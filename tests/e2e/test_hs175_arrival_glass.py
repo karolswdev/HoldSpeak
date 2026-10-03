@@ -56,6 +56,7 @@ from .glass_infra import (
     REPO,
 )
 from tests._evidence import evidence_dir
+from .chair_windows import open_chair_window
 
 pytest.importorskip("playwright.sync_api", reason="Arrival glass needs Playwright")
 
@@ -494,6 +495,10 @@ class TestArrivalWeekStrip:
                 )
 
             # ── WEEK strip present ──
+            # PHILO-13-11 (slice two, R2): at 393 one Chair window at a time;
+            # the strip lives in The week.
+            if width <= 720:
+                open_chair_window(page, "The week")
             strip = page.locator("[data-testid='arrival-week-strip']")
             assert strip.count() == 1, (
                 f"WEEK strip missing at {width}"
@@ -578,7 +583,11 @@ class TestArrivalWeekStrip:
                 if (!body) return [];
                 const allowed = ['btn', 'desk-mic', 'surface-ledger-line',
                     'gadget-cycle', 'gadget-stepper-btn'];
+                // PHILO-13-11 (slice two): the Chair is windows; a title bar's
+                // gadgets are the library chrome Button, fenced by
+                // test_philo13_11_frame_glass.py F2. The body law is unchanged.
                 return Array.from(body.querySelectorAll('button'))
+                    .filter(b => !b.closest('.desk-pullout-head'))
                     .filter(b => !allowed.some(c => b.classList.contains(c)))
                     .map(b => (b.textContent || '').trim().slice(0, 40));
             }""")
@@ -955,6 +964,9 @@ class TestArrivalWeekStrip:
             page.emulate_media(reduced_motion="reduce")
             page.on("pageerror", lambda err: errors.append(str(err)))
             _open_arrival(page, self.base)
+            # PHILO-13-11 (slice two, R2): the rows live in The week.
+            if width <= 720:
+                open_chair_window(page, "The week")
 
             row = page.locator("[data-testid='arrival-meeting-row']", has_text="Standup")
             assert row.count() == 1
@@ -996,12 +1008,15 @@ class TestArrivalWeekStrip:
                 timeout=10_000,
             )
             assert page.locator("[data-testid='arrival-unlink-refused']").count() == 0
-            # The NEXT line drops the Room token too (same door read).
-            next_text = page.locator("[data-testid='arrival-next']").first.text_content() or ""
-            assert "Q4 PLATFORM" not in next_text.upper(), next_text
             # The row and its ARMS stay: unlink is not cancel.
             row_text = row.first.text_content() or ""
             assert "ARMS" in row_text and "ROOM" not in row_text, row_text
+            # The NEXT line drops the Room token too (same door read).
+            # PHILO-13-11 (slice two, R2): at 393 it is in Needs you.
+            if width <= 720:
+                open_chair_window(page, "Needs you")
+            next_text = page.locator("[data-testid='arrival-next']").first.text_content() or ""
+            assert "Q4 PLATFORM" not in next_text.upper(), next_text
 
             with get_database()._connection() as conn:
                 links = conn.execute(

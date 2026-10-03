@@ -3,7 +3,6 @@
    sections compose from the surface library. */
 
 .chair {
-  --arrival-capture-clearance: 112px;
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -13,13 +12,159 @@
   min-height: calc(100dvh - var(--desk-snap-top) - var(--desk-snap-bottom));
 }
 
-/* HS-150-06 — the working band is law at EVERY height. */
+/* PHILO-13-11 (C1, slice two) — the Chair is a Workbench SCREEN of four
+   windows (design §5; boards C1-1, C1-4a–e, C1-6a). The screen is the
+   dithered backdrop (WBPattern, a 4 px checker); it never scrolls. It is NOT
+   a stacking context (no position, no z-index), so the Chair's windows
+   stack in the one window band with every desk window (one front window). */
 .chair:not(.chair-first-value) {
   box-sizing: border-box;
-  height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
-  max-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
-  overflow-y: auto;
-  overscroll-behavior-block: contain;
+  max-width: none;
+  overflow: hidden;
+  background-color: var(--wb-backdrop);
+  background-image: conic-gradient(var(--wb-dither) 25%, transparent 0 50%, var(--wb-dither) 0 75%, transparent 0);
+  background-size: 4px 4px;
+}
+@media (min-width: 721px) {
+  .chair:not(.chair-first-value) {
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+  }
+}
+/* 393: the Chair keeps its working band (HS-150-06) and, under a standing
+   write receipt, starts below the row (PHILO-3-01, write-receipt.css); the
+   one Chair window starts where the Chair does. */
+@media (max-width: 720px) {
+  .desk-next:has(> .desk-receipt-row) .desk-window.chair-window.is-sheet {
+    top: calc(var(--desk-work-top) + var(--desk-receipt-row-h, 0px) + var(--space-2));
+  }
+}
+
+/* ── The Chair's windows (DeskWindowFrame hosts, tiled) ─────────────────
+   Each window keeps its CSS home until the owner moves or sizes it; the
+   body scrolls by itself. 1440: Needs you left (above Capture, 100 px);
+   Brief right, 64 % of the column so SEND is on the first screen; The week
+   right below it. 393: the phone sheet (dock.css) fills the work area. */
+.desk-next .desk-window.chair-window {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  /* no overflow clip on the shell: the title bar rides over the 4 px frame
+     (its gadgets sit flush to the corner); the body scrolls by itself. */
+  background: var(--desk-window-fill, var(--surface-1));
+}
+.desk-next .chair-window-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 14px 16px 20px;
+  white-space: normal;
+}
+.desk-next .chair-window--needs .chair-window-body {
+  gap: 10px;
+}
+.desk-next .chair-window--capture .chair-window-body {
+  justify-content: center;
+  padding: 8px 12px;
+}
+/* The capture bar lives in its window: no floating bar over content. */
+.desk-next .chair-window .arrival-capture-bar {
+  position: static;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  flex-wrap: wrap;
+}
+/* R3, the work first: the ranking strip has its own line and fits whole
+   (393: RANKED ▾, stripMenu.tsx); the availability chip, CHECKED … and the
+   calendar state wrap to the line below, off the strip. */
+.desk-next .chair-window .arrival-head-tokens > .arrival-ranking:not(.is-folded) {
+  flex: 1 0 100%;
+}
+.desk-next .chair-window .arrival-head-tokens > * {
+  flex: none;
+}
+/* SETUP below the actions: one compact row. */
+.desk-next .chair-window [data-testid="arrival-blocker"] .surface-section {
+  gap: 4px;
+}
+@media (min-width: 721px) {
+  .desk-next .chair-window,
+  .desk-next .chair-window-closed {
+    --chair-top: calc(var(--wb-screen-h, 28px) + 14px);
+    --chair-bottom: calc(var(--desk-dock-h, var(--desk-work-bottom)) + 14px);
+    --chair-band: calc(100dvh - var(--chair-top) - var(--chair-bottom));
+    --chair-capture-h: 100px;
+  }
+  /* The aftercare card lands in the Capture window's slot (design §5): while
+     it stands, Capture grows to hold it whole and Needs you gives up the same
+     height, so the card is read where it lands (no covered half). */
+  .desk-next .chair-desk:has(.chair-window--capture [data-aftercare-slot]:not(:empty)) :is(.chair-window, .chair-window-closed) {
+    --chair-capture-h: 300px;
+  }
+  .desk-next .chair-window--needs,
+  .desk-next .chair-window-closed.chair-window--needs {
+    left: 14px;
+    top: var(--chair-top);
+    width: calc(50% - 22px);
+    bottom: calc(var(--chair-bottom) + var(--chair-capture-h) + 12px);
+  }
+  .desk-next .chair-window--capture,
+  .desk-next .chair-window-closed.chair-window--capture {
+    left: 14px;
+    bottom: var(--chair-bottom);
+    width: calc(50% - 22px);
+    height: var(--chair-capture-h);
+  }
+  .desk-next .chair-window--brief,
+  .desk-next .chair-window-closed.chair-window--brief {
+    left: calc(50% + 8px);
+    right: 14px;
+    top: var(--chair-top);
+    height: calc(var(--chair-band) * 0.64 - 8px);
+  }
+  .desk-next .chair-window--week,
+  .desk-next .chair-window-closed.chair-window--week {
+    left: calc(50% + 8px);
+    right: 14px;
+    bottom: var(--chair-bottom);
+    height: calc(var(--chair-band) * 0.36 - 8px);
+  }
+}
+/* R1: a closed Chair window leaves its place with ONE compact reopen
+   Button (library Button, dense, the window's name). */
+.desk-next .chair-window-closed {
+  position: fixed;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--wb-dither);
+}
+.desk-next .chair-window-closed .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.desk-next .chair-window-closed .btn svg {
+  width: 14px;
+  height: 12px;
+}
+/* 393: with no Chair window open, the Chair shows a reopen Button for each. */
+.desk-next .chair-reopen-list {
+  position: fixed;
+  inset: var(--wb-screen-h, 44px) 0 var(--desk-dock-h, 56px) 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
 }
 
 /* HS-140-01: first value gate. */
@@ -48,7 +193,7 @@
   line-height: 1.15;
 }
 .arrival-display--accent {
-  color: var(--accent);
+  color: var(--accent-text); /* PHILO-13-11 (R5): ember TEXT on the well (5.43:1; --accent read 4.26:1) */
 }
 .arrival-display--muted {
   color: var(--text-muted);
@@ -75,7 +220,7 @@
   color: var(--text-muted);
 }
 .arrival-arming-token {
-  color: var(--accent);
+  color: var(--accent-text); /* PHILO-13-11 (R5): ember TEXT on the well (5.43:1; --accent read 4.26:1) */
   font-weight: 700;
 }
 .arrival-arming-countdown {
@@ -128,7 +273,7 @@
   letter-spacing: 0.04em;
 }
 .arrival-week-day[data-today] .arrival-week-overflow {
-  color: var(--accent);
+  color: var(--accent-text); /* PHILO-13-11 (R5): ember TEXT on the well (5.43:1; --accent read 4.26:1) */
 }
 
 .arrival-week-day-label {
@@ -140,7 +285,7 @@
   color: var(--text-muted);
 }
 .arrival-week-day[data-today] .arrival-week-day-label {
-  color: var(--accent);
+  color: var(--accent-text); /* PHILO-13-11 (R5): ember TEXT on the well (5.43:1; --accent read 4.26:1) */
 }
 
 .arrival-week-total {
@@ -397,7 +542,7 @@
   color: var(--danger, #c53030);
 }
 .arrival-why-token[data-tone="warning"] {
-  color: var(--accent);
+  color: var(--accent-text); /* PHILO-13-11 (R5): ember TEXT on the well (5.43:1; --accent read 4.26:1) */
 }
 
 .arrival-project-token {
@@ -479,7 +624,7 @@
 }
 .arrival-meeting-badge[data-badge="running"],
 .arrival-meeting-badge[data-badge="queued"] {
-  color: var(--accent);
+  color: var(--accent-text); /* PHILO-13-11 (R5): ember TEXT on the well (5.43:1; --accent read 4.26:1) */
 }
 .arrival-meeting-badge[data-badge="ran"] {
   color: var(--success, #38a169);
@@ -514,7 +659,7 @@
 
 /* ── Proposal prefix (HS-172-03) ───────────────────────────────────── */
 .arrival-proposal-prefix {
-  color: var(--accent);
+  color: var(--accent-text); /* PHILO-13-11 (R5): ember TEXT on the well (5.43:1; --accent read 4.26:1) */
   font-weight: 600;
 }
 
@@ -612,16 +757,6 @@
 /* Fallback viewport media for the shell (container query cannot reach
    the chair itself -- it is the container ancestor, not a descendant). */
 @media (max-width: 480px) {
-  .chair {
-    padding: var(--space-3);
-    gap: var(--space-4);
-    /* dock.css reserves padding below the sticky bar for the wrapped dock.
-       Native nearest scrolling must clear that band as well as the bar. */
-    scroll-padding-bottom: calc(
-      var(--arrival-capture-clearance) + var(--space-4) +
-      max(0px, var(--desk-dock-h, var(--desk-snap-bottom)) - var(--desk-snap-bottom))
-    );
-  }
   /* HS-175 C5: Unlink visible at the phone width (viewport fallback). */
   .arrival-meeting-verbs {
     opacity: 1;
@@ -629,32 +764,10 @@
   .arrival-display {
     font-size: 22px;
   }
+  /* PHILO-13-11 (C1, slice two): the capture bar is in the Capture window
+     (on demand from Speak at 393); no sticky bar, no clearance. */
   .arrival-capture-bar {
-    position: sticky;
-    bottom: 0;
-    z-index: var(--desk-z-local, 1);
     flex-wrap: wrap;
-  }
-  /* HS-200-15 (counsel P1-8): the sticky bar floats over the content it
-     follows; the section before it clears the bar's height so nothing
-     sits under it at the end of the scroll. */
-  .chair > :nth-last-child(2) {
-    margin-bottom: max(112px, var(--arrival-capture-clearance));
-  }
-  /* An empty aftercare slot is removed from layout. Preserve the original
-     capture clearance on the content row before that slot. */
-  .chair > :has(+ [data-aftercare-slot="before-capture"]:empty) {
-    margin-bottom: max(112px, var(--arrival-capture-clearance));
-  }
-  /* Keep the live aftercare slot as the browser's scroll anchor while the
-     async Chair summary can still grow above it. When the card is dismissed,
-     the selectors stop matching and the Chair's normal anchoring returns. */
-  .chair:has(> [data-aftercare-slot="before-capture"]:not(:empty))
-    > *:has(~ [data-aftercare-slot="before-capture"]) {
-    overflow-anchor: none;
-  }
-  .chair > [data-aftercare-slot="before-capture"]:not(:empty) {
-    overflow-anchor: auto;
   }
   /* HS-200-15 (counsel P0-2): the @container block above cannot reach the
      chair (it is the container ancestor), so the 393 row grammar lives
@@ -685,5 +798,18 @@
   }
   .chair .surface-ledger[data-cols="room"] .surface-ledger-line[data-testid="arrival-meeting-row"] > .surface-ledger-trailing .btn {
     min-height: 44px;
+  }
+}
+
+/* PHILO-13-11 (C1, slice two; R2, C7's floor): at 393 every target in a
+   Chair window owns a 44 x 44 box (Done, Name an owner, Ack, Defer,
+   Generate, the capture verbs). */
+@media (max-width: 720px) {
+  /* five classes: above a library species' own dense min-height (the
+     transcript fold), without naming library classes outside the library
+     (the HS-156-03 surface fence) */
+  .desk-next .desk-window.chair-window .chair-window-body :is(button, [role="button"]) {
+    min-height: 44px;
+    min-width: 44px;
   }
 }

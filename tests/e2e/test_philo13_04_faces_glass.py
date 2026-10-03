@@ -30,6 +30,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .chair_windows import open_chair_window
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the faces glass needs Playwright")
@@ -125,7 +126,7 @@ class TestFacesDoNotLie:
 
     def _close_windows(self, page: Any, width: int) -> None:
         for _ in range(6):
-            gadgets = page.locator(".desk-window .desk-light-close:visible")
+            gadgets = page.locator(".desk-window .desk-gadget-close:visible")
             if not gadgets.count():
                 return
             self._press(page, gadgets.last, width)
@@ -143,6 +144,9 @@ class TestFacesDoNotLie:
                 starts: list[int] = []
                 page.on("response", lambda r: starts.append(r.status)
                         if r.url.endswith("/api/meeting/start") else None)
+                # PHILO-13-11 (slice two, R2): at 393 Capture opens from the Speak AppIcon.
+                if width <= 720:
+                    open_chair_window(page, "Capture")
                 self._press(page, page.get_by_test_id("arrival-record-meeting"), width)
                 receipt = page.locator(".write-receipt").filter(has_text="NOT RECORDING")
                 receipt.wait_for()
@@ -169,6 +173,9 @@ class TestFacesDoNotLie:
                 # The Chair: the AVAILABLE fact, and a STORED summary per meeting.
                 chair = page.locator(".chair")
                 assert "No engine for summaries" in chair.inner_text()
+                # PHILO-13-11 (slice two, R2): at 393 the meetings are in The week.
+                if width <= 720:
+                    open_chair_window(page, "The week")
                 badges = page.get_by_test_id("arrival-meeting-badge").all_inner_texts()
                 assert "SUMMARY STORED" in badges and "OFF" in badges, badges
                 self._shot(page, "chair-facts", width)
@@ -197,8 +204,11 @@ class TestFacesDoNotLie:
                 row = meetings.get_by_text("Checkout latency review").first
                 row.wait_for()
                 self._press(page, row, width)
-                meetings.get_by_text("SUMMARY STORED").first.wait_for()
-                assert not meetings.locator(".meetings-detail-head").get_by_text("SUMMARY OFF").count()
+                # A3-W: the rail now says SUMMARY STORED too (its hidden compact
+                # line at 393), so the record's own head is the locator.
+                head = meetings.locator(".meetings-detail-head")
+                head.get_by_text("SUMMARY STORED").first.wait_for()
+                assert not head.get_by_text("SUMMARY OFF").count()
                 self._shot(page, "meetings-stored", width)
                 assert not errors, errors
             finally:
@@ -403,6 +413,8 @@ class TestFacesDoNotLie:
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width, seed=False, fake_media=True)
             try:
+                if width <= 720:   # PHILO-13-11 (slice two, R2): Capture from Speak
+                    open_chair_window(page, "Capture")
                 self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
                 thought = page.locator(".desk-window[aria-label='Thought']")
                 mic = thought.locator("[aria-label='Speak the note']")
@@ -475,3 +487,303 @@ class TestFacesDoNotLie:
                 assert not errors, errors
             finally:
                 browser.close()
+
+
+# ── PHILO-13-04 A3-W: the Meetings list rail names the STORED fact ────────
+
+
+def _mint_through_the_real_producers(tmp_path: Path) -> None:
+    """One summarized and one unsummarized meeting, as H-A3's fences mint them.
+
+    ``import_meeting`` -> ``_admit`` -> ``process_next_intel_job`` over the
+    deferred-queue rig (only the engine and plugin host are doubles), into a
+    database of its own; the hub boots on a copy of it. The patches live in a
+    private ``MonkeyPatch`` context and leave before the hub boots. Then the
+    stored meeting's run status is set to ``disabled``, as the H-A3 fence does
+    (``tests/unit/test_philo13_a3h_meeting_summary.py``): the case that drew
+    ``OFF`` beside a stored summary.
+    """
+    import shutil
+    import sqlite3
+
+    from holdspeak.intel_queue import process_next_intel_job
+    from tests.unit.test_phase200_meeting_outcomes import _rig as _outcomes_rig
+    from types import SimpleNamespace
+
+    from holdspeak.meeting_import import import_meeting
+    from tests.unit.test_philo13_a3h_meeting_summary import PRODUCED_SUMMARY, SOURCE
+    from tests.unit.test_philo3_summary_detail import _admit
+
+    def _import(db: Any, source: Path, meeting_id: str, title: str, transcript: str) -> Any:
+        class _Transcriber:  # the one double: the words the import hears
+            def transcribe(self, _audio: Any, **_kwargs: Any) -> str:
+                return transcript
+
+        return import_meeting(
+            source, db=db, transcriber=_Transcriber(),
+            config=SimpleNamespace(meeting=SimpleNamespace(
+                intel_enabled=True, intel_deferred_enabled=True)),
+            title=title, meeting_id=meeting_id,
+        ).state
+
+    rig = tmp_path / "producer"
+    rig.mkdir()
+    with pytest.MonkeyPatch.context() as mp:
+        # The HS-200-12 rig: `_queue_rig` with the REAL plugin host and the
+        # REAL decision/action plugins put back; the one double is the
+        # provider's completion text.
+        db, engine = _outcomes_rig(rig, mp)
+        source = rig / "meeting.wav"
+        shutil.copyfile(SOURCE, source)
+        stored = _import(db, source, A3W_STORED, "Checkout latency review",
+                         "Latency came from a cold cache after deploy.")
+        none = _import(db, source, A3W_NONE, "Vendor call: card network",
+                       "We discussed the card network SLA.")
+        _admit(db, stored.id)
+        assert process_next_intel_job() is True
+        assert db.meetings.get_meeting(stored.id).intel.summary == PRODUCED_SUMMARY
+        assert db.meetings.get_meeting(none.id).intel is None
+        with db._connection() as conn:
+            conn.execute("UPDATE meetings SET intel_status = 'disabled' WHERE id = ?", (stored.id,))
+
+        # Astra's #730 finding 3: a stored summary WITH proposed outcomes.
+        # Each meeting is saved and enqueued by the stop-handoff producer, and
+        # the real drainer runs the summary, the plugins and the proposal
+        # bridge. Then two get a re-run: the first fails for real (the
+        # provider errors), the second stays queued (this hub has no drainer).
+        for meeting_id, title in OUTCOME_MEETINGS.items():
+            _outcome_meeting(db, meeting_id, title)
+        drained = 0
+        while process_next_intel_job():
+            drained += 1
+        assert drained >= len(OUTCOME_MEETINGS)
+        for meeting_id in (A3W_FAILED, A3W_QUEUED):
+            db.intel.enqueue_intel_job(
+                meeting_id, transcript_hash=db.meetings.get_meeting(meeting_id).transcript_hash(),
+                reason="re-run")
+        engine.error = "provider failed"
+        assert process_next_intel_job(retry_max_attempts=1) is True
+        rows = {m.id: m for m in db.meetings.list_meetings(limit=50)}
+        assert {i: rows[i].intel_status for i in OUTCOME_MEETINGS} == {
+            A3W_OUTCOMES: "ready", A3W_FAILED: "error", A3W_QUEUED: "queued"}
+        assert all(rows[i].has_summary and rows[i].needs_you_count > 0 for i in OUTCOME_MEETINGS)
+    src = sqlite3.connect(rig / "queue.db")
+    dst = sqlite3.connect(tmp_path / "holdspeak.db")  # _boot's DEFAULT_DB_PATH
+    src.backup(dst)
+    src.close()
+    dst.close()
+
+
+A3W_STORED = "a3w-stored"
+A3W_NONE = "a3w-none"
+A3W_OUTCOMES = "a3w-outcomes"
+A3W_FAILED = "a3w-rerun-failed"
+A3W_QUEUED = "a3w-rerun-queued"
+OUTCOME_MEETINGS = {
+    A3W_OUTCOMES: "Payments cut-over review",
+    A3W_FAILED: "Payments cut-over: re-run failed",
+    A3W_QUEUED: "Payments cut-over: re-run queued",
+}
+
+
+def _outcome_meeting(db: Any, meeting_id: str, title: str) -> None:
+    """The HS-200-12 meeting (`test_phase200_meeting_outcomes._meeting`) with
+    its own title: saved, linked to a Project, enqueued at stop handoff."""
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+    from tests.unit.test_hs172_loop_wire import _link_meeting_project, _seed_project
+    from tests.unit.test_phase200_meeting_outcomes import SEGMENTS
+
+    state = MeetingState(
+        id=meeting_id, started_at=datetime.now() - timedelta(hours=2),
+        ended_at=datetime.now() - timedelta(hours=1), title=title,
+        segments=[TranscriptSegment(text=text, speaker=speaker, start_time=start, end_time=end)
+                  for start, end, speaker, text in SEGMENTS],
+    )
+    db.meetings.save_meeting(state)
+    _seed_project(db, "prj-cutover")
+    _link_meeting_project(db, meeting_id, "prj-cutover")
+    db.intel.enqueue_intel_job(meeting_id, transcript_hash=state.transcript_hash(),
+                               reason="stop handoff")
+
+
+class TestMeetingsRailNamesStored:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        _ensure_build()
+        _mint_through_the_real_producers(tmp_path)
+        server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        self.base = base
+        try:
+            yield
+        finally:
+            server.stop()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_the_rail_says_summary_stored(self, width: int) -> None:
+        """The list rail says SUMMARY STORED beside the stored summary, and
+        OFF only beside the meeting that stores none. Red on main 02ce9e8c
+        (the rail said OFF for both)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                      device_scale_factor=1, has_touch=width < 720)
+            page = ctx.new_page()
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                rows = {r["id"]: r for r in _api(page, "GET", "/api/meetings?limit=20", token=TOKEN)["meetings"]}
+                assert rows[A3W_STORED]["has_summary"] is True
+                assert rows[A3W_STORED]["intel_status"] == "disabled"
+                assert rows[A3W_NONE]["has_summary"] is False
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(1500)
+                _settle(page)
+                TestFacesDoNotLie._press(
+                    page, page.locator(".desk-dock-launch[aria-label^='Meetings']"), width)
+                meetings = page.locator(".desk-window[aria-label='Meetings']")
+                stored = meetings.get_by_test_id(f"meeting-row-{A3W_STORED}")
+                none = meetings.get_by_test_id(f"meeting-row-{A3W_NONE}")
+                stored.wait_for()
+                none.wait_for()
+                stored.scroll_into_view_if_needed()  # at 393 the rail scrolls
+                TestFacesDoNotLie._shot(page, "meetings-rail-stored", width)
+                assert stored.get_by_test_id("state-token").inner_text() == "SUMMARY STORED"
+                assert not stored.get_by_text(re.compile(r"\bOFF\b")).count()
+                assert none.get_by_test_id("state-token").inner_text() == "OFF"
+                assert not none.get_by_text("STORED").count()
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_a_needs_you_count_never_covers_the_run(self, width: int) -> None:
+        """Muad'Dib's ruling on Astra's #730 finding 3: capture → FAILED (Retry)
+        → RUNNING / QUEUED → NEEDS YOU → SUMMARY STORED → the rest. Three
+        meetings store a summary AND proposed outcomes (real producers); the
+        rail names the failed and the queued re-run, and the count only where
+        no run is live. Red on a139ad13 (all three said `5 NEED YOU`)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                      device_scale_factor=1, has_touch=width < 720)
+            page = ctx.new_page()
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                rows = {r["id"]: r for r in _api(page, "GET", "/api/meetings?limit=20", token=TOKEN)["meetings"]}
+                for meeting_id in OUTCOME_MEETINGS:
+                    assert rows[meeting_id]["has_summary"] is True
+                    assert rows[meeting_id]["needs_you_count"] == 5
+                assert rows[A3W_FAILED]["intel_status"] == "error"
+                assert rows[A3W_QUEUED]["intel_status"] == "queued"
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(1500)
+                _settle(page)
+                TestFacesDoNotLie._press(
+                    page, page.locator(".desk-dock-launch[aria-label^='Meetings']"), width)
+                meetings = page.locator(".desk-window[aria-label='Meetings']")
+
+                def token(meeting_id: str) -> str:
+                    row = meetings.get_by_test_id(f"meeting-row-{meeting_id}")
+                    row.wait_for()
+                    return row.get_by_test_id("state-token").inner_text()
+
+                assert token(A3W_FAILED) == "FAILED"
+                # This hub has no drainer, so the queued run says so (HS-200-42).
+                assert token(A3W_QUEUED) in {"QUEUED", "NOT DRAINING"}
+                assert token(A3W_OUTCOMES) == "5 NEED YOU"
+                assert token(A3W_STORED) == "SUMMARY STORED"
+                meetings.get_by_test_id(f"meeting-row-{A3W_FAILED}").scroll_into_view_if_needed()
+                TestFacesDoNotLie._shot(page, "meetings-rail-precedence", width)
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_a_running_rerun_is_named_over_its_outcomes(self, width: int) -> None:
+        """Astra's counsel r2 on #730: RUNNING beside a real nonzero
+        needs_you_count, through the real rail producer. The stored summary and
+        its 5 proposals came from the real plugins and bridge (setup), and setup
+        left its re-run queued. Here the REAL executor claims that re-run on
+        the hub's own database and broker; the one double, the provider,
+        BLOCKS until the browser has read the rail. Red with the
+        PROCESS_LEADS skip removed (the rail said `5 NEED YOU`)."""
+        import threading
+
+        from playwright.sync_api import sync_playwright
+
+        from holdspeak.db import get_database
+        from holdspeak.intel_queue import process_next_intel_job
+        from tests.unit.test_meeting_deferred_admission import _Route
+        from tests.unit.test_phase200_meeting_outcomes import ACT, DEC, ScriptedIntel
+
+        db = get_database()  # the hub's database
+        engine = ScriptedIntel()
+        entered, release = threading.Event(), threading.Event()
+        real_analyze = engine.analyze
+
+        def held_analyze(transcript: str, **kwargs: Any) -> Any:
+            entered.set()
+            release.wait(120.0)  # the provider answers only when released
+            return real_analyze(transcript, **kwargs)
+
+        engine.analyze = held_analyze  # type: ignore[method-assign]
+        outcome: dict[str, Any] = {}
+        with pytest.MonkeyPatch.context() as mp, sync_playwright() as pw:
+            mp.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
+            mp.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
+            mp.setattr("holdspeak.plugins.router.preview_route_from_transcript",
+                       lambda **kwargs: _Route((DEC, ACT)))
+            worker = threading.Thread(
+                target=lambda: outcome.setdefault("ran", process_next_intel_job()), daemon=True)
+            worker.start()
+            browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                      device_scale_factor=1, has_touch=width < 720)
+            page = ctx.new_page()
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                assert entered.wait(60.0), "the executor never reached the provider"
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                rows = {r["id"]: r for r in _api(page, "GET", "/api/meetings?limit=20", token=TOKEN)["meetings"]}
+                assert rows[A3W_QUEUED]["intel_status"] == "running", rows[A3W_QUEUED]
+                assert rows[A3W_QUEUED]["needs_you_count"] > 0
+                assert rows[A3W_QUEUED]["has_summary"] is True
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(1500)
+                _settle(page)
+                TestFacesDoNotLie._press(
+                    page, page.locator(".desk-dock-launch[aria-label^='Meetings']"), width)
+                meetings = page.locator(".desk-window[aria-label='Meetings']")
+                row = meetings.get_by_test_id(f"meeting-row-{A3W_QUEUED}")
+                row.wait_for()
+                row.scroll_into_view_if_needed()
+                assert entered.is_set() and not release.is_set()
+                TestFacesDoNotLie._shot(page, "meetings-rail-running", width)
+                assert row.get_by_test_id("state-token").inner_text() == "RUNNING"
+                assert not row.get_by_text("NEED YOU").count()
+                assert not errors, errors
+            finally:
+                release.set()
+                worker.join(120.0)
+                browser.close()
+        assert not worker.is_alive() and outcome.get("ran") is True, outcome
+        after = db.meetings.get_meeting(A3W_QUEUED)
+        assert after.intel_status == "ready", after.intel_status
+

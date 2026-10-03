@@ -33,6 +33,7 @@ import pytest
 
 from ._doc_send_glass import Boards
 from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair, _settle
+from .chair_windows import open_chair_window
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the document SEND well glass needs Playwright")
@@ -47,9 +48,11 @@ REMOTE_HOST = "192.0.2.123"  # TEST-NET-1: never loopback
 AGENT_ID = "remote-project-agent"
 
 CH = ".chair [data-seat=brief]"                       # the Chair's brief seat
-IB = ".desk-window [data-seat=brief]"                 # Intelligence -> BRIEF
-DD = ".desk-window [data-seat=desk-decision]"         # the decision window
-DR = ".desk-window .receipt-detail [data-seat=decision-record]"   # Intelligence -> DECISIONS
+# PHILO-13-11 (slice two): the Chair is four windows (.chair-window); the
+# Intelligence and decision seats are the OTHER windows.
+IB = ".desk-window:not(.chair-window) [data-seat=brief]"                 # Intelligence -> BRIEF
+DD = ".desk-window:not(.chair-window) [data-seat=desk-decision]"         # the decision window
+DR = ".desk-window:not(.chair-window) .receipt-detail [data-seat=decision-record]"   # Intelligence -> DECISIONS
 RR = "[data-testid=room-body] [data-seat=decision-record]"        # a Room decision row, unfolded
 
 # The species' stamp (features/channels/channels.ts `stamp`), in the page's zone.
@@ -141,10 +144,15 @@ class _Rig:
         _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
         return browser, page, errors
 
-    def _reload(self, page: Any) -> None:
+    def _reload(self, page: Any, chair: str | None = None) -> None:
         page.reload(wait_until="load")
         _normal_chair(page)
         page.wait_for_timeout(1200)
+        # PHILO-13-11 (slice two, R2): at 393 one Chair window at a time; the
+        # seat under test (Brief, The week) is opened through Go ▸ Chair.
+        if chair and page.viewport_size["width"] <= 720:
+            open_chair_window(page, chair)
+            page.wait_for_timeout(600)
         _settle(page)
 
     def _dest(self, page: Any, name: str) -> tuple[str, Path]:
@@ -255,7 +263,7 @@ class _Rig:
     @staticmethod
     def _close_windows(page: Any) -> None:
         for _ in range(6):
-            btn = page.locator(".desk-window [aria-label^='Close ']")
+            btn = page.locator(".desk-window:not(.chair-window) [aria-label^='Close ']")
             if not btn.count():
                 break
             btn.last.click()
@@ -307,7 +315,7 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 ref = f"monday_brief:{brief['id']}"
                 items = [it for sec in brief["sections"].values() for it in sec]
                 assert len(items) >= 2, brief
-                self._reload(page)
+                self._reload(page, "Brief")
 
                 # A1: no destination -- the Chair's brief carries the well: one token, one verb.
                 page.locator(f"{CH} [data-testid=send-none]").wait_for(timeout=T)
@@ -322,7 +330,7 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 r = self._agent().post("/api/channels/sends", json={"document_ref": ref, "destination_id": ledger})
                 assert r.status_code == 200, r.text
                 prepared_id = r.json()["send"]["id"]
-                self._reload(page)
+                self._reload(page, "Brief")
 
                 chip = ".chair [data-testid=arrival-brief] [data-testid=doc-prepared-chip]"
                 page.locator(chip).wait_for(timeout=T)
@@ -460,7 +468,7 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 latest_items = [it for sec in _api(page, "GET", "/api/brief/latest", token=TOKEN)["sections"].values() for it in sec]
                 for it in latest_items[1:]:
                     _api(page, "POST", f"/api/brief/items/{it['id']}/shelf", {"state": "acknowledged"}, token=TOKEN)
-                self._reload(page)
+                self._reload(page, "Brief")
                 ack = page.locator(".chair [data-testid=arrival-brief] .btn", has_text="Ack").first
                 ack.wait_for(timeout=T)
                 self._pick(page, CH, "Team folder")
@@ -501,7 +509,10 @@ class TestBriefAndDecisionSendGlass(_Rig):
 
                 # T3c: ordinary scrolling (the wheel) brings the receipt's history row out from
                 # under the Chair's sticky capture bar; the receipt is still there.
-                vw, vh = width, SIZES[width]
+                # PHILO-13-11 (slice two): the Brief is its own window; the wheel turns over
+                # that window's body (the viewport's centre is the screen between windows).
+                box = page.locator(".chair-window--brief .chair-window-body").bounding_box()
+                vw, vh = 2 * box["x"] + box["width"], 2 * box["y"] + box["height"]
                 target = h_sel
                 page.mouse.move(vw / 2, vh / 2)
                 clear = False
@@ -839,7 +850,7 @@ class TestChairMeetingsAndBriefToSlack(_Rig):
                 team, team_dir = self._dest(page, "Team folder")
                 slack = self._slack(page)
                 assert self.keys.values and not self.edge.requests
-                self._reload(page)
+                self._reload(page, "The week")
 
                 ok_row = "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-sync'])"
                 rt_row = "li.surface-ledger-row:has(> [data-testid=arrival-meeting-row]):has([data-send=well][data-doc$=':c6-retry'])"
@@ -849,6 +860,11 @@ class TestChairMeetingsAndBriefToSlack(_Rig):
                 page.locator(f"{RT} [data-testid=destination-row]").first.wait_for(timeout=T)
                 page.wait_for_timeout(600)
 
+                # PHILO-13-11 (slice two): at 1440 The week is 36 % of the right column;
+                # the meeting well is read with the window zoomed (board C1-4b).
+                if width > 720:
+                    page.get_by_role("button", name="Zoom The week").click()
+                    page.wait_for_timeout(600)
                 # C6b, the healthy branch: SUMMARY, then SEND with the form picker (44 px at 393).
                 picker = f"{OK} [data-testid=doc-forms] select, {OK} [data-testid=doc-forms] .btn"
                 c6 = shots.shoot(page, "C6b-chair-meetings-row-well", OK,
@@ -865,38 +881,20 @@ class TestChairMeetingsAndBriefToSlack(_Rig):
                     # G4 on the Chair: the picker is 44 px tall and owns all nine points of its target.
                     assert pick_box[1] >= 44, pick_box
                     assert all(min(o["target"]) >= 44 for o in picker_probe), picker_probe
-                    # Ordinary scrolling past the capture bar: the Chair scrolled so the picker sits
-                    # UNDER the sticky capture bar; the mouse wheel over the Chair then brings it out,
-                    # and the picker owns all nine points of its 44 x 44 target.
-                    under = page.evaluate("""(sel) => { const p = document.querySelector(sel); const bar = document.querySelector('[data-testid=arrival-capture-bar]');
-                      const s = document.querySelector('.chair'); const pr = p.getBoundingClientRect(), br = bar.getBoundingClientRect();
-                      s.scrollTop += (pr.top + pr.height / 2) - (br.top + br.height / 2);
-                      const q = p.getBoundingClientRect(); const h = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2);
-                      return {covered: !!h && !p.contains(h), by: h ? String(h.className).slice(0, 40) : null}; }""", picker)
-                    assert under["covered"], under
-                    steps = 0
-                    for steps in range(1, 16):
-                        page.mouse.move(width / 2, 300)
-                        page.mouse.wheel(0, 90)
-                        page.wait_for_timeout(200)
-                        pts = page.evaluate("""(sel) => { const p = document.querySelector(sel); const r = p.getBoundingClientRect();
+                    # PHILO-13-11 (slice two, R2): the old law here scrolled the picker UNDER
+                    # the Chair's sticky capture bar and proved the wheel brought it out. The
+                    # capture bar is its own window now (on demand from Speak at 393): no bar
+                    # floats over The week, so nothing can sit under it. Proven structurally,
+                    # and the picker still owns all nine points of its 44 x 44 target.
+                    bars_over_week = page.locator(".chair-window--week [data-testid=arrival-capture-bar]").count()
+                    owned_nine = page.evaluate("""(sel) => { const p = document.querySelector(sel); p.scrollIntoView({block: 'center'});
+                          const r = p.getBoundingClientRect();
                           const cx = r.left + r.width / 2, cy = r.top + r.height / 2, w = Math.max(44, r.width), h = Math.max(44, r.height);
                           const L = cx - w / 2 + 1, R = cx + w / 2 - 1, T = cy - h / 2 + 1, B = cy + h / 2 - 1;
                           return [[cx, cy], [cx, T], [R, cy], [cx, B], [L, cy], [L, T], [R, T], [L, B], [R, B]]
                             .map(([x, y]) => { const e = document.elementFromPoint(x, y); return !!e && p.contains(e); }); }""", picker)
-                        if all(pts):
-                            break
-                    owned_nine = []
-                    for x, y in page.evaluate("""(sel) => { const p = document.querySelector(sel); const r = p.getBoundingClientRect();
-                          const cx = r.left + r.width / 2, cy = r.top + r.height / 2, w = Math.max(44, r.width), h = Math.max(44, r.height);
-                          const L = cx - w / 2 + 1, R = cx + w / 2 - 1, T = cy - h / 2 + 1, B = cy + h / 2 - 1;
-                          return [[cx, cy], [cx, T], [R, cy], [cx, B], [L, cy], [L, T], [R, T], [L, B], [R, B]]; }""", picker):
-                        page.mouse.move(x, y)
-                        owned_nine.append(page.evaluate("""([sel, x, y]) => { const p = document.querySelector(sel);
-                          const e = document.elementFromPoint(x, y); return !!e && p.contains(e) && !!window.__pm && p.contains(window.__pm); }""",
-                                                        [picker, x, y]))
-                    c6["picker_after_scroll"] = {"under_bar_first": under, "wheel_steps": steps, "nine_points_owned": owned_nine}
-                    assert all(owned_nine), c6["picker_after_scroll"]
+                    c6["picker_after_scroll"] = {"capture_bars_over_the_week": bars_over_week, "nine_points_owned": owned_nine}
+                    assert bars_over_week == 0 and all(owned_nine), c6["picker_after_scroll"]
                     shots.shoot(page, "C6f-chair-picker-scrolled-clear-393".replace("-393", ""), OK, [f"{OK} [data-testid=doc-forms]"], seat=None)
 
                 # The send leg from the Chair row: face = hub row = kernel receipt.
@@ -921,6 +919,9 @@ class TestChairMeetingsAndBriefToSlack(_Rig):
                 assert "meeting_summary:c6-retry" in c6r["wells"], c6r["wells"]
                 assert "FAILED" in self._text(page, f"{rt_row} [data-testid=arrival-summary-status]")
 
+                if width > 720:   # PHILO-13-11: the Chair's screen again (The week un-zoomed)
+                    page.get_by_role("button", name="Zoom The week").click()
+                    page.wait_for_timeout(400)
                 # A6: the brief to Slack. A person signal (an agenda item on Priya's 1:1) puts a
                 # People section in the brief; one item is acknowledged on the shelf. The
                 # Slack-text preview carries the person lines and no Ack/Defer mark.
@@ -940,7 +941,7 @@ class TestChairMeetingsAndBriefToSlack(_Rig):
                 bref = f"monday_brief:{brief['id']}"
                 items = [it for sec in brief["sections"].values() for it in sec]
                 _api(page, "POST", f"/api/brief/items/{items[0]['id']}/shelf", {"state": "acknowledged"}, token=TOKEN)
-                self._reload(page)
+                self._reload(page, "Brief")
                 page.locator(f"{CH} [data-testid=destination-row]").first.wait_for(timeout=T)
                 self._pick(page, CH, SLACK)
                 body = f"{opened(CH, SLACK)} [data-testid=send-preview-body]"

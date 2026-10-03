@@ -124,6 +124,10 @@ export interface Meeting {
   calendarSourceLabel?: string | null;
   /** HS-170-04: word count of the transcript (null when no transcript). */
   transcriptWords?: number | null;
+  /** PHILO-13-04 H-A3 (#729): the list row's durable fact — a summary is
+   *  stored for this meeting (read from the persisted summary, apart from
+   *  the config switch and the run status). */
+  hasSummary?: boolean;
   /** Detail projection carried by the Arrival's bounded read. */
   intelSummary?: string | null;
   intelTopics?: string[];

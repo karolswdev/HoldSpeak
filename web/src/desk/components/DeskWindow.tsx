@@ -40,16 +40,17 @@ import {
 import {
   chipEls,
   shellEls,
-  windowRegistry,
   registrySnapshot,
   announceWindow,
   retractWindow,
   useOpenWindows,
+  useFrontWindowId,
   openWindowCount,
   closeFrontWindow,
   minimizeFrontWindow,
   focusOrRestoreApp,
 } from "./window/windowRegistry";
+import { GadgetGlyph } from "./window/GadgetGlyph";
 import {
   type DockLauncher,
   announceLauncher,
@@ -66,7 +67,6 @@ import {
   maximizeFrontWindow,
   snapFrontWindow,
 } from "./window/windowCommands";
-import { VerbGlyph } from "./window/VerbGlyph";
 import { Dock } from "./window/Dock";
 import { Button } from "../../components/signal/Signal";
 
@@ -115,6 +115,10 @@ export interface DeskWindowOptions {
    * desk object). The window seats itself beside it and the open/close
    * motion flies out of and back into it — spatial, not a side dock. */
   origin?: { x: number; y: number } | null;
+  /** PHILO-13-11 (C1, slice two) — a tiled window (the Chair's four): it
+   * keeps its CSS home until the owner moves or sizes it; the placement
+   * engine does not seat it. */
+  tiled?: boolean;
 }
 
 let resizeClampUsers = 0;
@@ -211,6 +215,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     const vw = window.innerWidth || 1280;
     const vh = window.innerHeight || 800;
     const cur = s.panelRects[id];
+    if (!cur && opts.tiled) return;
     if (cur) {
       const kept = clampIntoBand(cur, vw, vh, minW, minH);
       if (
@@ -486,8 +491,12 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       ...dragBind(),
       style: { touchAction: "none" } as React.CSSProperties,
     },
+    // PHILO-13-11 (C1) — the sizing gadget: two nested corners on the
+    // frame, bottom right. It is the resize grip (a drag, not a verb).
     grip: (
-      <span className="desk-window-grip" {...resizeBind()} aria-hidden="true" />
+      <span className="desk-window-grip desk-gadget-size" {...resizeBind()} aria-hidden="true">
+        <GadgetGlyph kind="size" />
+      </span>
     ),
     edges,
   };
@@ -525,6 +534,16 @@ export interface DeskWindowFrameProps {
   fitContent?: boolean;
   /** The client point this window opened from: see DeskWindowOptions. */
   origin?: { x: number; y: number } | null;
+  /** A tiled window: see DeskWindowOptions.tiled. */
+  tiled?: boolean;
+  /** PHILO-13-11 (C1, slice two) — when the window wears a Dock chip:
+   * "always" (default), or "iconified" for a window of a screen (the
+   * Chair's four): its chip appears only while it is iconified, so it has a
+   * place to come back from. */
+  dockChip?: "always" | "iconified";
+  /** Escape inside the window closes it (default true). The Chair's windows
+   * hold typing wells; there Close is the gadget, ⌘W or Window ▸ Close. */
+  escapeCloses?: boolean;
   open: boolean;
   onClose: () => void;
   /** Heavy content may unmount while minimized (default: stays mounted). */
@@ -556,6 +575,9 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     defaultH,
     fitContent,
     origin,
+    tiled,
+    dockChip: chipMode = "always",
+    escapeCloses = true,
     open,
     onClose,
     unmountOnMinimize,
@@ -567,15 +589,9 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const maximized = useDesk((s) => s.panelMax.includes(id));
   // HS-97-04 — the front window is the last id in the stacking order
   // that is open (announced) and not minimized; it alone wears depth.
-  const isFront = useDesk((s) => {
-    for (let i = s.panelOrder.length - 1; i >= 0; i--) {
-      const oid = s.panelOrder[i];
-      if (s.panelMin.includes(oid)) continue;
-      if (!windowRegistry.has(oid)) continue;
-      return oid === id;
-    }
-    return false;
-  });
+  // PHILO-13-11 (C1, R4): derived by the ONE hook that subscribes to the
+  // order AND the registry, so exactly one frame is front (blue).
+  const isFront = useFrontWindowId() === id;
   const compact = useCompactViewport();
   const reducedMotion = useReducedMotion();
   const win = useDeskWindow(id, {
@@ -585,10 +601,12 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     defaultH,
     fitContent,
     origin,
+    tiled,
     open: open && !minimized,
   });
   const glyph = glyphProp ?? (typeof icon === "string" ? icon : "▢");
   const name = label ?? (typeof title === "string" ? title : id);
+  const dock = chipMode === "always" || minimized;
 
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -697,10 +715,10 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
 
   useEffect(() => {
     if (!open) return;
-    announceWindow(id, name, glyph, () => requestClose());
+    announceWindow(id, name, glyph, () => requestClose(), dock);
     return () => retractWindow(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, id, name, glyph]);
+  }, [open, id, name, glyph, dock]);
 
   // HS-96-05 — window focus management (the ui-styling a11y pattern,
   // WITHOUT a modal trap: windows coexest is the law). Opening moves
@@ -773,6 +791,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             setHeadMenu(null);
             return;
           }
+          if (!escapeCloses) return;
           requestClose();
         }
       }}
@@ -820,35 +839,21 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           setHeadMenu({ x: e.clientX, y: e.clientY });
         }}
       >
-        <span className="desk-traffic">
+        {/* PHILO-13-11 (C1) — the Workbench gadget set: close flush left;
+            iconify and zoom flush right (393: close only; a window fills
+            the work area there). Depth (to back) is withheld until story
+            12 (C2) builds send-to-back: a gadget that does nothing is not
+            drawn (UX-CANON). TODO(PHILO-13-12): the depth gadget. */}
+        <span className="desk-gadgets desk-gadgets-left">
           <Button
             variant="chrome"
-            className="desk-light desk-light-close"
+            className="desk-gadget desk-gadget-close"
             aria-label={`Close ${name}`}
+            title={`Close ${name}`}
             onClick={requestClose}
           >
-            <VerbGlyph kind="light-close" />
+            <GadgetGlyph kind="close" />
           </Button>
-          <Button
-            variant="chrome"
-            className="desk-light desk-light-min"
-            aria-label={`Minimize ${name}`}
-            onClick={requestMinimize}
-          >
-            <VerbGlyph kind="light-min" />
-          </Button>
-          {!compact ? (
-            <Button
-              variant="chrome"
-              className="desk-light desk-light-max"
-              aria-label={maximized ? `Restore ${name}` : `Maximize ${name}`}
-              onClick={() => useDesk.getState().toggleMaximizePanel(id)}
-            >
-              <VerbGlyph kind={maximized ? "light-restore" : "light-max"} />
-            </Button>
-          ) : (
-            <span aria-hidden="true" />
-          )}
         </span>
         {leading}
         {icon}
@@ -857,6 +862,29 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         <span className="desk-pullout-title desk-window-title">{title}</span>
         {wings}
         {actions ? <span className="desk-window-actions">{actions}</span> : null}
+        {!compact ? (
+          <span className="desk-gadgets desk-gadgets-right">
+            <Button
+              variant="chrome"
+              className="desk-gadget desk-gadget-iconify"
+              aria-label={`Iconify ${name}`}
+              title={`Iconify ${name}`}
+              onClick={requestMinimize}
+            >
+              <GadgetGlyph kind="iconify" />
+            </Button>
+            <Button
+              variant="chrome"
+              className="desk-gadget desk-gadget-zoom"
+              aria-label={`Zoom ${name}`}
+              title={`Zoom ${name}`}
+              aria-pressed={maximized}
+              onClick={() => useDesk.getState().toggleMaximizePanel(id)}
+            >
+              <GadgetGlyph kind="zoom" />
+            </Button>
+          </span>
+        ) : null}
       </header>
       {headMenu ? (
         <WorkMenu

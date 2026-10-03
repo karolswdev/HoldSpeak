@@ -29,6 +29,7 @@ from pathlib import Path
 import pytest
 
 from .glass_infra import (
+    FOLDED_WORD_JS,
     _api,
     _assert_clean,
     _boot,
@@ -39,6 +40,7 @@ from .glass_infra import (
 from .test_hs201_one_thing_glass import _quiet_concierge
 from .test_hs202_05_button_hit_ownership import OWNERSHIP_JS
 from tests._evidence import evidence_dir
+from .chair_windows import open_chair_window
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(600, method="thread")]
 
@@ -157,7 +159,7 @@ _FAINT_JS = "getComputedStyle(document.documentElement).getPropertyValue('--text
 
 # The M7/M8 reader. Kept deliberately close to the census's own code so a
 # number here means the same thing a number in census.json means.
-_MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + """
+_MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + FOLDED_WORD_JS + """
   const parse = (s) => {
     const m = /rgba?\\(([^)]+)\\)/.exec(s || "");
     if (!m) return null;
@@ -211,8 +213,16 @@ _MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + """
            s.display !== 'none' && Number(s.opacity) > 0;
   };
 
+  // PHILO-13-11 (Astra counsel #730): a zero-size word has no box of its
+  // own, so `visible` alone never read it; it is a leaf when its parent is
+  // visible and it is not hidden (it then meets foldedWord or the floor).
+  const zeroWord = (el) => {
+    const s = getComputedStyle(el);
+    return parseFloat(s.fontSize) === 0 && s.display !== 'none' && s.visibility !== 'hidden'
+      && el.parentElement && visible(el.parentElement);
+  };
   const leaves = [...document.querySelectorAll('body *')]
-    .filter((el) => ownText(el) && visible(el));
+    .filter((el) => ownText(el) && (visible(el) || zeroWord(el)));
 
   // A nontext glyph is exempt from the floor, and only when a readable
   // word or an accessible name says the same thing. A word or a number
@@ -244,6 +254,10 @@ _MEASURE = """(faintHex) => {""" + OWNERSHIP_JS + """
     const text = ownText(el);
     const size = parseFloat(cs.fontSize);
 
+    // PHILO-13-11 (C1, §4 393): a word folded into one of the screen bar's
+    // picture controls (glass_infra.FOLDED_WORD_JS, narrowed after Astra's
+    // counsel on #730). Any other text under 12 px still fails.
+    if (foldedWord(el, text)) continue;
     if (size < 12) {
       const glyph = GLYPH.test(text);
       const alt = glyph ? named(el) : null;
@@ -504,7 +518,7 @@ def _screens(page, base: str):
     face), so `/profiles` would measure a screen the owner cannot reach.
     """
 
-    def desk():
+    def desk(capture: bool = False):
         # localStorage is only readable once the origin is loaded, so the
         # clear always follows a navigation, never precedes the first one.
         page.goto(base + "/?token=" + TOKEN, wait_until="load")
@@ -512,11 +526,26 @@ def _screens(page, base: str):
         page.goto(base + "/?token=" + TOKEN, wait_until="load")
         _normal_chair(page)
         page.get_by_test_id("arrival-display").wait_for(state="visible", timeout=20_000)
+        # PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a
+        # time; the capture bar is the Capture window, on demand from the
+        # Speak AppIcon. A walk that needs it opens it there.
+        if width <= 720 and not capture:
+            _settle(page)
+            return
+        if width <= 720:
+            open_chair_window(page, "Capture")
         page.get_by_test_id("arrival-capture-bar").wait_for(state="visible", timeout=20_000)
         _settle(page)
 
+    width = page.viewport_size["width"]
     desk()
     yield "arrival", page.get_by_test_id("arrival-display")
+    if width <= 720:
+        # The same screen, window by window: The week and Capture are
+        # measured under the same name (the ledger keys stay "arrival"), so
+        # the meetings and the capture controls are still read at 393.
+        yield "arrival", open_chair_window(page, "The week")
+        yield "arrival", open_chair_window(page, "Capture")
 
     _stage(page, base, "review-meetings")
     page.locator(".meetings-head-verbs").wait_for(state="visible", timeout=20_000)
@@ -530,7 +559,7 @@ def _screens(page, base: str):
     _settle(page)
     yield "meetings-record", page.locator(".meetings-detail-head")
 
-    desk()
+    desk(capture=True)
     thought = page.get_by_test_id("arrival-develop-thought")
     thought.wait_for(state="visible", timeout=20_000)
     thought.click()

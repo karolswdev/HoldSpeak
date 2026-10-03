@@ -18,8 +18,6 @@ src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-1
 # HS-129-08 — InlineEditor: note editing in pullout (byte-identical to main through 148-149)
 src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
 
-# HS-129-06 — containerQueryLaw: viewport-width media exceptions (byte-identical to main through 148-149)
-src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
 
 # chat: turn wire egress placement (byte-identical to main through 148-149)
 

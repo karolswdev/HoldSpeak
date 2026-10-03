@@ -116,8 +116,20 @@ def test_wings_inside_head(
             title_box = title.bounding_box()
             window_box = window.first.bounding_box()
 
+            # PHILO-13-11 (C1, owner-ratified 2026-10-02): at 393 the head is
+            # ONE 44 px row (close + wings); the window's name moves to the
+            # SCREEN title bar, which names the front window. The long name
+            # is fenced there (below) instead of in the head.
+            phone = width < 720
+            screen_name = page.locator("[data-testid=desk-screen-title] .desk-screen-name")
+            name_el = screen_name if phone else title
+
             assert head_box is not None, "head bounding box is null"
-            assert title_box is not None, "title bounding box is null"
+            if phone:
+                assert title_box is None, "the head repeats the title at 393 (the screen bar names the window)"
+                assert screen_name.bounding_box() is not None, "the screen title bar does not name the window"
+            else:
+                assert title_box is not None, "title bounding box is null"
             assert window_box is not None, "window bounding box is null"
 
             # At 393, wings may not be visible (compact mode may hide them).
@@ -156,8 +168,10 @@ def test_wings_inside_head(
             # Truncation is a secondary signal that the name is long
             # enough to matter -- assert it only at 393 where the head
             # is narrow enough to force it.
-            title_scroll = title.evaluate("el => el.scrollWidth")
-            title_client = title.evaluate("el => el.clientWidth")
+            if phone:
+                assert screen_name.text_content().strip() == LONG_NAME, screen_name.text_content()
+            title_scroll = name_el.evaluate("el => el.scrollWidth")
+            title_client = name_el.evaluate("el => el.clientWidth")
             if width < 560:
                 assert title_scroll > title_client, (
                     f"Title not truncated at {width}: scrollWidth={title_scroll}, "

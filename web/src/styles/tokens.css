@@ -98,6 +98,7 @@
   --accent-ink: #8a5a3d; /* HS-202-05: the ember fill under TEXT (filled Button, the Talk key). --accent stays the signal colour for rails, glows and borders; no light foreground reaches 4.5:1 on it. */
   --accent-ink-hover: #936041; /* HS-202-05: lighter than --accent-ink and still 4.74:1 with --text-on-accent */
   --accent-ink-press: #834f32; /* HS-202-05: the settle, darker than --accent-ink; 6.04:1 with --text-on-accent */
+  --accent-text: #bc8058; /* PHILO-13-11 (C1, R5): ember TEXT on the dark well (5.43:1 on --surface-1); --accent text reads 4.26:1. Filled verbs stay on --accent-ink. */
   --accent-tint: rgba(168, 110, 74, 0.12);
   --accent-glow: rgba(168, 110, 74, 0.28);
   --accent-gradient: linear-gradient( 135deg, #da9868 0%, #a86e4a 50%, #834f32 100% );
@@ -315,7 +316,6 @@
   --ease-expo: cubic-bezier(0.87, 0, 0.13, 1); /* HS-99: the emphatic easing for large moves */
   --ease-back: cubic-bezier(0.68, -0.4, 0.32, 1.4); /* HS-99: the playful overshoot (small elements only) */
   --desk-glass-edge: inset 0 0 0 1px var(--border); /* HS-110-01: solid border replaces the frosted-glass rim */
-  --gadget-close-fill: #3a1c1c; /* HS-110-01: close gadget hover on front window — dim red, not traffic light */
   --gadget-fill: var(--surface-2); /* HS-110-01: gadget rest fill */
   --gadget-fill-hover: var(--surface-3); /* HS-110-01: gadget hover fill */
   --shade-1: rgba(0, 0, 0, 0.3); /* the inner dark hairline / shade wash (glass-edge family) */
@@ -333,6 +333,26 @@
   --desk-aerogel-edge: var(--border); /* HS-110-01: aerogel border — solid 1px, not a soft wash */
   --desk-aerogel-blur: none; /* HS-110-01: no backdrop-filter — opaque receipt */
   --desk-aerogel-shadow: none; /* HS-110-01: no float shadow — bevel-depth only */
+  --wb-steel: #9ea4b0; /* PHILO-13-11 (C1) Workbench Steel: pen 0: the frame plate, bars, gadgets */
+  --wb-steel-2: #b3b8c2; /* PHILO-13-11 (C1) Workbench Steel: the frame plate under the pointer */
+  --wb-ink: #0b0c10; /* PHILO-13-11 (C1) Workbench Steel: pen 1: lines and words on the frame (7.81:1 on steel, 5.40:1 on blue, 17.12:1 on paper) */
+  --wb-paper: #eef0f3; /* PHILO-13-11 (C1) Workbench Steel: pen 2: the screen title bar, the menus, the state tags */
+  --wb-blue: #6688bb; /* PHILO-13-11 (C1) Workbench Steel: pen 3: the ONE front window, its frame and its title bar (Workbench 2.0 blue) */
+  --wb-hi: rgba(255, 255, 255, 0.72); /* PHILO-13-11 (C1) Workbench Steel: the shine: top and left edges of a plate */
+  --wb-lo: rgba(0, 0, 0, 0.5); /* PHILO-13-11 (C1) Workbench Steel: the shade: bottom and right edges of a plate */
+  --wb-backdrop: #3c4454; /* PHILO-13-11 (C1) Workbench Steel: the Chair screen */
+  --wb-dither: #363e4d; /* PHILO-13-11 (C1) Workbench Steel: the Chair screen pattern, a 4 px checker (WBPattern) */
+  --wb-rec: #b3261e; /* PHILO-13-11 (C1) Workbench Steel: REC on paper (5.73:1) */
+  --wb-hover: rgba(255, 255, 255, 0.22); /* PHILO-13-11 (C1) Workbench Steel: a gadget under the pointer */
+  --wb-press: rgba(0, 0, 0, 0.12); /* PHILO-13-11 (C1) Workbench Steel: a pressed gadget */
+  --wb-frame: 4px; /* PHILO-13-11 (C1) Workbench Steel: the window border */
+  --wb-bar-h: 26px; /* PHILO-13-11 (C1) Workbench Steel: the window title bar (393: 44px, window-chrome.css) */
+  --wb-screen-h: 28px; /* PHILO-13-11 (C1) Workbench Steel: the screen title bar (393: 44px, window-chrome.css) */
+  --wb-gadget-w: 26px; /* PHILO-13-11 (C1) Workbench Steel: one window gadget (393: 44px, window-chrome.css) */
+  --wb-raised: inset 1px 1px 0 var(--wb-hi), inset -1px -1px 0 var(--wb-lo); /* PHILO-13-11 (C1) Workbench Steel: a raised plate */
+  --wb-sunken: inset 1px 1px 0 var(--wb-lo), inset -1px -1px 0 var(--wb-hi); /* PHILO-13-11 (C1) Workbench Steel: a pressed plate, an open wing */
+  --wb-drop: 4px 4px 0 rgba(0, 0, 0, 0.32); /* PHILO-13-11 (C1) Workbench Steel: window and menu drop: a hard offset, no blur */
+  --wb-stipple: repeating-linear-gradient(180deg, transparent 0 3px, rgba(0, 0, 0, 0.16) 3px 4px); /* PHILO-13-11 (C1) Workbench Steel: the drag bar: 1 px lines every 4 px */
 }
 
 @media (prefers-reduced-motion: reduce) {

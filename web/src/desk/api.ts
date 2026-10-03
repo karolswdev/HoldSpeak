@@ -501,6 +501,7 @@ export const fromWireMeeting = (m: unknown): Meeting | null => {
         : intelStatusObject && typeof intelStatusObject.state === "string"
           ? intelStatusObject.state
           : null,
+    hasSummary: wireRaw(m, "has_summary") === true,
     intelSummary: intel && typeof intel.summary === "string" ? intel.summary : null,
     intelTopics: intel && Array.isArray(intel.topics)
       ? intel.topics.filter((topic): topic is string => typeof topic === "string")

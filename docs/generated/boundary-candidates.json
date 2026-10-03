@@ -6733,7 +6733,7 @@
     },
     {
       "path": "web/src/desk/api.ts",
-      "line": 1184,
+      "line": 1185,
       "kinds": [
         "http_client"
       ],
@@ -6823,7 +6823,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 933,
+      "line": 925,
       "kinds": [
         "http_client"
       ],
@@ -6833,7 +6833,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1084,
+      "line": 1076,
       "kinds": [
         "http_client"
       ],
@@ -6843,7 +6843,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1597,
+      "line": 1610,
       "kinds": [
         "http_client"
       ],
@@ -6853,7 +6853,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1881,
+      "line": 1894,
       "kinds": [
         "http_client"
       ],
@@ -6863,7 +6863,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1935,
+      "line": 1948,
       "kinds": [
         "http_client"
       ],
@@ -6873,7 +6873,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1988,
+      "line": 2001,
       "kinds": [
         "http_client"
       ],
@@ -7763,7 +7763,7 @@
     },
     {
       "path": "web/src/desk/verbRegistry.ts",
-      "line": 48,
+      "line": 54,
       "kinds": [
         "http_client"
       ],
@@ -8143,7 +8143,7 @@
     },
     {
       "path": "web/src/lib/primitives.ts",
-      "line": 534,
+      "line": 538,
       "kinds": [
         "http_client"
       ],
@@ -8873,7 +8873,7 @@
     },
     {
       "path": "web/src/pages/cores/history/CatalogRail.tsx",
-      "line": 258,
+      "line": 267,
       "kinds": [
         "http_client"
       ],

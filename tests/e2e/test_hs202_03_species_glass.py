@@ -386,10 +386,56 @@ class TestSharedControlsAreSpecies:
             )
             page.reload(wait_until="load")
             _normal_chair(page)
-            tabs = page.locator(".desk-wings-tabs [role=tab]")
-            tabs.first.wait_for(timeout=15_000)
-            _settle(page)
-            if tabs.count() >= 2:
+            # PHILO-13-11 (C1, §3a; owner-ratified 2026-10-02): at 393 a wing
+            # strip that does not fit the head's one 44 px row is ONE strip
+            # menu Button (the current face + ▾). The species, the 44 px
+            # target and the keyboard grammar are fenced on that Button and
+            # its menu; the dock checks with a window open stay as they were.
+            if width <= 720:
+                strip = page.locator(".desk-wings .surface-strip-menu")
+                strip.wait_for(timeout=15_000)
+                _settle(page)
+                assert strip.count() == 1, "the wings did not fold into ONE strip menu at 393"
+                _library_species(page, ".desk-wings button", subject="the wing strip menu", chrome_only=True)
+                _strip_targets(page, ".desk-wings button", subject="the wing strip menu")
+                reset = page.locator(".desk-dock-reset")
+                assert reset.count() >= 2, (
+                    "the dock drew no overview/reset keys with a window "
+                    "open: those targets were NOT ASSESSED"
+                )
+                _strip_targets(page, ".desk-dock button", subject="the dock, with a window open")
+                _shot(page, f"wings-{tag}.png")
+                before = strip.text_content().strip()
+                ring = _tab_into(page, ".desk-wings")
+                assert ring["outlineWidth"] > 0, f"the strip menu has no focus ring: {ring}"
+                page.keyboard.press("Enter")
+                page.locator(".desk-menu-list").first.wait_for(timeout=5_000)
+                checked = page.locator(".desk-menu-list [aria-checked=true]").all_inner_texts()
+                assert len(checked) == 1, f"the strip menu must check ONE current face: {checked}"
+                # the CHOICES own the target, not only the trigger (Astra counsel
+                # on #730): every row of the open menu, checkable rows included
+                choices = page.locator(".desk-menu-list [role^=menuitem]")
+                assert choices.count() >= 5, f"the strip menu drew {choices.count()} choices"
+                assert page.locator(".desk-menu-list [role=menuitemcheckbox]").count() >= 4
+                _strip_targets(page, ".desk-menu-list [role^=menuitem]", subject="the strip menu's choices")
+                # a keyboard open puts focus on a row (DeskMenu autoFocus)
+                page.wait_for_function(
+                    "() => Boolean(document.activeElement?.closest('.desk-menu-list'))",
+                    timeout=5_000,
+                )
+                page.keyboard.press("ArrowDown")
+                page.keyboard.press("Enter")
+                page.wait_for_timeout(400)
+                after = page.locator(".desk-wings .surface-strip-menu").text_content().strip()
+                assert after and after != before, f"the keyboard did not walk the faces: {before} -> {after}"
+                tabs = page.locator(".desk-wings-tabs [role=tab]")
+            else:
+                tabs = page.locator(".desk-wings-tabs [role=tab]")
+                tabs.first.wait_for(timeout=15_000)
+                _settle(page)
+            if width <= 720:
+                pass
+            elif tabs.count() >= 2:
                 _library_species(
                     page, ".desk-wings button", subject="the wing bar",
                     chrome_only=True,
@@ -541,8 +587,12 @@ class TestSharedControlsAreSpecies:
 
             # The rail is a toolbar of real buttons: each one focuses and
             # draws a ring (the raw markup did too; nothing moved).
+            # PHILO-13-11 (slice two): the Chair's four windows carry close
+            # gadgets too and come first in the DOM; the walk starts at the
+            # editor window's own close gadget, as it always meant to.
             ring = _tab_into(
-                page, ".desk-editor-toolbar", start=".desk-light-close", limit=20,
+                page, ".desk-editor-toolbar",
+                start=".desk-window-shell:has(.desk-editor-toolbar) .desk-gadget-close", limit=20,
             )
             assert ring["outlineWidth"] > 0, f"no focus ring on the rail: {ring}"
             assert ring["inRail"], ring

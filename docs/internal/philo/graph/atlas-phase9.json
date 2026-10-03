@@ -2191,7 +2191,7 @@
         {
           "path": "web/src/desk/shell.ts",
           "symbol": "export function openProjectRoom",
-          "line": 110,
+          "line": 127,
           "claim": "the one key that opens a project's Room"
         }
       ],

@@ -57,9 +57,17 @@ describe("the dock lays out for the phone (HS-202-02)", () => {
   const block = phoneBlock(dockCss);
   const dock = rule(block, ".desk-next .desk-dock {");
 
-  it("wraps inside the viewport instead of running past its edge", () => {
-    expect(dock).toMatch(/flex-wrap:\s*wrap/);
-    expect(dock).not.toMatch(/overflow-x:\s*auto/);
+  // PHILO-13-11 (C1, R2; owner-ratified 2026-10-02): the phone shelf is ONE
+  // 56 px row so a window keeps ≥ 700 px of content; a full shelf scrolls
+  // INSIDE itself (the Dock is the one strip allowed to). It still never
+  // runs past the viewport's edge: pinned to both sides, no max width.
+  it("stays inside the viewport: one 56 px row that scrolls inside itself", () => {
+    expect(dock).toMatch(/left:\s*0/);
+    expect(dock).toMatch(/right:\s*0/);
+    expect(dock).toMatch(/max-width:\s*none/);
+    expect(dock).toMatch(/flex-wrap:\s*nowrap/);
+    expect(dock).toMatch(/height:\s*calc\(56px/);
+    expect(dock).toMatch(/overflow-x:\s*auto/);
   });
 
   it("keeps the shell layer, so a sheet no longer buries every button", () => {

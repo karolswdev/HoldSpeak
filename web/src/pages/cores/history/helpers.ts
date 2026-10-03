@@ -99,6 +99,15 @@ export function stateToken(row: Record<string, unknown>): StateToken {
     import_failed: { label: "IMPORT FAILED", tone: "danger" },
   };
   if (row.status === "failed") return { label: "FAILED", tone: "danger" };
+  // PHILO-13-04 A3-W (coordinator ruling): an ACTIVE run is the live fact,
+  // so RUNNING, QUEUED and FAILED (with its Retry) show first.
+  if (["running", "queued", "pending", "error", "failed"].includes(state)) {
+    return known[state];
+  }
+  // Then the list row's `has_summary` (H-A3, #729): the STORED fact, read
+  // from the persisted summary, not the config switch or a quiet run status.
+  // The rail said `OFF` beside a stored summary (meetings-stored-1440.png).
+  if (row.has_summary === true) return { axis: "SUMMARY", label: "STORED" };
   // HS-172: complete intel → RAN (success).  HS-200-12: the bound executor
   // writes `ready` when a real run finishes (db/intel.py, "Meeting
   // intelligence ready."); `complete` is the seeded/legacy word.  Both RAN.
@@ -301,6 +310,11 @@ export function meetingRowState(row: Record<string, unknown>): MeetingRowState {
   // FAILED
   if (token.label === "FAILED" || token.tone === "danger") {
     return { label: token.label, tone: "danger", verb: "Retry", verbVariant: "primary" };
+  }
+  // PHILO-13-04 A3-W: a stored summary. The rail drops the axis word on
+  // every other state; `STORED` alone does not say what is stored.
+  if (token.label === "STORED") {
+    return { label: "SUMMARY STORED", verb: "Open", verbVariant: "ghost" };
   }
   // RAN (complete intel)
   if (token.label === "RAN") {

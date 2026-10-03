@@ -278,6 +278,11 @@
         "doc": "HS-202-05: the settle, darker than --accent-ink; 6.04:1 with --text-on-accent"
       },
       {
+        "name": "--accent-text",
+        "value": "{primitive.color.orange.400}",
+        "doc": "PHILO-13-11 (C1, R5): ember TEXT on the dark well (5.43:1 on --surface-1); --accent text reads 4.26:1. Filled verbs stay on --accent-ink."
+      },
+      {
         "name": "--accent-tint",
         "value": "rgba(168, 110, 74, 0.12)"
       },
@@ -1208,11 +1213,6 @@
         "doc": "HS-110-01: solid border replaces the frosted-glass rim"
       },
       {
-        "name": "--gadget-close-fill",
-        "value": "#3a1c1c",
-        "doc": "HS-110-01: close gadget hover on front window — dim red, not traffic light"
-      },
-      {
         "name": "--gadget-fill",
         "value": "var(--surface-2)",
         "doc": "HS-110-01: gadget rest fill"
@@ -1296,6 +1296,106 @@
         "name": "--desk-aerogel-shadow",
         "value": "none",
         "doc": "HS-110-01: no float shadow — bevel-depth only"
+      },
+      {
+        "name": "--wb-steel",
+        "value": "#9ea4b0",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: pen 0: the frame plate, bars, gadgets"
+      },
+      {
+        "name": "--wb-steel-2",
+        "value": "#b3b8c2",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: the frame plate under the pointer"
+      },
+      {
+        "name": "--wb-ink",
+        "value": "#0b0c10",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: pen 1: lines and words on the frame (7.81:1 on steel, 5.40:1 on blue, 17.12:1 on paper)"
+      },
+      {
+        "name": "--wb-paper",
+        "value": "#eef0f3",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: pen 2: the screen title bar, the menus, the state tags"
+      },
+      {
+        "name": "--wb-blue",
+        "value": "#6688bb",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: pen 3: the ONE front window, its frame and its title bar (Workbench 2.0 blue)"
+      },
+      {
+        "name": "--wb-hi",
+        "value": "rgba(255, 255, 255, 0.72)",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: the shine: top and left edges of a plate"
+      },
+      {
+        "name": "--wb-lo",
+        "value": "rgba(0, 0, 0, 0.5)",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: the shade: bottom and right edges of a plate"
+      },
+      {
+        "name": "--wb-backdrop",
+        "value": "#3c4454",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: the Chair screen"
+      },
+      {
+        "name": "--wb-dither",
+        "value": "#363e4d",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: the Chair screen pattern, a 4 px checker (WBPattern)"
+      },
+      {
+        "name": "--wb-rec",
+        "value": "#b3261e",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: REC on paper (5.73:1)"
+      },
+      {
+        "name": "--wb-hover",
+        "value": "rgba(255, 255, 255, 0.22)",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: a gadget under the pointer"
+      },
+      {
+        "name": "--wb-press",
+        "value": "rgba(0, 0, 0, 0.12)",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: a pressed gadget"
+      },
+      {
+        "name": "--wb-frame",
+        "value": "4px",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: the window border"
+      },
+      {
+        "name": "--wb-bar-h",
+        "value": "26px",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: the window title bar (393: 44px, window-chrome.css)"
+      },
+      {
+        "name": "--wb-screen-h",
+        "value": "28px",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: the screen title bar (393: 44px, window-chrome.css)"
+      },
+      {
+        "name": "--wb-gadget-w",
+        "value": "26px",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: one window gadget (393: 44px, window-chrome.css)"
+      },
+      {
+        "name": "--wb-raised",
+        "value": "inset 1px 1px 0 var(--wb-hi), inset -1px -1px 0 var(--wb-lo)",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: a raised plate"
+      },
+      {
+        "name": "--wb-sunken",
+        "value": "inset 1px 1px 0 var(--wb-lo), inset -1px -1px 0 var(--wb-hi)",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: a pressed plate, an open wing"
+      },
+      {
+        "name": "--wb-drop",
+        "value": "4px 4px 0 rgba(0, 0, 0, 0.32)",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: window and menu drop: a hard offset, no blur"
+      },
+      {
+        "name": "--wb-stipple",
+        "value": "repeating-linear-gradient(180deg, transparent 0 3px, rgba(0, 0, 0, 0.16) 3px 4px)",
+        "doc": "PHILO-13-11 (C1) Workbench Steel: the drag bar: 1 px lines every 4 px"
       }
     ]
   },

@@ -44,3 +44,21 @@
 .surface-filter-token.btn[data-filter-active]:hover:not(:disabled) {
   background: color-mix(in srgb, var(--accent) 30%, var(--surface-2));
 }
+
+/* PHILO-13-11 (C1, §3a) — the folded strip (stripMenu.tsx): at the phone
+   width a strip that does not fit its row is ONE menu Button, 44 px tall,
+   showing the current choice and ▾. Its box takes the row's free width, so
+   the strip unfolds again when the row can hold it. */
+.surface-filter-tokens.is-folded {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.surface-filter-tokens .surface-strip-menu.btn {
+  min-height: 44px;
+  padding: 0 14px;
+  font: 700 12px var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}

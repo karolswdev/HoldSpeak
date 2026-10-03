@@ -242,34 +242,45 @@
        is published by Dock.tsx from the dock's own measured height, so a
        dock that wraps to two rows still keeps every door reachable. */
     bottom: var(--desk-dock-h, 0px);
-    top: auto;
+    /* PHILO-13-11 (C1, R2): the phone is one window at a time — the
+       window fills the work area from the screen bar to the Dock. */
+    top: var(--wb-screen-h);
     width: auto;
+    height: auto;
     /* HS-98-02: a desktop min-width (420px surface floor) must never
        push a sheet past a 393px phone — the sheet owns the edge. */
     min-width: 0;
-    max-height: min(78vh, calc(100dvh - var(--desk-dock-h, 0px) - 48px));
-    border-radius: var(--radius-sm) var(--desk-sheet-top-radius) 0 0;
+    max-height: none;
+    border-radius: 0;
     /* HS-129-02 — the sheet is still a window: its body owns scroll so
        the fixed head and foot stay visible above the material. */
     overflow: hidden;
   }
   /* HS-202-02 — the dock is the phone's ONLY persistent door, and the
-     Record orb rides it. It now lays out FOR the phone: it wraps inside
-     the viewport instead of running 410px past its right edge, and it
-     keeps the shell layer so a bottom sheet no longer buries all eleven
-     buttons (03-interaction-walk.md finding 1). */
+     Record orb rides it. It lays out FOR the phone: pinned to both edges,
+     it never runs past the viewport (it ran 410px past its right edge),
+     and it keeps the shell layer so a sheet never buries its buttons
+     (03-interaction-walk.md finding 1).
+     PHILO-13-11 (C1, R2): it no longer wraps. The shelf is ONE 56 px row so
+     the window above keeps ≥ 700 px of content; a full shelf scrolls
+     inside itself (the Dock is the one strip allowed to; its More gadget
+     is C3/C7). */
   .desk-next .desk-dock {
     left: 0;
     right: 0;
     bottom: 0;
     transform: none;
     max-width: none;
-    flex-wrap: wrap;
-    justify-content: center;
-    row-gap: 4px;
-    overflow-x: visible;
-    padding: 4px 8px calc(4px + env(safe-area-inset-bottom, 0px));
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
     z-index: var(--desk-z-dock);
+  }
+  .desk-next .desk-dock > * {
+    flex-shrink: 0;
   }
   /* HS-202-02: the Chair keeps its own hands clear of the dock. The
      phone dock wraps, so it is taller than the 52px the desktop work

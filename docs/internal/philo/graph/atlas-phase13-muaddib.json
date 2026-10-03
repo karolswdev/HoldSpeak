@@ -87,6 +87,38 @@
         },
         {
           "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "at_width": 393,
+          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "at_width": 393,
+          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
+          "at_width": 393,
+          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
           "selector": "[data-testid=arrival-brief-generate]",
@@ -103,7 +135,7 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": ".desk-window[aria-label='Intelligence'] .desk-light-close",
+          "selector": ".desk-window[aria-label='Intelligence'] .desk-gadget-close",
           "why": "the Intelligence window is open over the Chair"
         }
       ],
@@ -111,7 +143,7 @@
         "kind": "ui",
         "action": "click",
         "adapter": "ui-pointer",
-        "selector": ".desk-window[aria-label='Intelligence'] .desk-light-close",
+        "selector": ".desk-window[aria-label='Intelligence'] .desk-gadget-close",
         "why": "close the window by its own Close gadget"
       },
       "expected": {
@@ -182,6 +214,22 @@
           "action": "reload",
           "adapter": "ui-navigation",
           "why": "a fresh Desk read after the gate"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-dock [aria-label^='Speak']",
+          "at_width": 393,
+          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Capture the way the owner does (tests/e2e/chair_windows.py)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+          "at_width": 393,
+          "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Capture the way the owner does (tests/e2e/chair_windows.py)"
         },
         {
           "kind": "ui",

@@ -1371,6 +1371,14 @@ def _mints_brief_material(step: dict) -> bool:
             and step.get("path") == "/api/decisions")
 
 
+def _without_chair_doors(steps: list) -> list:
+    """PHILO-13-11 (slice two, R2): the 393-only steps that open a Chair window
+    through its real door (Go ▸ Chair, the Dock's Speak) are the face's
+    navigation, not the chain under test; the chain's own steps keep their order."""
+    return [s for s in steps if not (isinstance(s, dict) and s.get("at_width") == 393
+                                     and str(s.get("why", "")).startswith("PHILO-13-11 (slice two, R2)"))]
+
+
 def test_same_day_generate_again_binds_returned_displayed_and_retained(atlas: dict) -> None:
     """Finding 3: the returned brief must BE the displayed one, and the face the
     trigger acts on must be the brief the store gave back after a reload."""
@@ -1381,7 +1389,7 @@ def test_same_day_generate_again_binds_returned_displayed_and_retained(atlas: di
     assert spec and spec["from"] == "trigger", spec
     assert spec.get("display") == BRIEF_HEADLINE == case["expected"]["observe_at"], spec
 
-    setup = case["setup"]
+    setup = _without_chair_doors(case["setup"])
     first_click = next(i for i, s in enumerate(setup)
                        if s.get("action") == "click" and s.get("selector") == GENERATE)
     reload = next(i for i, s in enumerate(setup) if s.get("action") == "reload")
@@ -1606,7 +1614,8 @@ def test_same_day_same_id_fails_a_different_id_by_machine(atlas: dict) -> None:
     proves the producer returns the RETAINED id (monday_brief_service.py:194-202)."""
     case = _case(atlas, SAME_ID)
     face = _case(atlas, SAME_DAY)
-    assert case["setup"] == face["setup"], "the sibling must run the same chain"
+    assert _without_chair_doors(case["setup"]) == _without_chair_doors(face["setup"]), \
+        "the sibling must run the same chain"
     reload = next(i for i, s in enumerate(case["setup"]) if s.get("action") == "reload")
     captured = [i for i, s in enumerate(case["setup"]) if s.get("capture_as") == "first_brief_id"]
     assert captured and captured[0] > reload, "the id is not the retained one"

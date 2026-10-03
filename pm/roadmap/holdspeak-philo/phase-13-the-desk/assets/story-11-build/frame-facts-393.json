@@ -1,0 +1,84 @@
+{
+  "chair": {
+    "width": 393,
+    "windows": 0,
+    "blue": [],
+    "front": [],
+    "screen": "Chair",
+    "layout": [],
+    "ownership": [],
+    "clipped": [],
+    "ellipsis": [],
+    "sideways": [],
+    "content": null,
+    "small_targets": [],
+    "small_text": [],
+    "low_contrast": []
+  },
+  "meetings": {
+    "width": 393,
+    "windows": 1,
+    "blue": [
+      "Meetings"
+    ],
+    "front": [
+      "Meetings"
+    ],
+    "screen": "Meetings",
+    "layout": [],
+    "ownership": [],
+    "clipped": [],
+    "ellipsis": [],
+    "sideways": [],
+    "content": 704,
+    "small_targets": [],
+    "small_text": [],
+    "low_contrast": []
+  },
+  "strip-menu-open": {
+    "width": 393,
+    "windows": 1,
+    "blue": [
+      "Meetings"
+    ],
+    "front": [
+      "Meetings"
+    ],
+    "screen": "Meetings",
+    "layout": [],
+    "ownership": [],
+    "clipped": [],
+    "ellipsis": [],
+    "sideways": [],
+    "content": 704,
+    "small_targets": [],
+    "small_text": [],
+    "low_contrast": []
+  },
+  "strip-menu-checked": [
+    "Outcomes"
+  ],
+  "strip-menu-check-mark-area": 224,
+  "people": {
+    "width": 393,
+    "windows": 2,
+    "blue": [
+      "People"
+    ],
+    "front": [
+      "People"
+    ],
+    "screen": "People",
+    "layout": [],
+    "ownership": [],
+    "clipped": [],
+    "ellipsis": [],
+    "sideways": [],
+    "content": 704,
+    "small_targets": [],
+    "small_text": [],
+    "low_contrast": []
+  },
+  "errors": [],
+  "failures": {}
+}

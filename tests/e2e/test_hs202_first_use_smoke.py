@@ -28,6 +28,7 @@ from .test_hs201_09_connect_engine_glass import _StubHandler
 from .test_hs201_one_thing_glass import _quiet_concierge
 from .test_hs201_summary_face_glass import _FixtureImportTranscriber, _chip_label
 from tests._evidence import evidence_dir
+from .chair_windows import open_chair_window
 
 TOKEN = "hs202-first-use"
 WAV = REPO / "tests/fixtures/core_path_smoke_16k.wav"
@@ -67,12 +68,20 @@ def _hit(locator, *, fit=True):
     }""", fit)
 
 
-def _desk(page, base):
+def _desk(page, base, *, capture=False):
     """Between jobs only: clear remembered windows, keeping all saved objects."""
     page.evaluate("localStorage.removeItem('hs.desk.workspace.v1')")
     page.goto(base + "/?token=" + TOKEN)
     _normal_chair(page)
     _loaded(page.get_by_test_id("arrival-display"))
+    # PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time,
+    # Needs you first; the capture bar is the Capture window, on demand from
+    # the Speak AppIcon (a job that uses a capture verb asks for it).
+    if page.viewport_size["width"] <= 720:
+        if capture:
+            open_chair_window(page, "Capture")
+        else:
+            return
     _loaded(page.get_by_test_id("arrival-capture-bar"))
 
 
@@ -361,7 +370,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                     page.keyboard.press("Escape")
 
             # Job 3: the named door must lead to a place that keeps a thought.
-            _desk(page, base)
+            _desk(page, base, capture=True)
             thought = page.get_by_test_id("arrival-develop-thought")
             assert _hit(thought)
             thought.click()

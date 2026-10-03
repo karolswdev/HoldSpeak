@@ -30,12 +30,21 @@ import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
+from .chair_windows import open_chair_window
 
 pytest.importorskip("playwright.sync_api", reason="the close glass needs Playwright")
 
 TOKEN = "philo13-05-close"
 SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-05-shots")
 SIZES = {1440: 900, 393: 852}
+
+
+def _on_the_desk(hit: dict[str, Any] | None) -> bool:
+    """The old centre lands on the Desk. PHILO-13-11 (slice two): the Chair
+    screen is now four windows (`chair:*`), so a hit on a Chair window is the
+    Desk under the closed window; any other window is not."""
+    return hit is not None and hit["desk"] and (
+        hit["window"] is None or str(hit["window"]).startswith("chair:"))
 DECISION = "Freeze the old ledger on Nov 5"
 NOTE = "Arch review prep"
 
@@ -124,7 +133,7 @@ class TestCloseMeansGone:
         proof = {"window": win["id"], "centre": [round(cx), round(cy)], "hit": hit, "left_in_dom": left}
         (SHOTS / f"{name}-{width}.txt").write_text(f"{proof}\n")
         assert not left, f"the closed window stays in the DOM: {left}"
-        assert hit is not None and hit["window"] is None and hit["desk"], f"the old centre hits {hit}"
+        assert _on_the_desk(hit), f"the old centre hits {hit}"
         return proof
 
     # ── the fences ───────────────────────────────────────────────────────
@@ -142,17 +151,20 @@ class TestCloseMeansGone:
                 option = page.locator("[id^='desk-palette-option-decision:']").first
                 option.wait_for()
                 self._press(page, option, width)
-                page.locator(f".desk-light-close[aria-label='Close {DECISION}']").wait_for()
+                page.locator(f".desk-gadget-close[aria-label='Close {DECISION}']").wait_for()
                 self._close_and_prove(page, width, DECISION, "palette-decision")
 
                 # 2. the Dock: `intelligence:desk`.
                 self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
-                page.locator(".desk-light-close[aria-label='Close Intelligence']").wait_for()
+                page.locator(".desk-gadget-close[aria-label='Close Intelligence']").wait_for()
                 self._close_and_prove(page, width, "Intelligence", "dock-intelligence")
 
                 # 3. Write a thought: `note:<id>` (newThought.ts) → the Thought window.
+                # PHILO-13-11 (slice two, R2): at 393 Capture opens from the Speak AppIcon.
+                if width <= 720:
+                    open_chair_window(page, "Capture")
                 self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
-                page.locator(".desk-light-close[aria-label='Close Thought']").wait_for()
+                page.locator(".desk-gadget-close[aria-label='Close Thought']").wait_for()
                 self._close_and_prove(page, width, "Thought", "write-a-thought")
 
                 self._press(page, page.get_by_test_id("chair-floor-toggle"), width)
@@ -163,12 +175,12 @@ class TestCloseMeansGone:
                     obj.wait_for(state="attached")
                     obj.focus()
                     page.keyboard.press("Enter")
-                    page.locator(f".desk-light-close[aria-label='Close {NOTE}']").wait_for()
+                    page.locator(f".desk-gadget-close[aria-label='Close {NOTE}']").wait_for()
                     self._close_and_prove(page, width, NOTE, "floor-bare-note")
                 else:
                     # 4. the list mount at 393: a row tap passes `note:<id>` (qualifiedRef).
                     self._press(page, page.locator(f".desk-list-name-cell[aria-label='{NOTE}']"), width)
-                    page.locator(f".desk-light-close[aria-label='Close {NOTE}']").wait_for()
+                    page.locator(f".desk-gadget-close[aria-label='Close {NOTE}']").wait_for()
                     self._close_and_prove(page, width, NOTE, "list-row-note")
                     # 5. a bare id at 393: the row's menu → Open (object.open → openPullout(o.id)).
                     page.locator(f".desk-list-name-cell[aria-label='{DECISION}']").focus()
@@ -176,7 +188,7 @@ class TestCloseMeansGone:
                     item = page.get_by_role("menuitem", name="Open", exact=True)
                     item.wait_for()
                     self._press(page, item, width)
-                    page.locator(f".desk-light-close[aria-label='Close {DECISION}']").wait_for()
+                    page.locator(f".desk-gadget-close[aria-label='Close {DECISION}']").wait_for()
                     self._close_and_prove(page, width, DECISION, "row-menu-bare-decision")
                 assert not errors, errors
             finally:
@@ -195,10 +207,13 @@ class TestCloseMeansGone:
                     status=500, body='{"detail":"injected"}', content_type="application/json"))
                 page.reload(wait_until="load")
                 _normal_chair(page)
+                # PHILO-13-11 (slice two, R2): at 393 the Brief is its own window.
+                if width <= 720:
+                    open_chair_window(page, "Brief")
                 retry = page.get_by_test_id("arrival-brief-retry")
                 retry.wait_for()
                 self._press(page, page.locator(".desk-dock-launch[aria-label^='Intelligence']"), width)
-                page.locator(".desk-light-close[aria-label='Close Intelligence']").wait_for()
+                page.locator(".desk-gadget-close[aria-label='Close Intelligence']").wait_for()
                 page.unroute("**/api/brief/latest*")
                 proof = self._close_and_prove(page, width, "Intelligence", "j1-retry")
                 self._press(page, retry, width)
@@ -272,7 +287,7 @@ class TestCloseMeansGone:
                 assert answers and answers[0]["status"] == 200, answers
                 assert db.meetings.get_meeting(local.id) is None
                 assert not left, f"the closed card stays in the DOM: {left}"
-                assert hit is not None and hit["window"] is None and hit["desk"], f"the old centre hits {hit}"
+                assert _on_the_desk(hit), f"the old centre hits {hit}"
                 assert not errors, errors
             finally:
                 browser.close()

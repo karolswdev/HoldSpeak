@@ -408,6 +408,21 @@ def _row_texts(page: Any, testid: str) -> list[str]:
 # ── legs ─────────────────────────────────────────────────────────────
 
 
+def _rank(page: Any, name: str) -> None:
+    """Pick a ranking class the way the face offers it. PHILO-13-11 (C1 §3a,
+    slice one): at 393 the strip that does not fit folds into ONE menu Button
+    (`RANKED ▾`); the class is chosen from its menu. At 1440 it is the strip."""
+    strip = page.get_by_role("group", name="Ranking")
+    token = strip.get_by_role("button", name=name, exact=True)
+    if token.count():
+        token.click()
+        return
+    strip.get_by_test_id("surface-strip-menu").click()
+    menu = page.locator(".desk-head-menu")
+    menu.wait_for()
+    menu.get_by_role("menuitemcheckbox", name=name, exact=True).click()
+
+
 def _run_one_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
@@ -559,15 +574,14 @@ def _run_three_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
             assert rows.count() == 5
 
             # The strip filters by class, and RANKED restores the key.
-            strip = page.get_by_role("group", name="Ranking")
-            strip.get_by_role("button", name="OVERDUE").click()
+            _rank(page, "OVERDUE")
             _settle(page)
             assert rows.count() == 2, _row_texts(page, "arrival-needs-you-row")
             assert len(_primaries(page)) == 1, _primaries(page)
-            strip.get_by_role("button", name="NOT RUN").click()
+            _rank(page, "NOT RUN")
             _settle(page)
             assert (page.get_by_test_id("arrival-needs-you-none").text_content() or "").strip() == "NOTHING NOT RUN"
-            strip.get_by_role("button", name="RANKED").click()
+            _rank(page, "RANKED")
             _settle(page)
             assert rows.count() == 5
 
@@ -637,22 +651,26 @@ def _run_long_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
             _shot(page, "long-row-sources", width)
 
             # The selected filter token is never the filled primary.
-            page.get_by_role("group", name="Ranking").get_by_role("button", name="OVERDUE").click()
+            _rank(page, "OVERDUE")
             _settle(page)
             assert len(_primaries(page)) == 1, _primaries(page)
 
             if width <= 480:
                 # Counsel P1-8: scrolled to the end, the last section clears the
-                # capture bar.
-                page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)")
+                # capture bar. PHILO-13-11 (slice two, R2): at 393 the capture bar
+                # is its own window (on demand from Speak); the boundary the last
+                # section must clear is the Needs-you window body's lower edge.
+                page.evaluate("""() => { const b = document.querySelector('.chair-window--needs .chair-window-body');
+                    b.scrollTop = b.scrollHeight; }""")
                 page.wait_for_timeout(200)
                 _settle(page)
                 clear = page.evaluate("""() => {
-                    const bar = document.querySelector('.arrival-capture-bar').getBoundingClientRect();
-                    const sections = [...document.querySelectorAll('.chair > [data-testid^="arrival-"]')]
-                        .filter(el => !el.classList.contains('arrival-capture-bar'));
+                    const body = document.querySelector('.chair-window--needs .chair-window-body');
+                    const bar = body.getBoundingClientRect();
+                    const sections = [...body.querySelectorAll(':scope > [data-testid^="arrival-"]')]
+                        .filter(el => el.getBoundingClientRect().height > 0);
                     const last = sections[sections.length - 1].getBoundingClientRect();
-                    return {barTop: bar.top, lastBottom: last.bottom, lastId: sections[sections.length - 1].getAttribute('data-testid')};
+                    return {barTop: bar.bottom, lastBottom: last.bottom, lastId: sections[sections.length - 1].getAttribute('data-testid')};
                 }""")
                 assert clear["lastBottom"] <= clear["barTop"] + 0.5, clear
                 _shot(page, "bar-clear", width)

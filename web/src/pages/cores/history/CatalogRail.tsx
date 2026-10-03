@@ -52,6 +52,13 @@ function leadRunRowId(
   return first ? String(first.id) : null;
 }
 
+/** PHILO-13-04 A3-W — the process states a NEEDS YOU count never covers:
+ *  capture, failure, and an active summary run. */
+const PROCESS_LEADS = new Set([
+  "REC", "INTERRUPTED", "CAPTURE FAILED", "RECOVERABLE",
+  "FAILED", "IMPORT FAILED", "RUNNING", "QUEUED",
+]);
+
 /** Render a list of tokens joined by middle dots (U+00B7).
  *  Dots are sibling flex children for equal spacing on both sides. */
 function TokenLine({ parts }: { parts: ReactNode[] }) {
@@ -95,14 +102,16 @@ function MeetingStreamRow({
   const isRunning = runningId === String(row.id);
   const needsYouCount = Number(row.needs_you_count ?? row.needsYouCount ?? 0);
 
-  // The board: NEEDS YOU N (accent) replaces OFF/SAVED for meetings with outcomes
+  // The board: NEEDS YOU N (accent) for meetings with outcomes.
+  // PHILO-13-04 A3-W (Muad'Dib's ruling on Astra's #730 finding 3): the
+  // process state leads, so a failure is never hidden. Order: capture
+  // states, FAILED (with Retry), RUNNING / QUEUED, then NEEDS YOU, then
+  // SUMMARY STORED, then the rest. A proposed outcome used to draw
+  // "1 NEEDS YOU" over a failed, running or queued summary run.
   const token = stateToken(row);
   let displayLabel = state.label;
   let displayTone = state.tone;
-  if (needsYouCount > 0 && (token.label === "SAVED" || token.label === "RAN")) {
-    displayLabel = countToken(needsYouCount, "NEEDS YOU", "NEED YOU") ?? "";
-    displayTone = "accent";
-  } else if (needsYouCount > 0 && token.label !== "OFF") {
+  if (needsYouCount > 0 && !PROCESS_LEADS.has(token.label)) {
     displayLabel = countToken(needsYouCount, "NEEDS YOU", "NEED YOU") ?? displayLabel;
     displayTone = "accent";
   }

@@ -122,6 +122,24 @@ Presence rules (they are the species, not the caller's business):
 - Not to be confused with `SurfaceWings`: filters are flat tokens, wings are
   the beveled strip, and the two never look alike (canon D).
 
+### The strip menu form (PHILO-13-11, C1 §3a)
+
+Strips of choices — `FilterTokens` and the window wings (`SurfaceWings`) —
+obey one rule: nothing clips, nothing scrolls sideways (HS-200-12).
+
+- At the phone width a strip that does not fit its row becomes ONE library
+  `Button` (`StripMenuButton`, `stripMenu.tsx`): the current choice and ▾
+  (`RANKED ▾`, `OUTCOMES ▾`), 44 px tall. It opens the DeskMenu species
+  (`WorkMenu`) with every choice as a `menuitemcheckbox`, a check on the
+  current one; a window's gear door joins after a separator. A keyboard
+  press opens it with focus on a row.
+- "Does not fit" is MEASURED (`useStripFit`): the strip folds when its
+  content runs past its box or its choices wrap to a second line, and
+  unfolds when the row is wide enough again. Never a fixed count; a strip
+  that fits stays a strip. Where nothing can be measured (jsdom), it stays a
+  strip.
+- The desktop strip never folds.
+
 ## StringGadget.micLabel (HS-200-13) / PadGadget.micLabel (HS-201-12)
 
 The text well's mic is the voice law (canon B: MicButton on every text

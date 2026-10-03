@@ -16,6 +16,8 @@ import {
   type ReactNode,
 } from "react";
 import { Button } from "../../components/signal/Signal";
+import { useCompactViewport } from "../useCompactViewport";
+import { StripMenuButton, useStripFit } from "./stripMenu";
 
 export interface WingSpec {
   id: string;
@@ -81,8 +83,33 @@ export function SurfaceWings({
   // When no wing is active (the door face rules), the first wing keeps
   // the Tab stop so the strip stays reachable.
   const hasActive = wings.some((w) => w.id === active);
+  // PHILO-13-11 (C1, §3a): at the phone width a wing strip that does not
+  // fit the head's one 44 px row is ONE strip menu Button (the current face
+  // + ▾) whose menu carries every face and, after a separator, the gear
+  // door. Measured, never a fixed count; a strip that fits stays a strip.
+  const compact = useCompactViewport();
+  const { ref, fits } = useStripFit<HTMLSpanElement>(
+    compact,
+    wings.map((w) => w.label).join("|") + (door ? `|${door}` : ""),
+  );
+  if (!fits)
+    return (
+      <span ref={ref} className="desk-wings is-folded">
+        <StripMenuButton
+          label="Window faces"
+          choices={wings.map((w) => ({ value: w.id, label: w.label }))}
+          value={active}
+          onChange={onChange}
+          door={door}
+          doorOpen={doorOpen}
+          onDoor={onDoor}
+          variant="chrome"
+          className="desk-wing desk-wings-menu"
+        />
+      </span>
+    );
   return (
-    <span className="desk-wings">
+    <span ref={ref} className="desk-wings">
       {/* The tablist wraps ONLY the tabs — the gear door is a pressed
           gadget, not a tab (aria-required-children). display:contents
           keeps the strip one flex row. */}
