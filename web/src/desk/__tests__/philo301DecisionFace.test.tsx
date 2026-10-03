@@ -16,7 +16,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     apiRequest: vi.fn((url: string, init?: RequestInit) => {
       if (url === "/api/decisions" && init?.method === "POST") {
         const decision = {
-          id: "decision_new1", title: "New decision", status: "proposed",
+          id: "decision_new1", title: "Adopt the one bus", status: "proposed",
           deciders: [], decided_at: null, context_markdown: "", decision_markdown: "",
           alternatives: [], consequences_markdown: "", tags: [],
           created_at: "2026-09-22T00:00:00Z", updated_at: "2026-09-22T00:00:00Z", deleted: false,
@@ -52,7 +52,8 @@ beforeEach(() => {
 describe("PHILO-3-01 the decision face", () => {
   it("New Decision opens the DecisionPullout for the created decision", async () => {
     await act(async () => {
-      await useDesk.getState().createPrimitive("decision");
+      // PHILO-13-08 (B3): a decision is created only once it is named.
+      await useDesk.getState().createPrimitive("decision", { title: "Adopt the one bus" });
     });
     const s = useDesk.getState();
     expect(s.pullouts.map((p) => p.id)).toContain("decision_new1");

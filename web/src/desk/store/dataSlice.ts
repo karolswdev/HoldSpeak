@@ -21,6 +21,7 @@ import { buildLinearGraph } from "../graph";
 import { loadSetup } from "../setup";
 import { registerRepository as registerRepositoryApi } from "../repository";
 import { faceChangeCount, nextFreeZoneName } from "../zoneName";
+import { useNamePrompt } from "../chromeState";
 import type { DeskState, SliceCreator, ZoneRenameError } from "./types";
 import { GHOST_LAYOUT_KEYS } from "./types";
 
@@ -308,13 +309,22 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       get().openNewWorkbenchChooser();
       return;
     }
+    // PHILO-13-08 (B3) — a decision is named BEFORE it is persisted. With no
+    // title from the caller the palette asks it inline; closing the palette
+    // writes nothing, so no `New decision` placeholder is ever born (F9).
+    if (kind === "decision" && !String(overrides.title ?? "").trim()) {
+      useNamePrompt.getState().ask({
+        label: "Decision title",
+        submit: (title) => void get().createPrimitive("decision", { ...overrides, title }),
+      });
+      return;
+    }
     const posts = {
       note: ["/api/notes", "note", { title: "New note", body_markdown: "" }],
       decision: [
         "/api/decisions",
         "decision",
         {
-          title: "New decision",
           status: "proposed",
           context_markdown: "",
           decision_markdown: "",

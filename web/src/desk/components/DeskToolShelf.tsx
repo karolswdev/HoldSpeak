@@ -23,7 +23,7 @@ import {
   contextualIntegrationActions,
 } from "../contextual";
 import { useDesk } from "../store";
-import { usePalette } from "../chromeState";
+import { useNamePrompt, usePalette } from "../chromeState";
 import { StringGadget } from "../surface/gadgets";
 import { allObjects } from "../world";
 import { DESK_TOOLS, KIND_GLYPH, KIND_LABEL } from "../tools";
@@ -203,6 +203,8 @@ export function oneDoorPerName<
 
 export function DeskToolShelf() {
   const open = usePalette((s) => s.open);
+  // PHILO-13-08 (B3): a create that asks its name first (New Decision).
+  const prompt = useNamePrompt((s) => s.prompt);
   const [query, setQuery] = useState("");
   const [sel, setSel] = useState(0);
   const rootRef = useRef<HTMLElement | null>(null);
@@ -277,6 +279,12 @@ export function DeskToolShelf() {
     setQuery("");
     setSel(0);
   }, [open]);
+
+  // PHILO-13-08 (B3): a create that asks its name takes the typing at once
+  // (the row he pressed is gone, so focus would fall to the page).
+  useEffect(() => {
+    if (open && prompt) searchRef.current?.focus();
+  }, [open, prompt]);
 
   // The deck's open state is shared chrome state (the keymap toggles
   // it); an unmounting shelf never leaves it stranded open.
@@ -563,6 +571,14 @@ export function DeskToolShelf() {
     : null;
   const activeId = selected ? `desk-palette-option-${selected.id}` : undefined;
 
+  const submitName = () => {
+    const name = query.trim();
+    if (!prompt || !name) return;
+    const { submit } = prompt;
+    close(); // closing clears the prompt (chromeState)
+    submit(name);
+  };
+
   const runRow = (row: DeckRow) => {
     if (row.ghost) return;
     recordRecent(row.id);
@@ -583,7 +599,8 @@ export function DeskToolShelf() {
     } else if (event.key === "Enter") {
       // Enter ALWAYS runs the selected hit - the top hit by default.
       event.preventDefault();
-      if (selected) runRow(selected);
+      if (prompt) submitName();
+      else if (selected) runRow(selected);
     }
   };
 
@@ -628,14 +645,14 @@ export function DeskToolShelf() {
               onKeyDown={onDeckKeyDown}
             >
               <label className="desk-tool-search">
-                <span className="sr-only">Search tools and Desk items</span>
+                <span className="sr-only">{prompt ? prompt.label : "Search tools and Desk items"}</span>
                 <StringGadget
                   inputRef={searchRef}
-                  label="Search tools and Desk items"
+                  label={prompt ? prompt.label : "Search tools and Desk items"}
                   value={query}
-                  placeholder="Search tools and Desk items"
+                  placeholder={prompt ? prompt.label : "Search tools and Desk items"}
                   onChange={setQuery}
-                  inputProps={{
+                  inputProps={prompt ? { "data-testid": "palette-name" } as Record<string, string> : {
                     role: "combobox",
                     "aria-expanded": open,
                     "aria-controls": "desk-palette-listbox",
@@ -643,7 +660,14 @@ export function DeskToolShelf() {
                   }}
                 />
               </label>
-              {rows.length ? (
+              {prompt ? (
+                <div className="desk-tool-name">
+                  <Button dense variant="primary" data-testid="palette-name-save"
+                    disabled={!query.trim()} onClick={submitName}>
+                    Save
+                  </Button>
+                </div>
+              ) : rows.length ? (
                 <ul
                   id="desk-palette-listbox"
                   className="desk-deck-list"

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** PHILO-13-11's C1 canvas ratified (the material); this story's own canvas ratified
 - **Unblocks:** none
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
@@ -59,3 +59,11 @@ Grounding size: S (`grounding/faces-jobs.md:158`). PROVISIONAL.
 - UNKNOWN: whether the desk decision already has a project reference field, or only `context_markdown`. Verify before build; Tenet 1 — no new table if a ref field or context carries it. If a backend change is needed, it is handoff **H-B3**: Astra's lane changes the decision route/service (its files); this story consumes it and edits no backend file.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+## RATIFIED by the owner — 2026-10-03
+
+On the page https://claude.ai/artifact/V9yuy6rPpNJL5hCtcenTq7 (the built B3 shots, `assets/story-08-shots/`, on the owner-ratified Workbench material), the owner answered verbatim: **"Ratify, merge it"**. Muad'Dib's ruling on the backend finding: the meeting and project refs ride the existing fields and edges (tags `meeting:`/`project:`, context, the project resources edge) — no new backend field (Tenet 1). Ledger to Astra: memory's project filter keys `desk_decision:<id>` while faces file `decision:<id>` (`holdspeak/db/memory.py:78`, `:1326`) — pre-existing.
+
+## Closed — 2026-10-03
+
+Decide in the meeting record: 2 gestures at 1440 and touch 393; the decision carries its meeting and project (tags + context + the project resources edge, DB read back); ⌘K New Decision writes nothing until named; abandoned tries leave no record. Astra's single pass (a draft followed into another meeting) paid — the well is keyed by meeting id, drafts kept per meeting. Owner ratified the face ("Ratify, merge it"). Capture `evidence-story-08.md` (vitest 911, tsc, guard, pytest 133).
