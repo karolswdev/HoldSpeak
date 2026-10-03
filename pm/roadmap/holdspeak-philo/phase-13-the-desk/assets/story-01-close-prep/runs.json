@@ -1,0 +1,134 @@
+[
+  {
+    "label": "zone-1440",
+    "case": "case.p13.directory.zone",
+    "viewport": 1440,
+    "verdict": "fail",
+    "revision": "23a6c137f896e230e44e8e4e31f1f508b60fa05f",
+    "dirty": true,
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-njbpxgwk/.local/share/holdspeak/holdspeak.db",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "notes": [
+      "TRIGGER lifecycle failed: ui step click_role on 'Open' failed: TimeoutError: Locator.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for get_by_role(\"menuitem\", name=\"Open\", exact=True).first\n    - locator resolved to <button type=\"button\" role=\"menuitem\" aria-disabled="
+    ],
+    "original_observation": ".tmp/close-b0/zone-1440/20261003T174937Z-case.p13.directory.zone-astra-1440/observation.json",
+    "observation": "pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-close-prep/zone-1440/observation.json"
+  },
+  {
+    "label": "zone-393",
+    "case": "case.p13.directory.zone",
+    "viewport": 393,
+    "verdict": "blocked",
+    "revision": "23a6c137f896e230e44e8e4e31f1f508b60fa05f",
+    "dirty": true,
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xz69j1sh/.local/share/holdspeak/holdspeak.db",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "notes": [
+      "BLOCKED: ui step click on '.desk-tools-launch' failed: TimeoutError: Locator.tap: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\".desk-tools-launch\").first\n    - locator resolved to <button type=\"button\" title=\"Search \u2318K\" aria-expanded=\"false\" aria-contro"
+    ],
+    "original_observation": ".tmp/close-b0/zone-393/20261003T175044Z-case.p13.directory.zone-astra-393/observation.json",
+    "observation": "pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-close-prep/zone-393/observation.json"
+  },
+  {
+    "label": "chain-1440",
+    "case": "case.p13.chain.pullout",
+    "viewport": 1440,
+    "verdict": "pass",
+    "revision": "23a6c137f896e230e44e8e4e31f1f508b60fa05f",
+    "dirty": true,
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-pr5q41wq/.local/share/holdspeak/holdspeak.db",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "notes": [
+      "predicate: 'No steps' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1022, 'y': 64, 'w': 400, 'h': 553}"
+    ],
+    "original_observation": ".tmp/close-b0/chain-1440/20261003T175155Z-case.p13.chain.pullout-astra-1440/observation.json",
+    "observation": "pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-close-prep/chain-1440/observation.json"
+  },
+  {
+    "label": "chain-393",
+    "case": "case.p13.chain.pullout",
+    "viewport": 393,
+    "verdict": "fail",
+    "revision": "23a6c137f896e230e44e8e4e31f1f508b60fa05f",
+    "dirty": true,
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kafueapb/.local/share/holdspeak/holdspeak.db",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "notes": [
+      "TRIGGER lifecycle failed: ui step click on '.desk-tools-launch' failed: TimeoutError: Locator.tap: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\".desk-tools-launch\").first\n    - locator resolved to <button type=\"button\" title=\"Search \u2318K\" aria-expanded=\"false\" aria-contro"
+    ],
+    "original_observation": ".tmp/close-b0/chain-393/20261003T175439Z-case.p13.chain.pullout-astra-393/observation.json",
+    "observation": "pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-close-prep/chain-393/observation.json"
+  },
+  {
+    "label": "coder-1440",
+    "case": "case.p13.coder.pullout",
+    "viewport": 1440,
+    "verdict": "pass",
+    "revision": "23a6c137f896e230e44e8e4e31f1f508b60fa05f",
+    "dirty": true,
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3ir76l29/.local/share/holdspeak/holdspeak.db",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "notes": [
+      "predicate: 'Should I run the full suite now?' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1022, 'y': 64, 'w': 400, 'h': 274}"
+    ],
+    "original_observation": ".tmp/close-b0/coder-1440/20261003T175603Z-case.p13.coder.pullout-astra-1440/observation.json",
+    "observation": "pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-close-prep/coder-1440/observation.json"
+  },
+  {
+    "label": "coder-393",
+    "case": "case.p13.coder.pullout",
+    "viewport": 393,
+    "verdict": "fail",
+    "revision": "23a6c137f896e230e44e8e4e31f1f508b60fa05f",
+    "dirty": true,
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-it4dx3lc/.local/share/holdspeak/holdspeak.db",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "notes": [
+      "TRIGGER lifecycle failed: ui step click on '.desk-tools-launch' failed: TimeoutError: Locator.tap: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\".desk-tools-launch\").first\n    - locator resolved to <button type=\"button\" title=\"Search \u2318K\" aria-expanded=\"false\" aria-contro"
+    ],
+    "original_observation": ".tmp/close-b0/coder-393/20261003T175714Z-case.p13.coder.pullout-astra-393/observation.json",
+    "observation": "pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-close-prep/coder-393/observation.json"
+  }
+]
