@@ -3626,7 +3626,7 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"desk.new-zone\"",
-          "line": 238,
+          "line": 255,
           "claim": "the face makes a zone with the New Zone verb"
         }
       ],
@@ -3661,7 +3661,7 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"desk.new-knowledge\"",
-          "line": 194,
+          "line": 211,
           "claim": "the face makes a knowledge base with the New Knowledge verb"
         }
       ],
@@ -3712,7 +3712,7 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"object.delete\"",
-          "line": 586,
+          "line": 603,
           "claim": "the face deletes a selected object with the Delete verb"
         }
       ],

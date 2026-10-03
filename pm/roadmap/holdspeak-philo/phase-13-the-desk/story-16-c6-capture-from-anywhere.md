@@ -54,3 +54,5 @@ Grounding size: S (`grounding/faces-jobs.md:161`). PROVISIONAL.
 - 2026-10-01 — `web/src/desk/newThought.ts` is not named in PROPOSAL §4's map; assigned to this lane (status file, "File ownership").
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+- 2026-10-03 — Muad'Dib ruling: the pop-key opens a thought directly (this story's acceptance, the faster gesture: Tenet 3), not the Capture window that design/workbench-look.md §C6 names; the Capture window stays reachable from the Chair and from Speak. The key is ⌃T (Ctrl+T off a Mac is the browser's new tab; the menu verb is the path there). The verb also sits in the Floor's right-click NEW submenu (the `new` group).
