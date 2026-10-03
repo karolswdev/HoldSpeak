@@ -444,6 +444,7 @@
   background: var(--wb-steel-2);
 }
 .desk-next .desk-pullout-head .desk-gadget:active:not(:disabled),
+.desk-next .desk-window-shell.is-front > .desk-pullout-head .desk-gadget:active:not(:disabled),
 .desk-next .desk-pullout-head .desk-gadget[aria-pressed="true"],
 .desk-next .desk-window-shell.is-front > .desk-pullout-head .desk-gadget[aria-pressed="true"] {
   background: var(--wb-press);

@@ -210,6 +210,24 @@ class TestTitleBarB:
                         failures["window-menu"]["T5 the window menu opens from the title bar"] = True
                     page.screenshot(path=str(SHOTS / "build-TB-4-window-menu-1440.png"))
                     page.keyboard.press("Escape")
+                    # T6 (Astra on #759): a held front gadget draws the pressed
+                    # fill, not the hover fill. Press, read, release off it.
+                    zoom = people.locator(":scope > .desk-pullout-head .desk-gadget[aria-label^='Zoom']").first
+                    zb = zoom.bounding_box()
+                    page.mouse.move(zb["x"] + zb["width"] / 2, zb["y"] + zb["height"] / 2)
+                    page.mouse.down()
+                    held = zoom.evaluate("""el => {
+                      const probe = document.createElement('i');
+                      probe.style.background = 'var(--wb-press)';
+                      el.parentElement.appendChild(probe);
+                      const want = getComputedStyle(probe).backgroundColor; probe.remove();
+                      return {got: getComputedStyle(el).backgroundColor, want};
+                    }""")
+                    page.mouse.move(2, SIZES[width] - 2)
+                    page.mouse.up()
+                    facts["held_zoom"] = held
+                    if held["got"] != held["want"]:
+                        failures["window-menu"]["T6 a held front gadget draws --wb-press"] = held
                 else:
                     measure("phone")
                     page.screenshot(path=str(SHOTS / "build-TB-3-phone-393.png"))
