@@ -353,6 +353,10 @@
   --wb-sunken: inset 1px 1px 0 var(--wb-lo), inset -1px -1px 0 var(--wb-hi); /* PHILO-13-11 (C1) Workbench Steel: a pressed plate, an open wing */
   --wb-drop: 4px 4px 0 rgba(0, 0, 0, 0.32); /* PHILO-13-11 (C1) Workbench Steel: window and menu drop: a hard offset, no blur */
   --wb-stipple: repeating-linear-gradient(180deg, transparent 0 3px, rgba(0, 0, 0, 0.16) 3px 4px); /* PHILO-13-11 (C1) Workbench Steel: the drag bar: 1 px lines every 4 px */
+  --wb-stipple-fine: repeating-linear-gradient(180deg, transparent 0 2px, rgba(11, 12, 16, 0.07) 2px 3px); /* PHILO-13-11 title bar B (owner pick 2026-10-03): the FRONT drag bar only: 1 px lines every 3 px, 7 % ink */
+  --wb-ink-dim: #2a2e36; /* PHILO-13-11 title bar B (owner pick 2026-10-03): an inactive window's title (5.44:1 on steel) */
+  --wb-rule: rgba(11, 12, 16, 0.45); /* PHILO-13-11 title bar B (owner pick 2026-10-03): the hairline between gadget cells */
+  --wb-raised-soft: inset 1px 1px 0 rgba(255, 255, 255, 0.36), inset -1px -1px 0 rgba(0, 0, 0, 0.25); /* PHILO-13-11 title bar B (owner pick 2026-10-03): a gadget cell, the raised bevel at half strength */
 }
 
 @media (prefers-reduced-motion: reduce) {

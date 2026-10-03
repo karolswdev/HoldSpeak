@@ -143,7 +143,7 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | PHILO-13-08 | B3 — Decide where the meeting is | done | [story-08-b3-decide-where-the-meeting-is](./story-08-b3-decide-where-the-meeting-is.md) | [evidence-story-08](./evidence-story-08.md) |
 | PHILO-13-09 | B4 — The 1:1 finds its person | backlog | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | — |
 | PHILO-13-10 | B5 — The update writes the week | done | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | [evidence-story-10](./evidence-story-10.md) |
-| PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | in-progress | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
+| PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | done | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | [evidence-story-11](./evidence-story-11.md) |
 | PHILO-13-12 | C2 — The gadgets that are missing | done | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | [evidence-story-12](./evidence-story-12.md) |
 | PHILO-13-13 | C3 — A live Dock (AppIcons) | done | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | [evidence-story-13](./evidence-story-13.md) |
 | PHILO-13-14 | C4 — A palette that knows his week and does verbs | done | [story-14-c4-a-palette-that-knows-his-week](./story-14-c4-a-palette-that-knows-his-week.md) | [evidence-story-14](./evidence-story-14.md) |
@@ -245,6 +245,8 @@ The canvas set, in order: C1's canvas first (the frame, the chrome, the Chair, t
 D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
+
+2026-10-03: **PHILO-13-11 title bar B built (the owner's pick, "B").** He said the C1 title bar "looks terrible". Three directions and the control were drawn (`assets/titlebar-canvas/`), and he picked B, Workbench refined. Inactive bars are now flat. Only the front bar has fine stripes, and its title sits on a cut-out in the bar's own blue. The gadgets sit on one grid, and 393 keeps 44 px. Title contrast is 5.40:1 on the front bar and 5.44:1 on inactive bars. Shots are in `assets/titlebar-build/`. Story 11 stays in-progress.
 
 2026-10-03: **H-rig-clearof RATIFIED by Muad'Dib; main integration confirmed before merge.** Per-width clearance and restart UI follow-ups are available; real replayed retention passes at both widths. Arrival passes at 1440 and retains the inherited missing-Capture-slot failure at 393. No story closes. [Astra lane record](lane-rig-clearof-astra.md).
 
