@@ -263,9 +263,11 @@ class WorkbenchItemRepository(BaseRepository):
                     completed_at,
                 ),
             )
-        return self.get(clean_id)  # type: ignore[return-value]
+        return self.get(clean_id, include_parked=True)  # type: ignore[return-value]
 
-    def get(self, item_id: str) -> Optional[WorkbenchItemRecord]:
+    def get(
+        self, item_id: str, *, include_parked: bool = False
+    ) -> Optional[WorkbenchItemRecord]:
         clean_id = str(item_id or "").strip()
         if not clean_id:
             return None
@@ -273,31 +275,115 @@ class WorkbenchItemRepository(BaseRepository):
             row = conn.execute("SELECT * FROM workbench_items WHERE id = ?", (clean_id,)).fetchone()
         if not row:
             return None
+        if row["parked"] and not include_parked:
+            return None
         return self._row(row)
 
     def list_for_workbench(
-        self, workbench_id: str, *, status: Optional[str] = None, limit: int = 500
+        self,
+        workbench_id: str,
+        *,
+        status: Optional[str] = None,
+        parked: bool = False,
+        limit: int = 500,
     ) -> list[WorkbenchItemRecord]:
         bounded = max(1, min(int(limit), 2000))
         with self._connection() as conn:
             if status:
                 rows = conn.execute(
-                    "SELECT * FROM workbench_items WHERE workbench_id = ? AND status = ? ORDER BY priority ASC, created_at ASC LIMIT ?",
-                    (workbench_id, status, bounded),
+                    """SELECT * FROM workbench_items
+                       WHERE workbench_id = ? AND status = ? AND parked = ?
+                       ORDER BY priority ASC, created_at ASC LIMIT ?""",
+                    (workbench_id, status, 1 if parked else 0, bounded),
                 ).fetchall()
             else:
                 rows = conn.execute(
-                    "SELECT * FROM workbench_items WHERE workbench_id = ? ORDER BY priority ASC, created_at ASC LIMIT ?",
-                    (workbench_id, bounded),
+                    """SELECT * FROM workbench_items
+                       WHERE workbench_id = ? AND parked = ?
+                       ORDER BY priority ASC, created_at ASC LIMIT ?""",
+                    (workbench_id, 1 if parked else 0, bounded),
                 ).fetchall()
         return [self._row(r) for r in rows]
 
+    def _transition_parked(
+        self, workbench_id: str, item_ids: list[str], *, parked: bool
+    ) -> tuple[list[str], str | None, list[str]]:
+        """Set the parked bit for all IDs under one write lock.
+
+        The precondition check and UPDATE share ``BEGIN IMMEDIATE``. A caller
+        therefore cannot validate a pending item, lose a race to the runner,
+        and then park a changed row (or park only part of a bulk request).
+        """
+        ids = list(dict.fromkeys(str(item_id).strip() for item_id in item_ids))
+        if not ids or any(not item_id for item_id in ids):
+            raise ValueError("item ids are required")
+        placeholders = ",".join("?" for _ in ids)
+        target = 1 if parked else 0
+        expected = 1 - target
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            rows = conn.execute(
+                f"""SELECT id, status, parked FROM workbench_items
+                    WHERE workbench_id = ? AND id IN ({placeholders})""",
+                (workbench_id, *ids),
+            ).fetchall()
+            by_id = {str(row["id"]): row for row in rows}
+            missing = [item_id for item_id in ids if item_id not in by_id]
+            if missing:
+                return [], "missing", missing
+            if parked:
+                claimed = [item_id for item_id in ids if by_id[item_id]["status"] == "claimed"]
+                if claimed:
+                    return [], "claimed", claimed
+            to_change = [
+                item_id for item_id in ids if int(by_id[item_id]["parked"]) != target
+            ]
+            if not to_change:
+                return ids, None, []
+            now = _now_iso()
+            changed_placeholders = ",".join("?" for _ in to_change)
+            changed = conn.execute(
+                f"""UPDATE workbench_items SET parked = ?, last_modified = ?
+                    WHERE workbench_id = ? AND id IN ({changed_placeholders}) AND parked = ?""",
+                (1 if parked else 0, now, workbench_id, *to_change, expected),
+            )
+            if int(changed.rowcount) != len(to_change):
+                # This should be unreachable while the transaction owns the
+                # write lock, but never report a partial bulk transition.
+                raise RuntimeError("Workbench item state changed during transition")
+        return ids, None, []
+
+    def park_many(self, workbench_id: str, item_ids: list[str]) -> tuple[list[str], str | None, list[str]]:
+        return self._transition_parked(workbench_id, item_ids, parked=True)
+
+    def restore_many(self, workbench_id: str, item_ids: list[str]) -> tuple[list[str], str | None, list[str]]:
+        return self._transition_parked(workbench_id, item_ids, parked=False)
+
     def delete(self, item_id: str) -> bool:
+        """Park an item under the legacy repository verb.
+
+        The route/service path uses :meth:`park_many`, but this compatibility
+        verb must also obey the never-delete rule for older callers.
+        """
         clean_id = str(item_id or "").strip()
         if not clean_id:
             return False
         with self._connection() as conn:
-            cur = conn.execute("DELETE FROM workbench_items WHERE id = ?", (clean_id,))
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT status, parked FROM workbench_items WHERE id = ?", (clean_id,)
+            ).fetchone()
+            if row is None:
+                return False
+            if row["status"] == "claimed":
+                raise ValueError("Cannot park a claimed item")
+            if row["parked"]:
+                return True
+            cur = conn.execute(
+                "UPDATE workbench_items SET parked = 1, last_modified = ? "
+                "WHERE id = ? AND parked = 0 AND status != 'claimed'",
+                (_now_iso(), clean_id),
+            )
             return bool(cur.rowcount and cur.rowcount > 0)
 
     def has_active_items(self, workbench_id: str) -> bool:
@@ -327,6 +413,7 @@ class WorkbenchItemRepository(BaseRepository):
             last_modified=row["last_modified"],
             claimed_at=row["claimed_at"],
             completed_at=row["completed_at"],
+            parked=bool(row["parked"]),
         )
 
 

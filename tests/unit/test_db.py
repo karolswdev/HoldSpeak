@@ -190,15 +190,17 @@ class TestDatabase:
         assert meetings[0].id == "test123"
 
     def test_delete_meeting(self, db, sample_meeting):
-        """Test deleting a meeting."""
+        """The legacy removal verb hides the meeting and retains its row."""
         db.meetings.save_meeting(sample_meeting)
 
         result = db.meetings.delete_meeting(sample_meeting.id)
         assert result is True
 
-        # Should be gone
+        # Absent from normal reads; the retained row can be restored.
         retrieved = db.meetings.get_meeting(sample_meeting.id)
         assert retrieved is None
+        retained = db.meetings.get_meeting(sample_meeting.id, include_parked=True)
+        assert retained is not None and retained.parked is True
 
     def test_delete_nonexistent_meeting(self, db):
         """Test deleting a meeting that doesn't exist."""
@@ -2124,4 +2126,3 @@ class TestMeshDispatchSchema:
         assert db.mesh_worker.reserve(
             hub_key_id="k1", hub_operation_id="op2", first_ordinal=1
         ) is True
-

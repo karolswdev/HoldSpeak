@@ -12091,6 +12091,7 @@
       "test_candidates": [
         "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/unit/test_graph_walk_calibration.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo_graph_schema.py",
         "tests/unit/test_web_routes_projections.py"
       ],
@@ -20373,6 +20374,7 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo13_a3h_meeting_summary.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -20590,6 +20592,10 @@
             {
               "name": "has_open_actions",
               "annotation": "bool"
+            },
+            {
+              "name": "parked",
+              "annotation": "bool"
             }
           ],
           "return_annotation": "Any",
@@ -20654,6 +20660,7 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo13_a3h_meeting_summary.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -20694,7 +20701,7 @@
             "GET"
           ],
           "symbol": "api_meeting_facets",
-          "line": 92,
+          "line": 94,
           "parameters": [
             {
               "name": "request",
@@ -20831,6 +20838,7 @@
         "tests/integration/test_web_meeting_import_api.py",
         "tests/integration/test_web_transcript_import_api.py",
         "tests/unit/test_graph_walk_calibration.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_the_loop.py",
@@ -20869,7 +20877,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_meeting",
-          "line": 141,
+          "line": 145,
           "parameters": [
             {
               "name": "meeting_id",
@@ -20898,7 +20906,7 @@
           ],
           "body_access_keys": [],
           "raw_request": true,
-          "docstring": "Delete a meeting (HS-55-02: e.g. a failed import's honest row)."
+          "docstring": "Park a meeting while retaining its transcript and related work."
         }
       ],
       "test_candidates": [
@@ -20936,6 +20944,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -20976,7 +20985,7 @@
             "GET"
           ],
           "symbol": "api_get_meeting",
-          "line": 101,
+          "line": 103,
           "parameters": [
             {
               "name": "meeting_id",
@@ -20985,6 +20994,10 @@
             {
               "name": "request",
               "annotation": "Request"
+            },
+            {
+              "name": "include_parked",
+              "annotation": "bool"
             }
           ],
           "return_annotation": "Any",
@@ -21043,6 +21056,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -21083,7 +21097,7 @@
             "PUT"
           ],
           "symbol": "api_rename_meeting",
-          "line": 114,
+          "line": 118,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21156,6 +21170,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -21259,6 +21274,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -21366,6 +21382,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -21474,6 +21491,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -21511,7 +21529,7 @@
             "POST"
           ],
           "symbol": "api_recover_meeting_capture",
-          "line": 155,
+          "line": 172,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21576,6 +21594,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -21615,7 +21634,7 @@
             "GET"
           ],
           "symbol": "api_export_meeting",
-          "line": 197,
+          "line": 214,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21688,6 +21707,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -21785,6 +21805,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -21824,7 +21845,7 @@
             "GET"
           ],
           "symbol": "api_meeting_proposals",
-          "line": 51,
+          "line": 56,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21890,6 +21911,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -21990,6 +22012,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -22092,6 +22115,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -22197,6 +22221,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -22299,6 +22324,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -22407,6 +22433,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -22515,6 +22542,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -22554,7 +22582,7 @@
             "GET"
           ],
           "symbol": "api_meeting_outcome_review",
-          "line": 63,
+          "line": 68,
           "parameters": [
             {
               "name": "meeting_id",
@@ -22618,6 +22646,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -22728,6 +22757,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -22830,6 +22860,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -22937,6 +22968,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -22976,7 +23008,7 @@
             "POST"
           ],
           "symbol": "api_accept_reviewed",
-          "line": 73,
+          "line": 78,
           "parameters": [
             {
               "name": "meeting_id",
@@ -23041,6 +23073,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -23153,6 +23186,114 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
+        "tests/unit/test_philo_graph_atlas.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/restore",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.crud",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/meetings/crud.py",
+      "handler_evidence": [
+        {
+          "path": "/api/meetings/{meeting_id}/restore",
+          "methods": [
+            "POST"
+          ],
+          "symbol": "api_restore_meeting",
+          "line": 159,
+          "parameters": [
+            {
+              "name": "meeting_id",
+              "annotation": "str"
+            },
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [
+            404,
+            500
+          ],
+          "calls": [
+            "JSONResponse",
+            "_principal",
+            "_service",
+            "_service(ctx).restore_meeting",
+            "log.error",
+            "router.post",
+            "str"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": "Restore a parked meeting with all retained work intact."
+        }
+      ],
+      "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
+        "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
+        "tests/e2e/test_hs202_02_first_use_glass.py",
+        "tests/e2e/test_hs202_first_use_smoke.py",
+        "tests/e2e/test_phase200_daily_loop.py",
+        "tests/integration/test_actuator_presence_broadcasts.py",
+        "tests/integration/test_history_slack_surfaces.py",
+        "tests/integration/test_meeting_conflict_recovery.py",
+        "tests/integration/test_meeting_import_parity.py",
+        "tests/integration/test_meeting_intel_recovery.py",
+        "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_primitive_framework_sync.py",
+        "tests/integration/test_project_routes_characterization.py",
+        "tests/integration/test_web_aftercare_file_issue.py",
+        "tests/integration/test_web_history_import_ui.py",
+        "tests/integration/test_web_intent_timeline_api.py",
+        "tests/integration/test_web_meeting_aftercare_api.py",
+        "tests/integration/test_web_meeting_import_api.py",
+        "tests/integration/test_web_meeting_proposals_api.py",
+        "tests/integration/test_web_meeting_rename_api.py",
+        "tests/integration/test_web_meetings_facets_api.py",
+        "tests/integration/test_web_server.py",
+        "tests/integration/test_web_slack_export.py",
+        "tests/integration/test_web_transcript_import_api.py",
+        "tests/uat/test_egress_cloud.py",
+        "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -23192,7 +23333,7 @@
             "GET"
           ],
           "symbol": "api_meeting_sync_conflicts",
-          "line": 165,
+          "line": 182,
           "parameters": [
             {
               "name": "meeting_id",
@@ -23258,6 +23399,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -23297,7 +23439,7 @@
             "POST"
           ],
           "symbol": "api_resolve_meeting_sync_conflict",
-          "line": 176,
+          "line": 193,
           "parameters": [
             {
               "name": "meeting_id",
@@ -23375,6 +23517,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
         "tests/unit/test_philo5_loop_compat.py",
@@ -30475,7 +30618,7 @@
             "GET"
           ],
           "symbol": "api_project_proposals",
-          "line": 83,
+          "line": 88,
           "parameters": [
             {
               "name": "project_id",
@@ -33235,7 +33378,7 @@
             "POST"
           ],
           "symbol": "api_confirm_proposal",
-          "line": 95,
+          "line": 100,
           "parameters": [
             {
               "name": "proposal_id",
@@ -33280,7 +33423,8 @@
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
-        "tests/unit/test_philo11_atlas.py"
+        "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_meeting_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -33312,7 +33456,7 @@
             "POST"
           ],
           "symbol": "api_dismiss_proposal",
-          "line": 136,
+          "line": 141,
           "parameters": [
             {
               "name": "proposal_id",
@@ -33347,7 +33491,8 @@
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
-        "tests/unit/test_philo11_atlas.py"
+        "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_meeting_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -33379,7 +33524,7 @@
             "POST"
           ],
           "symbol": "api_edit_proposal",
-          "line": 115,
+          "line": 120,
           "parameters": [
             {
               "name": "proposal_id",
@@ -33424,7 +33569,8 @@
         "tests/e2e/test_hs200_meeting_outcomes_glass.py",
         "tests/e2e/test_hs200_people_preparation_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
-        "tests/unit/test_philo11_atlas.py"
+        "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_meeting_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -38186,7 +38332,7 @@
             "GET"
           ],
           "symbol": "api_list_skills",
-          "line": 216,
+          "line": 276,
           "parameters": [
             {
               "name": "request",
@@ -38245,7 +38391,7 @@
             "POST"
           ],
           "symbol": "api_create_skill",
-          "line": 223,
+          "line": 283,
           "parameters": [
             {
               "name": "request",
@@ -38309,7 +38455,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_skill",
-          "line": 253,
+          "line": 313,
           "parameters": [
             {
               "name": "skill_id",
@@ -38369,7 +38515,7 @@
             "PUT"
           ],
           "symbol": "api_update_skill",
-          "line": 239,
+          "line": 299,
           "parameters": [
             {
               "name": "skill_id",
@@ -43397,7 +43543,7 @@
             "GET"
           ],
           "symbol": "api_list_templates",
-          "line": 209,
+          "line": 269,
           "parameters": [
             {
               "name": "request",
@@ -43452,7 +43598,7 @@
             "POST"
           ],
           "symbol": "api_instantiate_template",
-          "line": 263,
+          "line": 323,
           "parameters": [
             {
               "name": "template_id",
@@ -43542,7 +43688,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -43608,7 +43755,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -43640,7 +43788,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_workbench",
-          "line": 91,
+          "line": 97,
           "parameters": [
             {
               "name": "workbench_id",
@@ -43674,7 +43822,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -43715,6 +43864,10 @@
             {
               "name": "request",
               "annotation": "Request"
+            },
+            {
+              "name": "parked",
+              "annotation": "bool"
             }
           ],
           "return_annotation": "Any",
@@ -43737,7 +43890,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -43769,7 +43923,7 @@
             "PUT"
           ],
           "symbol": "api_update_workbench",
-          "line": 78,
+          "line": 84,
           "parameters": [
             {
               "name": "workbench_id",
@@ -43803,7 +43957,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -43831,7 +43986,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -43859,7 +44015,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -43887,7 +44044,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -43915,7 +44073,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -43943,7 +44102,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -43975,7 +44135,7 @@
             "POST"
           ],
           "symbol": "api_add_item",
-          "line": 103,
+          "line": 109,
           "parameters": [
             {
               "name": "workbench_id",
@@ -44014,7 +44174,152 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/items/park",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/primitives/workbenches.py",
+      "handler_evidence": [
+        {
+          "path": "/api/workbenches/{workbench_id}/items/park",
+          "methods": [
+            "POST"
+          ],
+          "symbol": "api_park_items",
+          "line": 155,
+          "parameters": [
+            {
+              "name": "workbench_id",
+              "annotation": "str"
+            },
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [
+            400,
+            409
+          ],
+          "calls": [
+            "JSONResponse",
+            "_json_body",
+            "_not_found",
+            "_principal",
+            "_svc",
+            "_svc().park_items",
+            "body.get",
+            "error_500",
+            "router.post",
+            "str"
+          ],
+          "body_access_keys": [
+            "item_ids"
+          ],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/items/restore",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/primitives/workbenches.py",
+      "handler_evidence": [
+        {
+          "path": "/api/workbenches/{workbench_id}/items/restore",
+          "methods": [
+            "POST"
+          ],
+          "symbol": "api_restore_items",
+          "line": 174,
+          "parameters": [
+            {
+              "name": "workbench_id",
+              "annotation": "str"
+            },
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [
+            400,
+            409
+          ],
+          "calls": [
+            "JSONResponse",
+            "_json_body",
+            "_not_found",
+            "_principal",
+            "_svc",
+            "_svc().restore_items",
+            "body.get",
+            "error_500",
+            "router.post",
+            "str"
+          ],
+          "body_access_keys": [
+            "item_ids"
+          ],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44046,7 +44351,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_item",
-          "line": 135,
+          "line": 141,
           "parameters": [
             {
               "name": "workbench_id",
@@ -44065,6 +44370,7 @@
           "declared_response_model": null,
           "declared_responses": {},
           "literal_error_statuses": [
+            400,
             409
           ],
           "calls": [
@@ -44084,7 +44390,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44116,7 +44423,7 @@
             "PUT"
           ],
           "symbol": "api_update_item",
-          "line": 121,
+          "line": 127,
           "parameters": [
             {
               "name": "workbench_id",
@@ -44155,7 +44462,80 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/workbenches/{workbench_id}/items/{item_id}/restore",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.workbenches",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/primitives/workbenches.py",
+      "handler_evidence": [
+        {
+          "path": "/api/workbenches/{workbench_id}/items/{item_id}/restore",
+          "methods": [
+            "POST"
+          ],
+          "symbol": "api_restore_item",
+          "line": 193,
+          "parameters": [
+            {
+              "name": "workbench_id",
+              "annotation": "str"
+            },
+            {
+              "name": "item_id",
+              "annotation": "str"
+            },
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [
+            400,
+            409
+          ],
+          "calls": [
+            "JSONResponse",
+            "_not_found",
+            "_principal",
+            "_svc",
+            "_svc().restore_item",
+            "error_500",
+            "router.post",
+            "str"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": null
+        }
+      ],
+      "test_candidates": [
+        "tests/e2e/test_philo8_one_delete_glass.py",
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44187,7 +44567,7 @@
             "POST"
           ],
           "symbol": "api_retry_mint",
-          "line": 147,
+          "line": 207,
           "parameters": [
             {
               "name": "workbench_id",
@@ -44226,7 +44606,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44258,7 +44639,7 @@
             "DELETE"
           ],
           "symbol": "api_clear_memory",
-          "line": 281,
+          "line": 341,
           "parameters": [
             {
               "name": "workbench_id",
@@ -44288,7 +44669,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44320,7 +44702,7 @@
             "GET"
           ],
           "symbol": "api_list_memory",
-          "line": 274,
+          "line": 334,
           "parameters": [
             {
               "name": "workbench_id",
@@ -44350,7 +44732,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44382,7 +44765,7 @@
             "POST"
           ],
           "symbol": "api_promote_memory",
-          "line": 289,
+          "line": 349,
           "parameters": [
             {
               "name": "workbench_id",
@@ -44419,7 +44802,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44447,7 +44831,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44475,7 +44860,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44503,7 +44889,8 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44535,7 +44922,7 @@
             "POST"
           ],
           "symbol": "api_run_workbench",
-          "line": 161,
+          "line": 221,
           "parameters": [
             {
               "name": "workbench_id",
@@ -44572,7 +44959,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44604,7 +44992,7 @@
             "GET"
           ],
           "symbol": "api_list_runs",
-          "line": 202,
+          "line": 262,
           "parameters": [
             {
               "name": "workbench_id",
@@ -44634,7 +45022,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44664,7 +45053,7 @@
             "POST"
           ],
           "symbol": "api_cancel_workbench_run",
-          "line": 173,
+          "line": 233,
           "parameters": [
             {
               "name": "workbench_id",
@@ -44699,7 +45088,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -44731,7 +45121,7 @@
             "POST"
           ],
           "symbol": "api_voice_resolve",
-          "line": 182,
+          "line": 242,
           "parameters": [
             {
               "name": "workbench_id",
@@ -44772,7 +45162,8 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo8_one_delete_glass.py",
-        "tests/integration/test_web_automations_api.py"
+        "tests/integration/test_web_automations_api.py",
+        "tests/unit/test_philo13_workbench_parking.py"
       ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
@@ -45887,6 +46278,7 @@
         "tests/unit/test_people_routes.py",
         "tests/unit/test_phase143_routing_authority_census.py",
         "tests/unit/test_phase143_surface_fallback_census.py",
+        "tests/unit/test_philo13_workbench_parking.py",
         "tests/unit/test_philo5_loop_compat.py",
         "tests/unit/test_philo5_pairs.py",
         "tests/unit/test_philo5_the_loop.py",

@@ -1,0 +1,128 @@
+# PHILO-13-02 H-A1 meeting parking proof
+
+All pytest commands below used an isolated `HOME=$(mktemp -d)`.
+
+## Initial red proof (before implementation)
+
+Command:
+
+```text
+HOME=$(mktemp -d) uv run pytest -q --collect-only tests/unit/test_philo13_meeting_parking.py
+```
+
+Observed collection output:
+
+```text
+tests/unit/test_philo13_meeting_parking.py::test_repository_parks_and_restores_without_deleting_retained_work
+tests/unit/test_philo13_meeting_parking.py::test_repository_park_and_restore_are_idempotent_and_unknown_stays_missing
+tests/unit/test_philo13_meeting_parking.py::test_real_import_route_parks_reads_retained_detail_and_restores
+tests/unit/test_philo13_meeting_parking.py::test_schema_reconciles_parked_columns_additively
+
+4 tests collected in 3.13s
+```
+
+Command:
+
+```text
+HOME=$(mktemp -d) uv run pytest -q tests/unit/test_philo13_meeting_parking.py
+```
+
+Observed result was `FFFF`: the repository tests failed because
+`get_meeting(..., include_parked=...)` was not implemented and
+`restore_meeting` was absent; the route test hit the same missing
+`include_parked` argument; and the reconcile test failed because the
+`parked` column was absent. The complete pre-compaction traceback was not
+persisted; these failure signatures are the exact red observations retained
+from that run.
+
+## Final collection
+
+Command:
+
+```text
+HOME=$(mktemp -d) uv run pytest -q --collect-only tests/unit/test_philo13_meeting_parking.py tests/unit/test_phase200_meeting_outcomes.py tests/unit/test_db_schema_policy.py tests/unit/test_reconcile.py
+```
+
+Output:
+
+```text
+tests/unit/test_philo13_meeting_parking.py::test_repository_parks_and_restores_without_deleting_retained_work
+tests/unit/test_philo13_meeting_parking.py::test_repository_park_and_restore_are_idempotent_and_unknown_stays_missing
+tests/unit/test_philo13_meeting_parking.py::test_save_does_not_accidentally_unpark_a_retained_meeting
+tests/unit/test_philo13_meeting_parking.py::test_service_parked_search_reads_only_the_retained_meeting
+tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_proposal_refusal_tells_owner_to_restore
+tests/unit/test_philo13_meeting_parking.py::test_mcp_delete_verbs_return_parked_receipts_and_retain_rows
+tests/unit/test_philo13_meeting_parking.py::test_real_import_route_parks_reads_retained_detail_and_restores
+tests/unit/test_philo13_meeting_parking.py::test_schema_reconciles_parked_columns_additively
+tests/unit/test_phase200_meeting_outcomes.py::test_a_real_run_produces_proposals_through_the_drainer_and_the_bridge
+tests/unit/test_phase200_meeting_outcomes.py::test_confirm_preserves_meeting_span_and_extraction_provenance
+tests/unit/test_phase200_meeting_outcomes.py::test_an_unknown_owner_or_due_stays_unknown_until_the_owner_supplies_it
+tests/unit/test_phase200_meeting_outcomes.py::test_edit_in_place_drops_support_keeps_the_record_and_confirm_returns_the_ids
+tests/unit/test_phase200_meeting_outcomes.py::test_dismiss_returns_the_durable_state_and_writes_no_record
+tests/unit/test_phase200_meeting_outcomes.py::test_a_repeated_completion_mints_no_duplicate_proposal
+tests/unit/test_phase200_meeting_outcomes.py::test_a_model_retry_mints_no_duplicate_proposal_or_commitment
+tests/unit/test_phase200_meeting_outcomes.py::test_a_lost_acknowledgement_replays_the_same_durable_result
+tests/unit/test_phase200_meeting_outcomes.py::test_seeded_repeated_completion_after_a_confirm_mints_no_duplicate
+tests/unit/test_phase200_meeting_outcomes.py::test_seeded_lost_acknowledgement_replays_the_same_result
+tests/unit/test_phase200_meeting_outcomes.py::test_accept_reviewed_confirms_only_supported_rows_without_unknowns
+tests/unit/test_phase200_meeting_outcomes.py::test_a_changed_transcript_proposes_again_beside_the_earlier_decisions
+tests/unit/test_phase200_meeting_outcomes.py::test_supplied_owner_and_due_are_distinguishable_from_extracted
+tests/unit/test_phase200_meeting_outcomes.py::test_confirm_after_the_meeting_was_deleted_is_a_named_refusal
+tests/unit/test_phase200_meeting_outcomes.py::test_a_liveness_tick_racing_the_claim_does_not_refuse_the_bound_executor
+tests/unit/test_phase200_meeting_outcomes.py::test_an_unpersisted_parent_shell_is_an_orphan_only_after_a_lease
+tests/unit/test_db_schema_policy.py::test_fresh_db_is_created_at_current_version
+tests/unit/test_db_schema_policy.py::test_reconcile_is_noop_on_current_db
+tests/unit/test_db_schema_policy.py::test_newer_stamped_db_opens_without_error
+tests/unit/test_db_schema_policy.py::test_missing_table_self_heals
+tests/unit/test_db_schema_policy.py::test_missing_column_self_heals
+tests/unit/test_db_schema_policy.py::test_orphan_table_and_rows_survive
+tests/unit/test_db_schema_policy.py::test_v8_db_gains_model_manifests_via_reconcile
+tests/unit/test_db_schema_policy.py::test_backup_database_copies_to_timestamped_sibling
+tests/unit/test_db_schema_policy.py::test_backup_database_does_not_clobber
+tests/unit/test_db_schema_policy.py::test_upgrade_adds_the_profiles_node_column
+tests/unit/test_reconcile.py::test_reconcile_recreates_dropped_table
+tests/unit/test_reconcile.py::test_reconcile_adds_provider_command_table_to_old_shape_without_touching_rows
+tests/unit/test_reconcile.py::test_reconcile_adds_calendar_events_to_old_shape_without_touching_rows
+tests/unit/test_reconcile.py::test_reconcile_adds_missing_column
+tests/unit/test_reconcile.py::test_reconcile_adds_datetime_default_column_with_constant
+tests/unit/test_reconcile.py::test_reconcile_is_idempotent
+tests/unit/test_reconcile.py::test_reconcile_no_alter_on_current_db
+tests/unit/test_reconcile.py::test_reconcile_widens_historical_parent_kind_check_without_row_loss
+tests/unit/test_reconcile.py::test_reconcile_preserves_orphan_table
+tests/unit/test_reconcile.py::test_newer_db_opens_without_error
+tests/unit/test_reconcile.py::test_newer_db_opens_via_database_class
+tests/unit/test_reconcile.py::test_reference_schema_contains_canonical_tables
+tests/unit/test_reconcile.py::test_is_function_default_detects_datetime
+tests/unit/test_reconcile.py::test_soft_deleted_decision_survives_reconcile
+tests/unit/test_reconcile.py::test_clean_db_reconcile_skips_backfills
+tests/unit/test_reconcile.py::test_shape_change_triggers_backup_and_backfills
+tests/unit/test_reconcile.py::test_fresh_creation_does_not_back_up
+tests/unit/test_reconcile.py::test_fts_shadow_tables_excluded_from_reference
+tests/unit/test_reconcile.py::test_reconcile_adds_source_columns_to_existing_calendar_events
+tests/unit/test_reconcile.py::test_fts_shadow_tables_not_altered
+
+54 tests collected in 1.00s
+```
+
+## Final green run
+
+Command:
+
+```text
+HOME=$(mktemp -d) uv run pytest -q tests/unit/test_philo13_meeting_parking.py tests/unit/test_phase200_meeting_outcomes.py tests/unit/test_db_schema_policy.py tests/unit/test_reconcile.py
+```
+
+Output:
+
+```text
+......................................................                   [100%]
+54 passed in 23.97s
+```
+
+Focused MCP and route guard run:
+
+```text
+HOME=$(mktemp -d) uv run pytest -q tests/unit/test_philo13_meeting_parking.py tests/unit/test_mcp_tools.py::test_tools_list_exposes_pipeline_mcp_tools_with_closed_schemas tests/unit/test_phase200_meeting_outcomes.py::test_confirm_after_the_meeting_was_deleted_is_a_named_refusal
+..........                                                               [100%]
+10 passed in 4.47s
+```

@@ -1,0 +1,397 @@
+{
+  "id": "obs-20261002T033541Z-case.p13.meeting.park_restore-astra-1440",
+  "run_id": "20261002T033541Z-case.p13.meeting.park_restore-astra-1440",
+  "case_id": "case.p13.meeting.park_restore",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.route.meetings_park"
+  ],
+  "state_id": "state.meetings.p13_park_restore",
+  "provenance": {
+    "revision": "c7073f9cac59e898e53f425f4a437966a10aaa0b",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "588d695d3b1310526dec24a19c80c41e46b3ddd91f1b11a2535c4c39fbc91a5e",
+      "assets": [
+        "index-BkuS9K4h.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:53440",
+      "port": 53440,
+      "pid": 15947,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo11_documents/meeting_transcript.vtt": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-02T03:35:44.135484+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [
+      {
+        "kind": "cli",
+        "action": "restart_hub",
+        "adapter": "process",
+        "stopped_pid": 15947,
+        "started_pid": 16105,
+        "downtime_s": 2.55,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps/.local/share/holdspeak/holdspeak.db",
+        "port": 53440,
+        "hub_identity": {
+          "url": "http://127.0.0.1:53440",
+          "port": 53440,
+          "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps/.local/share/holdspeak/holdspeak.db",
+          "stopped_pid": 15947,
+          "started_pid": 16105
+        },
+        "meeting_before": {
+          "meeting_id": null,
+          "summary": null,
+          "run_receipt": null,
+          "transcription_status": null,
+          "payload": "{\"error\":\"Meeting not found\"}"
+        },
+        "meeting_after": {
+          "meeting_id": null,
+          "summary": null,
+          "run_receipt": null,
+          "transcription_status": null,
+          "payload": "{\"error\":\"Meeting not found\"}"
+        },
+        "summary_retained": false,
+        "receipt_retained": false,
+        "meeting_identity_retained": false
+      }
+    ],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "f0178c1e145b6671ec6359b2a2f58cec5cc06da1968ecca716a4eab0d3dd2180",
+      "version": "phase13-astra-wave1"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "browser_context": {
+      "viewport": 1440,
+      "has_touch": false
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.01,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "991bbad8",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "991bbad8"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/991bbad8",
+        "fields": {
+          "/transcription_status": "complete",
+          "/segments": {
+            "min_items": 3
+          }
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 2,
+        "elapsed_s": 0.317,
+        "payload": {
+          "id": "991bbad8",
+          "parked": false,
+          "started_at": "2026-10-01T21:35:52.439928",
+          "ended_at": "2026-10-01T21:36:16.439928",
+          "duration": 24.0,
+          "formatted_duration": "00:24",
+          "title": "Atlas retained meeting",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Avery: We agree to use one document registry for the channel sources.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 8.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "Blair: Avery will check the frozen bytes before the next review.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 8.0,
+              "end_time": 16.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "Avery: The channel reads durable records and keeps the transcript private.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 16.0,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 34,
+          "sync_modified_at": "2026-10-01T21:35:52.443674",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/transcription_status": true,
+          "/segments": true
+        }
+      }
+    },
+    {
+      "kind": "api",
+      "method": "DELETE",
+      "path": "/api/meetings/991bbad8",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "parked": "991bbad8"
+      },
+      "response_sha256": "5e239cd952bbc9399fc30a243b6b9b99dc594b08845f87a3a3bdcfbcbac6243d"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings?parked=true",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/meetings/0/id",
+        "value": "991bbad8"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/meetings/0/id equals the declared value"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings/991bbad8?include_parked=true",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/parked",
+        "value": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/parked equals the declared value"
+    },
+    {
+      "kind": "cli",
+      "action": "restart_hub",
+      "adapter": "process",
+      "stopped_pid": 15947,
+      "started_pid": 16105,
+      "downtime_s": 2.55,
+      "same_db_path": true,
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps/.local/share/holdspeak/holdspeak.db",
+      "port": 53440,
+      "hub_identity": {
+        "url": "http://127.0.0.1:53440",
+        "port": 53440,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps/.local/share/holdspeak/holdspeak.db",
+        "stopped_pid": 15947,
+        "started_pid": 16105
+      },
+      "meeting_before": {
+        "meeting_id": null,
+        "summary": null,
+        "run_receipt": null,
+        "transcription_status": null,
+        "payload": "{\"error\":\"Meeting not found\"}"
+      },
+      "meeting_after": {
+        "meeting_id": null,
+        "summary": null,
+        "run_receipt": null,
+        "transcription_status": null,
+        "payload": "{\"error\":\"Meeting not found\"}"
+      },
+      "summary_retained": false,
+      "receipt_retained": false,
+      "meeting_identity_retained": false
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    }
+  ],
+  "preconditions": [],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps",
+    "meeting_id": "991bbad8"
+  },
+  "trigger": null,
+  "diff": {},
+  "before": null,
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "blocked",
+  "notes": [
+    "BLOCKED: precondition not met: {'kind': 'protocol_field', 'path': '/segments/1/text', 'value': 'Avery will check the frozen bytes before the next review.'} at 'protocol: GET /api/meetings/991bbad8?include_parked=true' \u2014 /segments/1/text = 'Blair: Avery will check the frozen bytes before the next review.', wanted 'Avery will check the frozen bytes before the next review.'"
+  ],
+  "complete": true,
+  "setup_error": {
+    "step": {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings/{meeting_id}?include_parked=true",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/segments/1/text",
+        "value": "Avery will check the frozen bytes before the next review."
+      },
+      "why": "The actual imported transcript survives parking and a real process restart.",
+      "timeout_s": 10
+    },
+    "error": "precondition not met: {'kind': 'protocol_field', 'path': '/segments/1/text', 'value': 'Avery will check the frozen bytes before the next review.'} at 'protocol: GET /api/meetings/991bbad8?include_parked=true' \u2014 /segments/1/text = 'Blair: Avery will check the frozen bytes before the next review.', wanted 'Avery will check the frozen bytes before the next review.'"
+  },
+  "shots": [
+    ".tmp/graph-walk/philo-13-02/meeting-1440-r1/20261002T033541Z-case.p13.meeting.park_restore-astra-1440/blocked.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-k0z5p_ps/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:53440"
+  ],
+  "duration_s": 24.518
+}

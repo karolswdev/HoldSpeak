@@ -235,7 +235,7 @@ class ProjectionRepository(BaseRepository):
         with self._connection() as conn:
             meetings = {
                 str(row["id"]): str(row["title"] or "Untitled meeting")
-                for row in conn.execute("SELECT id,title FROM meetings").fetchall()
+                for row in conn.execute("SELECT id,title FROM meetings WHERE parked = 0").fetchall()
             }
             rows: list[DeskProjection] = []
             rows.extend(self._actuators(conn, meetings))
@@ -244,7 +244,7 @@ class ProjectionRepository(BaseRepository):
             rows.extend(self._steering(conn))
             rows.extend(self._meetings(conn, meetings))
             rows.extend(self._sync_conflicts(conn, meetings))
-            rows.extend(self._artifacts(conn))
+            rows.extend(self._artifacts(conn, meetings))
             rows.extend(self._jobs(conn, meetings))
             rows.extend(self._cadence(conn))
             rows.extend(self._pipeline_events(conn))
@@ -271,6 +271,8 @@ class ProjectionRepository(BaseRepository):
             status = str(row["status"])
             target = str(row["target"])
             meeting_id = row["meeting_id"]
+            if meeting_id and str(meeting_id) not in meetings:
+                continue
             payload = self._json_loads_dict(row["payload_json"])
             source = payload.get("_source") if isinstance(payload.get("_source"), dict) else {}
             source_ref = str(source.get("ref") or "").strip()
@@ -484,7 +486,7 @@ class ProjectionRepository(BaseRepository):
 
     def _meetings(self, conn: Any, meetings: dict[str, str]) -> list[DeskProjection]:
         result = []
-        for row in conn.execute("SELECT * FROM meetings").fetchall():
+        for row in conn.execute("SELECT * FROM meetings WHERE parked = 0").fetchall():
             status = str(row["capture_status"] or "finalized")
             needs = status in {"capture_failed", "recoverable", "recovered"}
             active = status in {"provisional", "recording"}
@@ -510,6 +512,8 @@ class ProjectionRepository(BaseRepository):
         for row in rows:
             resolved = bool(row["resolved_at"])
             mid = str(row["meeting_id"])
+            if mid not in meetings:
+                continue
             result.append(DeskProjection(
                 id=f"sync_conflict:{row['id']}:{'resolved' if resolved else 'open'}",
                 projection_kind="receipt" if resolved else "attention",
@@ -527,9 +531,11 @@ class ProjectionRepository(BaseRepository):
             ))
         return result
 
-    def _artifacts(self, conn: Any) -> list[DeskProjection]:
+    def _artifacts(self, conn: Any, meetings: dict[str, str]) -> list[DeskProjection]:
         result = []
         for row in conn.execute("SELECT * FROM artifacts").fetchall():
+            if row["meeting_id"] and str(row["meeting_id"]) not in meetings:
+                continue
             status = str(row["status"])
             needs = status in {"draft", "needs_review"}
             result.append(DeskProjection(
@@ -575,6 +581,8 @@ class ProjectionRepository(BaseRepository):
                 if state not in {"queued", "running", "failed"}:
                     continue
                 mid = str(row["meeting_id"])
+                if mid not in meetings:
+                    continue
                 failed = state == "failed"
                 source_id = (
                     str(row["job_id"]) if table == "intel_jobs" and "job_id" in row.keys()

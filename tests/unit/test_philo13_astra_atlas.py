@@ -31,7 +31,10 @@ EXPECTED_CASES = {
     "case.p13.coder.pullout",
     "case.p13.directory.zone",
     "case.p13.info.window",
+    "case.p13.meeting.park_restore",
+    "case.p13.workbench.park_restore",
 }
+PARKING_CASES = {"case.p13.meeting.park_restore", "case.p13.workbench.park_restore"}
 
 LIFECYCLE_CASES = {
     "case.p13.roadmap.window": {
@@ -505,7 +508,8 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
     # C6 is already folded: this atlas owns one .op; the historical 69 stays
     # only in the shared Phase 1–12 population fence.
     assert sum(case["id"].endswith(".op") for case in cases.values()) == 1
-    faces = [case for case in cases.values() if not case["id"].endswith(".op")]
+    faces = [case for case in cases.values()
+             if not case["id"].endswith(".op") and case["id"] not in PARKING_CASES]
     assert len(faces) == 9
     for case in faces:
         assert case["viewports"] == [1440, 393]

@@ -284,7 +284,8 @@ class RecallService:
         row = conn.execute(
             """SELECT m.started_at FROM decision_record_sources s
                JOIN meetings m ON m.id IN (s.source_ref, replace(s.source_ref, 'meeting:', ''))
-               WHERE s.record_id = ? AND s.source_type = 'meeting' LIMIT 1""",
+               WHERE s.record_id = ? AND s.source_type = 'meeting'
+                 AND m.parked = 0 LIMIT 1""",
             (record_id,),
         ).fetchone()
         return str(row["started_at"]) if row and row["started_at"] else None
@@ -333,7 +334,8 @@ class RecallService:
         if not meeting_id:
             return None, "none"
         mrow = conn.execute(
-            "SELECT id, title, started_at FROM meetings WHERE id = ?", (meeting_id,)
+            "SELECT id, title, started_at FROM meetings WHERE id = ? AND parked = 0",
+            (meeting_id,),
         ).fetchone()
         if mrow is None:
             return None, "none"
@@ -406,7 +408,10 @@ class RecallService:
                         FROM decision_commitments c
                         JOIN decision_records r ON r.source_id = c.decision_id AND r.deleted = 0
                         LEFT JOIN action_items ai ON ai.id = c.action_item_id
+                        LEFT JOIN decisions d ON d.id = c.decision_id
+                        LEFT JOIN meetings m ON m.id = COALESCE(ai.meeting_id, d.source_meeting_id)
                         WHERE r.id IN ({placeholders})
+                          AND (m.id IS NULL OR m.parked = 0)
                         ORDER BY c.due_at ASC NULLS LAST, c.created_at ASC""",
                     record_ids,
                 ).fetchall())
@@ -425,7 +430,10 @@ class RecallService:
                         FROM decision_commitments c
                         JOIN action_items ai ON ai.id = c.action_item_id
                         LEFT JOIN decision_records r ON r.source_id = c.decision_id AND r.deleted = 0
+                        LEFT JOIN decisions d ON d.id = c.decision_id
+                        LEFT JOIN meetings m ON m.id = COALESCE(ai.meeting_id, d.source_meeting_id)
                         WHERE {predicate}
+                          AND (m.id IS NULL OR m.parked = 0)
                         ORDER BY c.due_at ASC NULLS LAST, c.created_at ASC
                         LIMIT ?""",
                     [f"%{t}%" for t in terms] + [limit],

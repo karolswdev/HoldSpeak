@@ -137,7 +137,9 @@ class MeetingRepository(BaseRepository):
         SQLite transaction. The stored losing value remains untouched until this
         method commits successfully.
 
-        Returns ``resolved``, ``deleted``, ``missing``, or ``already_resolved``.
+        Returns ``resolved``, ``deleted`` (the incoming wire tombstone was
+        selected; the canonical row is parked), ``missing``, or
+        ``already_resolved``.
         """
         if resolution not in {"keep_current", "use_incoming"}:
             raise ValueError("resolution must be keep_current or use_incoming")
@@ -170,8 +172,20 @@ class MeetingRepository(BaseRepository):
             if resolution == "use_incoming":
                 incoming = json.loads(row["incoming_json"])
                 if bool(incoming.get("deleted")):
-                    # The conflict row is removed by the Meeting FK cascade.
-                    conn.execute("DELETE FROM meetings WHERE id = ?", (meeting_id,))
+                    # A tombstone parks the canonical row so its transcript,
+                    # children, and conflict history remain recoverable.
+                    conn.execute(
+                        """UPDATE meetings
+                           SET parked = 1, sync_modified_at = ?, updated_at = datetime('now')
+                           WHERE id = ?""",
+                        (resolution_clock.isoformat(), meeting_id),
+                    )
+                    conn.execute(
+                        """UPDATE meeting_sync_conflicts
+                           SET winner = 'incoming', resolved_at = ?
+                           WHERE id = ? AND meeting_id = ? AND resolved_at IS NULL""",
+                        (datetime.now().isoformat(), conflict_id, meeting_id),
+                    )
                     return "deleted"
                 if incoming_state is None or incoming_state.id != meeting_id:
                     raise ValueError("incoming Meeting does not match the conflict")
@@ -459,11 +473,14 @@ class MeetingRepository(BaseRepository):
                 now_iso,
             ))
 
-    def get_meeting(self, meeting_id: str) -> Optional["MeetingState"]:
-        """Load a complete meeting by ID."""
+    def get_meeting(
+        self, meeting_id: str, *, include_parked: bool = False
+    ) -> Optional["MeetingState"]:
+        """Load a complete active meeting, or a parked one when requested."""
         with self._connection() as conn:
             row = conn.execute(
-                "SELECT * FROM meetings WHERE id = ?", (meeting_id,)
+                "SELECT * FROM meetings WHERE id = ? AND (parked = 0 OR ?)",
+                (meeting_id, int(bool(include_parked))),
             ).fetchone()
 
             if not row:
@@ -522,6 +539,7 @@ class MeetingRepository(BaseRepository):
         return MeetingState(
             id=meeting_id,
             started_at=datetime.fromisoformat(row['started_at']),
+            parked=bool(row['parked']),
             ended_at=datetime.fromisoformat(row['ended_at']) if row['ended_at'] else None,
             title=row['title'],
             tags=tags,
@@ -616,6 +634,7 @@ class MeetingRepository(BaseRepository):
         speaker: Optional[str] = None,
         has_open_actions: bool = False,
         meeting_ids: Optional[list[str]] = None,
+        parked: bool = False,
     ) -> list[MeetingSummary]:
         """List meetings with optional filters.
 
@@ -641,9 +660,9 @@ class MeetingRepository(BaseRepository):
                         LIMIT 1
                     ), 0) as has_summary
                 FROM meetings m
-                WHERE 1=1
+                WHERE m.parked = ?
             """
-            params: list[Any] = []
+            params: list[Any] = [int(bool(parked))]
 
             if date_from:
                 query += " AND m.started_at >= ?"
@@ -699,6 +718,7 @@ class MeetingRepository(BaseRepository):
                     intel_requested_at=datetime.fromisoformat(r["intel_requested_at"]) if r["intel_requested_at"] else None,
                     intel_completed_at=datetime.fromisoformat(r["intel_completed_at"]) if r["intel_completed_at"] else None,
                     has_summary=bool(r["has_summary"]),
+                    parked=bool(r["parked"]),
                 )
                 for r in conn.execute(query, params)
             ]
@@ -870,7 +890,7 @@ class MeetingRepository(BaseRepository):
                 SELECT a.*, m.title as meeting_title, m.started_at as meeting_date
                 FROM action_items a
                 LEFT JOIN meetings m ON a.meeting_id = m.id
-                WHERE 1=1
+                WHERE (a.meeting_id IS NULL OR m.parked = 0)
             """
             params: list[Any] = []
 
@@ -1019,7 +1039,7 @@ class MeetingRepository(BaseRepository):
             return result.rowcount > 0
 
     def search_transcripts(
-        self, query: str, limit: int = 100
+        self, query: str, limit: int = 100, *, include_parked: bool = False
     ) -> list[tuple[str, "TranscriptSegment"]]:
         """Full-text search across all transcripts. Returns (meeting_id, segment) tuples."""
         from ..meeting_session import TranscriptSegment
@@ -1030,10 +1050,11 @@ class MeetingRepository(BaseRepository):
                 SELECT s.meeting_id, s.text, s.speaker, s.start_time, s.end_time, s.is_bookmarked
                 FROM segments_fts
                 JOIN segments s ON segments_fts.rowid = s.id
-                WHERE segments_fts MATCH ?
+                JOIN meetings m ON m.id = s.meeting_id
+                WHERE segments_fts MATCH ? AND (m.parked = 0 OR ?)
                 ORDER BY rank
                 LIMIT ?
-            """, (query, limit)):
+            """, (query, int(bool(include_parked)), limit)):
                 segment = TranscriptSegment(
                     text=r['text'],
                     speaker=r['speaker'],
@@ -1067,17 +1088,39 @@ class MeetingRepository(BaseRepository):
             return True
 
     def delete_meeting(self, meeting_id: str) -> bool:
-        """Delete a meeting and all related data. Returns True if found."""
+        """Park a meeting without deleting its retained work."""
         with self._connection() as conn:
             result = conn.execute(
-                "DELETE FROM meetings WHERE id = ?", (meeting_id,)
+                "UPDATE meetings SET parked = 1, updated_at = datetime('now') "
+                "WHERE id = ? AND parked = 0",
+                (meeting_id,),
             )
-            return result.rowcount > 0
+            if result.rowcount > 0:
+                return True
+            return conn.execute(
+                "SELECT 1 FROM meetings WHERE id = ?", (meeting_id,)
+            ).fetchone() is not None
 
-    def get_meeting_count(self) -> int:
-        """Get total number of meetings in database."""
+    def restore_meeting(self, meeting_id: str) -> bool:
+        """Restore a parked meeting; repeated restore is an idempotent success."""
         with self._connection() as conn:
-            row = conn.execute("SELECT COUNT(*) FROM meetings").fetchone()
+            result = conn.execute(
+                "UPDATE meetings SET parked = 0, updated_at = datetime('now') "
+                "WHERE id = ? AND parked = 1",
+                (meeting_id,),
+            )
+            if result.rowcount > 0:
+                return True
+            return conn.execute(
+                "SELECT 1 FROM meetings WHERE id = ?", (meeting_id,)
+            ).fetchone() is not None
+
+    def get_meeting_count(self, *, parked: bool = False) -> int:
+        """Get the active or parked meeting count."""
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) FROM meetings WHERE parked = ?", (int(bool(parked)),)
+            ).fetchone()
             return row[0] if row else 0
 
     # === Speaker Methods ===
@@ -1267,7 +1310,7 @@ class MeetingRepository(BaseRepository):
                     m.duration_seconds as meeting_duration
                 FROM segments s
                 JOIN meetings m ON s.meeting_id = m.id
-                WHERE s.speaker_id = ?
+                WHERE s.speaker_id = ? AND m.parked = 0
                 ORDER BY m.started_at DESC, s.start_time ASC
                 LIMIT ?
             """, (speaker_id, limit)).fetchall()
@@ -1326,7 +1369,7 @@ class MeetingRepository(BaseRepository):
                     MAX(m.started_at) as last_seen
                 FROM segments s
                 JOIN meetings m ON s.meeting_id = m.id
-                WHERE s.speaker_id = ?
+                WHERE s.speaker_id = ? AND m.parked = 0
             """, (speaker_id,)).fetchone()
 
             first_seen = None
