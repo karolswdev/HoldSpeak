@@ -666,7 +666,8 @@
             "action": "click_role",
             "adapter": "ui-by-viewport",
             "role": "button",
-            "name": "Delivery"
+            "name": "Delivery",
+            "optional": true
           },
           {
             "kind": "ui",
@@ -829,7 +830,8 @@
             "action": "click_role",
             "adapter": "ui-by-viewport",
             "role": "button",
-            "name": "Delivery"
+            "name": "Delivery",
+            "optional": true
           },
           {
             "kind": "ui",
