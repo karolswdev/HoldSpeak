@@ -38,7 +38,7 @@
 .rhythm-runs-on-caption {
   display: block;
   width: 100%;
-  font: 600 11px / 1.2 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1.2 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);

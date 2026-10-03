@@ -13,7 +13,7 @@
   border-radius: 0;
   background: var(--desk-window-well);
   box-shadow: var(--desk-window-etch);
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   color: var(--text-muted);
@@ -45,7 +45,7 @@
   border: 0;
   background: transparent;
   color: var(--text-faint);
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   cursor: pointer;
 }
 
@@ -111,7 +111,7 @@
   border: 0;
   background: transparent;
   color: var(--text-faint);
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   cursor: pointer;
 }
 

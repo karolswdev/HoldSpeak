@@ -777,8 +777,8 @@ export function EgressChip({
     "gadget-chip gadget-chip-egress" + (className ? ` ${className}` : "");
   if (onClick) {
     return (
-      <button
-        type="button"
+      <Button
+        variant="chrome"
         className={cls}
         data-scope={scope}
         title={tip}
@@ -786,7 +786,7 @@ export function EgressChip({
         onClick={onClick}
       >
         {label}
-      </button>
+      </Button>
     );
   }
   return (

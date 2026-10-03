@@ -87,7 +87,7 @@
   border-radius: var(--radius-xs);
   background: var(--surface-2);
   border: 1px solid var(--accent-tint);
-  font: 600 10px / 1.2 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1.2 var(--font-mono);
   letter-spacing: var(--letter-spacing-label-compact);
   text-transform: uppercase;
   color: var(--text);
@@ -158,7 +158,7 @@
   border-radius: 50%;
   background: var(--accent);
   color: var(--bg);
-  font: 700 9px / 1 var(--font-mono);
+  font: 700 var(--font-size-xs) / 1 var(--font-mono);
 }
 
 .surface-topology-node-label {
@@ -177,7 +177,7 @@
 
 .surface-topology-node-state {
   flex: none;
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
 }
 
 .surface-topology-node-state[data-state="idle"] {
@@ -217,7 +217,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font: 400 10px / 1.3 var(--font-mono);
+  font: 400 var(--font-size-xs) / 1.3 var(--font-mono);
   color: var(--text-muted);
 }
 

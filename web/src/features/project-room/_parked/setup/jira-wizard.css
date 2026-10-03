@@ -42,7 +42,7 @@
 
 /* DUE token on ledger rows */
 .jira-wizard-token {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono, monospace);
   font-weight: 500;
   color: var(--text-tertiary);

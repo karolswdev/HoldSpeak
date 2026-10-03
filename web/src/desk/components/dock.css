@@ -122,7 +122,7 @@
   background: transparent;
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   cursor: pointer;
 }
 .desk-next .desk-dock-label {

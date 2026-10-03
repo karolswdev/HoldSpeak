@@ -76,7 +76,7 @@
 .surface-disclosure-token {
   margin-left: auto;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   letter-spacing: var(--letter-spacing-eyebrow);
   color: var(--text-faint);
   white-space: nowrap;
@@ -116,7 +116,7 @@
   margin: 0;
   padding: 1px 6px 1px 4px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;

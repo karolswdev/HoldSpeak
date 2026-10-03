@@ -20,7 +20,7 @@
   border-radius: 0;
   box-shadow: none;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: var(--letter-spacing-eyebrow);
   text-transform: uppercase;

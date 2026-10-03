@@ -578,7 +578,7 @@
 }
 .surface-traffic-empty {
   padding: 10px 6px;
-  font: 600 11px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   color: var(--text-faint);
@@ -734,7 +734,7 @@
 }
 .surface-material code {
   font-family: var(--font-mono);
-  font-size: 0.92em;
+  font-size: max(var(--font-size-xs), 0.92em);
   background: var(--wash-1);
   padding: 1px 5px;
   border-radius: 2px;
@@ -826,7 +826,7 @@ button.surface-edit-in-place:hover {
 .desk-surface-body .transcript-list .transcript-speaker {
   flex-shrink: 0;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -900,7 +900,7 @@ button.surface-edit-in-place:hover {
   margin: 0;
   padding: 0 4px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1007,7 +1007,7 @@ button.surface-edit-in-place:hover {
 .surface-panel-title {
   margin: 2px 0 6px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1050,7 +1050,7 @@ button.surface-edit-in-place:hover {
 /* HS-111-01: outcome eyebrows in mono — system-label style */
 .surface-eyebrow {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1103,7 +1103,7 @@ button.surface-edit-in-place:hover {
   margin: 0;
   padding: 14px 4px 6px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1169,7 +1169,7 @@ button.surface-edit-in-place:hover {
   font-weight: 500;
 }
 .surface-stream-entry[data-dense] .surface-stream-meta {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .surface-stream-verbs {
   margin-left: auto;
@@ -1343,7 +1343,7 @@ button.surface-edit-in-place:hover {
 }
 .surface-ledger-cell {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   white-space: nowrap;
 }
 .surface-ledger-dest {
@@ -1422,7 +1422,7 @@ button.surface-edit-in-place:hover {
 .surface-ledger-band {
   margin: 10px 0 2px;
   padding: 0 6px;
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
   color: var(--text-faint);
@@ -1433,7 +1433,7 @@ button.surface-edit-in-place:hover {
 /* HS-111-04 — an empty band is ONE quiet ledger line, never a void. */
 .surface-ledger-empty {
   padding: 4px 6px;
-  font: 600 11px / 1.4 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1.4 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -1450,7 +1450,7 @@ button.surface-edit-in-place:hover {
 .surface-ledger-origin {
   display: block;
   padding: 2px 6px 0;
-  font: 500 10px / 1.3 var(--font-mono);
+  font: 500 var(--font-size-xs) / 1.3 var(--font-mono);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -1647,7 +1647,7 @@ button.surface-edit-in-place:hover {
    spine — the output slip's index. */
 .surface-tile-stamp {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1830,7 +1830,7 @@ button.surface-edit-in-place:hover {
   flex-shrink: 0;
 }
 .surface-bay-tag {
-  font-size: 0.625rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: var(--letter-spacing-label-wide);
   text-transform: uppercase;
@@ -1957,7 +1957,7 @@ button.surface-edit-in-place:hover {
    title (the archive card's stamp). */
 .surface-detail-facts {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   letter-spacing: var(--letter-spacing-label-compact);
   text-transform: uppercase;
   color: var(--text-muted);
@@ -2290,7 +2290,7 @@ button.surface-edit-in-place:hover {
 .prefs-hit-module {
   color: var(--text-muted);
   text-transform: uppercase;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   letter-spacing: 0.06em;
 }
 /* HS-139-07: composed 4+3 grid with bright pixel-sprite tiles. Tiles are
@@ -2365,7 +2365,7 @@ button.surface-edit-in-place:hover {
 }
 .prefs-tile-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: var(--letter-spacing-eyebrow);
   text-transform: uppercase;
@@ -2513,18 +2513,18 @@ button.surface-edit-in-place:hover {
   text-transform: uppercase;
 }
 .prefs-wallpaper-copy strong {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .prefs-wallpaper-copy > span {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.35;
   text-transform: none;
 }
 .prefs-wallpaper-state {
   justify-self: end;
   color: var(--text-muted);
-  font-size: 9px;
+  font-size: var(--font-size-xs);
 }
 .prefs-wallpaper-card[data-selected] .prefs-wallpaper-state {
   color: var(--accent);
@@ -2533,7 +2533,7 @@ button.surface-edit-in-place:hover {
   margin: 0;
   padding: 4px 6px 8px;
   color: var(--text-muted);
-  font-size: 9px;
+  font-size: var(--font-size-xs);
 }
 @container surface (max-width: 419px) {
   .prefs-wallpaper-grid {
@@ -2650,7 +2650,7 @@ button.surface-edit-in-place:hover {
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 2px 10px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .meeting-conflict-slip-facts > div {
   display: contents;
@@ -3366,7 +3366,7 @@ button.surface-edit-in-place:hover {
 .assignment-candidate-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .assignment-candidate-added {
   margin-block-start: auto;
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: var(--letter-spacing-label-compact);
   text-transform: uppercase;
   color: var(--text-faint);
@@ -3532,7 +3532,7 @@ button.surface-edit-in-place:hover {
 }
 .prefs-token-caption {
   display: block;
-  font: 600 11px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding-top: 4px;
@@ -3641,7 +3641,7 @@ button.surface-edit-in-place:hover {
   border-radius: var(--radius-sm);
   background: var(--wash-1);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   line-height: 1;
   color: var(--text);
@@ -3889,7 +3889,7 @@ button.surface-edit-in-place:hover {
 }
 .meetings-stream-fact {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -3899,13 +3899,13 @@ button.surface-edit-in-place:hover {
 /* Middle dot separator between tokens (U+00B7). */
 .meetings-stream-dot {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-dimmed);
   margin: 0 0.5ch;
 }
 .meetings-stream-no-transcript {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -3956,7 +3956,7 @@ button.surface-edit-in-place:hover {
 .meetings-stream[data-narrowed] .meetings-stream-compact-facts {
   display: block;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -4003,7 +4003,7 @@ button.surface-edit-in-place:hover {
 .meetings-detail-needs-head .surface-caption {
   flex: 1;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -4095,18 +4095,18 @@ button.surface-edit-in-place:hover {
 .meetings-review-dot {
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
 }
 .meetings-review-project .btn {
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
 .meetings-review .surface-caption {
   display: block;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;

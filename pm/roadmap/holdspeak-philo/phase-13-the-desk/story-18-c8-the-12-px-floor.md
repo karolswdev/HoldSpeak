@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** PHILO-13-11 (C1 canvas ratified: the type tokens sit in the material)
 - **Unblocks:** none
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks

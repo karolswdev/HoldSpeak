@@ -267,7 +267,7 @@
 .thread-raw-toggle {
   cursor: pointer;
   padding: 3px 8px;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -298,7 +298,7 @@
 }
 
 .desk-next .thread-row-actions .desk-chip.quiet {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -458,7 +458,7 @@
 
 .thread-ref-chip-kind {
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-faint);
@@ -474,7 +474,7 @@
 .thread-ref-chip-remove {
   all: unset;
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono, ui-monospace, monospace);
   color: var(--text-faint);
   padding: 0 2px;
@@ -589,7 +589,7 @@
 }
 
 .thread-token-count {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono, ui-monospace, monospace);
   letter-spacing: 0.04em;
   color: var(--text-faint);
@@ -647,7 +647,7 @@
   border-radius: 2px;
   background: var(--wash-1, rgba(128, 128, 128, 0.08));
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -672,7 +672,7 @@
   border-radius: 2px;
   background: var(--warn-signal, #f59e0b);
   color: var(--text-on-accent);
-  font-size: 9px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.06em;
   flex-shrink: 0;
@@ -715,7 +715,7 @@
 }
 
 .thread-tool-decision-actions .desk-chip {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -816,7 +816,7 @@
 /* Truncated tag (HS-152-05 D3) */
 .thread-result-truncated {
   display: inline-block;
-  font-size: 9px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -1110,7 +1110,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-weight: 600;
   text-transform: uppercase;
@@ -1135,7 +1135,7 @@
 
 .thread-guardrail-raw {
   margin-top: 4px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 
 .thread-guardrail-raw summary {
@@ -1151,7 +1151,7 @@
   padding: 4px 6px;
   background: var(--wash-2, rgba(128, 128, 128, 0.06));
   border-radius: 2px;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   max-height: 200px;
   overflow: auto;
   white-space: pre-wrap;
@@ -1223,7 +1223,7 @@
   align-items: center;
   gap: 4px;
   padding: 2px 6px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   background: var(--wash-2, rgba(128, 128, 128, 0.08));
   border-radius: 3px;
   max-width: 200px;
@@ -1241,7 +1241,7 @@
   padding: 0 2px;
   cursor: pointer;
   color: var(--text-muted, #888);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1;
 }
 

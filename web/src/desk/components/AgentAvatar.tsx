@@ -27,7 +27,9 @@ export function AgentAvatar({
   spriteState?: string | null;
 }) {
   const custom = String(avatar || "").trim();
-  if (custom && custom !== "\u{1F916}")
+  // PHILO-13-18: a recipe whose avatar is a colour (#2563EB, the thread-mode
+  // tint) has no glyph; drawing the hex as text overlapped the agent's name.
+  if (custom && custom !== "\u{1F916}" && !/^#[0-9a-f]{3,8}$/i.test(custom))
     return (
       <span className={className} aria-hidden="true">
         {custom}
