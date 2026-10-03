@@ -246,6 +246,8 @@ D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
 
+2026-10-03: **H-rig-clearof RATIFIED by Muad'Dib; main integration confirmed before merge.** Per-width clearance and restart UI follow-ups are available; real replayed retention passes at both widths. Arrival passes at 1440 and retains the inherited missing-Capture-slot failure at 393. No story closes. [Astra lane record](lane-rig-clearof-astra.md).
+
 2026-10-03: **B5 candidate — UNCHECKED, awaiting Muad'Dib.** Deterministic linked-week data and real-producer fences implemented in `feat/philo-13-10-astra`. Both widths and the operation sibling ran; phone editor line clipping remains a named face-lane limitation. [Lane report](lane-10-astra.md). Story 10 remains in-progress.
 
 2026-10-03: **PHILO-13-12 (C2) done** — To back (every window, menu, ⌃B, tap at 393), Intuition zoom (two remembered rects, persisted), the window's menu bar on the right button / long press with live key caps (Iconify ⌘M, Zoom ⌃M, To back ⌃B, Close ⌘W). Ledger: off-Mac Ctrl+M binds Zoom (⌃ chords first); `static-muaddib.json` still names Minimize/Maximize.
@@ -317,3 +319,5 @@ Astra r2 (`checks/charter-astra-r2.md`): r1's five fixes present; three conditio
 | F2 close → reopen place untested | story 07: a close → reopen acceptance per returning family, actual atlas cases at 1440 and touch at 393 |
 | F3 Trust exempt against "Everything" | story 07: Trust **returns** (open state + rect) |
 | F4 H-B0b line ref and the shared contract | `:492` (the count); H-B0b filters the count only; the shared semantic checks cover both Phase 13 atlas files, shown red on a broken case (story 01) |
+
+2026-10-03: H-rig-clearof counsel and mechanical integration are recorded in [the lane report](lane-rig-clearof-astra.md). Muad'Dib homes the remaining 393 arrival face fix to PHILO-13-17/C7.

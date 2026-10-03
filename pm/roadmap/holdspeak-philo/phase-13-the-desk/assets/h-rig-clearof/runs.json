@@ -1,0 +1,58 @@
+[
+  {
+    "label": "arrival-red-393",
+    "observation": "assets/h-rig-clearof/arrival-red-393/20261003T033342Z-case.philo603.toast.arrival-astra-393/observation.json",
+    "verdict": "fail",
+    "notes": [
+      "the primary predicate result is retained, but the declared post-verdict Dismiss transition failed its separate fence",
+      "predicate: the card is not rendered inside its declared slot '[data-testid=arrival-aftercare-slot]': {'selector': '[data-testid=arrival-aftercare-slot]', 'present': False, 'contains_card': False}",
+      "a nonzero diff with the wrong result is a finding, not a pass (changed: ['api_reads', 'attrs', 'document_text_len', 'document_text_sha256', 'focus', 'focus_label', 'rect', 'target_present', 'text', 'visible'])."
+    ],
+    "revision": "5912fcb9474cae7b058838f120a2c216189be89a",
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-kfhgjq6z/.local/share/holdspeak/holdspeak.db"
+  },
+  {
+    "label": "arrival-1440",
+    "observation": "assets/h-rig-clearof/arrival-1440/20261003T034200Z-case.philo603.toast.arrival-astra-1440/observation.json",
+    "verdict": "pass",
+    "notes": [
+      "predicate: 'MEETING READY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 83, 'y': 588, 'w': 560, 'h': 152}"
+    ],
+    "revision": "5912fcb9474cae7b058838f120a2c216189be89a",
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-54i5zs5s/.local/share/holdspeak/holdspeak.db"
+  },
+  {
+    "label": "arrival-393",
+    "observation": "assets/h-rig-clearof/arrival-393/20261003T034258Z-case.philo603.toast.arrival-astra-393/observation.json",
+    "verdict": "fail",
+    "notes": [
+      "the primary predicate result is retained, but the declared post-verdict Dismiss transition failed its separate fence",
+      "predicate: the card is not rendered inside its declared slot '[data-testid=arrival-aftercare-slot]': {'selector': '[data-testid=arrival-aftercare-slot]', 'present': False, 'contains_card': False}",
+      "a nonzero diff with the wrong result is a finding, not a pass (changed: ['api_reads', 'attrs', 'document_text_len', 'document_text_sha256', 'focus', 'focus_label', 'rect', 'target_present', 'text', 'visible'])."
+    ],
+    "revision": "5912fcb9474cae7b058838f120a2c216189be89a",
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-hi7cwd6n/.local/share/holdspeak/holdspeak.db"
+  },
+  {
+    "label": "restart-1440",
+    "observation": "assets/h-rig-clearof/restart-1440/20261003T034044Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-1440/observation.json",
+    "verdict": "pass",
+    "notes": [
+      "framing is a separate scroll after the raw observation; it does not change the verdict or completion time",
+      "predicate: observe_at text is 'The meeting covered decisions regarding the local meeting ledger, migration planning, summary retrieval after hub restarts, and isolated rig tests. Mayyachan is tasked with writing the migration plan by Friday, while Leo Martinez will test restart retrieval on Tuesday.', wanted 'The meeting covered decisions regarding the local meeting ledger, migration planning, summary retrieval after hub restarts, and isolated rig tests. Mayyachan is tasked with writing the migration plan by Friday, while Leo Martinez will test restart retrieval on Tuesday.'"
+    ],
+    "revision": "5912fcb9474cae7b058838f120a2c216189be89a",
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-w7sbmvnm/.local/share/holdspeak/holdspeak.db"
+  },
+  {
+    "label": "restart-393-touch",
+    "observation": "assets/h-rig-clearof/restart-393-touch/20261003T034518Z-case.closure.chain.s3_same_summary_after_restart.replayed-astra-393/observation.json",
+    "verdict": "pass",
+    "notes": [
+      "framing is a separate scroll after the raw observation; it does not change the verdict or completion time",
+      "predicate: observe_at text is 'The meeting covered decisions regarding the local meeting ledger, migration planning, summary retrieval after hub restarts, and isolated rig tests. Mayyachan is tasked with writing the migration plan by Friday, while Leo Martinez will test restart retrieval on Tuesday.', wanted 'The meeting covered decisions regarding the local meeting ledger, migration planning, summary retrieval after hub restarts, and isolated rig tests. Mayyachan is tasked with writing the migration plan by Friday, while Leo Martinez will test restart retrieval on Tuesday.'"
+    ],
+    "revision": "5912fcb9474cae7b058838f120a2c216189be89a",
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-uousa35q/.local/share/holdspeak/holdspeak.db"
+  }
+]
