@@ -23,6 +23,8 @@ import { useDesk, type PanelRect } from "../store";
 import { useCompactViewport } from "../useCompactViewport";
 import { WorkMenu } from "./DeskMenu";
 import { headMenuEntries } from "../windowMenuAdapter";
+import { WindowIdContext } from "./window/windowIdContext";
+import { primeSendTo, sendToEntry, useSendToTick, withSendTo } from "../windowSend";
 import { DESK_WINDOW, DESK_Z } from "../../lib/tokens.gen";
 
 // -- Extracted modules (HS-117-04) --
@@ -642,6 +644,12 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const [headMenu, setHeadMenu] = useState<{ x: number; y: number } | null>(
     null,
   );
+  // PHILO-13-15 (C5): an open window menu reads its Send to facts and
+  // re-renders when a read lands.
+  useSendToTick(Boolean(headMenu));
+  useEffect(() => {
+    if (headMenu) primeSendTo(id);
+  }, [headMenu, id]);
   // PHILO-13-12 (C2) — the right button anywhere in the window opens the
   // window's menu bar at the pointer (board C1-2b). A field, a link and a
   // body that draws its own menu (it prevents the default) keep their own
@@ -1000,18 +1008,18 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           label={`${name} window menu`}
           x={headMenu.x}
           y={headMenu.y}
-          entries={headMenuEntries({
+          entries={withSendTo(sendToEntry(id), headMenuEntries({
             maximized,
             compact,
             requestMinimize,
             toggleMaximize: () => zoomWindow(id),
             requestClose,
             toBack: () => sendWindowToBack(id),
-          })}
+          }))}
           onClose={() => setHeadMenu(null)}
         />
       ) : null}
-      {children}
+      <WindowIdContext.Provider value={id}>{children}</WindowIdContext.Provider>
       {!compact ? win.grip : null}
       {!compact ? win.edges : null}
     </motion.div>

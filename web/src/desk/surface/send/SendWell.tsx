@@ -76,6 +76,18 @@ const bump = () => { store.tick++; store.subs.forEach((f) => f()); };
 const useStore = () =>
   useSyncExternalStore((f) => { store.subs.add(f); return () => { store.subs.delete(f); }; }, () => store.tick);
 
+/** PHILO-13-15 (C5): the push seam (Phase 12 design section 6). ONE setter
+ *  per well: `Send to ▸` sets the destination of the document `ref`; an open
+ *  well reacts in place (no remount), a well that mounts later opens on it.
+ *  A held press keeps its pick (the row's own toggle rule). */
+export function pickDestination(ref: string, destinationId: string | null) {
+  const was = store.picked.get(ref) ?? null;
+  if (was && [...store.busy, ...store.holds.keys()].includes(`${ref}|${was}`)) return;
+  store.picked.set(ref, destinationId); bump();
+}
+/** The destination picked for `ref`, or null. */
+export const pickedDestination = (ref: string): string | null => store.picked.get(ref) ?? null;
+
 /** Test seam: forget every held press (a fresh page has none). */
 export function resetSendStore() {
   store.picked.clear(); store.preparedOpen.clear(); store.holds.clear(); store.outcomes.clear(); store.busy.clear();
@@ -701,7 +713,10 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
  *  sent rows; no counter at zero. The update keeps its DELIVERY N. */
 export const HISTORY_HEAD = "SENDS";
 
-export function SendHistory({ sends }: { sends: Send[] }) {
+/** `tag` (PHILO-13-15, Astra C5 check condition 2): a host whose document has
+ *  forms (the meeting) names each row's form, so a result of another form
+ *  stays readable after he switches form. */
+export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => { form: string; word: string } | null }) {
   const rows = sends
     .filter((s) => s.state === "sent" || s.state === "unknown")
     .sort((a, b) => String(b.settled_at ?? "").localeCompare(String(a.settled_at ?? "")));
@@ -714,6 +729,8 @@ export function SendHistory({ sends }: { sends: Send[] }) {
           <ul className="surface-ledger-rows" data-testid="history-list">
             {rows.map((r) => {
               const name = r.destination_name ?? "—";
+              const t = tag?.(r) ?? null;
+              const formChip = t ? <span className="surface-token" data-chip data-form={t.form} data-testid="history-form">{t.word}</span> : null;
               if (r.state === "unknown") {
                 const far = farSide(r.channel, r.target, r.account);
                 return (
@@ -721,6 +738,7 @@ export function SendHistory({ sends }: { sends: Send[] }) {
                     lead={<span data-outcome="unknown"><StateChip state="warning" label="" /></span>}
                     primary={<span className="surface-primary" data-to={name}>{`${SEND_WORDS.unknownChip} · CHECK ${name}`}</span>}
                     cells={<span className="send-cells">
+                      {formChip}
                       {r.reason ? <span className="surface-token" data-chip>{unknownWord(r.reason)}</span> : null}
                       {far ? <Button dense variant="ghost" data-testid="history-check" data-href={far} onClick={() => openFar(far)}>{SEND_WORDS.check}</Button> : null}
                       <span className="surface-token" data-chip>{stamp(r.settled_at)}</span>
@@ -732,6 +750,7 @@ export function SendHistory({ sends }: { sends: Send[] }) {
                   lead={<span data-outcome="sent"><StateChip state="success" label="" /></span>}
                   primary={<span className="surface-primary" data-to={name}>{name}</span>}
                   cells={<span className="send-cells">
+                    {formChip}
                     <span className="surface-token" data-chip data-tone="ok" data-testid="history-word">{sentWord(r.channel, r.proof, r.account)}</span>
                     <ProofCell channel={r.channel} proof={r.proof} target={r.target} account={r.account} />
                     <span className="surface-token" data-chip>{stamp(r.settled_at)}</span>

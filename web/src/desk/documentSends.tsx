@@ -15,6 +15,7 @@
 import type { ReactNode } from "react";
 import { PreparedChip, SendWells, mergeKnown, useSends, type DocRef } from "./surface/send";
 import { stamp } from "../features/channels/channels";
+import { useAnnounceWindowDocument } from "./windowSend";
 import "./documentSends.css";
 
 /** `SEP 29` from an ISO time, in the viewer's zone. */
@@ -39,7 +40,20 @@ export const decisionRecordDoc = (id: string, text?: string | null): DocRef => (
 
 /** The brief's SEND well and its SENDS history (canvas A; the Chair and Intelligence -> BRIEF). */
 export function BriefSendWells({ brief }: { brief: BriefLike }) {
+  // PHILO-13-15 (C5): the exact brief id is the window's document (`latest` never substitutes).
+  useAnnounceWindowDocument({ kind: "brief", id: brief.id });
   return <div data-seat="brief"><SendWells doc={briefDoc(brief)} /></div>;
+}
+
+/** PHILO-13-15 (C5, canvas P5): the artifact window's SEND well on `artifact:<id>`. */
+export const artifactDoc = (id: string, title?: string | null, type?: string | null): DocRef => ({
+  ref: `artifact:${id}`,
+  title: String(title || "Artifact"),
+  label: `ARTIFACT · ${String(type || "artifact").replace(/[_-]+/g, " ").toUpperCase()}`,
+});
+
+export function ArtifactSendWells({ id, title, type }: { id: string; title?: string | null; type?: string | null }) {
+  return <div data-seat="artifact"><SendWells doc={artifactDoc(id, title, type)} /></div>;
 }
 
 /** The Chair's BRIEF head verbs with PREPARED ×K first (A4). With a

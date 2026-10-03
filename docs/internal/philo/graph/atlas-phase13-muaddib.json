@@ -657,6 +657,197 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.p13.send_to.window_menu_opens_preview",
+      "job": "p12",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p13_send_to_picked",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P13SendToDecision",
+            "status": "accepted",
+            "decision_markdown": "P13SendToDecisionText."
+          },
+          "expect_status": 201,
+          "why": "create the accepted desk decision through its real producer",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P13-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the decision producer result in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "why": "open the Desk palette"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "P13SendToDecision",
+          "why": "find the real desk decision by its title"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button.desk-deck-row[id='desk-palette-option-decision:{decision_id}']",
+          "why": "open the decision window through the Desk palette"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[id='pullout:decision:{decision_id}'] [data-seat=desk-decision] [data-testid=send-well]",
+          "why": "the decision window is open with its SEND well, nothing picked"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "button": "right",
+          "selector": "[id='pullout:decision:{decision_id}'] > .desk-pullout-head .desk-pullout-title",
+          "why": "gesture 1: the right button on the title bar opens the window's menu (DeskWindow.tsx)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-head-menu [role=menuitem][aria-haspopup=menu]:has-text('Send to')",
+          "why": "gesture 2: Send to ▸ leads the window menu; its rows are the saved destinations"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-head-menu [role=menuitem]:has-text('P13-Folder · FILE')",
+        "why": "gesture 3: the destination row of Send to ▸; the window's own well opens on it",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/preview"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/preview",
+              "status": 200,
+              "body_fields": {
+                "payload_digest": {
+                  "nonempty": true
+                }
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "Send"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {},
+                    "count": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": "[id='pullout:decision:{decision_id}'] [data-seat=desk-decision] [data-testid=send-open][data-destination='P13-Folder'] [data-testid=send-verbs]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=desk_decision:{decision_id}"
+          }
+        ],
+        "words": "the owner right-clicks the decision window's title bar, opens Send to ▸ and picks P13-Folder: the window's own SEND well opens on P13-Folder with the hub's real preview of desk_decision:{decision_id} and Send, and the hub holds no send row until he presses Send. Red on main: the window menu has no Send to (windowMenuAdapter.tsx builds window verbs only)."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
     }
   ],
   "states": [
@@ -793,12 +984,44 @@
         {
           "path": "web/src/desk/components/DeskMenuBar.tsx",
           "symbol": "export function groupGoForPhone(",
-          "line": 39,
+          "line": 41,
           "claim": "at 393 Go leads with the four menus as submenus"
         }
       ],
       "reachable_by": [
         "case.p13.phone.go_desk_menu"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_send_to_picked",
+      "family": "desk_presentation",
+      "values": {
+        "opened_by": "Send to ▸ in the window menu (one composition with the Object menu)",
+        "well": "the window's own SEND well, picked, its preview and Send in view; no send row"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskWindow.tsx",
+          "symbol": "entries={withSendTo(sendToEntry(id), headMenuEntries({",
+          "line": 1011,
+          "claim": "the window menu leads with Send to ▸ from the window's own document"
+        },
+        {
+          "path": "web/src/desk/windowSend.tsx",
+          "symbol": "export function sendToEntry(",
+          "line": 197,
+          "claim": "the rows are the active saved destinations; withheld where the document cannot send"
+        },
+        {
+          "path": "web/src/desk/surface/send/SendWell.tsx",
+          "symbol": "export function pickDestination(",
+          "line": 83,
+          "claim": "the push seam: one setter per well; an open well reacts in place"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.send_to.window_menu_opens_preview"
       ]
     }
   ],
@@ -829,6 +1052,12 @@
       "applicability": "not_applicable",
       "combination": "case.p13.capture.titled_by_first_words with an .op sibling",
       "reason": "its durable half is read in the same case: expected.reads GET /api/thoughts must hold the thought titled with the typed words (protocol_reads), beside the face half."
+    },
+    {
+      "id": "excluded.p13.send_to_states_and_op",
+      "applicability": "not_applicable",
+      "combination": "case.p13.send_to.window_menu_opens_preview with an .op sibling, its SENDING / FAILED / UNKNOWN / OFFLINE / CHECKING / CAN'T CHECK branches, the Object menu, the Room link, the brief and artifact windows, and touch at 393",
+      "reason": "the rig drives a mouse at 393 and has no route-injection step (scripts/graph_walk.py UI_ACTIONS); the stand-in outcomes need injected answers. Each branch is fenced as rendered at 1440 (mouse) and 393 (touch) through the real hub by tests/e2e/test_philo13_15_send_to_glass.py, which reads the hub's own channel_sends rows and a real FILE send read back from the HOME. The .op sibling count is Astra's (H-B0b)."
     }
   ],
   "council_readings": []

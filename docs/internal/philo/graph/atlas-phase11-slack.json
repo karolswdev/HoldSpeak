@@ -9170,7 +9170,7 @@
         {
           "path": "web/src/meetings/MeetingSendWell.tsx",
           "symbol": "data-seat=\"meeting\"",
-          "line": 44,
+          "line": 69,
           "claim": "The meeting document forms mount one SEND well."
         },
         {
@@ -9194,7 +9194,7 @@
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "data-testid=\"send-well\"",
-          "line": 493,
+          "line": 505,
           "claim": "The shared send well exposes destination rows, receipts and prepared rows."
         }
       ],
@@ -9227,19 +9227,19 @@
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "data-testid=\"send-sent\"",
-          "line": 302,
+          "line": 314,
           "claim": "The shared Send well renders terminal Slack success and failure receipts."
         },
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "data-testid=\"send-failed\"",
-          "line": 308,
+          "line": 320,
           "claim": "The shared Send well renders a known Slack failure."
         },
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "data-testid=\"send-unknown\"",
-          "line": 315,
+          "line": 327,
           "claim": "The shared Send well renders an indeterminate Slack outcome."
         }
       ],
@@ -9316,7 +9316,7 @@
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "data-testid=\"preview-refused\"",
-          "line": 429,
+          "line": 441,
           "claim": "The well keeps a named preview refusal with size facts on its face."
         },
         {
