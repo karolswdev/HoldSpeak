@@ -69,7 +69,9 @@ Missing shards: **none**.
 | `desk.persist` | Persist workspace | Restore and save the local Desk arrangement with a bounded versioned shape. | built_unreleased | user | source_and_assertions_inspected | no | local |
 | `desk.runtime` | Reflect runtime state | Keep Desk surfaces truthful while the single runtime bus connects, reconnects or is offline. | partial | user | source_and_assertions_inspected | no | local |
 | `desk.native_host` | Native Desk host seam | Provide bounded display, filesystem and host integration capabilities when a native adapter is later adopted. | planned | integration | source_inspected | no | possible |
-| `project.update.linked_week` | Draft a project update | Draft an update from linked meeting summaries, decisions and owned actions. | built_unreleased | user | tests_executed | no | local |
+| `desk.dock.live` | Read live Dock state | Read meeting, send, recording and connection state from Dock AppIcons. | partial | user | tests_executed | no | local |
+| `project.update.linked_week` | Draft a project update | Draft an update from linked meeting summaries, decisions and owned actions. Find the latest published update. | built_unreleased | user | tests_executed | no | local |
+| `people.prep.read` | Read 1:1 preparation | Read a report's linked 1:1, agenda, project and owned meeting actions. | partial | user | tests_executed | no | local |
 | `agents.thread_persistent` | Persistent Thread chat | Save a multi-turn assistant conversation with branches, drafts, refs and kept results. | experimental | user | source_and_assertions_inspected | no | possible |
 | `agents.thread_tool_loop` | Persistent Thread tool loop | Offer a bounded MCP tool palette inside a Thread turn and retain tool results and receipts. | experimental | user | source_and_assertions_inspected | no | possible |
 | `agents.interview` | Interview conversation | Use one owner-only Thread mode to record sourced facts and reviewable suggestions. | experimental | user | source_and_assertions_inspected | no | possible |

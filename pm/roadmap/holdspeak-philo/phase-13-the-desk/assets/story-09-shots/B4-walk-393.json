@@ -1,0 +1,41 @@
+{
+ "width": 393,
+ "touch": true,
+ "frame_taps": 3,
+ "brief_failure": "NEXT 1:1 DID NOT LOAD \u00b7 NOT AVAILABLE NOW\nTry again",
+ "brief_failure_side": "NEXT 1:1\nNEXT 1:1 DID NOT LOAD \u00b7 NOT AVAILABLE NOW\nTry again",
+ "after_retry_side": "NEXT 1:1\n1:1 Priya / Karol\nTOMORROW 12:10 AM \u00b7 B4 calendar\nLink this 1:1",
+ "suggestion": "NEXT 1:1\n1:1 Priya / Karol\nTOMORROW 12:10 AM \u00b7 B4 calendar\nLink this 1:1",
+ "header_before_link": 0,
+ "links_before_press": 0,
+ "header_after_link": "NEXT 1:1 \u00b7 TOMORROW 12:10 AM",
+ "now_side": "NEXT 1:1\nTOMORROW 12:10 AM",
+ "people_iso": [],
+ "row_taps": 1,
+ "front_after_row": [
+  "People"
+ ],
+ "lens_after_row": "Prep",
+ "agenda": "AGENDA 1\nReview the dry-run report",
+ "owed": "WAITING ON PRIYA\nSend the dry-run report\n1:1 Priya / Karol \u00b7 BY TUE",
+ "projects": "PROJECTS\nB4 Dry-run project",
+ "prep_iso": [],
+ "prep_header": "NEXT 1:1 \u00b7 TOMORROW 12:10 AM",
+ "readable": {
+  "scopes": 1,
+  "clipped": [],
+  "overlaps": []
+ },
+ "readable_scrolled": {
+  "scopes": 1,
+  "clipped": [],
+  "overlaps": []
+ },
+ "front_after_owed": [
+  {
+   "title": "Meetings",
+   "text": "OUTCOMES \u25be Nothing needs you Record meeting Import HAS OPEN ACTIONS PARKED 1 1:1 Priya / Karol OCT 04 \u00b7 30 MIN \u00b7 SUMMARY STORED SUMMARY Priya owns the report fo"
+  }
+ ],
+ "errors": []
+}

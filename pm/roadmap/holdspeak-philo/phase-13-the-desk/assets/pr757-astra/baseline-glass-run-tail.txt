@@ -1,0 +1,63 @@
+Command (run from the baseline worktree; resolved isolated HOME shown):
+
+```text
+BASELINE_HOME=/tmp/hs-pr757-baseline.3dbh9H
+PATH=/Users/karol/.nvm/versions/node/v22.21.0/bin:$PATH HOME="$BASELINE_HOME" PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright npm_config_cache=/Users/karol/.npm uv run pytest -q tests/e2e/test_hs202_03_species_glass.py tests/e2e/test_philo13_12_gadgets_glass.py::TestTheGadgets::test_gadgets_1440
+```
+
+Failure excerpts and exact run tail:
+
+```text
+F                                                                    [100%]
+=================================== FAILURES ===================================
+_______ TestSharedControlsAreSpecies.test_menus_dock_and_wings[1440-900] _______
+E           AssertionError: the dock's Tab order left DOM order: ['Intelligence, 2 need you', 'Speak', 'Meetings', 'People', 'Agents', 'Settings', 'Floor', 'Desk memory, 2 need attention', 'Delivery', 'Panes', '◌Hide the menus'] != ['Intelligence, 2 need you', 'Speak', 'Meetings', 'People', 'Agents', 'Settings', 'Floor', 'Desk memory, 2 need attention', 'Delivery', 'Panes', 'More AppIcons']
+E           assert ['Intelligenc...ettings', ...] == ['Intelligenc...ettings', ...]
+E             At index 10 diff: '◌Hide the menus' != 'More AppIcons'
+_______ TestSharedControlsAreSpecies.test_menus_dock_and_wings[393-852] ________
+E       AssertionError: the dock: rows overlap after the 44px growth — a taller target that eats its neighbour is not a target: 'Agents' x 'More AppIcons' (48.0x54.0px)
+E       assert not ["'Agents' x 'More AppIcons' (48.0x54.0px)"]
+_______________________ TestTheGadgets.test_gadgets_1440 _______________________
+E               AssertionError: {
+E                   "G2 the zoomed state resizes": {
+E                     "zoomed": [
+E                       10,
+E                       54,
+E                       1420,
+E                       794
+E                     ],
+E                     "sized": [
+E                       10,
+E                       54,
+E                       1420,
+E                       794
+E                     ]
+E                   },
+E                   "G2 both rects in the workspace document": {
+E                     "rects": {
+E                       "surface-meetings": {
+E                         "x": 790,
+E                         "y": 229,
+E                         "w": 640,
+E                         "h": 619
+E                       }
+E                     },
+E                     "order": [
+E                       "surface-project-memory",
+E                       "chair:brief",
+E                       "chair:week",
+E                       "chair:capture",
+E                       "chair:needs",
+E                       "surface-meetings"
+E                     ],
+E                     "max": [
+E                       "surface-meetings"
+E                     ]
+E                   }
+E               assert not {'G2 both rects in the workspace document': {'max': ['surface-meetings'], 'order': ['surface-project-memory', 'chair:b...0, 'x': 790, 'y': 229}}, 'G2 the zoomed state resizes': {'sized': [10, 54, 1420, 794], 'zoomed': [10, 54, 1420, 794]}}
+=========================== short test summary info ============================
+FAILED tests/e2e/test_hs202_03_species_glass.py::TestSharedControlsAreSpecies::test_menus_dock_and_wings[1440-900]
+FAILED tests/e2e/test_hs202_03_species_glass.py::TestSharedControlsAreSpecies::test_menus_dock_and_wings[393-852]
+FAILED tests/e2e/test_philo13_12_gadgets_glass.py::TestTheGadgets::test_gadgets_1440
+3 failed, 2 passed in 51.24s
+```

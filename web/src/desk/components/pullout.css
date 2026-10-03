@@ -759,6 +759,12 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
     border-left-width: 0;
     border-right-width: 0;
   }
+  /* PHILO-13-17 (C7, Q5; C1 R2 on every host): at 393 every control in a
+     window's body and footer owns 44 x 44. */
+  .desk-next .desk-window-shell.is-sheet :is(.surface-footer-verbs, .desk-pullout-body, .desk-surface-body) :is(button, [role=button], a[href]) {
+    min-height: 44px;
+    min-width: 44px;
+  }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head {
     margin: 0;
     flex-wrap: nowrap;

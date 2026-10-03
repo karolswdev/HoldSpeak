@@ -1,0 +1,30 @@
+[
+  {
+    "label": "final-reload-1440",
+    "case": "case.p13.dock.meeting_read_survives_reload",
+    "verdict": "pass",
+    "source": ".tmp/c3-conditions/walks/final-reload-1440/20261003T073537Z-case.p13.dock.meeting_read_survives_reload-astra-1440",
+    "observation": "final-reload-1440/observation.json",
+    "build": {
+      "built": true,
+      "index_sha256": "c010cafd361d050d7068016eb57fabbc4d9ff87d6e7990214801f2085dd376ca",
+      "assets": [
+        "index-C_g7Nx2i.js"
+      ]
+    }
+  },
+  {
+    "label": "final-reload-393",
+    "case": "case.p13.dock.meeting_read_survives_reload",
+    "verdict": "pass",
+    "source": ".tmp/c3-conditions/walks/final-reload-393/20261003T073637Z-case.p13.dock.meeting_read_survives_reload-astra-393",
+    "observation": "final-reload-393/observation.json",
+    "build": {
+      "built": true,
+      "index_sha256": "c010cafd361d050d7068016eb57fabbc4d9ff87d6e7990214801f2085dd376ca",
+      "assets": [
+        "index-C_g7Nx2i.js"
+      ]
+    }
+  }
+]

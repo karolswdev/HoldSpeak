@@ -59,10 +59,139 @@ _SUMMARY_ATTENTION_PREDICATE = """
 """
 
 
+def _sorted_attendees(values: list[Any]) -> list[str]:
+    """Return exact, trimmed, non-empty attendee strings in lexical order."""
+    return sorted(
+        {
+            text
+            for value in values
+            if (text := str(value or "").strip())
+        }
+    )
+
+
+def _attendees_for_rows(
+    conn: sqlite3.Connection, rows: list[sqlite3.Row]
+) -> dict[str, list[str]]:
+    """Batch the two durable attendee sources for one meeting-list page."""
+    meeting_ids = [str(row["id"]) for row in rows]
+    if not meeting_ids:
+        return {}
+
+    placeholders = ",".join("?" for _ in meeting_ids)
+    values: dict[str, list[Any]] = {meeting_id: [] for meeting_id in meeting_ids}
+    for row in conn.execute(
+        f"""SELECT DISTINCT meeting_id, speaker
+            FROM segments
+            WHERE meeting_id IN ({placeholders})
+        """,
+        meeting_ids,
+    ):
+        values[str(row["meeting_id"])].append(row["speaker"])
+
+    event_to_meetings: dict[str, list[str]] = {}
+    for row in rows:
+        event_id = str(row["calendar_event_id"] or "")
+        if event_id:
+            event_to_meetings.setdefault(event_id, []).append(str(row["id"]))
+    event_ids = list(event_to_meetings)
+    if event_ids:
+        event_placeholders = ",".join("?" for _ in event_ids)
+        for row in conn.execute(
+            f"""SELECT id, attendees_json
+                FROM calendar_events
+                WHERE id IN ({event_placeholders})""",
+            event_ids,
+        ):
+            event_attendees = json.loads(row["attendees_json"])
+            if not isinstance(event_attendees, list):
+                raise TypeError("calendar event attendees_json must be a JSON list")
+            for meeting_id in event_to_meetings.get(str(row["id"]), []):
+                values[meeting_id].extend(event_attendees)
+
+    return {
+        meeting_id: _sorted_attendees(attendees)
+        for meeting_id, attendees in values.items()
+    }
+
+
 class MeetingRepository(BaseRepository):
     """Persistence for meetings, transcripts, speakers, and action items."""
 
     table = "meetings"
+
+    # === C3 Dock readiness ===
+
+    def mark_ready_unseen(
+        self, meeting_id: str, *, ready_at: Optional[str] = None
+    ) -> Optional[dict[str, Any]]:
+        """Record one real completion as unread Dock attention.
+
+        This seam is called by the producer after it has durably completed the
+        meeting. Historical summaries never receive a row, so they cannot
+        manufacture a READY badge during a later list read.
+        """
+        clean_id = str(meeting_id or "").strip()
+        if not clean_id:
+            return None
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT id, title, intel_completed_at FROM meetings WHERE id = ? AND parked = 0",
+                (clean_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            revision = str(ready_at or row["intel_completed_at"] or datetime.now().isoformat())
+            conn.execute(
+                """INSERT INTO meeting_ready_reads (meeting_id, ready_at, read_at)
+                   VALUES (?, ?, NULL)
+                   ON CONFLICT(meeting_id) DO UPDATE SET
+                       ready_at = excluded.ready_at,
+                       read_at = CASE
+                           WHEN meeting_ready_reads.ready_at = excluded.ready_at
+                           THEN meeting_ready_reads.read_at
+                           ELSE NULL
+                       END""",
+                (clean_id, revision),
+            )
+            return {"id": str(row["id"]), "title": row["title"], "ready_at": revision}
+
+    def list_unread_ready(self) -> list[dict[str, Any]]:
+        """Return only producer-created readiness rows still unseen."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT r.meeting_id AS id, m.title, r.ready_at
+                   FROM meeting_ready_reads r
+                   JOIN meetings m ON m.id = r.meeting_id
+                   WHERE r.read_at IS NULL AND m.parked = 0
+                   ORDER BY r.ready_at DESC, r.meeting_id"""
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def mark_ready_read(self, meeting_id: str) -> Optional[dict[str, Any]]:
+        """Acknowledge the current readiness revision, idempotently."""
+        clean_id = str(meeting_id or "").strip()
+        if not clean_id:
+            return None
+        with self._connection() as conn:
+            meeting = conn.execute(
+                "SELECT id FROM meetings WHERE id = ? AND parked = 0", (clean_id,)
+            ).fetchone()
+            if meeting is None:
+                return None
+            row = conn.execute(
+                "SELECT meeting_id, ready_at FROM meeting_ready_reads WHERE meeting_id = ?",
+                (clean_id,),
+            ).fetchone()
+            if row is None:
+                # Opening an old summary is a harmless acknowledgement. It
+                # must not create readiness state or turn history into READY.
+                return {"id": clean_id, "ready_at": None, "read": True}
+            conn.execute(
+                "UPDATE meeting_ready_reads SET read_at = COALESCE(read_at, datetime('now')) WHERE meeting_id = ?",
+                (clean_id,),
+            )
+            return {"id": str(row["meeting_id"]), "ready_at": str(row["ready_at"]), "read": True}
 
     def _normalize_action_item_status(self, status: object) -> str:
         """Validate and normalize an action item status value."""
@@ -733,6 +862,8 @@ class MeetingRepository(BaseRepository):
             query += " ORDER BY m.started_at DESC LIMIT ? OFFSET ?"
             params.extend([limit, offset])
 
+            rows = conn.execute(query, params).fetchall()
+            attendees_by_meeting = _attendees_for_rows(conn, rows)
             return [
                 MeetingSummary(
                     id=r['id'],
@@ -755,6 +886,7 @@ class MeetingRepository(BaseRepository):
                     capture_checkpoint_seconds=float(r["capture_checkpoint_seconds"] or 0.0),
                     provenance=r["provenance"] or "desktop",
                     calendar_event_id=r["calendar_event_id"] if r["calendar_event_id"] else None,
+                    attendees=attendees_by_meeting.get(str(r["id"]), []),
                     transcript_words=int(r["transcript_words"]) if r["segment_count"] and r["transcript_words"] else None,
                     needs_you_count=int(r["needs_you_count"]) if r["needs_you_count"] else 0,
                     intel_requested_at=datetime.fromisoformat(r["intel_requested_at"]) if r["intel_requested_at"] else None,
@@ -762,7 +894,7 @@ class MeetingRepository(BaseRepository):
                     has_summary=bool(r["has_summary"]),
                     parked=bool(r["parked"]),
                 )
-                for r in conn.execute(query, params)
+                for r in rows
             ]
 
     def get_summary_attention_count(self, *, parked: bool = False) -> int:

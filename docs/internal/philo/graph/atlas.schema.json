@@ -371,6 +371,11 @@
               "type": "object",
               "minProperties": 1,
               "description": "PHILO-7-03: capture the one row at capture_path whose fields equal these values (the desk seeds rows of its own)."
+            },
+            "capture_field": {
+              "type": "string",
+              "minLength": 1,
+              "description": "When capture_path names a collection, take this field from the one row selected by capture_match."
             }
           }
         },
@@ -981,10 +986,12 @@
             "action": {
               "enum": [
                 "restart_hub",
+                "stop_hub",
                 "queue_meeting_intelligence",
                 "create_repository_fixture",
                 "ingest_coder_fixture",
-                "seed_needs_you_week"
+                "seed_needs_you_week",
+                "seed_people_prep"
               ]
             },
             "capture_as": {

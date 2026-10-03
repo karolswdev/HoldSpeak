@@ -353,7 +353,15 @@
           "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "at 393 no hardware key is assumed: the phone's one menu door (Go carries the Desk menu's verbs, DeskMenuBar.tsx)"
+          "why": "at 393 no hardware key is assumed: the phone's one menu door, Go (DeskMenuBar.tsx)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Desk')",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q3): Go is grouped at 393, Chair ▸ Desk ▸ Object ▸ Window ▸; the Desk menu's verbs are one tap in (DeskMenuBar.tsx groupGoForPhone)"
         },
         {
           "kind": "ui",
@@ -413,6 +421,1220 @@
         "words": "the owner opens a thought in one key press (1440) or from the menu (393, a tap), types its first words, and the thought is titled by them: the Thought window's title shows the hub's saved title, and the hub's thought list (the read the Chair's THOUGHTS rows draw, ChairHome.tsx) holds a thought titled with those words. Red on main: no ⌃T verb, and every thought kept the title `Thought` (newThought.ts:29)."
       },
       "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.phone.switcher_two_taps",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.phone_switcher"
+      ],
+      "state_id": "state.desk_presentation.p13_phone_switcher",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the Desk past the closed gate"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "the Chair screen is drawn: its Needs you window is open"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[data-testid=desk-screen-switcher]",
+          "why": "tap 1 at 393: the screen title is the window switcher, `<window> ▾` (ScreenSwitcher.tsx)",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "why": "1440: the Window menu (the switcher is a 393 face; the same Chair rows live in Window ▸ Chair)",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "why": "1440: Window ▸ Chair",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "why": "the open windows are listed, a check on the front one"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+        "why": "tap 2: the Brief row brings Brief to the work area"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "attr_equals",
+          "attr": "aria-label",
+          "value": "Brief"
+        },
+        "observe_at": ".desk-window-shell.is-front",
+        "words": "at 393 the owner reaches any open window in two taps: the screen title's switcher, then the window's row; Brief is the one front window. At 1440 the same rows in Window ▸ Chair do the same. Red on main 2d1d791a: the screen title is a label (no switcher), and Brief is Go ▸ Chair ▸ Brief, three taps."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.phone.go_desk_menu",
+      "job": "j11",
+      "edge_ids": [
+        "edge.face.desk_new_thought"
+      ],
+      "state_id": "state.desk_presentation.p13_phone_go_grouped",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the Desk past the closed gate"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "the Chair screen is drawn: its Needs you window is open"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "why": "393: Go, the phone's one menu door",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Desk')",
+          "why": "393: Go ▸ Desk, the Desk menu as a menu (the panel is replaced, a back row first)",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-item[data-menu-id='desk'] button",
+          "why": "1440: the Desk menu on the bar",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Write a thought')",
+          "why": "the Desk menu's verbs are listed"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Write a thought')",
+        "why": "a Desk menu verb, reached as a menu"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "attr_equals",
+          "attr": "aria-label",
+          "value": "Thought"
+        },
+        "observe_at": ".desk-window-shell.is-front",
+        "words": "at 393 the Desk menu is reachable as a menu: Go ▸ Desk ▸ Write a thought opens a Thought window in front (1440: the Desk menu on the bar). Red on main 2d1d791a: Go is one flat list with no Desk ▸ row (the selector Go ▸ Desk does not exist)."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.send_to.window_menu_opens_preview",
+      "job": "p12",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p13_send_to_picked",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P13SendToDecision",
+            "status": "accepted",
+            "decision_markdown": "P13SendToDecisionText."
+          },
+          "expect_status": 201,
+          "why": "create the accepted desk decision through its real producer",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P13-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the decision producer result in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "why": "open the Desk palette"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "P13SendToDecision",
+          "why": "find the real desk decision by its title"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button.desk-deck-row[id='desk-palette-option-decision:{decision_id}']",
+          "why": "open the decision window through the Desk palette"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[id='pullout:decision:{decision_id}'] [data-seat=desk-decision] [data-testid=send-well]",
+          "why": "the decision window is open with its SEND well, nothing picked"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "button": "right",
+          "selector": "[id='pullout:decision:{decision_id}'] > .desk-pullout-head .desk-pullout-title",
+          "why": "gesture 1: the right button on the title bar opens the window's menu (DeskWindow.tsx)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-head-menu [role=menuitem][aria-haspopup=menu]:has-text('Send to')",
+          "why": "gesture 2: Send to ▸ leads the window menu; its rows are the saved destinations"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": ".desk-head-menu [role=menuitem]:has-text('P13-Folder · FILE')",
+        "why": "gesture 3: the destination row of Send to ▸; the window's own well opens on it",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/preview"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/preview",
+              "status": 200,
+              "body_fields": {
+                "payload_digest": {
+                  "nonempty": true
+                }
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "Send"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {},
+                    "count": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": "[id='pullout:decision:{decision_id}'] [data-seat=desk-decision] [data-testid=send-open][data-destination='P13-Folder'] [data-testid=send-verbs]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=desk_decision:{decision_id}"
+          }
+        ],
+        "words": "the owner right-clicks the decision window's title bar, opens Send to ▸ and picks P13-Folder: the window's own SEND well opens on P13-Folder with the hub's real preview of desk_decision:{decision_id} and Send, and the hub holds no send row until he presses Send. Red on main: the window menu has no Send to (windowMenuAdapter.tsx builds window verbs only)."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.palette.person_opens_her_window",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.palette_person"
+      ],
+      "state_id": "state.desk_presentation.p13_palette_person",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        "HOLDSPEAK_PEOPLE_KEYSTORE_FILE names a key file inside that HOME (the People store never reaches the system keychain)"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub (it applies the fresh Desk seed)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/people/setup",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "set up the People store (the walk runs with HOLDSPEAK_PEOPLE_KEYSTORE_FILE in the isolated HOME)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/people/relationships",
+          "adapter": "http-route",
+          "body": {
+            "display_name": "Priya P13",
+            "relationship_kind": "direct_report"
+          },
+          "expect_status": 201,
+          "why": "add his report through the real People producer",
+          "capture_as": "rel_id",
+          "capture_path": "relationship.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the producers' results in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "why": "gesture 1: open the Desk palette"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "Priya",
+          "why": "he types her name"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "button.desk-deck-row[id='desk-palette-option-people:{rel_id}']",
+        "why": "gesture 2: the top row, PEOPLE · Priya P13 · PERSON"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "window_titled",
+              "value": "People"
+            },
+            {
+              "kind": "text_contains",
+              "value": "Priya P13"
+            }
+          ]
+        },
+        "observe_at": ".desk-window[aria-label='People'] .people-detail-head",
+        "words": "the owner opens the palette, types `Priya` and presses the top row: the People window opens on Priya P13 (her detail head). Two gestures. Red on main: `Priya` found nothing (grounding/probes/faces-jobs-palette.out.txt)."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.palette.prep_one_on_one",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.palette_prep"
+      ],
+      "state_id": "state.desk_presentation.p13_palette_prep",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        "HOLDSPEAK_PEOPLE_KEYSTORE_FILE names a key file inside that HOME (the People store never reaches the system keychain)"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub (it applies the fresh Desk seed)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/people/setup",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "set up the People store (the walk runs with HOLDSPEAK_PEOPLE_KEYSTORE_FILE in the isolated HOME)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/people/relationships",
+          "adapter": "http-route",
+          "body": {
+            "display_name": "Priya P13",
+            "relationship_kind": "direct_report"
+          },
+          "expect_status": 201,
+          "why": "add his report through the real People producer",
+          "capture_as": "rel_id",
+          "capture_path": "relationship.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the producers' results in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "why": "gesture 1: open the Desk palette"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "prep priya",
+          "why": "he types the verb and her name"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "button.desk-deck-row[id='desk-palette-option-week.prep.{rel_id}']",
+        "why": "gesture 2: VERBS · Prep 1:1 with Priya P13"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "window_titled",
+              "value": "People"
+            },
+            {
+              "kind": "selector_presence",
+              "present": true,
+              "selector": ".desk-window[aria-label='People'] [data-testid=people-prep-lens]"
+            }
+          ]
+        },
+        "observe_at": ".desk-window[aria-label='People'] [data-testid=people-prep-lens]",
+        "words": "the owner opens the palette, types `prep priya` and presses `Prep 1:1 with Priya P13`: the People window opens on her, on the Prep lens. Red on main: the palette had no Prep verb."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.palette.thought_word_finds_it",
+      "job": "j5",
+      "edge_ids": [
+        "edge.face.palette_object_body"
+      ],
+      "state_id": "state.desk_presentation.p13_palette_thought",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub (it applies the fresh Desk seed)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/notes",
+          "adapter": "http-route",
+          "body": {
+            "title": "Thought",
+            "body_markdown": "Ask Jordan about the Kafka offsets.",
+            "tags": []
+          },
+          "expect_status": 201,
+          "why": "a thought through the real notes producer, titled `Thought` (as every old thought is)",
+          "capture_as": "note_id",
+          "capture_path": "note.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the producers' results in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "why": "gesture 1: open the Desk palette"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "kafka",
+          "why": "he types a word that is only inside the thought"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "button.desk-deck-row[id='desk-palette-option-note:{note_id}']",
+        "why": "gesture 2: the top row, OBJECTS · Thought"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "text_contains",
+          "value": "Kafka offsets"
+        },
+        "observe_at": ".desk-window[aria-label='Thought']",
+        "words": "the owner types `kafka`, a word inside one thought titled `Thought`, and presses the top row: that thought opens in its window. Red on main: a word from a thought found 0 results (grounding/faces-jobs.md J5)."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.palette.send_opens_preview",
+      "job": "p12",
+      "edge_ids": [
+        "edge.face.channel_send"
+      ],
+      "state_id": "state.desk_presentation.p13_palette_send",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub (it applies the fresh Desk seed)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "adapter": "http-route",
+          "body": {
+            "title": "P13PaletteDecision",
+            "status": "accepted",
+            "decision_markdown": "P13PaletteDecisionText."
+          },
+          "expect_status": 201,
+          "why": "create the accepted desk decision through its real producer",
+          "capture_as": "decision_id",
+          "capture_path": "decision.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/channels/destinations",
+          "adapter": "http-route",
+          "body": {
+            "name": "P13-Folder",
+            "channel": "file",
+            "folder": "{hub_home}",
+            "synced": false
+          },
+          "expect_status": 200,
+          "why": "save a real folder destination under this walk's isolated HOME",
+          "capture_as": "dest_id",
+          "capture_path": "destination.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the producers' results in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "why": "gesture 1: open the Desk palette"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "P13PaletteDecision",
+          "why": "find the decision by its title"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button.desk-deck-row[id='desk-palette-option-decision:{decision_id}']",
+          "why": "open the decision window through the palette (the front document)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[id='pullout:decision:{decision_id}'] [data-seat=desk-decision] [data-testid=send-well]",
+          "why": "the decision window is open in front with its SEND well, nothing picked"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "why": "gesture 1: open the Desk palette again"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "send",
+          "why": "he types `send`"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "button.desk-deck-row[id='desk-palette-option-week.send.{dest_id}']",
+        "why": "gesture 2: VERBS · Send P13PaletteDecision to P13-Folder (C5's push seam)",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/channels/preview"
+        }
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/channels/preview",
+              "status": 200,
+              "body_fields": {
+                "payload_digest": {
+                  "nonempty": true
+                }
+              }
+            },
+            {
+              "kind": "readable_text",
+              "value": "Send"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "sends",
+                    "match": {},
+                    "count": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": "[id='pullout:decision:{decision_id}'] [data-seat=desk-decision] [data-testid=send-open][data-destination='P13-Folder'] [data-testid=send-verbs]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/channels/sends?document_ref=desk_decision:{decision_id}"
+          }
+        ],
+        "words": "with the decision window in front, the owner types `send` and presses `Send P13PaletteDecision to P13-Folder`: the window's own SEND well opens on P13-Folder with the hub's real preview and Send, and the hub holds no send row until he presses Send. Red on main: `send` gave 16 noise rows and no document could be sent from the palette (grounding/probes/faces-jobs-palette.out.txt)."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.palette.draft_update",
+      "job": "j4",
+      "edge_ids": [
+        "edge.face.room_updates"
+      ],
+      "state_id": "state.desk_presentation.p13_palette_draft_update",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub (it applies the fresh Desk seed)"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "P13 Palette Room",
+            "description": "The palette's Room."
+          },
+          "expect_status": 200,
+          "why": "a project through the real project producer",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the producers' results in the Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": "button[aria-controls=desk-tool-shelf]",
+          "why": "gesture 1: open the Desk palette"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "input[aria-controls=desk-palette-listbox]",
+          "value": "draft update p13",
+          "why": "he types the verb and the project"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "button.desk-deck-row[id='desk-palette-option-week.draft-update.{project_id}']",
+        "why": "gesture 2: VERBS · Draft update for P13 Palette Room"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "selector_presence",
+              "present": true,
+              "selector": "[id='surface-project-memory'] [data-testid=update-posture][data-phase=list]"
+            },
+            {
+              "kind": "readable_text",
+              "value": "Draft"
+            }
+          ]
+        },
+        "observe_at": "[id='surface-project-memory'] [data-testid=update-posture][data-phase=list]",
+        "words": "the owner types `draft update p13` and presses `Draft update for P13 Palette Room`: the Room opens in its Update posture with Draft in view, as the Room's own `Draft update` does. Red on main: the palette had no update verb."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.people.prep_link",
+      "job": "j7",
+      "edge_ids": [
+        "edge.face.people_prep"
+      ],
+      "state_id": "state.people.p13_prep_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub with the B4 real producer refs (seed_people_prep); nothing is linked until his press, at 1440 and 393."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before the People producer."
+        },
+        {
+          "kind": "cli",
+          "action": "seed_people_prep",
+          "capture_as": "people",
+          "adapter": "people-prep-producer",
+          "why": "Mint the calendar, meeting, People, project, alias, and agenda through their real producers in the run-owned HOME."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "people"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-deck-row[id=\"desk-palette-option-desk.open-people\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": "#surface-people",
+          "state": "visible",
+          "timeout_s": 15
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "#surface-people button:has-text(\"Priya Sharma\")"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "tab",
+          "name": "Prep"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": "[data-testid=\"prep-link-suggestion\"]",
+          "state": "visible",
+          "timeout_s": 15
+        },
+        {
+          "kind": "check",
+          "observe_at": "[data-testid=\"prep-owed\"]",
+          "predicate": {
+            "kind": "readable_text",
+            "value": "Send the dry-run report"
+          },
+          "timeout_s": 10,
+          "capture_shot": true,
+          "why": "Prep shows what Priya owes from the meeting before he links the 1:1."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Link this 1:1"
+      },
+      "expected": {
+        "observe_at": "[data-testid=\"people-next-1on1\"]",
+        "predicate": {
+          "kind": "readable_text",
+          "value": "NEXT 1:1"
+        },
+        "words": "Prep offers the calendar 1:1 whose title holds Priya's alias; his press on Link this 1:1 links it through the existing route, and NEXT 1:1 shows with a formatted time."
+      },
+      "completion_bound_s": 30,
       "viewports": [
         1440,
         393
@@ -2343,7 +3565,7 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"desk.new-thought\",",
-          "line": 184,
+          "line": 189,
           "claim": "one registered verb with the key ⌃T, in the Desk menu"
         },
         {
@@ -2361,6 +3583,263 @@
       ],
       "reachable_by": [
         "case.p13.capture.titled_by_first_words"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_phone_switcher",
+      "family": "desk_presentation",
+      "values": {
+        "title": "the front window's name, then a painted ▾",
+        "rows": "the phone's ring: the open Chair windows, then the desk windows as they opened"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/window/ScreenSwitcher.tsx",
+          "symbol": "export function ScreenSwitcher(",
+          "line": 15,
+          "claim": "at 393 the screen title is a library menu Button listing the ring"
+        },
+        {
+          "path": "web/src/desk/components/window/phoneRing.ts",
+          "symbol": "export function phoneRing(",
+          "line": 32,
+          "claim": "one ring order for the switcher and the swipe"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.phone.switcher_two_taps"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_phone_go_grouped",
+      "family": "desk_presentation",
+      "values": {
+        "go": "Chair ▸ Desk ▸ Object ▸ Window ▸, then Go's own rows"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskMenuBar.tsx",
+          "symbol": "export function groupGoForPhone(",
+          "line": 41,
+          "claim": "at 393 Go leads with the four menus as submenus"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.phone.go_desk_menu"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_send_to_picked",
+      "family": "desk_presentation",
+      "values": {
+        "opened_by": "Send to ▸ in the window menu (one composition with the Object menu)",
+        "well": "the window's own SEND well, picked, its preview and Send in view; no send row"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskWindow.tsx",
+          "symbol": "entries={withSendTo(sendToEntry(id), headMenuEntries({",
+          "line": 1020,
+          "claim": "the window menu leads with Send to ▸ from the window's own document"
+        },
+        {
+          "path": "web/src/desk/windowSend.tsx",
+          "symbol": "export function sendToEntry(",
+          "line": 197,
+          "claim": "the rows are the active saved destinations; withheld where the document cannot send"
+        },
+        {
+          "path": "web/src/desk/surface/send/SendWell.tsx",
+          "symbol": "export function pickDestination(",
+          "line": 83,
+          "claim": "the push seam: one setter per well; an open well reacts in place"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.send_to.window_menu_opens_preview"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_palette_person",
+      "family": "desk_presentation",
+      "values": {
+        "opened_by": "the palette's PEOPLE row (a name)",
+        "window": "People, on her relationship"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskToolShelf.tsx",
+          "symbol": "section: \"PEOPLE\",",
+          "line": 435,
+          "claim": "one PEOPLE row per relationship from GET /api/people/relationships"
+        },
+        {
+          "path": "web/src/desk/openObject.ts",
+          "symbol": "export function openPerson(",
+          "line": 32,
+          "claim": "the one open grammar for a person"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.palette.person_opens_her_window"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_palette_prep",
+      "family": "desk_presentation",
+      "values": {
+        "opened_by": "the registry's Prep verb family",
+        "window": "People, on her relationship, on Prep"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "id: \"week.prep\",",
+          "line": 920,
+          "claim": "one Prep 1:1 row per relationship"
+        },
+        {
+          "path": "web/src/desk/components/DeskToolShelf.tsx",
+          "symbol": "for (const verb of weekVerbs({",
+          "line": 449,
+          "claim": "the palette renders the registry's week verbs"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.palette.prep_one_on_one"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_palette_thought",
+      "family": "desk_presentation",
+      "values": {
+        "opened_by": "a word inside the note's body",
+        "window": "the thought, in its own window"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskToolShelf.tsx",
+          "symbol": "export function wordScore(",
+          "line": 150,
+          "claim": "a body matches by whole-word prefix only"
+        },
+        {
+          "path": "web/src/desk/components/DeskToolShelf.tsx",
+          "symbol": "body: objectBody(item.ref),",
+          "line": 569,
+          "claim": "a note's body is the row's body term"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.palette.thought_word_finds_it"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_palette_send",
+      "family": "desk_presentation",
+      "values": {
+        "opened_by": "the registry's Send verb family over C5's composition",
+        "well": "the front window's SEND well, picked, its preview and Send in view; no send row"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "id: \"week.send\",",
+          "line": 930,
+          "claim": "one Send row per destination of the front document"
+        },
+        {
+          "path": "web/src/desk/windowSend.tsx",
+          "symbol": "export function sendChoices(",
+          "line": 223,
+          "claim": "the same composition as Send to ▸; the pick is pickFor"
+        },
+        {
+          "path": "web/src/desk/windowSend.tsx",
+          "symbol": "export function pickFor(",
+          "line": 255,
+          "claim": "the push seam: the well opens on the pick; nothing is sent"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.palette.send_opens_preview"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_palette_draft_update",
+      "family": "desk_presentation",
+      "values": {
+        "opened_by": "the registry's Draft update verb family",
+        "window": "the Room, in its Update posture"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "id: \"week.draft-update\",",
+          "line": 938,
+          "claim": "one Draft update row per project"
+        },
+        {
+          "path": "web/src/desk/openObject.ts",
+          "symbol": "export function openProjectUpdates(",
+          "line": 48,
+          "claim": "the Room opens and takes the Update request once"
+        },
+        {
+          "path": "web/src/features/project-room/ProjectRoomCore.tsx",
+          "symbol": "takeRoomUpdatesRequest(projectId)",
+          "line": 2162,
+          "claim": "the Room enters its Update posture, as its Draft update Button does"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.palette.draft_update"
+      ]
+    },
+    {
+      "id": "state.people.p13_prep_face",
+      "family": "briefs",
+      "values": {
+        "lifecycle": "real ICS suggestion, Prep, his press on Link this 1:1, NEXT 1:1",
+        "truth": "the suggestion links nothing by itself; Prep shows the agenda, what the report owes and her projects"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "function LinkSuggestions(",
+          "line": 595,
+          "claim": "A calendar event whose title holds the alias shows with a library Link this 1:1 Button; the press calls the existing calendar-links route."
+        },
+        {
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "function NextOneOnOneSide(",
+          "line": 632,
+          "claim": "The Now side reads the linked 1:1 with the header's formatter; a failed brief read is a named failure with Try again."
+        },
+        {
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "function shortDay(",
+          "line": 581,
+          "claim": "A date-only deadline stays its calendar day in the desk's zone."
+        },
+        {
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "symbol": "data-testid=\"people-next-1on1\"",
+          "line": 373,
+          "claim": "NEXT 1:1 reads the hub's linked event through one formatter."
+        }
+      ],
+      "reachable_by": [
+        "case.p13.people.prep_link"
       ]
     },
     {
@@ -2569,6 +4048,12 @@
       "applicability": "not_applicable",
       "combination": "case.p13.capture.titled_by_first_words with an .op sibling",
       "reason": "its durable half is read in the same case: expected.reads GET /api/thoughts must hold the thought titled with the typed words (protocol_reads), beside the face half."
+    },
+    {
+      "id": "excluded.p13.send_to_states_and_op",
+      "applicability": "not_applicable",
+      "combination": "case.p13.send_to.window_menu_opens_preview with an .op sibling, its SENDING / FAILED / UNKNOWN / OFFLINE / CHECKING / CAN'T CHECK branches, the Object menu, the Room link, the brief and artifact windows, and touch at 393",
+      "reason": "the rig drives a mouse at 393 and has no route-injection step (scripts/graph_walk.py UI_ACTIONS); the stand-in outcomes need injected answers. Each branch is fenced as rendered at 1440 (mouse) and 393 (touch) through the real hub by tests/e2e/test_philo13_15_send_to_glass.py, which reads the hub's own channel_sends rows and a real FILE send read back from the HOME. The .op sibling count is Astra's (H-B0b)."
     }
   ],
   "council_readings": []

@@ -42,6 +42,22 @@ def _principal(request: Request):
 def build_crud_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
+    @router.get("/api/meetings/ready")
+    async def api_list_unread_ready_meetings(request: Request) -> Any:
+        """Read producer-created meeting readiness that is still unseen."""
+        return JSONResponse(_service(ctx).list_ready(_principal(request)))
+
+    @router.post("/api/meetings/{meeting_id}/ready/read")
+    async def api_mark_meeting_ready_read(meeting_id: str, request: Request) -> Any:
+        """Acknowledge the readiness marker opened by the Meetings face."""
+        try:
+            result = _service(ctx).mark_ready_read(_principal(request), meeting_id)
+        except NotFound:
+            return JSONResponse({"error": "Meeting not found"}, status_code=404)
+        if ctx.broadcast is not None and result["ready_at"] is not None:
+            ctx.broadcast("desk_changed", {"kind": "meeting_ready_read", "id": meeting_id})
+        return JSONResponse(result)
+
     @router.get("/api/meetings")
     async def api_list_meetings(
         request: Request,
@@ -64,6 +80,11 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
         return the same summary shape (this also fixed search results
         previously returning full ``to_dict`` payloads whose nested
         ``intel_status`` broke the status pill).
+
+        Each row includes ``attendees: list[str]``: saved segment speakers
+        plus the linked calendar event's attendee emails, trimmed, with
+        blanks and exact duplicates removed, in case-sensitive lexical
+        order. The field is an empty list when neither source has values.
         """
         if q is not None:
             return JSONResponse(

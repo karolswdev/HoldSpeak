@@ -1,0 +1,401 @@
+{
+  "schema_version": 1,
+  "atlas_version": "h-c5-latest-published",
+  "extends": "docs/internal/philo/graph/atlas.json",
+  "source_commit": "fc12a18d56868fc95a3310eb9cf99c0421a25730",
+  "cases": [
+    {
+      "id": "case.h_c5.update.latest_first",
+      "job": "p9",
+      "edge_ids": [
+        "edge.face.room_updates"
+      ],
+      "state_id": "state.desk_presentation.p9_room_face",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "the first-use arrival completed on the hub (the glass does the same): the optional click can land before the Chair draws it"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "the 'Continue later' dismissal is on the hub before any reload"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas ledger cutover"
+          },
+          "capture_as": "project_id",
+          "capture_path": "project.id",
+          "expect_status": 200,
+          "why": "the Room under test"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/updates/draft",
+          "adapter": "http-route",
+          "body": {
+            "generator": "deterministic"
+          },
+          "capture_as": "update_id",
+          "capture_path": "update.id",
+          "expect_status": 200,
+          "why": "an update to publish"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/updates/{update_id}/regenerate",
+          "adapter": "http-route",
+          "body": {
+            "generator": "deterministic"
+          },
+          "capture_as": "older_id",
+          "capture_path": "update.id",
+          "expect_status": 200,
+          "why": "the first published update has draft revision 2"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/updates/{older_id}/publish",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "a published update (the Q0 ruling: delivery needs one)"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/updates/{older_id}/regenerate",
+          "adapter": "http-route",
+          "body": {
+            "generator": "deterministic"
+          },
+          "capture_as": "latest_id",
+          "capture_path": "update.id",
+          "expect_status": 200,
+          "why": "regenerate the published update to create a new revision-1 draft through the real producer"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/updates/{latest_id}/publish",
+          "adapter": "http-route",
+          "body": {},
+          "expect_status": 200,
+          "why": "publish the later inserted revision-1 row"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "a fresh Desk read after the seed"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "the palette (DeskToolShelf.tsx: PROJECTS rows `Open <name>`)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "Atlas ledger cutover"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "Open the project's Room (the one key, open-project-memory, scope project:<id>)"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": "[data-testid=updates-verb]",
+        "why": "the update list (ProjectRoomCore.tsx RoomHead `Draft update`)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "readable_text",
+              "value": "PUBLISHED"
+            },
+            {
+              "kind": "readable_text",
+              "value": "REV 1"
+            }
+          ]
+        },
+        "observe_at": "[data-testid=update-list-item]:first-child [data-update-id=\"{latest_id}\"]",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/projects/{project_id}/updates"
+          }
+        ],
+        "words": "The Room lists the later publication first even though its draft revision is 1 and the older publication is revision 2. Both are minted through draft, regenerate and publish routes. The response records latest_published_update_id. Same-second ordering is separately frozen and asserted by the route regression tests; this live clock walk does not claim a forced tie."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.p9_list_face",
+      "family": "desk_presentation",
+      "values": {
+        "list": "the list face as the owner ratified it (2026-09-27)",
+        "width": "four columns at 1440; the fold line at 393"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskListView.tsx",
+          "symbol": "function FoldLine",
+          "line": 36,
+          "claim": "the fold: Kind, Zone and Attention ride the name Button in a surface of 720 px or less"
+        },
+        {
+          "path": "web/src/desk/components/DeskListView.tsx",
+          "symbol": "countToken(visible.length, \"SHOWN\", \"SHOWN\")",
+          "line": 351,
+          "claim": "the status says SHOWN for any count"
+        },
+        {
+          "path": "web/src/desk/components/DeskSortableTable.tsx",
+          "symbol": "function SortButton",
+          "line": 42,
+          "claim": "the one sort verb is the library Button, aria-pressed on the sorted column"
+        },
+        {
+          "path": "web/src/desk/components/DeskMenu.tsx",
+          "symbol": "useLayoutEffect(() => {",
+          "line": 493,
+          "claim": "the work menu keeps its measured panel inside the viewport"
+        },
+        {
+          "path": "web/src/desk/components/list-view.css",
+          "symbol": "container-name: surface;",
+          "line": 344,
+          "claim": "the list face is a surface container, so its @container rules apply on the Floor's list"
+        }
+      ],
+      "reachable_by": [
+        "case.p9.list_status.shown",
+        "case.p9.list_columns.in_view",
+        "case.p9.list_sort.zone_pressed",
+        "case.p9.list_row_menu.delete_in_view"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p9_room_face",
+      "family": "desk_presentation",
+      "values": {
+        "room": "the Room's face as the owner ratified the story 03 canvases (2026-09-27)",
+        "width": "1440 and 393"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/features/project-room/ProjectRoomCore.tsx",
+          "symbol": "function ItemsSection",
+          "line": 1052,
+          "claim": "the ITEMS section, after NEEDS YOU, omitted when empty, UNAVAILABLE + Retry on a failed read"
+        },
+        {
+          "path": "web/src/features/channels/SendWell.tsx",
+          "symbol": "export function DeliveryHistory",
+          "line": 29,
+          "claim": "To + Mark delivered above the body of a published update, and the delivery history (PHILO-10-04: under the SEND well, story 01's one table)"
+        },
+        {
+          "path": "web/src/features/project-room/update/UpdatePosture.tsx",
+          "symbol": "countLabel(\"UPDATES\"",
+          "line": 262,
+          "claim": "the update list's head counts updates"
+        },
+        {
+          "path": "web/src/features/project-room/project-room.css",
+          "symbol": ".room-ask-container {",
+          "line": 307,
+          "claim": "the Ask well is in the flow at every width"
+        },
+        {
+          "path": "web/src/desk/shell.ts",
+          "symbol": "export function openProjectRoom",
+          "line": 127,
+          "claim": "the one key that opens a project's Room"
+        }
+      ],
+      "reachable_by": [
+        "case.p9.room_items.late_row",
+        "case.p9.update_list.head_updates",
+        "case.p9.update.delivered_row",
+        "case.p9.room_steward_verb.owned",
+        "case.p9.update.delivered_row.op"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p9_grant_face",
+      "family": "desk_presentation",
+      "values": {
+        "ledger": "Settings > System > Remote access, as the owner ratified the grant canvas (set A)",
+        "width": "1440 and 393"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/SettingsCore.tsx",
+          "symbol": "data-testid=\"project-grant-chip\"",
+          "line": 395,
+          "claim": "the project line's chip: RUN AND PUBLISH ALLOWED or STOPPED"
+        },
+        {
+          "path": "web/src/pages/cores/SettingsCore.tsx",
+          "symbol": "data-testid={`credential-row-${cred.id}`}",
+          "line": 973,
+          "claim": "one ledger row per credential"
+        },
+        {
+          "path": "web/src/pages/cores/SettingsCore.tsx",
+          "symbol": "data-testid=\"palette-token\"",
+          "line": 978,
+          "claim": "the row's palette token reads the issued name"
+        },
+        {
+          "path": "holdspeak/web/routes/mcp_http.py",
+          "symbol": "@router.put(\"/api/settings/remote/delegations/{identity}/projects/{project_id}\")",
+          "line": 458,
+          "claim": "the owner's project grant: admitted, owner-only, HTTP only"
+        }
+      ],
+      "reachable_by": [
+        "case.p9.grant.project_allowed",
+        "case.p9.grant_route.project_allowed",
+        "case.p9.grant.desk_reads_desk"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p9_connections_face",
+      "family": "desk_presentation",
+      "values": {
+        "connections": "Settings > Connections on a hub that never checked a remote provider",
+        "width": "1440 and 393"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/pages/cores/connections/ConnectionsPane.tsx",
+          "symbol": "case \"never_checked\": return \"Never checked\";",
+          "line": 52,
+          "claim": "the chip's words for a provider never checked"
+        }
+      ],
+      "reachable_by": [
+        "case.p9.connections.never_checked_face"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.python_wall",
+      "source": "datetime.datetime.now() inside the hub process",
+      "mechanism": "none: no Phase 9 case moves a clock",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [
+    {
+      "id": "excluded.p9.list_face_op",
+      "applicability": "not_applicable",
+      "combination": "case.p9.list_status.shown, case.p9.list_columns.in_view, case.p9.list_sort.zone_pressed, case.p9.list_row_menu.delete_in_view with an .op sibling",
+      "reason": "each proves a FACE fact with no durable outcome: a status word, a row's geometry, a sort verb's pressed state, a menu's seat. There is no operation to pair."
+    },
+    {
+      "id": "excluded.p9.selection_and_text_floor",
+      "applicability": "not_applicable",
+      "combination": "the selection contrast (>= 3:1) and the list's 12 px text floor as atlas cases",
+      "reason": "the rig has no predicate that reads a computed style or a composited contrast (scripts/graph_walk.py check_predicate); a new predicate kind is rig work outside PHILO-9-04. Both are fenced as rendered at 1440 and 393 by tests/e2e/test_philo9_04_desk_debts_glass.py (test_the_selection_is_visible, test_the_list_text_is_12px_and_readable)."
+    },
+    {
+      "id": "excluded.p9.room_face_callers_and_receipts",
+      "applicability": "not_applicable",
+      "combination": "F1 (a meeting's project button), F3 (steward counts), F7 (RECEIPTS) as atlas cases",
+      "reason": "F1 needs a meeting row, which no HTTP route seeds; F3 compares the face with the hub's run and steps read in the same test; F7's RECEIPTS section sits below the fold at both widths and the rig does not scroll an observe_at into view. All three are fenced as rendered at 1440 and 393 by tests/e2e/test_philo9_03_room_face_glass.py."
+    },
+    {
+      "id": "excluded.p9.room_face_op",
+      "applicability": "not_applicable",
+      "combination": "case.p9.room_items.late_row, case.p9.update_list.head_updates, case.p9.room_steward_verb.owned with an .op sibling",
+      "reason": "each proves a FACE fact with no durable outcome of its own; the delivery's durable outcome and its equivalence with MCP are PHILO-9-02's."
+    },
+    {
+      "id": "excluded.p9.agent_side_grant",
+      "applicability": "not_applicable",
+      "combination": "an agent's run, stop or publish with and without a project grant, and an agent refused grant or revoke, as atlas cases",
+      "reason": "the rig speaks with the owner's token only (scripts/graph_walk.py Hub: X-HoldSpeak-Token / Bearer of the hub's owner token); an agent principal is rig work outside PHILO-9-05. Each is fenced with a real Settings-issued PROJECT credential over MCP and HTTP by tests/unit/test_philo9_project_grant.py, test_philo9_project_grant_lifecycle.py and test_philo9_project_grant_restart.py (PHILO-9-07)."
+    },
+    {
+      "id": "excluded.p9.grant_face_op",
+      "applicability": "not_applicable",
+      "combination": "case.p9.grant.desk_reads_desk and case.p9.connections.never_checked_face with an .op sibling",
+      "reason": "the palette token is a read of the issued credential (no operation to pair; the case reads the wire in the same observation). The Connections face's operation twin is PHILO-9-02's case.p9.connections.never_checked in atlas-phase9-steward.json (connection.list), kept in that file."
+    }
+  ],
+  "council_readings": []
+}

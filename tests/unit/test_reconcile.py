@@ -562,17 +562,23 @@ def test_fts_shadow_tables_excluded_from_reference() -> None:
 def test_reconcile_adds_source_columns_to_existing_calendar_events(
     tmp_path: Path,
 ) -> None:
-    """HS-146-01: source_id and source_label columns added to an existing DB with rows."""
+    """Existing calendar rows gain all additive source and attendee columns."""
     old_schema = SCHEMA_SQL.replace(
         "    subscription_revision TEXT NOT NULL,\n"
         "    source_id TEXT NOT NULL DEFAULT '',\n"
-        "    source_label TEXT NOT NULL DEFAULT ''\n",
+        "    source_label TEXT NOT NULL DEFAULT '',\n"
+        "    attendees_json TEXT NOT NULL DEFAULT '[]'\n",
         "    subscription_revision TEXT NOT NULL\n",
     ).replace(
         "ON calendar_events(source_id, uid, starts_at)",
         "ON calendar_events(subscription_revision, uid, starts_at)",
     )
-    assert "source_id" not in old_schema.split("calendar_events")[1].split(");")[0]
+    calendar_table = old_schema.split(
+        "CREATE TABLE IF NOT EXISTS calendar_events", 1
+    )[1].split(");", 1)[0]
+    assert all(column not in calendar_table for column in (
+        "source_id", "source_label", "attendees_json"
+    ))
     conn = sqlite3.connect(str(tmp_path / "old-calendar-columns.db"))
     conn.row_factory = sqlite3.Row
     try:
@@ -585,21 +591,29 @@ def test_reconcile_adds_source_columns_to_existing_calendar_events(
         )
         conn.commit()
 
+        before = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(calendar_events)").fetchall()
+        }
+        assert not {"source_id", "source_label", "attendees_json"} & before
+
         assert reconcile_schema(conn) is True
 
         cols = {
             row[1]
             for row in conn.execute("PRAGMA table_info(calendar_events)").fetchall()
         }
-        assert "source_id" in cols
-        assert "source_label" in cols
+        assert {"source_id", "source_label", "attendees_json"} <= cols
 
         row = conn.execute(
-            "SELECT source_id, source_label, title FROM calendar_events WHERE id='ev1'"
+            """SELECT source_id, source_label, attendees_json, title
+               FROM calendar_events WHERE id='ev1'"""
         ).fetchone()
         assert row["source_id"] == ""
         assert row["source_label"] == ""
+        assert row["attendees_json"] == "[]"
         assert row["title"] == "Old event"
+        assert reconcile_schema(conn) is False
     finally:
         conn.close()
 

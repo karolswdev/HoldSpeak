@@ -6422,13 +6422,13 @@
         },
         {
           "claim": "/desk and unknown paths redirect to /.",
-          "line": 67,
+          "line": 46,
           "path": "web/src/App.tsx",
           "symbol": "App"
         },
         {
           "claim": "DeskApp composes the Workbench shell.",
-          "line": 184,
+          "line": 86,
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "DeskApp"
         }
@@ -6522,13 +6522,13 @@
       "sources": [
         {
           "claim": "Window rectangles are clamped to the work band and minimum dimensions.",
-          "line": 119,
+          "line": 175,
           "path": "web/src/desk/components/window/windowGeometry.ts",
           "symbol": "clampRect"
         },
         {
           "claim": "The shared frame owns geometry and focus callbacks.",
-          "line": 556,
+          "line": 586,
           "path": "web/src/desk/components/DeskWindow.tsx",
           "symbol": "DeskWindowFrame"
         }
@@ -6744,13 +6744,13 @@
       "sources": [
         {
           "claim": "Definitions include ids, labels, availability and runner behavior.",
-          "line": 28,
+          "line": 57,
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "Verb"
         },
         {
           "claim": "The registry enumerates Desk verbs.",
-          "line": 136,
+          "line": 167,
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "VERBS"
         }
@@ -6857,13 +6857,13 @@
       "sources": [
         {
           "claim": "The matrix enumerates supported kind pairs and named effects.",
-          "line": 9,
+          "line": 22,
           "path": "web/src/desk/dropMatrix.ts",
           "symbol": "DROP_MATRIX"
         },
         {
           "claim": "External files are accepted only over a release target.",
-          "line": 9,
+          "line": 17,
           "path": "web/src/desk/components/GlassDropLayer.tsx",
           "symbol": "GlassDropLayer"
         }
@@ -6961,13 +6961,13 @@
       "sources": [
         {
           "claim": "The key is hs.desk.workspace.v1.",
-          "line": 8,
+          "line": 10,
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "DESK_WORKSPACE_STORAGE_KEY"
         },
         {
           "claim": "Wrong version, invalid JSON and invalid shape return an empty workspace.",
-          "line": 112,
+          "line": 82,
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "loadDeskWorkspace"
         }
@@ -7063,7 +7063,7 @@
       "sources": [
         {
           "claim": "RuntimeBus owns the socket, states, ping and bounded reconnect policy.",
-          "line": 13,
+          "line": 26,
           "path": "web/src/runtime/RuntimeBus.tsx",
           "symbol": "RuntimeBusProvider"
         },
@@ -7176,7 +7176,109 @@
     },
     {
       "apis": [
-        "POST /api/projects/{project_id}/updates/draft"
+        "GET /api/channels/sends",
+        "GET /api/people/relationships",
+        "GET /api/people/relationships/{relationship_id}/brief",
+        "GET /api/meetings/ready",
+        "POST /api/meetings/{meeting_id}/ready/read"
+      ],
+      "authority": "The hub owns recording and send outcomes. Completion producers store unseen readiness; opening a meeting acknowledges it.",
+      "configuration": [],
+      "dependencies": [
+        "RuntimeBus",
+        "useNeedsYou",
+        "recordingSlice",
+        "B4 brief"
+      ],
+      "docs": [
+        "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-13-c3-a-live-dock.md"
+      ],
+      "domain": "desk",
+      "egress": "The Dock reads state and opens surfaces. It does not send data.",
+      "egress_possible": false,
+      "entry_points": [
+        "web/src/desk/components/window/Dock.tsx::Dock"
+      ],
+      "evidence_level": "tests_executed",
+      "exposure": "user",
+      "failure_states": [
+        "runtime disconnected",
+        "domain read failed",
+        "send failed",
+        "send outcome unknown",
+        "recording refused"
+      ],
+      "id": "desk.dock.live",
+      "inputs": [
+        "runtime frames",
+        "durable sends",
+        "durable unseen meeting readiness",
+        "People briefs",
+        "active projects",
+        "A2 membership"
+      ],
+      "kernel_operations": [],
+      "limitations": [
+        "C3-W must finish styling and adopt launch origin in Chair.",
+        "No physical recording was attempted; the rig refuses microphone starts.",
+        "The People clock requires H-B4.",
+        "Muad'Dib's single-pass conditions are recorded in checks/c3-744-conditions.md; C3-W and the owner's sitting remain open."
+      ],
+      "model_requirements": [],
+      "name": "Read live Dock state",
+      "network_requirements": [],
+      "outputs": [
+        "READY",
+        "REC",
+        "SENT",
+        "SEND FAILED",
+        "UNKNOWN",
+        "OFFLINE AS OF",
+        "per-app badges",
+        "explicit Dock launch origin"
+      ],
+      "owner_observed": false,
+      "persistence": [
+        "meeting_ready_reads: ready_at and read_at"
+      ],
+      "platforms": {
+        "aipi": "unknown",
+        "ipad": "unknown",
+        "linux_wayland": "unknown",
+        "linux_x11": "unknown",
+        "macos": "unknown"
+      },
+      "purpose": "Read meeting, send, recording and connection state from Dock AppIcons.",
+      "release_availability": "unverified",
+      "replacement": null,
+      "side_effect": "local_reversible",
+      "sources": [
+        {
+          "claim": "The Dock projects hub state and sends explicit launch origin to the shell.",
+          "line": 260,
+          "path": "web/src/desk/components/window/Dock.tsx",
+          "symbol": "Dock"
+        }
+      ],
+      "status": "partial",
+      "status_reason": "H-C3 state and launch origin are implemented; C3-W styling and Chair origin adoption remain with the faces lane.",
+      "surfaces": [
+        "Desk Dock"
+      ],
+      "tests": [
+        {
+          "assertion": "The real channel producer persists each terminal outcome and emits the matching hub frame.",
+          "execution": "passed",
+          "node": "test_real_channel_settlement_emits_dock_invalidation",
+          "path": "tests/unit/test_philo13_c3_dock.py"
+        }
+      ],
+      "trust_boundary": "Authenticated hub frames and owner routes provide state. Opening an AppIcon uses the existing shell."
+    },
+    {
+      "apis": [
+        "POST /api/projects/{project_id}/updates/draft",
+        "GET /api/projects/{project_id}/updates"
       ],
       "authority": "The existing project.draft_update operation admits the write.",
       "configuration": [],
@@ -7217,7 +7319,8 @@
       "outputs": [
         "update body",
         "source claims",
-        "source coverage"
+        "source coverage",
+        "latest_published_update_id on the update list read; null when the filtered list has no publication"
       ],
       "owner_observed": false,
       "persistence": [
@@ -7230,7 +7333,7 @@
         "linux_x11": "unknown",
         "macos": "unknown"
       },
-      "purpose": "Draft an update from linked meeting summaries, decisions and owned actions.",
+      "purpose": "Draft an update from linked meeting summaries, decisions and owned actions. Find the latest published update.",
       "release_availability": "unverified",
       "replacement": null,
       "side_effect": "local_reversible",
@@ -7240,6 +7343,18 @@
           "line": 1997,
           "path": "holdspeak/services/project_update_service.py",
           "symbol": "ProjectUpdateService._read_week_sources"
+        },
+        {
+          "claim": "Published updates come first, ordered by published_at descending then rowid descending; unpublished rows retain draft revision and creation order.",
+          "line": 172,
+          "path": "holdspeak/db/updates.py",
+          "symbol": "UpdatesRepository.list_updates"
+        },
+        {
+          "claim": "The list response exposes latest_published_update_id so the face does not sort publications.",
+          "line": 49,
+          "path": "holdspeak/web/routes/project_updates.py",
+          "symbol": "build_project_updates_router"
         }
       ],
       "status": "built_unreleased",
@@ -7260,9 +7375,103 @@
           "execution": "passed",
           "node": "test_deterministic_draft_never_calls_model_boundary",
           "path": "tests/unit/test_philo13_b5_week.py"
+        },
+        {
+          "assertion": "Real route publications in the same second select the greater rowid even when its draft revision is lower.",
+          "execution": "passed",
+          "node": "test_same_second_published_tie_ignores_high_draft_revision",
+          "path": "tests/integration/test_update_routes.py"
+        },
+        {
+          "assertion": "The greater publication timestamp wins over a greater rowid; the filtered draft-only read has no latest publication.",
+          "execution": "passed",
+          "node": "test_published_at_beats_later_rowid",
+          "path": "tests/integration/test_update_routes.py"
         }
       ],
       "trust_boundary": "The deterministic generator reads stored project and meeting data. It does not call a model."
+    },
+    {
+      "apis": [
+        "GET /api/people/relationships/{relationship_id}/brief"
+      ],
+      "authority": "The People owner route admits the read.",
+      "configuration": [],
+      "dependencies": [
+        "PeopleService",
+        "encrypted People store"
+      ],
+      "docs": [
+        "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-09-b4-the-one-on-one-finds-its-person.md"
+      ],
+      "domain": "desk",
+      "egress": "The brief read sends no data off device.",
+      "egress_possible": false,
+      "entry_points": [
+        "holdspeak/services/people_service.py::PeopleService.one_on_one_brief"
+      ],
+      "evidence_level": "tests_executed",
+      "exposure": "user",
+      "failure_states": [
+        "People store unavailable",
+        "Plaintext context unavailable"
+      ],
+      "id": "people.prep.read",
+      "inputs": [
+        "relationship id",
+        "saved aliases",
+        "calendar links"
+      ],
+      "kernel_operations": [],
+      "limitations": [
+        "B4-W must wire PeopleCore before the story is done.",
+        "Muad'Dib has not checked this candidate."
+      ],
+      "model_requirements": [],
+      "name": "Read 1:1 preparation",
+      "network_requirements": [],
+      "outputs": [
+        "calendar suggestions",
+        "next event",
+        "agenda",
+        "owned actions",
+        "projects"
+      ],
+      "owner_observed": false,
+      "persistence": [],
+      "platforms": {
+        "aipi": "unknown",
+        "ipad": "unknown",
+        "linux_wayland": "unknown",
+        "linux_x11": "unknown",
+        "macos": "unknown"
+      },
+      "purpose": "Read a report's linked 1:1, agenda, project and owned meeting actions.",
+      "release_availability": "unverified",
+      "replacement": null,
+      "side_effect": "none",
+      "sources": [
+        {
+          "claim": "The transient brief includes the linked calendar event, saved agenda, alias-owned meeting actions and projects.",
+          "line": 373,
+          "path": "holdspeak/services/people_service.py",
+          "symbol": "PeopleService.one_on_one_brief"
+        }
+      ],
+      "status": "partial",
+      "status_reason": "H-B4 data is implemented and tested; B4-W face wiring remains with the faces lane.",
+      "surfaces": [
+        "People Prep data"
+      ],
+      "tests": [
+        {
+          "assertion": "Real ICS, meeting and People producers yield a suggestion, confirmed event and the report-owned open actions; completed and parked work stays out.",
+          "execution": "passed",
+          "node": "test_brief_suggests_alias_event_without_linking_and_returns_next_prep_data",
+          "path": "tests/unit/test_philo13_b4_prep.py"
+        }
+      ],
+      "trust_boundary": "The owner reads the encrypted People relationship and stored calendar, project and meeting context. A suggested calendar link needs explicit confirmation."
     },
     {
       "apis": [

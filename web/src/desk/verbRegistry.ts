@@ -13,6 +13,7 @@
 import { defaultViewFor, useDesk } from "./store";
 import { openIntelligence } from "./intelligenceNavigation";
 import { openSurfaceOr } from "./shell";
+import { openPerson, openProjectUpdates } from "./openObject";
 import { objectByRef } from "./world";
 import { DESK_TOOLS, KIND_GLYPH } from "./tools";
 import { applicationForAction } from "./applications";
@@ -72,6 +73,10 @@ export interface Verb {
   palette?: boolean;
   /** Extra ⌘K match terms. */
   keywords?: string[];
+  /** PHILO-13-14 (C4) — the program the verb opens, by its own name: the
+   * query `People` finds the People app before a note that starts with the
+   * word. */
+  app?: string;
   /** PHILO-8-01 — the verb makes or edits a zone, so only a face that shows
    * zones (the Floor: spatial or list) offers it; the Chair withholds it
    * (the owner's Q2 (c), UX-CANON §A.11). */
@@ -381,6 +386,7 @@ export const VERBS: Verb[] = [
     group: "view",
     glyph: "◆",
     keywords: ["brief", "follow-through", "receipts"],
+    app: "Intelligence",
     ghost: never,
     run: () => openIntelligence({ view: "brief" }),
   },
@@ -392,6 +398,7 @@ export const VERBS: Verb[] = [
     group: "view",
     glyph: "⊕",
     keywords: ["relationships", "1:1", "one on one", "management"],
+    app: "People",
     ghost: never,
     run: () => openSurfaceOr("open-people", "/", undefined),
   },
@@ -887,4 +894,57 @@ export function verbsFor(scope: VerbScope): Verb[] {
 
 export function verbById(id: string): Verb | undefined {
   return VERBS.find((v) => v.id === id);
+}
+
+/* ── PHILO-13-14 (C4): the week's verbs ─────────────────────────────────
+ * A verb FAMILY is one registered verb with one row per thing of his week:
+ * a report, a project, a destination of the front document. The palette
+ * renders these rows; each runs through the one open grammar (openObject)
+ * or C5's push seam (windowSend). A `Send …` row only opens the exact
+ * preview in the document's SEND well: he presses Send (Article V). */
+
+export interface WeekPerson { id: string; name: string; kind: string }
+export interface WeekProject { id: string; name: string }
+export interface WeekSend { title: string; choices: Array<{ id: string; name: string; channel: string; pick(): void }> }
+export interface Week { people: WeekPerson[]; projects: WeekProject[]; send: WeekSend | null }
+
+export interface WeekVerbRow { id: string; family: string; label: string; keywords: string; run(): void }
+
+export interface VerbFamily {
+  id: string;
+  rows(week: Week): WeekVerbRow[];
+}
+
+export const VERB_FAMILIES: VerbFamily[] = [
+  {
+    id: "week.prep",
+    // Every relationship has a Prep lens (a report, a peer): PeopleCore.
+    rows: (week) => week.people
+      .map((p) => ({
+        id: `week.prep.${p.id}`, family: "week.prep",
+        label: `Prep 1:1 with ${p.name}`, keywords: "prep 1:1 one on one agenda",
+        run: () => openPerson(p.id, "prep"),
+      })),
+  },
+  {
+    id: "week.send",
+    rows: (week) => (week.send?.choices ?? []).map((d) => ({
+      id: `week.send.${d.id}`, family: "week.send",
+      label: `Send ${week.send?.title} to ${d.name}`, keywords: `send ${d.channel.toLowerCase()}`,
+      run: () => d.pick(),
+    })),
+  },
+  {
+    id: "week.draft-update",
+    rows: (week) => week.projects.map((p) => ({
+      id: `week.draft-update.${p.id}`, family: "week.draft-update",
+      label: `Draft update for ${p.name}`, keywords: "draft update status weekly project",
+      run: () => openProjectUpdates(p.id),
+    })),
+  },
+];
+
+/** Every week-verb row, in family order. */
+export function weekVerbs(week: Week): WeekVerbRow[] {
+  return VERB_FAMILIES.flatMap((f) => f.rows(week));
 }

@@ -15190,7 +15190,7 @@
     },
     "/api/meetings": {
       "get": {
-        "description": "List meetings, with HS-55-04 server-side facets composing with search.\n\nFacets filter in SQL over the whole archive. With ``search``, the\nfull-text hits flow through the same faceted query, so both branches\nreturn the same summary shape (this also fixed search results\npreviously returning full ``to_dict`` payloads whose nested\n``intel_status`` broke the status pill).",
+        "description": "List meetings, with HS-55-04 server-side facets composing with search.\n\nFacets filter in SQL over the whole archive. With ``search``, the\nfull-text hits flow through the same faceted query, so both branches\nreturn the same summary shape (this also fixed search results\npreviously returning full ``to_dict`` payloads whose nested\n``intel_status`` broke the status pill).\n\nEach row includes ``attendees: list[str]``: saved segment speakers\nplus the linked calendar event's attendee emails, trimmed, with\nblanks and exact duplicates removed, in case-sensitive lexical\norder. The field is an empty list when neither source has values.",
         "operationId": "api_list_meetings_api_meetings_get",
         "parameters": [
           {
@@ -15418,6 +15418,25 @@
           }
         },
         "summary": "Import Recording"
+      }
+    },
+    "/api/meetings/ready": {
+      "get": {
+        "description": "Read producer-created meeting readiness that is still unseen.",
+        "operationId": "api_list_unread_ready_meetings_api_meetings_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api List Unread Ready Meetings Api Meetings Ready Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api List Unread Ready Meetings"
       }
     },
     "/api/meetings/{meeting_id}": {
@@ -16414,6 +16433,46 @@
           }
         },
         "summary": "Api Decide Meeting Proposal"
+      }
+    },
+    "/api/meetings/{meeting_id}/ready/read": {
+      "post": {
+        "description": "Acknowledge the readiness marker opened by the Meetings face.",
+        "operationId": "api_mark_meeting_ready_read_api_meetings__meeting_id__ready_read_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meeting_id",
+            "required": true,
+            "schema": {
+              "title": "Meeting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Mark Meeting Ready Read Api Meetings  Meeting Id  Ready Read Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Mark Meeting Ready Read"
       }
     },
     "/api/meetings/{meeting_id}/restore": {

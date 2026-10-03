@@ -29,8 +29,10 @@
 .desk-next .surface-state-chip[data-state="idle"] {
   color: var(--text-muted);
 }
+/* PHILO-13-15 (C5, canvas P7, ratified 2026-10-03): SENDING and PREPARED
+   read on --accent-text; --accent drew the word at 4.26:1, under C1's 4.5:1. */
 .desk-next .surface-state-chip[data-state="active"] {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .desk-next .surface-state-chip[data-state="working"] {
   color: var(--info);

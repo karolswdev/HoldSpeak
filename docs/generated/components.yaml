@@ -438,7 +438,7 @@
       "sources": [
         {
           "claim": "DeskApp mounts the Desk composition.",
-          "line": 184,
+          "line": 86,
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "DeskApp"
         }
@@ -467,7 +467,7 @@
       "sources": [
         {
           "claim": "World descriptors contain stable object fields and placement.",
-          "line": 18,
+          "line": 103,
           "path": "web/src/desk/world.ts",
           "symbol": "worldObjects"
         }
@@ -498,7 +498,7 @@
       "sources": [
         {
           "claim": "The shared frame owns window interactions.",
-          "line": 556,
+          "line": 586,
           "path": "web/src/desk/components/DeskWindow.tsx",
           "symbol": "DeskWindowFrame"
         }
@@ -527,7 +527,7 @@
       "sources": [
         {
           "claim": "The registry enumerates Desk verbs.",
-          "line": 136,
+          "line": 167,
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "VERBS"
         }
@@ -583,7 +583,7 @@
       "sources": [
         {
           "claim": "RuntimeBus owns one guarded runtime socket and connection state.",
-          "line": 13,
+          "line": 26,
           "path": "web/src/runtime/RuntimeBus.tsx",
           "symbol": "RuntimeBusProvider"
         }

@@ -492,6 +492,7 @@ export const fromWireMeeting = (m: unknown): Meeting | null => {
     startedAt: wireString(m, "started_at"),
     endedAt: wireStringOrNull(m, "ended_at"),
     segmentCount: wireNumber(m, "segment_count"),
+    attendees: wireArray(m, "attendees").filter((a): a is string => typeof a === "string" && a.trim() !== ""),
     actionItemCount: wireNumber(m, "action_item_count"),
     durationSeconds: typeof durationRaw === "number" ? durationRaw : null,
     tags: wireArray(m, "tags").filter((t): t is string => typeof t === "string"),

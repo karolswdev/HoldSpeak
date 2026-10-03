@@ -198,7 +198,8 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     act(() => openSurfaceOr("dictate", "/dictation"));
     expect(region("Capture")).toBeNull();
     expect(region("Needs you")).toBeTruthy();
-    // the Dock's Speak AppIcon: a press on it, then the same shell key
+    // PHILO-13-13 C3-W: a click on a Speak-labelled Dock element is no
+    // longer a signal (the 1.5 s press window is retired) ...
     const dock = document.createElement("div");
     dock.className = "desk-dock";
     const speak = document.createElement("button");
@@ -208,6 +209,9 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     fireEvent.click(speak);
     act(() => openSurfaceOr("dictate", "/dictation"));
     dock.remove();
+    expect(region("Capture")).toBeNull();
+    // ... the Dock's explicit launch origin (#744) is the one signal.
+    act(() => openSurfaceOr("dictate", "/dictation", undefined, { origin: "dock" }));
     await waitFor(() => expect(region("Capture")).toBeTruthy());
     expect(region("Needs you")).toBeNull();
     // closing Capture gives the work area back to the next Chair window

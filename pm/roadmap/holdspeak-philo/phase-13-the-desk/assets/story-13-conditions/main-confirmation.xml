@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="31" skipped="0" tests="35" time="93.648" timestamp="2026-10-03T00:34:45.428374-06:00" hostname="Karols-MacBook-Pro.local"><testcase classname="tests.integration.test_web_history_archive" name="test_history_keeps_approval_and_export_governance" time="0.008"><failure message="AssertionError: assert 'ConfirmVerb' in '// HS-170-04 — the Meetings face, rewritten to the settled design.\n// Board: display headline + Record/Import + stre...      Park\n              &lt;/Button&gt;\n            &lt;/span&gt;\n          ) : null\n        }\n      /&gt;}\n    &lt;/&gt;\n  );\n}\n'">tests/integration/test_web_history_archive.py:51: in test_history_keeps_approval_and_export_governance
+    assert "ConfirmVerb" in shell
+E   AssertionError: assert 'ConfirmVerb' in '// HS-170-04 — the Meetings face, rewritten to the settled design.\n// Board: display headline + Record/Import + stre...      Park\n              &lt;/Button&gt;\n            &lt;/span&gt;\n          ) : null\n        }\n      /&gt;}\n    &lt;/&gt;\n  );\n}\n'</failure></testcase><testcase classname="tests.integration.test_live_action_item_triage.TestLiveFirstResolutionOrder" name="test_falls_through_to_the_saved_meeting_when_no_live_session_owns_it" time="0.007"><failure message="AttributeError: '_ArchiveSpy' object has no attribute '_connection'">tests/integration/test_live_action_item_triage.py:101: in test_falls_through_to_the_saved_meeting_when_no_live_session_owns_it
+    _service(archive, on_update=live).update_action_item(
+holdspeak/services/meeting_service.py:683: in update_action_item
+    mark_needs_you_dirty(self._db)
+holdspeak/services/needs_you_aggregate.py:750: in mark_needs_you_dirty
+    with db._connection() as conn:
+         ^^^^^^^^^^^^^^
+E   AttributeError: '_ArchiveSpy' object has no attribute '_connection'</failure></testcase><testcase classname="tests.unit.test_decisions" name="test_meeting_delete_severs_source_without_deleting_decision" time="0.236"><failure message="AssertionError: assert 'linked' == 'source_deleted'&#10;  &#10;  - source_deleted&#10;  + linked">tests/unit/test_decisions.py:217: in test_meeting_delete_severs_source_without_deleting_decision
+    assert survivor.source_state == "source_deleted"
+E   AssertionError: assert 'linked' == 'source_deleted'
+E     
+E     - source_deleted
+E     + linked</failure></testcase><testcase classname="tests.unit.test_hs172_people_sources.TestBriefEnrichment" name="test_last_meeting_present" time="0.035"><failure message="sqlite3.OperationalError: no such column: parked">tests/unit/test_hs172_people_sources.py:343: in test_last_meeting_present
+    brief = service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+holdspeak/services/people_service.py:408: in one_on_one_brief
+    linked_meetings, unlinked_meeting_count = self._brief_plaintext(
+holdspeak/services/people_service.py:690: in _brief_plaintext
+    meeting_rows = conn.execute(
+E   sqlite3.OperationalError: no such column: parked</failure></testcase><testcase classname="tests.integration.test_live_action_item_triage.TestLiveFirstResolutionOrder" name="test_saved_meetings_still_work_with_no_live_session_bound_at_all" time="0.001"><failure message="AttributeError: '_ArchiveSpy' object has no attribute '_connection'">tests/integration/test_live_action_item_triage.py:110: in test_saved_meetings_still_work_with_no_live_session_bound_at_all
+    service.update_action_item(UNAUTHENTICATED, "saved-1", {"status": "done"})
+holdspeak/services/meeting_service.py:683: in update_action_item
+    mark_needs_you_dirty(self._db)
+holdspeak/services/needs_you_aggregate.py:750: in mark_needs_you_dirty
+    with db._connection() as conn:
+         ^^^^^^^^^^^^^^
+E   AttributeError: '_ArchiveSpy' object has no attribute '_connection'</failure></testcase><testcase classname="tests.integration.test_phase200_recipe_catalog.TestTheScheduledOwnerReallyFires" name="test_the_sweep_is_driven_by_a_wall_clock_loop" time="0.004"><failure message="AssertionError: ('Tick every 60 seconds; on each tick, check if a sweep is due.', None, ('get_database', 'get_observer'), ('Principal', 'PrincipalKind'), ('HeartbeatService',), ('observer',), ...)&#10;assert []">tests/integration/test_phase200_recipe_catalog.py:652: in test_the_sweep_is_driven_by_a_wall_clock_loop
+    assert ticks, loop.__code__.co_consts
+E   AssertionError: ('Tick every 60 seconds; on each tick, check if a sweep is due.', None, ('get_database', 'get_observer'), ('Principal', 'PrincipalKind'), ('HeartbeatService',), ('observer',), ...)
+E   assert []</failure></testcase><testcase classname="tests.e2e.test_hs176_journal_glass" name="test_journal_filtered[393-852]" time="37.192"><failure message="playwright._impl._errors.TimeoutError: Locator.click: Timeout 30000ms exceeded.&#10;Call log:&#10;  - waiting for get_by_role(&quot;tab&quot;, name=&quot;Journal&quot;)">tests/e2e/test_hs176_journal_glass.py:392: in test_journal_filtered
+    _open_journal(page)
+tests/e2e/test_hs176_journal_glass.py:214: in _open_journal
+    page.get_by_role("tab", name="Journal").click()
+.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py:15637: in click
+    self._sync(
+.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py:162: in click
+    return await self._frame._click(self._selector, strict=True, **params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Locator.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for get_by_role("tab", name="Journal")</failure></testcase><testcase classname="tests.e2e.test_hs176_loop_glass" name="test_speak_loop_1440" time="10.477" /><testcase classname="tests.e2e.test_graph_walk_smoke" name="test_the_rig_drives_the_real_atlas[case.j10.arrival_generate_brief.generated_empty]" time="10.137" /><testcase classname="tests.e2e.test_hs176_journal_glass" name="test_journal_quiet[393-852]" time="37.076"><failure message="playwright._impl._errors.TimeoutError: Locator.click: Timeout 30000ms exceeded.&#10;Call log:&#10;  - waiting for get_by_role(&quot;tab&quot;, name=&quot;Journal&quot;)">tests/e2e/test_hs176_journal_glass.py:441: in test_journal_quiet
+    _open_journal(page)
+tests/e2e/test_hs176_journal_glass.py:214: in _open_journal
+    page.get_by_role("tab", name="Journal").click()
+.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py:15637: in click
+    self._sync(
+.venv/lib/python3.14/site-packages/playwright/_impl/_locator.py:162: in click
+    return await self._frame._click(self._selector, strict=True, **params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.14/site-packages/playwright/_impl/_frame.py:566: in _click
+    await self._channel.send("click", self._timeout, locals_to_params(locals()))
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:69: in send
+    return await self._connection.wrap_api_call(
+.venv/lib/python3.14/site-packages/playwright/_impl/_connection.py:559: in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E   playwright._impl._errors.TimeoutError: Locator.click: Timeout 30000ms exceeded.
+E   Call log:
+E     - waiting for get_by_role("tab", name="Journal")</failure></testcase><testcase classname="tests.unit.test_interior_canon_guard" name="test_no_left_border_rails_in_web_css" time="0.044"><failure message="AssertionError: the left rail is banned (HS-101 canon rule 6) — remove the border-left and use the aerogel inset (.surface-aerogel / --desk-aerogel-* tokens) instead:&#10;  web/src/desk/components/chrome-menus.css:695: border-left: 1px solid var(--wb-ink);&#10;  web/src/desk/components/chrome-menus.css:745: border-left: 1px solid var(--wb-ink);&#10;  web/src/desk/components/pullout.css:759: border-left-width: 0;&#10;  web/src/desk/components/window-chrome.css:159: border-left: 1px solid var(--wb-ink);&#10;  web/src/desk/components/window-chrome.css:425: border-left: 1px solid var(--wb-ink);&#10;  web/src/desk/components/window-chrome.css:456: border-left: 1px solid var(--wb-ink);&#10;  web/src/desk/components/window-chrome.css:908: border-left: 1px solid var(--wb-ink);&#10;assert not ['web/src/desk/components/chrome-menus.css:695: border-left: 1px solid var(--wb-ink);', 'web/src/desk/components/chrom...1px solid var(--wb-ink);', 'web/src/desk/components/window-chrome.css:456: border-left: 1px solid var(--wb-ink);', ...]">tests/unit/test_interior_canon_guard.py:35: in test_no_left_border_rails_in_web_css
+    assert not offenders, (
+E   AssertionError: the left rail is banned (HS-101 canon rule 6) — remove the border-left and use the aerogel inset (.surface-aerogel / --desk-aerogel-* tokens) instead:
+E     web/src/desk/components/chrome-menus.css:695: border-left: 1px solid var(--wb-ink);
+E     web/src/desk/components/chrome-menus.css:745: border-left: 1px solid var(--wb-ink);
+E     web/src/desk/components/pullout.css:759: border-left-width: 0;
+E     web/src/desk/components/window-chrome.css:159: border-left: 1px solid var(--wb-ink);
+E     web/src/desk/components/window-chrome.css:425: border-left: 1px solid var(--wb-ink);
+E     web/src/desk/components/window-chrome.css:456: border-left: 1px solid var(--wb-ink);
+E     web/src/desk/components/window-chrome.css:908: border-left: 1px solid var(--wb-ink);
+E   assert not ['web/src/desk/components/chrome-menus.css:695: border-left: 1px solid var(--wb-ink);', 'web/src/desk/components/chrom...1px solid var(--wb-ink);', 'web/src/desk/components/window-chrome.css:456: border-left: 1px solid var(--wb-ink);', ...]</failure></testcase><testcase classname="tests.unit.test_people_brief.TestBriefAggregation" name="test_brief_unlinked_meeting_count_f11" time="0.018"><failure message="sqlite3.OperationalError: no such column: parked">tests/unit/test_people_brief.py:192: in test_brief_unlinked_meeting_count_f11
+    brief = service.one_on_one_brief(OWNER, rel["id"], db=db)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+holdspeak/services/people_service.py:408: in one_on_one_brief
+    linked_meetings, unlinked_meeting_count = self._brief_plaintext(
+holdspeak/services/people_service.py:690: in _brief_plaintext
+    meeting_rows = conn.execute(
+E   sqlite3.OperationalError: no such column: parked</failure></testcase><testcase classname="tests.unit.test_people_brief.TestWriteCountSpy" name="test_brief_writes_zero_rows_to_plain_db" time="0.016"><failure message="sqlite3.OperationalError: no such column: parked">tests/unit/test_people_brief.py:252: in test_brief_writes_zero_rows_to_plain_db
+    service.one_on_one_brief(OWNER, rel["id"], db=db)
+holdspeak/services/people_service.py:408: in one_on_one_brief
+    linked_meetings, unlinked_meeting_count = self._brief_plaintext(
+holdspeak/services/people_service.py:690: in _brief_plaintext
+    meeting_rows = conn.execute(
+E   sqlite3.OperationalError: no such column: parked</failure></testcase><testcase classname="tests.unit.test_people_brief.TestCommitmentTriadUntouched" name="test_action_items_unchanged_after_brief" time="0.011"><failure message="sqlite3.OperationalError: no such column: parked">tests/unit/test_people_brief.py:430: in test_action_items_unchanged_after_brief
+    service.one_on_one_brief(OWNER, rel["id"], db=db)
+holdspeak/services/people_service.py:408: in one_on_one_brief
+    linked_meetings, unlinked_meeting_count = self._brief_plaintext(
+holdspeak/services/people_service.py:690: in _brief_plaintext
+    meeting_rows = conn.execute(
+E   sqlite3.OperationalError: no such column: parked</failure></testcase><testcase classname="tests.unit.test_phase200_doc_claims" name="test_registered_claim_matches_its_state[holds:UX-CANON.md:179]" time="0.003"><failure message="AssertionError: a documentation claim that used to HOLD is now FALSE: docs/internal/UX-CANON.md:179&#10;    the sentence: A1 (raw `&lt;button&gt;`) is held to a dated, down-only ratchet of 102, measured on 2026-09-28 by #694 (the live count once the Phase 9 and 10 faces landed; 105 the same day by PHILO-9-04, the sortable table's sort headers; 106 on 2026-09-21 by HS-202-03; 175 on 2026-09-17 by HS-200-44, once the matcher could see a multi-line opening tag). That number can only shrink.&#10;    what is true: tests/ux_canon_ceiling.json holds A1 = 102 with a dated reason, the canon scanner's A1 count over web/src is at or under it, and the document states the same number. Lowered 105 -&gt; 102 on 2026-09-28 by #694 (the ceiling rewritten to the live counts). Lowered 106 -&gt; 105 on 2026-09-28 by PHILO-9-04 (the sortable table's sort headers became the library Button). Lowered 175 -&gt; 106 on 2026-09-21 by HS-202-03 (the shared species on the first-use path became library Buttons); the row is re-pinned to the new number so the predicate keeps the down-only law honest. Corrected 2026-09-17 by HS-200-44&#10;    Fix the code, or correct the sentence AND its registry row (tests/unit/doc_claims/registry.py) in this same commit.&#10;assert False">tests/unit/test_phase200_doc_claims.py:63: in test_registered_claim_matches_its_state
+    assert satisfied, (
+E   AssertionError: a documentation claim that used to HOLD is now FALSE: docs/internal/UX-CANON.md:179
+E       the sentence: A1 (raw `&lt;button&gt;`) is held to a dated, down-only ratchet of 102, measured on 2026-09-28 by #694 (the live count once the Phase 9 and 10 faces landed; 105 the same day by PHILO-9-04, the sortable table's sort headers; 106 on 2026-09-21 by HS-202-03; 175 on 2026-09-17 by HS-200-44, once the matcher could see a multi-line opening tag). That number can only shrink.
+E       what is true: tests/ux_canon_ceiling.json holds A1 = 102 with a dated reason, the canon scanner's A1 count over web/src is at or under it, and the document states the same number. Lowered 105 -&gt; 102 on 2026-09-28 by #694 (the ceiling rewritten to the live counts). Lowered 106 -&gt; 105 on 2026-09-28 by PHILO-9-04 (the sortable table's sort headers became the library Button). Lowered 175 -&gt; 106 on 2026-09-21 by HS-202-03 (the shared species on the first-use path became library Buttons); the row is re-pinned to the new number so the predicate keeps the down-only law honest. Corrected 2026-09-17 by HS-200-44
+E       Fix the code, or correct the sentence AND its registry row (tests/unit/doc_claims/registry.py) in this same commit.
+E   assert False</failure></testcase><testcase classname="tests.unit.test_phase200_doc_claims" name="test_registered_claim_matches_its_state[holds:useDeskChangedRefresh.ts:15]" time="0.262"><failure message="AssertionError: a documentation claim that used to HOLD is now FALSE: web/src/desk/useDeskChangedRefresh.ts:15&#10;    the sentence: Meeting changes announce themselves from the import worker when an import ends, success or failure (`MeetingService._run_import_job`), and from the summary queue after durable running and settled transitions (`_notify_queue_meeting_changed`). Other meeting writes, project rooms, thoughts and sync emit no frame; their surfaces carry their own signals.&#10;    what is true: literal-kind 'meeting' desk_changed calls under holdspeak/ are in MeetingService._run_import_job and _notify_queue_meeting_changed; real-producer queue fences verify durable running and settled publication. No literal thought/project/room/sync kind exists (PHILO-3-02, updated 2026-09-23)&#10;    Fix the code, or correct the sentence AND its registry row (tests/unit/doc_claims/registry.py) in this same commit.&#10;assert False">tests/unit/test_phase200_doc_claims.py:63: in test_registered_claim_matches_its_state
+    assert satisfied, (
+E   AssertionError: a documentation claim that used to HOLD is now FALSE: web/src/desk/useDeskChangedRefresh.ts:15
+E       the sentence: Meeting changes announce themselves from the import worker when an import ends, success or failure (`MeetingService._run_import_job`), and from the summary queue after durable running and settled transitions (`_notify_queue_meeting_changed`). Other meeting writes, project rooms, thoughts and sync emit no frame; their surfaces carry their own signals.
+E       what is true: literal-kind 'meeting' desk_changed calls under holdspeak/ are in MeetingService._run_import_job and _notify_queue_meeting_changed; real-producer queue fences verify durable running and settled publication. No literal thought/project/room/sync kind exists (PHILO-3-02, updated 2026-09-23)
+E       Fix the code, or correct the sentence AND its registry row (tests/unit/doc_claims/registry.py) in this same commit.
+E   assert False</failure></testcase><testcase classname="tests.unit.test_phase143_routing_authority_census" name="test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer" time="2.170"><failure message="AssertionError: assert {'holdspeak/d...acement', ...} == {'holdspeak/d...acement', ...}&#10;  &#10;  Extra items in the left set:&#10;  'holdspeak/mcp/tools.py:1156:import:resolve_meeting_placement'&#10;  Extra items in the right set:&#10;  'holdspeak/mcp/tools.py:1154:import:resolve_meeting_placement'&#10;  Use -v to get more diff">tests/unit/test_phase143_routing_authority_census.py:366: in test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer
+    assert references == ROUTING_RESOLVER_REFERENCES
+E   AssertionError: assert {'holdspeak/d...acement', ...} == {'holdspeak/d...acement', ...}
+E     
+E     Extra items in the left set:
+E     'holdspeak/mcp/tools.py:1156:import:resolve_meeting_placement'
+E     Extra items in the right set:
+E     'holdspeak/mcp/tools.py:1154:import:resolve_meeting_placement'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.unit.test_phase143_inference_capability_census" name="test_phase143_every_product_runner_entrance_has_one_owner" time="5.100"><failure message="AssertionError: a pinned operation-contract site moved or is gone; re-read it and re-anchor: stale=['holdspeak/mcp/resources.py:578|read_resource|call', 'holdspeak/mcp/tools.py:653|_primitive_list|call', 'holdspeak/mcp/tools.py:659|_primitive_get|call', 'holdspeak/operations.py:2162|OperationRegistry.invoke_receipted|call']&#10;assert {'holdspeak/m...ceipted|call'} &lt;= {'holdspeak/k...ed|call', ...}&#10;  &#10;  Extra items in the left set:&#10;  'holdspeak/mcp/tools.py:659|_primitive_get|call'&#10;  'holdspeak/mcp/tools.py:653|_primitive_list|call'&#10;  'holdspeak/mcp/resources.py:578|read_resource|call'&#10;  'holdspeak/operations.py:2162|OperationRegistry.invoke_receipted|call'">tests/unit/test_phase143_inference_capability_census.py:675: in test_phase143_every_product_runner_entrance_has_one_owner
+    assert pinned &lt;= every, (
+E   AssertionError: a pinned operation-contract site moved or is gone; re-read it and re-anchor: stale=['holdspeak/mcp/resources.py:578|read_resource|call', 'holdspeak/mcp/tools.py:653|_primitive_list|call', 'holdspeak/mcp/tools.py:659|_primitive_get|call', 'holdspeak/operations.py:2162|OperationRegistry.invoke_receipted|call']
+E   assert {'holdspeak/m...ceipted|call'} &lt;= {'holdspeak/k...ed|call', ...}
+E     
+E     Extra items in the left set:
+E     'holdspeak/mcp/tools.py:659|_primitive_get|call'
+E     'holdspeak/mcp/tools.py:653|_primitive_list|call'
+E     'holdspeak/mcp/resources.py:578|read_resource|call'
+E     'holdspeak/operations.py:2162|OperationRegistry.invoke_receipted|call'</failure></testcase><testcase classname="tests.unit.test_phase143_inference_capability_census" name="test_phase143_shared_helpers_have_semantic_callers" time="7.151"><failure message="AssertionError: shared Ask/Recipe helper callers changed; classify the public semantic operation rather than assigning the helper one false capability.&#10;  unregistered=['holdspeak/mcp/tools.py:1022|dispatch|run']&#10;  stale=['holdspeak/mcp/tools.py:1020|dispatch|run']&#10;assert {'holdspeak/m...dispatch|ask'} == {'holdspeak/m...dispatch|ask'}&#10;  &#10;  Extra items in the left set:&#10;  'holdspeak/mcp/tools.py:1022|dispatch|run'&#10;  Extra items in the right set:&#10;  'holdspeak/mcp/tools.py:1020|dispatch|run'&#10;  Use -v to get more diff">tests/unit/test_phase143_inference_capability_census.py:695: in test_phase143_shared_helpers_have_semantic_callers
+    assert live == set(SEMANTIC_HELPER_CALLERS), (
+E   AssertionError: shared Ask/Recipe helper callers changed; classify the public semantic operation rather than assigning the helper one false capability.
+E     unregistered=['holdspeak/mcp/tools.py:1022|dispatch|run']
+E     stale=['holdspeak/mcp/tools.py:1020|dispatch|run']
+E   assert {'holdspeak/m...dispatch|ask'} == {'holdspeak/m...dispatch|ask'}
+E     
+E     Extra items in the left set:
+E     'holdspeak/mcp/tools.py:1022|dispatch|run'
+E     Extra items in the right set:
+E     'holdspeak/mcp/tools.py:1020|dispatch|run'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.unit.test_philo4_01_atlas_contracts" name="test_the_reload_claim_points_at_the_quiet_branch" time="0.007"><failure message="AssertionError: ({'claim': 'a brief with nothing untriaged keeps its own section, headline and Generate after a reload (the quiet bran...n className=&quot;surface-receipt-line&quot; data-testid=&quot;arrival-brief-date&quot;&gt;&#10;        {parts.join(&quot; · &quot;)}&#10;      &lt;/span&gt;&#10;    );&#10;  }')&#10;assert 'arrival-brief-headline' in '    &lt;span className=&quot;surface-receipt-line&quot; data-testid=&quot;arrival-brief-date&quot;&gt;\n      {parts.join(&quot; · &quot;)}\n    &lt;/span&gt;\n  );\n}'">tests/unit/test_philo4_01_atlas_contracts.py:141: in test_the_reload_claim_points_at_the_quiet_branch
+    assert "arrival-brief-headline" in window, (ref, window)
+E   AssertionError: ({'claim': 'a brief with nothing untriaged keeps its own section, headline and Generate after a reload (the quiet bran...n className="surface-receipt-line" data-testid="arrival-brief-date"&gt;
+E           {parts.join(" · ")}
+E         &lt;/span&gt;
+E       );
+E     }')
+E   assert 'arrival-brief-headline' in '    &lt;span className="surface-receipt-line" data-testid="arrival-brief-date"&gt;\n      {parts.join(" · ")}\n    &lt;/span&gt;\n  );\n}'</failure></testcase><testcase classname="tests.e2e.test_hs141_thought_workbench_glass" name="test_thought_workbench_real_glass[393]" time="10.674" /><testcase classname="tests.unit.test_philo3_summary_detail" name="test_summary_wire_fixture_matches_real_producer_states" time="1.930"><failure message="AssertionError: assert [{'detail': {...nal_failure'}] == [{'detail': {...nal_failure'}]&#10;  &#10;  At index 0 diff: {'state': 'imported_off', 'list': {'id': '&lt;producer-volatile&gt;', 'started_at': '&lt;producer-volatile&gt;', 'ended_at': '&lt;producer-volatile&gt;', 'title': 'Architecture boundary review', 'duration_seconds': 34.67525, 'segment_count': 2, 'action_item_count': 0, 'tags': ['architecture'], 'intel_status': 'disabled', 'intel_status_detail': 'No summary yet. Import does not run the summary — ask for it on the meeting.', 'intel_model_host': None, 'has_summary': False, 'intel_duration_s': None, 'capture_status': 'finalized', 'capture_failure': None, 'capture_checkpoint_s...&#10;  &#10;  ...Full output truncated (2 lines hidden), use '-vv' to show">tests/unit/test_philo3_summary_detail.py:375: in test_summary_wire_fixture_matches_real_producer_states
+    assert _normalise_wire(fixture["cases"]) == _normalise_wire(expected_cases)
+E   AssertionError: assert [{'detail': {...nal_failure'}] == [{'detail': {...nal_failure'}]
+E     
+E     At index 0 diff: {'state': 'imported_off', 'list': {'id': '&lt;producer-volatile&gt;', 'started_at': '&lt;producer-volatile&gt;', 'ended_at': '&lt;producer-volatile&gt;', 'title': 'Architecture boundary review', 'duration_seconds': 34.67525, 'segment_count': 2, 'action_item_count': 0, 'tags': ['architecture'], 'intel_status': 'disabled', 'intel_status_detail': 'No summary yet. Import does not run the summary — ask for it on the meeting.', 'intel_model_host': None, 'has_summary': False, 'intel_duration_s': None, 'capture_status': 'finalized', 'capture_failure': None, 'capture_checkpoint_s...
+E     
+E     ...Full output truncated (2 lines hidden), use '-vv' to show</failure></testcase><testcase classname="tests.e2e.test_hs144_door_glass" name="test_hs144_door_empty_and_error_shots[393]" time="9.222"><failure message="AssertionError: Headline should read 'Nothing needs you' on door error: Coverage incomplete&#10;assert 'nothing needs you' in 'coverage incomplete'&#10; +  where 'coverage incomplete' = &lt;built-in method lower of str object at 0x11c16ca70&gt;()&#10; +    where &lt;built-in method lower of str object at 0x11c16ca70&gt; = 'Coverage incomplete'.lower">tests/e2e/test_hs144_door_glass.py:416: in test_hs144_door_empty_and_error_shots
+    assert "nothing needs you" in headline.lower(), \
+E   AssertionError: Headline should read 'Nothing needs you' on door error: Coverage incomplete
+E   assert 'nothing needs you' in 'coverage incomplete'
+E    +  where 'coverage incomplete' = &lt;built-in method lower of str object at 0x11c16ca70&gt;()
+E    +    where &lt;built-in method lower of str object at 0x11c16ca70&gt; = 'Coverage incomplete'.lower</failure></testcase><testcase classname="tests.e2e.test_hs144_door_glass" name="test_hs144_door_empty_and_error_shots[1440]" time="8.452"><failure message="AssertionError: Headline should read 'Nothing needs you' on door error: Coverage incomplete&#10;assert 'nothing needs you' in 'coverage incomplete'&#10; +  where 'coverage incomplete' = &lt;built-in method lower of str object at 0x116b99bb0&gt;()&#10; +    where &lt;built-in method lower of str object at 0x116b99bb0&gt; = 'Coverage incomplete'.lower">tests/e2e/test_hs144_door_glass.py:416: in test_hs144_door_empty_and_error_shots
+    assert "nothing needs you" in headline.lower(), \
+E   AssertionError: Headline should read 'Nothing needs you' on door error: Coverage incomplete
+E   assert 'nothing needs you' in 'coverage incomplete'
+E    +  where 'coverage incomplete' = &lt;built-in method lower of str object at 0x116b99bb0&gt;()
+E    +    where &lt;built-in method lower of str object at 0x116b99bb0&gt; = 'Coverage incomplete'.lower</failure></testcase><testcase classname="tests.unit.test_philo6_01_import_badge" name="test_empty_vtt_import_leaves_import_failed_on_the_wire" time="0.734"><failure message="AssertionError: the vitest fixture drifted from the real producer; re-run with PHILO6_WRITE_FIXTURE=1&#10;assert {'detail': {'...': None, ...}} == {'detail': {'...': None, ...}}&#10;  &#10;  Differing items:&#10;  {'list_row': {'action_item_count': 0, 'calendar_event_id': None, 'capture_checkpoint_seconds': 0.0, 'capture_failure': None, ...}} != {'list_row': {'action_item_count': 0, 'calendar_event_id': None, 'capture_checkpoint_seconds': 0.0, 'capture_failure': None, ...}}&#10;  {'detail': {'bookmarks': [], 'calendar_event_id': None, 'capture_checkpoint_at': None, 'capture_checkpoint_seconds': 0.0, ...}} != {'detail': {'bookmarks': [], 'calendar_event_id': None, 'capture_checkpoint_at': None, 'capture_checkpoint_seconds': 0.0, ...}}&#10;  Use -v to get more diff">tests/unit/test_philo6_01_import_badge.py:149: in test_empty_vtt_import_leaves_import_failed_on_the_wire
+    assert recorded == wire, (
+E   AssertionError: the vitest fixture drifted from the real producer; re-run with PHILO6_WRITE_FIXTURE=1
+E   assert {'detail': {'...': None, ...}} == {'detail': {'...': None, ...}}
+E     
+E     Differing items:
+E     {'list_row': {'action_item_count': 0, 'calendar_event_id': None, 'capture_checkpoint_seconds': 0.0, 'capture_failure': None, ...}} != {'list_row': {'action_item_count': 0, 'calendar_event_id': None, 'capture_checkpoint_seconds': 0.0, 'capture_failure': None, ...}}
+E     {'detail': {'bookmarks': [], 'calendar_event_id': None, 'capture_checkpoint_at': None, 'capture_checkpoint_seconds': 0.0, ...}} != {'detail': {'bookmarks': [], 'calendar_event_id': None, 'capture_checkpoint_at': None, 'capture_checkpoint_seconds': 0.0, ...}}
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.e2e.test_philo8_03_then_guard" name="test_a_follow_up_after_the_window_is_blocked[1440-click_wait]" time="22.787"><failure message="AssertionError: ('fail', &quot;TRIGGER lifecycle failed: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'te...ndo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (the target is disabled)&quot;)&#10;assert 'fail' == 'blocked'&#10;  &#10;  - blocked&#10;  + fail">tests/e2e/test_philo8_03_then_guard.py:94: in test_a_follow_up_after_the_window_is_blocked
+    assert record["verdict"] == "blocked", (record["verdict"], notes)
+E   AssertionError: ('fail', "TRIGGER lifecycle failed: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'te...ndo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (the target is disabled)")
+E   assert 'fail' == 'blocked'
+E     
+E     - blocked
+E     + fail</failure></testcase><testcase classname="tests.e2e.test_philo8_03_then_guard" name="test_a_follow_up_after_the_window_is_blocked[1440-before_guard]" time="33.523"><failure message="AssertionError: ('fail', 'TRIGGER lifecycle failed: ui step click not delivered: its guard {\'visible\': \'.undo-receipt.is-pending\',... at delivery (.undo-receipt.is-pending is not visible; &quot;Undo&quot; not in &quot;&quot;; .undo-receipt-time reads null, wanted &gt;= 2s)')&#10;assert 'fail' == 'blocked'&#10;  &#10;  - blocked&#10;  + fail">tests/e2e/test_philo8_03_then_guard.py:94: in test_a_follow_up_after_the_window_is_blocked
+    assert record["verdict"] == "blocked", (record["verdict"], notes)
+E   AssertionError: ('fail', 'TRIGGER lifecycle failed: ui step click not delivered: its guard {\'visible\': \'.undo-receipt.is-pending\',... at delivery (.undo-receipt.is-pending is not visible; "Undo" not in ""; .undo-receipt-time reads null, wanted &gt;= 2s)')
+E   assert 'fail' == 'blocked'
+E     
+E     - blocked
+E     + fail</failure></testcase><testcase classname="tests.unit.test_people_brief.TestBriefAggregation" name="test_brief_linked_meetings_via_uid_chain" time="0.031"><failure message="sqlite3.OperationalError: no such column: parked">tests/unit/test_people_brief.py:164: in test_brief_linked_meetings_via_uid_chain
+    brief = service.one_on_one_brief(OWNER, rel["id"], db=db)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+holdspeak/services/people_service.py:408: in one_on_one_brief
+    linked_meetings, unlinked_meeting_count = self._brief_plaintext(
+holdspeak/services/people_service.py:690: in _brief_plaintext
+    meeting_rows = conn.execute(
+E   sqlite3.OperationalError: no such column: parked</failure></testcase><testcase classname="tests.e2e.test_hs176_loop_glass" name="test_speak_loop_393" time="7.934"><failure message="AssertionError: []&#10;assert [] == ['SPEAK', 'JO...S', 'LEARNED']&#10;  &#10;  Right contains 4 more items, first extra item: 'SPEAK'&#10;  Use -v to get more diff">tests/e2e/test_hs176_loop_glass.py:372: in test_speak_loop_393
+    _run(tmp_path, monkeypatch, 393, 852)
+tests/e2e/test_hs176_loop_glass.py:353: in _run
+    assert wings == ["SPEAK", "JOURNAL", "BLOCKS", "LEARNED"], wings
+E   AssertionError: []
+E   assert [] == ['SPEAK', 'JO...S', 'LEARNED']
+E     
+E     Right contains 4 more items, first extra item: 'SPEAK'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.e2e.test_hs163_steward_glass" name="test_dogfood_run_and_dedup[393]" time="5.486"><failure message="AssertionError: assert 19501 &gt; 20000&#10; +  where 19501 = os.stat_result(st_mode=33188, st_ino=725047065, st_dev=16777229, st_nlink=1, st_uid=501, st_gid=20, st_size=19501, st_atime=1791006995, st_mtime=1791009329, st_ctime=1791009329).st_size&#10; +    where os.stat_result(st_mode=33188, st_ino=725047065, st_dev=16777229, st_nlink=1, st_uid=501, st_gid=20, st_size=19501, st_atime=1791006995, st_mtime=1791009329, st_ctime=1791009329) = stat()&#10; +      where stat = (PosixPath('/Users/karol/dev/tools/wt-c3-744-baseline/.tmp/evidence-shots/pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots') / 'steward-empty-393.png').stat">tests/e2e/test_hs163_steward_glass.py:275: in test_dogfood_run_and_dedup
+    assert (SHOTS / f"steward-empty-{width}.png").stat().st_size &gt; 20_000
+E   AssertionError: assert 19501 &gt; 20000
+E    +  where 19501 = os.stat_result(st_mode=33188, st_ino=725047065, st_dev=16777229, st_nlink=1, st_uid=501, st_gid=20, st_size=19501, st_atime=1791006995, st_mtime=1791009329, st_ctime=1791009329).st_size
+E    +    where os.stat_result(st_mode=33188, st_ino=725047065, st_dev=16777229, st_nlink=1, st_uid=501, st_gid=20, st_size=19501, st_atime=1791006995, st_mtime=1791009329, st_ctime=1791009329) = stat()
+E    +      where stat = (PosixPath('/Users/karol/dev/tools/wt-c3-744-baseline/.tmp/evidence-shots/pm/roadmap/holdspeak/phase-163-the-stewards-hand/assets/story-06-shots') / 'steward-empty-393.png').stat</failure></testcase><testcase classname="tests.e2e.test_hs201_summary_face_glass" name="test_the_summary_is_asked_for_disclosed_and_found_again" time="6.846"><failure message="AssertionError: ['Run summary', 'Decide']&#10;assert 2 &lt;= 1&#10; +  where 2 = len(['Run summary', 'Decide'])">tests/e2e/test_hs201_summary_face_glass.py:220: in test_the_summary_is_asked_for_disclosed_and_found_again
+    _assert_canon(page)
+tests/e2e/test_hs201_summary_face_glass.py:488: in _assert_canon
+    assert len(found["primaries"]) &lt;= 1, found["primaries"]
+E   AssertionError: ['Run summary', 'Decide']
+E   assert 2 &lt;= 1
+E    +  where 2 = len(['Run summary', 'Decide'])</failure></testcase><testcase classname="tests.unit.test_graph_walk_calibration" name="test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires" time="0.002"><failure message="AssertionError: assert frozenset({'c...'press', ...}) == {'click', 'cl... 'press', ...}&#10;  &#10;  Extra items in the left set:&#10;  'set_input_files'&#10;  'world_context_menu'&#10;  Use -v to get more diff">tests/unit/test_graph_walk_calibration.py:275: in test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires
+    assert UI_ACTIONS == {"goto", "reload", "click", "click_role", "fill",
+E   AssertionError: assert frozenset({'c...'press', ...}) == {'click', 'cl... 'press', ...}
+E     
+E     Extra items in the left set:
+E     'set_input_files'
+E     'world_context_menu'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.e2e.test_philo8_one_delete_glass.TestOneDelete" name="test_a_failed_refresh_keeps_the_pending_delete_and_its_undo[1440]" time="39.719" /><testcase classname="tests.e2e.test_philo8_03_then_guard" name="test_a_follow_up_after_the_window_is_blocked[393-before_guard]" time="28.579"><failure message="AssertionError: ('fail', 'TRIGGER lifecycle failed: ui step click not delivered: its guard {\'visible\': \'.undo-receipt.is-pending\',... at delivery (.undo-receipt.is-pending is not visible; &quot;Undo&quot; not in &quot;&quot;; .undo-receipt-time reads null, wanted &gt;= 2s)')&#10;assert 'fail' == 'blocked'&#10;  &#10;  - blocked&#10;  + fail">tests/e2e/test_philo8_03_then_guard.py:94: in test_a_follow_up_after_the_window_is_blocked
+    assert record["verdict"] == "blocked", (record["verdict"], notes)
+E   AssertionError: ('fail', 'TRIGGER lifecycle failed: ui step click not delivered: its guard {\'visible\': \'.undo-receipt.is-pending\',... at delivery (.undo-receipt.is-pending is not visible; "Undo" not in ""; .undo-receipt-time reads null, wanted &gt;= 2s)')
+E   assert 'fail' == 'blocked'
+E     
+E     - blocked
+E     + fail</failure></testcase><testcase classname="tests.e2e.test_philo8_03_then_guard" name="test_a_follow_up_after_the_window_is_blocked[393-click_wait]" time="18.712"><failure message="AssertionError: ('fail', &quot;TRIGGER lifecycle failed: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'te...ndo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (the target is disabled)&quot;)&#10;assert 'fail' == 'blocked'&#10;  &#10;  - blocked&#10;  + fail">tests/e2e/test_philo8_03_then_guard.py:94: in test_a_follow_up_after_the_window_is_blocked
+    assert record["verdict"] == "blocked", (record["verdict"], notes)
+E   AssertionError: ('fail', "TRIGGER lifecycle failed: ui step click not delivered: its guard {'visible': '.undo-receipt.is-pending', 'te...ndo', 'seconds_left': {'selector': '.undo-receipt-time', 'min': 2}} did not hold at delivery (the target is disabled)")
+E   assert 'fail' == 'blocked'
+E     
+E     - blocked
+E     + fail</failure></testcase></testsuite></testsuites>

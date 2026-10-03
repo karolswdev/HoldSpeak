@@ -1,0 +1,171 @@
+{
+  "C1-1-the-desk": {
+    "frame": {
+      "width": 393,
+      "windows": 1,
+      "blue": [
+        "Needs you"
+      ],
+      "front": [
+        "Needs you"
+      ],
+      "screen": "Needs you",
+      "layout": [],
+      "ownership": [],
+      "clipped": [],
+      "ellipsis": [
+        "Needs you"
+      ],
+      "sideways": [],
+      "content": 704,
+      "small_targets": [],
+      "small_text": [],
+      "low_contrast": []
+    },
+    "chair": {
+      "width": 393,
+      "windows": [
+        "Needs you"
+      ],
+      "reopen": [],
+      "page_scrolls": false,
+      "bodies": {
+        "Needs you": {
+          "overflowY": "auto",
+          "scrolls": true,
+          "h": 704
+        }
+      },
+      "tiles_overlap": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "overlap": [],
+      "small_targets": [],
+      "low_contrast": [],
+      "small_text": [
+        {
+          "text": "\u25cf",
+          "size": 11
+        }
+      ]
+    }
+  },
+  "C1-4b-chair-week-open": {
+    "frame": {
+      "width": 393,
+      "windows": 1,
+      "blue": [
+        "The week"
+      ],
+      "front": [
+        "The week"
+      ],
+      "screen": "The week",
+      "layout": [],
+      "ownership": [],
+      "clipped": [],
+      "ellipsis": [
+        "The week"
+      ],
+      "sideways": [],
+      "content": 704,
+      "small_targets": [],
+      "small_text": [],
+      "low_contrast": []
+    },
+    "chair": {
+      "width": 393,
+      "windows": [
+        "The week"
+      ],
+      "reopen": [],
+      "page_scrolls": false,
+      "bodies": {
+        "The week": {
+          "overflowY": "auto",
+          "scrolls": true,
+          "h": 704
+        }
+      },
+      "tiles_overlap": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "overlap": [],
+      "small_targets": [],
+      "low_contrast": [],
+      "small_text": [
+        {
+          "text": "\u21bb",
+          "size": 11
+        },
+        {
+          "text": "\u25b8",
+          "size": 11
+        }
+      ]
+    }
+  },
+  "go-chair": [
+    [
+      "Needs you",
+      "true"
+    ],
+    [
+      "Brief",
+      "true"
+    ],
+    [
+      "The week",
+      "true"
+    ]
+  ],
+  "C1-4e-chair-window-reopened": {
+    "frame": {
+      "width": 393,
+      "windows": 1,
+      "blue": [
+        "Brief"
+      ],
+      "front": [
+        "Brief"
+      ],
+      "screen": "Brief",
+      "layout": [],
+      "ownership": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "content": 704,
+      "small_targets": [],
+      "small_text": [],
+      "low_contrast": []
+    },
+    "chair": {
+      "width": 393,
+      "windows": [
+        "Brief"
+      ],
+      "reopen": [],
+      "page_scrolls": false,
+      "bodies": {
+        "Brief": {
+          "overflowY": "auto",
+          "scrolls": true,
+          "h": 704
+        }
+      },
+      "tiles_overlap": [],
+      "clipped": [],
+      "ellipsis": [],
+      "sideways": [],
+      "overlap": [],
+      "small_targets": [],
+      "low_contrast": [],
+      "small_text": []
+    }
+  },
+  "errors": [],
+  "failures": {}
+}

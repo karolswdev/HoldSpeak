@@ -5,7 +5,7 @@
 // minimal cluster (DeskChrome); a fresh desk shows the guiding empty state.
 // HS-135-06: the Chair is HOME at `/`. The spatial floor stays intact
 // behind a dock button (counsel ruling B.Q1).
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../components/signal/Signal";
 import { defaultViewFor, useDesk } from "./store";
 import { useChairState } from "./chairState";
@@ -132,15 +132,23 @@ function DeskFaces() {
   // `updatedAt` changes only after the first combined desk/setup refresh has
   // settled. Keep the room quiet while that server-owned arrival choice is
   // unknown; later background refreshes preserve the normal Chair.
+  // PHILO-13-13 C3-W: once a setup snapshot was read, a later read that
+  // loses it (the hub went down) keeps the Desk and its frame. The Dock says
+  // OFFLINE · AS OF and the failed read is named on the receipt line
+  // (dataSlice `READ <collection>` + Retry); the error face never replaces
+  // a Desk the owner already has (UX-CANON: errors never overlap the UI).
+  const lastSetup = useRef(setup);
+  if (setup) lastSetup.current = setup;
+  const shownSetup = setup ?? lastSetup.current;
   const setupFailure =
     (refreshFailure
       ? `Your Desk is still unchanged. ${refreshFailure} Retry to check it again.`
       : null) ??
-    (updatedAt !== null && setup === null
+    (updatedAt !== null && shownSetup === null
       ? error || "Your Desk is still unchanged. HoldSpeak could not read setup status. Retry to check it again."
       : null);
-  const setupPending = !setupFailure && updatedAt === null && (loading || setup === null);
-  const arrivalRequired = setup?.arrival_required === true;
+  const setupPending = !setupFailure && updatedAt === null && (loading || shownSetup === null);
+  const arrivalRequired = shownSetup?.arrival_required === true;
   useEffect(() => {
     if (arrivalRequired) useSettleState.getState().setSettled(false);
   }, [arrivalRequired]);
@@ -230,7 +238,7 @@ function DeskFaces() {
       {!arrivalRequired && compact && <DeskReceiptRow />}
       {showFloor ? (
         empty ? (
-          <EmptyDesk arrivalRequired={setup?.arrival_required === true} />
+          <EmptyDesk arrivalRequired={arrivalRequired} />
         ) : defaultViewFor(viewMode, total, window.innerWidth <= 720) ===
           "list" ? (
           <DeskListView />

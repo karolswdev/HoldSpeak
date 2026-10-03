@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** the owner's ratification of this charter (the canvas starts in wave one, beside Wave A and B0); the build waits on the owner's ratification of the canvas
 - **Unblocks:** PHILO-13-06, -08, -15, -17 (their canvases are drawn on this material); PHILO-13-12 to -18 and C3-W (no C face is built before its canvas is ratified); A1-F (its artboard is in this set)
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
@@ -70,6 +70,7 @@ Grounding size: not sized (new in PROPOSAL r2). PROVISIONAL; the long pole of th
 
 ## Notes
 
+- 2026-10-03 — **The window title bar: B, Workbench refined (owner pick).** The owner said the C1 title bar "looks terrible"; on the page https://claude.ai/artifact/KF7PkJvexbmfuUkdPPHu3E (the control + three directions, `assets/titlebar-canvas/`) he answered, verbatim: **"B"**. B replaces the solid title plate: fine stripes on the front bar only, inactive bars flat, the title on the bar's own blue cut-out, one gadget grid; 393 keeps 44 px. Build: `assets/titlebar-build/`.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
 

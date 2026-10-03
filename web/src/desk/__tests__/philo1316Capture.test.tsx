@@ -20,7 +20,7 @@ const kd = (init: KeyboardEventInit) => new KeyboardEvent("keydown", { bubbles: 
 const flush = () => new Promise((done) => setTimeout(done, 0));
 
 beforeEach(() => vi.mocked(openNewThought).mockClear());
-afterEach(() => { vi.useRealTimers(); vi.clearAllMocks(); document.body.innerHTML = ""; });
+afterEach(() => { vi.useRealTimers(); vi.clearAllMocks(); document.body.replaceChildren(); });
 
 describe("the pop-key verb", () => {
   it("is one registered verb in the Desk menu, with ⌃T shown as its key", () => {

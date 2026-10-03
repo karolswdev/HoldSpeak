@@ -115,8 +115,12 @@ class PersistenceMixin:
                 from ..db import get_database as _get_db
                 from ..meeting_aftercare import build_aftercare_ready_event
 
-                event = build_aftercare_ready_event(_get_db(), state.id)
+                ready_db = _get_db()
+                event = build_aftercare_ready_event(ready_db, state.id)
+                # Durable-before-observable: the aftercare frame must have a
+                # producer-created unseen row before the browser can render it.
                 if event is not None:
+                    ready_db.meetings.mark_ready_unseen(state.id)
                     self._emit_broadcast("aftercare_ready", event)
             except Exception as exc:  # observational only
                 log.debug(f"aftercare_ready broadcast skipped: {exc}")

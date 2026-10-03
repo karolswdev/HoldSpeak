@@ -1,0 +1,802 @@
+
+> holdspeak-web@0.0.1 test:web
+> vitest run --maxWorkers=2 --run src/desk/components/window/Dock.test.tsx src/desk/components/window/dockState.test.ts
+
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-13-13-astra/web
+
+stderr | src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > renders durable state marks and one membership badge while suppressing zero
+An update to Dock inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Dock inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > passes the explicit Dock origin when an active project opens
+An update to Dock inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Dock inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ❯ src/desk/components/window/Dock.test.tsx (8 tests | 5 failed) 2427ms
+     × renders durable state marks and one membership badge while suppressing zero 58ms
+     × passes the explicit Dock origin when an active project opens 16ms
+     × reads People readiness before protected relationships 16ms
+     × clears the stale 1:1 mark and gates relationships when People is unconfigured 1017ms
+     × clears the stale 1:1 mark and gates relationships when People is unavailable 1017ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > renders durable state marks and one membership badge while suppressing zero
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Alpha, 1 open here"
+
+Here are the accessible roles:
+
+  toolbar:
+
+  Name "Dock":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Dock"[39m
+    [33mclass[39m=[32m"desk-dock"[39m
+    [33mrole[39m=[32m"toolbar"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Intelligence, 1 need you":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Intelligence, 1 need you"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-app is-attention"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "Meetings":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Meetings"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "People":
+  [36m<button[39m
+    [33maria-label[39m=[32m"People"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "Agents":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Agents"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "Settings":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Settings"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "Alpha, 1 need you":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Alpha, 1 need you"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-project"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "Quiet":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Quiet"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-project"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "Floor":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Floor"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"desk-dock-launch"[39m
+    [33mdata-testid[39m=[32m"chair-floor-toggle"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  presentation:
+
+  Name "":
+  [36m<img[39m
+    [33malt[39m=[32m""[39m
+    [33mclass[39m=[32m"desk-dock-sprite"[39m
+    [33mdraggable[39m=[32m"false"[39m
+    [33mheight[39m=[32m"32"[39m
+    [33msrc[39m=[32m"floor.svg"[39m
+    [33mwidth[39m=[32m"32"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33maria-label[39m=[32m"Dock"[39m
+      [33mclass[39m=[32m"desk-dock"[39m
+      [33mrole[39m=[32m"toolbar"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Intelligence, 1 need you"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-app is-attention"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0mI[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mIntelligence[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-chip desk-dock-badge"[39m
+          [33mdata-tone[39m=[32m"warn"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Meetings"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0mM[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mMeetings[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"People"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0mP[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mPeople[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Agents"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0mA[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mAgents[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Settings"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0mS[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mSettings[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Alpha, 1 need you"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-project"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0m▤[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mAlpha[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-chip desk-dock-badge"[39m
+          [33mdata-tone[39m=[32m"warn"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Quiet"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-project"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0m▤[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mQuiet[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Floor"[39m
+        [33maria-pressed[39m=[32m"false"[39m
+        [33mclass[39m=[32m"desk-dock-launch"[39m
+        [33mdata-testid[39m=[32m"chair-floor-toggle"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<img[39m
+          [33malt[39m=[32m""[39m
+          [33mclass[39m=[32m"desk-dock-sprite"[39m
+          [33mdraggable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"32"[39m
+          [33msrc[39m=[32m"floor.svg"[39m
+          [33mwidth[39m=[32m"32"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mFloor[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/desk/components/window/Dock.test.tsx:189:19
+    187|     render(<Dock />);
+    188|
+    189|     expect(screen.getByRole("button", { name: "Alpha, 1 open here" }))…
+       |                   ^
+    190|     expect(screen.getByRole("button", { name: "Quiet" })).toBeTruthy();
+    191|     expect(screen.getByRole("button", { name: "Intelligence, 1 need yo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > passes the explicit Dock origin when an active project opens
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Alpha, 1 open here"
+
+Here are the accessible roles:
+
+  toolbar:
+
+  Name "Dock":
+  [36m<div[39m
+    [33maria-label[39m=[32m"Dock"[39m
+    [33mclass[39m=[32m"desk-dock"[39m
+    [33mrole[39m=[32m"toolbar"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Intelligence, 1 need you":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Intelligence, 1 need you"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-app is-attention"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "Meetings":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Meetings"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "People":
+  [36m<button[39m
+    [33maria-label[39m=[32m"People"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "Agents":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Agents"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "Settings":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Settings"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "Alpha, 1 need you":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Alpha, 1 need you"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-project"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "Quiet":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Quiet"[39m
+    [33mclass[39m=[32m"desk-dock-launch desk-dock-project"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  Name "Floor":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Floor"[39m
+    [33maria-pressed[39m=[32m"false"[39m
+    [33mclass[39m=[32m"desk-dock-launch"[39m
+    [33mdata-testid[39m=[32m"chair-floor-toggle"[39m
+    [33mvariant[39m=[32m"chrome"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  presentation:
+
+  Name "":
+  [36m<img[39m
+    [33malt[39m=[32m""[39m
+    [33mclass[39m=[32m"desk-dock-sprite"[39m
+    [33mdraggable[39m=[32m"false"[39m
+    [33mheight[39m=[32m"32"[39m
+    [33msrc[39m=[32m"floor.svg"[39m
+    [33mwidth[39m=[32m"32"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33maria-label[39m=[32m"Dock"[39m
+      [33mclass[39m=[32m"desk-dock"[39m
+      [33mrole[39m=[32m"toolbar"[39m
+    [36m>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Intelligence, 1 need you"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-app is-attention"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0mI[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mIntelligence[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-chip desk-dock-badge"[39m
+          [33mdata-tone[39m=[32m"warn"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Meetings"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0mM[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mMeetings[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"People"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0mP[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mPeople[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Agents"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0mA[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mAgents[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Settings"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0mS[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mSettings[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Alpha, 1 need you"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-project"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0m▤[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mAlpha[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-chip desk-dock-badge"[39m
+          [33mdata-tone[39m=[32m"warn"[39m
+        [36m>[39m
+          [0m1[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Quiet"[39m
+        [33mclass[39m=[32m"desk-dock-launch desk-dock-project"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+        [36m>[39m
+          [0m▤[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mQuiet[0m
+        [36m</span>[39m
+      [36m</button>[39m
+      [36m<button[39m
+        [33maria-label[39m=[32m"Floor"[39m
+        [33maria-pressed[39m=[32m"false"[39m
+        [33mclass[39m=[32m"desk-dock-launch"[39m
+        [33mdata-testid[39m=[32m"chair-floor-toggle"[39m
+        [33mvariant[39m=[32m"chrome"[39m
+      [36m>[39m
+        [36m<img[39m
+          [33malt[39m=[32m""[39m
+          [33mclass[39m=[32m"desk-dock-sprite"[39m
+          [33mdraggable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"32"[39m
+          [33msrc[39m=[32m"floor.svg"[39m
+          [33mwidth[39m=[32m"32"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"desk-dock-label"[39m
+        [36m>[39m
+          [0mFloor[0m
+        [36m</span>[39m
+      [36m</button>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/desk/components/window/Dock.test.tsx:208:28
+    206|     render(<Dock />);
+    207|
+    208|     fireEvent.click(screen.getByRole("button", { name: "Alpha, 1 open …
+       |                            ^
+    209|     await waitFor(() => expect(opened).toHaveBeenCalledWith("dock"));
+    210|     off();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > reads People readiness before protected relationships
+AssertionError: expected -1 to be greater than or equal to 0
+ ❯ src/desk/components/window/Dock.test.tsx:233:28
+    231|     const readinessIndex = paths.indexOf("/api/people/readiness");
+    232|     const relationshipsIndex = paths.indexOf("/api/people/relationship…
+    233|     expect(readinessIndex).toBeGreaterThanOrEqual(0);
+       |                            ^
+    234|     expect(relationshipsIndex).toBeGreaterThanOrEqual(0);
+    235|     expect(readinessIndex).toBeLessThan(relationshipsIndex);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > clears the stale 1:1 mark and gates relationships when People is unconfigured
+ FAIL  src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > clears the stale 1:1 mark and gates relationships when People is unavailable
+AssertionError: expected <span …(2)></span> to be null
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mstyle[39m=[32m"--desk-dock-h: 0px;"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Dock"[39m
+        [33mclass[39m=[32m"desk-dock"[39m
+        [33mrole[39m=[32m"toolbar"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Intelligence, 1 need you"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-app is-attention"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mI[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mIntelligence[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-chip desk-dock-badge"[39m
+            [33mdata-tone[39m=[32m"warn"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-state"[39m
+            [33mdata-testid[39m=[32m"desk-dock-send-state"[39m
+          [36m>[39m
+            [0mSEND FAILED[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Meetings"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mM[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mMeetings[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"People"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mP[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mPeople[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-state"[39m
+            [33mdata-testid[39m=[32m"desk-dock-people-state"[39m
+          [36m>[39m
+            [0m1:1 09:00 AM[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Agents"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mA[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mAgents[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Settings"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mS[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mSettings[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Alpha, 1 need you"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-project"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0m▤[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mAlpha[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-chip desk-dock-badge"[39m
+            [33mdata-tone[39m=[32m"warn"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Quiet"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-project"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0m▤[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mQuiet[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Floor"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"desk-dock-launch"[39m
+          [33mdata-testid[39m=[32m"chair-floor-toggle"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<img[39m
+            [33malt[39m=[32m""[39m
+            [33mclass[39m=[32m"desk-dock-sprite"[39m
+            [33mdraggable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"32"[39m
+            [33msrc[39m=[32m"floor.svg"[39m
+            [33mwidth[39m=[32m"32"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mFloor[0m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected:
+null
+
++ Received:
+<span
+  class="desk-dock-state"
+  data-testid="desk-dock-people-state"
+>
+  1:1 09:00 AM
+</span>
+
+ ❯ src/desk/components/window/Dock.test.tsx:253:80
+    251|     });
+    252|
+    253|     await waitFor(() => expect(screen.queryByTestId("desk-dock-people-…
+       |                                                                                ^
+    254|     expect(relationshipReads()).toBe(before);
+    255|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  5 failed | 13 passed (18)
+   Start at  01:27:43
+   Duration  2.86s (transform 122ms, setup 118ms, import 156ms, tests 2.44s, environment 363ms)
+
+
+run_exit=1

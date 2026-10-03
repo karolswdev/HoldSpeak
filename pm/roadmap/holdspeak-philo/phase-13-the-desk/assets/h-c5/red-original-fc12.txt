@@ -1,0 +1,108 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+___ TestLatestPublishedOrderingPreFix.test_no_published_null_and_draft_order ___
+
+self = <tests.integration.test_h_c5_red.TestLatestPublishedOrderingPreFix object at 0x1114096d0>
+rig = (<holdspeak.db.core.Database object at 0x11139ba10>, <starlette.testclient.TestClient object at 0x11172e900>)
+
+    def test_no_published_null_and_draft_order(self, rig) -> None:
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-red-drafts")
+>       assert client.get(f"/api/projects/{pid}/updates").json() == {
+            "updates": [],
+            "latest_published_update_id": None,
+        }
+E       AssertionError: assert {'updates': []} == {'latest_publ...'updates': []}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Right contains 1 more item:
+E         {'latest_published_update_id': None}
+E         Use -v to get more diff
+
+tests/integration/test_h_c5_red.py:66: AssertionError
+_ TestLatestPublishedOrderingPreFix.test_same_second_equal_revision_uses_later_rowid _
+
+self = <tests.integration.test_h_c5_red.TestLatestPublishedOrderingPreFix object at 0x111409bd0>
+rig = (<holdspeak.db.core.Database object at 0x111605bd0>, <starlette.testclient.TestClient object at 0x111833390>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111750b00>
+
+    def test_same_second_equal_revision_uses_later_rowid(self, rig, monkeypatch) -> None:
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-red-tie")
+        _set_clock(monkeypatch, "2026-07-01T10:00:00")
+        first = _publish(client, _draft(client, pid)["id"])
+        second = _publish(client, _draft(client, pid)["id"])
+        assert first["draft_revision"] == second["draft_revision"] == 1
+        assert first["published_at"] == second["published_at"]
+        assert _rowid(db, second["id"]) > _rowid(db, first["id"])
+        body = client.get(f"/api/projects/{pid}/updates").json()
+>       assert [row["id"] for row in body["updates"]] == [
+            second["id"], first["id"],
+        ]
+E       AssertionError: assert ['pupd_1df8b8...452259aa9c5a'] == ['pupd_687ef4...7da75a720518']
+E         
+E         At index 0 diff: 'pupd_1df8b84df6ce4d229e3e7da75a720518' != 'pupd_687ef43be45146ebbc96452259aa9c5a'
+E         Use -v to get more diff
+
+tests/integration/test_h_c5_red.py:88: AssertionError
+_ TestLatestPublishedOrderingPreFix.test_same_second_ignores_high_draft_revision _
+
+self = <tests.integration.test_h_c5_red.TestLatestPublishedOrderingPreFix object at 0x111449480>
+rig = (<holdspeak.db.core.Database object at 0x111a2e0d0>, <starlette.testclient.TestClient object at 0x111b1b4d0>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111ab0950>
+
+    def test_same_second_ignores_high_draft_revision(self, rig, monkeypatch) -> None:
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-red-revision")
+        _set_clock(monkeypatch, "2026-08-01T12:00:00")
+        first = _draft(client, pid)
+        second = _regenerate(client, first["id"])
+        high = _regenerate(client, second["id"])
+        high_published = _publish(client, high["id"])
+        later = _publish(client, _draft(client, pid)["id"])
+        assert high_published["draft_revision"] == 3
+        assert later["draft_revision"] == 1
+        assert high_published["published_at"] == later["published_at"]
+        assert _rowid(db, later["id"]) > _rowid(db, high["id"])
+        body = client.get(f"/api/projects/{pid}/updates").json()
+>       assert [row["id"] for row in body["updates"][:2]] == [
+            later["id"], high["id"],
+        ]
+E       AssertionError: assert ['pupd_d64005...46df6b2de56d'] == ['pupd_fdf0a5...e9dde7c63add']
+E         
+E         At index 0 diff: 'pupd_d64005c204ed4f8f8f53e9dde7c63add' != 'pupd_fdf0a571ba39489ba8c6b4edc57b1e07'
+E         Use -v to get more diff
+
+tests/integration/test_h_c5_red.py:107: AssertionError
+____ TestLatestPublishedOrderingPreFix.test_published_at_beats_later_rowid _____
+
+self = <tests.integration.test_h_c5_red.TestLatestPublishedOrderingPreFix object at 0x1114496e0>
+rig = (<holdspeak.db.core.Database object at 0x111b1bc50>, <starlette.testclient.TestClient object at 0x111d50d60>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111bc3ac0>
+
+    def test_published_at_beats_later_rowid(self, rig, monkeypatch) -> None:
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-red-published-at")
+        _set_clock(monkeypatch, "2026-08-02T12:00:00")
+        newer = _publish(client, _draft(client, pid)["id"])
+        _set_clock(monkeypatch, "2026-08-01T12:00:00")
+        older = _draft(client, pid)
+        older_two = _publish(client, _regenerate(client, older["id"])["id"])
+        assert newer["published_at"] > older_two["published_at"]
+        assert _rowid(db, older_two["id"]) > _rowid(db, newer["id"])
+        body = client.get(f"/api/projects/{pid}/updates").json()
+>       assert [row["id"] for row in body["updates"][:2]] == [
+            newer["id"], older_two["id"],
+        ]
+E       AssertionError: assert ['pupd_71f174...82279a91ceff'] == ['pupd_b4aa1d...0f2eb3305023']
+E         
+E         At index 0 diff: 'pupd_71f174f825d242208a240f2eb3305023' != 'pupd_b4aa1da2f22d45ca9edf82279a91ceff'
+E         Use -v to get more diff
+
+tests/integration/test_h_c5_red.py:122: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/test_h_c5_red.py::TestLatestPublishedOrderingPreFix::test_no_published_null_and_draft_order
+FAILED tests/integration/test_h_c5_red.py::TestLatestPublishedOrderingPreFix::test_same_second_equal_revision_uses_later_rowid
+FAILED tests/integration/test_h_c5_red.py::TestLatestPublishedOrderingPreFix::test_same_second_ignores_high_draft_revision
+FAILED tests/integration/test_h_c5_red.py::TestLatestPublishedOrderingPreFix::test_published_at_beats_later_rowid
+4 failed in 1.73s

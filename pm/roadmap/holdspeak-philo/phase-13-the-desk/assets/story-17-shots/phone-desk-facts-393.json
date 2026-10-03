@@ -1,0 +1,634 @@
+{
+ "facts": {
+  "width": 393,
+  "C7-1-the-frame": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "Needs you"
+   ],
+   "title": "Needs you",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 2,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "C7-3a-meeting-window": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "Ledger cutover sync"
+   ],
+   "title": "Ledger cutover sync",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 2,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "swipe_forward": [
+   "Needs you",
+   "Brief",
+   "The week",
+   "Meetings",
+   "Ledger cutover sync"
+  ],
+  "swipe_score": "5 of 5",
+  "swipe_back": [
+   "Meetings"
+  ],
+  "C7-3b-swipe-to-meetings": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "Meetings"
+   ],
+   "title": "Meetings",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 2,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "C7-3c-swipe-to-the-chair": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "The week"
+   ],
+   "title": "The week",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 2,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "long_press_menu": 1,
+  "switcher_rows": [
+   "Needs you",
+   "Brief",
+   "The week",
+   "Meetings",
+   "Ledger cutover sync"
+  ],
+  "C7-4a-switcher-open": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "The week"
+   ],
+   "title": "The week",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 3,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      238,
+      240,
+      243
+     ],
+     "bg": [
+      11,
+      12,
+      16
+     ],
+     "open": true
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "C7-4b-switcher-picked": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "Needs you"
+   ],
+   "title": "Needs you",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 2,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "switcher_taps": 2,
+  "go_heads": [
+   "Chair",
+   "Desk",
+   "Object",
+   "Window"
+  ],
+  "C7-5a-go-grouped": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "Needs you"
+   ],
+   "title": "Needs you",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 3,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "go_object_back_row": "\u25c2\nObject",
+  "C7-5b-go-object": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "Needs you"
+   ],
+   "title": "Needs you",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 3,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "own_record_open": true,
+  "aftercare_event": {
+   "meeting_id": "m-c7-vendor",
+   "title": "Vendor call",
+   "open_total": 2,
+   "decided_total": 0,
+   "top_items": [
+    {
+     "task": "Send the contract draft",
+     "owner": "Avery Chen"
+    },
+    {
+     "task": "Book the legal review",
+     "owner": "Me"
+    }
+   ]
+  },
+  "C7-6e-aftercare-own-record-in-front": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "Meetings"
+   ],
+   "title": "Meetings",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 2,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "own_record_card_in_meetings": true,
+  "C7-6a-aftercare-arrives": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "Capture"
+   ],
+   "title": "Capture",
+   "fixed_card": false,
+   "card_in_capture": true,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 2,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "meeting_window_after_card": "none",
+  "C7-6b-aftercare-swipe-away": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "Meetings"
+   ],
+   "title": "Meetings",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 2,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "switcher_after_card": [
+   "Needs you",
+   "Brief",
+   "The week",
+   "Capture",
+   "Meetings",
+   "Ledger cutover sync"
+  ],
+  "C7-6c-aftercare-switcher-lists-capture": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "Meetings"
+   ],
+   "title": "Meetings",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 3,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      238,
+      240,
+      243
+     ],
+     "bg": [
+      11,
+      12,
+      16
+     ],
+     "open": true
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "C7-6d-aftercare-return": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "Capture"
+   ],
+   "title": "Capture",
+   "fixed_card": false,
+   "card_in_capture": true,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 2,
+    "clipped": [],
+    "overlaps": []
+   },
+   "frame_px": 100,
+   "chevron": {
+    "whole": true,
+    "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      238,
+      240,
+      243
+     ],
+     "bg": [
+      11,
+      12,
+      16
+     ],
+     "open": false
+    },
+    "box": [
+     158,
+     13,
+     6,
+     17
+    ],
+    "title_truncated": true
+   }
+  },
+  "eyebrow_color": "rgb(188, 128, 88)",
+  "errors": []
+ },
+ "fails": []
+}

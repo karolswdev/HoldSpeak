@@ -1,0 +1,82 @@
+/* Title bar direction A, "Quiet" (canvas only; no product file changes).
+   No stripes. A flat steel bar with one hairline bevel (a 1 px shine on top,
+   the ink rule below). The title is plain 12 px bold mono ink, left, beside
+   the close gadget, with no plate. The ONE front window: the bar takes the
+   front pen (--wb-blue, the colour its frame already wears). Inactive bars:
+   flat steel, the title in a dimmed ink (#2a2e36, 5.44:1 on steel). Gadgets:
+   20 x 20 at 1440, evenly spaced on a 4 px gap, no boxes until the pointer
+   is on one; 44 x 44 at 393. Every gadget stays the library Button
+   (variant="chrome"); only its paint changes. */
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head {
+  background: var(--wb-steel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 0 var(--wb-ink);
+  gap: 0;
+}
+html .desk-next .desk-window.desk-window-shell.is-front > .desk-pullout-head {
+  background: var(--wb-blue);
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-pullout-title {
+  flex: 1 1 auto;
+  max-width: none;
+  margin: 0 8px 0 4px;
+  padding: 0;
+  background: transparent;
+  color: #2a2e36;
+  font: 700 12px/var(--wb-bar-h) var(--font-mono);
+  letter-spacing: 0.01em;
+}
+html .desk-next .desk-window.desk-window-shell.is-front > .desk-pullout-head .desk-pullout-title {
+  background: transparent;
+  color: var(--wb-ink);
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadgets {
+  align-items: center;
+  align-self: stretch;
+  gap: 4px;
+  padding: 0 4px;
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget {
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: none;
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.12);
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget:active:not(:disabled) {
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: none;
+}
+/* the glyphs: ink lines, no paper fill (one pen on the bar) */
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget svg rect[fill="var(--wb-paper)"] {
+  fill: transparent;
+}
+html .desk-next .desk-window.desk-window-shell:not(.is-front) > .desk-pullout-head .desk-gadget svg {
+  opacity: 0.78;
+}
+/* the wings and head verbs: flat on the bar, one hairline, no bevel */
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wing {
+  border-left: 1px solid rgba(11, 12, 16, 0.35);
+  background: transparent;
+  box-shadow: none;
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wing.is-on {
+  background: var(--wb-paper);
+  box-shadow: inset 0 -2px 0 var(--wb-ink);
+}
+@media (max-width: 720px) {
+  html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadgets {
+    gap: 0;
+    padding: 0;
+  }
+  html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    border-radius: 0;
+  }
+}

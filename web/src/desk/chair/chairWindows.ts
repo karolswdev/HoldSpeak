@@ -49,8 +49,14 @@ interface ChairWindowsState {
   closed: Record<string, boolean>;
   /** 393: the one Chair window that fills the work area ("" = none). */
   phone: string;
+  /** PHILO-13-17 (C7, Q4b): 393: Capture joins the phone's window ring when
+   * it opens there and stays in it until it is closed. */
+  captureInRing: boolean;
 }
 
+// PHILO-13-07 (B2): the closed Chair windows and the phone's window come
+// back from the one workspace document. Capture is in the ring when it was
+// the phone's window (C7's ring is derived from that, not stored twice).
 const storedChair = loadDeskWorkspace().chair;
 
 export const useChairWindows = create<ChairWindowsState>(() => ({
@@ -63,6 +69,7 @@ export const useChairWindows = create<ChairWindowsState>(() => ({
     storedChair && (storedChair.phone === "" || CHAIR_WINDOW_IDS.includes(storedChair.phone))
       ? storedChair.phone
       : "chair:needs",
+  captureInRing: storedChair?.phone === "chair:capture",
 }));
 
 // PHILO-13-07 (B2): a closed Chair window stays closed after a reload.
@@ -99,9 +106,11 @@ export function openChairWindow(id: string): void {
       if (w.dock && !desk.panelMin.includes(w.id)) desk.minimizePanel(w.id);
     }
   }
+  const compact = compactNow();
   useChairWindows.setState((s) => ({
     closed: { ...s.closed, [id]: false },
     phone: id,
+    captureInRing: s.captureInRing || (compact && id === "chair:capture"),
   }));
   if (desk.panelMin.includes(id)) desk.restorePanel(id);
   else useDesk.getState().focusPanel(id);
@@ -122,7 +131,11 @@ export function closeChairWindow(id: string): void {
       const recent = [...order].reverse().find((o) => candidates.includes(o));
       phone = recent ?? candidates[0] ?? "";
     }
-    return { closed, phone };
+    return {
+      closed,
+      phone,
+      captureInRing: id === "chair:capture" ? false : s.captureInRing,
+    };
   });
 }
 
@@ -154,4 +167,15 @@ export function openCaptureOnPhone(): boolean {
   if (!compactNow()) return false;
   openChairWindow("chair:capture");
   return true;
+}
+
+/** PHILO-13-17 (C7, Q4b) — at 393 Capture is in the ring without coming to
+ * the front (a card waits for it when the Chair mounts with one pending). */
+export function keepCaptureInRing(): void {
+  if (!compactNow()) return;
+  useChairWindows.setState((s) =>
+    s.captureInRing && !s.closed["chair:capture"]
+      ? s
+      : { captureInRing: true, closed: { ...s.closed, "chair:capture": false } },
+  );
 }

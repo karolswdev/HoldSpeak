@@ -6,6 +6,7 @@ encrypted sidecar for the manual People slice.
 """
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -45,6 +46,7 @@ _RELATIONSHIP_KINDS = frozenset({"direct_report", "peer", "extended"})
 _ENTRY_KINDS = frozenset({"one_on_one"})
 _RECORD_KINDS = frozenset({"request", "commitment", "grounding_note"})
 _OPEN_COMMITMENT = "open"
+_WORD_RE = re.compile(r"[a-z0-9]+")
 
 
 def _now() -> str:
@@ -113,7 +115,9 @@ class PeopleService:
         })
         return self._relationship_view(record)
 
-    def get_relationship(self, principal: Any, relationship_id: str) -> dict[str, Any]:
+    def get_relationship(
+        self, principal: Any, relationship_id: str, *, db: Any = None,
+    ) -> dict[str, Any]:
         self._require_ready_owner(principal)
         record = self._get(relationship_id, "relationship")
         if record is None or str(record.get("state") or "") == "archived":
@@ -124,6 +128,11 @@ class PeopleService:
         commitments = [self._record_view(item) for item in self._list("commitment", relationship_id=relationship_id)]
         notes = [self._record_view(item) for item in self._list("grounding_note", relationship_id=relationship_id)]
         view.update({"sessions": sessions, "requests": requests, "commitments": commitments, "notes": notes})
+        if db is not None:
+            calendar_context = self._brief_calendar_context(db, record)
+            next_event = calendar_context["next_one_on_one"]
+            view["next_one_on_one"] = next_event["starts_at"] if next_event else None
+            view["next_one_on_one_event"] = next_event
         return view
 
     def archive_relationship(self, principal: Any, relationship_id: str) -> dict[str, Any]:
@@ -409,6 +418,14 @@ class PeopleService:
                 db, calendar_links, limit=N,
             )
 
+        calendar_context = self._brief_calendar_context(db, relationship)
+        owner_aliases = [
+            str(alias).strip()
+            for alias in relationship.get("owner_aliases") or []
+            if isinstance(alias, str) and str(alias).strip()
+        ]
+        open_meeting_actions = self._brief_owned_actions(db, owner_aliases)
+
         # HS-172-05: Watch-derived summary from persisted snapshots.
         # Reads are free (Article V.5); never triggers an evaluation.
         watch_summary = self._brief_watch_summary(db, relationship)
@@ -436,9 +453,160 @@ class PeopleService:
             "grounding_note_count": grounding_note_count,
             "linked_meetings": linked_meetings,
             "unlinked_meeting_count": unlinked_meeting_count,
+            "calendar_link_suggestions": calendar_context["calendar_link_suggestions"],
+            "next_one_on_one": calendar_context["next_one_on_one"],
+            "open_meeting_actions": open_meeting_actions,
+            "projects": calendar_context["projects"],
             "watch_summary": watch_summary,
             "last_meeting": last_meeting,
         }
+
+    @staticmethod
+    def _calendar_event_view(row: Any) -> dict[str, Any]:
+        """Expose only the calendar fields needed to confirm or prepare."""
+        return {
+            "id": str(row["id"]),
+            "uid": str(row["uid"]),
+            "title": str(row["title"] or ""),
+            "starts_at": str(row["starts_at"]),
+            "ends_at": str(row["ends_at"]),
+            "source_id": str(row["source_id"] or ""),
+            "source_label": str(row["source_label"] or ""),
+        }
+
+    @staticmethod
+    def _title_contains_alias(title: str, alias: str) -> bool:
+        """Match a saved alias as a whole-word phrase in an event title."""
+        alias_tokens = tuple(_WORD_RE.findall(str(alias).casefold()))
+        title_tokens = tuple(_WORD_RE.findall(str(title).casefold()))
+        if not alias_tokens:
+            return False
+        width = len(alias_tokens)
+        return any(
+            title_tokens[index:index + width] == alias_tokens
+            for index in range(len(title_tokens) - width + 1)
+        )
+
+    def _brief_calendar_context(
+        self, db: Any, relationship: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Read upcoming links, alias candidates, and linked project names.
+
+        This is a transient read.  A suggestion never mutates the encrypted
+        relationship; confirmation still goes through ``link_calendar_series``.
+        """
+        empty = {
+            "calendar_link_suggestions": [],
+            "next_one_on_one": None,
+            "projects": [],
+        }
+        if db is None:
+            return empty
+        try:
+            conn_factory = db._connection
+            with conn_factory() as conn:
+                now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+                relationship_links = {
+                    (str(link.get("uid") or ""), str(link.get("source_id") or ""))
+                    for link in relationship.get("calendar_links") or []
+                    if isinstance(link, dict)
+                }
+                candidate_rows = conn.execute(
+                    """SELECT id, uid, title, starts_at, ends_at, source_id, source_label
+                       FROM calendar_events
+                       WHERE starts_at >= ?
+                       ORDER BY starts_at, id
+                    """,
+                    (now,),
+                ).fetchall()
+                events = [self._calendar_event_view(row) for row in candidate_rows]
+                events.sort(key=lambda event: (event["starts_at"], event["id"]))
+
+                all_linked = {
+                    (str(link.get("uid") or ""), str(link.get("source_id") or ""))
+                    for record in self._list("relationship")
+                    for link in record.get("calendar_links") or []
+                    if isinstance(link, dict)
+                }
+                aliases = [
+                    str(alias).strip()
+                    for alias in relationship.get("owner_aliases") or []
+                    if isinstance(alias, str) and str(alias).strip()
+                ]
+                suggestions = [
+                    event for event in events
+                    if (event["uid"], event["source_id"]) not in all_linked
+                    and any(self._title_contains_alias(event["title"], alias) for alias in aliases)
+                ]
+                next_event = next(
+                    (
+                        event for event in events
+                        if (event["uid"], event["source_id"]) in relationship_links
+                    ),
+                    None,
+                )
+
+                project_refs = [
+                    str(project_id).strip()
+                    for project_id in relationship.get("project_refs") or []
+                    if str(project_id).strip()
+                ]
+                projects: list[dict[str, str]] = []
+                if project_refs:
+                    placeholders = ",".join("?" for _ in project_refs)
+                    project_rows = conn.execute(
+                        f"SELECT id, name FROM projects WHERE id IN ({placeholders})",
+                        project_refs,
+                    ).fetchall()
+                    projects = [
+                        {"id": str(row["id"]), "name": str(row["name"] or "")}
+                        for row in project_rows
+                    ]
+                return {
+                    "calendar_link_suggestions": suggestions,
+                    "next_one_on_one": next_event,
+                    "projects": projects,
+                }
+        except Exception as exc:
+            raise PeopleServiceError("people_plaintext_unavailable") from exc
+
+    @staticmethod
+    def _brief_owned_actions(db: Any, aliases: list[str]) -> list[dict[str, Any]]:
+        """Read pending actions owned by a saved alias from active meetings."""
+        if db is None or not aliases:
+            return []
+        alias_keys = {alias.casefold() for alias in aliases}
+        try:
+            with db._connection() as conn:
+                rows = conn.execute(
+                    """SELECT ai.id, ai.task, ai.owner, ai.due, ai.delegated_at,
+                               m.id AS meeting_id, m.title AS meeting_title,
+                               m.started_at AS meeting_started_at,
+                               m.calendar_event_id
+                        FROM action_items ai
+                        JOIN meetings m ON m.id = ai.meeting_id
+                        WHERE m.parked = 0
+                          AND ai.status = 'pending'
+                          AND TRIM(COALESCE(ai.owner, '')) <> ''
+                        ORDER BY ai.created_at, ai.id""",
+                ).fetchall()
+                return [
+                    {
+                        "id": str(row["id"]),
+                        "task": str(row["task"]),
+                        "owner": row["owner"],
+                        "due": row["due"],
+                        "delegated_at": row["delegated_at"],
+                        "meeting_id": str(row["meeting_id"]),
+                        "meeting_title": row["meeting_title"],
+                        "meeting_started_at": str(row["meeting_started_at"]),
+                        "calendar_event_id": row["calendar_event_id"],
+                    }
+                    for row in rows
+                    if str(row["owner"] or "").strip().casefold() in alias_keys
+                ]
+        except Exception as exc:
+            raise PeopleServiceError("people_plaintext_unavailable") from exc
 
     def _brief_watch_summary(
         self, db: Any, relationship: dict[str, Any],

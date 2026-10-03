@@ -236,10 +236,15 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       [...primitiveWrites].map(([key, state]) => [key, { ...state }]),
     );
     set({ loading: true, error: "" });
+    let setupCause: unknown = null;
     const [
-      { items, profiles, projects, inferenceTargets, models, status, error, failed },
+      { items, profiles, projects, inferenceTargets, models, status, error, failed: collectionFailed },
       setup,
-    ] = await Promise.all([loadAll(), loadSetup()]);
+    ] = await Promise.all([loadAll(), loadSetup((cause) => { setupCause = cause; })]);
+    // PHILO-13-13 C3-W: a Desk that keeps its frame through a lost setup read
+    // (DeskApp) names that read here, like any collection read.
+    const failed = collectionFailed ??
+      (setup === null && setupCause !== null ? { label: "Setup", cause: setupCause } : null);
     // PHILO-3-01 — a failed collection read is named on the face (the desk
     // receipt line), with Retry; a pending write (CREATE, SAVE, ...) keeps its
     // receipt and its Retry: a read failure never replaces it.

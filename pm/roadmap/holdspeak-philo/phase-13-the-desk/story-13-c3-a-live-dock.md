@@ -2,11 +2,11 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** PHILO-13-03 (A2, the one needs-you projection); PHILO-13-04 (A3, Record reads `res.ok`); PHILO-13-11 (C1 canvas ratified: live state drawn on the AppIcons, criterion 7); PHILO-13-09 (B4, for the 1:1 time on People)
 - **Unblocks:** C3-W (the faces lane's wiring step)
 - **Owner:** Astra (Luna, xhigh); Muad'Dib checks. Wiring step C3-W: Muad'Dib (Fedaykin, Opus 5.5) on `feat/philo-13-muaddib`; Astra checks
-- **Lane:** Data + truth (`../wt-philo-13-astra`, `feat/philo-13-astra`)
+- **Lane:** Data + truth (`../wt-philo-13-13-astra`, `feat/philo-13-13-astra`)
 - **Proposal:** C3 (PROPOSAL §3, Wave C)
 - **Closure finding:** `grounding/structure.md` F4 (`:287`), move 3 (`:302`); `grounding/faces-jobs.md` move 5 (`:156`)
 - **Canvas:** C1's (the AppIcon states, criterion 7)
@@ -62,3 +62,5 @@ Grounding size: M (`grounding/structure.md:302`; `grounding/faces-jobs.md:156`).
 
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+- 2026-10-03 — H-C3 and H-C3-origin: Muad'Dib MERGE-WITH-CONDITIONS; C1 unseen READY and C2 main integration paid under the owner's no-further-check-round ruling. [Astra lane report and failure ledger](lane-13-astra.md). C3-W remains a named handoff; no done flip.

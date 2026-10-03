@@ -41,6 +41,20 @@ export function publishRegistry() {
   for (const l of registryListeners) l();
 }
 
+/** PHILO-13-17 (C7; Astra r1 #751, condition 1) — each open window's
+ * opening sequence. A window re-announces on a title change (retract, then
+ * announce in the same commit), which moves it to the END of the Map; this
+ * sequence survives that, so "the order the windows opened" stays true. A
+ * window really closed (not re-announced by the next microtask) drops it, so
+ * a reopened window is the newest. */
+const openSeq = new Map<string, number>();
+let nextSeq = 0;
+
+/** The opening sequence of an open window (Infinity when not open). */
+export function openedSeq(id: string): number {
+  return openSeq.get(id) ?? Number.POSITIVE_INFINITY;
+}
+
 export function announceWindow(
   id: string,
   label: string,
@@ -48,6 +62,7 @@ export function announceWindow(
   close: () => void,
   dock = true,
 ) {
+  if (!openSeq.has(id)) openSeq.set(id, ++nextSeq);
   windowRegistry.set(id, { label, glyph, close, dock });
   publishRegistry();
 }
@@ -55,6 +70,9 @@ export function announceWindow(
 export function retractWindow(id: string) {
   windowRegistry.delete(id);
   publishRegistry();
+  queueMicrotask(() => {
+    if (!windowRegistry.has(id)) openSeq.delete(id);
+  });
 }
 
 function subscribeRegistry(cb: () => void) {

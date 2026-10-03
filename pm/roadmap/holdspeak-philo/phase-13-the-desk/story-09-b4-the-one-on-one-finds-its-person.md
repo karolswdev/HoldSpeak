@@ -2,11 +2,11 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** the owner's ratification of this charter
 - **Unblocks:** B4-W (the faces lane's wiring step), PHILO-13-13 (the 1:1 time on the People AppIcon)
 - **Owner:** Astra (Luna, xhigh); Muad'Dib checks. Wiring step B4-W: Muad'Dib (Fedaykin, Opus 5.5) on `feat/philo-13-muaddib`; Astra checks
-- **Lane:** Data + truth (`../wt-philo-13-astra`, `feat/philo-13-astra`)
+- **Lane:** Data + truth (`../wt-philo-13-09-astra`, `feat/philo-13-09-astra`)
 - **Proposal:** B4 (PROPOSAL §3, Wave B)
 - **Closure finding:** `grounding/faces-jobs.md` F10 (`:176`), move 8 (`:159`)
 - **Canvas:** none new (Prep's rows reuse the existing People species); any new element goes on the C1 material
@@ -61,3 +61,7 @@ Grounding size: M (`grounding/faces-jobs.md:159`). PROVISIONAL.
 
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+- 2026-10-03 — H-B4 candidate: [Astra lane report](lane-09-astra.md). UNCHECKED — awaiting Muad'Dib. B4-W remains a separate face handoff; no done flip.
+
+- 2026-10-03 — #742 mechanically rebased onto main `76c361537`; 156 parent tests passed. Held unmerged for B4-W; see lane-09-astra.md.

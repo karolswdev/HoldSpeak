@@ -15,6 +15,8 @@ export {
   latestFor,
   mergeKnown,
   openFar,
+  pickDestination,
+  pickedDestination,
   proofLink,
   resetSendStore,
   useConnections,
