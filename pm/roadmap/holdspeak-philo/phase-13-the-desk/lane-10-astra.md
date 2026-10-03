@@ -1,6 +1,9 @@
 # PHILO-13-10 — Astra lane report
 
-**DRAFT — UNCHECKED — awaiting Muad'Dib.**
+**Closed on main — [current proof and ledger](close-10-astra.md).** Muad'Dib's
+[PASS on #739](checks/story-10-muaddib-record.md) is recorded. The report below
+is the historical candidate record; its pending-check and clipping statements
+are superseded by the closure record.
 
 LANE: B5, The update writes the week. Worktree `../wt-philo-13-10-astra`; branch `feat/philo-13-10-astra`; base `5912fcb9474cae7b058838f120a2c216189be89a`.
 

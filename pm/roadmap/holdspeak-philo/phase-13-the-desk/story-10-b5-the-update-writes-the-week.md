@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** the owner's ratification of this charter
 - **Unblocks:** none
 - **Owner:** Astra (Luna, xhigh); Muad'Dib checks
@@ -28,10 +28,10 @@ For a project with a summarized meeting, a decision and two owned actions, the d
 
 ## Acceptance criteria
 
-- [ ] On the grounding week, the draft for the project lists its linked meeting's summary, its decision and its two owned actions, each with its ref. Red on main (`J4-04`).
-- [ ] 111 typed characters → 0 to reach a publishable draft; he edits.
-- [ ] No engine call is made (the fence runs with no engine assigned).
-- [ ] The meeting, decision and actions are minted through the real producers and linked through the real route.
+- [x] On the grounding week, the draft for the project lists its linked meeting's summary, its decision and its two owned actions, each with its ref. Red on main (`J4-04`).
+- [x] 111 typed characters → 0 to reach a publishable draft; he edits.
+- [x] No engine call is made (the fence runs with no engine assigned).
+- [x] The meeting, decision and actions are minted through the real producers and linked through the real route.
 
 ## Test plan
 
@@ -50,6 +50,8 @@ For a project with a summarized meeting, a decision and two owned actions, the d
 Grounding size: M (`grounding/faces-jobs.md:157`). PROVISIONAL.
 
 ## Notes
+
+- 2026-10-03 — Closed after #739 (`573969dbf`) and Muad'Dib's recorded PASS. Current-main `23a6c137f` rerun: 242 scoped tests, actual 1440/393 native-touch draft cases and stored-draft operation sibling pass. C8 healed editor wrapping. [Closure, ledger and limits](close-10-astra.md); [canonical evidence](evidence-story-10.md). The dispatch authorizes self-merge on scoped proof.
 
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
