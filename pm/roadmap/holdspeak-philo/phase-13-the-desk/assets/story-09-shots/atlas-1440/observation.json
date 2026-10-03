@@ -1,0 +1,1094 @@
+{
+  "id": "obs-20261003T052040Z-case.p13.people.prep_link-muaddib-1440",
+  "run_id": "20261003T052040Z-case.p13.people.prep_link-muaddib-1440",
+  "case_id": "case.p13.people.prep_link",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-muaddib.json",
+  "job": "j7",
+  "edge_ids": [
+    "edge.face.people_prep"
+  ],
+  "state_id": "state.people.p13_prep_face",
+  "provenance": {
+    "revision": "53a88cb304167cd6ea7545e6a7b8b93616fc4f54",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "57597bb1c4a91c5350132aa476d5ac37a60aaa2c5e39c2576c28d4745bce0f0e",
+      "assets": [
+        "index-DFnfiOPA.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:53969",
+      "port": 53969,
+      "pid": 13283,
+      "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T05:20:41.275155+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [
+      {
+        "stopped_pid": 13165,
+        "started_pid": 13283,
+        "downtime_s": 1.53,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.local/share/holdspeak/holdspeak.db",
+        "port": 53969,
+        "reason": "People prep producer"
+      }
+    ],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-muaddib.json",
+      "sha256": "e3a232a69435cfee196126292d5f913dc03ddd5cd931d70cde223ed8b956e9df",
+      "version": "phase13-muaddib"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "browser_context": {
+      "viewport": 1440,
+      "has_touch": false
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null,
+    "people_prep": {
+      "kind": "cli",
+      "action": "seed_people_prep",
+      "adapter": "people-prep-producer",
+      "command": [
+        "/Users/karol/dev/tools/wt-philo-13-b4w/.venv/bin/python3",
+        "/Users/karol/dev/tools/wt-philo-13-b4w/scripts/philo13_b4_fixture.py",
+        "seed",
+        "--db",
+        "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.local/share/holdspeak/holdspeak.db",
+        "--home",
+        "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7"
+      ],
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.local/share/holdspeak/holdspeak.db",
+      "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7",
+      "script_sha256": "f12765f58fc4f5cb3e8933b91f4b0c56093352437a527f22a2ca73d3c49977c2",
+      "fixture": {
+        "db": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.local/share/holdspeak/holdspeak.db",
+        "event_title": "1:1 Priya / Karol",
+        "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7",
+        "ids": {
+          "action_id": "philo13-b4-owned-action",
+          "event_id": "ce_fb4a580eda669f8236a54fcc9426695f84dc1ffa9707ebaeafd22999bb836207",
+          "event_source_id": "philo13-b4-calendar",
+          "event_title": "1:1 Priya / Karol",
+          "event_uid": "philo13-b4-priya@example.test",
+          "meeting_id": "philo13-b4-meeting",
+          "parked_meeting_id": "philo13-b4-parked-meeting",
+          "project_id": "proj-f32d61603014",
+          "relationship_id": "42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1",
+          "session_id": "d08d01bd-d15e-40e6-b904-5ff9b4dea3ba"
+        },
+        "mode": "seed",
+        "people_keystore": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/people.key",
+        "people_sidecar": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/people.sidecar.sqlite3",
+        "producers": {
+          "calendar": "CalendarIngestConductor.refresh",
+          "meeting": "Database.meetings.save_meeting",
+          "people": "build_people_router + production_people_store",
+          "project": "ProjectService.create_project"
+        },
+        "schema": "philo13-b4-people-prep@1"
+      },
+      "captured": {
+        "prefix": "people",
+        "values": {
+          "people_relationship_id": "42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1",
+          "people_event_id": "ce_fb4a580eda669f8236a54fcc9426695f84dc1ffa9707ebaeafd22999bb836207",
+          "people_event_uid": "philo13-b4-priya@example.test",
+          "people_event_source_id": "philo13-b4-calendar",
+          "people_event_title": "1:1 Priya / Karol",
+          "people_project_id": "proj-f32d61603014",
+          "people_meeting_id": "philo13-b4-meeting",
+          "people_session_id": "d08d01bd-d15e-40e6-b904-5ff9b4dea3ba",
+          "people_action_id": "philo13-b4-owned-action",
+          "relationship_id": "42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1"
+        }
+      },
+      "restart": {
+        "stopped_pid": 13165,
+        "started_pid": 13283,
+        "downtime_s": 1.53,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.local/share/holdspeak/holdspeak.db",
+        "port": 53969
+      },
+      "page_reloaded": true
+    }
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.96,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "cli",
+      "action": "seed_people_prep",
+      "adapter": "people-prep-producer",
+      "command": [
+        "/Users/karol/dev/tools/wt-philo-13-b4w/.venv/bin/python3",
+        "/Users/karol/dev/tools/wt-philo-13-b4w/scripts/philo13_b4_fixture.py",
+        "seed",
+        "--db",
+        "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.local/share/holdspeak/holdspeak.db",
+        "--home",
+        "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7"
+      ],
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.local/share/holdspeak/holdspeak.db",
+      "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7",
+      "script_sha256": "f12765f58fc4f5cb3e8933b91f4b0c56093352437a527f22a2ca73d3c49977c2",
+      "fixture": {
+        "db": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.local/share/holdspeak/holdspeak.db",
+        "event_title": "1:1 Priya / Karol",
+        "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7",
+        "ids": {
+          "action_id": "philo13-b4-owned-action",
+          "event_id": "ce_fb4a580eda669f8236a54fcc9426695f84dc1ffa9707ebaeafd22999bb836207",
+          "event_source_id": "philo13-b4-calendar",
+          "event_title": "1:1 Priya / Karol",
+          "event_uid": "philo13-b4-priya@example.test",
+          "meeting_id": "philo13-b4-meeting",
+          "parked_meeting_id": "philo13-b4-parked-meeting",
+          "project_id": "proj-f32d61603014",
+          "relationship_id": "42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1",
+          "session_id": "d08d01bd-d15e-40e6-b904-5ff9b4dea3ba"
+        },
+        "mode": "seed",
+        "people_keystore": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/people.key",
+        "people_sidecar": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/people.sidecar.sqlite3",
+        "producers": {
+          "calendar": "CalendarIngestConductor.refresh",
+          "meeting": "Database.meetings.save_meeting",
+          "people": "build_people_router + production_people_store",
+          "project": "ProjectService.create_project"
+        },
+        "schema": "philo13-b4-people-prep@1"
+      },
+      "captured": {
+        "prefix": "people",
+        "values": {
+          "people_relationship_id": "42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1",
+          "people_event_id": "ce_fb4a580eda669f8236a54fcc9426695f84dc1ffa9707ebaeafd22999bb836207",
+          "people_event_uid": "philo13-b4-priya@example.test",
+          "people_event_source_id": "philo13-b4-calendar",
+          "people_event_title": "1:1 Priya / Karol",
+          "people_project_id": "proj-f32d61603014",
+          "people_meeting_id": "philo13-b4-meeting",
+          "people_session_id": "d08d01bd-d15e-40e6-b904-5ff9b4dea3ba",
+          "people_action_id": "philo13-b4-owned-action",
+          "relationship_id": "42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1"
+        }
+      },
+      "restart": {
+        "stopped_pid": 13165,
+        "started_pid": 13283,
+        "downtime_s": 1.53,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.local/share/holdspeak/holdspeak.db",
+        "port": 53969
+      },
+      "page_reloaded": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "selector": ".desk-tools-launch",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-input",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "selector": ".desk-deck-row[id=\"desk-palette-option-desk.open-people\"]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-observation",
+      "selector": "#surface-people",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "selector": "#surface-people button:has-text(\"Priya Sharma\")",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Prep",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-observation",
+      "selector": "[data-testid=\"prep-link-suggestion\"]",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "[data-testid=\"prep-owed\"]",
+      "predicate": {
+        "kind": "readable_text",
+        "value": "Send the dry-run report"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "'Send the dry-run report' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 52, 'y': 470, 'w': 584, 'h': 79}",
+      "shot": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/b4w/gw-1440/20261003T052040Z-case.p13.people.prep_link-muaddib-1440/setup-11.png"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub with the B4 real producer refs (seed_people_prep); nothing is linked until his press, at 1440 and 393.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7",
+    "people_relationship_id": "42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1",
+    "people_event_id": "ce_fb4a580eda669f8236a54fcc9426695f84dc1ffa9707ebaeafd22999bb836207",
+    "people_event_uid": "philo13-b4-priya@example.test",
+    "people_event_source_id": "philo13-b4-calendar",
+    "people_event_title": "1:1 Priya / Karol",
+    "people_project_id": "proj-f32d61603014",
+    "people_meeting_id": "philo13-b4-meeting",
+    "people_session_id": "d08d01bd-d15e-40e6-b904-5ff9b4dea3ba",
+    "people_action_id": "philo13-b4-owned-action",
+    "relationship_id": "42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click_role",
+    "adapter": "ui-pointer",
+    "adapter_requested": "ui-by-viewport",
+    "name": "Link this 1:1",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "NEXT 1:1 \u00b7 SUN 11:20 PM"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "people-next-header",
+        "data-testid": "people-next-1on1"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 52,
+        "y": 180,
+        "w": 584,
+        "h": 18
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-lenses > button.btn.btn--ghost",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "Prep",
+      "after": "HoldSpeak\nDesk\nObject\nGo\nWindow\nPeople\n\u2302 THIS DEVICE\nSearch\n"
+    },
+    "document_text_sha256": {
+      "before": "befb713ae3a9511f397972007fa423fe972a5392305034fdbc99dc91cf25128c",
+      "after": "2cae00235036ab7a8d9fe07d4cb70708ba9cdc6149f5b84f4bfd71350bc8aa3a"
+    },
+    "document_text_len": {
+      "before": 1259,
+      "after": 1248
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "div > div > section.surface-section > div.send-line > span.gadget-cycle > select",
+          "value": "meeting_summary"
+        },
+        {
+          "selector": "input#people-new-relationship",
+          "value": ""
+        },
+        {
+          "selector": "div.surface-split.surface-split-open > div.surface-split-main > section.surface-section > div.people-new > span.gadget-cycle > select",
+          "value": "direct_report"
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=\"people-next-1on1\"]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "div > div > section.surface-section > div.send-line > span.gadget-cycle > select",
+        "value": "meeting_summary"
+      },
+      {
+        "selector": "input#people-new-relationship",
+        "value": ""
+      },
+      {
+        "selector": "div.surface-split.surface-split-open > div.surface-split-main > section.surface-section > div.people-new > span.gadget-cycle > select",
+        "value": "direct_report"
+      }
+    ],
+    "field_value": null,
+    "focus": "div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-lenses > button.btn.btn--ghost",
+    "focus_label": "Prep",
+    "url": "http://127.0.0.1:53969/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      },
+      {
+        "title": "People",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 640,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "befb713ae3a9511f397972007fa423fe972a5392305034fdbc99dc91cf25128c",
+    "document_text_len": 1259,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T05:20:52.004367+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=\"people-next-1on1\"]",
+    "target_present": true,
+    "text": "NEXT 1:1 \u00b7 SUN 11:20 PM",
+    "attrs": {
+      "class": "people-next-header",
+      "data-testid": "people-next-1on1"
+    },
+    "rect": {
+      "x": 52,
+      "y": 180,
+      "w": 584,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 52,
+        "y": 180,
+        "w": 584,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 125,
+          "y": 182.25,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 125,
+          "y": 189,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 125,
+          "y": 195.75,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 344,
+          "y": 182.25,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 344,
+          "y": 189,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 344,
+          "y": 195.75,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 563,
+          "y": 182.25,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 563,
+          "y": 189,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 563,
+          "y": 195.75,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\nPeople\n\u2302 THIS DEVICE\nSearch\n",
+    "url": "http://127.0.0.1:53969/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      },
+      {
+        "title": "People",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 640,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "2cae00235036ab7a8d9fe07d4cb70708ba9cdc6149f5b84f4bfd71350bc8aa3a",
+    "document_text_len": 1248,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T05:20:53.233042+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:53969) non-GET response after the click",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/calendar-links",
+        "status": 200,
+        "body_sha256": "8371a9d96a9c87a8e925603a3909563674e3d4658a1c62bca67d1fb9560c7923",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:53969) non-GET response after the click"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:53969) non-GET response after the click",
+      "seen": [
+        {
+          "method": "POST",
+          "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/calendar-links",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/one-on-ones",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/brief",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/calendar-links",
+      "status": 200,
+      "body_sha256": "8371a9d96a9c87a8e925603a3909563674e3d4658a1c62bca67d1fb9560c7923",
+      "body": {
+        "relationship": {
+          "id": "42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1",
+          "display_name": "Priya Sharma",
+          "relationship_kind": "direct_report",
+          "role_context": "",
+          "timezone": "",
+          "cadence": "",
+          "project_refs": [
+            "proj-f32d61603014"
+          ],
+          "calendar_links": [
+            {
+              "label": "1:1 Priya / Karol",
+              "linked_at": "2026-10-03T05:20:52Z",
+              "source_id": "philo13-b4-calendar",
+              "uid": "philo13-b4-priya@example.test"
+            }
+          ],
+          "owner_aliases": [
+            "Priya"
+          ],
+          "state": "active",
+          "created_at": "2026-10-03T05:20:47Z",
+          "updated_at": "2026-10-03T05:20:52+00:00"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:53969) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=\"people-next-1on1\"]",
+    "target_present": true,
+    "text": "NEXT 1:1 \u00b7 SUN 11:20 PM",
+    "attrs": {
+      "class": "people-next-header",
+      "data-testid": "people-next-1on1"
+    },
+    "rect": {
+      "x": 52,
+      "y": 180,
+      "w": 584,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 52,
+        "y": 180,
+        "w": 584,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 125,
+          "y": 182.25,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 125,
+          "y": 189,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 125,
+          "y": 195.75,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 344,
+          "y": 182.25,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 344,
+          "y": 189,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 344,
+          "y": 195.75,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 563,
+          "y": 182.25,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 563,
+          "y": 189,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        },
+        {
+          "x": 563,
+          "y": 195.75,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.people-surface > div.surface-split.surface-split-open > div.surface-split-detail > div.people-detail > div.people-next-header"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\nPeople\n\u2302 THIS DEVICE\nSearch\n",
+    "url": "http://127.0.0.1:53969/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      },
+      {
+        "title": "People",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 640,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "2cae00235036ab7a8d9fe07d4cb70708ba9cdc6149f5b84f4bfd71350bc8aa3a",
+    "document_text_len": 1248,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T05:20:53.098916+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:53969) non-GET response after the click",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/calendar-links",
+        "status": 200,
+        "body_sha256": "8371a9d96a9c87a8e925603a3909563674e3d4658a1c62bca67d1fb9560c7923",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:53969) non-GET response after the click"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:53969) non-GET response after the click",
+      "seen": [
+        {
+          "method": "POST",
+          "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/calendar-links",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/one-on-ones",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/brief",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/calendar-links",
+      "status": 200,
+      "body_sha256": "8371a9d96a9c87a8e925603a3909563674e3d4658a1c62bca67d1fb9560c7923",
+      "body": {
+        "relationship": {
+          "id": "42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1",
+          "display_name": "Priya Sharma",
+          "relationship_kind": "direct_report",
+          "role_context": "",
+          "timezone": "",
+          "cadence": "",
+          "project_refs": [
+            "proj-f32d61603014"
+          ],
+          "calendar_links": [
+            {
+              "label": "1:1 Priya / Karol",
+              "linked_at": "2026-10-03T05:20:52Z",
+              "source_id": "philo13-b4-calendar",
+              "uid": "philo13-b4-priya@example.test"
+            }
+          ],
+          "owner_aliases": [
+            "Priya"
+          ],
+          "state": "active",
+          "created_at": "2026-10-03T05:20:47Z",
+          "updated_at": "2026-10-03T05:20:52+00:00"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:53969) non-GET response after the click"
+    },
+    "predicate_satisfied": true,
+    "reading": "'NEXT 1:1' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 52, 'y': 180, 'w': 584, 'h': 18}",
+    "elapsed_s": 0.936
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'NEXT 1:1' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 52, 'y': 180, 'w': 584, 'h': 18}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.068,
+    "first_satisfied_at_s": 0.936,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'NEXT 1:1' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 52, 'y': 180, 'w': 584, 'h': 18}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:53969) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/calendar-links",
+      "status": 200,
+      "body_sha256": "8371a9d96a9c87a8e925603a3909563674e3d4658a1c62bca67d1fb9560c7923",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:53969) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:53969) non-GET response after the click",
+    "seen": [
+      {
+        "method": "POST",
+        "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/calendar-links",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/one-on-ones",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/people/relationships/42ad3519-a6e2-4ff6-bbf4-63fa3c0b9ca1/brief",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/b4w/gw-1440/20261003T052040Z-case.p13.people.prep_link-muaddib-1440/before.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/b4w/gw-1440/20261003T052040Z-case.p13.people.prep_link-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:53969"
+  ],
+  "duration_s": 12.558
+}

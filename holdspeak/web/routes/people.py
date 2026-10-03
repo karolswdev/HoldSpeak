@@ -18,6 +18,8 @@ def _failure(exc: PeopleServiceError) -> HTTPException:
     code = str(exc)
     if code == "people_owner_required":
         return HTTPException(status_code=403, detail=code)
+    if code == "people_plaintext_unavailable":
+        return HTTPException(status_code=503, detail=code)
     if code in {"people_store_unavailable", "people_store_write_failed"}:
         return HTTPException(status_code=503, detail="people_store_unavailable")
     if code == "series_already_linked" and isinstance(exc, SeriesAlreadyLinked):
@@ -109,7 +111,10 @@ def build_people_router(ctx: WebContext) -> APIRouter:
     @router.get("/relationships/{relationship_id}")
     async def relationship(request: Request, relationship_id: str) -> dict[str, Any]:
         try:
-            return {"relationship": service.get_relationship(principal(request), relationship_id)}
+            from ...db import get_database
+            return {"relationship": service.get_relationship(
+                principal(request), relationship_id, db=get_database(),
+            )}
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 

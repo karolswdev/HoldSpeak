@@ -326,7 +326,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 )
                 assert _hit(go_title), "Go menu door is unreachable at 393"
                 go_title.click()
-                folded = page.get_by_role("menu", name="Go menu", exact=True)
+                folded = page.locator(".desk-verbbar-menu[role=menu]")  # its name follows the open group at 393 (C5)
                 _loaded(folded.get_by_role("menuitem").first)
                 shot("folded-go-menu")
 
@@ -418,7 +418,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 go_title = page.locator(".desk-verbbar").get_by_role("button", name="Go", exact=True)
                 assert _hit(go_title), "Go menu door is unreachable for New Note"
                 go_title.click()
-                folded = page.get_by_role("menu", name="Go menu", exact=True)
+                folded = page.locator(".desk-verbbar-menu[role=menu]")  # its name follows the open group at 393 (C5)
                 go_group(page, "Desk")  # PHILO-13-17 (C7, Q3): Go ▸ Desk ▸ New Note
                 new_note = folded.get_by_role(
                     "menuitem", name=re.compile(r"^New Note(?:\s|$)")

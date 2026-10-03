@@ -1,0 +1,1730 @@
+{
+  "id": "obs-20261003T194743Z-case.p13.remember.room_empty_draft-muaddib-1440",
+  "run_id": "20261003T194743Z-case.p13.remember.room_empty_draft-muaddib-1440",
+  "case_id": "case.p13.remember.room_empty_draft",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-muaddib.json",
+  "job": "j4",
+  "edge_ids": [
+    "edge.face.window_return"
+  ],
+  "state_id": "state.desk_presentation.p13_remember_room_empty",
+  "provenance": {
+    "revision": "ad3855f0d4e984bd60c38ca26c41ecb7facf1fa3",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "24677d2c7e828a90af9c76acce9eb31aa9e487f8a31673b6c312e6c022783db3",
+      "assets": [
+        "index-CY1L4D5o.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:53515",
+      "port": 53515,
+      "pid": 69037,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tjonuv39",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tjonuv39/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T19:47:44.157441+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-muaddib.json",
+      "sha256": "866d8006681f82b0b6e4c3f8916ce202ee500f77676071bbafc57e72f3f98ca9",
+      "version": "phase13-muaddib"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "browser_context": {
+      "viewport": 1440,
+      "has_touch": false
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tjonuv39",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tjonuv39",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tjonuv39/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tjonuv39"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-03T13:47:48.644045"
+        }
+      },
+      "response_sha256": "be67ac04ab6347283c5e816b43a3652890a7ec7fc6451a3e907d51456ff8154c"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-7b01cfd8d99c",
+          "name": "P13 Remember Room",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-10-03T13:47:48.778167",
+          "updated_at": "2026-10-03T13:47:48.778167",
+          "result_kind": "created",
+          "project_id": "proj-7b01cfd8d99c",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-7b01cfd8d99c"
+          ]
+        }
+      },
+      "response_sha256": "c57db3e640ae499808e12ebb05f317e8459aab75563c488ac4181c68506f1fa9",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-7b01cfd8d99c"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tjonuv39",
+    "project_id": "proj-7b01cfd8d99c"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "adapter_requested": "ui-by-viewport",
+    "selector": ".desk-tools-launch",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "fill",
+        "adapter": "ui-input",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": "[id='desk-palette-option-project.open.proj-7b01cfd8d99c']",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "#surface-project-memory",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": "#surface-project-memory [data-testid=updates-verb]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": "#surface-project-memory [data-testid=update-verb-draft-deterministic]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "#surface-project-memory [contenteditable=true]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": "#surface-project-memory [contenteditable=true]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-input",
+        "selector": "#surface-project-memory [contenteditable=true]",
+        "key": "ControlOrMeta+a",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "press",
+        "adapter": "ui-input",
+        "selector": "#surface-project-memory [contenteditable=true]",
+        "key": "Backspace",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "#surface-project-memory [contenteditable=true]",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "P13 Remember Room\nROOM\nHISTORY\nBack\n\u25cb\nDRAFT\nDETERMINISTIC\nREV 1\nB\nI\nU\nH1\nH2\nH3\nList\n1.\n</>\nLink\nQuote\nWrite your update\n\nUPDATE DRAFT \u00b7 DETERMINISTIC \u00b7 UNSAVED\nSave\nRegenerate\nCopy\nPublish"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "id": "surface-project-memory",
+        "tabindex": "-1",
+        "class": "desk-surface-window desk-window desk-window-shell is-floating is-front",
+        "role": "region",
+        "aria-label": "P13 Remember Room",
+        "style": "z-index: 46; opacity: 1; transform: none; inset: 72px auto auto 24px; width: 800px; height: 619px; max-height: none;"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 24,
+        "y": 72,
+        "w": 800,
+        "h": 619
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "body",
+      "after": "div.update-body-editor > div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping"
+    },
+    "focus_label": {
+      "before": "",
+      "after": "Update body"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Needs you",
+          "rect": {
+            "x": 14,
+            "y": 42,
+            "w": 698,
+            "h": 681
+          },
+          "visible": true
+        },
+        {
+          "title": "Brief",
+          "rect": {
+            "x": 728,
+            "y": 42,
+            "w": 698,
+            "h": 500
+          },
+          "visible": true
+        },
+        {
+          "title": "The week",
+          "rect": {
+            "x": 728,
+            "y": 558,
+            "w": 698,
+            "h": 277
+          },
+          "visible": true
+        },
+        {
+          "title": "Capture",
+          "rect": {
+            "x": 14,
+            "y": 735,
+            "w": 698,
+            "h": 100
+          },
+          "visible": true
+        },
+        {
+          "title": "P13 Remember Room",
+          "rect": {
+            "x": 24,
+            "y": 72,
+            "w": 800,
+            "h": 619
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "3c279d25d2215b37ae8fd65ef463263239129e9185382a8cdd9f4754a4c7b756"
+    },
+    "document_text_len": {
+      "before": 0,
+      "after": 624
+    },
+    "field_value": {
+      "before": {
+        "selector": "#surface-project-memory .cm-placeholder",
+        "present": false,
+        "value": null
+      },
+      "after": {
+        "selector": "#surface-project-memory .cm-placeholder",
+        "present": true,
+        "value": null
+      }
+    }
+  },
+  "before": {
+    "observe_at": "#surface-project-memory",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": {
+      "selector": "#surface-project-memory .cm-placeholder",
+      "present": false,
+      "value": null
+    },
+    "focus": "body",
+    "focus_label": "",
+    "url": "http://127.0.0.1:53515/",
+    "windows": [],
+    "pending_marker_present": null,
+    "selector_presence": {
+      "#surface-project-memory .cm-placeholder": false
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T19:47:49.369438+00:00"
+  },
+  "after": {
+    "observe_at": "#surface-project-memory",
+    "target_present": true,
+    "text": "P13 Remember Room\nROOM\nHISTORY\nBack\n\u25cb\nDRAFT\nDETERMINISTIC\nREV 1\nB\nI\nU\nH1\nH2\nH3\nList\n1.\n</>\nLink\nQuote\nWrite your update\n\nUPDATE DRAFT \u00b7 DETERMINISTIC \u00b7 UNSAVED\nSave\nRegenerate\nCopy\nPublish",
+    "attrs": {
+      "id": "surface-project-memory",
+      "tabindex": "-1",
+      "class": "desk-surface-window desk-window desk-window-shell is-floating is-front",
+      "role": "region",
+      "aria-label": "P13 Remember Room",
+      "style": "z-index: 46; opacity: 1; transform: none; inset: 72px auto auto 24px; width: 800px; height: 619px; max-height: none;"
+    },
+    "rect": {
+      "x": 24,
+      "y": 72,
+      "w": 800,
+      "h": 619
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 24,
+        "y": 72,
+        "w": 800,
+        "h": 619
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 124,
+          "y": 149.375,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.update-posture > div.update-editor > div.update-editor-band > span.update-provenance > span.surface-token"
+        },
+        {
+          "x": 124,
+          "y": 381.5,
+          "owned": true,
+          "owner": "div.update-body-editor > div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping"
+        },
+        {
+          "x": 124,
+          "y": 613.625,
+          "owned": true,
+          "owner": "div#surface-project-memory > div.desk-surface-body"
+        },
+        {
+          "x": 424,
+          "y": 149.375,
+          "owned": true,
+          "owner": "div#surface-project-memory > div.desk-surface-body > div.update-posture > div.update-editor > div.update-editor-band"
+        },
+        {
+          "x": 424,
+          "y": 381.5,
+          "owned": true,
+          "owner": "div.update-body-editor > div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping"
+        },
+        {
+          "x": 424,
+          "y": 613.625,
+          "owned": true,
+          "owner": "div#surface-project-memory > div.desk-surface-body"
+        },
+        {
+          "x": 724,
+          "y": 149.375,
+          "owned": true,
+          "owner": "div#surface-project-memory > div.desk-surface-body > div.update-posture > div.update-editor > div.update-editor-band"
+        },
+        {
+          "x": 724,
+          "y": 381.5,
+          "owned": true,
+          "owner": "div.update-body-editor > div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping"
+        },
+        {
+          "x": 724,
+          "y": 613.625,
+          "owned": true,
+          "owner": "div#surface-project-memory > div.desk-surface-body"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": {
+      "selector": "#surface-project-memory .cm-placeholder",
+      "present": true,
+      "value": null
+    },
+    "focus": "div.update-body-editor > div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Update body",
+    "url": "http://127.0.0.1:53515/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      },
+      {
+        "title": "P13 Remember Room",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "selector_presence": {
+      "#surface-project-memory .cm-placeholder": true
+    },
+    "document_text_sha256": "3c279d25d2215b37ae8fd65ef463263239129e9185382a8cdd9f4754a4c7b756",
+    "document_text_len": 624,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T19:47:54.479957+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:53515) non-GET response after the click",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/projects/proj-7b01cfd8d99c/room/read",
+        "status": 200,
+        "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:53515) non-GET response after the click",
+        "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:53515) non-GET response after the click",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/mic.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/follow-through/board",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decision-records/review",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-meetings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-agents.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-settings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-speak.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/floor-grid.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/follow-through/board",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-bell.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decision-records/review",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/record-orb.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/ProjectMemoryCore-CtprjGQz.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-D9YE7g0K.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/projects/proj-7b01cfd8d99c/room/read",
+      "status": 200,
+      "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "body": null,
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:53515) non-GET response after the click",
+      "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "#surface-project-memory",
+    "target_present": true,
+    "text": "P13 Remember Room\nROOM\nHISTORY\nBack\n\u25cb\nDRAFT\nDETERMINISTIC\nREV 1\nB\nI\nU\nH1\nH2\nH3\nList\n1.\n</>\nLink\nQuote\nWrite your update\n\nUPDATE DRAFT \u00b7 DETERMINISTIC \u00b7 UNSAVED\nSave\nRegenerate\nCopy\nPublish",
+    "attrs": {
+      "id": "surface-project-memory",
+      "tabindex": "-1",
+      "class": "desk-surface-window desk-window desk-window-shell is-floating is-front",
+      "role": "region",
+      "aria-label": "P13 Remember Room",
+      "style": "z-index: 46; opacity: 1; transform: none; inset: 72px auto auto 24px; width: 800px; height: 619px; max-height: none;"
+    },
+    "rect": {
+      "x": 24,
+      "y": 72,
+      "w": 800,
+      "h": 619
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 24,
+        "y": 72,
+        "w": 800,
+        "h": 619
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 124,
+          "y": 149.375,
+          "owned": true,
+          "owner": "div.desk-surface-body > div.update-posture > div.update-editor > div.update-editor-band > span.update-provenance > span.surface-token"
+        },
+        {
+          "x": 124,
+          "y": 381.5,
+          "owned": true,
+          "owner": "div.update-body-editor > div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping"
+        },
+        {
+          "x": 124,
+          "y": 613.625,
+          "owned": true,
+          "owner": "div#surface-project-memory > div.desk-surface-body"
+        },
+        {
+          "x": 424,
+          "y": 149.375,
+          "owned": true,
+          "owner": "div#surface-project-memory > div.desk-surface-body > div.update-posture > div.update-editor > div.update-editor-band"
+        },
+        {
+          "x": 424,
+          "y": 381.5,
+          "owned": true,
+          "owner": "div.update-body-editor > div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping"
+        },
+        {
+          "x": 424,
+          "y": 613.625,
+          "owned": true,
+          "owner": "div#surface-project-memory > div.desk-surface-body"
+        },
+        {
+          "x": 724,
+          "y": 149.375,
+          "owned": true,
+          "owner": "div#surface-project-memory > div.desk-surface-body > div.update-posture > div.update-editor > div.update-editor-band"
+        },
+        {
+          "x": 724,
+          "y": 381.5,
+          "owned": true,
+          "owner": "div.update-body-editor > div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping"
+        },
+        {
+          "x": 724,
+          "y": 613.625,
+          "owned": true,
+          "owner": "div#surface-project-memory > div.desk-surface-body"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": {
+      "selector": "#surface-project-memory .cm-placeholder",
+      "present": true,
+      "value": null
+    },
+    "focus": "div.update-body-editor > div.desk-editor > div.desk-code-editor > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Update body",
+    "url": "http://127.0.0.1:53515/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      },
+      {
+        "title": "P13 Remember Room",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "selector_presence": {
+      "#surface-project-memory .cm-placeholder": true
+    },
+    "document_text_sha256": "3c279d25d2215b37ae8fd65ef463263239129e9185382a8cdd9f4754a4c7b756",
+    "document_text_len": 624,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T19:47:54.315641+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:53515) non-GET response after the click",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/projects/proj-7b01cfd8d99c/room/read",
+        "status": 200,
+        "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:53515) non-GET response after the click",
+        "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:53515) non-GET response after the click",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/mic.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/follow-through/board",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decision-records/review",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-meetings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-agents.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-settings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-speak.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/floor-grid.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/follow-through/board",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-bell.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decision-records/review",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/record-orb.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/ProjectMemoryCore-CtprjGQz.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-D9YE7g0K.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/projects/proj-7b01cfd8d99c/room/read",
+      "status": 200,
+      "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "body": null,
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:53515) non-GET response after the click",
+      "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: text_contains: 'UNSAVED' in observe_at text | selector_presence: selector '#surface-project-memory .cm-placeholder' is present, wanted present",
+    "elapsed_s": 4.87
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: text_contains: 'UNSAVED' in observe_at text | selector_presence: selector '#surface-project-memory .cm-placeholder' is present, wanted present",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 5.025,
+    "first_satisfied_at_s": 4.87,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: text_contains: 'UNSAVED' in observe_at text | selector_presence: selector '#surface-project-memory .cm-placeholder' is present, wanted present"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:53515) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/projects/proj-7b01cfd8d99c/room/read",
+      "status": 200,
+      "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:53515) non-GET response after the click",
+      "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:53515) non-GET response after the click",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/mic.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings/heartbeat",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/follow-through/board",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decision-records/review",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-meetings.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-agents.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-settings.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-speak.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/floor-grid.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/follow-through/board",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-bell.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-search.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-mark.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decision-records/review",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/record-orb.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/ProjectMemoryCore-CtprjGQz.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/SendWell-D9YE7g0K.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs2/atlas-phase13-muaddib/20261003T194743Z-case.p13.remember.room_empty_draft-muaddib-1440/before.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs2/atlas-phase13-muaddib/20261003T194743Z-case.p13.remember.room_empty_draft-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tjonuv39/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tjonuv39/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:53515"
+  ],
+  "duration_s": 11.052
+}

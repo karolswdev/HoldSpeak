@@ -1,0 +1,162 @@
+{
+ "width": 393,
+ "before": {
+  "windows": [
+   {
+    "id": "chair:needs",
+    "title": "Needs you",
+    "rect": [
+     0,
+     44,
+     393,
+     752
+    ]
+   },
+   {
+    "id": "pullout:decision:d-freeze",
+    "title": "Freeze the old ledger on Nov 5",
+    "rect": [
+     0,
+     44,
+     393,
+     752
+    ]
+   },
+   {
+    "id": "surface-project-memory",
+    "title": "Payments ledger cutover",
+    "rect": [
+     0,
+     44,
+     393,
+     752
+    ]
+   },
+   {
+    "id": "surface-people",
+    "title": "People",
+    "rect": [
+     0,
+     44,
+     393,
+     752
+    ]
+   }
+  ],
+  "workspace": {
+   "version": 1,
+   "windowsById": {
+    "surface-people": {
+     "id": "surface-people",
+     "kind": "surface",
+     "applicationKey": "open-people",
+     "scope": "people:0745eff1-b2fc-4e4f-890f-1f22bdb68eb0",
+     "persistence": "workspace"
+    },
+    "surface-project-memory": {
+     "id": "surface-project-memory",
+     "kind": "surface",
+     "applicationKey": "open-project-memory",
+     "scope": "project:p-ledger",
+     "persistence": "workspace"
+    }
+   },
+   "panel": {
+    "rects": {},
+    "order": [
+     "chair:needs",
+     "surface-people",
+     "pullout:decision:d-freeze",
+     "surface-project-memory"
+    ],
+    "max": [],
+    "min": []
+   },
+   "zoneWindows": [],
+   "zoneViewPrefs": {},
+   "windows": {
+    "pullouts": [
+     "decision:d-freeze"
+    ],
+    "info": [],
+    "roadmap": [],
+    "repository": [],
+    "workbench": []
+   },
+   "drafts": {
+    "people/1on1/0745eff1-b2fc-4e4f-890f-1f22bdb68eb0": "Ask Priya about the EU shard backup plan",
+    "room/update-body/pupd_aadf9b104da04178bad5e9d6abf6536b": "## Progress\n\n- Meeting summary: Ledger cutover sync -- Dual-write is stable. The team agreed to freeze the old ledger on Nov 5. Jordan owns the rollback plan.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers i Dry run passed Tuesday; EU shard backup plan due Friday; Priya owns the rollback runbook.n this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+   },
+   "places": {
+    "people/person": "0745eff1-b2fc-4e4f-890f-1f22bdb68eb0",
+    "people/lens/0745eff1-b2fc-4e4f-890f-1f22bdb68eb0": "one-on-ones",
+    "room/update/p-ledger": "editor:pupd_aadf9b104da04178bad5e9d6abf6536b"
+   }
+  },
+  "room_rect": [
+   0,
+   44,
+   393,
+   752
+  ],
+  "writes": []
+ },
+ "after_windows": [
+  {
+   "id": "chair:needs",
+   "title": "Needs you",
+   "rect": [
+    0,
+    44,
+    393,
+    752
+   ]
+  },
+  {
+   "id": "pullout:decision:d-freeze",
+   "title": "Freeze the old ledger on Nov 5",
+   "rect": [
+    0,
+    44,
+    393,
+    752
+   ]
+  },
+  {
+   "id": "surface-project-memory",
+   "title": "Payments ledger cutover",
+   "rect": [
+    0,
+    44,
+    393,
+    752
+   ]
+  },
+  {
+   "id": "surface-people",
+   "title": "People",
+   "rect": [
+    0,
+    44,
+    393,
+    752
+   ]
+  }
+ ],
+ "people": {
+  "person": "Priya Nair",
+  "tab": "1:1s",
+  "agenda": "Ask Priya about the EU shard backup plan"
+ },
+ "room_rect_after": [
+  0,
+  44,
+  393,
+  752
+ ],
+ "dock_chips": [
+  "Focus Freeze the old ledger on Nov 5",
+  "Close Freeze the old ledger on Nov 5"
+ ],
+ "writes_after_reload": []
+}

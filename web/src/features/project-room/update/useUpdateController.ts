@@ -7,13 +7,20 @@
 // 2 s "Copied" feedback stays, and Mark delivered never depends on it (R4-3:
 // no clipboard state is stored).
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "../../../lib/api";
 import { plainFailure } from "../../../desk/surface/plainFailure";
+import { forgetDraft, keepDraft, keepPlace, keptDraft, keptPlace } from "../../../desk/deskMemory";
 import type { ProjectUpdate, UpdateLifecycle } from "./model";
 import * as updateApi from "./api";
 
 export type UpdatePosture = "off" | "list" | "editor";
+
+/* PHILO-13-07 (B2) — the Room's update place (`list` or `editor:<update>`)
+   per project, and the unsaved body per update (never per project, so the
+   text typed for one update never shows in another). Save clears it. */
+const updatePlaceKey = (projectId: string) => `room/update/${projectId}`;
+const updateDraftKey = (updateId: string) => `room/update-body/${updateId}`;
 
 export function useUpdateController(
   projectId: string,
@@ -42,6 +49,8 @@ export function useUpdateController(
   });
   // The editor text as it is now, for a save that answers after he typed on.
   const editBodyNow = useRef("");
+  // The draft update the editor holds now (B2's draft key), for the handler.
+  const currentId = useRef<string | null>(null);
 
   // ── Editor state ──
   const [current, setCurrent] = useState<ProjectUpdate | null>(null);
@@ -113,6 +122,7 @@ export function useUpdateController(
       const list = await updateApi.fetchUpdates(projectId);
       setUpdates(list);
       setPosture("list");
+      keepPlace(updatePlaceKey(projectId), "list");
     } catch (reason) {
       fail("UPDATES DID NOT LOAD", reason);
     } finally {
@@ -122,23 +132,27 @@ export function useUpdateController(
 
   // ── Exit update posture ──
   const exitUpdates = useCallback(() => {
+    if (projectId) keepPlace(updatePlaceKey(projectId), "");
     setPosture("off");
     setUpdates([]);
     setCurrent(null);
     setEditBody("");
     setDirty(false);
     setError("");
-  }, []);
+  }, [projectId]);
 
   // ── Open a specific update in the editor ──
   const openUpdate = useCallback((update: ProjectUpdate) => {
     setDeliveriesReadFailed(false);
     setCurrent(update);
-    setEditBody(update.bodyMd);
-    setDirty(false);
+    // An emptied body is kept as "" (its own state, never "no draft").
+    const kept = update.lifecycle === "draft" ? keptDraft(updateDraftKey(update.id)) : null;
+    setEditBody(kept ?? update.bodyMd);
+    setDirty(kept !== null && kept !== update.bodyMd);
     setPosture("editor");
     setError("");
-  }, []);
+    if (projectId) keepPlace(updatePlaceKey(projectId), `editor:${update.id}`);
+  }, [projectId]);
 
   // ── Back to list from editor ──
   const backToList = useCallback(async () => {
@@ -158,6 +172,7 @@ export function useUpdateController(
       setLoading(false);
     }
     setPosture("list");
+    keepPlace(updatePlaceKey(projectId), "list");
   }, [projectId]);
 
   // ── Draft verb ──
@@ -171,6 +186,7 @@ export function useUpdateController(
       setEditBody(update.bodyMd);
       setDirty(false);
       setPosture("editor");
+      keepPlace(updatePlaceKey(projectId), `editor:${update.id}`);
       // Refresh list in background
       updateApi.fetchUpdates(projectId).then(setUpdates).catch(() => {});
     } catch (reason) {
@@ -193,6 +209,7 @@ export function useUpdateController(
       if (editBodyNow.current === sent) {
         setEditBody(saved.bodyMd);
         setDirty(false);
+        forgetDraft(updateDraftKey(current.id));
       }
     } catch (reason) {
       fail("NOT SAVED", reason, () => void verbs.current.save());
@@ -208,15 +225,17 @@ export function useUpdateController(
     setError("");
     try {
       const newDraft = await updateApi.regenerateUpdate(current.id, generator);
+      forgetDraft(updateDraftKey(current.id));
       setCurrent(newDraft);
       setEditBody(newDraft.bodyMd);
       setDirty(false);
+      if (projectId) keepPlace(updatePlaceKey(projectId), `editor:${newDraft.id}`);
     } catch (reason) {
       fail("DRAFT NOT MADE", reason, () => void regenerate(generator));
     } finally {
       setRegenerateBusy(false);
     }
-  }, [current]);
+  }, [current, projectId]);
 
   // ── Publish verb ──
   const publish = useCallback(async () => {
@@ -225,6 +244,7 @@ export function useUpdateController(
     setError("");
     try {
       const published = await updateApi.publishUpdate(current.id);
+      forgetDraft(updateDraftKey(current.id));
       setCurrent(published);
       onRoomRefresh();
     } catch (reason) {
@@ -311,8 +331,32 @@ export function useUpdateController(
     editBodyNow.current = value;
     setEditBody(value);
     setDirty(true);
+    if (currentId.current) keepDraft(updateDraftKey(currentId.current), value);
   }, []);
   verbs.current = { save, publish };
+  currentId.current = current?.lifecycle === "draft" ? current.id : null;
+
+  // PHILO-13-07 (B2): the Room comes back where it was — on the update list,
+  // or in the editor on the same update with its unsaved text. Restore only
+  // reads; it never saves or publishes.
+  const restored = useRef("");
+  useEffect(() => {
+    if (!projectId || restored.current === projectId) return;
+    restored.current = projectId;
+    const place = keptPlace(updatePlaceKey(projectId));
+    if (!place) return;
+    let live = true;
+    setLoading(true);
+    void updateApi.fetchUpdates(projectId).then((list) => {
+      if (!live) return;
+      setUpdates(list);
+      const updateId = place.startsWith("editor:") ? place.slice("editor:".length) : "";
+      const update = updateId ? list.find((u) => u.id === updateId) : undefined;
+      if (update) openUpdate(update);
+      else setPosture("list");
+    }).catch(() => undefined).finally(() => { if (live) setLoading(false); });
+    return () => { live = false; };
+  }, [projectId, openUpdate]);
   editBodyNow.current = editBody;
 
   // ── Derived ──

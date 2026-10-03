@@ -36,10 +36,13 @@ EXPECTED_CASES = {
     "case.p13.dock.needs_you_week",
     "case.p13.update.linked_week",
     "case.p13.update.linked_week.op",
+    "case.p13.people.prep.protocol",
+    "case.p13.people.prep",
 }
 PARKING_CASES = {"case.p13.meeting.park_restore", "case.p13.workbench.park_restore"}
 NEEDS_YOU_CASES = {"case.p13.dock.needs_you_week"}
 WEEK_CASES = {"case.p13.update.linked_week"}
+PEOPLE_PREP_CASES = {"case.p13.people.prep", "case.p13.people.prep.protocol"}
 
 LIVE_DOCK_CASES = {
     'case.p13.dock.send_sent',
@@ -431,12 +434,23 @@ def _assert_phase13_case_fence(atlas: dict) -> None:
     directory = cases["case.p13.directory.zone"]
     assert directory["applicability"] == "applicable"
     assert directory["expected"]["predicate"] == {
-        "kind": "readable_text",
-        "value": "Atlas Phase 13 Zone",
+        "kind": "all_of",
+        "predicates": [
+            {"kind": "attr_equals", "attr": "aria-label", "value": "Atlas Phase 13 Zone"},
+            {"kind": "readable_text", "value": "Drop items here"},
+        ],
     }
+    assert directory["completion_bound_s"] == 40
+    assert any("33.753 s" in text and "40 s" in text for text in directory["preconditions"])
     assert directory["expected"]["observe_at"] == ".desk-zone-window"
     assert "should open its real ZoneWindow" in directory["expected"]["words"]
     assert directory["trigger"]["action"] == "world_context_menu"
+    assert any(
+        step.get("action") == "wait_for" and step.get("at_width") == 1440
+        and step.get("selector") == '.desk-zone-window :text("Atlas Phase 13 Zone")'
+        and step.get("state") == "visible"
+        for step in directory["trigger"].get("then", [])
+    ), "the desktop title remains visible after reopen"
     zone_doors = [
         step for step in _steps(directory)
         if step.get("action") == "world_context_menu"
@@ -528,14 +542,15 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
     faces = [
         case for case in cases.values()
         if not case["id"].endswith(".op")
-        and case["id"] not in PARKING_CASES | NEEDS_YOU_CASES | LIVE_DOCK_CASES | WEEK_CASES
+        and case["id"] not in PARKING_CASES | NEEDS_YOU_CASES | LIVE_DOCK_CASES | WEEK_CASES | PEOPLE_PREP_CASES
     ]
     assert len(faces) == 9
     for case in faces:
         assert case["viewports"] == [1440, 393]
         assert case["applicability"] == "applicable", case["id"]
         # A DOM-only text match passed an off-screen Repository in the real walk.
-        assert case["expected"]["predicate"]["kind"] == "readable_text", case["id"]
+        expected_kind = "all_of" if case["id"] == "case.p13.directory.zone" else "readable_text"
+        assert case["expected"]["predicate"]["kind"] == expected_kind, case["id"]
         steps = _steps(case)
         close_index = next(i for i, step in enumerate(steps) if 'Close ' in step.get("selector", ""))
         assert steps[close_index + 1]["state"] == "hidden", case["id"]
@@ -656,6 +671,31 @@ def test_needs_you_case_reads_six_before_real_mutation_and_five_after_reload() -
     assert case["trigger"]["action"] == "reload"
     assert case["expected"]["predicate"] == {"kind": "readable_text", "value": "5"}
     assert "desk-dock-badge" in case["expected"]["observe_at"]
+
+
+def test_people_prep_cases_fence_suggestion_link_and_owned_prep_data() -> None:
+    op = _cases()["case.p13.people.prep.protocol"]
+    setup = op["setup"]
+    seed = next(i for i, step in enumerate(setup) if step.get("action") == "seed_people_prep")
+    suggestion = next(i for i, step in enumerate(setup) if step.get("capture_as") == "people_suggestion_uid")
+    link = next(i for i, step in enumerate(setup) if step.get("path", "").endswith("/calendar-links"))
+    brief_check = next(i for i, step in enumerate(setup) if step.get("kind") == "check" and "brief" in step.get("observe_at", ""))
+    assert seed < suggestion < link < brief_check
+    assert setup[suggestion]["capture_match"] == {
+        "uid": "{people_event_uid}", "source_id": "{people_event_source_id}",
+    }
+    fields = {part["path"] for part in setup[brief_check]["predicate"]["predicates"]}
+    assert {
+        "brief.next_one_on_one.uid",
+        "brief.open_meeting_actions.0.id",
+        "brief.agenda_items.0.body",
+        "brief.projects.0.id",
+    } <= fields
+    face = _cases()["case.p13.people.prep"]
+    assert face["viewports"] == [1440, 393]
+    assert face["expected"]["predicate"] == {
+        "kind": "readable_text", "value": "Send the dry-run report",
+    }
 
 
 def test_phase13_shared_semantic_guards_show_red_then_green(tmp_path, monkeypatch) -> None:

@@ -3509,6 +3509,56 @@
       "status": "built_unreleased"
     },
     {
+      "availability": "unknown",
+      "capability_id": "people.prep.read",
+      "id": "people.prep.read@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/people_service.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "people.prep.read",
+      "id": "people.prep.read@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/people_service.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "people.prep.read",
+      "id": "people.prep.read@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/people_service.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "people.prep.read",
+      "id": "people.prep.read@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/people_service.py"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "people.prep.read",
+      "id": "people.prep.read@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/people_service.py"
+      ],
+      "status": "partial"
+    },
+    {
       "availability": "not_applicable",
       "capability_id": "agents.thread_persistent",
       "id": "agents.thread_persistent@aipi",

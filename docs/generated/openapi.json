@@ -15190,7 +15190,7 @@
     },
     "/api/meetings": {
       "get": {
-        "description": "List meetings, with HS-55-04 server-side facets composing with search.\n\nFacets filter in SQL over the whole archive. With ``search``, the\nfull-text hits flow through the same faceted query, so both branches\nreturn the same summary shape (this also fixed search results\npreviously returning full ``to_dict`` payloads whose nested\n``intel_status`` broke the status pill).",
+        "description": "List meetings, with HS-55-04 server-side facets composing with search.\n\nFacets filter in SQL over the whole archive. With ``search``, the\nfull-text hits flow through the same faceted query, so both branches\nreturn the same summary shape (this also fixed search results\npreviously returning full ``to_dict`` payloads whose nested\n``intel_status`` broke the status pill).\n\nEach row includes ``attendees: list[str]``: saved segment speakers\nplus the linked calendar event's attendee emails, trimmed, with\nblanks and exact duplicates removed, in case-sensitive lexical\norder. The field is an empty list when neither source has values.",
         "operationId": "api_list_meetings_api_meetings_get",
         "parameters": [
           {

@@ -11,7 +11,7 @@ import { defaultViewFor, useDesk } from "./store";
 import { useChairState } from "./chairState";
 import { DeskReceiptRow } from "./components/DeskReceiptRow";
 import { useCompactViewport } from "./useCompactViewport";
-import { ChairHome } from "./chair";
+import { ChairHome } from "./chair"; import { ReturningWindows } from "./returningWindows"; // PHILO-13-07 (B2)
 import { DeskListView } from "./components/DeskListView";
 import { DeskChrome } from "./components/DeskChrome";
 import { EmptyDesk } from "./components/EmptyDesk";
@@ -117,7 +117,7 @@ function DeskFaces() {
     try {
       await refresh();
       const open = new URLSearchParams(window.location.search).get("open");
-      if (open) useDesk.getState().openPullout(open);
+      if (open) { useDesk.getState().openPullout(open); const url = new URL(window.location.href); url.searchParams.delete("open"); window.history.replaceState(window.history.state, "", url); } // B2 (Astra P2 #747): a link opens once; a reload never replays it over the restored editor
     } catch (caught) {
       setRefreshFailure(
         caught instanceof Error && caught.message
@@ -269,7 +269,7 @@ function DeskFaces() {
         <Pullout key={pullout.id} o={pullout.object!} pulloutId={pullout.id} origin={pullout.origin} />
       ))}
       {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}
-      {!arrivalRequired && <DeskToolInspector />}
+      {!arrivalRequired && <><ReturningWindows /* PHILO-13-07 (B2): the other families return once */ /><DeskToolInspector /></>}
       {!arrivalRequired && <MissionControlConveyor />}
       {!arrivalRequired && <DeliveryBoard />}
       {!arrivalRequired && <DeliveryDossierWindow />}

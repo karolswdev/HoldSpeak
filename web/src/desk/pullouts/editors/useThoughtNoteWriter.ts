@@ -8,6 +8,7 @@ import {
   type ThoughtWorkspaceCursor,
 } from "../../thoughts";
 import { thoughtTitle } from "../../thoughtTitle";
+import { forgetDraft, keepDraft, keptDraft } from "../../deskMemory";
 
 export type ThoughtDraft = { title: string; body: string; tags: string };
 
@@ -30,6 +31,25 @@ const toDraft = (thought: Thought): ThoughtDraft => ({
   tags: thought.working_note.tags.join(", "),
 });
 
+/* PHILO-13-07 (B2) — the words not yet kept by the hub are kept on this
+   device, per Thought, until a write lands. A reload brings them back into
+   the field as an unsaved edit; restore itself never saves. */
+const draftKey = (thought: Thought) => `thought/body/${thought.id}`;
+const sameDraft = (a: ThoughtDraft, b: ThoughtDraft) =>
+  a.title === b.title && a.body === b.body && a.tags === b.tags;
+const keptThoughtDraft = (thought: Thought): ThoughtDraft | null => {
+  try {
+    const raw = keptDraft(draftKey(thought));
+    if (!raw) return null;
+    const value = JSON.parse(raw) as Partial<ThoughtDraft>;
+    if (typeof value.title !== "string" || typeof value.body !== "string" || typeof value.tags !== "string") return null;
+    const kept = { title: value.title, body: value.body, tags: value.tags };
+    return sameDraft(kept, toDraft(thought)) ? null : kept;
+  } catch {
+    return null;
+  }
+};
+
 /**
  * The sole serialized writer for a Thought's working Note. Presentation is a
  * consumer: the compact legacy editor and the Workbench document plane share
@@ -50,24 +70,25 @@ export function useThoughtNoteWriter({
   locked?: boolean;
   workspaceCursor?: ThoughtWorkspaceCursor;
 }) {
-  const [draftState, setDraftState] = useState<ThoughtDraft>(() => toDraft(thought));
+  const [restoredDraft] = useState<ThoughtDraft | null>(() => keptThoughtDraft(thought));
+  const [draftState, setDraftState] = useState<ThoughtDraft>(() => restoredDraft ?? toDraft(thought));
   const [saving, setSaving] = useState(false);
   /* PHILO-3-04 — the foot's four states are React state, never a ref read
      at render: an edit, a failure and a conflict each re-render the foot. */
-  const [pending, setPending] = useState(false);
+  const [pending, setPending] = useState(Boolean(restoredDraft));
   const [failure, setFailure] = useState<ThoughtSaveFailure | null>(null);
   const [conflicted, setConflicted] = useState(false);
   const [keptAt, setKeptAt] = useState<string | null>(() => thought.working_note.last_modified ?? null);
   const timer = useRef<number | null>(null);
   const inFlight = useRef(false);
-  const dirty = useRef(false);
+  const dirty = useRef(Boolean(restoredDraft));
   const saveFailed = useRef(false);
   const conflictFenced = useRef(false);
   const commandFence = useRef(locked);
   const cursorRetryUsed = useRef(false);
   const authorityEpoch = useRef(0);
   const mounted = useRef(true);
-  const draft = useRef<ThoughtDraft>(toDraft(thought));
+  const draft = useRef<ThoughtDraft>(restoredDraft ?? toDraft(thought));
   const current = useRef(thought);
   const cursor = useRef(workspaceCursor);
   const waiters = useRef<Array<() => void>>([]);
@@ -103,6 +124,7 @@ export function useThoughtNoteWriter({
     current.current = authoritative;
     const next = toDraft(authoritative);
     draft.current = next;
+    forgetDraft(draftKey(authoritative));
     if (mounted.current) {
       setDraftState(next);
       setSaving(false);
@@ -180,6 +202,8 @@ export function useThoughtNoteWriter({
         schedule(0);
       } else {
         settle();
+        // B2: the hub kept these words; the device copy is no longer needed.
+        if (!dirty.current) forgetDraft(draftKey(result.thought));
       }
       wake();
     } catch (cause) {
@@ -257,6 +281,7 @@ export function useThoughtNoteWriter({
     const value = { ...draft.current, ...next };
     draft.current = value;
     setDraftState(value);
+    keepDraft(draftKey(current.current), JSON.stringify(value));
     dirty.current = true;
     fail(null);
     cursorRetryUsed.current = false;

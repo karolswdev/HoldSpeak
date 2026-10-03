@@ -1678,6 +1678,33 @@
       "tests_executed": 4
     },
     {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "people.prep.read",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
       "assertions_inspected": 2,
       "docs": {
         "api": 0,
@@ -4083,28 +4110,28 @@
   ],
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
   "totals": {
-    "assertions_inspected": 209,
+    "assertions_inspected": 210,
     "doc_paths": [
-      227,
-      227
+      228,
+      228
     ],
     "docs": {
       "api": 0,
       "operational": 65,
       "security": 19
     },
-    "records": 151,
-    "records_with_executed_assertions": 76,
+    "records": 152,
+    "records_with_executed_assertions": 77,
     "semantics_unresolved": 75,
     "source_paths": [
-      267,
-      267
+      268,
+      268
     ],
     "test_paths": [
-      209,
-      209
+      210,
+      210
     ],
-    "tests_executed": 177
+    "tests_executed": 178
   },
   "validation_errors": 0
 }

@@ -1,0 +1,61 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__ test_brief_suggests_alias_event_without_linking_and_returns_next_prep_data __
+
+db = <holdspeak.db.core.Database object at 0x1102bb620>
+people = <holdspeak.services.people_service.PeopleService object at 0x1104bd160>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-147/test_brief_suggests_alias_even0')
+
+    def test_brief_suggests_alias_event_without_linking_and_returns_next_prep_data(
+        db: Database, people: PeopleService, tmp_path: Path,
+    ) -> None:
+        event = _ingest_calendar(db, tmp_path)
+        _save_meeting(db, event.id)
+        project = ProjectService(db, observer=get_observer()).create_project(
+            OWNER, {"name": "Dry-run project", "description": "B4 project"}
+        )
+        relationship = people.create_relationship(OWNER, {"display_name": "Priya Sharma"})
+        people.link_owner_alias(OWNER, relationship["id"], "Priya")
+        people.link_project(OWNER, relationship["id"], project["id"])
+    
+        before = people.get_relationship(OWNER, relationship["id"])
+        assert before["calendar_links"] in (None, [])
+    
+        brief = people.one_on_one_brief(OWNER, relationship["id"], db=db)
+    
+>       assert brief["calendar_link_suggestions"] == [
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            {
+                "id": event.id,
+                "uid": event.uid,
+                "title": event.title,
+                "starts_at": event.starts_at,
+                "ends_at": event.ends_at,
+                "source_id": event.source_id,
+                "source_label": event.source_label,
+            }
+        ]
+E       KeyError: 'calendar_link_suggestions'
+
+tests/unit/test_philo13_b4_prep.py:105: KeyError
+______________ test_calendar_suggestion_uses_explicit_alias_only _______________
+
+db = <holdspeak.db.core.Database object at 0x110423250>
+people = <holdspeak.services.people_service.PeopleService object at 0x1104c8190>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-147/test_calendar_suggestion_uses_0')
+
+    def test_calendar_suggestion_uses_explicit_alias_only(
+        db: Database, people: PeopleService, tmp_path: Path,
+    ) -> None:
+        _ingest_calendar(db, tmp_path)
+        relationship = people.create_relationship(OWNER, {"display_name": "Priya Sharma"})
+        brief = people.one_on_one_brief(OWNER, relationship["id"], db=db)
+>       assert brief["calendar_link_suggestions"] == []
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'calendar_link_suggestions'
+
+tests/unit/test_philo13_b4_prep.py:152: KeyError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo13_b4_prep.py::test_brief_suggests_alias_event_without_linking_and_returns_next_prep_data
+FAILED tests/unit/test_philo13_b4_prep.py::test_calendar_suggestion_uses_explicit_alias_only
+2 failed in 0.96s

@@ -449,7 +449,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       // (see `renameLock` in infoContract). Reaching here anyway is a wiring
       // fault, and it is named instead of swallowed.
       reportWriteFailure(verb, `NO UPDATE PATH FOR ${kind.toUpperCase()}`, undefined, qualifiedRef(kind, id));
-      return;
+      return false;
     }
     const camel: Record<string, string> = {
       title: "title",
@@ -557,17 +557,19 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       });
       if (!res.ok) {
         await refused(res);
-        return;
+        return false;
       }
       const state = primitiveWrites.get(key);
-      if (!state || state.version !== writeVersion) return;
+      if (!state || state.version !== writeVersion) return true; // it landed; a newer write owns the receipt
       primitiveWrites.set(key, { ...state, pending: false });
       clearWriteFailure(qualifiedRef(kind, id));
       // HS-202-02 — the hub answered ok: the object is KEPT, and the
       // editor's foot may say so (04-sober-eye.md, rank 5).
       set({ keptAt: { ...get().keptAt, [id]: Date.now() } });
+      return true;
     } catch (cause) {
       await refused(cause);
+      return false;
     }
   },
 

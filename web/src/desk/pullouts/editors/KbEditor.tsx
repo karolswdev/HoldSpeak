@@ -12,6 +12,7 @@ import { editorVoiceGrammar } from "../../voice/grammars/editor";
 import type { VoiceProposal } from "../../voice/grammar";
 import type { KB } from "../../../lib/primitives";
 import { useDebouncedSave } from "./useDebouncedSave";
+import { keptEditorPatch, keptField } from "./editorDraft";
 import type { InlineEditorContentProps } from "./types";
 
 export function KbEditor({ object: o, onClose, autoFocusName }: InlineEditorContentProps) {
@@ -26,10 +27,14 @@ export function KbEditor({ object: o, onClose, autoFocusName }: InlineEditorCont
     () => (items.kb || []).find((x) => x.id === o.id) || o.ref as KB,
     [items, o.id],
   );
-  const [f, setF] = useState<Record<string, string>>(() => ({
-    name: String(live.name || ""),
-    body: String("bodyMarkdown" in live && live.bodyMarkdown ? live.bodyMarkdown : ""),
-  }));
+  // PHILO-13-07 (B2): an edit the hub has not kept returns after a reload.
+  const [f, setF] = useState<Record<string, string>>(() => {
+    const kept = keptEditorPatch("kb", o.id);
+    return {
+      name: keptField(kept, "name", String(live.name || "")),
+      body: keptField(kept, "body_markdown", String("bodyMarkdown" in live && live.bodyMarkdown ? live.bodyMarkdown : "")),
+    };
+  });
 
   const set = (key: string, wire: string, value: string) => {
     setF((prev) => ({ ...prev, [key]: value }));

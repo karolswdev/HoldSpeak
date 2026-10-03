@@ -636,6 +636,11 @@
   .desk-next .desk-dock > .desk-dock-more {
     order: 99;
     position: sticky;
+    /* PHILO-13-01 (B0): the sticky gadget is never a snap target. As one it
+       moved with the shelf, so every tap's gesture end re-snapped the shelf
+       one page on and the tap pressed the icon a page further (Floor →
+       Hide the menus). */
+    scroll-snap-align: none;
     right: 0;
     flex: 0 0 48px;
     width: 48px;

@@ -1,0 +1,83 @@
+/* Title bar direction C, "Modern Workbench" (canvas only).
+   A 32 px bar at 1440 (44 px at 393). The title: 13 px semibold sans
+   (--font-sans), left, beside the close gadget. Bars are flat: the front one
+   light steel (#d5d9df, the title in ink, 13.79:1) with a 2 px front-pen
+   underline (--wb-blue); inactive bars steel, the title in #23262d (6.05:1).
+   Gadgets are monochrome icon buttons: 26 x 26 at 1440 (44 x 44 at 393),
+   6 px corners, a hover-strength tint at rest (6 % ink) and 14 % under the
+   pointer; the glyphs are ink lines only. Each stays the library Button. */
+@media (min-width: 721px) {
+  :root:root:root {
+    --wb-bar-h: 32px;
+  }
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head {
+  background: var(--wb-steel);
+  box-shadow: inset 0 -1px 0 rgba(11, 12, 16, 0.55);
+  gap: 0;
+}
+html .desk-next .desk-window.desk-window-shell.is-front > .desk-pullout-head {
+  background: #d5d9df;
+  box-shadow: inset 0 -2px 0 var(--wb-blue);
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-pullout-title {
+  flex: 1 1 auto;
+  max-width: none;
+  margin: 0 8px 0 6px;
+  padding: 0;
+  background: transparent;
+  color: #23262d;
+  font: 600 13px/var(--wb-bar-h) var(--font-sans);
+  letter-spacing: 0;
+}
+html .desk-next .desk-window.desk-window-shell.is-front > .desk-pullout-head .desk-pullout-title {
+  background: transparent;
+  color: var(--wb-ink);
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadgets {
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget {
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(11, 12, 16, 0.06);
+  box-shadow: none;
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget:hover:not(:disabled) {
+  background: rgba(11, 12, 16, 0.14);
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget:active:not(:disabled) {
+  background: rgba(11, 12, 16, 0.22);
+  box-shadow: none;
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget svg rect[fill="var(--wb-paper)"] {
+  fill: transparent;
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wing {
+  border-left: 0;
+  background: transparent;
+  box-shadow: none;
+  font: 600 12px var(--font-sans);
+}
+html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wing.is-on {
+  background: transparent;
+  box-shadow: inset 0 -2px 0 var(--wb-ink);
+}
+@media (max-width: 720px) {
+  html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadgets {
+    gap: 0;
+    padding: 0;
+  }
+  html .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    border-radius: 0;
+    background: transparent;
+  }
+}

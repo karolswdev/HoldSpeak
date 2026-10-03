@@ -1,0 +1,2668 @@
+{
+  "id": "obs-20261003T204519Z-case.p13.workbench.park_restore-muaddib-393",
+  "run_id": "20261003T204519Z-case.p13.workbench.park_restore-muaddib-393",
+  "case_id": "case.p13.workbench.park_restore",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j1",
+  "edge_ids": [
+    "edge.route.workbench_items_park"
+  ],
+  "state_id": "state.desk_presentation.p13_park_restore",
+  "provenance": {
+    "revision": "06116f5c68cbc23a75af9df96333327919cb4240",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f256163c5fb16d4dcafc1e26884896c729452af1703e1f0af707833a4be33886",
+      "assets": [
+        "index-BRUaZ34P.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:65317",
+      "port": 65317,
+      "pid": 29360,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T20:45:19.480016+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [
+      {
+        "kind": "cli",
+        "action": "restart_hub",
+        "adapter": "process",
+        "stopped_pid": 29360,
+        "started_pid": 29464,
+        "downtime_s": 1.53,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb/.local/share/holdspeak/holdspeak.db",
+        "port": 65317,
+        "hub_identity": {
+          "url": "http://127.0.0.1:65317",
+          "port": 65317,
+          "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb/.local/share/holdspeak/holdspeak.db",
+          "stopped_pid": 29360,
+          "started_pid": 29464
+        },
+        "meeting_before": {
+          "meeting_id": null,
+          "summary": null,
+          "run_receipt": null,
+          "transcription_status": null,
+          "payload": {
+            "workbench": {
+              "id": "workbench_34b82257fc6c",
+              "name": "Atlas retained work",
+              "recipe_id": null,
+              "profile_id": null,
+              "resolver_profile_id": null,
+              "schedule": null,
+              "schedule_enabled": false,
+              "schedule_revision": 1,
+              "item_order": [],
+              "created_at": "2026-10-03T20:45:25Z",
+              "last_modified": "2026-10-03T20:45:25Z",
+              "deleted": false,
+              "items": [],
+              "item_count": 0,
+              "pending_count": 0,
+              "last_run": null,
+              "assignment_summary": {
+                "status": "no_assignment",
+                "source": null,
+                "chain": [],
+                "repair": "Choose default"
+              }
+            }
+          }
+        },
+        "meeting_after": {
+          "meeting_id": null,
+          "summary": null,
+          "run_receipt": null,
+          "transcription_status": null,
+          "payload": {
+            "workbench": {
+              "id": "workbench_34b82257fc6c",
+              "name": "Atlas retained work",
+              "recipe_id": null,
+              "profile_id": null,
+              "resolver_profile_id": null,
+              "schedule": null,
+              "schedule_enabled": false,
+              "schedule_revision": 1,
+              "item_order": [],
+              "created_at": "2026-10-03T20:45:25Z",
+              "last_modified": "2026-10-03T20:45:25Z",
+              "deleted": false,
+              "items": [],
+              "item_count": 0,
+              "pending_count": 0,
+              "last_run": null,
+              "assignment_summary": {
+                "status": "no_assignment",
+                "source": null,
+                "chain": [],
+                "repair": "Choose default"
+              }
+            }
+          }
+        },
+        "summary_retained": false,
+        "receipt_retained": false,
+        "meeting_identity_retained": false
+      },
+      {
+        "kind": "cli",
+        "action": "restart_hub",
+        "adapter": "process",
+        "stopped_pid": 29464,
+        "started_pid": 29502,
+        "downtime_s": 1.53,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb/.local/share/holdspeak/holdspeak.db",
+        "port": 65317,
+        "hub_identity": {
+          "url": "http://127.0.0.1:65317",
+          "port": 65317,
+          "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb/.local/share/holdspeak/holdspeak.db",
+          "stopped_pid": 29464,
+          "started_pid": 29502
+        },
+        "meeting_before": {
+          "meeting_id": null,
+          "summary": null,
+          "run_receipt": null,
+          "transcription_status": null,
+          "payload": {
+            "workbench": {
+              "id": "workbench_34b82257fc6c",
+              "name": "Atlas retained work",
+              "recipe_id": null,
+              "profile_id": null,
+              "resolver_profile_id": null,
+              "schedule": null,
+              "schedule_enabled": false,
+              "schedule_revision": 1,
+              "item_order": [],
+              "created_at": "2026-10-03T20:45:25Z",
+              "last_modified": "2026-10-03T20:45:25Z",
+              "deleted": false,
+              "items": [],
+              "item_count": 0,
+              "pending_count": 0,
+              "last_run": null,
+              "assignment_summary": {
+                "status": "no_assignment",
+                "source": null,
+                "chain": [],
+                "repair": "Choose default"
+              }
+            }
+          }
+        },
+        "meeting_after": {
+          "meeting_id": null,
+          "summary": null,
+          "run_receipt": null,
+          "transcription_status": null,
+          "payload": {
+            "workbench": {
+              "id": "workbench_34b82257fc6c",
+              "name": "Atlas retained work",
+              "recipe_id": null,
+              "profile_id": null,
+              "resolver_profile_id": null,
+              "schedule": null,
+              "schedule_enabled": false,
+              "schedule_revision": 1,
+              "item_order": [],
+              "created_at": "2026-10-03T20:45:25Z",
+              "last_modified": "2026-10-03T20:45:25Z",
+              "deleted": false,
+              "items": [],
+              "item_count": 0,
+              "pending_count": 0,
+              "last_run": null,
+              "assignment_summary": {
+                "status": "no_assignment",
+                "source": null,
+                "chain": [],
+                "repair": "Choose default"
+              }
+            }
+          }
+        },
+        "summary_retained": false,
+        "receipt_retained": false,
+        "meeting_identity_retained": false
+      }
+    ],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "7e4fd58cff5125d68eb75fe0466df81044095ff7fb3641537bba98bc5c61a755",
+      "version": "phase13-astra-wave2"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "browser_context": {
+      "viewport": 393,
+      "has_touch": true
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.28,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/workbenches",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "workbench": {
+          "id": "workbench_34b82257fc6c",
+          "name": "Atlas retained work",
+          "recipe_id": null,
+          "profile_id": null,
+          "resolver_profile_id": null,
+          "schedule": null,
+          "schedule_enabled": false,
+          "schedule_revision": 1,
+          "item_order": [],
+          "created_at": "2026-10-03T20:45:25Z",
+          "last_modified": "2026-10-03T20:45:25Z",
+          "deleted": false,
+          "items": [],
+          "item_count": 0,
+          "pending_count": 0,
+          "last_run": null,
+          "assignment_summary": {
+            "status": "no_assignment",
+            "source": null,
+            "chain": [],
+            "repair": "Choose default"
+          }
+        }
+      },
+      "response_sha256": "d7cfb23c8b7564369a4b4cb3887d1e526f633df8b10aa743b8fa58c11df3c52b",
+      "captured": {
+        "name": "workbench_id",
+        "path": "workbench.id",
+        "value": "workbench_34b82257fc6c"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/workbenches/workbench_34b82257fc6c/items",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "item": {
+          "id": "wbi_6ff7c29c8315",
+          "workbench_id": "workbench_34b82257fc6c",
+          "title": "Atlas first item",
+          "body": "Keep the first work body",
+          "priority": 3,
+          "status": "pending",
+          "grounding": {},
+          "context": {},
+          "result": null,
+          "result_artifact_id": null,
+          "result_egress": null,
+          "tokens_consumed": 0,
+          "created_at": "2026-10-03T20:45:25Z",
+          "last_modified": "2026-10-03T20:45:25Z",
+          "claimed_at": null,
+          "completed_at": null,
+          "parked": false
+        }
+      },
+      "response_sha256": "e0e5de811e01eb1ce1f9c7ba89633b7be590afee00268d62a014438a58c60a4c",
+      "captured": {
+        "name": "item_id",
+        "path": "item.id",
+        "value": "wbi_6ff7c29c8315"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/workbenches/workbench_34b82257fc6c/items/wbi_6ff7c29c8315",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "item": {
+          "id": "wbi_6ff7c29c8315",
+          "workbench_id": "workbench_34b82257fc6c",
+          "title": "Atlas first item",
+          "body": "Keep the first work body",
+          "priority": 3,
+          "status": "done",
+          "grounding": {},
+          "context": {},
+          "result": "Atlas retained result",
+          "result_artifact_id": null,
+          "result_egress": null,
+          "tokens_consumed": 0,
+          "created_at": "2026-10-03T20:45:25Z",
+          "last_modified": "2026-10-03T20:45:25Z",
+          "claimed_at": null,
+          "completed_at": null,
+          "parked": false
+        }
+      },
+      "response_sha256": "9691ef19acdc9db47614abea05f808f5db25dd856e95b545353d495e204d9911"
+    },
+    {
+      "kind": "api",
+      "method": "DELETE",
+      "path": "/api/workbenches/workbench_34b82257fc6c/items/wbi_6ff7c29c8315",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "parked": "wbi_6ff7c29c8315",
+        "item": {
+          "id": "wbi_6ff7c29c8315",
+          "workbench_id": "workbench_34b82257fc6c",
+          "title": "Atlas first item",
+          "body": "Keep the first work body",
+          "priority": 3,
+          "status": "done",
+          "grounding": {},
+          "context": {},
+          "result": "Atlas retained result",
+          "result_artifact_id": null,
+          "result_egress": null,
+          "tokens_consumed": 0,
+          "created_at": "2026-10-03T20:45:25Z",
+          "last_modified": "2026-10-03T20:45:25Z",
+          "claimed_at": null,
+          "completed_at": null,
+          "parked": true
+        }
+      },
+      "response_sha256": "7c818ef0d5d4f5b8eb15277deaa55057f572a5a557f28cd81c92940ac0d6fbc5"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/workbenches/workbench_34b82257fc6c?parked=true",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/workbench/items/0/id",
+        "value": "wbi_6ff7c29c8315"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/workbench/items/0/id equals the declared value"
+    },
+    {
+      "kind": "cli",
+      "action": "restart_hub",
+      "adapter": "process",
+      "stopped_pid": 29360,
+      "started_pid": 29464,
+      "downtime_s": 1.53,
+      "same_db_path": true,
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb/.local/share/holdspeak/holdspeak.db",
+      "port": 65317,
+      "hub_identity": {
+        "url": "http://127.0.0.1:65317",
+        "port": 65317,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb/.local/share/holdspeak/holdspeak.db",
+        "stopped_pid": 29360,
+        "started_pid": 29464
+      },
+      "meeting_before": {
+        "meeting_id": null,
+        "summary": null,
+        "run_receipt": null,
+        "transcription_status": null,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [],
+            "item_count": 0,
+            "pending_count": 0,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        }
+      },
+      "meeting_after": {
+        "meeting_id": null,
+        "summary": null,
+        "run_receipt": null,
+        "transcription_status": null,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [],
+            "item_count": 0,
+            "pending_count": 0,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        }
+      },
+      "summary_retained": false,
+      "receipt_retained": false,
+      "meeting_identity_retained": false
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-navigation",
+      "selector": ".desk-dock",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/workbenches/workbench_34b82257fc6c?parked=true",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/workbench/items/0/result",
+        "value": "Atlas retained result"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/workbench/items/0/result equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/workbenches/workbench_34b82257fc6c/items/wbi_6ff7c29c8315/restore",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "item": {
+          "id": "wbi_6ff7c29c8315",
+          "workbench_id": "workbench_34b82257fc6c",
+          "title": "Atlas first item",
+          "body": "Keep the first work body",
+          "priority": 3,
+          "status": "done",
+          "grounding": {},
+          "context": {},
+          "result": "Atlas retained result",
+          "result_artifact_id": null,
+          "result_egress": null,
+          "tokens_consumed": 0,
+          "created_at": "2026-10-03T20:45:25Z",
+          "last_modified": "2026-10-03T20:45:28Z",
+          "claimed_at": null,
+          "completed_at": null,
+          "parked": false
+        }
+      },
+      "response_sha256": "c80f65a14c52e861bc4db632e569939c73a1ceb8dbd1dd868ccb10c02e21a236"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/workbenches/workbench_34b82257fc6c",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/workbench/items/0/id",
+        "value": "wbi_6ff7c29c8315"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/workbench/items/0/id equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/workbenches/workbench_34b82257fc6c/items",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "item": {
+          "id": "wbi_b36719034012",
+          "workbench_id": "workbench_34b82257fc6c",
+          "title": "Atlas second item",
+          "body": "Keep the second work body",
+          "priority": 3,
+          "status": "pending",
+          "grounding": {},
+          "context": {},
+          "result": null,
+          "result_artifact_id": null,
+          "result_egress": null,
+          "tokens_consumed": 0,
+          "created_at": "2026-10-03T20:45:28Z",
+          "last_modified": "2026-10-03T20:45:28Z",
+          "claimed_at": null,
+          "completed_at": null,
+          "parked": false
+        }
+      },
+      "response_sha256": "b8cd78764ca9f7ed5d3867ad4ddcf24759ff15a22e234fec1904ae94a7aeba28",
+      "captured": {
+        "name": "item_two",
+        "path": "item.id",
+        "value": "wbi_b36719034012"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/workbenches/workbench_34b82257fc6c/items/park",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "parked": [
+          "wbi_6ff7c29c8315",
+          "wbi_b36719034012"
+        ]
+      },
+      "response_sha256": "9dd50de7b207be10d7fd573ad48f7e78af9b83776398fed2fd744537ae3c66a7"
+    },
+    {
+      "kind": "cli",
+      "action": "restart_hub",
+      "adapter": "process",
+      "stopped_pid": 29464,
+      "started_pid": 29502,
+      "downtime_s": 1.53,
+      "same_db_path": true,
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb/.local/share/holdspeak/holdspeak.db",
+      "port": 65317,
+      "hub_identity": {
+        "url": "http://127.0.0.1:65317",
+        "port": 65317,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb/.local/share/holdspeak/holdspeak.db",
+        "stopped_pid": 29464,
+        "started_pid": 29502
+      },
+      "meeting_before": {
+        "meeting_id": null,
+        "summary": null,
+        "run_receipt": null,
+        "transcription_status": null,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [],
+            "item_count": 0,
+            "pending_count": 0,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        }
+      },
+      "meeting_after": {
+        "meeting_id": null,
+        "summary": null,
+        "run_receipt": null,
+        "transcription_status": null,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [],
+            "item_count": 0,
+            "pending_count": 0,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        }
+      },
+      "summary_retained": false,
+      "receipt_retained": false,
+      "meeting_identity_retained": false
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-navigation",
+      "selector": ".desk-dock",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/workbenches/workbench_34b82257fc6c",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/workbench/items",
+        "value": []
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/workbench/items equals the declared value"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/workbenches/workbench_34b82257fc6c?parked=true",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/workbench/items/0/parked",
+        "value": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/workbench/items/0/parked equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/workbenches/workbench_34b82257fc6c/items/restore",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "restored": [
+          "wbi_6ff7c29c8315",
+          "wbi_b36719034012"
+        ]
+      },
+      "response_sha256": "a26b7062dece1cc156ed868a2b9d4fb29380c04bf896a0d434e7836afb0bb5f6"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "H-A1 backend proof only; A1-F owns Parked filter, Restore Button and the 8-second face window. Real workbench/item producers, no inference engine or sends.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb",
+    "workbench_id": "workbench_34b82257fc6c",
+    "item_id": "wbi_6ff7c29c8315",
+    "item_two": "wbi_b36719034012"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "reload",
+    "adapter": "ui-navigation",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-navigation",
+        "selector": ".desk-dock",
+        "done": true
+      }
+    ]
+  },
+  "diff": {},
+  "before": {
+    "observe_at": "protocol: GET /api/workbenches/workbench_34b82257fc6c",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:needs",
+    "focus_label": "Needs you",
+    "url": "http://127.0.0.1:65317/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/workbenches/workbench_34b82257fc6c",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "e57f5bde0cca77188fd3452e57ed1a0a2603f308898300c8e185e95bee677b34",
+      "rows": [],
+      "payload": {
+        "workbench": {
+          "id": "workbench_34b82257fc6c",
+          "name": "Atlas retained work",
+          "recipe_id": null,
+          "profile_id": null,
+          "resolver_profile_id": null,
+          "schedule": null,
+          "schedule_enabled": false,
+          "schedule_revision": 1,
+          "item_order": [],
+          "created_at": "2026-10-03T20:45:25Z",
+          "last_modified": "2026-10-03T20:45:25Z",
+          "deleted": false,
+          "items": [
+            {
+              "id": "wbi_6ff7c29c8315",
+              "workbench_id": "workbench_34b82257fc6c",
+              "title": "Atlas first item",
+              "body": "Keep the first work body",
+              "priority": 3,
+              "status": "done",
+              "grounding": {},
+              "context": {},
+              "result": "Atlas retained result",
+              "result_artifact_id": null,
+              "result_egress": null,
+              "tokens_consumed": 0,
+              "created_at": "2026-10-03T20:45:25Z",
+              "last_modified": "2026-10-03T20:45:31Z",
+              "claimed_at": null,
+              "completed_at": null,
+              "parked": false
+            },
+            {
+              "id": "wbi_b36719034012",
+              "workbench_id": "workbench_34b82257fc6c",
+              "title": "Atlas second item",
+              "body": "Keep the second work body",
+              "priority": 3,
+              "status": "pending",
+              "grounding": {},
+              "context": {},
+              "result": null,
+              "result_artifact_id": null,
+              "result_egress": null,
+              "tokens_consumed": 0,
+              "created_at": "2026-10-03T20:45:28Z",
+              "last_modified": "2026-10-03T20:45:31Z",
+              "claimed_at": null,
+              "completed_at": null,
+              "parked": false
+            }
+          ],
+          "item_count": 2,
+          "pending_count": 1,
+          "last_run": null,
+          "assignment_summary": {
+            "status": "no_assignment",
+            "source": null,
+            "chain": [],
+            "repair": "Choose default"
+          }
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "e57f5bde0cca77188fd3452e57ed1a0a2603f308898300c8e185e95bee677b34"
+    },
+    "document_text_sha256": "c9ae54af2a83efd644871e1727b36a2353a5982352f970e884d850f641af2dd1",
+    "document_text_len": 189,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/workbenches/workbench_34b82257fc6c",
+        "status": 200,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [
+              {
+                "id": "wbi_6ff7c29c8315",
+                "workbench_id": "workbench_34b82257fc6c",
+                "title": "Atlas first item",
+                "body": "Keep the first work body",
+                "priority": 3,
+                "status": "done",
+                "grounding": {},
+                "context": {},
+                "result": "Atlas retained result",
+                "result_artifact_id": null,
+                "result_egress": null,
+                "tokens_consumed": 0,
+                "created_at": "2026-10-03T20:45:25Z",
+                "last_modified": "2026-10-03T20:45:31Z",
+                "claimed_at": null,
+                "completed_at": null,
+                "parked": false
+              },
+              {
+                "id": "wbi_b36719034012",
+                "workbench_id": "workbench_34b82257fc6c",
+                "title": "Atlas second item",
+                "body": "Keep the second work body",
+                "priority": 3,
+                "status": "pending",
+                "grounding": {},
+                "context": {},
+                "result": null,
+                "result_artifact_id": null,
+                "result_egress": null,
+                "tokens_consumed": 0,
+                "created_at": "2026-10-03T20:45:28Z",
+                "last_modified": "2026-10-03T20:45:31Z",
+                "claimed_at": null,
+                "completed_at": null,
+                "parked": false
+              }
+            ],
+            "item_count": 2,
+            "pending_count": 1,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        },
+        "body_sha256": "e57f5bde0cca77188fd3452e57ed1a0a2603f308898300c8e185e95bee677b34"
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches/workbench_34b82257fc6c",
+        "status": 200,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [
+              {
+                "id": "wbi_6ff7c29c8315",
+                "workbench_id": "workbench_34b82257fc6c",
+                "title": "Atlas first item",
+                "body": "Keep the first work body",
+                "priority": 3,
+                "status": "done",
+                "grounding": {},
+                "context": {},
+                "result": "Atlas retained result",
+                "result_artifact_id": null,
+                "result_egress": null,
+                "tokens_consumed": 0,
+                "created_at": "2026-10-03T20:45:25Z",
+                "last_modified": "2026-10-03T20:45:31Z",
+                "claimed_at": null,
+                "completed_at": null,
+                "parked": false
+              },
+              {
+                "id": "wbi_b36719034012",
+                "workbench_id": "workbench_34b82257fc6c",
+                "title": "Atlas second item",
+                "body": "Keep the second work body",
+                "priority": 3,
+                "status": "pending",
+                "grounding": {},
+                "context": {},
+                "result": null,
+                "result_artifact_id": null,
+                "result_egress": null,
+                "tokens_consumed": 0,
+                "created_at": "2026-10-03T20:45:28Z",
+                "last_modified": "2026-10-03T20:45:31Z",
+                "claimed_at": null,
+                "completed_at": null,
+                "parked": false
+              }
+            ],
+            "item_count": 2,
+            "pending_count": 1,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        },
+        "body_sha256": "e57f5bde0cca77188fd3452e57ed1a0a2603f308898300c8e185e95bee677b34"
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches/workbench_34b82257fc6c?parked=true",
+        "status": 200,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [],
+            "item_count": 0,
+            "pending_count": 0,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        },
+        "body_sha256": "d7cfb23c8b7564369a4b4cb3887d1e526f633df8b10aa743b8fa58c11df3c52b"
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches/workbench_34b82257fc6c?parked=true",
+        "status": 200,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [],
+            "item_count": 0,
+            "pending_count": 0,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        },
+        "body_sha256": "d7cfb23c8b7564369a4b4cb3887d1e526f633df8b10aa743b8fa58c11df3c52b"
+      }
+    ],
+    "at_utc": "2026-10-03T20:45:32.175556+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/workbenches/workbench_34b82257fc6c",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:needs",
+    "focus_label": "Needs you",
+    "url": "http://127.0.0.1:65317/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/workbenches/workbench_34b82257fc6c",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "e57f5bde0cca77188fd3452e57ed1a0a2603f308898300c8e185e95bee677b34",
+      "rows": [],
+      "payload": {
+        "workbench": {
+          "id": "workbench_34b82257fc6c",
+          "name": "Atlas retained work",
+          "recipe_id": null,
+          "profile_id": null,
+          "resolver_profile_id": null,
+          "schedule": null,
+          "schedule_enabled": false,
+          "schedule_revision": 1,
+          "item_order": [],
+          "created_at": "2026-10-03T20:45:25Z",
+          "last_modified": "2026-10-03T20:45:25Z",
+          "deleted": false,
+          "items": [
+            {
+              "id": "wbi_6ff7c29c8315",
+              "workbench_id": "workbench_34b82257fc6c",
+              "title": "Atlas first item",
+              "body": "Keep the first work body",
+              "priority": 3,
+              "status": "done",
+              "grounding": {},
+              "context": {},
+              "result": "Atlas retained result",
+              "result_artifact_id": null,
+              "result_egress": null,
+              "tokens_consumed": 0,
+              "created_at": "2026-10-03T20:45:25Z",
+              "last_modified": "2026-10-03T20:45:31Z",
+              "claimed_at": null,
+              "completed_at": null,
+              "parked": false
+            },
+            {
+              "id": "wbi_b36719034012",
+              "workbench_id": "workbench_34b82257fc6c",
+              "title": "Atlas second item",
+              "body": "Keep the second work body",
+              "priority": 3,
+              "status": "pending",
+              "grounding": {},
+              "context": {},
+              "result": null,
+              "result_artifact_id": null,
+              "result_egress": null,
+              "tokens_consumed": 0,
+              "created_at": "2026-10-03T20:45:28Z",
+              "last_modified": "2026-10-03T20:45:31Z",
+              "claimed_at": null,
+              "completed_at": null,
+              "parked": false
+            }
+          ],
+          "item_count": 2,
+          "pending_count": 1,
+          "last_run": null,
+          "assignment_summary": {
+            "status": "no_assignment",
+            "source": null,
+            "chain": [],
+            "repair": "Choose default"
+          }
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "e57f5bde0cca77188fd3452e57ed1a0a2603f308898300c8e185e95bee677b34"
+    },
+    "document_text_sha256": "c9ae54af2a83efd644871e1727b36a2353a5982352f970e884d850f641af2dd1",
+    "document_text_len": 189,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/workbenches/workbench_34b82257fc6c",
+        "status": 200,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [
+              {
+                "id": "wbi_6ff7c29c8315",
+                "workbench_id": "workbench_34b82257fc6c",
+                "title": "Atlas first item",
+                "body": "Keep the first work body",
+                "priority": 3,
+                "status": "done",
+                "grounding": {},
+                "context": {},
+                "result": "Atlas retained result",
+                "result_artifact_id": null,
+                "result_egress": null,
+                "tokens_consumed": 0,
+                "created_at": "2026-10-03T20:45:25Z",
+                "last_modified": "2026-10-03T20:45:31Z",
+                "claimed_at": null,
+                "completed_at": null,
+                "parked": false
+              },
+              {
+                "id": "wbi_b36719034012",
+                "workbench_id": "workbench_34b82257fc6c",
+                "title": "Atlas second item",
+                "body": "Keep the second work body",
+                "priority": 3,
+                "status": "pending",
+                "grounding": {},
+                "context": {},
+                "result": null,
+                "result_artifact_id": null,
+                "result_egress": null,
+                "tokens_consumed": 0,
+                "created_at": "2026-10-03T20:45:28Z",
+                "last_modified": "2026-10-03T20:45:31Z",
+                "claimed_at": null,
+                "completed_at": null,
+                "parked": false
+              }
+            ],
+            "item_count": 2,
+            "pending_count": 1,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        },
+        "body_sha256": "e57f5bde0cca77188fd3452e57ed1a0a2603f308898300c8e185e95bee677b34"
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches/workbench_34b82257fc6c",
+        "status": 200,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [
+              {
+                "id": "wbi_6ff7c29c8315",
+                "workbench_id": "workbench_34b82257fc6c",
+                "title": "Atlas first item",
+                "body": "Keep the first work body",
+                "priority": 3,
+                "status": "done",
+                "grounding": {},
+                "context": {},
+                "result": "Atlas retained result",
+                "result_artifact_id": null,
+                "result_egress": null,
+                "tokens_consumed": 0,
+                "created_at": "2026-10-03T20:45:25Z",
+                "last_modified": "2026-10-03T20:45:31Z",
+                "claimed_at": null,
+                "completed_at": null,
+                "parked": false
+              },
+              {
+                "id": "wbi_b36719034012",
+                "workbench_id": "workbench_34b82257fc6c",
+                "title": "Atlas second item",
+                "body": "Keep the second work body",
+                "priority": 3,
+                "status": "pending",
+                "grounding": {},
+                "context": {},
+                "result": null,
+                "result_artifact_id": null,
+                "result_egress": null,
+                "tokens_consumed": 0,
+                "created_at": "2026-10-03T20:45:28Z",
+                "last_modified": "2026-10-03T20:45:31Z",
+                "claimed_at": null,
+                "completed_at": null,
+                "parked": false
+              }
+            ],
+            "item_count": 2,
+            "pending_count": 1,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        },
+        "body_sha256": "e57f5bde0cca77188fd3452e57ed1a0a2603f308898300c8e185e95bee677b34"
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches/workbench_34b82257fc6c?parked=true",
+        "status": 200,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [],
+            "item_count": 0,
+            "pending_count": 0,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        },
+        "body_sha256": "d7cfb23c8b7564369a4b4cb3887d1e526f633df8b10aa743b8fa58c11df3c52b"
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches/workbench_34b82257fc6c?parked=true",
+        "status": 200,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [],
+            "item_count": 0,
+            "pending_count": 0,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        },
+        "body_sha256": "d7cfb23c8b7564369a4b4cb3887d1e526f633df8b10aa743b8fa58c11df3c52b"
+      }
+    ],
+    "at_utc": "2026-10-03T20:45:34.617409+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:65317) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:65317) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-BRUaZ34P.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/react-SZyUX699.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-DIUKYpz6.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-gslz4Tc-.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-Cr5G-Rag.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/setup/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/repositories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-speak.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-meetings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/workbenches/workbench_34b82257fc6c",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:needs",
+    "focus_label": "Needs you",
+    "url": "http://127.0.0.1:65317/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/workbenches/workbench_34b82257fc6c",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "e57f5bde0cca77188fd3452e57ed1a0a2603f308898300c8e185e95bee677b34",
+      "rows": [],
+      "payload": {
+        "workbench": {
+          "id": "workbench_34b82257fc6c",
+          "name": "Atlas retained work",
+          "recipe_id": null,
+          "profile_id": null,
+          "resolver_profile_id": null,
+          "schedule": null,
+          "schedule_enabled": false,
+          "schedule_revision": 1,
+          "item_order": [],
+          "created_at": "2026-10-03T20:45:25Z",
+          "last_modified": "2026-10-03T20:45:25Z",
+          "deleted": false,
+          "items": [
+            {
+              "id": "wbi_6ff7c29c8315",
+              "workbench_id": "workbench_34b82257fc6c",
+              "title": "Atlas first item",
+              "body": "Keep the first work body",
+              "priority": 3,
+              "status": "done",
+              "grounding": {},
+              "context": {},
+              "result": "Atlas retained result",
+              "result_artifact_id": null,
+              "result_egress": null,
+              "tokens_consumed": 0,
+              "created_at": "2026-10-03T20:45:25Z",
+              "last_modified": "2026-10-03T20:45:31Z",
+              "claimed_at": null,
+              "completed_at": null,
+              "parked": false
+            },
+            {
+              "id": "wbi_b36719034012",
+              "workbench_id": "workbench_34b82257fc6c",
+              "title": "Atlas second item",
+              "body": "Keep the second work body",
+              "priority": 3,
+              "status": "pending",
+              "grounding": {},
+              "context": {},
+              "result": null,
+              "result_artifact_id": null,
+              "result_egress": null,
+              "tokens_consumed": 0,
+              "created_at": "2026-10-03T20:45:28Z",
+              "last_modified": "2026-10-03T20:45:31Z",
+              "claimed_at": null,
+              "completed_at": null,
+              "parked": false
+            }
+          ],
+          "item_count": 2,
+          "pending_count": 1,
+          "last_run": null,
+          "assignment_summary": {
+            "status": "no_assignment",
+            "source": null,
+            "chain": [],
+            "repair": "Choose default"
+          }
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "e57f5bde0cca77188fd3452e57ed1a0a2603f308898300c8e185e95bee677b34"
+    },
+    "document_text_sha256": "c9ae54af2a83efd644871e1727b36a2353a5982352f970e884d850f641af2dd1",
+    "document_text_len": 189,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/workbenches/workbench_34b82257fc6c",
+        "status": 200,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [
+              {
+                "id": "wbi_6ff7c29c8315",
+                "workbench_id": "workbench_34b82257fc6c",
+                "title": "Atlas first item",
+                "body": "Keep the first work body",
+                "priority": 3,
+                "status": "done",
+                "grounding": {},
+                "context": {},
+                "result": "Atlas retained result",
+                "result_artifact_id": null,
+                "result_egress": null,
+                "tokens_consumed": 0,
+                "created_at": "2026-10-03T20:45:25Z",
+                "last_modified": "2026-10-03T20:45:31Z",
+                "claimed_at": null,
+                "completed_at": null,
+                "parked": false
+              },
+              {
+                "id": "wbi_b36719034012",
+                "workbench_id": "workbench_34b82257fc6c",
+                "title": "Atlas second item",
+                "body": "Keep the second work body",
+                "priority": 3,
+                "status": "pending",
+                "grounding": {},
+                "context": {},
+                "result": null,
+                "result_artifact_id": null,
+                "result_egress": null,
+                "tokens_consumed": 0,
+                "created_at": "2026-10-03T20:45:28Z",
+                "last_modified": "2026-10-03T20:45:31Z",
+                "claimed_at": null,
+                "completed_at": null,
+                "parked": false
+              }
+            ],
+            "item_count": 2,
+            "pending_count": 1,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        },
+        "body_sha256": "e57f5bde0cca77188fd3452e57ed1a0a2603f308898300c8e185e95bee677b34"
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches/workbench_34b82257fc6c",
+        "status": 200,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [
+              {
+                "id": "wbi_6ff7c29c8315",
+                "workbench_id": "workbench_34b82257fc6c",
+                "title": "Atlas first item",
+                "body": "Keep the first work body",
+                "priority": 3,
+                "status": "done",
+                "grounding": {},
+                "context": {},
+                "result": "Atlas retained result",
+                "result_artifact_id": null,
+                "result_egress": null,
+                "tokens_consumed": 0,
+                "created_at": "2026-10-03T20:45:25Z",
+                "last_modified": "2026-10-03T20:45:31Z",
+                "claimed_at": null,
+                "completed_at": null,
+                "parked": false
+              },
+              {
+                "id": "wbi_b36719034012",
+                "workbench_id": "workbench_34b82257fc6c",
+                "title": "Atlas second item",
+                "body": "Keep the second work body",
+                "priority": 3,
+                "status": "pending",
+                "grounding": {},
+                "context": {},
+                "result": null,
+                "result_artifact_id": null,
+                "result_egress": null,
+                "tokens_consumed": 0,
+                "created_at": "2026-10-03T20:45:28Z",
+                "last_modified": "2026-10-03T20:45:31Z",
+                "claimed_at": null,
+                "completed_at": null,
+                "parked": false
+              }
+            ],
+            "item_count": 2,
+            "pending_count": 1,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        },
+        "body_sha256": "e57f5bde0cca77188fd3452e57ed1a0a2603f308898300c8e185e95bee677b34"
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches/workbench_34b82257fc6c?parked=true",
+        "status": 200,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [],
+            "item_count": 0,
+            "pending_count": 0,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        },
+        "body_sha256": "d7cfb23c8b7564369a4b4cb3887d1e526f633df8b10aa743b8fa58c11df3c52b"
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches/workbench_34b82257fc6c?parked=true",
+        "status": 200,
+        "payload": {
+          "workbench": {
+            "id": "workbench_34b82257fc6c",
+            "name": "Atlas retained work",
+            "recipe_id": null,
+            "profile_id": null,
+            "resolver_profile_id": null,
+            "schedule": null,
+            "schedule_enabled": false,
+            "schedule_revision": 1,
+            "item_order": [],
+            "created_at": "2026-10-03T20:45:25Z",
+            "last_modified": "2026-10-03T20:45:25Z",
+            "deleted": false,
+            "items": [],
+            "item_count": 0,
+            "pending_count": 0,
+            "last_run": null,
+            "assignment_summary": {
+              "status": "no_assignment",
+              "source": null,
+              "chain": [],
+              "repair": "Choose default"
+            }
+          }
+        },
+        "body_sha256": "d7cfb23c8b7564369a4b4cb3887d1e526f633df8b10aa743b8fa58c11df3c52b"
+      }
+    ],
+    "at_utc": "2026-10-03T20:45:34.468332+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:65317) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:65317) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-BRUaZ34P.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/react-SZyUX699.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-DIUKYpz6.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-gslz4Tc-.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-Cr5G-Rag.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/setup/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/repositories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-speak.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-meetings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "GET /api/workbenches/workbench_34b82257fc6c answered 200 with 1 row(s) {'id': 'wbi_6ff7c29c8315', 'parked': False, 'result': 'Atlas retained result'}; GET /api/workbenches/workbench_34b82257fc6c answered 200 with 1 row(s) {'id': 'wbi_b36719034012', 'parked': False, 'body': 'Keep the second work body'}; GET /api/workbenches/workbench_34b82257fc6c?parked=true answered 200 with 0 row(s) {'id': 'wbi_6ff7c29c8315'}; GET /api/workbenches/workbench_34b82257fc6c?parked=true answered 200 with 0 row(s) {'id': 'wbi_b36719034012'}",
+    "elapsed_s": 2.232
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "GET /api/workbenches/workbench_34b82257fc6c answered 200 with 1 row(s) {'id': 'wbi_6ff7c29c8315', 'parked': False, 'result': 'Atlas retained result'}; GET /api/workbenches/workbench_34b82257fc6c answered 200 with 1 row(s) {'id': 'wbi_b36719034012', 'parked': False, 'body': 'Keep the second work body'}; GET /api/workbenches/workbench_34b82257fc6c?parked=true answered 200 with 0 row(s) {'id': 'wbi_6ff7c29c8315'}; GET /api/workbenches/workbench_34b82257fc6c?parked=true answered 200 with 0 row(s) {'id': 'wbi_b36719034012'}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 2.381,
+    "first_satisfied_at_s": 2.232,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: GET /api/workbenches/workbench_34b82257fc6c answered 200 with 1 row(s) {'id': 'wbi_6ff7c29c8315', 'parked': False, 'result': 'Atlas retained result'}; GET /api/workbenches/workbench_34b82257fc6c answered 200 with 1 row(s) {'id': 'wbi_b36719034012', 'parked': False, 'body': 'Keep the second work body'}; GET /api/workbenches/workbench_34b82257fc6c?parked=true answered 200 with 0 row(s) {'id': 'wbi_6ff7c29c8315'}; GET /api/workbenches/workbench_34b82257fc6c?parked=true answered 200 with 0 row(s) {'id': 'wbi_b36719034012'}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:65317) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:65317) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings/heartbeat",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/index-BRUaZ34P.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/react-SZyUX699.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/desk-DIUKYpz6.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/desk-gslz4Tc-.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/index-Cr5G-Rag.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-mark.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-search.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-speak.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-meetings.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs3/atlas-phase13-astra/20261003T204519Z-case.p13.workbench.park_restore-muaddib-393/before.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs3/atlas-phase13-astra/20261003T204519Z-case.p13.workbench.park_restore-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-36lwf_yb/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:65317"
+  ],
+  "duration_s": 15.665
+}

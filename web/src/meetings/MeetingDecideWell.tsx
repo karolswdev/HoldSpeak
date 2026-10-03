@@ -19,6 +19,7 @@ import { StringGadget } from "../desk/surface/gadgets";
 import { SurfaceRow, SurfaceRows, SurfaceSection } from "../desk/surface/Surface";
 import { decideFromMeeting, decisionsFromMeeting } from "../desk/decide";
 import { writeFailureReason } from "../desk/hooks/useWriteReceipt";
+import { forgetDraft, keepDraft, keptDraft } from "../desk/deskMemory";
 
 const clock = (d: Date) =>
   `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -43,14 +44,19 @@ export function MeetingDecideWell(props: DecideWellProps) {
 function DecideWellFor({ meetingId, title, startedAt, summary }: DecideWellProps) {
   const decisions = useDesk((s) => s.items.decision);
   const made = decisionsFromMeeting(decisions, meetingId);
-  const [naming, setNaming] = useState(() => drafts.has(meetingId));
-  const [draft, setDraftState] = useState(() => drafts.get(meetingId) ?? "");
+  // PHILO-13-07 (B2): the unfinished title is also kept in the workspace
+  // document, per meeting, so it returns after a reload and a close.
+  const draftKey = `meeting/decide/${meetingId}`;
+  const [naming, setNaming] = useState(() => drafts.has(meetingId) || keptDraft(draftKey) !== null);
+  const [draft, setDraftState] = useState(() => drafts.get(meetingId) ?? keptDraft(draftKey) ?? "");
   const setDraft = (next: string) => {
     drafts.set(meetingId, next);
+    keepDraft(draftKey, next);
     setDraftState(next);
   };
   const forget = () => {
     drafts.delete(meetingId);
+    forgetDraft(draftKey);
     setDraftState("");
   };
   const [busy, setBusy] = useState(false);

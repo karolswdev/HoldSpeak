@@ -1,0 +1,443 @@
+[
+  {
+    "status": "ERROR",
+    "test": "tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_section[1440]",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "ERROR",
+    "test": "tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_section[393]",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "ERROR",
+    "test": "tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_well_unfold",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "ERROR",
+    "test": "tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_matched_absent_when_zero",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs176_journal_glass.py::test_journal_filtered[393-852]",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "HS176 Journal / 393 tab access"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/integration/test_web_history_archive.py::test_history_keeps_approval_and_export_governance",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "Meetings governance / old ConfirmVerb assertion; PHILO A1 Park face"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_decisions.py::test_meeting_delete_severs_source_without_deleting_decision",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "Decision source lifecycle / PHILO A1 Park semantics"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_desk_locks.py::test_the_front_door_is_the_desk_with_the_guard",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs176_journal_glass.py::test_journal_quiet[393-852]",
+    "summary": "p...",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "HS176 Journal / 393 tab access"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/integration/test_live_action_item_triage.py::TestLiveFirstResolutionOrder::test_falls_through_to_the_saved_meeting_when_no_live_session_owns_it",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "Live action-item triage / archive test double"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/integration/test_live_action_item_triage.py::TestLiveFirstResolutionOrder::test_saved_meetings_still_work_with_no_live_session_bound_at_all",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "Live action-item triage / archive test double"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_hs172_people_sources.py::TestBriefEnrichment::test_last_meeting_present",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "People / B4 plain-database fixture schema"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_interior_canon_guard.py::test_no_left_border_rails_in_web_css",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "UX canon / CSS rail guard"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs176_loop_glass.py::test_speak_loop_393",
+    "summary": "AssertionErr...",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "HS176 Speak / correction and compact surface"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/integration/test_phase200_recipe_catalog.py::TestTheScheduledOwnerReallyFires::test_the_sweep_is_driven_by_a_wall_clock_loop",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "Cadence / scheduled-loop source contract"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_hs175_calendar_sources.py::TestCalendarSourcesRoute::test_source_stats_from_db",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_hs175_calendar_sources.py::TestCalendarSourcesRoute::test_matched_this_week",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_hs175_calendar_sources.py::TestSourcesPayloadClocks::test_event_count_names_what_it_counts",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_hs175_calendar_sources.py::TestSourcesPayloadClocks::test_last_read_is_an_instant_and_a_local_clock",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_hs175_calendar_sources.py::TestSourcesPayloadClocks::test_matched_this_week_uses_the_local_week",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_hs175_calendar_sources.py::TestDstEdgeSources::test_matched_this_week_across_fall_back",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_graph_walk_calibration.py::test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "Graph rig / action-vocabulary calibration fence"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_people_brief.py::TestBriefAggregation::test_brief_linked_meetings_via_uid_chain",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "People / B4 plain-database fixture schema"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_people_brief.py::TestBriefAggregation::test_brief_unlinked_meeting_count_f11",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "People / B4 plain-database fixture schema"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_people_brief.py::TestWriteCountSpy::test_brief_writes_zero_rows_to_plain_db",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "People / B4 plain-database fixture schema"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_people_brief.py::TestCommitmentTriadUntouched::test_action_items_unchanged_after_brief",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "People / B4 plain-database fixture schema"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/integration/test_web_setup_route.py::test_dashboard_owns_first_value_without_redirecting",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_one_path_cardinality.py::test_cancellation_after_provider_return_is_one_child_one_receipt_one_physical_attempt",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_phase143_inference_capability_census.py::test_phase143_every_product_runner_entrance_has_one_owner",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "Phase 143 inference capability census / stale anchors and classifications"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_phase143_inference_capability_census.py::test_phase143_shared_helpers_have_semantic_callers",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "Phase 143 inference capability census / stale anchors and classifications"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_phase200_doc_claims.py::test_registered_claim_matches_its_state[holds:UX-CANON.md:179]",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "UX canon and PHILO bus coverage / registered documentation claims"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_phase200_doc_claims.py::test_registered_claim_matches_its_state[holds:useDeskChangedRefresh.ts:15]",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "UX canon and PHILO bus coverage / registered documentation claims"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_philo10_atlas.py::test_the_counts_over_every_atlas_file",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs200_coverage_glass.py::TestCoverageGlass::test_shade_coverage_1440",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_philo3_summary_detail.py::test_summary_wire_fixture_matches_real_producer_states",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "PHILO 3 Meetings / summary wire fixture"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_philo4_01_atlas_contracts.py::test_the_reload_claim_points_at_the_quiet_branch",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "PHILO 4 Brief atlas / source-branch claim"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_phase143_routing_authority_census.py::test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "Phase 143 routing authority census / stale source classification"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_philo6_01_import_badge.py::test_empty_vtt_import_leaves_import_failed_on_the_wire",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "PHILO 6 Meetings / empty-import wire fixture"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs144_door_glass.py::test_hs144_door_empty_and_error_shots[1440]",
+    "summary": "",
+    "prior_record": "inherited \u2014 seam-rerun.xml reaches same Door headline assertion as baseline-audit.json after People fix",
+    "prior_home": "HS144 Door / error headline"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_product_copy.py::test_primary_copy_has_no_prohibited_operational_drift",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_philo9_atlas.py::test_the_counts_over_every_atlas_file",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs144_door_glass.py::test_hs144_door_empty_and_error_shots[393]",
+    "summary": "",
+    "prior_record": "inherited \u2014 seam-rerun.xml reaches same Door headline assertion as baseline-audit.json after People fix",
+    "prior_home": "HS144 Door / error headline"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_philo9_compat.py::test_the_http_routes_keep_their_envelopes_and_statuses",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/unit/test_residual_service_admission.py::test_a_cancelled_cadence_parent_never_publishes_its_late_draft",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_philo8_03_then_guard.py::test_a_follow_up_after_the_window_is_blocked[1440-before_guard]",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "PHILO 8 rig / expired undo-window outcome"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_philo8_03_then_guard.py::test_a_follow_up_after_the_window_is_blocked[1440-click_wait]",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "PHILO 8 rig / expired undo-window outcome"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_philo8_03_then_guard.py::test_a_follow_up_after_the_window_is_blocked[393-before_guard]",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "PHILO 8 rig / expired undo-window outcome"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_philo8_03_then_guard.py::test_a_follow_up_after_the_window_is_blocked[393-click_wait]",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "PHILO 8 rig / expired undo-window outcome"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs201_summary_face_glass.py::test_the_summary_is_asked_for_disclosed_and_found_again",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "HS201 Meetings / primary-verb count"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs202_03_species_glass.py::TestSharedControlsAreSpecies::test_menus_dock_and_wings[1440-900]",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs202_03_species_glass.py::TestSharedControlsAreSpecies::test_menus_dock_and_wings[393-852]",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs163_steward_glass.py::test_dogfood_run_and_dedup[393]",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs163_steward_glass.py::test_stop_mid_run[1440]",
+    "summary": "playw...",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_a_lost_answer_and_every_unreadable_read_are_named[393]",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs171_shade_glass.py::test_shade_quiet_1440",
+    "summary": "Assertion...",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "HS171 system shade / retained face fences"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs171_shade_glass.py::test_shade_quiet_393",
+    "summary": "AssertionE...",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "HS171 system shade / retained face fences"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs172_arrival_glass.py::TestArrivalProposals::test_arrival_confirm_fires",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "HS171 system shade / retained face fences"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs176_journal_glass.py::test_journal_stream[393-852]",
+    "summary": "...",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "HS176 Journal / 393 tab access"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_philo11_05b_meeting_faces_glass.py::TestMeetingFacesGlass::test_the_meeting_faces_and_slack_destinations[1440]",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "PHILO 10 Send / setup and result face"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_hs176_journal_glass.py::test_journal_row_open[393-852]",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "HS176 Journal / 393 tab access"
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_philo11_05b_meeting_faces_glass.py::TestMeetingFacesGlass::test_the_meeting_faces_and_slack_destinations[393]",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_philo13_12_gadgets_glass.py::TestTheGadgets::test_gadgets_1440",
+    "summary": "",
+    "prior_record": null,
+    "prior_home": null
+  },
+  {
+    "status": "FAILED",
+    "test": "tests/e2e/test_philo304_thought_foot_reflow.py::test_the_receipt_yields_to_the_verbs[393-None]",
+    "summary": "",
+    "prior_record": "inherited \u2014 baseline-audit.json: same confirmed assertion/cause on main",
+    "prior_home": "HS141 Thought Workbench / browser boot and compact face"
+  }
+]

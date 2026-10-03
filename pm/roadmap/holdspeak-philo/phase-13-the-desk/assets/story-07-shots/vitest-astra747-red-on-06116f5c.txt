@@ -1,0 +1,4 @@
+     × the inline editor: a refused field stays kept when a later write of another field lands 7ms
+     × Schedule recording: an emptied time stays empty after a reload, never the default 42ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 13 passed (15)

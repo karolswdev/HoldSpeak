@@ -161,8 +161,8 @@ export interface DeskState {
   /** Per-zone remembered expression in the workspace: the window remembers. */
   zoneViewPrefs: Record<string, ZoneViewPref>;
   /** HS-105-04 -- open Info cards (transient inspection windows; they
-   * coexist but do not persist across reload). Ref is `kind:id`, bare
-   * id, or `zone:<id>`. */
+   * coexist and, since PHILO-13-07 B2, return after a reload). Ref is
+   * `kind:id`, bare id, or `zone:<id>`. */
   infoWindows: { ref: string; origin: { x: number; y: number } | null }[];
   /** Delivery Workbench projects open as their own Desk application window. */
   roadmapWindows: { slug: string; origin: { x: number; y: number } | null }[];
@@ -213,8 +213,21 @@ export interface DeskState {
   /** Window focus order; the last id renders in front. Persisted
    * (HS-97-03: the arrangement is sacred, stacking included). */
   panelOrder: string[];
-  /** Minimized windows (parked in the tray/dock), session-scoped. */
+  /** Minimized windows (parked in the tray/dock). Persisted (PHILO-13-07
+   * B2): a minimized window comes back minimized. */
   panelMin: string[];
+  /** PHILO-13-07 (B2) — unsent field text, keyed by field AND object
+   * (`people/1on1/<person>`). Persisted in the workspace document; a draft
+   * clears when its write lands. Restore fills a field, never sends it. */
+  drafts: Record<string, string>;
+  /** PHILO-13-07 (B2) — a window's place (person + tab, the Room's update),
+   * keyed like a draft. Persisted in the workspace document. */
+  places: Record<string, string>;
+  /** Keep one draft ("" is an emptied field, kept as such) or, with null,
+   * forget it; writes the workspace document. */
+  setDraft(key: string, text: string | null): void;
+  /** Keep (or, with "", clear) one place; writes the workspace document. */
+  setPlace(key: string, value: string): void;
   /** Maximized windows (full stage; the saved rect is kept), persisted. */
   panelMax: string[];
   /** PHILO-13-12 (C2) — zoom's second remembered rect per window: the
@@ -248,7 +261,7 @@ export interface DeskState {
     id: string,
     patch: Record<string, unknown>,
     verb?: string,
-  ): Promise<void>;
+  ): Promise<boolean>; // true when the hub kept the write (PHILO-13-07 B2)
   /** Tombstone a deletable primitive, then settle all local desk faces. */
   /** Resolves `true` when the hub took the delete, `false` when it refused. */
   deletePrimitive(id: string, kind: string): Promise<boolean>;

@@ -166,7 +166,7 @@ describe("PHILO-6-05 decision body fences", () => {
 
     requests.failPut = true;
     requests.deferDecisionRead = true;
-    let save!: Promise<void>;
+    let save!: Promise<unknown>; // updatePrimitive answers kept (PHILO-13-07 B2)
     act(() => {
       save = useDesk.getState().updatePrimitive("decision", decision.id, {
         decision_markdown: "Rejected new decision",
@@ -193,7 +193,7 @@ describe("PHILO-6-05 decision body fences", () => {
 
     requests.failPut = true;
     requests.failDecisionRead = true;
-    let save!: Promise<void>;
+    let save!: Promise<unknown>; // updatePrimitive answers kept (PHILO-13-07 B2)
     act(() => {
       save = useDesk.getState().updatePrimitive("decision", decision.id, {
         decision_markdown: "Rejected new decision",
@@ -298,7 +298,7 @@ describe("PHILO-6-05 decision body fences", () => {
     useDesk.setState({ newIds: [] });
     render(<ProductionHost />);
     requests.deferPut = true;
-    let save!: Promise<void>;
+    let save!: Promise<unknown>; // updatePrimitive answers kept (PHILO-13-07 B2)
     act(() => {
       save = useDesk.getState().updatePrimitive("decision", decision.id, {
         decision_markdown: "Keep the local ledger",
@@ -327,14 +327,14 @@ describe("PHILO-6-05 decision body fences", () => {
     render(<ProductionHost />);
     requests.deferPut = true;
     requests.deferDecisionRead = true;
-    let firstSave!: Promise<void>;
+    let firstSave!: Promise<unknown>;
     act(() => {
       firstSave = useDesk.getState().updatePrimitive("decision", decision.id, {
         decision_markdown: "First decision",
       });
     });
     await waitFor(() => expect(requests.putResolvers).toHaveLength(1));
-    let secondSave!: Promise<void>;
+    let secondSave!: Promise<unknown>;
     act(() => {
       secondSave = useDesk.getState().updatePrimitive("decision", decision.id, {
         decision_markdown: "Second decision",

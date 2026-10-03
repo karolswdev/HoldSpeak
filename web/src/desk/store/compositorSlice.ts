@@ -57,6 +57,41 @@ const initialWindowsById = Object.fromEntries(
   }),
 );
 
+// PHILO-13-07 (B2) — the open object windows come back after a reload, each
+// through its own family's array (the same openers then raise and close it).
+const initialWindowLists = initialWorkspace.windows ?? {
+  pullouts: [], info: [], roadmap: [], repository: [], workbench: [],
+};
+const reopened = <K extends string>(key: K, values: string[]) =>
+  values.map((value) => ({ [key]: value, origin: null }) as Record<K, string> & {
+    origin: null;
+  });
+
+// A minimized window comes back minimized only when its window comes back
+// too; a stale id (a window that does not return) is dropped. The frame's
+// "an open presents the window" rule then skips these ids once, on the
+// window's mount after the reload (`isRehydratedMinimized`), until a restore
+// or a close ends that state (idempotent, so a double-run effect agrees).
+const returningIds = new Set<string>([
+  ...Object.keys(initialWindowsById),
+  ...initialWindowLists.pullouts.map((id) => `pullout:${id}`),
+  ...initialWindowLists.info.map((ref) => `info:${ref}`),
+  ...initialWindowLists.roadmap.map((slug) => `roadmap:${slug}`),
+  ...initialWindowLists.repository.map((id) => `repository:${id}`),
+  ...initialWindowLists.workbench.map((id) => `workbench:${id}`),
+  ...initialWorkspace.zoneWindows.map((id) => `zone:${id}`),
+]);
+const initialPanelMin = (initialPanelLayout.min ?? []).filter(
+  (id) => returningIds.has(id) || id.startsWith("chair:"),
+);
+const rehydratedMinimized = new Set(initialPanelMin);
+
+/** True for a window that came back minimized after a reload and has not
+ * been restored or closed since: its mount keeps it minimized. */
+export function isRehydratedMinimized(id: string): boolean {
+  return rehydratedMinimized.has(id);
+}
+
 // ---- factory-generated open/close functions -----------------------------
 
 const openZone = makeOpenWindow(ZONE_WINDOW_CONFIG);
@@ -118,24 +153,50 @@ export type CompositorSlice = Pick<
   | "setZoomRect"
   | "sendPanelToBack"
   | "resetLayout"
+  | "drafts"
+  | "places"
+  | "setDraft"
+  | "setPlace"
 >;
 
 export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) => ({
   panelRects: initialPanelRects,
   panelSaved: Object.keys(initialPanelRects),
   panelOrder: initialPanelLayout.order,
-  panelMin: [],
+  panelMin: initialPanelMin,
   panelMax: initialPanelLayout.max,
   panelZoom: initialPanelLayout.zoom ?? {},
   windowsById: initialWindowsById,
-  pullouts: [],
+  pullouts: reopened("id", initialWindowLists.pullouts),
   zoneWindows: initialWorkspace.zoneWindows.map((id) => ({ id, origin: null })),
   zoneViewPrefs: initialWorkspace.zoneViewPrefs,
-  infoWindows: [],
-  roadmapWindows: [],
-  repositoryWindows: [],
-  workbenchWindows: [],
+  infoWindows: reopened("ref", initialWindowLists.info),
+  roadmapWindows: reopened("slug", initialWindowLists.roadmap),
+  repositoryWindows: reopened("id", initialWindowLists.repository),
+  workbenchWindows: reopened("id", initialWindowLists.workbench),
+  // Exempt (B2 story table): the chooser holds no typed text and no record;
+  // one pick makes the record, so reopening is the same one gesture.
   newWorkbenchChooser: null,
+  drafts: initialWorkspace.drafts ?? {},
+  places: initialWorkspace.places ?? {},
+
+  // ---- drafts and places (PHILO-13-07 B2) ------------------------------
+
+  setDraft(key, text) {
+    const current = get().drafts;
+    // null forgets the draft; "" keeps an emptied field as its own state.
+    if (text === null ? !(key in current) : current[key] === text) return;
+    const { [key]: _old, ...rest } = current;
+    set({ drafts: text === null ? rest : { ...rest, [key]: text } });
+    saveDeskWorkspace(get());
+  },
+  setPlace(key, value) {
+    const current = get().places;
+    if ((current[key] ?? "") === value) return;
+    const { [key]: _old, ...rest } = current;
+    set({ places: value ? { ...rest, [key]: value } : rest });
+    saveDeskWorkspace(get());
+  },
 
   // ---- pullouts (hand-written: custom close with optional id) -----------
 
@@ -152,6 +213,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
         if (!open.some((p) => p.id === id))
           set({ pullouts: [...open, { id, origin: origin ?? null }] });
         set({ editingId: null });
+        saveDeskWorkspace(get());
         // PHILO-13-06 (B1): an open asks for the window in front, also when
         // it sits iconified on its Dock chip (393: a Chair window iconifies
         // the desk windows), never a press that leaves it hidden.
@@ -195,6 +257,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
         )
         .pop()?.id;
     set({ pullouts: open.filter((p) => p.id !== victim) });
+    saveDeskWorkspace(get());
   },
 
   // ---- factory-generated window pairs -----------------------------------
@@ -208,27 +271,35 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   },
   openInfoWindow(ref, origin) {
     openInfo(ref, origin, set, get);
+    saveDeskWorkspace(get());
   },
   closeInfoWindow(ref) {
     closeInfo(ref, set, get);
+    saveDeskWorkspace(get());
   },
   openRoadmapWindow(slug, origin) {
     openRoadmap(slug, origin, set, get);
+    saveDeskWorkspace(get());
   },
   closeRoadmapWindow(slug) {
     closeRoadmap(slug, set, get);
+    saveDeskWorkspace(get());
   },
   openRepositoryWindow(id, origin) {
     openRepository(id, origin, set, get);
+    saveDeskWorkspace(get());
   },
   closeRepositoryWindow(id) {
     closeRepository(id, set, get);
+    saveDeskWorkspace(get());
   },
   openWorkbenchWindow(id, origin) {
     openWorkbench(id, origin, set, get);
+    saveDeskWorkspace(get());
   },
   closeWorkbenchWindow(id) {
     closeWorkbench(id, set, get);
+    saveDeskWorkspace(get());
   },
   openNewWorkbenchChooser(origin) {
     set({ newWorkbenchChooser: { origin: origin ?? null } });
@@ -319,6 +390,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     get().focusPanel(id);
   },
   retirePanel(id) {
+    rehydratedMinimized.delete(id);
     if (!get().panelOrder.includes(id)) return;
     const order = get().panelOrder.filter((x) => x !== id);
     set({ panelOrder: order });
@@ -327,8 +399,10 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   minimizePanel(id) {
     if (get().panelMin.includes(id)) return;
     set({ panelMin: [...get().panelMin, id] });
+    saveDeskWorkspace(get());
   },
   restorePanel(id) {
+    rehydratedMinimized.delete(id);
     const panelMin = get().panelMin.filter((x) => x !== id);
     const order = compactPanelOrder([
       ...get().panelOrder.filter((x) => x !== id),

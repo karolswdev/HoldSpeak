@@ -1,0 +1,8 @@
+glass-b2: ..........                                                               [100%]
+glass-b2: 10 passed in 140.91s (0:02:20)
+glass-test_philo13_15_send_to_glass: ........                                                                 [100%]
+glass-test_philo13_15_send_to_glass: 8 passed in 238.70s (0:03:58)
+glass-test_philo13_17_phone_desk_glass: ...                                                                      [100%]
+glass-test_philo13_17_phone_desk_glass: 3 passed in 69.15s (0:01:09)
+glass-test_hs202_first_use_smoke: ..                                                                       [100%]
+glass-test_hs202_first_use_smoke: 2 passed in 57.66s
