@@ -462,6 +462,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               (needsYouBadge ? " is-attention" : "")
             }
             aria-label={badge ? `${application.label}, ${needsYouBadge ? `${badge} need you` : "brief ready"}` : application.label}
+            aria-describedby={application.windowId === "intelligence:desk" && sendLabel === "SEND FAILED"
+              ? "desk-dock-send-failed-desc"
+              : undefined}
             onClick={() => {
               const s = useDesk.getState();
               if (running && minimized) s.restorePanel(application.windowId);
@@ -513,11 +516,18 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             ) : null}
             {application.windowId === "intelligence:desk" && sendLabel ? (
               <span className="desk-dock-state" data-testid="desk-dock-send-state" data-tone={sendTone}>
-                {/* 393 reads FAILED: the icon names the window (C1-8b). */}
+                {/* 393 reads the ratified short label FAILED (C1-8b); both
+                    labels are whole words, one shown per width. */}
                 {sendLabel === "SEND FAILED" ? (
-                  <><span className="desk-dock-state-long">SEND </span>FAILED</>
+                  <>
+                    <span className="desk-dock-state-wide">SEND FAILED</span>
+                    <span className="desk-dock-state-short">FAILED</span>
+                  </>
                 ) : sendLabel}
               </span>
+            ) : null}
+            {application.windowId === "intelligence:desk" && sendLabel === "SEND FAILED" ? (
+              <span id="desk-dock-send-failed-desc" hidden>Send failed</span>
             ) : null}
             {application.windowId === "surface-people" && peopleLabel ? (
               <span className="desk-dock-state" data-testid="desk-dock-people-state">

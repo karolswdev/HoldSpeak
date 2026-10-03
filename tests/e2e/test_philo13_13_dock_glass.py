@@ -157,6 +157,38 @@ class TestLiveDock:
         box = page.locator(DOCK).bounding_box()
         assert box and box["x"] >= 0 and box["x"] + box["width"] <= width + 0.5, box
 
+    def _refresh_from_hub(self, page: Any, width: int) -> None:
+        """His "Refresh from hub" (desk.refresh), from the palette: the
+        search shelf opens it at both widths."""
+        field = page.locator("[aria-controls=desk-palette-listbox]")
+        if not field.is_visible():
+            self._press(page, page.locator("[aria-controls=desk-tool-shelf]"), width)
+        field.fill("Refresh from hub")
+        self._press(page, page.locator("[id='desk-palette-option-desk.refresh']"), width)
+
+    def _outage_receipt(self, page: Any) -> dict[str, Any]:
+        """The named failure, on the glass and usable: its exact words, and
+        Retry and OK each own the point at their centre (nothing over them)."""
+        words = "READ MEETINGS FAILED · HUB UNREACHABLE"
+        label = page.locator(".write-receipt", has_text=words).first
+        label.wait_for(timeout=T)
+        text = " ".join(label.locator(".write-receipt-label").inner_text().split())
+        assert text == words, text
+        owned: dict[str, Any] = {}
+        for name in ("Retry", "OK"):
+            button = label.get_by_role("button", name=name, exact=True)
+            assert button.count() == 1, f"{name} is missing from the outage receipt"
+            owned[name] = page.evaluate(
+                """(el) => { const r = el.getBoundingClientRect();
+                    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+                    const hit = document.elementFromPoint(x, y);
+                    return { owned: !!hit && (hit === el || el.contains(hit)),
+                             hit: hit ? (hit.className || hit.tagName) + '' : null,
+                             in_viewport: x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight }; }""",
+                button.element_handle())
+            assert owned[name]["in_viewport"] and owned[name]["owned"], f"{name}: {owned[name]}"
+        return {"text": text, "controls": owned}
+
     def _tag(self, page: Any, testid: str, pattern: str) -> str:
         page.wait_for_function(
             "([id, p]) => new RegExp(p).test(document.querySelector(`[data-testid=${id}]`)?.textContent || '')",
@@ -284,12 +316,13 @@ class TestLiveDock:
                 for tag in ("desk-dock-meetings-state", "desk-dock-send-state", "desk-dock-people-state"):
                     assert page.get_by_test_id(tag).count() == 0, f"{tag} claims freshness offline"
                 assert dock.locator(".desk-dock-badge:visible").count() == 0, "a count claims freshness offline"
-                # Hold the outage long enough for the Desk's own reads to fail.
-                page.evaluate("() => { window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')); }")
-                page.wait_for_timeout(8000)
+                # An actual failed Desk refresh: his "Refresh from hub", from the palette.
+                self._refresh_from_hub(page, width)
+                receipt = self._outage_receipt(page)
+                proof["outage_receipt"] = receipt
                 assert page.get_by_label("Preparing HoldSpeak").count() == 0, "the error face replaced the Desk"
-                assert page.get_by_role("button", name="Retry", exact=True).count() == 0 or dock.is_visible()
                 assert dock.is_visible() and offline.is_visible()
+                page.screenshot(path=str(SHOTS / f"dock-08b-outage-receipt-{width}.png"))
                 proof["offline"] = offline.inner_text()
                 proof["receipt"] = page.evaluate(
                     "() => [...document.querySelectorAll('[role=status]')].map((n) => n.innerText).filter(Boolean)")

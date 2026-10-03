@@ -444,6 +444,10 @@
 .desk-next .desk-dock .desk-orb-elapsed {
   top: -16px;
 }
+/* SEND FAILED is the 1440 label; FAILED is the phone's (393 block) */
+.desk-next .desk-dock-state-short {
+  display: none;
+}
 /* More AppIcons is the phone's gadget only */
 .desk-next .desk-dock-more {
   display: none;
@@ -476,6 +480,13 @@
     /* HS-129-02 — the sheet is still a window: its body owns scroll so
        the fixed head and foot stay visible above the material. */
     overflow: hidden;
+  }
+  /* PHILO-13-13 C3-W (Astra's condition 1): a standing receipt is a row
+     between the bar and the work (PHILO-3-01), so EVERY phone window
+     starts under it, not only the Chair's (chair.css:40): the named
+     failure and its Retry / OK are never under an open application. */
+  .desk-next:has(> .desk-receipt-row) .desk-window-shell.is-sheet {
+    top: calc(var(--desk-work-top) + var(--desk-receipt-row-h, 0px) + var(--space-2));
   }
   /* HS-202-02 — the dock is the phone's ONLY persistent door, and the
      Record orb rides it. It lays out FOR the phone: pinned to both edges,
@@ -604,10 +615,13 @@
     left: 50%;
     transform: translateX(-50%);
   }
-  /* the qualifier leaves the glass, not the text: the tag still reads
-     SEND FAILED to a reader, and FAILED to the eye (C1-8b) */
-  .desk-next .desk-dock-state-long {
-    font-size: 0;
+  /* the ratified short label (C1-8b): FAILED, real text; the Button's
+     description says "Send failed" */
+  .desk-next .desk-dock-state-wide {
+    display: none;
+  }
+  .desk-next .desk-dock-state-short {
+    display: inline;
   }
   /* the tag rides the foot here, so the glyph rides the top */
   .desk-next .desk-dock-launch > span[aria-hidden="true"] {

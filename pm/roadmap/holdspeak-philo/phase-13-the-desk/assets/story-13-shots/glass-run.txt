@@ -1,3 +1,2 @@
-..  [100%]
-2 passed in 36.63s
-(HOLDSPEAK_EVIDENCE_WRITE=1 HOME=<mktemp> uv run pytest -q tests/e2e/test_philo13_13_dock_glass.py)
+..                                                                       [100%]
+2 passed in 20.81s

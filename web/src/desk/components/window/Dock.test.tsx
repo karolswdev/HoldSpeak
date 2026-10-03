@@ -360,8 +360,14 @@ describe("C3-W the AppIcon face (boards C1-1, C1-8a-c)", () => {
     const tag = await screen.findByTestId("desk-dock-send-state");
     await waitFor(() => expect(tag).toHaveTextContent("SEND FAILED"));
     expect(tag).toHaveAttribute("data-tone", "fail");
-    // 393 reads FAILED: the qualifier is its own span the phone folds away.
-    expect(tag.querySelector(".desk-dock-state-long")?.textContent).toBe("SEND ");
+    // 1440 reads SEND FAILED; 393 reads the ratified short label FAILED.
+    // Both are whole words (no zero-size text); the stylesheet shows one.
+    expect(tag.querySelector(".desk-dock-state-wide")?.textContent).toBe("SEND FAILED");
+    expect(tag.querySelector(".desk-dock-state-short")?.textContent).toBe("FAILED");
+    expect(tag.querySelector(".desk-dock-state-long")).toBeNull();
+    // The Intelligence AppIcon carries the full words as its description.
+    const icon = screen.getByRole("button", { name: /^Intelligence/ });
+    expect(icon).toHaveAccessibleDescription("Send failed");
   });
 
   it("a project AppIcon is the drawer sprite, not a text glyph", () => {
