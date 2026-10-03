@@ -1,0 +1,36 @@
+........................................................................ [ 28%]
+........................................................................ [ 56%]
+........................................................................ [ 84%]
+..........F.............................                                 [100%]
+=================================== FAILURES ===================================
+________ test_reconcile_adds_source_columns_to_existing_calendar_events ________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-482/test_reconcile_adds_source_col0')
+
+    def test_reconcile_adds_source_columns_to_existing_calendar_events(
+        tmp_path: Path,
+    ) -> None:
+        """HS-146-01: source_id and source_label columns added to an existing DB with rows."""
+        old_schema = SCHEMA_SQL.replace(
+            "    subscription_revision TEXT NOT NULL,\n"
+            "    source_id TEXT NOT NULL DEFAULT '',\n"
+            "    source_label TEXT NOT NULL DEFAULT ''\n",
+            "    subscription_revision TEXT NOT NULL\n",
+        ).replace(
+            "ON calendar_events(source_id, uid, starts_at)",
+            "ON calendar_events(subscription_revision, uid, starts_at)",
+        )
+>       assert "source_id" not in old_schema.split("calendar_events")[1].split(");")[0]
+E       assert 'source_id' not in " (\n    id ...FAULT '[]'\n"
+E         
+E         'source_id' is contained here:
+E           NULL,
+E               source_id TEXT NOT NULL DEFAULT '',
+E         ?     +++++++++
+E               source_label TEXT NOT NULL DEFAULT '',
+E               attendees_json TEXT NOT NULL DEFAULT '[]'
+
+tests/unit/test_reconcile.py:575: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_reconcile.py::test_reconcile_adds_source_columns_to_existing_calendar_events
+1 failed, 255 passed in 63.24s (0:01:03)
