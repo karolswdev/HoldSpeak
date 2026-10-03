@@ -116,6 +116,28 @@ describe("Q1 the ring and the swipe", () => {
   });
 });
 
+describe("Astra r1 #751: the ring keeps the opening order", () => {
+  it("a title change (retract + announce in one commit) keeps the window's place", async () => {
+    openDeskWindow("surface-project-memory", "Payments ledger cutover");
+    openDeskWindow("surface:meetings", "Meetings");
+    openDeskWindow("pullout:meeting:ledger", "Ledger cutover sync");
+    // DeskWindow re-announces on a title change: the Map puts it last
+    retractWindow("surface-project-memory");
+    announceWindow("surface-project-memory", "Payments ledger cutover", "", () => {});
+    await Promise.resolve();
+    expect(ids().slice(3)).toEqual(["Payments ledger cutover", "Meetings", "Ledger cutover sync"]);
+  });
+
+  it("a window really closed and opened again is the newest", async () => {
+    openDeskWindow("surface:meetings", "Meetings");
+    openDeskWindow("pullout:meeting:ledger", "Ledger cutover sync");
+    retractWindow("surface:meetings");
+    await Promise.resolve();
+    openDeskWindow("surface:meetings", "Meetings");
+    expect(ids().slice(3)).toEqual(["Ledger cutover sync", "Meetings"]);
+  });
+});
+
 describe("Q4b Capture stays in the ring until it is closed", () => {
   it("joins when it opens at 393, survives a swipe away, leaves on Close", () => {
     expect(ids()).not.toContain("Capture");
@@ -152,6 +174,17 @@ describe("Q2 the switcher in the screen title", () => {
     expect(rows.map((r) => r.getAttribute("aria-checked"))).toEqual(["false", "false", "true", "false"]);
     act(() => fireEvent.click(rows[0])); // tap 2
     expect(phoneCurrent()).toBe("chair:needs");
+  });
+
+  it("a second tap on the open switcher closes it (Astra r1 #751)", () => {
+    render(<ScreenSwitcher name="Needs you" />);
+    const button = screen.getByTestId("desk-screen-switcher");
+    act(() => void fireEvent.pointerDown(button, { button: 0 }));
+    expect(screen.getByRole("menu", { name: "Open windows" })).toBeInTheDocument();
+    act(() => void fireEvent.pointerDown(button, { button: 0 }));
+    expect(screen.queryByRole("menu", { name: "Open windows" })).toBeNull();
+    act(() => void fireEvent.pointerDown(button, { button: 0 }));
+    expect(screen.getByRole("menu", { name: "Open windows" })).toBeInTheDocument();
   });
 });
 

@@ -3,7 +3,7 @@
 // lists the phone's ring (phoneRing.ts), a check on the window in front:
 // any open window in two taps. The title text truncates; the ▾ is its own
 // fixed mark (painted by CSS) and never does. It also mounts the ring's touch swipe.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { WorkMenu, type WorkMenuEntry } from "../DeskMenu";
 import { useDesk } from "../../store";
@@ -23,6 +23,23 @@ export function ScreenSwitcher({ name }: { name: string }) {
   useDesk((s) => s.panelMin);
   usePhoneSwipe(true);
   const [at, setAt] = useState<{ x: number; y: number } | null>(null);
+  // A press on the title while the menu is open CLOSES it. The menu's own
+  // outside press (document, capture) closes it first and may re-render
+  // before the title's handler runs, which then read "closed" and opened it
+  // again. This listener is added before the menu's (on mount), so it notes
+  // the press on the open title first; the title's handler then stays closed.
+  const openRef = useRef(false);
+  openRef.current = Boolean(at);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const pressClosesRef = useRef(false);
+  useEffect(() => {
+    const down = (e: PointerEvent) => {
+      pressClosesRef.current =
+        openRef.current && Boolean(buttonRef.current?.contains(e.target as Node));
+    };
+    document.addEventListener("pointerdown", down, true);
+    return () => document.removeEventListener("pointerdown", down, true);
+  }, []);
   const current = phoneCurrent();
   const entries: WorkMenuEntry[] = phoneRing().map((w) => ({
     type: "item" as const,
@@ -40,11 +57,14 @@ export function ScreenSwitcher({ name }: { name: string }) {
         aria-expanded={Boolean(at)}
         aria-label={`Windows: ${name}`}
         data-testid="desk-screen-switcher"
-        // Pointer-down, as the menu bar's titles: the menu's own outside
-        // press closes first, and the render-time `at` still names the
-        // state before it, so the same press toggles the menu closed.
+        ref={buttonRef}
         onPointerDown={(e) => {
           if (e.button > 0) return; // a secondary button is not a tap
+          if (pressClosesRef.current) {
+            pressClosesRef.current = false;
+            setAt(null);
+            return;
+          }
           const r = e.currentTarget.getBoundingClientRect();
           setAt(at ? null : { x: r.left, y: r.bottom });
         }}

@@ -16,7 +16,7 @@ import {
   openChairWindow,
   useChairWindows,
 } from "../../chair/chairWindows";
-import { frontWindowId, registrySnapshot } from "./windowRegistry";
+import { frontWindowId, openedSeq, registrySnapshot } from "./windowRegistry";
 
 export type RingWindow = { id: string; label: string; chair: boolean };
 
@@ -39,9 +39,11 @@ export function phoneRing(): RingWindow[] {
           (w.phone || (w.id === "chair:capture" && (cw.captureInRing || cw.phone === w.id))),
       ).map((w) => ({ id: w.id, label: w.title, chair: true }))
     : [];
-  // The registry Map keeps announce order: the order the windows opened.
+  // The order the windows opened: their opening sequence, never the
+  // registry Map's order (a title change re-announces a window at its end).
   const desk = registrySnapshot
     .filter((w) => w.dock && !w.id.startsWith("chair:"))
+    .sort((a, b) => openedSeq(a.id) - openedSeq(b.id))
     .map((w) => ({ id: w.id, label: w.label, chair: false }));
   return [...chair, ...desk];
 }

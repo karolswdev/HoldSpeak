@@ -22,6 +22,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
     "box": [
      158,
      13,
@@ -52,6 +66,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
     "box": [
      158,
      13,
@@ -93,6 +121,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
     "box": [
      158,
      13,
@@ -123,6 +165,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
     "box": [
      158,
      13,
@@ -161,6 +217,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      238,
+      240,
+      243
+     ],
+     "bg": [
+      11,
+      12,
+      16
+     ],
+     "open": true
+    },
     "box": [
      158,
      13,
@@ -191,6 +261,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
     "box": [
      158,
      13,
@@ -228,6 +312,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
     "box": [
      158,
      13,
@@ -259,6 +357,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
     "box": [
      158,
      13,
@@ -306,6 +418,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
     "box": [
      158,
      13,
@@ -337,6 +463,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
     "box": [
      158,
      13,
@@ -368,6 +508,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      11,
+      12,
+      16
+     ],
+     "bg": [
+      238,
+      240,
+      243
+     ],
+     "open": false
+    },
     "box": [
      158,
      13,
@@ -406,6 +560,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      238,
+      240,
+      243
+     ],
+     "bg": [
+      11,
+      12,
+      16
+     ],
+     "open": true
+    },
     "box": [
      158,
      13,
@@ -436,6 +604,20 @@
    "chevron": {
     "whole": true,
     "painted": true,
+    "contrast": {
+     "ratio": 17.12,
+     "fg": [
+      238,
+      240,
+      243
+     ],
+     "bg": [
+      11,
+      12,
+      16
+     ],
+     "open": false
+    },
     "box": [
      158,
      13,

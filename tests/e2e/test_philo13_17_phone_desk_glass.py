@@ -122,6 +122,25 @@ WHOLE = "(sel) => {" + JS_LIB + r"""
 }"""
 
 
+MARK_CONTRAST = r"""(sel) => {
+  const rgb = (s) => { const m = String(s).match(/rgba?\(([^)]+)\)/); if (!m) return null;
+    const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return {r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1}; };
+  const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
+  const blend = (t, u) => ({r: t.r * t.a + u.r * (1 - t.a), g: t.g * t.a + u.g * (1 - t.a), b: t.b * t.a + u.b * (1 - t.a), a: 1});
+  const mark = document.querySelector(sel); if (!mark) return {ratio: 0};
+  const chain = []; for (let e = mark; e; e = e.parentElement) {
+    const c = rgb(getComputedStyle(e).backgroundColor); if (c && c.a > 0) { chain.push(c); if (c.a >= 1) break; } }
+  let g = {r: 255, g: 255, b: 255, a: 1}; for (let i = chain.length - 1; i >= 0; i--) g = blend(chain[i], g);
+  const fg = blend(rgb(getComputedStyle(mark, '::before').color) || rgb(getComputedStyle(mark).color), g);
+  const x = lum(fg), y = lum(g);
+  const btn = mark.closest('.desk-screen-switcher');
+  return {ratio: Math.round(((Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)) * 100) / 100,
+          fg: [fg.r, fg.g, fg.b].map(Math.round), bg: [g.r, g.g, g.b].map(Math.round),
+          open: btn ? btn.getAttribute('aria-expanded') === 'true' : null};
+}"""
+
+
 def _seed_card_meeting() -> None:
     """A finished meeting with open items, so the hub's own aftercare event is not quiet."""
     from holdspeak.db import get_database
@@ -240,7 +259,7 @@ class TestThePhoneDesk:
                 fails.append(f"{name}: body/footer controls under 44 x 44 {f['body_under_44']}")
             if chevron:
                 f["chevron"] = self._chevron(page)
-                if not (f["chevron"]["whole"] and f["chevron"]["painted"]):
+                if not (f["chevron"]["whole"] and f["chevron"]["painted"] and f["chevron"]["contrast"]["ratio"] >= 3):
                     fails.append(f"{name}: the switcher ▾ is not painted whole {f['chevron']}")
         if faults["clipped"] or faults["overlaps"]:
             fails.append(f"{name}: on_glass clipped/overlaps {f['on_glass']}")
@@ -265,7 +284,12 @@ class TestThePhoneDesk:
         page.evaluate(f"() => {{ document.querySelector('{sel}').style.visibility = ''; }}")
         cut = page.evaluate("""() => { const n = document.querySelector('.desk-screen-switcher .desk-screen-name');
             return n ? n.scrollWidth > n.clientWidth + 1 : null; }""")
-        return {"whole": bool(w.get("whole")), "painted": shown != hidden,
+        # Astra r1 #751, condition 3: pixels that change at 1:1 are not "painted"
+        # for a reader. The mark's computed colour against the button's own
+        # (opaque, composited) background reads >= 3:1 (a non-text mark), in
+        # the closed and in the open state.
+        contrast = page.evaluate(MARK_CONTRAST, sel)
+        return {"whole": bool(w.get("whole")), "painted": shown != hidden, "contrast": contrast,
                 "box": [round(b["x"]), round(b["y"]), round(b["width"]), round(b["height"])], "title_truncated": cut}
 
     def _send_card(self) -> dict[str, Any]:
@@ -457,6 +481,60 @@ class TestThePhoneDesk:
                     fails.append(f"page errors {real}")
             finally:
                 (SHOTS / f"phone-desk-facts-{width}.json").write_text(json.dumps({"facts": facts, "fails": fails}, indent=1, default=str))
+                browser.close()
+        assert not fails, fails
+
+    def test_the_ring_keeps_order_and_name_and_the_switcher_toggles_393(self) -> None:
+        """Astra r1 #751, conditions 1 and 2, with native touch taps.
+
+        Open the Room (a core that publishes its own title), then Meetings, then
+        a meeting, then swipe to Needs you (the desk windows iconify): the ring
+        keeps the opening order and the Room keeps its name. A second tap on the
+        switcher closes its menu."""
+        from playwright.sync_api import sync_playwright
+        from .test_philo13_11_frame_glass import ROOM, _stage
+
+        width = 393
+        facts: dict[str, Any] = {"width": width}
+        fails: list[str] = []
+        want = ["Needs you", "Brief", "The week", ROOM, "Meetings", MEETING]
+        switcher = ".desk-screen-switcher-menu"
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                _stage(page, "open-project-memory", "project:p-ledger")
+                page.locator(f".desk-window-shell[aria-label='{ROOM}']").wait_for()
+                self._open_meeting(page, width)
+                self._swipe(page, +1)  # wraps to Needs you: every desk window iconifies
+                facts["front_after_swipe"] = self._front(page)["front"]
+                self._tap(page, page.get_by_test_id("desk-screen-switcher"), width, 600)
+                rows = [r.replace("✓", "").strip() for r in page.locator(f"{switcher} [role=menuitemcheckbox]").all_inner_texts()]
+                facts["ring_after_iconify"] = rows
+                if rows != want:
+                    fails.append(f"C1 the ring lost order or name: {rows}, want {want}")
+                page.screenshot(path=str(SHOTS / f"C7-11-ring-order-and-name-{width}.png"))
+                # C2: the second native tap on the open switcher closes it
+                self._tap(page, page.get_by_test_id("desk-screen-switcher"), width, 600)
+                still = page.locator(switcher).count()
+                facts["menu_after_second_tap"] = still
+                if still:
+                    fails.append("C2 a second tap on the switcher did not close it")
+                # ... and a third opens it again (the toggle, not a dead title)
+                self._tap(page, page.get_by_test_id("desk-screen-switcher"), width, 600)
+                facts["menu_after_third_tap"] = page.locator(switcher).count()
+                if not facts["menu_after_third_tap"]:
+                    fails.append("C2 a third tap did not open the switcher")
+                # the Room comes back by its name (the menu the third tap opened)
+                self._tap(page, page.locator(f"{switcher} [role=menuitemcheckbox]", has_text=ROOM), width, 1500)
+                f = self._front(page)
+                facts["room_restored"] = f
+                if f["front"] != [ROOM] or f["title"] != ROOM:
+                    fails.append(f"C1 the Room restored as {f['front']} titled {f['title']}")
+                real = [e for e in errors if "ResizeObserver" not in e]
+                if real:
+                    fails.append(f"page errors {real}")
+            finally:
+                (SHOTS / f"ring-facts-{width}.json").write_text(json.dumps({"facts": facts, "fails": fails}, indent=1, default=str))
                 browser.close()
         assert not fails, fails
 
