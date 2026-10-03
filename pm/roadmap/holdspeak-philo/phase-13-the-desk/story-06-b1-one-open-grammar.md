@@ -64,3 +64,7 @@ Grounding size: S (faces move 1) to M (structure move 2). PROVISIONAL.
 - 2026-10-01 — B1 and B4 share the J3 prep outcome: B1 owns the open (the row → People at Prep), B4 owns the link and Prep's contents.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+## RATIFIED by the owner — 2026-10-03
+
+On the page https://claude.ai/artifact/BfkDkEbuo1day5d1K1DnN3 (the built B1 shots, `assets/story-06-shots/`, on the owner-ratified Workbench material), the owner answered verbatim: **"Ratify, merge it"**. This is the face's ratification record the gate requires (current-phase-status.md §gates).
