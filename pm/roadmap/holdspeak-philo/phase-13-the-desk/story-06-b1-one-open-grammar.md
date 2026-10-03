@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** PHILO-13-11's C1 canvas ratified (the material); this story's own canvas ratified; PHILO-13-05 (close means gone)
 - **Unblocks:** none
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks

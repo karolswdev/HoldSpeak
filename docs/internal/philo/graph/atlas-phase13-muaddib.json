@@ -311,7 +311,7 @@
         {
           "path": "web/src/desk/store/compositorSlice.ts",
           "symbol": "closePullout(id) {",
-          "line": 177,
+          "line": 180,
           "claim": "closePullout filters the open cards by equality"
         }
       ],

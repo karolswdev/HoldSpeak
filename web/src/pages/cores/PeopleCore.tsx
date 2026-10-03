@@ -305,6 +305,9 @@ type NowConcern = "prs" | "assignments" | "commitments" | null;
 
 function RelationshipPane({ relationship, initialLens, onRefresh, onProtectedFailure, onArchived, onBack }: { relationship: RelationshipDetail; initialLens?: Lens | null; onRefresh(): void; onProtectedFailure(cause: unknown): void; onArchived(): void; onBack(): void }) {
   const [lens, setLens] = useState<Lens>(initialLens || "now");
+  // PHILO-13-06 (B1): a row that opens this person on a lens (a 1:1 → Prep)
+  // moves the open window to that lens.
+  useEffect(() => { if (initialLens) setLens(initialLens); }, [initialLens]);
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
   const [nowConcern, setNowConcern] = useState<NowConcern>(null);
   const [prepBrief, setPrepBrief] = useState<OneOnOneBrief | null>(null);
