@@ -59,3 +59,7 @@ Grounding size: S (`grounding/faces-jobs.md:158`). PROVISIONAL.
 - UNKNOWN: whether the desk decision already has a project reference field, or only `context_markdown`. Verify before build; Tenet 1 — no new table if a ref field or context carries it. If a backend change is needed, it is handoff **H-B3**: Astra's lane changes the decision route/service (its files); this story consumes it and edits no backend file.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+## RATIFIED by the owner — 2026-10-03
+
+On the page https://claude.ai/artifact/V9yuy6rPpNJL5hCtcenTq7 (the built B3 shots, `assets/story-08-shots/`, on the owner-ratified Workbench material), the owner answered verbatim: **"Ratify, merge it"**. Muad'Dib's ruling on the backend finding: the meeting and project refs ride the existing fields and edges (tags `meeting:`/`project:`, context, the project resources edge) — no new backend field (Tenet 1). Ledger to Astra: memory's project filter keys `desk_decision:<id>` while faces file `decision:<id>` (`holdspeak/db/memory.py:78`, `:1326`) — pre-existing.
