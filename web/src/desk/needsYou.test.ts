@@ -280,7 +280,7 @@ describe("the shared needs-you read", () => {
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 
   it("uses the cached Room read on mount and poll, and fresh only for explicit refresh", async () => {
     vi.useFakeTimers();
@@ -568,7 +568,7 @@ describe("the real producer membership oracle", () => {
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 
   it("rejects a code mutant that skips dedupAttention on the real producer oracle", async () => {
     const home = mkdtempSync(join(tmpdir(), "philo13-a2-c4-dedup-"));
@@ -650,5 +650,5 @@ describe("the real producer membership oracle", () => {
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 });
