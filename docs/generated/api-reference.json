@@ -33528,10 +33528,12 @@
             "JSONResponse",
             "_enrich_update",
             "error_500",
+            "next",
             "ops",
             "ops().invoke",
             "principal",
-            "router.get"
+            "router.get",
+            "update.get"
           ],
           "body_access_keys": [],
           "raw_request": true,
@@ -33636,7 +33638,7 @@
             "POST"
           ],
           "symbol": "api_draft_update",
-          "line": 82,
+          "line": 96,
           "parameters": [
             {
               "name": "project_id",
@@ -42960,7 +42962,7 @@
             "PUT"
           ],
           "symbol": "api_save_update",
-          "line": 110,
+          "line": 124,
           "parameters": [
             {
               "name": "update_id",
@@ -43059,7 +43061,7 @@
             "POST"
           ],
           "symbol": "api_mark_update_delivered",
-          "line": 210,
+          "line": 224,
           "parameters": [
             {
               "name": "update_id",
@@ -43153,7 +43155,7 @@
             "GET"
           ],
           "symbol": "api_update_markdown",
-          "line": 244,
+          "line": 258,
           "parameters": [
             {
               "name": "update_id",
@@ -43241,7 +43243,7 @@
             "POST"
           ],
           "symbol": "api_publish_update",
-          "line": 177,
+          "line": 191,
           "parameters": [
             {
               "name": "update_id",
@@ -43341,7 +43343,7 @@
             "POST"
           ],
           "symbol": "api_regenerate_update",
-          "line": 144,
+          "line": 158,
           "parameters": [
             {
               "name": "update_id",

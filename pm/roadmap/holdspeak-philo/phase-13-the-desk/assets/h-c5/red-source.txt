@@ -1,0 +1,4 @@
+revision fc12a18d56868fc95a3310eb9cf99c0421a25730
+holdspeak /private/tmp/holdspeak-h-c5-red/holdspeak/__init__.py
+updates /private/tmp/holdspeak-h-c5-red/holdspeak/db/updates.py
+routes /private/tmp/holdspeak-h-c5-red/holdspeak/web/routes/project_updates.py
