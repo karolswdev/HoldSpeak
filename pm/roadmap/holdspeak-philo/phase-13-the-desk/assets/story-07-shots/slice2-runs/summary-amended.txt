@@ -1,0 +1,4 @@
+amended case.p13.delivery.dossier_window 1440 VERDICT: pass terminal=settled | NOTE: predicate: 'ATLAS-1-01' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 426, 'y': 54, 'w': 420, 'h': 794}
+amended case.p13.delivery.dossier_window 393 VERDICT: pass terminal=settled | NOTE: predicate: 'ATLAS-1-01' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 0, 'y': 44, 'w': 393, 'h': 752}
+amended case.p13.delivery.terminal_window 1440 VERDICT: pass terminal=settled | NOTE: predicate: 'Atlas terminal' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 234, 'y': 54, 'w': 620, 'h': 794}
+amended case.p13.delivery.terminal_window 393 VERDICT: pass terminal=settled | NOTE: predicate: 'Atlas terminal' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 0, 'y': 44, 'w': 362, 'h': 752}

@@ -16,6 +16,10 @@ is Astra's (H-B0b); this lane adds no ``.op`` sibling.
   ``case.p13.palette.prep_one_on_one``, ``case.p13.palette.thought_word_finds_it``,
   ``case.p13.palette.send_opens_preview``, ``case.p13.palette.draft_update``
 * PHILO-13-09 (B4-W): ``case.p13.people.prep_link``
+* PHILO-13-07 (B2, slice two + Astra's #747 conditions): twelve
+  ``case.p13.remember.*`` cases -- each family the rig can open on a plain hub
+  returns after a reload, ``*_close_keeps_place`` reopens the same object
+  after a close, an emptied draft stays empty, a refused field stays kept.
 """
 from __future__ import annotations
 
@@ -45,6 +49,18 @@ CASES = {
     "case.p13.palette.send_opens_preview",  # PHILO-13-14
     "case.p13.palette.draft_update",  # PHILO-13-14
     "case.p13.people.prep_link",  # PHILO-13-09 (B4-W)
+    "case.p13.remember.delivery_board",  # PHILO-13-07
+    "case.p13.remember.delivery_dossier",  # PHILO-13-07
+    "case.p13.remember.trust_window",  # PHILO-13-07
+    "case.p13.remember.schedule_draft",  # PHILO-13-07
+    "case.p13.remember.schedule_close_keeps_place",  # PHILO-13-07
+    "case.p13.remember.decide_draft",  # PHILO-13-07
+    "case.p13.remember.decide_close_keeps_place",  # PHILO-13-07
+    "case.p13.remember.room_empty_draft",  # PHILO-13-07 (Astra's B2 condition)
+    "case.p13.remember.room_empty_close_keeps_place",  # PHILO-13-07 (Astra's B2 condition)
+    "case.p13.remember.editor_refused_field_kept",  # PHILO-13-07 (Astra's P1 on #747)
+    "case.p13.remember.schedule_empty_time_kept",  # PHILO-13-07 (Astra's P2 on #747)
+    "case.p13.remember.editor_survives_url_open",  # PHILO-13-07 (Astra's P2 on #747)
 }
 
 GENERAL = [
@@ -98,7 +114,7 @@ def test_the_file_validates_against_the_atlas_schema(atlas: dict) -> None:
 def test_the_lane_case_count_and_names(atlas: dict) -> None:
     ids = {case["id"] for case in atlas["cases"]}
     assert ids == CASES
-    assert len(atlas["cases"]) == 12
+    assert len(atlas["cases"]) == 24
     # No `.op` sibling here: the shared count at test_philo_graph_atlas.py:492
     # stays Astra's (H-B0b).
     assert not [i for i in ids if i.endswith(".op") or i.endswith(".op.replayed")]

@@ -1,0 +1,1820 @@
+{
+  "id": "obs-20261003T202802Z-case.p13.remember.editor_refused_field_kept-muaddib-393",
+  "run_id": "20261003T202802Z-case.p13.remember.editor_refused_field_kept-muaddib-393",
+  "case_id": "case.p13.remember.editor_refused_field_kept",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": ".tmp/b2/red-atlas.json",
+  "job": "j2",
+  "edge_ids": [
+    "edge.face.window_return"
+  ],
+  "state_id": "state.desk_presentation.p13_remember_editor",
+  "provenance": {
+    "revision": "06116f5c68cbc23a75af9df96333327919cb4240",
+    "revision_source": "git",
+    "dirty": false,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "24677d2c7e828a90af9c76acce9eb31aa9e487f8a31673b6c312e6c022783db3",
+      "assets": [
+        "index-CY1L4D5o.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:62589",
+      "port": 62589,
+      "pid": 11537,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z2b9k57o",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z2b9k57o/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T20:28:02.528246+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [
+      {
+        "label": "One refused Agent write; the next goes to the real hub",
+        "substitute": "http_fault",
+        "method": "PUT",
+        "path": "/api/recipes/p13-recipe",
+        "status": 503,
+        "times": 1
+      }
+    ],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": ".tmp/b2/red-atlas.json",
+      "sha256": "56fa9d82bbbd3e6119cc1eef632aa1975b187a77514a9cea0f145f0c6506e954",
+      "version": "phase13-muaddib"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "browser_context": {
+      "viewport": 393,
+      "has_touch": true
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z2b9k57o",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z2b9k57o",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z2b9k57o/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z2b9k57o"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-03T14:28:06.488134"
+        }
+      },
+      "response_sha256": "95893d508cff3460d0d8adc2b55df0be0d4809af1c71132ad9c727833be94ce4"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/recipes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "recipe": {
+          "id": "p13-recipe",
+          "name": "Original name",
+          "avatar": "",
+          "role": "Original role",
+          "system_prompt": "",
+          "user_template": "",
+          "tools": [],
+          "kb_id": null,
+          "profile_id": null,
+          "manual_context": "",
+          "use_zone_context": false,
+          "kind": "",
+          "created_at": "2026-10-03T20:28:06Z",
+          "last_modified": "2026-10-03T20:28:06Z",
+          "deleted": false,
+          "capability": {
+            "kind": "persona",
+            "input_schema": {
+              "type": "object",
+              "required": [
+                "input"
+              ],
+              "properties": {
+                "input": {
+                  "type": "string",
+                  "help": "Material to work on."
+                }
+              }
+            },
+            "input_help": "Choose or enter the material this capability should work on.",
+            "supported_placements": [
+              "assignment:recipe"
+            ],
+            "effect_classes": [
+              "creates_artifact"
+            ],
+            "readiness": {
+              "state": "ready",
+              "detail": ""
+            },
+            "action_label": "Ask Original name",
+            "support": "supported"
+          },
+          "placement": {
+            "source": "canonical_assignment",
+            "subject_kind": "recipe",
+            "subject_id": "p13-recipe"
+          }
+        }
+      },
+      "response_sha256": "e7218ff4482cc4b945d835f885d8c44e3a13e54e4bf47cde67dcbe5d6fbeb55e"
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?open=persona:p13-recipe&token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-observation",
+      "selector": ".desk-pullout button:text-is(\"Edit\")",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "selector": ".desk-pullout button:text-is(\"Edit\")",
+      "done": true
+    },
+    {
+      "kind": "boundary",
+      "label": "One refused Agent write; the next goes to the real hub",
+      "substitute": "http_fault",
+      "adapter": "labelled-substitution",
+      "origin": "http://127.0.0.1:62589",
+      "method": "PUT",
+      "path": "/api/recipes/p13-recipe",
+      "status": 503,
+      "times": 1,
+      "seam": "playwright page.route (browser boundary)",
+      "fulfilled": [
+        "http://127.0.0.1:62589/api/recipes/p13-recipe"
+      ]
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-input",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-observation",
+      "selector": ".write-receipt:has-text(\"SAVE FAILED\")",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-input",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/recipes/p13-recipe",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "recipe.role",
+        "value": "Saved role after refusal"
+      },
+      "adapter": "observation",
+      "waited_s": 0.61,
+      "holds": true,
+      "reading": "recipe.role equals the declared value"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z2b9k57o"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "reload",
+    "adapter": "ui-navigation",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-pullout input[aria-label=\"Name\"]",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "focus": {
+      "before": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-string > input",
+      "after": "div#pullout:persona:p13-recipe"
+    },
+    "focus_label": {
+      "before": "Role",
+      "after": "Original name"
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input",
+          "value": "Unsaved name"
+        },
+        {
+          "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-string > input",
+          "value": "Saved role after refusal"
+        },
+        {
+          "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea",
+          "value": ""
+        }
+      ],
+      "after": [
+        {
+          "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input",
+          "value": "Original name"
+        },
+        {
+          "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-string > input",
+          "value": "Saved role after refusal"
+        },
+        {
+          "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea",
+          "value": ""
+        }
+      ]
+    },
+    "field_value": {
+      "before": {
+        "selector": ".desk-pullout input[aria-label=\"Name\"]",
+        "present": true,
+        "value": "Unsaved name"
+      },
+      "after": {
+        "selector": ".desk-pullout input[aria-label=\"Name\"]",
+        "present": true,
+        "value": "Original name"
+      }
+    }
+  },
+  "before": {
+    "observe_at": ".desk-pullout",
+    "target_present": true,
+    "text": "Original name\nMore\nCancel\nSave",
+    "attrs": {
+      "id": "pullout:persona:p13-recipe",
+      "tabindex": "-1",
+      "class": "desk-pullout is-card desk-window desk-window-shell is-sheet is-front",
+      "role": "region",
+      "aria-label": "Original name",
+      "style": "--k: #FF6B35; z-index: 43; opacity: 1; transform: none;"
+    },
+    "rect": {
+      "x": 0,
+      "y": 44,
+      "w": 393,
+      "h": 752
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 0,
+        "y": 44,
+        "w": 393,
+        "h": 752
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 49.125,
+          "y": 138,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row"
+        },
+        {
+          "x": 49.125,
+          "y": 420,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 49.125,
+          "y": 702,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 196.5,
+          "y": 138,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input"
+        },
+        {
+          "x": 196.5,
+          "y": 420,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 196.5,
+          "y": 702,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 343.875,
+          "y": 138,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > button.btn--chrome.desk-mic > span"
+        },
+        {
+          "x": 343.875,
+          "y": 420,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 343.875,
+          "y": 702,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input",
+        "value": "Unsaved name"
+      },
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-string > input",
+        "value": "Saved role after refusal"
+      },
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": {
+      "selector": ".desk-pullout input[aria-label=\"Name\"]",
+      "present": true,
+      "value": "Unsaved name"
+    },
+    "focus": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-string > input",
+    "focus_label": "Role",
+    "url": "http://127.0.0.1:62589/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Original name",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "d0b5c694fb9eaaa1a28cbdf098e0db40acc4c4ff967297bbbbe2f67fac19c414",
+    "document_text_len": 240,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T20:28:12.202043+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-pullout",
+    "target_present": true,
+    "text": "Original name\nMore\nCancel\nSave",
+    "attrs": {
+      "id": "pullout:persona:p13-recipe",
+      "tabindex": "-1",
+      "class": "desk-pullout is-card desk-window desk-window-shell is-sheet is-front",
+      "role": "region",
+      "aria-label": "Original name",
+      "style": "--k: #FF6B35; z-index: 43; opacity: 1; transform: none;"
+    },
+    "rect": {
+      "x": 0,
+      "y": 44,
+      "w": 393,
+      "h": 752
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 0,
+        "y": 44,
+        "w": 393,
+        "h": 752
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 49.125,
+          "y": 138,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row"
+        },
+        {
+          "x": 49.125,
+          "y": 420,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 49.125,
+          "y": 702,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 196.5,
+          "y": 138,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input"
+        },
+        {
+          "x": 196.5,
+          "y": 420,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 196.5,
+          "y": 702,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 343.875,
+          "y": 138,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > button.btn--chrome.desk-mic > span"
+        },
+        {
+          "x": 343.875,
+          "y": 420,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 343.875,
+          "y": 702,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input",
+        "value": "Original name"
+      },
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-string > input",
+        "value": "Saved role after refusal"
+      },
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": {
+      "selector": ".desk-pullout input[aria-label=\"Name\"]",
+      "present": true,
+      "value": "Original name"
+    },
+    "focus": "div#pullout:persona:p13-recipe",
+    "focus_label": "Original name",
+    "url": "http://127.0.0.1:62589/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Original name",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "d0b5c694fb9eaaa1a28cbdf098e0db40acc4c4ff967297bbbbe2f67fac19c414",
+    "document_text_len": 240,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T20:28:42.558574+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:62589) non-GET response after the click",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/inference/assignments/editor",
+        "status": 200,
+        "body_sha256": "65270738b19852f39bc155aa80512d74717771fdfb827d7bcf7fc98b86ff5e4e",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:62589) non-GET response after the click"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:62589) non-GET response after the click",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-gslz4Tc-.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-Cr5G-Rag.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/react-SZyUX699.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-CY1L4D5o.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-B3DxtdgQ.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/setup/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/repositories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/inference/assignments/editor",
+      "status": 200,
+      "body_sha256": "65270738b19852f39bc155aa80512d74717771fdfb827d7bcf7fc98b86ff5e4e",
+      "body": {
+        "schema": "AssignmentEditorProjection@1",
+        "scope": {
+          "kind": "subject",
+          "subject_kind": "recipe",
+          "subject_id": "p13-recipe",
+          "capability_id": "chat.turn"
+        },
+        "selected_capability": {
+          "id": "chat.turn",
+          "revision": 1,
+          "label": "Desk chat",
+          "group": {
+            "id": "thoughts_notes",
+            "label": "Thoughts & notes"
+          },
+          "allowed_boundaries": [
+            "cloud",
+            "local",
+            "mesh",
+            "private_network"
+          ],
+          "fallback_dispositions": [
+            "context_overflow",
+            "invalid_typed_output",
+            "known_no_generation_transient",
+            "local_capacity_unavailable",
+            "provider_permanent"
+          ]
+        },
+        "draft_base_revision": 0,
+        "configured_assignment": null,
+        "effective": {
+          "status": "no_assignment",
+          "capability_id": "chat.turn",
+          "inherited_from": null,
+          "assignment": null,
+          "repair": "Choose default"
+        },
+        "candidates": [],
+        "retry_policy": {
+          "permitted_ids": [
+            "retry.text.standard"
+          ],
+          "default_id": "retry.text.standard"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:62589) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-pullout",
+    "target_present": true,
+    "text": "Original name\nMore\nCancel\nSave",
+    "attrs": {
+      "id": "pullout:persona:p13-recipe",
+      "tabindex": "-1",
+      "class": "desk-pullout is-card desk-window desk-window-shell is-sheet is-front",
+      "role": "region",
+      "aria-label": "Original name",
+      "style": "--k: #FF6B35; z-index: 43; opacity: 1; transform: none;"
+    },
+    "rect": {
+      "x": 0,
+      "y": 44,
+      "w": 393,
+      "h": 752
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 0,
+        "y": 44,
+        "w": 393,
+        "h": 752
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 49.125,
+          "y": 138,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row"
+        },
+        {
+          "x": 49.125,
+          "y": 420,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 49.125,
+          "y": 702,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 196.5,
+          "y": 138,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input"
+        },
+        {
+          "x": 196.5,
+          "y": 420,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 196.5,
+          "y": 702,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 343.875,
+          "y": 138,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > button.btn--chrome.desk-mic > span"
+        },
+        {
+          "x": 343.875,
+          "y": 420,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 343.875,
+          "y": 702,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input",
+        "value": "Original name"
+      },
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-string > input",
+        "value": "Saved role after refusal"
+      },
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": {
+      "selector": ".desk-pullout input[aria-label=\"Name\"]",
+      "present": true,
+      "value": "Original name"
+    },
+    "focus": "div#pullout:persona:p13-recipe",
+    "focus_label": "Original name",
+    "url": "http://127.0.0.1:62589/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Original name",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "d0b5c694fb9eaaa1a28cbdf098e0db40acc4c4ff967297bbbbe2f67fac19c414",
+    "document_text_len": 240,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T20:28:14.536271+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:62589) non-GET response after the click",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/inference/assignments/editor",
+        "status": 200,
+        "body_sha256": "65270738b19852f39bc155aa80512d74717771fdfb827d7bcf7fc98b86ff5e4e",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:62589) non-GET response after the click"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:62589) non-GET response after the click",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-gslz4Tc-.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-Cr5G-Rag.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/react-SZyUX699.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-CY1L4D5o.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-B3DxtdgQ.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/setup/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/repositories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/inference/assignments/editor",
+      "status": 200,
+      "body_sha256": "65270738b19852f39bc155aa80512d74717771fdfb827d7bcf7fc98b86ff5e4e",
+      "body": {
+        "schema": "AssignmentEditorProjection@1",
+        "scope": {
+          "kind": "subject",
+          "subject_kind": "recipe",
+          "subject_id": "p13-recipe",
+          "capability_id": "chat.turn"
+        },
+        "selected_capability": {
+          "id": "chat.turn",
+          "revision": 1,
+          "label": "Desk chat",
+          "group": {
+            "id": "thoughts_notes",
+            "label": "Thoughts & notes"
+          },
+          "allowed_boundaries": [
+            "cloud",
+            "local",
+            "mesh",
+            "private_network"
+          ],
+          "fallback_dispositions": [
+            "context_overflow",
+            "invalid_typed_output",
+            "known_no_generation_transient",
+            "local_capacity_unavailable",
+            "provider_permanent"
+          ]
+        },
+        "draft_base_revision": 0,
+        "configured_assignment": null,
+        "effective": {
+          "status": "no_assignment",
+          "capability_id": "chat.turn",
+          "inherited_from": null,
+          "assignment": null,
+          "repair": "Choose default"
+        },
+        "candidates": [],
+        "retry_policy": {
+          "permitted_ids": [
+            "retry.text.standard"
+          ],
+          "default_id": "retry.text.standard"
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:62589) non-GET response after the click"
+    },
+    "predicate_satisfied": false,
+    "reading": "value is 'Original name', wanted 'Unsaved name'",
+    "elapsed_s": 2.269
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": false,
+    "reading": "value is 'Original name', wanted 'Unsaved name'",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 30.288,
+    "first_satisfied_at_s": null,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": false
+  },
+  "verdict": "fail",
+  "notes": [
+    "predicate: value is 'Original name', wanted 'Unsaved name'",
+    "a nonzero diff with the wrong result is a finding, not a pass (changed: ['field_value', 'focus', 'focus_label', 'values'])."
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:62589) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/inference/assignments/editor",
+      "status": 200,
+      "body_sha256": "65270738b19852f39bc155aa80512d74717771fdfb827d7bcf7fc98b86ff5e4e",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:62589) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:62589) non-GET response after the click",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/desk-gslz4Tc-.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/index-Cr5G-Rag.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/react-SZyUX699.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/index-CY1L4D5o.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/desk-B3DxtdgQ.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings/heartbeat",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/red4/20261003T202802Z-case.p13.remember.editor_refused_field_kept-muaddib-393/before.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/red4/20261003T202802Z-case.p13.remember.editor_refused_field_kept-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z2b9k57o/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-z2b9k57o/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:62589"
+  ],
+  "duration_s": 42.6
+}

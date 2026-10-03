@@ -11,6 +11,7 @@ import {
 } from "../../graph";
 import type { Workflow } from "../../../lib/primitives";
 import { useDebouncedSave } from "./useDebouncedSave";
+import { keptEditorPatch, keptField } from "./editorDraft";
 import type { InlineEditorContentProps } from "./types";
 
 export function WorkflowEditor({ object: o, autoFocusName }: InlineEditorContentProps) {
@@ -21,12 +22,14 @@ export function WorkflowEditor({ object: o, autoFocusName }: InlineEditorContent
     () => (items.workflow || []).find((x) => x.id === o.id) || o.ref as Workflow,
     [items, o.id],
   );
+  // PHILO-13-07 (B2): an edit the hub has not kept returns after a reload.
+  const [kept] = useState(() => keptEditorPatch("workflow", o.id));
   const [f, setF] = useState<Record<string, string>>(() => ({
-    name: String(live.name || ""),
+    name: keptField(kept, "name", String(live.name || "")),
   }));
 
   const [steps, setSteps] = useState<LinearStep[] | null>(() =>
-    parseLinearGraph(live.graphJson),
+    parseLinearGraph(kept.graph_json ?? live.graphJson),
   );
 
   const commitGraph = (next: LinearStep[], name?: string) => {

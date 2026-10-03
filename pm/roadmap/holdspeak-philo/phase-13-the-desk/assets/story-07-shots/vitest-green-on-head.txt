@@ -1,0 +1,13 @@
+ ✓ src/desk/__tests__/deskRemembers.philo1307.test.tsx > B2: every open window returns after a reload > pullouts return in open order; a closed one stays gone 122ms
+ ✓ src/desk/__tests__/deskRemembers.philo1307.test.tsx > B2: every open window returns after a reload > Info, Roadmap, Repository and Workbench windows return; a closed one stays gone 10ms
+ ✓ src/desk/__tests__/deskRemembers.philo1307.test.tsx > B2: every open window returns after a reload > a minimized window comes back minimized; a moved window comes back where it was; order and zoom return 9ms
+ ✓ src/desk/__tests__/deskRemembers.philo1307.test.tsx > B2: every open window returns after a reload > a window that comes back minimized stays minimized when its frame mounts; a stale minimize is dropped 303ms
+ ✓ src/desk/__tests__/deskRemembers.philo1307.test.tsx > B2: every open window returns after a reload > opening a window that came back minimized brings it to the front 4ms
+ ✓ src/desk/__tests__/deskRemembers.philo1307.test.tsx > B2: every open window returns after a reload > a closed Chair window stays closed; the phone's window returns 8ms
+ ✓ src/desk/__tests__/deskRemembers.philo1307.test.tsx > B2: every open window returns after a reload > the screen (Chair or Floor) returns, and the compositor's save keeps it 11ms
+ ✓ src/desk/__tests__/deskRemembers.philo1307.test.tsx > B2 / B0-F2: a closed sheet (393) leaves the stacking order > closing a compact window retires it, so after a reload its reopen lands in front of its opener 15ms
+ ✓ src/desk/__tests__/deskRemembers.philo1307.test.tsx > B2: unsent drafts return, per object, and clear on save > People: the person, the 1:1s tab and the unsent agenda item return after a close and a reload; Add clears it 724ms
+ ✓ src/desk/__tests__/deskRemembers.philo1307.test.tsx > B2: unsent drafts return, per object, and clear on save > People: a draft for one person never shows for another 113ms
+ ✓ src/desk/__tests__/deskRemembers.philo1307.test.tsx > B2: unsent drafts return, per object, and clear on save > Room: the update editor and its 111 unsaved characters return after a reload; restore never saves; Save clears 72ms
+ ✓ src/desk/__tests__/deskRemembers.philo1307.test.tsx > B2: unsent drafts return, per object, and clear on save > Thought: words the hub has not kept return after a reload as an unsaved edit; restore never saves; a landed save clears them 35ms
+      Tests  66 passed (66)

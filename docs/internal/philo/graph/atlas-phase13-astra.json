@@ -666,7 +666,8 @@
             "action": "click_role",
             "adapter": "ui-by-viewport",
             "role": "button",
-            "name": "Delivery"
+            "name": "Delivery",
+            "optional": true
           },
           {
             "kind": "ui",
@@ -829,7 +830,8 @@
             "action": "click_role",
             "adapter": "ui-by-viewport",
             "role": "button",
-            "name": "Delivery"
+            "name": "Delivery",
+            "optional": true
           },
           {
             "kind": "ui",
@@ -1622,6 +1624,7 @@
             "adapter": "ui-by-viewport",
             "role": "button",
             "name": "Floor",
+            "optional": true,
             "timeout_s": 2
           },
           {
@@ -5483,7 +5486,7 @@
         },
         {
           "path": "web/src/pages/cores/PeopleCore.tsx",
-          "line": 401,
+          "line": 421,
           "symbol": "function PrepLens",
           "claim": "The People Prep face reads the brief and renders its preparation lens."
         }

@@ -1,0 +1,469 @@
+{
+  "id": "obs-20261003T064207Z-case.p13.roadmap.window-muaddib-1440",
+  "run_id": "20261003T064207Z-case.p13.roadmap.window-muaddib-1440",
+  "case_id": "case.p13.roadmap.window",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j1",
+  "edge_ids": [
+    "edge.face.roadmap_window"
+  ],
+  "state_id": "state.desk_presentation.p13_unwalked_windows",
+  "provenance": {
+    "revision": "e9b01e227c0836ae90f4d82dc4e571868a0a8a7b",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "a77180ca2984388c6ae378bebe0ee35e9d8e39d02c155716bbd6353183c9ca2e",
+      "assets": [
+        "index-B4dCyu0j.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:52092",
+      "port": 52092,
+      "pid": 10691,
+      "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a",
+      "scheduler_thread": false,
+      "repo_root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/atlas-desk-repository"
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T06:42:07.970642+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [
+      {
+        "stopped_pid": 10390,
+        "started_pid": 10691,
+        "downtime_s": 5.6,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/.local/share/holdspeak/holdspeak.db",
+        "port": 52092,
+        "reason": "repository fixture router rebuild",
+        "repo_root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/atlas-desk-repository"
+      }
+    ],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "8a240237affb33e0535f0f68ccc91a5dba4971830dd2773f71689a086a02d578",
+      "version": "phase13-astra-wave2"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "browser_context": {
+      "viewport": 1440,
+      "has_touch": false
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null,
+    "repository_fixture": {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/atlas-desk-repository",
+      "label": "Atlas Desk",
+      "project_slug": "atlas-desk",
+      "story_id": "ATLAS-1-01",
+      "git_head": "87207f0587e3bb443b47b1b3e105b968c4410c8d",
+      "capture_as": "repo",
+      "variables": {
+        "repo_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/atlas-desk-repository",
+        "repo_label": "Atlas Desk",
+        "repo_project_slug": "atlas-desk",
+        "repo_story_id": "ATLAS-1-01",
+        "repo_git_head": "87207f0587e3bb443b47b1b3e105b968c4410c8d"
+      }
+    }
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 2.66,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "cli",
+      "action": "create_repository_fixture",
+      "adapter": "repository-fixture-producer",
+      "fixture": {
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/atlas-desk-repository",
+        "label": "Atlas Desk",
+        "project_slug": "atlas-desk",
+        "story_id": "ATLAS-1-01",
+        "git_head": "87207f0587e3bb443b47b1b3e105b968c4410c8d"
+      },
+      "repo_root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/atlas-desk-repository",
+      "captured": {
+        "prefix": "repo",
+        "values": {
+          "repo_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/atlas-desk-repository",
+          "repo_label": "Atlas Desk",
+          "repo_project_slug": "atlas-desk",
+          "repo_story_id": "ATLAS-1-01",
+          "repo_git_head": "87207f0587e3bb443b47b1b3e105b968c4410c8d"
+        }
+      },
+      "restart": {
+        "stopped_pid": 10390,
+        "started_pid": 10691,
+        "downtime_s": 5.6,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/.local/share/holdspeak/holdspeak.db",
+        "port": 52092
+      },
+      "page_reloaded": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "The real isolated repository fixture feeds the Roadmap API; the ordinary Desk palette opens its Roadmap object.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "The fixture seam patches the real build_roadmaps_router builder in the isolated hub, so production Roadmap reads use this case's repository.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, Floor re-entry, and the final reopen.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a",
+    "repo_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/atlas-desk-repository",
+    "repo_label": "Atlas Desk",
+    "repo_project_slug": "atlas-desk",
+    "repo_story_id": "ATLAS-1-01",
+    "repo_git_head": "87207f0587e3bb443b47b1b3e105b968c4410c8d"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "adapter_requested": "ui-by-viewport",
+    "selector": ".desk-tools-launch",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "fill",
+        "adapter": "ui-input",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": "[id=\"desk-palette-option-roadmap:roadmap:atlas-desk\"]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-roadmap-window",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-roadmap-window:has-text(\"Roadmap not found\")",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": ".desk-roadmap-window button[aria-label^=\"Close \"]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-roadmap-window",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "[data-testid=\"chair-floor-toggle\"]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "name": "Floor",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": ".desk-tools-launch",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "fill",
+        "adapter": "ui-input",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": "[id=\"desk-palette-option-roadmap:roadmap:atlas-desk\"]",
+        "done": true
+      }
+    ]
+  },
+  "diff": {},
+  "before": {
+    "observe_at": ".desk-roadmap-window",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "",
+    "url": "http://127.0.0.1:52092/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T06:42:26.037166+00:00"
+  },
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "fail",
+  "notes": [
+    "TRIGGER lifecycle failed: ui step wait_for on '.desk-roadmap-window' failed: TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\".desk-roadmap-window\").first to be visible\n"
+  ],
+  "complete": true,
+  "trigger_error": {
+    "step": {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-by-viewport",
+      "selector": ".desk-tools-launch",
+      "then": [
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Atlas Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-roadmap:roadmap:atlas-desk\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-roadmap-window",
+          "state": "visible",
+          "timeout_s": 10,
+          "capture_shot": true
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-roadmap-window:has-text(\"Roadmap not found\")",
+          "state": "visible",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-roadmap-window button[aria-label^=\"Close \"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-roadmap-window",
+          "state": "hidden",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "timeout_s": 2
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Atlas Desk"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-roadmap:roadmap:atlas-desk\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-roadmap-window",
+          "state": "visible",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-roadmap-window:has-text(\"Roadmap not found\")",
+          "state": "visible",
+          "timeout_s": 10
+        }
+      ]
+    },
+    "error": "ui step wait_for on '.desk-roadmap-window' failed: TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\".desk-roadmap-window\").first to be visible\n",
+    "lifecycle": "fail"
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/b0head-all/20261003T064207Z-case.p13.roadmap.window-muaddib-1440/blocked.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "REPO_ROOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/atlas-desk-repository",
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ec7qb62a/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:52092"
+  ],
+  "duration_s": 34.865
+}

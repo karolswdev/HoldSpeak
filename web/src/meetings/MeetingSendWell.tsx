@@ -14,7 +14,7 @@ import { useState } from "react";
 import { CycleGadget } from "../desk/surface";
 import { SendHistory, SendWell, mergeKnown, pickDestination, pickedDestination, useSends } from "../desk/surface/send";
 import { useAnnounceWindowDocument } from "../desk/windowSend";
-import { stamp } from "../features/channels/channels";
+import { stamp } from "../features/channels/channels"; import { keepPlace, keptPlace } from "../desk/deskMemory"; // PHILO-13-07 (B2)
 
 export const MEETING_FORMS = [
   { value: "meeting_summary", label: "Summary", word: "SUMMARY" },
@@ -34,7 +34,7 @@ const day = (iso?: string | null) => (iso ? stamp(iso).replace(/ \d\d:\d\d$/, ""
 export function MeetingSendWell({ meetingId, title, startedAt }: {
   meetingId: string; title: string; startedAt?: string | null;
 }) {
-  const [kind, setKind] = useState<Form>(formPick.get(meetingId) ?? "meeting_summary");
+  const [kind, setKind] = useState<Form>(formPick.get(meetingId) ?? MEETING_FORMS.find((f) => f.value === keptPlace(`meeting/form/${meetingId}`))?.value ?? "meeting_summary"); // B2: the kept pick, per meeting
   const form = MEETING_FORMS.find((f) => f.value === kind) ?? MEETING_FORMS[0];
   // PHILO-13-15 (C5): the window's document for `Send to ▸` (this form).
   useAnnounceWindowDocument({ kind: "meeting", id: meetingId, form: BINDING_FORM[kind] });
@@ -47,7 +47,7 @@ export function MeetingSendWell({ meetingId, title, startedAt }: {
           // keeps the picked destination.
           const was = pickedDestination(`${kind}:${meetingId}`);
           if (was) pickDestination(`${v}:${meetingId}`, was);
-          formPick.set(meetingId, v as Form); setKind(v as Form);
+          formPick.set(meetingId, v as Form); keepPlace(`meeting/form/${meetingId}`, v === "meeting_summary" ? "" : v); setKind(v as Form); // B2: kept per meeting
         }} />
     </div>
   );

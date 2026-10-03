@@ -7493,7 +7493,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 589,
+      "line": 591,
       "kinds": [
         "http_client"
       ],
@@ -7503,7 +7503,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 665,
+      "line": 667,
       "kinds": [
         "http_client"
       ],
@@ -7513,7 +7513,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 704,
+      "line": 706,
       "kinds": [
         "http_client"
       ],
@@ -7523,7 +7523,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 717,
+      "line": 719,
       "kinds": [
         "http_client"
       ],
@@ -7533,7 +7533,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 730,
+      "line": 732,
       "kinds": [
         "http_client"
       ],
@@ -7543,7 +7543,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 742,
+      "line": 744,
       "kinds": [
         "http_client"
       ],
@@ -7553,7 +7553,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 756,
+      "line": 758,
       "kinds": [
         "http_client"
       ],
@@ -7563,7 +7563,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 761,
+      "line": 763,
       "kinds": [
         "http_client"
       ],
@@ -7573,7 +7573,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 783,
+      "line": 785,
       "kinds": [
         "http_client"
       ],
@@ -7583,7 +7583,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 868,
+      "line": 870,
       "kinds": [
         "http_client"
       ],
@@ -7593,7 +7593,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 885,
+      "line": 887,
       "kinds": [
         "http_client"
       ],
@@ -8393,7 +8393,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 85,
+      "line": 86,
       "kinds": [
         "http_client"
       ],
@@ -8403,7 +8403,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 212,
+      "line": 216,
       "kinds": [
         "http_client"
       ],
@@ -8413,7 +8413,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 590,
+      "line": 610,
       "kinds": [
         "http_client"
       ],
@@ -8423,7 +8423,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 677,
+      "line": 697,
       "kinds": [
         "http_client"
       ],
@@ -8433,7 +8433,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 688,
+      "line": 708,
       "kinds": [
         "http_client"
       ],
@@ -8443,7 +8443,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 734,
+      "line": 754,
       "kinds": [
         "http_client"
       ],
@@ -8453,7 +8453,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 746,
+      "line": 766,
       "kinds": [
         "http_client"
       ],
@@ -8463,7 +8463,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 770,
+      "line": 790,
       "kinds": [
         "http_client"
       ],
@@ -8473,7 +8473,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 771,
+      "line": 791,
       "kinds": [
         "http_client"
       ],
@@ -8483,7 +8483,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 772,
+      "line": 792,
       "kinds": [
         "http_client"
       ],
@@ -8493,17 +8493,17 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 791,
+      "line": 812,
       "kinds": [
         "http_client"
       ],
       "excerpt": "const createRequest = async () => { if (!request.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/requests`, { method: \"POST\", json: { body: request.trim(), visibility: \"shared_intent\", sourc",
-      "line_sha256": "680af437151875bdf6bea8b4a5a67a145999805a16ff0286808bc784e210fcd2",
+      "line_sha256": "527cc781b6c810e36d1ff16ff7b303bafc0e9f2862f128e0e8c3125e2ef904ac",
       "review": "candidate_only"
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 792,
+      "line": 813,
       "kinds": [
         "http_client"
       ],
@@ -8513,7 +8513,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 870,
+      "line": 891,
       "kinds": [
         "http_client"
       ],
@@ -8523,7 +8523,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 886,
+      "line": 907,
       "kinds": [
         "http_client"
       ],
@@ -8533,7 +8533,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 887,
+      "line": 908,
       "kinds": [
         "http_client"
       ],
@@ -8543,17 +8543,17 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 904,
+      "line": 926,
       "kinds": [
         "http_client"
       ],
       "excerpt": "const add = async () => { if (!draft.trim()) return; setBusy(true); try { const active = session ?? (await apiFetch<{ one_on_one: Session }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/one-on-ones`, { method: \"POST\", json: { visibility } ",
-      "line_sha256": "ab05fde5edff9faaca753ec4321b2ca1fc4a8080864feb025c363e6eac490122",
+      "line_sha256": "0cdd4b1d0fc21ab8916c504c2573b7f35a602a6e78ff44ef55ebbcc9e0ef5d04",
       "review": "candidate_only"
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 905,
+      "line": 927,
       "kinds": [
         "http_client"
       ],
@@ -8563,7 +8563,7 @@
     },
     {
       "path": "web/src/pages/cores/PeopleCore.tsx",
-      "line": 910,
+      "line": 932,
       "kinds": [
         "http_client"
       ],

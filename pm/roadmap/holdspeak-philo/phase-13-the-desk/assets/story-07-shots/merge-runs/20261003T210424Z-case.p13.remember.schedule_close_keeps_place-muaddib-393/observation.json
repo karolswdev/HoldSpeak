@@ -1,0 +1,1547 @@
+{
+  "id": "obs-20261003T210424Z-case.p13.remember.schedule_close_keeps_place-muaddib-393",
+  "run_id": "20261003T210424Z-case.p13.remember.schedule_close_keeps_place-muaddib-393",
+  "case_id": "case.p13.remember.schedule_close_keeps_place",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-muaddib.json",
+  "job": "j2",
+  "edge_ids": [
+    "edge.face.window_return"
+  ],
+  "state_id": "state.desk_presentation.p13_remember_schedule",
+  "provenance": {
+    "revision": "ab9bd1ea57c388288c5b02812179bc21da265b54",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "d84516940a8671827fad725c86d6306b48e39fab111ad14cba23a388223d442f",
+      "assets": [
+        "index-yocudMGr.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50606",
+      "port": 50606,
+      "pid": 43340,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-trtcgwho",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-trtcgwho/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T21:04:25.112654+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-muaddib.json",
+      "sha256": "7a332b13de9afa59d4ce76c98e95b2573a3695e1c565f46442cfbc6309b30b4d",
+      "version": "phase13-muaddib"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "browser_context": {
+      "viewport": 393,
+      "has_touch": true
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-trtcgwho",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-trtcgwho",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-trtcgwho/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-trtcgwho"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-03T15:04:28.961690"
+        }
+      },
+      "response_sha256": "5871c9fc1e50b532d4c6b195c2a2a70af0a8cc8065b8610783dc36e2e7738ca8"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-trtcgwho"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-touch",
+    "adapter_requested": "ui-by-viewport",
+    "at_width": 393,
+    "selector": ".desk-dock [aria-label^='Speak']",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "at_width": 393,
+        "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-touch",
+        "adapter_requested": "ui-by-viewport",
+        "selector": "[data-testid=arrival-schedule]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "fill",
+        "adapter": "ui-input",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-touch",
+        "adapter_requested": "ui-by-viewport",
+        "selector": "[id='schedule:__create__'] .desk-gadget-close",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "[id='schedule:__create__']",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-touch",
+        "adapter_requested": "ui-by-viewport",
+        "at_width": 393,
+        "selector": ".desk-dock [aria-label^='Speak']",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "at_width": 393,
+        "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-touch",
+        "adapter_requested": "ui-by-viewport",
+        "selector": "[data-testid=arrival-schedule]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "[id='schedule:__create__'] input[aria-label='Title']",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": ""
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "aria-label": "Title",
+        "placeholder": "Scheduled recording",
+        "type": "text",
+        "value": "P13 ledger dry run"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 19,
+        "y": 147,
+        "w": 261,
+        "h": 44
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "body",
+      "after": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+    },
+    "focus_label": {
+      "before": "",
+      "after": "Title"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Capture",
+          "rect": {
+            "x": 0,
+            "y": 44,
+            "w": 393,
+            "h": 752
+          },
+          "visible": true
+        },
+        {
+          "title": "Schedule recording",
+          "rect": {
+            "x": 0,
+            "y": 44,
+            "w": 393,
+            "h": 752
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "b938791775d7393359901b7d6fb84fc2807fd425f79b5510eb3736ddda57f6a7"
+    },
+    "document_text_len": {
+      "before": 0,
+      "after": 336
+    },
+    "values": {
+      "before": [],
+      "after": [
+        {
+          "selector": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input",
+          "value": "P13 ledger dry run"
+        }
+      ]
+    },
+    "field_value": {
+      "before": {
+        "selector": "[id='schedule:__create__'] input[aria-label='Title']",
+        "present": false,
+        "value": null
+      },
+      "after": {
+        "selector": "[id='schedule:__create__'] input[aria-label='Title']",
+        "present": true,
+        "value": "P13 ledger dry run"
+      }
+    }
+  },
+  "before": {
+    "observe_at": "[id='schedule:__create__'] input[aria-label='Title']",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": {
+      "selector": "[id='schedule:__create__'] input[aria-label='Title']",
+      "present": false,
+      "value": null
+    },
+    "focus": "body",
+    "focus_label": "",
+    "url": "http://127.0.0.1:50606/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T21:04:29.600215+00:00"
+  },
+  "after": {
+    "observe_at": "[id='schedule:__create__'] input[aria-label='Title']",
+    "target_present": true,
+    "text": "",
+    "attrs": {
+      "aria-label": "Title",
+      "placeholder": "Scheduled recording",
+      "type": "text",
+      "value": "P13 ledger dry run"
+    },
+    "rect": {
+      "x": 19,
+      "y": 147,
+      "w": 261,
+      "h": 44
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 19,
+        "y": 147,
+        "w": 261,
+        "h": 44
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 51.625,
+          "y": 152.5,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 51.625,
+          "y": 169,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 51.625,
+          "y": 185.5,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 149.5,
+          "y": 152.5,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 149.5,
+          "y": 169,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 149.5,
+          "y": 185.5,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 247.375,
+          "y": 152.5,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 247.375,
+          "y": 169,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 247.375,
+          "y": 185.5,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 368,
+        "w": 369,
+        "h": 144
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input",
+        "value": "P13 ledger dry run"
+      }
+    ],
+    "field_value": {
+      "selector": "[id='schedule:__create__'] input[aria-label='Title']",
+      "present": true,
+      "value": "P13 ledger dry run"
+    },
+    "focus": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input",
+    "focus_label": "Title",
+    "url": "http://127.0.0.1:50606/",
+    "windows": [
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Schedule recording",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "b938791775d7393359901b7d6fb84fc2807fd425f79b5510eb3736ddda57f6a7",
+    "document_text_len": 336,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T21:04:32.630415+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:50606) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:50606) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/follow-through/board",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decision-records/review",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings/ready",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/people/readiness",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-agents.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-people.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-bell.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-meetings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-speak.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[id='schedule:__create__'] input[aria-label='Title']",
+    "target_present": true,
+    "text": "",
+    "attrs": {
+      "aria-label": "Title",
+      "placeholder": "Scheduled recording",
+      "type": "text",
+      "value": "P13 ledger dry run"
+    },
+    "rect": {
+      "x": 19,
+      "y": 147,
+      "w": 261,
+      "h": 44
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 19,
+        "y": 147,
+        "w": 261,
+        "h": 44
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 51.625,
+          "y": 152.5,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 51.625,
+          "y": 169,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 51.625,
+          "y": 185.5,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 149.5,
+          "y": 152.5,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 149.5,
+          "y": 169,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 149.5,
+          "y": 185.5,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 247.375,
+          "y": 152.5,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 247.375,
+          "y": 169,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        },
+        {
+          "x": 247.375,
+          "y": 185.5,
+          "owned": true,
+          "owner": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 54,
+        "w": 393,
+        "h": 746
+      },
+      "capture_bar": {
+        "x": 12,
+        "y": 368,
+        "w": 369,
+        "h": 144
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input",
+        "value": "P13 ledger dry run"
+      }
+    ],
+    "field_value": {
+      "selector": "[id='schedule:__create__'] input[aria-label='Title']",
+      "present": true,
+      "value": "P13 ledger dry run"
+    },
+    "focus": "section.gadget-group > div.gadget-sheet > div.gadget-row > span.gadget-row-gadget > span.gadget-string > input",
+    "focus_label": "Title",
+    "url": "http://127.0.0.1:50606/",
+    "windows": [
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Schedule recording",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "b938791775d7393359901b7d6fb84fc2807fd425f79b5510eb3736ddda57f6a7",
+    "document_text_len": 336,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T21:04:32.499926+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:50606) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:50606) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/follow-through/board",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decision-records/review",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings/ready",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/people/readiness",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-agents.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-people.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-bell.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-meetings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-speak.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "value is 'P13 ledger dry run', wanted 'P13 ledger dry run'",
+    "elapsed_s": 2.868
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "value is 'P13 ledger dry run', wanted 'P13 ledger dry run'",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 2.998,
+    "first_satisfied_at_s": 2.868,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: value is 'P13 ledger dry run', wanted 'P13 ledger dry run'"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:50606) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:50606) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings/heartbeat",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/follow-through/board",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decision-records/review",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/ready",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/people/readiness",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-agents.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-people.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-bell.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-search.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-meetings.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-mark.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-speak.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings/heartbeat",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs4/atlas-phase13-muaddib/20261003T210424Z-case.p13.remember.schedule_close_keeps_place-muaddib-393/before.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs4/atlas-phase13-muaddib/20261003T210424Z-case.p13.remember.schedule_close_keeps_place-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-trtcgwho/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-trtcgwho/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50606"
+  ],
+  "duration_s": 8.045
+}

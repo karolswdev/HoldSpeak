@@ -1,0 +1,28 @@
+{
+ "windows": [
+  "Needs you"
+ ],
+ "workspace": {
+  "version": 1,
+  "windowsById": {},
+  "panel": {
+   "rects": {},
+   "order": [
+    "chair:needs"
+   ],
+   "max": [],
+   "min": []
+  },
+  "zoneWindows": [],
+  "zoneViewPrefs": {},
+  "windows": {
+   "pullouts": [],
+   "info": [],
+   "roadmap": [],
+   "repository": [],
+   "workbench": []
+  },
+  "drafts": {},
+  "places": {}
+ }
+}

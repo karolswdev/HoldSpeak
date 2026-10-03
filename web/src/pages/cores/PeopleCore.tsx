@@ -9,6 +9,7 @@ import { openSurfaceOr } from "../../desk/shell";
 import { PERSON_OPEN_EVENT, refOpener, type PersonOpenRequest } from "../../desk/openObject";
 import { composePeoplePrep, readPeoplePrep, type PeoplePrepData, type PrepCalendarEvent } from "../../desk/people/prepData";
 import { announceTaskReturn, taskFocusPending } from "../../desk/returnToTask";
+import { keepPlace, keptPlace, useDeskDraft } from "../../desk/deskMemory";
 import { CycleGadget, EgressChip, PadGadget, StringGadget } from "../../desk/surface/gadgets";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import {
@@ -141,6 +142,9 @@ function isProtectedFailure(cause: unknown): boolean {
   return code.startsWith("people_store_") || code.startsWith("people_key_");
 }
 
+/** PHILO-13-07 (B2) — the People window's place: the person it was on. */
+const PEOPLE_PERSON_PLACE = "people/person";
+
 function facts() {
   return <><span className="people-fact">Encrypted</span><span className="people-fact">Local storage</span><span className="people-fact">Notes only</span></>;
 }
@@ -217,6 +221,9 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     // PHILO-13-04 fix round (Astra counsel P2): a standing failure leaves only
     // when this read lands; it is never cleared before the person is back.
     setSelectedId(id); setDetail(null);
+    // PHILO-13-07 (B2): the person is this window's place; it returns after
+    // a reload and a close.
+    keepPlace(PEOPLE_PERSON_PLACE, id);
     try {
       const [relationship, sessions] = await Promise.all([
         apiFetch<{ relationship: Relationship }>(`/api/people/relationships/${encodeURIComponent(id)}`),
@@ -234,6 +241,13 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       relationships.some((relationship) => relationship.id === requestedRelationshipId)
     ) void select(requestedRelationshipId);
   }, [readiness, relationships, requestedRelationshipId, selectedId]); // selection is a response to the opaque Desk scope
+  // PHILO-13-07 (B2): with no person in the open request, the window comes
+  // back on the person it was on (an explicit scope always wins).
+  useEffect(() => {
+    if (stateOf(readiness) !== "ready" || requestedRelationshipId || requestedProjectId || selectedId) return;
+    const kept = keptPlace(PEOPLE_PERSON_PLACE);
+    if (kept && relationships.some((relationship) => relationship.id === kept)) void select(kept);
+  }, [readiness, relationships]); // once per roster read: Back clears the place
   const createRelationship = async () => {
     const display_name = newName.trim(); if (!display_name) return;
     setBusy(true); setError("");
@@ -285,7 +299,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     <SurfaceSplit
       detailOpen={Boolean(selected)}
       main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} projectFilter={projectFilter} onClearProjectFilter={() => setProjectFilter(null)} />}
-      detail={selected ? <RelationshipPane relationship={selected} initialLens={requestedLens} lensRequest={lensRequest} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); }} /> : undefined}
+      detail={selected ? <RelationshipPane relationship={selected} initialLens={requestedLens} lensRequest={lensRequest} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); keepPlace(PEOPLE_PERSON_PLACE, ""); }} /> : undefined}
     />
   </div>;
 }
@@ -318,11 +332,17 @@ function Roster({ relationships, selectedId, newName, setNewName, newKind, setNe
 type NowConcern = "prs" | "assignments" | "commitments" | null;
 
 function RelationshipPane({ relationship, initialLens, lensRequest = null, onRefresh, onProtectedFailure, onArchived, onBack }: { relationship: RelationshipDetail; initialLens?: Lens | null; lensRequest?: { lens: Lens; seq: number } | null; onRefresh(): void; onProtectedFailure(cause: unknown): void; onArchived(): void; onBack(): void }) {
-  const [lens, setLens] = useState<Lens>(initialLens || "now");
+  // PHILO-13-07 (B2): the tab is part of the place, kept per person.
+  const lensPlace = `people/lens/${relationship.id}`;
+  const [lens, setLensState] = useState<Lens>(() => initialLens || (keptPlace(lensPlace) as Lens) || "now");
+  const setLens = useCallback((next: Lens) => {
+    setLensState(next);
+    keepPlace(lensPlace, next === "now" ? "" : next);
+  }, [lensPlace]);
   // PHILO-13-06 (B1): a row that opens this person on a lens (a 1:1 → Prep)
   // moves the open window to that lens.
-  useEffect(() => { if (initialLens) setLens(initialLens); }, [initialLens]);
-  useEffect(() => { if (lensRequest) setLens(lensRequest.lens); }, [lensRequest]);
+  useEffect(() => { if (initialLens) setLens(initialLens); }, [initialLens, setLens]);
+  useEffect(() => { if (lensRequest) setLens(lensRequest.lens); }, [lensRequest, setLens]);
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
   const [nowConcern, setNowConcern] = useState<NowConcern>(null);
   const [prepBrief, setPrepBrief] = useState<OneOnOneBrief | null>(null);
@@ -343,11 +363,11 @@ function RelationshipPane({ relationship, initialLens, lensRequest = null, onRef
     setPrepBrief(brief);
     setNowConcern(concern);
     setLens("now");
-  }, []);
+  }, [setLens]);
   const switchLens = useCallback((id: Lens) => {
     setLens(id);
     if (id !== "now") setNowConcern(null);
-  }, []);
+  }, [setLens]);
   return <div className="people-detail">
     <div className="people-detail-head"><Button dense variant="ghost" onClick={onBack}>Back</Button><strong>{relationship.display_name}</strong></div>
     {nextLabel ? <div className="people-next-header" data-testid="people-next-1on1">NEXT 1:1 &middot; {nextLabel}</div> : null}
@@ -787,8 +807,9 @@ function relationshipLabel(kind?: string): string {
 }
 
 function NowLens({ relationship, onRefresh, onProtectedFailure, concern, prepBrief }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; concern?: NowConcern; prepBrief?: OneOnOneBrief | null }) {
-  const [request, setRequest] = useState(""); const [busy, setBusy] = useState(false); const [selectedCommitment, setSelectedCommitment] = useState<Commitment | null>(null);
-  const createRequest = async () => { if (!request.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/requests`, { method: "POST", json: { body: request.trim(), visibility: "shared_intent", source: { kind: "manual" } } }); setRequest(""); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
+  // PHILO-13-07 (B2): the unsent request is kept per person; Add clears it.
+  const [request, setRequest, forgetRequest] = useDeskDraft(`people/request/${relationship.id}`); const [busy, setBusy] = useState(false); const [selectedCommitment, setSelectedCommitment] = useState<Commitment | null>(null);
+  const createRequest = async () => { if (!request.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/requests`, { method: "POST", json: { body: request.trim(), visibility: "shared_intent", source: { kind: "manual" } } }); forgetRequest(); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
   const accept = async (id: string) => { try { await apiFetch(`/api/people/requests/${encodeURIComponent(id)}/accept`, { method: "POST", json: {} }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
 
   // HS-172-05: when opened from a Prep summary row, show per-entity detail rows.
@@ -899,9 +920,10 @@ function HistoryLens({ relationship }: { relationship: RelationshipDetail }) {
 }
 
 function OneOnOnes({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
-  const [draft, setDraft] = useState(""); const [visibility, setVisibility] = useState<Visibility>("shared_intent"); const [busy, setBusy] = useState(false);
+  // PHILO-13-07 (B2): the unsent agenda item is kept per person; Add clears it.
+  const [draft, setDraft, forgetDraft] = useDeskDraft(`people/1on1/${relationship.id}`); const [visibility, setVisibility] = useState<Visibility>("shared_intent"); const [busy, setBusy] = useState(false);
   const session = relationship.sessions?.[0];
-  const add = async () => { if (!draft.trim()) return; setBusy(true); try { const active = session ?? (await apiFetch<{ one_on_one: Session }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/one-on-ones`, { method: "POST", json: { visibility } })).one_on_one; await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(active.id)}/agenda`, { method: "POST", json: { body: draft.trim(), visibility, state: "open", source: { kind: "manual" } } }); setDraft(""); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
+  const add = async () => { if (!draft.trim()) return; setBusy(true); try { const active = session ?? (await apiFetch<{ one_on_one: Session }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/one-on-ones`, { method: "POST", json: { visibility } })).one_on_one; await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(active.id)}/agenda`, { method: "POST", json: { body: draft.trim(), visibility, state: "open", source: { kind: "manual" } } }); forgetDraft(); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
   const roll = async (item: AgendaItem) => { if (!session) return; try { await apiFetch(`/api/people/one-on-ones/${encodeURIComponent(session.id)}/agenda`, { method: "POST", json: { body: item.body, visibility: item.visibility, state: "open", rolled_from_id: item.id, source: { kind: "manual" } } }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
   return <SurfaceSection label="1:1s"><div className="people-agenda-add"><PadGadget label="Agenda item" value={draft} onChange={setDraft} placeholder="Agenda item" rows={2} /><CycleGadget label="Visibility" value={visibility} onChange={(value) => setVisibility(value as Visibility)} options={[{ value: "shared_intent", label: "Shared" }, { value: "leader_private", label: "Leader private" }]} /><Button dense disabled={!draft.trim() || busy} onClick={() => void add()}>Add</Button></div>{!session ? <SurfaceState empty emptyLabel="No 1:1s" /> : <SurfaceRows>{(session.agenda ?? []).map((item) => <SurfaceRow key={item.id} title={item.body} detail={item.visibility === "leader_private" ? "Leader private" : "Shared"} meta={item.state} verbs={<Button dense variant="ghost" onClick={() => void roll(item)}>Roll forward</Button>} />)}</SurfaceRows>}</SurfaceSection>;
 }

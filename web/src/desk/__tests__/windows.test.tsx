@@ -188,14 +188,15 @@ describe("HS-103-01: Reset Layout clears an open window's rect too", () => {
 });
 
 describe("the lifecycle store + versioned workspace persistence", () => {
-  it("round-trips rects + order + max through one slot; min stays out (HS-97-03)", () => {
+  // PHILO-13-07 (B2) supersedes HS-97-03's session-only minimize.
+  it("round-trips rects + order + max + min through one slot (PHILO-13-07 B2)", () => {
     useDesk.getState().setPanelRect("a", { x: 10, y: 20, w: 400, h: 300 }, true);
     useDesk.getState().minimizePanel("a");
     useDesk.getState().toggleMaximizePanel("b");
     const raw = JSON.parse(localStorage.getItem("hs.desk.workspace.v1") || "{}");
     expect(raw.rects).toBeUndefined();
     expect(raw.panel.rects.a).toEqual({ x: 10, y: 20, w: 400, h: 300 });
-    expect(raw.panel.min).toBeUndefined();
+    expect(raw.panel.min).toEqual(["a"]);
     expect(raw.panel.order).toEqual(["b"]);
     expect(raw.panel.max).toEqual(["b"]);
     expect(useDesk.getState().panelMin).toEqual(["a"]);
@@ -207,7 +208,7 @@ describe("the lifecycle store + versioned workspace persistence", () => {
     useDesk.getState().toggleMaximizePanel("b");
     useDesk.getState().toggleMaximizePanel("b");
     const raw = JSON.parse(localStorage.getItem("hs.desk.workspace.v1") || "{}");
-    expect(raw.panel.min).toBeUndefined();
+    expect(raw.panel.min).toEqual([]);
     expect(raw.panel.max).toEqual([]);
   });
 

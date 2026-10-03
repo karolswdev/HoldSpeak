@@ -1,0 +1,387 @@
+{
+  "id": "obs-20261003T204256Z-case.p13.directory.zone-muaddib-393",
+  "run_id": "20261003T204256Z-case.p13.directory.zone-muaddib-393",
+  "case_id": "case.p13.directory.zone",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j3",
+  "edge_ids": [
+    "edge.face.directory_zone_window"
+  ],
+  "state_id": "state.desk_presentation.p13_unwalked_windows",
+  "provenance": {
+    "revision": "06116f5c68cbc23a75af9df96333327919cb4240",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f256163c5fb16d4dcafc1e26884896c729452af1703e1f0af707833a4be33886",
+      "assets": [
+        "index-BRUaZ34P.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64816",
+      "port": 64816,
+      "pid": 27798,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-90hqirhx",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-90hqirhx/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T20:42:57.371635+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "7e4fd58cff5125d68eb75fe0466df81044095ff7fb3641537bba98bc5c61a755",
+      "version": "phase13-astra-wave2"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "browser_context": {
+      "viewport": 393,
+      "has_touch": true
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-90hqirhx",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-90hqirhx",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-90hqirhx/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-90hqirhx"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.28,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/directories",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "directory": {
+          "id": "dir_da9960ef93b3",
+          "name": "Atlas Phase 13 Zone",
+          "name_normalized": "atlas phase 13 zone",
+          "parent_id": null,
+          "created_at": "2026-10-03T20:43:02Z",
+          "last_modified": "2026-10-03T20:43:02Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "2e7e8616598ebc69cdf4cac02acc510c09594da5255687e886d43a5358c385f6",
+      "captured": {
+        "name": "zone_id",
+        "path": "directory.id",
+        "value": "dir_da9960ef93b3"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-observation",
+      "selector": "[data-testid=\"chair-floor-toggle\"]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Floor",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "at_width": 393,
+      "selector": ".desk-tools-launch",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-input",
+      "at_width": 393,
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "at_width": 393,
+      "selector": "[id=\"desk-palette-option-desk.toggle-view\"]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "The Zone producer is real. Spatial's world zone is the ordinary Directory door: its native context menu should offer Open and the product verb should open the real ZoneWindow.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "Every mouse/touch press uses ui-by-viewport. The real __hsWorldZoneProbe and __hsWorldHitProbe agree on the produced zone before the native context gesture; the window closes, reloads, and reopens through that same door.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-90hqirhx",
+    "zone_id": "dir_da9960ef93b3"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "world_context_menu",
+    "adapter": "ui-touch",
+    "adapter_requested": "ui-by-viewport",
+    "world_ref": "dir_da9960ef93b3",
+    "world_target": "zone",
+    "world_probe": {
+      "id": "dir_da9960ef93b3",
+      "x": 65.5,
+      "y": 162.4,
+      "width": 104,
+      "height": 116
+    },
+    "point": {
+      "x": 65.5,
+      "y": 168.4
+    },
+    "world_hit_probe": {
+      "type": "zone",
+      "id": "dir_da9960ef93b3"
+    },
+    "gesture": "touch-long-press",
+    "hold_ms": 650,
+    "selector": ".desk-world-canvas",
+    "done": true,
+    "then": []
+  },
+  "diff": {},
+  "before": {
+    "observe_at": ".desk-zone-window",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nGo\nFloor\n\u2302 THIS DEVICE\n1\nSearch\n02:43 PM\nAtlas Pha",
+    "url": "http://127.0.0.1:64816/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "9166102f750d77104ef003fa3caeebd3952f5f11e9dcfd3c21f268d9b36d9e21",
+    "document_text_len": 263,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T20:43:07.481040+00:00"
+  },
+  "after": null,
+  "initial_feedback": null,
+  "terminal_outcome": null,
+  "verdict": "fail",
+  "notes": [
+    "TRIGGER lifecycle failed: ui step click_role on 'Open' failed: TimeoutError: Locator.tap: Timeout 10000ms exceeded.\nCall log:\n  - waiting for get_by_role(\"menuitem\", name=\"Open\", exact=True).first\n    - locator resolved to <button type=\"button\" role=\"menuitem\" aria-disabled=\"t"
+  ],
+  "complete": true,
+  "trigger_error": {
+    "step": {
+      "kind": "ui",
+      "action": "world_context_menu",
+      "adapter": "ui-by-viewport",
+      "selector": ".desk-world-canvas",
+      "world_target": "zone",
+      "world_ref": "{zone_id}",
+      "hold_ms": 650,
+      "then": [
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "menuitem",
+          "name": "Open"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-zone-window",
+          "state": "visible",
+          "timeout_s": 10,
+          "capture_shot": true
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-zone-window button[aria-label^=\"Close \"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-zone-window",
+          "state": "hidden",
+          "timeout_s": 10
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "timeout_s": 2
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-world-canvas",
+          "state": "visible",
+          "timeout_s": 15
+        },
+        {
+          "kind": "ui",
+          "action": "world_context_menu",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-world-canvas",
+          "world_target": "zone",
+          "world_ref": "{zone_id}",
+          "hold_ms": 650
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "menuitem",
+          "name": "Open"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-zone-window",
+          "state": "visible",
+          "timeout_s": 10
+        }
+      ]
+    },
+    "error": "ui step click_role on 'Open' failed: TimeoutError: Locator.tap: Timeout 10000ms exceeded.\nCall log:\n  - waiting for get_by_role(\"menuitem\", name=\"Open\", exact=True).first\n    - locator resolved to <button type=\"button\" role=\"menuitem\" aria-disabled=\"t",
+    "lifecycle": "fail"
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs3/atlas-phase13-astra/20261003T204256Z-case.p13.directory.zone-muaddib-393/blocked.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-90hqirhx/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-90hqirhx/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64816"
+  ],
+  "duration_s": 25.192
+}

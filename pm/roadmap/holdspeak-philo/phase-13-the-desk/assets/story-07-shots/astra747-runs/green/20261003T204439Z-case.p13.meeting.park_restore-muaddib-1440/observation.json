@@ -1,0 +1,2269 @@
+{
+  "id": "obs-20261003T204439Z-case.p13.meeting.park_restore-muaddib-1440",
+  "run_id": "20261003T204439Z-case.p13.meeting.park_restore-muaddib-1440",
+  "case_id": "case.p13.meeting.park_restore",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j6",
+  "edge_ids": [
+    "edge.route.meetings_park"
+  ],
+  "state_id": "state.meetings.p13_park_restore",
+  "provenance": {
+    "revision": "06116f5c68cbc23a75af9df96333327919cb4240",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f256163c5fb16d4dcafc1e26884896c729452af1703e1f0af707833a4be33886",
+      "assets": [
+        "index-BRUaZ34P.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64916",
+      "port": 64916,
+      "pid": 28718,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo11_documents/meeting_transcript.vtt": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T20:44:39.947537+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [
+      {
+        "kind": "cli",
+        "action": "restart_hub",
+        "adapter": "process",
+        "stopped_pid": 28718,
+        "started_pid": 28795,
+        "downtime_s": 1.53,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4/.local/share/holdspeak/holdspeak.db",
+        "port": 64916,
+        "hub_identity": {
+          "url": "http://127.0.0.1:64916",
+          "port": 64916,
+          "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4/.local/share/holdspeak/holdspeak.db",
+          "stopped_pid": 28718,
+          "started_pid": 28795
+        },
+        "meeting_before": {
+          "meeting_id": null,
+          "summary": null,
+          "run_receipt": null,
+          "transcription_status": null,
+          "payload": "{\"error\":\"Meeting not found\"}"
+        },
+        "meeting_after": {
+          "meeting_id": null,
+          "summary": null,
+          "run_receipt": null,
+          "transcription_status": null,
+          "payload": "{\"error\":\"Meeting not found\"}"
+        },
+        "summary_retained": false,
+        "receipt_retained": false,
+        "meeting_identity_retained": false
+      }
+    ],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "7e4fd58cff5125d68eb75fe0466df81044095ff7fb3641537bba98bc5c61a755",
+      "version": "phase13-astra-wave2"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "browser_context": {
+      "viewport": 1440,
+      "has_touch": false
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.96,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "fixture",
+      "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+      "route": {
+        "method": "POST",
+        "path": "/api/meetings/import"
+      },
+      "adapter": "http-route",
+      "status": 202,
+      "response": {
+        "meeting_id": "156cfba4",
+        "status": "importing"
+      },
+      "captured": {
+        "name": "meeting_id",
+        "path": "meeting_id",
+        "value": "156cfba4"
+      },
+      "completion_wait": {
+        "method": "GET",
+        "path": "/api/meetings/156cfba4",
+        "fields": {
+          "/transcription_status": "complete",
+          "/segments": {
+            "min_items": 3
+          }
+        },
+        "status": 200,
+        "matched": true,
+        "polls": 2,
+        "elapsed_s": 0.317,
+        "payload": {
+          "id": "156cfba4",
+          "parked": false,
+          "started_at": "2026-10-03T14:44:44.875709",
+          "ended_at": "2026-10-03T14:45:08.875709",
+          "duration": 24.0,
+          "formatted_duration": "00:24",
+          "title": "Atlas retained meeting",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Avery: We agree to use one document registry for the channel sources.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 8.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "Blair: Avery will check the frozen bytes before the next review.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 8.0,
+              "end_time": 16.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "Avery: The channel reads durable records and keeps the transcript private.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 16.0,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 34,
+          "sync_modified_at": "2026-10-03T14:44:44.879102",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "field_matches": {
+          "/transcription_status": true,
+          "/segments": true
+        }
+      }
+    },
+    {
+      "kind": "api",
+      "method": "DELETE",
+      "path": "/api/meetings/156cfba4",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "parked": "156cfba4"
+      },
+      "response_sha256": "2ea33374983bdb6c4ce7ed41df14606911db5f88402dde7d138dd70bbf5e65b2"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings?parked=true",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/meetings/0/id",
+        "value": "156cfba4"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/meetings/0/id equals the declared value"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings/156cfba4?include_parked=true",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/parked",
+        "value": true
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/parked equals the declared value"
+    },
+    {
+      "kind": "cli",
+      "action": "restart_hub",
+      "adapter": "process",
+      "stopped_pid": 28718,
+      "started_pid": 28795,
+      "downtime_s": 1.53,
+      "same_db_path": true,
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4/.local/share/holdspeak/holdspeak.db",
+      "port": 64916,
+      "hub_identity": {
+        "url": "http://127.0.0.1:64916",
+        "port": 64916,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4/.local/share/holdspeak/holdspeak.db",
+        "stopped_pid": 28718,
+        "started_pid": 28795
+      },
+      "meeting_before": {
+        "meeting_id": null,
+        "summary": null,
+        "run_receipt": null,
+        "transcription_status": null,
+        "payload": "{\"error\":\"Meeting not found\"}"
+      },
+      "meeting_after": {
+        "meeting_id": null,
+        "summary": null,
+        "run_receipt": null,
+        "transcription_status": null,
+        "payload": "{\"error\":\"Meeting not found\"}"
+      },
+      "summary_retained": false,
+      "receipt_retained": false,
+      "meeting_identity_retained": false
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-navigation",
+      "selector": ".desk-dock",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/meetings/156cfba4?include_parked=true",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "/segments/1/text",
+        "value": "Blair: Avery will check the frozen bytes before the next review."
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "/segments/1/text equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/meetings/156cfba4/restore",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "meeting": {
+          "id": "156cfba4",
+          "parked": false,
+          "started_at": "2026-10-03T14:44:44.875709",
+          "ended_at": "2026-10-03T14:45:08.875709",
+          "duration": 24.0,
+          "formatted_duration": "00:24",
+          "title": "Atlas retained meeting",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Avery: We agree to use one document registry for the channel sources.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 8.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "Blair: Avery will check the frozen bytes before the next review.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 8.0,
+              "end_time": 16.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "Avery: The channel reads durable records and keeps the transcript private.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 16.0,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 34,
+          "sync_modified_at": "2026-10-03T14:44:44.879102",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        }
+      },
+      "response_sha256": "167fd0e8568d2b7096ca9ede38bc1c78472153b9ef398b9bed2a6715c92f0604"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "H-A1 backend proof only. Existing face is not changed or certified. Real VTT import needs no engine. Every DB lives in the run HOME.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4",
+    "meeting_id": "156cfba4"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "reload",
+    "adapter": "ui-navigation",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-navigation",
+        "selector": ".desk-dock",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "document_text_sha256": {
+      "before": "fafae21447f079d8b9d2f2052c2d27d3cf911a0ac8ccefb3e1d7fdb2a8387434",
+      "after": "c6877f174e6de43373e572d5d2cdd0c37afaf388494cfb8af008d7736f400425"
+    },
+    "document_text_len": {
+      "before": 407,
+      "after": 521
+    }
+  },
+  "before": {
+    "observe_at": "protocol: GET /api/meetings",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:capture",
+    "focus_label": "Capture",
+    "url": "http://127.0.0.1:64916/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/meetings",
+      "status": 200,
+      "collection": "meetings",
+      "row_count": 1,
+      "payload_sha256": "92e67511958dab08bd62bc73a4b02329706cd9aba670bc32546a47280701dc9e",
+      "rows": [
+        {
+          "id": "156cfba4",
+          "started_at": "2026-10-03T14:44:44.875709",
+          "ended_at": "2026-10-03T14:45:08.875709",
+          "title": "Atlas retained meeting",
+          "duration_seconds": 24.0,
+          "segment_count": 3,
+          "action_item_count": 0,
+          "tags": [],
+          "intel_status": "disabled",
+          "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "intel_model_host": null,
+          "intel_duration_s": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "parked": false,
+          "transcriptWords": 34,
+          "needs_you_count": 0,
+          "has_summary": false,
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null
+        }
+      ],
+      "payload": {
+        "meetings": [
+          {
+            "id": "156cfba4",
+            "started_at": "2026-10-03T14:44:44.875709",
+            "ended_at": "2026-10-03T14:45:08.875709",
+            "title": "Atlas retained meeting",
+            "duration_seconds": 24.0,
+            "segment_count": 3,
+            "action_item_count": 0,
+            "tags": [],
+            "intel_status": "disabled",
+            "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "intel_model_host": null,
+            "intel_duration_s": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "parked": false,
+            "transcriptWords": 34,
+            "needs_you_count": 0,
+            "has_summary": false,
+            "planned_route": {
+              "status": "unavailable",
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "legs": []
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null
+          }
+        ],
+        "total": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "92e67511958dab08bd62bc73a4b02329706cd9aba670bc32546a47280701dc9e"
+    },
+    "document_text_sha256": "fafae21447f079d8b9d2f2052c2d27d3cf911a0ac8ccefb3e1d7fdb2a8387434",
+    "document_text_len": 407,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "payload": {
+          "meetings": [
+            {
+              "id": "156cfba4",
+              "started_at": "2026-10-03T14:44:44.875709",
+              "ended_at": "2026-10-03T14:45:08.875709",
+              "title": "Atlas retained meeting",
+              "duration_seconds": 24.0,
+              "segment_count": 3,
+              "action_item_count": 0,
+              "tags": [],
+              "intel_status": "disabled",
+              "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "intel_model_host": null,
+              "intel_duration_s": null,
+              "capture_status": "finalized",
+              "capture_failure": null,
+              "capture_checkpoint_seconds": 0.0,
+              "provenance": "desktop",
+              "calendar_event_id": null,
+              "parked": false,
+              "transcriptWords": 34,
+              "needs_you_count": 0,
+              "has_summary": false,
+              "planned_route": {
+                "status": "unavailable",
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "legs": []
+              },
+              "run_receipt": null,
+              "last_refusal": null,
+              "intel_job": null
+            }
+          ],
+          "total": 1
+        },
+        "body_sha256": "92e67511958dab08bd62bc73a4b02329706cd9aba670bc32546a47280701dc9e"
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings?parked=true",
+        "status": 200,
+        "payload": {
+          "meetings": [],
+          "total": 0
+        },
+        "body_sha256": "1d66a15943cee181126aa2d6e0beec103f375ef3c4985a875430ab621316d599"
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/156cfba4",
+        "status": 200,
+        "payload": {
+          "id": "156cfba4",
+          "parked": false,
+          "started_at": "2026-10-03T14:44:44.875709",
+          "ended_at": "2026-10-03T14:45:08.875709",
+          "duration": 24.0,
+          "formatted_duration": "00:24",
+          "title": "Atlas retained meeting",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Avery: We agree to use one document registry for the channel sources.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 8.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "Blair: Avery will check the frozen bytes before the next review.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 8.0,
+              "end_time": 16.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "Avery: The channel reads durable records and keeps the transcript private.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 16.0,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 34,
+          "sync_modified_at": "2026-10-03T14:44:44.879102",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "4d7f10e504f326ba8d45605959332d88b0697ae9069c76108c0286ef2b2917ab"
+      }
+    ],
+    "at_utc": "2026-10-03T20:44:48.852481+00:00"
+  },
+  "after": {
+    "observe_at": "protocol: GET /api/meetings",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:capture",
+    "focus_label": "Capture",
+    "url": "http://127.0.0.1:64916/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/meetings",
+      "status": 200,
+      "collection": "meetings",
+      "row_count": 1,
+      "payload_sha256": "92e67511958dab08bd62bc73a4b02329706cd9aba670bc32546a47280701dc9e",
+      "rows": [
+        {
+          "id": "156cfba4",
+          "started_at": "2026-10-03T14:44:44.875709",
+          "ended_at": "2026-10-03T14:45:08.875709",
+          "title": "Atlas retained meeting",
+          "duration_seconds": 24.0,
+          "segment_count": 3,
+          "action_item_count": 0,
+          "tags": [],
+          "intel_status": "disabled",
+          "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "intel_model_host": null,
+          "intel_duration_s": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "parked": false,
+          "transcriptWords": 34,
+          "needs_you_count": 0,
+          "has_summary": false,
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null
+        }
+      ],
+      "payload": {
+        "meetings": [
+          {
+            "id": "156cfba4",
+            "started_at": "2026-10-03T14:44:44.875709",
+            "ended_at": "2026-10-03T14:45:08.875709",
+            "title": "Atlas retained meeting",
+            "duration_seconds": 24.0,
+            "segment_count": 3,
+            "action_item_count": 0,
+            "tags": [],
+            "intel_status": "disabled",
+            "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "intel_model_host": null,
+            "intel_duration_s": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "parked": false,
+            "transcriptWords": 34,
+            "needs_you_count": 0,
+            "has_summary": false,
+            "planned_route": {
+              "status": "unavailable",
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "legs": []
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null
+          }
+        ],
+        "total": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "92e67511958dab08bd62bc73a4b02329706cd9aba670bc32546a47280701dc9e"
+    },
+    "document_text_sha256": "c6877f174e6de43373e572d5d2cdd0c37afaf388494cfb8af008d7736f400425",
+    "document_text_len": 521,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "payload": {
+          "meetings": [
+            {
+              "id": "156cfba4",
+              "started_at": "2026-10-03T14:44:44.875709",
+              "ended_at": "2026-10-03T14:45:08.875709",
+              "title": "Atlas retained meeting",
+              "duration_seconds": 24.0,
+              "segment_count": 3,
+              "action_item_count": 0,
+              "tags": [],
+              "intel_status": "disabled",
+              "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "intel_model_host": null,
+              "intel_duration_s": null,
+              "capture_status": "finalized",
+              "capture_failure": null,
+              "capture_checkpoint_seconds": 0.0,
+              "provenance": "desktop",
+              "calendar_event_id": null,
+              "parked": false,
+              "transcriptWords": 34,
+              "needs_you_count": 0,
+              "has_summary": false,
+              "planned_route": {
+                "status": "unavailable",
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "legs": []
+              },
+              "run_receipt": null,
+              "last_refusal": null,
+              "intel_job": null
+            }
+          ],
+          "total": 1
+        },
+        "body_sha256": "92e67511958dab08bd62bc73a4b02329706cd9aba670bc32546a47280701dc9e"
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings?parked=true",
+        "status": 200,
+        "payload": {
+          "meetings": [],
+          "total": 0
+        },
+        "body_sha256": "1d66a15943cee181126aa2d6e0beec103f375ef3c4985a875430ab621316d599"
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/156cfba4",
+        "status": 200,
+        "payload": {
+          "id": "156cfba4",
+          "parked": false,
+          "started_at": "2026-10-03T14:44:44.875709",
+          "ended_at": "2026-10-03T14:45:08.875709",
+          "duration": 24.0,
+          "formatted_duration": "00:24",
+          "title": "Atlas retained meeting",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Avery: We agree to use one document registry for the channel sources.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 8.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "Blair: Avery will check the frozen bytes before the next review.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 8.0,
+              "end_time": 16.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "Avery: The channel reads durable records and keeps the transcript private.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 16.0,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 34,
+          "sync_modified_at": "2026-10-03T14:44:44.879102",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "4d7f10e504f326ba8d45605959332d88b0697ae9069c76108c0286ef2b2917ab"
+      }
+    ],
+    "at_utc": "2026-10-03T20:44:51.348169+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:64916) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:64916) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-BRUaZ34P.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/react-SZyUX699.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-DIUKYpz6.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-gslz4Tc-.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-Cr5G-Rag.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/setup/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/repositories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/mic.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-speak.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-meetings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-agents.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-settings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/floor-grid.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/record-orb.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "protocol: GET /api/meetings",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:capture",
+    "focus_label": "Capture",
+    "url": "http://127.0.0.1:64916/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "protocol": {
+      "method": "GET",
+      "path": "/api/meetings",
+      "status": 200,
+      "collection": "meetings",
+      "row_count": 1,
+      "payload_sha256": "92e67511958dab08bd62bc73a4b02329706cd9aba670bc32546a47280701dc9e",
+      "rows": [
+        {
+          "id": "156cfba4",
+          "started_at": "2026-10-03T14:44:44.875709",
+          "ended_at": "2026-10-03T14:45:08.875709",
+          "title": "Atlas retained meeting",
+          "duration_seconds": 24.0,
+          "segment_count": 3,
+          "action_item_count": 0,
+          "tags": [],
+          "intel_status": "disabled",
+          "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+          "intel_model_host": null,
+          "intel_duration_s": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "parked": false,
+          "transcriptWords": 34,
+          "needs_you_count": 0,
+          "has_summary": false,
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null
+        }
+      ],
+      "payload": {
+        "meetings": [
+          {
+            "id": "156cfba4",
+            "started_at": "2026-10-03T14:44:44.875709",
+            "ended_at": "2026-10-03T14:45:08.875709",
+            "title": "Atlas retained meeting",
+            "duration_seconds": 24.0,
+            "segment_count": 3,
+            "action_item_count": 0,
+            "tags": [],
+            "intel_status": "disabled",
+            "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "intel_model_host": null,
+            "intel_duration_s": null,
+            "capture_status": "finalized",
+            "capture_failure": null,
+            "capture_checkpoint_seconds": 0.0,
+            "provenance": "desktop",
+            "calendar_event_id": null,
+            "parked": false,
+            "transcriptWords": 34,
+            "needs_you_count": 0,
+            "has_summary": false,
+            "planned_route": {
+              "status": "unavailable",
+              "reason_code": "no assignment",
+              "selection_hash": null,
+              "legs": []
+            },
+            "run_receipt": null,
+            "last_refusal": null,
+            "intel_job": null
+          }
+        ],
+        "total": 1
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 1,
+      "payload_sha256": "92e67511958dab08bd62bc73a4b02329706cd9aba670bc32546a47280701dc9e"
+    },
+    "document_text_sha256": "c6877f174e6de43373e572d5d2cdd0c37afaf388494cfb8af008d7736f400425",
+    "document_text_len": 521,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "payload": {
+          "meetings": [
+            {
+              "id": "156cfba4",
+              "started_at": "2026-10-03T14:44:44.875709",
+              "ended_at": "2026-10-03T14:45:08.875709",
+              "title": "Atlas retained meeting",
+              "duration_seconds": 24.0,
+              "segment_count": 3,
+              "action_item_count": 0,
+              "tags": [],
+              "intel_status": "disabled",
+              "intel_status_detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+              "intel_model_host": null,
+              "intel_duration_s": null,
+              "capture_status": "finalized",
+              "capture_failure": null,
+              "capture_checkpoint_seconds": 0.0,
+              "provenance": "desktop",
+              "calendar_event_id": null,
+              "parked": false,
+              "transcriptWords": 34,
+              "needs_you_count": 0,
+              "has_summary": false,
+              "planned_route": {
+                "status": "unavailable",
+                "reason_code": "no assignment",
+                "selection_hash": null,
+                "legs": []
+              },
+              "run_receipt": null,
+              "last_refusal": null,
+              "intel_job": null
+            }
+          ],
+          "total": 1
+        },
+        "body_sha256": "92e67511958dab08bd62bc73a4b02329706cd9aba670bc32546a47280701dc9e"
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings?parked=true",
+        "status": 200,
+        "payload": {
+          "meetings": [],
+          "total": 0
+        },
+        "body_sha256": "1d66a15943cee181126aa2d6e0beec103f375ef3c4985a875430ab621316d599"
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/156cfba4",
+        "status": 200,
+        "payload": {
+          "id": "156cfba4",
+          "parked": false,
+          "started_at": "2026-10-03T14:44:44.875709",
+          "ended_at": "2026-10-03T14:45:08.875709",
+          "duration": 24.0,
+          "formatted_duration": "00:24",
+          "title": "Atlas retained meeting",
+          "tags": [],
+          "segments": [
+            {
+              "text": "Avery: We agree to use one document registry for the channel sources.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 0.0,
+              "end_time": 8.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "Blair: Avery will check the frozen bytes before the next review.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 8.0,
+              "end_time": 16.0,
+              "is_bookmarked": false,
+              "device_id": null
+            },
+            {
+              "text": "Avery: The channel reads durable records and keeps the transcript private.",
+              "speaker": "Transcript",
+              "speaker_id": null,
+              "start_time": 16.0,
+              "end_time": 24.0,
+              "is_bookmarked": false,
+              "device_id": null
+            }
+          ],
+          "bookmarks": [],
+          "intel": null,
+          "intel_status": {
+            "state": "disabled",
+            "detail": "No summary yet. Import does not run the summary \u2014 ask for it on the meeting.",
+            "requested_at": null,
+            "completed_at": null
+          },
+          "mic_label": "Me",
+          "remote_label": "Remote",
+          "web_url": null,
+          "capture_status": "finalized",
+          "capture_failure": null,
+          "transcription_status": "complete",
+          "transcription_status_detail": null,
+          "capture_checkpoint_at": null,
+          "capture_checkpoint_seconds": 0.0,
+          "provenance": "desktop",
+          "calendar_event_id": null,
+          "transcriptWords": 34,
+          "sync_modified_at": "2026-10-03T14:44:44.879102",
+          "devices": [],
+          "planned_route": {
+            "status": "unavailable",
+            "reason_code": "no assignment",
+            "selection_hash": null,
+            "legs": []
+          },
+          "run_receipt": null,
+          "last_refusal": null,
+          "intel_job": null,
+          "intel_model_host": null
+        },
+        "body_sha256": "4d7f10e504f326ba8d45605959332d88b0697ae9069c76108c0286ef2b2917ab"
+      }
+    ],
+    "at_utc": "2026-10-03T20:44:51.201678+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:64916) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:64916) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-BRUaZ34P.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/react-SZyUX699.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-DIUKYpz6.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-gslz4Tc-.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-Cr5G-Rag.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/setup/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/repositories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/mic.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-speak.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-meetings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-agents.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-settings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/floor-grid.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/record-orb.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "GET /api/meetings answered 200 with 1 row(s) {'id': '156cfba4', 'parked': False}; GET /api/meetings?parked=true answered 200 with 0 row(s) {'id': '156cfba4'}; GET /api/meetings/156cfba4 answered 200 with 1 row(s) {'text': 'Blair: Avery will check the frozen bytes before the next review.'}",
+    "elapsed_s": 2.229
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "GET /api/meetings answered 200 with 1 row(s) {'id': '156cfba4', 'parked': False}; GET /api/meetings?parked=true answered 200 with 0 row(s) {'id': '156cfba4'}; GET /api/meetings/156cfba4 answered 200 with 1 row(s) {'text': 'Blair: Avery will check the frozen bytes before the next review.'}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 2.375,
+    "first_satisfied_at_s": 2.229,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: GET /api/meetings answered 200 with 1 row(s) {'id': '156cfba4', 'parked': False}; GET /api/meetings?parked=true answered 200 with 0 row(s) {'id': '156cfba4'}; GET /api/meetings/156cfba4 answered 200 with 1 row(s) {'text': 'Blair: Avery will check the frozen bytes before the next review.'}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:64916) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:64916) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/index-BRUaZ34P.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/react-SZyUX699.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/desk-DIUKYpz6.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/desk-gslz4Tc-.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/index-Cr5G-Rag.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-mark.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-search.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/mic.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-speak.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-meetings.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-agents.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-settings.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/floor-grid.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/record-orb.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs3/atlas-phase13-astra/20261003T204439Z-case.p13.meeting.park_restore-muaddib-1440/before.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs3/atlas-phase13-astra/20261003T204439Z-case.p13.meeting.park_restore-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lrou_ka4/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64916"
+  ],
+  "duration_s": 11.982
+}

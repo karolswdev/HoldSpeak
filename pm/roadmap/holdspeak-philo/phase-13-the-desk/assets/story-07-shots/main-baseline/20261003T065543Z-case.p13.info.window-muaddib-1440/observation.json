@@ -1,0 +1,1587 @@
+{
+  "id": "obs-20261003T065543Z-case.p13.info.window-muaddib-1440",
+  "run_id": "20261003T065543Z-case.p13.info.window-muaddib-1440",
+  "case_id": "case.p13.info.window",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j3",
+  "edge_ids": [
+    "edge.face.info_window"
+  ],
+  "state_id": "state.desk_presentation.p13_unwalked_windows",
+  "provenance": {
+    "revision": "e9b01e227c0836ae90f4d82dc4e571868a0a8a7b",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "5433f72d6b8f31bf7f96041975f2fba1ef7cf4e4e19988efebc39efa017bcbd7",
+      "assets": [
+        "index-CKZp9DJ9.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:61013",
+      "port": 61013,
+      "pid": 30181,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0vz8penm",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0vz8penm/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T06:55:44.211873+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "8a240237affb33e0535f0f68ccc91a5dba4971830dd2773f71689a086a02d578",
+      "version": "phase13-astra-wave2"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "browser_context": {
+      "viewport": 1440,
+      "has_touch": false
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0vz8penm",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0vz8penm",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0vz8penm/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0vz8penm"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.28,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/chains",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "chain": {
+          "id": "chain_dbe36147264e",
+          "name": "Atlas B0 Info Sequence",
+          "steps": [],
+          "created_at": "2026-10-03T06:55:49Z",
+          "last_modified": "2026-10-03T06:55:49Z",
+          "deleted": false,
+          "capability": {
+            "kind": "sequence",
+            "input_schema": {
+              "type": "object",
+              "required": [
+                "input"
+              ],
+              "properties": {
+                "input": {
+                  "type": "string",
+                  "help": "Material to work on."
+                }
+              }
+            },
+            "input_help": "Choose or enter the material this capability should work on.",
+            "supported_placements": [
+              "this_machine"
+            ],
+            "effect_classes": [
+              "creates_artifact"
+            ],
+            "readiness": {
+              "state": "unavailable",
+              "detail": "Add at least one Agent to this linear Sequence."
+            },
+            "action_label": "Run Atlas B0 Info Sequence",
+            "support": "linear_compatibility"
+          }
+        }
+      },
+      "response_sha256": "357e8bb285f393d7f93fe9dabd7fa755af84c2d681768afb8449d20ce169cb5d",
+      "captured": {
+        "name": "info_chain_id",
+        "path": "chain.id",
+        "value": "chain_dbe36147264e"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-observation",
+      "selector": "[data-testid=\"chair-floor-toggle\"]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Floor",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "done": false,
+      "skipped": "at_width 393; this run is 1440"
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-input",
+      "done": false,
+      "skipped": "at_width 393; this run is 1440"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "done": false,
+      "skipped": "at_width 393; this run is 1440"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A real Sequence object supplies Spatial's object context menu and Get Info verb; the object is located by the product's read-only __hsWorldProbe and confirmed by __hsWorldHitProbe.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "Every mouse/touch press uses ui-by-viewport. Desktop uses a native right click; 393 uses Chromium's native touchStart/touchEnd with a 500 ms hold.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "A 1440 rerun showed IDENTITY at 52.465 s with a 40 s bound; 75 s allows 22.535 s of observed headroom without changing the expected result.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0vz8penm",
+    "info_chain_id": "chain_dbe36147264e"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "world_context_menu",
+    "adapter": "ui-pointer",
+    "adapter_requested": "ui-by-viewport",
+    "world_ref": "sequence:chain_dbe36147264e",
+    "world_target": "object",
+    "world_probe": {
+      "id": "chain_dbe36147264e",
+      "ref": "sequence:chain_dbe36147264e",
+      "title": "Atlas B0 Info Sequence",
+      "x": 466.56,
+      "y": 673.6666666666667,
+      "selected": false
+    },
+    "point": {
+      "x": 466.56,
+      "y": 673.6666666666667
+    },
+    "world_hit_probe": {
+      "type": "object",
+      "id": "chain_dbe36147264e",
+      "ref": "sequence:chain_dbe36147264e"
+    },
+    "gesture": "mouse-right-click",
+    "selector": ".desk-world-canvas",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "name": "Get Info",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-info-window .desk-info-body",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": ".desk-info-window button[aria-label^=\"Close \"]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-info-window",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "[data-testid=\"chair-floor-toggle\"]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "name": "Floor",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-world-canvas",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "world_context_menu",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "world_ref": "sequence:chain_dbe36147264e",
+        "world_target": "object",
+        "world_probe": {
+          "id": "chain_dbe36147264e",
+          "ref": "sequence:chain_dbe36147264e",
+          "title": "Atlas B0 Info Sequence",
+          "x": 466.56,
+          "y": 673.6666666666667,
+          "selected": false
+        },
+        "point": {
+          "x": 466.56,
+          "y": 673.6666666666667
+        },
+        "world_hit_probe": {
+          "type": "object",
+          "id": "chain_dbe36147264e",
+          "ref": "sequence:chain_dbe36147264e"
+        },
+        "gesture": "mouse-right-click",
+        "selector": ".desk-world-canvas",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "name": "Get Info",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-info-window .desk-info-body",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Atlas B0 Info Sequence\nSequence\nIDENTITY\nNAME\nAtlas B0 Info Sequence\nKIND\nSequence\nID\nRAW"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "id": "info:chain:chain_dbe36147264e",
+        "tabindex": "-1",
+        "class": "desk-pullout is-card desk-info-window desk-window desk-window-shell is-floating is-front",
+        "role": "region",
+        "aria-label": "Atlas B0 Info Sequence Info",
+        "style": "z-index: 47; opacity: 1; transform: none; inset: 64px auto auto 1022px; width: 400px; max-height: 784px;"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 1022,
+        "y": 64,
+        "w": 400,
+        "h": 165
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch",
+      "after": "div#info:chain:chain_dbe36147264e"
+    },
+    "focus_label": {
+      "before": "Chair",
+      "after": "Atlas B0 Info Sequence Info"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Atlas B0 Info Sequence",
+          "rect": {
+            "x": 1022,
+            "y": 64,
+            "w": 400,
+            "h": 165
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "04c8338dfb98bec0d8cc61c2fea3203dd7d62e5645e29d0cff2f0d650fefeaa9",
+      "after": "d8a6fdd255dee026d5f7247da86e818c2e0712908c4548d6965ce7404318c581"
+    },
+    "document_text_len": {
+      "before": 198,
+      "after": 518
+    }
+  },
+  "before": {
+    "observe_at": ".desk-info-window",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch",
+    "focus_label": "Chair",
+    "url": "http://127.0.0.1:61013/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "04c8338dfb98bec0d8cc61c2fea3203dd7d62e5645e29d0cff2f0d650fefeaa9",
+    "document_text_len": 198,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T06:55:52.082705+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-info-window",
+    "target_present": true,
+    "text": "Atlas B0 Info Sequence\nSequence\nIDENTITY\nNAME\nAtlas B0 Info Sequence\nKIND\nSequence\nID\nRAW",
+    "attrs": {
+      "id": "info:chain:chain_dbe36147264e",
+      "tabindex": "-1",
+      "class": "desk-pullout is-card desk-info-window desk-window desk-window-shell is-floating is-front",
+      "role": "region",
+      "aria-label": "Atlas B0 Info Sequence Info",
+      "style": "z-index: 47; opacity: 1; transform: none; inset: 64px auto auto 1022px; width: 400px; max-height: 784px;"
+    },
+    "rect": {
+      "x": 1022,
+      "y": 64,
+      "w": 400,
+      "h": 165
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1022,
+        "y": 64,
+        "w": 400,
+        "h": 165
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1072,
+          "y": 84.625,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > header.desk-pullout-head.desk-window-handle > img"
+        },
+        {
+          "x": 1072,
+          "y": 146.5,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > div.desk-pullout-body.desk-surface-body > section > div.info-kv > b"
+        },
+        {
+          "x": 1072,
+          "y": 208.375,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > div.desk-pullout-body.desk-surface-body > section > div.info-kv"
+        },
+        {
+          "x": 1222,
+          "y": 84.625,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > header.desk-pullout-head.desk-window-handle > span.desk-pullout-title.desk-window-title"
+        },
+        {
+          "x": 1222,
+          "y": 146.5,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > div.desk-pullout-body.desk-surface-body > section > div.info-kv > button.info-name"
+        },
+        {
+          "x": 1222,
+          "y": 208.375,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > div.desk-pullout-body.desk-surface-body > section > div.info-kv > details.gadget-fold"
+        },
+        {
+          "x": 1372,
+          "y": 84.625,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > header.desk-pullout-head.desk-window-handle > span.desk-gadgets.desk-gadgets-right > button.btn--chrome.desk-gadget"
+        },
+        {
+          "x": 1372,
+          "y": 146.5,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > div.desk-pullout-body.desk-surface-body > section > div.info-kv"
+        },
+        {
+          "x": 1372,
+          "y": 208.375,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > div.desk-pullout-body.desk-surface-body > section > div.info-kv > details.gadget-fold"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#info:chain:chain_dbe36147264e",
+    "focus_label": "Atlas B0 Info Sequence Info",
+    "url": "http://127.0.0.1:61013/",
+    "windows": [
+      {
+        "title": "Atlas B0 Info Sequence",
+        "rect": {
+          "x": 1022,
+          "y": 64,
+          "w": 400,
+          "h": 165
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "d8a6fdd255dee026d5f7247da86e818c2e0712908c4548d6965ce7404318c581",
+    "document_text_len": 518,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T06:56:33.158248+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:61013) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:61013) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/_built/assets/webworkerAll-nzWy8Kqw.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/browserAll-CfLqO_MS.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/8153f122-2527-4bbb-8e2c-f50d24864682",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton14.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton11.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/drawer.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note6.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton9.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/tome9.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note12.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/cartridge.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/cartridge_sel.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/cartridge.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/key-down.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/latch.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/file.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/land.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/latch.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/error.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/key-up.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-info-window",
+    "target_present": true,
+    "text": "Atlas B0 Info Sequence\nSequence\nIDENTITY\nNAME\nAtlas B0 Info Sequence\nKIND\nSequence\nID\nRAW",
+    "attrs": {
+      "id": "info:chain:chain_dbe36147264e",
+      "tabindex": "-1",
+      "class": "desk-pullout is-card desk-info-window desk-window desk-window-shell is-floating is-front",
+      "role": "region",
+      "aria-label": "Atlas B0 Info Sequence Info",
+      "style": "z-index: 47; opacity: 1; transform: none; inset: 64px auto auto 1022px; width: 400px; max-height: 784px;"
+    },
+    "rect": {
+      "x": 1022,
+      "y": 64,
+      "w": 400,
+      "h": 165
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1022,
+        "y": 64,
+        "w": 400,
+        "h": 165
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1072,
+          "y": 84.625,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > header.desk-pullout-head.desk-window-handle > img"
+        },
+        {
+          "x": 1072,
+          "y": 146.5,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > div.desk-pullout-body.desk-surface-body > section > div.info-kv > b"
+        },
+        {
+          "x": 1072,
+          "y": 208.375,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > div.desk-pullout-body.desk-surface-body > section > div.info-kv"
+        },
+        {
+          "x": 1222,
+          "y": 84.625,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > header.desk-pullout-head.desk-window-handle > span.desk-pullout-title.desk-window-title"
+        },
+        {
+          "x": 1222,
+          "y": 146.5,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > div.desk-pullout-body.desk-surface-body > section > div.info-kv > button.info-name"
+        },
+        {
+          "x": 1222,
+          "y": 208.375,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > div.desk-pullout-body.desk-surface-body > section > div.info-kv > details.gadget-fold"
+        },
+        {
+          "x": 1372,
+          "y": 84.625,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > header.desk-pullout-head.desk-window-handle > span.desk-gadgets.desk-gadgets-right > button.btn--chrome.desk-gadget"
+        },
+        {
+          "x": 1372,
+          "y": 146.5,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > div.desk-pullout-body.desk-surface-body > section > div.info-kv"
+        },
+        {
+          "x": 1372,
+          "y": 208.375,
+          "owned": true,
+          "owner": "div#info:chain:chain_dbe36147264e > div.desk-pullout-body.desk-surface-body > section > div.info-kv > details.gadget-fold"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#info:chain:chain_dbe36147264e",
+    "focus_label": "Atlas B0 Info Sequence Info",
+    "url": "http://127.0.0.1:61013/",
+    "windows": [
+      {
+        "title": "Atlas B0 Info Sequence",
+        "rect": {
+          "x": 1022,
+          "y": 64,
+          "w": 400,
+          "h": 165
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "d8a6fdd255dee026d5f7247da86e818c2e0712908c4548d6965ce7404318c581",
+    "document_text_len": 518,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T06:56:32.527859+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:61013) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:61013) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/_built/assets/webworkerAll-nzWy8Kqw.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/browserAll-CfLqO_MS.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/8153f122-2527-4bbb-8e2c-f50d24864682",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton14.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton11.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/drawer.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note6.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton9.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/tome9.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note12.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/cartridge.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/cartridge_sel.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/cartridge.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/key-down.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/latch.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/file.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/land.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/latch.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/error.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/key-up.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "'IDENTITY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1022, 'y': 64, 'w': 400, 'h': 165}",
+    "elapsed_s": 36.511
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'IDENTITY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1022, 'y': 64, 'w': 400, 'h': 165}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 37.141,
+    "first_satisfied_at_s": 36.511,
+    "completion_bound_s": 75.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'IDENTITY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 1022, 'y': 64, 'w': 400, 'h': 165}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:61013) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:61013) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/_built/assets/webworkerAll-nzWy8Kqw.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/browserAll-CfLqO_MS.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:61013/8153f122-2527-4bbb-8e2c-f50d24864682",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:61013/e574c85e-a023-4f01-8a03-3787ec62cc43",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/automaton14.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/automaton11.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/drawer.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note6.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/automaton9.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/automaton.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/tome9.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note12.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/cartridge.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/cartridge_sel.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/cartridge.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/key-down.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/latch.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/file.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/land.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/latch.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/error.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/key-up.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/b0main/20261003T065543Z-case.p13.info.window-muaddib-1440/before.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/b0main/20261003T065543Z-case.p13.info.window-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0vz8penm/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0vz8penm/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:61013"
+  ],
+  "duration_s": 52.472
+}
