@@ -79,8 +79,8 @@ holds the cases; `docs/generated/graph.json` is the join of the passes.
    shots. Workers restore nothing; they report.
 6. **Fold the result into the graph.** A sealed pass JSON is not edited
    later. After the council records its resolutions, run
-   `python scripts/philo_graph_reference.py` and commit
-   `docs/generated/graph.json`; `--check` proves it is current, and
+   `python scripts/philo_graph_reference.py`. It writes
+   `docs/generated/graph.json`, which is not in git; `--check` proves the inputs join, and
    `uv run --extra dev python scripts/philo_graph_reference.py --census` lists
    new, removed and changed entry points since the passes. The census reads
    HTTP routes from source (the app that `scripts/gen_api_surface.py`

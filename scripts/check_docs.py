@@ -16,6 +16,13 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
+# Not in git (owner ruling 2026-10-03): scripts/gen_docs.sh writes these on
+# demand, so a link to one is lawful on a fresh clone.
+ON_DEMAND = {
+    "docs/generated/api-reference.json",
+    "docs/generated/boundary-candidates.json",
+    "docs/generated/graph.json",
+}
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
 INLINE_CODE = re.compile(r"(`+).*?\1")
 INLINE_LINK = re.compile(
@@ -116,6 +123,8 @@ def check_documents(paths: list[Path], root: Path) -> list[str]:
                 continue
             destination = (path.parent / unquote(url.path)).resolve() if url.path else path.resolve()
             if not destination.exists():
+                if destination.is_relative_to(root) and destination.relative_to(root).as_posix() in ON_DEMAND:
+                    continue
                 errors.append(f"{label}:{number}: missing target {target}")
                 continue
             if url.fragment and destination.suffix.lower() == ".md" and destination.is_file():

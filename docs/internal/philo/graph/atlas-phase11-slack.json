@@ -9142,13 +9142,11 @@
         {
           "path": "holdspeak/services/channel_service.py",
           "symbol": "def send(self, principal",
-          "line": 452,
           "claim": "The owner sends the frozen payload through the shared lifecycle."
         },
         {
           "path": "scripts/graph_walk.py",
           "symbol": "def _install_email_edge",
-          "line": 2982,
           "claim": "Recording HTTPS edges and memory key stores inside the actual hub process."
         }
       ],
@@ -9170,31 +9168,26 @@
         {
           "path": "web/src/meetings/MeetingSendWell.tsx",
           "symbol": "data-seat=\"meeting\"",
-          "line": 69,
           "claim": "The meeting document forms mount one SEND well."
         },
         {
           "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-          "symbol": "MeetingSendWell",
-          "line": 175,
+          "symbol": "<MeetingSendWell meetingId={id} title={meetingTitle}",
           "claim": "The Meetings record renders the well for a stored summary."
         },
         {
           "path": "web/src/desk/pullouts/MeetingPullout.tsx",
-          "symbol": "MeetingSendWell",
-          "line": 155,
+          "symbol": "<MeetingSendWell meetingId={o.id} title={String(detail.title ?? o.title ?? \"Meeting\")}",
           "claim": "The meeting window renders the same well."
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "MeetingSendWellLazy",
-          "line": 61,
+          "symbol": "import { MeetingSendWellLazy } from \"../../meetings/MeetingSendWellLazy\";",
           "claim": "The unfolded Chair meeting row renders the well."
         },
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "data-testid=\"send-well\"",
-          "line": 505,
           "claim": "The shared send well exposes destination rows, receipts and prepared rows."
         }
       ],
@@ -9227,19 +9220,16 @@
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "data-testid=\"send-sent\"",
-          "line": 314,
           "claim": "The shared Send well renders terminal Slack success and failure receipts."
         },
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "data-testid=\"send-failed\"",
-          "line": 320,
           "claim": "The shared Send well renders a known Slack failure."
         },
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "data-testid=\"send-unknown\"",
-          "line": 327,
           "claim": "The shared Send well renders an indeterminate Slack outcome."
         }
       ],
@@ -9261,13 +9251,11 @@
         {
           "path": "web/src/pages/cores/connections/Destinations.tsx",
           "symbol": "data-testid=\"dest-form\"",
-          "line": 168,
           "claim": "The Connections face renders the destination form."
         },
         {
           "path": "web/src/pages/cores/connections/Destinations.tsx",
           "symbol": "data-testid=\"dest-row\"",
-          "line": 418,
           "claim": "Saved destinations render as rows with an owner Check verb."
         }
       ],
@@ -9289,13 +9277,11 @@
         {
           "path": "web/src/pages/cores/history/MeetingDetail.tsx",
           "symbol": "digest",
-          "line": 172,
           "claim": "The Meetings record comment names the removed aftercare Slack rows."
         },
         {
           "path": "web/src/pages/cores/SettingsCore.tsx",
-          "symbol": "Destinations",
-          "line": 2330,
+          "symbol": "<Destinations />",
           "claim": "Settings keeps the channel destination group as the supported path."
         }
       ],
@@ -9316,13 +9302,11 @@
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "data-testid=\"preview-refused\"",
-          "line": 441,
           "claim": "The well keeps a named preview refusal with size facts on its face."
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "brief-send",
-          "line": 1252,
+          "symbol": "{brief ? <BriefSendWells key=\"brief-send\" brief={brief} /> : null}",
           "claim": "The Chair keeps the same brief SEND well across the last-item branch."
         }
       ],

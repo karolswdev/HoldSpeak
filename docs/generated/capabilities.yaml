@@ -6980,9 +6980,9 @@
       ],
       "tests": [
         {
-          "assertion": "The persistence test asserts the v1 record fields and excludes minimum dimensions.",
+          "assertion": "The persistence test asserts that rects, order, max and min return from one slot.",
           "execution": "not_run",
-          "node": "round-trips rects + order + max through one slot; min stays out (HS-97-03)",
+          "node": "round-trips rects + order + max + min through one slot (PHILO-13-07 B2)",
           "path": "web/src/desk/__tests__/windows.test.tsx"
         }
       ],

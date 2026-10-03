@@ -34,8 +34,8 @@ from tests.unit import test_philo_graph_atlas as general
 REPO = Path(__file__).resolve().parents[2]
 ATLAS = REPO / "docs/internal/philo/graph/atlas-phase13-muaddib.json"
 
-#: Every case this lane has added, by story. A new case changes this set in
-#: the same commit (one count, one owner).
+#: The cases the checks below name. A new case does not have to join this set
+#: (owner ruling 2026-10-03: no literal list every lane must edit).
 CASES = {
     "case.p13.close.intelligence_gone",  # PHILO-13-05
     "case.p13.record.refused_not_recording",  # PHILO-13-04
@@ -112,9 +112,13 @@ def test_the_file_validates_against_the_atlas_schema(atlas: dict) -> None:
 
 
 def test_the_lane_case_count_and_names(atlas: dict) -> None:
-    ids = {case["id"] for case in atlas["cases"]}
-    assert ids == CASES
-    assert len(atlas["cases"]) == 24
+    # Structural, not literal (owner ruling 2026-10-03): a new case needs no
+    # edit here. Ids are unique and lawful; the named cases stay.
+    listed = [case["id"] for case in atlas["cases"]]
+    ids = set(listed)
+    assert len(listed) == len(ids), sorted(i for i in ids if listed.count(i) > 1)
+    assert all(i.startswith("case.p13.") for i in ids), sorted(ids)
+    assert CASES <= ids, sorted(CASES - ids)
     # No `.op` sibling here: the shared count at test_philo_graph_atlas.py:492
     # stays Astra's (H-B0b).
     assert not [i for i in ids if i.endswith(".op") or i.endswith(".op.replayed")]

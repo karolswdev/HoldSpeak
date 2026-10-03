@@ -190,7 +190,6 @@
         {
           "path": "holdspeak/services/ask_service.py",
           "symbol": "def keep",
-          "line": 459,
           "claim": "Ask Keep stores the artifact body and lineage."
         }
       ],

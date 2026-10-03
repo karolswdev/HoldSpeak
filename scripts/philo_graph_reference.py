@@ -11,11 +11,12 @@ generator, and the error names both sides.
 Usage::
 
     python scripts/philo_graph_reference.py            # write the join
-    python scripts/philo_graph_reference.py --check    # exit 1 on drift
+    python scripts/philo_graph_reference.py --check    # exit 1 when the join is refused
     uv run --extra dev python scripts/philo_graph_reference.py --census
 
-``--check`` proves generated consistency: the file on disk is byte-equal to a
-fresh join of the committed inputs.  ``--census`` is a separate comparison of
+The join is not in git (owner ruling 2026-10-03): ``scripts/gen_docs.sh``
+writes it on demand.  ``--check`` joins the committed inputs in memory and
+exits 1 when the join is refused.  ``--census`` is a separate comparison of
 the entry points in the CURRENT source against the edges of the join.  It
 reports new, removed and changed entry points and exits 1 when it finds any
 (or cannot read a catalogue).  It also lists miscited sources: a pass cited a
@@ -746,7 +747,7 @@ def subtype_conflicts(graph: dict) -> list[str]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("--check", action="store_true", help="exit 1 when the join on disk is stale")
+    mode.add_argument("--check", action="store_true", help="exit 1 when the committed inputs do not join")
     mode.add_argument("--census", action="store_true", help="compare current source entry points with the join's edges")
     parser.add_argument("--root", type=Path, default=ROOT)
     args = parser.parse_args(argv)
@@ -754,10 +755,15 @@ def main(argv: list[str] | None = None) -> int:
     target = root / OUTPUT
 
     if args.census:
-        if not target.is_file():
-            print(f"census: {OUTPUT} does not exist; generate it first")
+        # The join is not in git (owner ruling 2026-10-03); the census joins
+        # the committed inputs in memory.
+        try:
+            graph, _ = join(load_inputs(root))
+        except JoinError as error:
+            for problem in error.problems:
+                print(problem)
+            print(f"graph join refused: {len(error.problems)} problem(s)")
             return 1
-        graph = json.loads(target.read_text(encoding="utf-8"))
         differences = census(graph, root)
         print(CENSUS_SCOPE)
         for line in differences:
@@ -786,9 +792,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     text = render(graph)
     if args.check:
-        if not target.is_file() or target.read_text(encoding="utf-8") != text:
-            print(f"graph join drift: {OUTPUT} (run python scripts/philo_graph_reference.py)")
-            return 1
+        # The join is not in git (owner ruling 2026-10-03): it holds the hash
+        # of every input, so two branches always conflict. --check proves the
+        # committed inputs join without a contradiction and render to JSON;
+        # tests/unit/test_philo_graph_reference.py proves the schema.
+        json.loads(text)
         conflicts = subtype_conflicts(graph)
         for line in conflicts:
             print(line)

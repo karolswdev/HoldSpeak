@@ -145,7 +145,7 @@ Setup is heavier than a menu-bar app. Wayland limits global hotkeys to best effo
 - [Use cases](docs/USE_CASES.md): choose a workflow by the result you need.
 - [Architecture](docs/ARCHITECTURE.md): the runtime and data flow.
 - [Documentation index](docs/README.md): every guide and reference.
-- [Graph join](docs/generated/graph.json): which triggers reach which actions.
+- Graph join (`docs/generated/graph.json`; run `scripts/gen_docs.sh` to write it): which triggers reach which actions.
 
 ## Contributing and license
 
