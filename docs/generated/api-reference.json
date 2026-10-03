@@ -12091,6 +12091,7 @@
       "test_candidates": [
         "tests/e2e/test_philo9_04_desk_debts_glass.py",
         "tests/unit/test_graph_walk_calibration.py",
+        "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo_graph_schema.py",
         "tests/unit/test_web_routes_projections.py"
       ],

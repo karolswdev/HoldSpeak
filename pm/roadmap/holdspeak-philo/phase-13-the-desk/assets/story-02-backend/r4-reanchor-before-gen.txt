@@ -1,0 +1,28 @@
+COMMAND: uv run --no-sync pytest -q tests/unit/test_philo13_meeting_parking.py tests/unit/test_philo_graph_atlas.py tests/unit/test_api_surface.py tests/unit/test_philo_graph_reference.py
+........................................................................ [ 47%]
+..............................................................F......... [ 95%]
+.......                                                                  [100%]
+=================================== FAILURES ===================================
+________________________ test_committed_join_is_current ________________________
+
+joined = ({'cases': [{'applicability': 'applicable', 'completion_bound_s': 120, 'edge_ids': ['edge.route.meeting_capture_recove..._shelf.refused', 'case-revision: live-astra ran an older revision of case.j10.route_brief_generate.load_failure', ...])
+
+    def test_committed_join_is_current(joined):
+        """--check's own comparison: the file on disk is the join of the inputs."""
+        graph, _ = joined
+>       assert (ROOT / gen.OUTPUT).read_text(encoding="utf-8") == gen.render(graph)
+E       assert '{\n "schema_...n  }\n ]\n}\n' == '{\n "schema_...n  }\n ]\n}\n'
+E
+E         Skipping 535 identical leading characters in diff, use -v to show
+E         Skipping 6306571 identical trailing characters in diff, use -v to show
+E         - sha256": "4a7212d26810fa2c9e49236b0423b9af11a4206a4f8101297c2a6b856d26bbb8"
+E         + sha256": "b854d43773c55206ee284fb77c5da1cb1bfba469736bf4bf3ee079551973b2c7"
+E             },
+E             {...
+E
+E         ...Full output truncated (21 lines hidden), use '-vv' to show
+
+tests/unit/test_philo_graph_reference.py:108: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo_graph_reference.py::test_committed_join_is_current
+1 failed, 150 passed in 9.36s

@@ -9194,13 +9194,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "attention_state",
-          "line": 590,
+          "line": 598,
           "claim": "an intel job that is queued or running projects attention/unseen"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "attention_state",
-          "line": 498,
+          "line": 500,
           "claim": "a provisional or recording meeting projects attention/unseen"
         }
       ],
@@ -9227,13 +9227,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "needs_attention",
-          "line": 590,
+          "line": 598,
           "claim": "a failed intel job projects attention/needs_attention with severity error"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "needs_attention",
-          "line": 498,
+          "line": 500,
           "claim": "capture_failed/recoverable/recovered project attention/needs_attention"
         },
         {
@@ -9359,13 +9359,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "resolved",
-          "line": 706,
+          "line": 714,
           "claim": "a pipeline event projects receipt/resolved"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "receipt",
-          "line": 699,
+          "line": 707,
           "claim": "pipeline events are receipt-kind only"
         }
       ],
@@ -9391,7 +9391,7 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "detail_url",
-          "line": 692,
+          "line": 700,
           "claim": "a HeartbeatService event carries /cadence as its door"
         },
         {
@@ -9428,7 +9428,7 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "detail_url",
-          "line": 692,
+          "line": 700,
           "claim": "a non-HeartbeatService pipeline event carries no door"
         },
         {
@@ -9465,13 +9465,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "meetings.get",
-          "line": 586,
+          "line": 594,
           "claim": "the jobs producer defaults the label when the meeting row is gone, so a job outlives its meeting"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "detail_url",
-          "line": 595,
+          "line": 603,
           "claim": "the job projection's door still points at the deleted meeting"
         },
         {
@@ -9501,7 +9501,7 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "_meetings",
-          "line": 485,
+          "line": 487,
           "claim": "the meeting capture producer"
         }
       ],
@@ -9525,13 +9525,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "_jobs",
-          "line": 552,
+          "line": 558,
           "claim": "the intel/plugin job producer"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "intel_jobs",
-          "line": 554,
+          "line": 560,
           "claim": "intel_jobs and plugin_run_jobs are the two job tables it reads"
         }
       ],
@@ -9556,13 +9556,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "_pipeline_events",
-          "line": 640,
+          "line": 648,
           "claim": "the pipeline-event producer"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "HeartbeatService",
-          "line": 652,
+          "line": 660,
           "claim": "only remote-origin events or HeartbeatService events are surfaced"
         }
       ],
@@ -9586,13 +9586,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "_cadence",
-          "line": 599,
+          "line": 607,
           "claim": "the cadence-loop producer"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "actionable",
-          "line": 603,
+          "line": 611,
           "claim": "open/snoozed/delegated loops are the actionable set"
         }
       ],
@@ -9616,13 +9616,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "_dictation",
-          "line": 413,
+          "line": 415,
           "claim": "the dictation-journal producer"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "dictation_journal",
-          "line": 434,
+          "line": 436,
           "claim": "its rows carry source_kind dictation_journal"
         }
       ],
@@ -9671,13 +9671,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "_steering",
-          "line": 440,
+          "line": 442,
           "claim": "the steering-audit producer"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "steering_audit",
-          "line": 476,
+          "line": 478,
           "claim": "its rows carry source_kind steering_audit"
         }
       ],
@@ -9701,13 +9701,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "_artifacts",
-          "line": 530,
+          "line": 534,
           "claim": "the artifact producer"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "needs_review",
-          "line": 534,
+          "line": 540,
           "claim": "draft and needs_review artifacts ask for attention"
         }
       ],
@@ -9726,13 +9726,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "_sync_conflicts",
-          "line": 507,
+          "line": 509,
           "claim": "the sync-conflict producer"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "paired_device",
-          "line": 521,
+          "line": 525,
           "claim": "its destination is a paired device"
         }
       ],
@@ -9756,7 +9756,7 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "plugin_run_jobs",
-          "line": 554,
+          "line": 560,
           "claim": "plugin_run_jobs is the second job table the producer reads"
         }
       ],
@@ -9782,7 +9782,7 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "outcome",
-          "line": 685,
+          "line": 693,
           "claim": "a pipeline event with an error projects outcome failed"
         }
       ],
@@ -9914,7 +9914,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "is_empty",
-          "line": 1530,
+          "line": 1532,
           "claim": "is_empty is true when no section holds an item"
         },
         {
@@ -10048,7 +10048,7 @@
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "SHELF_STATES",
-          "line": 1454,
+          "line": 1456,
           "claim": "any other shelf state is refused by name"
         }
       ],
@@ -10174,7 +10174,7 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "active",
-          "line": 490,
+          "line": 492,
           "claim": "provisional and recording are the two active capture states"
         },
         {
@@ -10205,13 +10205,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "recording",
-          "line": 490,
+          "line": 492,
           "claim": "recording is an active capture state"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "Meeting is recording",
-          "line": 495,
+          "line": 497,
           "claim": "the projection says so on the face"
         }
       ],
@@ -10242,7 +10242,7 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "Meeting saved",
-          "line": 495,
+          "line": 497,
           "claim": "a finalized meeting projects the saved receipt"
         }
       ],
@@ -10267,7 +10267,7 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "capture_failed",
-          "line": 489,
+          "line": 491,
           "claim": "capture_failed is one of the three recovery capture states"
         }
       ],
@@ -10292,7 +10292,7 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "recoverable",
-          "line": 489,
+          "line": 491,
           "claim": "recoverable projects needs_attention with a recovery decision kind"
         },
         {
@@ -10323,13 +10323,13 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "recovered",
-          "line": 489,
+          "line": 491,
           "claim": "recovered still asks for attention"
         },
         {
           "path": "holdspeak/db/intel.py",
           "symbol": "recovered",
-          "line": 1216,
+          "line": 1217,
           "claim": "finalized and recovered are the two capture states a queued job may claim"
         }
       ],
@@ -10509,7 +10509,7 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "unseen",
-          "line": 590,
+          "line": 598,
           "claim": "a queued job projects attention/unseen on the desk"
         }
       ],
@@ -10640,7 +10640,7 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "failed",
-          "line": 590,
+          "line": 598,
           "claim": "a failed job projects needs_attention"
         }
       ],
@@ -10665,7 +10665,7 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "lineage_leaves",
-          "line": 560,
+          "line": 566,
           "claim": "the producer selects the newest lineage leaf so a retry suppresses its failed ancestor"
         },
         {

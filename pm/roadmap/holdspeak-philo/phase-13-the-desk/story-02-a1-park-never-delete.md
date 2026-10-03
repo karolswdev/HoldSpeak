@@ -69,6 +69,7 @@ Grounding size: not sized as a move (a prerequisite repair, `grounding/structure
 
 ## Notes
 
+- 2026-10-02 — r4 integration after #726 merged at 44ec934a: #727 rebased onto the new main with both B0 copies dropped and the marker-bearing 29fb/780 history repaired. The additive conflict resolution keeps H-A3 `has_summary` and A1 `parked`. The three shared fences first showed the four expected source-reference / graph-join failures; all 42 Atlas source references were then re-anchored against the live definitions and generated documentation was refreshed. The combined A1/shared selection collected and passed 377 tests; all 12 Documentation Navigation commands and the operations, OpenAPI and graph generated-reference checks pass. The red and green command outputs are in `assets/story-02-backend/r4-*.txt`. Story 02 remains in-progress pending A1-F.
 - 2026-10-02 — r3 implementation pays the signed #727 counsel conditions: both
   bound intel claim reads reject parked Meetings (the initial selection and the
   post-bind recheck); FollowThrough action cards, Project action/artifact

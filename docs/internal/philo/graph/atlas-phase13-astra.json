@@ -2262,7 +2262,7 @@
       "sources": [
         {
           "path": "holdspeak/db/meetings.py",
-          "line": 1068,
+          "line": 1090,
           "symbol": "def delete_meeting",
           "claim": "The normal removal path retains the row through park; this case reads it after restart and restore."
         }
