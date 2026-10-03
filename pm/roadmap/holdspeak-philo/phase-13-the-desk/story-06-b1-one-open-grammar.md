@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** PHILO-13-11's C1 canvas ratified (the material); this story's own canvas ratified; PHILO-13-05 (close means gone)
 - **Unblocks:** none
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
@@ -68,3 +68,7 @@ Grounding size: S (faces move 1) to M (structure move 2). PROVISIONAL.
 ## RATIFIED by the owner — 2026-10-03
 
 On the page https://claude.ai/artifact/BfkDkEbuo1day5d1K1DnN3 (the built B1 shots, `assets/story-06-shots/`, on the owner-ratified Workbench material), the owner answered verbatim: **"Ratify, merge it"**. This is the face's ratification record the gate requires (current-phase-status.md §gates).
+
+## Amendment and close — 2026-10-03 (Muad'Dib, visible; the owner may overrule)
+
+Met at 1440: J1 dead taps 5 → **0**, J1 path 7 → **3** gestures, J3 prep 5 → **1**. At 393 the dead taps are **0** but J1 is **12** and J3 prep **4** gestures: every extra tap is moving between Chair windows (one window at a time on the phone), not a row open. That cost is homed to **PHILO-13-17 (C7) the phone desk**, which owns phone window navigation; it is not counted as met here. Astra's single pass (RATIFY-WITH-CONDITIONS: a repeat Prep open stayed on Now) is paid — every person open is a numbered request PeopleCore applies even with an unchanged scope; vitest red → green, glass Prep → Now → reopen red at 1440 → green at both widths.

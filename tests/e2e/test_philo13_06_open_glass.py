@@ -225,6 +225,21 @@ class TestOneOpenGrammar:
                 self._open(page, width, one, "People", "Priya Nair", "1:1 row -> Priya on Prep", walk)
                 walk["lens_after_1on1"] = self._lens(page)
                 walk["j1_gestures"] = walk["row_taps"] + walk["frame_taps"]
+
+                # Astra's pass: Prep -> Now -> the same 1:1 row again lands on Prep
+                # (the scope is unchanged; the open is a new request).
+                people = page.locator(".desk-window-shell[aria-label='People'], .desk-window[aria-label='People']").first
+                self._press(page, people.get_by_role("tab", name="Now"), width)
+                page.wait_for_timeout(400)
+                reopen: dict[str, Any] = {"lens_after_now": self._lens(page), "row_taps": 0, "frame_taps": 0,
+                                          "dead": 0, "steps": []}
+                self._chair_window(page, width, "The week", reopen)
+                one = page.locator("[data-testid='arrival-meeting-row']", has_text=ONE_ON_ONE).first
+                self._open(page, width, one, "People", "Priya Nair", "1:1 row again -> Prep", reopen)
+                page.wait_for_timeout(300)
+                reopen["lens"] = self._lens(page)
+                walk["reopen_prep"] = reopen
+                page.screenshot(path=str(SHOTS / f"B1-03b-prep-now-reopen-{width}.png"))
                 page.screenshot(path=str(SHOTS / f"B1-03-one-on-one-prep-{width}.png"))
 
                 # The sync row's Room: the event linked to its project opens the Room.
@@ -307,6 +322,9 @@ class TestOneOpenGrammar:
             fails["J1 <= 3 gestures at 1440"] = walk.get("j1_gestures")
         if walk.get("lens_after_1on1") != "Prep":
             fails["the 1:1 opens Prep"] = walk.get("lens_after_1on1")
+        reopen = walk.get("reopen_prep") or {}
+        if reopen.get("lens_after_now") != "Now" or reopen.get("dead") or reopen.get("lens") != "Prep":
+            fails["Prep -> Now -> reopen lands on Prep"] = reopen
         j3 = walk.get("j3") or {}
         if j3.get("dead") or j3.get("row_taps") != 1 or j3.get("lens") != "Prep":
             fails["J3 prep 1 gesture"] = j3

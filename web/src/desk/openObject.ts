@@ -21,8 +21,22 @@ export function personScope(relationshipId: string, lens?: PersonLens): string {
   return `people:${relationshipId}${lens ? `:${lens}` : ""}`;
 }
 
+/** PHILO-13-06 (Astra's pass): every explicit open of a person on a lens is
+ * one request, counted. An open with an unchanged scope (the same 1:1 row
+ * tapped again after he chose Now) still re-applies the lens: the People
+ * window hears the request, not only the scope. */
+export const PERSON_OPEN_EVENT = "holdspeak:person-open";
+export type PersonOpenRequest = { relationshipId: string; lens?: PersonLens; seq: number };
+let personOpenSeq = 0;
+
 export function openPerson(relationshipId: string, lens?: PersonLens): void {
   openSurfaceOr("open-people", "/", personScope(relationshipId, lens));
+  personOpenSeq += 1;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent<PersonOpenRequest>(PERSON_OPEN_EVENT, {
+      detail: { relationshipId, lens, seq: personOpenSeq },
+    }));
+  }
 }
 
 /** Refs the citation species opens in a window of their own. */

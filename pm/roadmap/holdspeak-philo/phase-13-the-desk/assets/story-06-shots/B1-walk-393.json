@@ -48,6 +48,25 @@
  ],
  "lens_after_1on1": "Prep",
  "j1_gestures": 12,
+ "reopen_prep": {
+  "lens_after_now": "Now",
+  "row_taps": 1,
+  "frame_taps": 3,
+  "dead": 0,
+  "steps": [
+   {
+    "what": "1:1 row again -> Prep",
+    "dead": false,
+    "front": [
+     "People"
+    ],
+    "opened": [
+     "People"
+    ]
+   }
+  ],
+  "lens": "Prep"
+ },
  "room_step": {
   "what": "calendar row -> its Room",
   "dead": false,
