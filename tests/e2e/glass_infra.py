@@ -363,7 +363,14 @@ _RENDERED_TEXT_JS = """(args) => {
   //  * An inset (see below) is recorded in `inset`, not failed.
   //  * Words inside a control are read for overlap too.
   // Off (the default), the reader is exactly the #734 reader.
-  const scrollY = (e) => ['auto', 'scroll'].includes(getComputedStyle(e).overflowY);
+  // a vertical scroller exempts only text the reader can scroll to: the text
+  // lies inside the scroll range (an auto box with words shifted above its
+  // top, or past its scrollHeight, cannot be scrolled into view)
+  const scrollY = (e, tr) => {
+    if (!['auto', 'scroll'].includes(getComputedStyle(e).overflowY)) return false;
+    const er = e.getBoundingClientRect(), top = tr.top - er.top - e.clientTop + e.scrollTop;
+    return top >= -1 && top + tr.height <= e.scrollHeight + 1;
+  };
   const painted = (r, el) => {  // el: the first box that may clip r (the text's own element; a control's parent)
     let L = Math.max(r.left, 0), T = Math.max(r.top, 0), R = Math.min(r.right, innerWidth), B = Math.min(r.bottom, innerHeight);
     for (let a = el; a && a !== document.documentElement; a = a.parentElement) {
@@ -400,7 +407,7 @@ _RENDERED_TEXT_JS = """(args) => {
         // a hidden overflow that pokes past by its own frame is judged by the text box alone
         const side = a.scrollWidth > a.clientWidth + 1 && (!onGlass || ['auto', 'scroll'].includes(cs.overflowX));
         const pastX = clipX && (tr.left < ar.left - 1 || tr.right > ar.right + 1 || side);
-        const pastY = clipY && !(onGlass && scrollY(a)) && (tr.top < ar.top - 1 || tr.bottom > ar.bottom + 1);
+        const pastY = clipY && !(onGlass && scrollY(a, tr)) && (tr.top < ar.top - 1 || tr.bottom > ar.bottom + 1);
         // the ellipsis is drawn by the box that clips (`a`), or by the text's own box
         const es = getComputedStyle(a), hs = getComputedStyle(n.parentElement);
         const ell = onGlass && pastX && !pastY && es.textOverflow === 'ellipsis' && es.whiteSpace === 'nowrap'
