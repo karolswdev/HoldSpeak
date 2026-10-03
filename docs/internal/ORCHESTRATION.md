@@ -1,5 +1,11 @@
 # Orchestration — the Muad'Dib method
 
+> **Amended 2026-10-03 (owner ruling).** The commit gate is removed. Where
+> this document names `dw contract`, evidence capture, evidence files, or a
+> story flip, that step no longer exists. The flow is branch, PR, one
+> review by the other brain, merge, then update `pm/STATUS.md`. Rules:
+> `CLAUDE.md` "How we work now".
+
 How multi-agent phases run in this repository. There are two
 orchestrators, Muad'Dib and Astra, equals ([TWO-BRAINS.md](TWO-BRAINS.md));
 Muad'Dib's implementation agents are the Fedaykin (Opus 5.5 sessions since 2026-09-22,
