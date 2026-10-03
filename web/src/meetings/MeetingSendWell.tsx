@@ -12,7 +12,7 @@
  */
 import { useState } from "react";
 import { CycleGadget } from "../desk/surface";
-import { SendWells, pickDestination, pickedDestination } from "../desk/surface/send";
+import { SendHistory, SendWell, mergeKnown, pickDestination, pickedDestination, useSends } from "../desk/surface/send";
 import { useAnnounceWindowDocument } from "../desk/windowSend";
 import { stamp } from "../features/channels/channels";
 
@@ -51,10 +51,25 @@ export function MeetingSendWell({ meetingId, title, startedAt }: {
         }} />
     </div>
   );
+  // PHILO-13-15 (Astra C5 check, condition 2): ONE read per form, held here
+  // across form changes, so a send of the summary still in flight when he
+  // switches to Digest keeps its read and its result. The history is the
+  // meeting's: every form's ended sends, each row named by its form.
+  const reads = {
+    meeting_summary: useSends(`meeting_summary:${meetingId}`),
+    meeting_digest: useSends(`meeting_digest:${meetingId}`),
+    meeting_followup: useSends(`meeting_followup:${meetingId}`),
+  };
+  const history = MEETING_FORMS.flatMap((f) => mergeKnown(`${f.value}:${meetingId}`, reads[f.value].data ?? []));
+  const formTag = (s: { document_ref: string }) => {
+    const f = MEETING_FORMS.find((x) => s.document_ref === `${x.value}:${meetingId}`);
+    return f ? { form: f.value, word: f.word } : null;
+  };
   return (
     <div data-seat="meeting" data-testid="meeting-send-well">
-      <SendWells key={kind} head={head}
+      <SendWell key={kind} head={head} sendsRead={reads[kind]}
         doc={{ ref: `${kind}:${meetingId}`, title: `${title} ${form.label.toLowerCase()}`, label: `${form.word} ${day(startedAt)}`.trim() }} />
+      <SendHistory sends={history} tag={formTag} />
     </div>
   );
 }

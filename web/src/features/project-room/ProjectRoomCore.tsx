@@ -2145,7 +2145,8 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   const { openUpdate } = updateCtrl;
   const openLinkedUpdate = useCallback(async (updateId: string) => {
     if (!ctrl.projectId) return false;
-    const u = (await fetchUpdates(ctrl.projectId).catch(() => [])).find((x) => x.id === updateId);
+    // A failed read rejects: the link shows the failure with Retry (windowSend.tsx).
+    const u = (await fetchUpdates(ctrl.projectId)).find((x) => x.id === updateId);
     if (!u) return false;
     openUpdate(u);
     return true;

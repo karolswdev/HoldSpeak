@@ -308,7 +308,9 @@ function linkRoom(projectId: string, link: RoomLink) { S.links.set(projectId, li
 
 /** The Room's side of the link: the linked update opens in the Update
  *  posture (also when the Room is open on another update), its well picked.
- *  A failed latest-update read holds the failure until Retry. */
+ *  A failed latest-update read -- the menu's, or the Room's own read of the
+ *  linked update -- holds the failure until Retry. `open` resolves false when
+ *  the update is not in the read, and rejects when the read fails. */
 export function useRoomSendLink(projectId: string | null, open: (updateId: string) => Promise<boolean>): RoomLink | null {
   useSendToTick(Boolean(projectId));
   const link = projectId ? S.links.get(projectId) ?? null : null;
@@ -316,9 +318,14 @@ export function useRoomSendLink(projectId: string | null, open: (updateId: strin
     if (!projectId || link?.state !== "open") return;
     S.links.delete(projectId);
     const ref = `project_update:${link.updateId}`;
+    // Astra C5 check, condition 1: the Room's own read of the linked update can
+    // fail after the menu's read succeeded. The handoff is kept: the Room's SEND
+    // well shows CANNOT READ LATEST UPDATE + Retry, never nothing.
+    const failed = () => linkRoom(projectId, { state: "failed", destinationId: link.destinationId, at: Date.now() });
     void pushPick(ref, link.destinationId)
       .then(() => open(link.updateId))
-      .then((ok) => { if (ok) arrive(ref, ROOM_WINDOW); });
+      .then((ok) => { if (ok) arrive(ref, ROOM_WINDOW); else failed(); })
+      .catch(failed);
     bump();
   }, [projectId, link, open]);
   const failedAt = link?.state === "failed" ? link.at : 0;

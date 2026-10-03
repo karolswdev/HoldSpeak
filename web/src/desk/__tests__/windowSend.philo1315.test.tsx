@@ -145,15 +145,32 @@ describe("the reads: CHECKING, CAN'T CHECK, OFFLINE, a known absence", () => {
     expect(labels(e)).toEqual(["Team updates · FILE"]);
   });
 
-  it("the tie rule: the greatest published_at, then the first the hub lists", () => {
-    expect(latestPublished([
-      { id: "u3", lifecycle: "draft", published_at: null },
-      { id: "u2", lifecycle: "published", published_at: "2026-10-02T09:00:00" },
-      { id: "u1", lifecycle: "published", published_at: "2026-10-02T09:00:00" },
-      { id: "u0", lifecycle: "published", published_at: "2026-10-01T09:00:00" },
-    ])).toBe("u2");
-    expect(latestPublished([{ id: "u0", lifecycle: "superseded", published_at: "2026-10-01" }])).toBeNull();
+  // H-C5 (open, Astra's lane): the tie rule is "the greatest published_at, then
+  // the greatest rowid". The read (holdspeak/db/updates.py list_updates) orders
+  // by draft_revision DESC, created_at DESC and carries no rowid, so the face
+  // CANNOT apply the rowid half. The interim rule takes the greatest
+  // published_at and, on a tie, the FIRST row the hub lists: it ASSUMES the
+  // producer lists the later insert first. These cases state that assumption;
+  // they prove nothing about the hub. When Astra's read orders by
+  // published_at DESC, rowid DESC, the tie case becomes a glass fence through
+  // the real routes (two publishes inside one second) and this file switches
+  // to it.
+  const SAME_SECOND = "2026-10-02T09:00:00";
+  const pub = (id: string, published_at: string | null, lifecycle = "published") => ({ id, lifecycle, published_at });
+
+  it("the greatest published_at wins, wherever the hub lists it", () => {
+    expect(latestPublished([pub("u0", "2026-10-01T09:00:00"), pub("u2", SAME_SECOND), pub("u3", null, "draft")])).toBe("u2");
+    expect(latestPublished([pub("u2", SAME_SECOND), pub("u0", "2026-10-01T09:00:00")])).toBe("u2");
+    expect(latestPublished([pub("u0", "2026-10-01", "superseded")])).toBeNull();
   });
+
+  it("a same-second tie follows the PRODUCER'S ORDER (the interim assumption, not the tie rule)", () => {
+    // The answer is whichever the hub listed first: swap the list, the answer swaps.
+    expect(latestPublished([pub("later", SAME_SECOND), pub("earlier", SAME_SECOND)])).toBe("later");
+    expect(latestPublished([pub("earlier", SAME_SECOND), pub("later", SAME_SECOND)])).toBe("earlier");
+  });
+
+  it.todo("H-C5: two publishes inside one second through the real routes; the read names the later insert (after Astra's read fix)");
 });
 
 describe("the push seam and the pick", () => {
@@ -191,6 +208,31 @@ describe("the push seam and the pick", () => {
     await waitFor(() => expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe("meeting_digest:m7"));
     expect(pickedDestination("meeting_digest:m7")).toBe("chd_f");
     await waitFor(() => expect(previews).toContain("meeting_digest:m7"));
+  });
+});
+
+describe("a form change keeps the other form's result (Astra C5 check, condition 2)", () => {
+  it("the summary's SAVED row stays in the meeting's history after Summary -> Digest", async () => {
+    routes["GET /api/channels/sends"] = () => ({ sends: [] });
+    apiFetch.mockImplementation((path: string, init: RequestInit & { json?: Record<string, unknown> } = {}) => {
+      if (path.startsWith("/api/channels/sends") && path.includes("meeting_summary%3Am8")) {
+        return Promise.resolve({ sends: [{
+          id: "chs_s1", document_ref: "meeting_summary:m8", destination_id: "chd_f", destination_name: "Team updates",
+          channel: "file", account: {}, target: { folder: "/Users/k/Team" }, payload_digest: "d", preview: { text: "" },
+          prepared_by: { kind: "owner", identity: "" }, prepare_operation_id: null, state: "sent", reason: null,
+          proof: { path: "/Users/k/Team/x.md" }, created_at: "2026-10-03T10:00:00Z",
+          dispatch_started_at: "2026-10-03T10:00:00Z", settled_at: "2026-10-03T10:00:01Z" }] });
+      }
+      const r = routes[`${init.method ?? "GET"} ${path.split("?")[0]}`];
+      return r ? Promise.resolve(r(init)) : Promise.reject(new TypeError(`unrouted ${path}`));
+    });
+    render(<MeetingSendWell meetingId="m8" title="Ledger sync" />);
+    await screen.findByTestId("history-form");
+    fireEvent.change(within(screen.getByTestId("doc-forms")).getByRole("combobox"), { target: { value: "meeting_digest" } });
+    await waitFor(() => expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe("meeting_digest:m8"));
+    const row = screen.getByTestId("history-row");
+    expect(within(row).getByTestId("history-form").getAttribute("data-form")).toBe("meeting_summary");
+    expect(row.textContent).toContain("SAVED");
   });
 });
 
