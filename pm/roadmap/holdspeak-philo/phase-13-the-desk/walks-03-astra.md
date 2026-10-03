@@ -46,7 +46,7 @@ After removing the title-match suppression and keeping the seeded Room milestone
 
 For both observations, the hub and SQLite path were under the run's temporary HOME; the recorded source revision is dirty as expected. I read the initial feedback and settled result separately and viewed both before/after shots. The trigger is the reload after the setup's real A1 status change; it fires no extra non-GET request. Command logs are [1440](assets/story-03-needs-you/r3/dock-1440-command.txt) and [393](assets/story-03-needs-you/r3/dock-393-command.txt). The isolated walk scratch under `.tmp/graph-walk/phase13-astra-r3/` was removed after each result was copied to the story assets.
 
-## R4 actual Dock walk on current main
+## R4 Dock walk from the #730 candidate
 
 After rebasing onto current `main` at #730, I ran the real `case.p13.dock.needs_you_week` one time per viewport, engine `none`, with a fresh short-path HOME and DB each time. Both observations report revision `50addf2e46e86e24a1cb0ee51f775c6b098e24ae`, pass, six before the real A1 status route, and five after reload within the 30-second bound. The 393 run uses native touch. I read each observation and viewed all four before/after images before accepting the result.
 
@@ -56,3 +56,14 @@ After rebasing onto current `main` at #730, I ran the real `case.p13.dock.needs_
 | 393 | pass, 2.369 s | [record](assets/story-03-needs-you/r4-dock-393/20261003T020226Z-case.p13.dock.needs_you_week-astra-393/observation.json) | [6](assets/story-03-needs-you/r4-dock-393/20261003T020226Z-case.p13.dock.needs_you_week-astra-393/before.png) | [5](assets/story-03-needs-you/r4-dock-393/20261003T020226Z-case.p13.dock.needs_you_week-astra-393/after.png) | native `ui-touch` | dirty from the already-copied 1440 evidence files only |
 
 Both DB paths are under the per-run temporary HOME and both runs use engine `none`. The first 1440 attempt used a long system temp path and its tmux cleanup reported a socket-path error; no run-owned tmux process remained. I removed that scratch and reran 1440 with `/tmp/p13.*`, then used the same short path for 393. The final observations report no server at their run-owned tmux sockets, and the run output under `.tmp/graph-walk/phase13-astra-r4-short/` was removed after the results were copied here. These Dock results do not close A2-W's Chair, bell, Room or Meetings work.
+
+## R4 actual Dock walk on the #731 head
+
+After rebasing onto #731 (`origin/main` `8485874f6`), I ran the actual `case.p13.dock.needs_you_week` once per viewport at candidate source revision `0f32ddb87613638725ec80c471a6ced7b0b3e070`. Each invocation used engine `none`, a fresh isolated HOME and DB, and its own output directory. The produced Desk reads six before the real A1 status route and five after reload, within the 30-second bound. I read each observation and viewed every before/after shot.
+
+| Viewport | Result | Observation | Before | After | Input mode |
+|---|---|---|---|---|---|
+| 1440 | pass, 2.378 s to predicate | [record](assets/story-03-needs-you/r4-dock-on-731-1440/20261003T023129Z-case.p13.dock.needs_you_week-astra-1440/observation.json) | [6](assets/story-03-needs-you/r4-dock-on-731-1440/20261003T023129Z-case.p13.dock.needs_you_week-astra-1440/before.png) | [5](assets/story-03-needs-you/r4-dock-on-731-1440/20261003T023129Z-case.p13.dock.needs_you_week-astra-1440/after.png) | pointer |
+| 393 | pass, 2.379 s to predicate | [record](assets/story-03-needs-you/r4-dock-on-731-393/20261003T023147Z-case.p13.dock.needs_you_week-astra-393/observation.json) | [6](assets/story-03-needs-you/r4-dock-on-731-393/20261003T023147Z-case.p13.dock.needs_you_week-astra-393/before.png) | [5](assets/story-03-needs-you/r4-dock-on-731-393/20261003T023147Z-case.p13.dock.needs_you_week-astra-393/after.png) | native touch |
+
+Command records: [1440](assets/story-03-needs-you/r4-on-731-walk-1440-command.txt), [393](assets/story-03-needs-you/r4-on-731-walk-393-command.txt). Both observations name the same candidate revision and isolated per-run DB paths. They report `dirty=true` because the untracked `r4-on-731-*` verification receipts were already present; there were no tracked A2 source edits, and the A2 source paths are byte-identical to the #730 candidate `50addf2e`. The 393 `touch_mode` resolves to `ui-touch` / `native-touch`. These Dock observations do not close A2-W's Chair, bell, Room or Meetings work.
