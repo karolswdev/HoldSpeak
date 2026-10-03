@@ -4,6 +4,7 @@ export {
   useDesk,
   defaultViewFor,
   loadPanelLayout,
+  isRehydratedMinimized,
   loadDeskWorkspace,
   DESK_WORKSPACE_STORAGE_KEY,
   DESK_WORKSPACE_VERSION,

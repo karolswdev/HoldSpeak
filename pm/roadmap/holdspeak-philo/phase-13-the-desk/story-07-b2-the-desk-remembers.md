@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** **PHILO-13-01 (B0) merged, its cases passing on main; this story's merge record cites B0's merged commit and evidence path (the gate)**; PHILO-13-05 (close means gone)
 - **Unblocks:** D1 (out of this phase; the owner's "Later" waits on this story's return in real use)
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
