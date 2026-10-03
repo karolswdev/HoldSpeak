@@ -2,11 +2,11 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** the owner's ratification of this charter
 - **Unblocks:** none
 - **Owner:** Astra (Luna, xhigh); Muad'Dib checks
-- **Lane:** Data + truth (`../wt-philo-13-astra`, `feat/philo-13-astra`)
+- **Lane:** Data + truth (`../wt-philo-13-10-astra`, `feat/philo-13-10-astra`)
 - **Proposal:** B5 (PROPOSAL §3, Wave B); Muad'Dib's ruling, PROPOSAL §5 (not forked)
 - **Closure finding:** `grounding/faces-jobs.md` F6 (`:172`), move 6 (`:157`), fork 4 (`:190`)
 - **Canvas:** none (the draft's text; the Room face is unchanged)
@@ -53,3 +53,5 @@ Grounding size: M (`grounding/faces-jobs.md:157`). PROVISIONAL.
 
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+- 2026-10-03 — B5 candidate implemented and verified; UNCHECKED — awaiting Muad'Dib. [Lane report](lane-10-astra.md). The editor line-wrap limitation is recorded, not waived.

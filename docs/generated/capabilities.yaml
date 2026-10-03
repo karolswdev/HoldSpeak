@@ -7176,6 +7176,96 @@
     },
     {
       "apis": [
+        "POST /api/projects/{project_id}/updates/draft"
+      ],
+      "authority": "The existing project.draft_update operation admits the write.",
+      "configuration": [],
+      "dependencies": [
+        "ProjectService",
+        "ProjectUpdateService"
+      ],
+      "docs": [
+        "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-10-b5-the-update-writes-the-week.md"
+      ],
+      "domain": "desk",
+      "egress": "Draft creation writes locally. Send is a separate action.",
+      "egress_possible": false,
+      "entry_points": [
+        "holdspeak/services/project_update_service.py::ProjectUpdateService.draft_update"
+      ],
+      "evidence_level": "tests_executed",
+      "exposure": "user",
+      "failure_states": [
+        "Named source-coverage caveats when a stored source cannot be read."
+      ],
+      "id": "project.update.linked_week",
+      "inputs": [
+        "project id",
+        "linked meetings",
+        "Room decisions",
+        "owned open actions"
+      ],
+      "kernel_operations": [
+        "project.draft_update"
+      ],
+      "limitations": [
+        "Pending Muad'Dib counsel and merge; no owner sitting is claimed."
+      ],
+      "model_requirements": [],
+      "name": "Draft a project update",
+      "network_requirements": [],
+      "outputs": [
+        "update body",
+        "source claims",
+        "source coverage"
+      ],
+      "owner_observed": false,
+      "persistence": [
+        "project_updates"
+      ],
+      "platforms": {
+        "aipi": "unknown",
+        "ipad": "unknown",
+        "linux_wayland": "unknown",
+        "linux_x11": "unknown",
+        "macos": "unknown"
+      },
+      "purpose": "Draft an update from linked meeting summaries, decisions and owned actions.",
+      "release_availability": "unverified",
+      "replacement": null,
+      "side_effect": "local_reversible",
+      "sources": [
+        {
+          "claim": "Reads active linked meeting summaries, owned open actions and Room decisions.",
+          "line": 1997,
+          "path": "holdspeak/services/project_update_service.py",
+          "symbol": "ProjectUpdateService._read_week_sources"
+        }
+      ],
+      "status": "built_unreleased",
+      "status_reason": "Implemented in the PHILO-13-10 candidate; the paired producer tests passed. Muad'Dib has not checked this candidate.",
+      "surfaces": [
+        "Project Room",
+        "Update draft"
+      ],
+      "tests": [
+        {
+          "assertion": "The draft includes real persisted meeting summary, decision and two owned actions with source refs.",
+          "execution": "passed",
+          "node": "test_deterministic_draft_reads_real_linked_week",
+          "path": "tests/unit/test_philo13_b5_week.py"
+        },
+        {
+          "assertion": "The deterministic path does not access the model broker.",
+          "execution": "passed",
+          "node": "test_deterministic_draft_never_calls_model_boundary",
+          "path": "tests/unit/test_philo13_b5_week.py"
+        }
+      ],
+      "trust_boundary": "The deterministic generator reads stored project and meeting data. It does not call a model."
+    },
+    {
+      "apis": [
         "POST /api/threads",
         "GET /api/threads",
         "GET /api/threads/{thread_id}",
