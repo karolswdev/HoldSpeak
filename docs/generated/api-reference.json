@@ -16317,7 +16317,9 @@
       ],
       "source": "holdspeak/web/routes/follow_through.py",
       "handler_evidence": [],
-      "test_candidates": [],
+      "test_candidates": [
+        "tests/e2e/test_philo13_09_prep_glass.py"
+      ],
       "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
       "contract_review": {
         "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",

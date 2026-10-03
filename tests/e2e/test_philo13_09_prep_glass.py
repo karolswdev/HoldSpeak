@@ -8,7 +8,10 @@ store with a FILE key in this HOME, the People routes and ProjectService. The
 hub's own Config then names the same ICS source (PUT /api/settings), and the
 real conductor re-ingests it with the 1:1 inside this week.
 
-The walk, per width:
+The walk, per width (the browser in America/Denver):
+  0. The brief route fails once (503): the Now side names it
+     (`NEXT 1:1 DID NOT LOAD · NOT AVAILABLE NOW`) with Try again, never
+     "No 1:1 planned"; Try again shows the suggestion.
   1. People on Priya, Prep: the calendar suggestion; nothing is linked yet
      (the custody rule). His press on `Link this 1:1` links it; then
      `NEXT 1:1 · <formatted time>` shows.
@@ -42,6 +45,8 @@ SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-
 SIZES = {1440: 900, 393: 852}
 ISO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}")
 OWED = "Send the dry-run report"
+DUE = "2026-10-06"  # a Tuesday; the desk below runs in America/Denver
+DESK_ZONE = "America/Denver"
 
 
 def _http(base: str, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -80,6 +85,13 @@ def _seed(root: Path, base: str) -> dict[str, Any]:
     brief = _http(base, "GET", f"/api/people/relationships/{rid}/brief")["brief"]
     assert [s["title"] for s in brief["calendar_link_suggestions"]] == [b4.EVENT_TITLE]
     assert [a["task"] for a in brief["open_meeting_actions"]] == [OWED]
+    # Astra's B4-W condition 2: the fixture's owned action carries no deadline
+    # (due=None). The real `Set a date` producer (follow_through_service,
+    # verb "due") gives it a calendar day, stored as `YYYY-MM-DD`.
+    _http(base, "POST", "/api/follow-through/complete",
+          {"card_id": b4.ACTION_ID, "verb": "due", "payload": {"due": DUE}})
+    brief = _http(base, "GET", f"/api/people/relationships/{rid}/brief")["brief"]
+    assert [a["due"] for a in brief["open_meeting_actions"]] == [DUE]
     return {"rid": rid, "title": b4.EVENT_TITLE, "project": "B4 Dry-run project", "meeting_id": b4.MEETING_ID}
 
 
@@ -107,7 +119,8 @@ class TestOneOnOneFindsItsPerson:
     def _page(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
         browser = pw.chromium.launch(headless=True)
         ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
-                                  device_scale_factor=1, has_touch=width < 720, is_mobile=False)
+                                  device_scale_factor=1, has_touch=width < 720, is_mobile=False,
+                                  timezone_id=DESK_ZONE)
         page = ctx.new_page()
         page.set_default_timeout(30_000)
         errors: list[str] = []
@@ -174,7 +187,31 @@ class TestOneOnOneFindsItsPerson:
                 # 1. People on Priya, Prep: the suggestion; Link this 1:1 on his press.
                 self._palette(page, "people", "desk.open-people", width)
                 people = page.locator("#surface-people")
+                # Astra's B4-W condition 1: the brief route fails once (503);
+                # the Now side names the failure; Try again shows the suggestion.
+                fail_once = {"left": 1}
+
+                def _brief_503(route: Any) -> None:
+                    if fail_once["left"] > 0:
+                        fail_once["left"] -= 1
+                        route.fulfill(status=503, body='{"detail":"people_plaintext_unavailable"}',
+                                      content_type="application/json")
+                    else:
+                        route.continue_()
+
+                page.route(re.compile(r".*/api/people/relationships/[^/]+/brief$"), _brief_503)
                 self._press(page, people.locator("button").filter(has_text="Priya Sharma").first, width)
+                side = people.get_by_test_id("people-next-side")
+                failure = side.get_by_test_id("people-next-failure")
+                failure.wait_for()
+                _settle(page)
+                walk["brief_failure"] = failure.inner_text()
+                walk["brief_failure_side"] = side.inner_text()
+                page.screenshot(path=str(SHOTS / f"B4-00-brief-failed-{width}.png"))
+                self._press(page, failure.get_by_role("button", name="Try again"), width)
+                side.get_by_role("button", name="Link this 1:1").wait_for()
+                walk["after_retry_side"] = side.inner_text()
+                page.unroute(re.compile(r".*/api/people/relationships/[^/]+/brief$"))
                 self._press(page, people.get_by_role("tab", name="Prep"), width)
                 suggestion = people.get_by_test_id("prep-link-suggestion")
                 suggestion.wait_for()
@@ -277,6 +314,13 @@ class TestOneOnOneFindsItsPerson:
             fails["Prep shows the agenda"] = walk.get("agenda")
         if OWED not in walk.get("owed", "") or "WAITING ON PRIYA" not in walk.get("owed", "").upper():
             fails["Prep shows what Priya owes"] = walk.get("owed")
+        if "BY TUE" not in walk.get("owed", "").upper() or "BY MON" in walk.get("owed", "").upper():
+            fails["the date-only deadline stays Tuesday in America/Denver"] = walk.get("owed")
+        if "NEXT 1:1 DID NOT LOAD · NOT AVAILABLE NOW" not in walk.get("brief_failure", "") or \
+                "No 1:1 planned" in walk.get("brief_failure_side", ""):
+            fails["a failed brief read is named, never 'No 1:1 planned'"] = walk.get("brief_failure_side")
+        if "Link this 1:1" not in walk.get("after_retry_side", ""):
+            fails["Try again brings the suggestion"] = walk.get("after_retry_side")
         if self.ids["project"] not in walk.get("projects", ""):
             fails["Prep shows her project"] = walk.get("projects")
         for key in ("readable", "readable_scrolled"):

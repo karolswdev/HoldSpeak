@@ -368,8 +368,8 @@ function shortWhen(isoDate: string): string {
     const d = new Date(isoDate);
     if (Number.isNaN(d.getTime())) return "";
     const now = new Date();
-    const diffMs = d.getTime() - now.getTime();
-    const diffDays = Math.floor(diffMs / 86_400_000);
+    const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); // calendar days, not 24 h blocks
+    const diffDays = Math.round((startOf(d) - startOf(now)) / 86_400_000);
     const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
     if (diffDays === 0) return `TODAY ${time}`;
     if (diffDays === 1) return `TOMORROW ${time}`;
@@ -554,9 +554,13 @@ function PrepLens({ relationship, onRefresh, onProtectedFailure, onOpenConcern }
   </div>;
 }
 
-/** A due date as a short day (`FRI`); never the raw ISO string. */
+/** A due date as a short day (`FRI`); never the raw ISO string. A date-only
+ * value (`YYYY-MM-DD`, the `Set a date` producer's calendar day) stays that
+ * calendar day in the desk's zone; `new Date("2026-10-06")` would read it as
+ * UTC midnight and show the day before west of UTC. */
 function shortDay(isoDate: string): string {
-  const d = new Date(isoDate);
+  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate.trim());
+  const d = day ? new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3])) : new Date(isoDate);
   return Number.isNaN(d.getTime()) ? isoDate : d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
 }
 
@@ -608,6 +612,11 @@ function LinkSuggestions({ relationship, prep, onLinked, onProtectedFailure, tes
 function NextOneOnOneSide({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
   const [prep, setPrep] = useState<PeoplePrepData | null>(null);
   const [read, setRead] = useState(false);
+  // Astra's B4-W condition 1: a failed read is a named failure with Try
+  // again (the story-04 pattern), never "No 1:1 planned". A key or lock
+  // failure still goes to the window's custody path.
+  const [failure, setFailure] = useState("");
+  const [attempt, setAttempt] = useState(0);
   const nextAt = relationship.next_one_on_one ?? null;
   const links = linkKey(relationship);
   useEffect(() => {
@@ -615,17 +624,27 @@ function NextOneOnOneSide({ relationship, onRefresh, onProtectedFailure }: { rel
     let live = true;
     setRead(false);
     void readPeoplePrep(relationship.id)
-      .then((next) => { if (live) setPrep(next); })
-      .catch(() => { if (live) setPrep(null); })
+      .then((next) => { if (live) { setPrep(next); setFailure(""); } })
+      .catch((cause) => {
+        if (!live) return;
+        setPrep(null);
+        if (isProtectedFailure(cause) && !isStoreOutage(cause)) { onProtectedFailure(cause); return; }
+        setFailure(plainFailure("NEXT 1:1 DID NOT LOAD", cause));
+      })
       .finally(() => { if (live) setRead(true); });
     return () => { live = false; };
-  }, [relationship.id, nextAt, links]);
+  }, [relationship.id, nextAt, links, attempt]);
   const label = nextAt ? shortWhen(nextAt) : "";
   const suggested = !nextAt && prep && prep.calendarLinkSuggestions.length > 0;
   return <div data-testid="people-next-side">
     {label ? <SurfaceSection label="Next 1:1"><span className="people-next-side">{label}</span></SurfaceSection>
       : suggested ? <LinkSuggestions relationship={relationship} prep={prep} onLinked={onRefresh} onProtectedFailure={onProtectedFailure} testId="people-next-suggestion" />
-        : <SurfaceSection label="Next 1:1">{read || nextAt ? <SurfaceState empty emptyLabel="No 1:1 planned" /> : <SurfaceState loading />}</SurfaceSection>}
+        : <SurfaceSection label="Next 1:1">{failure ? (
+          <span className="people-failure" role="alert" data-testid="people-next-failure">
+            <span className="people-failure-label">{failure}</span>
+            <Button dense variant="ghost" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>
+          </span>
+        ) : read || nextAt ? <SurfaceState empty emptyLabel="No 1:1 planned" /> : <SurfaceState loading />}</SurfaceSection>}
   </div>;
 }
 

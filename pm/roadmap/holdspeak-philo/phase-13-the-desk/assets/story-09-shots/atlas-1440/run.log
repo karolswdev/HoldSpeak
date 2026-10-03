@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: muaddib
+SOURCE: 53a88cb304167cd6ea7545e6a7b8b93616fc4f54 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase13-muaddib.json
+RUNTIME: build=['index-DFnfiOPA.js'] hub=http://127.0.0.1:53969 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-chon1if7/.local/share/holdspeak/holdspeak.db engine=none
+JOB: j7
+VERDICT: pass terminal=settled
+EVIDENCE: ['/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/b4w/gw-1440/20261003T052040Z-case.p13.people.prep_link-muaddib-1440/before.png', '/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/b4w/gw-1440/20261003T052040Z-case.p13.people.prep_link-muaddib-1440/after.png']
+NOTE: predicate: 'NEXT 1:1' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 52, 'y': 180, 'w': 584, 'h': 18}

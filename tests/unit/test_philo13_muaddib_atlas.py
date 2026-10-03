@@ -8,6 +8,7 @@ is Astra's (H-B0b); this lane adds no ``.op`` sibling.
 
 * PHILO-13-05 (A4): ``case.p13.close.intelligence_gone``
 * PHILO-13-04 (A3): ``case.p13.record.refused_not_recording``
+* PHILO-13-09 (B4-W): ``case.p13.people.prep_link``
 """
 from __future__ import annotations
 
@@ -27,6 +28,7 @@ ATLAS = REPO / "docs/internal/philo/graph/atlas-phase13-muaddib.json"
 CASES = {
     "case.p13.close.intelligence_gone",  # PHILO-13-05
     "case.p13.record.refused_not_recording",  # PHILO-13-04
+    "case.p13.people.prep_link",  # PHILO-13-09 (B4-W)
 }
 
 GENERAL = [
@@ -80,13 +82,13 @@ def test_the_file_validates_against_the_atlas_schema(atlas: dict) -> None:
 def test_the_lane_case_count_and_names(atlas: dict) -> None:
     ids = {case["id"] for case in atlas["cases"]}
     assert ids == CASES
-    assert len(atlas["cases"]) == 2
+    assert len(atlas["cases"]) == 3
     # No `.op` sibling here: the shared count at test_philo_graph_atlas.py:492
     # stays Astra's (H-B0b).
     assert not [i for i in ids if i.endswith(".op") or i.endswith(".op.replayed")]
 
 
-def test_both_cases_are_face_cases_at_both_widths(atlas: dict) -> None:
+def test_every_case_is_a_face_case_at_both_widths(atlas: dict) -> None:
     for case in atlas["cases"]:
         assert case["applicability"] == "applicable", case["id"]
         assert sorted(case["viewports"]) == [393, 1440], case["id"]
