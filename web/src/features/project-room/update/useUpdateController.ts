@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "../../../lib/api";
 import { plainFailure } from "../../../desk/surface/plainFailure";
-import { keepDraft, keepPlace, keptDraft, keptPlace } from "../../../desk/deskMemory";
+import { forgetDraft, keepDraft, keepPlace, keptDraft, keptPlace } from "../../../desk/deskMemory";
 import type { ProjectUpdate, UpdateLifecycle } from "./model";
 import * as updateApi from "./api";
 
@@ -145,9 +145,10 @@ export function useUpdateController(
   const openUpdate = useCallback((update: ProjectUpdate) => {
     setDeliveriesReadFailed(false);
     setCurrent(update);
-    const kept = update.lifecycle === "draft" ? keptDraft(updateDraftKey(update.id)) : "";
-    setEditBody(kept || update.bodyMd);
-    setDirty(Boolean(kept) && kept !== update.bodyMd);
+    // An emptied body is kept as "" (its own state, never "no draft").
+    const kept = update.lifecycle === "draft" ? keptDraft(updateDraftKey(update.id)) : null;
+    setEditBody(kept ?? update.bodyMd);
+    setDirty(kept !== null && kept !== update.bodyMd);
     setPosture("editor");
     setError("");
     if (projectId) keepPlace(updatePlaceKey(projectId), `editor:${update.id}`);
@@ -208,7 +209,7 @@ export function useUpdateController(
       if (editBodyNow.current === sent) {
         setEditBody(saved.bodyMd);
         setDirty(false);
-        keepDraft(updateDraftKey(current.id), "");
+        forgetDraft(updateDraftKey(current.id));
       }
     } catch (reason) {
       fail("NOT SAVED", reason, () => void verbs.current.save());
@@ -224,7 +225,7 @@ export function useUpdateController(
     setError("");
     try {
       const newDraft = await updateApi.regenerateUpdate(current.id, generator);
-      keepDraft(updateDraftKey(current.id), "");
+      forgetDraft(updateDraftKey(current.id));
       setCurrent(newDraft);
       setEditBody(newDraft.bodyMd);
       setDirty(false);
@@ -243,7 +244,7 @@ export function useUpdateController(
     setError("");
     try {
       const published = await updateApi.publishUpdate(current.id);
-      keepDraft(updateDraftKey(current.id), "");
+      forgetDraft(updateDraftKey(current.id));
       setCurrent(published);
       onRoomRefresh();
     } catch (reason) {

@@ -1,0 +1,1595 @@
+{
+  "id": "obs-20261003T193503Z-case.p13.calendar.snapshot_window-muaddib-393",
+  "run_id": "20261003T193503Z-case.p13.calendar.snapshot_window-muaddib-393",
+  "case_id": "case.p13.calendar.snapshot_window",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j1",
+  "edge_ids": [
+    "edge.face.calendar_snapshot_window"
+  ],
+  "state_id": "state.desk_presentation.p13_unwalked_windows",
+  "provenance": {
+    "revision": "ad3855f0d4e984bd60c38ca26c41ecb7facf1fa3",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "24677d2c7e828a90af9c76acce9eb31aa9e487f8a31673b6c312e6c022783db3",
+      "assets": [
+        "index-CY1L4D5o.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:65170",
+      "port": 65170,
+      "pid": 49168,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-d7b9exod",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-d7b9exod/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {
+      "tests/fixtures/philo13/calendar-input.png": "791149fb5184eb17959cb4dd9e3bb81c6cc730f1ab093090e9b391cc40b3db13"
+    },
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T19:35:03.856935+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "e691deb9e51112b12d41bd97df15c1f49aa227e5cb2708be17533ba33af07b8b",
+      "version": "phase13-astra-wave2"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "browser_context": {
+      "viewport": 393,
+      "has_touch": true
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-d7b9exod",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-d7b9exod",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-d7b9exod/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-d7b9exod"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null,
+    "input_files": [
+      {
+        "path": "tests/fixtures/philo13/calendar-input.png",
+        "resolved_path": "/Users/karol/dev/tools/wt-philo-13-b2/tests/fixtures/philo13/calendar-input.png",
+        "sha256": "791149fb5184eb17959cb4dd9e3bb81c6cc730f1ab093090e9b391cc40b3db13",
+        "scope": "repository_fixture"
+      },
+      {
+        "path": "tests/fixtures/philo13/calendar-input.png",
+        "resolved_path": "/Users/karol/dev/tools/wt-philo-13-b2/tests/fixtures/philo13/calendar-input.png",
+        "sha256": "791149fb5184eb17959cb4dd9e3bb81c6cc730f1ab093090e9b391cc40b3db13",
+        "scope": "repository_fixture"
+      }
+    ]
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.28,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "Fresh isolated HOME; Settings exposes the real native Calendar snapshot upload. With engine=none, the producer returns the real no-engine refusal on the Settings Meetings face.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "Every mouse/touch press uses ui-by-viewport. The trigger owns the refusal, close, reload, and reopen path; no extracted event is substituted.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-d7b9exod"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click_role",
+    "adapter": "ui-touch",
+    "adapter_requested": "ui-by-viewport",
+    "name": "Settings",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-touch",
+        "adapter_requested": "ui-by-viewport",
+        "selector": ".prefs-hub .surface-ledger-row:has-text(\"Meetings\") button",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "set_input_files",
+        "adapter": "ui-touch",
+        "adapter_requested": "ui-by-viewport",
+        "selector": "[data-testid=\"calendar-snapshot-btn\"]",
+        "value": "tests/fixtures/philo13/calendar-input.png",
+        "done": true,
+        "input_file": {
+          "path": "tests/fixtures/philo13/calendar-input.png",
+          "resolved_path": "/Users/karol/dev/tools/wt-philo-13-b2/tests/fixtures/philo13/calendar-input.png",
+          "sha256": "791149fb5184eb17959cb4dd9e3bb81c6cc730f1ab093090e9b391cc40b3db13",
+          "scope": "repository_fixture"
+        }
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "[role=\"region\"][aria-label=\"Calendar snapshot\"]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-touch",
+        "adapter_requested": "ui-by-viewport",
+        "selector": "[role=\"region\"][aria-label=\"Calendar snapshot\"] button[aria-label^=\"Close \"]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "[role=\"region\"][aria-label=\"Calendar snapshot\"]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-touch",
+        "adapter_requested": "ui-by-viewport",
+        "name": "Settings",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-touch",
+        "adapter_requested": "ui-by-viewport",
+        "selector": ".prefs-hub .surface-ledger-row:has-text(\"Meetings\") button",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "set_input_files",
+        "adapter": "ui-touch",
+        "adapter_requested": "ui-by-viewport",
+        "selector": "[data-testid=\"calendar-snapshot-btn\"]",
+        "value": "tests/fixtures/philo13/calendar-input.png",
+        "done": true,
+        "input_file": {
+          "path": "tests/fixtures/philo13/calendar-input.png",
+          "resolved_path": "/Users/karol/dev/tools/wt-philo-13-b2/tests/fixtures/philo13/calendar-input.png",
+          "sha256": "791149fb5184eb17959cb4dd9e3bb81c6cc730f1ab093090e9b391cc40b3db13",
+          "scope": "repository_fixture"
+        }
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "[role=\"region\"][aria-label=\"Calendar snapshot\"]",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Calendar snapshot\nCALENDAR SNAPSHOT\n\nno_vision_model_assigned"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "id": "surface-calendar-snapshot",
+        "tabindex": "-1",
+        "class": "desk-surface-window desk-window desk-window-shell is-sheet is-front",
+        "role": "region",
+        "aria-label": "Calendar snapshot",
+        "style": "z-index: 44; opacity: 1; transform: none;"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 0,
+        "y": 44,
+        "w": 393,
+        "h": 752
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div#chair:needs",
+      "after": "div#surface-calendar-snapshot"
+    },
+    "focus_label": {
+      "before": "Needs you",
+      "after": "Calendar snapshot"
+    },
+    "windows": {
+      "before": [
+        {
+          "title": "Needs you",
+          "rect": {
+            "x": 0,
+            "y": 44,
+            "w": 393,
+            "h": 752
+          },
+          "visible": true
+        }
+      ],
+      "after": [
+        {
+          "title": "Needs you",
+          "rect": {
+            "x": 0,
+            "y": 44,
+            "w": 393,
+            "h": 752
+          },
+          "visible": true
+        },
+        {
+          "title": "Settings",
+          "rect": {
+            "x": 0,
+            "y": 44,
+            "w": 393,
+            "h": 752
+          },
+          "visible": true
+        },
+        {
+          "title": "Calendar snapshot",
+          "rect": {
+            "x": 0,
+            "y": 44,
+            "w": 393,
+            "h": 752
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "0562fcbd82bb921a48940b82a7bf68cbf446d85560fc051146ec4c3cfc5a78a7",
+      "after": "c30732769af394ec280d69bc3bbf9ff1c4d017ef40d064af9b49ea8d63517259"
+    },
+    "document_text_len": {
+      "before": 189,
+      "after": 651
+    }
+  },
+  "before": {
+    "observe_at": "[role=region][aria-label^=Calendar]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:needs",
+    "focus_label": "Needs you",
+    "url": "http://127.0.0.1:65170/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "0562fcbd82bb921a48940b82a7bf68cbf446d85560fc051146ec4c3cfc5a78a7",
+    "document_text_len": 189,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T19:35:10.918836+00:00"
+  },
+  "after": {
+    "observe_at": "[role=region][aria-label^=Calendar]",
+    "target_present": true,
+    "text": "Calendar snapshot\nCALENDAR SNAPSHOT\n\nno_vision_model_assigned",
+    "attrs": {
+      "id": "surface-calendar-snapshot",
+      "tabindex": "-1",
+      "class": "desk-surface-window desk-window desk-window-shell is-sheet is-front",
+      "role": "region",
+      "aria-label": "Calendar snapshot",
+      "style": "z-index: 44; opacity: 1; transform: none;"
+    },
+    "rect": {
+      "x": 0,
+      "y": 44,
+      "w": 393,
+      "h": 752
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 0,
+        "y": 44,
+        "w": 393,
+        "h": 752
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 49.125,
+          "y": 138,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body > div.surface-padded > section.surface-section"
+        },
+        {
+          "x": 49.125,
+          "y": 420,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body"
+        },
+        {
+          "x": 49.125,
+          "y": 702,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body"
+        },
+        {
+          "x": 196.5,
+          "y": 138,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body > div.surface-padded > section.surface-section"
+        },
+        {
+          "x": 196.5,
+          "y": 420,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body"
+        },
+        {
+          "x": 196.5,
+          "y": 702,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body"
+        },
+        {
+          "x": 343.875,
+          "y": 138,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body > div.surface-padded > section.surface-section"
+        },
+        {
+          "x": 343.875,
+          "y": 420,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body"
+        },
+        {
+          "x": 343.875,
+          "y": 702,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#surface-calendar-snapshot",
+    "focus_label": "Calendar snapshot",
+    "url": "http://127.0.0.1:65170/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Calendar snapshot",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "c30732769af394ec280d69bc3bbf9ff1c4d017ef40d064af9b49ea8d63517259",
+    "document_text_len": 651,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T19:35:15.671526+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:65170) non-GET response after the click",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/calendar/snapshot",
+        "status": 200,
+        "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:65170) non-GET response after the click",
+        "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:65170) non-GET response after the click",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/_built/assets/core-hooks-BtcHuWGm.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/core-layout-7FsKUiT1.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/atmosphereControls-nB4jNh-k.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/settingsWallpaper-BT_Z7aEr.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-B7uQ-g3r.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-D9YE7g0K.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SettingsCore-BCZ8S3_-.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/api-CL2G7x-O.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/authority/policy",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/hub",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/calendar/sources",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/calendar/snapshot",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/CalendarSnapshotReviewCore-B5I-ZVVL.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-CY1L4D5o.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/react-SZyUX699.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-B3DxtdgQ.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-gslz4Tc-.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-Cr5G-Rag.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/calendar/snapshot",
+      "status": 200,
+      "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "body": null,
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:65170) non-GET response after the click",
+      "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[role=region][aria-label^=Calendar]",
+    "target_present": true,
+    "text": "Calendar snapshot\nCALENDAR SNAPSHOT\n\nno_vision_model_assigned",
+    "attrs": {
+      "id": "surface-calendar-snapshot",
+      "tabindex": "-1",
+      "class": "desk-surface-window desk-window desk-window-shell is-sheet is-front",
+      "role": "region",
+      "aria-label": "Calendar snapshot",
+      "style": "z-index: 44; opacity: 1; transform: none;"
+    },
+    "rect": {
+      "x": 0,
+      "y": 44,
+      "w": 393,
+      "h": 752
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 0,
+        "y": 44,
+        "w": 393,
+        "h": 752
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 49.125,
+          "y": 138,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body > div.surface-padded > section.surface-section"
+        },
+        {
+          "x": 49.125,
+          "y": 420,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body"
+        },
+        {
+          "x": 49.125,
+          "y": 702,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body"
+        },
+        {
+          "x": 196.5,
+          "y": 138,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body > div.surface-padded > section.surface-section"
+        },
+        {
+          "x": 196.5,
+          "y": 420,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body"
+        },
+        {
+          "x": 196.5,
+          "y": 702,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body"
+        },
+        {
+          "x": 343.875,
+          "y": 138,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body > div.surface-padded > section.surface-section"
+        },
+        {
+          "x": 343.875,
+          "y": 420,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body"
+        },
+        {
+          "x": 343.875,
+          "y": 702,
+          "owned": true,
+          "owner": "div#surface-calendar-snapshot > div.desk-surface-body"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#surface-calendar-snapshot",
+    "focus_label": "Calendar snapshot",
+    "url": "http://127.0.0.1:65170/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Settings",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Calendar snapshot",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "c30732769af394ec280d69bc3bbf9ff1c4d017ef40d064af9b49ea8d63517259",
+    "document_text_len": 651,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T19:35:15.541386+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:65170) non-GET response after the click",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/calendar/snapshot",
+        "status": 200,
+        "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:65170) non-GET response after the click",
+        "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:65170) non-GET response after the click",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/_built/assets/core-hooks-BtcHuWGm.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/core-layout-7FsKUiT1.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/atmosphereControls-nB4jNh-k.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/settingsWallpaper-BT_Z7aEr.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-B7uQ-g3r.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SendWell-D9YE7g0K.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/SettingsCore-BCZ8S3_-.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/api-CL2G7x-O.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/authority/policy",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/hub",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/calendar/sources",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "POST",
+          "path": "/api/calendar/snapshot",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/CalendarSnapshotReviewCore-B5I-ZVVL.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-CY1L4D5o.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/react-SZyUX699.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-B3DxtdgQ.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-gslz4Tc-.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-Cr5G-Rag.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/calendar/snapshot",
+      "status": 200,
+      "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "body": null,
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:65170) non-GET response after the click",
+      "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+    },
+    "predicate_satisfied": true,
+    "reading": "'no_vision_model_assigned' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 0, 'y': 44, 'w': 393, 'h': 752}",
+    "elapsed_s": 4.567
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'no_vision_model_assigned' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 0, 'y': 44, 'w': 393, 'h': 752}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 4.694,
+    "first_satisfied_at_s": 4.567,
+    "completion_bound_s": 20.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'no_vision_model_assigned' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 0, 'y': 44, 'w': 393, 'h': 752}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:65170) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/calendar/snapshot",
+      "status": 200,
+      "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:65170) non-GET response after the click",
+      "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:65170) non-GET response after the click",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/_built/assets/core-hooks-BtcHuWGm.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/core-layout-7FsKUiT1.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/atmosphereControls-nB4jNh-k.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/settingsWallpaper-BT_Z7aEr.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/SendWell-B7uQ-g3r.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/SendWell-D9YE7g0K.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/SettingsCore-BCZ8S3_-.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/api-CL2G7x-O.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/authority/policy",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings/hub",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/calendar/sources",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/calendar/snapshot",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/CalendarSnapshotReviewCore-B5I-ZVVL.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/index-CY1L4D5o.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/react-SZyUX699.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/desk-B3DxtdgQ.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/desk-gslz4Tc-.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/index-Cr5G-Rag.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs2/atlas-phase13-astra/20261003T193503Z-case.p13.calendar.snapshot_window-muaddib-393/before.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs2/atlas-phase13-astra/20261003T193503Z-case.p13.calendar.snapshot_window-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-d7b9exod/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-d7b9exod/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:65170"
+  ],
+  "duration_s": 12.364
+}

@@ -1,0 +1,24 @@
+{
+ "width": 393,
+ "after_reload": {
+  "body": "",
+  "unsaved": true,
+  "drafts": {
+   "room/update-body/pupd_9577b54959364a15acaa2b2171a44d86": ""
+  }
+ },
+ "after_reopen": {
+  "body": "",
+  "unsaved": true,
+  "drafts": {
+   "room/update-body/pupd_9577b54959364a15acaa2b2171a44d86": ""
+  }
+ },
+ "after_save": {
+  "puts": [
+   "PUT"
+  ],
+  "drafts": {},
+  "unsaved": false
+ }
+}

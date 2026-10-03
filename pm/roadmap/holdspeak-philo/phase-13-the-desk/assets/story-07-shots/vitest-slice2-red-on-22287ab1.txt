@@ -1,0 +1,14 @@
+     × dossier, terminal, Mission Control, session, Trust, tool inspector, Schedule, Ask and the editor come back; restore sends no write 443ms
+     × a closed family stays gone after a reload 15ms
+     × the inline editor returns on its object after the first Desk read 15ms
+     × the Delivery board returns after a reload; Close forgets it 138ms
+     × Decide: the unfinished decision title returns per meeting after a reload; it never shows under another meeting 53ms
+     × Schedule recording: the unsaved title and time return after a close and a reload; a landed save clears them 50ms
+     × the meeting SEND form pick returns per meeting after a reload 27ms
+     × the inline editor: an edit the hub has not kept returns after a reload; restore never saves; a kept save clears it 6ms
+     × the NoteEditor shows the kept edit after a reload 108ms
+     × drops a returned pullout whose record no longer exists, keeps the rest 19ms
+     × picked Team folder for one document comes back picked; another document starts unpicked; no send 1409ms
+     × a kept pick onto a destination that is gone is not restored 1029ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  12 failed | 2 passed (14)

@@ -223,8 +223,9 @@ export interface DeskState {
   /** PHILO-13-07 (B2) — a window's place (person + tab, the Room's update),
    * keyed like a draft. Persisted in the workspace document. */
   places: Record<string, string>;
-  /** Keep (or, with "", clear) one draft; writes the workspace document. */
-  setDraft(key: string, text: string): void;
+  /** Keep one draft ("" is an emptied field, kept as such) or, with null,
+   * forget it; writes the workspace document. */
+  setDraft(key: string, text: string | null): void;
   /** Keep (or, with "", clear) one place; writes the workspace document. */
   setPlace(key: string, value: string): void;
   /** Maximized windows (full stage; the saved rect is kept), persisted. */

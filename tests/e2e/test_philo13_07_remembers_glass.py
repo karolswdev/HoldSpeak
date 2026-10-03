@@ -49,7 +49,7 @@ WINDOWS_JS = r"""() => [...document.querySelectorAll('.desk-window-shell, .desk-
     return {id: w.id, title: (w.getAttribute('aria-label') || '').trim(), rect: [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]}; })"""
 
 
-class TestTheDeskRemembers:
+class _Rig:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         keyfile = tmp_path / "people.key"
@@ -124,6 +124,9 @@ class TestTheDeskRemembers:
     def _workspace(self, page: Any) -> dict[str, Any]:
         return json.loads(page.evaluate("() => localStorage.getItem('hs.desk.workspace.v1') || '{}'"))
 
+
+
+class TestTheDeskRemembers(_Rig):
     @pytest.mark.parametrize("width", list(SIZES))
     def test_windows_places_and_drafts_return_after_a_reload(self, width: int) -> None:
         from playwright.sync_api import sync_playwright
@@ -268,6 +271,211 @@ class TestTheDeskRemembers:
                     {"windows": titles, "workspace": self._workspace(page)}, indent=1) + "\n")
                 assert not any(DECISION in t for t in titles), titles
                 assert "decision:d-freeze" not in self._workspace(page)["windows"]["pullouts"]
+                assert not errors, errors
+            finally:
+                browser.close()
+
+
+class TestSliceTwoReturns(_Rig):
+    """B2 slice two, on the same rig: the meeting window with its SEND form
+    pick and its unfinished Decide title, the Delivery board, the Trust
+    window and Schedule recording with its typed title all come back after a
+    reload; the closed ones stay gone. Red on the slice-one head 22287ab1
+    (vitest fence deskRemembers2.philo1307.test.tsx; this glass was not run
+    against it)."""
+
+    DECIDE = "Freeze the old ledger after the dry run"
+    SCHEDULE = "Ledger cutover dry run"
+
+    def _present(self, page: Any) -> dict[str, Any]:
+        return page.evaluate("""() => ({
+          meeting: !!document.querySelector(".desk-pullout [data-testid=meeting-decide-well]"),
+          form: (document.querySelector(".desk-pullout [data-testid=doc-forms] select") || {}).value || null,
+          decide: (document.querySelector(".desk-pullout [aria-label='Decision title']") || {}).value ?? null,
+          board: !!document.querySelector(".desk-dlv-board"),
+          trust: !!document.querySelector("#trust"),
+          schedule: (document.querySelector("[id='schedule:__create__'] input[aria-label='Title']") || {}).value ?? null,
+        })""")
+
+    def _front(self, page: Any, width: int, title: str) -> None:
+        """The window's Dock chip brings it forward (it returned on its
+        remembered plane, so a later window may cover it)."""
+        chip = page.locator(f".desk-dock-chip button[aria-label^='Focus {title}']").first
+        if chip.count():
+            self._press(page, chip, width)
+        else:
+            page.locator(f"[aria-label='{title}'] .desk-pullout-head, #trust .desk-pullout-head").first.click(position={"x": 200, "y": 10}, force=False)
+        page.wait_for_timeout(500)
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_families_and_drafts_return_and_closed_stay_gone(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            writes: list[str] = []
+            page.on("request", lambda r: writes.append(f"{r.method} {r.url}")
+                    if r.method in ("PUT", "POST", "DELETE") and "/api/" in r.url
+                    and not any(p in r.url for p in ("/preview", "/subscriptions", "/peek", "/brief/generate")) else None)
+            try:
+                # 1. the meeting window: Digest, then Decide -> a title, not saved
+                page.goto(f"{self.base}/?token={TOKEN}&open=meeting:m-standup", wait_until="load")
+                _normal_chair(page)
+                well = page.locator(".desk-pullout [data-testid=meeting-decide-well]").first
+                well.wait_for(timeout=20_000)
+                page.locator(".desk-pullout [data-testid=doc-forms] select").first.select_option("meeting_digest")
+                self._press(page, well.get_by_role("button", name="Decide", exact=True), width)
+                well.get_by_role("textbox", name="Decision title").fill(self.DECIDE)
+                # 2. the Delivery board from the Dock
+                self._press(page, page.get_by_role("button", name="Delivery", exact=True).first, width)
+                page.locator(".desk-dlv-board").wait_for()
+                # 3. the Trust window from the privacy badge
+                self._press(page, page.locator("[aria-label^='Privacy and trust']").first, width)
+                page.locator("#trust").wait_for()
+                # 4. Schedule recording from Capture, a typed title, not saved
+                if width <= 720:  # Capture opens from the Speak AppIcon at 393 (R2)
+                    self._press(page, page.locator(".desk-dock [aria-label^='Speak']").first, width)
+                    page.locator(".desk-window-shell.chair-window[aria-label='Capture']").wait_for()
+                self._press(page, page.get_by_test_id("arrival-schedule").first, width)
+                title = page.locator("[id='schedule:__create__'] input[aria-label='Title']")
+                title.wait_for()
+                title.fill(self.SCHEDULE)
+                page.wait_for_timeout(500)
+                _settle(page)
+                before = self._present(page)
+                page.screenshot(path=str(SHOTS / f"B2-05-slice2-before-reload-{width}.png"))
+                typed_writes = list(writes)
+
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.locator(".desk-pullout [data-testid=meeting-decide-well]").first.wait_for(state="attached", timeout=20_000)
+                page.locator("[id='schedule:__create__']").wait_for(state="attached", timeout=20_000)
+                page.wait_for_timeout(1500)
+                _settle(page)
+                after = self._present(page)
+                page.screenshot(path=str(SHOTS / f"B2-06-slice2-after-reload-{width}.png"))
+
+                # close two of them, reload: they stay gone. Each comes to the
+                # front first (it returned on its remembered plane, so a later
+                # window may cover it): through the frame's own JS focus seam
+                # is not a gesture he has, so the fence uses the Window menu.
+                self._front(page, width, "Data boundaries")
+                self._press(page, page.locator("#trust [aria-label^='Close']").first, width)
+                page.locator("#trust").wait_for(state="detached")
+                self._front(page, width, "Delivery")
+                self._press(page, page.locator(".desk-dlv-board [aria-label^='Close']").first, width)
+                page.locator(".desk-dlv-board").wait_for(state="detached")
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.locator("[id='schedule:__create__']").wait_for(state="attached", timeout=20_000)
+                page.wait_for_timeout(1500)
+                _settle(page)
+                closed = self._present(page)
+                page.screenshot(path=str(SHOTS / f"B2-07-slice2-closed-stay-gone-{width}.png"))
+                proof = {"width": width, "before": before, "after": after, "after_close": closed,
+                         "writes_before_reload": typed_writes,
+                         "writes_after": [w for w in writes if w not in typed_writes]}
+                (SHOTS / f"B2-slice2-proof-{width}.json").write_text(json.dumps(proof, indent=1) + "\n")
+
+                assert after == {"meeting": True, "form": "meeting_digest", "decide": self.DECIDE,
+                                 "board": True, "trust": True, "schedule": self.SCHEDULE}, proof
+                assert closed["board"] is False and closed["trust"] is False, proof
+                assert closed["schedule"] == self.SCHEDULE and closed["decide"] == self.DECIDE, proof
+                assert not proof["writes_before_reload"] and not proof["writes_after"], "a draft was saved or sent"
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_an_emptied_room_draft_stays_empty_until_save(self, width: int) -> None:
+        """Astra's B2 condition: the Room body cleared to nothing stays empty
+        and UNSAVED after a reload and after a close/reopen; Save clears the
+        draft. Red on 22287ab1 (vitest fence; the old saved text came back)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            puts: list[str] = []
+            page.on("request", lambda r: puts.append(r.method) if r.method == "PUT" and "/api/updates/" in r.url else None)
+            try:
+                self._palette(page, "Payments", "project.open.p-ledger", width)
+                room = page.locator("#surface-project-memory")
+                self._press(page, room.get_by_test_id("updates-verb"), width)
+                self._press(page, room.get_by_test_id("update-verb-draft-deterministic"), width)
+                editor = room.locator("[contenteditable=true]").first
+                editor.wait_for()
+                self._press(page, editor, width)
+                page.keyboard.press("ControlOrMeta+a")
+                page.keyboard.press("Backspace")
+                page.wait_for_timeout(400)
+                empty_js = "e => !!e.querySelector('.cm-placeholder') && [...e.querySelectorAll('.cm-line')].every(l => !(l.textContent || '').replace(l.querySelector('.cm-placeholder')?.textContent || '', '').trim())"
+                assert editor.evaluate(empty_js), "the body did not clear"
+
+                def state() -> dict[str, Any]:
+                    r = page.locator("#surface-project-memory")
+                    r.locator("[contenteditable=true]").first.wait_for(timeout=20_000)
+                    page.wait_for_timeout(800)
+                    ed = r.locator("[contenteditable=true]").first
+                    return {"body": "" if ed.evaluate(empty_js) else ed.inner_text().strip()[:80],
+                            "unsaved": "UNSAVED" in r.inner_text().upper(),
+                            "drafts": {k: v for k, v in self._workspace(page).get("drafts", {}).items() if k.startswith("room/")}}
+
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                after_reload = state()
+                page.screenshot(path=str(SHOTS / f"B2-08-empty-draft-after-reload-{width}.png"))
+                # close the Room and reopen it by its normal opener
+                self._press(page, page.locator("#surface-project-memory [aria-label^='Close']").first, width)
+                page.locator("#surface-project-memory").wait_for(state="detached")
+                self._palette(page, "Payments", "project.open.p-ledger", width)
+                after_reopen = state()
+                page.screenshot(path=str(SHOTS / f"B2-09-empty-draft-after-reopen-{width}.png"))
+                self._press(page, page.locator("#surface-project-memory").get_by_role("button", name="Save", exact=True), width)
+                page.wait_for_timeout(1500)
+                saved = {"puts": list(puts), "drafts": {k: v for k, v in self._workspace(page).get("drafts", {}).items() if k.startswith("room/")},
+                         "unsaved": "UNSAVED" in page.locator("#surface-project-memory").inner_text().upper()}
+                page.screenshot(path=str(SHOTS / f"B2-10-empty-draft-saved-{width}.png"))
+                proof = {"width": width, "after_reload": after_reload, "after_reopen": after_reopen, "after_save": saved}
+                (SHOTS / f"B2-empty-draft-{width}.json").write_text(json.dumps(proof, indent=1) + "\n")
+                for leg in (after_reload, after_reopen):
+                    assert leg["body"] == "" and leg["unsaved"], proof
+                    assert list(leg["drafts"].values()) == [""], proof
+                assert saved["puts"] == ["PUT"], proof
+                assert saved["drafts"] == {} and not saved["unsaved"], proof
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_j5_the_thought_window_returns_with_its_words(self, width: int) -> None:
+        """J5's return leg (grounding faces-jobs.md:113, J5-04): he writes a
+        thought, it autosaves, he reloads: the Thought window is back with his
+        words, 0 gestures (was 3 to find it again)."""
+        from playwright.sync_api import sync_playwright
+
+        words = "Shard backup plan: ask Priya before Friday"
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                if width <= 720:  # Capture opens from the Speak AppIcon at 393 (R2)
+                    self._press(page, page.locator(".desk-dock [aria-label^='Speak']").first, width)
+                    page.locator(".desk-window-shell.chair-window[aria-label='Capture']").wait_for()
+                self._press(page, page.get_by_test_id("arrival-develop-thought").first, width)
+                field = page.locator(".desk-window[aria-label^='Thought'] .thought-note-body .cm-content, .desk-window .thought-note-body .cm-content").first
+                field.wait_for(timeout=15_000)
+                self._press(page, field, width)
+                page.keyboard.type(words)
+                page.wait_for_timeout(2500)  # the writer's 450 ms autosave lands
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                back = page.locator(".thought-note-body .cm-content", has_text=words).first
+                back.wait_for(state="attached", timeout=20_000)
+                page.wait_for_timeout(800)
+                _settle(page)
+                page.screenshot(path=str(SHOTS / f"B2-11-j5-thought-after-reload-{width}.png"))
+                (SHOTS / f"B2-j5-{width}.json").write_text(json.dumps(
+                    {"width": width, "regestures_after_reload": 0, "thought_back": True,
+                     "windows": [w["title"] for w in self._windows(page)]}, indent=1) + "\n")
                 assert not errors, errors
             finally:
                 browser.close()

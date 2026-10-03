@@ -11,7 +11,7 @@ import { defaultViewFor, useDesk } from "./store";
 import { useChairState } from "./chairState";
 import { DeskReceiptRow } from "./components/DeskReceiptRow";
 import { useCompactViewport } from "./useCompactViewport";
-import { ChairHome } from "./chair";
+import { ChairHome } from "./chair"; import { ReturningWindows } from "./returningWindows"; // PHILO-13-07 (B2)
 import { DeskListView } from "./components/DeskListView";
 import { DeskChrome } from "./components/DeskChrome";
 import { EmptyDesk } from "./components/EmptyDesk";
@@ -261,7 +261,7 @@ function DeskFaces() {
         <Pullout key={pullout.id} o={pullout.object!} pulloutId={pullout.id} origin={pullout.origin} />
       ))}
       {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}
-      {!arrivalRequired && <DeskToolInspector />}
+      {!arrivalRequired && <><ReturningWindows /* PHILO-13-07 (B2): the other families return once */ /><DeskToolInspector /></>}
       {!arrivalRequired && <MissionControlConveyor />}
       {!arrivalRequired && <DeliveryBoard />}
       {!arrivalRequired && <DeliveryDossierWindow />}

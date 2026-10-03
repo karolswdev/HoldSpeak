@@ -8,7 +8,7 @@ import {
   type ThoughtWorkspaceCursor,
 } from "../../thoughts";
 import { thoughtTitle } from "../../thoughtTitle";
-import { keepDraft, keptDraft } from "../../deskMemory";
+import { forgetDraft, keepDraft, keptDraft } from "../../deskMemory";
 
 export type ThoughtDraft = { title: string; body: string; tags: string };
 
@@ -124,7 +124,7 @@ export function useThoughtNoteWriter({
     current.current = authoritative;
     const next = toDraft(authoritative);
     draft.current = next;
-    keepDraft(draftKey(authoritative), "");
+    forgetDraft(draftKey(authoritative));
     if (mounted.current) {
       setDraftState(next);
       setSaving(false);
@@ -203,7 +203,7 @@ export function useThoughtNoteWriter({
       } else {
         settle();
         // B2: the hub kept these words; the device copy is no longer needed.
-        if (!dirty.current) keepDraft(draftKey(result.thought), "");
+        if (!dirty.current) forgetDraft(draftKey(result.thought));
       }
       wake();
     } catch (cause) {

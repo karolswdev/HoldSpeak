@@ -106,12 +106,14 @@ const parseWindowLists = (value: unknown): DeskWorkspaceWindows => {
   };
 };
 
-const parseTextMap = (value: unknown): Record<string, string> => {
+/** `allowEmpty`: a draft cleared to "" is its own state (he emptied the
+ * field), distinct from no draft (Astra's B2 condition); a place never is. */
+const parseTextMap = (value: unknown, allowEmpty = false): Record<string, string> => {
   if (!value || typeof value !== "object") return {};
   const entries = Object.entries(value).filter(
     ([key, text]) =>
       key.length > 0 && key.length <= DRAFT_KEY_LIMIT &&
-      typeof text === "string" && text.length > 0 && text.length <= DRAFT_VALUE_LIMIT,
+      typeof text === "string" && (allowEmpty || text.length > 0) && text.length <= DRAFT_VALUE_LIMIT,
   ) as [string, string][];
   return Object.fromEntries(entries.slice(-DRAFT_COUNT_LIMIT));
 };
@@ -200,7 +202,7 @@ export function loadDeskWorkspace(): DeskWorkspaceDocumentV1 {
       ...(candidate.screen === "chair" || candidate.screen === "floor"
         ? { screen: candidate.screen }
         : {}),
-      drafts: parseTextMap(candidate.drafts),
+      drafts: parseTextMap(candidate.drafts, true),
       places: parseTextMap(candidate.places),
     };
   } catch {
@@ -291,7 +293,7 @@ export function saveDeskWorkspace(state: WorkspaceState): void {
       workbench: compactRefs((state.workbenchWindows ?? []).map((w) => w.id)),
     },
     ...storedSections(),
-    drafts: parseTextMap(state.drafts ?? {}),
+    drafts: parseTextMap(state.drafts ?? {}, true),
     places: parseTextMap(state.places ?? {}),
   };
   try {

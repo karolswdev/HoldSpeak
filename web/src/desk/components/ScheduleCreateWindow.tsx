@@ -10,6 +10,7 @@
 
 import { useCallback, useState } from "react";
 import { useDesk } from "../store";
+import { useDeskDraft } from "../deskMemory";
 import { DeskWindowFrame } from "./DeskWindow";
 import {
   GadgetGroup,
@@ -67,14 +68,20 @@ function ScheduleCreateForm({
   origin: { x: number; y: number } | null;
   onClose: () => void;
 }) {
-  const [title, setTitle] = useState("");
+  // PHILO-13-07 (B2): the unsaved title and time return after a reload and
+  // a close; a landed save clears them. The window is for a NEW record, so
+  // the key is the one create window.
+  const [title, setTitle, forgetTitle] = useDeskDraft("schedule/new/title");
   const [mode, setMode] = useState("one-shot");
-  const [dateTime, setDateTime] = useState(() => {
+  const [keptTime, keepTime, forgetTime] = useDeskDraft("schedule/new/time");
+  const [defaultTime] = useState(() => {
     const d = new Date();
     d.setMinutes(d.getMinutes() + 30);
     d.setSeconds(0, 0);
     return toDatetimeLocal(d);
   });
+  const dateTime = keptTime || defaultTime;
+  const setDateTime = keepTime;
   const [cronExpr, setCronExpr] = useState("0 9 * * 1-5");
   const [duration, setDuration] = useState("60");
   const [submitting, setSubmitting] = useState(false);
@@ -114,6 +121,8 @@ function ScheduleCreateForm({
 
     setSubmitting(false);
     if (ok) {
+      forgetTitle();
+      forgetTime();
       onClose();
     } else {
       setError("Could not save. Your entries are kept. Check the time and try again.");

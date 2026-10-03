@@ -417,6 +417,1421 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.p13.remember.delivery_board",
+      "job": "j4",
+      "edge_ids": [
+        "edge.face.window_return"
+      ],
+      "state_id": "state.desk_presentation.p13_remember_delivery",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the normal Desk after the arrival"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Delivery",
+        "why": "open the Delivery board from the Dock",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-board",
+            "state": "visible",
+            "timeout_s": 10,
+            "why": "the board is open"
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation",
+            "why": "the reload this case is about"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-board",
+            "state": "visible",
+            "timeout_s": 20,
+            "why": "the board came back on its own"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "DELIVERY"
+        },
+        "observe_at": ".desk-dlv-board",
+        "words": "he opens Delivery and reloads; the Delivery board is open again with no gesture. Red on 22287ab1: the board was local state and a reload closed it."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.remember.delivery_dossier",
+      "job": "j4",
+      "edge_ids": [
+        "edge.face.window_return"
+      ],
+      "state_id": "state.desk_presentation.p13_remember_delivery",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the normal Desk after the arrival"
+        },
+        {
+          "kind": "cli",
+          "action": "create_repository_fixture",
+          "capture_as": "repo",
+          "adapter": "repository-fixture-producer",
+          "why": "A real Git repository and DW roadmap, wholly below this run HOME; no product rows or responses are substituted."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/delivery/sources",
+          "adapter": "http-route",
+          "body": {
+            "path": "{repo_path}",
+            "label": "{repo_label}"
+          },
+          "why": "register the fixture repository as a Delivery source"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Delivery",
+        "why": "open the Delivery board from the Dock",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-board",
+            "state": "visible",
+            "timeout_s": 10,
+            "why": "the board is open"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-dlv-board .desk-mc-story-pick:has-text(\"ATLAS-1-01\")",
+            "why": "open the fixture story's dossier"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-dossier .desk-dlv-facts-line",
+            "state": "visible",
+            "timeout_s": 10,
+            "why": "the dossier is open"
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation",
+            "why": "the reload this case is about"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-dossier .desk-dlv-facts-line",
+            "state": "visible",
+            "timeout_s": 20,
+            "why": "the dossier came back on its own"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "ATLAS-1-01"
+        },
+        "observe_at": ".desk-dlv-dossier",
+        "words": "he opens a story's dossier and reloads; the same dossier is open again, in front, with no gesture. Red on 22287ab1: the dossier store was in memory only."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.remember.trust_window",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.window_return"
+      ],
+      "state_id": "state.desk_presentation.p13_remember_trust",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the normal Desk after the arrival"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": "[aria-label^='Privacy and trust']",
+        "why": "open Data boundaries from the menu bar's privacy badge",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "#trust",
+            "state": "visible",
+            "timeout_s": 10,
+            "why": "the Trust window is open"
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation",
+            "why": "the reload this case is about"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "#trust",
+            "state": "visible",
+            "timeout_s": 20,
+            "why": "the Trust window came back on its own"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Data boundaries"
+        },
+        "observe_at": "#trust",
+        "words": "he opens Data boundaries and reloads; it is open again. Red on 22287ab1: its open state was in memory only."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.remember.schedule_draft",
+      "job": "j2",
+      "edge_ids": [
+        "edge.face.window_return"
+      ],
+      "state_id": "state.desk_presentation.p13_remember_schedule",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the normal Desk after the arrival"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-dock [aria-label^='Speak']",
+        "at_width": 393,
+        "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+            "state": "visible",
+            "timeout_s": 10,
+            "at_width": 393,
+            "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[data-testid=arrival-schedule]",
+            "why": "Schedule in the Capture window"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "[id='schedule:__create__'] input[aria-label='Title']",
+            "value": "P13 ledger dry run",
+            "why": "type a title, not saved"
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation",
+            "why": "the reload this case is about"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "[id='schedule:__create__'] input[aria-label='Title']",
+            "state": "visible",
+            "timeout_s": 20,
+            "why": "the window came back"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "input_value",
+          "selector": "[id='schedule:__create__'] input[aria-label='Title']",
+          "equals": "P13 ledger dry run"
+        },
+        "observe_at": "[id='schedule:__create__'] input[aria-label='Title']",
+        "words": "he types a title in Schedule recording and reloads; the window is open with his title, nothing scheduled. Red on 22287ab1."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.remember.schedule_close_keeps_place",
+      "job": "j2",
+      "edge_ids": [
+        "edge.face.window_return"
+      ],
+      "state_id": "state.desk_presentation.p13_remember_schedule",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the normal Desk after the arrival"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-dock [aria-label^='Speak']",
+        "at_width": 393,
+        "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+            "state": "visible",
+            "timeout_s": 10,
+            "at_width": 393,
+            "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[data-testid=arrival-schedule]",
+            "why": "Schedule in the Capture window"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "[id='schedule:__create__'] input[aria-label='Title']",
+            "value": "P13 ledger dry run",
+            "why": "type a title, not saved"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id='schedule:__create__'] .desk-gadget-close",
+            "why": "close the window by its own Close gadget"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "[id='schedule:__create__']",
+            "state": "hidden",
+            "timeout_s": 10,
+            "why": "the window is gone"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-dock [aria-label^='Speak']",
+            "at_width": 393,
+            "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+            "state": "visible",
+            "timeout_s": 10,
+            "at_width": 393,
+            "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[data-testid=arrival-schedule]",
+            "why": "reopen Schedule from Capture"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "[id='schedule:__create__'] input[aria-label='Title']",
+            "state": "visible",
+            "timeout_s": 10,
+            "why": "the window is open again"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "input_value",
+          "selector": "[id='schedule:__create__'] input[aria-label='Title']",
+          "equals": "P13 ledger dry run"
+        },
+        "observe_at": "[id='schedule:__create__'] input[aria-label='Title']",
+        "words": "he types a title, closes Schedule recording, and opens it again; his title is there. Red on 22287ab1: the title was component state."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.remember.decide_draft",
+      "job": "j2",
+      "edge_ids": [
+        "edge.face.window_return"
+      ],
+      "state_id": "state.desk_presentation.p13_remember_decide",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the normal Desk after the arrival"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+          "sha256": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "adapter": "http-route",
+          "form": {
+            "title": "P13 Remember Meeting"
+          },
+          "expect_status": 202,
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete"
+            },
+            "timeout_s": 30,
+            "poll_s": 0.3
+          },
+          "why": "a real imported meeting through the import route"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the imported meeting in the Desk"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-tools-launch",
+        "why": "open the palette",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "P13 Remember Meeting",
+            "why": "search the meeting by its title"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id='desk-palette-option-meeting:{meeting_id}']",
+            "why": "open the meeting window from its palette row"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout [data-testid=meeting-decide-well]",
+            "state": "visible",
+            "timeout_s": 15,
+            "why": "the meeting window shows its Decide well"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-pullout [data-testid=meeting-decide-well] [data-testid=meeting-decide]",
+            "why": "Decide"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": ".desk-pullout [data-testid=meeting-decide-well] input[aria-label^='Decision']",
+            "value": "Freeze the old ledger after the dry run",
+            "why": "type a decision title, not saved"
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation",
+            "why": "the reload this case is about"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout [data-testid=meeting-decide-well] input[aria-label^='Decision']",
+            "state": "visible",
+            "timeout_s": 20,
+            "why": "the meeting window came back"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "input_value",
+          "selector": ".desk-pullout [data-testid=meeting-decide-well] input[aria-label^='Decision']",
+          "equals": "Freeze the old ledger after the dry run"
+        },
+        "observe_at": ".desk-pullout [data-testid=meeting-decide-well] input[aria-label^='Decision']",
+        "words": "he names a decision in the meeting window and reloads; the meeting window is open with his title, nothing decided. Red on 22287ab1."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.remember.decide_close_keeps_place",
+      "job": "j2",
+      "edge_ids": [
+        "edge.face.window_return"
+      ],
+      "state_id": "state.desk_presentation.p13_remember_decide",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the normal Desk after the arrival"
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+          "sha256": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "adapter": "http-route",
+          "form": {
+            "title": "P13 Remember Meeting"
+          },
+          "expect_status": 202,
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete"
+            },
+            "timeout_s": 30,
+            "poll_s": 0.3
+          },
+          "why": "a real imported meeting through the import route"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the imported meeting in the Desk"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-tools-launch",
+        "why": "open the palette",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "P13 Remember Meeting",
+            "why": "search the meeting by its title"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id='desk-palette-option-meeting:{meeting_id}']",
+            "why": "open the meeting window from its palette row"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout [data-testid=meeting-decide-well]",
+            "state": "visible",
+            "timeout_s": 15,
+            "why": "the meeting window shows its Decide well"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-pullout [data-testid=meeting-decide-well] [data-testid=meeting-decide]",
+            "why": "Decide"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": ".desk-pullout [data-testid=meeting-decide-well] input[aria-label^='Decision']",
+            "value": "Freeze the old ledger after the dry run",
+            "why": "type a decision title, not saved"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-pullout:has([data-testid=meeting-decide-well]) .desk-gadget-close",
+            "why": "close the meeting window by its own Close gadget"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout [data-testid=meeting-decide-well]",
+            "state": "hidden",
+            "timeout_s": 10,
+            "why": "the meeting window is gone"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-tools-launch",
+            "why": "open the palette"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "P13 Remember Meeting",
+            "why": "search the meeting by its title"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id='desk-palette-option-meeting:{meeting_id}']",
+            "why": "open the meeting window from its palette row"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout [data-testid=meeting-decide-well]",
+            "state": "visible",
+            "timeout_s": 15,
+            "why": "the meeting window shows its Decide well"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "input_value",
+          "selector": ".desk-pullout [data-testid=meeting-decide-well] input[aria-label^='Decision']",
+          "equals": "Freeze the old ledger after the dry run"
+        },
+        "observe_at": ".desk-pullout [data-testid=meeting-decide-well] input[aria-label^='Decision']",
+        "words": "he names a decision, closes the meeting window and opens the same meeting again; his title is there. Red on 22287ab1 after a reload; close kept it only in memory."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.remember.room_empty_draft",
+      "job": "j4",
+      "edge_ids": [
+        "edge.face.window_return"
+      ],
+      "state_id": "state.desk_presentation.p13_remember_room_empty",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the normal Desk after the arrival"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "P13 Remember Room"
+          },
+          "expect_status": 200,
+          "capture_as": "project_id",
+          "capture_path": "project.id",
+          "why": "a real project through the projects route"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the new project in the Desk"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-tools-launch",
+        "why": "open the palette",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "P13 Remember Room",
+            "why": "search the project"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id='desk-palette-option-project.open.{project_id}']",
+            "why": "open the Room from its palette row"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "#surface-project-memory",
+            "state": "visible",
+            "timeout_s": 15,
+            "why": "the Room is open"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "#surface-project-memory [data-testid=updates-verb]",
+            "why": "Updates"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "#surface-project-memory [data-testid=update-verb-draft-deterministic]",
+            "why": "Draft"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "#surface-project-memory [contenteditable=true]",
+            "state": "visible",
+            "timeout_s": 15,
+            "why": "the draft editor is open"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "#surface-project-memory [contenteditable=true]",
+            "why": "put the caret in the body"
+          },
+          {
+            "kind": "ui",
+            "action": "press",
+            "adapter": "ui-input",
+            "selector": "#surface-project-memory [contenteditable=true]",
+            "key": "ControlOrMeta+a",
+            "why": "select the whole body"
+          },
+          {
+            "kind": "ui",
+            "action": "press",
+            "adapter": "ui-input",
+            "selector": "#surface-project-memory [contenteditable=true]",
+            "key": "Backspace",
+            "why": "delete it: the body is empty, not saved"
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation",
+            "why": "the reload this case is about"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "#surface-project-memory [contenteditable=true]",
+            "state": "visible",
+            "timeout_s": 20,
+            "why": "the Room came back in the editor"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "text_contains",
+              "value": "UNSAVED"
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-project-memory .cm-placeholder",
+              "present": true
+            }
+          ]
+        },
+        "observe_at": "#surface-project-memory",
+        "words": "he empties the update body and reloads; the editor is empty and says UNSAVED. Red on 22287ab1: the old saved text came back and UNSAVED went away (Astra's B2 condition)."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.remember.room_empty_close_keeps_place",
+      "job": "j4",
+      "edge_ids": [
+        "edge.face.window_return"
+      ],
+      "state_id": "state.desk_presentation.p13_remember_room_empty",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the normal Desk after the arrival"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "P13 Remember Room"
+          },
+          "expect_status": 200,
+          "capture_as": "project_id",
+          "capture_path": "project.id",
+          "why": "a real project through the projects route"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the new project in the Desk"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-tools-launch",
+        "why": "open the palette",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "P13 Remember Room",
+            "why": "search the project"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id='desk-palette-option-project.open.{project_id}']",
+            "why": "open the Room from its palette row"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "#surface-project-memory",
+            "state": "visible",
+            "timeout_s": 15,
+            "why": "the Room is open"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "#surface-project-memory [data-testid=updates-verb]",
+            "why": "Updates"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "#surface-project-memory [data-testid=update-verb-draft-deterministic]",
+            "why": "Draft"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "#surface-project-memory [contenteditable=true]",
+            "state": "visible",
+            "timeout_s": 15,
+            "why": "the draft editor is open"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "#surface-project-memory [contenteditable=true]",
+            "why": "put the caret in the body"
+          },
+          {
+            "kind": "ui",
+            "action": "press",
+            "adapter": "ui-input",
+            "selector": "#surface-project-memory [contenteditable=true]",
+            "key": "ControlOrMeta+a",
+            "why": "select the whole body"
+          },
+          {
+            "kind": "ui",
+            "action": "press",
+            "adapter": "ui-input",
+            "selector": "#surface-project-memory [contenteditable=true]",
+            "key": "Backspace",
+            "why": "delete it: the body is empty, not saved"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "#surface-project-memory .desk-gadget-close",
+            "why": "close the Room by its own Close gadget"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "#surface-project-memory",
+            "state": "hidden",
+            "timeout_s": 10,
+            "why": "the Room is gone"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-tools-launch",
+            "why": "open the palette"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "P13 Remember Room",
+            "why": "search the project"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id='desk-palette-option-project.open.{project_id}']",
+            "why": "open the Room from its palette row"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "#surface-project-memory",
+            "state": "visible",
+            "timeout_s": 15,
+            "why": "the Room is open"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "#surface-project-memory [contenteditable=true]",
+            "state": "visible",
+            "timeout_s": 15,
+            "why": "the Room reopened in the editor"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "text_contains",
+              "value": "UNSAVED"
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-project-memory .cm-placeholder",
+              "present": true
+            }
+          ]
+        },
+        "observe_at": "#surface-project-memory",
+        "words": "he empties the update body, closes the Room and opens it again; the editor is empty and says UNSAVED. Red on 22287ab1 after a reload."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
     }
   ],
   "states": [
@@ -444,7 +1859,7 @@
         {
           "path": "web/src/desk/store/compositorSlice.ts",
           "symbol": "closePullout(id) {",
-          "line": 246,
+          "line": 247,
           "claim": "closePullout filters the open cards by equality"
         }
       ],
@@ -514,6 +1929,149 @@
       ],
       "reachable_by": [
         "case.p13.capture.titled_by_first_words"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_remember_delivery",
+      "family": "desk_presentation",
+      "values": {
+        "window": "the Delivery board and its story dossier",
+        "after_reload": "open again, the same story"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeliveryBoard.tsx",
+          "symbol": "keptWindow<boolean>(\"delivery-board\")",
+          "line": 355,
+          "claim": "the board opens from its kept record"
+        },
+        {
+          "path": "web/src/desk/returningWindows.tsx",
+          "symbol": "rememberWindow(\"delivery-dossier\", {",
+          "line": 33,
+          "claim": "the dossier's story is kept while it is open"
+        },
+        {
+          "path": "web/src/desk/returningWindows.tsx",
+          "symbol": "void useDeliveryDossier.getState().openStory(",
+          "line": 101,
+          "claim": "a reload reopens the same story through openStory"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.remember.delivery_board",
+        "case.p13.remember.delivery_dossier"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_remember_trust",
+      "family": "desk_presentation",
+      "values": {
+        "window": "Data boundaries (the Trust window)",
+        "after_reload": "open again"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/returningWindows.tsx",
+          "symbol": "rememberWindow(\"trust\", s.open ? true : null)",
+          "line": 58,
+          "claim": "the Trust window's open state is kept"
+        },
+        {
+          "path": "web/src/desk/returningWindows.tsx",
+          "symbol": "useTrustWindow.getState().setOpen(true)",
+          "line": 107,
+          "claim": "a reload reopens it"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.remember.trust_window"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_remember_schedule",
+      "family": "desk_presentation",
+      "values": {
+        "window": "Schedule recording",
+        "draft": "the unsaved title",
+        "after": "reload, or close and reopen"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/ScheduleCreateWindow.tsx",
+          "symbol": "useDeskDraft(\"schedule/new/title\")",
+          "line": 74,
+          "claim": "the title is a kept draft"
+        },
+        {
+          "path": "web/src/desk/returningWindows.tsx",
+          "symbol": "desk.openScheduleCreate()",
+          "line": 110,
+          "claim": "a reload reopens the window"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.remember.schedule_draft",
+        "case.p13.remember.schedule_close_keeps_place"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_remember_decide",
+      "family": "desk_presentation",
+      "values": {
+        "window": "the meeting window",
+        "draft": "the unfinished Decide title",
+        "after": "reload, or close and reopen"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/meetings/MeetingDecideWell.tsx",
+          "symbol": "const draftKey = `meeting/decide/${meetingId}`;",
+          "line": 49,
+          "claim": "the title is kept per meeting"
+        },
+        {
+          "path": "web/src/desk/store/compositorSlice.ts",
+          "symbol": "pullouts: reopened(\"id\", initialWindowLists.pullouts)",
+          "line": 170,
+          "claim": "the meeting window returns after a reload"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.remember.decide_draft",
+        "case.p13.remember.decide_close_keeps_place"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_remember_room_empty",
+      "family": "desk_presentation",
+      "values": {
+        "window": "the Room, Update editor",
+        "draft": "the body emptied by him",
+        "after": "reload, or close and reopen"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/store/compositorSlice.ts",
+          "symbol": "// null forgets the draft; \"\" keeps an emptied field as its own state.",
+          "line": 187,
+          "claim": "an emptied draft is kept as \"\""
+        },
+        {
+          "path": "web/src/features/project-room/update/useUpdateController.ts",
+          "symbol": "setEditBody(kept ?? update.bodyMd);",
+          "line": 150,
+          "claim": "the editor takes the kept body, empty included"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.remember.room_empty_draft",
+        "case.p13.remember.room_empty_close_keeps_place"
       ]
     }
   ],

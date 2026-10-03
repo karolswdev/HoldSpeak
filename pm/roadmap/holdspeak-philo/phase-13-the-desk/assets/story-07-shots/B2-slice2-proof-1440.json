@@ -1,0 +1,29 @@
+{
+ "width": 1440,
+ "before": {
+  "meeting": true,
+  "form": "meeting_digest",
+  "decide": "Freeze the old ledger after the dry run",
+  "board": true,
+  "trust": true,
+  "schedule": "Ledger cutover dry run"
+ },
+ "after": {
+  "meeting": true,
+  "form": "meeting_digest",
+  "decide": "Freeze the old ledger after the dry run",
+  "board": true,
+  "trust": true,
+  "schedule": "Ledger cutover dry run"
+ },
+ "after_close": {
+  "meeting": true,
+  "form": "meeting_digest",
+  "decide": "Freeze the old ledger after the dry run",
+  "board": false,
+  "trust": false,
+  "schedule": "Ledger cutover dry run"
+ },
+ "writes_before_reload": [],
+ "writes_after": []
+}

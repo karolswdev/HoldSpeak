@@ -6,6 +6,7 @@ import { AgentAvatar } from "../../components/AgentAvatar";
 import { CycleGadget, PadGadget, StringGadget } from "../../surface/gadgets";
 import type { Persona } from "../../../lib/primitives";
 import { useDebouncedSave } from "./useDebouncedSave";
+import { keptEditorPatch, keptField } from "./editorDraft";
 import type { InlineEditorContentProps } from "./types";
 
 export function RecipeEditor({ object: o, autoFocusName }: InlineEditorContentProps) {
@@ -17,15 +18,19 @@ export function RecipeEditor({ object: o, autoFocusName }: InlineEditorContentPr
     () => (items.recipe || []).find((x) => x.id === o.id) || o.ref as Persona,
     [items, o.id],
   );
-  const [f, setF] = useState<Record<string, string>>(() => ({
-    name: String(live.name || ""),
-    avatar: String(live.avatar || ""),
-    role: String(live.role || ""),
-    systemPrompt: String(live.systemPrompt || ""),
-    userTemplate: String(live.userTemplate || ""),
-    tools: (live.tools || []).join(", "),
-    kbId: String(live.kbId || ""),
-  }));
+  // PHILO-13-07 (B2): an edit the hub has not kept returns after a reload.
+  const [f, setF] = useState<Record<string, string>>(() => {
+    const kept = keptEditorPatch("recipe", o.id);
+    return {
+      name: keptField(kept, "name", String(live.name || "")),
+      avatar: keptField(kept, "avatar", String(live.avatar || "")),
+      role: keptField(kept, "role", String(live.role || "")),
+      systemPrompt: keptField(kept, "system_prompt", String(live.systemPrompt || "")),
+      userTemplate: keptField(kept, "user_template", String(live.userTemplate || "")),
+      tools: keptField(kept, "tools", (live.tools || []).join(", ")),
+      kbId: keptField(kept, "kb_id", String(live.kbId || "")),
+    };
+  });
 
   const set = (key: string, wire: string, value: string, split = false) => {
     setF((prev) => ({ ...prev, [key]: value }));

@@ -8478,7 +8478,7 @@
         "http_client"
       ],
       "excerpt": "const createRequest = async () => { if (!request.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/requests`, { method: \"POST\", json: { body: request.trim(), visibility: \"shared_intent\", sourc",
-      "line_sha256": "680af437151875bdf6bea8b4a5a67a145999805a16ff0286808bc784e210fcd2",
+      "line_sha256": "527cc781b6c810e36d1ff16ff7b303bafc0e9f2862f128e0e8c3125e2ef904ac",
       "review": "candidate_only"
     },
     {
@@ -8528,7 +8528,7 @@
         "http_client"
       ],
       "excerpt": "const add = async () => { if (!draft.trim()) return; setBusy(true); try { const active = session ?? (await apiFetch<{ one_on_one: Session }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/one-on-ones`, { method: \"POST\", json: { visibility } ",
-      "line_sha256": "ab05fde5edff9faaca753ec4321b2ca1fc4a8080864feb025c363e6eac490122",
+      "line_sha256": "0cdd4b1d0fc21ab8916c504c2573b7f35a602a6e78ff44ef55ebbcc9e0ef5d04",
       "review": "candidate_only"
     },
     {

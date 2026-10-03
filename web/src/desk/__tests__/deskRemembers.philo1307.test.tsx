@@ -229,6 +229,50 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
   const update = (id: string, body: string) =>
     ({ id, lifecycle: "draft", bodyMd: body, deliveries: [] }) as unknown as ProjectUpdate;
 
+  // Astra's B2 condition (slice one check): an EMPTIED draft is its own
+  // state. Red on 22287ab1: setDraft("") deleted the key and the Room fell
+  // back to the saved text; UNSAVED disappeared.
+  it("Room: a body cleared to empty stays empty and UNSAVED after a reload and a close/reopen; Save clears the draft", async () => {
+    fetchUpdates.mockResolvedValue([update("u1", "No focus items")]);
+    let { useUpdateController } = await import("../../features/project-room/update/useUpdateController");
+    const first = renderHook(() => useUpdateController("p1", () => {}));
+    await act(async () => { await first.result.current.enterUpdates(); });
+    act(() => first.result.current.openUpdate(update("u1", "No focus items")));
+    act(() => first.result.current.handleEditBody(""));
+    first.unmount();
+    expect(stored().drafts).toEqual({ "room/update-body/u1": "" });
+
+    vi.resetModules(); // reload
+    ({ useUpdateController } = await import("../../features/project-room/update/useUpdateController"));
+    const second = renderHook(() => useUpdateController("p1", () => {}));
+    await waitFor(() => expect(second.result.current.posture).toBe("editor"));
+    expect(second.result.current.editBody).toBe("");
+    expect(second.result.current.dirty).toBe(true);
+    // close (back to the list) and reopen the same update
+    await act(async () => { await second.result.current.backToList(); });
+    act(() => second.result.current.openUpdate(update("u1", "No focus items")));
+    expect(second.result.current.editBody).toBe("");
+    expect(second.result.current.dirty).toBe(true);
+    expect(saveUpdate).not.toHaveBeenCalled();
+
+    saveUpdate.mockImplementationOnce(async (_id: string, body: string) => update("u1", body));
+    await act(async () => { await second.result.current.save(); });
+    expect(saveUpdate).toHaveBeenCalledWith("u1", "");
+    expect(stored().drafts).toEqual({});
+    second.unmount();
+  });
+
+  it("every keyed draft: an emptied field is kept as \"\"; forgetting removes it", async () => {
+    const { useDesk } = await import("../store");
+    useDesk.getState().setDraft("people/1on1/r1", "words");
+    useDesk.getState().setDraft("people/1on1/r1", "");
+    expect(stored().drafts).toEqual({ "people/1on1/r1": "" });
+    const fresh = (await reload()).useDesk;
+    expect(fresh.getState().drafts).toEqual({ "people/1on1/r1": "" });
+    fresh.getState().setDraft("people/1on1/r1", null);
+    expect(stored().drafts).toEqual({});
+  });
+
   it("Room: the update editor and its 111 unsaved characters return after a reload; restore never saves; Save clears", async () => {
     const typed = "Ledger cutover: dry run passed Tuesday; EU shard backup plan due Friday; Priya owns the rollback runbook draft.";
     expect(typed.length).toBe(111);

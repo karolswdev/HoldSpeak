@@ -13,7 +13,7 @@
 import { useState } from "react";
 import { CycleGadget } from "../desk/surface";
 import { SendWells } from "../desk/surface/send";
-import { stamp } from "../features/channels/channels";
+import { stamp } from "../features/channels/channels"; import { keepPlace, keptPlace } from "../desk/deskMemory"; // PHILO-13-07 (B2)
 
 export const MEETING_FORMS = [
   { value: "meeting_summary", label: "Summary", word: "SUMMARY" },
@@ -31,13 +31,13 @@ const day = (iso?: string | null) => (iso ? stamp(iso).replace(/ \d\d:\d\d$/, ""
 export function MeetingSendWell({ meetingId, title, startedAt }: {
   meetingId: string; title: string; startedAt?: string | null;
 }) {
-  const [kind, setKind] = useState<Form>(formPick.get(meetingId) ?? "meeting_summary");
+  const [kind, setKind] = useState<Form>(formPick.get(meetingId) ?? MEETING_FORMS.find((f) => f.value === keptPlace(`meeting/form/${meetingId}`))?.value ?? "meeting_summary"); // B2: the kept pick, per meeting
   const form = MEETING_FORMS.find((f) => f.value === kind) ?? MEETING_FORMS[0];
   const head = (
     <div className="send-line" data-testid="doc-forms">
       <CycleGadget label="Document" value={kind}
         options={MEETING_FORMS.map(({ value, label }) => ({ value, label }))}
-        onChange={(v) => { formPick.set(meetingId, v as Form); setKind(v as Form); }} />
+        onChange={(v) => { formPick.set(meetingId, v as Form); keepPlace(`meeting/form/${meetingId}`, v === "meeting_summary" ? "" : v); setKind(v as Form); }} />
     </div>
   );
   return (

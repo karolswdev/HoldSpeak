@@ -70,7 +70,7 @@
      "id": "surface-people",
      "kind": "surface",
      "applicationKey": "open-people",
-     "scope": "people:5d7ecffb-8cc5-4f80-b742-a6ccbc89402a",
+     "scope": "people:16bda14e-3dc9-40cc-ad67-9eaf83b525fb",
      "persistence": "workspace"
     },
     "surface-project-memory": {
@@ -115,13 +115,13 @@
     "workbench": []
    },
    "drafts": {
-    "people/1on1/5d7ecffb-8cc5-4f80-b742-a6ccbc89402a": "Ask Priya about the EU shard backup plan",
-    "room/update-body/pupd_4ed51074fe3846b489705135681b9404": "## Progress\n\n- Meeting summary: Ledger cutover sync -- Dual-write is stable. The team agreed to freeze the old ledger on Nov 5. Jordan owns the rollback plan.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n Dry run passed Tuesday; EU shard backup plan due Friday; Priya owns the rollback runbook.\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+    "people/1on1/16bda14e-3dc9-40cc-ad67-9eaf83b525fb": "Ask Priya about the EU shard backup plan",
+    "room/update-body/pupd_9c146833ff4f4353a175182a23dc1d21": "## Progress\n\n- Meeting summary: Ledger cutover sync -- Dual-write is stable. The team agreed to freeze the old ledger on Nov 5. Jordan owns the rollback plan.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n Dry run passed Tuesday; EU shard backup plan due Friday; Priya owns the rollback runbook.\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
    },
    "places": {
-    "people/person": "5d7ecffb-8cc5-4f80-b742-a6ccbc89402a",
-    "people/lens/5d7ecffb-8cc5-4f80-b742-a6ccbc89402a": "one-on-ones",
-    "room/update/p-ledger": "editor:pupd_4ed51074fe3846b489705135681b9404"
+    "people/person": "16bda14e-3dc9-40cc-ad67-9eaf83b525fb",
+    "people/lens/16bda14e-3dc9-40cc-ad67-9eaf83b525fb": "one-on-ones",
+    "room/update/p-ledger": "editor:pupd_9c146833ff4f4353a175182a23dc1d21"
    }
   },
   "room_rect": [

@@ -52,6 +52,7 @@ import {
   retractLauncher,
 } from "./DeskWindow";
 import { MicButton } from "./MicButton";
+import { keptWindow, rememberWindow } from "../deskMemory";
 
 // Glyph constants — keep dingbat codepoints off JSX source lines.
 const GLYPH_WARN = String.fromCodePoint(0x26A0);
@@ -350,7 +351,12 @@ export function DeliveryBoard() {
   const sources = useDelivery((s) => s.sources);
   const attempts = useDelivery((s) => s.attempts);
   const updatedAt = useDelivery((s) => s.updatedAt);
-  const [open, setOpen] = useState(false);
+  // PHILO-13-07 (B2): the board returns after a reload; a close forgets it.
+  const [open, setOpenState] = useState(() => keptWindow<boolean>("delivery-board") === true);
+  const setOpen = (next: boolean) => {
+    setOpenState(next);
+    rememberWindow("delivery-board", next ? true : null);
+  };
   const targets = useDeliveryFactory((s) => s.targets);
 
   useEffect(() => {

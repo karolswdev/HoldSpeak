@@ -184,9 +184,10 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
 
   setDraft(key, text) {
     const current = get().drafts;
-    if ((current[key] ?? "") === text) return;
+    // null forgets the draft; "" keeps an emptied field as its own state.
+    if (text === null ? !(key in current) : current[key] === text) return;
     const { [key]: _old, ...rest } = current;
-    set({ drafts: text ? { ...rest, [key]: text } : rest });
+    set({ drafts: text === null ? rest : { ...rest, [key]: text } });
     saveDeskWorkspace(get());
   },
   setPlace(key, value) {
