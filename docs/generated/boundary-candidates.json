@@ -6733,7 +6733,7 @@
     },
     {
       "path": "web/src/desk/api.ts",
-      "line": 1185,
+      "line": 1186,
       "kinds": [
         "http_client"
       ],
@@ -7763,7 +7763,7 @@
     },
     {
       "path": "web/src/desk/verbRegistry.ts",
-      "line": 54,
+      "line": 55,
       "kinds": [
         "http_client"
       ],
@@ -8143,7 +8143,7 @@
     },
     {
       "path": "web/src/lib/primitives.ts",
-      "line": 538,
+      "line": 541,
       "kinds": [
         "http_client"
       ],

@@ -80,6 +80,11 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
         return the same summary shape (this also fixed search results
         previously returning full ``to_dict`` payloads whose nested
         ``intel_status`` broke the status pill).
+
+        Each row includes ``attendees: list[str]``: saved segment speakers
+        plus the linked calendar event's attendee emails, trimmed, with
+        blanks and exact duplicates removed, in case-sensitive lexical
+        order. The field is an empty list when neither source has values.
         """
         if q is not None:
             return JSONResponse(

@@ -462,6 +462,18 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* PHILO-13-14 (C4): a week verb (`Send <document> to <destination>`) wraps
+   to a second line instead of cutting the destination with an ellipsis. */
+.desk-next .desk-deck-row[data-wrap] {
+  height: auto;
+  min-height: 26px;
+  padding-block: 4px;
+}
+.desk-next .desk-deck-row[data-wrap] .desk-deck-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: start;
+}
 .desk-next .desk-deck-kind {
   flex: none;
   color: var(--text-faint);

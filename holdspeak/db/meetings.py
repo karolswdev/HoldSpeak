@@ -59,6 +59,62 @@ _SUMMARY_ATTENTION_PREDICATE = """
 """
 
 
+def _sorted_attendees(values: list[Any]) -> list[str]:
+    """Return exact, trimmed, non-empty attendee strings in lexical order."""
+    return sorted(
+        {
+            text
+            for value in values
+            if (text := str(value or "").strip())
+        }
+    )
+
+
+def _attendees_for_rows(
+    conn: sqlite3.Connection, rows: list[sqlite3.Row]
+) -> dict[str, list[str]]:
+    """Batch the two durable attendee sources for one meeting-list page."""
+    meeting_ids = [str(row["id"]) for row in rows]
+    if not meeting_ids:
+        return {}
+
+    placeholders = ",".join("?" for _ in meeting_ids)
+    values: dict[str, list[Any]] = {meeting_id: [] for meeting_id in meeting_ids}
+    for row in conn.execute(
+        f"""SELECT DISTINCT meeting_id, speaker
+            FROM segments
+            WHERE meeting_id IN ({placeholders})
+        """,
+        meeting_ids,
+    ):
+        values[str(row["meeting_id"])].append(row["speaker"])
+
+    event_to_meetings: dict[str, list[str]] = {}
+    for row in rows:
+        event_id = str(row["calendar_event_id"] or "")
+        if event_id:
+            event_to_meetings.setdefault(event_id, []).append(str(row["id"]))
+    event_ids = list(event_to_meetings)
+    if event_ids:
+        event_placeholders = ",".join("?" for _ in event_ids)
+        for row in conn.execute(
+            f"""SELECT id, attendees_json
+                FROM calendar_events
+                WHERE id IN ({event_placeholders})""",
+            event_ids,
+        ):
+            event_attendees = json.loads(row["attendees_json"])
+            if not isinstance(event_attendees, list):
+                raise TypeError("calendar event attendees_json must be a JSON list")
+            for meeting_id in event_to_meetings.get(str(row["id"]), []):
+                values[meeting_id].extend(event_attendees)
+
+    return {
+        meeting_id: _sorted_attendees(attendees)
+        for meeting_id, attendees in values.items()
+    }
+
+
 class MeetingRepository(BaseRepository):
     """Persistence for meetings, transcripts, speakers, and action items."""
 
@@ -806,6 +862,8 @@ class MeetingRepository(BaseRepository):
             query += " ORDER BY m.started_at DESC LIMIT ? OFFSET ?"
             params.extend([limit, offset])
 
+            rows = conn.execute(query, params).fetchall()
+            attendees_by_meeting = _attendees_for_rows(conn, rows)
             return [
                 MeetingSummary(
                     id=r['id'],
@@ -828,6 +886,7 @@ class MeetingRepository(BaseRepository):
                     capture_checkpoint_seconds=float(r["capture_checkpoint_seconds"] or 0.0),
                     provenance=r["provenance"] or "desktop",
                     calendar_event_id=r["calendar_event_id"] if r["calendar_event_id"] else None,
+                    attendees=attendees_by_meeting.get(str(r["id"]), []),
                     transcript_words=int(r["transcript_words"]) if r["segment_count"] and r["transcript_words"] else None,
                     needs_you_count=int(r["needs_you_count"]) if r["needs_you_count"] else 0,
                     intel_requested_at=datetime.fromisoformat(r["intel_requested_at"]) if r["intel_requested_at"] else None,
@@ -835,7 +894,7 @@ class MeetingRepository(BaseRepository):
                     has_summary=bool(r["has_summary"]),
                     parked=bool(r["parked"]),
                 )
-                for r in conn.execute(query, params)
+                for r in rows
             ]
 
     def get_summary_attention_count(self, *, parked: bool = False) -> int:

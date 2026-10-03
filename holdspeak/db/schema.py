@@ -3725,7 +3725,8 @@ CREATE TABLE IF NOT EXISTS calendar_events (
     last_seen_at REAL NOT NULL,
     subscription_revision TEXT NOT NULL,
     source_id TEXT NOT NULL DEFAULT '',
-    source_label TEXT NOT NULL DEFAULT ''
+    source_label TEXT NOT NULL DEFAULT '',
+    attendees_json TEXT NOT NULL DEFAULT '[]'
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_calendar_events_source_uid_start
 ON calendar_events(source_id, uid, starts_at);

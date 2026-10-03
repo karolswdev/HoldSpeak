@@ -5751,6 +5751,7 @@
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/e2e/test_philo13_11_chair_glass.py",
         "tests/e2e/test_philo13_13_dock_glass.py",
+        "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/e2e/test_philo13_15_send_to_glass.py",
         "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/integration/test_philo11_slack_operations.py",
@@ -5820,6 +5821,7 @@
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/e2e/test_philo13_11_chair_glass.py",
         "tests/e2e/test_philo13_13_dock_glass.py",
+        "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/e2e/test_philo13_15_send_to_glass.py",
         "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/integration/test_philo11_slack_operations.py",
@@ -20396,6 +20398,7 @@
         "tests/e2e/test_philo13_03_needs_you_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_13_dock_glass.py",
+        "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_device_meeting_session.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20405,6 +20408,7 @@
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_meeting_stop_and_conflicts.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -20678,7 +20682,7 @@
           ],
           "body_access_keys": [],
           "raw_request": true,
-          "docstring": "List meetings, with HS-55-04 server-side facets composing with search.\n\nFacets filter in SQL over the whole archive. With ``search``, the\nfull-text hits flow through the same faceted query, so both branches\nreturn the same summary shape (this also fixed search results\npreviously returning full ``to_dict`` payloads whose nested\n``intel_status`` broke the status pill)."
+          "docstring": "List meetings, with HS-55-04 server-side facets composing with search.\n\nFacets filter in SQL over the whole archive. With ``search``, the\nfull-text hits flow through the same faceted query, so both branches\nreturn the same summary shape (this also fixed search results\npreviously returning full ``to_dict`` payloads whose nested\n``intel_status`` broke the status pill).\n\nEach row includes ``attendees: list[str]``: saved segment speakers\nplus the linked calendar event's attendee emails, trimmed, with\nblanks and exact duplicates removed, in case-sensitive lexical\norder. The field is an empty list when neither source has values."
         }
       ],
       "test_candidates": [
@@ -20697,12 +20701,14 @@
         "tests/e2e/test_philo13_03_needs_you_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_13_dock_glass.py",
+        "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -20768,7 +20774,7 @@
             "GET"
           ],
           "symbol": "api_meeting_facets",
-          "line": 112,
+          "line": 117,
           "parameters": [
             {
               "name": "request",
@@ -21000,7 +21006,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_meeting",
-          "line": 163,
+          "line": 168,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21049,6 +21055,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -21111,7 +21118,7 @@
             "GET"
           ],
           "symbol": "api_get_meeting",
-          "line": 121,
+          "line": 126,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21164,6 +21171,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -21226,7 +21234,7 @@
             "PUT"
           ],
           "symbol": "api_rename_meeting",
-          "line": 136,
+          "line": 141,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21281,6 +21289,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -21388,6 +21397,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -21499,6 +21509,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -21611,6 +21622,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -21670,7 +21682,7 @@
             "POST"
           ],
           "symbol": "api_recover_meeting_capture",
-          "line": 190,
+          "line": 195,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21717,6 +21729,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -21778,7 +21791,7 @@
             "GET"
           ],
           "symbol": "api_export_meeting",
-          "line": 232,
+          "line": 237,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21833,6 +21846,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -21934,6 +21948,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -22043,6 +22058,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -22147,6 +22163,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -22253,6 +22270,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -22362,6 +22380,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -22468,6 +22487,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -22580,6 +22600,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -22692,6 +22713,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -22799,6 +22821,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -22913,6 +22936,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -23021,6 +23045,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -23132,6 +23157,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -23240,6 +23266,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -23356,6 +23383,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -23464,6 +23492,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -23525,7 +23554,7 @@
             "POST"
           ],
           "symbol": "api_restore_meeting",
-          "line": 177,
+          "line": 182,
           "parameters": [
             {
               "name": "meeting_id",
@@ -23574,6 +23603,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -23635,7 +23665,7 @@
             "GET"
           ],
           "symbol": "api_meeting_sync_conflicts",
-          "line": 200,
+          "line": 205,
           "parameters": [
             {
               "name": "meeting_id",
@@ -23683,6 +23713,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -23744,7 +23775,7 @@
             "POST"
           ],
           "symbol": "api_resolve_meeting_sync_conflict",
-          "line": 211,
+          "line": 216,
           "parameters": [
             {
               "name": "meeting_id",
@@ -23804,6 +23835,7 @@
         "tests/integration/test_meeting_import_parity.py",
         "tests/integration/test_meeting_intel_recovery.py",
         "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/integration/test_primitive_framework_sync.py",
         "tests/integration/test_project_routes_characterization.py",
         "tests/integration/test_web_aftercare_file_issue.py",
@@ -25423,6 +25455,7 @@
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_philo13_05_close_glass.py",
         "tests/e2e/test_philo13_12_gadgets_glass.py",
+        "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/e2e/test_philo13_16_capture_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/e2e/test_philo9_04_desk_debts_glass.py",
@@ -25524,6 +25557,7 @@
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_philo13_05_close_glass.py",
         "tests/e2e/test_philo13_12_gadgets_glass.py",
+        "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/e2e/test_philo13_16_capture_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/e2e/test_philo9_04_desk_debts_glass.py",
@@ -26157,6 +26191,7 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -26193,6 +26228,7 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/unit/test_owner_gesture.py",
         "tests/unit/test_people_calendar_link.py",
         "tests/unit/test_people_routes.py"
@@ -36808,6 +36844,7 @@
         "tests/e2e/test_hs147_one_tap_glass.py",
         "tests/e2e/test_hs170_arrival_glass.py",
         "tests/e2e/test_hs175_arrival_glass.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/unit/test_event_linked_arm.py",
         "tests/unit/test_scheduled_recording_routes.py"
       ],
@@ -36840,6 +36877,7 @@
         "tests/e2e/test_hs147_one_tap_glass.py",
         "tests/e2e/test_hs170_arrival_glass.py",
         "tests/e2e/test_hs175_arrival_glass.py",
+        "tests/integration/test_philo13_meeting_attendees_api.py",
         "tests/unit/test_event_linked_arm.py",
         "tests/unit/test_scheduled_recording_routes.py"
       ],
@@ -38801,6 +38839,7 @@
         "tests/e2e/test_philo13_11_frame_glass.py",
         "tests/e2e/test_philo13_12_gadgets_glass.py",
         "tests/e2e/test_philo13_13_dock_glass.py",
+        "tests/e2e/test_philo13_14_palette_glass.py",
         "tests/e2e/test_philo13_15_send_to_glass.py",
         "tests/e2e/test_philo13_16_capture_glass.py",
         "tests/e2e/test_philo13_17_phone_desk_glass.py",
