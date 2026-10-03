@@ -7,6 +7,7 @@ import { openIntelligence } from "../../intelligenceNavigation";
 import { refreshNeedsYou, useNeedsYou } from "../../needsYou";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { DOCK_SPRITES, SYSTEM } from "../../systemSprites";
+import { spriteUrl } from "../../sprites";
 import { useDesk } from "../../store";
 import { useSettleState } from "../../settleState";
 import { useChairState } from "../../chairState";
@@ -25,11 +26,12 @@ import {
   dockStateLabel,
   EMPTY_DOCK_LIVE,
   formatDockTime,
-  latestSendOutcome,
+  latestSendSettle,
   nextOneOnOneLabel,
   projectNeedsYouCounts,
   reduceDockFrame,
   type DockRelationshipRead,
+  type DockSendOutcome,
   type DockSendRead,
   type DockLiveState,
 } from "./dockState";
@@ -46,7 +48,8 @@ const DOCK_LIVE_FRAMES = [
 ] as const;
 
 interface DockReadState {
-  sendOutcome: ReturnType<typeof latestSendOutcome>;
+  sendOutcome: DockSendOutcome | null;
+  sendSettledAt: string | null;
   nextOneOnOne: string | null;
   peopleReadiness: PeopleReadinessState | null;
   readyMeetingIds: string[];
@@ -57,6 +60,7 @@ interface DockReadState {
 
 const EMPTY_DOCK_READ: DockReadState = {
   sendOutcome: null,
+  sendSettledAt: null,
   nextOneOnOne: null,
   peopleReadiness: null,
   readyMeetingIds: [],
@@ -195,10 +199,14 @@ function useDockLiveReads(): {
     const readAt = Date.now();
     setReads((previous) => ({
       ...previous,
-      ...(sends.status === "fulfilled" ? {
-        sendOutcome: latestSendOutcome(wireRows<DockSendRead>(sends.value, "sends")),
-        sendReadAt: readAt,
-      } : {}),
+      ...(sends.status === "fulfilled" ? (() => {
+        const settle = latestSendSettle(wireRows<DockSendRead>(sends.value, "sends"));
+        return {
+          sendOutcome: settle?.outcome ?? null,
+          sendSettledAt: settle?.at ?? null,
+          sendReadAt: readAt,
+        };
+      })() : {}),
       ...(people.status === "fulfilled" ? {
         peopleReadiness: people.value.readiness,
         ...(people.value.complete ? {
@@ -397,7 +405,13 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const recordingLabel = recording
     ? `REC${recording.startedAt ? ` ${formatDockTime(recording.startedAt)}` : ""}`
     : null;
-  const sendLabel = !offline ? dockStateLabel(live.sendOutcome || reads.sendOutcome) : null;
+  const sendOutcome = live.sendOutcome || reads.sendOutcome;
+  // C3-W (C1-8a): SENT carries the settle time of the durable read; a frame
+  // newer than that read shows its outcome alone until the read lands.
+  const sendLabel = !offline
+    ? dockStateLabel(sendOutcome, sendOutcome === reads.sendOutcome ? reads.sendSettledAt : null)
+    : null;
+  const sendTone = sendOutcome === "sent" ? "ok" : sendOutcome === "failed" ? "fail" : "warn";
   const peopleLabel = !offline && reads.peopleReadiness === "ready" && reads.nextOneOnOne
     ? `1:1 ${formatDockTime(reads.nextOneOnOne)}`
     : null;
@@ -419,7 +433,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       /* HS-110-04: magnification swell removed -- the shelf is flat. */
     >
       {offline ? (
-        <span className="desk-dock-offline" data-testid="desk-dock-offline">
+        <span className="desk-dock-offline" data-testid="desk-dock-offline" role="status">
           OFFLINE · AS OF {formatDockTime(lastSuccessfulAt)}
         </span>
       ) : null}
@@ -440,6 +454,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           <Button
             key={application.windowId}
             variant="chrome"
+            data-app={application.windowId}
             className={
               "desk-dock-launch desk-dock-app" +
               (running ? " is-run" : "") +
@@ -488,13 +503,20 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               </span>
             ) : null}
             {application.windowId === "surface-meetings" && (recordingLabel || readyMeetingBadge) ? (
-              <span className="desk-dock-state" data-testid="desk-dock-meetings-state">
+              <span
+                className="desk-dock-state"
+                data-testid="desk-dock-meetings-state"
+                data-tone={recordingLabel ? "rec" : "ok"}
+              >
                 {recordingLabel || readyMeetingBadge}
               </span>
             ) : null}
             {application.windowId === "intelligence:desk" && sendLabel ? (
-              <span className="desk-dock-state" data-testid="desk-dock-send-state">
-                {sendLabel}
+              <span className="desk-dock-state" data-testid="desk-dock-send-state" data-tone={sendTone}>
+                {/* 393 reads FAILED: the icon names the window (C1-8b). */}
+                {sendLabel === "SEND FAILED" ? (
+                  <><span className="desk-dock-state-long">SEND </span>FAILED</>
+                ) : sendLabel}
               </span>
             ) : null}
             {application.windowId === "surface-people" && peopleLabel ? (
@@ -515,6 +537,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           <Button
             key={`project:${project.id}`}
             variant="chrome"
+            data-app="project"
             className={`desk-dock-launch desk-dock-project${projectWindow ? " is-run" : ""}`}
             aria-label={count > 0 ? `${project.name}, ${count} open here` : project.name}
             onClick={() => {
@@ -528,7 +551,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               );
             }}
           >
-            <span aria-hidden="true">▤</span>
+            {/* C1: a project is a drawer (the Workbench silhouette rule). */}
+            <img src={spriteUrl("directory", project.id)} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
             <span className="desk-dock-label">{project.name}</span>
             {count > 0 ? (
               <span className="desk-chip desk-dock-badge" data-tone="warn">
@@ -665,6 +689,23 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </Button>
         </>
       ) : null}
+      {/* C1 (393): the shelf ends on a whole icon; this gadget moves one
+          page. The stylesheet shows it at phone width only. */}
+      <Button
+        variant="chrome"
+        className="desk-dock-more"
+        aria-label="More AppIcons"
+        data-testid="desk-dock-more"
+        onClick={(e) => {
+          const shelf = (e.currentTarget as HTMLElement).closest(".desk-dock") as HTMLElement | null;
+          if (!shelf) return;
+          const page = shelf.clientWidth - (e.currentTarget as HTMLElement).offsetWidth;
+          const atEnd = shelf.scrollLeft + shelf.clientWidth >= shelf.scrollWidth - 1;
+          shelf.scrollTo({ left: atEnd ? 0 : shelf.scrollLeft + page, behavior: "smooth" });
+        }}
+      >
+        <span aria-hidden="true">▸</span>
+      </Button>
       {!settled && chipMenu ? (
         <WorkMenu
           className="desk-dock-menu"

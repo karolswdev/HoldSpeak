@@ -62,21 +62,42 @@
     );
   }
 }
+/* PHILO-13-13 C3-W — the AppIcon shelf, built to the ratified C1 canvas
+   (boards C1-1, C1-8a–c; design/workbench-look.md §6). A steel shelf
+   across the full width, 76 px (393: 56 px). It never leaves the
+   viewport: it scrolls inside itself when it is full, and an icon never
+   shrinks (66 px at least). */
 .desk-next .desk-dock {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   bottom: 0;
+  transform: none;
   z-index: var(--desk-z-dock);
   display: flex;
-  align-items: center;
-  gap: 4px;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 2px;
+  height: 76px;
+  box-sizing: border-box;
   padding: 4px 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
   border-radius: 0;
-  background: var(--desk-glass);
+  background: var(--wb-steel);
   border: none;
-  border-top: 1px solid var(--border);
-  box-shadow: inset 0 1px 0 var(--bevel-light);
+  border-top: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-raised);
+  scrollbar-width: thin;
+}
+.desk-next .desk-dock > * {
+  flex-shrink: 0;
+}
+/* The working band ends above the 76 px shelf (it was 52 for the flat one). */
+@media (min-width: 721px) {
+  :root {
+    --desk-snap-bottom: 76px;
+  }
 }
 .desk-next .desk-dock-chip {
   position: relative;
@@ -93,21 +114,6 @@
     opacity: 0;
     transform: translateY(6px) scale(0.92);
   }
-}
-/* HS-110-03: front chip wears accent tint, not a running underline */
-.desk-next .desk-dock-chip.is-front {
-  background: var(--accent-tint);
-  border-color: var(--border-strong);
-}
-/* HS-110-03: no glyph swell — flat shelf */
-.desk-next .desk-dock-launch {
-  position: relative;
-}
-.desk-next .desk-dock-launch.is-run {
-  border-bottom: 2px solid var(--accent);
-}
-.desk-next .desk-dock-launch.is-front {
-  background: var(--surface-3);
 }
 .desk-next .desk-dock-chip.is-min {
   opacity: 0.55;
@@ -172,43 +178,6 @@
   margin: 0 auto;
 }
 
-/* HS-97-07 — launcher chips + the shelf's orb seat. */
-.desk-next .desk-dock-launch {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border: 0;
-  border-radius: 2px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.desk-next .desk-dock-launch:hover {
-  background: var(--accent-tint);
-  color: var(--text);
-}
-/* HS-111-09 — dock hover brightens the sprite itself (the icon-family
-   _sel treatment; chrome states are CSS per ICON-DISCIPLINE). */
-.desk-next .desk-dock-launch:hover .desk-dock-sprite {
-  filter: brightness(1.15);
-}
-.desk-next .desk-dock-launch.is-run {
-  color: var(--text);
-  box-shadow: inset 0 -2px 0 var(--desk-window-keyline);
-}
-.desk-next .desk-dock-launch strong {
-  display: grid;
-  min-width: 18px;
-  height: 18px;
-  place-items: center;
-  border-radius: 0;
-  background: var(--danger-signal);
-  color: var(--text);
-  font-size: var(--font-size-xs);
-}
 .desk-next .desk-dock-sep {
   width: 1px;
   height: 22px;
@@ -233,6 +202,258 @@
   transform: translateX(-50%);
   white-space: nowrap;
 }
+/* ══ PHILO-13-13 C3-W — the AppIcons and their live state (C1-1, C1-8a–c) ══
+   An AppIcon is the 32 px sprite over its name (12 px mono ink). States are
+   drawn ON the icon: rest (no plate), running (a sunken plate, the name
+   inverted), front (the name on the blue plate), a count (the ember-ink
+   notch, top right, never a zero), a state tag (top left), and one
+   OFFLINE · AS OF tag heading the shelf. No status window. */
+.desk-next .desk-dock-launch {
+  position: relative;
+  display: grid;
+  grid-template-rows: 36px auto;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-width: 66px;
+  max-width: 128px;
+  height: 66px;
+  align-self: center;
+  padding: 2px 3px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--wb-ink);
+  box-shadow: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.desk-next .desk-dock-launch:hover {
+  background: var(--wb-steel-2);
+  border-color: var(--wb-ink);
+  box-shadow: var(--wb-raised);
+  color: var(--wb-ink);
+}
+.desk-next .desk-dock-launch:hover .desk-dock-sprite {
+  filter: brightness(1.15) drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.45));
+}
+.desk-next .desk-dock-launch .desk-dock-sprite {
+  width: 32px;
+  height: 32px;
+  align-self: end;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.45));
+}
+/* a text glyph (Intelligence ◈) sits low in the picture row, so the state
+   tag above it never covers it */
+.desk-next .desk-dock-launch > span[aria-hidden="true"] {
+  align-self: end;
+  font-size: 20px;
+  line-height: 20px;
+  color: var(--wb-ink);
+}
+.desk-next .desk-dock-launch .desk-dock-label {
+  display: block;
+  max-width: 116px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 2px;
+  font: 600 12px var(--font-mono);
+  color: var(--wb-ink);
+  background: transparent;
+}
+.desk-next .desk-dock-project .desk-dock-label {
+  max-width: 96px;
+}
+.desk-next .desk-dock-launch.is-run {
+  background: var(--wb-steel);
+  border-color: var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .desk-dock-launch.is-run .desk-dock-label {
+  background: var(--wb-ink);
+  color: var(--wb-paper);
+}
+.desk-next .desk-dock-launch.is-front {
+  background: var(--wb-steel);
+}
+.desk-next .desk-dock-launch.is-front .desk-dock-label {
+  background: var(--wb-blue);
+  color: var(--wb-ink);
+}
+/* the count: the ember-ink notch at the top right */
+.desk-next .desk-dock-launch .desk-dock-badge {
+  position: absolute;
+  top: 2px;
+  left: calc(50% + 8px);
+  min-width: 22px;
+  height: 20px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--accent-ink);
+  color: var(--text-on-accent);
+  box-shadow: var(--wb-raised);
+  font: 700 12px var(--font-mono);
+}
+.desk-next .desk-dock-launch .desk-dock-badge:not([data-tone]) {
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+}
+/* the state tag: REC, READY, SENT, SEND FAILED, UNKNOWN, 1:1 */
+.desk-next .desk-dock-state {
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 18px;
+  box-sizing: border-box;
+  padding: 0 4px;
+  /* inline, so the tag's words read as one line ("SEND FAILED") */
+  display: inline-block;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+  box-shadow: var(--wb-raised);
+  font: 700 12px/16px var(--font-mono);
+  white-space: nowrap;
+}
+.desk-next .desk-dock-state[data-tone="ok"] {
+  color: #1d5c2e; /* 7.3:1 on --wb-paper (C1 canvas) */
+}
+.desk-next .desk-dock-state[data-tone="warn"] {
+  color: #6b4a00; /* 7.0:1 on --wb-paper (C1 canvas) */
+}
+.desk-next .desk-dock-state:is([data-tone="rec"], [data-tone="fail"]) {
+  color: var(--wb-rec);
+}
+.desk-next .desk-dock-state[data-tone="rec"]::before {
+  content: "● ";
+  white-space: pre;
+}
+/* an icon with a tag is wide enough for it; with a tag and a count, the
+   tag takes the top left and the count the top right (never one box) */
+.desk-next .desk-dock-launch:has(.desk-dock-state) {
+  min-width: 104px;
+}
+.desk-next .desk-dock-launch:has(.desk-dock-state):has(.desk-dock-badge) {
+  min-width: 128px;
+  max-width: 160px;
+}
+.desk-next .desk-dock-launch:has(.desk-dock-badge) .desk-dock-state {
+  left: 4px;
+  transform: none;
+}
+.desk-next .desk-dock-launch:has(.desk-dock-state) .desk-dock-badge {
+  left: auto;
+  right: 4px;
+}
+/* disconnected: one tag heads the shelf; Dock.tsx draws no tag and no
+   count, so nothing claims to be fresh */
+.desk-next .desk-dock-offline {
+  align-self: center;
+  flex: none;
+  height: 26px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+  box-shadow: var(--wb-raised);
+  font: 700 12px var(--font-mono);
+  white-space: nowrap;
+}
+/* a launcher's own count is not refreshed while the hub is away either */
+.desk-next .desk-dock:has(.desk-dock-offline) .desk-dock-badge {
+  display: none;
+}
+/* open windows that are not applications: raised steel tabs (front: blue) */
+.desk-next .desk-dock-sep {
+  align-self: center;
+  width: 2px;
+  height: 48px;
+  margin: 0 6px;
+  background: var(--wb-ink);
+  box-shadow: 1px 0 0 var(--wb-hi);
+}
+.desk-next .desk-dock-chip {
+  align-self: center;
+  max-width: 200px;
+  height: 32px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .desk-dock-chip.is-front {
+  background: var(--wb-blue);
+  border-color: var(--wb-ink);
+}
+.desk-next .desk-dock-chip.is-min {
+  opacity: 1;
+  background: var(--wb-steel);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .desk-dock-main {
+  min-width: 0;
+  padding: 0 8px;
+  color: var(--wb-ink);
+  background: transparent;
+  font: 600 12px var(--font-mono);
+}
+.desk-next .desk-dock-x {
+  color: var(--wb-ink);
+  border-left: 1px solid var(--wb-ink);
+  border-radius: 0;
+}
+.desk-next .desk-dock-reset {
+  align-self: center;
+  color: var(--wb-ink);
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+}
+.desk-next .desk-dock-reset:hover {
+  color: var(--wb-ink);
+  background: var(--wb-steel-2);
+}
+.desk-next .desk-dock .desk-room-actions {
+  align-self: center;
+}
+.desk-next .desk-dock .desk-room-actions > button {
+  color: var(--wb-ink);
+  border: 1px solid var(--wb-ink);
+  border-radius: 0;
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised);
+  font: 600 12px var(--font-mono);
+}
+.desk-next .desk-dock .desk-room-actions > button:hover,
+.desk-next .desk-dock .desk-room-actions > button[aria-pressed="true"] {
+  color: var(--wb-ink);
+  background: var(--wb-steel-2);
+}
+.desk-next .desk-dock .desk-orb-wrap {
+  align-self: center;
+}
+/* the orb's note rides inside the shelf (the shelf clips what leaves it) */
+.desk-next .desk-dock .desk-orb-note,
+.desk-next .desk-dock .desk-orb-elapsed {
+  top: -16px;
+}
+/* More AppIcons is the phone's gadget only */
+.desk-next .desk-dock-more {
+  display: none;
+}
+
+/* ══ 393: the shelf shows the daily seats first (Intelligence, Meetings,
+   People, Speak), each 85 px, ends on a whole icon, and a 48 px More
+   AppIcons gadget at the right edge moves one page. The projects follow
+   behind More. The name goes to the accessible name; the picture and the
+   state stay. ══ */
 @media (max-width: 720px) {
   .desk-next .desk-window-shell.is-sheet {
     position: fixed;
@@ -276,8 +497,13 @@
     justify-content: flex-start;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    gap: 0;
+    padding: 0 0 env(safe-area-inset-bottom, 0px) 4px;
     z-index: var(--desk-z-dock);
+    /* C3-W: the shelf snaps to whole icons; More AppIcons pages it */
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 4px;
+    scrollbar-width: none;
   }
   .desk-next .desk-dock > * {
     flex-shrink: 0;
@@ -340,5 +566,79 @@
   }
   .desk-next .desk-room-actions > button {
     min-height: 44px;
+  }
+  /* PHILO-13-13 C3-W — the AppIcons at 393 */
+  .desk-next .desk-dock::-webkit-scrollbar {
+    display: none;
+  }
+  .desk-next .desk-dock > * {
+    order: 10;
+    scroll-snap-align: start;
+  }
+  .desk-next .desk-dock > .desk-dock-launch,
+  .desk-next .desk-dock > .desk-dock-launch:has(.desk-dock-state),
+  .desk-next .desk-dock > .desk-dock-launch:has(.desk-dock-state):has(.desk-dock-badge) {
+    width: 85px;
+    min-width: 85px;
+    max-width: 85px;
+    height: 54px;
+    min-height: 44px;
+    grid-template-rows: 34px;
+    padding: 1px 2px;
+  }
+  /* disconnected, the one tag still heads the shelf (§6), before the seats */
+  .desk-next .desk-dock > .desk-dock-offline { order: 0; }
+  /* a snapped shelf re-snaps to the icon it held when the tag arrives,
+     which would push the tag off the left edge: no snap while offline */
+  .desk-next .desk-dock:has(> .desk-dock-offline) { scroll-snap-type: none; }
+  .desk-next .desk-dock > [data-app="intelligence:desk"] { order: 1; }
+  .desk-next .desk-dock > [data-app="surface-meetings"] { order: 2; }
+  .desk-next .desk-dock > [data-app="surface-people"] { order: 3; }
+  .desk-next .desk-dock > [data-app="surface-dictation"] { order: 4; }
+  .desk-next .desk-dock > .desk-dock-project { order: 6; }
+  /* the tag rides the icon's foot and reads short; the count keeps the top right */
+  .desk-next .desk-dock-launch .desk-dock-state,
+  .desk-next .desk-dock-launch:has(.desk-dock-badge) .desk-dock-state {
+    top: auto;
+    bottom: 1px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  /* the qualifier leaves the glass, not the text: the tag still reads
+     SEND FAILED to a reader, and FAILED to the eye (C1-8b) */
+  .desk-next .desk-dock-state-long {
+    font-size: 0;
+  }
+  /* the tag rides the foot here, so the glyph rides the top */
+  .desk-next .desk-dock-launch > span[aria-hidden="true"] {
+    align-self: start;
+  }
+  .desk-next .desk-dock-launch .desk-dock-badge,
+  .desk-next .desk-dock-launch:has(.desk-dock-state) .desk-dock-badge {
+    top: 1px;
+    left: auto;
+    right: 4px;
+  }
+  .desk-next .desk-dock > .desk-dock-more {
+    order: 99;
+    position: sticky;
+    right: 0;
+    flex: 0 0 48px;
+    width: 48px;
+    min-height: 0;
+    height: 56px;
+    align-self: stretch;
+    display: grid;
+    place-items: center;
+    margin: 0 0 0 auto;
+    padding: 0;
+    border: 0;
+    border-left: 1px solid var(--wb-ink);
+    border-radius: 0;
+    background: var(--wb-steel);
+    box-shadow: var(--wb-raised), -6px 0 8px -4px rgba(0, 0, 0, 0.35);
+    color: var(--wb-ink);
+    font: 700 18px var(--font-mono);
+    z-index: 2;
   }
 }
