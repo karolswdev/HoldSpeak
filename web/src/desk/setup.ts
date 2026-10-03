@@ -37,11 +37,16 @@ export interface SetupStatus {
 }
 import { apiFetch } from "../lib/api";
 
-export async function loadSetup(): Promise<SetupStatus | null> {
+export async function loadSetup(
+  onError?: (cause: unknown) => void,
+): Promise<SetupStatus | null> {
   try {
     return await apiFetch<SetupStatus>("/api/setup/status");
-  } catch {
-    return null; // adapter unreachable — chrome stays quiet (honest)
+  } catch (cause) {
+    // adapter unreachable — chrome stays quiet (honest); a caller that names
+    // read failures (the Desk refresh, PHILO-13-13 C3-W) hears the cause.
+    onError?.(cause);
+    return null;
   }
 }
 

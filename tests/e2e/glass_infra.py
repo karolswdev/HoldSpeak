@@ -182,6 +182,8 @@ def _boot(
     token: str = "glass-test",
     gh_runner: Any = None,
     acli_runner: Any = None,
+    on_start: Any = None,
+    on_stop: Any = None,
 ) -> tuple[Any, str]:
     """Boot a real MeetingWebServer with isolated DB and HOME.
 
@@ -193,6 +195,10 @@ def _boot(
         Injected gh CLI runner (hs161/hs164 GitHub glass).
     acli_runner : Any, optional
         Injected acli runner (hs166 Jira glass).
+    on_start, on_stop : Any, optional
+        The capture boundary (PHILO-13-13 C3-W): what the hub's runtime
+        answers when the face asks it to start or stop a meeting. Omitted,
+        the real route refuses a start (501, no capture control).
     """
     global _current_token
     _current_token = token
@@ -232,8 +238,9 @@ def _boot(
     server = MeetingWebServer(
         WebRuntimeCallbacks(
             on_bookmark=lambda *_: None,
-            on_stop=lambda: None,
+            on_stop=on_stop or (lambda: None),
             get_state=lambda: {},
+            on_start=on_start,
         ),
         auth_token=token,
         **kwargs,

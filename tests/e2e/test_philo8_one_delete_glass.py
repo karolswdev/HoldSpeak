@@ -564,9 +564,11 @@ class TestOneDelete:
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
     def test_a_failed_refresh_keeps_the_pending_delete_and_its_undo(self, width: int) -> None:
-        """P1-b: the setup read fails (503) while "Undo" shows. The desk shows
-        its failure screen; the pending delete must NOT commit early (no DELETE
-        before the 8 s window ends), and after Retry the receipt is back."""
+        """P1-b: the setup read fails (503) while "Undo" shows. The desk names
+        the failed read (READ SETUP FAILED + Retry) and keeps its face
+        (PHILO-13-13 C3-W: the error face never replaces a Desk he already
+        has); the pending delete must NOT commit early (no DELETE before the
+        8 s window ends), and after Retry the receipt is back."""
         import time
         from playwright.sync_api import sync_playwright
 
@@ -582,11 +584,14 @@ class TestOneDelete:
                 fail = lambda route: route.fulfill(status=503, content_type="application/json", body="{}")
                 page.route("**/api/setup/status", fail)
                 _palette(page, "Refresh from hub", "desk.refresh")
-                page.locator("[role=alert]").wait_for(timeout=10_000)
+                failure = page.locator(".write-receipt", has_text="READ SETUP FAILED").first
+                failure.wait_for(timeout=10_000)
+                assert page.get_by_label("Preparing HoldSpeak").count() == 0, "the error face replaced the Desk"
                 shown = time.monotonic() - t0
                 status_during = _status(page, decision_id) if shown < 7.0 else None
                 page.unroute("**/api/setup/status", fail)
-                page.locator("[role=alert]").get_by_role("button", name="Retry").click()
+                failure.get_by_role("button", name="Retry", exact=True).click()
+                page.locator(".write-receipt", has_text="READ SETUP FAILED").wait_for(state="detached", timeout=10_000)
                 page.locator(".desk-listmode").wait_for(timeout=10_000)
                 recovered = time.monotonic() - t0
                 receipt = page.evaluate("() => document.querySelector('.undo-receipt')?.innerText || ''")

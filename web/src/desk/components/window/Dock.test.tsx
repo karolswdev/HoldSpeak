@@ -330,3 +330,71 @@ describe("H-C3 Dock rendering", () => {
     await waitFor(() => expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull());
   });
 });
+
+describe("C3-W the AppIcon face (boards C1-1, C1-8a-c)", () => {
+  beforeEach(() => {
+    mocks.apiFetch.mockReset();
+    mocks.apiFetch.mockImplementation(mocks.defaultApiFetch);
+    mocks.runtimeListeners.clear();
+    mocks.durable.readyRows.length = 0;
+    mocks.people.readiness = { readiness: "ready" };
+    mocks.people.readinessError = null;
+    mocks.runtime.state = "connected";
+    __resetSurfaces();
+  });
+
+  it("SENT carries its settle time and the ok tone", async () => {
+    const at = new Date(2026, 9, 3, 14, 2).toISOString();
+    mocks.apiFetch.mockImplementation(async (path: string) => {
+      if (path === "/api/channels/sends") return { sends: [{ state: "sent", settled_at: at }] };
+      return mocks.defaultApiFetch(path);
+    });
+    render(<Dock />);
+    const tag = await screen.findByTestId("desk-dock-send-state");
+    await waitFor(() => expect(tag).toHaveTextContent("SENT 14:02"));
+    expect(tag).toHaveAttribute("data-tone", "ok");
+  });
+
+  it("SEND FAILED wears the fail tone and keeps its short form for the phone", async () => {
+    render(<Dock />);
+    const tag = await screen.findByTestId("desk-dock-send-state");
+    await waitFor(() => expect(tag).toHaveTextContent("SEND FAILED"));
+    expect(tag).toHaveAttribute("data-tone", "fail");
+    // 1440 reads SEND FAILED; 393 reads the ratified short label FAILED.
+    // Both are whole words (no zero-size text); the stylesheet shows one.
+    expect(tag.querySelector(".desk-dock-state-wide")?.textContent).toBe("SEND FAILED");
+    expect(tag.querySelector(".desk-dock-state-short")?.textContent).toBe("FAILED");
+    expect(tag.querySelector(".desk-dock-state-long")).toBeNull();
+    // The Intelligence AppIcon carries the full words as its description.
+    const icon = screen.getByRole("button", { name: /^Intelligence/ });
+    expect(icon).toHaveAccessibleDescription("Send failed");
+  });
+
+  it("a project AppIcon is the drawer sprite, not a text glyph", () => {
+    render(<Dock />);
+    const project = screen.getByRole("button", { name: "Alpha, 1 open here" });
+    expect(project.textContent).not.toContain("▤");
+    const sprite = project.querySelector("img.desk-dock-sprite");
+    expect(sprite?.getAttribute("src")).toMatch(/desk\/sprites\/drawer\.png$/);
+    expect(project).toHaveAttribute("data-app", "project");
+  });
+
+  it("names each daily seat for the phone order and carries the More AppIcons gadget", () => {
+    render(<Dock />);
+    expect(screen.getByRole("button", { name: /^Intelligence/ })).toHaveAttribute("data-app", "intelligence:desk");
+    expect(screen.getByRole("button", { name: "Meetings" })).toHaveAttribute("data-app", "surface-meetings");
+    expect(screen.getByRole("button", { name: "More AppIcons" })).toBeTruthy();
+  });
+
+  it("offline: one OFFLINE · AS OF status heads the shelf; no tag, no count", async () => {
+    const view = render(<Dock />);
+    await waitFor(() => expect(screen.getByTestId("desk-dock-send-state")).toBeTruthy());
+    mocks.runtime.state = "offline";
+    view.rerender(<Dock />);
+    const offline = await screen.findByRole("status");
+    expect(offline).toHaveTextContent(/^OFFLINE · AS OF \d\d:\d\d$/);
+    expect(offline.parentElement?.firstElementChild).toBe(offline);
+    expect(screen.queryByTestId("desk-dock-send-state")).toBeNull();
+    expect(screen.queryByText("1")).toBeNull();
+  });
+});

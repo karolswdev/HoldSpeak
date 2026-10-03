@@ -1,0 +1,4 @@
+                # An actual failed Desk refresh: his "Refresh from hub", by the menu.
+E           AssertionError: Retry: {'owned': False, 'hit': 'desk-wings', 'in_viewport': True}
+E           assert (True and False)
+1 failed, 1 passed in 20.75s
