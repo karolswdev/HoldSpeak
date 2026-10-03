@@ -328,7 +328,8 @@ export function DeskToolShelf() {
     for (const { project, needs } of projectRows) {
       const badge =
         needs && needs > 0
-          ? `${needs} ${needs === 1 ? "NEEDS YOU" : "NEED YOU"}`
+          // PHILO-13-03: a Room's own count is narrower than "needs you".
+          ? `${needs} OPEN`
           : projectCoverage[project.id];
       push({
         id: `project.open.${project.id}`,

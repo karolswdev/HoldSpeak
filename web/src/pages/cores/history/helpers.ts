@@ -222,7 +222,7 @@ export function meetingFailed(row: Record<string, unknown>): boolean {
 }
 
 /** HS-170-04 — the display headline: `N meeting(s) need a summary` (accent)
- *  or `Nothing needs you` (muted) or `No meetings yet` when empty.
+ *  or `All summaries done` (muted) or `No meetings yet` when empty.
  *  HS-201-01: a FAILED row is named instead of the all-clear. */
 export function meetingsHeadline(
   meetingRows: Record<string, unknown>[],
@@ -243,7 +243,9 @@ export function meetingsHeadline(
     const noun = failed === 1 ? "meeting failed" : "meetings failed";
     return { text: `${failed} ${noun}`, accent: true };
   }
-  return { text: "Nothing needs you", accent: false };
+  // PHILO-13-03 (canvas C1-4a): Meetings counts summaries, a narrower set
+  // than "needs you"; its all-clear says what it counts.
+  return { text: "All summaries done", accent: false };
 }
 
 /** HS-201-11 — is there an open action a meeting facet could match?

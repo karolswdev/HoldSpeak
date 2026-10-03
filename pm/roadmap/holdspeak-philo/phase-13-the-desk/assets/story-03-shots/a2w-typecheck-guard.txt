@@ -1,0 +1,9 @@
+
+> holdspeak-web@0.0.1 typecheck
+> tsc --noEmit
+
+
+> holdspeak-web@0.0.1 guard:architecture
+> node scripts/guard-architecture.mjs
+
+React architecture guard passed (895 source files; zero framework residue).

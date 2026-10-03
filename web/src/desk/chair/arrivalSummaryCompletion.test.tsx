@@ -423,6 +423,12 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       if (value === "/api/meetings/m-run-failure") {
         return snapshots[currentSnapshot].detail as never;
       }
+      // PHILO-13-03: the Chair's R3 is the needs-you module's bounded
+      // `summary_attention` read; the hub answers the meeting as it is now
+      // (one row), never every lifecycle snapshot at once.
+      if (value.startsWith("/api/meetings?summary_attention=true")) {
+        return { meetings: [snapshots[currentSnapshot].list], total: 1 } as never;
+      }
       if (value.endsWith("/intelligence/run")) {
         return {
           job_id: "ij-run-failure",
@@ -465,7 +471,9 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge")).toHaveTextContent("FAILED"));
     expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("THIS DEVICE");
     expectProducerCause(snapshots[2]);
-    expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 need you");
+    // PHILO-13-03: the head is the one needs-you snapshot, which re-reads on
+    // the same debounced desk_changed frame; it follows within the wait.
+    await waitFor(() => expect(screen.getByTestId("arrival-display")).toHaveTextContent("1 need you"));
     expect(screen.queryAllByTestId("arrival-run-intel")).toHaveLength(0);
     expect(mockedApiFetch.mock.calls.filter(([path]) => String(path).endsWith("/intelligence/run"))).toHaveLength(1);
   });

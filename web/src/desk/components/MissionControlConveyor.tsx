@@ -605,7 +605,8 @@ export function MissionControlConveyor() {
         <span className="surface-token">RAILS</span>
         {awaitingCount > 0 ? (
           <span className="surface-token" data-tone="warn">
-            {countLabel("NEEDS YOU", awaitingCount)}
+            {/* PHILO-13-03: runs that wait for an answer, not "needs you". */}
+            {countLabel("WAITING", awaitingCount)}
           </span>
         ) : null}
         {sessions.length > 0 ? <span className="surface-token">{countLabel("RUNS", sessions.length)}</span> : null}
@@ -626,7 +627,7 @@ export function MissionControlConveyor() {
           <span className="surface-token">RAILS</span>
           {awaitingCount > 0 ? (
             <span className="surface-token" data-tone="warn">
-              {`NEEDS YOU ${awaitingCount}`}
+              {`WAITING ${awaitingCount}`}
             </span>
           ) : null}
           {sessions.length > 0 ? <span className="surface-token">{countLabel("RUNS", sessions.length)}</span> : null}

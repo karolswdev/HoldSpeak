@@ -19,9 +19,8 @@ import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { intelBadge } from "./intelBadge";
-import { meetingPathBlockers, type AssignmentRead } from "./meetingPathBlocker";
 import { onReturnToTask } from "../returnToTask";
-import { getAssignmentSummary, type AssignmentSummary } from "../../pages/cores/assignmentExperience";
+import { refreshNeedsYou, useNeedsYou } from "../needsYou";
 import { useRuntimeBus, useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { labelFor, supportsDoorVerb, commandForDoorVerb } from "./doorVerbs";
 import {
@@ -48,9 +47,7 @@ import {
   RANK_LABEL,
   ageToken,
   attentionCaption,
-  dedupAttention,
   observedAtToken,
-  rankAttention,
   rankClassOf,
   reasonToken,
   type AttentionSource,
@@ -284,11 +281,6 @@ function summaryStored(...rows: Meeting[]): boolean {
   );
 }
 
-function hasMeetingAttention(meeting: Meeting): boolean {
-  const state = arrivalIntelBadge(meeting);
-  return state === "RETRYING" || state === "FAILED";
-}
-
 interface ArrivalMeetingDetail {
   meeting: Meeting | null;
   error: string | null;
@@ -312,50 +304,6 @@ function doorEmblem(source: string): string {
   if (source === "meeting" || source === "action_item") return "MTG";
   if (source === "thought") return "TH";
   return "DOOR";
-}
-
-/** Convert door cards to NeedsYouItem-compatible rows for the arrival. */
-function doorCardsToItems(
-  column: string,
-  cards: DoorCard[],
-): NeedsYouItem[] {
-  return cards.map((card) => {
-    let why = "";
-    let severity = "info";
-    if (column === "overdue") {
-      const days = card.due ? Math.max(1, Math.floor((Date.now() - new Date(card.due).getTime()) / 86400000)) : 0;
-      why = days > 0 ? `OVERDUE · ${days}D` : "OVERDUE";
-      severity = "danger";
-    } else if (column === "now") {
-      // HS-200-15: the Door's `now` column is what is due now: the
-      // DUE TODAY class of the ranking key.
-      why = "DUE TODAY";
-      severity = "warning";
-    } else if (column === "waiting") {
-      why = card.owner ? `WAITING ON ${card.owner.toUpperCase()}` : "WAITING";
-      severity = "info";
-    } else if (column === "unassigned") {
-      why = "UNASSIGNED";
-      severity = "warning";
-    }
-    return {
-      id: `door:${card.id}`,
-      projectId: "",
-      projectName: "",
-      ref: card.id,
-      title: card.title || card.text || "Untitled",
-      why,
-      ageToken: "",
-      since: "",
-      dueAt: card.due ?? null,
-      source: card.source,
-      verbHref: null,
-      severity,
-      _doorCard: card,
-      _isDoor: true,
-      _isUnassigned: column === "unassigned",
-    } as NeedsYouItem & { _doorCard: DoorCard; _isDoor: boolean; _isUnassigned: boolean };
-  });
 }
 
 /** A brief item whose text is a raw Service.method / dotted-id / snake_case
@@ -495,23 +443,15 @@ export function ChairHome({ arrivalRequired = false }: { arrivalRequired?: boole
 // ── The Arrival face ───────────────────────────────────────────────
 
 function Arrival() {
-  // ── needs-you wire (rooms) ──
-  // HS-200-07 (C4): a read that never landed is itself a coverage gap —
-  // the arrival must not speak the all-clear over an answer it lacks.
-  const [needsYou, setNeedsYou] = useState<NeedsYouPayload | null>(null);
-  const [needsYouUnread, setNeedsYouUnread] = useState(false);
-  const readNeedsYou = useCallback(async (fresh = false) => {
-    try {
-      const data = await apiFetch<NeedsYouPayload>(
-        fresh ? "/api/desk/needs-you?fresh=1" : "/api/desk/needs-you",
-      );
-      setNeedsYou(data);
-      setNeedsYouUnread(false);
-    } catch {
-      setNeedsYouUnread(true);
-    }
-  }, []);
-  useEffect(() => { void readNeedsYou(); }, [readNeedsYou]);
+  // ── needs-you (PHILO-13-03, A2-W) ──
+  // ONE membership for the whole Desk: the Chair, the bell and the Dock read
+  // the same snapshot from `needsYou.ts` (R1 rows + R2 blockers + R3
+  // meetings). The Chair keeps no copy of the rule. HS-200-07 (C4): a read
+  // that never landed is itself a coverage gap.
+  const needs = useNeedsYou();
+  const needsYou = needs.room as (NeedsYouPayload & { next?: NeedsYouPayload["next"] }) | null;
+  const needsYouUnread = Boolean(needs.errors.room);
+  const readNeedsYou = useCallback((fresh = false) => refreshNeedsYou(fresh), []);
 
   // ── door wire (owner's action items) ──
   const [door, setDoor] = useState<DoorProjection | null>(null);
@@ -633,19 +573,9 @@ function Arrival() {
   // as `useDeskChangedRefresh` does) and when the window takes focus
   // again (the owner comes back from Models, or from anywhere else).
   // A read that has not landed is an UNKNOWN, never a clear desk.
-  const [assignments, setAssignments] = useState<AssignmentSummary | null>(null);
-  const [assignmentRead, setAssignmentRead] = useState<AssignmentRead>("pending");
-  const readAssignments = useCallback(async () => {
-    try {
-      const summary = await getAssignmentSummary();
-      setAssignments(summary);
-      setAssignmentRead("ok");
-    } catch {
-      setAssignments(null);
-      setAssignmentRead("failed");
-    }
-  }, []);
-  useEffect(() => { void readAssignments(); }, [readAssignments]);
+  // PHILO-13-03: the roster is one of the membership's inputs, so a re-read
+  // is a needs-you refresh (the shared snapshot reads the roster itself).
+  const readAssignments = useCallback(() => refreshNeedsYou(false), []);
   // Counsel round 2 (condition 1): the product's OWN return signal. Models
   // announces `holdspeak:settings-updated` the moment it applies a set
   // (`features/concierge/useConciergeController.ts:507` ->
@@ -658,7 +588,7 @@ function Arrival() {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const unsubscribe = subscribeFrames("desk_changed", () => {
       if (timer !== null) clearTimeout(timer);
-      timer = setTimeout(() => { timer = null; void readAssignments(); }, 300);
+      timer = setTimeout(() => { timer = null; void refreshNeedsYou(true); }, 300);
     });
     const onFocus = () => { void readAssignments(); };
     window.addEventListener("focus", onFocus);
@@ -668,10 +598,7 @@ function Arrival() {
       window.removeEventListener("focus", onFocus);
     };
   }, [subscribeFrames, readAssignments]);
-  const blockers = useMemo(
-    () => meetingPathBlockers(assignments, assignmentRead),
-    [assignments, assignmentRead],
-  );
+  const blockers = needs.blockers;
 
   // HS-200-42 (counsel N1): WHO will execute the queue. The `runtime_queue`
   // frame (the same one the ambient HUD chip reads) now carries the hub
@@ -759,46 +686,13 @@ function Arrival() {
     </span>
   ) : null;
 
-  const roomItems = needsYou?.items ?? [];
-
-  // ── merge door items into needs-you ──
-  const doorItems = useMemo(() => {
-    if (!door) return [];
-    const board = door.board ?? {};
-    // HS-200-13 (AC3): a commitment the Room already emits as an attention
-    // row (source `commitment`, with its Project and its next action) is
-    // the same action item the Door's board projects; the Room's row wins
-    // and the Door's card for it is not drawn a second time.
-    const covered = new Set(
-      roomItems
-        .filter((item) => item.source === "commitment" && item.actionItemId)
-        .map((item) => String(item.actionItemId)),
-    );
-    // Order: overdue first, then now, then waiting, then unassigned.
-    // Active items do not appear.
-    return [
-      ...doorCardsToItems("overdue", board.overdue ?? []),
-      ...doorCardsToItems("now", board.now ?? []),
-      ...doorCardsToItems("waiting", board.waiting ?? []),
-      ...doorCardsToItems("unassigned", board.unassigned ?? []),
-    ].filter((item) => !covered.has(String(item.ref)));
-  }, [door, roomItems]);
   // HS-200-15: ONE clock per render for every age and OBSERVED token.
-  const now = useMemo(() => new Date(), [needsYou, door]);
-  // HS-171: separate muted from unmuted; muted render dimmed at the end.
-  // HS-200-15 (AC2, AC3): the merged rows are deduplicated (one obligation,
-  // one row, its sources traceable) and RANKED by the five-class key —
-  // overdue, due today, not run, no due date, waiting: never by severity.
-  const { unmutedItems, mutedItems } = useMemo(() => {
-    const merged = rankAttention(dedupAttention([...doorItems, ...roomItems], now), now);
-    const unmuted: NeedsYouItem[] = [];
-    const muted: NeedsYouItem[] = [];
-    for (const item of merged) {
-      if (item.muted) muted.push(item);
-      else unmuted.push(item);
-    }
-    return { unmutedItems: unmuted, mutedItems: muted };
-  }, [doorItems, roomItems, now]);
+  const now = useMemo(() => new Date(), [needs.members, needsYou]);
+  // HS-171 / HS-200-13 / HS-200-15: the Door's cards and the Room's rows,
+  // the Room's commitment winning over its Door card, deduplicated, ranked,
+  // the muted rows apart: all of it is the module's (`computeNeedsYou`).
+  const unmutedItems = needs.unmutedItems as unknown as NeedsYouItem[];
+  const mutedItems = needs.mutedItems as unknown as NeedsYouItem[];
 
   // ── the ranking filter (RANKED = the full key) ──
   const [rankFilter, setRankFilter] = useState<"" | RankClass>("");
@@ -815,23 +709,19 @@ function Arrival() {
     [needsYou, needsYouUnread],
   );
   // HS-201-01: what needs the owner but is not an attention row -- the
-  // meeting-path blocker and every FAILED meeting. `Nothing needs you`
-  // is never spoken over one (audits/face-walk-opus.md defect 8).
-  const failedMeetings = meetings.filter((meeting) => {
-    const detail = meetingDetails[meeting.id]?.meeting;
-    return hasMeetingAttention(detail ?? meeting);
-  }).length;
+  // meeting-path blockers (R2) and every FAILED or RETRYING meeting (R3,
+  // the module's bounded server read). `Nothing needs you` is never spoken
+  // over one (audits/face-walk-opus.md defect 8).
   // HS-201-11 (owner's ruling): the calendar row is an OFFER, not a row
-  // that asks. A desk with no calendar must not say `1 need you` for ever
-  // (tenet 3), so `Connect calendar` renders and the head never counts it.
-  const pending = blockers.length + failedMeetings;
-  // Counsel fix round, second pass (ruling 1): a roster read still in
-  // flight draws no row, and the all-clear waits for it -- an unknown is
-  // never spoken as a clear desk.
+  // that asks, so `Connect calendar` renders and the head never counts it.
+  const pending = needs.count - count;
+  // Counsel fix round, second pass (ruling 1): a read still in flight (or
+  // one that failed) draws no all-clear -- an unknown is never spoken as a
+  // clear desk.
   const headline = headlineFor(
     count,
     projectCount,
-    coverage.complete && assignmentRead !== "pending",
+    coverage.complete && needs.complete,
     pending,
   );
   const headlineAccent = count > 0 || pending > 0;
@@ -979,6 +869,8 @@ function Arrival() {
         drainer: outcome.result.drainer === "running" ? "running" : "absent",
       });
       void useDesk.getState().refresh();
+      // PHILO-13-03: a run moves a FAILED meeting out of the membership.
+      void refreshNeedsYou(true);
       clearWriteFailure(`meeting:${meetingId}`);
     } catch (error) {
       reportWriteFailure("Run summary", error, () => void runIntelligence(meetingId, route), `meeting:${meetingId}`);
@@ -1001,14 +893,10 @@ function Arrival() {
   }, [meetings, intelReceipt]);
 
   // ── proposal confirm: optimistically remove from needs-you ──
-  const handleProposalConfirm = useCallback((proposalId: string) => {
-    setNeedsYou((prev) => {
-      if (!prev) return prev;
-      const remaining = prev.items.filter((it) => it.proposalId !== proposalId);
-      // UX-CANON A8: the headline guards zero; this is state, not display.
-      const nextCount = remaining.reduce((n) => n + 1, 0);
-      return { ...prev, items: remaining, count: nextCount };
-    });
+  // PHILO-13-03: a confirm changes the membership, so the ONE snapshot is
+  // re-read fresh: the Chair, the bell and the Dock move together.
+  const handleProposalConfirm = useCallback((_proposalId: string) => {
+    void refreshNeedsYou(true);
   }, []);
 
   // ── arming countdown (lost door 2) ──
@@ -1507,7 +1395,9 @@ function NeedsYouSection({
 }) {
   // HS-200-15 (verdict Q1): five in the first view; the rest reveal IN
   // PLACE behind `N MORE · Show all`. The caption carries the cap
-  // (`NEEDS YOU 5 OF 17`); the display line above carries the true total.
+  // (`ACTIONS 5 OF 17`); the display line above carries the true total.
+  // PHILO-13-03: the list is narrower than "needs you" (no SETUP row, no
+  // failed meeting), so it says what it counts.
   const [showAll, setShowAll] = useState(false);
   const remainderRef = useRef<HTMLButtonElement>(null);
   useEffect(() => { setShowAll(false); }, [filter]);
@@ -1519,7 +1409,7 @@ function NeedsYouSection({
   // What the cap hides (the remainder row stays while expanded, as the
   // way back).
   const remaining = Math.max(0, filtered.length - ATTENTION_CAP);
-  const label = muted ? "MUTED" : "NEEDS YOU";
+  const label = muted ? "MUTED" : "ACTIONS";
 
   // Escape inside the revealed rows returns focus to the remainder verb.
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -1896,6 +1786,8 @@ function NeedsYouRowVerbs({
           json: { card_id: item.actionItemId, verb: "done", payload: {} },
         });
         setDone(true);
+        // PHILO-13-03: the membership changed; the bell and the Dock follow.
+        void refreshNeedsYou(true);
         clearWriteFailure(`action-item:${item.actionItemId}`);
       } catch (error) {
         reportWriteFailure("Mark done", error, () => void markDone(), `action-item:${item.actionItemId}`);
@@ -2000,6 +1892,9 @@ function NeedsYouRowVerbs({
       try {
         await apiFetch(cmd.endpoint, { method: "POST", json: cmd.body });
         setDone(true);
+        // PHILO-13-03: a Done changes the membership; one fresh re-read moves
+        // the Chair, the bell and the Dock together (no minute lag).
+        void refreshNeedsYou(true);
         clearWriteFailure(`door:${cmd.endpoint}`);
       } catch (error) {
         reportWriteFailure(labelFor(firstVerb), error, () => void fireVerb(), `door:${cmd.endpoint}`);

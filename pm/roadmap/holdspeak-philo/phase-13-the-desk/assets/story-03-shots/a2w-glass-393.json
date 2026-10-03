@@ -1,0 +1,70 @@
+{
+  "width": 393,
+  "touch": true,
+  "oracle": {
+    "expectedRefs": [
+      "philo13-a2-A1",
+      "A2 confirm the room commitment",
+      "philo13-a2-A3",
+      "philo13-a2-A4",
+      "blocker:engines",
+      "philo13-a2-failed-meeting"
+    ],
+    "expectedCount": 6
+  },
+  "before": {
+    "said": [
+      "Needs you",
+      "Needs you",
+      "6 need you",
+      "aria:Desk memory: 6 need you",
+      "aria:Intelligence, 6 need you"
+    ],
+    "head": "6 need you",
+    "head_n": 6,
+    "bell": 6,
+    "intel": 6,
+    "memory": 6
+  },
+  "chair_caption": "ACTIONS 4",
+  "done_latency": {
+    "ms": 32,
+    "head": 5,
+    "bell": 5,
+    "intel": 5
+  },
+  "after": {
+    "said": [
+      "Needs you",
+      "Needs you",
+      "5 need you",
+      "aria:Desk memory: 5 need you",
+      "aria:Intelligence, 5 need you"
+    ],
+    "head": "5 need you",
+    "head_n": 5,
+    "bell": 5,
+    "intel": 5,
+    "memory": 5
+  },
+  "meetings": {
+    "said": [
+      "Needs you",
+      "5 need you",
+      "aria:Desk memory: 5 need you",
+      "aria:Intelligence, 5 need you"
+    ],
+    "headline": "1 meeting failed"
+  },
+  "room": {
+    "headline": "1 open here",
+    "said": [
+      "Needs you",
+      "5 need you",
+      "aria:Desk memory: 5 need you",
+      "aria:Intelligence, 5 need you"
+    ],
+    "open_here": true
+  },
+  "page_errors": []
+}

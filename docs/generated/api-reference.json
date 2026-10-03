@@ -38247,6 +38247,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
+        "tests/e2e/test_philo13_03_needs_you_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_05_close_glass.py",
         "tests/e2e/test_philo13_11_chair_glass.py",

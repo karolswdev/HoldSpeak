@@ -263,7 +263,9 @@ function RoomHeadline({
       data-testid="room-headline"
       data-accent={isAccent || undefined}
     >
-      {count === 1 ? "1 needs you" : count > 0 ? `${count} need you` : "Nothing needs you"}
+      {/* PHILO-13-03 (canvas C1-4a): a Room counts its own open items, a
+          narrower set than the Desk's one "needs you" number. */}
+      {count > 0 ? `${count} open here` : "Clear here"}
     </span>
   );
 }
@@ -763,7 +765,7 @@ function ProposalRow({
   );
 }
 
-/* ── NEEDS YOU section ── */
+/* ── OPEN HERE section (PHILO-13-03: was NEEDS YOU) ── */
 
 function NeedsYouSection({
   room,
@@ -821,9 +823,9 @@ function NeedsYouSection({
 
   if (items.length === 0) {
     return (
-      <SurfaceSection label="NEEDS YOU" actions={reviewAction}>
+      <SurfaceSection label="OPEN HERE" actions={reviewAction}>
         <p className="room-empty-line" data-testid="needs-you-empty">
-          Nothing needs you{nextCheck ? ` · next check ${formatTimeShort(nextCheck)}` : ""}
+          Nothing open{nextCheck ? ` · next check ${formatTimeShort(nextCheck)}` : ""}
         </p>
       </SurfaceSection>
     );
@@ -840,7 +842,7 @@ function NeedsYouSection({
     [0]?.proposalId || "";
 
   return (
-    <SurfaceSection label={`NEEDS YOU ${count}`} actions={reviewAction}>
+    <SurfaceSection label={`OPEN HERE ${count}`} actions={reviewAction}>
       <SurfaceLedger count="" cols="room">
         <ul className="surface-ledger-rows">
           {items.map((item, i) => {
