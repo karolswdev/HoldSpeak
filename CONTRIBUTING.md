@@ -14,7 +14,6 @@ cd HoldSpeak
 uv venv
 source .venv/bin/activate
 uv pip install -e '.[dev]'
-git config core.hooksPath .githooks
 ```
 
 The build hook installs Web dependencies and builds the bundled app.
@@ -100,26 +99,13 @@ Use the [dogfood protocol](dogfood/PROTOCOL.md) for whole-product or release exe
 
 ## Commit workflow
 
-Every commit requires a generated contract tied to the staged tree.
-Read [the contract rules](pm/roadmap/PMO-CONTRACT.md) before certifying the change.
+There is no commit gate (owner ruling 2026-10-03).
 
-1. Stage the intended files with `git add`.
-2. Generate the contract.
+1. Make a branch from `main`.
+2. Commit normally with `git commit`.
+3. Open a pull request. Include the actual validation results in the description.
+4. One review, then merge.
 
-   ```sh
-   .githooks/dw contract new
-   ```
-
-3. Read `.tmp/CONTRACT.md`.
-4. Mark each box only after you verify its statement.
-5. Commit normally with `git commit`.
-
-The hooks validate the staged facts and archive the successful contract.
-If you change the staged files, regenerate the contract with `--force` before committing.
-A hand-written contract or `--no-verify` bypass is not an accepted workflow.
-
-For roadmap work, update the associated tracking and evidence in the same commit.
-For other work, include the actual validation results in the commit or PR description.
 The [repository working agreements](CLAUDE.md) describe the complete process.
 
 ## Report a problem

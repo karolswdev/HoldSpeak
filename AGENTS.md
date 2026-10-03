@@ -8,7 +8,7 @@ down. The ruling and the protocol are canon in
 you both run is `docs/internal/ORCHESTRATION.md`. The supreme canon is
 `docs/internal/CONSTITUTION.md`; every face obeys
 `docs/internal/UX-CANON.md`. `CLAUDE.md` holds the repo's working
-agreements and the commit gate; they bind you exactly as they bind him.
+agreements ("How we work now"); they bind you exactly as they bind him.
 
 ## The Seven Tenets come first
 
@@ -69,39 +69,42 @@ spawn_agent(task_name="<snake_case>", model="gpt-5.6-luna",
   ten files of three sibling lanes. `git show HEAD:<path>` to read a
   committed version; `log`/`diff`/`show` are fine.
 - Staging is by explicit path. `git add -A` is forbidden, always.
-- One commit lane per brain; Lunas hold for SHIP and never stage,
-  capture evidence, flip, or contract.
+- One commit lane per brain; Lunas hold for SHIP and never stage or
+  commit.
 
-## Tests — scoped for workers, full for you
+## Tests — the ones that cover the change
 
-- Lunas run only the focused tests their brief names. You run the full
-  suite as the lane's orchestrator, in a quiet tree (no worker editing),
-  with the commands in `CLAUDE.md` §"Test commands".
+- Lunas run only the focused tests their brief names. You run the tests
+  that cover the lane's change (the same rule as `CLAUDE.md`), with the
+  commands in `CLAUDE.md` §"Test commands". The full suite is a nightly
+  run, not a merge step (owner ruling 2026-10-03).
 - Every pytest run uses an isolated HOME; the owner's real desk DB lives
   under `Path.home()` and a bare run will write into it:
   `HOME=$(mktemp -d) uv run pytest -q …`. Never run
   `tests/e2e/test_metal.py`.
-- Read the output before you flip anything. Type-check is not
-  validation. A full-suite run rewrites ~388 tracked evidence PNGs from
-  other phases; restore them before staging, by explicit path, only the
-  ` M` paths (a blanket loop truncated untracked shots).
+- Read the output before you open the PR. Type-check is not
+  validation. Tests write shots to `.tmp/evidence-shots/`; the tree is
+  clean after a run.
 - A live walk runs through `scripts/graph_walk.py`, one case per
   invocation. The one procedure (mint a case, run the rig, read an
   observation, output directories) is
   `agent/skills/holdspeak-capability-verifier/SKILL.md`, "Walk a case";
   the worker-brief scars are in `docs/internal/ORCHESTRATION.md` §3.
 
-## Commits — the gate is the same gate
+## Commits — no gate (owner ruling 2026-10-03)
 
-Every commit passes the Delivery Workbench gate. Stage by path, then
-`.githooks/dw contract new [--story ID]`, verify each rule honestly,
-flip every box in `.tmp/CONTRACT.md`, then `git commit`. Never
-`--no-verify`. One story flips done per commit; the flipped story's
-evidence file ships with it. `.githooks/dw doctor`, `dw next`,
-`dw check`, `dw gate` orient you; the full rules are in
-`pm/roadmap/PMO-CONTRACT.md`. Merges are by PR to `main`, by the lane
-owner, on verification, after the other brain's counsel-on-built is
-recorded. Never push `main` directly.
+The owner, 2026-10-03: "I feel like we've been paying the price of
+working under delivery workbench that has been bogging us down
+BIG-FREAKIN'-TIME ... I want us to move fast. Super-fast."
+
+The commit gate is removed. Branch in your worktree, stage by path,
+commit plainly, open a PR. The other brain gives one review of the PR
+(one check, one confirmation). The lane owner merges; CI does not gate
+the merge. At merge, update `pm/STATUS.md`. No contracts, no evidence
+files, no per-story flips. A face gets a canvas before build. The hooks
+are parked in `.githooks/_parked/`; `.githooks/dw next` and
+`dw context` still read the old roadmap under `pm/roadmap/`, which is
+history. Never push `main` directly.
 
 ## Checks — the report you owe, and the one you ask for
 
@@ -136,8 +139,7 @@ artifact `UNCHECKED — awaiting Muad'Dib` and do not act on it until a
 Muad'Dib session has checked it.
 
 Disagreement runs one round each; then the lane owner rules and the
-dissent is recorded verbatim under "Open dissents" in the phase status
-doc. The Constitution and UX-CANON outrank both of you.
+dissent is recorded verbatim in the PR. The Constitution and UX-CANON outrank both of you.
 
 ## The owner's standing rulings you must know
 
@@ -154,78 +156,3 @@ doc. The Constitution and UX-CANON outrank both of you.
 - Handovers and records live in `docs/internal/` and the phase folders,
   never in a chat artifact.
 
-<!-- BEGIN DELIVERY WORKBENCH (managed by pmo-roadmap install.sh/update.sh — edits inside are overwritten) -->
-
-## Delivery Workbench (PMO rails)
-
-This repository uses Delivery Workbench: an evidence-first commit gate
-over a Markdown roadmap under `pm/roadmap/<project>/` (phases, stories,
-paired evidence files). Markdown is the source of truth; `.githooks/dw`
-is the CLI for everything below. Run `.githooks/dw doctor` if anything
-seems miswired. `.githooks/dw-workbench --root .` serves a localhost
-web view of the roadmap (browse, health, trace, guarded edit).
-
-Orient before working:
-
-- `.githooks/dw context [project] --compact` — JSON snapshot: issues,
-  warnings, next story, per-story trace paths.
-- `.githooks/dw next [project]` — the next actionable story
-  (exit 0 = found, 2 = nothing actionable, 1 = error; `--json` for a
-  machine-readable object).
-- `.githooks/dw check [project]` — structural and evidence-content
-  lint; greppable `ERROR <path>: <issue>` lines, exit 1 on issues.
-
-Work a story (statuses: backlog | ready | in-progress | blocked | done;
-done-synonyms complete/closed/shipped gate identically):
-
-1. `.githooks/dw story status <project> <phase> <story> in-progress`
-2. Do the work.
-3. Prove it — run the real verification through
-   `.githooks/dw evidence capture <project> <phase> <story> -- <command>`
-   (records command, exit code, index tree, and output into the story's
-   evidence file; screenshots/binaries go under `assets/` next to it).
-4. `.githooks/dw story status <project> <phase> <story> done`
-   (refuses without evidence).
-
-Commit — every commit passes the gate:
-
-1. Stage everything (`git add …`), THEN generate the contract:
-   `.githooks/dw contract new [--story ID] [--consent yes --reasons "…"]
-   [--tests-capture <evidence-path>[#ts]]`
-   It stamps machine-verified facts (branch, HEAD, index tree, staged
-   sample, story IDs); restaging afterwards invalidates it (regenerate
-   with `--force`).
-2. Honestly verify each rule, then flip every `- [ ]` to `- [x]` in
-   `.tmp/CONTRACT.md`. A `--tests-capture` reference pre-checks the
-   "Tests ran." box and is re-verified by the gate.
-3. `git commit`. Trailers (`PMO-Story`, `PMO-Contract-Digest`) and the
-   contract archive under `.git/pmo-contract-archive/<sha>` are
-   automatic; the contract survives an aborted commit.
-
-Gate rules the machinery enforces: one story flips done per commit
-(bundle only with `.tmp/BUNDLE-OK.md` + one-line rationale), the
-flipped story's `evidence-story-NN.md` ships in the same commit, and
-evidence never appears or disappears orphaned. Preflight any time with
-`.githooks/dw gate [--porcelain]` — it never consumes the contract.
-`.githooks/dw verify [<base>..<head> | --all]` re-derives the
-structural rules from pushed history alone — audit any range,
-no local contract needed.
-
-MCP-capable agents: prefer the MCP tools over shelling out —
-`.githooks/dw-mcp` (stdio JSON-RPC; wire it per your client — Claude Code reads `.mcp.json`, Codex uses `codex mcp add`) serves the same core as
-structured tools with identical refusals: orientation (`dw_context`,
-`dw_next`, `dw_check`, `dw_doctor`), verification (`dw_verify`,
-`dw_gate`), guarded mutations (`dw_story_status`,
-`dw_evidence_capture`, `dw_contract_new`). Certification is never a
-tool call: flipping contract boxes stays a manual, deliberate edit
-(see `docs/mcp.md` in the framework repo).
-
-Never use `--no-verify`; when blocked, read the banner — it names the
-rule and the remediation, and includes the exact contract template.
-
-Canon: `pm/roadmap/PMO-CONTRACT.md` (rules),
-`pm/roadmap/roadmap-builder.md` (methodology).
-
-Agents without MCP support: the CLI commands above are the complete surface — nothing below requires MCP.
-
-<!-- END DELIVERY WORKBENCH -->

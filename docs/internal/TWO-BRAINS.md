@@ -24,7 +24,15 @@ The owner, 2026-09-19, verbatim:
 > our opus-workers to use this model!" The Fedaykin follow the newest Opus
 > on his ruling each time; the quote above is kept verbatim as history.
 
-Two orchestrators, one product, one gate. Neither is the other's
+> Amended 2026-10-03: "I feel like we've been paying the price of working
+> under delivery workbench that has been bogging us down BIG-FREAKIN'-TIME
+> ... I want us to move fast. Super-fast." The commit gate is removed:
+> no contracts, no evidence files, no per-story flips, no merge-record
+> ritual. The flow is branch, PR, one review by the other brain, merge;
+> then update `pm/STATUS.md`. A face still gets a canvas before build.
+> `CLAUDE.md` "How we work now" holds the rules.
+
+Two orchestrators, one product. Neither is the other's
 counsel-on-call; each is the other's equal, and each is checked by the
 other before anything it authored is acted on.
 
@@ -51,11 +59,19 @@ self-report is not proof (it answered "GPT-5, default"); the rollout is.
 
 ## 3. The check law — you check him, he checks you
 
+**Amended 2026-10-03 (the owner: "I want us to move fast. Super-fast."):
+the only check that gates is ONE review of the PR before it merges, plus
+the owner's ratification of a face's canvas. Briefing workers and
+committing a doc need no prior check and no separate check record; a
+charter or canon edit is reviewed as its PR like any other change.**
+
+The text below is the earlier law, kept for its reasoning:
 **Nothing authored by one brain is acted on until the other has checked
 it.** "Authored" means: a phase charter, a story's settled design, a
 brief that changes a chartered criterion, a merge verdict, a canon edit,
-a walk's closing evidence. "Acted on" means: workers briefed, a story
-flipped, a PR merged, a doc committed as canon.
+a face's canvas. "Acted on" means: workers briefed, a PR merged, a doc
+committed as canon. For built work the check is one review of the PR:
+one check, one confirmation.
 
 The check asks the counsel question, never "approve this":
 
@@ -76,20 +92,16 @@ UNKNOWN:             what the checker could not verify, and why
 
 Rules of the check:
 
-- **A check is recorded in the tree, next to what it checked.** For a
-  phase: `pm/roadmap/holdspeak/phase-NNN/checks/<artifact>-<brain>.md`.
-  For a canon doc or an audit: a `checks/` sibling folder, or a
-  section headed `## Check — <brain>, <date>` at the end of the doc.
-  The record names the session id (Astra) or the Claude session (Muad'Dib)
-  so the transcript can be found.
+- **A check is recorded where the work is:** the PR review. No
+  separate check record in a doc, no merge-verdict comment
+  (amended 2026-10-03).
 - **A finding is a failing test.** Reproduce, classify, fix or ledger.
   The author may proceed over a finding only by naming it and the
   reason in the record; never by omission. The owner sees both minds.
 - **One round each, then the lane owner rules.** Author → check →
   author's response → checker's reply. If they still disagree, the
   brain that OWNS the lane (§4) decides, the dissent is recorded
-  verbatim, and the disagreement is listed in the phase status doc
-  under "Open dissents" for the owner. A third opinion (an Opus counsel
+  verbatim in the PR for the owner. A third opinion (an Opus counsel
   session, or the sober eye) may be sought; it is counsel, not a vote.
 - **The Seven Tenets, the Constitution and UX-CANON outrank both brains.** A check that
   cites an article beats a preference that does not.
@@ -98,23 +110,23 @@ Rules of the check:
   summaries.
 - **Checks are cheap and frequent.** A check costs one invocation; a
   merged mistake costs a phase. Default to checking. The only things
-  exempt are mid-story worker traffic, memory notes, and bookkeeping
-  commits that flip nothing.
+  exempt are mid-story worker traffic, memory notes, and updates to
+  `pm/STATUS.md`.
 
 ## 4. Lanes — who owns what
 
 Work is divided into **lanes** at charter. A lane is a set of stories
-with disjoint files and one owner brain. The charter's status doc
-carries a lane table:
+with disjoint files and one owner brain. The charter carries a lane
+table:
 
 ```
 | Lane | Stories | Owner | Checker | Worktree | Branch |
 ```
 
-- The owner brain briefs its workers, verifies on glass and by the full
-  suite, commits through the gate, opens the PR.
+- The owner brain briefs its workers, verifies on glass and by the
+  tests that cover the change, commits, opens the PR.
 - The checker brain performs **counsel on built**: one check of the
-  built lane (the PR, the shots, the evidence) before merge. The
+  built lane (the PR and its shots) before merge. The
   standing ruling "counsel once on built, merge on verification"
   ([memory: push to full usability]) is unchanged; the counsel is now the
   other brain.
@@ -138,13 +150,12 @@ the HS-175 stash scar at double scale. So:
   named in the lane table. Astra's `-C` points at that worktree.
 - Muad'Dib's lanes likewise run in worktrees when Astra has a live lane;
   the main checkout is for orientation, merges, and canon.
-- Inside a worktree the ORCHESTRATION.md machinery applies unchanged:
-  serialized SHIP, explicit-path staging, `dw contract new`, honest
-  boxes, evidence paired with flips. `AGENTS.md` carries the same laws
-  in Astra's dialect.
+- Inside a worktree: serialized SHIP, explicit-path staging, plain
+  commits. No contract, no evidence file, no flip. `AGENTS.md` carries
+  the same rules in Astra's dialect.
 - Merges are by PR to `main`, on verification, by the lane owner, after
-  the other brain's counsel-on-built is recorded. Never a direct push.
-  The merge record (the PR comment) names both verdicts.
+  the other brain's one review. Never a direct push. The lane owner
+  updates `pm/STATUS.md` at merge.
 - Worktrees are removed at lane close (worktree-close law, Phase 173).
 
 ## 6. The invocation contract
@@ -231,8 +242,8 @@ leads with the outcome and carries proof:
 ```
 LANE: <id>  STORIES: …  WORKTREE: …  BRANCH: …  PR: …
 OUTCOME: built | blocked | partial
-PROOF: focused tests (collect output + run tail), full-suite tail,
-       shots at 1440 and 393 (paths), evidence capture paths
+PROOF: focused tests (collect output + run tail),
+       shots at 1440 and 393 (paths)
 LEDGER: debt found, classified a/b/c, with homes
 AMENDMENTS: any chartered criterion changed, visibly, with reason
 UNKNOWN: what could not be verified
@@ -240,12 +251,13 @@ UNKNOWN: what could not be verified
 
 ## 8. What the owner gets
 
-Every close carries two verdicts, both named, both in the tree. Status
+Every merged PR carries the owner brain's proof and the other brain's
+review. Status
 reports lead with jobs and mornings, not merge counts (ORCHESTRATION.md
 §"What the owner gets"), and now add one line: *which brain owned the
 lane, which checked it, and whether they agreed.* An open dissent is
-never buried; it is the first item under "Open dissents" in the phase
-status doc, with both positions verbatim.
+never buried; it is in the PR and in `pm/STATUS.md` under open work,
+with both positions verbatim.
 
 ## 9. First application
 
