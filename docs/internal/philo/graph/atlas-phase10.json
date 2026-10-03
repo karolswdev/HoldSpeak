@@ -7663,13 +7663,13 @@
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "export function SendWell",
-          "line": 453,
+          "line": 465,
           "claim": "the SEND well: destinations, the pick, the preview, Send, the latest receipt"
         },
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "function PreparedRow",
-          "line": 612,
+          "line": 624,
           "claim": "a prepared send: Send and Discard while it waits; its result when it ended"
         },
         {

@@ -10,6 +10,8 @@
 // HS-148-01 - the grammar core: stipple ghosting, drawn keycap wells,
 // checkable lane (menuitemcheckbox/menuitemradio), the lane law,
 // recessed separators, ghost-reason collapse, submenu indicator.
+// PHILO-13-15 (C5) - at 393 a submenu inside a submenu opens (the back row
+// climbs one level); at 1440 a submenu opens next to its parent panel.
 import {
   useEffect,
   useLayoutEffect,
@@ -470,6 +472,11 @@ export function WorkMenu({
   menuContext?: string;
 }) {
   const [openSub, setOpenSub] = useState<string | null>(null);
+  // PHILO-13-15 (C5, Astra canvas r1 condition 2): at 393 a submenu inside a
+  // submenu opens too (Go ▸ Object ▸ Send to ▸). `deeper` is the path below
+  // `openSub`; the back row climbs one level.
+  const [deeper, setDeeper] = useState<string[]>([]);
+  useEffect(() => { setDeeper([]); }, [openSub]);
   const [subAt, setSubAt] = useState<{ x: number; y: number } | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
   const subRef = useRef<HTMLElement | null>(null);
@@ -491,13 +498,17 @@ export function WorkMenu({
       if (r.bottom > window.innerHeight - margin) {
         el.style.top = `${Math.max(margin, window.innerHeight - margin - r.height)}px`;
       }
-      // PHILO-13-12 (C2): the opening clamp (clampStyle) can pull a submenu
-      // back over its parent panel near the right edge; a submenu that
-      // overlaps its parent flips to the parent's left side too.
-      const overParent = Boolean(flipFrom && r.left < flipFrom.right - 1 && r.right > flipFrom.left);
-      if (!NARROW() && (r.right > window.innerWidth - margin || overParent)) {
-        const flipped = flipFrom ? flipFrom.left - r.width - 1 : -1;
-        el.style.left = `${flipped >= margin ? flipped : Math.max(margin, window.innerWidth - margin - r.width)}px`;
+      // PHILO-13-15 (C5, Astra canvas r1 condition 4, ratified 2026-10-03):
+      // a desktop submenu opens NEXT TO its parent panel -- on the right
+      // side if it fits, otherwise on the left side. Only when neither side
+      // fits is it clamped to the viewport. (Main clamped it to the right
+      // edge, far from its parent.)
+      if (!NARROW() && flipFrom) {
+        const right = flipFrom.right + 1;
+        const left = flipFrom.left - r.width - 1;
+        el.style.left = `${right + r.width <= window.innerWidth - margin ? right : left >= margin ? left : Math.max(margin, window.innerWidth - margin - r.width)}px`;
+      } else if (!NARROW() && r.right > window.innerWidth - margin) {
+        el.style.left = `${Math.max(margin, window.innerWidth - margin - r.width)}px`;
       }
     };
     keepInView(panelRef.current);
@@ -552,6 +563,23 @@ export function WorkMenu({
     [entries, openSub],
   );
   const narrow = NARROW();
+  // 393: the deepest submenu on the path that still resolves (a re-render
+  // that drops a nested submenu falls back to its parent).
+  const current = useMemo(() => {
+    let at = sub;
+    for (const id of deeper) {
+      const next = at?.entries.find((e) => e.type === "sub" && e.id === id) as
+        | Extract<WorkMenuEntry, { type: "sub" }>
+        | undefined;
+      if (!next) break;
+      at = next;
+    }
+    return at;
+  }, [sub, deeper]);
+  const openDeeper = (id: string | null) => {
+    if (!id) return;
+    setDeeper((d) => (d[d.length - 1] === id ? d : [...d, id]));
+  };
 
   const onSubAnchor = (_id: string, el: HTMLElement) => {
     const r = el.getBoundingClientRect();
@@ -571,7 +599,7 @@ export function WorkMenu({
         (className ? ` ${className}` : "")
       }
       role="menu"
-      aria-label={label}
+      aria-label={narrow && current ? `${current.label} submenu` : label}
       style={clampStyle(x, y)}
       data-menu-context={menuContext || "verb"}
       onPointerDown={(e) => e.stopPropagation()}
@@ -593,30 +621,34 @@ export function WorkMenu({
         menuKeyDown(e, onClose, returnFocus);
       }}
     >
-      {narrow && sub ? (
-        // 393: the submenu REPLACES the panel; a back row leads.
+      {narrow && current ? (
+        // 393: the submenu REPLACES the panel; a back row leads. A nested
+        // submenu replaces it again; the back row climbs one level.
         <>
           <Button
             variant="chrome"
             role="menuitem"
             className="desk-menu-back"
-            onClick={() => setOpenSub(null)}
+            onClick={() =>
+              deeper.length ? setDeeper((d) => d.slice(0, -1)) : setOpenSub(null)
+            }
           >
             {/* HS-148-01: the back row participates in the lane law. */}
             <span className="desk-menu-glyph" aria-hidden="true">
               {"◂"}
             </span>
-            <span className="desk-menu-label">{sub.label}</span>
+            <span className="desk-menu-label">{current.label}</span>
           </Button>
           <WorkMenuSep />
           <WorkMenuRows
-            entries={sub.entries}
+            key={current.id}
+            entries={current.entries}
             onClose={onClose}
             openSub={null}
-            setOpenSub={() => {}}
+            setOpenSub={openDeeper}
             onSubAnchor={() => {}}
-            hasLane={panelHasLane(sub.entries)}
-            collapsedReason={collapseGhostReason(sub.entries)}
+            hasLane={panelHasLane(current.entries)}
+            collapsedReason={collapseGhostReason(current.entries)}
           />
         </>
       ) : (

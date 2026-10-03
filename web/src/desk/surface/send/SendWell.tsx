@@ -76,6 +76,18 @@ const bump = () => { store.tick++; store.subs.forEach((f) => f()); };
 const useStore = () =>
   useSyncExternalStore((f) => { store.subs.add(f); return () => { store.subs.delete(f); }; }, () => store.tick);
 
+/** PHILO-13-15 (C5): the push seam (Phase 12 design section 6). ONE setter
+ *  per well: `Send to ▸` sets the destination of the document `ref`; an open
+ *  well reacts in place (no remount), a well that mounts later opens on it.
+ *  A held press keeps its pick (the row's own toggle rule). */
+export function pickDestination(ref: string, destinationId: string | null) {
+  const was = store.picked.get(ref) ?? null;
+  if (was && [...store.busy, ...store.holds.keys()].includes(`${ref}|${was}`)) return;
+  store.picked.set(ref, destinationId); bump();
+}
+/** The destination picked for `ref`, or null. */
+export const pickedDestination = (ref: string): string | null => store.picked.get(ref) ?? null;
+
 /** Test seam: forget every held press (a fresh page has none). */
 export function resetSendStore() {
   store.picked.clear(); store.preparedOpen.clear(); store.holds.clear(); store.outcomes.clear(); store.busy.clear();
