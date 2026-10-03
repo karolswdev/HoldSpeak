@@ -148,7 +148,7 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | PHILO-13-13 | C3 — A live Dock (AppIcons) | in-progress | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
 | PHILO-13-14 | C4 — A palette that knows his week and does verbs | backlog | [story-14-c4-a-palette-that-knows-his-week](./story-14-c4-a-palette-that-knows-his-week.md) | — |
 | PHILO-13-15 | C5 — Send to from any document window (the Phase 12 fold) | backlog | [story-15-c5-send-to-from-any-document-window](./story-15-c5-send-to-from-any-document-window.md) | — |
-| PHILO-13-16 | C6 — Capture from anywhere | backlog | [story-16-c6-capture-from-anywhere](./story-16-c6-capture-from-anywhere.md) | — |
+| PHILO-13-16 | C6 — Capture from anywhere | done | [story-16-c6-capture-from-anywhere](./story-16-c6-capture-from-anywhere.md) | [evidence-story-16](./evidence-story-16.md) |
 | PHILO-13-17 | C7 — The phone desk | backlog | [story-17-c7-the-phone-desk](./story-17-c7-the-phone-desk.md) | — |
 | PHILO-13-18 | C8 — The 12 px floor | done | [story-18-c8-the-12-px-floor](./story-18-c8-the-12-px-floor.md) | [evidence-story-18](./evidence-story-18.md) |
 Numbers follow the build order in PROPOSAL r2 (B0 first: it gates B2); the five-column story index follows Delivery Workbench.
@@ -322,6 +322,6 @@ Astra r2 (`checks/charter-astra-r2.md`): r1's five fixes present; three conditio
 
 ## Wave 2 — H-C3 candidate, 2026-10-03
 
-H-C3 / #744: Muad'Dib MERGE-WITH-CONDITIONS; C1 and C2 paid under the owner's single-pass merge instruction. READY is durable and unseen, clears on open, and stays clear after reload. [Lane report, proof and full failure ledger](lane-13-astra.md). Eight condition walks pass at 1440/393. Full-suite failures are classified, with two Dock clipping cases assigned to C3-W. C3-W retains CSS, SENT time and Chair's Dock-press timer. Story 13 stays in-progress. H-B4 / #742 was rebased and pushed as `f9106fd9`; it remains open for B4-W and must not merge alone.
+H-C3 / #744 (integrated through main `e9b01e227` / C6): Muad'Dib MERGE-WITH-CONDITIONS; C1 and C2 paid under the owner's single-pass merge instruction. READY is durable and unseen, clears on open, and stays clear after reload. [Lane report, proof and full failure ledger](lane-13-astra.md). Eight condition walks pass at 1440/393. Full-suite failures are classified, with two Dock clipping cases assigned to C3-W. C3-W retains CSS, SENT time and Chair's Dock-press timer. Story 13 stays in-progress. H-B4 / #742 was rebased and pushed as `f9106fd9`; it remains open for B4-W and must not merge alone.
 
 2026-10-03: H-rig-clearof counsel and mechanical integration are recorded in [the lane report](lane-rig-clearof-astra.md). Muad'Dib homes the remaining 393 arrival face fix to PHILO-13-17/C7.

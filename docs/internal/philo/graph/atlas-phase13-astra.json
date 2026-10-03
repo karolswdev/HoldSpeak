@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "atlas_version": "phase13-astra-wave1",
-  "source_commit": "76c3615379cc9bf1d6b1ba174407bfc7c684e557",
+  "source_commit": "e9b01e227c0836ae90f4d82dc4e571868a0a8a7b",
   "cases": [
     {
       "id": "case.p13.directory.zone_window.op",
@@ -3400,7 +3400,7 @@
           "observe_at": "[data-testid=desk-dock-offline]",
           "predicate": {
             "kind": "readable_text",
-            "value": "OFFLINE · AS OF"
+            "value": "OFFLINE \u00b7 AS OF"
           },
           "timeout_s": 30,
           "capture_shot": true
@@ -5070,7 +5070,7 @@
           "path": "web/src/desk/needsYou.ts",
           "line": 233,
           "symbol": "export function computeNeedsYou",
-          "claim": "The Dock reads the one R1–R3 membership rule."
+          "claim": "The Dock reads the one R1\u2013R3 membership rule."
         }
       ],
       "reachable_by": [

@@ -27,7 +27,7 @@ Thus H-B4 does not supply a date-only value to `formatDockTime`.
 
 ## Execution record
 
-C1 and C2 are paid. Astra’s execution verdict is MERGE under the owner’s explicit single-pass ruling; final proof and the failure ledger are recorded
+C1 and C2 are paid, including final integration with main `e9b01e227` / C6 after the requested `fc12a18d` / C8. Astra’s execution verdict is MERGE under the owner’s explicit single-pass ruling; final proof and the failure ledger are recorded
 in [the lane report](../lane-13-astra.md).
 
 The first three worker spawns used full-history forks and inherited Astra
