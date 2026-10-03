@@ -7,6 +7,7 @@ import {
   type ThoughtWorkspaceProjection,
   type ThoughtWorkspaceCursor,
 } from "../../thoughts";
+import { thoughtTitle } from "../../thoughtTitle";
 
 export type ThoughtDraft = { title: string; body: string; tags: string };
 
@@ -138,8 +139,10 @@ export function useThoughtNoteWriter({
     const requestEpoch = authorityEpoch.current;
     const sent = { ...draft.current };
     try {
+      /* PHILO-13-16 (C6): an untitled thought takes its first words. */
+      const title = thoughtTitle(sent.title, current.current.working_note, sent.body);
       const patch = {
-        title: sent.title,
+        title,
         body_markdown: sent.body,
         tags: sent.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
       };
@@ -161,6 +164,10 @@ export function useThoughtNoteWriter({
       }
       current.current = result.thought;
       cursorRetryUsed.current = false;
+      if (title !== sent.title && draft.current.title === sent.title) {
+        draft.current = { ...draft.current, title };
+        if (mounted.current) setDraftState(draft.current);
+      }
       if (result.workbench) cursor.current = result.workbench.workspace_cursor;
       if (mounted.current) {
         onThought(result.thought);

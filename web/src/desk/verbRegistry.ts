@@ -178,6 +178,23 @@ export const VERBS: Verb[] = [
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("note"),
   },
+  // PHILO-13-16 (C6) — the pop-key: a thought from any window in one key
+  // press (⌃T). At 393 the same verb is in the Desk menu; no key is assumed.
+  {
+    id: "desk.new-thought",
+    label: "Write a thought",
+    menu: "desk",
+    scope: "floor",
+    group: "new",
+    key: "⌃T",
+    glyph: KIND_GLYPH.note,
+    keywords: ["capture", "thought", "write", "idea"],
+    ghost: never,
+    run: async () => {
+      const { openNewThought } = await import("./newThought");
+      await openNewThought();
+    },
+  },
   {
     id: "desk.new-decision",
     label: "New Decision",
