@@ -4940,6 +4940,317 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.p13.people.prep.protocol",
+      "job": "j7",
+      "edge_ids": [
+        "edge.route.people_prep_read"
+      ],
+      "state_id": "state.people.p13_prep",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; the People sidecar key and HoldSpeak database are both inside the run HOME."
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "body": {
+            "disposition": "completed"
+          },
+          "adapter": "http-route",
+          "expect_status": 200
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before the People producer."
+        },
+        {
+          "kind": "cli",
+          "action": "seed_people_prep",
+          "capture_as": "people",
+          "adapter": "people-prep-producer",
+          "why": "Mint the calendar, meeting, People, project, alias, and agenda through their real producers in the run-owned HOME."
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/people/relationships/{relationship_id}/brief",
+          "adapter": "http-route",
+          "capture_as": "people_suggestion_uid",
+          "capture_path": "brief.calendar_link_suggestions",
+          "capture_match": {
+            "uid": "{people_event_uid}",
+            "source_id": "{people_event_source_id}"
+          },
+          "capture_field": "uid",
+          "expect_status": 200,
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/people/relationships/{relationship_id}/calendar-links",
+          "adapter": "http-route",
+          "body": {
+            "uid": "{people_event_uid}",
+            "source_id": "{people_event_source_id}",
+            "label": "{people_event_title}"
+          },
+          "expect_status": 200
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/people/relationships/{relationship_id}/brief",
+          "predicate": {
+            "kind": "all_of",
+            "predicates": [
+              {
+                "kind": "protocol_field",
+                "path": "brief.next_one_on_one.uid",
+                "value": "{people_event_uid}"
+              },
+              {
+                "kind": "protocol_field",
+                "path": "brief.next_one_on_one.source_id",
+                "value": "{people_event_source_id}"
+              },
+              {
+                "kind": "protocol_field",
+                "path": "brief.open_meeting_actions.0.id",
+                "value": "{people_action_id}"
+              },
+              {
+                "kind": "protocol_field",
+                "path": "brief.open_meeting_actions.0.meeting_id",
+                "value": "{people_meeting_id}"
+              },
+              {
+                "kind": "protocol_field",
+                "path": "brief.agenda_items.0.body",
+                "value": "Review the dry-run report"
+              },
+              {
+                "kind": "protocol_field",
+                "path": "brief.projects.0.id",
+                "value": "{people_project_id}"
+              }
+            ]
+          },
+          "timeout_s": 10,
+          "why": "The existing route read must carry the confirmed event, the alias-owned meeting action with its source meeting, the agenda, and the linked project."
+        }
+      ],
+      "trigger": {
+        "kind": "api",
+        "method": "GET",
+        "path": "/api/people/relationships/{relationship_id}/brief",
+        "adapter": "http-route",
+        "expect_status": 200,
+        "body": null
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/people/relationships/{relationship_id}/brief",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/people/relationships/{relationship_id}/brief"
+          }
+        ],
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_field",
+              "path": "brief.next_one_on_one.uid",
+              "value": "{people_event_uid}"
+            },
+            {
+              "kind": "protocol_field",
+              "path": "brief.next_one_on_one.source_id",
+              "value": "{people_event_source_id}"
+            },
+            {
+              "kind": "protocol_field",
+              "path": "brief.open_meeting_actions.0.id",
+              "value": "{people_action_id}"
+            },
+            {
+              "kind": "protocol_field",
+              "path": "brief.open_meeting_actions.0.meeting_id",
+              "value": "{people_meeting_id}"
+            },
+            {
+              "kind": "protocol_field",
+              "path": "brief.agenda_items.0.body",
+              "value": "Review the dry-run report"
+            },
+            {
+              "kind": "protocol_field",
+              "path": "brief.projects.0.id",
+              "value": "{people_project_id}"
+            }
+          ]
+        },
+        "words": "The real calendar suggestion is read before the existing link route confirms it; the same route then reads the confirmed next event, alias-owned follow-up with its meeting reference, agenda, and linked project."
+      },
+      "completion_bound_s": 30,
+      "viewports": []
+    },
+    {
+      "id": "case.p13.people.prep",
+      "job": "j7",
+      "edge_ids": [
+        "edge.face.people_prep"
+      ],
+      "state_id": "state.people.p13_prep",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub with the B4 real producer refs; this face case reads the same People relationship at 1440 and 393."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before the People producer."
+        },
+        {
+          "kind": "cli",
+          "action": "seed_people_prep",
+          "capture_as": "people",
+          "adapter": "people-prep-producer",
+          "why": "Mint the calendar, meeting, People, project, alias, and agenda through their real producers in the run-owned HOME."
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/people/relationships/{relationship_id}/brief",
+          "adapter": "http-route",
+          "capture_as": "people_suggestion_uid",
+          "capture_path": "brief.calendar_link_suggestions",
+          "capture_match": {
+            "uid": "{people_event_uid}",
+            "source_id": "{people_event_source_id}"
+          },
+          "capture_field": "uid",
+          "expect_status": 200,
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/people/relationships/{relationship_id}/calendar-links",
+          "adapter": "http-route",
+          "body": {
+            "uid": "{people_event_uid}",
+            "source_id": "{people_event_source_id}",
+            "label": "{people_event_title}"
+          },
+          "expect_status": 200
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "people"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-desk.open-people\"]"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": "#surface-people",
+          "state": "visible",
+          "timeout_s": 15
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "#surface-people button:has-text(\"Priya Sharma\")"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": "[data-testid=\"people-next-1on1\"]",
+          "state": "visible",
+          "timeout_s": 15
+        },
+        {
+          "kind": "check",
+          "observe_at": "[data-testid=people-next-1on1]",
+          "predicate": {
+            "kind": "text_contains",
+            "value": "NEXT 1:1"
+          },
+          "timeout_s": 10,
+          "capture_shot": true,
+          "why": "Read the linked event in Now before switching to Prep."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "tab",
+        "name": "Prep"
+      },
+      "expected": {
+        "observe_at": "[data-testid=\"people-prep-lens\"]",
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Send the dry-run report"
+        },
+        "words": "The real calendar and People link routes supply the linked event to Now; Prep must render the report-owned follow-up. H-B4 delivers the data and B4-W owns its face wiring."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
     }
   ],
   "states": [
@@ -5126,6 +5437,39 @@
       "reachable_by": [
         "case.p13.update.linked_week",
         "case.p13.update.linked_week.op"
+      ]
+    },
+    {
+      "id": "state.people.p13_prep",
+      "family": "briefs",
+      "values": {
+        "lifecycle": "real ICS suggestion, confirmed series, brief read, Now, Prep",
+        "truth": "alias-owned meeting action, agenda, linked project, next event; the report follow-up remains a reference"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "scripts/philo13_b4_fixture.py",
+          "line": 160,
+          "symbol": "def seed_people_prep",
+          "claim": "B4 graph cases mint calendar, meeting, People, project, alias, and agenda data through real producers."
+        },
+        {
+          "path": "holdspeak/services/people_service.py",
+          "line": 373,
+          "symbol": "def one_on_one_brief",
+          "claim": "The People brief reads the confirmed event, alias-owned open meeting actions, agenda, and linked projects."
+        },
+        {
+          "path": "web/src/pages/cores/PeopleCore.tsx",
+          "line": 401,
+          "symbol": "function PrepLens",
+          "claim": "The People Prep face reads the brief and renders its preparation lens."
+        }
+      ],
+      "reachable_by": [
+        "case.p13.people.prep.protocol",
+        "case.p13.people.prep"
       ]
     }
   ],

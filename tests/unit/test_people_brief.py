@@ -56,7 +56,8 @@ def _make_plain_db(tmp_path: Path) -> Any:
         subscription_revision TEXT, source_id TEXT NOT NULL DEFAULT '',
         source_label TEXT NOT NULL DEFAULT '')""")
     conn.execute("""CREATE TABLE meetings (
-        id TEXT PRIMARY KEY, started_at TEXT NOT NULL, ended_at TEXT,
+        id TEXT PRIMARY KEY, parked INTEGER NOT NULL DEFAULT 0,
+        started_at TEXT NOT NULL, ended_at TEXT,
         title TEXT, calendar_event_id TEXT)""")
     conn.execute("""CREATE TABLE action_items (
         id TEXT PRIMARY KEY, meeting_id TEXT NOT NULL, task TEXT NOT NULL,

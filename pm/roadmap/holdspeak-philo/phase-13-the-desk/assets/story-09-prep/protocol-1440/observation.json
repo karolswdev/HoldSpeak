@@ -1,0 +1,1408 @@
+{
+  "id": "obs-20261003T043359Z-case.p13.people.prep.protocol-astra-1440",
+  "run_id": "20261003T043359Z-case.p13.people.prep.protocol-astra-1440",
+  "case_id": "case.p13.people.prep.protocol",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j7",
+  "edge_ids": [
+    "edge.route.people_prep_read"
+  ],
+  "state_id": "state.people.p13_prep",
+  "provenance": {
+    "revision": "5912fcb9474cae7b058838f120a2c216189be89a",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "a8ee06827a87799106843a2aafcdd2badcd416ac37e75116afc43ad9d2b993eb",
+      "assets": [
+        "index-Codv14oo.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64306",
+      "port": 64306,
+      "pid": 50616,
+      "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T04:34:00.311006+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [
+      {
+        "stopped_pid": 50349,
+        "started_pid": 50616,
+        "downtime_s": 1.53,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/.local/share/holdspeak/holdspeak.db",
+        "port": 64306,
+        "reason": "People prep producer"
+      }
+    ],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "c4f62504a05608d19a4eb5e291f15569853da6f2586bf136ed9d6839a3e59e6c",
+      "version": "phase13-astra-wave1"
+    },
+    "touch_mode": {
+      "adapter": "ui-pointer",
+      "resolved_adapter": "ui-pointer",
+      "requested": false,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "browser_context": {
+      "viewport": 1440,
+      "has_touch": false
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null,
+    "people_prep": {
+      "kind": "cli",
+      "action": "seed_people_prep",
+      "adapter": "people-prep-producer",
+      "command": [
+        "/Users/karol/dev/tools/wt-philo-13-09-astra/.venv/bin/python3",
+        "/Users/karol/dev/tools/wt-philo-13-09-astra/scripts/philo13_b4_fixture.py",
+        "seed",
+        "--db",
+        "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/.local/share/holdspeak/holdspeak.db",
+        "--home",
+        "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u"
+      ],
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/.local/share/holdspeak/holdspeak.db",
+      "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u",
+      "script_sha256": "f12765f58fc4f5cb3e8933b91f4b0c56093352437a527f22a2ca73d3c49977c2",
+      "fixture": {
+        "db": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/.local/share/holdspeak/holdspeak.db",
+        "event_title": "1:1 Priya / Karol",
+        "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u",
+        "ids": {
+          "action_id": "philo13-b4-owned-action",
+          "event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+          "event_source_id": "philo13-b4-calendar",
+          "event_title": "1:1 Priya / Karol",
+          "event_uid": "philo13-b4-priya@example.test",
+          "meeting_id": "philo13-b4-meeting",
+          "parked_meeting_id": "philo13-b4-parked-meeting",
+          "project_id": "proj-7d6e233b83c1",
+          "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+          "session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4"
+        },
+        "mode": "seed",
+        "people_keystore": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/people.key",
+        "people_sidecar": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/people.sidecar.sqlite3",
+        "producers": {
+          "calendar": "CalendarIngestConductor.refresh",
+          "meeting": "Database.meetings.save_meeting",
+          "people": "build_people_router + production_people_store",
+          "project": "ProjectService.create_project"
+        },
+        "schema": "philo13-b4-people-prep@1"
+      },
+      "captured": {
+        "prefix": "people",
+        "values": {
+          "people_relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+          "people_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+          "people_event_uid": "philo13-b4-priya@example.test",
+          "people_event_source_id": "philo13-b4-calendar",
+          "people_event_title": "1:1 Priya / Karol",
+          "people_project_id": "proj-7d6e233b83c1",
+          "people_meeting_id": "philo13-b4-meeting",
+          "people_session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+          "people_action_id": "philo13-b4-owned-action",
+          "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365"
+        }
+      },
+      "restart": {
+        "stopped_pid": 50349,
+        "started_pid": 50616,
+        "downtime_s": 1.53,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/.local/share/holdspeak/holdspeak.db",
+        "port": 64306
+      }
+    }
+  },
+  "setup": [
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-02T22:34:02.874075"
+        }
+      },
+      "response_sha256": "3362b6a578e261994b9133c254442188d82939339d87ced91169df8a6ac2ff54"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "cli",
+      "action": "seed_people_prep",
+      "adapter": "people-prep-producer",
+      "command": [
+        "/Users/karol/dev/tools/wt-philo-13-09-astra/.venv/bin/python3",
+        "/Users/karol/dev/tools/wt-philo-13-09-astra/scripts/philo13_b4_fixture.py",
+        "seed",
+        "--db",
+        "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/.local/share/holdspeak/holdspeak.db",
+        "--home",
+        "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u"
+      ],
+      "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/.local/share/holdspeak/holdspeak.db",
+      "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u",
+      "script_sha256": "f12765f58fc4f5cb3e8933b91f4b0c56093352437a527f22a2ca73d3c49977c2",
+      "fixture": {
+        "db": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/.local/share/holdspeak/holdspeak.db",
+        "event_title": "1:1 Priya / Karol",
+        "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u",
+        "ids": {
+          "action_id": "philo13-b4-owned-action",
+          "event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+          "event_source_id": "philo13-b4-calendar",
+          "event_title": "1:1 Priya / Karol",
+          "event_uid": "philo13-b4-priya@example.test",
+          "meeting_id": "philo13-b4-meeting",
+          "parked_meeting_id": "philo13-b4-parked-meeting",
+          "project_id": "proj-7d6e233b83c1",
+          "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+          "session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4"
+        },
+        "mode": "seed",
+        "people_keystore": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/people.key",
+        "people_sidecar": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/people.sidecar.sqlite3",
+        "producers": {
+          "calendar": "CalendarIngestConductor.refresh",
+          "meeting": "Database.meetings.save_meeting",
+          "people": "build_people_router + production_people_store",
+          "project": "ProjectService.create_project"
+        },
+        "schema": "philo13-b4-people-prep@1"
+      },
+      "captured": {
+        "prefix": "people",
+        "values": {
+          "people_relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+          "people_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+          "people_event_uid": "philo13-b4-priya@example.test",
+          "people_event_source_id": "philo13-b4-calendar",
+          "people_event_title": "1:1 Priya / Karol",
+          "people_project_id": "proj-7d6e233b83c1",
+          "people_meeting_id": "philo13-b4-meeting",
+          "people_session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+          "people_action_id": "philo13-b4-owned-action",
+          "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365"
+        }
+      },
+      "restart": {
+        "stopped_pid": 50349,
+        "started_pid": 50616,
+        "downtime_s": 1.53,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/.local/share/holdspeak/holdspeak.db",
+        "port": 64306
+      }
+    },
+    {
+      "kind": "api",
+      "method": "GET",
+      "path": "/api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "brief": {
+          "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+          "display_name": "Priya Sharma",
+          "open_commitments": [],
+          "agenda_items": [
+            {
+              "id": "fcaf9389-d368-4541-b2ae-9bc95a06bf2c",
+              "session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+              "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+              "body": "Review the dry-run report",
+              "visibility": "leader_private",
+              "state": "open",
+              "rolled_from_id": null,
+              "created_at": "2026-10-03T04:34:04Z",
+              "updated_at": "2026-10-03T04:34:04Z"
+            }
+          ],
+          "grounding_note_count": 0,
+          "linked_meetings": [],
+          "unlinked_meeting_count": 0,
+          "calendar_link_suggestions": [
+            {
+              "id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+              "uid": "philo13-b4-priya@example.test",
+              "title": "1:1 Priya / Karol",
+              "starts_at": "2026-10-05T04:34:03Z",
+              "ends_at": "2026-10-05T05:04:03Z",
+              "source_id": "philo13-b4-calendar",
+              "source_label": "B4 calendar"
+            }
+          ],
+          "next_one_on_one": null,
+          "open_meeting_actions": [
+            {
+              "id": "philo13-b4-owned-action",
+              "task": "Send the dry-run report",
+              "owner": "Priya",
+              "due": null,
+              "delegated_at": null,
+              "meeting_id": "philo13-b4-meeting",
+              "meeting_title": "1:1 Priya / Karol",
+              "meeting_started_at": "2026-10-05T04:34:03.862548+00:00",
+              "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278"
+            }
+          ],
+          "projects": [
+            {
+              "id": "proj-7d6e233b83c1",
+              "name": "B4 Dry-run project"
+            }
+          ],
+          "watch_summary": {
+            "prs_waiting": [],
+            "oldest_waiting_days": 0,
+            "open_assignments": []
+          },
+          "last_meeting": null
+        }
+      },
+      "response_sha256": "d6433192ab921d45f2caef230a1f22c8004c4b9d419037d720a1a6a65c526cd8",
+      "captured": {
+        "name": "people_suggestion_uid",
+        "path": "brief.calendar_link_suggestions",
+        "value": "philo13-b4-priya@example.test",
+        "match": {
+          "uid": "philo13-b4-priya@example.test",
+          "source_id": "philo13-b4-calendar"
+        }
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/calendar-links",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "relationship": {
+          "id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+          "display_name": "Priya Sharma",
+          "relationship_kind": "direct_report",
+          "role_context": "",
+          "timezone": "",
+          "cadence": "",
+          "project_refs": [
+            "proj-7d6e233b83c1"
+          ],
+          "calendar_links": [
+            {
+              "label": "1:1 Priya / Karol",
+              "linked_at": "2026-10-03T04:34:05Z",
+              "source_id": "philo13-b4-calendar",
+              "uid": "philo13-b4-priya@example.test"
+            }
+          ],
+          "owner_aliases": [
+            "Priya"
+          ],
+          "state": "active",
+          "created_at": "2026-10-03T04:34:04Z",
+          "updated_at": "2026-10-03T04:34:05+00:00"
+        }
+      },
+      "response_sha256": "ee94c0f06dfe6c49e6329f8ef72226d3d7f11e3ccce707b29ab1a2566fa1c02c"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+      "predicate": {
+        "kind": "all_of",
+        "predicates": [
+          {
+            "kind": "protocol_field",
+            "path": "brief.next_one_on_one.uid",
+            "value": "philo13-b4-priya@example.test"
+          },
+          {
+            "kind": "protocol_field",
+            "path": "brief.next_one_on_one.source_id",
+            "value": "philo13-b4-calendar"
+          },
+          {
+            "kind": "protocol_field",
+            "path": "brief.open_meeting_actions.0.id",
+            "value": "philo13-b4-owned-action"
+          },
+          {
+            "kind": "protocol_field",
+            "path": "brief.open_meeting_actions.0.meeting_id",
+            "value": "philo13-b4-meeting"
+          },
+          {
+            "kind": "protocol_field",
+            "path": "brief.agenda_items.0.body",
+            "value": "Review the dry-run report"
+          },
+          {
+            "kind": "protocol_field",
+            "path": "brief.projects.0.id",
+            "value": "proj-7d6e233b83c1"
+          }
+        ]
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "all_of: protocol_field: brief.next_one_on_one.uid equals the declared value | protocol_field: brief.next_one_on_one.source_id equals the declared value | protocol_field: brief.open_meeting_actions.0.id equals the declared value | protocol_field: brief.open_meeting_actions.0.meeting_id equals the declared value | protocol_field: brief.agenda_items.0.body equals the declared value | protocol_field: brief.projects.0.id equals the declared value"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "A fresh isolated hub; the People sidecar key and HoldSpeak database are both inside the run HOME.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u",
+    "people_relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+    "people_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+    "people_event_uid": "philo13-b4-priya@example.test",
+    "people_event_source_id": "philo13-b4-calendar",
+    "people_event_title": "1:1 Priya / Karol",
+    "people_project_id": "proj-7d6e233b83c1",
+    "people_meeting_id": "philo13-b4-meeting",
+    "people_session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+    "people_action_id": "philo13-b4-owned-action",
+    "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+    "people_suggestion_uid": "philo13-b4-priya@example.test"
+  },
+  "trigger": {
+    "kind": "api",
+    "method": "GET",
+    "path": "/api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+    "adapter": "http-route",
+    "status": 200,
+    "response": {
+      "brief": {
+        "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+        "display_name": "Priya Sharma",
+        "open_commitments": [],
+        "agenda_items": [
+          {
+            "id": "fcaf9389-d368-4541-b2ae-9bc95a06bf2c",
+            "session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+            "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+            "body": "Review the dry-run report",
+            "visibility": "leader_private",
+            "state": "open",
+            "rolled_from_id": null,
+            "created_at": "2026-10-03T04:34:04Z",
+            "updated_at": "2026-10-03T04:34:04Z"
+          }
+        ],
+        "grounding_note_count": 0,
+        "linked_meetings": [
+          {
+            "meeting_id": "philo13-b4-meeting",
+            "title": "1:1 Priya / Karol",
+            "started_at": "2026-10-05T04:34:03.862548+00:00",
+            "ended_at": "2026-10-05T05:04:03.862548+00:00",
+            "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+            "open_action_items": [
+              {
+                "id": "philo13-b4-owned-action",
+                "task": "Send the dry-run report",
+                "owner": "Priya",
+                "due": null,
+                "delegated_at": null
+              },
+              {
+                "id": "philo13-b4-other-action",
+                "task": "Review the dry-run report",
+                "owner": "philo13-b4-owner",
+                "due": null,
+                "delegated_at": null
+              }
+            ],
+            "decisions": []
+          }
+        ],
+        "unlinked_meeting_count": 0,
+        "calendar_link_suggestions": [],
+        "next_one_on_one": {
+          "id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+          "uid": "philo13-b4-priya@example.test",
+          "title": "1:1 Priya / Karol",
+          "starts_at": "2026-10-05T04:34:03Z",
+          "ends_at": "2026-10-05T05:04:03Z",
+          "source_id": "philo13-b4-calendar",
+          "source_label": "B4 calendar"
+        },
+        "open_meeting_actions": [
+          {
+            "id": "philo13-b4-owned-action",
+            "task": "Send the dry-run report",
+            "owner": "Priya",
+            "due": null,
+            "delegated_at": null,
+            "meeting_id": "philo13-b4-meeting",
+            "meeting_title": "1:1 Priya / Karol",
+            "meeting_started_at": "2026-10-05T04:34:03.862548+00:00",
+            "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278"
+          }
+        ],
+        "projects": [
+          {
+            "id": "proj-7d6e233b83c1",
+            "name": "B4 Dry-run project"
+          }
+        ],
+        "watch_summary": {
+          "prs_waiting": [],
+          "oldest_waiting_days": 0,
+          "open_assignments": []
+        },
+        "last_meeting": {
+          "meeting_id": "philo13-b4-meeting",
+          "title": "1:1 Priya / Karol",
+          "item_count": 2,
+          "open_count": 2
+        }
+      }
+    },
+    "response_sha256": "ef6cd8cc3e8af1bd6568fa617af1ffed471fb3bb2079d9bc9115880d93d265ec"
+  },
+  "diff": {},
+  "before": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:64306",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": "protocol: GET /api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+    "protocol": {
+      "method": "GET",
+      "path": "/api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "ef6cd8cc3e8af1bd6568fa617af1ffed471fb3bb2079d9bc9115880d93d265ec",
+      "rows": [],
+      "payload": {
+        "brief": {
+          "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+          "display_name": "Priya Sharma",
+          "open_commitments": [],
+          "agenda_items": [
+            {
+              "id": "fcaf9389-d368-4541-b2ae-9bc95a06bf2c",
+              "session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+              "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+              "body": "Review the dry-run report",
+              "visibility": "leader_private",
+              "state": "open",
+              "rolled_from_id": null,
+              "created_at": "2026-10-03T04:34:04Z",
+              "updated_at": "2026-10-03T04:34:04Z"
+            }
+          ],
+          "grounding_note_count": 0,
+          "linked_meetings": [
+            {
+              "meeting_id": "philo13-b4-meeting",
+              "title": "1:1 Priya / Karol",
+              "started_at": "2026-10-05T04:34:03.862548+00:00",
+              "ended_at": "2026-10-05T05:04:03.862548+00:00",
+              "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+              "open_action_items": [
+                {
+                  "id": "philo13-b4-owned-action",
+                  "task": "Send the dry-run report",
+                  "owner": "Priya",
+                  "due": null,
+                  "delegated_at": null
+                },
+                {
+                  "id": "philo13-b4-other-action",
+                  "task": "Review the dry-run report",
+                  "owner": "philo13-b4-owner",
+                  "due": null,
+                  "delegated_at": null
+                }
+              ],
+              "decisions": []
+            }
+          ],
+          "unlinked_meeting_count": 0,
+          "calendar_link_suggestions": [],
+          "next_one_on_one": {
+            "id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+            "uid": "philo13-b4-priya@example.test",
+            "title": "1:1 Priya / Karol",
+            "starts_at": "2026-10-05T04:34:03Z",
+            "ends_at": "2026-10-05T05:04:03Z",
+            "source_id": "philo13-b4-calendar",
+            "source_label": "B4 calendar"
+          },
+          "open_meeting_actions": [
+            {
+              "id": "philo13-b4-owned-action",
+              "task": "Send the dry-run report",
+              "owner": "Priya",
+              "due": null,
+              "delegated_at": null,
+              "meeting_id": "philo13-b4-meeting",
+              "meeting_title": "1:1 Priya / Karol",
+              "meeting_started_at": "2026-10-05T04:34:03.862548+00:00",
+              "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278"
+            }
+          ],
+          "projects": [
+            {
+              "id": "proj-7d6e233b83c1",
+              "name": "B4 Dry-run project"
+            }
+          ],
+          "watch_summary": {
+            "prs_waiting": [],
+            "oldest_waiting_days": 0,
+            "open_assignments": []
+          },
+          "last_meeting": {
+            "meeting_id": "philo13-b4-meeting",
+            "title": "1:1 Priya / Karol",
+            "item_count": 2,
+            "open_count": 2
+          }
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "ef6cd8cc3e8af1bd6568fa617af1ffed471fb3bb2079d9bc9115880d93d265ec"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+        "status": 200,
+        "payload": {
+          "brief": {
+            "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+            "display_name": "Priya Sharma",
+            "open_commitments": [],
+            "agenda_items": [
+              {
+                "id": "fcaf9389-d368-4541-b2ae-9bc95a06bf2c",
+                "session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+                "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+                "body": "Review the dry-run report",
+                "visibility": "leader_private",
+                "state": "open",
+                "rolled_from_id": null,
+                "created_at": "2026-10-03T04:34:04Z",
+                "updated_at": "2026-10-03T04:34:04Z"
+              }
+            ],
+            "grounding_note_count": 0,
+            "linked_meetings": [
+              {
+                "meeting_id": "philo13-b4-meeting",
+                "title": "1:1 Priya / Karol",
+                "started_at": "2026-10-05T04:34:03.862548+00:00",
+                "ended_at": "2026-10-05T05:04:03.862548+00:00",
+                "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+                "open_action_items": [
+                  {
+                    "id": "philo13-b4-owned-action",
+                    "task": "Send the dry-run report",
+                    "owner": "Priya",
+                    "due": null,
+                    "delegated_at": null
+                  },
+                  {
+                    "id": "philo13-b4-other-action",
+                    "task": "Review the dry-run report",
+                    "owner": "philo13-b4-owner",
+                    "due": null,
+                    "delegated_at": null
+                  }
+                ],
+                "decisions": []
+              }
+            ],
+            "unlinked_meeting_count": 0,
+            "calendar_link_suggestions": [],
+            "next_one_on_one": {
+              "id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+              "uid": "philo13-b4-priya@example.test",
+              "title": "1:1 Priya / Karol",
+              "starts_at": "2026-10-05T04:34:03Z",
+              "ends_at": "2026-10-05T05:04:03Z",
+              "source_id": "philo13-b4-calendar",
+              "source_label": "B4 calendar"
+            },
+            "open_meeting_actions": [
+              {
+                "id": "philo13-b4-owned-action",
+                "task": "Send the dry-run report",
+                "owner": "Priya",
+                "due": null,
+                "delegated_at": null,
+                "meeting_id": "philo13-b4-meeting",
+                "meeting_title": "1:1 Priya / Karol",
+                "meeting_started_at": "2026-10-05T04:34:03.862548+00:00",
+                "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278"
+              }
+            ],
+            "projects": [
+              {
+                "id": "proj-7d6e233b83c1",
+                "name": "B4 Dry-run project"
+              }
+            ],
+            "watch_summary": {
+              "prs_waiting": [],
+              "oldest_waiting_days": 0,
+              "open_assignments": []
+            },
+            "last_meeting": {
+              "meeting_id": "philo13-b4-meeting",
+              "title": "1:1 Priya / Karol",
+              "item_count": 2,
+              "open_count": 2
+            }
+          }
+        },
+        "body_sha256": "ef6cd8cc3e8af1bd6568fa617af1ffed471fb3bb2079d9bc9115880d93d265ec"
+      }
+    ],
+    "at_utc": "2026-10-03T04:34:05.883725+00:00"
+  },
+  "after": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:64306",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": "protocol: GET /api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+    "protocol": {
+      "method": "GET",
+      "path": "/api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "ef6cd8cc3e8af1bd6568fa617af1ffed471fb3bb2079d9bc9115880d93d265ec",
+      "rows": [],
+      "payload": {
+        "brief": {
+          "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+          "display_name": "Priya Sharma",
+          "open_commitments": [],
+          "agenda_items": [
+            {
+              "id": "fcaf9389-d368-4541-b2ae-9bc95a06bf2c",
+              "session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+              "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+              "body": "Review the dry-run report",
+              "visibility": "leader_private",
+              "state": "open",
+              "rolled_from_id": null,
+              "created_at": "2026-10-03T04:34:04Z",
+              "updated_at": "2026-10-03T04:34:04Z"
+            }
+          ],
+          "grounding_note_count": 0,
+          "linked_meetings": [
+            {
+              "meeting_id": "philo13-b4-meeting",
+              "title": "1:1 Priya / Karol",
+              "started_at": "2026-10-05T04:34:03.862548+00:00",
+              "ended_at": "2026-10-05T05:04:03.862548+00:00",
+              "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+              "open_action_items": [
+                {
+                  "id": "philo13-b4-owned-action",
+                  "task": "Send the dry-run report",
+                  "owner": "Priya",
+                  "due": null,
+                  "delegated_at": null
+                },
+                {
+                  "id": "philo13-b4-other-action",
+                  "task": "Review the dry-run report",
+                  "owner": "philo13-b4-owner",
+                  "due": null,
+                  "delegated_at": null
+                }
+              ],
+              "decisions": []
+            }
+          ],
+          "unlinked_meeting_count": 0,
+          "calendar_link_suggestions": [],
+          "next_one_on_one": {
+            "id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+            "uid": "philo13-b4-priya@example.test",
+            "title": "1:1 Priya / Karol",
+            "starts_at": "2026-10-05T04:34:03Z",
+            "ends_at": "2026-10-05T05:04:03Z",
+            "source_id": "philo13-b4-calendar",
+            "source_label": "B4 calendar"
+          },
+          "open_meeting_actions": [
+            {
+              "id": "philo13-b4-owned-action",
+              "task": "Send the dry-run report",
+              "owner": "Priya",
+              "due": null,
+              "delegated_at": null,
+              "meeting_id": "philo13-b4-meeting",
+              "meeting_title": "1:1 Priya / Karol",
+              "meeting_started_at": "2026-10-05T04:34:03.862548+00:00",
+              "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278"
+            }
+          ],
+          "projects": [
+            {
+              "id": "proj-7d6e233b83c1",
+              "name": "B4 Dry-run project"
+            }
+          ],
+          "watch_summary": {
+            "prs_waiting": [],
+            "oldest_waiting_days": 0,
+            "open_assignments": []
+          },
+          "last_meeting": {
+            "meeting_id": "philo13-b4-meeting",
+            "title": "1:1 Priya / Karol",
+            "item_count": 2,
+            "open_count": 2
+          }
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "ef6cd8cc3e8af1bd6568fa617af1ffed471fb3bb2079d9bc9115880d93d265ec"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+        "status": 200,
+        "payload": {
+          "brief": {
+            "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+            "display_name": "Priya Sharma",
+            "open_commitments": [],
+            "agenda_items": [
+              {
+                "id": "fcaf9389-d368-4541-b2ae-9bc95a06bf2c",
+                "session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+                "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+                "body": "Review the dry-run report",
+                "visibility": "leader_private",
+                "state": "open",
+                "rolled_from_id": null,
+                "created_at": "2026-10-03T04:34:04Z",
+                "updated_at": "2026-10-03T04:34:04Z"
+              }
+            ],
+            "grounding_note_count": 0,
+            "linked_meetings": [
+              {
+                "meeting_id": "philo13-b4-meeting",
+                "title": "1:1 Priya / Karol",
+                "started_at": "2026-10-05T04:34:03.862548+00:00",
+                "ended_at": "2026-10-05T05:04:03.862548+00:00",
+                "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+                "open_action_items": [
+                  {
+                    "id": "philo13-b4-owned-action",
+                    "task": "Send the dry-run report",
+                    "owner": "Priya",
+                    "due": null,
+                    "delegated_at": null
+                  },
+                  {
+                    "id": "philo13-b4-other-action",
+                    "task": "Review the dry-run report",
+                    "owner": "philo13-b4-owner",
+                    "due": null,
+                    "delegated_at": null
+                  }
+                ],
+                "decisions": []
+              }
+            ],
+            "unlinked_meeting_count": 0,
+            "calendar_link_suggestions": [],
+            "next_one_on_one": {
+              "id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+              "uid": "philo13-b4-priya@example.test",
+              "title": "1:1 Priya / Karol",
+              "starts_at": "2026-10-05T04:34:03Z",
+              "ends_at": "2026-10-05T05:04:03Z",
+              "source_id": "philo13-b4-calendar",
+              "source_label": "B4 calendar"
+            },
+            "open_meeting_actions": [
+              {
+                "id": "philo13-b4-owned-action",
+                "task": "Send the dry-run report",
+                "owner": "Priya",
+                "due": null,
+                "delegated_at": null,
+                "meeting_id": "philo13-b4-meeting",
+                "meeting_title": "1:1 Priya / Karol",
+                "meeting_started_at": "2026-10-05T04:34:03.862548+00:00",
+                "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278"
+              }
+            ],
+            "projects": [
+              {
+                "id": "proj-7d6e233b83c1",
+                "name": "B4 Dry-run project"
+              }
+            ],
+            "watch_summary": {
+              "prs_waiting": [],
+              "oldest_waiting_days": 0,
+              "open_assignments": []
+            },
+            "last_meeting": {
+              "meeting_id": "philo13-b4-meeting",
+              "title": "1:1 Priya / Karol",
+              "item_count": 2,
+              "open_count": 2
+            }
+          }
+        },
+        "body_sha256": "ef6cd8cc3e8af1bd6568fa617af1ffed471fb3bb2079d9bc9115880d93d265ec"
+      }
+    ],
+    "at_utc": "2026-10-03T04:34:06.817478+00:00",
+    "trigger_response": {
+      "method": "GET",
+      "path": "/api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+      "status": 200,
+      "body_sha256": "ef6cd8cc3e8af1bd6568fa617af1ffed471fb3bb2079d9bc9115880d93d265ec",
+      "body": {
+        "brief": {
+          "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+          "display_name": "Priya Sharma",
+          "open_commitments": [],
+          "agenda_items": [
+            {
+              "id": "fcaf9389-d368-4541-b2ae-9bc95a06bf2c",
+              "session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+              "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+              "body": "Review the dry-run report",
+              "visibility": "leader_private",
+              "state": "open",
+              "rolled_from_id": null,
+              "created_at": "2026-10-03T04:34:04Z",
+              "updated_at": "2026-10-03T04:34:04Z"
+            }
+          ],
+          "grounding_note_count": 0,
+          "linked_meetings": [
+            {
+              "meeting_id": "philo13-b4-meeting",
+              "title": "1:1 Priya / Karol",
+              "started_at": "2026-10-05T04:34:03.862548+00:00",
+              "ended_at": "2026-10-05T05:04:03.862548+00:00",
+              "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+              "open_action_items": [
+                {
+                  "id": "philo13-b4-owned-action",
+                  "task": "Send the dry-run report",
+                  "owner": "Priya",
+                  "due": null,
+                  "delegated_at": null
+                },
+                {
+                  "id": "philo13-b4-other-action",
+                  "task": "Review the dry-run report",
+                  "owner": "philo13-b4-owner",
+                  "due": null,
+                  "delegated_at": null
+                }
+              ],
+              "decisions": []
+            }
+          ],
+          "unlinked_meeting_count": 0,
+          "calendar_link_suggestions": [],
+          "next_one_on_one": {
+            "id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+            "uid": "philo13-b4-priya@example.test",
+            "title": "1:1 Priya / Karol",
+            "starts_at": "2026-10-05T04:34:03Z",
+            "ends_at": "2026-10-05T05:04:03Z",
+            "source_id": "philo13-b4-calendar",
+            "source_label": "B4 calendar"
+          },
+          "open_meeting_actions": [
+            {
+              "id": "philo13-b4-owned-action",
+              "task": "Send the dry-run report",
+              "owner": "Priya",
+              "due": null,
+              "delegated_at": null,
+              "meeting_id": "philo13-b4-meeting",
+              "meeting_title": "1:1 Priya / Karol",
+              "meeting_started_at": "2026-10-05T04:34:03.862548+00:00",
+              "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278"
+            }
+          ],
+          "projects": [
+            {
+              "id": "proj-7d6e233b83c1",
+              "name": "B4 Dry-run project"
+            }
+          ],
+          "watch_summary": {
+            "prs_waiting": [],
+            "oldest_waiting_days": 0,
+            "open_assignments": []
+          },
+          "last_meeting": {
+            "meeting_id": "philo13-b4-meeting",
+            "title": "1:1 Priya / Karol",
+            "item_count": 2,
+            "open_count": 2
+          }
+        }
+      }
+    }
+  },
+  "initial_feedback": {
+    "target_present": true,
+    "text": "",
+    "attrs": {},
+    "visible": true,
+    "url": "http://127.0.0.1:64306",
+    "focus": null,
+    "windows": [],
+    "values": [],
+    "headless": true,
+    "observe_at": "protocol: GET /api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+    "protocol": {
+      "method": "GET",
+      "path": "/api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+      "status": 200,
+      "collection": null,
+      "row_count": 0,
+      "payload_sha256": "ef6cd8cc3e8af1bd6568fa617af1ffed471fb3bb2079d9bc9115880d93d265ec",
+      "rows": [],
+      "payload": {
+        "brief": {
+          "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+          "display_name": "Priya Sharma",
+          "open_commitments": [],
+          "agenda_items": [
+            {
+              "id": "fcaf9389-d368-4541-b2ae-9bc95a06bf2c",
+              "session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+              "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+              "body": "Review the dry-run report",
+              "visibility": "leader_private",
+              "state": "open",
+              "rolled_from_id": null,
+              "created_at": "2026-10-03T04:34:04Z",
+              "updated_at": "2026-10-03T04:34:04Z"
+            }
+          ],
+          "grounding_note_count": 0,
+          "linked_meetings": [
+            {
+              "meeting_id": "philo13-b4-meeting",
+              "title": "1:1 Priya / Karol",
+              "started_at": "2026-10-05T04:34:03.862548+00:00",
+              "ended_at": "2026-10-05T05:04:03.862548+00:00",
+              "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+              "open_action_items": [
+                {
+                  "id": "philo13-b4-owned-action",
+                  "task": "Send the dry-run report",
+                  "owner": "Priya",
+                  "due": null,
+                  "delegated_at": null
+                },
+                {
+                  "id": "philo13-b4-other-action",
+                  "task": "Review the dry-run report",
+                  "owner": "philo13-b4-owner",
+                  "due": null,
+                  "delegated_at": null
+                }
+              ],
+              "decisions": []
+            }
+          ],
+          "unlinked_meeting_count": 0,
+          "calendar_link_suggestions": [],
+          "next_one_on_one": {
+            "id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+            "uid": "philo13-b4-priya@example.test",
+            "title": "1:1 Priya / Karol",
+            "starts_at": "2026-10-05T04:34:03Z",
+            "ends_at": "2026-10-05T05:04:03Z",
+            "source_id": "philo13-b4-calendar",
+            "source_label": "B4 calendar"
+          },
+          "open_meeting_actions": [
+            {
+              "id": "philo13-b4-owned-action",
+              "task": "Send the dry-run report",
+              "owner": "Priya",
+              "due": null,
+              "delegated_at": null,
+              "meeting_id": "philo13-b4-meeting",
+              "meeting_title": "1:1 Priya / Karol",
+              "meeting_started_at": "2026-10-05T04:34:03.862548+00:00",
+              "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278"
+            }
+          ],
+          "projects": [
+            {
+              "id": "proj-7d6e233b83c1",
+              "name": "B4 Dry-run project"
+            }
+          ],
+          "watch_summary": {
+            "prs_waiting": [],
+            "oldest_waiting_days": 0,
+            "open_assignments": []
+          },
+          "last_meeting": {
+            "meeting_id": "philo13-b4-meeting",
+            "title": "1:1 Priya / Karol",
+            "item_count": 2,
+            "open_count": 2
+          }
+        }
+      }
+    },
+    "protocol_digest": {
+      "status": 200,
+      "row_count": 0,
+      "payload_sha256": "ef6cd8cc3e8af1bd6568fa617af1ffed471fb3bb2079d9bc9115880d93d265ec"
+    },
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+        "status": 200,
+        "payload": {
+          "brief": {
+            "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+            "display_name": "Priya Sharma",
+            "open_commitments": [],
+            "agenda_items": [
+              {
+                "id": "fcaf9389-d368-4541-b2ae-9bc95a06bf2c",
+                "session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+                "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+                "body": "Review the dry-run report",
+                "visibility": "leader_private",
+                "state": "open",
+                "rolled_from_id": null,
+                "created_at": "2026-10-03T04:34:04Z",
+                "updated_at": "2026-10-03T04:34:04Z"
+              }
+            ],
+            "grounding_note_count": 0,
+            "linked_meetings": [
+              {
+                "meeting_id": "philo13-b4-meeting",
+                "title": "1:1 Priya / Karol",
+                "started_at": "2026-10-05T04:34:03.862548+00:00",
+                "ended_at": "2026-10-05T05:04:03.862548+00:00",
+                "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+                "open_action_items": [
+                  {
+                    "id": "philo13-b4-owned-action",
+                    "task": "Send the dry-run report",
+                    "owner": "Priya",
+                    "due": null,
+                    "delegated_at": null
+                  },
+                  {
+                    "id": "philo13-b4-other-action",
+                    "task": "Review the dry-run report",
+                    "owner": "philo13-b4-owner",
+                    "due": null,
+                    "delegated_at": null
+                  }
+                ],
+                "decisions": []
+              }
+            ],
+            "unlinked_meeting_count": 0,
+            "calendar_link_suggestions": [],
+            "next_one_on_one": {
+              "id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+              "uid": "philo13-b4-priya@example.test",
+              "title": "1:1 Priya / Karol",
+              "starts_at": "2026-10-05T04:34:03Z",
+              "ends_at": "2026-10-05T05:04:03Z",
+              "source_id": "philo13-b4-calendar",
+              "source_label": "B4 calendar"
+            },
+            "open_meeting_actions": [
+              {
+                "id": "philo13-b4-owned-action",
+                "task": "Send the dry-run report",
+                "owner": "Priya",
+                "due": null,
+                "delegated_at": null,
+                "meeting_id": "philo13-b4-meeting",
+                "meeting_title": "1:1 Priya / Karol",
+                "meeting_started_at": "2026-10-05T04:34:03.862548+00:00",
+                "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278"
+              }
+            ],
+            "projects": [
+              {
+                "id": "proj-7d6e233b83c1",
+                "name": "B4 Dry-run project"
+              }
+            ],
+            "watch_summary": {
+              "prs_waiting": [],
+              "oldest_waiting_days": 0,
+              "open_assignments": []
+            },
+            "last_meeting": {
+              "meeting_id": "philo13-b4-meeting",
+              "title": "1:1 Priya / Karol",
+              "item_count": 2,
+              "open_count": 2
+            }
+          }
+        },
+        "body_sha256": "ef6cd8cc3e8af1bd6568fa617af1ffed471fb3bb2079d9bc9115880d93d265ec"
+      }
+    ],
+    "at_utc": "2026-10-03T04:34:06.803750+00:00",
+    "trigger_response": {
+      "method": "GET",
+      "path": "/api/people/relationships/74f1aff2-b169-408b-865f-c5a9bfdc4365/brief",
+      "status": 200,
+      "body_sha256": "ef6cd8cc3e8af1bd6568fa617af1ffed471fb3bb2079d9bc9115880d93d265ec",
+      "body": {
+        "brief": {
+          "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+          "display_name": "Priya Sharma",
+          "open_commitments": [],
+          "agenda_items": [
+            {
+              "id": "fcaf9389-d368-4541-b2ae-9bc95a06bf2c",
+              "session_id": "a45e90f8-467e-47f3-9147-82e992ab9db4",
+              "relationship_id": "74f1aff2-b169-408b-865f-c5a9bfdc4365",
+              "body": "Review the dry-run report",
+              "visibility": "leader_private",
+              "state": "open",
+              "rolled_from_id": null,
+              "created_at": "2026-10-03T04:34:04Z",
+              "updated_at": "2026-10-03T04:34:04Z"
+            }
+          ],
+          "grounding_note_count": 0,
+          "linked_meetings": [
+            {
+              "meeting_id": "philo13-b4-meeting",
+              "title": "1:1 Priya / Karol",
+              "started_at": "2026-10-05T04:34:03.862548+00:00",
+              "ended_at": "2026-10-05T05:04:03.862548+00:00",
+              "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+              "open_action_items": [
+                {
+                  "id": "philo13-b4-owned-action",
+                  "task": "Send the dry-run report",
+                  "owner": "Priya",
+                  "due": null,
+                  "delegated_at": null
+                },
+                {
+                  "id": "philo13-b4-other-action",
+                  "task": "Review the dry-run report",
+                  "owner": "philo13-b4-owner",
+                  "due": null,
+                  "delegated_at": null
+                }
+              ],
+              "decisions": []
+            }
+          ],
+          "unlinked_meeting_count": 0,
+          "calendar_link_suggestions": [],
+          "next_one_on_one": {
+            "id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278",
+            "uid": "philo13-b4-priya@example.test",
+            "title": "1:1 Priya / Karol",
+            "starts_at": "2026-10-05T04:34:03Z",
+            "ends_at": "2026-10-05T05:04:03Z",
+            "source_id": "philo13-b4-calendar",
+            "source_label": "B4 calendar"
+          },
+          "open_meeting_actions": [
+            {
+              "id": "philo13-b4-owned-action",
+              "task": "Send the dry-run report",
+              "owner": "Priya",
+              "due": null,
+              "delegated_at": null,
+              "meeting_id": "philo13-b4-meeting",
+              "meeting_title": "1:1 Priya / Karol",
+              "meeting_started_at": "2026-10-05T04:34:03.862548+00:00",
+              "calendar_event_id": "ce_850cfef729866a57ec07c1bf6e11837feaa2706afc9302d71539bd3e49478278"
+            }
+          ],
+          "projects": [
+            {
+              "id": "proj-7d6e233b83c1",
+              "name": "B4 Dry-run project"
+            }
+          ],
+          "watch_summary": {
+            "prs_waiting": [],
+            "oldest_waiting_days": 0,
+            "open_assignments": []
+          },
+          "last_meeting": {
+            "meeting_id": "philo13-b4-meeting",
+            "title": "1:1 Priya / Karol",
+            "item_count": 2,
+            "open_count": 2
+          }
+        }
+      }
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_field: brief.next_one_on_one.uid equals the declared value | protocol_field: brief.next_one_on_one.source_id equals the declared value | protocol_field: brief.open_meeting_actions.0.id equals the declared value | protocol_field: brief.open_meeting_actions.0.meeting_id equals the declared value | protocol_field: brief.agenda_items.0.body equals the declared value | protocol_field: brief.projects.0.id equals the declared value",
+    "elapsed_s": 0.92
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: protocol_field: brief.next_one_on_one.uid equals the declared value | protocol_field: brief.next_one_on_one.source_id equals the declared value | protocol_field: brief.open_meeting_actions.0.id equals the declared value | protocol_field: brief.open_meeting_actions.0.meeting_id equals the declared value | protocol_field: brief.agenda_items.0.body equals the declared value | protocol_field: brief.projects.0.id equals the declared value",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 0.934,
+    "first_satisfied_at_s": 0.92,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: protocol_field: brief.next_one_on_one.uid equals the declared value | protocol_field: brief.next_one_on_one.source_id equals the declared value | protocol_field: brief.open_meeting_actions.0.id equals the declared value | protocol_field: brief.open_meeting_actions.0.meeting_id equals the declared value | protocol_field: brief.agenda_items.0.body equals the declared value | protocol_field: brief.projects.0.id equals the declared value"
+  ],
+  "complete": true,
+  "shots": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3je39_1u/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64306"
+  ],
+  "duration_s": 7.173
+}

@@ -97,3 +97,6 @@
   font: 600 12px / 1.3 var(--font-mono);
   letter-spacing: 0.04em;
 }
+
+/* PHILO-13-09 (B4-W): the Now side's Next 1:1 reads as the header does. */
+.people-next-side { font-family: var(--font-mono); font-size: var(--desk-surface-detail-size); letter-spacing: 0.04em; color: var(--text); }

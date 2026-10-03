@@ -1678,6 +1678,33 @@
       "tests_executed": 2
     },
     {
+      "assertions_inspected": 1,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
+      "id": "people.prep.read",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          1,
+          1
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 1
+    },
+    {
       "assertions_inspected": 2,
       "docs": {
         "api": 0,
