@@ -71,7 +71,7 @@
 /* ── the source ledger ── */
 
 .prepare-emblem {
-  font: 600 11px/1 var(--font-mono, ui-monospace, monospace);
+  font: 600 var(--font-size-xs)/1 var(--font-mono, ui-monospace, monospace);
   letter-spacing: 0.06em;
   color: var(--text-muted);
 }

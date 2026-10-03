@@ -180,7 +180,7 @@
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   box-shadow: var(--desk-window-etch), var(--desk-window-shadow);
-  font: 10px/1.25 var(--font-mono);
+  font: var(--font-size-xs)/1.25 var(--font-mono);
 }
 .desk-voice-proposal-heard {
   max-width: 220px;

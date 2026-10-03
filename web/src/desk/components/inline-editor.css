@@ -181,7 +181,7 @@
 }
 .desk-editor-ai-bar-error {
   color: var(--danger);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   max-width: 260px;
 }
 
@@ -209,7 +209,7 @@
 .editor-proposal-action {
   border: 1px solid var(--border);
   border-radius: 0;
-  font: 600 10px/1 var(--font-mono);
+  font: 600 var(--font-size-xs)/1 var(--font-mono);
   letter-spacing: 0.06em;
   padding: 4px 12px;
 }

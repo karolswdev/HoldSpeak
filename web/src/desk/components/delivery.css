@@ -60,7 +60,7 @@
   border: 1px solid var(--surface-3);
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -81,7 +81,7 @@
   border-color: color-mix(in srgb, var(--danger) 40%, transparent);
 }
 .desk-next .desk-dlv-hint {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 /* HS-111: section labels — system-label style */
 .desk-next .desk-dlv-story-open {
@@ -140,7 +140,7 @@
   margin: 4px 0;
 }
 .desk-next .desk-dlv-node {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .desk-next .desk-dlv-list {
   margin-top: var(--space-3);
@@ -193,7 +193,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  font: 600 10px/1.25 var(--font-mono, ui-monospace, monospace);
+  font: 600 var(--font-size-xs)/1.25 var(--font-mono, ui-monospace, monospace);
   letter-spacing: 0.04em;
 }
 .desk-next .desk-pr-gate.is-ungated {
@@ -208,7 +208,7 @@
   background: var(--wash-1);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.45;
   white-space: pre;
 }
@@ -253,7 +253,7 @@
 .desk-next .desk-pr-refusal {
   flex-basis: 100%;
   color: var(--danger);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
 }
 .desk-next .desk-pr-detail td,
 .desk-next .desk-pr-action td,
@@ -270,7 +270,7 @@
 }
 .desk-next .desk-pr-detail dt {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -284,7 +284,7 @@
 }
 .desk-next .desk-pr-compose > label {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -388,7 +388,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .desk-next .desk-pr-proposal pre {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
   }
 }
 

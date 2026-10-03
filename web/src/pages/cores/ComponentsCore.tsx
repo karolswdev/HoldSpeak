@@ -68,8 +68,8 @@ const GALLERY_PLAN_STEPS: PlanStep[] = [
 ];
 
 const GALLERY_TOPOLOGY_NODES: GraphNode[] = [
-  { id: "home", label: "This Mac", home: true, state: "success", x: 40, y: 100, children: <span style={{ fontSize: 10, color: "var(--text-muted)" }}>MLX, llama.cpp</span> },
-  { id: "lan", label: "LAN Server", state: "success", x: 360, y: 35, children: <span style={{ fontSize: 10, color: "var(--text-muted)" }}>qwen3.6-35b</span> },
+  { id: "home", label: "This Mac", home: true, state: "success", x: 40, y: 100, children: <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>MLX, llama.cpp</span> },
+  { id: "lan", label: "LAN Server", state: "success", x: 360, y: 35, children: <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)" }}>qwen3.6-35b</span> },
   { id: "cloud", label: "Cloud API", state: "unreachable", x: 360, y: 175 },
 ];
 
@@ -435,7 +435,7 @@ export function ComponentsCore({ hero }: CoreProps) {
           nodes={GALLERY_TOPOLOGY_NODES}
           flows={GALLERY_TOPOLOGY_FLOWS}
           ariaLabel="Gallery topology"
-          inspectorSlot={<div style={{ padding: 8, fontSize: 11, fontFamily: "var(--font-mono)" }}>Inspector slot</div>}
+          inspectorSlot={<div style={{ padding: 8, fontSize: "var(--font-size-sm)", fontFamily: "var(--font-mono)" }}>Inspector slot</div>}
           addNodeSlot={<Button dense variant="ghost">+ Add node</Button>}
         />
       </SurfaceSection>

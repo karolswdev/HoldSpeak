@@ -533,7 +533,8 @@
       },
       {
         "name": "--font-size-xs",
-        "value": "0.75rem"
+        "value": "0.75rem",
+        "doc": "PHILO-13-18 (C8): the 12 px floor. The smallest readable size; a caption, chip, meta or label under it rides this token (UX-CANON, the 12 px floor). Only a nontext glyph goes below it."
       },
       {
         "name": "--font-size-sm",

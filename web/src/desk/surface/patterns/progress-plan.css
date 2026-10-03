@@ -166,7 +166,7 @@
   box-shadow: inset 1px 1px 0 var(--bevel-light, transparent),
               inset -1px -1px 0 var(--bevel-dark, transparent);
   color: var(--text);
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: var(--letter-spacing-label-compact);
   text-transform: uppercase;
   cursor: pointer;

@@ -72,14 +72,14 @@
   padding: 0 2px;
 }
 .desk-next .speak-lands-in-caption {
-  font: 600 11px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
   white-space: nowrap;
 }
 .desk-next .speak-lands-in-dot {
-  font: 600 11px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   color: var(--text-faint);
 }
 .desk-next .speak-lands-in-target {
@@ -132,14 +132,14 @@
   border-top: 1px solid var(--border);
 }
 .desk-next .speak-engine-caption {
-  font: 600 11px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
   white-space: nowrap;
 }
 .desk-next .speak-engine-dot {
-  font: 600 11px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   color: var(--text-faint);
 }
 .desk-next .speak-engine-name {
@@ -151,7 +151,7 @@
   color: var(--text-muted);
 }
 .desk-next .speak-engine-checking {
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -226,14 +226,14 @@
 }
 .desk-next .speak-detail-label {
   min-width: 60px;
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
   white-space: nowrap;
 }
 .desk-next .speak-detail-value {
-  font: 500 11px / 1.2 var(--font-mono);
+  font: 500 var(--font-size-xs) / 1.2 var(--font-mono);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text);
@@ -247,7 +247,7 @@
   display: inline-flex;
   align-items: center;
   padding: 3px 7px;
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -322,7 +322,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 500 11px / 1.4 var(--font-mono);
+  font: 500 var(--font-size-xs) / 1.4 var(--font-mono);
   letter-spacing: 0.04em;
   color: var(--text);
 }
@@ -338,7 +338,7 @@
 /* Token fact lines (used by Readiness and DictationSections). */
 .desk-next .speak-token-line {
   margin: 0;
-  font: 500 11px / 1.5 var(--font-mono);
+  font: 500 var(--font-size-xs) / 1.5 var(--font-mono);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text);
@@ -377,7 +377,7 @@
   border-radius: 0;
   background: var(--desk-window-well, rgba(0, 0, 0, 0.28));
   box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ok);
@@ -412,7 +412,7 @@
   min-width: 0;
 }
 .desk-next .speak-applied-caption {
-  font: 600 11px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -445,7 +445,7 @@
 
 /* The FIELD caption leads the teach row. */
 .desk-next .speak-teach-caption {
-  font: 600 11px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);

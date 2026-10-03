@@ -27,7 +27,7 @@
 }
 
 .concierge-hardware-token {
-  font: 600 11px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text, #f2f3f5);
@@ -38,7 +38,7 @@
 }
 
 .concierge-checked-at {
-  font: 400 11px/1 "JetBrains Mono", monospace;
+  font: 400 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   letter-spacing: 0.06em;
   color: var(--text-faint);
   text-transform: uppercase;
@@ -59,7 +59,7 @@
 }
 
 .concierge-section-label {
-  font: 600 11px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted, #9ba2b0);
@@ -144,7 +144,7 @@
 /* ── Lead emblem ── */
 
 .concierge-lead {
-  font: 600 11px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   color: var(--muted, #9ba2b0);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -227,7 +227,7 @@
 /* ── Key chip ── */
 
 .concierge-key-chip {
-  font: 600 10px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding: 2px 6px;
@@ -254,7 +254,7 @@
 }
 
 .concierge-cost-chip {
-  font: 600 10px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--warning, #f5a623);
@@ -266,7 +266,7 @@
 /* ── Progress token ── */
 
 .concierge-progress-token {
-  font: 600 11px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--accent, #a86e4a);
@@ -452,7 +452,7 @@
 }
 
 .concierge-receipt {
-  font: 600 11px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted, #9ba2b0);

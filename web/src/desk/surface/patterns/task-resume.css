@@ -10,7 +10,7 @@
 }
 
 .surface-task-resume-caption {
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: var(--letter-spacing-label-compact);
   text-transform: uppercase;
   color: var(--text-muted);

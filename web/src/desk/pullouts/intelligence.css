@@ -25,7 +25,7 @@
   background: transparent;
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.055em;
   line-height: 1;
@@ -117,7 +117,7 @@
   border-right: 1px solid var(--accent);
   background: var(--accent-tint);
   color: var(--text);
-  font-size: 0.6875rem;
+  font-size: var(--font-size-xs);
   font-weight: 800;
   letter-spacing: 0.09em;
 }
@@ -146,7 +146,7 @@
   justify-content: space-between;
   gap: var(--space-2);
   color: var(--text-faint);
-  font-size: 0.625rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.07em;
 }
@@ -161,7 +161,7 @@
   background: var(--desk-window-well);
   color: var(--text-muted);
   font: inherit;
-  font-size: 0.6875rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   padding: 4px 7px;
@@ -178,7 +178,7 @@
   color: var(--text);
 }
 
-.receipts-id { color: var(--text-faint); font-size: 0.625rem; }
+.receipts-id { color: var(--text-faint); font-size: var(--font-size-xs); }
 .receipts-results .surface-ledger-primary { font-weight: 700; }
 
 .receipt-detail-head {
@@ -222,7 +222,7 @@
 
 .receipt-fields dt {
   color: var(--text-faint);
-  font-size: 0.625rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -233,7 +233,7 @@
 .receipt-detail h4 {
   margin: 0 0 var(--space-1);
   color: var(--text-faint);
-  font-size: 0.625rem;
+  font-size: var(--font-size-xs);
   letter-spacing: 0.08em;
 }
 
@@ -272,7 +272,7 @@
   color: var(--text-faint);
 }
 
-.receipt-chain strong { color: var(--text); font-size: 0.625rem; }
+.receipt-chain strong { color: var(--text); font-size: var(--font-size-xs); }
 .receipt-chain span:last-child, .receipt-chain button:last-child { text-align: right; }
 
 .receipt-revisions ol { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
@@ -416,7 +416,7 @@
   box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.05em;
   line-height: 1.2;
@@ -470,7 +470,7 @@
   margin: 0 0 var(--space-1);
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -546,7 +546,7 @@
 
 .intelligence-brief-sf-kind {
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--text-faint);
@@ -586,7 +586,7 @@
   padding: var(--space-2) var(--space-3);
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--font-size-xs);
 }
 
 /* HS-129-06 — Name the window body that governs Brief density. */
@@ -626,7 +626,7 @@
   background: var(--desk-window-well);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   line-height: 1.25;
   text-align: center;
@@ -657,7 +657,7 @@
   background: var(--desk-window-well);
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 0.5625rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   line-height: 1;
 }
@@ -692,7 +692,7 @@
   min-width: 3.75rem;
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: var(--font-size-xs);
   text-align: right;
 }
 
@@ -752,13 +752,13 @@
   background: var(--desk-window-well);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--font-size-xs);
   line-height: 1.45;
 }
 
 .follow-through-provenance cite {
   color: var(--text-faint);
-  font-size: 0.625rem;
+  font-size: var(--font-size-xs);
   font-style: normal;
   font-weight: 700;
   text-transform: uppercase;
@@ -769,7 +769,7 @@
   padding: var(--space-2) 0;
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: var(--font-size-xs);
   text-transform: uppercase;
 }
 

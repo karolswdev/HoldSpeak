@@ -30,7 +30,7 @@
   background: var(--accent-gradient);
   box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
   color: var(--text-on-accent);
-  font: 650 9px / 1 var(--font-mono);
+  font: 650 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -63,7 +63,7 @@
 
 /* The hero word label. */
 .capture-hero-word {
-  font-size: 9px;
+  font-size: var(--font-size-xs);
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;

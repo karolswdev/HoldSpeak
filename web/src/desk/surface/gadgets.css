@@ -177,7 +177,7 @@
   padding: 0 8px;
   border: 1px solid var(--border, #2a2e3e);
   border-radius: 2px;
-  font: 600 11px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -311,7 +311,7 @@
   border-color: var(--accent);
 }
 .gadget-mx-caption {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
 .gadget-mx-deps {
@@ -400,7 +400,7 @@
   align-self: center;
   padding: 0 5px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -576,7 +576,7 @@
 }
 .gadget-table-head span {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -598,7 +598,7 @@
   background: var(--surface-2);
   box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
   color: var(--text-muted);
-  font: 600 11px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   cursor: pointer;
 }
 .gadget-x:hover {
@@ -612,7 +612,7 @@
   border-radius: 0;
   background: transparent;
   color: var(--text-muted);
-  font: 600 11px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -637,7 +637,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--text);
 }
 
@@ -650,7 +650,7 @@
   min-width: 0;
 }
 .gadget-ledmeter-label {
-  font: 600 9px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -703,7 +703,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text);
@@ -760,7 +760,7 @@
   background: var(--surface-2);
   box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
   color: var(--text);
-  font: 650 9px / 1 var(--font-mono);
+  font: 650 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -909,7 +909,7 @@ button.gadget-chip-egress {
   overflow-wrap: anywhere;
 }
 .gadget-secret-label small {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
 .gadget-secret-verbs {
@@ -1028,7 +1028,7 @@ button.gadget-chip-egress {
 .gadget-fold-token {
   margin-left: auto;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   letter-spacing: 0.06em;
   color: var(--text-faint);
   white-space: nowrap;
@@ -1069,7 +1069,7 @@ button.gadget-chip-egress {
   gap: 6px;
 }
 .gadget-checkline-word {
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);

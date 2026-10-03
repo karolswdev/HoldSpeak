@@ -217,7 +217,7 @@
   font-family: var(--font-mono);
 }
 .room-proposal-edit-label-text {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono);
   font-weight: 600;
   text-transform: uppercase;
@@ -227,7 +227,7 @@
 }
 .room-proposal-was-caption {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -337,7 +337,7 @@
    Active = filled dark, no accent, no bevel. */
 .room-history-filters { display: inline-flex; gap: 0; }
 .room-filter-token.btn {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono);
   font-weight: 600;
   text-transform: uppercase;

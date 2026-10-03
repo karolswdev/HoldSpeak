@@ -54,13 +54,13 @@
 .people-prep-row-main { display: flex; align-items: center; gap: 8px; padding: 10px 0; flex-wrap: wrap; }
 .people-prep-row-primary { font: 600 15px/1.4 var(--font-sans, 'Inter', system-ui, sans-serif); color: var(--text); white-space: nowrap; text-transform: uppercase; min-width: 0; }
 .people-prep-row-tokens { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.people-prep-token { font: 600 10px/1 var(--font-mono, 'JetBrains Mono', monospace); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; }
+.people-prep-token { font: 600 var(--font-size-xs)/1 var(--font-mono, 'JetBrains Mono', monospace); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; }
 .people-prep-token[data-warning] { color: var(--warning, #fbbf24); }
 .people-prep-token-muted { color: var(--text-muted); }
 .people-prep-row-spacer { flex: 1; min-width: 8px; }
 /* The Open verb must never clip or be pushed out of the row. */
 .people-prep-row-main > .btn { flex-shrink: 0; }
-.people-prep-receipt { font: 600 10px/1 var(--font-mono, 'JetBrains Mono', monospace); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.people-prep-receipt { font: 600 var(--font-size-xs)/1 var(--font-mono, 'JetBrains Mono', monospace); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 
 /* HS-172-05 — Now wing caption tokens (same grammar as Room proposal captions). */
 .people-now-caption {

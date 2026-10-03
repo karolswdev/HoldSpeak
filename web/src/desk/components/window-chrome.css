@@ -189,7 +189,7 @@
 .desk-next .desk-panel-eyebrow {
   display: block;
   color: var(--accent);
-  font: 700 10px var(--font-mono);
+  font: 700 var(--font-size-xs) var(--font-mono);
   letter-spacing: var(--letter-spacing-eyebrow);
   text-transform: uppercase;
 }
@@ -216,7 +216,7 @@
 .desk-next .desk-pullout-body h3 {
   margin: 0 0 6px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;

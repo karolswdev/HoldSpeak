@@ -1,0 +1,414 @@
+{
+ "width": 393,
+ "states": {
+  "Chair Needs you": {
+   "leaves": 49,
+   "front": "Needs you",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 2
+  },
+  "Chair Brief": {
+   "leaves": 37,
+   "front": "Brief",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 2
+  },
+  "Chair The week": {
+   "leaves": 77,
+   "front": "The week",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [
+    [
+     "\u21bb",
+     "Document"
+    ]
+   ],
+   "sideways": [],
+   "scopes": 2
+  },
+  "Chair Capture": {
+   "leaves": 20,
+   "front": "Capture",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 2
+  },
+  "Dock Intelligence": {
+   "leaves": 90,
+   "front": "Intelligence",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Dock Speak": {
+   "leaves": 20,
+   "front": "Capture",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 2
+  },
+  "Dock Meetings": {
+   "leaves": 84,
+   "front": "Meetings",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Dock Meetings > Review": {
+   "leaves": 80,
+   "front": "Meetings",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Dock Meetings > Record": {
+   "leaves": 60,
+   "front": "Meetings",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Dock Meetings > Artifacts": {
+   "leaves": 80,
+   "front": "Meetings",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Dock Meetings > Meeting plumbing": {
+   "leaves": 89,
+   "front": "Meetings",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [
+    [
+     "\u21bb",
+     "Queue status"
+    ]
+   ],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Dock Agents": {
+   "leaves": 59,
+   "front": "Agents",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Dock Agents > DELIVERY": {
+   "leaves": 52,
+   "front": "Agents",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Dock Settings": {
+   "leaves": 88,
+   "front": "Settings",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Dock Settings > GUIDE": {
+   "leaves": 87,
+   "front": "Settings",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Dock Floor": {
+   "leaves": 142,
+   "front": null,
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 1
+  },
+  "Dock Desk memory": {
+   "leaves": 71,
+   "front": "Needs you",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 2
+  },
+  "Dock Delivery": {
+   "leaves": 63,
+   "front": "Delivery",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Dock Panes": {
+   "leaves": 53,
+   "front": "Needs you",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 2
+  },
+  "Object meeting record": {
+   "leaves": 82,
+   "front": "Meetings",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [
+    [
+     "\u21bb",
+     "Document"
+    ]
+   ],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Object person Priya": {
+   "leaves": 72,
+   "front": "People",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Object the Room": {
+   "leaves": 69,
+   "front": "Payments ledger cutover",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [
+    {
+     "text": "Payments ledger cutover",
+     "in": "desk-screen-name"
+    }
+   ],
+   "inset": [
+    [
+     "\u21bb",
+     "Result"
+    ]
+   ],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Object the Room > HISTORY": {
+   "leaves": 60,
+   "front": "Payments ledger cutover",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [
+    {
+     "text": "Payments ledger cutover",
+     "in": "desk-screen-name"
+    }
+   ],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Object workbench configuration": {
+   "leaves": 99,
+   "front": "Ledger cutover bench",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [
+    {
+     "text": "Ledger cutover bench",
+     "in": "desk-screen-name"
+    },
+    {
+     "text": "Draft rollback runbook",
+     "in": "wb-card-title"
+    },
+    {
+     "text": "Check reconciliation timings",
+     "in": "wb-card-title"
+    },
+    {
+     "text": "Rerun shard benchmark",
+     "in": "wb-card-title"
+    }
+   ],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Object workbench": {
+   "leaves": 77,
+   "front": "Ledger cutover bench",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [
+    {
+     "text": "Ledger cutover bench",
+     "in": "desk-screen-name"
+    },
+    {
+     "text": "Draft rollback runbook",
+     "in": "wb-card-title"
+    },
+    {
+     "text": "Check reconciliation timings",
+     "in": "wb-card-title"
+    },
+    {
+     "text": "Rerun shard benchmark",
+     "in": "wb-card-title"
+    }
+   ],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Object workbench item open": {
+   "leaves": 79,
+   "front": "Ledger cutover bench",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [
+    {
+     "text": "Ledger cutover bench",
+     "in": "desk-screen-name"
+    },
+    {
+     "text": "Draft rollback runbook",
+     "in": "wb-card-title"
+    },
+    {
+     "text": "Check reconciliation timings",
+     "in": "wb-card-title"
+    },
+    {
+     "text": "Rerun shard benchmark",
+     "in": "wb-card-title"
+    }
+   ],
+   "inset": [
+    [
+     "Item body",
+     "Speak Item body"
+    ]
+   ],
+   "sideways": [],
+   "scopes": 3
+  },
+  "Object decision": {
+   "leaves": 69,
+   "front": "Adopt OpenTelemetry for all services",
+   "small": [],
+   "clipped": [],
+   "overlaps": [],
+   "ellipsis": [
+    {
+     "text": "Adopt OpenTelemetry for all services",
+     "in": "desk-screen-name"
+    }
+   ],
+   "inset": [],
+   "sideways": [],
+   "scopes": 3
+  }
+ },
+ "unreached": [],
+ "dock": [
+  "Intelligence",
+  "Speak",
+  "Meetings",
+  "Agents",
+  "Settings",
+  "Floor",
+  "Desk memory",
+  "Delivery",
+  "Panes"
+ ],
+ "errors": [],
+ "totals": {
+  "states": 27,
+  "small": 0,
+  "small_consumers": 0,
+  "clipped": 0,
+  "overlaps": 0
+ },
+ "small_consumers": []
+}

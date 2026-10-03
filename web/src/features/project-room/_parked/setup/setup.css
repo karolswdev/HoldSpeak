@@ -255,7 +255,7 @@
 /* Cadence as a chip in the meta row */
 .setup-brief-watch-chip {
   display: inline-block;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   padding: 0 var(--space-1);
   border-radius: var(--radius-xs);
   background: var(--bg-tertiary);
