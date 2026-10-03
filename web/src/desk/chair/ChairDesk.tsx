@@ -31,9 +31,6 @@ import {
 
 export type ChairDeskProps = Record<ChairWindowKey, ReactNode>;
 
-/** How long a press on the Dock's Speak AppIcon arms the Capture answer. */
-const DOCK_PRESS_MS = 1500;
-
 function ChairWindow({
   spec,
   open,
@@ -92,29 +89,17 @@ export function ChairDesk(props: ChairDeskProps) {
   const phone = useChairWindows((s) => s.phone);
 
   // Muad'Dib's ruling: ONLY the Dock's Speak AppIcon opens Capture at 393.
-  // Go ▸ Speak, the verb and ⌘1 keep opening the Speak window. The Dock's
-  // launch logic is not ours to change (Dock.tsx is Astra's), so the press
-  // on the AppIcon arms the answer here: a capture-phase listener notes a
-  // press on the Dock's Speak AppIcon, and the shell's "dictate" key is
-  // answered only while that press is fresh (the Dock opens through an
-  // async import, so the window is a short time, not the same tick).
-  useEffect(() => {
-    let armedAt = -Infinity;
-    const arm = (e: Event) => {
-      const t = e.target as Element | null;
-      if (t?.closest?.(".desk-dock [aria-label^='Speak']")) armedAt = performance.now();
-    };
-    document.addEventListener("click", arm, true);
-    const off = answerSurfaceFirst("dictate", () => {
-      const fromDock = performance.now() - armedAt < DOCK_PRESS_MS;
-      armedAt = -Infinity;
-      return fromDock && openCaptureOnPhone();
-    });
-    return () => {
-      document.removeEventListener("click", arm, true);
-      off();
-    };
-  }, []);
+  // Go ▸ Speak, the verb and ⌘1 keep opening the Speak window. PHILO-13-13
+  // C3-W: the Dock says so itself — its launches carry `origin: "dock"`
+  // (SurfaceOpenOptions, #744), so the Chair reads the origin and no press
+  // window is needed.
+  useEffect(
+    () =>
+      answerSurfaceFirst("dictate", (_scope, options) =>
+        options?.origin === "dock" && openCaptureOnPhone(),
+      ),
+    [],
+  );
   // PHILO-13-17 (C7, Q4; the owner's ruling): at 393 an arriving aftercare
   // card opens Capture, so the card lands in its slot (a desk window in
   // front iconifies, never closes). Muad'Dib's ruling 2026-10-03: when the

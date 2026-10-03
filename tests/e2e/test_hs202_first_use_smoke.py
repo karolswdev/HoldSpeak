@@ -294,9 +294,25 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             dock = page.locator(".desk-dock")
             doors = {}
             for key, name in (("speak", "Speak"), ("meetings", "Meetings"), ("memory", "Desk memory")):
-                doors[key] = check("dock-" + key,
-                                   _hit(dock.get_by_role("button", name=name, exact=True)),
+                door = dock.get_by_role("button", name=name, exact=True)
+                # PHILO-13-13 C3-W (the ratified C1 393 Dock): the shelf ends on a
+                # whole icon and More AppIcons pages it; a door past the page is
+                # one More press away, never a sideways page scroll.
+                more = dock.get_by_test_id("desk-dock-more")
+                for _ in range(3):
+                    if _hit(door) or width > 720 or not more.is_visible():
+                        break
+                    more.click()
+                    page.wait_for_timeout(400)
+                doors[key] = check("dock-" + key, _hit(door),
                                    name + " dock door fits and owns its hit target")
+                # page back to the first page (More wraps at the end) for the next door
+                first = dock.get_by_role("button", name="Speak", exact=True)
+                for _ in range(3):
+                    if width > 720 or _hit(first) or not more.is_visible():
+                        break
+                    more.click()
+                    page.wait_for_timeout(400)
             meetings_ok = doors["meetings"]
             if meetings_ok:
                 _meetings(page)

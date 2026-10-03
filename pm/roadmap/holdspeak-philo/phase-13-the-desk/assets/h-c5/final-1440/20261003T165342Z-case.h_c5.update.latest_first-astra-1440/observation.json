@@ -1,0 +1,1319 @@
+{
+  "id": "obs-20261003T165342Z-case.h_c5.update.latest_first-astra-1440",
+  "run_id": "20261003T165342Z-case.h_c5.update.latest_first-astra-1440",
+  "case_id": "case.h_c5.update.latest_first",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-h-c5.json",
+  "job": "p9",
+  "edge_ids": [
+    "edge.face.room_updates"
+  ],
+  "state_id": "state.desk_presentation.p9_room_face",
+  "provenance": {
+    "revision": "2d1d791a0b12b1f42fecdec0903a74a86a1e7d0b",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "500970e6db1758a9e5a797eaeb09092d31ac346cc49f9e3e2ece2835d006f33c",
+      "assets": [
+        "index-NBVXyeen.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:63228",
+      "port": 63228,
+      "pid": 99922,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur3n5c3k",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur3n5c3k/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T16:53:43.015994+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-h-c5.json",
+      "sha256": "63aed0f8efd20d92e0f87884da2b3ffec354a5464770e7f5fc61e170f2f063bc",
+      "version": "h-c5-latest-published"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "browser_context": {
+      "viewport": 1440,
+      "has_touch": false
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur3n5c3k",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur3n5c3k",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur3n5c3k/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur3n5c3k"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-03T10:53:47.048818"
+        }
+      },
+      "response_sha256": "c6cb38a5ae2b18b0cbdb14843395e5beb1f784c92169f76e0fd91b7e41bd0da2"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "project": {
+          "id": "proj-71d53a5e60df",
+          "name": "Atlas ledger cutover",
+          "description": "",
+          "keywords": [],
+          "team_members": [],
+          "context": {},
+          "detection_threshold": 0.4,
+          "is_archived": false,
+          "meeting_count": 0,
+          "created_at": "2026-10-03T10:53:47.079070",
+          "updated_at": "2026-10-03T10:53:47.079070",
+          "result_kind": "created",
+          "project_id": "proj-71d53a5e60df",
+          "project_revision": 1,
+          "changed_refs": [
+            "project:proj-71d53a5e60df"
+          ]
+        }
+      },
+      "response_sha256": "60d59f8ee574f2bf2158ac8a26d50edb408fee5838ee117afcd9498d2d899e7f",
+      "captured": {
+        "name": "project_id",
+        "path": "project.id",
+        "value": "proj-71d53a5e60df"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/projects/proj-71d53a5e60df/updates/draft",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_d7250d0e025a4075b76c7c86809a59d2",
+          "project_id": "proj-71d53a5e60df",
+          "project_revision": 1,
+          "review_id": null,
+          "lifecycle": "draft",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"week_source_refs\":[]}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-10-03T16:53:47+00:00",
+          "updated_at": "2026-10-03T16:53:47+00:00",
+          "published_at": null,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generatorHost": null,
+          "generatorModel": null
+        }
+      },
+      "response_sha256": "68f5fcbc75649cd2febba65f646e2d492a324c2760507bfc9074f944c033d4b8",
+      "captured": {
+        "name": "update_id",
+        "path": "update.id",
+        "value": "pupd_d7250d0e025a4075b76c7c86809a59d2"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/updates/pupd_d7250d0e025a4075b76c7c86809a59d2/regenerate",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_915dc0db709d43408380d8bc261ffdec",
+          "project_id": "proj-71d53a5e60df",
+          "project_revision": 1,
+          "review_id": null,
+          "lifecycle": "draft",
+          "draft_revision": 2,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"week_source_refs\":[]}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-10-03T16:53:47+00:00",
+          "updated_at": "2026-10-03T16:53:47+00:00",
+          "published_at": null,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generatorHost": null,
+          "generatorModel": null
+        }
+      },
+      "response_sha256": "be8e0450270fd7b3d75444d5f94983460441430f063773ca4d60f20d04e772b4",
+      "captured": {
+        "name": "older_id",
+        "path": "update.id",
+        "value": "pupd_915dc0db709d43408380d8bc261ffdec"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/updates/pupd_915dc0db709d43408380d8bc261ffdec/publish",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_915dc0db709d43408380d8bc261ffdec",
+          "project_id": "proj-71d53a5e60df",
+          "project_revision": 2,
+          "review_id": null,
+          "lifecycle": "published",
+          "draft_revision": 2,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"week_source_refs\":[]}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-10-03T16:53:47+00:00",
+          "updated_at": "2026-10-03T16:53:47+00:00",
+          "published_at": "2026-10-03T16:53:47+00:00",
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "result_kind": "updated",
+          "changed_refs": [
+            "project:proj-71d53a5e60df"
+          ],
+          "generatorHost": null,
+          "generatorModel": null
+        },
+        "operation_id": "op_f94ea62fb894422ab093840dba477f45",
+        "receipt": {
+          "receipt_id": "rcpt_90783d845c2349ed9309ab1512c5e48b",
+          "operation_id": "op_f94ea62fb894422ab093840dba477f45",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project_update:pupd_915dc0db709d43408380d8bc261ffdec",
+          "created_at": 1791046427.09461,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project_update:pupd_915dc0db709d43408380d8bc261ffdec"
+        }
+      },
+      "response_sha256": "007e3722d49a066f054ff88fd5fb0ff65d0c78b1fc8a6330e6a4e94fb8b44e49"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/updates/pupd_915dc0db709d43408380d8bc261ffdec/regenerate",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_eae58da756d04cb68eb298aa8a201c49",
+          "project_id": "proj-71d53a5e60df",
+          "project_revision": 2,
+          "review_id": null,
+          "lifecycle": "draft",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":2,\"week_source_refs\":[]}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-10-03T16:53:47+00:00",
+          "updated_at": "2026-10-03T16:53:47+00:00",
+          "published_at": null,
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "generatorHost": null,
+          "generatorModel": null
+        }
+      },
+      "response_sha256": "124d8866d1e6c9130aa4bc704faf4cfe5ec5fedce4fa0a806ab6b72d3494f832",
+      "captured": {
+        "name": "latest_id",
+        "path": "update.id",
+        "value": "pupd_eae58da756d04cb68eb298aa8a201c49"
+      }
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/updates/pupd_eae58da756d04cb68eb298aa8a201c49/publish",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "update": {
+          "id": "pupd_eae58da756d04cb68eb298aa8a201c49",
+          "project_id": "proj-71d53a5e60df",
+          "project_revision": 3,
+          "review_id": null,
+          "lifecycle": "published",
+          "draft_revision": 1,
+          "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+          "claims_json": "[]",
+          "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":2,\"week_source_refs\":[]}",
+          "generator": "deterministic",
+          "generator_host": null,
+          "generator_model": null,
+          "created_at": "2026-10-03T16:53:47+00:00",
+          "updated_at": "2026-10-03T16:53:47+00:00",
+          "published_at": "2026-10-03T16:53:47+00:00",
+          "fallback_reason": null,
+          "fallback_receipt": null,
+          "result_kind": "updated",
+          "changed_refs": [
+            "project:proj-71d53a5e60df"
+          ],
+          "generatorHost": null,
+          "generatorModel": null
+        },
+        "operation_id": "op_d43d3f32be4e489e8f87412c962ccbe5",
+        "receipt": {
+          "receipt_id": "rcpt_6d2ba3072e764f13b13e7780bd042163",
+          "operation_id": "op_d43d3f32be4e489e8f87412c962ccbe5",
+          "state": "succeeded",
+          "outcome": "succeeded",
+          "result_ref": "project_update:pupd_eae58da756d04cb68eb298aa8a201c49",
+          "created_at": 1791046427.100829,
+          "actor_kind": "owner",
+          "actor_identity": "owner-session",
+          "delegator_kind": "",
+          "delegator_identity": "",
+          "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+          "target_ref": "project_update:pupd_eae58da756d04cb68eb298aa8a201c49"
+        }
+      },
+      "response_sha256": "07e0ef6044ae8cf7d95d3cca4d8a56f84a933aab07e44d18ecdb85dad65c7ee6"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "selector": "[aria-controls=desk-tool-shelf]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-keyboard",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "selector": "[id='desk-palette-option-project.open.proj-71d53a5e60df']",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": "[data-testid=room-body]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur3n5c3k",
+    "project_id": "proj-71d53a5e60df",
+    "update_id": "pupd_d7250d0e025a4075b76c7c86809a59d2",
+    "older_id": "pupd_915dc0db709d43408380d8bc261ffdec",
+    "latest_id": "pupd_eae58da756d04cb68eb298aa8a201c49"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-pointer",
+    "adapter_requested": "ui-by-viewport",
+    "selector": "[data-testid=updates-verb]",
+    "done": true
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "PUBLISHED\nREV 1"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "class": "update-list-row",
+        "data-update-id": "pupd_eae58da756d04cb68eb298aa8a201c49",
+        "data-lifecycle": "published",
+        "data-generator": "deterministic"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 142,
+        "y": 182,
+        "w": 147,
+        "h": 18
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div#surface-project-memory",
+      "after": "body"
+    },
+    "focus_label": {
+      "before": "Atlas ledger cutover",
+      "after": "HoldSpeak\nDesk\nObject\nGo\nWindow\nAtlas ledger cutover\n\u2302 THIS "
+    },
+    "document_text_sha256": {
+      "before": "0b6cb7c577d51f0fde7813e3e23e730a9b9c42a345badb1f3464334a203fbe5f",
+      "after": "294f0d1fbbcc600c7f79e6017738fdfa9c190e05d15105bb4d3cded15b1ce3ec"
+    },
+    "document_text_len": {
+      "before": 765,
+      "after": 711
+    },
+    "values": {
+      "before": [
+        {
+          "selector": "div.desk-surface-body > div.room-body > div.room-section-rise.room-ask-container > div.room-ask-section > div.room-ask-well > input.room-ask-input",
+          "value": ""
+        },
+        {
+          "selector": "div.room-section-rise.room-ask-container > div.room-ask-section > div.room-ask-well > span.room-ask-result > span.gadget-cycle > select",
+          "value": "answer"
+        }
+      ],
+      "after": []
+    }
+  },
+  "before": {
+    "observe_at": "[data-testid=update-list-item]:first-child [data-update-id=\"pupd_eae58da756d04cb68eb298aa8a201c49\"]",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "div.desk-surface-body > div.room-body > div.room-section-rise.room-ask-container > div.room-ask-section > div.room-ask-well > input.room-ask-input",
+        "value": ""
+      },
+      {
+        "selector": "div.room-section-rise.room-ask-container > div.room-ask-section > div.room-ask-well > span.room-ask-result > span.gadget-cycle > select",
+        "value": "answer"
+      }
+    ],
+    "field_value": null,
+    "focus": "div#surface-project-memory",
+    "focus_label": "Atlas ledger cutover",
+    "url": "http://127.0.0.1:63228/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      },
+      {
+        "title": "Atlas ledger cutover",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "0b6cb7c577d51f0fde7813e3e23e730a9b9c42a345badb1f3464334a203fbe5f",
+    "document_text_len": 765,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-71d53a5e60df/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_eae58da756d04cb68eb298aa8a201c49",
+              "project_id": "proj-71d53a5e60df",
+              "project_revision": 2,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":2,\"week_source_refs\":[]}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-03T16:53:47+00:00",
+              "updated_at": "2026-10-03T16:53:47+00:00",
+              "published_at": "2026-10-03T16:53:47+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            },
+            {
+              "id": "pupd_915dc0db709d43408380d8bc261ffdec",
+              "project_id": "proj-71d53a5e60df",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 2,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"week_source_refs\":[]}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-03T16:53:47+00:00",
+              "updated_at": "2026-10-03T16:53:47+00:00",
+              "published_at": "2026-10-03T16:53:47+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            },
+            {
+              "id": "pupd_d7250d0e025a4075b76c7c86809a59d2",
+              "project_id": "proj-71d53a5e60df",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "superseded",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"week_source_refs\":[]}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-03T16:53:47+00:00",
+              "updated_at": "2026-10-03T16:53:47+00:00",
+              "published_at": null,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ],
+          "latest_published_update_id": "pupd_eae58da756d04cb68eb298aa8a201c49"
+        },
+        "body_sha256": "22fcda0268b1cff2b77e2126b85087b6cdd2550eaff8ba372ca6c0114f798a28"
+      }
+    ],
+    "at_utc": "2026-10-03T16:53:49.580656+00:00"
+  },
+  "after": {
+    "observe_at": "[data-testid=update-list-item]:first-child [data-update-id=\"pupd_eae58da756d04cb68eb298aa8a201c49\"]",
+    "target_present": true,
+    "text": "PUBLISHED\nREV 1",
+    "attrs": {
+      "class": "update-list-row",
+      "data-update-id": "pupd_eae58da756d04cb68eb298aa8a201c49",
+      "data-lifecycle": "published",
+      "data-generator": "deterministic"
+    },
+    "rect": {
+      "x": 142,
+      "y": 182,
+      "w": 147,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 142,
+        "y": 182,
+        "w": 147,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 159.970703125,
+          "y": 184.25,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 159.970703125,
+          "y": 191,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 159.970703125,
+          "y": 197.75,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 215.0546875,
+          "y": 184.25,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 215.0546875,
+          "y": 191,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 215.0546875,
+          "y": 197.75,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 270.138671875,
+          "y": 184.25,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 270.138671875,
+          "y": 191,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 270.138671875,
+          "y": 197.75,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\nAtlas ledger cutover\n\u2302 THIS ",
+    "url": "http://127.0.0.1:63228/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      },
+      {
+        "title": "Atlas ledger cutover",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "294f0d1fbbcc600c7f79e6017738fdfa9c190e05d15105bb4d3cded15b1ce3ec",
+    "document_text_len": 711,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-71d53a5e60df/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_eae58da756d04cb68eb298aa8a201c49",
+              "project_id": "proj-71d53a5e60df",
+              "project_revision": 2,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":2,\"week_source_refs\":[]}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-03T16:53:47+00:00",
+              "updated_at": "2026-10-03T16:53:47+00:00",
+              "published_at": "2026-10-03T16:53:47+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            },
+            {
+              "id": "pupd_915dc0db709d43408380d8bc261ffdec",
+              "project_id": "proj-71d53a5e60df",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 2,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"week_source_refs\":[]}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-03T16:53:47+00:00",
+              "updated_at": "2026-10-03T16:53:47+00:00",
+              "published_at": "2026-10-03T16:53:47+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            },
+            {
+              "id": "pupd_d7250d0e025a4075b76c7c86809a59d2",
+              "project_id": "proj-71d53a5e60df",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "superseded",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"week_source_refs\":[]}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-03T16:53:47+00:00",
+              "updated_at": "2026-10-03T16:53:47+00:00",
+              "published_at": null,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ],
+          "latest_published_update_id": "pupd_eae58da756d04cb68eb298aa8a201c49"
+        },
+        "body_sha256": "22fcda0268b1cff2b77e2126b85087b6cdd2550eaff8ba372ca6c0114f798a28"
+      }
+    ],
+    "at_utc": "2026-10-03T16:53:50.821640+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:63228) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:63228) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/projects/proj-71d53a5e60df/updates",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "[data-testid=update-list-item]:first-child [data-update-id=\"pupd_eae58da756d04cb68eb298aa8a201c49\"]",
+    "target_present": true,
+    "text": "PUBLISHED\nREV 1",
+    "attrs": {
+      "class": "update-list-row",
+      "data-update-id": "pupd_eae58da756d04cb68eb298aa8a201c49",
+      "data-lifecycle": "published",
+      "data-generator": "deterministic"
+    },
+    "rect": {
+      "x": 142,
+      "y": 182,
+      "w": 147,
+      "h": 18
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 142,
+        "y": 182,
+        "w": 147,
+        "h": 18
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 159.970703125,
+          "y": 184.25,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 159.970703125,
+          "y": 191,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 159.970703125,
+          "y": 197.75,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 215.0546875,
+          "y": 184.25,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 215.0546875,
+          "y": 191,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 215.0546875,
+          "y": 197.75,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 270.138671875,
+          "y": 184.25,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 270.138671875,
+          "y": 191,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        },
+        {
+          "x": 270.138671875,
+          "y": 197.75,
+          "owned": true,
+          "owner": "ul.surface-ledger-rows > li.surface-ledger-row > div.surface-ledger-line > span.surface-ledger-primary > span.update-list-row > span.surface-token"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "HoldSpeak\nDesk\nObject\nGo\nWindow\nAtlas ledger cutover\n\u2302 THIS ",
+    "url": "http://127.0.0.1:63228/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      },
+      {
+        "title": "Atlas ledger cutover",
+        "rect": {
+          "x": 24,
+          "y": 72,
+          "w": 800,
+          "h": 619
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "294f0d1fbbcc600c7f79e6017738fdfa9c190e05d15105bb4d3cded15b1ce3ec",
+    "document_text_len": 711,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-71d53a5e60df/updates",
+        "status": 200,
+        "payload": {
+          "updates": [
+            {
+              "id": "pupd_eae58da756d04cb68eb298aa8a201c49",
+              "project_id": "proj-71d53a5e60df",
+              "project_revision": 2,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":2,\"week_source_refs\":[]}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-03T16:53:47+00:00",
+              "updated_at": "2026-10-03T16:53:47+00:00",
+              "published_at": "2026-10-03T16:53:47+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            },
+            {
+              "id": "pupd_915dc0db709d43408380d8bc261ffdec",
+              "project_id": "proj-71d53a5e60df",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "published",
+              "draft_revision": 2,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"week_source_refs\":[]}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-03T16:53:47+00:00",
+              "updated_at": "2026-10-03T16:53:47+00:00",
+              "published_at": "2026-10-03T16:53:47+00:00",
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            },
+            {
+              "id": "pupd_d7250d0e025a4075b76c7c86809a59d2",
+              "project_id": "proj-71d53a5e60df",
+              "project_revision": 1,
+              "review_id": null,
+              "lifecycle": "superseded",
+              "draft_revision": 1,
+              "body_md": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+              "claims_json": "[]",
+              "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":1,\"week_source_refs\":[]}",
+              "generator": "deterministic",
+              "generator_host": null,
+              "generator_model": null,
+              "created_at": "2026-10-03T16:53:47+00:00",
+              "updated_at": "2026-10-03T16:53:47+00:00",
+              "published_at": null,
+              "fallback_reason": null,
+              "fallback_receipt": null,
+              "deliveries": [],
+              "generatorHost": null,
+              "generatorModel": null
+            }
+          ],
+          "latest_published_update_id": "pupd_eae58da756d04cb68eb298aa8a201c49"
+        },
+        "body_sha256": "22fcda0268b1cff2b77e2126b85087b6cdd2550eaff8ba372ca6c0114f798a28"
+      }
+    ],
+    "at_utc": "2026-10-03T16:53:50.682944+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:63228) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:63228) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/projects/proj-71d53a5e60df/updates",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'PUBLISHED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 142, 'y': 182, 'w': 147, 'h': 18} | readable_text: 'REV 1' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 142, 'y': 182, 'w': 147, 'h': 18}",
+    "elapsed_s": 0.943
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: readable_text: 'PUBLISHED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 142, 'y': 182, 'w': 147, 'h': 18} | readable_text: 'REV 1' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 142, 'y': 182, 'w': 147, 'h': 18}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.081,
+    "first_satisfied_at_s": 0.943,
+    "completion_bound_s": 45.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: readable_text: 'PUBLISHED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 142, 'y': 182, 'w': 147, 'h': 18} | readable_text: 'REV 1' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 142, 'y': 182, 'w': 147, 'h': 18}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:63228) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:63228) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/projects/proj-71d53a5e60df/updates",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    ".tmp/h-c5/final-1440/20261003T165342Z-case.h_c5.update.latest_first-astra-1440/before.png",
+    ".tmp/h-c5/final-1440/20261003T165342Z-case.h_c5.update.latest_first-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur3n5c3k/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ur3n5c3k/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:63228"
+  ],
+  "duration_s": 8.422
+}

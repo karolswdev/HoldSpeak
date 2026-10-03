@@ -120,10 +120,17 @@ export interface DockSendRead {
   created_at?: string | null;
 }
 
-/** Pick the latest terminal send from the existing channel read. */
-export function latestSendOutcome(
+/** C3-W: the latest terminal send and its settle time (SENT 14:02, C1-8a). */
+export function latestSendSettle(
   sends: readonly DockSendRead[],
-): DockSendOutcome | null {
+): { outcome: DockSendOutcome; at: string | null } | null {
+  const outcome = latestSendOutcome(sends);
+  if (!outcome) return null;
+  const latest = latestTerminal(sends);
+  return { outcome, at: latest?.settled_at || latest?.created_at || null };
+}
+
+function latestTerminal(sends: readonly DockSendRead[]): DockSendRead | undefined {
   const terminal = sends.filter((send) =>
     send.state === "sent" || send.state === "failed" || send.state === "unknown",
   );
@@ -133,7 +140,14 @@ export function latestSendOutcome(
     if (timestamp) return timestamp;
     return Number(right.dispatch_seq ?? -1) - Number(left.dispatch_seq ?? -1);
   });
-  const outcome = terminal[0]?.state;
+  return terminal[0];
+}
+
+/** Pick the latest terminal send from the existing channel read. */
+export function latestSendOutcome(
+  sends: readonly DockSendRead[],
+): DockSendOutcome | null {
+  const outcome = latestTerminal(sends)?.state;
   return outcome === "sent" || outcome === "failed" || outcome === "unknown" ? outcome : null;
 }
 
@@ -180,8 +194,11 @@ export function projectNeedsYouCounts(
   return counts;
 }
 
-export function dockStateLabel(outcome: DockSendOutcome | null): string | null {
-  if (outcome === "sent") return "SENT";
+export function dockStateLabel(
+  outcome: DockSendOutcome | null,
+  settledAt?: string | null,
+): string | null {
+  if (outcome === "sent") return settledAt ? `SENT ${formatDockTime(settledAt)}` : "SENT";
   if (outcome === "failed") return "SEND FAILED";
   if (outcome === "unknown") return "UNKNOWN";
   return null;
@@ -191,5 +208,5 @@ export function formatDockTime(value: string | number | null | undefined): strin
   if (value === null || value === undefined || value === "") return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 }

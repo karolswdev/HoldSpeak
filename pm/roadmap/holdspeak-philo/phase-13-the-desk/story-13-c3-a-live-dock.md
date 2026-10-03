@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** PHILO-13-03 (A2, the one needs-you projection); PHILO-13-04 (A3, Record reads `res.ok`); PHILO-13-11 (C1 canvas ratified: live state drawn on the AppIcons, criterion 7); PHILO-13-09 (B4, for the 1:1 time on People)
 - **Unblocks:** C3-W (the faces lane's wiring step)
 - **Owner:** Astra (Luna, xhigh); Muad'Dib checks. Wiring step C3-W: Muad'Dib (Fedaykin, Opus 5.5) on `feat/philo-13-muaddib`; Astra checks
