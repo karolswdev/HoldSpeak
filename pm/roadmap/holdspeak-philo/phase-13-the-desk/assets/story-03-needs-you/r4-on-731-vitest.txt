@@ -1,0 +1,100 @@
+COMMAND: HOME=<isolated> TMPDIR=<isolated> npx vitest run src/desk/needsYou.test.ts src/desk/attention.test.ts src/desk/chair/arrivalOneThing.test.tsx src/desk/chair/arrivalRefresh.test.tsx src/desk/chair/arrivalAttention.test.tsx src/desk/chair/arrivalQuietDesk.test.tsx src/desk/chair/arrivalCoverage.test.tsx --reporter=verbose --maxWorkers=1
+
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-13-astra/web
+
+ ✓ src/desk/needsYou.test.ts > the one needs-you membership > counts a settled R1-R3 example once and preserves each ref 2ms
+ ✓ src/desk/needsYou.test.ts > the one needs-you membership > keeps a retried job as RETRYING after its due time 1ms
+ ✓ src/desk/needsYou.test.ts > the one needs-you membership > does not infer a missing engine from an absent roster row 0ms
+ ✓ src/desk/needsYou.test.ts > the one needs-you membership > makes a failed assignment read unknown instead of clear 0ms
+stderr | src/desk/needsYou.test.ts > the shared needs-you read > uses the cached Room read on mount and poll, and fresh only for explicit refresh
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/desk/needsYou.test.ts > the shared needs-you read > uses the producer-backed summary filter and never reads an unfiltered meeting page 1539ms
+ ✓ src/desk/needsYou.test.ts > the shared needs-you read > uses the cached Room read on mount and poll, and fresh only for explicit refresh 58ms
+ ✓ src/desk/needsYou.test.ts > the shared needs-you read > paginates meetings by offset when the HTTP route omits next_cursor 55ms
+ ✓ src/desk/needsYou.test.ts > the shared needs-you read > uses shared coverage semantics when complete is true over a failed row 56ms
+ ✓ src/desk/needsYou.test.ts > the shared needs-you read > keeps the meeting-path blocker unknown when the roster read fails 62ms
+stdout | src/desk/needsYou.test.ts > the real producer membership oracle > matches before/after real wire and rejects controlled wrong projections
+{"mutant":"count M1","rejection":"expected 7 to be 6 // Object.is equality","expectedCount":6,"actualCount":7,"expectedRefs":["philo13-a2-A1","A2 confirm the room commitment","philo13-a2-A3","philo13-a2-A4","blocker:engines","philo13-a2-failed-meeting"],"actualRefs":["A2 confirm the room commitment","M1 muted project attention","blocker:engines","philo13-a2-A1","philo13-a2-A3","philo13-a2-A4","philo13-a2-failed-meeting"]}
+{"mutant":"retain A2 Door duplicate","rejection":"expected 7 to be 6 // Object.is equality","expectedCount":6,"actualCount":7,"expectedRefs":["philo13-a2-A1","A2 confirm the room commitment","philo13-a2-A3","philo13-a2-A4","blocker:engines","philo13-a2-failed-meeting"],"actualRefs":["A2 confirm the room commitment","action-0005000000000000","blocker:engines","philo13-a2-A1","philo13-a2-A3","philo13-a2-A4","philo13-a2-failed-meeting"]}
+{"mutant":"drop R3 failed meeting","rejection":"expected 5 to be 6 // Object.is equality","expectedCount":6,"actualCount":5,"expectedRefs":["philo13-a2-A1","A2 confirm the room commitment","philo13-a2-A3","philo13-a2-A4","blocker:engines","philo13-a2-failed-meeting"],"actualRefs":["A2 confirm the room commitment","blocker:engines","philo13-a2-A1","philo13-a2-A3","philo13-a2-A4"]}
+
+ ✓ src/desk/needsYou.test.ts > the shared needs-you read > retains the last Room rows after a later Room read fails 62ms
+ ✓ src/desk/needsYou.test.ts > the shared needs-you read > shares one in-flight read between two mounted consumers 16ms
+stdout | src/desk/needsYou.test.ts > the real producer membership oracle > rejects a code mutant that skips dedupAttention on the real producer oracle
+{"mutant":"skip dedupAttention","rejection":"expected 7 to be 6 // Object.is equality","expectedCount":6,"actualCount":7,"expectedRefs":["A2 confirm the room commitment","blocker:engines","philo13-a2-A1","philo13-a2-A3","philo13-a2-A4","philo13-a2-failed-meeting"],"actualRefs":["A2 confirm the room commitment","blocker:engines","philo13-a2-A1","philo13-a2-A3","philo13-a2-A4","philo13-a2-dedup-A2","philo13-a2-failed-meeting"],"extraRef":"philo13-a2-dedup-A2"}
+
+ ✓ src/desk/needsYou.test.ts > the real producer membership oracle > matches before/after real wire and rejects controlled wrong projections 2629ms
+ ✓ src/desk/needsYou.test.ts > the real producer membership oracle > rejects a code mutant that skips dedupAttention on the real producer oracle 1780ms
+ ✓ src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > headline: the true total; the Project clause only over several Projects 1ms
+ ✓ src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > shows five rows with reason, source and one action; the caption carries the cap; the rest is reachable 463ms
+ ✓ src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > draws the dedup disclosure naming every source of a merged row 127ms
+ ✓ src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > draws exactly ONE filled primary on the whole face, and the selected filter is not it 67ms
+ ✓ src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > states the ranking key on the face as a filter strip and filters by class 91ms
+ ✓ src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > withholds the Project button over one Project and says `3 need you` 27ms
+ ✓ src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > keeps coverage ABOVE the answer: each unreadable source with its reason, token, observation and verb 32ms
+ ✓ src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > stamps a remembered row STILL TRUE with its observation, and never speaks the all-clear over a partial result 40ms
+ ✓ src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > speaks the all-clear with the coverage chip only when complete 14ms
+ ✓ src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > a Room commitment is one row with one lawful verb; the Door's card for it is not drawn twice 52ms
+ ✓ src/desk/chair/arrivalAttention.test.tsx > Arrival attention (HS-200-15) > Mark done is the verb only when owner and date are known, and it posts the explicit act 17ms
+ ✓ src/desk/chair/arrivalRefresh.test.tsx > HS-201-01 the row clears on the OPEN desk > re-reads the roster when the window takes focus again 54ms
+ ✓ src/desk/chair/arrivalRefresh.test.tsx > HS-201-01 the row clears on the OPEN desk > re-reads the roster on the product's settings-updated signal 32ms
+ ✓ src/desk/chair/arrivalRefresh.test.tsx > HS-201-01 the row clears on the OPEN desk > re-reads the roster on the hub's desk_changed frame 346ms
+ ✓ src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 headline > never says the all-clear while something is pending 1ms
+ ✓ src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > draws ONE row with ONE Button when no engine makes summaries 50ms
+ ✓ src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > is gone once the summary capability is assigned 21ms
+ ✓ src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > stays while only a global head exists (the queue cannot use it) 20ms
+ ✓ src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > draws no setup row while the roster read is still in flight 13ms
+ ✓ src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > names the unknown as its own row when the roster could not be read 21ms
+ ✓ src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > draws a row when no engine transcribes speech 21ms
+ ✓ src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > draws ONE row when neither engine is assigned 17ms
+ ✓ src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 the Chair names the one thing > clears the speech row when the speech capability is assigned 17ms
+ ✓ src/desk/chair/arrivalOneThing.test.tsx > HS-201-01 a microphone action never opens Models > draws no blocker row for a microphone primary_action 14ms
+ ✓ src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > says Nothing needs you only when the empty result is complete 42ms
+ ✓ src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > never speaks the all-clear over an empty PARTIAL result 33ms
+ ✓ src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > shows the coverage row beside healthy items and marks a remembered row 22ms
+ ✓ src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > treats a read that never landed as a coverage gap, not as quiet 19ms
+ ✓ src/desk/chair/arrivalCoverage.test.tsx > Arrival coverage (HS-200-07 / C4) > keeps the arrival honest at the narrow viewport rule (no prose row) 20ms
+ ✓ src/desk/chair/arrivalQuietDesk.test.tsx > HS-201-11 the head speaks one total > adds what asks outside the attention list 1ms
+ ✓ src/desk/chair/arrivalQuietDesk.test.tsx > HS-201-11 the arrival head and its asking rows agree > counts the setup row, and the calendar offer beside it never moves it 58ms
+ ✓ src/desk/chair/arrivalQuietDesk.test.tsx > HS-201-11 the arrival head and its asking rows agree > speaks the all-clear beside a calendar offer 27ms
+ ✓ src/desk/chair/arrivalQuietDesk.test.tsx > HS-201-11 the arrival head and its asking rows agree > speaks the all-clear with the calendar connected too 19ms
+ ✓ src/desk/attention.test.ts > ranking (AC2) > has the five classes in the ratified order and a cap of five 1ms
+ ✓ src/desk/attention.test.ts > ranking (AC2) > ranks overdue, due today, not run, no due date, waiting — severity never reorders 1ms
+ ✓ src/desk/attention.test.ts > ranking (AC2) > orders within each class by the ratified observable time 0ms
+ ✓ src/desk/attention.test.ts > ranking (AC2) > tie-breaks on the stable id, deterministically 0ms
+ ✓ src/desk/attention.test.ts > ranking (AC2) > trusts the wire's class when lawful and reads the facts otherwise 0ms
+ ✓ src/desk/attention.test.ts > ranking (AC2) > sorts an unknown time last in its class 0ms
+ ✓ src/desk/attention.test.ts > dedup (AC3) > collapses three projections of one obligation into one traceable row 1ms
+ ✓ src/desk/attention.test.ts > dedup (AC3) > keeps the same title in two Projects as two obligations 0ms
+ ✓ src/desk/attention.test.ts > dedup (AC3) > joins a Door card to the one Project that names the same thing 0ms
+ ✓ src/desk/attention.test.ts > dedup (AC3) > counsel probe 1: distinct obligations with one title and one source never merge 0ms
+ ✓ src/desk/attention.test.ts > dedup (AC3) > the true cross-source case is one row whose sources each keep their title and way in 0ms
+ ✓ src/desk/attention.test.ts > dedup (AC3) > the shared fixture ranks and groups exactly as the Python side does 0ms
+ ✓ src/desk/attention.test.ts > dedup (AC3) > keeps the wire's own sources when merging a row that arrived merged 0ms
+ ✓ src/desk/attention.test.ts > dedup (AC3) > normalises a leading ref, case and spacing 0ms
+ ✓ src/desk/attention.test.ts > the tokens the face draws > reason token: the class, the source's detail, the observable age 0ms
+ ✓ src/desk/attention.test.ts > the tokens the face draws > ages and observation stamps 0ms
+ ✓ src/desk/attention.test.ts > the tokens the face draws > caption: the cap in the caption, never a zero 0ms
+
+ Test Files  7 passed (7)
+      Tests  63 passed (63)
+   Start at  20:25:54
+   Duration  11.63s (transform 499ms, setup 306ms, import 1.52s, tests 8.07s, environment 1.23s)
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice
+EXIT: 0

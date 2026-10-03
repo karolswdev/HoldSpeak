@@ -1,0 +1,19 @@
+Isolated HOME; scoped H-A2 route and real-producer fixture tests only.
+
+$ uv run pytest --collect-only -q tests/unit/test_philo13_needs_you_route.py tests/unit/test_philo13_needs_you_fixture.py
+tests/unit/test_philo13_needs_you_route.py::test_summary_attention_filters_before_pagination_and_excludes_parked_and_old_job_leaves
+tests/unit/test_philo13_needs_you_route.py::test_cached_needs_you_route_rebuilds_after_real_action_item_status_mutation
+tests/unit/test_philo13_needs_you_fixture.py::test_seed_accepts_existing_empty_hub_and_refuses_oracle_reseed
+tests/unit/test_philo13_needs_you_fixture.py::test_export_reads_same_real_ids_and_mutates_a1_through_http_route
+tests/unit/test_philo13_needs_you_fixture.py::test_cli_stdout_is_json_and_export_keeps_seed_ids
+
+5 tests collected in 0.68s
+
+exit_code=0
+
+$ uv run pytest -q tests/unit/test_philo13_needs_you_route.py tests/unit/test_philo13_needs_you_fixture.py
+.....                                                                    [100%]
+5 passed in 6.81s
+
+exit_code=0
+

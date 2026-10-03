@@ -1,10 +1,10 @@
 // Dock — the application launcher + running window toolbar.
 // Extracted from DeskWindow.tsx (HS-117-04).
-import { useEffect, useRef, useState, useCallback, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { apiFetch } from "../../../lib/api";
 import { useIntelligenceAttention } from "../../intelligenceAttention";
 import { openIntelligence } from "../../intelligenceNavigation";
+import { useNeedsYou } from "../../needsYou";
 import { DOCK_SPRITES, SYSTEM } from "../../systemSprites";
 import { useDesk } from "../../store";
 import { useSettleState } from "../../settleState";
@@ -50,24 +50,12 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const chairSurface = useChairState((s) => s.surface);
   const toggleSurface = useChairState((s) => s.toggle);
   const intelligenceAttention = useIntelligenceAttention();
-  // HS-171-04: dock badge = needs-you count (muted excluded).
-  const [needsYouCount, setNeedsYouCount] = useState(0);
-  const refreshNeedsYou = useCallback(() => {
-    void apiFetch<{ count?: number }>("/api/desk/needs-you")
-      .then((data) => setNeedsYouCount(Number(data?.count) || 0))
-      .catch(() => {});
-  }, []);
-  useEffect(() => { refreshNeedsYou(); }, [refreshNeedsYou]);
-  // Refresh the dock badge on the same interval as the shade poll.
-  useEffect(() => {
-    const timer = window.setInterval(refreshNeedsYou, 60_000);
-    return () => window.clearInterval(timer);
-  }, [refreshNeedsYou]);
+  // PHILO-13-03: every Desk face reads the same membership snapshot. The
+  // hook owns the shared read and its one approximately-minute poll.
+  const { count: needsYouCount } = useNeedsYou();
   const intelligenceBadge = needsYouCount > 0
     ? String(needsYouCount)
-    : intelligenceAttention.overdue
-      ? String(intelligenceAttention.overdue)
-      : intelligenceAttention.briefReady ? "•" : null;
+    : intelligenceAttention.briefReady ? "•" : null;
   // HS-99-04 — the dock chip menu (one menu vocabulary).
   const [chipMenu, setChipMenu] = useState<{
     id: string;
@@ -152,7 +140,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           application.windowId === "intelligence:desk"
             ? intelligenceBadge
             : null;
-        const overdue = badge !== null && badge !== "•";
+        const needsYouBadge = badge !== null && badge !== "•";
         return (
           <Button
             key={application.windowId}
@@ -161,9 +149,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               "desk-dock-launch desk-dock-app" +
               (running ? " is-run" : "") +
               (running && application.windowId === front && !minimized ? " is-front" : "") +
-              (overdue ? " is-attention" : "")
+              (needsYouBadge ? " is-attention" : "")
             }
-            aria-label={badge ? `${application.label}, ${overdue ? `${badge} overdue` : "brief ready"}` : application.label}
+            aria-label={badge ? `${application.label}, ${needsYouBadge ? `${badge} need you` : "brief ready"}` : application.label}
             onClick={() => {
               const s = useDesk.getState();
               if (running && minimized) s.restorePanel(application.windowId);
@@ -198,7 +186,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             )}
             <span className="desk-dock-label">{application.label}</span>
             {badge ? (
-              <span className="desk-chip desk-dock-badge" data-tone={overdue ? "warn" : undefined}>
+              <span className="desk-chip desk-dock-badge" data-tone={needsYouBadge ? "warn" : undefined}>
                 {badge}
               </span>
             ) : null}

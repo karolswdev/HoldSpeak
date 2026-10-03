@@ -15328,6 +15328,16 @@
               "title": "Parked",
               "type": "boolean"
             }
+          },
+          {
+            "in": "query",
+            "name": "summary_attention",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Summary Attention",
+              "type": "boolean"
+            }
           }
         ],
         "responses": {

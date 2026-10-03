@@ -27,6 +27,38 @@ if TYPE_CHECKING:  # forward-ref types for annotations (imported lazily at runti
 log = get_logger("db.meetings")
 
 
+# PHILO-13 R3: the summary attention membership is the same persisted
+# vocabulary projected by web/src/desk/needsYou.ts::meetingSummaryBadge.
+# Select the current lineage leaf before applying status, so an old failed
+# predecessor cannot resurrect after a later successful successor.
+_SUMMARY_ATTENTION_CTE = """
+WITH lineage_leaves AS (
+    SELECT j.* FROM intel_jobs j
+    WHERE NOT EXISTS (
+        SELECT 1 FROM intel_jobs successor
+        WHERE successor.origin_job_id = j.job_id
+    )
+), current_jobs AS (
+    SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY meeting_id
+        ORDER BY requested_at DESC, updated_at DESC, job_id DESC
+    ) AS current_rank
+    FROM lineage_leaves
+)
+"""
+_SUMMARY_ATTENTION_PREDICATE = """
+(
+    LOWER(TRIM(COALESCE(m.intel_status, ''))) IN ('error', 'failed', 'import_failed')
+    OR LOWER(TRIM(COALESCE(attention_job.status, ''))) = 'failed'
+    OR (
+        LOWER(TRIM(COALESCE(attention_job.status, ''))) IN ('queued', 'retrying')
+        AND COALESCE(attention_job.attempts, 0) > 0
+        AND TRIM(COALESCE(attention_job.last_error, '')) <> ''
+    )
+)
+"""
+
+
 class MeetingRepository(BaseRepository):
     """Persistence for meetings, transcripts, speakers, and action items."""
 
@@ -635,6 +667,7 @@ class MeetingRepository(BaseRepository):
         has_open_actions: bool = False,
         meeting_ids: Optional[list[str]] = None,
         parked: bool = False,
+        summary_attention: bool = False,
     ) -> list[MeetingSummary]:
         """List meetings with optional filters.
 
@@ -643,7 +676,12 @@ class MeetingRepository(BaseRepository):
         results flow through the same faceted query.
         """
         with self._connection() as conn:
-            query = """
+            attention_join = """
+                LEFT JOIN current_jobs attention_job
+                    ON attention_job.meeting_id = m.id
+                   AND attention_job.current_rank = 1
+            """ if summary_attention else ""
+            query = (_SUMMARY_ATTENTION_CTE if summary_attention else "") + f"""
                 SELECT m.*,
                     (SELECT COUNT(*) FROM segments WHERE meeting_id = m.id) as segment_count,
                     (SELECT COUNT(*) FROM action_items WHERE meeting_id = m.id) as action_count,
@@ -660,9 +698,13 @@ class MeetingRepository(BaseRepository):
                         LIMIT 1
                     ), 0) as has_summary
                 FROM meetings m
+                {attention_join}
                 WHERE m.parked = ?
             """
             params: list[Any] = [int(bool(parked))]
+
+            if summary_attention:
+                query += f" AND {_SUMMARY_ATTENTION_PREDICATE}"
 
             if date_from:
                 query += " AND m.started_at >= ?"
@@ -722,6 +764,24 @@ class MeetingRepository(BaseRepository):
                 )
                 for r in conn.execute(query, params)
             ]
+
+    def get_summary_attention_count(self, *, parked: bool = False) -> int:
+        """Count FAILED/RETRYING Meetings across the active archive."""
+        with self._connection() as conn:
+            row = conn.execute(
+                _SUMMARY_ATTENTION_CTE
+                + """
+                SELECT COUNT(*)
+                FROM meetings m
+                LEFT JOIN current_jobs attention_job
+                    ON attention_job.meeting_id = m.id
+                   AND attention_job.current_rank = 1
+                WHERE m.parked = ?
+                  AND """
+                + _SUMMARY_ATTENTION_PREDICATE,
+                (int(bool(parked)),),
+            ).fetchone()
+            return int(row[0]) if row else 0
 
     def mark_route_fence_pending(self, meeting_id: str, error: str) -> None:
         """Persist the retry obligation when a Stop fence cannot commit."""

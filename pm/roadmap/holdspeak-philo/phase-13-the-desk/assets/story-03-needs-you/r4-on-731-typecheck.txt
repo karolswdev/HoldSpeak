@@ -1,0 +1,2 @@
+COMMAND: HOME=<isolated> TMPDIR=<isolated> npx tsc --noEmit --pretty false
+EXIT: 0
