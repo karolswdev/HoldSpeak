@@ -1,0 +1,2773 @@
+{
+ "_seat_guard_1440": [
+  "PHILO-13-15/17 SEAT GUARD (c5): 8 files, 9 seats, every anchor met"
+ ],
+ "C5-1-window-menu-send-to-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Ledger cutover sync window menu",
+    "rows": [
+     "Send to »",
+     "Iconify ⌘ M",
+     "Zoom ⌃ M",
+     "To back ⌃ B",
+     "Close window ⌘ W",
+     "Desk »",
+     "Go »",
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   },
+   {
+    "label": "Send to submenu",
+    "rows": [
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   }
+  ],
+  "screen_title": "Ledger cutover sync",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Ledger cutover sync"
+   ],
+   "front": "Ledger cutover sync",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Ledger cutover sync"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "submenus": [
+   {
+    "label": "Send to submenu",
+    "adjacent": true,
+    "side": "left",
+    "gap_right": -351
+   }
+  ],
+  "intended_front": "Ledger cutover sync"
+ },
+ "C5-3-picked-preview-in-view-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Ledger cutover sync",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Ledger cutover sync"
+   ],
+   "front": "Ledger cutover sync",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Ledger cutover sync"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[id='pullout:meeting:m-standup'] > .desk-pullout-head .desk-pullout-title": {
+    "found": true,
+    "whole": true,
+    "w": 117,
+    "h": 26,
+    "top": 64
+   },
+   "[id='pullout:meeting:m-standup'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 92,
+    "h": 19,
+    "top": 263
+   },
+   "[id='pullout:meeting:m-standup'] [data-testid=send-open] [data-testid=send-preview-field] dd": {
+    "found": true,
+    "whole": true,
+    "w": 241,
+    "h": 19,
+    "top": 358
+   },
+   "[id='pullout:meeting:m-standup'] [data-testid=send-open] [data-testid=send-verbs] .btn--primary": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 408
+   }
+  },
+  "submenus": [],
+  "intended_front": "Ledger cutover sync",
+  "hub_sends_before_send": 0
+ },
+ "C5-13-second-pick-in-place-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Ledger cutover sync",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Ledger cutover sync"
+   ],
+   "front": "Ledger cutover sync",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Ledger cutover sync"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[id='pullout:meeting:m-standup'] > .desk-pullout-head .desk-pullout-title": {
+    "found": true,
+    "whole": true,
+    "w": 117,
+    "h": 26,
+    "top": 64
+   },
+   "[id='pullout:meeting:m-standup'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 57,
+    "h": 19,
+    "top": 345
+   },
+   "[id='pullout:meeting:m-standup'] [data-testid=send-open] [data-testid=send-preview-field] dd": {
+    "found": true,
+    "whole": true,
+    "w": 225,
+    "h": 19,
+    "top": 440
+   },
+   "[id='pullout:meeting:m-standup'] [data-testid=send-open] [data-testid=send-verbs] .btn--primary": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 508
+   }
+  },
+  "submenus": [],
+  "intended_front": "Ledger cutover sync",
+  "picked": "PAY-118"
+ },
+ "C5-14-digest-keeps-destination-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Ledger cutover sync",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Ledger cutover sync"
+   ],
+   "front": "Ledger cutover sync",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Ledger cutover sync"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[id='pullout:meeting:m-standup'] > .desk-pullout-head .desk-pullout-title": {
+    "found": true,
+    "whole": true,
+    "w": 117,
+    "h": 26,
+    "top": 64
+   },
+   "[id='pullout:meeting:m-standup'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 57,
+    "h": 19,
+    "top": 345
+   },
+   "[id='pullout:meeting:m-standup'] [data-testid=send-open] [data-testid=send-preview-field] dd": {
+    "found": true,
+    "whole": true,
+    "w": 225,
+    "h": 19,
+    "top": 440
+   },
+   "[id='pullout:meeting:m-standup'] [data-testid=send-open] [data-testid=send-verbs] .btn--primary": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 508
+   }
+  },
+  "submenus": [],
+  "intended_front": "Ledger cutover sync",
+  "doc": "meeting_digest:m-standup",
+  "picked": "PAY-118"
+ },
+ "C5-4-sending-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Ledger cutover sync",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Ledger cutover sync"
+   ],
+   "front": "Ledger cutover sync",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Ledger cutover sync"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[id='pullout:meeting:m-standup'] > .desk-pullout-head .desk-pullout-title": {
+    "found": true,
+    "whole": true,
+    "w": 117,
+    "h": 26,
+    "top": 64
+   },
+   "[id='pullout:meeting:m-standup'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 92,
+    "h": 19,
+    "top": 263
+   }
+  },
+  "submenus": [],
+  "intended_front": "Ledger cutover sync"
+ },
+ "C5-5-sent-file-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Ledger cutover sync",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Ledger cutover sync"
+   ],
+   "front": "Ledger cutover sync",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Ledger cutover sync"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[id='pullout:meeting:m-standup'] > .desk-pullout-head .desk-pullout-title": {
+    "found": true,
+    "whole": true,
+    "w": 117,
+    "h": 26,
+    "top": 64
+   },
+   "[id='pullout:meeting:m-standup'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 102,
+    "h": 19,
+    "top": 159
+   }
+  },
+  "submenus": [],
+  "intended_front": "Ledger cutover sync",
+  "hub_sends_after_send": 1
+ },
+ "C5-6-failed-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Freeze the old ledger on Nov 5",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Freeze the old ledger on Nov 5"
+   ],
+   "front": "Freeze the old ledger on Nov 5",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Freeze the old ledger on Nov 5"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[id='pullout:decision:d-freeze'] > .desk-pullout-head .desk-pullout-title": {
+    "found": true,
+    "whole": true,
+    "w": 180,
+    "h": 26,
+    "top": 64
+   },
+   "[id='pullout:decision:d-freeze'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 57,
+    "h": 19,
+    "top": 277
+   }
+  },
+  "submenus": [],
+  "intended_front": "Freeze the old ledger on Nov 5"
+ },
+ "C5-7-unknown-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Adopt OpenTelemetry for all services",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Adopt OpenTelemetry for all services"
+   ],
+   "front": "Adopt OpenTelemetry for all services",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Adopt OpenTelemetry for all se"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[id='pullout:decision:d-otel'] > .desk-pullout-head .desk-pullout-title": {
+    "found": true,
+    "whole": true,
+    "w": 180,
+    "h": 26,
+    "top": 64
+   },
+   "[id='pullout:decision:d-otel'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 92,
+    "h": 19,
+    "top": 355
+   }
+  },
+  "submenus": [],
+  "intended_front": "Adopt OpenTelemetry for all services"
+ },
+ "C5-8-withheld-no-summary-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Vendor call window menu",
+    "rows": [
+     "Iconify ⌘ M",
+     "Zoom ⌃ M",
+     "To back ⌃ B",
+     "Close window ⌘ W",
+     "Desk »",
+     "Go »"
+    ]
+   }
+  ],
+  "screen_title": "Vendor call",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Vendor call"
+   ],
+   "front": "Vendor call",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "submenus": [],
+  "intended_front": "Vendor call"
+ },
+ "C5-2-object-menu-send-to-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Object menu",
+    "rows": [
+     "Send to »",
+     "Open",
+     "Get Info",
+     "Ask this project · Select a Project",
+     "Ask AI",
+     "Continue in thread",
+     "Edit",
+     "Rename F2",
+     "Duplicate",
+     "Move to Zone",
+     "Delete Delete",
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   },
+   {
+    "label": "Send to submenu",
+    "rows": [
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   }
+  ],
+  "screen_title": "Cutover requirements",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Cutover requirements"
+   ],
+   "front": "Cutover requirements",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "submenus": [
+   {
+    "label": "Send to submenu",
+    "adjacent": true,
+    "side": "right",
+    "gap_right": 1
+   }
+  ],
+  "intended_front": "Cutover requirements"
+ },
+ "C5-12-artifact-window-well-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Cutover requirements",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Cutover requirements"
+   ],
+   "front": "Cutover requirements",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[id='pullout:artifact:art-cutover-reqs'] > .desk-pullout-head .desk-pullout-title": {
+    "found": true,
+    "whole": true,
+    "w": 165,
+    "h": 26,
+    "top": 64
+   },
+   "[id='pullout:artifact:art-cutover-reqs'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 102,
+    "h": 19,
+    "top": 206
+   },
+   "[id='pullout:artifact:art-cutover-reqs'] [data-testid=send-open] [data-testid=send-preview-field] dd": {
+    "found": true,
+    "whole": true,
+    "w": 248,
+    "h": 38,
+    "top": 323
+   },
+   "[id='pullout:artifact:art-cutover-reqs'] [data-testid=send-open] [data-testid=send-verbs] .btn--primary": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 368
+   }
+  },
+  "submenus": [],
+  "intended_front": "Cutover requirements",
+  "raw_in_artifact": 0
+ },
+ "C5-9-no-destination-add-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Freeze the old ledger on Nov 5 window menu",
+    "rows": [
+     "Send to »",
+     "Iconify ⌘ M",
+     "Zoom ⌃ M",
+     "To back ⌃ B",
+     "Close window ⌘ W",
+     "Desk »",
+     "Go »",
+     "Add destination"
+    ]
+   },
+   {
+    "label": "Send to submenu",
+    "rows": [
+     "Add destination"
+    ]
+   }
+  ],
+  "screen_title": "Freeze the old ledger on Nov 5",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Freeze the old ledger on Nov 5"
+   ],
+   "front": "Freeze the old ledger on Nov 5",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Freeze the old ledger on Nov 5"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "submenus": [
+   {
+    "label": "Send to submenu",
+    "adjacent": true,
+    "side": "left",
+    "gap_right": -347
+   }
+  ],
+  "intended_front": "Freeze the old ledger on Nov 5"
+ },
+ "C5-10a-room-checking-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Payments ledger cutover window menu",
+    "rows": [
+     "Send to · CHECKING »",
+     "Iconify ⌘ M",
+     "Zoom ⌃ M",
+     "To back ⌃ B",
+     "Close window ⌘ W",
+     "Desk »",
+     "Go »",
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   },
+   {
+    "label": "Send to · CHECKING submenu",
+    "rows": [
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   }
+  ],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "SINCE YOU LOOKED",
+    "b": "Ask this project",
+    "w": 114,
+    "h": 18,
+    "waiver": "sticky"
+   },
+   {
+    "a": "SAT 00:42",
+    "b": "Choose",
+    "w": 58,
+    "h": 16,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Nothing since 00:42",
+    "b": "Ask this project",
+    "w": 295,
+    "h": 8,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Nothing since 00:42",
+    "b": "Speak",
+    "w": 34,
+    "h": 7,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Nothing since 00:42",
+    "b": "Choose",
+    "w": 61,
+    "h": 2,
+    "waiver": "sticky"
+   }
+  ],
+  "submenus": [
+   {
+    "label": "Send to · CHECKING submenu",
+    "adjacent": true,
+    "side": "right",
+    "gap_right": 1
+   }
+  ],
+  "intended_front": "Payments ledger cutover"
+ },
+ "C5-10b-room-cant-check-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Payments ledger cutover window menu",
+    "rows": [
+     "Send to · CAN'T CHECK »",
+     "Iconify ⌘ M",
+     "Zoom ⌃ M",
+     "To back ⌃ B",
+     "Close window ⌘ W",
+     "Desk »",
+     "Go »",
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   },
+   {
+    "label": "Send to · CAN'T CHECK submenu",
+    "rows": [
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   }
+  ],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "SINCE YOU LOOKED",
+    "b": "Ask this project",
+    "w": 114,
+    "h": 18,
+    "waiver": "sticky"
+   },
+   {
+    "a": "SAT 00:42",
+    "b": "Choose",
+    "w": 58,
+    "h": 16,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Nothing since 00:42",
+    "b": "Ask this project",
+    "w": 295,
+    "h": 8,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Nothing since 00:42",
+    "b": "Speak",
+    "w": 34,
+    "h": 7,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Nothing since 00:42",
+    "b": "Choose",
+    "w": 61,
+    "h": 2,
+    "waiver": "sticky"
+   }
+  ],
+  "submenus": [
+   {
+    "label": "Send to · CAN'T CHECK submenu",
+    "adjacent": true,
+    "side": "right",
+    "gap_right": 1
+   }
+  ],
+  "intended_front": "Payments ledger cutover"
+ },
+ "C5-10c-room-pick-opens-failure-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "SR",
+    "b": "Ask this project",
+    "w": 9,
+    "h": 18,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Sam Rivera",
+    "b": "Ask this project",
+    "w": 81,
+    "h": 21,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Open: Sam Rivera",
+    "b": "Choose",
+    "w": 40,
+    "h": 21,
+    "waiver": "sticky"
+   }
+  ],
+  "whole": {
+   "[id='surface-project-memory'] [data-testid=c5-room-read-failed] [data-testid=c5-latest-unreadable]": {
+    "found": true,
+    "whole": true,
+    "w": 764,
+    "h": 24,
+    "top": 142
+   },
+   "[id='surface-project-memory'] [data-testid=c5-room-read-failed] [data-testid=c5-latest-unreadable-retry]": {
+    "found": true,
+    "whole": true,
+    "w": 54,
+    "h": 24,
+    "top": 142
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "C5-11-room-retry-recovers-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[id='surface-project-memory'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 102,
+    "h": 19,
+    "top": 153
+   },
+   "[id='surface-project-memory'] [data-testid=send-open] [data-testid=send-preview-field] dd": {
+    "found": true,
+    "whole": true,
+    "w": 648,
+    "h": 19,
+    "top": 226
+   },
+   "[id='surface-project-memory'] [data-testid=send-open] [data-testid=send-verbs] .btn--primary": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 253
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "C5-15-brief-window-picked-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Brief",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Brief"
+   ],
+   "front": "Brief",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[id='chair:brief'] > .desk-pullout-head .desk-pullout-title": {
+    "found": true,
+    "whole": true,
+    "w": 53,
+    "h": 26,
+    "top": 42
+   },
+   "[id='chair:brief'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 92,
+    "h": 19,
+    "top": 84
+   },
+   "[id='chair:brief'] [data-testid=send-open] [data-testid=send-preview-field] dd": {
+    "found": true,
+    "whole": true,
+    "w": 531,
+    "h": 19,
+    "top": 152
+   },
+   "[id='chair:brief'] [data-testid=send-open] [data-testid=send-verbs] .btn--primary": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 202
+   }
+  },
+  "submenus": [],
+  "intended_front": "Brief"
+ },
+ "C5-16a-offline-menu-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Adopt OpenTelemetry for all services window menu",
+    "rows": [
+     "Send to · OFFLINE »",
+     "Iconify ⌘ M",
+     "Zoom ⌃ M",
+     "To back ⌃ B",
+     "Close window ⌘ W",
+     "Desk »",
+     "Go »",
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   },
+   {
+    "label": "Send to · OFFLINE submenu",
+    "rows": [
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   }
+  ],
+  "screen_title": "Adopt OpenTelemetry for all services",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Adopt OpenTelemetry for all services"
+   ],
+   "front": "Adopt OpenTelemetry for all services",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Adopt OpenTelemetry for all se"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "submenus": [
+   {
+    "label": "Send to · OFFLINE submenu",
+    "adjacent": true,
+    "side": "left",
+    "gap_right": -351
+   }
+  ],
+  "intended_front": "Adopt OpenTelemetry for all services"
+ },
+ "C5-16b-offline-well-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Adopt OpenTelemetry for all services",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 849,
+    "h": 51
+   },
+   "capture": {
+    "top": 772,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Adopt OpenTelemetry for all services"
+   ],
+   "front": "Adopt OpenTelemetry for all services",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Adopt OpenTelemetry for all se"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "submenus": [],
+  "intended_front": "Adopt OpenTelemetry for all services"
+ },
+ "_browser_errors_1440": [],
+ "_seat_guard_393": [
+  "PHILO-13-15/17 SEAT GUARD (c5): 8 files, 9 seats, every anchor met"
+ ],
+ "C5-1-window-menu-send-to-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Ledger cutover sync window menu",
+    "rows": [
+     "Send to",
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   }
+  ],
+  "screen_title": "Ledger cutover sync",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Ledger cutover sync"
+   ],
+   "front": "Ledger cutover sync",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Ledger cutover sync"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "Dictate about this",
+    "w": 126,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Record follow-up",
+    "w": 124,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": "Ledger cutover sync"
+ },
+ "C5-3-picked-preview-in-view-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Ledger cutover sync",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Ledger cutover sync"
+   ],
+   "front": "Ledger cutover sync",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Ledger cutover sync"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "Dictate about this",
+    "w": 126,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Record follow-up",
+    "w": 124,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "whole": {
+   ".desk-screen-name": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 17,
+    "top": 13
+   },
+   "[id='pullout:meeting:m-standup'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 92,
+    "h": 19,
+    "top": 261
+   },
+   "[id='pullout:meeting:m-standup'] [data-testid=send-open] [data-testid=send-preview-field] dd": {
+    "found": true,
+    "whole": true,
+    "w": 242,
+    "h": 19,
+    "top": 356
+   },
+   "[id='pullout:meeting:m-standup'] [data-testid=send-open] [data-testid=send-verbs] .btn--primary": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 420
+   }
+  },
+  "submenus": [],
+  "intended_front": "Ledger cutover sync",
+  "hub_sends_before_send": 0
+ },
+ "C5-13-second-pick-in-place-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Ledger cutover sync",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Ledger cutover sync"
+   ],
+   "front": "Ledger cutover sync",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Ledger cutover sync"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "Dictate about this",
+    "w": 126,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Record follow-up",
+    "w": 124,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "whole": {
+   ".desk-screen-name": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 17,
+    "top": 13
+   },
+   "[id='pullout:meeting:m-standup'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 57,
+    "h": 19,
+    "top": 343
+   },
+   "[id='pullout:meeting:m-standup'] [data-testid=send-open] [data-testid=send-preview-field] dd": {
+    "found": true,
+    "whole": true,
+    "w": 226,
+    "h": 19,
+    "top": 438
+   },
+   "[id='pullout:meeting:m-standup'] [data-testid=send-open] [data-testid=send-verbs] .btn--primary": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 520
+   }
+  },
+  "submenus": [],
+  "intended_front": "Ledger cutover sync",
+  "picked": "PAY-118"
+ },
+ "C5-14-digest-keeps-destination-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Ledger cutover sync",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Ledger cutover sync"
+   ],
+   "front": "Ledger cutover sync",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Ledger cutover sync"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "Dictate about this",
+    "w": 126,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Record follow-up",
+    "w": 124,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "whole": {
+   ".desk-screen-name": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 17,
+    "top": 13
+   },
+   "[id='pullout:meeting:m-standup'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 57,
+    "h": 19,
+    "top": 343
+   },
+   "[id='pullout:meeting:m-standup'] [data-testid=send-open] [data-testid=send-preview-field] dd": {
+    "found": true,
+    "whole": true,
+    "w": 226,
+    "h": 19,
+    "top": 438
+   },
+   "[id='pullout:meeting:m-standup'] [data-testid=send-open] [data-testid=send-verbs] .btn--primary": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 520
+   }
+  },
+  "submenus": [],
+  "intended_front": "Ledger cutover sync",
+  "doc": "meeting_digest:m-standup",
+  "picked": "PAY-118"
+ },
+ "C5-4-sending-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Ledger cutover sync",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Ledger cutover sync"
+   ],
+   "front": "Ledger cutover sync",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Ledger cutover sync"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "Dictate about this",
+    "w": 126,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Record follow-up",
+    "w": 124,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "whole": {
+   ".desk-screen-name": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 17,
+    "top": 13
+   },
+   "[id='pullout:meeting:m-standup'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 92,
+    "h": 19,
+    "top": 261
+   }
+  },
+  "submenus": [],
+  "intended_front": "Ledger cutover sync"
+ },
+ "C5-5-sent-file-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Ledger cutover sync",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Ledger cutover sync"
+   ],
+   "front": "Ledger cutover sync",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Ledger cutover sync"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "Dictate about this",
+    "w": 126,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Record follow-up",
+    "w": 124,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "whole": {
+   ".desk-screen-name": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 17,
+    "top": 13
+   },
+   "[id='pullout:meeting:m-standup'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 102,
+    "h": 19,
+    "top": 157
+   }
+  },
+  "submenus": [],
+  "intended_front": "Ledger cutover sync",
+  "hub_sends_after_send": 1
+ },
+ "C5-6-failed-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Freeze the old ledger on Nov 5",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Freeze the old ledger on Nov 5"
+   ],
+   "front": "Freeze the old ledger on Nov 5",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Freeze the old ledger on Nov 5"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   ".desk-screen-name": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 17,
+    "top": 13
+   },
+   "[id='pullout:decision:d-freeze'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 57,
+    "h": 19,
+    "top": 227
+   }
+  },
+  "submenus": [],
+  "intended_front": "Freeze the old ledger on Nov 5"
+ },
+ "C5-7-unknown-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Adopt OpenTelemetry for all services",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Adopt OpenTelemetry for all services"
+   ],
+   "front": "Adopt OpenTelemetry for all services",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Adopt OpenTelemetry for all se"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   ".desk-screen-name": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 17,
+    "top": 13
+   },
+   "[id='pullout:decision:d-otel'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 92,
+    "h": 19,
+    "top": 258
+   }
+  },
+  "submenus": [],
+  "intended_front": "Adopt OpenTelemetry for all services"
+ },
+ "C5-8-withheld-no-summary-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Vendor call window menu",
+    "rows": [
+     "Iconify ⌘ M",
+     "Zoom · Fills the screen ⌃ M",
+     "To back ⌃ B",
+     "Close window ⌘ W",
+     "Desk »",
+     "Go »"
+    ]
+   }
+  ],
+  "screen_title": "Vendor call",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Vendor call"
+   ],
+   "front": "Vendor call",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Vendor call"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 94,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 69,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 90,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 89,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 97,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 67,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 137,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Assign to Payments ledger cutove",
+    "w": 181,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Inspect Payments ledger cutover ",
+    "w": 68,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Assign to Platform observability",
+    "w": 162,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Inspect Platform observability P",
+    "w": 68,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Assign to Staff hiring loop Proj",
+    "w": 127,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Inspect Staff hiring loop Projec",
+    "w": 68,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Dictate about this",
+    "w": 126,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Record follow-up",
+    "w": 124,
+    "h": 27,
+    "own": 3,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": "Vendor call"
+ },
+ "C5-2-object-menu-send-to-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Go menu",
+    "rows": [
+     "◂ Send to",
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   }
+  ],
+  "screen_title": "Cutover requirements",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Cutover requirements"
+   ],
+   "front": "Cutover requirements",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Cutover requirements"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 94,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 69,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 90,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 89,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 97,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 67,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": "Cutover requirements"
+ },
+ "C5-12-artifact-window-well-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Cutover requirements",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Cutover requirements"
+   ],
+   "front": "Cutover requirements",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Cutover requirements"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   ".desk-screen-name": {
+    "found": true,
+    "whole": true,
+    "w": 68,
+    "h": 17,
+    "top": 13
+   },
+   "[id='pullout:artifact:art-cutover-reqs'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 102,
+    "h": 19,
+    "top": 109
+   },
+   "[id='pullout:artifact:art-cutover-reqs'] [data-testid=send-open] [data-testid=send-preview-field] dd": {
+    "found": true,
+    "whole": true,
+    "w": 249,
+    "h": 38,
+    "top": 226
+   },
+   "[id='pullout:artifact:art-cutover-reqs'] [data-testid=send-open] [data-testid=send-verbs] .btn--primary": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 285
+   }
+  },
+  "submenus": [],
+  "intended_front": "Cutover requirements",
+  "raw_in_artifact": 0
+ },
+ "C5-9-no-destination-add-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Freeze the old ledger on Nov 5 window menu",
+    "rows": [
+     "Send to",
+     "Add destination"
+    ]
+   }
+  ],
+  "screen_title": "Freeze the old ledger on Nov 5",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Freeze the old ledger on Nov 5"
+   ],
+   "front": "Freeze the old ledger on Nov 5",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Freeze the old ledger on Nov 5"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 94,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 69,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 90,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 89,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 97,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 67,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "btn--chrome desk-chip quiet",
+    "w": 137,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Assign to Payments ledger cutove",
+    "w": 181,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Inspect Payments ledger cutover ",
+    "w": 68,
+    "h": 27,
+    "own": 0,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": "Freeze the old ledger on Nov 5"
+ },
+ "C5-10a-room-checking-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Payments ledger cutover window menu",
+    "rows": [
+     "Send to · CHECKING",
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   }
+  ],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "C5-10b-room-cant-check-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Payments ledger cutover window menu",
+    "rows": [
+     "Send to · CAN'T CHECK",
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   }
+  ],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "C5-10c-room-pick-opens-failure-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[id='surface-project-memory'] [data-testid=c5-room-read-failed] [data-testid=c5-latest-unreadable]": {
+    "found": true,
+    "whole": true,
+    "w": 365,
+    "h": 52,
+    "top": 132
+   },
+   "[id='surface-project-memory'] [data-testid=c5-room-read-failed] [data-testid=c5-latest-unreadable-retry]": {
+    "found": true,
+    "whole": true,
+    "w": 54,
+    "h": 24,
+    "top": 146
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "C5-11-room-retry-recovers-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover",
+    "UPDATE Published · Determinist"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[id='surface-project-memory'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 102,
+    "h": 19,
+    "top": 171
+   },
+   "[id='surface-project-memory'] [data-testid=send-open] [data-testid=send-preview-field] dd": {
+    "found": true,
+    "whole": true,
+    "w": 249,
+    "h": 38,
+    "top": 288
+   },
+   "[id='surface-project-memory'] [data-testid=send-open] [data-testid=send-verbs] .btn--primary": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 24,
+    "top": 348
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "C5-15-brief-window-picked-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Brief",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Brief"
+   ],
+   "front": "Brief",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   ".desk-screen-name": {
+    "found": true,
+    "whole": true,
+    "w": 30,
+    "h": 17,
+    "top": 13
+   },
+   "[id='chair:brief'] li.surface-ledger-row:has([data-testid=send-open]) .surface-primary": {
+    "found": true,
+    "whole": true,
+    "w": 92,
+    "h": 19,
+    "top": 251
+   },
+   "[id='chair:brief'] [data-testid=send-open] [data-testid=send-preview-field] dd": {
+    "found": true,
+    "whole": true,
+    "w": 274,
+    "h": 19,
+    "top": 341
+   },
+   "[id='chair:brief'] [data-testid=send-open] [data-testid=send-verbs] .btn--primary": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 44,
+    "top": 405
+   }
+  },
+  "submenus": [],
+  "intended_front": "Brief"
+ },
+ "C5-16a-offline-menu-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Adopt OpenTelemetry for all services window menu",
+    "rows": [
+     "Send to · OFFLINE",
+     "Team updates · FILE",
+     "Slack #leads · SLACK",
+     "PAY-118 · JIRA"
+    ]
+   }
+  ],
+  "screen_title": "Adopt OpenTelemetry for all services",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Adopt OpenTelemetry for all services"
+   ],
+   "front": "Adopt OpenTelemetry for all services",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Adopt OpenTelemetry for all se"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": "Adopt OpenTelemetry for all services"
+ },
+ "C5-16b-offline-well-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Adopt OpenTelemetry for all services",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Adopt OpenTelemetry for all services"
+   ],
+   "front": "Adopt OpenTelemetry for all services",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Adopt OpenTelemetry for all se"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": "Adopt OpenTelemetry for all services"
+ },
+ "_browser_errors_393": [],
+ "_fails": []
+}
