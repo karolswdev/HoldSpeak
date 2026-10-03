@@ -6,6 +6,7 @@ they cannot patch individual calendar rows.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from typing import Any, Iterable, Optional, Protocol, Sequence
 
 from .base import BaseRepository
@@ -21,6 +22,7 @@ class CalendarEventProjection(Protocol):
     ends_at: str
     location: Optional[str]
     meeting_url: Optional[str]
+    attendees: Sequence[str]
 
 
 @dataclass(frozen=True)
@@ -36,6 +38,7 @@ class CalendarEvent:
     subscription_revision: str
     source_id: str = ""
     source_label: str = ""
+    attendees: tuple[str, ...] = ()
 
 
 def _row_to_model(row: Any) -> CalendarEvent:
@@ -51,6 +54,7 @@ def _row_to_model(row: Any) -> CalendarEvent:
         subscription_revision=str(row["subscription_revision"]),
         source_id=str(row["source_id"]) if "source_id" in row.keys() else "",
         source_label=str(row["source_label"]) if "source_label" in row.keys() else "",
+        attendees=tuple(json.loads(row["attendees_json"])),
     )
 
 
@@ -94,8 +98,9 @@ class CalendarEventRepository(BaseRepository):
                 conn.execute(
                     """INSERT INTO calendar_events
                        (id, uid, title, starts_at, ends_at, location, meeting_url,
-                        last_seen_at, subscription_revision, source_id, source_label)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                        ON CONFLICT(id) DO UPDATE SET
                            uid=excluded.uid,
                            title=excluded.title,
@@ -106,7 +111,8 @@ class CalendarEventRepository(BaseRepository):
                            last_seen_at=excluded.last_seen_at,
                            subscription_revision=excluded.subscription_revision,
                            source_id=excluded.source_id,
-                           source_label=excluded.source_label""",
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
                     (
                         str(event.id),
                         str(event.uid),
@@ -119,6 +125,7 @@ class CalendarEventRepository(BaseRepository):
                         revision,
                         sid,
                         slabel,
+                        json.dumps(event.attendees),
                     ),
                 )
 
