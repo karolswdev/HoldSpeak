@@ -354,6 +354,39 @@ class TestTheGadgets:
             finally:
                 browser.close()
 
+    def test_zoom_survives_reload_unarranged_1440(self) -> None:
+        """Astra on PR #731: open, Zoom, reload, Zoom -> the exact original
+        rect, with NO drag first (a window the owner never arranged)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, 1440)
+            try:
+                _stage(page, "review-meetings")
+                meetings = page.locator(".desk-window-shell[aria-label='Meetings']")
+                meetings.wait_for()
+                page.wait_for_timeout(600)
+                original = _rect(self._stack(page), "Meetings")
+                zoom = meetings.get_by_role("button", name="Zoom Meetings")
+                zoom.click()
+                zoomed = _rect(self._stack(page), "Meetings")
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                meetings.wait_for()
+                page.wait_for_timeout(800)
+                after_reload = _rect(self._stack(page), "Meetings")
+                zoom.click()
+                back = _rect(self._stack(page), "Meetings")
+                facts = {"original": original, "zoomed": zoomed, "after_reload": after_reload, "back": back,
+                         "errors": [e for e in errors if "ResizeObserver" not in e]}
+                (SHOTS / "gadget-facts-zoom-reload-1440.json").write_text(json.dumps(facts, indent=2) + "\n")
+                assert zoomed != original, facts
+                assert after_reload == zoomed, facts
+                assert back == original, facts
+                assert not facts["errors"], facts["errors"]
+            finally:
+                browser.close()
+
     def _notes(self, page: Any) -> list[Any]:
         return page.evaluate(
             """async (token) => { const r = await fetch('/api/notes', {headers: {authorization: `Bearer ${token}`}});

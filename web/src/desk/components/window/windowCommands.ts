@@ -6,6 +6,7 @@ import {
   cycleWindows as cycleWindowsRaw,
   cycleWindowsReverse as cycleWindowsReverseRaw,
   frontWindowId,
+  shellEls,
 } from "./windowRegistry";
 
 /** Window command handlers live below the React frame/barrel so the command
@@ -32,6 +33,24 @@ export function snapFrontWindow(side: "left" | "right"): void {
   state.focusPanel(id);
 }
 
+/** PHILO-13-12 (C2) — zoom one window between its two remembered rects.
+ * The FIRST zoom keeps the normal rect even when the owner never arranged
+ * the window: only arranged rects are saved, so without this a reload
+ * measured the zoomed size as the normal one (Astra, PR #731). The rect is
+ * read from the glass, so a content-sized window comes back exactly. */
+export function zoomWindow(id: string): void {
+  const state = useDesk.getState();
+  if (!state.panelMax.includes(id) && !state.panelSaved.includes(id)) {
+    const r = shellEls.get(id)?.getBoundingClientRect();
+    const rect =
+      r && r.width && r.height
+        ? { x: r.left, y: r.top, w: r.width, h: r.height }
+        : state.panelRects[id];
+    if (rect) state.setPanelRect(id, rect, true);
+  }
+  useDesk.getState().toggleMaximizePanel(id);
+}
+
 /** PHILO-13-12 (C2) — ⌃M: zoom the front window between its two
  * remembered rects (Intuition's zoom). The same toggle as the gadget. */
 export function zoomFrontWindow(): void {
@@ -39,7 +58,7 @@ export function zoomFrontWindow(): void {
   if (!id) return;
   const state = useDesk.getState();
   if (state.panelMin.includes(id)) state.restorePanel(id);
-  state.toggleMaximizePanel(id);
+  zoomWindow(id);
 }
 
 /** Kept for its importers: zoom the front window (was: maximize only). */

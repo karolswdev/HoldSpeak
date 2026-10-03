@@ -67,6 +67,7 @@ import {
   maximizeFrontWindow,
   sendWindowToBack,
   snapFrontWindow,
+  zoomWindow,
 } from "./window/windowCommands";
 import { Dock } from "./window/Dock";
 import { Button } from "../../components/signal/Signal";
@@ -933,7 +934,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           if (compact) return;
           const t = e.target as HTMLElement | null;
           if (t?.closest("button, a, input, textarea, select")) return;
-          useDesk.getState().toggleMaximizePanel(id);
+          zoomWindow(id);
         }}
       >
         {/* PHILO-13-11 (C1) — the Workbench gadget set: close flush left;
@@ -976,7 +977,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
                 aria-label={`Zoom ${name}`}
                 title={`Zoom ${name}`}
                 aria-pressed={maximized}
-                onClick={() => useDesk.getState().toggleMaximizePanel(id)}
+                onClick={() => zoomWindow(id)}
               >
                 <GadgetGlyph kind="zoom" />
               </Button>
@@ -1003,7 +1004,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             maximized,
             compact,
             requestMinimize,
-            toggleMaximize: () => useDesk.getState().toggleMaximizePanel(id),
+            toggleMaximize: () => zoomWindow(id),
             requestClose,
             toBack: () => sendWindowToBack(id),
           })}
