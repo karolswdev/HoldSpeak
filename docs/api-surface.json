@@ -3647,7 +3647,9 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/meetings/{meeting_id}/proposals",

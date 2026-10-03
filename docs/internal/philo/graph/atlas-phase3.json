@@ -74,6 +74,22 @@
         },
         {
           "kind": "ui",
+          "action": "fill",
+          "selector": "[data-testid=palette-name]",
+          "value": "Adopt the one desk bus",
+          "adapter": "ui-keyboard",
+          "why": "PHILO-13-08 (B3): the deck asks the decision's title first; nothing is written before it is named (grounding F9)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "selector": "[data-testid=palette-name]",
+          "key": "Enter",
+          "adapter": "ui-keyboard",
+          "why": "Enter with a title creates it: POST /api/decisions with that title"
+        },
+        {
+          "kind": "ui",
           "action": "wait_for",
           "selector": ".desk-decision-card textarea[aria-label=Decision]",
           "adapter": "ui-pointer",
@@ -83,10 +99,10 @@
           "kind": "check",
           "predicate": {
             "kind": "text_contains",
-            "value": "New decision"
+            "value": "Adopt the one desk bus"
           },
-          "observe_at": "[role=region][aria-label='New decision']",
-          "why": "the opened face is the new decision's pullout, titled by it"
+          "observe_at": "[role=region][aria-label='Adopt the one desk bus']",
+          "why": "the opened face is the new decision's pullout, titled by the name he gave it"
         },
         {
           "kind": "api",
@@ -118,7 +134,7 @@
           "role": "button",
           "name": "Done",
           "adapter": "ui-pointer",
-          "why": "DecisionPullout Done -> updatePrimitive('decision') -> PUT /api/decisions/{id}; the default title yields to the first line"
+          "why": "DecisionPullout Done -> updatePrimitive('decision') -> PUT /api/decisions/{id}; the title he named stays"
         },
         {
           "kind": "check",
@@ -212,7 +228,7 @@
           "body_contains": "invalid decision status"
         },
         "observe_at": "protocol: POST /api/decisions",
-        "words": "setup: Search > New Decision creates a decision (201) and OPENS its face (the DecisionPullout, in Edit); the owner writes Context (the source) and Decision; Done titles it by the first line; the hub holds title, text and source under the face-minted id; after a reload Search reopens it under the new title and the card shows text and source. trigger: the same route refuses a bad status with 400 that NAMES the refusal.",
+        "words": "setup: Search > New Decision > its title creates a decision (201) and OPENS its face (the DecisionPullout, in Edit); the owner writes Context (the source) and Decision; the title he named stays; the hub holds title, text and source under the face-minted id; after a reload Search reopens it under the new title and the card shows text and source. trigger: the same route refuses a bad status with 400 that NAMES the refusal.",
         "reads": [
           {
             "method": "GET",
@@ -315,6 +331,22 @@
           "why": "the face create verb desk.new-decision (web/src/desk/verbRegistry.ts:147-158; also Desk menu > New Decision and \u2318\u21e7N at 1440) -> createPrimitive('decision') -> POST /api/decisions -> openPullout (web/src/desk/store/dataSlice.ts)"
         },
         {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[data-testid=palette-name]",
+          "value": "Adopt the one desk bus",
+          "adapter": "ui-keyboard",
+          "why": "PHILO-13-08 (B3): the deck asks the decision's title first; nothing is written before it is named (grounding F9)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "selector": "[data-testid=palette-name]",
+          "key": "Enter",
+          "adapter": "ui-keyboard",
+          "why": "Enter with a title creates it: POST /api/decisions with that title"
+        },
+        {
           "kind": "check",
           "predicate": {
             "kind": "text_contains",
@@ -357,7 +389,7 @@
           "method": "POST",
           "path": "/api/decisions",
           "status": 201,
-          "body_contains": "New decision"
+          "body_contains": "Adopt the one desk bus"
         },
         "observe_at": "protocol: POST /api/decisions",
         "words": "after the create and the reads fail and then recover, the rendered Retry re-issues the create and the hub answers 201 with the new record"
@@ -2020,6 +2052,22 @@
         },
         {
           "kind": "ui",
+          "action": "fill",
+          "selector": "[data-testid=palette-name]",
+          "value": "Keep summary retrieval on the local desk",
+          "adapter": "ui-keyboard",
+          "why": "PHILO-13-08 (B3): the deck asks the decision's title first; nothing is written before it is named (grounding F9)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "selector": "[data-testid=palette-name]",
+          "key": "Enter",
+          "adapter": "ui-keyboard",
+          "why": "Enter with a title creates it: POST /api/decisions with that title"
+        },
+        {
+          "kind": "ui",
           "action": "wait_for",
           "selector": ".desk-decision-card textarea[aria-label=Decision]",
           "adapter": "ui-pointer",
@@ -2076,7 +2124,7 @@
             "path": "/api/meetings/{meeting_id}"
           }
         ],
-        "words": "chain step 4: after the restart, Search > New Decision opens the decision face; the owner writes the meeting's decision two and its source; Done titles it by the first line and the hub holds it."
+        "words": "chain step 4: after the restart, Search > New Decision > its title opens the decision face; the owner writes the meeting's decision two and its source; the decision keeps the title he named and the hub holds it."
       },
       "completion_bound_s": 60
     },
@@ -2603,6 +2651,22 @@
         },
         {
           "kind": "ui",
+          "action": "fill",
+          "selector": "[data-testid=palette-name]",
+          "value": "Keep summary retrieval on the local desk",
+          "adapter": "ui-keyboard",
+          "why": "PHILO-13-08 (B3): the deck asks the decision's title first; nothing is written before it is named (grounding F9)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "selector": "[data-testid=palette-name]",
+          "key": "Enter",
+          "adapter": "ui-keyboard",
+          "why": "Enter with a title creates it: POST /api/decisions with that title"
+        },
+        {
+          "kind": "ui",
           "action": "wait_for",
           "selector": ".desk-decision-card textarea[aria-label=Decision]",
           "adapter": "ui-pointer",
@@ -3077,6 +3141,22 @@
           "selector": "[id='desk-palette-option-desk.new-decision']",
           "adapter": "ui-pointer",
           "why": "the face create verb desk.new-decision (POST /api/decisions)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[data-testid=palette-name]",
+          "value": "Keep summary retrieval on the local desk",
+          "adapter": "ui-keyboard",
+          "why": "PHILO-13-08 (B3): the deck asks the decision's title first; nothing is written before it is named (grounding F9)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "selector": "[data-testid=palette-name]",
+          "key": "Enter",
+          "adapter": "ui-keyboard",
+          "why": "Enter with a title creates it: POST /api/decisions with that title"
         },
         {
           "kind": "ui",
@@ -3593,6 +3673,22 @@
           "selector": "[id='desk-palette-option-desk.new-decision']",
           "adapter": "ui-pointer",
           "why": "the face create verb desk.new-decision (POST /api/decisions)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[data-testid=palette-name]",
+          "value": "Keep summary retrieval on the local desk",
+          "adapter": "ui-keyboard",
+          "why": "PHILO-13-08 (B3): the deck asks the decision's title first; nothing is written before it is named (grounding F9)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "selector": "[data-testid=palette-name]",
+          "key": "Enter",
+          "adapter": "ui-keyboard",
+          "why": "Enter with a title creates it: POST /api/decisions with that title"
         },
         {
           "kind": "ui",
@@ -4156,6 +4252,22 @@
           "selector": "[id='desk-palette-option-desk.new-decision']",
           "adapter": "ui-pointer",
           "why": "the face create verb desk.new-decision (POST /api/decisions)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[data-testid=palette-name]",
+          "value": "Keep summary retrieval on the local desk",
+          "adapter": "ui-keyboard",
+          "why": "PHILO-13-08 (B3): the deck asks the decision's title first; nothing is written before it is named (grounding F9)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "selector": "[data-testid=palette-name]",
+          "key": "Enter",
+          "adapter": "ui-keyboard",
+          "why": "Enter with a title creates it: POST /api/decisions with that title"
         },
         {
           "kind": "ui",
@@ -7229,6 +7341,22 @@
           "selector": "[id='desk-palette-option-desk.new-decision']",
           "adapter": "ui-pointer",
           "why": "the face create verb desk.new-decision (POST /api/decisions)"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "selector": "[data-testid=palette-name]",
+          "value": "Keep summary retrieval on the local desk",
+          "adapter": "ui-keyboard",
+          "why": "PHILO-13-08 (B3): the deck asks the decision's title first; nothing is written before it is named (grounding F9)"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "selector": "[data-testid=palette-name]",
+          "key": "Enter",
+          "adapter": "ui-keyboard",
+          "why": "Enter with a title creates it: POST /api/decisions with that title"
         },
         {
           "kind": "ui",

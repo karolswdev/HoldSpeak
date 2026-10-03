@@ -1080,6 +1080,8 @@
   .desk-next .desk-clock > span:first-child {
     display: none;
   }
+  /* PHILO-13-08 (B3): the deck's name well Save, a 44 px box. */
+  .desk-next .desk-tool-name > button { min-height: 44px; }
 }
 
 @media (max-width: 420px) {
@@ -1118,3 +1120,7 @@
   visibility: visible;
   color: var(--wb-ink);
 }
+
+/* PHILO-13-08 (B3): the deck asks a create's name (New Decision); Save
+   sits under the well. */
+.desk-tool-name { display: flex; padding: 6px 2px 2px; }
