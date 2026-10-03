@@ -114,7 +114,7 @@ function Frame({ id, title }: { id: string; title: string }) {
 }
 
 describe("the gadget set (§3)", () => {
-  it("close flush left; iconify then zoom flush right; every gadget a library Button; no traffic lights", () => {
+  it("close flush left; iconify, zoom then depth flush right; every gadget a library Button; no traffic lights", () => {
     setCompact(false);
     render(<Frame id="g1" title="Meetings" />);
     const head = screen.getByRole("region", { name: "Meetings" }).querySelector("header")!;
@@ -124,22 +124,22 @@ describe("the gadget set (§3)", () => {
     const labels = (el: HTMLElement) =>
       Array.from(el.querySelectorAll("button")).map((b) => b.getAttribute("aria-label"));
     expect(labels(kids[0])).toEqual(["Close Meetings"]);
-    expect(labels(kids.at(-1)!)).toEqual(["Iconify Meetings", "Zoom Meetings"]);
+    // PHILO-13-12 (C2): depth is built (send to back), so it is drawn.
+    expect(labels(kids.at(-1)!)).toEqual(["Iconify Meetings", "Zoom Meetings", "To back Meetings"]);
     // The library Button stamps `btn--chrome` on a chrome verb (Signal.tsx).
     for (const b of Array.from(head.querySelectorAll("button"))) expect(b.className).toMatch(/(^|\s)btn--chrome(\s|$)/);
     expect(head.querySelector(".desk-traffic, .desk-light")).toBeNull();
-    // Depth is withheld until C2 builds send-to-back (no verb that does nothing).
-    expect(within(head).queryByRole("button", { name: /To back/ })).toBeNull();
     // The sizing gadget sits on the frame, bottom right.
     expect(document.querySelector(".desk-window-grip.desk-gadget-size svg")).toBeTruthy();
   });
 
-  it("at the phone width the set is close alone (a window fills the work area)", () => {
+  it("at the phone width the set is close and depth (a window fills the work area)", () => {
     setCompact(true);
     render(<Frame id="g2" title="People" />);
     const head = screen.getByRole("region", { name: "People" }).querySelector("header")!;
     expect(Array.from(head.querySelectorAll("button")).map((b) => b.getAttribute("aria-label"))).toEqual([
       "Close People",
+      "To back People",
     ]);
   });
 });

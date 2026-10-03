@@ -65,7 +65,9 @@ import {
   cycleWindows,
   cycleWindowsReverse,
   maximizeFrontWindow,
+  sendWindowToBack,
   snapFrontWindow,
+  zoomWindow,
 } from "./window/windowCommands";
 import { Dock } from "./window/Dock";
 import { Button } from "../../components/signal/Signal";
@@ -95,6 +97,9 @@ export {
   useLaunchers,
 };
 
+/** PHILO-13-12 (C2) — a touch held this long opens the window menu (393). */
+const LONG_PRESS_MS = 500;
+
 /** The desk-window z band (see the ladder note in desk.css). */
 const Z_BASE = DESK_Z.windowBase;
 
@@ -119,6 +124,9 @@ export interface DeskWindowOptions {
    * keeps its CSS home until the owner moves or sizes it; the placement
    * engine does not seat it. */
   tiled?: boolean;
+  /** PHILO-13-12 (C2) — the window is zoomed: geometry reads and writes
+   * zoom's own remembered rect (`panelZoom`), never the normal one. */
+  zoomed?: boolean;
 }
 
 let resizeClampUsers = 0;
@@ -127,8 +135,17 @@ let resizeClampTimer: ReturnType<typeof setTimeout> | undefined;
 function reClampOpenWindows() {
   const state = useDesk.getState();
   for (const { id } of registrySnapshot) {
+    if (state.panelMax.includes(id)) {
+      // PHILO-13-12 (C2): a remembered zoomed rect stays whole on screen too.
+      const zr = state.panelZoom?.[id];
+      if (!zr) continue;
+      const kept = clampRect(zr, 320, 220);
+      if (kept.x !== zr.x || kept.y !== zr.y || kept.w !== zr.w || kept.h !== zr.h)
+        state.setZoomRect(id, kept, true);
+      continue;
+    }
     const rect = state.panelRects[id];
-    if (!rect || state.panelMax.includes(id)) continue;
+    if (!rect) continue;
     const clamped = clampRect(rect, 320, 220);
     if (
       clamped.x !== rect.x ||
@@ -162,7 +179,18 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   const minW = opts.minW ?? 320;
   const minH = opts.minH ?? 220;
   const open = opts.open ?? true;
-  const rect = useDesk((s) => s.panelRects[id]);
+  const zoomed = Boolean(opts.zoomed);
+  const normalRect = useDesk((s) => s.panelRects[id]);
+  const zoomRect = useDesk((s) => s.panelZoom?.[id]);
+  // PHILO-13-12 (C2) — zoom's two remembered rects: while zoomed the frame
+  // reads and writes the zoomed rect; the normal rect waits untouched.
+  const rect = zoomed ? zoomRect : normalRect;
+  const zoomedRef = useRef(zoomed);
+  zoomedRef.current = zoomed;
+  const writeRect = (next: PanelRect, persist: boolean) => {
+    if (zoomedRef.current) useDesk.getState().setZoomRect(id, next, persist);
+    else useDesk.getState().setPanelRect(id, next, persist);
+  };
   const orderIndex = useDesk((s) => s.panelOrder.indexOf(id));
   const arranged = useDesk((s) => s.panelSaved.includes(id));
   // A fit-content card pins its height DURING the first resize drag,
@@ -171,10 +199,15 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   const elRef = useRef<HTMLElement | null>(null);
 
   const measure = (): PanelRect => {
-    const cur = useDesk.getState().panelRects[id];
+    const st = useDesk.getState();
+    const cur = zoomedRef.current ? st.panelZoom?.[id] : st.panelRects[id];
     if (cur) return cur;
     const el = elRef.current;
     const r = el?.getBoundingClientRect();
+    // A zoomed window without its own rect yet fills the work band: its
+    // first move or resize starts from exactly what is on screen.
+    if (zoomedRef.current && el && r && r.width)
+      return { x: r.left, y: r.top, w: r.width, h: r.height };
     if (!el || !r || !r.width) return { x: MARGIN, y: 64, w: opts.defaultW ?? 400, h: opts.defaultH ?? 480 };
     // The entrance spring translates the panel; strip the live transform so
     // a mid-animation measure still yields the settled rect.
@@ -377,18 +410,15 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
               )
             : null;
         publishGhost(last ? null : tile);
-        useDesk
-          .getState()
-          .setPanelRect(
-            id,
-            (last ? tile : null) ??
-              clampRect(
-                { ...base, x: base.x + mx, y: base.y + my },
-                minW,
-                minH,
-              ),
-            last,
-          );
+        writeRect(
+          (last ? tile : null) ??
+            clampRect(
+              { ...base, x: base.x + mx, y: base.y + my },
+              minW,
+              minH,
+            ),
+          last,
+        );
       } else if (last) {
         publishGhost(null);
       }
@@ -401,13 +431,10 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     ({ movement: [mx, my], last, memo }) => {
       const base: PanelRect = memo?.base ?? measure();
       setLiveResize(!last);
-      useDesk
-        .getState()
-        .setPanelRect(
-          id,
-          clampRect({ ...base, w: base.w + mx, h: base.h + my }, minW, minH),
-          last,
-        );
+      writeRect(
+        clampRect({ ...base, w: base.w + mx, h: base.h + my }, minW, minH),
+        last,
+      );
       return { base };
     },
     { pointer: { buttons: 1 } },
@@ -419,9 +446,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       const mode = String(args?.[0] ?? "br");
       const base: PanelRect = memo?.base ?? measure();
       setLiveResize(!last);
-      useDesk
-        .getState()
-        .setPanelRect(id, resizeEdge(mode, base, mx, my, minW, minH), last);
+      writeRect(resizeEdge(mode, base, mx, my, minW, minH), last);
       return { base };
     },
     { pointer: { buttons: 1 } },
@@ -473,7 +498,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         zIndex: Z_BASE + Math.max(orderIndex, 0),
         // A content-sized card keeps its CSS height (the material
         // decides) until the user arranges it; arranged rects pin.
-        ...(opts.fitContent && !arranged && !liveResize
+        ...(opts.fitContent && !arranged && !liveResize && !zoomed
           ? { maxHeight: cardBandCap }
           : { height: rect.h, maxHeight: "none" }),
       }
@@ -594,6 +619,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const isFront = useFrontWindowId() === id;
   const compact = useCompactViewport();
   const reducedMotion = useReducedMotion();
+  const zoomRect = useDesk((s) => s.panelZoom?.[id]);
   const win = useDeskWindow(id, {
     minW,
     minH,
@@ -602,6 +628,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     fitContent,
     origin,
     tiled,
+    zoomed: maximized && !compact,
     open: open && !minimized,
   });
   const glyph = glyphProp ?? (typeof icon === "string" ? icon : "▢");
@@ -615,6 +642,41 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const [headMenu, setHeadMenu] = useState<{ x: number; y: number } | null>(
     null,
   );
+  // PHILO-13-12 (C2) — the right button anywhere in the window opens the
+  // window's menu bar at the pointer (board C1-2b). A field, a link and a
+  // body that draws its own menu (it prevents the default) keep their own
+  // right button; a press on a control or a row opens the window menu too.
+  const openWindowMenu = (
+    target: EventTarget | null,
+    x: number,
+    y: number,
+  ): boolean => {
+    const t = target as HTMLElement | null;
+    if (
+      t?.closest(
+        "a[href], input, textarea, select, [contenteditable='true'], [role='menu'], .desk-head-menu",
+      )
+    )
+      return false;
+    const sel = typeof window !== "undefined" ? window.getSelection?.() : null;
+    if (sel && !sel.isCollapsed && shellRef.current?.contains(sel.anchorNode))
+      return false;
+    setHeadMenu({ x, y });
+    return true;
+  };
+  // 393: a long press (touch) opens the same menu.
+  const pressRef = useRef<{
+    timer: ReturnType<typeof setTimeout>;
+    x: number;
+    y: number;
+  } | null>(null);
+  // A long press that opened the menu swallows the click its release makes.
+  const pressFiredRef = useRef(false);
+  const cancelPress = () => {
+    if (pressRef.current) clearTimeout(pressRef.current.timer);
+    pressRef.current = null;
+  };
+  useEffect(() => cancelPress, []);
   useEffect(() => {
     if (!headMenu) return;
     const close = () => setHeadMenu(null);
@@ -757,7 +819,10 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     ...rootStyle,
     ...(compact
       ? { zIndex: (win.style.zIndex as number) ?? 42 }
-      : maxed
+      : maxed && zoomRect
+        ? // PHILO-13-12 (C2): the zoomed rect the user sized.
+          win.style
+        : maxed
         ? {
             top: "var(--desk-work-top)",
             left: MARGIN,
@@ -817,33 +882,65 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         win.focus();
         e.stopPropagation();
       }}
+      // The long press listens in the capture phase: a row that keeps its
+      // own pointer-down (a drag, a selection) still opens the menu.
+      onPointerDownCapture={(e) => {
+        pressFiredRef.current = false;
+        if (e.pointerType === "touch") {
+          cancelPress();
+          const target = e.target;
+          const { clientX: x, clientY: y } = e;
+          pressRef.current = {
+            x,
+            y,
+            timer: setTimeout(() => {
+              pressRef.current = null;
+              pressFiredRef.current = openWindowMenu(target, x, y);
+            }, LONG_PRESS_MS),
+          };
+        }
+      }}
+      onPointerMoveCapture={(e) => {
+        const p = pressRef.current;
+        if (p && Math.abs(e.clientX - p.x) + Math.abs(e.clientY - p.y) > 10)
+          cancelPress();
+      }}
+      onPointerUpCapture={cancelPress}
+      onClickCapture={(e) => {
+        if (!pressFiredRef.current) return;
+        pressFiredRef.current = false;
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onPointerCancelCapture={cancelPress}
+      onContextMenu={(e) => {
+        if (e.defaultPrevented) return;
+        // A long press already opened the menu (touch fires both).
+        if (headMenu) {
+          e.preventDefault();
+          return;
+        }
+        if (openWindowMenu(e.target, e.clientX, e.clientY)) e.preventDefault();
+      }}
       role="region"
       aria-label={name}
     >
       <header
         className={`desk-pullout-head desk-window-handle${wings ? " has-wings" : ""}`}
-        {...(compact || maxed ? {} : win.handleProps)}
+        {...(compact ? {} : win.handleProps)}
         onDoubleClick={(e) => {
           // HS-97-05 — double-click the head toggles maximize (buttons
           // inside the head keep their own clicks).
           if (compact) return;
           const t = e.target as HTMLElement | null;
           if (t?.closest("button, a, input, textarea, select")) return;
-          useDesk.getState().toggleMaximizePanel(id);
-        }}
-        onContextMenu={(e) => {
-          // HS-99-02 — the bar owns its window verbs on right-click.
-          const t = e.target as HTMLElement | null;
-          if (t?.closest("button, a, input, textarea, select")) return;
-          e.preventDefault();
-          setHeadMenu({ x: e.clientX, y: e.clientY });
+          zoomWindow(id);
         }}
       >
         {/* PHILO-13-11 (C1) — the Workbench gadget set: close flush left;
-            iconify and zoom flush right (393: close only; a window fills
-            the work area there). Depth (to back) is withheld until story
-            12 (C2) builds send-to-back: a gadget that does nothing is not
-            drawn (UX-CANON). TODO(PHILO-13-12): the depth gadget. */}
+            iconify, zoom and depth flush right. PHILO-13-12 (C2): depth
+            sends the window to the back. 393: close and depth (a window
+            fills the work area; Zoom stays in the window menu). */}
         <span className="desk-gadgets desk-gadgets-left">
           <Button
             variant="chrome"
@@ -862,29 +959,40 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         <span className="desk-pullout-title desk-window-title">{title}</span>
         {wings}
         {actions ? <span className="desk-window-actions">{actions}</span> : null}
-        {!compact ? (
-          <span className="desk-gadgets desk-gadgets-right">
-            <Button
-              variant="chrome"
-              className="desk-gadget desk-gadget-iconify"
-              aria-label={`Iconify ${name}`}
-              title={`Iconify ${name}`}
-              onClick={requestMinimize}
-            >
-              <GadgetGlyph kind="iconify" />
-            </Button>
-            <Button
-              variant="chrome"
-              className="desk-gadget desk-gadget-zoom"
-              aria-label={`Zoom ${name}`}
-              title={`Zoom ${name}`}
-              aria-pressed={maximized}
-              onClick={() => useDesk.getState().toggleMaximizePanel(id)}
-            >
-              <GadgetGlyph kind="zoom" />
-            </Button>
-          </span>
-        ) : null}
+        <span className="desk-gadgets desk-gadgets-right">
+          {!compact ? (
+            <>
+              <Button
+                variant="chrome"
+                className="desk-gadget desk-gadget-iconify"
+                aria-label={`Iconify ${name}`}
+                title={`Iconify ${name}`}
+                onClick={requestMinimize}
+              >
+                <GadgetGlyph kind="iconify" />
+              </Button>
+              <Button
+                variant="chrome"
+                className="desk-gadget desk-gadget-zoom"
+                aria-label={`Zoom ${name}`}
+                title={`Zoom ${name}`}
+                aria-pressed={maximized}
+                onClick={() => zoomWindow(id)}
+              >
+                <GadgetGlyph kind="zoom" />
+              </Button>
+            </>
+          ) : null}
+          <Button
+            variant="chrome"
+            className="desk-gadget desk-gadget-depth"
+            aria-label={`To back ${name}`}
+            title={`To back ${name}`}
+            onClick={() => sendWindowToBack(id)}
+          >
+            <GadgetGlyph kind="depth" />
+          </Button>
+        </span>
       </header>
       {headMenu ? (
         <WorkMenu
@@ -896,15 +1004,16 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             maximized,
             compact,
             requestMinimize,
-            toggleMaximize: () => useDesk.getState().toggleMaximizePanel(id),
+            toggleMaximize: () => zoomWindow(id),
             requestClose,
+            toBack: () => sendWindowToBack(id),
           })}
           onClose={() => setHeadMenu(null)}
         />
       ) : null}
       {children}
-      {!maxed && !compact ? win.grip : null}
-      {!maxed && !compact ? win.edges : null}
+      {!compact ? win.grip : null}
+      {!compact ? win.edges : null}
     </motion.div>
   );
 }

@@ -1,0 +1,152 @@
+[
+  {
+    "path": "a2-final-typecheck.txt",
+    "bytes": 219,
+    "sha256": "f38641394eac8ae72c967f0407a3483f4af6636ace0c3f5fc0ff24ef1de21ade"
+  },
+  {
+    "path": "a2-final-vitest.txt",
+    "bytes": 10270,
+    "sha256": "dbfea4e515508a07345ec2c9992fc1af4e79f2a8e5f80edc118cd92c40e64f34"
+  },
+  {
+    "path": "a2-membership-proof.txt",
+    "bytes": 10155,
+    "sha256": "c25f455f1f1d3191056adf5694e91e55c698d4ee36edc533c8eadb651547d92c"
+  },
+  {
+    "path": "a2-python-browser-path-red.txt",
+    "bytes": 13527,
+    "sha256": "9fb1e85a90bd293737e38b7f4745a8b69164f751761f873d34d066f74c4330c6"
+  },
+  {
+    "path": "a2-python-collection.txt",
+    "bytes": 14983,
+    "sha256": "2fcfcd81f89cbd98c2293a0a54742cddfd39a51141ca546be58fe466d1b03fff"
+  },
+  {
+    "path": "a2-python-run.txt",
+    "bytes": 261,
+    "sha256": "6bffda204c441f9220f2b13a33f3c53eb7dcfca4458875753348457c81f158fd"
+  },
+  {
+    "path": "a2-steward-focused.txt",
+    "bytes": 27266,
+    "sha256": "92d801893ad8d0d59b75d2723733c868ec04e94e9d81d7f355b5ec14537f35d0"
+  },
+  {
+    "path": "a2-web-baseline-r1.txt",
+    "bytes": 1034,
+    "sha256": "a8a81fdb491ea0314599a34bce3c2a1e00bdf62defa052eaa2e478cd5416dc37"
+  },
+  {
+    "path": "a2-web-baseline.py",
+    "bytes": 679,
+    "sha256": "47933b2333a65fa4e4759c2ddbf5af292014de79a03cb908f44cfbb80ef07a56"
+  },
+  {
+    "path": "a2-web-baseline.txt",
+    "bytes": 831,
+    "sha256": "b150ae620db958d1cc992876a2150a05ba323b481d96cccd98a1fe5e8ff414a0"
+  },
+  {
+    "path": "a2-web-build.txt",
+    "bytes": 31521,
+    "sha256": "36ad0e291c2c86cc077093364c3c74ad33024129394561473d6128bc8fa27860"
+  },
+  {
+    "path": "captured-runs.md",
+    "bytes": 38682,
+    "sha256": "0d93e8d6706ca708203e0ad9c9ba43f1622a4f587c566fe148e22da9317c7727"
+  },
+  {
+    "path": "final/dock-1440-final/20261002T043501Z-case.p13.dock.needs_you_week-astra-1440/after.png",
+    "bytes": 187255,
+    "sha256": "126dad916fba9ef1aa7a8663ebaba70319f502f013a2503c2510aaa183c5ccb3"
+  },
+  {
+    "path": "final/dock-1440-final/20261002T043501Z-case.p13.dock.needs_you_week-astra-1440/before.png",
+    "bytes": 199311,
+    "sha256": "d785da6a91685911e140c904312d7f9e3e2789ec3875919eb66615a289601022"
+  },
+  {
+    "path": "final/dock-1440-final/20261002T043501Z-case.p13.dock.needs_you_week-astra-1440/observation.json",
+    "bytes": 325101,
+    "sha256": "f43f78160b6486492ec6640102766acbe37cc43da6c4a823e9deea35e01eda24"
+  },
+  {
+    "path": "final/dock-1440-final/20261002T043501Z-case.p13.dock.needs_you_week-astra-1440/setup-05.png",
+    "bytes": 199311,
+    "sha256": "d785da6a91685911e140c904312d7f9e3e2789ec3875919eb66615a289601022"
+  },
+  {
+    "path": "final/dock-1440-final/command.log",
+    "bytes": 89,
+    "sha256": "8f6b9b925e21a49414583d6091594da5221ad4a7c946c6caf783f26094269dad"
+  },
+  {
+    "path": "final/dock-393-final/20261002T043623Z-case.p13.dock.needs_you_week-astra-393/after.png",
+    "bytes": 92418,
+    "sha256": "bd1b1f98f8cf046c12748aa527aa1ef3a714dbefd21d8c5a04d2fae05d9a73ef"
+  },
+  {
+    "path": "final/dock-393-final/20261002T043623Z-case.p13.dock.needs_you_week-astra-393/before.png",
+    "bytes": 95674,
+    "sha256": "26df4340ce395bd26f68d22ceeb1ae6a2d500901c23a28fc625fbea7d08e2f37"
+  },
+  {
+    "path": "final/dock-393-final/20261002T043623Z-case.p13.dock.needs_you_week-astra-393/observation.json",
+    "bytes": 325228,
+    "sha256": "4a010480cb961133a1c355f66da3d9e820163c0ee8f629472e0c06922d6a8c18"
+  },
+  {
+    "path": "final/dock-393-final/20261002T043623Z-case.p13.dock.needs_you_week-astra-393/setup-05.png",
+    "bytes": 95674,
+    "sha256": "26df4340ce395bd26f68d22ceeb1ae6a2d500901c23a28fc625fbea7d08e2f37"
+  },
+  {
+    "path": "final/dock-393-final/command.log",
+    "bytes": 89,
+    "sha256": "cf49b9cee9343b1ec43698abec055f868a62d4934ae31ba1460b47c93bcfa409"
+  },
+  {
+    "path": "old-build/dock-1440-old-build/20261002T043233Z-case.p13.dock.needs_you_week-astra-1440/blocked.png",
+    "bytes": 198815,
+    "sha256": "6f52e868f6e51168219cb685d495ada8fa1c2c4aa8e86a7932dde0ce4e35a216"
+  },
+  {
+    "path": "old-build/dock-1440-old-build/20261002T043233Z-case.p13.dock.needs_you_week-astra-1440/observation.json",
+    "bytes": 290335,
+    "sha256": "90540934576b05e3d564b62e83f7c1a4a3b7f0b1f8a1a5264c535a7204af5184"
+  },
+  {
+    "path": "old-build/dock-1440-old-build/command.log",
+    "bytes": 89,
+    "sha256": "d9592ddf01f6719844c6529956773e5b4b87b5978067874bd3a587524e0002ce"
+  },
+  {
+    "path": "read-one-a2.py",
+    "bytes": 912,
+    "sha256": "d8f7a748caaa65e7b798912aaeb48b7ba068eba3822e68ae7324dcc82a25c0dc"
+  },
+  {
+    "path": "run-one-a2.py",
+    "bytes": 2242,
+    "sha256": "e187bba1cdf7494ede987efab7d7280e7c9dd19b14936bbb445a282b3e20330b"
+  },
+  {
+    "path": "selected-runs.json",
+    "bytes": 2443,
+    "sha256": "32af3ccba747c7f31c247bb00c6bb311418edf213b153acc2720168cb37fbbfa"
+  },
+  {
+    "path": "test-a2-python.py",
+    "bytes": 1178,
+    "sha256": "4a915208fcaae673632c8ae0713eaaa27c0851d4f241c82ac8b4abaadef498d2"
+  },
+  {
+    "path": "test-a2-web.py",
+    "bytes": 1242,
+    "sha256": "8e3e657911482d0f287f67d0d246e3488b9cf0dbd783f05afa7a7597036153ee"
+  }
+]

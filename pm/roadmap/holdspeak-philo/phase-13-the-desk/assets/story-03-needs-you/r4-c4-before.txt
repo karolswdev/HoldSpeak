@@ -1,0 +1,31 @@
+$ ./node_modules/.bin/vitest run src/desk/needsYou.test.ts -t rejects a code mutant that skips dedupAttention on the real producer oracle --maxWorkers=1
+EXIT: 1
+
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-13-astra/web
+
+stdout | src/desk/needsYou.test.ts > the real producer membership oracle > rejects a code mutant that skips dedupAttention on the real producer oracle
+{"mutant":"skip dedupAttention","rejection":"NONE","expectedCount":6,"actualCount":6,"expectedRefs":["A2 confirm the room commitment","blocker:engines","philo13-a2-A1","philo13-a2-A3","philo13-a2-A4","philo13-a2-failed-meeting"],"actualRefs":["A2 confirm the room commitment","blocker:engines","philo13-a2-A1","philo13-a2-A3","philo13-a2-A4","philo13-a2-failed-meeting"],"extraRef":"A1 close the overdue release note"}
+
+ ❯ src/desk/needsYou.test.ts (13 tests | 1 failed | 12 skipped) 1715ms
+     × rejects a code mutant that skips dedupAttention on the real producer oracle 1714ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  19:09:16
+   Duration  2.31s (transform 98ms, setup 92ms, import 144ms, tests 1.71s, environment 282ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/desk/needsYou.test.ts > the real producer membership oracle > rejects a code mutant that skips dedupAttention on the real producer oracle
+AssertionError: expected undefined to be an instance of Error
+ ❯ src/desk/needsYou.test.ts:601:25
+    599|         extraRef: actualDuplicateRef,
+    600|       }));
+    601|       expect(rejection).toBeInstanceOf(Error);
+       |                         ^
+    602|       expect(projected.count).toBe(7);
+    603|       expect(projected.members.map(({ ref }) => ref)).toContain(actual…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯

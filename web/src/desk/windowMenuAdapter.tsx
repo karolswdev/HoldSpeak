@@ -6,19 +6,63 @@
 import { verbById, verbLabel, type VerbContext } from "./verbRegistry";
 import type { WorkMenuEntry } from "./components/DeskMenu";
 import { VerbGlyph } from "./components/window/VerbGlyph";
+import { GadgetGlyph } from "./components/window/GadgetGlyph";
 
 const CTX: VerbContext = { selectedRef: null };
 
-/** Build WorkMenuEntry[] for the window-head right-click menu.
- * Labels + keycaps come FROM the registry; onSelect dispatches to the
- * caller's per-window actions. WorkMenu calls onClose before onSelect,
- * so the adapter need not dismiss the menu itself. */
+/** PHILO-13-12 (C2) — the registry verbs the window menu's Desk ▸ and
+ * Go ▸ carry (board C1-2b: the canvas's choice, verbatim). */
+export const WINDOW_MENU_DESK = [
+  "desk.new-note",
+  "desk.new-decision",
+  "system.search",
+  "system.sheet",
+] as const;
+export const WINDOW_MENU_GO = [
+  "desk.open-intelligence",
+  "desk.open-people",
+  "desk.overview",
+] as const;
+
+function registryItem(id: string): WorkMenuEntry | null {
+  const v = verbById(id);
+  if (!v) return null;
+  return {
+    type: "item",
+    id: v.id,
+    label: verbLabel(v, CTX),
+    keycap: v.key,
+    ghost: v.ghost(CTX),
+    onSelect: () => v.run(CTX),
+  };
+}
+
+function registrySub(id: string, label: string, ids: readonly string[]): WorkMenuEntry {
+  return {
+    type: "sub",
+    id,
+    label,
+    entries: ids
+      .map(registryItem)
+      .filter((e): e is WorkMenuEntry => e !== null),
+  };
+}
+
+/** Build WorkMenuEntry[] for the window's right-button menu: the active
+ * window's menu bar (PHILO-13-12, C2; board C1-2b). Iconify ⌘M, Zoom ⌃M,
+ * To back ⌃B, Close window ⌘W, then Desk ▸ and Go ▸. Labels + keycaps
+ * come FROM the registry (⌘ stands for the Amiga key); onSelect
+ * dispatches to the caller's per-window actions. WorkMenu calls onClose
+ * before onSelect, so the adapter need not dismiss the menu itself.
+ * At 393 a window fills the work area: Zoom stays, ghosted with the
+ * registry's reason. */
 export function headMenuEntries(opts: {
   maximized: boolean;
   compact: boolean;
   requestMinimize: () => void;
   toggleMaximize: () => void;
   requestClose: () => void;
+  toBack?: () => void;
 }): WorkMenuEntry[] {
   const entries: WorkMenuEntry[] = [];
   const minVerb = verbById("window.minimize");
@@ -28,34 +72,52 @@ export function headMenuEntries(opts: {
       id: "window.minimize",
       label: verbLabel(minVerb, CTX),
       keycap: minVerb.key,
-      glyph: <VerbGlyph kind="minimize" />,
+      glyph: <GadgetGlyph kind="iconify" />,
       onSelect: opts.requestMinimize,
     });
   }
-  if (!opts.compact) {
-    const maxVerb = verbById("window.maximize");
-    if (maxVerb) {
-      entries.push({
-        type: "item",
-        id: "window.maximize",
-        label: opts.maximized ? "Restore" : verbLabel(maxVerb, CTX),
-        keycap: maxVerb.key,
-        glyph: <VerbGlyph kind={opts.maximized ? "restore" : "maximize"} />,
-        onSelect: opts.toggleMaximize,
-      });
-    }
+  const zoomVerb = verbById("window.maximize");
+  if (zoomVerb) {
+    entries.push({
+      type: "item",
+      id: "window.maximize",
+      label: verbLabel(zoomVerb, CTX),
+      keycap: zoomVerb.key,
+      glyph: <GadgetGlyph kind="zoom" />,
+      ghost: opts.compact ? "Fills the screen" : null,
+      onSelect: opts.toggleMaximize,
+    });
+  }
+  const depthVerb = verbById("window.depth");
+  if (depthVerb && opts.toBack) {
+    entries.push({
+      type: "item",
+      id: "window.depth",
+      label: verbLabel(depthVerb, CTX),
+      keycap: depthVerb.key,
+      glyph: <GadgetGlyph kind="depth" />,
+      onSelect: opts.toBack,
+    });
   }
   const closeVerb = verbById("window.close");
   if (closeVerb) {
-    entries.push({
-      type: "item",
-      id: "window.close",
-      label: verbLabel(closeVerb, CTX),
-      keycap: closeVerb.key,
-      glyph: <VerbGlyph kind="close" />,
-      onSelect: opts.requestClose,
-    });
+    entries.push(
+      { type: "sep", id: "window-sep" },
+      {
+        type: "item",
+        id: "window.close",
+        label: verbLabel(closeVerb, CTX),
+        keycap: closeVerb.key,
+        glyph: <GadgetGlyph kind="close" />,
+        onSelect: opts.requestClose,
+      },
+    );
   }
+  entries.push(
+    { type: "sep", id: "bar-sep" },
+    registrySub("bar-desk", "Desk", WINDOW_MENU_DESK),
+    registrySub("bar-go", "Go", WINDOW_MENU_GO),
+  );
   return entries;
 }
 

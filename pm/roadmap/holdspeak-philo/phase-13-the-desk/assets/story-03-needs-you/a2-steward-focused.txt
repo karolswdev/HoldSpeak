@@ -1,0 +1,506 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-13-astra/web
+
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Mount proof: Steward verb in Room chrome > shows 'Steward' button in the Room 40ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Mount proof: Steward verb in Room chrome > clicking 'Steward' enters the steward list posture 45ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Mounted-path: run once and view detail > run once fires POST, enters detail, shows steps from poll 128ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Step rows: human labels and receipt refs > renders effect kind as human label, not machine token 83ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Step rows: human labels and receipt refs > receipt refs render as openable chips with human labels 85ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Step rows: human labels and receipt refs > clicking a receipt ref opens via the house citation opener 85ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > No raw IDs on glass > no rendered text matches the raw ID pattern (pstrun_/pststep_) 65ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Stop: consequential styling and honest states > Stop button renders with consequential styling during a running run 85ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Stop: consequential styling and honest states > Stop fires POST and the poll shows stopping then interrupted 178ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > STW-002: run disabled with honest reason > Run button is disabled when an active run exists and shows the reason 43ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > History list: designed rows > renders run rows with state, time, summary, chevron 46ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > History list: designed rows > row is keyboard-accessible (button tag, no aria-expanded) 43ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > History list: designed rows > two-line row structure: primary + secondary as separate children 42ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Policy: round-trip > enters policy view, shows fields, saves with PUT 84ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Policy: round-trip > no policy returns null and shows defaults 64ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Policy: round-trip > egress badge on model-touching effect kinds 63ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Vocabulary: no em/en dashes in rendered text > no em or en dashes in any visible text or aria-labels 41ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Empty state > shows empty state when no runs exist 42ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Policy: visible labels on toggles > enabled toggle has visible 'Steward enabled' label 67ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Policy: visible labels on toggles > each effect kind toggle has its human label visible 62ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > History list: secondary line substance > secondary line shows effect count without repeating the state 42ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > History list: secondary line substance > secondary line shows reason for interrupted runs 42ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > History list: secondary line substance > no secondary line when run has nothing to say 41ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Degraded coverage: visible warning > shows PARTIAL COVERAGE chip when a source is not ok 63ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Degraded coverage: visible warning > step row shows PARTIAL chip when observed.partial is true 83ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Degraded coverage: visible warning > no degraded marker when all sources are ok 85ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Footer: honest pluralization > detail footer reads RUN N · COMPLETED · N PHASES 84ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Footer: honest pluralization > completed run with all 6 phases shows '6 PHASES' 92ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Provenance: run history distinguishes unattended from manual > manual run shows 'Manual' provenance in list 44ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Provenance: run history distinguishes unattended from manual > conductor run shows 'Scheduled' provenance in list 43ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Provenance: run history distinguishes unattended from manual > mixed history shows both provenance labels 42ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Provenance: run history distinguishes unattended from manual > detail view shows provenance in the band 85ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Unattended toggle and grant text assembly > policy view shows unattended toggle defaulting to off 65ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Unattended toggle and grant text assembly > enabling unattended shows grant tokens with real values 63ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Unattended toggle and grant text assembly > toggle round-trips through PUT with unattended_enabled 89ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Unattended toggle and grant text assembly > grant text shows 'no effects are eligible' when empty effect list 64ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Circuit state: watches with non-closed circuits > shows no circuit section when all watches are closed 63ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Circuit state: watches with non-closed circuits > shows circuit rows for open watches 63ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Circuit state: watches with non-closed circuits > half-open circuit shows 'Probing' state 64ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > computeVerticalScrollHint (pure function) > returns none when nothing clips 0ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > computeVerticalScrollHint (pure function) > returns bottom at the top edge 0ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > computeVerticalScrollHint (pure function) > returns top at the bottom edge 0ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > computeVerticalScrollHint (pure function) > returns both at a mid-scroll position 0ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > computeVerticalScrollHint (pure function) > absorbs the 20px tolerance 0ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Scroll hint: data-scroll-hint is set on the posture root > sets data-scroll-hint on the steward posture element 41ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Model chip honesty: only draft_update wears the MODEL egress badge > create_proposals is NOT model-touching (identity no-op) 0ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Model chip honesty: only draft_update wears the MODEL egress badge > draft_update IS model-touching 0ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Model chip honesty: only draft_update wears the MODEL egress badge > refresh_sources is NOT model-touching 0ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Model chip honesty: only draft_update wears the MODEL egress badge > egress chip title names the wiring (Settings > Models) 64ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > PHILO-9-03 F3: the steward face tells what the run did > a run with nothing allowed says so, counts no checkpoint as an effect, and shows its review 65ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > PHILO-9-03 F3: the steward face tells what the run did > a refused start is named by its code (steward_policy_required) 65ms
+ ✓ src/features/project-room/steward/__tests__/StewardPosture.test.tsx > PHILO-9-03 F15: a suggested source row offers no dead verb > the watch source row with `suggested` set draws no Button 21ms
+
+ Test Files  1 passed (1)
+      Tests  52 passed (52)
+   Start at  22:30:16
+   Duration  4.34s (transform 772ms, setup 105ms, import 981ms, tests 2.87s, environment 299ms)
+
+stderr | src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Mounted-path: run once and view detail > run once fires POST, enters detail, shows steps from poll
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Mounted-path: run once and view detail > run once fires POST, enters detail, shows steps from poll
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Mounted-path: run once and view detail > run once fires POST, enters detail, shows steps from poll
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Mounted-path: run once and view detail > run once fires POST, enters detail, shows steps from poll
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Stop: consequential styling and honest states > Stop fires POST and the poll shows stopping then interrupted
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Stop: consequential styling and honest states > Stop fires POST and the poll shows stopping then interrupted
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Stop: consequential styling and honest states > Stop fires POST and the poll shows stopping then interrupted
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Stop: consequential styling and honest states > Stop fires POST and the poll shows stopping then interrupted
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Stop: consequential styling and honest states > Stop fires POST and the poll shows stopping then interrupted
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Stop: consequential styling and honest states > Stop fires POST and the poll shows stopping then interrupted
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectRoomCore inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.21.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.0
+npm notice To update run: npm install -g npm@11.21.0
+npm notice

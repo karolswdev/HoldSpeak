@@ -29,6 +29,7 @@ from ..meeting_import import (
 from ..meeting_session import MeetingState
 from ..principals import Principal
 from holdspeak.services.errors import ConflictError, NotFound, ServiceError, ValidationError
+from .needs_you_aggregate import mark_needs_you_dirty
 
 _LOG = logging.getLogger(__name__)
 
@@ -356,6 +357,7 @@ class MeetingService:
         tag: str | None = None,
         has_open_actions: bool = False,
         parked: bool = False,
+        summary_attention: bool = False,
     ) -> dict[str, Any]:
         """Return archive summaries, preserving the web archive's filters."""
         bounded_limit = max(1, min(int(limit), 500))
@@ -382,9 +384,16 @@ class MeetingService:
             has_open_actions=has_open_actions,
             meeting_ids=search_ids,
             parked=parked,
+            summary_attention=summary_attention,
         )
-        filtered = bool(query or from_date or to_date or speaker or tag or has_open_actions)
-        total = len(meetings) if filtered else self._db.meetings.get_meeting_count(parked=parked)
+        filtered = bool(
+            query or from_date or to_date or speaker or tag or has_open_actions
+            or summary_attention
+        )
+        if summary_attention and not any((query, from_date, to_date, speaker, tag, has_open_actions)):
+            total = self._db.meetings.get_summary_attention_count(parked=parked)
+        else:
+            total = len(meetings) if filtered else self._db.meetings.get_meeting_count(parked=parked)
         payloads = [self._summary_payload(meeting) for meeting in meetings]
         self._enrich_calendar_origin(payloads)
         self._enrich_intel_status(payloads)
@@ -671,6 +680,7 @@ class MeetingService:
             return {"success": True, "action_item": live}
         if not self._db.meetings.update_action_item_status(item_id, status):
             raise self._unserved_action_item(item_id, self._on_live_update_action_item)
+        mark_needs_you_dirty(self._db)
         return self._updated_action_item(item_id)
 
     def review_action_item(self, principal: Principal, item_id: str, patch: dict[str, Any]) -> dict[str, Any]:

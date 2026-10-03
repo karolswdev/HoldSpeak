@@ -501,6 +501,10 @@ _DS6_BORDER_LEFT = re.compile(r"border-left\s*:([^;}]*)")
 _DS6_ACCENT_VALUE = re.compile(
     r"(?:var\(--accent|#[0-9a-fA-F]|rgb|hsl|var\(--\w*accent|var\(--\w*color)")
 _DS6_TOKEN_VALUE = re.compile(r"^\s*\d+px\s+solid\s+var\(")
+# The Workbench ink divider (owner-ratified Workbench look, PHILO-13-11,
+# 2026-10-02): a 1px line in the ink pen between gadgets and menu panes.
+# It is a separator, never an accent rail; only this exact token is exempt.
+_DS6_INK_DIVIDER = re.compile(r"^\s*1px\s+solid\s+var\(--wb-ink\)\s*$")
 _CSS_FONT_SIZE = re.compile(r"font-size\s*:\s*([^;}]+)")
 _TSX_FONT_SIZE = re.compile(r"fontSize\s*:\s*[\"']?([^\"'}, \n]+)")
 _TSX_BORDER_LEFT = re.compile(r"borderLeft\s*:\s*([^,}]*)")
@@ -632,6 +636,8 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
             if _DS6_ACCENT_VALUE.search(value):
                 violations.append(Violation(rel_path, line_no, "DS6",
                     f"Accent left rail (banned by DESIGN_SYSTEM rule 6): {stripped[:100]}"))
+            elif _DS6_INK_DIVIDER.search(value):
+                continue
             elif _DS6_TOKEN_VALUE.search(value):
                 violations.append(Violation(rel_path, line_no, "DS6",
                     f"Border-left with token (check if accent): {stripped[:100]}",

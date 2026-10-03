@@ -491,7 +491,11 @@ export function WorkMenu({
       if (r.bottom > window.innerHeight - margin) {
         el.style.top = `${Math.max(margin, window.innerHeight - margin - r.height)}px`;
       }
-      if (!NARROW() && r.right > window.innerWidth - margin) {
+      // PHILO-13-12 (C2): the opening clamp (clampStyle) can pull a submenu
+      // back over its parent panel near the right edge; a submenu that
+      // overlaps its parent flips to the parent's left side too.
+      const overParent = Boolean(flipFrom && r.left < flipFrom.right - 1 && r.right > flipFrom.left);
+      if (!NARROW() && (r.right > window.innerWidth - margin || overParent)) {
         const flipped = flipFrom ? flipFrom.left - r.width - 1 : -1;
         el.style.left = `${flipped >= margin ? flipped : Math.max(margin, window.innerWidth - margin - r.width)}px`;
       }

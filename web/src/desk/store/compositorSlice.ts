@@ -32,6 +32,7 @@ export interface PanelLayout {
   rects: Record<string, PanelRect>;
   order: string[];
   max: string[];
+  zoom?: Record<string, PanelRect>;
 }
 
 export function loadPanelLayout(): PanelLayout {
@@ -78,6 +79,7 @@ export type CompositorSlice = Pick<
   | "panelOrder"
   | "panelMin"
   | "panelMax"
+  | "panelZoom"
   | "windowsById"
   | "pullouts"
   | "zoneWindows"
@@ -113,6 +115,8 @@ export type CompositorSlice = Pick<
   | "minimizePanel"
   | "restorePanel"
   | "toggleMaximizePanel"
+  | "setZoomRect"
+  | "sendPanelToBack"
   | "resetLayout"
 >;
 
@@ -122,6 +126,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   panelOrder: initialPanelLayout.order,
   panelMin: [],
   panelMax: initialPanelLayout.max,
+  panelZoom: initialPanelLayout.zoom ?? {},
   windowsById: initialWindowsById,
   pullouts: [],
   zoneWindows: initialWorkspace.zoneWindows.map((id) => ({ id, origin: null })),
@@ -344,8 +349,27 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     set({ panelMax, panelOrder: order });
     saveDeskWorkspace(get());
   },
+  // PHILO-13-12 (C2) — zoom as Intuition does it: the window alternates
+  // between two remembered rects. `panelRects` holds the normal one (never
+  // touched while zoomed, so zoom back restores it exactly); `panelZoom`
+  // holds the zoomed one once the user sizes or moves the zoomed window.
+  setZoomRect(id, rect, persist = false) {
+    set({ panelZoom: { ...(get().panelZoom ?? {}), [id]: rect } });
+    if (persist) saveDeskWorkspace(get());
+  },
+  // PHILO-13-12 (C2) — depth: the window goes behind every other window;
+  // the next one in the order becomes the front window.
+  sendPanelToBack(id) {
+    const order = compactPanelOrder([
+      id,
+      ...get().panelOrder.filter((x) => x !== id),
+    ]);
+    set({ panelOrder: order });
+    saveDeskWorkspace(get());
+  },
   resetLayout() {
     set({
+      panelZoom: {},
       panelRects: {},
       panelSaved: [],
       panelOrder: [],

@@ -1,23 +1,27 @@
 {
   "chair": {
     "width": 393,
-    "windows": 0,
-    "blue": [],
-    "front": [],
-    "screen": "Chair",
+    "windows": 1,
+    "blue": [
+      "Needs you"
+    ],
+    "front": [
+      "Needs you"
+    ],
+    "screen": "Needs you",
     "layout": [],
     "ownership": [],
     "clipped": [],
     "ellipsis": [],
     "sideways": [],
-    "content": null,
+    "content": 704,
     "small_targets": [],
     "small_text": [],
     "low_contrast": []
   },
   "meetings": {
     "width": 393,
-    "windows": 1,
+    "windows": 2,
     "blue": [
       "Meetings"
     ],
@@ -37,7 +41,7 @@
   },
   "strip-menu-open": {
     "width": 393,
-    "windows": 1,
+    "windows": 2,
     "blue": [
       "Meetings"
     ],
@@ -61,7 +65,7 @@
   "strip-menu-check-mark-area": 224,
   "people": {
     "width": 393,
-    "windows": 2,
+    "windows": 3,
     "blue": [
       "People"
     ],

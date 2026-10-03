@@ -33,7 +33,7 @@ export function parseKey(cap: string): KeySpec | null {
 
 /** Plain-letter chords stay quiet while the user is typing (the HS-101
  * rule: ⌘W/⌘M never eat a word in a field). */
-const TYPING_GUARDED = new Set(["w", "m"]);
+const TYPING_GUARDED = new Set(["w", "m", "b"]);
 
 function typing(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null;
@@ -63,10 +63,13 @@ export function matchKey(e: KeyboardEvent, spec: KeySpec): boolean {
   return e.key.toLocaleLowerCase() === spec.key;
 }
 
+/** PHILO-13-12 (C2) — a literal ⌃ chord binds before a ⌘ chord: ⌘ also
+ * accepts ctrl off the Mac, so ⌃M (Zoom) must win over ⌘M (Iconify) for the
+ * ctrl key. On a Mac ⌘M stays Iconify. */
 const BOUND_VERBS: { verb: Verb; spec: KeySpec }[] = VERBS.flatMap((verb) => {
   const spec = verb.key ? parseKey(verb.key) : null;
   return spec ? [{ verb, spec }] : [];
-});
+}).sort((a, b) => Number(b.spec.ctrl) - Number(a.spec.ctrl));
 
 export function keyContext(): VerbContext {
   const ids = useDesk.getState().selectedIds;

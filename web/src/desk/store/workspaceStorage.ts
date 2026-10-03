@@ -19,6 +19,9 @@ export interface DeskWorkspaceDocumentV1 {
     rects: Record<string, PanelRect>;
     order: string[];
     max: string[];
+    /** PHILO-13-12 (C2) — zoom's remembered rect per window (optional:
+     * a document written before C2 reads as "fills the work band"). */
+    zoom?: Record<string, PanelRect>;
   };
   zoneWindows: string[];
   zoneViewPrefs: Record<string, ZoneViewPref>;
@@ -93,6 +96,10 @@ export function loadDeskWorkspace(): DeskWorkspaceDocumentV1 {
       Object.entries(panel.rects && typeof panel.rects === "object" ? panel.rects : {})
         .filter(([id, rect]) => isPanelId(id) && isPanelRect(rect)),
     ) as Record<string, PanelRect>;
+    const zoom = Object.fromEntries(
+      Object.entries(panel.zoom && typeof panel.zoom === "object" ? panel.zoom : {})
+        .filter(([id, rect]) => isPanelId(id) && isPanelRect(rect)),
+    ) as Record<string, PanelRect>;
     const zoneViewPrefs = Object.fromEntries(
       Object.entries(
         candidate.zoneViewPrefs && typeof candidate.zoneViewPrefs === "object"
@@ -108,6 +115,7 @@ export function loadDeskWorkspace(): DeskWorkspaceDocumentV1 {
         rects,
         order: compactIds(panel.order),
         max: compactIds(panel.max),
+        ...(Object.keys(zoom).length ? { zoom } : {}),
       },
       zoneWindows: compactIds(candidate.zoneWindows),
       zoneViewPrefs,
@@ -126,13 +134,17 @@ type WorkspaceState = Pick<
   | "panelMax"
   | "zoneWindows"
   | "zoneViewPrefs"
->;
+> & { panelZoom?: Record<string, PanelRect> };
 
 export function saveDeskWorkspace(state: WorkspaceState): void {
   const rects: Record<string, PanelRect> = {};
   for (const id of state.panelSaved) {
     const rect = state.panelRects[id];
     if (rect && isPanelId(id) && isPanelRect(rect)) rects[id] = rect;
+  }
+  const zoom: Record<string, PanelRect> = {};
+  for (const [id, rect] of Object.entries(state.panelZoom ?? {})) {
+    if (isPanelId(id) && isPanelRect(rect)) zoom[id] = rect;
   }
   const document: DeskWorkspaceDocumentV1 = {
     version: DESK_WORKSPACE_VERSION,
@@ -141,6 +153,7 @@ export function saveDeskWorkspace(state: WorkspaceState): void {
       rects,
       order: compactIds(state.panelOrder),
       max: compactIds(state.panelMax),
+      ...(Object.keys(zoom).length ? { zoom } : {}),
     },
     zoneWindows: state.zoneWindows.map((window) => window.id),
     zoneViewPrefs: state.zoneViewPrefs,

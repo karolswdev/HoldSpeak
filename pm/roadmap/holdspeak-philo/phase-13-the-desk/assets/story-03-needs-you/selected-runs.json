@@ -1,0 +1,74 @@
+[
+  {
+    "label": "dock-1440-final",
+    "observation": "assets/story-03-needs-you/final/dock-1440-final/20261002T043501Z-case.p13.dock.needs_you_week-astra-1440/observation.json",
+    "case": "case.p13.dock.needs_you_week",
+    "verdict": "pass",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "notes": [
+      "predicate: '5' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 209, 'y': 862, 'w': 33, 'h': 27}"
+    ],
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "352de5798bea298813dde379efee8abe1983b743e2afcf5f869757c39bf37909",
+      "assets": [
+        "index-zqpG_Lw0.js"
+      ]
+    }
+  },
+  {
+    "label": "dock-1440-old-build",
+    "observation": "assets/story-03-needs-you/old-build/dock-1440-old-build/20261002T043233Z-case.p13.dock.needs_you_week-astra-1440/observation.json",
+    "case": "case.p13.dock.needs_you_week",
+    "verdict": "blocked",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "notes": [
+      "BLOCKED: precondition not met: {'kind': 'readable_text', 'value': '6'} at '.desk-dock-app[aria-label^=\"Intelligence\"] .desk-dock-badge' \u2014 '6' NOT in observe_at text"
+    ],
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "588d695d3b1310526dec24a19c80c41e46b3ddd91f1b11a2535c4c39fbc91a5e",
+      "assets": [
+        "index-BkuS9K4h.js"
+      ]
+    }
+  },
+  {
+    "label": "dock-393-final",
+    "observation": "assets/story-03-needs-you/final/dock-393-final/20261002T043623Z-case.p13.dock.needs_you_week-astra-393/observation.json",
+    "case": "case.p13.dock.needs_you_week",
+    "verdict": "pass",
+    "touch": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "notes": [
+      "predicate: '5' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 45, 'y': 741, 'w': 33, 'h': 27}"
+    ],
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "352de5798bea298813dde379efee8abe1983b743e2afcf5f869757c39bf37909",
+      "assets": [
+        "index-zqpG_Lw0.js"
+      ]
+    }
+  }
+]
