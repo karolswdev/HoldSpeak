@@ -32,6 +32,31 @@ const MENUS: { id: MenuId; label: string }[] = [
   { id: "window", label: "Window" },
 ];
 
+/** PHILO-13-17 (C7, Q3; ratified 2026-10-03) — Go at 393: `Chair ▸`
+ * (lifted out of Window), `Desk ▸`, `Object ▸`, `Window ▸`, then Go's own
+ * rows. The Desk, Object and Window menus stay menus, one tap each. Pure:
+ * `group(id)` is the menu bar's own builder over the one verb registry. */
+export function groupGoForPhone(
+  goRows: WorkMenuEntry[],
+  group: (id: MenuId) => WorkMenuEntry[],
+): WorkMenuEntry[] {
+  const win = group("window");
+  const chairAt = win.findIndex((e) => e.type === "sub" && e.label === "Chair");
+  const chair = chairAt >= 0 ? win.splice(chairAt, 1)[0] : null;
+  const trim = (rows: WorkMenuEntry[]) => {
+    while (rows.length && rows[0].type === "sep") rows.shift();
+    while (rows.length && rows[rows.length - 1].type === "sep") rows.pop();
+    return rows;
+  };
+  const heads: WorkMenuEntry[] = [
+    ...(chair ? [chair] : []),
+    { type: "sub", id: "go-desk", label: "Desk", entries: trim(group("desk")) },
+    { type: "sub", id: "go-object", label: "Object", entries: trim(group("object")) },
+    { type: "sub", id: "go-window", label: "Window", entries: trim(win) },
+  ];
+  return goRows.length ? [...heads, { type: "sep", id: "go-sep" }, ...goRows] : heads;
+}
+
 export function DeskMenuBar() {
   const settled = useSettleState((s) => s.settled);
   // HS-202-02 — the phone bar has room for ONE navigator. Go is that door
@@ -116,9 +141,13 @@ export function DeskMenuBar() {
   const entries = (id: MenuId): WorkMenuEntry[] => {
     const out: WorkMenuEntry[] = [];
     menuEntries(id, out);
-    // The one phone door carries every menu's verbs, in bar order.
-    if (compact && id === "go")
-      for (const m of MENUS) if (m.id !== "go") menuEntries(m.id, out);
+    // The one phone door carries every menu, grouped (PHILO-13-17, C7 Q3):
+    // Chair ▸ Desk ▸ Object ▸ Window ▸ first, then Go's own rows.
+    if (compact && id === "go") return groupGoForPhone(out, (m) => {
+      const e: WorkMenuEntry[] = [];
+      menuEntries(m, e);
+      return e;
+    });
     return out;
   };
 

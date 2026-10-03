@@ -19,6 +19,7 @@ import { DeskToolShelf } from "./DeskToolShelf";
 import { DeskMenuBar } from "./DeskMenuBar";
 import { useLaunchers } from "./DeskWindow";
 import { useFrontWindowId, useAllOpenWindows } from "./window/windowRegistry";
+import { ScreenSwitcher } from "./window/ScreenSwitcher";
 import { useChairState } from "../chairState";
 import { useNeedsYou } from "../needsYou";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
@@ -99,6 +100,9 @@ function ScreenTitle() {
   const name =
     (front ? open.find((w) => w.id === front)?.label : null) ??
     (surface === "chair" ? "Chair" : "Floor");
+  // PHILO-13-17 (C7, Q2): at 393 the title is the window switcher.
+  const compact = useCompactViewport();
+  if (compact) return <ScreenSwitcher name={name} />;
   return (
     <span className="desk-screen-title" data-testid="desk-screen-title">
       <span className="desk-screen-name" title={name}>{name}</span>

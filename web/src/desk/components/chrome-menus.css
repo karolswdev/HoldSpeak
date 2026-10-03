@@ -702,6 +702,36 @@
   color: var(--wb-ink);
   font: 700 13px var(--font-display);
 }
+/* PHILO-13-17 (C7, Q2): 393 — the title is the window switcher. The name
+   truncates; the ▾ is its own fixed mark and never does. */
+.desk-next .desk-screen-title.has-switcher {
+  padding-left: 0;
+}
+.desk-next .desk-screen-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  height: 100%;
+  min-height: 44px;
+  padding: 0 8px;
+  justify-content: flex-start;
+}
+.desk-next .desk-screen-switcher > .desk-screen-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: inherit;
+}
+.desk-next .desk-screen-switcher-mark {
+  flex: 0 0 auto;
+  color: var(--wb-ink);
+  font: 700 13px var(--font-display);
+}
+.desk-next .desk-screen-switcher-mark::before {
+  content: "\25BE"; /* ▾ */
+}
 .desk-next .desk-menubar::before {
   display: none;
 }

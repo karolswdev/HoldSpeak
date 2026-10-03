@@ -8,7 +8,9 @@
 //     library Button in its place; Window ▸ Chair reopens it too.
 //   - 393 (R2): one window at a time fills the work area; Needs you first;
 //     Capture opens on demand from the Speak AppIcon (no permanent strip).
-import { useEffect, useLayoutEffect, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
+import { useAftercare } from "../intelligenceAttention";
+import { frontWindowAftercareSlot } from "../../components/AmbientLayer";
 import { Button } from "../../components/signal/Signal";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { GadgetGlyph } from "../components/window/GadgetGlyph";
@@ -19,6 +21,7 @@ import {
   CHAIR_WINDOWS,
   CHAIR_WINDOW_IDS,
   closeChairWindow,
+  keepCaptureInRing,
   openCaptureOnPhone,
   openChairWindow,
   useChairWindows,
@@ -112,6 +115,24 @@ export function ChairDesk(props: ChairDeskProps) {
       off();
     };
   }, []);
+  // PHILO-13-17 (C7, Q4; the owner's ruling): at 393 an arriving aftercare
+  // card opens Capture, so the card lands in its slot (a desk window in
+  // front iconifies, never closes). Muad'Dib's ruling 2026-10-03: when the
+  // front desk window already hosts the card's slot (the meeting's own
+  // record in Meetings), the card lands there and nothing moves. A card
+  // already waiting when the Chair mounts keeps Capture in the ring (Q4b)
+  // without taking the front.
+  const aftercare = useAftercare();
+  const seenCard = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    const key = aftercare ? `${aftercare.meetingId}:${aftercare.title}` : null;
+    const first = seenCard.current === undefined;
+    const arrived = key !== null && key !== seenCard.current;
+    seenCard.current = key;
+    if (!arrived) return;
+    if (first) keepCaptureInRing();
+    else if (!frontWindowAftercareSlot()) openCaptureOnPhone();
+  }, [aftercare]);
   // Parent layout effects run after the windows present themselves.
   useLayoutEffect(() => {
     raiseNeedsAmongChair();
