@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** the owner's ratification of this charter (the backend half, H-A1); for the face half (A1-F): the owner's ratification of C1's artboard "Parked and Restore" (story 11)
 - **Unblocks:** A1-F (the faces lane's wiring step)
 - **Owner:** Astra (Luna, xhigh); Muad'Dib checks. Wiring step A1-F: Muad'Dib (Fedaykin, Opus 5.5) on `feat/philo-13-muaddib`; Astra checks
@@ -85,3 +85,7 @@ Grounding size: not sized as a move (a prerequisite repair, `grounding/structure
 
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+## Closed — 2026-10-03
+
+Both halves merged/built: H-A1 (Astra, #727 — park/restore/Parked routes, every read filters parked meetings incl. brief, Recall, needs-you, follow-through, intel claim; decisions derived from a parked meeting hide with it) and A1-F (the faces lane — Park replaces Delete/Remove, one press with no confirm per the owner's ratification 2026-10-02 "One press"; PARKED receipt + Restore; the PARKED filter; RESTORED receipt with the row in view; refused restore + Retry; bulk Clear done → PARKED n; claimed item refused in place). Built to the ratified Parked and Restore artboard (C1-5a–j); shots `assets/story-02-shots/`. Final capture `evidence-story-02.md` (pipefail): vitest 1898, tsc clean, architecture guard, pytest 204 (park glass at 1440 + touch 393 with DB readback after Park and Restore, and reload).

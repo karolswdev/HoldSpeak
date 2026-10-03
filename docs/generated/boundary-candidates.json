@@ -7043,7 +7043,7 @@
     },
     {
       "path": "web/src/desk/components/WorkbenchWindow.tsx",
-      "line": 52,
+      "line": 66,
       "kinds": [
         "http_client"
       ],
@@ -7053,7 +7053,7 @@
     },
     {
       "path": "web/src/desk/components/WorkbenchWindow.tsx",
-      "line": 1131,
+      "line": 1183,
       "kinds": [
         "websocket"
       ],
@@ -8323,22 +8323,12 @@
     },
     {
       "path": "web/src/pages/cores/HistoryCore.tsx",
-      "line": 444,
+      "line": 491,
       "kinds": [
         "http_client"
       ],
       "excerpt": "await apiBlob(",
       "line_sha256": "764607cca6d146ab0e6bc6e168ceb15d4f1fd8322a2e1ea82cf585948f161688",
-      "review": "candidate_only"
-    },
-    {
-      "path": "web/src/pages/cores/HistoryCore.tsx",
-      "line": 463,
-      "kinds": [
-        "http_client"
-      ],
-      "excerpt": "await apiFetch(`/api/meetings/${encodeURIComponent(String(selected.id))}`, {",
-      "line_sha256": "1bbeb2dc638b3eecfef064b1e8ff758857132dda6b7523729932cfaa47e8653d",
       "review": "candidate_only"
     },
     {
@@ -8873,7 +8863,7 @@
     },
     {
       "path": "web/src/pages/cores/history/CatalogRail.tsx",
-      "line": 267,
+      "line": 278,
       "kinds": [
         "http_client"
       ],

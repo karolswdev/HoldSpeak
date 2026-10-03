@@ -20342,6 +20342,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_device_meeting_session.py",
@@ -20634,6 +20635,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20921,6 +20923,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -21033,6 +21036,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -21147,6 +21151,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -21251,6 +21256,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -21359,6 +21365,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -21468,6 +21475,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -21571,6 +21579,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -21684,6 +21693,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -21782,6 +21792,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -21888,6 +21899,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -21989,6 +22001,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -22092,6 +22105,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -22198,6 +22212,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -22301,6 +22316,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -22410,6 +22426,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -22519,6 +22536,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -22623,6 +22641,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -22734,6 +22753,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -22837,6 +22857,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -22945,6 +22966,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -23050,6 +23072,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -23163,6 +23186,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -23270,6 +23294,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -23376,6 +23401,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -23494,6 +23520,7 @@
         "tests/e2e/test_hs202_02_first_use_glass.py",
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
         "tests/integration/test_meeting_conflict_recovery.py",
@@ -38130,6 +38157,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_05_close_glass.py",
         "tests/e2e/test_philo13_11_chair_glass.py",
@@ -43692,6 +43720,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -43759,6 +43788,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -43826,6 +43856,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -43894,6 +43925,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -43961,6 +43993,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -43990,6 +44023,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44019,6 +44053,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44048,6 +44083,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44077,6 +44113,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44106,6 +44143,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44178,6 +44216,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44250,6 +44289,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44322,6 +44362,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44394,6 +44435,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44466,6 +44508,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44538,6 +44581,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44610,6 +44654,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44673,6 +44718,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44736,6 +44782,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44806,6 +44853,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44835,6 +44883,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44864,6 +44913,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44893,6 +44943,7 @@
       "source": "holdspeak/web/routes/automations.py",
       "handler_evidence": [],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44963,6 +45014,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -45026,6 +45078,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -45092,6 +45145,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -45166,6 +45220,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -46272,6 +46327,7 @@
       "test_candidates": [
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs143_assignments_glass.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/e2e/test_route_preflight.py",
         "tests/integration/test_web_automations_api.py",

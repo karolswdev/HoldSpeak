@@ -74,7 +74,8 @@
 }
 
 /* HS-129-05 — migrated receipt-bar children retain their prior slot face. */
-.desk-next .surface-footer-receipt > .surface-footer-receipt-line {
+.desk-next .surface-footer-receipt > .surface-footer-receipt-line,
+.desk-next .surface-footer-receipt > .park-receipt > .surface-footer-receipt-line {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -86,7 +87,8 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.desk-next .surface-footer-receipt > .surface-footer-receipt-line[data-tone="danger"] {
+.desk-next .surface-footer-receipt > .surface-footer-receipt-line[data-tone="danger"],
+.desk-next .surface-footer-receipt > .park-receipt > .surface-footer-receipt-line[data-tone="danger"] {
   color: var(--danger);
 }
 .desk-next .surface-footer-verbs > .surface-footer-verbs-group {

@@ -134,7 +134,7 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | PHILO-13-01 | B0 — Walk what was not walked | in-progress | [story-01-b0-walk-what-was-not-walked](./story-01-b0-walk-what-was-not-walked.md) | — |
-| PHILO-13-02 | A1 — Park, never delete | in-progress | [story-02-a1-park-never-delete](./story-02-a1-park-never-delete.md) | — |
+| PHILO-13-02 | A1 — Park, never delete | done | [story-02-a1-park-never-delete](./story-02-a1-park-never-delete.md) | [evidence-story-02](./evidence-story-02.md) |
 | PHILO-13-03 | A2 — One meaning of "needs you" | in-progress | [story-03-a2-one-meaning-of-needs-you](./story-03-a2-one-meaning-of-needs-you.md) | [H-A2 draft proof](lane-03-astra.md); awaiting A2-W and Muad'Dib |
 | PHILO-13-04 | A3 — Faces that do not lie | done | [story-04-a3-faces-that-do-not-lie](./story-04-a3-faces-that-do-not-lie.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-13-05 | A4 — Close means gone | done | [story-05-a4-close-means-gone](./story-05-a4-close-means-gone.md) | [evidence-story-05](./evidence-story-05.md) |

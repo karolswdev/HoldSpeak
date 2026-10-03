@@ -1,0 +1,18 @@
+/* PHILO-13-02 (A1-F) — the Parked strip and the park receipt (C1-5a–j). */
+.desk-next .parked-strip {
+  display: grid;
+  gap: 6px;
+}
+.desk-next .parked-strip-facet {
+  display: flex;
+  gap: 6px;
+}
+.desk-next .parked-strip-chip {
+  color: var(--text-muted);
+}
+.desk-next .park-receipt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}

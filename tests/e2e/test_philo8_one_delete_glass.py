@@ -183,7 +183,7 @@ def _observe_receipts(page: Any) -> None:
     page.evaluate("""() => {
       window.__receipts = []; let last = null;
       const read = () => {
-        const text = [...document.querySelectorAll('.undo-receipt, .write-receipt')].map((e) => e.innerText).join(' | ');
+        const text = [...document.querySelectorAll('.undo-receipt, .write-receipt, .park-receipt')].map((e) => e.innerText).join(' | ');
         if (text !== last) { window.__receipts.push({t: performance.now(), text}); last = text; }
       };
       new MutationObserver(read).observe(document.body, {subtree: true, childList: true, characterData: true});
@@ -521,8 +521,11 @@ class TestOneDelete:
                 browser.close()
 
     @pytest.mark.e2e
-    def test_a_repeated_workbench_remove_never_offers_a_false_undo(self) -> None:
-        """P1-a, the Workbench window (the same hook)."""
+    def test_a_workbench_park_is_kept_and_restore_brings_it_back(self) -> None:
+        """P1-a, rehomed by PHILO-13-02 (A1-F): the Workbench window's Remove
+        and its 8 s Undo are retired for Park (one press; the hub keeps the
+        row, parked). The law the old fence held -- the undo verb keeps the
+        item -- holds on Restore: past the old window the item is active."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -537,19 +540,23 @@ class TestOneDelete:
                 window = page.locator(".desk-workbench-window")
                 window.wait_for(timeout=10_000)
                 window.get_by_text("Repeat WB item", exact=True).click()
-                for _ in range(2):
-                    window.get_by_role("button", name="Remove", exact=True).click()
-                    page.wait_for_function(
-                        "() => (document.querySelector('.desk-workbench-window .undo-receipt')?.innerText || '').includes('Removed')",
-                        timeout=5_000,
-                    )
-                window.locator(".undo-receipt-btn").click()
+                assert window.get_by_role("button", name="Remove", exact=True).count() == 0
+                window.get_by_role("button", name="Park", exact=True).click()
+                page.wait_for_function(
+                    "() => /^PARKED \\d\\d:\\d\\d$/.test(document.querySelector('.desk-workbench-window .park-receipt [role=status]')?.innerText || '')",
+                    timeout=5_000,
+                )
+                parked = _api(page, "GET", f"/api/workbenches/{wb}?parked=true", token=TOKEN)["workbench"]["items"]
+                assert [i["id"] for i in parked] == [item], parked
+                window.locator(".park-receipt").get_by_role("button", name="Restore", exact=True).click()
                 page.wait_for_timeout(WINDOW_WAIT_MS)
-                receipt = page.evaluate("() => document.querySelector('.desk-workbench-window .undo-receipt')?.innerText || ''")
+                receipt = page.evaluate("() => document.querySelector('.desk-workbench-window .park-receipt')?.innerText || ''")
                 items = _api(page, "GET", f"/api/workbenches/{wb}", token=TOKEN)["workbench"]["items"]
                 kept = any(i["id"] == item for i in items)
-                print(f"workbench repeat: kept {kept}; receipt {receipt!r}; DELETE {len(self.deletes)}")
-                assert kept and not self.deletes, (kept, receipt, self.deletes)
+                print(f"workbench park/restore: kept {kept}; receipt {receipt!r}; DELETE {len(self.deletes)}")
+                assert kept and "RESTORED" in receipt, (kept, receipt)
+                # The one DELETE is the park itself (H-A1: the route parks).
+                assert len(self.deletes) == 1, self.deletes
                 self._clean(errors)
             finally:
                 browser.close()
@@ -691,9 +698,10 @@ class TestOneDelete:
 
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
-    def test_a_workbench_remove_works_again_after_a_refusal(self, width: int) -> None:
-        """Round four item 2: a refused Remove (403) frees the item: the next
-        Remove sends a DELETE; the window never says "Removal committed"."""
+    def test_a_workbench_park_works_again_after_a_refusal(self, width: int) -> None:
+        """Round four item 2, rehomed by PHILO-13-02: a refused Park (403)
+        frees the item: the next Park sends a DELETE (the hub's park); the
+        window never says PARKED before the refusal."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -718,36 +726,36 @@ class TestOneDelete:
                         route.continue_()
 
                 page.route(url, refuse)
-                window.get_by_role("button", name="Remove", exact=True).click()
+                window.get_by_role("button", name="Park", exact=True).click()
                 window.locator(".write-receipt").wait_for(timeout=WINDOW_WAIT_MS + 6_000)
                 page.unroute(url, refuse)
                 before = len(self.deletes)
-                window.get_by_role("button", name="Remove", exact=True).click()
-                # Round five (MISSED 1): the renewed window shows its Undo.
+                window.get_by_role("button", name="Park", exact=True).click()
                 page.wait_for_function(
-                    "() => (document.querySelector('.desk-workbench-window .undo-receipt')?.innerText || '').includes('Removed Refused item')",
+                    "() => (document.querySelector('.desk-workbench-window .park-receipt')?.innerText || '').startsWith('PARKED')",
                     timeout=5_000,
                 )
-                _readable_in_view(page, ".desk-workbench-window .undo-receipt-btn")
-                page.wait_for_timeout(WINDOW_WAIT_MS)
+                _readable_in_view(page, ".desk-workbench-window .park-receipt button")
                 history = page.evaluate("() => window.__receipts")
                 items = _api(page, "GET", f"/api/workbenches/{wb}", token=TOKEN)["workbench"]["items"]
+                parked = _api(page, "GET", f"/api/workbenches/{wb}?parked=true", token=TOKEN)["workbench"]["items"]
                 sent = len(self.deletes) - before
-                print(f"workbench refusal {width}: DELETE after refusal {sent}; items {len(items)};"
+                print(f"workbench refusal {width}: DELETE after refusal {sent}; items {len(items)}; parked {len(parked)};"
                       f" history {[h['text'] for h in history]}")
-                assert sent == 1 and not items, (sent, items)
-                first_failure = next(i for i, h in enumerate(history) if "REMOVE ITEM" in h["text"])
+                assert sent == 1 and not items and [i["id"] for i in parked] == [item], (sent, items, parked)
+                first_failure = next(i for i, h in enumerate(history) if "PARK ITEM" in h["text"])
                 before_failure = [h["text"] for h in history[:first_failure + 1]]
-                assert not any("Removal committed" in t for t in before_failure), before_failure
+                assert not any("PARKED" in t for t in before_failure), before_failure
                 self._clean(errors)
             finally:
                 browser.close()
 
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
-    def test_a_workbench_remove_after_a_refusal_offers_undo(self, width: int) -> None:
-        """Round five P1: refusal, then an ordinary Remove: its Undo is visible
-        (the old refusal never hides it) and Undo keeps the item."""
+    def test_a_workbench_park_after_a_refusal_offers_restore(self, width: int) -> None:
+        """Round five P1, rehomed by PHILO-13-02: refusal, then an ordinary
+        Park: its Restore is visible (the old refusal never hides it) and
+        Restore keeps the item."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -771,24 +779,22 @@ class TestOneDelete:
                         route.continue_()
 
                 page.route(url, refuse)
-                window.get_by_role("button", name="Remove", exact=True).click()
+                window.get_by_role("button", name="Park", exact=True).click()
                 window.locator(".write-receipt").wait_for(timeout=WINDOW_WAIT_MS + 6_000)
                 page.unroute(url, refuse)
-                before = len(self.deletes)
-                window.get_by_role("button", name="Remove", exact=True).click()
+                window.get_by_role("button", name="Park", exact=True).click()
                 page.wait_for_function(
-                    "() => !!document.querySelector('.desk-workbench-window .undo-receipt-btn')", timeout=5_000,
+                    "() => !!document.querySelector('.desk-workbench-window .park-receipt button')", timeout=5_000,
                 )
-                box = _readable_in_view(page, ".desk-workbench-window .undo-receipt-btn")
-                footer = page.evaluate("() => document.querySelector('.desk-workbench-window .undo-receipt')?.innerText || ''")
-                page.screenshot(path=str(SHOTS / f"workbench-undo-after-refusal-{width}.png"))
-                page.evaluate("() => document.querySelector('.desk-workbench-window .undo-receipt-btn').click()")
+                box = _readable_in_view(page, ".desk-workbench-window .park-receipt button")
+                footer = page.evaluate("() => document.querySelector('.desk-workbench-window .park-receipt')?.innerText || ''")
+                page.screenshot(path=str(SHOTS / f"workbench-restore-after-refusal-{width}.png"))
+                page.evaluate("() => document.querySelector('.desk-workbench-window .park-receipt button').click()")
                 page.wait_for_timeout(WINDOW_WAIT_MS)
                 items = _api(page, "GET", f"/api/workbenches/{wb}", token=TOKEN)["workbench"]["items"]
-                sent = len(self.deletes) - before
-                print(f"workbench undo after refusal {width}: Undo at {box}; receipt {footer!r}; kept {len(items)}; DELETE {sent}")
-                assert "Removed Undo item" in footer, footer
-                assert [i["id"] for i in items] == [item] and sent == 0, (items, sent)
+                print(f"workbench restore after refusal {width}: Restore at {box}; receipt {footer!r}; kept {len(items)}")
+                assert footer.startswith("PARKED") and "Restore" in footer, footer
+                assert [i["id"] for i in items] == [item], items
                 self._clean(errors)
             finally:
                 browser.close()
@@ -796,8 +802,9 @@ class TestOneDelete:
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
     def test_a_workbench_success_keeps_another_items_refusal(self, width: int) -> None:
-        """Round six (the Workbench's local channel): A's Remove is refused; B is
-        removed and commits; A's failure and Retry still show; Retry removes A."""
+        """Round six (the Workbench's local channel), rehomed by PHILO-13-02:
+        A's Park is refused; B is parked; A's failure and Retry still show;
+        Retry parks A."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -822,20 +829,19 @@ class TestOneDelete:
 
                 page.route(url, refuse)
                 window.get_by_text("Item A", exact=True).click()
-                window.get_by_role("button", name="Remove", exact=True).click()
+                window.get_by_role("button", name="Park", exact=True).click()
                 window.locator(".write-receipt").wait_for(timeout=WINDOW_WAIT_MS + 6_000)
                 page.unroute(url, refuse)
                 window.get_by_text("Item B", exact=True).click()
-                window.get_by_role("button", name="Remove", exact=True).click()
+                window.get_by_role("button", name="Park", exact=True).click()
                 page.wait_for_timeout(WINDOW_WAIT_MS + 1_000)
                 items = [i["id"] for i in _api(page, "GET", f"/api/workbenches/{wb}", token=TOKEN)["workbench"]["items"]]
-                assert items == [a], items  # B committed, A kept
-                page.wait_for_timeout(7_000)  # past B's "Removal committed" linger
+                assert items == [a], items  # B parked, A kept
                 standing = page.evaluate(
                     "() => [...document.querySelectorAll('.desk-workbench-window .write-receipt')].map((e) => e.innerText)"
                 )
                 print(f"workbench two items {width}: standing {standing}")
-                assert standing and "REMOVE ITEM" in standing[0], standing
+                assert standing and "PARK ITEM" in standing[0], standing
                 _readable_in_view(page, ".desk-workbench-window .write-receipt-retry")
                 page.locator(".desk-workbench-window .write-receipt-retry").click()
                 page.wait_for_timeout(2_000)

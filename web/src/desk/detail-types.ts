@@ -39,6 +39,9 @@ export interface WorkbenchItem {
   tokens_consumed: number;
   created_at: string;
   completed_at: string | null;
+  /** PHILO-13-02 — set by park and restore; a parked item's park time. */
+  last_modified?: string | null;
+  parked?: boolean;
 }
 
 export interface WorkbenchRun {

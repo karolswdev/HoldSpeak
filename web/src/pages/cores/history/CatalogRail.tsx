@@ -1,6 +1,7 @@
 // HS-170-04 — the meetings stream (the board's list face).
 // Each row: title at primary, date/duration/words/state tokens, verb at right.
 // Token separators: middle dot (U+00B7) between EVERY token, muted.
+import { useEffect, useRef } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
   SurfaceState,
@@ -83,9 +84,13 @@ function MeetingStreamRow({
   drainerAbsent,
   refusal,
   isLead,
+  restored = false,
 }: {
   row: Record<string, unknown>;
   isSelected: boolean;
+  /** PHILO-13-02 — the row Restore just brought back: it comes into view,
+   *  marked (C1-5d). */
+  restored?: boolean;
   /** HS-201-04 — the one row of the rail that may wear a filled primary. */
   isLead: boolean;
   onSelect: () => void;
@@ -96,6 +101,10 @@ function MeetingStreamRow({
   /** HS-201-04 — the hub's 409 on THIS row's last run gesture. */
   refusal?: SummaryRefusal | null;
 }) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (restored) rowRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [restored]);
   const state = meetingRowState(row);
   const words = wordsToken(row.transcriptWords);
   const noTranscript = row.transcriptWords == null;
@@ -211,8 +220,10 @@ function MeetingStreamRow({
 
   return (
     <div
+      ref={rowRef}
       className="meetings-stream-row"
       data-selected={isSelected || undefined}
+      data-restored={restored || undefined}
       data-testid={`meeting-row-${String(row.id)}`}
     >
       {/* HS-202-03 — the clickable body IS the library Button (UX-CANON
@@ -298,8 +309,11 @@ export function CatalogRail({
   drainerAbsent,
   runRefusal,
   narrowed,
+  restoredId = null,
 }: {
   meetingRows: Record<string, unknown>[];
+  /** PHILO-13-02 — the meeting Restore just brought back. */
+  restoredId?: string | null;
   meetings: { loading: boolean; error: string; reload(): Promise<unknown> };
   selected: Record<string, unknown> | null;
   setSelected: (row: Record<string, unknown> | null) => void;
@@ -344,6 +358,7 @@ export function CatalogRail({
               }}
               onRunIntelligence={onRunIntelligence}
               isLead={leadId === String(row.id)}
+              restored={restoredId === String(row.id)}
               runningId={runningId}
               drainerAbsent={drainerAbsent}
               refusal={
