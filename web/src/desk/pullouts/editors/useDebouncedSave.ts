@@ -23,13 +23,14 @@ export function useDebouncedSave(kind: string, id: string) {
       const body = pending.current ?? {};
       pending.current = {};
       inFlight.current = { ...inFlight.current, ...body };
-      const before = useDesk.getState().keptAt[id];
-      void Promise.resolve(updatePrimitive(kind, id, body)).then(() => {
-        // Kept by the hub (the receipt's stamp moved): forget what it sent.
-        if (useDesk.getState().keptAt[id] !== before) {
-          inFlight.current = {};
-          keep();
+      void Promise.resolve(updatePrimitive(kind, id, body)).then((kept) => {
+        // Astra's P1 on #747: a landed write forgets ONLY the fields it
+        // carried (and only if not edited since); a refused field stays kept.
+        if (kept !== true) return;
+        for (const [key, value] of Object.entries(body)) {
+          if (inFlight.current[key] === value) delete inFlight.current[key];
         }
+        keep();
       });
     }, 450);
   };

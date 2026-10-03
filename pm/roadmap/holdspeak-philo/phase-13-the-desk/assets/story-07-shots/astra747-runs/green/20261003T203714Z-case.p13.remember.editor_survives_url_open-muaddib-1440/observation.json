@@ -1,0 +1,1734 @@
+{
+  "id": "obs-20261003T203714Z-case.p13.remember.editor_survives_url_open-muaddib-1440",
+  "run_id": "20261003T203714Z-case.p13.remember.editor_survives_url_open-muaddib-1440",
+  "case_id": "case.p13.remember.editor_survives_url_open",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-muaddib.json",
+  "job": "j2",
+  "edge_ids": [
+    "edge.face.window_return"
+  ],
+  "state_id": "state.desk_presentation.p13_remember_editor",
+  "provenance": {
+    "revision": "06116f5c68cbc23a75af9df96333327919cb4240",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f256163c5fb16d4dcafc1e26884896c729452af1703e1f0af707833a4be33886",
+      "assets": [
+        "index-BRUaZ34P.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:63867",
+      "port": 63867,
+      "pid": 21310,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zohgqzm2",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zohgqzm2/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T20:37:15.298434+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-muaddib.json",
+      "sha256": "8d110b093f60af26762c21d06b2fda766022ae218243799ec27603c4afd92b20",
+      "version": "phase13-muaddib"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "browser_context": {
+      "viewport": 1440,
+      "has_touch": false
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zohgqzm2",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zohgqzm2",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zohgqzm2/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zohgqzm2"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-03T14:37:22.034327"
+        }
+      },
+      "response_sha256": "e512b59a9e310ebea09a41de9c0e3886caa4fb1ac49afd2c9a1e9428ab42fe7d"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/recipes",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "recipe": {
+          "id": "p13-recipe",
+          "name": "Original name",
+          "avatar": "",
+          "role": "Original role",
+          "system_prompt": "",
+          "user_template": "",
+          "tools": [],
+          "kb_id": null,
+          "profile_id": null,
+          "manual_context": "",
+          "use_zone_context": false,
+          "kind": "",
+          "created_at": "2026-10-03T20:37:22Z",
+          "last_modified": "2026-10-03T20:37:22Z",
+          "deleted": false,
+          "capability": {
+            "kind": "persona",
+            "input_schema": {
+              "type": "object",
+              "required": [
+                "input"
+              ],
+              "properties": {
+                "input": {
+                  "type": "string",
+                  "help": "Material to work on."
+                }
+              }
+            },
+            "input_help": "Choose or enter the material this capability should work on.",
+            "supported_placements": [
+              "assignment:recipe"
+            ],
+            "effect_classes": [
+              "creates_artifact"
+            ],
+            "readiness": {
+              "state": "ready",
+              "detail": ""
+            },
+            "action_label": "Ask Original name",
+            "support": "supported"
+          },
+          "placement": {
+            "source": "canonical_assignment",
+            "subject_kind": "recipe",
+            "subject_id": "p13-recipe"
+          }
+        }
+      },
+      "response_sha256": "78c20fd005c87586e38505a55132477a11b538df6aada345529f5e4d52407932"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zohgqzm2"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "goto",
+    "adapter": "ui-navigation",
+    "url": "/?open=persona:p13-recipe&token=graph-walk-token",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-pullout button:text-is(\"Edit\")",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": ".desk-pullout button:text-is(\"Edit\")",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "fill",
+        "adapter": "ui-input",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-pullout input[aria-label=\"Name\"]",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Original name\nMore\nCancel\nSave"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "id": "pullout:persona:p13-recipe",
+        "tabindex": "-1",
+        "class": "desk-pullout is-card desk-window desk-window-shell is-floating is-front",
+        "role": "region",
+        "aria-label": "Original name",
+        "style": "--k: #FF6B35; z-index: 46; opacity: 1; transform: none; inset: 64px auto auto 1022px; width: 400px; max-height: 784px;"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 1022,
+        "y": 64,
+        "w": 400,
+        "h": 387
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "body",
+      "after": "div#pullout:persona:p13-recipe"
+    },
+    "focus_label": {
+      "before": "",
+      "after": "Original name"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Needs you",
+          "rect": {
+            "x": 14,
+            "y": 42,
+            "w": 698,
+            "h": 681
+          },
+          "visible": true
+        },
+        {
+          "title": "Brief",
+          "rect": {
+            "x": 728,
+            "y": 42,
+            "w": 698,
+            "h": 500
+          },
+          "visible": true
+        },
+        {
+          "title": "The week",
+          "rect": {
+            "x": 728,
+            "y": 558,
+            "w": 698,
+            "h": 277
+          },
+          "visible": true
+        },
+        {
+          "title": "Capture",
+          "rect": {
+            "x": 14,
+            "y": 735,
+            "w": 698,
+            "h": 100
+          },
+          "visible": true
+        },
+        {
+          "title": "Original name",
+          "rect": {
+            "x": 1022,
+            "y": 64,
+            "w": 400,
+            "h": 387
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "24feb3d2684186b7f64e82f8c8e6155a6766f57c0f2dad041ca9a88c19b3abbe"
+    },
+    "document_text_len": {
+      "before": 0,
+      "after": 458
+    },
+    "values": {
+      "before": [],
+      "after": [
+        {
+          "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input",
+          "value": "Renamed by link"
+        },
+        {
+          "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-string > input",
+          "value": "Original role"
+        },
+        {
+          "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea",
+          "value": ""
+        }
+      ]
+    },
+    "field_value": {
+      "before": {
+        "selector": ".desk-pullout input[aria-label=\"Name\"]",
+        "present": false,
+        "value": null
+      },
+      "after": {
+        "selector": ".desk-pullout input[aria-label=\"Name\"]",
+        "present": true,
+        "value": "Renamed by link"
+      }
+    }
+  },
+  "before": {
+    "observe_at": ".desk-pullout",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": {
+      "selector": ".desk-pullout input[aria-label=\"Name\"]",
+      "present": false,
+      "value": null
+    },
+    "focus": "body",
+    "focus_label": "",
+    "url": "http://127.0.0.1:63867/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T20:37:22.681049+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-pullout",
+    "target_present": true,
+    "text": "Original name\nMore\nCancel\nSave",
+    "attrs": {
+      "id": "pullout:persona:p13-recipe",
+      "tabindex": "-1",
+      "class": "desk-pullout is-card desk-window desk-window-shell is-floating is-front",
+      "role": "region",
+      "aria-label": "Original name",
+      "style": "--k: #FF6B35; z-index: 46; opacity: 1; transform: none; inset: 64px auto auto 1022px; width: 400px; max-height: 784px;"
+    },
+    "rect": {
+      "x": 1022,
+      "y": 64,
+      "w": 400,
+      "h": 387
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1022,
+        "y": 64,
+        "w": 400,
+        "h": 387
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1072,
+          "y": 112.3203125,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row"
+        },
+        {
+          "x": 1072,
+          "y": 257.28125,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea"
+        },
+        {
+          "x": 1072,
+          "y": 402.2421875,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 1222,
+          "y": 112.3203125,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input"
+        },
+        {
+          "x": 1222,
+          "y": 257.28125,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea"
+        },
+        {
+          "x": 1222,
+          "y": 402.2421875,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 1372,
+          "y": 112.3203125,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > button.btn--chrome.desk-mic > span"
+        },
+        {
+          "x": 1372,
+          "y": 257.28125,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea"
+        },
+        {
+          "x": 1372,
+          "y": 402.2421875,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input",
+        "value": "Renamed by link"
+      },
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-string > input",
+        "value": "Original role"
+      },
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": {
+      "selector": ".desk-pullout input[aria-label=\"Name\"]",
+      "present": true,
+      "value": "Renamed by link"
+    },
+    "focus": "div#pullout:persona:p13-recipe",
+    "focus_label": "Original name",
+    "url": "http://127.0.0.1:63867/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      },
+      {
+        "title": "Original name",
+        "rect": {
+          "x": 1022,
+          "y": 64,
+          "w": 400,
+          "h": 387
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "24feb3d2684186b7f64e82f8c8e6155a6766f57c0f2dad041ca9a88c19b3abbe",
+    "document_text_len": 458,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T20:37:27.092296+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:63867) non-GET response after the click",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/inference/assignments/editor",
+        "status": 200,
+        "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:63867) non-GET response after the click",
+        "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:63867) non-GET response after the click",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/mic.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-BRUaZ34P.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/react-SZyUX699.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-DIUKYpz6.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-gslz4Tc-.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-Cr5G-Rag.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/setup/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/repositories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/mic.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/inference/assignments/editor",
+      "status": 200,
+      "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "body": null,
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:63867) non-GET response after the click",
+      "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-pullout",
+    "target_present": true,
+    "text": "Original name\nMore\nCancel\nSave",
+    "attrs": {
+      "id": "pullout:persona:p13-recipe",
+      "tabindex": "-1",
+      "class": "desk-pullout is-card desk-window desk-window-shell is-floating is-front",
+      "role": "region",
+      "aria-label": "Original name",
+      "style": "--k: #FF6B35; z-index: 46; opacity: 1; transform: none; inset: 64px auto auto 1022px; width: 400px; max-height: 784px;"
+    },
+    "rect": {
+      "x": 1022,
+      "y": 64,
+      "w": 400,
+      "h": 387
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 1022,
+        "y": 64,
+        "w": 400,
+        "h": 387
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 1072,
+          "y": 112.3203125,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row"
+        },
+        {
+          "x": 1072,
+          "y": 257.28125,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea"
+        },
+        {
+          "x": 1072,
+          "y": 402.2421875,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 1222,
+          "y": 112.3203125,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input"
+        },
+        {
+          "x": 1222,
+          "y": 257.28125,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea"
+        },
+        {
+          "x": 1222,
+          "y": 402.2421875,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 1372,
+          "y": 112.3203125,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > button.btn--chrome.desk-mic > span"
+        },
+        {
+          "x": 1372,
+          "y": 257.28125,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea"
+        },
+        {
+          "x": 1372,
+          "y": 402.2421875,
+          "owned": true,
+          "owner": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > div.desk-inline-editor-row > span.gadget-string > input",
+        "value": "Renamed by link"
+      },
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-string > input",
+        "value": "Original role"
+      },
+      {
+        "selector": "div#pullout:persona:p13-recipe > div.desk-pullout-body.desk-surface-body > span.gadget-pad > textarea",
+        "value": ""
+      }
+    ],
+    "field_value": {
+      "selector": ".desk-pullout input[aria-label=\"Name\"]",
+      "present": true,
+      "value": "Renamed by link"
+    },
+    "focus": "div#pullout:persona:p13-recipe",
+    "focus_label": "Original name",
+    "url": "http://127.0.0.1:63867/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      },
+      {
+        "title": "Original name",
+        "rect": {
+          "x": 1022,
+          "y": 64,
+          "w": 400,
+          "h": 387
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "24feb3d2684186b7f64e82f8c8e6155a6766f57c0f2dad041ca9a88c19b3abbe",
+    "document_text_len": 458,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T20:37:26.950033+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:63867) non-GET response after the click",
+      "chosen": {
+        "method": "POST",
+        "path": "/api/inference/assignments/editor",
+        "status": 200,
+        "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:63867) non-GET response after the click",
+        "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:63867) non-GET response after the click",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/mic.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-BRUaZ34P.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/react-SZyUX699.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-DIUKYpz6.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-gslz4Tc-.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-Cr5G-Rag.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/setup/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/repositories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/mic.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "POST",
+      "path": "/api/inference/assignments/editor",
+      "status": 200,
+      "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "body": null,
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:63867) non-GET response after the click",
+      "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+    },
+    "predicate_satisfied": true,
+    "reading": "value is 'Renamed by link', wanted 'Renamed by link'",
+    "elapsed_s": 4.192
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "value is 'Renamed by link', wanted 'Renamed by link'",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 4.329,
+    "first_satisfied_at_s": 4.192,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: value is 'Renamed by link', wanted 'Renamed by link'"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:63867) non-GET response after the click",
+    "chosen": {
+      "method": "POST",
+      "path": "/api/inference/assignments/editor",
+      "status": 200,
+      "body_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:63867) non-GET response after the click",
+      "body_error": "Error('Response.body: Protocol error (Network.getResponseBody): No resource with given identifier found')"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:63867) non-GET response after the click",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/mic.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/index-BRUaZ34P.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/react-SZyUX699.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/desk-DIUKYpz6.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/desk-gslz4Tc-.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/index-Cr5G-Rag.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/mic.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-mark.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-search.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings/heartbeat",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs3/atlas-phase13-muaddib/20261003T203714Z-case.p13.remember.editor_survives_url_open-muaddib-1440/before.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs3/atlas-phase13-muaddib/20261003T203714Z-case.p13.remember.editor_survives_url_open-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zohgqzm2/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zohgqzm2/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:63867"
+  ],
+  "duration_s": 12.681
+}

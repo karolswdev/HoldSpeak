@@ -1,0 +1,1812 @@
+{
+  "id": "obs-20261003T203950Z-case.p13.delivery.dossier_window-muaddib-1440",
+  "run_id": "20261003T203950Z-case.p13.delivery.dossier_window-muaddib-1440",
+  "case_id": "case.p13.delivery.dossier_window",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j4",
+  "edge_ids": [
+    "edge.face.delivery_dossier_window"
+  ],
+  "state_id": "state.desk_presentation.p13_unwalked_windows",
+  "provenance": {
+    "revision": "06116f5c68cbc23a75af9df96333327919cb4240",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "f256163c5fb16d4dcafc1e26884896c729452af1703e1f0af707833a4be33886",
+      "assets": [
+        "index-BRUaZ34P.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:64294",
+      "port": 64294,
+      "pid": 24554,
+      "home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa",
+      "scheduler_thread": false,
+      "repo_root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/atlas-desk-repository"
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T20:39:51.379319+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [
+      {
+        "stopped_pid": 24408,
+        "started_pid": 24554,
+        "downtime_s": 2.03,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/.local/share/holdspeak/holdspeak.db",
+        "port": 64294,
+        "reason": "repository fixture router rebuild",
+        "repo_root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/atlas-desk-repository"
+      }
+    ],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "7e4fd58cff5125d68eb75fe0466df81044095ff7fb3641537bba98bc5c61a755",
+      "version": "phase13-astra-wave2"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "browser_context": {
+      "viewport": 1440,
+      "has_touch": false
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null,
+    "repository_fixture": {
+      "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/atlas-desk-repository",
+      "label": "Atlas Desk",
+      "project_slug": "atlas-desk",
+      "story_id": "ATLAS-1-01",
+      "git_head": "9617803ef05b654f98c463ef7a35d597a16a566d",
+      "capture_as": "repo",
+      "variables": {
+        "repo_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/atlas-desk-repository",
+        "repo_label": "Atlas Desk",
+        "repo_project_slug": "atlas-desk",
+        "repo_story_id": "ATLAS-1-01",
+        "repo_git_head": "9617803ef05b654f98c463ef7a35d597a16a566d"
+      }
+    }
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 1.28,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "cli",
+      "action": "create_repository_fixture",
+      "adapter": "repository-fixture-producer",
+      "fixture": {
+        "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/atlas-desk-repository",
+        "label": "Atlas Desk",
+        "project_slug": "atlas-desk",
+        "story_id": "ATLAS-1-01",
+        "git_head": "9617803ef05b654f98c463ef7a35d597a16a566d"
+      },
+      "repo_root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/atlas-desk-repository",
+      "captured": {
+        "prefix": "repo",
+        "values": {
+          "repo_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/atlas-desk-repository",
+          "repo_label": "Atlas Desk",
+          "repo_project_slug": "atlas-desk",
+          "repo_story_id": "ATLAS-1-01",
+          "repo_git_head": "9617803ef05b654f98c463ef7a35d597a16a566d"
+        }
+      },
+      "restart": {
+        "stopped_pid": 24408,
+        "started_pid": 24554,
+        "downtime_s": 2.03,
+        "same_db_path": true,
+        "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/.local/share/holdspeak/holdspeak.db",
+        "port": 64294
+      },
+      "page_reloaded": true
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/delivery/sources",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "source": {
+          "source_id": "src_a0bd0ec45c82811a",
+          "node_id": null,
+          "label": "Atlas Desk",
+          "fingerprint": "sha256:1b93a9e88755335c15ae45d38ff89c21e28808bbfc369843c7c146382f841942",
+          "worktrees": [
+            {
+              "worktree_id": "wt_08b44ebb6ee47feb",
+              "branch": "main"
+            }
+          ]
+        },
+        "worktree_id": "wt_08b44ebb6ee47feb"
+      },
+      "response_sha256": "6a84322064ae7d7682e29a2ec9a0d2c1d182fa96e79eafb6a0084839fc07fe63"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "The real Delivery source exposes the fixture story ATLAS-1-01.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "The fixture seam patches the real build_roadmaps_router builder in the isolated hub, so production Delivery reads use this case's repository.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, Delivery re-entry, and the final reopen.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa",
+    "repo_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/atlas-desk-repository",
+    "repo_label": "Atlas Desk",
+    "repo_project_slug": "atlas-desk",
+    "repo_story_id": "ATLAS-1-01",
+    "repo_git_head": "9617803ef05b654f98c463ef7a35d597a16a566d"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click_role",
+    "adapter": "ui-pointer",
+    "adapter_requested": "ui-by-viewport",
+    "name": "Delivery",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-dlv-board",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": ".desk-dlv-board .desk-mc-story-pick:has-text(\"ATLAS-1-01\")",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-dlv-dossier .desk-dlv-facts-line",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": ".desk-dlv-dossier button[aria-label^=\"Close \"]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-dlv-dossier",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "done": false,
+        "error": "TimeoutError('Locator.click: Timeout 10000ms exceeded.\\nCall log:\\n  - waiting for get_by_role(\"button\", name=\"Delivery\", exact=True).first\\n')"
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-dlv-board",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": ".desk-dlv-board .desk-mc-story-pick:has-text(\"ATLAS-1-01\")",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-dlv-dossier .desk-dlv-facts-line",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "ATLAS-1-01\n\nREADY\nCACHED\nHEAD 9617803EF05B\nRUNS 0 PASS 0 FAIL\n\nCAPTURED RUNS\nASSETS 2\nStory\ntext/markdown\n119 B\n\u2197 DOWNLOAD\nPhase status\ntext/markdown\n211 B\n\u2197 DOWNLOAD\nRAW \u00b7 STORY"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "id": "delivery-dossier",
+        "tabindex": "-1",
+        "class": "desk-pullout desk-dlv-dossier desk-window desk-window-shell is-floating is-front",
+        "role": "region",
+        "aria-label": "Dossier ATLAS-1-01",
+        "style": "z-index: 47; opacity: 1; transform: none; inset: 54px auto auto 426px; width: 420px; height: 794px; max-height: none;"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 426,
+        "y": 54,
+        "w": 420,
+        "h": 794
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div#chair:capture",
+      "after": "div#delivery-dossier"
+    },
+    "focus_label": {
+      "before": "Capture",
+      "after": "Dossier ATLAS-1-01"
+    },
+    "windows": {
+      "before": [
+        {
+          "title": "Needs you",
+          "rect": {
+            "x": 14,
+            "y": 42,
+            "w": 698,
+            "h": 681
+          },
+          "visible": true
+        },
+        {
+          "title": "Brief",
+          "rect": {
+            "x": 728,
+            "y": 42,
+            "w": 698,
+            "h": 500
+          },
+          "visible": true
+        },
+        {
+          "title": "The week",
+          "rect": {
+            "x": 728,
+            "y": 558,
+            "w": 698,
+            "h": 277
+          },
+          "visible": true
+        },
+        {
+          "title": "Capture",
+          "rect": {
+            "x": 14,
+            "y": 735,
+            "w": 698,
+            "h": 100
+          },
+          "visible": true
+        }
+      ],
+      "after": [
+        {
+          "title": "Needs you",
+          "rect": {
+            "x": 14,
+            "y": 42,
+            "w": 698,
+            "h": 681
+          },
+          "visible": true
+        },
+        {
+          "title": "Brief",
+          "rect": {
+            "x": 728,
+            "y": 42,
+            "w": 698,
+            "h": 500
+          },
+          "visible": true
+        },
+        {
+          "title": "The week",
+          "rect": {
+            "x": 728,
+            "y": 558,
+            "w": 698,
+            "h": 277
+          },
+          "visible": true
+        },
+        {
+          "title": "Capture",
+          "rect": {
+            "x": 14,
+            "y": 735,
+            "w": 698,
+            "h": 100
+          },
+          "visible": true
+        },
+        {
+          "title": "\u25a4 Delivery",
+          "rect": {
+            "x": 868,
+            "y": 229,
+            "w": 560,
+            "h": 619
+          },
+          "visible": true
+        },
+        {
+          "title": "ATLAS-1-01",
+          "rect": {
+            "x": 426,
+            "y": 54,
+            "w": 420,
+            "h": 794
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "2fc0b2992397767f68e14ae868dd31580f38ea5498e9bfec9ca41e7d53f60dc2",
+      "after": "ffe8c55bd1c94dee481f56720c47fccb6a06224d3647a62dad3d59de7f058b3c"
+    },
+    "document_text_len": {
+      "before": 407,
+      "after": 883
+    }
+  },
+  "before": {
+    "observe_at": ".desk-dlv-dossier",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#chair:capture",
+    "focus_label": "Capture",
+    "url": "http://127.0.0.1:64294/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "2fc0b2992397767f68e14ae868dd31580f38ea5498e9bfec9ca41e7d53f60dc2",
+    "document_text_len": 407,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T20:39:59.623273+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-dlv-dossier",
+    "target_present": true,
+    "text": "ATLAS-1-01\n\nREADY\nCACHED\nHEAD 9617803EF05B\nRUNS 0 PASS 0 FAIL\n\nCAPTURED RUNS\nASSETS 2\nStory\ntext/markdown\n119 B\n\u2197 DOWNLOAD\nPhase status\ntext/markdown\n211 B\n\u2197 DOWNLOAD\nRAW \u00b7 STORY",
+    "attrs": {
+      "id": "delivery-dossier",
+      "tabindex": "-1",
+      "class": "desk-pullout desk-dlv-dossier desk-window desk-window-shell is-floating is-front",
+      "role": "region",
+      "aria-label": "Dossier ATLAS-1-01",
+      "style": "z-index: 47; opacity: 1; transform: none; inset: 54px auto auto 426px; width: 420px; height: 794px; max-height: none;"
+    },
+    "rect": {
+      "x": 426,
+      "y": 54,
+      "w": 420,
+      "h": 794
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 426,
+        "y": 54,
+        "w": 420,
+        "h": 794
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 478.5,
+          "y": 153.25,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body > section"
+        },
+        {
+          "x": 478.5,
+          "y": 451,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body"
+        },
+        {
+          "x": 478.5,
+          "y": 748.75,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body"
+        },
+        {
+          "x": 636,
+          "y": 153.25,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body > section"
+        },
+        {
+          "x": 636,
+          "y": 451,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body"
+        },
+        {
+          "x": 636,
+          "y": 748.75,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body"
+        },
+        {
+          "x": 793.5,
+          "y": 153.25,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body > section"
+        },
+        {
+          "x": 793.5,
+          "y": 451,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body"
+        },
+        {
+          "x": 793.5,
+          "y": 748.75,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#delivery-dossier",
+    "focus_label": "Dossier ATLAS-1-01",
+    "url": "http://127.0.0.1:64294/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      },
+      {
+        "title": "\u25a4 Delivery",
+        "rect": {
+          "x": 868,
+          "y": 229,
+          "w": 560,
+          "h": 619
+        },
+        "visible": true
+      },
+      {
+        "title": "ATLAS-1-01",
+        "rect": {
+          "x": 426,
+          "y": 54,
+          "w": 420,
+          "h": 794
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "ffe8c55bd1c94dee481f56720c47fccb6a06224d3647a62dad3d59de7f058b3c",
+    "document_text_len": 883,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T20:40:11.692368+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:64294) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:64294) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/factory/profiles",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/factory/discover",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/stories/atlas-desk/ATLAS-1-01/dossier",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-BRUaZ34P.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/react-SZyUX699.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-DIUKYpz6.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-gslz4Tc-.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-Cr5G-Rag.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/setup/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/repositories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-dlv-dossier",
+    "target_present": true,
+    "text": "ATLAS-1-01\n\nREADY\nCACHED\nHEAD 9617803EF05B\nRUNS 0 PASS 0 FAIL\n\nCAPTURED RUNS\nASSETS 2\nStory\ntext/markdown\n119 B\n\u2197 DOWNLOAD\nPhase status\ntext/markdown\n211 B\n\u2197 DOWNLOAD\nRAW \u00b7 STORY",
+    "attrs": {
+      "id": "delivery-dossier",
+      "tabindex": "-1",
+      "class": "desk-pullout desk-dlv-dossier desk-window desk-window-shell is-floating is-front",
+      "role": "region",
+      "aria-label": "Dossier ATLAS-1-01",
+      "style": "z-index: 47; opacity: 1; transform: none; inset: 54px auto auto 426px; width: 420px; height: 794px; max-height: none;"
+    },
+    "rect": {
+      "x": 426,
+      "y": 54,
+      "w": 420,
+      "h": 794
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 426,
+        "y": 54,
+        "w": 420,
+        "h": 794
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 478.5,
+          "y": 153.25,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body > section"
+        },
+        {
+          "x": 478.5,
+          "y": 451,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body"
+        },
+        {
+          "x": 478.5,
+          "y": 748.75,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body"
+        },
+        {
+          "x": 636,
+          "y": 153.25,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body > section"
+        },
+        {
+          "x": 636,
+          "y": 451,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body"
+        },
+        {
+          "x": 636,
+          "y": 748.75,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body"
+        },
+        {
+          "x": 793.5,
+          "y": 153.25,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body > section"
+        },
+        {
+          "x": 793.5,
+          "y": 451,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body"
+        },
+        {
+          "x": 793.5,
+          "y": 748.75,
+          "owned": true,
+          "owner": "div#delivery-dossier > div.desk-pullout-body"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": {
+      "chair": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 900
+      },
+      "capture_bar": {
+        "x": 30,
+        "y": 772,
+        "w": 666,
+        "h": 48
+      },
+      "scroll_top": 0,
+      "scroll_padding_bottom": "auto",
+      "end_margin_bottom": "0px"
+    },
+    "values": [],
+    "field_value": null,
+    "focus": "div#delivery-dossier",
+    "focus_label": "Dossier ATLAS-1-01",
+    "url": "http://127.0.0.1:64294/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 14,
+          "y": 42,
+          "w": 698,
+          "h": 681
+        },
+        "visible": true
+      },
+      {
+        "title": "Brief",
+        "rect": {
+          "x": 728,
+          "y": 42,
+          "w": 698,
+          "h": 500
+        },
+        "visible": true
+      },
+      {
+        "title": "The week",
+        "rect": {
+          "x": 728,
+          "y": 558,
+          "w": 698,
+          "h": 277
+        },
+        "visible": true
+      },
+      {
+        "title": "Capture",
+        "rect": {
+          "x": 14,
+          "y": 735,
+          "w": 698,
+          "h": 100
+        },
+        "visible": true
+      },
+      {
+        "title": "\u25a4 Delivery",
+        "rect": {
+          "x": 868,
+          "y": 229,
+          "w": 560,
+          "h": 619
+        },
+        "visible": true
+      },
+      {
+        "title": "ATLAS-1-01",
+        "rect": {
+          "x": 426,
+          "y": 54,
+          "w": 420,
+          "h": 794
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "ffe8c55bd1c94dee481f56720c47fccb6a06224d3647a62dad3d59de7f058b3c",
+    "document_text_len": 883,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T20:40:11.558959+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:64294) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:64294) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/factory/profiles",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/factory/discover",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/stories/atlas-desk/ATLAS-1-01/dossier",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-BRUaZ34P.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/react-SZyUX699.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-DIUKYpz6.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/desk-gslz4Tc-.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/index-Cr5G-Rag.css",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/sync/pull",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/notes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decisions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/recipes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/kbs",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/directories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workflows",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/chains",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference-targets",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/projects",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/workbenches",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/models",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/setup/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/threads",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/repositories",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "'ATLAS-1-01' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 426, 'y': 54, 'w': 420, 'h': 794}",
+    "elapsed_s": 11.794
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'ATLAS-1-01' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 426, 'y': 54, 'w': 420, 'h': 794}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 11.927,
+    "first_satisfied_at_s": 11.794,
+    "completion_bound_s": 20.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'ATLAS-1-01' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 426, 'y': 54, 'w': 420, 'h': 794}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:64294) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:64294) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/settings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/factory/profiles",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/factory/discover",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/stories/atlas-desk/ATLAS-1-01/dossier",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/index-BRUaZ34P.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/react-SZyUX699.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/desk-DIUKYpz6.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/desk-gslz4Tc-.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/index-Cr5G-Rag.css",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/inter-latin-400-normal-C38fXH4l.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/inter-latin-600-normal-LgqL8muc.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/sync/pull",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/notes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decisions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/recipes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/kbs",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/directories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workflows",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/chains",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference-targets",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/projects",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/workbenches",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/setup/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/threads",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/repositories",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-mark.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-search.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs3/atlas-phase13-astra/20261003T203950Z-case.p13.delivery.dossier_window-muaddib-1440/before.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs3/atlas-phase13-astra/20261003T203950Z-case.p13.delivery.dossier_window-muaddib-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "REPO_ROOT /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/atlas-desk-repository",
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jjaeduaa/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:64294"
+  ],
+  "duration_s": 20.964
+}

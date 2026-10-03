@@ -287,7 +287,7 @@ describe("B2 slice two: the remaining drafts return, per object, and clear on sa
     ({ keptEditorPatch } = await import("../pullouts/editors/editorDraft"));
     ({ useDesk } = await import("../store"));
     expect(keptEditorPatch("note", "n1")).toEqual({ body_markdown: "Shard backup: ask Priya" });
-    const kept = vi.fn(async (_k: string, id: string) => { useDesk.setState({ keptAt: { [id]: Date.now() + 1 } }); });
+    const kept = vi.fn(async (_k: string, id: string) => { useDesk.setState({ keptAt: { [id]: Date.now() + 1 } }); return true; });
     useDesk.setState({ updatePrimitive: kept } as never);
     const second = renderHook(() => useDebouncedSave("note", "n1"));
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
@@ -296,6 +296,51 @@ describe("B2 slice two: the remaining drafts return, per object, and clear on sa
     await act(async () => { await vi.advanceTimersByTimeAsync(450); });
     expect(kept).toHaveBeenCalledWith("note", "n1", { body_markdown: "Shard backup: ask Priya", title: "Ledger risks" });
     expect(stored().drafts).toEqual({});
+    second.unmount();
+  });
+
+  // Astra's P1 on #747. Red on 06116f5c: the landed role write cleared
+  // every kept field, so the refused name was lost on reload.
+  it("the inline editor: a refused field stays kept when a later write of another field lands", async () => {
+    vi.useFakeTimers();
+    let { useDebouncedSave } = await import("../pullouts/editors/useDebouncedSave");
+    let { useDesk } = await import("../store");
+    const answers = [false, true]; // the name write is refused, the role write lands
+    const write = vi.fn(async () => answers.shift() ?? true);
+    useDesk.setState({ updatePrimitive: write } as never);
+    const first = renderHook(() => useDebouncedSave("recipe", "r1"));
+    act(() => first.result.current({ name: "Unsaved name" }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(450); });
+    act(() => first.result.current({ role: "Saved role" }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(450); });
+    expect(write).toHaveBeenNthCalledWith(1, "recipe", "r1", { name: "Unsaved name" });
+    expect(write).toHaveBeenNthCalledWith(2, "recipe", "r1", { role: "Saved role" });
+    expect(JSON.parse(stored().drafts["editor/recipe/r1"])).toEqual({ name: "Unsaved name" });
+    first.unmount();
+
+    vi.resetModules(); // reload: the refused name comes back
+    ({ useDebouncedSave } = await import("../pullouts/editors/useDebouncedSave"));
+    ({ useDesk } = await import("../store"));
+    const { keptEditorPatch } = await import("../pullouts/editors/editorDraft");
+    expect(keptEditorPatch("recipe", "r1")).toEqual({ name: "Unsaved name" });
+    void useDebouncedSave; void useDesk;
+  });
+
+  // Astra's P2 on #747. Red on 06116f5c: `keptTime || defaultTime`.
+  it("Schedule recording: an emptied time stays empty after a reload, never the default", async () => {
+    let { useDesk } = await import("../store");
+    let { ScheduleCreateWindow } = await import("../components/ScheduleCreateWindow");
+    useDesk.getState().openScheduleCreate();
+    const first = render(<ScheduleCreateWindow />);
+    fireEvent.change(screen.getByLabelText("When"), { target: { value: "" } });
+    first.unmount();
+    expect(stored().drafts).toEqual({ "schedule/new/time": "" });
+    vi.resetModules();
+    ({ useDesk } = await import("../store"));
+    ({ ScheduleCreateWindow } = await import("../components/ScheduleCreateWindow"));
+    useDesk.getState().openScheduleCreate();
+    const second = render(<ScheduleCreateWindow />);
+    expect(screen.getByLabelText("When")).toHaveValue("");
     second.unmount();
   });
 

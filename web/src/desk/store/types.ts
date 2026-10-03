@@ -261,7 +261,7 @@ export interface DeskState {
     id: string,
     patch: Record<string, unknown>,
     verb?: string,
-  ): Promise<void>;
+  ): Promise<boolean>; // true when the hub kept the write (PHILO-13-07 B2)
   /** Tombstone a deletable primitive, then settle all local desk faces. */
   /** Resolves `true` when the hub took the delete, `false` when it refused. */
   deletePrimitive(id: string, kind: string): Promise<boolean>;

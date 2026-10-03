@@ -117,7 +117,7 @@ function DeskFaces() {
     try {
       await refresh();
       const open = new URLSearchParams(window.location.search).get("open");
-      if (open) useDesk.getState().openPullout(open);
+      if (open) { useDesk.getState().openPullout(open); const url = new URL(window.location.href); url.searchParams.delete("open"); window.history.replaceState(window.history.state, "", url); } // B2 (Astra P2 #747): a link opens once; a reload never replays it over the restored editor
     } catch (caught) {
       setRefreshFailure(
         caught instanceof Error && caught.message

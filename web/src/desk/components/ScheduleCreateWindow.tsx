@@ -80,7 +80,9 @@ function ScheduleCreateForm({
     d.setSeconds(0, 0);
     return toDatetimeLocal(d);
   });
-  const dateTime = keptTime || defaultTime;
+  // Astra's P2 on #747: an emptied time is kept empty, never the default.
+  const hasKeptTime = useDesk((s) => "schedule/new/time" in s.drafts);
+  const dateTime = hasKeptTime ? keptTime : defaultTime;
   const setDateTime = keepTime;
   const [cronExpr, setCronExpr] = useState("0 9 * * 1-5");
   const [duration, setDuration] = useState("60");

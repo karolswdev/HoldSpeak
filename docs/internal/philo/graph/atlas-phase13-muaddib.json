@@ -1832,6 +1832,438 @@
         1440,
         393
       ]
+    },
+    {
+      "id": "case.p13.remember.editor_refused_field_kept",
+      "job": "j2",
+      "edge_ids": [
+        "edge.face.window_return"
+      ],
+      "state_id": "state.desk_presentation.p13_remember_editor",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the normal Desk after the arrival"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/recipes",
+          "adapter": "http-route",
+          "body": {
+            "id": "p13-recipe",
+            "name": "Original name",
+            "role": "Original role"
+          },
+          "expect_status": 201,
+          "why": "a real Agent through the recipes route"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/?open=persona:p13-recipe",
+          "why": "open the Agent window by its link"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".desk-pullout button:text-is(\"Edit\")",
+          "state": "visible",
+          "timeout_s": 10,
+          "why": "the Agent window is open"
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/",
+          "why": "the plain Desk (the window stays open)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-pullout button:text-is(\"Edit\")",
+          "why": "Edit"
+        },
+        {
+          "kind": "boundary",
+          "label": "One refused Agent write; the next goes to the real hub",
+          "substitute": "http_fault",
+          "method": "PUT",
+          "path": "/api/recipes/p13-recipe",
+          "status": 503,
+          "body": {
+            "detail": "write refused"
+          },
+          "times": 1
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": ".desk-pullout input[aria-label=\"Name\"]",
+          "value": "Unsaved name",
+          "why": "rename the Agent: this write is refused"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-observation",
+          "selector": ".write-receipt:has-text(\"SAVE FAILED\")",
+          "state": "visible",
+          "timeout_s": 10,
+          "why": "the refusal is named on the receipt line"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": ".desk-pullout input[aria-label='Role']",
+          "value": "Saved role after refusal",
+          "why": "change its role: this write lands"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "recipe.role",
+            "value": "Saved role after refusal"
+          },
+          "observe_at": "protocol: GET /api/recipes/p13-recipe",
+          "timeout_s": 10,
+          "why": "the role write landed on the hub"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "why": "the reload this case is about",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout input[aria-label=\"Name\"]",
+            "state": "visible",
+            "timeout_s": 15,
+            "why": "the editor came back"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "input_value",
+          "selector": ".desk-pullout input[aria-label=\"Name\"]",
+          "equals": "Unsaved name"
+        },
+        "observe_at": ".desk-pullout",
+        "words": "a refused name write and then a landed role write; after a reload the editor still holds the unsaved name. Red on 06116f5c: the landed role write cleared every kept field (Astra's P1 on #747)."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.remember.schedule_empty_time_kept",
+      "job": "j2",
+      "edge_ids": [
+        "edge.face.window_return"
+      ],
+      "state_id": "state.desk_presentation.p13_remember_editor",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the normal Desk after the arrival"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-dock [aria-label^='Speak']",
+        "at_width": 393,
+        "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-window-shell.chair-window[aria-label='Capture']",
+            "state": "visible",
+            "timeout_s": 10,
+            "at_width": 393,
+            "why": "at 393 Capture opens on demand from the Dock's Speak AppIcon (R2; tests/e2e/chair_windows.py)"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[data-testid=arrival-schedule]",
+            "why": "Schedule in the Capture window"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "[id='schedule:__create__'] input[aria-label='When']",
+            "value": "",
+            "why": "empty the time field"
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation",
+            "why": "the reload this case is about"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "[id='schedule:__create__'] input[aria-label='When']",
+            "state": "visible",
+            "timeout_s": 20,
+            "why": "the window came back"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "input_value",
+          "selector": "[id='schedule:__create__'] input[aria-label='When']",
+          "equals": ""
+        },
+        "observe_at": "[id='schedule:__create__'] input[aria-label='When']",
+        "words": "he empties the time in Schedule recording and reloads; the time stays empty, never the default. Red on 06116f5c (Astra's P2 on #747)."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.remember.editor_survives_url_open",
+      "job": "j2",
+      "edge_ids": [
+        "edge.face.window_return"
+      ],
+      "state_id": "state.desk_presentation.p13_remember_editor",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "the normal Desk after the arrival"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/recipes",
+          "adapter": "http-route",
+          "body": {
+            "id": "p13-recipe",
+            "name": "Original name",
+            "role": "Original role"
+          },
+          "expect_status": 201,
+          "why": "a real Agent through the recipes route"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "goto",
+        "adapter": "ui-navigation",
+        "url": "/?open=persona:p13-recipe",
+        "why": "open the Agent window by its link",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout button:text-is(\"Edit\")",
+            "state": "visible",
+            "timeout_s": 10,
+            "why": "the Agent window is open"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-pullout button:text-is(\"Edit\")",
+            "why": "Edit"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": ".desk-pullout input[aria-label=\"Name\"]",
+            "value": "Renamed by link",
+            "why": "rename the Agent"
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation",
+            "why": "the reload this case is about"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout input[aria-label=\"Name\"]",
+            "state": "visible",
+            "timeout_s": 15,
+            "why": "the editor came back"
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "input_value",
+          "selector": ".desk-pullout input[aria-label=\"Name\"]",
+          "equals": "Renamed by link"
+        },
+        "observe_at": ".desk-pullout",
+        "words": "he opens an Agent from its ?open= link, edits it and reloads; the editor is still open on his words. Red on 06116f5c: the reload replayed ?open= and the open closed the restored editor (Astra's P2 on #747)."
+      },
+      "completion_bound_s": 30,
+      "viewports": [
+        1440,
+        393
+      ]
     }
   ],
   "states": [
@@ -2072,6 +2504,41 @@
       "reachable_by": [
         "case.p13.remember.room_empty_draft",
         "case.p13.remember.room_empty_close_keeps_place"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_remember_editor",
+      "family": "desk_presentation",
+      "values": {
+        "window": "the inline editor; Schedule recording",
+        "draft": "a refused field; an emptied time",
+        "after": "reload"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/pullouts/editors/useDebouncedSave.ts",
+          "symbol": "if (inFlight.current[key] === value) delete inFlight.current[key];",
+          "line": 31,
+          "claim": "a landed write forgets only the fields it carried"
+        },
+        {
+          "path": "web/src/desk/components/ScheduleCreateWindow.tsx",
+          "symbol": "const dateTime = hasKeptTime ? keptTime : defaultTime;",
+          "line": 85,
+          "claim": "an emptied time stays empty"
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "url.searchParams.delete(\"open\");",
+          "line": 120,
+          "claim": "the ?open= link is consumed once, so a reload does not replay it"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.remember.editor_refused_field_kept",
+        "case.p13.remember.schedule_empty_time_kept",
+        "case.p13.remember.editor_survives_url_open"
       ]
     }
   ],
