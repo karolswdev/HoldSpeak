@@ -3400,7 +3400,7 @@
           "observe_at": "[data-testid=desk-dock-offline]",
           "predicate": {
             "kind": "readable_text",
-            "value": "OFFLINE \u00b7 AS OF"
+            "value": "OFFLINE · AS OF"
           },
           "timeout_s": 30,
           "capture_shot": true
@@ -5030,7 +5030,7 @@
       "sources": [
         {
           "path": "holdspeak/db/meetings.py",
-          "line": 1223,
+          "line": 1282,
           "symbol": "def delete_meeting",
           "claim": "The normal removal path retains the row through park; this case reads it after restart and restore."
         }
@@ -5070,7 +5070,7 @@
           "path": "web/src/desk/needsYou.ts",
           "line": 233,
           "symbol": "export function computeNeedsYou",
-          "claim": "The Dock reads the one R1\u2013R3 membership rule."
+          "claim": "The Dock reads the one R1–R3 membership rule."
         }
       ],
       "reachable_by": [

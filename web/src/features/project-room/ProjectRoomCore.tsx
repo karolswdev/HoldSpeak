@@ -49,7 +49,7 @@ import { onReturnToTask, rememberTaskFocus } from "../../desk/returnToTask";
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
-import { refOpener } from "../../desk/openObject";
+import { ROOM_UPDATES_EVENT, refOpener, takeRoomUpdatesRequest } from "../../desk/openObject";
 import { useDesk } from "../../desk/store";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type {
@@ -2152,6 +2152,18 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     return true;
   }, [ctrl.projectId, openUpdate]);
   const sendFailed = useRoomSendLink(ctrl.projectId, openLinkedUpdate);
+
+  // PHILO-13-14 (C4): the palette's `Draft update for <project>` opens this
+  // Room in its Update posture, as the `Draft update` Button does.
+  const { enterUpdates } = updateCtrl;
+  useEffect(() => {
+    const projectId = ctrl.projectId;
+    if (!projectId) return;
+    const take = () => { if (takeRoomUpdatesRequest(projectId)) void enterUpdates(); };
+    take();
+    window.addEventListener(ROOM_UPDATES_EVENT, take);
+    return () => window.removeEventListener(ROOM_UPDATES_EVENT, take);
+  }, [ctrl.projectId, enterUpdates]);
   const sendFailure = sendFailed && ctrl.projectId ? (
     <div data-send="well" data-testid="send-well" data-doc={`project:${ctrl.projectId}`} role="group"
       aria-label="Send the latest update">
