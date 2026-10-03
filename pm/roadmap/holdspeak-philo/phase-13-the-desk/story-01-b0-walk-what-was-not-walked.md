@@ -44,17 +44,17 @@ Nine paths are unwalked (`grounding/faces-surfaces.md:59`, `:219`; `grounding/fa
 ## Acceptance criteria
 
 - [ ] H-B0a and H-B0b merged first: `atlas-phase13-astra.json` and its count fence exist; the shared count excludes `atlas-phase13-*`; `test_philo_graph_atlas.py` passes.
-- [ ] Each of the nine paths has an atlas case in `docs/internal/philo/graph/atlas-phase13-astra.json` that validates against `docs/internal/philo/graph/atlas.schema.json` (`HOME=$(mktemp -d) uv run --extra dev pytest -q tests/unit/test_philo_graph_atlas.py`).
-- [ ] Each case ran through `scripts/graph_walk.py run`, one case per invocation, at 1440 and at 393, each in a fresh HOME; `provenance.db_path` is under that HOME.
+- [x] Each of the nine paths has an atlas case in `docs/internal/philo/graph/atlas-phase13-astra.json` that validates against `docs/internal/philo/graph/atlas.schema.json` (`HOME=$(mktemp -d) uv run --extra dev pytest -q tests/unit/test_philo_graph_atlas.py`).
+- [x] Each case ran through `scripts/graph_walk.py run`, one case per invocation, at 1440 and at 393, each in a fresh HOME; `provenance.db_path` is under that HOME.
 - [ ] Each case passes on main, or, where it finds a defect, it is red on main with the defect named and a home (story or BACKLOG) recorded. Red-before-green where the defect is in this phase's scope.
-- [ ] The 393 runs drive touch, not the mouse adapter (`grounding/structure.md:37` names the mouse adapter as not touch proof); if the rig has no touch adapter for a step, that is a named limit, not a pass.
-- [ ] Cases exist and pass on main **before** PHILO-13-07 merges. The gate is review evidence: this story's evidence file names each run directory, and B2's merge record cites this story's merged commit and `evidence-story-01.md`.
+- [x] The 393 runs drive touch, not the mouse adapter (`grounding/structure.md:37` names the mouse adapter as not touch proof); if the rig has no touch adapter for a step, that is a named limit, not a pass.
+- [ ] **B2 gate (Muad'Dib's signed C5 ruling):** B0's cases are re-run on B2's head. A red homed outside B2 may remain red with its home cited; B0-F2, whose home is B2, must pass on B2's head. Re-walk B0-F1 (Chain/Coder Close) after PHILO-13-05 (#725) merges. B2's merge record cites this story's merged commit on main, `evidence-story-01.md`, and the runs made on B2's head.
 
 ## Test plan
 
 - **Atlas file:** `docs/internal/philo/graph/atlas-phase13-astra.json` (this lane's only atlas file; `--atlas` per run, `scripts/graph_walk.py:6507`); its count fence in `tests/unit/test_philo13_astra_atlas.py`.
 - **Atlas:** `HOME="$(mktemp -d)" PLAYWRIGHT_BROWSERS_PATH="$REAL_HOME/Library/Caches/ms-playwright" uv run --extra dev python scripts/graph_walk.py run --atlas docs/internal/philo/graph/atlas-phase13-astra.json --case <case id> --brain astra --viewport <1440|393> --engine none --out .tmp/graph-walk/philo-13-01/<label>` — one case per invocation (`agent/skills/holdspeak-capability-verifier/SKILL.md` "Walk a case").
-- **Focused:** `tests/unit/test_philo_graph_atlas.py` and `tests/unit/test_philo13_astra_atlas.py` only.
+- **Focused:** `tests/unit/test_philo_graph_atlas.py`, `tests/unit/test_api_surface.py`, `tests/unit/test_philo_graph_reference.py`, `tests/unit/test_philo13_astra_atlas.py`, and `tests/unit/test_philo13_graph_walk.py`. Every focused selection after a code move includes the first three shared fences.
 - **Shots:** `before.png` / `after.png` per run, read by eye; 1440 and 393 (touch).
 
 ## Worker-brief scars
@@ -69,5 +69,11 @@ Grounding size: not sized there; nine cases at two widths. PROVISIONAL.
 
 ## Notes
 
+- 2026-10-02 — r4 pre-merge hygiene: the R1 baseline pin names reachable commit e2e92c582, whose Astra Atlas blob matches the pre-fix case; docs/generated/api-reference.json was regenerated from the current source to clear API-reference drift; all 12 CI Documentation Navigation commands pass. A clean GitHub clone at df9ae07c5d34f39502d4305ac5cb1a1f1e5b3adf found the pin and passed all 166 focused tests. Story 01 stays in-progress for the B2-head gate; this is incremental evidence, not the final story evidence.
+- 2026-10-02 — r3: paid Muad'Dib's R1–R6 on the rebased #726 draft head. The two `HEAD`-moving Atlas fences now use pinned pre-fix commit `c7073f9c`; F7 is classified as a product defect from matching real zone probes and disabled Open at both widths; Info's 40 s rerun exposed a 52.465 s result, so the case and bound fence now state the measured 75 s limit; both graph hit probes now sample `[0.125, 0.5, 0.875]` and preserve nine ownership checks; trigger lifecycle failures record `fail`; the single Astra `.op` count remains separate from the shared historical 69 count. The final focused selection collects and passes 166 tests with the three standing shared files. Ten actual r3 case-width runs are recorded in [walks-01-astra.md](walks-01-astra.md), including the post-#725 Chain/Coder visible → hidden → visible Dock-chip fence. Story 01 stays in-progress: B0 is not on main and the B2-head gate, canonical evidence and F2 check remain open.
+- 2026-10-02 — Muad'Dib's signed counsel on #726: C1 requires a five-column pass / product-red / rig-limit table; C2 requires Calendar's refusal-face lifecycle, Zone through the Directory door and Info through Spatial before retaining L2/L3 as limits; C3 corrects F1 to match visible state and surviving records; C4 discloses the `build_roadmaps_router` seam in every repository-backed case; C5 replaces the deadlocking B2 gate with the gate above and requires F1 re-walk after #725 merges; C6 accepts the five-column table and makes `atlas.schema.json` and `scripts/graph_walk.py` Astra-owned shared files, with face-lane additions by named handoff.
+- 2026-10-02 — r2: all 18 final Atlas-hash cases were walked and preserved; the final Spatial Info expectation is the observed uppercase `IDENTITY`, changed together with its fence. The five-column table and findings distinguish predicate pass, product-red and rig-limit. These branch observations do not satisfy the main-run criterion or the pending #725/B2 gates; Story 01 remains in-progress.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+- 2026-10-01 — Astra baseline: [lane record](lane-01-astra.md), [18 runs](walks-01-astra.md), [findings](findings-01-astra.md). Main/merge and missing useful-face proofs remain open; story stays in-progress.

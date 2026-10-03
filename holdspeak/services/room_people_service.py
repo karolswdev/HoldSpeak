@@ -245,6 +245,7 @@ def _read_room_commitments(project_service: ProjectService, project_id: str) -> 
                     ON p.commitment_id = c.id AND p.state = 'confirmed'
                WHERE c.status = 'open'
                  AND d.deleted = 0
+                 AND (m.id IS NULL OR m.parked = 0)
                ORDER BY c.due_at ASC NULLS LAST, c.created_at ASC""",
             (project_id,),
         ).fetchall()

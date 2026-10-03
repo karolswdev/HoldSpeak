@@ -355,6 +355,7 @@ class MeetingService:
         speaker: str | None = None,
         tag: str | None = None,
         has_open_actions: bool = False,
+        parked: bool = False,
     ) -> dict[str, Any]:
         """Return archive summaries, preserving the web archive's filters."""
         bounded_limit = max(1, min(int(limit), 500))
@@ -367,7 +368,7 @@ class MeetingService:
                 dict.fromkeys(
                     meeting_id
                     for meeting_id, _ in self._db.meetings.search_transcripts(
-                        query.strip(), limit=500
+                        query.strip(), limit=500, include_parked=parked
                     )
                 )
             )
@@ -380,9 +381,10 @@ class MeetingService:
             tag=tag,
             has_open_actions=has_open_actions,
             meeting_ids=search_ids,
+            parked=parked,
         )
         filtered = bool(query or from_date or to_date or speaker or tag or has_open_actions)
-        total = len(meetings) if filtered else self._db.meetings.get_meeting_count()
+        total = len(meetings) if filtered else self._db.meetings.get_meeting_count(parked=parked)
         payloads = [self._summary_payload(meeting) for meeting in meetings]
         self._enrich_calendar_origin(payloads)
         self._enrich_intel_status(payloads)
@@ -399,12 +401,14 @@ class MeetingService:
         include: str | None = None,
         *,
         id: str | None = None,
+        include_parked: bool = False,
     ) -> dict[str, Any]:
         """Return a meeting; ``id`` is accepted for adapter-facing callers."""
+        include_parked = bool(include_parked)
         resolved_id = id if id is not None else meeting_id
         if not resolved_id:
             raise ValidationError("meeting id is required")
-        meeting = self._db.meetings.get_meeting(resolved_id)
+        meeting = self._db.meetings.get_meeting(resolved_id, include_parked=include_parked)
         if meeting is None:
             raise NotFound("meeting", resolved_id)
         payload = meeting.to_dict()
@@ -496,7 +500,17 @@ class MeetingService:
     def delete_meeting(self, principal: Principal, meeting_id: str) -> bool:
         if not self._db.meetings.delete_meeting(meeting_id):
             raise NotFound("meeting", meeting_id)
+        notify_desk_changed("meeting", meeting_id, "update")
         return True
+
+    def restore_meeting(self, principal: Principal, meeting_id: str) -> dict[str, Any]:
+        existing = self._db.meetings.get_meeting(meeting_id, include_parked=True)
+        if existing is None:
+            raise NotFound("meeting", meeting_id)
+        if not self._db.meetings.restore_meeting(meeting_id):
+            raise NotFound("meeting", meeting_id)
+        notify_desk_changed("meeting", meeting_id, "update")
+        return {"meeting": self.get_meeting(principal, meeting_id)}
 
     def export_meeting(
         self, principal: Principal, meeting_id: str, format: str
@@ -883,6 +897,7 @@ class MeetingService:
             "capture_checkpoint_seconds": meeting.capture_checkpoint_seconds,
             "provenance": meeting.provenance,
             "calendar_event_id": getattr(meeting, "calendar_event_id", None),
+            "parked": bool(getattr(meeting, "parked", False)),
             # HS-170-04: transcript word count for the face. Omitted when no
             # transcript (never 0). The list query computes it via subquery;
             # the detail computes it from the loaded segments.

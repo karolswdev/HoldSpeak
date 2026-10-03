@@ -479,17 +479,17 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
         for case in json.loads(path.read_text())['cases']
         if case['id'].endswith('.op') or case['id'].endswith('.op.replayed')
     ]
-    # 19 Phase 5 op siblings plus two replay variants; PHILO-7-03 adds 18
-    # (atlas-phase7.json: nine desk pairs, two receipt cases, four refusal
-    # receipts, three note siblings). PHILO-8-03 adds 5 (atlas-phase8.json:
-    # two zones, the rename, the taken name, the list delete, two deletes).
-    # PHILO-9-05 adds 1 (atlas-phase9.json: the Room's mark delivered).
-    # PHILO-10-05 adds 12 (atlas-phase10.json: the Send's durable outcomes and
-    # its transitions -- replay, Send and Discard in both orders).
-    # PHILO-11-02 adds 3 Slack protocol cases on the same lifecycle; PHILO-11-06
-    # adds seven document-source operation cases and one long-source refusal.
-    # PHILO-12-01 adds the stored artifact's preparation through MCP.
-    assert len(siblings) == 69
+    # PHILO-13 B0 owns its own atlas count; semantic checks still use siblings.
+    legacy_siblings = [
+        case
+        for path in ATLAS_FILES
+        if not path.name.startswith("atlas-phase13-")
+        for case in json.loads(path.read_text())['cases']
+        if case['id'].endswith('.op') or case['id'].endswith('.op.replayed')
+    ]
+    # Historical pre-Phase-13 total is 69; the unfiltered list remains the
+    # semantic subject, including both Phase 13 atlases. H-B0b count anchor.
+    assert len(legacy_siblings) == 69
     sibling_ids = {case["id"] for case in siblings}
     assert READ_REFUSAL_SIBLINGS <= sibling_ids
     mutating = {

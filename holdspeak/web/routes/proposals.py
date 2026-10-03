@@ -41,7 +41,12 @@ def _service(ctx: WebContext) -> ProposalBridgeService:
 
 def _status(result: dict[str, Any]) -> int:
     """404 for a missing proposal; 409 for one already decided the other way."""
-    return 409 if result.get("code") in {"confirmed", "dismissed", "meeting_deleted"} else 404
+    return 409 if result.get("code") in {
+        "confirmed",
+        "dismissed",
+        "meeting_deleted",
+        "meeting_parked",
+    } else 404
 
 
 def build_proposal_router(ctx: WebContext) -> APIRouter:

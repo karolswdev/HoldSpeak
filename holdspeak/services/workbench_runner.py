@@ -131,7 +131,7 @@ class WorkbenchRunner:
             with self.db._connection() as conn:
                 row = conn.execute("SELECT workbench_id FROM workbench_runs WHERE id=?", (run_id,)).fetchone()
                 workbench_id = str(row["workbench_id"]) if row is not None else ""
-                pending = conn.execute("SELECT COUNT(*) AS n FROM workbench_items WHERE workbench_id=? AND status='pending'", (workbench_id,)).fetchone()
+                pending = conn.execute("SELECT COUNT(*) AS n FROM workbench_items WHERE workbench_id=? AND status='pending' AND parked=0", (workbench_id,)).fetchone()
             emit_run_complete(
                 workbench_id=workbench_id, run_id=run_id, disposition=disposition,
                 attempted=attempted, completed=completed, failed=failed,
@@ -243,7 +243,7 @@ class WorkbenchRunner:
             from ..workbench_memory import recall_for_prompt
             memory=recall_for_prompt(workbench_id)
         skills=[s.id for s in self.db.skills.list_for_recipe(recipe.id,active_only=True)]
-        complete=failed=mints=0
+        attempted=complete=failed=mints=0
         try:
             for ordinal,item in enumerate(items,1):
                 if self.broker.parent_run_controller.expire_if_due(parent.context,principal):
@@ -255,14 +255,34 @@ class WorkbenchRunner:
                     conn.execute("BEGIN IMMEDIATE")
                     claimed = conn.execute(
                         """UPDATE workbench_items SET status='claimed', claimed_at=?
-                           WHERE id=? AND status='pending' AND EXISTS (
+                           WHERE id=? AND status='pending' AND parked=0 AND EXISTS (
                              SELECT 1 FROM kernel_parent_runs
                              WHERE operation_id=? AND state='OPEN' AND execution_epoch=?
                            )""",
                         (now, item.id, parent.operation_id, parent.context.epoch),
                     ).rowcount
+                    parked_skip = False
+                    if claimed != 1:
+                        item_state = conn.execute(
+                            "SELECT parked FROM workbench_items WHERE id=?",
+                            (item.id,),
+                        ).fetchone()
+                        parent_state = conn.execute(
+                            "SELECT state, execution_epoch FROM kernel_parent_runs WHERE operation_id=?",
+                            (parent.operation_id,),
+                        ).fetchone()
+                        parked_skip = bool(
+                            item_state is not None
+                            and item_state["parked"]
+                            and parent_state is not None
+                            and parent_state["state"] == "OPEN"
+                            and int(parent_state["execution_epoch"]) == parent.context.epoch
+                        )
                 if claimed != 1:
+                    if parked_skip:
+                        continue
                     return self._adopt_terminal(run_id, parent)
+                attempted += 1
                 emit_item_claimed(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items))
                 parts=[x for x in (context,memory,_hydrate_item_grounding(
                     self.db,
@@ -327,12 +347,12 @@ class WorkbenchRunner:
                 )
                 if memory_routed["outcome"] == "succeeded":
                     self.broker.projection_stager.finalize(str(memory_routed["winning_reservation"]["child_invocation_id"]))
-            ctx=constitutional_receipt(); stage=self.broker.projection_stager.stage(parent.native_id,"workbench-run-result",{"parent_operation_id":parent.operation_id,"run_id":run_id,"attempted":len(items),"completed":complete,"failed":failed,"mint_failures":mints,"egress_boundary":"","model":"","context_revision":ctx["revision"],"context_hash":ctx["content_hash"],"skills":skills})
+            ctx=constitutional_receipt(); stage=self.broker.projection_stager.stage(parent.native_id,"workbench-run-result",{"parent_operation_id":parent.operation_id,"run_id":run_id,"attempted":attempted,"completed":complete,"failed":failed,"mint_failures":mints,"egress_boundary":"","model":"","context_revision":ctx["revision"],"context_hash":ctx["content_hash"],"skills":skills})
             receipt=self._close_or_adopt(parent,"succeeded",principal=principal,result_ref=stage.result_ref)
             if receipt.get("outcome") != "succeeded":
                 return self._adopt_terminal(run_id,parent)
             self.broker.projection_stager.finalize(parent.native_id)
-            links=self._record_terminal(run_id,parent,receipt,attempted=len(items),completed=complete,failed=failed)
+            links=self._record_terminal(run_id,parent,receipt,attempted=attempted,completed=complete,failed=failed)
             return {"run_id":run_id,"parent_operation_id":parent.operation_id,"receipt_id":receipt["receipt_id"],"children":links,"placement":self._route_target(route)}
         except Exception:
             receipt=self._close_or_adopt(parent,"failed",principal=principal)

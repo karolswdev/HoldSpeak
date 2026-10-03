@@ -1,0 +1,217 @@
+[
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-final/20261002T034710Z-case.p13.meeting.park_restore-astra-1440/after.png",
+    "archive": "assets/story-02-backend/final/meeting-1440-final/20261002T034710Z-case.p13.meeting.park_restore-astra-1440/after.png",
+    "sha256": "b25ee8ae2ab6324a82afdf947900509d00e3a9b0bb1fd83e4d79e395b463fe8b"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-final/20261002T034710Z-case.p13.meeting.park_restore-astra-1440/before.png",
+    "archive": "assets/story-02-backend/final/meeting-1440-final/20261002T034710Z-case.p13.meeting.park_restore-astra-1440/before.png",
+    "sha256": "91ad2a74a45fcc73b8d5329535beea4d14efe47d024cf52c839ec53b34eeb453"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-final/20261002T034710Z-case.p13.meeting.park_restore-astra-1440/observation.json",
+    "archive": "assets/story-02-backend/final/meeting-1440-final/20261002T034710Z-case.p13.meeting.park_restore-astra-1440/observation.json",
+    "sha256": "a79c51eaea7ae8e18d362d788ea4b7e5fe90e0e4b78325225ff013c2e9c7c6a5"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-final/command.log",
+    "archive": "assets/story-02-backend/final/meeting-1440-final/command.log",
+    "sha256": "9e32939ddcae8b9e564d94d6d5bd15a86722a9fa25988abe53e24537a4771df4"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r1/20261002T033541Z-case.p13.meeting.park_restore-astra-1440/blocked.png",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r1/20261002T033541Z-case.p13.meeting.park_restore-astra-1440/blocked.png",
+    "sha256": "78c5e2266761b946ab504fd6311d0397a0bd1d7b55db5f752458181884d07557"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r1/20261002T033541Z-case.p13.meeting.park_restore-astra-1440/observation.json",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r1/20261002T033541Z-case.p13.meeting.park_restore-astra-1440/observation.json",
+    "sha256": "26c72881b9a291c1fb1f3ee5c4b766d7ace8fdad30c3e876f8724fac67bc073e"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r1/command.log",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r1/command.log",
+    "sha256": "4096fc613cc373290045091a5af0d791b1b4304973790df6be0e615e18fe723c"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r2/20261002T033639Z-case.p13.meeting.park_restore-astra-1440/after.png",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r2/20261002T033639Z-case.p13.meeting.park_restore-astra-1440/after.png",
+    "sha256": "51f7909f85b622b27718d35fbc0302dc227d7b33073f0cad42219d0b38440d68"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r2/20261002T033639Z-case.p13.meeting.park_restore-astra-1440/before.png",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r2/20261002T033639Z-case.p13.meeting.park_restore-astra-1440/before.png",
+    "sha256": "51f7909f85b622b27718d35fbc0302dc227d7b33073f0cad42219d0b38440d68"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r2/20261002T033639Z-case.p13.meeting.park_restore-astra-1440/observation.json",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r2/20261002T033639Z-case.p13.meeting.park_restore-astra-1440/observation.json",
+    "sha256": "17b94ccc27e824beba20add0684ef458ed50f3f2cd758142d5eea0cc6ae2aee0"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r2/command.log",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r2/command.log",
+    "sha256": "373f5447c163ef4889d8aa2be09ee4fdbe3bee60b82e2147cb2921134319c3a6"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r3/20261002T033753Z-case.p13.meeting.park_restore-astra-1440/after.png",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r3/20261002T033753Z-case.p13.meeting.park_restore-astra-1440/after.png",
+    "sha256": "442f1f0cd1b4fbd2d80c06dccb6e4e76995fb4f1a163202ccc64f8b6b0c8e672"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r3/20261002T033753Z-case.p13.meeting.park_restore-astra-1440/before.png",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r3/20261002T033753Z-case.p13.meeting.park_restore-astra-1440/before.png",
+    "sha256": "51f7909f85b622b27718d35fbc0302dc227d7b33073f0cad42219d0b38440d68"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r3/20261002T033753Z-case.p13.meeting.park_restore-astra-1440/observation.json",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r3/20261002T033753Z-case.p13.meeting.park_restore-astra-1440/observation.json",
+    "sha256": "01ee3aa0b9e8b434f9f79bff53e4df8ebcfbf25feae641b1ff4f6ad77df87d94"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r3/command.log",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r3/command.log",
+    "sha256": "7fbcb93fe82e7ec37d2f9ad19cf20e4f887cacfaa1a4f3c379eab56e2d5db91c"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r4/20261002T034308Z-case.p13.meeting.park_restore-astra-1440/after.png",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r4/20261002T034308Z-case.p13.meeting.park_restore-astra-1440/after.png",
+    "sha256": "ac398f88b104916b1b6e330162bf6a15d90bb19f688b5afb3fc6ca10def4a00e"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r4/20261002T034308Z-case.p13.meeting.park_restore-astra-1440/before.png",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r4/20261002T034308Z-case.p13.meeting.park_restore-astra-1440/before.png",
+    "sha256": "2aa6e60423b4e49e02011ec25357a4ba3e61abec7019b9293b172bc26704b4bd"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r4/20261002T034308Z-case.p13.meeting.park_restore-astra-1440/observation.json",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r4/20261002T034308Z-case.p13.meeting.park_restore-astra-1440/observation.json",
+    "sha256": "69d2a3aaea1e5f7709e8412829b961de51ce63b46184380903fd942cbec1b211"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-1440-r4/command.log",
+    "archive": "assets/story-02-backend/calibration/meeting-1440-r4/command.log",
+    "sha256": "55870c83ac37316b28b3a6667ddcfa7c0a1207c758114894ac7ebf422e833790"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-393-final/20261002T034814Z-case.p13.meeting.park_restore-astra-393/after.png",
+    "archive": "assets/story-02-backend/final/meeting-393-final/20261002T034814Z-case.p13.meeting.park_restore-astra-393/after.png",
+    "sha256": "64abfb551083f12c0f2472352cabae6a171fa59d1ef19bbff71c257129b7b65c"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-393-final/20261002T034814Z-case.p13.meeting.park_restore-astra-393/before.png",
+    "archive": "assets/story-02-backend/final/meeting-393-final/20261002T034814Z-case.p13.meeting.park_restore-astra-393/before.png",
+    "sha256": "090db3d6f870abc34269850620b460658e9b1420f0659b53f4b2cfc97c05f930"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-393-final/20261002T034814Z-case.p13.meeting.park_restore-astra-393/observation.json",
+    "archive": "assets/story-02-backend/final/meeting-393-final/20261002T034814Z-case.p13.meeting.park_restore-astra-393/observation.json",
+    "sha256": "eb7d2559b85852e64f7d4fc6e8c3c8aca715d99a867d0643dae672985ea75197"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-393-final/command.log",
+    "archive": "assets/story-02-backend/final/meeting-393-final/command.log",
+    "sha256": "5014d0fa1645da5d241d1650187b852abfe5dded7323c1ff15281c1de760071b"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-393-r1/20261002T033908Z-case.p13.meeting.park_restore-astra-393/after.png",
+    "archive": "assets/story-02-backend/calibration/meeting-393-r1/20261002T033908Z-case.p13.meeting.park_restore-astra-393/after.png",
+    "sha256": "d68561793edba88d19d036f7926d3a492f0de0407589abbf65da6fae2e94bef6"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-393-r1/20261002T033908Z-case.p13.meeting.park_restore-astra-393/before.png",
+    "archive": "assets/story-02-backend/calibration/meeting-393-r1/20261002T033908Z-case.p13.meeting.park_restore-astra-393/before.png",
+    "sha256": "d6106840d5247ca406ad80fdf90a235f38582d253f5bb4dd156ed2645e22581e"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-393-r1/20261002T033908Z-case.p13.meeting.park_restore-astra-393/observation.json",
+    "archive": "assets/story-02-backend/calibration/meeting-393-r1/20261002T033908Z-case.p13.meeting.park_restore-astra-393/observation.json",
+    "sha256": "06f617d3815504bfd2d0b01a19483a5920c0bdaa56b0ba704538e124b3c61166"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/meeting-393-r1/command.log",
+    "archive": "assets/story-02-backend/calibration/meeting-393-r1/command.log",
+    "sha256": "e7442afb750b62fe461806763bbfca4856f89180e9b76a97f2e97d2eef2d92f0"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-1440-final/20261002T034924Z-case.p13.workbench.park_restore-astra-1440/after.png",
+    "archive": "assets/story-02-backend/final/workbench-1440-final/20261002T034924Z-case.p13.workbench.park_restore-astra-1440/after.png",
+    "sha256": "5d7289f4e34fa5688d15de2db1193718bb811943e32c0ad4e599d24b8f30b74e"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-1440-final/20261002T034924Z-case.p13.workbench.park_restore-astra-1440/before.png",
+    "archive": "assets/story-02-backend/final/workbench-1440-final/20261002T034924Z-case.p13.workbench.park_restore-astra-1440/before.png",
+    "sha256": "5d7289f4e34fa5688d15de2db1193718bb811943e32c0ad4e599d24b8f30b74e"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-1440-final/20261002T034924Z-case.p13.workbench.park_restore-astra-1440/observation.json",
+    "archive": "assets/story-02-backend/final/workbench-1440-final/20261002T034924Z-case.p13.workbench.park_restore-astra-1440/observation.json",
+    "sha256": "04238087eb58a37bef87081860399d4af4d3f95de1b58343b791c9a4e89bed42"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-1440-final/command.log",
+    "archive": "assets/story-02-backend/final/workbench-1440-final/command.log",
+    "sha256": "66fb64a4c98d11aff38d3045030c7844b606c499ffc7b332d69a096d7eb54bfc"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-1440-r1/20261002T034010Z-case.p13.workbench.park_restore-astra-1440/after.png",
+    "archive": "assets/story-02-backend/calibration/workbench-1440-r1/20261002T034010Z-case.p13.workbench.park_restore-astra-1440/after.png",
+    "sha256": "8677d41599a072ba218906acb4db683fdc989fb095d3a508c024036e5b3599b1"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-1440-r1/20261002T034010Z-case.p13.workbench.park_restore-astra-1440/before.png",
+    "archive": "assets/story-02-backend/calibration/workbench-1440-r1/20261002T034010Z-case.p13.workbench.park_restore-astra-1440/before.png",
+    "sha256": "8677d41599a072ba218906acb4db683fdc989fb095d3a508c024036e5b3599b1"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-1440-r1/20261002T034010Z-case.p13.workbench.park_restore-astra-1440/observation.json",
+    "archive": "assets/story-02-backend/calibration/workbench-1440-r1/20261002T034010Z-case.p13.workbench.park_restore-astra-1440/observation.json",
+    "sha256": "96fec8adb934c0fa12faa41479f84e00ddc101b4b80919bacdedde4508d9fb30"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-1440-r1/command.log",
+    "archive": "assets/story-02-backend/calibration/workbench-1440-r1/command.log",
+    "sha256": "b417561081c642ee6374e0338881fd9a31924f0728fdfcddd4e2416784cbd301"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-393-final/20261002T035047Z-case.p13.workbench.park_restore-astra-393/after.png",
+    "archive": "assets/story-02-backend/final/workbench-393-final/20261002T035047Z-case.p13.workbench.park_restore-astra-393/after.png",
+    "sha256": "cb279b45900b12bb6cf5f54587da0cf9c4bc088702ae54f5fa92c0ba8fc92e71"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-393-final/20261002T035047Z-case.p13.workbench.park_restore-astra-393/before.png",
+    "archive": "assets/story-02-backend/final/workbench-393-final/20261002T035047Z-case.p13.workbench.park_restore-astra-393/before.png",
+    "sha256": "cb279b45900b12bb6cf5f54587da0cf9c4bc088702ae54f5fa92c0ba8fc92e71"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-393-final/20261002T035047Z-case.p13.workbench.park_restore-astra-393/observation.json",
+    "archive": "assets/story-02-backend/final/workbench-393-final/20261002T035047Z-case.p13.workbench.park_restore-astra-393/observation.json",
+    "sha256": "07dc9b82c2fceba3b09e49940126aa61611acfe10f9fb03e54ebcc0bba50a2b1"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-393-final/command.log",
+    "archive": "assets/story-02-backend/final/workbench-393-final/command.log",
+    "sha256": "1033d5b271ebb445bff7914ac8223e7ff63ff380748a8ea793574a8ea78fdc51"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-393-r1/20261002T034116Z-case.p13.workbench.park_restore-astra-393/after.png",
+    "archive": "assets/story-02-backend/calibration/workbench-393-r1/20261002T034116Z-case.p13.workbench.park_restore-astra-393/after.png",
+    "sha256": "538cfb07c3dc68a48c37fc9e71bb91bac61ae7ad9f7e5e6198671c31c9de75b8"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-393-r1/20261002T034116Z-case.p13.workbench.park_restore-astra-393/before.png",
+    "archive": "assets/story-02-backend/calibration/workbench-393-r1/20261002T034116Z-case.p13.workbench.park_restore-astra-393/before.png",
+    "sha256": "538cfb07c3dc68a48c37fc9e71bb91bac61ae7ad9f7e5e6198671c31c9de75b8"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-393-r1/20261002T034116Z-case.p13.workbench.park_restore-astra-393/observation.json",
+    "archive": "assets/story-02-backend/calibration/workbench-393-r1/20261002T034116Z-case.p13.workbench.park_restore-astra-393/observation.json",
+    "sha256": "90c12cc0e3ffd888239d14a3df235d8213e9f5f5ec0222184bffe37ed5da5abe"
+  },
+  {
+    "source": ".tmp/graph-walk/philo-13-02/workbench-393-r1/command.log",
+    "archive": "assets/story-02-backend/calibration/workbench-393-r1/command.log",
+    "sha256": "920228701b7f7ae14c7d4afff408a176ccb486f923788d7367bab78549f48da2"
+  }
+]

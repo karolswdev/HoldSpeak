@@ -1,0 +1,2305 @@
+{
+  "schema_version": 1,
+  "atlas_version": "phase13-astra-wave1",
+  "source_commit": "27b915538b792f4a80d0cf1c46a0600cb68756e3",
+  "cases": [
+    {
+      "id": "case.p13.directory.zone_window.op",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.directory_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub; no browser. The operation sibling reads the same Zone producer outcome headlessly."
+      ],
+      "setup": [],
+      "trigger": {
+        "kind": "op",
+        "name": "zone.create",
+        "args": {
+          "name": "Atlas Phase 13 Zone"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "zone_id",
+        "capture_path": "id",
+        "why": "the Zone producer that the Directory face opens"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "observe",
+              "path": "directory.id",
+              "value": "{zone_id}"
+            },
+            {
+              "source": "observe",
+              "path": "directory.name",
+              "value": "Atlas Phase 13 Zone"
+            },
+            {
+              "source": "read",
+              "index": 0,
+              "path": "",
+              "contains": {
+                "id": "{zone_id}",
+                "name": "Atlas Phase 13 Zone"
+              }
+            },
+            {
+              "source": "trigger",
+              "path": "operation_id",
+              "absent": true
+            }
+          ]
+        },
+        "observe_at": {
+          "kind": "op",
+          "name": "zone.read",
+          "args": {
+            "directory_id": "{zone_id}"
+          }
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "zone.list",
+            "args": {}
+          }
+        ],
+        "words": "the Zone producer is durable and the headless read binds its returned id; this is the shared semantic sibling for the window case."
+      },
+      "completion_bound_s": 30,
+      "viewports": []
+    },
+    {
+      "id": "case.p13.calendar.snapshot_window",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.calendar_snapshot_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "Fresh isolated HOME; Settings exposes the real native Calendar snapshot upload. With engine=none, the producer returns the real no-engine refusal on the Settings Meetings face.",
+        "Every mouse/touch press uses ui-by-viewport. The trigger owns the refusal, close, reload, and reopen path; no extracted event is substituted."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Settings",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".prefs-hub .surface-ledger-row:has-text(\"Meetings\") button"
+          },
+          {
+            "kind": "ui",
+            "action": "set_input_files",
+            "adapter": "ui-by-viewport",
+            "selector": "[data-testid=\"calendar-snapshot-btn\"]",
+            "file_chooser": true,
+            "value": "tests/fixtures/philo13/calendar-input.png"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "[role=\"region\"][aria-label=\"Calendar snapshot\"]",
+            "state": "visible",
+            "timeout_s": 15,
+            "capture_shot": true
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[role=\"region\"][aria-label=\"Calendar snapshot\"] button[aria-label^=\"Close \"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "[role=\"region\"][aria-label=\"Calendar snapshot\"]",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "button",
+            "name": "Settings"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".prefs-hub .surface-ledger-row:has-text(\"Meetings\") button"
+          },
+          {
+            "kind": "ui",
+            "action": "set_input_files",
+            "adapter": "ui-by-viewport",
+            "selector": "[data-testid=\"calendar-snapshot-btn\"]",
+            "file_chooser": true,
+            "value": "tests/fixtures/philo13/calendar-input.png"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "[role=\"region\"][aria-label=\"Calendar snapshot\"]",
+            "state": "visible",
+            "timeout_s": 15
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "no_vision_model_assigned"
+        },
+        "observe_at": "[role=region][aria-label^=Calendar]",
+        "words": "The native Calendar upload shows the real no_vision_model_assigned refusal; the Calendar snapshot window closes, reloads, and reopens through its ordinary door with the same visible refusal."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.roadmap.window",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.roadmap_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "The real isolated repository fixture feeds the Roadmap API; the ordinary Desk palette opens its Roadmap object.",
+        "The fixture seam patches the real build_roadmaps_router builder in the isolated hub, so production Roadmap reads use this case's repository.",
+        "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, Floor re-entry, and the final reopen."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "cli",
+          "action": "create_repository_fixture",
+          "capture_as": "repo",
+          "adapter": "repository-fixture-producer",
+          "why": "A real Git repository and DW roadmap, wholly below this run HOME; no product rows or responses are substituted."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-tools-launch",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "Atlas Desk"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id=\"desk-palette-option-roadmap:roadmap:atlas-desk\"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-roadmap-window",
+            "state": "visible",
+            "timeout_s": 10,
+            "capture_shot": true
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-roadmap-window:has-text(\"Roadmap not found\")",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-roadmap-window button[aria-label^=\"Close \"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-roadmap-window",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": "[data-testid=\"chair-floor-toggle\"]",
+            "state": "visible",
+            "timeout_s": 15,
+            "adapter": "ui-observation"
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "button",
+            "name": "Floor",
+            "timeout_s": 2
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-tools-launch"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "Atlas Desk"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id=\"desk-palette-option-roadmap:roadmap:atlas-desk\"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-roadmap-window",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-roadmap-window:has-text(\"Roadmap not found\")",
+            "state": "visible",
+            "timeout_s": 10
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Roadmap not found"
+        },
+        "observe_at": ".desk-roadmap-window",
+        "words": "The real repository-fixture-producer reaches the palette Roadmap, but the product refuses the fixture as not found; this observed product refusal persists through close, reload, Floor re-entry, and reopen. Root's five-column ledger records it as Product-red."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.repository.window",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.repository_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "The repository is registered through its real route from the isolated fixture.",
+        "The fixture seam patches the real build_roadmaps_router builder in the isolated hub, so production Repository reads use this case's repository.",
+        "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, Floor re-entry, and the final reopen."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "cli",
+          "action": "create_repository_fixture",
+          "capture_as": "repo",
+          "adapter": "repository-fixture-producer",
+          "why": "A real Git repository and DW roadmap, wholly below this run HOME; no product rows or responses are substituted."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/repositories",
+          "adapter": "http-route",
+          "body": {
+            "path": "{repo_path}",
+            "label": "{repo_label}"
+          },
+          "capture_as": "repository_id",
+          "capture_path": "repository.id",
+          "expect_status": 200
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-tools-launch",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "Atlas Desk"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id=\"desk-palette-option-repository:{repository_id}\"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-repo-files .desk-sortable-table-row:has-text(\"atlas_repository.py\")",
+            "state": "visible",
+            "timeout_s": 10,
+            "capture_shot": true
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-repo-window button[aria-label^=\"Close \"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-repo-window",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": "[data-testid=\"chair-floor-toggle\"]",
+            "state": "visible",
+            "timeout_s": 15,
+            "adapter": "ui-observation"
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "button",
+            "name": "Floor",
+            "timeout_s": 2
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-tools-launch"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "Atlas Desk"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id=\"desk-palette-option-repository:{repository_id}\"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-repo-files .desk-sortable-table-row:has-text(\"atlas_repository.py\")",
+            "state": "visible",
+            "timeout_s": 10
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "atlas_repository.py"
+        },
+        "observe_at": ".desk-repo-files",
+        "words": "The real repository file table is readable in the viewport after Close, reload, and reopening the same registered repository."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.delivery.dossier_window",
+      "job": "j4",
+      "edge_ids": [
+        "edge.face.delivery_dossier_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "The real Delivery source exposes the fixture story ATLAS-1-01.",
+        "The fixture seam patches the real build_roadmaps_router builder in the isolated hub, so production Delivery reads use this case's repository.",
+        "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, Delivery re-entry, and the final reopen."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "cli",
+          "action": "create_repository_fixture",
+          "capture_as": "repo",
+          "adapter": "repository-fixture-producer",
+          "why": "A real Git repository and DW roadmap, wholly below this run HOME; no product rows or responses are substituted."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/delivery/sources",
+          "adapter": "http-route",
+          "body": {
+            "path": "{repo_path}",
+            "label": "{repo_label}"
+          }
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Delivery",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-board",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-dlv-board .desk-mc-story-pick:has-text(\"ATLAS-1-01\")"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-dossier .desk-dlv-facts-line",
+            "state": "visible",
+            "timeout_s": 10,
+            "capture_shot": true
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-dlv-dossier button[aria-label^=\"Close \"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-dossier",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "button",
+            "name": "Delivery"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-board",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-dlv-board .desk-mc-story-pick:has-text(\"ATLAS-1-01\")"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-dossier .desk-dlv-facts-line",
+            "state": "visible",
+            "timeout_s": 10
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "ATLAS-1-01"
+        },
+        "observe_at": ".desk-dlv-dossier",
+        "words": "The same produced object opens, presents 'ATLAS-1-01', closes before reload, and opens again through its ordinary door."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.delivery.terminal_window",
+      "job": "j4",
+      "edge_ids": [
+        "edge.face.delivery_terminal_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "Only an authentic isolated tmux target may produce the terminal row; no target is fabricated.",
+        "The fixture seam patches the real build_roadmaps_router builder in the isolated hub, so production Delivery reads use this case's repository.",
+        "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, Delivery re-entry, and the final reopen."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "cli",
+          "action": "create_repository_fixture",
+          "capture_as": "repo",
+          "adapter": "repository-fixture-producer",
+          "why": "A real Git repository and DW roadmap, wholly below this run HOME; no product rows or responses are substituted."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/delivery/sources",
+          "adapter": "http-route",
+          "body": {
+            "path": "{repo_path}",
+            "label": "{repo_label}"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/coders/factory/spawn",
+          "adapter": "http-route",
+          "body": {
+            "name": "atlas_terminal",
+            "command": "printf 'Atlas terminal\\n'; sleep 120"
+          },
+          "expect_status": 200
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-by-viewport",
+        "role": "button",
+        "name": "Delivery",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-board",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-dlv-sessions .surface-ledger-line:has-text(\"atlas_terminal\")"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-terminal :text(\"Atlas terminal\")",
+            "state": "visible",
+            "timeout_s": 10,
+            "capture_shot": true
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-dlv-terminal button[aria-label^=\"Close \"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-terminal",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "button",
+            "name": "Delivery"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-board",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-dlv-sessions .surface-ledger-line:has-text(\"atlas_terminal\")"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dlv-terminal :text(\"Atlas terminal\")",
+            "state": "visible",
+            "timeout_s": 10
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Atlas terminal"
+        },
+        "observe_at": ".desk-dlv-terminal",
+        "words": "The same produced object opens, presents 'Atlas terminal', closes before reload, and opens again through its ordinary door."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.chain.pullout",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.chain_pullout"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "POST /api/chains creates the actual empty Sequence.",
+        "Every mouse/touch press uses ui-by-viewport. The trigger owns first open, close, reload, Floor re-entry, and the final reopen."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/chains",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas B0 Sequence",
+            "steps": []
+          },
+          "expect_status": 201,
+          "capture_as": "chain_id",
+          "capture_path": "chain.id"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-tools-launch",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "Atlas B0 Sequence"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id=\"desk-palette-option-chain:{chain_id}\"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout[aria-label=\"Atlas B0 Sequence\"] :text(\"No steps\")",
+            "state": "visible",
+            "timeout_s": 10,
+            "capture_shot": true
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-pullout[aria-label=\"Atlas B0 Sequence\"] button[aria-label^=\"Close \"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout[aria-label=\"Atlas B0 Sequence\"]",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": "[data-testid=\"chair-floor-toggle\"]",
+            "state": "visible",
+            "timeout_s": 15,
+            "adapter": "ui-observation"
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "button",
+            "name": "Floor",
+            "timeout_s": 2
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-tools-launch"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "Atlas B0 Sequence"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id=\"desk-palette-option-chain:{chain_id}\"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout[aria-label=\"Atlas B0 Sequence\"] :text(\"No steps\")",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
+            "state": "visible",
+            "timeout_s": 10
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "No steps"
+        },
+        "observe_at": ".desk-pullout.is-card",
+        "words": "The same produced object opens, presents 'No steps', removes its Dock chip when closed before reload, and opens again through its ordinary door."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.coder.pullout",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.coder_pullout"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "The normal agent-hook producer ingests the retained Codex question and emits an awaiting-response session.",
+        "Every mouse/touch press uses ui-by-viewport. After the producer, the trigger refreshes the page before first open, then owns close, reload, Floor re-entry, and the final reopen."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "cli",
+          "action": "create_repository_fixture",
+          "capture_as": "repo",
+          "adapter": "repository-fixture-producer",
+          "why": "A real Git repository and DW roadmap, wholly below this run HOME; no product rows or responses are substituted."
+        },
+        {
+          "kind": "cli",
+          "action": "ingest_coder_fixture",
+          "capture_as": "coder",
+          "adapter": "agent-hook-cli",
+          "why": "The existing transcript INPUT fixture passes through the real CLI and normal registry. This proves ingestion and the Coder face, not a live coding engine or a tmux pane."
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-tools-launch"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "Atlas"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id=\"desk-palette-option-coder:{coder_session_id}\"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout.is-card :text(\"Should I run the full suite now?\")",
+            "state": "visible",
+            "timeout_s": 10,
+            "capture_shot": true
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-pullout.is-card:has-text(\"Should I run the full suite now?\") button[aria-label^=\"Close \"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout.is-card:has-text(\"Should I run the full suite now?\")",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": "[data-testid=\"chair-floor-toggle\"]",
+            "state": "visible",
+            "timeout_s": 15,
+            "adapter": "ui-observation"
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "button",
+            "name": "Floor",
+            "timeout_s": 2
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-tools-launch"
+          },
+          {
+            "kind": "ui",
+            "action": "fill",
+            "adapter": "ui-input",
+            "selector": "input[placeholder=\"Search tools and Desk items\"]",
+            "value": "Atlas"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": "[id=\"desk-palette-option-coder:{coder_session_id}\"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-pullout.is-card :text(\"Should I run the full suite now?\")",
+            "state": "visible",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-dock-chip button",
+            "state": "visible",
+            "timeout_s": 10
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Should I run the full suite now?"
+        },
+        "observe_at": ".desk-pullout.is-card",
+        "words": "The real agent-hook session is ingested, the page refreshes to read it, then its Coder object door opens, presents 'Should I run the full suite now?', removes its Dock chip when closed before reload, and opens again through its ordinary door."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.directory.zone",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.directory_zone_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "The Zone producer is real. Spatial's world zone is the ordinary Directory door: its native context menu should offer Open and the product verb should open the real ZoneWindow.",
+        "Every mouse/touch press uses ui-by-viewport. The real __hsWorldZoneProbe and __hsWorldHitProbe agree on the produced zone before the native context gesture; the window closes, reloads, and reopens through that same door."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/directories",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas Phase 13 Zone"
+          },
+          "expect_status": 201,
+          "capture_as": "zone_id",
+          "capture_path": "directory.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-desk.toggle-view\"]",
+          "at_width": 393
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "world_context_menu",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-world-canvas",
+        "world_target": "zone",
+        "world_ref": "{zone_id}",
+        "hold_ms": 650,
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "menuitem",
+            "name": "Open"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-zone-window",
+            "state": "visible",
+            "timeout_s": 10,
+            "capture_shot": true
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-zone-window button[aria-label^=\"Close \"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-zone-window",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "[data-testid=\"chair-floor-toggle\"]",
+            "state": "visible",
+            "timeout_s": 15
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "button",
+            "name": "Floor",
+            "timeout_s": 2
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-world-canvas",
+            "state": "visible",
+            "timeout_s": 15
+          },
+          {
+            "kind": "ui",
+            "action": "world_context_menu",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-world-canvas",
+            "world_target": "zone",
+            "world_ref": "{zone_id}",
+            "hold_ms": 650
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "menuitem",
+            "name": "Open"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-zone-window",
+            "state": "visible",
+            "timeout_s": 10
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "Atlas Phase 13 Zone"
+        },
+        "observe_at": ".desk-zone-window",
+        "words": "The native Zone context menu should open its real ZoneWindow; this face path is B0-F7 when Open stays disabled."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.info.window",
+      "job": "j3",
+      "edge_ids": [
+        "edge.face.info_window"
+      ],
+      "state_id": "state.desk_presentation.p13_unwalked_windows",
+      "applicability": "applicable",
+      "preconditions": [
+        "A real Sequence object supplies Spatial's object context menu and Get Info verb; the object is located by the product's read-only __hsWorldProbe and confirmed by __hsWorldHitProbe.",
+        "Every mouse/touch press uses ui-by-viewport. Desktop uses a native right click; 393 uses Chromium's native touchStart/touchEnd with a 500 ms hold.",
+        "A 1440 rerun showed IDENTITY at 52.465 s with a 40 s bound; 75 s allows 22.535 s of observed headroom without changing the expected result."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/chains",
+          "adapter": "http-route",
+          "body": {
+            "name": "Atlas B0 Info Sequence",
+            "steps": []
+          },
+          "expect_status": 201,
+          "capture_as": "info_chain_id",
+          "capture_path": "chain.id"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"chair-floor-toggle\"]",
+          "state": "visible",
+          "timeout_s": 15,
+          "adapter": "ui-observation"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Floor",
+          "optional": true,
+          "timeout_s": 2
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-tools-launch",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-input",
+          "selector": "input[placeholder=\"Search tools and Desk items\"]",
+          "value": "Spatial view",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id=\"desk-palette-option-desk.toggle-view\"]",
+          "at_width": 393
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "world_context_menu",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-world-canvas",
+        "world_target": "object",
+        "world_ref": "sequence:{info_chain_id}",
+        "hold_ms": 650,
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "menuitem",
+            "name": "Get Info"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-info-window .desk-info-body",
+            "state": "visible",
+            "timeout_s": 10,
+            "capture_shot": true
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-info-window button[aria-label^=\"Close \"]"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-info-window",
+            "state": "hidden",
+            "timeout_s": 10
+          },
+          {
+            "kind": "ui",
+            "action": "reload",
+            "adapter": "ui-navigation"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": "[data-testid=\"chair-floor-toggle\"]",
+            "state": "visible",
+            "timeout_s": 15
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "button",
+            "name": "Floor",
+            "timeout_s": 2
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-world-canvas",
+            "state": "visible",
+            "timeout_s": 15
+          },
+          {
+            "kind": "ui",
+            "action": "world_context_menu",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-world-canvas",
+            "world_target": "object",
+            "world_ref": "sequence:{info_chain_id}",
+            "hold_ms": 650
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "adapter": "ui-by-viewport",
+            "role": "menuitem",
+            "name": "Get Info"
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-observation",
+            "selector": ".desk-info-window .desk-info-body",
+            "state": "visible",
+            "timeout_s": 10
+          }
+        ]
+      },
+      "expected": {
+        "predicate": {
+          "kind": "readable_text",
+          "value": "IDENTITY"
+        },
+        "observe_at": ".desk-info-window",
+        "words": "The produced Sequence opens Get Info through Spatial's ordinary object context door, closes before reload, and opens again through the same door."
+      },
+      "completion_bound_s": 75,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.meeting.park_restore",
+      "job": "j6",
+      "edge_ids": [
+        "edge.route.meetings_park"
+      ],
+      "state_id": "state.meetings.p13_park_restore",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "H-A1 backend proof only. Existing face is not changed or certified. Real VTT import needs no engine. Every DB lives in the run HOME."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "fixture",
+          "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+          "sha256": "710ae3147a62c2ab2ab1f3e5e6a26b2911066cdb3d9bc6fa24bdfbc1ae2076a8",
+          "route": {
+            "method": "POST",
+            "path": "/api/meetings/import"
+          },
+          "field": "file",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "adapter": "http-route",
+          "form": {
+            "title": "Atlas retained meeting"
+          },
+          "expect_status": 202,
+          "wait_for": {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}",
+            "fields": {
+              "/transcription_status": "complete",
+              "/segments": {
+                "min_items": 3
+              }
+            },
+            "timeout_s": 30,
+            "poll_s": 0.3
+          }
+        },
+        {
+          "kind": "api",
+          "method": "DELETE",
+          "path": "/api/meetings/{meeting_id}",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": null
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings?parked=true",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/meetings/0/id",
+            "value": "{meeting_id}"
+          },
+          "why": "The real normal removal retains the imported meeting in Parked.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}?include_parked=true",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/parked",
+            "value": true
+          },
+          "why": "The retained detail states its parked value.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "Reopen the real DB in a fresh hub process while the row is parked."
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-dock",
+          "state": "visible",
+          "timeout_s": 30,
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}?include_parked=true",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/segments/1/text",
+            "value": "Blair: Avery will check the frozen bytes before the next review."
+          },
+          "why": "The actual imported transcript survives parking and a real process restart.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/meetings/{meeting_id}/restore",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": null
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": ".desk-dock",
+            "state": "visible",
+            "timeout_s": 30,
+            "adapter": "ui-navigation"
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/meetings",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings"
+          },
+          {
+            "method": "GET",
+            "path": "/api/meetings?parked=true"
+          },
+          {
+            "method": "GET",
+            "path": "/api/meetings/{meeting_id}"
+          }
+        ],
+        "predicate": {
+          "kind": "protocol_reads",
+          "expect": [
+            {
+              "status": 200,
+              "row": {
+                "path": "meetings",
+                "match": {
+                  "id": "{meeting_id}",
+                  "parked": false
+                }
+              }
+            },
+            {
+              "status": 200,
+              "row": {
+                "path": "meetings",
+                "match": {
+                  "id": "{meeting_id}"
+                },
+                "count": 0
+              }
+            },
+            {
+              "status": 200,
+              "row": {
+                "path": "segments",
+                "match": {
+                  "text": "Blair: Avery will check the frozen bytes before the next review."
+                }
+              }
+            }
+          ]
+        },
+        "words": "Restore returns the same imported meeting to normal reads after reload; Parked no longer contains it and its real transcript remains."
+      },
+      "completion_bound_s": 30
+    },
+    {
+      "id": "case.p13.workbench.park_restore",
+      "job": "j1",
+      "edge_ids": [
+        "edge.route.workbench_items_park"
+      ],
+      "state_id": "state.desk_presentation.p13_park_restore",
+      "applicability": "applicable",
+      "viewports": [
+        1440,
+        393
+      ],
+      "preconditions": [
+        "H-A1 backend proof only; A1-F owns Parked filter, Restore Button and the 8-second face window. Real workbench/item producers, no inference engine or sends."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "The real arrival dismissal is durable before any reload."
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "body": {
+            "name": "Atlas retained work"
+          },
+          "capture_as": "workbench_id",
+          "capture_path": "workbench.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "body": {
+            "title": "Atlas first item",
+            "body": "Keep the first work body"
+          },
+          "capture_as": "item_id",
+          "capture_path": "item.id"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/workbenches/{workbench_id}/items/{item_id}",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": {
+            "status": "done",
+            "result": "Atlas retained result"
+          }
+        },
+        {
+          "kind": "api",
+          "method": "DELETE",
+          "path": "/api/workbenches/{workbench_id}/items/{item_id}",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": null
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/workbenches/{workbench_id}?parked=true",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/workbench/items/0/id",
+            "value": "{item_id}"
+          },
+          "why": "Single removal places the produced item in Parked.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "Reopen the real DB in a fresh hub process while the row is parked."
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-dock",
+          "state": "visible",
+          "timeout_s": 30,
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/workbenches/{workbench_id}?parked=true",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/workbench/items/0/result",
+            "value": "Atlas retained result"
+          },
+          "why": "The item result survives a real process restart while parked.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items/{item_id}/restore",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": null
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/workbenches/{workbench_id}",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/workbench/items/0/id",
+            "value": "{item_id}"
+          },
+          "why": "Single Restore returns the same produced item.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items",
+          "adapter": "http-route",
+          "expect_status": 201,
+          "body": {
+            "title": "Atlas second item",
+            "body": "Keep the second work body"
+          },
+          "capture_as": "item_two",
+          "capture_path": "item.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items/park",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": {
+            "item_ids": [
+              "{item_id}",
+              "{item_two}"
+            ]
+          }
+        },
+        {
+          "kind": "cli",
+          "action": "restart_hub",
+          "adapter": "process",
+          "why": "Reopen the real DB in a fresh hub process while the row is parked."
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-dock",
+          "state": "visible",
+          "timeout_s": 30,
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/workbenches/{workbench_id}",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/workbench/items",
+            "value": []
+          },
+          "why": "Bulk removal leaves normal reads empty after a real hub restart.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/workbenches/{workbench_id}?parked=true",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "/workbench/items/0/parked",
+            "value": true
+          },
+          "why": "The parked-only read still holds the produced rows.",
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/workbenches/{workbench_id}/items/restore",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "body": {
+            "item_ids": [
+              "{item_id}",
+              "{item_two}"
+            ]
+          }
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": ".desk-dock",
+            "state": "visible",
+            "timeout_s": 30,
+            "adapter": "ui-navigation"
+          }
+        ]
+      },
+      "expected": {
+        "observe_at": "protocol: GET /api/workbenches/{workbench_id}",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/workbenches/{workbench_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/workbenches/{workbench_id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/workbenches/{workbench_id}?parked=true"
+          },
+          {
+            "method": "GET",
+            "path": "/api/workbenches/{workbench_id}?parked=true"
+          }
+        ],
+        "predicate": {
+          "kind": "protocol_reads",
+          "expect": [
+            {
+              "status": 200,
+              "row": {
+                "path": "workbench.items",
+                "match": {
+                  "id": "{item_id}",
+                  "parked": false,
+                  "result": "Atlas retained result"
+                }
+              }
+            },
+            {
+              "status": 200,
+              "row": {
+                "path": "workbench.items",
+                "match": {
+                  "id": "{item_two}",
+                  "parked": false,
+                  "body": "Keep the second work body"
+                }
+              }
+            },
+            {
+              "status": 200,
+              "row": {
+                "path": "workbench.items",
+                "match": {
+                  "id": "{item_id}"
+                },
+                "count": 0
+              }
+            },
+            {
+              "status": 200,
+              "row": {
+                "path": "workbench.items",
+                "match": {
+                  "id": "{item_two}"
+                },
+                "count": 0
+              }
+            }
+          ]
+        },
+        "words": "Single and bulk park/restore retain the real item IDs and contents across hub restart and browser reload; restored rows leave Parked."
+      },
+      "completion_bound_s": 30
+    }
+  ],
+  "states": [
+    {
+      "id": "state.desk_presentation.p13_unwalked_windows",
+      "family": "desk_presentation",
+      "values": {
+        "surface": "unwalked Desk windows and pullouts",
+        "lifecycle": "open, close, reload, reopen"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/applications.ts",
+          "symbol": "action: \"review-calendar-snapshot\"",
+          "line": 416,
+          "claim": "Calendar snapshot is a mounted Desk application."
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "roadmapWindows.map",
+          "line": 269,
+          "claim": "Roadmap windows mount in the Desk compositor."
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "repositoryWindows.map",
+          "line": 276,
+          "claim": "Repository windows mount in the Desk compositor."
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "DeliveryDossierWindow",
+          "line": 267,
+          "claim": "The Delivery dossier mounts in the Desk."
+        },
+        {
+          "path": "web/src/desk/DeskApp.tsx",
+          "symbol": "DeliveryTerminalWindow",
+          "line": 268,
+          "claim": "The Delivery terminal mounts in the Desk."
+        },
+        {
+          "path": "web/src/desk/pullouts/registry.ts",
+          "symbol": "chain: ChainPullout",
+          "line": 33,
+          "claim": "Chain objects have a registered pullout."
+        },
+        {
+          "path": "web/src/desk/pullouts/registry.ts",
+          "symbol": "coder: CoderPullout",
+          "line": 35,
+          "claim": "Coder objects have a registered pullout."
+        },
+        {
+          "path": "web/src/desk/pullouts/registry.ts",
+          "symbol": "directory: DirectoryPullout",
+          "line": 36,
+          "claim": "Directory objects have a registered pullout."
+        },
+        {
+          "path": "web/src/desk/gl/WorldStage.tsx",
+          "symbol": "InfoWindow",
+          "line": 276,
+          "claim": "Info windows mount from the Floor."
+        }
+      ],
+      "reachable_by": [
+        "case.p13.directory.zone_window.op",
+        "case.p13.calendar.snapshot_window",
+        "case.p13.roadmap.window",
+        "case.p13.repository.window",
+        "case.p13.delivery.dossier_window",
+        "case.p13.delivery.terminal_window",
+        "case.p13.chain.pullout",
+        "case.p13.coder.pullout",
+        "case.p13.directory.zone",
+        "case.p13.info.window"
+      ]
+    },
+    {
+      "id": "state.meetings.p13_park_restore",
+      "family": "meetings",
+      "values": {
+        "lifecycle": "producer, park, restart, read, restore, reload"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/db/meetings.py",
+          "line": 1090,
+          "symbol": "def delete_meeting",
+          "claim": "The normal removal path retains the row through park; this case reads it after restart and restore."
+        }
+      ],
+      "reachable_by": [
+        "case.p13.meeting.park_restore"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_park_restore",
+      "family": "desk_presentation",
+      "values": {
+        "lifecycle": "producer, park, restart, read, restore, reload"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/db/workbenches.py",
+          "line": 362,
+          "symbol": "def delete(self, item_id",
+          "claim": "The normal removal path retains the row through park; this case reads it after restart and restore."
+        }
+      ],
+      "reachable_by": [
+        "case.p13.workbench.park_restore"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "clock.python_wall",
+      "source": "datetime.datetime.now() inside the hub process",
+      "mechanism": "none: this case does not move time",
+      "status": "available",
+      "used_by": []
+    }
+  ],
+  "excluded": [],
+  "council_readings": []
+}

@@ -690,7 +690,8 @@ class PeopleService:
             meeting_rows = conn.execute(
                 f"""SELECT id, title, started_at, ended_at, calendar_event_id
                     FROM meetings
-                    WHERE calendar_event_id IN ({placeholders})
+                    WHERE parked = 0
+                      AND calendar_event_id IN ({placeholders})
                     ORDER BY started_at DESC
                     LIMIT ?""",
                 [*calendar_event_ids, limit],
@@ -707,7 +708,8 @@ class PeopleService:
             # Unlinked = meetings WITHOUT calendar_event_id in the same window.
             unlinked_count_row = conn.execute(
                 """SELECT COUNT(*) as cnt FROM meetings
-                   WHERE (calendar_event_id IS NULL OR calendar_event_id = '')
+                   WHERE parked = 0
+                   AND (calendar_event_id IS NULL OR calendar_event_id = '')
                    AND started_at >= ?""",
                 (oldest_start,),
             ).fetchone()

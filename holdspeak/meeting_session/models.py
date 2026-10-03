@@ -153,6 +153,7 @@ class MeetingState:
     # this meeting. Captured at attach time; ``DeviceDescriptor.id``
     # is what surfaces on each ``TranscriptSegment.device_id``.
     devices: list = field(default_factory=list)  # list[DeviceDescriptor]
+    parked: bool = False
 
     @property
     def is_active(self) -> bool:
@@ -204,6 +205,7 @@ class MeetingState:
     def to_dict(self) -> dict:
         return {
             "id": self.id,
+            "parked": self.parked,
             "started_at": self.started_at.isoformat(),
             "ended_at": self.ended_at.isoformat() if self.ended_at else None,
             "duration": self.duration,

@@ -89,9 +89,11 @@ class WorkbenchService:
     def list_workbenches(self, principal: Principal) -> list[dict[str, Any]]:
         return [self._wb_payload(wb, principal) for wb in self._db.workbenches.list()]
 
-    def get_workbench(self, principal: Principal, workbench_id: str) -> dict[str, Any]:
+    def get_workbench(
+        self, principal: Principal, workbench_id: str, *, parked: bool = False
+    ) -> dict[str, Any]:
         wb = self._require_workbench(workbench_id)
-        return self._wb_payload(wb, principal)
+        return self._wb_payload(wb, principal, parked=parked)
 
     def create_workbench(self, principal: Principal, *, name: str, **fields: Any) -> dict[str, Any]:
         if not name.strip():
@@ -168,8 +170,17 @@ class WorkbenchService:
 
     # ── Items ────────────────────────────────────────────────────────────
 
-    def get_item(self, principal: Principal, workbench_id: str, item_id: str) -> dict[str, Any]:
-        return self._require_item(workbench_id, item_id).to_dict()
+    def get_item(
+        self,
+        principal: Principal,
+        workbench_id: str,
+        item_id: str,
+        *,
+        include_parked: bool = False,
+    ) -> dict[str, Any]:
+        return self._require_item(
+            workbench_id, item_id, include_parked=include_parked
+        ).to_dict()
 
     def add_item(
         self, principal: Principal, workbench_id: str, *, title: str, **fields: Any
@@ -215,14 +226,64 @@ class WorkbenchService:
         self._changed("workbench_item", item.id, "update")
         return item.to_dict()
 
-    def delete_item(self, principal: Principal, workbench_id: str, item_id: str) -> bool:
-        item = self._require_item(workbench_id, item_id)
-        if item.status == "claimed":
-            raise ConflictError("Cannot delete a claimed item")
-        if not self._db.workbench_items.delete(item_id):
+    def delete_item(
+        self, principal: Principal, workbench_id: str, item_id: str
+    ) -> dict[str, Any]:
+        return self.park_item(principal, workbench_id, item_id)
+
+    def park_item(self, principal: Principal, workbench_id: str, item_id: str) -> dict[str, Any]:
+        """Park one item while retaining every result and run link."""
+        self._require_workbench(workbench_id)
+        self._require_item(workbench_id, item_id, include_parked=True)
+        changed, reason, bad_ids = self._db.workbench_items.park_many(
+            workbench_id, [item_id]
+        )
+        self._raise_transition_error(reason, bad_ids, parked=True)
+        item = self._db.workbench_items.get(item_id, include_parked=True)
+        if item is None or not changed:
             raise NotFound("item", item_id)
-        self._changed("workbench_item", item_id, "delete")
-        return True
+        self._changed("workbench_item", item_id, "park")
+        return item.to_dict()
+
+    def park_items(
+        self, principal: Principal, workbench_id: str, item_ids: list[str]
+    ) -> dict[str, list[str]]:
+        """Park a validated set atomically, or leave every item untouched."""
+        ids = self._validate_item_ids(item_ids)
+        self._require_workbench(workbench_id)
+        changed, reason, bad_ids = self._db.workbench_items.park_many(workbench_id, ids)
+        self._raise_transition_error(reason, bad_ids, parked=True)
+        for item_id in changed:
+            self._changed("workbench_item", item_id, "park")
+        return {"parked": changed}
+
+    def restore_item(
+        self, principal: Principal, workbench_id: str, item_id: str
+    ) -> dict[str, Any]:
+        """Restore one parked item without rewriting its contents."""
+        self._require_workbench(workbench_id)
+        self._require_item(workbench_id, item_id, include_parked=True)
+        changed, reason, bad_ids = self._db.workbench_items.restore_many(
+            workbench_id, [item_id]
+        )
+        self._raise_transition_error(reason, bad_ids, parked=False)
+        item = self._db.workbench_items.get(item_id, include_parked=True)
+        if item is None or not changed:
+            raise NotFound("item", item_id)
+        self._changed("workbench_item", item_id, "restore")
+        return item.to_dict()
+
+    def restore_items(
+        self, principal: Principal, workbench_id: str, item_ids: list[str]
+    ) -> dict[str, list[str]]:
+        """Restore a validated set atomically, or leave every item untouched."""
+        ids = self._validate_item_ids(item_ids)
+        self._require_workbench(workbench_id)
+        changed, reason, bad_ids = self._db.workbench_items.restore_many(workbench_id, ids)
+        self._raise_transition_error(reason, bad_ids, parked=False)
+        for item_id in changed:
+            self._changed("workbench_item", item_id, "restore")
+        return {"restored": changed}
 
     def retry_mint(self, principal: Principal, workbench_id: str, item_id: str) -> dict[str, Any]:
         item = self._require_item(workbench_id, item_id)
@@ -549,18 +610,50 @@ class WorkbenchService:
             raise NotFound("workbench", workbench_id)
         return wb
 
-    def _require_item(self, workbench_id: str, item_id: str) -> Any:
-        item = self._db.workbench_items.get(item_id)
+    def _require_item(
+        self, workbench_id: str, item_id: str, *, include_parked: bool = False
+    ) -> Any:
+        item = self._db.workbench_items.get(item_id, include_parked=include_parked)
         if item is None or item.workbench_id != workbench_id:
             raise NotFound("item", item_id)
         return item
 
-    def _wb_payload(self, wb: Any, principal: Principal) -> dict[str, Any]:
+    @staticmethod
+    def _validate_item_ids(item_ids: Any) -> list[str]:
+        if not isinstance(item_ids, list) or not item_ids:
+            raise ValidationError("item_ids must be a non-empty list")
+        if any(not isinstance(item_id, str) or not item_id.strip() for item_id in item_ids):
+            raise ValidationError("item_ids must contain non-empty strings")
+        return list(dict.fromkeys(item_id.strip() for item_id in item_ids))
+
+    @staticmethod
+    def _raise_transition_error(
+        reason: str | None, bad_ids: list[str], *, parked: bool
+    ) -> None:
+        if reason is None:
+            return
+        item_id = bad_ids[0] if bad_ids else ""
+        if reason == "missing":
+            raise NotFound("item", item_id)
+        if reason == "claimed":
+            raise ConflictError("Cannot park a claimed item")
+        if reason == "already_parked":
+            raise ConflictError("Item is already parked")
+        if reason == "not_parked":
+            raise ConflictError("Item is not parked")
+        action = "park" if parked else "restore"
+        raise ConflictError(f"Cannot {action} Workbench item {item_id}")
+
+    def _wb_payload(
+        self, wb: Any, principal: Principal, *, parked: bool = False
+    ) -> dict[str, Any]:
         payload = wb.to_dict()
-        items = self._db.workbench_items.list_for_workbench(wb.id)
+        items = self._db.workbench_items.list_for_workbench(wb.id, parked=parked)
         payload["items"] = [item.to_dict() for item in items]
         payload["item_count"] = len(items)
-        payload["pending_count"] = sum(1 for item in items if item.status == "pending")
+        payload["pending_count"] = sum(
+            1 for item in items if item.status == "pending" and not item.parked
+        )
         runs = self._db.workbench_runs.list_for_workbench(wb.id, limit=1)
         payload["last_run"] = runs[0].to_dict() if runs else None
         if principal.kind is PrincipalKind.OWNER:

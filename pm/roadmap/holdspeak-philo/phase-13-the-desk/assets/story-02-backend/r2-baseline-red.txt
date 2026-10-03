@@ -1,0 +1,607 @@
+PHILO-13-02 r2 baseline red proof
+Original product sources: branch HEAD 65d55047f35017d1774486462797fc67c962c869.
+The changed implementation files were temporarily supplied from that commit; the working copies were restored byte-for-byte in a finally block.
+The producer tests mint each read family separately through the real Meeting repository, Monday Brief service, Memory repository, proposal repository, and Intel job repository. The C3 test stores a speaker through the real Meeting save path and collects every owner-read result before its assertion.
+Command: HOME=<isolated TemporaryDirectory> uv run pytest -vv -q tests/unit/test_philo13_meeting_parking.py -k "parked_meeting_is_absent or projection_route or sync_conflict_tombstone or parked_meeting_actions"
+
+============================= test session starts ==============================
+platform darwin -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- /Users/karol/dev/tools/wt-philo-13-a1-r2/.venv/bin/python3
+cachedir: .pytest_cache
+holdspeak: HOME=/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/philo13-a1-r2-red-home-rzgkdaxg
+rootdir: /Users/karol/dev/tools/wt-philo-13-a1-r2
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, xdist-3.8.0, timeout-2.4.0, asyncio-1.3.0, cov-7.0.0
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 16 items / 8 deselected / 8 selected
+
+tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_is_absent_from_its_real_read_family[brief] FAILED [ 12%]
+tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_is_absent_from_its_real_read_family[calendar] FAILED [ 25%]
+tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_is_absent_from_its_real_read_family[recall] FAILED [ 37%]
+tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_is_absent_from_its_real_read_family[proposal] FAILED [ 50%]
+tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_is_absent_from_its_real_read_family[intel_claim] FAILED [ 62%]
+tests/unit/test_philo13_meeting_parking.py::test_projection_route_hides_meeting_actuator_job_and_conflict_rows FAILED [ 75%]
+tests/unit/test_philo13_meeting_parking.py::test_sync_conflict_tombstone_parks_and_restores_retained_children FAILED [ 87%]
+tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_actions_and_speakers_disappear_from_all_owner_reads FAILED [100%]
+
+=================================== FAILURES ===================================
+________ test_parked_meeting_is_absent_from_its_real_read_family[brief] ________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-155/test_parked_meeting_is_absent_0')
+read_family = 'brief'
+
+    @pytest.mark.parametrize(
+        "read_family",
+        ["brief", "calendar", "recall", "proposal", "intel_claim"],
+    )
+    def test_parked_meeting_is_absent_from_its_real_read_family(
+        tmp_path: Path, read_family: str,
+    ) -> None:
+        db = Database(tmp_path / f"meeting-parking-{read_family}.db")
+        state = _meeting(f"read-family-{read_family}")
+        if read_family in {"brief", "calendar"}:
+            state.calendar_event_id = f"calendar-{read_family}"
+        db.meetings.save_meeting(state)
+
+        if read_family in {"brief", "calendar"}:
+            from holdspeak.services.monday_brief_service import MondayBriefService
+
+            brief = MondayBriefService(db)
+            window_start = "2026-10-01T00:00:00"
+            window_end = "2026-10-02T00:00:00"
+            read = (
+                (lambda: brief._collect_meetings(window_start, window_end))
+                if read_family == "brief"
+                else (lambda: brief._recorded_calendar_event_ids(window_start, window_end))
+            )
+            expected_after_park = [] if read_family == "brief" else set()
+            expected_after_restore = (
+                {f"calendar-{read_family}"} if read_family == "calendar" else None
+            )
+        elif read_family == "recall":
+            read = lambda: db.memory.search("retained transcript", kinds=["meeting"]).hits
+            expected_after_park = []
+            expected_after_restore = f"meeting:{state.id}"
+        elif read_family == "proposal":
+            proposal = db.proposals.create_proposal(
+                meeting_id=state.id,
+                project_id=None,
+                kind="action",
+                text="Keep the producer fence",
+                source_plugin="test",
+            )
+            assert proposal is not None
+            read = lambda: db.proposals.list_proposals(meeting_id=state.id)
+            expected_after_park = []
+            expected_after_restore = proposal.id
+        else:
+            job_id = db.intel.enqueue_intel_job(
+                state.id,
+                transcript_hash=state.transcript_hash(),
+                reason="producer fence",
+                legacy_displaced_work=True,
+            )
+            assert job_id
+            read = db.intel.claim_next_intel_job
+            expected_after_park = None
+            expected_after_restore = job_id
+
+        assert db.meetings.delete_meeting(state.id) is True
+        parked_value = read()
+>       assert parked_value == expected_after_park
+E       AssertionError: assert [BriefItem(id...ated_at=None)] == []
+E
+E         Left contains one more item: BriefItem(id='brief-item-0a095e6336f9459d9b3989889824ec43', section='changed', text='Meeting recorded: A1 retained meeting', detail='1 min · 1 action item', source_ref='meeting:read-family-brief', priority=50, created_at=None)
+E
+E         Full diff:
+E         - []
+E         + [
+E         +     BriefItem(...
+E
+E         ...Full output truncated (9 lines hidden), use '-vv' to show
+
+tests/unit/test_philo13_meeting_parking.py:405: AssertionError
+______ test_parked_meeting_is_absent_from_its_real_read_family[calendar] _______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-155/test_parked_meeting_is_absent_1')
+read_family = 'calendar'
+
+    @pytest.mark.parametrize(
+        "read_family",
+        ["brief", "calendar", "recall", "proposal", "intel_claim"],
+    )
+    def test_parked_meeting_is_absent_from_its_real_read_family(
+        tmp_path: Path, read_family: str,
+    ) -> None:
+        db = Database(tmp_path / f"meeting-parking-{read_family}.db")
+        state = _meeting(f"read-family-{read_family}")
+        if read_family in {"brief", "calendar"}:
+            state.calendar_event_id = f"calendar-{read_family}"
+        db.meetings.save_meeting(state)
+
+        if read_family in {"brief", "calendar"}:
+            from holdspeak.services.monday_brief_service import MondayBriefService
+
+            brief = MondayBriefService(db)
+            window_start = "2026-10-01T00:00:00"
+            window_end = "2026-10-02T00:00:00"
+            read = (
+                (lambda: brief._collect_meetings(window_start, window_end))
+                if read_family == "brief"
+                else (lambda: brief._recorded_calendar_event_ids(window_start, window_end))
+            )
+            expected_after_park = [] if read_family == "brief" else set()
+            expected_after_restore = (
+                {f"calendar-{read_family}"} if read_family == "calendar" else None
+            )
+        elif read_family == "recall":
+            read = lambda: db.memory.search("retained transcript", kinds=["meeting"]).hits
+            expected_after_park = []
+            expected_after_restore = f"meeting:{state.id}"
+        elif read_family == "proposal":
+            proposal = db.proposals.create_proposal(
+                meeting_id=state.id,
+                project_id=None,
+                kind="action",
+                text="Keep the producer fence",
+                source_plugin="test",
+            )
+            assert proposal is not None
+            read = lambda: db.proposals.list_proposals(meeting_id=state.id)
+            expected_after_park = []
+            expected_after_restore = proposal.id
+        else:
+            job_id = db.intel.enqueue_intel_job(
+                state.id,
+                transcript_hash=state.transcript_hash(),
+                reason="producer fence",
+                legacy_displaced_work=True,
+            )
+            assert job_id
+            read = db.intel.claim_next_intel_job
+            expected_after_park = None
+            expected_after_restore = job_id
+
+        assert db.meetings.delete_meeting(state.id) is True
+        parked_value = read()
+>       assert parked_value == expected_after_park
+E       AssertionError: assert {'calendar-calendar'} == set()
+E
+E         Extra items in the left set:
+E         'calendar-calendar'
+E
+E         Full diff:
+E         - set()
+E         + {
+E         +     'calendar-calendar',
+E         + }
+
+tests/unit/test_philo13_meeting_parking.py:405: AssertionError
+_______ test_parked_meeting_is_absent_from_its_real_read_family[recall] ________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-155/test_parked_meeting_is_absent_2')
+read_family = 'recall'
+
+    @pytest.mark.parametrize(
+        "read_family",
+        ["brief", "calendar", "recall", "proposal", "intel_claim"],
+    )
+    def test_parked_meeting_is_absent_from_its_real_read_family(
+        tmp_path: Path, read_family: str,
+    ) -> None:
+        db = Database(tmp_path / f"meeting-parking-{read_family}.db")
+        state = _meeting(f"read-family-{read_family}")
+        if read_family in {"brief", "calendar"}:
+            state.calendar_event_id = f"calendar-{read_family}"
+        db.meetings.save_meeting(state)
+
+        if read_family in {"brief", "calendar"}:
+            from holdspeak.services.monday_brief_service import MondayBriefService
+
+            brief = MondayBriefService(db)
+            window_start = "2026-10-01T00:00:00"
+            window_end = "2026-10-02T00:00:00"
+            read = (
+                (lambda: brief._collect_meetings(window_start, window_end))
+                if read_family == "brief"
+                else (lambda: brief._recorded_calendar_event_ids(window_start, window_end))
+            )
+            expected_after_park = [] if read_family == "brief" else set()
+            expected_after_restore = (
+                {f"calendar-{read_family}"} if read_family == "calendar" else None
+            )
+        elif read_family == "recall":
+            read = lambda: db.memory.search("retained transcript", kinds=["meeting"]).hits
+            expected_after_park = []
+            expected_after_restore = f"meeting:{state.id}"
+        elif read_family == "proposal":
+            proposal = db.proposals.create_proposal(
+                meeting_id=state.id,
+                project_id=None,
+                kind="action",
+                text="Keep the producer fence",
+                source_plugin="test",
+            )
+            assert proposal is not None
+            read = lambda: db.proposals.list_proposals(meeting_id=state.id)
+            expected_after_park = []
+            expected_after_restore = proposal.id
+        else:
+            job_id = db.intel.enqueue_intel_job(
+                state.id,
+                transcript_hash=state.transcript_hash(),
+                reason="producer fence",
+                legacy_displaced_work=True,
+            )
+            assert job_id
+            read = db.intel.claim_next_intel_job
+            expected_after_park = None
+            expected_after_restore = job_id
+
+        assert db.meetings.delete_meeting(state.id) is True
+        parked_value = read()
+>       assert parked_value == expected_after_park
+E       AssertionError: assert [MemoryHit(ki...ph_score=0.0)] == []
+E
+E         Left contains one more item: MemoryHit(kind='meeting', source_ref='meeting:read-family-recall', title='A1 retained meeting', snippet='The <mark>ret...alized_score=1.0, kind_rank=1, rank=1, retrieval_origin='lexical', related_to=None, relationship=None, graph_score=0.0)
+E
+E         Full diff:
+E         - []
+E         + [
+E         +     MemoryHit(...
+E
+E         ...Full output truncated (17 lines hidden), use '-vv' to show
+
+tests/unit/test_philo13_meeting_parking.py:405: AssertionError
+______ test_parked_meeting_is_absent_from_its_real_read_family[proposal] _______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-155/test_parked_meeting_is_absent_3')
+read_family = 'proposal'
+
+    @pytest.mark.parametrize(
+        "read_family",
+        ["brief", "calendar", "recall", "proposal", "intel_claim"],
+    )
+    def test_parked_meeting_is_absent_from_its_real_read_family(
+        tmp_path: Path, read_family: str,
+    ) -> None:
+        db = Database(tmp_path / f"meeting-parking-{read_family}.db")
+        state = _meeting(f"read-family-{read_family}")
+        if read_family in {"brief", "calendar"}:
+            state.calendar_event_id = f"calendar-{read_family}"
+        db.meetings.save_meeting(state)
+
+        if read_family in {"brief", "calendar"}:
+            from holdspeak.services.monday_brief_service import MondayBriefService
+
+            brief = MondayBriefService(db)
+            window_start = "2026-10-01T00:00:00"
+            window_end = "2026-10-02T00:00:00"
+            read = (
+                (lambda: brief._collect_meetings(window_start, window_end))
+                if read_family == "brief"
+                else (lambda: brief._recorded_calendar_event_ids(window_start, window_end))
+            )
+            expected_after_park = [] if read_family == "brief" else set()
+            expected_after_restore = (
+                {f"calendar-{read_family}"} if read_family == "calendar" else None
+            )
+        elif read_family == "recall":
+            read = lambda: db.memory.search("retained transcript", kinds=["meeting"]).hits
+            expected_after_park = []
+            expected_after_restore = f"meeting:{state.id}"
+        elif read_family == "proposal":
+            proposal = db.proposals.create_proposal(
+                meeting_id=state.id,
+                project_id=None,
+                kind="action",
+                text="Keep the producer fence",
+                source_plugin="test",
+            )
+            assert proposal is not None
+            read = lambda: db.proposals.list_proposals(meeting_id=state.id)
+            expected_after_park = []
+            expected_after_restore = proposal.id
+        else:
+            job_id = db.intel.enqueue_intel_job(
+                state.id,
+                transcript_hash=state.transcript_hash(),
+                reason="producer fence",
+                legacy_displaced_work=True,
+            )
+            assert job_id
+            read = db.intel.claim_next_intel_job
+            expected_after_park = None
+            expected_after_restore = job_id
+
+        assert db.meetings.delete_meeting(state.id) is True
+        parked_value = read()
+>       assert parked_value == expected_after_park
+E       AssertionError: assert [Proposal(id=...tionale=None)] == []
+E
+E         Left contains one more item: Proposal(id='prop-396e01cb78fd43a7', meeting_id='read-family-proposal', project_id=None, kind='action', text='Keep the...x=None, support='unknown', support_record=None, owner_supplied=None, due_supplied=None, edited_at=None, rationale=None)
+E
+E         Full diff:
+E         - []
+E         + [
+E         +     Proposal(...
+E
+E         ...Full output truncated (35 lines hidden), use '-vv' to show
+
+tests/unit/test_philo13_meeting_parking.py:405: AssertionError
+_____ test_parked_meeting_is_absent_from_its_real_read_family[intel_claim] _____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-155/test_parked_meeting_is_absent_4')
+read_family = 'intel_claim'
+
+    @pytest.mark.parametrize(
+        "read_family",
+        ["brief", "calendar", "recall", "proposal", "intel_claim"],
+    )
+    def test_parked_meeting_is_absent_from_its_real_read_family(
+        tmp_path: Path, read_family: str,
+    ) -> None:
+        db = Database(tmp_path / f"meeting-parking-{read_family}.db")
+        state = _meeting(f"read-family-{read_family}")
+        if read_family in {"brief", "calendar"}:
+            state.calendar_event_id = f"calendar-{read_family}"
+        db.meetings.save_meeting(state)
+
+        if read_family in {"brief", "calendar"}:
+            from holdspeak.services.monday_brief_service import MondayBriefService
+
+            brief = MondayBriefService(db)
+            window_start = "2026-10-01T00:00:00"
+            window_end = "2026-10-02T00:00:00"
+            read = (
+                (lambda: brief._collect_meetings(window_start, window_end))
+                if read_family == "brief"
+                else (lambda: brief._recorded_calendar_event_ids(window_start, window_end))
+            )
+            expected_after_park = [] if read_family == "brief" else set()
+            expected_after_restore = (
+                {f"calendar-{read_family}"} if read_family == "calendar" else None
+            )
+        elif read_family == "recall":
+            read = lambda: db.memory.search("retained transcript", kinds=["meeting"]).hits
+            expected_after_park = []
+            expected_after_restore = f"meeting:{state.id}"
+        elif read_family == "proposal":
+            proposal = db.proposals.create_proposal(
+                meeting_id=state.id,
+                project_id=None,
+                kind="action",
+                text="Keep the producer fence",
+                source_plugin="test",
+            )
+            assert proposal is not None
+            read = lambda: db.proposals.list_proposals(meeting_id=state.id)
+            expected_after_park = []
+            expected_after_restore = proposal.id
+        else:
+            job_id = db.intel.enqueue_intel_job(
+                state.id,
+                transcript_hash=state.transcript_hash(),
+                reason="producer fence",
+                legacy_displaced_work=True,
+            )
+            assert job_id
+            read = db.intel.claim_next_intel_job
+            expected_after_park = None
+            expected_after_restore = job_id
+
+        assert db.meetings.delete_meeting(state.id) is True
+        parked_value = read()
+>       assert parked_value == expected_after_park
+E       AssertionError: assert IntelJob(meeting_id='read-family-intel_claim', status='running', transcript_hash='b570eddaec6c424869638a5aa2e9a7335920a9db04c0950b247aef48bcaf0d8b', requested_at=datetime.datetime(2026, 10, 1, 23, 43, 10, 611959), updated_at=datetime.datetime(2026, 10, 1, 23, 43, 10, 612370), attempts=1, last_error='producer fence', meeting_title=None, started_at=None, intel_status_detail=None, displaced_work=(), frozen_bookmark_timestamps=(), frozen_bookmark_operations=(), frozen_plugin_members=(), frozen_plugin_route={}, job_id='ij_b48900bc2e4a7d453e7a95eded7ed874d6f16bc3450e0ab203714f217c1fd3aa', origin_job_id=None, work_descriptor_sha256='sha256:f40d29153ef1832b2869d047ee6483259efe1b8d8956c7af9bbfd58c4f254c88', claim_id='ic_97dbb4d29eb5489dd0b14de77e4d2bd3552d5e98c3566f6f73bc3f93224d334c', parent_operation_id=None, bundle_id=None, bundle_sha256=None, executor_lease_token=None, executor_lease_epoch=0, executor_lease_expires_at=None, lifecycle_posture='claimed', planned_route=None, run_receipt=None) == None
+
+tests/unit/test_philo13_meeting_parking.py:405: AssertionError
+______ test_projection_route_hides_meeting_actuator_job_and_conflict_rows ______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-155/test_projection_route_hides_me0')
+
+    def test_projection_route_hides_meeting_actuator_job_and_conflict_rows(tmp_path: Path) -> None:
+        db = Database(tmp_path / "meeting-parking-projections.db")
+        state = _meeting("projection-fences")
+        db.meetings.save_meeting(state)
+        db.actuators.record_proposal(
+            meeting_id=state.id,
+            window_id="projection-window",
+            plugin_id="projection-test",
+            plugin_version="1",
+            idempotency_key="projection-fence-actuator",
+            target="webhook",
+            action="post",
+            preview="projection fence",
+        )
+        db.plugins.record_artifact(
+            artifact_id="projection-fence-artifact",
+            meeting_id=state.id,
+            artifact_type="handoff",
+            title="Projection fence artifact",
+            body_markdown="Hidden with its parked Meeting",
+        )
+        db.intel.enqueue_intel_job(
+            state.id,
+            transcript_hash=state.transcript_hash(),
+            reason="projection fence",
+            legacy_displaced_work=True,
+        )
+        conflict_id = db.meetings.record_sync_conflict(
+            state.id,
+            local_value=state.to_dict(),
+            incoming_value={**state.to_dict(), "title": "incoming"},
+        )
+        assert conflict_id
+
+        app = FastAPI()
+        app.include_router(build_projections_router(WebContext(
+            get_state=lambda: {},
+            projection_service=ProjectionService(db),
+        )))
+        client = TestClient(app)
+
+        before_response = client.get("/api/desk/projections", params={"limit": 200}).json()
+        before = before_response["projections"]
+        meeting_ref = f"meeting:{state.id}"
+        related_rows = [
+            row for row in before
+            if row["subject_ref"] == meeting_ref or row["correlation_id"] == meeting_ref
+        ]
+        assert {row["source_kind"] for row in related_rows} >= {
+            "actuator_proposal", "artifact", "intel_job", "meeting_sync_conflict"
+        }
+
+        db.meetings.delete_meeting(state.id)
+        parked_response = client.get("/api/desk/projections", params={"limit": 200}).json()
+        parked = parked_response["projections"]
+>       assert all(
+            row["subject_ref"] != meeting_ref and row["correlation_id"] != meeting_ref
+            for row in parked
+        )
+E       assert False
+E        +  where False = all(<generator object test_projection_route_hides_meeting_actuator_job_and_conflict_rows.<locals>.<genexpr> at 0x10e1298c0>)
+
+tests/unit/test_philo13_meeting_parking.py:476: AssertionError
+______ test_sync_conflict_tombstone_parks_and_restores_retained_children _______
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-155/test_sync_conflict_tombstone_p0')
+
+    def test_sync_conflict_tombstone_parks_and_restores_retained_children(tmp_path: Path) -> None:
+        db = Database(tmp_path / "meeting-parking-conflict.db")
+        state = _meeting("conflict-tombstone")
+        db.meetings.save_meeting(state)
+        db.plugins.record_artifact(
+            artifact_id="conflict-artifact",
+            meeting_id=state.id,
+            artifact_type="handoff",
+            title="Conflict artifact",
+            body_markdown="Retained while parked",
+        )
+        before = _related_rows(db, state.id)
+        conflict_id = db.meetings.record_sync_conflict(
+            state.id,
+            local_value=state.to_dict(),
+            incoming_value={"id": state.id, "deleted": True},
+        )
+
+        assert db.meetings.resolve_sync_conflict(
+            state.id, conflict_id, resolution="use_incoming"
+        ) == "deleted"
+        assert db.meetings.get_meeting(state.id) is None
+        retained = db.meetings.get_meeting(state.id, include_parked=True)
+>       assert retained is not None and retained.parked is True
+E       assert (None is not None)
+
+tests/unit/test_philo13_meeting_parking.py:518: AssertionError
+___ test_parked_meeting_actions_and_speakers_disappear_from_all_owner_reads ____
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-155/test_parked_meeting_actions_an0')
+
+    def test_parked_meeting_actions_and_speakers_disappear_from_all_owner_reads(tmp_path: Path) -> None:
+        db = Database(tmp_path / "meeting-parking-owner-reads.db")
+        state = _meeting("owner-read-fences")
+        state.segments[0].speaker_id = "speaker-fence"
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT INTO speakers (id, name, embedding) VALUES (?, ?, ?)",
+                ("speaker-fence", "Fence speaker", b"speaker-embedding"),
+            )
+            conn.commit()
+        db.meetings.save_meeting(state)
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT INTO action_items (id, meeting_id, task, owner, status) "
+                "VALUES (?, NULL, ?, ?, 'pending')",
+                ("standalone-owner-read", "Standalone action", "Me"),
+            )
+            conn.commit()
+        db.projects.create_project(project_id="owner-read-project", name="Owner read project")
+        db.projects.associate_meeting_project(
+            meeting_id=state.id, project_id="owner-read-project", source="test", confidence=1.0
+        )
+
+        assert [item.id for item in db.meetings.list_action_items()] == [
+            "standalone-owner-read", "a1-action"
+        ]
+        project_service = ProjectService(db)
+        assert [item["id"] for item in project_service.list_action_items(OWNER, "owner-read-project")] == [
+            "a1-action"
+        ]
+
+        before_segments = db.meetings.get_speaker_segments("speaker-fence")
+        assert len(before_segments) == 1 and len(before_segments[0]["segments"]) == 1
+        assert db.meetings.get_speaker_stats("speaker-fence")["total_segments"] == 1
+
+        people_store = EncryptedPeopleStore(tmp_path / "people.sqlite3", MemoryKeyStore())
+        people_store.initialize()
+        people = PeopleService(people_store)
+        relationship = people.create_relationship(OWNER, {"display_name": "Owner read person"})
+        people.link_calendar_series(
+            OWNER, relationship["id"], "uid-owner-read", "source-owner-read", "Owner read"
+        )
+        db.calendar_events.replace_projection(
+            "owner-read-revision",
+            [CalendarEvent(
+                id="event-owner-read", uid="uid-owner-read", title="Owner read",
+                starts_at="2026-10-01T10:00:00", ends_at="2026-10-01T11:00:00",
+                location=None, meeting_url=None, last_seen_at=1.0,
+                subscription_revision="owner-read-revision", source_id="source-owner-read",
+            )],
+            seen_at=1.0,
+            source_id="source-owner-read",
+        )
+        with db._connection() as conn:
+            conn.execute(
+                "UPDATE meetings SET calendar_event_id=? WHERE id=?",
+                ("event-owner-read", state.id),
+            )
+            conn.commit()
+        assert people.one_on_one_brief(OWNER, relationship["id"], db=db)["linked_meetings"]
+
+        db.meetings.delete_meeting(state.id)
+        after_park = {
+            "global_actions": [item.id for item in db.meetings.list_action_items()],
+            "project_actions": [
+                item["id"] for item in project_service.list_action_items(OWNER, "owner-read-project")
+            ],
+            "speaker_meetings": [
+                group["meeting_id"] for group in db.meetings.get_speaker_segments("speaker-fence")
+            ],
+            "speaker_total_segments": db.meetings.get_speaker_stats("speaker-fence")["total_segments"],
+            "people_meetings": [
+                row["meeting_id"]
+                for row in people.one_on_one_brief(OWNER, relationship["id"], db=db)["linked_meetings"]
+            ],
+        }
+>       assert after_park == {
+            "global_actions": ["standalone-owner-read"],
+            "project_actions": [],
+            "speaker_meetings": [],
+            "speaker_total_segments": 0,
+            "people_meetings": [],
+        }
+E       AssertionError: assert {'global_acti...fences'], ...} == {'global_acti...ngs': [], ...}
+E
+E         Differing items:
+E         {'global_actions': ['standalone-owner-read', 'a1-action']} != {'global_actions': ['standalone-owner-read']}
+E         {'people_meetings': ['owner-read-fences']} != {'people_meetings': []}
+E         {'speaker_total_segments': 1} != {'speaker_total_segments': 0}
+E         {'project_actions': ['a1-action']} != {'project_actions': []}
+E         {'speaker_meetings': ['owner-read-fences']} != {'speaker_meetings': []}...
+E
+E         ...Full output truncated (27 lines hidden), use '-vv' to show
+
+tests/unit/test_philo13_meeting_parking.py:603: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_is_absent_from_its_real_read_family[brief]
+FAILED tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_is_absent_from_its_real_read_family[calendar]
+FAILED tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_is_absent_from_its_real_read_family[recall]
+FAILED tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_is_absent_from_its_real_read_family[proposal]
+FAILED tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_is_absent_from_its_real_read_family[intel_claim]
+FAILED tests/unit/test_philo13_meeting_parking.py::test_projection_route_hides_meeting_actuator_job_and_conflict_rows
+FAILED tests/unit/test_philo13_meeting_parking.py::test_sync_conflict_tombstone_parks_and_restores_retained_children
+FAILED tests/unit/test_philo13_meeting_parking.py::test_parked_meeting_actions_and_speakers_disappear_from_all_owner_reads
+======================= 8 failed, 8 deselected in 2.76s ========================
