@@ -143,7 +143,7 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | PHILO-13-08 | B3 — Decide where the meeting is | done | [story-08-b3-decide-where-the-meeting-is](./story-08-b3-decide-where-the-meeting-is.md) | [evidence-story-08](./evidence-story-08.md) |
 | PHILO-13-09 | B4 — The 1:1 finds its person | backlog | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | — |
 | PHILO-13-10 | B5 — The update writes the week | done | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | [evidence-story-10](./evidence-story-10.md) |
-| PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | in-progress | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
+| PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | done | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | [evidence-story-11](./evidence-story-11.md) |
 | PHILO-13-12 | C2 — The gadgets that are missing | done | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | [evidence-story-12](./evidence-story-12.md) |
 | PHILO-13-13 | C3 — A live Dock (AppIcons) | done | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | [evidence-story-13](./evidence-story-13.md) |
 | PHILO-13-14 | C4 — A palette that knows his week and does verbs | done | [story-14-c4-a-palette-that-knows-his-week](./story-14-c4-a-palette-that-knows-his-week.md) | [evidence-story-14](./evidence-story-14.md) |
