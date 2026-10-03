@@ -1,0 +1,30 @@
+All temporary roots outside the owner HOME and repository: /tmp/c3-path-check-l0q_rrru
+bringing up nodes...
+bringing up nodes...
+
+......................FF                                                 [100%]
+=================================== FAILURES ===================================
+__ TestOneNeedsYou.test_one_number_everywhere_and_done_moves_all_three[1440] ___
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-13-13-astra/.venv/bin/python
+tests/e2e/test_philo13_03_needs_you_glass.py:176: in test_one_number_everywhere_and_done_moves_all_three
+    assert said and all(n == 6 for n in said), before["said"]
+E   AssertionError: ['Needs you', 'Needs you', '6 need you', 'aria:Desk memory: 6 need you', 'aria:Intelligence, 6 need you', 'aria:A2 oracle room, 1 need you']
+E   assert ([6, 6, 6, 1] and False)
+E    +  where False = all(<generator object TestOneNeedsYou.test_one_number_everywhere_and_done_moves_all_three.<locals>.<genexpr> at 0x112593b90>)
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+___ TestOneNeedsYou.test_one_number_everywhere_and_done_moves_all_three[393] ___
+[gw1] darwin -- Python 3.14.2 /Users/karol/dev/tools/wt-philo-13-13-astra/.venv/bin/python
+tests/e2e/test_philo13_03_needs_you_glass.py:176: in test_one_number_everywhere_and_done_moves_all_three
+    assert said and all(n == 6 for n in said), before["said"]
+E   AssertionError: ['Needs you', 'Needs you', '6 need you', 'aria:Desk memory: 6 need you', 'aria:Intelligence, 6 need you', 'aria:A2 oracle room, 1 need you']
+E   assert ([6, 6, 6, 1] and False)
+E    +  where False = all(<generator object TestOneNeedsYou.test_one_number_everywhere_and_done_moves_all_three.<locals>.<genexpr> at 0x115773ed0>)
+------------------------------ Captured log setup ------------------------------
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+WARNING  holdspeak.intel_queue_conductor:intel_queue_conductor.py:130 Intel queue drainer is OFF: this process does not own the database.
+=========================== short test summary info ============================
+FAILED tests/e2e/test_philo13_03_needs_you_glass.py::TestOneNeedsYou::test_one_number_everywhere_and_done_moves_all_three[1440]
+FAILED tests/e2e/test_philo13_03_needs_you_glass.py::TestOneNeedsYou::test_one_number_everywhere_and_done_moves_all_three[393]
+2 failed, 22 passed in 16.78s

@@ -308,6 +308,11 @@ Missing shards: **none**.
 | `desk.native_host` | `linux_wayland` | unknown | planned |
 | `desk.native_host` | `linux_x11` | unknown | planned |
 | `desk.native_host` | `macos` | unknown | planned |
+| `desk.dock.live` | `aipi` | unknown | partial |
+| `desk.dock.live` | `ipad` | unknown | partial |
+| `desk.dock.live` | `linux_wayland` | unknown | partial |
+| `desk.dock.live` | `linux_x11` | unknown | partial |
+| `desk.dock.live` | `macos` | unknown | partial |
 | `project.update.linked_week` | `aipi` | unknown | built_unreleased |
 | `project.update.linked_week` | `ipad` | unknown | built_unreleased |
 | `project.update.linked_week` | `linux_wayland` | unknown | built_unreleased |

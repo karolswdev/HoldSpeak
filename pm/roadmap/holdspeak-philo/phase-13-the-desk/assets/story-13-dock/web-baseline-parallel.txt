@@ -1,0 +1,19 @@
+Running vitest...
+
+=== Web baseline report ===
+
+HEALED (4):
+  src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+  src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+  src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+  src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+
+BRANCH-NEW (4):
+  BRANCH-NEW: src/desk/needsYou.test.ts > the real producer membership oracle > matches before/after real wire and rejects controlled wrong projections
+  BRANCH-NEW: src/desk/needsYou.test.ts > the real producer membership oracle > rejects a code mutant that skips dedupAttention on the real producer oracle
+  BRANCH-NEW: src/desk/needsYou.test.ts > the shared needs-you read > uses the producer-backed summary filter and never reads an unfiltered meeting page
+  BRANCH-NEW: src/features/project-room/steward/__tests__/StewardPosture.test.tsx > Scroll hint: data-scroll-hint is set on the posture root > sets data-scroll-hint on the steward posture element
+
+Suite totals: 3123 passed, 4 failed, 0 skipped
+
+VERDICT: BRANCH-NEW FAILURES: 4

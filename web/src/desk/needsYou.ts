@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { fromWireMeeting } from "./api";
 import { apiFetch } from "../lib/api";
 import {
@@ -320,6 +320,7 @@ let generation = 0;
 let inflightFresh = false;
 const listeners = new Set<() => void>();
 let pollTimer: ReturnType<typeof setInterval> | null = null;
+let pollingSubscribers = 0;
 
 function publish(next: Partial<NeedsYouSnapshot> = {}): void {
   snapshot = { ...snapshot, ...next };
@@ -461,15 +462,19 @@ async function refreshNeedsYou(fresh = true): Promise<void> {
   return request;
 }
 
-function subscribe(listener: () => void): () => void {
+function subscribe(listener: () => void, poll: boolean): () => void {
   listeners.add(listener);
+  if (poll) pollingSubscribers += 1;
   if (listeners.size === 1) {
     void refreshNeedsYou(false);
+  }
+  if (poll && pollingSubscribers === 1) {
     pollTimer = setInterval(() => { void refreshNeedsYou(false); }, 60_000);
   }
   return () => {
     listeners.delete(listener);
-    if (listeners.size === 0 && pollTimer !== null) {
+    if (poll) pollingSubscribers = Math.max(0, pollingSubscribers - 1);
+    if (pollingSubscribers === 0 && pollTimer !== null) {
       clearInterval(pollTimer);
       pollTimer = null;
     }
@@ -482,8 +487,19 @@ function getSnapshot(): NeedsYouSnapshot {
 
 /** Shared Desk membership read. Multiple mounted faces share one snapshot,
  * one in-flight refresh and one approximately-minute poll. */
-export function useNeedsYou(): NeedsYouSnapshot & { refresh: () => Promise<void> } {
-  const value = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+export function useNeedsYou(
+  options: { poll?: boolean } = {},
+): NeedsYouSnapshot & { refresh: () => Promise<void> } {
+  const poll = options.poll !== false;
+  const subscribeForHook = useCallback(
+    (listener: () => void) => subscribe(listener, poll),
+    [poll],
+  );
+  const value = useSyncExternalStore(
+    subscribeForHook,
+    getSnapshot,
+    getSnapshot,
+  );
   useEffect(() => { void refreshNeedsYou(false); }, []);
   return { ...value, refresh: () => refreshNeedsYou(true) };
 }

@@ -1,0 +1,114 @@
+[
+  {
+    "name": "the open meeting record re-reads itself (HS-202-02) > shows the run verb after the engine is assigned, with no reload",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/pages/cores/__tests__/meetingRefresh202.test.tsx",
+    "location": {
+      "line": 111,
+      "column": 3
+    }
+  },
+  {
+    "name": "the open meeting record re-reads itself (HS-202-02) > re-reads the record when the hub says a run finished",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/pages/cores/__tests__/meetingRefresh202.test.tsx",
+    "location": {
+      "line": 131,
+      "column": 3
+    }
+  },
+  {
+    "name": "the open meeting record re-reads itself (HS-202-02) > re-reads the record on the desk_changed frame",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/pages/cores/__tests__/meetingRefresh202.test.tsx",
+    "location": {
+      "line": 147,
+      "column": 3
+    }
+  },
+  {
+    "name": "a slow refresh never restores a record the owner left > drops a response for a record that is no longer selected",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/pages/cores/__tests__/meetingRefresh202.test.tsx",
+    "location": {
+      "line": 165,
+      "column": 3
+    }
+  },
+  {
+    "name": "a refresh never withdraws what the record had > keeps Run summary when the detail payload omits transcriptWords",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/pages/cores/__tests__/meetingRefresh202.test.tsx",
+    "location": {
+      "line": 216,
+      "column": 3
+    }
+  },
+  {
+    "name": "the announced refresh survives the owner opening a record > catches the record up when the frame arrived before the click",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/pages/cores/__tests__/meetingRefresh202.test.tsx",
+    "location": {
+      "line": 269,
+      "column": 3
+    }
+  },
+  {
+    "name": "the open record follows the ledger > takes the new row's fields when the rows change under it",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/pages/cores/__tests__/meetingRefresh202.test.tsx",
+    "location": {
+      "line": 331,
+      "column": 3
+    }
+  },
+  {
+    "name": "C1 readiness acknowledgement > ACKs readiness when the owner opens a real Meetings row",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/pages/cores/__tests__/meetingRefresh202.test.tsx",
+    "location": {
+      "line": 398,
+      "column": 3
+    }
+  },
+  {
+    "name": "C1 readiness acknowledgement > ACKs readiness when a deep link opens the meeting",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/pages/cores/__tests__/meetingRefresh202.test.tsx",
+    "location": {
+      "line": 417,
+      "column": 3
+    }
+  },
+  {
+    "name": "H-C3 Dock rendering > renders durable state marks and one membership badge while suppressing zero",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/desk/components/window/Dock.test.tsx",
+    "location": {
+      "line": 172,
+      "column": 3
+    }
+  },
+  {
+    "name": "H-C3 Dock rendering > passes the explicit Dock origin when an active project opens",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/desk/components/window/Dock.test.tsx",
+    "location": {
+      "line": 187,
+      "column": 3
+    }
+  },
+  {
+    "name": "H-C3 Dock rendering > keeps a successful Send snapshot when the People projection fails",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/desk/components/window/Dock.test.tsx",
+    "location": {
+      "line": 199,
+      "column": 3
+    }
+  },
+  {
+    "name": "H-C3 Dock rendering > shows REC only after the real recording producer receives hub confirmation",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/desk/components/window/Dock.test.tsx",
+    "location": {
+      "line": 212,
+      "column": 3
+    }
+  },
+  {
+    "name": "H-C3 Dock rendering > renders the durable readiness transition and reconciles an acknowledged stale frame",
+    "file": "/Users/karol/dev/tools/wt-philo-13-13-astra/web/src/desk/components/window/Dock.test.tsx",
+    "location": {
+      "line": 229,
+      "column": 3
+    }
+  }
+]

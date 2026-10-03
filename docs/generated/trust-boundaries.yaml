@@ -327,7 +327,7 @@
       "sources": [
         {
           "claim": "The API helper is the browser HTTP boundary.",
-          "line": 14,
+          "line": 44,
           "path": "web/src/lib/api.ts",
           "symbol": "apiFetch"
         }
@@ -355,7 +355,7 @@
       "sources": [
         {
           "claim": "Malformed frames are ignored and reconnect is bounded.",
-          "line": 80,
+          "line": 26,
           "path": "web/src/runtime/RuntimeBus.tsx",
           "symbol": "RuntimeBusProvider"
         }
@@ -382,7 +382,7 @@
       "sources": [
         {
           "claim": "Invalid records are rejected and replaced by defaults.",
-          "line": 112,
+          "line": 82,
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "loadDeskWorkspace"
         }

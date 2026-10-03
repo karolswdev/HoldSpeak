@@ -28,7 +28,10 @@ describe("PHILO-9-03 F1: the one Room key", () => {
     registerSurface(PROJECT_ROOM_KEY, opener);
     openProjectRoom("proj-1");
     openProjectRoom("");
-    expect(opener.mock.calls).toEqual([["project:proj-1"], [undefined]]);
+    expect(opener.mock.calls).toEqual([
+      ["project:proj-1", undefined],
+      [undefined, undefined],
+    ]);
   });
 
   it("no source file asks for the dead key (census)", () => {

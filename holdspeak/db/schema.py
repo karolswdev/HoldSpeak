@@ -73,6 +73,17 @@ CREATE TABLE IF NOT EXISTS meeting_sync_conflicts (
 CREATE INDEX IF NOT EXISTS idx_meeting_sync_conflicts_open
 ON meeting_sync_conflicts(meeting_id, resolved_at, detected_at DESC);
 
+-- PHILO-13 C3: one durable unseen marker for each newly-ready meeting.
+-- Rows are created only by a real readiness producer; historical summaries
+-- have no row and therefore never become Dock attention by migration.
+CREATE TABLE IF NOT EXISTS meeting_ready_reads (
+    meeting_id TEXT PRIMARY KEY REFERENCES meetings(id) ON DELETE CASCADE,
+    ready_at TEXT NOT NULL,
+    read_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_meeting_ready_reads_unread
+ON meeting_ready_reads(read_at, ready_at DESC);
+
 -- Transcript segments
 CREATE TABLE IF NOT EXISTS segments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
