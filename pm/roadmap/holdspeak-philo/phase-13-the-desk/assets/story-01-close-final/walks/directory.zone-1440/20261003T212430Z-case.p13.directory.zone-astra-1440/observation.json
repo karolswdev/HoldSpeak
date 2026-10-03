@@ -1,0 +1,1570 @@
+{
+  "id": "obs-20261003T212430Z-case.p13.directory.zone-astra-1440",
+  "run_id": "20261003T212430Z-case.p13.directory.zone-astra-1440",
+  "case_id": "case.p13.directory.zone",
+  "brain": "astra",
+  "pass": "live",
+  "viewport": 1440,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-astra.json",
+  "job": "j3",
+  "edge_ids": [
+    "edge.face.directory_zone_window"
+  ],
+  "state_id": "state.desk_presentation.p13_unwalked_windows",
+  "provenance": {
+    "revision": "95ee5fe315c2760c8cbdd185a44206345bc6b5a9",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "d84516940a8671827fad725c86d6306b48e39fab111ad14cba23a388223d442f",
+      "assets": [
+        "index-yocudMGr.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:53697",
+      "port": 53697,
+      "pid": 59084,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n18yld2h",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n18yld2h/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T21:24:30.388523+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-astra.json",
+      "sha256": "a7258d2f94f445d61b10456efdbc20e8572ca875ab07523ea8885cdd33fbe40a",
+      "version": "phase13-astra-wave1"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-pointer",
+      "requested": true,
+      "viewport": 1440,
+      "has_touch": false,
+      "mode": "pointer"
+    },
+    "browser_context": {
+      "viewport": 1440,
+      "has_touch": false
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n18yld2h",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n18yld2h",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n18yld2h/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n18yld2h"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.96,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "api",
+      "method": "POST",
+      "path": "/api/directories",
+      "adapter": "http-route",
+      "status": 201,
+      "response": {
+        "directory": {
+          "id": "dir_ffc66ad02606",
+          "name": "Atlas Phase 13 Zone",
+          "name_normalized": "atlas phase 13 zone",
+          "parent_id": null,
+          "created_at": "2026-10-03T21:24:35Z",
+          "last_modified": "2026-10-03T21:24:35Z",
+          "deleted": false
+        }
+      },
+      "response_sha256": "4b7fc47b80bd6138de8e7c4c843163fcc1457910ee5b0dabcf88b2ac08287384",
+      "captured": {
+        "name": "zone_id",
+        "path": "directory.id",
+        "value": "dir_ffc66ad02606"
+      }
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-observation",
+      "selector": "[data-testid=\"chair-floor-toggle\"]",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "name": "Floor",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "done": false,
+      "skipped": "at_width 393; this run is 1440"
+    },
+    {
+      "kind": "ui",
+      "action": "fill",
+      "adapter": "ui-input",
+      "done": false,
+      "skipped": "at_width 393; this run is 1440"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "adapter_requested": "ui-by-viewport",
+      "done": false,
+      "skipped": "at_width 393; this run is 1440"
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "The Zone producer is real. Spatial's world zone is the ordinary Directory door: its native context menu should offer Open and the product verb should open the real ZoneWindow.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "Every mouse/touch press uses ui-by-viewport. The real __hsWorldZoneProbe and __hsWorldHitProbe agree on the produced zone before the native context gesture; the window closes, reloads, and reopens through that same door.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "On PR #757 at 1440 the complete open-close-reload-reopen lifecycle produced a late result at 33.753 s against the old 20 s bound; 40 s gives 6.247 s of measured headroom. This is a lifecycle bound, not a single-click latency target.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "C7 puts the 393 title in the truncated screen title outside the Zone window. The window aria-label proves identity and readable empty-state text retains visibility, viewport and all nine hit-ownership checks. The desktop title is still checked after reopen.",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n18yld2h",
+    "zone_id": "dir_ffc66ad02606"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "world_context_menu",
+    "adapter": "ui-pointer",
+    "adapter_requested": "ui-by-viewport",
+    "world_ref": "dir_ffc66ad02606",
+    "world_target": "zone",
+    "world_probe": {
+      "id": "dir_ffc66ad02606",
+      "x": 180,
+      "y": 111.8,
+      "width": 104,
+      "height": 116
+    },
+    "point": {
+      "x": 180.0,
+      "y": 117.8
+    },
+    "world_hit_probe": {
+      "type": "zone",
+      "id": "dir_ffc66ad02606"
+    },
+    "gesture": "mouse-right-click",
+    "selector": ".desk-world-canvas",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "name": "Open",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-zone-window",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "selector": ".desk-zone-window button[aria-label^=\"Close \"]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-zone-window",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "[data-testid=\"chair-floor-toggle\"]",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "done": false,
+        "error": "TimeoutError('Locator.click: Timeout 2000ms exceeded.\\nCall log:\\n  - waiting for get_by_role(\"button\", name=\"Floor\", exact=True).first\\n')"
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-world-canvas",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "world_context_menu",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "world_ref": "dir_ffc66ad02606",
+        "world_target": "zone",
+        "world_probe": {
+          "id": "dir_ffc66ad02606",
+          "x": 180,
+          "y": 111.8,
+          "width": 104,
+          "height": 116
+        },
+        "point": {
+          "x": 180.0,
+          "y": 117.8
+        },
+        "world_hit_probe": {
+          "type": "zone",
+          "id": "dir_ffc66ad02606"
+        },
+        "gesture": "mouse-right-click",
+        "selector": ".desk-world-canvas",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "click_role",
+        "adapter": "ui-pointer",
+        "adapter_requested": "ui-by-viewport",
+        "name": "Open",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": ".desk-zone-window",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "at_width": 1440,
+        "selector": ".desk-zone-window :text(\"Atlas Phase 13 Zone\")",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Atlas Phase 13 Zone\nICONS\nLIST\n\u25cb\nEmpty\nDrop items here\nEmpty"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "id": "zone:dir_ffc66ad02606",
+        "tabindex": "-1",
+        "class": "desk-pullout is-card desk-zone-window desk-window desk-window-shell is-floating is-front",
+        "role": "region",
+        "aria-label": "Atlas Phase 13 Zone",
+        "style": "z-index: 46; opacity: 1; transform: none; inset: 61px auto auto 208px; width: 400px; max-height: 787px;"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 208,
+        "y": 61,
+        "w": 400,
+        "h": 240
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch",
+      "after": "div#zone:dir_ffc66ad02606"
+    },
+    "focus_label": {
+      "before": "Chair",
+      "after": "Atlas Phase 13 Zone"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Atlas Phase 13 Zone",
+          "rect": {
+            "x": 208,
+            "y": 61,
+            "w": 400,
+            "h": 240
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "4099d5c8a07dea364f9235e8c18cdbc9404a860a39ffec1af051a912909343f1",
+      "after": "f79856d3f3d422298b1ab759aabae84482a1f6f74c166e31cbd62c9f2b932d6c"
+    },
+    "document_text_len": {
+      "before": 205,
+      "after": 477
+    }
+  },
+  "before": {
+    "observe_at": ".desk-zone-window",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#desk-next > div.desk-dock > button.btn--chrome.desk-dock-launch",
+    "focus_label": "Chair",
+    "url": "http://127.0.0.1:53697/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "4099d5c8a07dea364f9235e8c18cdbc9404a860a39ffec1af051a912909343f1",
+    "document_text_len": 205,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T21:24:37.195328+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-zone-window",
+    "target_present": true,
+    "text": "Atlas Phase 13 Zone\nICONS\nLIST\n\u25cb\nEmpty\nDrop items here\nEmpty",
+    "attrs": {
+      "id": "zone:dir_ffc66ad02606",
+      "tabindex": "-1",
+      "class": "desk-pullout is-card desk-zone-window desk-window desk-window-shell is-floating is-front",
+      "role": "region",
+      "aria-label": "Atlas Phase 13 Zone",
+      "style": "z-index: 46; opacity: 1; transform: none; inset: 61px auto auto 208px; width: 400px; max-height: 787px;"
+    },
+    "rect": {
+      "x": 208,
+      "y": 61,
+      "w": 400,
+      "h": 240
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 208,
+        "y": 61,
+        "w": 400,
+        "h": 240
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 258,
+          "y": 91,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 258,
+          "y": 181,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > div.desk-pullout-body.desk-surface-body > div.surface-state"
+        },
+        {
+          "x": 258,
+          "y": 271,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > footer.surface-footer > div.surface-footer-layout > div.surface-footer-receipt"
+        },
+        {
+          "x": 408,
+          "y": 91,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 408,
+          "y": 181,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > div.desk-pullout-body.desk-surface-body > div.surface-state"
+        },
+        {
+          "x": 408,
+          "y": 271,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > footer.surface-footer > div.surface-footer-layout > div.surface-footer-receipt > span.quiet"
+        },
+        {
+          "x": 558,
+          "y": 91,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 558,
+          "y": 181,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > div.desk-pullout-body.desk-surface-body > div.surface-state"
+        },
+        {
+          "x": 558,
+          "y": 271,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > footer.surface-footer > div.surface-footer-layout > div.surface-footer-receipt"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#zone:dir_ffc66ad02606",
+    "focus_label": "Atlas Phase 13 Zone",
+    "url": "http://127.0.0.1:53697/",
+    "windows": [
+      {
+        "title": "Atlas Phase 13 Zone",
+        "rect": {
+          "x": 208,
+          "y": 61,
+          "w": 400,
+          "h": 240
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "f79856d3f3d422298b1ab759aabae84482a1f6f74c166e31cbd62c9f2b932d6c",
+    "document_text_len": 477,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T21:25:11.502906+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:53697) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:53697) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/_built/assets/webworkerAll-CEs1yjzf.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/browserAll-CPvap7VD.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/2f77d094-04c5-44c7-be9a-e3a4630686ec",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton9.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/drawer.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton14.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note6.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/tome9.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton11.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note12.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/drawer_sel.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/drawer.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/error.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/file.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/latch.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/latch.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/key-down.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/land.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/key-up.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-zone-window",
+    "target_present": true,
+    "text": "Atlas Phase 13 Zone\nICONS\nLIST\n\u25cb\nEmpty\nDrop items here\nEmpty",
+    "attrs": {
+      "id": "zone:dir_ffc66ad02606",
+      "tabindex": "-1",
+      "class": "desk-pullout is-card desk-zone-window desk-window desk-window-shell is-floating is-front",
+      "role": "region",
+      "aria-label": "Atlas Phase 13 Zone",
+      "style": "z-index: 46; opacity: 1; transform: none; inset: 61px auto auto 208px; width: 400px; max-height: 787px;"
+    },
+    "rect": {
+      "x": 208,
+      "y": 61,
+      "w": 400,
+      "h": 240
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "rect": {
+        "x": 208,
+        "y": 61,
+        "w": 400,
+        "h": 240
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 258,
+          "y": 91,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 258,
+          "y": 181,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > div.desk-pullout-body.desk-surface-body > div.surface-state"
+        },
+        {
+          "x": 258,
+          "y": 271,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > footer.surface-footer > div.surface-footer-layout > div.surface-footer-receipt"
+        },
+        {
+          "x": 408,
+          "y": 91,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 408,
+          "y": 181,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > div.desk-pullout-body.desk-surface-body > div.surface-state"
+        },
+        {
+          "x": 408,
+          "y": 271,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > footer.surface-footer > div.surface-footer-layout > div.surface-footer-receipt > span.quiet"
+        },
+        {
+          "x": 558,
+          "y": 91,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > div.desk-pullout-body.desk-surface-body"
+        },
+        {
+          "x": 558,
+          "y": 181,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > div.desk-pullout-body.desk-surface-body > div.surface-state"
+        },
+        {
+          "x": 558,
+          "y": 271,
+          "owned": true,
+          "owner": "div#zone:dir_ffc66ad02606 > footer.surface-footer > div.surface-footer-layout > div.surface-footer-receipt"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#zone:dir_ffc66ad02606",
+    "focus_label": "Atlas Phase 13 Zone",
+    "url": "http://127.0.0.1:53697/",
+    "windows": [
+      {
+        "title": "Atlas Phase 13 Zone",
+        "rect": {
+          "x": 208,
+          "y": 61,
+          "w": 400,
+          "h": 240
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "f79856d3f3d422298b1ab759aabae84482a1f6f74c166e31cbd62c9f2b932d6c",
+    "document_text_len": 477,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T21:25:10.980748+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:53697) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:53697) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/_built/assets/webworkerAll-CEs1yjzf.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/browserAll-CPvap7VD.js",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/2f77d094-04c5-44c7-be9a-e3a4630686ec",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+          "status": 200,
+          "same_origin": false,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton9.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/drawer.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton14.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note6.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/tome9.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/automaton11.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/note12.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/drawer_sel.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/drawer.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/error.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/file.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/latch.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/latch.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/key-down.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/land.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sfx/key-up.ogg",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 304,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: attr_equals: aria-label='Atlas Phase 13 Zone', wanted 'Atlas Phase 13 Zone' | readable_text: 'Drop items here' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 208, 'y': 61, 'w': 400, 'h': 240}",
+    "elapsed_s": 30.34
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: attr_equals: aria-label='Atlas Phase 13 Zone', wanted 'Atlas Phase 13 Zone' | readable_text: 'Drop items here' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 208, 'y': 61, 'w': 400, 'h': 240}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 30.862,
+    "first_satisfied_at_s": 30.34,
+    "completion_bound_s": 40.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: attr_equals: aria-label='Atlas Phase 13 Zone', wanted 'Atlas Phase 13 Zone' | readable_text: 'Drop items here' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 208, 'y': 61, 'w': 400, 'h': 240}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:53697) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:53697) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/_built/assets/webworkerAll-CEs1yjzf.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/browserAll-CPvap7VD.js",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:53697/2f77d094-04c5-44c7-be9a-e3a4630686ec",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "http://127.0.0.1:53697/b3b9ec38-d801-4d80-b028-1bb70038aab7",
+        "status": 200,
+        "same_origin": false,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/automaton9.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/drawer.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/automaton14.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note6.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/automaton.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/tome9.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/automaton11.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/note12.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/drawer_sel.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/drawer.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/error.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/file.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/latch.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/latch.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/key-down.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/land.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sfx/key-up.ogg",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 304,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-close-final/walks/directory.zone-1440/20261003T212430Z-case.p13.directory.zone-astra-1440/before.png",
+    "pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-close-final/walks/directory.zone-1440/20261003T212430Z-case.p13.directory.zone-astra-1440/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n18yld2h/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-n18yld2h/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:53697"
+  ],
+  "duration_s": 44.277
+}

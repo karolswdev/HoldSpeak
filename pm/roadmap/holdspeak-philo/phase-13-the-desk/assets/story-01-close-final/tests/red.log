@@ -1,0 +1,49 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_phase13_spatial_reload_fence_accepts_only_floor_reentry _________
+
+    def test_phase13_spatial_reload_fence_accepts_only_floor_reentry() -> None:
+        proper = _atlas()
+>       _assert_phase13_spatial_reload_fence(proper)
+
+tests/unit/test_philo13_astra_atlas.py:813: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+atlas = {'atlas_version': 'phase13-astra-wave1', 'cases': [{'applicability': 'applicable', 'completion_bound_s': 30, 'edge_ids... 'source': 'datetime.datetime.now() inside the hub process', 'status': 'available', ...}], 'council_readings': [], ...}
+
+    def _assert_phase13_spatial_reload_fence(atlas: dict) -> None:
+        """Require Floor and the real canvas before Spatial's second context door."""
+        cases = {case["id"]: case for case in atlas["cases"]}
+        for case_id in ("case.p13.directory.zone", "case.p13.info.window"):
+            trigger_steps = _steps({"setup": [], "trigger": cases[case_id]["trigger"]})
+            doors = [
+                i for i, step in enumerate(trigger_steps)
+                if step.get("action") == "world_context_menu"
+            ]
+            assert len(doors) == 2, f"{case_id}: expected first and post-reload context doors"
+            reload_index = next(
+                i for i, step in enumerate(trigger_steps)
+                if step.get("action") == "reload"
+            )
+            floor_wait = next(
+                i for i, step in enumerate(trigger_steps[reload_index + 1:], reload_index + 1)
+                if step.get("action") == "wait_for"
+                and step.get("selector") == '[data-testid="chair-floor-toggle"]'
+                and step.get("state") == "visible"
+            )
+            floor_click = next(
+                i for i, step in enumerate(trigger_steps[floor_wait + 1:], floor_wait + 1)
+                if step.get("action") == "click_role" and step.get("name") == "Floor"
+            )
+>           assert trigger_steps[floor_click].get("optional") is True, (
+                f"{case_id}: post-reload Floor re-entry must be optional"
+            )
+E           AssertionError: case.p13.directory.zone: post-reload Floor re-entry must be optional
+E           assert None is True
+E            +  where None = <built-in method get of dict object at 0x1097cefc0>('optional')
+E            +    where <built-in method get of dict object at 0x1097cefc0> = {'action': 'click_role', 'adapter': 'ui-by-viewport', 'kind': 'ui', 'name': 'Floor', ...}.get
+
+tests/unit/test_philo13_astra_atlas.py:269: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo13_astra_atlas.py::test_phase13_spatial_reload_fence_accepts_only_floor_reentry
+1 failed in 0.40s
