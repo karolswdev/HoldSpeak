@@ -264,9 +264,10 @@ def test_saved_ask_draws_the_ratified_unfinished_row(
             unfinished_at = [i for i, name in enumerate(order)
                              if name.startswith("UNFINISHED")]
             assert unfinished_at, order
-            if "NEEDS YOU" in order:
-                assert unfinished_at[0] == order.index("NEEDS YOU") + 1, (
-                    f"UNFINISHED belongs directly after NEEDS YOU: {order}"
+            # PHILO-13-03: the Room's section is OPEN HERE (was NEEDS YOU).
+            if "OPEN HERE" in order:
+                assert unfinished_at[0] == order.index("OPEN HERE") + 1, (
+                    f"UNFINISHED belongs directly after OPEN HERE: {order}"
                 )
             if "SOURCES" in order:
                 assert unfinished_at[0] < order.index("SOURCES"), order
@@ -1149,7 +1150,7 @@ def test_a_full_unfinished_list_leaves_the_room_standing(
             # sections a Room draws depends on what it has; these two are what
             # this fixture's Room holds — RECEIPTS is absent because there are
             # none, which is A.8 doing its job.)
-            assert "NEEDS YOU" in standing, standing
+            assert "OPEN HERE" in standing, standing
             assert "SOURCES" in standing, standing
 
             # The sticky foot FLOATS over the body by design, so it can cover

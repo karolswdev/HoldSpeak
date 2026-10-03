@@ -10792,7 +10792,7 @@
         {
           "path": "web/src/desk/components/SystemShade.tsx",
           "symbol": "hasDoor",
-          "line": 385,
+          "line": 388,
           "claim": "the Finished section withholds Open when there is no door"
         }
       ],
@@ -11159,7 +11159,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "!briefLoading && !brief",
-          "line": 1316,
+          "line": 1204,
           "claim": "the Chair draws 'No brief yet' and Generate only when the read ANSWERED null (a failed read takes the branch above it, PHILO-3-03)"
         }
       ],
@@ -11178,7 +11178,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setBriefLoading",
-          "line": 551,
+          "line": 481,
           "claim": "the Chair starts with briefLoading true"
         },
         {
@@ -11209,7 +11209,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "generating",
-          "line": 750,
+          "line": 631,
           "claim": "the Chair's head Generate is disabled and GENERATING… holds the status slot in flight (PHILO-4-01)"
         }
       ],
@@ -11247,7 +11247,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setGenerateFailed",
-          "line": 719,
+          "line": 488,
           "claim": "the Chair names a failed generation BRIEF DID NOT GENERATE · <cause> in the status slot, no Retry (PHILO-4-01)"
         }
       ],
@@ -11303,7 +11303,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefItems",
-          "line": 887,
+          "line": 777,
           "claim": "the Chair reads items only from a brief that is not empty"
         }
       ],
@@ -11323,7 +11323,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "arrival-brief",
-          "line": 1375,
+          "line": 171,
           "claim": "a brief with nothing untriaged keeps its own section, headline and Generate after a reload (the quiet branch)"
         }
       ],
@@ -11350,7 +11350,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefShelf",
-          "line": 895,
+          "line": 785,
           "claim": "the Chair's untriaged list is the items with no shelf key"
         }
       ],
@@ -11774,7 +11774,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "hasTranscript",
-          "line": 2392,
+          "line": 2287,
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
       ],
@@ -12450,13 +12450,13 @@
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
           "symbol": "addEngineState",
-          "line": 567,
+          "line": 568,
           "claim": "Use this for summaries is enabled only when the added engine checked READY"
         },
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
           "symbol": "concierge-add-model",
-          "line": 550,
+          "line": 551,
           "claim": "the checked model name is shown beside it"
         }
       ],
@@ -12480,7 +12480,7 @@
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
           "symbol": "concierge-add-reason",
-          "line": 558,
+          "line": 559,
           "claim": "a refused check states its reason in an alert beside the field"
         }
       ],
@@ -13328,13 +13328,13 @@
         {
           "path": "web/src/desk/components/SystemShade.tsx",
           "symbol": "hasDoor",
-          "line": 334,
+          "line": 337,
           "claim": "the needs section withholds Open"
         },
         {
           "path": "web/src/desk/components/SystemShade.tsx",
           "symbol": "hasDoor",
-          "line": 385,
+          "line": 388,
           "claim": "the finished section withholds Open"
         }
       ],
@@ -13468,13 +13468,13 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "re-reads",
-          "line": 658,
+          "line": 577,
           "claim": "the Chair is a face that re-reads on arrival"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "apiFetch",
-          "line": 554,
+          "line": 18,
           "claim": "the brief read is one of those re-reads"
         }
       ],

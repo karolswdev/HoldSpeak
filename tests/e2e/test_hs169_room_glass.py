@@ -295,10 +295,10 @@ def _run_room_rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
             displays = page.locator(".room-body .surface-display")
             assert displays.count() == 1, f"Expected 1 display, got {displays.count()}"
 
-            # Headline text contains "need you"
+            # PHILO-13-03: the Room counts its own open items ("n open here").
             headline = page.get_by_test_id("room-headline")
             text = headline.text_content() or ""
-            assert "need you" in text, f"Headline: {text}"
+            assert "open here" in text, f"Headline: {text}"
             # At least 1 needs-you row (PR review + CI + Jira = 3)
             assert text[0].isdigit(), f"Headline should start with a count: {text}"
 
@@ -532,7 +532,7 @@ def _run_room_rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
 
             headline_q = page.get_by_test_id("room-headline")
             text_q = headline_q.text_content() or ""
-            assert text_q == "Nothing needs you", f"Quiet headline: {text_q}"
+            assert text_q == "Clear here", f"Quiet headline: {text_q}"
 
             # Source counts visible (never blank)
             page.locator("text=SOURCES").wait_for(timeout=5000)

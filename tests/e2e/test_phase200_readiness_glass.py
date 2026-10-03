@@ -218,7 +218,8 @@ def test_each_repair_state_is_drawn_with_one_verb(tmp_path, monkeypatch, state, 
 
             # The section counts what is there, never zero.
             label = page.get_by_test_id("concierge-repairs-label")
-            assert (label.text_content() or "").strip() == "NEEDS YOU 1"
+            # PHILO-13-03: the repairs are narrower than "needs you".
+            assert (label.text_content() or "").strip() == "TO REPAIR 1"
 
             # No raw <button> anywhere in the face.
             root = page.get_by_test_id("concierge-root")

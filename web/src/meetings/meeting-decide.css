@@ -1,0 +1,14 @@
+/* PHILO-13-08 (B3): the Decide well, next to SEND. Tokens only; every
+   species is the library's. At 393 every target owns a 44 px box
+   (design/workbench-look.md §5, UX-CANON C); the words make them wider. */
+.meeting-decide-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-block: 8px;
+}
+.meeting-decide-line .gadget-string { flex: 1 1 14rem; min-width: 0; }
+@container surface (max-width: 419px) {
+  .meeting-decide-line > button { min-height: 44px; }
+}

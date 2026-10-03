@@ -1,4 +1,4 @@
-"""PHILO-13 B0: Astra's nine face paths and shared semantic contract.
+"""PHILO-13 B0/B5: Astra's face paths and shared semantic contract.
 
 The phase file owns its own case and operation-sibling count.  The shared
 atlas contract still reads this file through ``ATLAS_FILES``; the mutant tests
@@ -34,9 +34,12 @@ EXPECTED_CASES = {
     "case.p13.meeting.park_restore",
     "case.p13.workbench.park_restore",
     "case.p13.dock.needs_you_week",
+    "case.p13.update.linked_week",
+    "case.p13.update.linked_week.op",
 }
 PARKING_CASES = {"case.p13.meeting.park_restore", "case.p13.workbench.park_restore"}
 NEEDS_YOU_CASES = {"case.p13.dock.needs_you_week"}
+WEEK_CASES = {"case.p13.update.linked_week"}
 
 LIFECYCLE_CASES = {
     "case.p13.roadmap.window": {
@@ -507,11 +510,12 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
     cases = _cases()
     assert set(cases) == EXPECTED_CASES
     assert cases["case.p13.directory.zone_window.op"]["viewports"] == []
-    # C6 is already folded: this atlas owns one .op; the historical 69 stays
-    # only in the shared Phase 1–12 population fence.
-    assert sum(case["id"].endswith(".op") for case in cases.values()) == 1
+    # C6 is already folded: this atlas owns the B0 and B5 .op siblings; the
+    # historical 69 stays only in the shared Phase 1–12 population fence.
+    assert sum(case["id"].endswith(".op") for case in cases.values()) == 2
     faces = [case for case in cases.values()
-             if not case["id"].endswith(".op") and case["id"] not in PARKING_CASES | NEEDS_YOU_CASES]
+             if not case["id"].endswith(".op")
+             and case["id"] not in PARKING_CASES | NEEDS_YOU_CASES | WEEK_CASES]
     assert len(faces) == 9
     for case in faces:
         assert case["viewports"] == [1440, 393]
@@ -526,6 +530,102 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
             if step.get("action") == "reload"
         ]
         assert reload_indices, case["id"]
+
+
+def test_b5_week_cases_keep_the_real_producer_and_deterministic_ui_contract() -> None:
+    case = _cases()["case.p13.update.linked_week"]
+    assert case["edge_ids"] == ["edge.face.room_updates"]
+    assert case["state_id"] == "state.desk_presentation.p13_week"
+    steps = _steps(case)
+    assert any(
+        step.get("kind") == "boundary"
+        and step.get("reply") == "tests/fixtures/philo13_b5_week_summary_reply.json"
+        for step in steps
+    )
+    meeting_import = next(
+        step for step in steps
+        if step.get("kind") == "op" and step.get("name") == "meeting.import"
+    )
+    assert meeting_import["args"]["path"] == "tests/fixtures/philo13_b5_week_transcript.vtt"
+    assert any(
+        step.get("kind") == "cli"
+        and step.get("action") == "queue_meeting_intelligence"
+        for step in steps
+    )
+    assert any(
+        step.get("kind") == "op"
+        and step.get("name") == "project.resource.add"
+        and step.get("args", {}).get("resource_ref") == "decision_record:{record_id}"
+        for step in steps
+    )
+    assert case["trigger"]["selector"] == "[data-testid=update-verb-draft-deterministic]"
+    assert case["trigger"]["adapter"] == "ui-by-viewport"
+    assert case["trigger"]["trigger_route"] == {
+        "method": "POST",
+        "path": "/api/projects/{project_id}/updates/draft",
+    }
+    assert case["expected"]["observe_at"] == "[data-testid=update-body-editor]"
+    expected = case["expected"]["predicate"]
+    assert expected["kind"] == "all_of"
+    text_values = {
+        part["value"] for part in expected["predicates"]
+        if part.get("kind") == "text_contains"
+    }
+    for value in (
+        "The ledger cutover is ready for the controlled migration.",
+        "Decision: Use the controlled migration window",
+        "Action: Confirm the migration window",
+        "owner Avery",
+        "Action: Send the rollback checklist",
+        "owner Morgan",
+    ):
+        assert value in text_values
+    assert any(
+        part.get("kind") == "protocol_reads"
+        for part in expected["predicates"]
+    )
+    assert case["expected"]["reads"] == [{
+        "method": "GET",
+        "path": "/api/projects/{project_id}/updates",
+    }]
+    for step in steps:
+        if step.get("kind") == "ui" and step.get("action") in {"click", "click_role"}:
+            assert step.get("adapter") == "ui-by-viewport", step
+        if step.get("kind") == "ui" and step.get("action") == "wait_for":
+            assert step.get("adapter") != "ui-by-viewport", step
+
+
+def test_b5_week_operation_sibling_binds_the_stored_deterministic_draft() -> None:
+    case = _cases()["case.p13.update.linked_week.op"]
+    assert case["viewports"] == []
+    assert not any(step.get("kind") == "ui" for step in _steps(case))
+    assert case["trigger"]["name"] == "project.draft_update"
+    assert case["trigger"]["args"] == {
+        "project_id": "{project_id}",
+        "generator": "deterministic",
+    }
+    assert case["trigger"]["capture_path"] == "update.id"
+    assert case["expected"]["observe_at"] == {
+        "kind": "op",
+        "name": "project.list_updates",
+        "args": {"project_id": "{project_id}"},
+    }
+    facts = case["expected"]["predicate"]["facts"]
+    assert {fact["path"] for fact in facts} >= {
+        "update.id",
+        "update.generator",
+        "update.lifecycle",
+        "update.body_md",
+        "update.claims_json",
+        "updates",
+        "updates.0.body_md",
+        "updates.0.claims_json",
+    }
+    assert case["expected"]["reads"] == [{
+        "kind": "op",
+        "name": "project.list_updates",
+        "args": {"project_id": "{project_id}"},
+    }]
 
 
 def test_needs_you_case_reads_six_before_real_mutation_and_five_after_reload() -> None:

@@ -135,14 +135,14 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | --- | --- | --- | --- | --- |
 | PHILO-13-01 | B0 — Walk what was not walked | in-progress | [story-01-b0-walk-what-was-not-walked](./story-01-b0-walk-what-was-not-walked.md) | — |
 | PHILO-13-02 | A1 — Park, never delete | done | [story-02-a1-park-never-delete](./story-02-a1-park-never-delete.md) | [evidence-story-02](./evidence-story-02.md) |
-| PHILO-13-03 | A2 — One meaning of "needs you" | in-progress | [story-03-a2-one-meaning-of-needs-you](./story-03-a2-one-meaning-of-needs-you.md) | [H-A2 draft proof](lane-03-astra.md); awaiting A2-W and Muad'Dib |
+| PHILO-13-03 | A2 — One meaning of "needs you" | done | [story-03-a2-one-meaning-of-needs-you](./story-03-a2-one-meaning-of-needs-you.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-13-04 | A3 — Faces that do not lie | done | [story-04-a3-faces-that-do-not-lie](./story-04-a3-faces-that-do-not-lie.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-13-05 | A4 — Close means gone | done | [story-05-a4-close-means-gone](./story-05-a4-close-means-gone.md) | [evidence-story-05](./evidence-story-05.md) |
 | PHILO-13-06 | B1 — One open grammar | done | [story-06-b1-one-open-grammar](./story-06-b1-one-open-grammar.md) | [evidence-story-06](./evidence-story-06.md) |
 | PHILO-13-07 | B2 — The Desk remembers | backlog | [story-07-b2-the-desk-remembers](./story-07-b2-the-desk-remembers.md) | — |
-| PHILO-13-08 | B3 — Decide where the meeting is | backlog | [story-08-b3-decide-where-the-meeting-is](./story-08-b3-decide-where-the-meeting-is.md) | — |
+| PHILO-13-08 | B3 — Decide where the meeting is | done | [story-08-b3-decide-where-the-meeting-is](./story-08-b3-decide-where-the-meeting-is.md) | [evidence-story-08](./evidence-story-08.md) |
 | PHILO-13-09 | B4 — The 1:1 finds its person | backlog | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | — |
-| PHILO-13-10 | B5 — The update writes the week | backlog | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | — |
+| PHILO-13-10 | B5 — The update writes the week | in-progress | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | — |
 | PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | in-progress | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
 | PHILO-13-12 | C2 — The gadgets that are missing | done | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | [evidence-story-12](./evidence-story-12.md) |
 | PHILO-13-13 | C3 — A live Dock (AppIcons) | backlog | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
@@ -246,7 +246,9 @@ D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
 
-2026-10-03: **H-rig-clearof built, DRAFT — UNCHECKED — awaiting Muad'Dib.** Per-width clearance and restart UI follow-ups are available; real replayed retention passes at both widths. Arrival passes at 1440 and retains the inherited missing-Capture-slot failure at 393. No story closes. [Astra lane record](lane-rig-clearof-astra.md).
+2026-10-03: **H-rig-clearof RATIFIED by Muad'Dib; main integration confirmed before merge.** Per-width clearance and restart UI follow-ups are available; real replayed retention passes at both widths. Arrival passes at 1440 and retains the inherited missing-Capture-slot failure at 393. No story closes. [Astra lane record](lane-rig-clearof-astra.md).
+
+2026-10-03: **B5 candidate — UNCHECKED, awaiting Muad'Dib.** Deterministic linked-week data and real-producer fences implemented in `feat/philo-13-10-astra`. Both widths and the operation sibling ran; phone editor line clipping remains a named face-lane limitation. [Lane report](lane-10-astra.md). Story 10 remains in-progress.
 
 2026-10-03: **PHILO-13-12 (C2) done** — To back (every window, menu, ⌃B, tap at 393), Intuition zoom (two remembered rects, persisted), the window's menu bar on the right button / long press with live key caps (Iconify ⌘M, Zoom ⌃M, To back ⌃B, Close ⌘W). Ledger: off-Mac Ctrl+M binds Zoom (⌃ chords first); `static-muaddib.json` still names Minimize/Maximize.
 
@@ -317,3 +319,5 @@ Astra r2 (`checks/charter-astra-r2.md`): r1's five fixes present; three conditio
 | F2 close → reopen place untested | story 07: a close → reopen acceptance per returning family, actual atlas cases at 1440 and touch at 393 |
 | F3 Trust exempt against "Everything" | story 07: Trust **returns** (open state + rect) |
 | F4 H-B0b line ref and the shared contract | `:492` (the count); H-B0b filters the count only; the shared semantic checks cover both Phase 13 atlas files, shown red on a broken case (story 01) |
+
+2026-10-03: H-rig-clearof counsel and mechanical integration are recorded in [the lane report](lane-rig-clearof-astra.md). Muad'Dib homes the remaining 393 arrival face fix to PHILO-13-17/C7.

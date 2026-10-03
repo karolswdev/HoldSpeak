@@ -9176,19 +9176,19 @@
         {
           "path": "web/src/pages/cores/history/MeetingDetail.tsx",
           "symbol": "MeetingSendWell",
-          "line": 174,
+          "line": 175,
           "claim": "The Meetings record renders the well for a stored summary."
         },
         {
           "path": "web/src/desk/pullouts/MeetingPullout.tsx",
           "symbol": "MeetingSendWell",
-          "line": 154,
+          "line": 155,
           "claim": "The meeting window renders the same well."
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "MeetingSendWellLazy",
-          "line": 2318,
+          "line": 61,
           "claim": "The unfolded Chair meeting row renders the well."
         },
         {
@@ -9289,7 +9289,7 @@
         {
           "path": "web/src/pages/cores/history/MeetingDetail.tsx",
           "symbol": "digest",
-          "line": 171,
+          "line": 172,
           "claim": "The Meetings record comment names the removed aftercare Slack rows."
         },
         {
@@ -9322,7 +9322,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "brief-send",
-          "line": 1364,
+          "line": 1252,
           "claim": "The Chair keeps the same brief SEND well across the last-item branch."
         }
       ],

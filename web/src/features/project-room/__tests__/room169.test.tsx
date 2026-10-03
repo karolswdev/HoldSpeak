@@ -228,7 +228,7 @@ describe("HS-169-03: NEEDS YOU section", () => {
 
     render(<WindowHarness scope="project:p1" />);
     const empty = await screen.findByTestId("needs-you-empty");
-    expect(empty.textContent).toContain("Nothing needs you");
+    expect(empty.textContent).toContain("Nothing open");
   });
 });
 
@@ -341,7 +341,7 @@ describe("HS-169-03: Room head", () => {
   it("shows headline count at display step with accent", async () => {
     render(<WindowHarness scope="project:p1" />);
     const headline = await screen.findByTestId("room-headline");
-    expect(headline.textContent).toBe("3 need you");
+    expect(headline.textContent).toBe("3 open here");
     expect(headline.classList.contains("surface-display")).toBe(true);
     expect(headline.getAttribute("data-accent")).toBeTruthy();
   });
@@ -355,7 +355,7 @@ describe("HS-169-03: Room head", () => {
 
     render(<WindowHarness scope="project:p1" />);
     const headline = await screen.findByTestId("room-headline");
-    expect(headline.textContent).toBe("Nothing needs you");
+    expect(headline.textContent).toBe("Clear here");
     expect(headline.getAttribute("data-accent")).toBeNull();
   });
 
@@ -485,7 +485,7 @@ describe("HS-169-03: display step", () => {
 
     const displays = document.querySelectorAll(".room-body .surface-display");
     expect(displays.length).toBe(1);
-    expect(displays[0].textContent).toBe("3 need you");
+    expect(displays[0].textContent).toBe("3 open here");
   });
 });
 

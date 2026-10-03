@@ -1,6 +1,6 @@
 # H-rig-clearof — Astra lane report
 
-**DRAFT — UNCHECKED — awaiting Muad'Dib.**
+**RATIFIED by Muad'Dib; mechanical main integration authorized.**
 
 LANE: PHILO Phase 13, H-rig-clearof (C1/11 handoff). Worktree `../wt-philo-13-rig-astra`; branch `feat/philo-13-rig-astra`; base `5912fcb9474cae7b058838f120a2c216189be89a`.
 
@@ -18,4 +18,12 @@ LEDGER: (b, inherited on the named base) at 393, The week is open while Capture 
 
 AMENDMENTS: no acceptance waived. Summary retention is checked after explicitly reopening The week at 393. Automatic open-window return remains B2/story 07 and is not proved by that case. Old atlas source anchors moved with the rig functions and the generated graph is refreshed in this commit. Node 25 fails to load its installed llhttp library; verification uses the already installed Node 22.21.0. Scratch HOME directories are cleaned by their owners; the owner's DB/keychain/microphone were not used. No full suite ran, per the dispatch.
 
-UNKNOWN: the unreplayed real-engine restart case, the missing C1 host at 393, Muad'Dib's check and the owner's sitting. Tuesday: the saved summary survives restart; the phone arrival overlay remains a face-lane defect.
+UNKNOWN: the unreplayed real-engine restart case, the missing Capture host at 393 (C7) and the owner's sitting. Tuesday: the saved summary survives restart; the phone arrival overlay remains a face-lane defect.
+
+## Muad'Dib check and integration — 2026-10-03
+
+[Single-pass check](https://github.com/karolswdev/HoldSpeak/pull/737#issuecomment-5965265632): **RATIFY**. Muad'Dib rehomes the remaining phone arrival failure to PHILO-13-17/C7: arrival opens Capture, where the card lives. The strict placement guard stays.
+
+[Mechanical instruction](https://github.com/karolswdev/HoldSpeak/pull/737#issuecomment-5965266992): "Rebase/merge main in (pre-authorized, mechanical), re-run the shared atlas/graph-reference checks, then merge — RATIFY stands."
+
+Main `65b0025abd0fd5c9d7189f78ce4770efc6605f29` is integrated without changing the ratified rig behavior. Both status entries are retained; the graph output is regenerated. The stories already delivered on main travel with the merge; no new story closure is claimed. Integration proof: [collection](assets/h-rig-clearof/integration-collection.txt), [captured tests](assets/h-rig-clearof/integration-captured.md), [all 12 Documentation Navigation commands](assets/h-rig-clearof/integration-navigation.txt).

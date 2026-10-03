@@ -21,6 +21,7 @@ import { ThreadsSection } from "./shared/ThreadsSection";
 import type { PulloutContentProps } from "./types";
 import { Button } from "../../components/signal/Signal";
 import { MeetingSendWellLazy as MeetingSendWell } from "../../meetings/MeetingSendWellLazy";
+import { MeetingDecideWell } from "../../meetings/MeetingDecideWell";
 
 interface MeetingDetail {
   intel?: { summary?: string; action_items?: any[]; topics?: string[] } | null;
@@ -153,6 +154,12 @@ export function MeetingPullout({ object: o, onClose }: PulloutContentProps) {
         {detail?.intel?.summary?.trim() ? (
           <MeetingSendWell meetingId={o.id} title={String(detail.title ?? o.title ?? "Meeting")}
             startedAt={String(detail.started_at ?? "") || null} />
+        ) : null}
+        {/* PHILO-13-08 (B3): Decide, next to SEND; with or without a summary. */}
+        {detail ? (
+          <MeetingDecideWell meetingId={o.id} title={String(detail.title ?? o.title ?? "Meeting")}
+            startedAt={String(detail.started_at ?? "") || null}
+            summary={detail.intel?.summary ?? null} />
         ) : null}
         {detail?.intel?.action_items &&
           detail.intel.action_items.length > 0 && (
