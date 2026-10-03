@@ -215,6 +215,22 @@ export function sendToEntry(winId: string | null): WorkMenuEntry | null {
   return { type: "sub", id: "send-to", label: sendToLabel(d), entries: rows };
 }
 
+/** PHILO-13-14 (C4) — the same composition for the palette's `Send …` rows:
+ *  the window's saved destinations, each with C5's pick. Null where
+ *  `Send to ▸` is withheld; empty while the destinations are read or when
+ *  none is saved (the palette offers no row that does nothing). */
+export type SendChoice = { id: string; name: string; channel: string; pick: () => void };
+export function sendChoices(winId: string | null): SendChoice[] | null {
+  const entry = sendToEntry(winId);
+  if (!entry || entry.type !== "sub" || !winId || !S.dests) return null;
+  return S.dests.map((x) => ({
+    id: x.id,
+    name: x.name,
+    channel: CHANNEL_WORD[x.channel] ?? String(x.channel).toUpperCase(),
+    pick: () => pickFor(winId, x.id),
+  }));
+}
+
 /** The window menu: `Send to ▸` leads, its own group (default 1a). */
 export function withSendTo(sendTo: WorkMenuEntry | null, entries: WorkMenuEntry[]): WorkMenuEntry[] {
   return sendTo ? [sendTo, { type: "sep", id: "send-to-sep" }, ...entries] : entries;

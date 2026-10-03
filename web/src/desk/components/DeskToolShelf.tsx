@@ -28,7 +28,12 @@ import { StringGadget } from "../surface/gadgets";
 import { allObjects } from "../world";
 import { DESK_TOOLS, KIND_GLYPH, KIND_LABEL } from "../tools";
 import { useChairState } from "../chairState";
-import { VERBS, offeredHere, verbLabel, type VerbContext } from "../verbRegistry";
+import {
+  VERBS, offeredHere, verbLabel, weekVerbs, type VerbContext, type WeekPerson,
+} from "../verbRegistry";
+import { openPerson } from "../openObject";
+import { primeSendTo, sendChoices, useSendToTick } from "../windowSend";
+import { useAllOpenWindows, useFrontWindowId } from "./window/windowRegistry";
 import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
 import { useLaunchers } from "./DeskWindow";
 import type { CoverageRecord } from "../coverage";
@@ -40,6 +45,7 @@ export { DESK_TOOLS, KIND_LABEL };
 
 const SECTIONS = [
   "PROJECTS",
+  "PEOPLE",
   "VERBS",
   "PROGRAMS",
   "OBJECTS",
@@ -60,6 +66,14 @@ interface DeckRow {
   ghost?: string | null;
   /** Extra match terms beyond the label. */
   terms?: string;
+  /** PHILO-13-14 (C4): the words inside the thing (a note's body, a
+   * meeting's speakers, a person's aliases), matched by word only. */
+  body?: string;
+  /** PHILO-13-14 (C4): the program's own name (an exact name ranks first). */
+  name?: string;
+  /** PHILO-13-14 (C4): a week verb's label wraps (never an ellipsis over the
+   * destination he picks). */
+  wrap?: boolean;
   /** HS-171-07: trailing badge chip (e.g. "2 NEED YOU"); absent when falsy. */
   badge?: string;
   run(): void;
@@ -129,17 +143,35 @@ export function fuzzyScore(query: string, target: string): number {
   return 0;
 }
 
+/** PHILO-13-14 (C4) — a match inside a body: every query word starts a word
+ * of the text (the plural fold applies). Never a scattered-letter or
+ * mid-word match: over a long body those find almost everything. Below a
+ * label's word match (60), so a title still leads. */
+export function wordScore(query: string, text: string | undefined): number {
+  const q = query.trim().toLocaleLowerCase();
+  if (q.length < 3 || !text) return 0;
+  const words = text.toLocaleLowerCase().split(/[^\p{L}\p{N}:']+/u).filter(Boolean);
+  if (!words.length) return 0;
+  const stems = words.map(stem);
+  const hit = (w: string) =>
+    words.some((x) => x.startsWith(w)) || (w.length > 2 && stems.some((x) => x.startsWith(stem(w))));
+  return q.split(/\s+/).every(hit) ? 50 : 0;
+}
+
 /** Fuzzy relevance with a recency boost; 0 = no match. */
 export function rankRow(
-  row: { label: string; terms?: string },
+  row: { label: string; terms?: string; body?: string; name?: string },
   query: string,
   recent: boolean,
   recentBoostsEmpty = false,
 ): number {
   if (!query) return recent && recentBoostsEmpty ? 2 : 1;
+  const named = row.name && row.name.toLocaleLowerCase() === query.toLocaleLowerCase() ? 100 : 0;
   const score = Math.max(
+    named,
     fuzzyScore(query, row.label),
     fuzzyScore(query, row.terms ?? ""),
+    wordScore(query, row.body),
   );
   return score ? score + (recent ? 10 : 0) : 0;
 }
@@ -153,7 +185,7 @@ export function rankRow(
  * A row with no section is a door (the registry faces below always carry
  * VERBS or PROGRAMS).
  */
-const OBJECT_SECTIONS = new Set(["OBJECTS", "MEETINGS", "PROJECTS", "SETTINGS"]);
+const OBJECT_SECTIONS = new Set(["OBJECTS", "MEETINGS", "PROJECTS", "PEOPLE", "SETTINGS"]);
 
 function isObjectRow(row: { section?: string }): boolean {
   return OBJECT_SECTIONS.has(String(row.section ?? ""));
@@ -201,6 +233,19 @@ export function oneDoorPerName<
   return out;
 }
 
+/** PHILO-13-14 (C4): the words inside an object the palette can match. */
+function objectBody(ref: unknown): string | undefined {
+  const r = (ref ?? {}) as Record<string, unknown>;
+  if (r.kind === "note") return typeof r.bodyMarkdown === "string" ? r.bodyMarkdown : undefined;
+  if (r.kind === "meeting" && Array.isArray(r.segments)) {
+    const speakers = new Set<string>();
+    for (const s of r.segments as Array<{ speaker?: unknown }>)
+      if (typeof s?.speaker === "string" && s.speaker.trim()) speakers.add(s.speaker.trim());
+    return speakers.size ? [...speakers].join(" ") : undefined;
+  }
+  return undefined;
+}
+
 export function DeskToolShelf() {
   const open = usePalette((s) => s.open);
   // PHILO-13-08 (B3): a create that asks its name first (New Decision).
@@ -224,6 +269,13 @@ export function DeskToolShelf() {
   const surface = useChairState((state) => state.surface);
   const integrations = setup?.trust?.destinations ?? [];
   const launchers = useLaunchers();
+  // PHILO-13-14 (C4): his week, from the real routes. People come from the
+  // People store (a locked or unset store answers nothing: no rows); the
+  // front window's document and its destinations from C5's composition.
+  const [people, setPeople] = useState<Array<WeekPerson & { aliases: string[]; role: string }>>([]);
+  const frontId = useFrontWindowId();
+  const windows = useAllOpenWindows();
+  const sendTick = useSendToTick(open);
 
   // HS-171-07: needs-you counts per project for the PROJECTS section.
   // Fetches the cached aggregate once on mount (the server cache is
@@ -258,17 +310,16 @@ export function DeskToolShelf() {
   }, []);
 
   useEffect(() => {
-    // ⌘K itself lives in desk/keymap.ts (the one binder); the deck
-    // keeps only its own Escape ladder: query first, then the panel.
+    // ⌘K itself lives in desk/keymap.ts (the one binder). PHILO-13-14 (C4):
+    // one Escape closes the shelf, also with a query typed (the query goes
+    // with it; the grounding walk needed two presses).
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      if (searchRef.current?.value) setQuery("");
-      else {
-        usePalette.getState().setOpen(false);
-        launchRef.current?.focus();
-      }
+      setQuery("");
+      usePalette.getState().setOpen(false);
+      launchRef.current?.focus();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -278,6 +329,28 @@ export function DeskToolShelf() {
     if (open) searchRef.current?.focus();
     setQuery("");
     setSel(0);
+  }, [open]);
+
+  // PHILO-13-14 (C4): each opening reads the people and primes the front
+  // window's `Send to` reads (the same reads its window menu starts).
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    void apiFetch<{ relationships?: Array<Record<string, unknown>> }>("/api/people/relationships")
+      .then((body) => {
+        if (!live) return;
+        setPeople((body?.relationships ?? []).flatMap((r) => {
+          const id = String(r.id ?? "");
+          const name = String(r.display_name ?? "").trim();
+          if (!id || !name || r.state === "archived") return [];
+          const aliases = Array.isArray(r.owner_aliases) ? r.owner_aliases.map(String) : [];
+          return [{ id, name, kind: String(r.relationship_kind ?? ""), aliases, role: String(r.role_context ?? "") }];
+        }));
+      })
+      .catch(() => { if (live) setPeople([]); });
+    primeSendTo(frontId);
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // PHILO-13-08 (B3): a create that asks its name takes the typing at once
@@ -351,6 +424,42 @@ export function DeskToolShelf() {
       });
     }
 
+    // ── PEOPLE: his relationships (PHILO-13-14, C4) — a name opens her window ──
+    if (normalized) {
+      for (const person of people)
+        push({
+          id: `people:${person.id}`,
+          section: "PEOPLE",
+          glyph: KIND_GLYPH.people ?? "⊕",
+          label: person.name,
+          kind: "PERSON",
+          body: [...person.aliases, person.role, person.kind === "direct_report" ? "report" : ""].join(" "),
+          run: () => openPerson(person.id),
+        });
+    }
+
+    // ── VERBS: the week's verbs (PHILO-13-14, C4): one registered family per
+    // job, one row per report, project or destination of the front document ──
+    if (normalized) {
+      const front = frontId ? windows.find((w) => w.id === frontId) : null;
+      const choices = front ? sendChoices(front.id) : null;
+      for (const verb of weekVerbs({
+        people,
+        projects: projects.map((p) => ({ id: p.id, name: p.name })),
+        send: front && choices?.length ? { title: front.label, choices } : null,
+      }))
+        push({
+          id: verb.id,
+          section: "VERBS",
+          glyph: "▸",
+          label: verb.label,
+          kind: "VERB",
+          terms: verb.keywords,
+          wrap: true,
+          run: verb.run,
+        });
+    }
+
     // ── VERBS: the registry + the contextual actions for a selection ──
     for (const action of contextualCapabilityActions(items, selectedIds))
       push({
@@ -400,6 +509,7 @@ export function DeskToolShelf() {
         keycap: v.key,
         ghost,
         terms: (v.keywords ?? []).join(" "),
+        name: v.app,
         run: () => v.run(ctx),
       });
     }
@@ -451,6 +561,9 @@ export function DeskToolShelf() {
           label: item.title,
           kind,
           terms: kind.toLocaleLowerCase(),
+          // PHILO-13-14 (C4): a word inside a thought (a note's body) or a
+          // speaker of a meeting finds it.
+          body: objectBody(item.ref),
           run: () => openPullout(qualifiedRef(item.kind, item.id)),
         });
       }
@@ -545,6 +658,10 @@ export function DeskToolShelf() {
       .map(({ row }) => row);
   }, [
     ctx.selectedRef,
+    frontId,
+    people,
+    sendTick,
+    windows,
     diveInto,
     integrations,
     items,
@@ -694,6 +811,7 @@ export function DeskToolShelf() {
                             (row.ghost ? " is-ghost" : "")
                           }
                           aria-disabled={row.ghost ? true : undefined}
+                          data-wrap={row.wrap || undefined}
                           aria-current={isSel || undefined}
                           onClick={() => runRow(row)}
                           onPointerEnter={() => {

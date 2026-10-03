@@ -107,13 +107,11 @@ describe("the deck", () => {
     ).toBeInTheDocument();
   });
 
-  it("Escape clears the query first, closes second", () => {
+  // PHILO-13-14 (C4): one Escape closes the deck, also with a query typed
+  // (the two-press ladder is gone; the query goes with the deck).
+  it("one Escape closes the deck, also with a query typed", () => {
     const deck = open();
     fireEvent.change(deck, { target: { value: "meet" } });
-    fireEvent.keyDown(document, { key: "Escape" });
-    expect(
-      screen.getByRole("combobox", { name: "Search tools and Desk items" }),
-    ).toHaveValue("");
     fireEvent.keyDown(document, { key: "Escape" });
     expect(usePalette.getState().open).toBe(false);
   });
