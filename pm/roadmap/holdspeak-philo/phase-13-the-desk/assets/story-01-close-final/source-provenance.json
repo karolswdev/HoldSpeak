@@ -1,0 +1,20 @@
+{
+  "main_revision": "050ce14d6fc3c2f029d3dff75d37686147044e03",
+  "lane_revision": "95ee5fe315c2760c8cbdd185a44206345bc6b5a9",
+  "product_diff_paths": [],
+  "product_diff_scope": [
+    "holdspeak",
+    "web/src",
+    "scripts",
+    "pyproject.toml",
+    "uv.lock",
+    "web/package.json",
+    "web/package-lock.json"
+  ],
+  "atlas_sha256": "a7258d2f94f445d61b10456efdbc20e8572ca875ab07523ea8885cdd33fbe40a",
+  "working_changes": [
+    " M docs/internal/philo/graph/atlas-phase13-astra.json",
+    " M tests/unit/test_philo13_astra_atlas.py",
+    "?? pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-01-close-final/"
+  ]
+}

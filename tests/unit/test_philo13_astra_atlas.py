@@ -266,6 +266,9 @@ def _assert_phase13_spatial_reload_fence(atlas: dict) -> None:
             i for i, step in enumerate(trigger_steps[floor_wait + 1:], floor_wait + 1)
             if step.get("action") == "click_role" and step.get("name") == "Floor"
         )
+        assert trigger_steps[floor_click].get("optional") is True, (
+            f"{case_id}: post-reload Floor re-entry must be optional"
+        )
         canvas_wait = next(
             i for i, step in enumerate(trigger_steps[floor_click + 1:], floor_click + 1)
             if step.get("action") == "wait_for"
@@ -806,7 +809,23 @@ def test_phase13_roadmap_fence_rejects_committed_pre_fix_atlas_then_accepts_curr
 
 
 def test_phase13_spatial_reload_fence_accepts_only_floor_reentry() -> None:
-    _assert_phase13_spatial_reload_fence(_atlas())
+    proper = _atlas()
+    _assert_phase13_spatial_reload_fence(proper)
+
+    for case_id in ("case.p13.directory.zone", "case.p13.info.window"):
+        missing_optional = copy.deepcopy(proper)
+        case = next(case for case in missing_optional["cases"] if case["id"] == case_id)
+        trigger_steps = _steps({"setup": [], "trigger": case["trigger"]})
+        reload_index = next(
+            i for i, step in enumerate(trigger_steps) if step.get("action") == "reload"
+        )
+        floor_step = next(
+            step for step in trigger_steps[reload_index + 1:]
+            if step.get("action") == "click_role" and step.get("name") == "Floor"
+        )
+        floor_step.pop("optional", None)
+        with pytest.raises(AssertionError, match="post-reload Floor re-entry must be optional"):
+            _assert_phase13_spatial_reload_fence(missing_optional)
 
 
 def test_phase13_repository_cases_name_the_real_router_seam() -> None:

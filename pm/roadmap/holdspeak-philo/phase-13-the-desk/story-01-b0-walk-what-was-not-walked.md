@@ -2,11 +2,11 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** the owner's ratification of this charter
 - **Unblocks:** PHILO-13-07 (B2's merge record must cite this story's merged commit and `evidence-story-01.md`); every story's atlas cases (H-B0a, H-B0b); every consolidation move that reaches an unwalked path
 - **Owner:** Astra (Luna, xhigh); Muad'Dib checks
-- **Lane:** Data + truth (`../wt-philo-13-astra`, `feat/philo-13-astra`)
+- **Lane:** Data + truth; closure in `../wt-philo-13-close-astra`, `docs/philo-13-close-astra` (#755); initial build in `../wt-philo-13-astra`, `feat/philo-13-astra`
 - **Proposal:** B0 (PROPOSAL §3, Wave B)
 - **Closure finding:** `grounding/checks/proposal-astra.md` MISSED 2; `grounding/checks/faces-astra.md` finding 5
 - **Canvas:** none
@@ -43,12 +43,12 @@ Nine paths are unwalked (`grounding/faces-surfaces.md:59`, `:219`; `grounding/fa
 
 ## Acceptance criteria
 
-- [ ] H-B0a and H-B0b merged first: `atlas-phase13-astra.json` and its count fence exist; the shared count excludes `atlas-phase13-*`; `test_philo_graph_atlas.py` passes.
+- [x] H-B0a and H-B0b merged first: `atlas-phase13-astra.json` and its count fence exist; the shared count excludes `atlas-phase13-*`; `test_philo_graph_atlas.py` passes.
 - [x] Each of the nine paths has an atlas case in `docs/internal/philo/graph/atlas-phase13-astra.json` that validates against `docs/internal/philo/graph/atlas.schema.json` (`HOME=$(mktemp -d) uv run --extra dev pytest -q tests/unit/test_philo_graph_atlas.py`).
 - [x] Each case ran through `scripts/graph_walk.py run`, one case per invocation, at 1440 and at 393, each in a fresh HOME; `provenance.db_path` is under that HOME.
-- [ ] Each case passes on main, or, where it finds a defect, it is red on main with the defect named and a home (story or BACKLOG) recorded. Red-before-green where the defect is in this phase's scope.
+- [x] Each case passes on main, or, where it finds a defect, it is red on main with the defect named and a home (story or BACKLOG) recorded. Red-before-green where the defect is in this phase's scope.
 - [x] The 393 runs drive touch, not the mouse adapter (`grounding/structure.md:37` names the mouse adapter as not touch proof); if the rig has no touch adapter for a step, that is a named limit, not a pass.
-- [ ] **B2 gate (Muad'Dib's signed C5 ruling):** B0's cases are re-run on B2's head. A red homed outside B2 may remain red with its home cited; B0-F2, whose home is B2, must pass on B2's head. Re-walk B0-F1 (Chain/Coder Close) after PHILO-13-05 (#725) merges. B2's merge record cites this story's merged commit on main, `evidence-story-01.md`, and the runs made on B2's head.
+- [x] **B2 gate (Muad'Dib's signed C5 ruling):** B0's cases are re-run on B2's head. A red homed outside B2 may remain red with its home cited; B0-F2, whose home is B2, must pass on B2's head. Re-walk B0-F1 (Chain/Coder Close) after PHILO-13-05 (#725) merges. B2's merge record cites this story's merged commit on main, `evidence-story-01.md`, and the runs made on B2's head.
 
 ## Test plan
 
@@ -69,6 +69,9 @@ Grounding size: not sized there; nine cases at two widths. PROVISIONAL.
 
 ## Notes
 
+- 2026-10-03 — **B0 closed under the caller’s explicit #755 self-merge dispatch.** B2 #747 merged as `050ce14d`; this lane merged it as `95ee5fe31` with identical product source. Zone’s post-reload Floor step and its fence now make that setup click optional; the 40 s bound, readable content and nine-point ownership are unchanged. All 18 core runs pass at 1440/393 native touch, including F1 and F2; eight related cases also pass within their stated protocol/replay limits. [Canonical command capture](evidence-story-01.md), [closing table, source proof and ledger](close-01-astra.md). B2’s original merge record names B0’s `44ec934a` + `a30544db` and branch runs; #755 supplies the final canonical evidence after B2, as dispatched, and supplements that record rather than backdating it. Scoped tests: 173 passed. Full Python remains red (104 failures, four setup errors); web assertions pass after serial reruns but DeskApp collection fails on main. All residuals retain open homes in BACKLOG B0-L1/L4/L5/L6.
+
+- 2026-10-03 — Current-main close preparation after #751: 172 scoped tests passed; six actual Directory/Zone and F1 runs captured at both widths on `23a6c137f`. Desktop Chain/Coder pass; desktop Zone Open remains disabled; the three phone runs stop at hidden Search after the recorded Floor tap. [Draft close record, proof and homes](close-01-astra.md). #747 remains open at `ad3855f0`; no done flip.
 - 2026-10-03 — PR #757 single-pass check: the Zone lifecycle bound is corrected from 20 to 40 s after a real PR-head result at 33.753 s. C7 moved the phone title outside the Zone window; the outcome now requires its exact accessible name AND readable empty-state content, preserving visibility and nine-point hit ownership, with a desktop title check after reopen. Atlas and fences change together. Mechanical corrections were pre-authorized; owner may overrule at the sitting. Story stays in-progress for the B2-head F2 proof and closing evidence. See [Astra check](checks/pr757-astra.md).
 
 - 2026-10-02 — r4 pre-merge hygiene: the R1 baseline pin names reachable commit e2e92c582, whose Astra Atlas blob matches the pre-fix case; docs/generated/api-reference.json was regenerated from the current source to clear API-reference drift; all 12 CI Documentation Navigation commands pass. A clean GitHub clone at df9ae07c5d34f39502d4305ac5cb1a1f1e5b3adf found the pin and passed all 166 focused tests. Story 01 stays in-progress for the B2-head gate; this is incremental evidence, not the final story evidence.

@@ -1,0 +1,1569 @@
+FFFFFFFFFFFFFFFFFFFF.FFFFFFFF                                            [100%]
+=================================== FAILURES ===================================
+____________________ test_the_counts_over_every_atlas_file _____________________
+
+    def test_the_counts_over_every_atlas_file() -> None:
+        # PHILO-13 (H-B0b principle): each ``atlas-phase13-*`` file is counted by
+        # its own lane's test file (one count, one owner), so this count leaves
+        # them out. Only the count: the general fences still read every file.
+        have = {
+            path.name: len(json.loads(path.read_text())["cases"])
+            for path in general.ATLAS_FILES
+            if not path.name.startswith("atlas-phase13-")
+        }
+>       assert have == COUNTS
+E       AssertionError: assert {'atlas-h-c5....son': 22, ...} == {'atlas-phase...json': 2, ...}
+E         
+E         Omitting 10 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'atlas-h-c5.json': 1}
+E         Use -v to get more diff
+
+tests/unit/test_philo10_atlas.py:133: AssertionError
+____________________ test_the_counts_over_every_atlas_file _____________________
+
+    def test_the_counts_over_every_atlas_file() -> None:
+        # PHILO-13 (H-B0b principle): each ``atlas-phase13-*`` file is counted by
+        # its own lane's test file (one count, one owner), so this count leaves
+        # them out. Only the count: the general fences still read every file.
+        have = {
+            path.name: len(json.loads(path.read_text())["cases"])
+            for path in general.ATLAS_FILES
+            if not path.name.startswith("atlas-phase13-")
+        }
+>       assert have == COUNTS
+E       AssertionError: assert {'atlas-h-c5....son': 22, ...} == {'atlas-phase...json': 2, ...}
+E         
+E         Omitting 10 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'atlas-h-c5.json': 1}
+E         Use -v to get more diff
+
+tests/unit/test_philo9_atlas.py:111: AssertionError
+________ test_registered_claim_matches_its_state[holds:UX-CANON.md:179] ________
+
+claim = Claim(doc='docs/internal/UX-CANON.md', anchor='A1 (raw `<button>`) is held to a\ndated, down-only ratchet of 102, meas... the new number so the predicate keeps the down-only law honest. Corrected 2026-09-17 by HS-200-44", story='HS-202-03')
+
+    @pytest.mark.parametrize("claim", CLAIMS, ids=_IDS)
+    def test_registered_claim_matches_its_state(claim: Claim) -> None:
+        """A ``holds`` claim must stay true; a ``known_false`` claim must stay false."""
+        assert claim.state in {"holds", "known_false"}, claim.state
+        satisfied = bool(claim.predicate())
+    
+        if claim.state == "holds":
+>           assert satisfied, (
+                f"a documentation claim that used to HOLD is now FALSE: {_where(claim)}\n"
+                f"  the sentence: {claim.sentence}\n"
+                f"  what is true: {claim.truth}\n"
+                "  Fix the code, or correct the sentence AND its registry row "
+                "(tests/unit/doc_claims/registry.py) in this same commit."
+            )
+E           AssertionError: a documentation claim that used to HOLD is now FALSE: docs/internal/UX-CANON.md:179
+E               the sentence: A1 (raw `<button>`) is held to a dated, down-only ratchet of 102, measured on 2026-09-28 by #694 (the live count once the Phase 9 and 10 faces landed; 105 the same day by PHILO-9-04, the sortable table's sort headers; 106 on 2026-09-21 by HS-202-03; 175 on 2026-09-17 by HS-200-44, once the matcher could see a multi-line opening tag). That number can only shrink.
+E               what is true: tests/ux_canon_ceiling.json holds A1 = 102 with a dated reason, the canon scanner's A1 count over web/src is at or under it, and the document states the same number. Lowered 105 -> 102 on 2026-09-28 by #694 (the ceiling rewritten to the live counts). Lowered 106 -> 105 on 2026-09-28 by PHILO-9-04 (the sortable table's sort headers became the library Button). Lowered 175 -> 106 on 2026-09-21 by HS-202-03 (the shared species on the first-use path became library Buttons); the row is re-pinned to the new number so the predicate keeps the down-only law honest. Corrected 2026-09-17 by HS-200-44
+E               Fix the code, or correct the sentence AND its registry row (tests/unit/doc_claims/registry.py) in this same commit.
+E           assert False
+
+tests/unit/test_phase200_doc_claims.py:63: AssertionError
+__ test_registered_claim_matches_its_state[holds:useDeskChangedRefresh.ts:15] __
+
+claim = Claim(doc='web/src/desk/useDeskChangedRefresh.ts', anchor='Meeting changes announce themselves from the import worker'...ed publication. No literal thought/project/room/sync kind exists (PHILO-3-02, updated 2026-09-23)", story='PHILO-3-02')
+
+    @pytest.mark.parametrize("claim", CLAIMS, ids=_IDS)
+    def test_registered_claim_matches_its_state(claim: Claim) -> None:
+        """A ``holds`` claim must stay true; a ``known_false`` claim must stay false."""
+        assert claim.state in {"holds", "known_false"}, claim.state
+        satisfied = bool(claim.predicate())
+    
+        if claim.state == "holds":
+>           assert satisfied, (
+                f"a documentation claim that used to HOLD is now FALSE: {_where(claim)}\n"
+                f"  the sentence: {claim.sentence}\n"
+                f"  what is true: {claim.truth}\n"
+                "  Fix the code, or correct the sentence AND its registry row "
+                "(tests/unit/doc_claims/registry.py) in this same commit."
+            )
+E           AssertionError: a documentation claim that used to HOLD is now FALSE: web/src/desk/useDeskChangedRefresh.ts:15
+E               the sentence: Meeting changes announce themselves from the import worker when an import ends, success or failure (`MeetingService._run_import_job`), and from the summary queue after durable running and settled transitions (`_notify_queue_meeting_changed`). Other meeting writes, project rooms, thoughts and sync emit no frame; their surfaces carry their own signals.
+E               what is true: literal-kind 'meeting' desk_changed calls under holdspeak/ are in MeetingService._run_import_job and _notify_queue_meeting_changed; real-producer queue fences verify durable running and settled publication. No literal thought/project/room/sync kind exists (PHILO-3-02, updated 2026-09-23)
+E               Fix the code, or correct the sentence AND its registry row (tests/unit/doc_claims/registry.py) in this same commit.
+E           assert False
+
+tests/unit/test_phase200_doc_claims.py:63: AssertionError
+______ test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires _______
+
+    def test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires():
+        """(4) A typo must not become a silent no-op that 'passed'."""
+        # PHILO-7-03 added `focus` (keyboard travel to a Floor world chip).
+        # PHILO-10-05 added `scroll_into_view` (the owner seats Send before he presses).
+        # PHILO-11-06 adds `select_option` for native destination selectors.
+>       assert UI_ACTIONS == {"goto", "reload", "click", "click_role", "fill",
+                              "select_option", "press", "wait_for", "focus", "scroll_into_view"}
+E       AssertionError: assert frozenset({'c...'press', ...}) == {'click', 'cl... 'press', ...}
+E         
+E         Extra items in the left set:
+E         'world_context_menu'
+E         'set_input_files'
+E         Use -v to get more diff
+
+tests/unit/test_graph_walk_calibration.py:275: AssertionError
+______________ TestBriefEnrichment.test_watch_summary_prs_waiting ______________
+
+db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x11048a8d0>)
+aliases = ['ania-k']
+
+    @staticmethod
+    def _brief_owned_actions(db: Any, aliases: list[str]) -> list[dict[str, Any]]:
+        """Read pending actions owned by a saved alias from active meetings."""
+        if db is None or not aliases:
+            return []
+        alias_keys = {alias.casefold() for alias in aliases}
+        try:
+            with db._connection() as conn:
+>               rows = conn.execute(
+                    """SELECT ai.id, ai.task, ai.owner, ai.due, ai.delegated_at,
+                               m.id AS meeting_id, m.title AS meeting_title,
+                               m.started_at AS meeting_started_at,
+                               m.calendar_event_id
+                        FROM action_items ai
+                        JOIN meetings m ON m.id = ai.meeting_id
+                        WHERE m.parked = 0
+                          AND ai.status = 'pending'
+                          AND TRIM(COALESCE(ai.owner, '')) <> ''
+                        ORDER BY ai.created_at, ai.id""",
+                ).fetchall()
+E               sqlite3.OperationalError: no such column: m.parked
+
+holdspeak/services/people_service.py:581: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+self = <tests.unit.test_hs172_people_sources.TestBriefEnrichment object at 0x10aee8b90>
+service = <holdspeak.services.people_service.PeopleService object at 0x1106d8d70>
+plain_db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x11048a8d0>)
+
+    def test_watch_summary_prs_waiting(self, service: PeopleService, plain_db: Any) -> None:
+        rel = service.create_relationship(OWNER, {"display_name": "Ania"})
+        service.link_owner_alias(OWNER, rel["id"], "ania-k")
+        service.link_project(OWNER, rel["id"], "proj-1")
+    
+        four_days_ago = (datetime.now() - timedelta(days=4)).isoformat()
+        _seed_watch(plain_db, "proj-1", "HoldSpeak", "gh", "pull_requests", [
+            {
+                "number": 612, "title": "Fix migration", "state": "OPEN",
+                "reviewRequests": ["ania-k"],
+                "url": "https://github.com/karolswdev/holdspeak/pull/612",
+                "updatedAt": four_days_ago,
+            },
+            {
+                "number": 613, "title": "Add tests", "state": "OPEN",
+                "reviewRequests": ["ania-k"],
+                "url": "https://github.com/karolswdev/holdspeak/pull/613",
+                "updatedAt": four_days_ago,
+            },
+            {
+                "number": 614, "title": "Other PR", "state": "OPEN",
+                "reviewRequests": ["other-reviewer"],
+                "url": "https://github.com/karolswdev/holdspeak/pull/614",
+                "updatedAt": four_days_ago,
+            },
+        ])
+    
+>       brief = service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_hs172_people_sources.py:244: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+holdspeak/services/people_service.py:427: in one_on_one_brief
+    open_meeting_actions = self._brief_owned_actions(db, owner_aliases)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x11048a8d0>)
+aliases = ['ania-k']
+
+    @staticmethod
+    def _brief_owned_actions(db: Any, aliases: list[str]) -> list[dict[str, Any]]:
+        """Read pending actions owned by a saved alias from active meetings."""
+        if db is None or not aliases:
+            return []
+        alias_keys = {alias.casefold() for alias in aliases}
+        try:
+            with db._connection() as conn:
+                rows = conn.execute(
+                    """SELECT ai.id, ai.task, ai.owner, ai.due, ai.delegated_at,
+                               m.id AS meeting_id, m.title AS meeting_title,
+                               m.started_at AS meeting_started_at,
+                               m.calendar_event_id
+                        FROM action_items ai
+                        JOIN meetings m ON m.id = ai.meeting_id
+                        WHERE m.parked = 0
+                          AND ai.status = 'pending'
+                          AND TRIM(COALESCE(ai.owner, '')) <> ''
+                        ORDER BY ai.created_at, ai.id""",
+                ).fetchall()
+                return [
+                    {
+                        "id": str(row["id"]),
+                        "task": str(row["task"]),
+                        "owner": row["owner"],
+                        "due": row["due"],
+                        "delegated_at": row["delegated_at"],
+                        "meeting_id": str(row["meeting_id"]),
+                        "meeting_title": row["meeting_title"],
+                        "meeting_started_at": str(row["meeting_started_at"]),
+                        "calendar_event_id": row["calendar_event_id"],
+                    }
+                    for row in rows
+                    if str(row["owner"] or "").strip().casefold() in alias_keys
+                ]
+        except Exception as exc:
+>           raise PeopleServiceError("people_plaintext_unavailable") from exc
+E           holdspeak.services.people_service.PeopleServiceError: people_plaintext_unavailable
+
+holdspeak/services/people_service.py:609: PeopleServiceError
+_____________ TestBriefEnrichment.test_watch_summary_jira_overdue ______________
+
+db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x1105726c0>)
+aliases = ['Ania Kowalska']
+
+    @staticmethod
+    def _brief_owned_actions(db: Any, aliases: list[str]) -> list[dict[str, Any]]:
+        """Read pending actions owned by a saved alias from active meetings."""
+        if db is None or not aliases:
+            return []
+        alias_keys = {alias.casefold() for alias in aliases}
+        try:
+            with db._connection() as conn:
+>               rows = conn.execute(
+                    """SELECT ai.id, ai.task, ai.owner, ai.due, ai.delegated_at,
+                               m.id AS meeting_id, m.title AS meeting_title,
+                               m.started_at AS meeting_started_at,
+                               m.calendar_event_id
+                        FROM action_items ai
+                        JOIN meetings m ON m.id = ai.meeting_id
+                        WHERE m.parked = 0
+                          AND ai.status = 'pending'
+                          AND TRIM(COALESCE(ai.owner, '')) <> ''
+                        ORDER BY ai.created_at, ai.id""",
+                ).fetchall()
+E               sqlite3.OperationalError: no such column: m.parked
+
+holdspeak/services/people_service.py:581: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+self = <tests.unit.test_hs172_people_sources.TestBriefEnrichment object at 0x10b09d310>
+service = <holdspeak.services.people_service.PeopleService object at 0x1106c3110>
+plain_db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x1105726c0>)
+
+    def test_watch_summary_jira_overdue(self, service: PeopleService, plain_db: Any) -> None:
+        rel = service.create_relationship(OWNER, {"display_name": "Ania Kowalska"})
+        service.link_owner_alias(OWNER, rel["id"], "Ania Kowalska")
+        service.link_project(OWNER, rel["id"], "proj-2")
+    
+        yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        _seed_watch(plain_db, "proj-2", "Governance", "jira", "issues", [
+            {
+                "key": "GOV-412", "summary": "PostgreSQL migration",
+                "status": "In Progress", "status_category": "indeterminate",
+                "assignee": "Ania Kowalska", "due_at": yesterday,
+                "url": "https://jira.example.com/GOV-412",
+            },
+            {
+                "key": "GOV-413", "summary": "Done task",
+                "status": "Done", "status_category": "done",
+                "assignee": "Ania Kowalska", "due_at": yesterday,
+                "url": "https://jira.example.com/GOV-413",
+            },
+        ])
+    
+>       brief = service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_hs172_people_sources.py:274: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+holdspeak/services/people_service.py:427: in one_on_one_brief
+    open_meeting_actions = self._brief_owned_actions(db, owner_aliases)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x1105726c0>)
+aliases = ['Ania Kowalska']
+
+    @staticmethod
+    def _brief_owned_actions(db: Any, aliases: list[str]) -> list[dict[str, Any]]:
+        """Read pending actions owned by a saved alias from active meetings."""
+        if db is None or not aliases:
+            return []
+        alias_keys = {alias.casefold() for alias in aliases}
+        try:
+            with db._connection() as conn:
+                rows = conn.execute(
+                    """SELECT ai.id, ai.task, ai.owner, ai.due, ai.delegated_at,
+                               m.id AS meeting_id, m.title AS meeting_title,
+                               m.started_at AS meeting_started_at,
+                               m.calendar_event_id
+                        FROM action_items ai
+                        JOIN meetings m ON m.id = ai.meeting_id
+                        WHERE m.parked = 0
+                          AND ai.status = 'pending'
+                          AND TRIM(COALESCE(ai.owner, '')) <> ''
+                        ORDER BY ai.created_at, ai.id""",
+                ).fetchall()
+                return [
+                    {
+                        "id": str(row["id"]),
+                        "task": str(row["task"]),
+                        "owner": row["owner"],
+                        "due": row["due"],
+                        "delegated_at": row["delegated_at"],
+                        "meeting_id": str(row["meeting_id"]),
+                        "meeting_title": row["meeting_title"],
+                        "meeting_started_at": str(row["meeting_started_at"]),
+                        "calendar_event_id": row["calendar_event_id"],
+                    }
+                    for row in rows
+                    if str(row["owner"] or "").strip().casefold() in alias_keys
+                ]
+        except Exception as exc:
+>           raise PeopleServiceError("people_plaintext_unavailable") from exc
+E           holdspeak.services.people_service.PeopleServiceError: people_plaintext_unavailable
+
+holdspeak/services/people_service.py:609: PeopleServiceError
+_______________ TestBriefEnrichment.test_watch_summary_no_writes _______________
+
+db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x110489fe0>)
+aliases = ['spy-login']
+
+    @staticmethod
+    def _brief_owned_actions(db: Any, aliases: list[str]) -> list[dict[str, Any]]:
+        """Read pending actions owned by a saved alias from active meetings."""
+        if db is None or not aliases:
+            return []
+        alias_keys = {alias.casefold() for alias in aliases}
+        try:
+            with db._connection() as conn:
+>               rows = conn.execute(
+                    """SELECT ai.id, ai.task, ai.owner, ai.due, ai.delegated_at,
+                               m.id AS meeting_id, m.title AS meeting_title,
+                               m.started_at AS meeting_started_at,
+                               m.calendar_event_id
+                        FROM action_items ai
+                        JOIN meetings m ON m.id = ai.meeting_id
+                        WHERE m.parked = 0
+                          AND ai.status = 'pending'
+                          AND TRIM(COALESCE(ai.owner, '')) <> ''
+                        ORDER BY ai.created_at, ai.id""",
+                ).fetchall()
+E               sqlite3.OperationalError: no such column: m.parked
+
+holdspeak/services/people_service.py:581: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+self = <tests.unit.test_hs172_people_sources.TestBriefEnrichment object at 0x10ae531d0>
+service = <holdspeak.services.people_service.PeopleService object at 0x110a38410>
+plain_db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x110489fe0>)
+
+    def test_watch_summary_no_writes(self, service: PeopleService, plain_db: Any) -> None:
+        """The 138 law: brief computation writes ZERO rows."""
+        rel = service.create_relationship(OWNER, {"display_name": "Spy"})
+        service.link_owner_alias(OWNER, rel["id"], "spy-login")
+        service.link_project(OWNER, rel["id"], "proj-spy")
+    
+        _seed_watch(plain_db, "proj-spy", "Spy", "gh", "pull_requests", [
+            {"number": 1, "title": "PR", "state": "OPEN",
+             "reviewRequests": ["spy-login"], "url": "", "updatedAt": ""},
+        ])
+    
+        conn = plain_db._connection()
+        tables = ["connector_watches", "projects", "source_suggestions"]
+        before = {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
+>       service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
+
+tests/unit/test_hs172_people_sources.py:318: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+holdspeak/services/people_service.py:427: in one_on_one_brief
+    open_meeting_actions = self._brief_owned_actions(db, owner_aliases)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x110489fe0>)
+aliases = ['spy-login']
+
+    @staticmethod
+    def _brief_owned_actions(db: Any, aliases: list[str]) -> list[dict[str, Any]]:
+        """Read pending actions owned by a saved alias from active meetings."""
+        if db is None or not aliases:
+            return []
+        alias_keys = {alias.casefold() for alias in aliases}
+        try:
+            with db._connection() as conn:
+                rows = conn.execute(
+                    """SELECT ai.id, ai.task, ai.owner, ai.due, ai.delegated_at,
+                               m.id AS meeting_id, m.title AS meeting_title,
+                               m.started_at AS meeting_started_at,
+                               m.calendar_event_id
+                        FROM action_items ai
+                        JOIN meetings m ON m.id = ai.meeting_id
+                        WHERE m.parked = 0
+                          AND ai.status = 'pending'
+                          AND TRIM(COALESCE(ai.owner, '')) <> ''
+                        ORDER BY ai.created_at, ai.id""",
+                ).fetchall()
+                return [
+                    {
+                        "id": str(row["id"]),
+                        "task": str(row["task"]),
+                        "owner": row["owner"],
+                        "due": row["due"],
+                        "delegated_at": row["delegated_at"],
+                        "meeting_id": str(row["meeting_id"]),
+                        "meeting_title": row["meeting_title"],
+                        "meeting_started_at": str(row["meeting_started_at"]),
+                        "calendar_event_id": row["calendar_event_id"],
+                    }
+                    for row in rows
+                    if str(row["owner"] or "").strip().casefold() in alias_keys
+                ]
+        except Exception as exc:
+>           raise PeopleServiceError("people_plaintext_unavailable") from exc
+E           holdspeak.services.people_service.PeopleServiceError: people_plaintext_unavailable
+
+holdspeak/services/people_service.py:609: PeopleServiceError
+________________ TestBriefEnrichment.test_last_meeting_present _________________
+
+self = <tests.unit.test_hs172_people_sources.TestBriefEnrichment object at 0x10af8ef10>
+service = <holdspeak.services.people_service.PeopleService object at 0x1109e0180>
+plain_db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x11077a770>)
+
+    def test_last_meeting_present(self, service: PeopleService, plain_db: Any) -> None:
+        """last_meeting summarizes the most recent linked meeting."""
+        rel = service.create_relationship(OWNER, {"display_name": "Jan"})
+        service.link_calendar_series(OWNER, rel["id"], "uid-weekly", "cal-1", "Weekly")
+    
+        conn = plain_db._connection()
+        conn.execute(
+            "INSERT INTO calendar_events (id, uid, title, starts_at, ends_at, last_seen_at, subscription_revision, source_id) "
+            "VALUES ('ev-1', 'uid-weekly', 'Weekly', '2026-08-01', '2026-08-01', 0.0, 'r1', 'cal-1')",
+        )
+        conn.execute(
+            "INSERT INTO meetings (id, started_at, ended_at, title, calendar_event_id) "
+            "VALUES ('m-1', '2026-08-01T10:00:00', '2026-08-01T11:00:00', 'Weekly', 'ev-1')",
+        )
+        conn.execute(
+            "INSERT INTO action_items (id, meeting_id, task, owner, status) VALUES "
+            "('ai-1', 'm-1', 'Ship it', 'Jan', 'pending'), "
+            "('ai-2', 'm-1', 'Done', 'Jan', 'completed')",
+        )
+        conn.commit()
+    
+>       brief = service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_hs172_people_sources.py:343: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+holdspeak/services/people_service.py:417: in one_on_one_brief
+    linked_meetings, unlinked_meeting_count = self._brief_plaintext(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x11077a770>)
+calendar_links = [{'label': 'Weekly', 'linked_at': '2026-10-03T22:21:02Z', 'source_id': 'cal-1', 'uid': 'uid-weekly'}]
+
+    @staticmethod
+    def _brief_plaintext(
+        db: Any,
+        calendar_links: list[dict[str, Any]],
+        *,
+        limit: int = 5,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Query the plaintext DB for linked meetings, action items, and decisions.
+    
+        Returns ``(linked_meetings, unlinked_meeting_count)``.
+    
+        The uid chain: relationship.calendar_links -> calendar_events by
+        (uid, source_id) -> their IDs -> meetings.calendar_event_id IN those IDs.
+        """
+        # Step 1: Collect all calendar_event IDs for the linked UIDs.
+        uid_source_pairs = [
+            (str(link.get("uid") or ""), str(link.get("source_id") or ""))
+            for link in calendar_links
+            if isinstance(link, dict) and link.get("uid") and link.get("source_id")
+        ]
+        if not uid_source_pairs:
+            return [], 0
+    
+        try:
+            conn_factory = db._connection
+        except AttributeError:
+            return [], 0
+    
+        with conn_factory() as conn:
+            # Find calendar_events matching any linked (uid, source_id).
+            # Build per-pair OR clauses.
+            where_clauses = " OR ".join(
+                "(uid = ? AND source_id = ?)" for _ in uid_source_pairs
+            )
+            params: list[str] = []
+            for uid, source_id in uid_source_pairs:
+                params.extend([uid, source_id])
+    
+            event_rows = conn.execute(
+                f"SELECT id FROM calendar_events WHERE {where_clauses}",
+                params,
+            ).fetchall()
+            calendar_event_ids = [str(row["id"]) for row in event_rows]
+    
+            if not calendar_event_ids:
+                return [], 0
+    
+            # Step 2: Find linked meetings (have calendar_event_id in our set).
+            placeholders = ",".join("?" for _ in calendar_event_ids)
+>           meeting_rows = conn.execute(
+                f"""SELECT id, title, started_at, ended_at, calendar_event_id
+                    FROM meetings
+                    WHERE parked = 0
+                      AND calendar_event_id IN ({placeholders})
+                    ORDER BY started_at DESC
+                    LIMIT ?""",
+                [*calendar_event_ids, limit],
+            ).fetchall()
+E           sqlite3.OperationalError: no such column: parked
+
+holdspeak/services/people_service.py:858: OperationalError
+______________ TestNoPronounInWire.test_watch_summary_no_pronouns ______________
+
+db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x110a4d170>)
+aliases = ['ania-k']
+
+    @staticmethod
+    def _brief_owned_actions(db: Any, aliases: list[str]) -> list[dict[str, Any]]:
+        """Read pending actions owned by a saved alias from active meetings."""
+        if db is None or not aliases:
+            return []
+        alias_keys = {alias.casefold() for alias in aliases}
+        try:
+            with db._connection() as conn:
+>               rows = conn.execute(
+                    """SELECT ai.id, ai.task, ai.owner, ai.due, ai.delegated_at,
+                               m.id AS meeting_id, m.title AS meeting_title,
+                               m.started_at AS meeting_started_at,
+                               m.calendar_event_id
+                        FROM action_items ai
+                        JOIN meetings m ON m.id = ai.meeting_id
+                        WHERE m.parked = 0
+                          AND ai.status = 'pending'
+                          AND TRIM(COALESCE(ai.owner, '')) <> ''
+                        ORDER BY ai.created_at, ai.id""",
+                ).fetchall()
+E               sqlite3.OperationalError: no such column: m.parked
+
+holdspeak/services/people_service.py:581: OperationalError
+
+The above exception was the direct cause of the following exception:
+
+self = <tests.unit.test_hs172_people_sources.TestNoPronounInWire object at 0x10b09d450>
+service = <holdspeak.services.people_service.PeopleService object at 0x1109e0640>
+plain_db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x110a4d170>)
+
+    def test_watch_summary_no_pronouns(self, service: PeopleService, plain_db: Any) -> None:
+        rel = service.create_relationship(OWNER, {"display_name": "Ania Kowalska"})
+        service.link_owner_alias(OWNER, rel["id"], "ania-k")
+        service.link_project(OWNER, rel["id"], "proj-pronoun")
+    
+        four_days_ago = (datetime.now() - timedelta(days=4)).isoformat()
+        _seed_watch(plain_db, "proj-pronoun", "Test", "gh", "pull_requests", [
+            {"number": 1, "title": "PR", "state": "OPEN",
+             "reviewRequests": ["ania-k"], "url": "", "updatedAt": four_days_ago},
+        ])
+    
+>       brief = service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_hs172_people_sources.py:553: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+holdspeak/services/people_service.py:427: in one_on_one_brief
+    open_meeting_actions = self._brief_owned_actions(db, owner_aliases)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db = namespace(_connection=<function plain_db.<locals>.<lambda> at 0x110a4d170>)
+aliases = ['ania-k']
+
+    @staticmethod
+    def _brief_owned_actions(db: Any, aliases: list[str]) -> list[dict[str, Any]]:
+        """Read pending actions owned by a saved alias from active meetings."""
+        if db is None or not aliases:
+            return []
+        alias_keys = {alias.casefold() for alias in aliases}
+        try:
+            with db._connection() as conn:
+                rows = conn.execute(
+                    """SELECT ai.id, ai.task, ai.owner, ai.due, ai.delegated_at,
+                               m.id AS meeting_id, m.title AS meeting_title,
+                               m.started_at AS meeting_started_at,
+                               m.calendar_event_id
+                        FROM action_items ai
+                        JOIN meetings m ON m.id = ai.meeting_id
+                        WHERE m.parked = 0
+                          AND ai.status = 'pending'
+                          AND TRIM(COALESCE(ai.owner, '')) <> ''
+                        ORDER BY ai.created_at, ai.id""",
+                ).fetchall()
+                return [
+                    {
+                        "id": str(row["id"]),
+                        "task": str(row["task"]),
+                        "owner": row["owner"],
+                        "due": row["due"],
+                        "delegated_at": row["delegated_at"],
+                        "meeting_id": str(row["meeting_id"]),
+                        "meeting_title": row["meeting_title"],
+                        "meeting_started_at": str(row["meeting_started_at"]),
+                        "calendar_event_id": row["calendar_event_id"],
+                    }
+                    for row in rows
+                    if str(row["owner"] or "").strip().casefold() in alias_keys
+                ]
+        except Exception as exc:
+>           raise PeopleServiceError("people_plaintext_unavailable") from exc
+E           holdspeak.services.people_service.PeopleServiceError: people_plaintext_unavailable
+
+holdspeak/services/people_service.py:609: PeopleServiceError
+_______________ test_the_reload_claim_points_at_the_quiet_branch _______________
+
+atlas = {'cases': [{'applicability': 'applicable', 'completion_bound_s': 20, 'edge_ids': ['edge.face.first_words_continue_late...son': 'the gate holds ONE capture state and ONE failure (web/src/desk/components/FirstWords.tsx:50, :51).'}, ...], ...}
+
+    def test_the_reload_claim_points_at_the_quiet_branch(atlas: dict) -> None:
+        lines = CHAIR.read_text().splitlines()
+        refs = [ref for ref in _state(atlas, "state.briefs.reload_persisted")["sources"]
+                if ref["path"] == "web/src/desk/chair/ChairHome.tsx"]
+        assert refs
+        for ref in refs:
+            window = "\n".join(lines[ref["line"] - 1: ref["line"] + 4])
+            # the quiet branch draws the brief's own headline; the untriaged
+            # branch (BriefSection rows) never does
+>           assert "arrival-brief-headline" in window, (ref, window)
+E           AssertionError: ({'claim': 'a brief with nothing untriaged keeps its own section, headline and Generate after a reload (the quiet bran...n className="surface-receipt-line" data-testid="arrival-brief-date">
+E                   {parts.join(" · ")}
+E                 </span>
+E               );
+E             }')
+E           assert 'arrival-brief-headline' in '    <span className="surface-receipt-line" data-testid="arrival-brief-date">\n      {parts.join(" · ")}\n    </span>\n  );\n}'
+
+tests/unit/test_philo4_01_atlas_contracts.py:141: AssertionError
+______________ TestCalendarSourcesRoute.test_source_stats_from_db ______________
+
+self = <tests.unit.test_hs175_calendar_sources.TestCalendarSourcesRoute object at 0x10b051fd0>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-564/test_source_stats_from_db0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x110594050>
+
+    def test_source_stats_from_db(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Source stats (calendar_count, last_seen) come from calendar_events."""
+        db, config = _setup(tmp_path, monkeypatch)
+        from holdspeak.config.integrations import CalendarSource, CalendarConfig
+    
+        sid = str(uuid.uuid4())
+        source = CalendarSource(id=sid, label="WORK", url="/tmp/cal.ics", enabled=True)
+        config.calendar = CalendarConfig(sources=[source])
+        config.save()
+    
+        # Seed two events with the same source but different UIDs.
+        now = time.time()
+        from holdspeak.db.calendar_events import CalendarEvent
+>       db.calendar_events.replace_projection(
+            "rev1",
+            [
+                _make_event("e1", "uid1", "Standup", "2026-09-08T10:00:00Z", "2026-09-08T11:00:00Z"),
+                _make_event("e2", "uid2", "Review", "2026-09-09T14:00:00Z", "2026-09-09T15:00:00Z"),
+            ],
+            seen_at=now,
+            source_id=sid,
+            source_label="WORK",
+        )
+
+tests/unit/test_hs175_calendar_sources.py:95: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.calendar_events.CalendarEventRepository object at 0x110a98980>
+subscription_revision = 'rev1'
+events = [<tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x110b246e0>, <tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x110a39450>]
+
+    def replace_projection(
+        self,
+        subscription_revision: str,
+        events: Iterable[CalendarEventProjection],
+        *,
+        seen_at: float,
+        source_id: str = "",
+        source_label: str = "",
+    ) -> None:
+        """Atomically replace the projection for one source.
+    
+        When ``source_id`` is set (multi-source mode), only that source's
+        rows are deleted before inserting.  When empty (legacy single-source
+        callers), all rows are deleted -- preserving the old behaviour.
+        """
+        revision = str(subscription_revision)
+        sid = str(source_id)
+        slabel = str(source_label)
+        desired = tuple(events)
+        with self._connection() as conn:
+            # The source owns its whole projection. Clear its old/current rows
+            # in the transaction before inserting the complete desired set,
+            # rather than depending on a clock value being unique across
+            # refreshes. A transaction rollback restores the prior working
+            # projection if any insert fails.
+            if sid:
+                conn.execute(
+                    "DELETE FROM calendar_events WHERE source_id = ?", (sid,)
+                )
+            else:
+                conn.execute("DELETE FROM calendar_events")
+            for event in desired:
+                conn.execute(
+                    """INSERT INTO calendar_events
+                       (id, uid, title, starts_at, ends_at, location, meeting_url,
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(id) DO UPDATE SET
+                           uid=excluded.uid,
+                           title=excluded.title,
+                           starts_at=excluded.starts_at,
+                           ends_at=excluded.ends_at,
+                           location=excluded.location,
+                           meeting_url=excluded.meeting_url,
+                           last_seen_at=excluded.last_seen_at,
+                           subscription_revision=excluded.subscription_revision,
+                           source_id=excluded.source_id,
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
+                    (
+                        str(event.id),
+                        str(event.uid),
+                        str(event.title or ""),
+                        str(event.starts_at),
+                        str(event.ends_at),
+                        str(event.location) if event.location is not None else None,
+                        str(event.meeting_url) if event.meeting_url is not None else None,
+                        float(seen_at),
+                        revision,
+                        sid,
+                        slabel,
+>                       json.dumps(event.attendees),
+                                   ^^^^^^^^^^^^^^^
+                    ),
+                )
+E               AttributeError: '_FakeEvent' object has no attribute 'attendees'
+
+holdspeak/db/calendar_events.py:128: AttributeError
+_______________ TestCalendarSourcesRoute.test_matched_this_week ________________
+
+self = <tests.unit.test_hs175_calendar_sources.TestCalendarSourcesRoute object at 0x10b0e0270>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-564/test_matched_this_week0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x110acd850>
+
+    def test_matched_this_week(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """matched_this_week counts events with calendar_event_projects links this week."""
+        db, config = _setup(tmp_path, monkeypatch)
+        from holdspeak.config.integrations import CalendarSource, CalendarConfig
+        from holdspeak.web.routes.calendar_sources import _iso_week_range_local
+    
+        sid = str(uuid.uuid4())
+        source = CalendarSource(id=sid, label="WORK", url="/tmp/cal.ics", enabled=True)
+        config.calendar = CalendarConfig(sources=[source])
+        config.meeting.auto_record = "room_linked"
+        config.save()
+    
+        week_start, week_end = _iso_week_range_local()
+    
+        # Seed an event within this week.
+        from datetime import datetime, timezone, timedelta
+        now = datetime.now(timezone.utc)
+        # Find a time this week.
+        monday = now - timedelta(days=now.weekday())
+        event_time = monday.replace(hour=10, minute=0, second=0, microsecond=0)
+        if event_time < now:
+            event_time = now + timedelta(hours=1)
+        event_iso = event_time.isoformat(timespec="seconds").replace("+00:00", "Z")
+        end_iso = (event_time + timedelta(hours=1)).isoformat(timespec="seconds").replace("+00:00", "Z")
+    
+        eid = str(uuid.uuid4())
+>       db.calendar_events.replace_projection(
+            "rev1",
+            [_make_event(eid, "uid-match", "Standup", event_iso, end_iso)],
+            seen_at=time.time(),
+            source_id=sid,
+            source_label="WORK",
+        )
+
+tests/unit/test_hs175_calendar_sources.py:142: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.calendar_events.CalendarEventRepository object at 0x110abc050>
+subscription_revision = 'rev1'
+events = [<tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x110abf9d0>]
+
+    def replace_projection(
+        self,
+        subscription_revision: str,
+        events: Iterable[CalendarEventProjection],
+        *,
+        seen_at: float,
+        source_id: str = "",
+        source_label: str = "",
+    ) -> None:
+        """Atomically replace the projection for one source.
+    
+        When ``source_id`` is set (multi-source mode), only that source's
+        rows are deleted before inserting.  When empty (legacy single-source
+        callers), all rows are deleted -- preserving the old behaviour.
+        """
+        revision = str(subscription_revision)
+        sid = str(source_id)
+        slabel = str(source_label)
+        desired = tuple(events)
+        with self._connection() as conn:
+            # The source owns its whole projection. Clear its old/current rows
+            # in the transaction before inserting the complete desired set,
+            # rather than depending on a clock value being unique across
+            # refreshes. A transaction rollback restores the prior working
+            # projection if any insert fails.
+            if sid:
+                conn.execute(
+                    "DELETE FROM calendar_events WHERE source_id = ?", (sid,)
+                )
+            else:
+                conn.execute("DELETE FROM calendar_events")
+            for event in desired:
+                conn.execute(
+                    """INSERT INTO calendar_events
+                       (id, uid, title, starts_at, ends_at, location, meeting_url,
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(id) DO UPDATE SET
+                           uid=excluded.uid,
+                           title=excluded.title,
+                           starts_at=excluded.starts_at,
+                           ends_at=excluded.ends_at,
+                           location=excluded.location,
+                           meeting_url=excluded.meeting_url,
+                           last_seen_at=excluded.last_seen_at,
+                           subscription_revision=excluded.subscription_revision,
+                           source_id=excluded.source_id,
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
+                    (
+                        str(event.id),
+                        str(event.uid),
+                        str(event.title or ""),
+                        str(event.starts_at),
+                        str(event.ends_at),
+                        str(event.location) if event.location is not None else None,
+                        str(event.meeting_url) if event.meeting_url is not None else None,
+                        float(seen_at),
+                        revision,
+                        sid,
+                        slabel,
+>                       json.dumps(event.attendees),
+                                   ^^^^^^^^^^^^^^^
+                    ),
+                )
+E               AttributeError: '_FakeEvent' object has no attribute 'attendees'
+
+holdspeak/db/calendar_events.py:128: AttributeError
+________ TestSourcesPayloadClocks.test_event_count_names_what_it_counts ________
+
+self = <tests.unit.test_hs175_calendar_sources.TestSourcesPayloadClocks object at 0x10b09df90>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-564/test_event_count_names_what_it0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x110accc50>
+
+    def test_event_count_names_what_it_counts(self, tmp_path, monkeypatch):
+        """C9(b): COUNT(DISTINCT uid) is the VEVENT count -> ``event_count``."""
+        db, config = _setup(tmp_path, monkeypatch)
+        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        sid = _seed_source(config)
+>       db.calendar_events.replace_projection(
+            "rev1",
+            [_make_event("e1", "uid1", "Standup", "2026-09-08T10:00:00Z", "2026-09-08T11:00:00Z"),
+             _make_event("e2", "uid2", "Review", "2026-09-09T14:00:00Z", "2026-09-09T15:00:00Z")],
+            seen_at=time.time(), source_id=sid, source_label="WORK",
+        )
+
+tests/unit/test_hs175_calendar_sources.py:263: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.calendar_events.CalendarEventRepository object at 0x110d325d0>
+subscription_revision = 'rev1'
+events = [<tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x110cb20d0>, <tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x110cb2210>]
+
+    def replace_projection(
+        self,
+        subscription_revision: str,
+        events: Iterable[CalendarEventProjection],
+        *,
+        seen_at: float,
+        source_id: str = "",
+        source_label: str = "",
+    ) -> None:
+        """Atomically replace the projection for one source.
+    
+        When ``source_id`` is set (multi-source mode), only that source's
+        rows are deleted before inserting.  When empty (legacy single-source
+        callers), all rows are deleted -- preserving the old behaviour.
+        """
+        revision = str(subscription_revision)
+        sid = str(source_id)
+        slabel = str(source_label)
+        desired = tuple(events)
+        with self._connection() as conn:
+            # The source owns its whole projection. Clear its old/current rows
+            # in the transaction before inserting the complete desired set,
+            # rather than depending on a clock value being unique across
+            # refreshes. A transaction rollback restores the prior working
+            # projection if any insert fails.
+            if sid:
+                conn.execute(
+                    "DELETE FROM calendar_events WHERE source_id = ?", (sid,)
+                )
+            else:
+                conn.execute("DELETE FROM calendar_events")
+            for event in desired:
+                conn.execute(
+                    """INSERT INTO calendar_events
+                       (id, uid, title, starts_at, ends_at, location, meeting_url,
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(id) DO UPDATE SET
+                           uid=excluded.uid,
+                           title=excluded.title,
+                           starts_at=excluded.starts_at,
+                           ends_at=excluded.ends_at,
+                           location=excluded.location,
+                           meeting_url=excluded.meeting_url,
+                           last_seen_at=excluded.last_seen_at,
+                           subscription_revision=excluded.subscription_revision,
+                           source_id=excluded.source_id,
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
+                    (
+                        str(event.id),
+                        str(event.uid),
+                        str(event.title or ""),
+                        str(event.starts_at),
+                        str(event.ends_at),
+                        str(event.location) if event.location is not None else None,
+                        str(event.meeting_url) if event.meeting_url is not None else None,
+                        float(seen_at),
+                        revision,
+                        sid,
+                        slabel,
+>                       json.dumps(event.attendees),
+                                   ^^^^^^^^^^^^^^^
+                    ),
+                )
+E               AttributeError: '_FakeEvent' object has no attribute 'attendees'
+
+holdspeak/db/calendar_events.py:128: AttributeError
+___ TestSourcesPayloadClocks.test_last_read_is_an_instant_and_a_local_clock ____
+
+self = <tests.unit.test_hs175_calendar_sources.TestSourcesPayloadClocks object at 0x10b09e0d0>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-564/test_last_read_is_an_instant_a0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x110b13b70>
+denver = None
+
+    def test_last_read_is_an_instant_and_a_local_clock(self, tmp_path, monkeypatch, denver):
+        """C8: ``last_read_at`` is ISO-UTC (the browser formats it); the
+        hub-local ``last_read`` reads 17:47 for 23:47Z at -06:00."""
+        db, config = _setup(tmp_path, monkeypatch)
+        from datetime import datetime, timezone
+        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        sid = _seed_source(config)
+        seen = datetime(2026, 9, 5, 23, 47, 0, tzinfo=timezone.utc).timestamp()
+>       db.calendar_events.replace_projection(
+            "rev1",
+            [_make_event("e1", "uid1", "Standup", "2026-09-08T10:00:00Z", "2026-09-08T11:00:00Z")],
+            seen_at=seen, source_id=sid, source_label="WORK",
+        )
+
+tests/unit/test_hs175_calendar_sources.py:283: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.calendar_events.CalendarEventRepository object at 0x1109e3bb0>
+subscription_revision = 'rev1'
+events = [<tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x110cb25d0>]
+
+    def replace_projection(
+        self,
+        subscription_revision: str,
+        events: Iterable[CalendarEventProjection],
+        *,
+        seen_at: float,
+        source_id: str = "",
+        source_label: str = "",
+    ) -> None:
+        """Atomically replace the projection for one source.
+    
+        When ``source_id`` is set (multi-source mode), only that source's
+        rows are deleted before inserting.  When empty (legacy single-source
+        callers), all rows are deleted -- preserving the old behaviour.
+        """
+        revision = str(subscription_revision)
+        sid = str(source_id)
+        slabel = str(source_label)
+        desired = tuple(events)
+        with self._connection() as conn:
+            # The source owns its whole projection. Clear its old/current rows
+            # in the transaction before inserting the complete desired set,
+            # rather than depending on a clock value being unique across
+            # refreshes. A transaction rollback restores the prior working
+            # projection if any insert fails.
+            if sid:
+                conn.execute(
+                    "DELETE FROM calendar_events WHERE source_id = ?", (sid,)
+                )
+            else:
+                conn.execute("DELETE FROM calendar_events")
+            for event in desired:
+                conn.execute(
+                    """INSERT INTO calendar_events
+                       (id, uid, title, starts_at, ends_at, location, meeting_url,
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(id) DO UPDATE SET
+                           uid=excluded.uid,
+                           title=excluded.title,
+                           starts_at=excluded.starts_at,
+                           ends_at=excluded.ends_at,
+                           location=excluded.location,
+                           meeting_url=excluded.meeting_url,
+                           last_seen_at=excluded.last_seen_at,
+                           subscription_revision=excluded.subscription_revision,
+                           source_id=excluded.source_id,
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
+                    (
+                        str(event.id),
+                        str(event.uid),
+                        str(event.title or ""),
+                        str(event.starts_at),
+                        str(event.ends_at),
+                        str(event.location) if event.location is not None else None,
+                        str(event.meeting_url) if event.meeting_url is not None else None,
+                        float(seen_at),
+                        revision,
+                        sid,
+                        slabel,
+>                       json.dumps(event.attendees),
+                                   ^^^^^^^^^^^^^^^
+                    ),
+                )
+E               AttributeError: '_FakeEvent' object has no attribute 'attendees'
+
+holdspeak/db/calendar_events.py:128: AttributeError
+_____ TestSourcesPayloadClocks.test_matched_this_week_uses_the_local_week ______
+
+self = <tests.unit.test_hs175_calendar_sources.TestSourcesPayloadClocks object at 0x10b08d5b0>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-564/test_matched_this_week_uses_th0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x110c8ccb0>
+denver = None
+
+    def test_matched_this_week_uses_the_local_week(self, tmp_path, monkeypatch, denver):
+        """A linked event on Sunday 23:00 Denver (Monday 05:00Z) counts THIS
+        week; one at Sunday 23:00 Denver LAST week does not (H4-1 inverted)."""
+        from datetime import timedelta
+        from holdspeak.services.project_service import local_week_bounds, utc_z
+        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        db, config = _setup(tmp_path, monkeypatch)
+        sid = _seed_source(config, auto_record="room_linked")
+        monday, next_monday = local_week_bounds()
+        e_in, e_out = str(uuid.uuid4()), str(uuid.uuid4())
+>       db.calendar_events.replace_projection(
+            "rev1",
+            [_make_event(e_in, "in", "Late Sunday", utc_z(next_monday - timedelta(hours=1)), utc_z(next_monday)),
+             _make_event(e_out, "out", "Last Sunday", utc_z(monday - timedelta(hours=1)), utc_z(monday))],
+            seen_at=time.time(), source_id=sid, source_label="WORK",
+        )
+
+tests/unit/test_hs175_calendar_sources.py:302: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.calendar_events.CalendarEventRepository object at 0x110c71a70>
+subscription_revision = 'rev1'
+events = [<tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x110cb2990>, <tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x110cb2ad0>]
+
+    def replace_projection(
+        self,
+        subscription_revision: str,
+        events: Iterable[CalendarEventProjection],
+        *,
+        seen_at: float,
+        source_id: str = "",
+        source_label: str = "",
+    ) -> None:
+        """Atomically replace the projection for one source.
+    
+        When ``source_id`` is set (multi-source mode), only that source's
+        rows are deleted before inserting.  When empty (legacy single-source
+        callers), all rows are deleted -- preserving the old behaviour.
+        """
+        revision = str(subscription_revision)
+        sid = str(source_id)
+        slabel = str(source_label)
+        desired = tuple(events)
+        with self._connection() as conn:
+            # The source owns its whole projection. Clear its old/current rows
+            # in the transaction before inserting the complete desired set,
+            # rather than depending on a clock value being unique across
+            # refreshes. A transaction rollback restores the prior working
+            # projection if any insert fails.
+            if sid:
+                conn.execute(
+                    "DELETE FROM calendar_events WHERE source_id = ?", (sid,)
+                )
+            else:
+                conn.execute("DELETE FROM calendar_events")
+            for event in desired:
+                conn.execute(
+                    """INSERT INTO calendar_events
+                       (id, uid, title, starts_at, ends_at, location, meeting_url,
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(id) DO UPDATE SET
+                           uid=excluded.uid,
+                           title=excluded.title,
+                           starts_at=excluded.starts_at,
+                           ends_at=excluded.ends_at,
+                           location=excluded.location,
+                           meeting_url=excluded.meeting_url,
+                           last_seen_at=excluded.last_seen_at,
+                           subscription_revision=excluded.subscription_revision,
+                           source_id=excluded.source_id,
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
+                    (
+                        str(event.id),
+                        str(event.uid),
+                        str(event.title or ""),
+                        str(event.starts_at),
+                        str(event.ends_at),
+                        str(event.location) if event.location is not None else None,
+                        str(event.meeting_url) if event.meeting_url is not None else None,
+                        float(seen_at),
+                        revision,
+                        sid,
+                        slabel,
+>                       json.dumps(event.attendees),
+                                   ^^^^^^^^^^^^^^^
+                    ),
+                )
+E               AttributeError: '_FakeEvent' object has no attribute 'attendees'
+
+holdspeak/db/calendar_events.py:128: AttributeError
+__________ TestDstEdgeSources.test_matched_this_week_across_fall_back __________
+
+self = <tests.unit.test_hs175_calendar_sources.TestDstEdgeSources object at 0x10b09e350>
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-564/test_matched_this_week_across_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x110a7e710>
+denver = None
+
+    def test_matched_this_week_across_fall_back(self, tmp_path, monkeypatch, denver):
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        from holdspeak.services.project_service import utc_z
+        from holdspeak.web.routes.calendar_sources import read_calendar_sources
+        db, config = _setup(tmp_path, monkeypatch)
+        sid = _seed_source(config, auto_record="room_linked")
+        tz = ZoneInfo("America/Denver")
+        now_fixed = datetime(2026, 11, 1, 20, 0, tzinfo=tz).astimezone()
+        rows = {
+            "e-mon": datetime(2026, 10, 26, 0, 30, tzinfo=tz),   # in (Monday 00:30 MDT)
+            "e-sun": datetime(2026, 11, 1, 0, 30, tzinfo=tz),    # in
+            "e-prev": datetime(2026, 10, 25, 23, 30, tzinfo=tz), # out (Sunday before)
+        }
+>       db.calendar_events.replace_projection(
+            "rev1",
+            [_make_event(eid, eid, eid, utc_z(local), utc_z(local)) for eid, local in rows.items()],
+            seen_at=time.time(), source_id=sid, source_label="WORK",
+        )
+
+tests/unit/test_hs175_calendar_sources.py:562: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <holdspeak.db.calendar_events.CalendarEventRepository object at 0x110d01130>
+subscription_revision = 'rev1'
+events = [<tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x110cb3110>, <tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x110cb3250>, <tests.unit.test_hs175_calendar_sources._FakeEvent object at 0x110cb34d0>]
+
+    def replace_projection(
+        self,
+        subscription_revision: str,
+        events: Iterable[CalendarEventProjection],
+        *,
+        seen_at: float,
+        source_id: str = "",
+        source_label: str = "",
+    ) -> None:
+        """Atomically replace the projection for one source.
+    
+        When ``source_id`` is set (multi-source mode), only that source's
+        rows are deleted before inserting.  When empty (legacy single-source
+        callers), all rows are deleted -- preserving the old behaviour.
+        """
+        revision = str(subscription_revision)
+        sid = str(source_id)
+        slabel = str(source_label)
+        desired = tuple(events)
+        with self._connection() as conn:
+            # The source owns its whole projection. Clear its old/current rows
+            # in the transaction before inserting the complete desired set,
+            # rather than depending on a clock value being unique across
+            # refreshes. A transaction rollback restores the prior working
+            # projection if any insert fails.
+            if sid:
+                conn.execute(
+                    "DELETE FROM calendar_events WHERE source_id = ?", (sid,)
+                )
+            else:
+                conn.execute("DELETE FROM calendar_events")
+            for event in desired:
+                conn.execute(
+                    """INSERT INTO calendar_events
+                       (id, uid, title, starts_at, ends_at, location, meeting_url,
+                        last_seen_at, subscription_revision, source_id, source_label,
+                        attendees_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(id) DO UPDATE SET
+                           uid=excluded.uid,
+                           title=excluded.title,
+                           starts_at=excluded.starts_at,
+                           ends_at=excluded.ends_at,
+                           location=excluded.location,
+                           meeting_url=excluded.meeting_url,
+                           last_seen_at=excluded.last_seen_at,
+                           subscription_revision=excluded.subscription_revision,
+                           source_id=excluded.source_id,
+                           source_label=excluded.source_label,
+                           attendees_json=excluded.attendees_json""",
+                    (
+                        str(event.id),
+                        str(event.uid),
+                        str(event.title or ""),
+                        str(event.starts_at),
+                        str(event.ends_at),
+                        str(event.location) if event.location is not None else None,
+                        str(event.meeting_url) if event.meeting_url is not None else None,
+                        float(seen_at),
+                        revision,
+                        sid,
+                        slabel,
+>                       json.dumps(event.attendees),
+                                   ^^^^^^^^^^^^^^^
+                    ),
+                )
+E               AttributeError: '_FakeEvent' object has no attribute 'attendees'
+
+holdspeak/db/calendar_events.py:128: AttributeError
+_________ test_meeting_delete_severs_source_without_deleting_decision __________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-564/test_meeting_delete_severs_sou0')
+
+    def test_meeting_delete_severs_source_without_deleting_decision(tmp_path) -> None:
+        db = Database(tmp_path / "sever.db")
+        _meeting(db, "meeting-1")
+        _artifact(db, "artifact-1", "meeting-1", [{"decision": "Memory survives"}])
+        db.decisions.reconcile_artifact("artifact-1")
+        decision_id = db.decisions.list()[0].id
+    
+        assert db.meetings.delete_meeting("meeting-1") is True
+        survivor = db.decisions.get(decision_id)
+        assert survivor is not None
+>       assert survivor.source_state == "source_deleted"
+E       AssertionError: assert 'linked' == 'source_deleted'
+E         
+E         - source_deleted
+E         + linked
+
+tests/unit/test_decisions.py:217: AssertionError
+____________ test_primary_copy_has_no_prohibited_operational_drift _____________
+
+    def test_primary_copy_has_no_prohibited_operational_drift() -> None:
+        recorded = _recorded_copy_debt()
+        problems = [
+            item
+            for item in violations(inventory(REPO))
+            if (str(item.path), item.rule_id, item.text) not in recorded
+        ]
+>       assert not problems, "Primary product-copy drift:\n  " + "\n  ".join(
+            f"{item.path}:{item.line}: {item.rule_id}: {item.text}"
+            for item in problems
+        )
+E       AssertionError: Primary product-copy drift:
+E           web/src/desk/windowSend.tsx:295: failure-missing-facts: [data-testid=send-preview], [data-testid=preview-refused], [data-testid=preview-failed]
+E       assert not [CopyViolation(rule_id='failure-missing-facts', path='web/src/desk/windowSend.tsx', line=295, text='[data-testid=send-...xt valid action, and the destination when relevant (missing: retained_work, next_action, destination_when_relevant).')]
+
+tests/unit/test_product_copy.py:74: AssertionError
+__ test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer ___
+
+    def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() -> None:
+        definitions, references, pointers, profile_ids = _routing_ast_inventory(REPO)
+        assert definitions == ROUTING_RESOLVER_DEFINITIONS
+>       assert references == ROUTING_RESOLVER_REFERENCES
+E       AssertionError: assert {'holdspeak/d...acement', ...} == {'holdspeak/d...acement', ...}
+E         
+E         Extra items in the left set:
+E         'holdspeak/mcp/tools.py:1156:import:resolve_meeting_placement'
+E         Extra items in the right set:
+E         'holdspeak/mcp/tools.py:1154:import:resolve_meeting_placement'
+E         Use -v to get more diff
+
+tests/unit/test_phase143_routing_authority_census.py:366: AssertionError
+_____________________ test_no_left_border_rails_in_web_css _____________________
+
+    def test_no_left_border_rails_in_web_css() -> None:
+        offenders: list[str] = []
+        for css in sorted(WEB_SRC.rglob("*.css")):
+            for lineno, line in enumerate(
+                css.read_text(encoding="utf-8").splitlines(), start=1
+            ):
+                if "border-left" not in line:
+                    continue
+                if HARMLESS.search(line):
+                    continue
+                rel = css.relative_to(ROOT)
+                offenders.append(f"{rel}:{lineno}: {line.strip()}")
+>       assert not offenders, (
+            "the left rail is banned (HS-101 canon rule 6) — remove the "
+            "border-left and use the aerogel inset (.surface-aerogel / "
+            "--desk-aerogel-* tokens) instead:\n" + "\n".join(offenders)
+        )
+E       AssertionError: the left rail is banned (HS-101 canon rule 6) — remove the border-left and use the aerogel inset (.surface-aerogel / --desk-aerogel-* tokens) instead:
+E         web/src/desk/components/chrome-menus.css:727: border-left: 1px solid var(--wb-ink);
+E         web/src/desk/components/chrome-menus.css:809: border-left: 1px solid var(--wb-ink);
+E         web/src/desk/components/dock.css:408: border-left: 1px solid var(--wb-ink);
+E         web/src/desk/components/dock.css:655: border-left: 1px solid var(--wb-ink);
+E         web/src/desk/components/pullout.css:759: border-left-width: 0;
+E         web/src/desk/components/window-chrome.css:159: border-left: 1px solid var(--wb-ink);
+E         web/src/desk/components/window-chrome.css:925: border-left: 1px solid var(--wb-ink);
+E       assert not ['web/src/desk/components/chrome-menus.css:727: border-left: 1px solid var(--wb-ink);', 'web/src/desk/components/chrom...9: border-left-width: 0;', 'web/src/desk/components/window-chrome.css:159: border-left: 1px solid var(--wb-ink);', ...]
+
+tests/unit/test_interior_canon_guard.py:35: AssertionError
+__________ test_phase143_every_product_runner_entrance_has_one_owner ___________
+
+    def test_phase143_every_product_runner_entrance_has_one_owner() -> None:
+        every = set(_runner_entrances())
+        pinned = set(OPERATION_CONTRACT_VARIABLE_SITES)
+>       assert pinned <= every, (
+            "a pinned operation-contract site moved or is gone; re-read it and "
+            f"re-anchor: stale={sorted(pinned - every)}"
+        )
+E       AssertionError: a pinned operation-contract site moved or is gone; re-read it and re-anchor: stale=['holdspeak/mcp/resources.py:578|read_resource|call', 'holdspeak/mcp/tools.py:653|_primitive_list|call', 'holdspeak/mcp/tools.py:659|_primitive_get|call', 'holdspeak/operations.py:2162|OperationRegistry.invoke_receipted|call']
+E       assert {'holdspeak/m...ceipted|call'} <= {'holdspeak/k...ed|call', ...}
+E         
+E         Extra items in the left set:
+E         'holdspeak/mcp/resources.py:578|read_resource|call'
+E         'holdspeak/operations.py:2162|OperationRegistry.invoke_receipted|call'
+E         'holdspeak/mcp/tools.py:659|_primitive_get|call'
+E         'holdspeak/mcp/tools.py:653|_primitive_list|call'
+
+tests/unit/test_phase143_inference_capability_census.py:675: AssertionError
+______________ test_phase143_shared_helpers_have_semantic_callers ______________
+
+    def test_phase143_shared_helpers_have_semantic_callers() -> None:
+        live = set(_semantic_helper_calls())
+>       assert live == set(SEMANTIC_HELPER_CALLERS), (
+            "shared Ask/Recipe helper callers changed; classify the public semantic "
+            "operation rather than assigning the helper one false capability.\n"
+            f"unregistered={sorted(live - set(SEMANTIC_HELPER_CALLERS))}\n"
+            f"stale={sorted(set(SEMANTIC_HELPER_CALLERS) - live)}"
+        )
+E       AssertionError: shared Ask/Recipe helper callers changed; classify the public semantic operation rather than assigning the helper one false capability.
+E         unregistered=['holdspeak/mcp/tools.py:1022|dispatch|run']
+E         stale=['holdspeak/mcp/tools.py:1020|dispatch|run']
+E       assert {'holdspeak/m...dispatch|ask'} == {'holdspeak/m...dispatch|ask'}
+E         
+E         Extra items in the left set:
+E         'holdspeak/mcp/tools.py:1022|dispatch|run'
+E         Extra items in the right set:
+E         'holdspeak/mcp/tools.py:1020|dispatch|run'
+E         Use -v to get more diff
+
+tests/unit/test_phase143_inference_capability_census.py:695: AssertionError
+____________ test_summary_wire_fixture_matches_real_producer_states ____________
+
+tmp_path = PosixPath('/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-564/test_summary_wire_fixture_matc0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x12462db70>
+
+    def test_summary_wire_fixture_matches_real_producer_states(
+        tmp_path: Path, monkeypatch: Any
+    ) -> None:
+        """Keep the fixture equal to newly minted producer wires, ignoring identities."""
+        fixture = json.loads(FIXTURE.read_text())
+        assert fixture["schema"] == "PHILO-3-02-summary-wire@1"
+        produced = _produce_summary_wire_cases(tmp_path / "producer", monkeypatch)
+        expected_cases = [
+            {"state": state, **wire} for state, wire in produced.items()
+        ]
+>       assert _normalise_wire(fixture["cases"]) == _normalise_wire(expected_cases)
+E       AssertionError: assert [{'detail': {...nal_failure'}] == [{'detail': {...nal_failure'}]
+E         
+E         At index 0 diff: {'state': 'imported_off', 'list': {'id': '<producer-volatile>', 'started_at': '<producer-volatile>', 'ended_at': '<producer-volatile>', 'title': 'Architecture boundary review', 'duration_seconds': 34.67525, 'segment_count': 2, 'action_item_count': 0, 'tags': ['architecture'], 'intel_status': 'disabled', 'intel_status_detail': 'No summary yet. Import does not run the summary — ask for it on the meeting.', 'intel_model_host': None, 'has_summary': False, 'intel_duration_s': None, 'capture_status': 'finalized', 'capture_failure': None, 'capture_checkpoint_s...
+E         
+E         ...Full output truncated (2 lines hidden), use '-vv' to show
+
+tests/unit/test_philo3_summary_detail.py:375: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.intel_queue:intel_queue.py:143 Deferred intel failed for meeting m-philo3-summary (attempt 1/6): retrying in 60s
+_________________________________ test_ratchet _________________________________
+
+    def test_ratchet():
+        """For every rule, the current hit count must be <= the ceiling count.
+    
+        Failure message names the rule, the delta, and the faces whose count
+        rose — so a developer sees exactly what to fix.
+        """
+        ceiling = json.loads(CEILING_PATH.read_text())
+        result = _get_scan()
+        totals = result["totals"]
+        face_rule_counts = result["face_rule_counts"]
+        ceiling_faces = ceiling.get("faces", {})
+    
+        regressions: list[str] = []
+        for rule, current in totals["per_rule"].items():
+            ceiling_val = ceiling["per_rule"].get(rule, 0)
+            if current > ceiling_val:
+                delta = current - ceiling_val
+                risen: list[str] = []
+                for face, counts in face_rule_counts.items():
+                    face_current = counts.get(rule, 0)
+                    face_ceiling = ceiling_faces.get(face, {}).get(rule, 0)
+                    if face_current > face_ceiling:
+                        risen.append(f"  {face}: {face_ceiling} -> {face_current}")
+                detail = "\n".join(risen) if risen else "  (no single face rose)"
+                regressions.append(
+                    f"{rule}: ceiling {ceiling_val} -> current {current} (+{delta})\n{detail}"
+                )
+    
+>       assert not regressions, (
+            "UX canon ratchet broken — new violations introduced:\n\n"
+            + "\n\n".join(regressions)
+            + "\n\nFix the violations, or if this is a deliberate trade-off, "
+            "run: python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json"
+        )
+E       AssertionError: UX canon ratchet broken — new violations introduced:
+E         
+E         raw-ids: ceiling 17 -> current 18 (+1)
+E           PeopleCore: 12 -> 13
+E         
+E         Fix the violations, or if this is a deliberate trade-off, run: python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json
+E       assert not ['raw-ids: ceiling 17 -> current 18 (+1)\n  PeopleCore: 12 -> 13']
+
+tests/unit/test_ux_canon_ratchet.py:89: AssertionError
+________________ test_the_front_door_is_the_desk_with_the_guard ________________
+
+    def test_the_front_door_is_the_desk_with_the_guard() -> None:
+        routes = (REPO / "web/src/routes.tsx").read_text(encoding="utf-8")
+        desk = (REPO / "web/src/desk/DeskApp.tsx").read_text(encoding="utf-8")
+        assert 'path: "/"' in routes and 'label: "Desk"' in routes
+>       assert "setup?.arrival_required" in desk, "the first-value state left the front door"
+E       AssertionError: the first-value state left the front door
+E       assert 'setup?.arrival_required' in "// The Desk route — the web app's front door (HS-73-02).\n//\n// React + Vite in the one Web tree. Full-bleed: the wo...SnapGhost />}\n      {!arrivalRequired && <Expose />}\n      {!arrivalRequired && <Switcher />}\n    </div>\n  );\n}\n"
+
+tests/unit/test_desk_locks.py:86: AssertionError
+____________ test_the_http_routes_keep_their_envelopes_and_statuses ____________
+
+hub = <test_philo5_the_loop.Hub object at 0x11b5e8ad0>
+room = {'meeting': 'm-compat', 'pid': 'proj-f3ecdd19c1ac', 'update': 'pupd_daeb48c26d8a4be986b6ef48aa97c3ce'}
+
+    def test_the_http_routes_keep_their_envelopes_and_statuses(hub: Hub, room: dict[str, str]) -> None:
+        c, pid = hub.client, room["pid"]
+        ok = [
+            ("GET", "/api/projects", None, {"projects"}),
+            ("GET", f"/api/projects/{pid}/items", None, {"items", "limit", "offset"}),
+            ("POST", f"/api/projects/{pid}/items", {"item_type": "milestone", "title": "M"}, {"success", "item"}),
+            ("GET", f"/api/projects/{pid}/resources", None, {"resources"}),
+            ("GET", f"/api/projects/{pid}/updates", None, {"updates"}),
+            ("PATCH", f"/api/projects/{pid}", {"description": "d"}, {"success", "project"}),
+        ]
+        for method, path, body, keys in ok:
+            resp = c.request(method, path, json=body) if body is not None else c.request(method, path)
+            assert resp.status_code == 200, (path, resp.text)
+>           assert _keys(resp.json()) == keys, (path, sorted(resp.json()))
+E           AssertionError: ('/api/projects/proj-f3ecdd19c1ac/updates', ['latest_published_update_id', 'updates'])
+E           assert {'latest_publ...d', 'updates'} == {'updates'}
+E             
+E             Extra items in the left set:
+E             'latest_published_update_id'
+E             Use -v to get more diff
+
+tests/unit/test_philo9_compat.py:128: AssertionError
+____________ test_empty_vtt_import_leaves_import_failed_on_the_wire ____________
+
+client = <starlette.testclient.TestClient object at 0x11b64a350>
+no_transcriber = None
+
+    def test_empty_vtt_import_leaves_import_failed_on_the_wire(client, no_transcriber):
+        """Characterisation (may pass pre-fix): the producer says import_failed."""
+        meeting_id, row, detail = _mint_failed_import(client)
+        assert _state(detail) == "import_failed", detail.get("intel_status")
+        assert detail.get("segments") == []
+        assert _state(row) == "import_failed", row.get("intel_status")
+    
+        wire = {
+            "list_row": _normalise(row, meeting_id),
+            "detail": _normalise(detail, meeting_id),
+        }
+        if os.environ.get("PHILO6_WRITE_FIXTURE") == "1":
+            FIXTURE.parent.mkdir(parents=True, exist_ok=True)
+            FIXTURE.write_text(json.dumps(wire, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        recorded = json.loads(FIXTURE.read_text(encoding="utf-8"))
+>       assert recorded == wire, (
+            "the vitest fixture drifted from the real producer; "
+            "re-run with PHILO6_WRITE_FIXTURE=1"
+        )
+E       AssertionError: the vitest fixture drifted from the real producer; re-run with PHILO6_WRITE_FIXTURE=1
+E       assert {'detail': {'...': None, ...}} == {'detail': {'...s': 0.0, ...}}
+E         
+E         Differing items:
+E         {'list_row': {'action_item_count': 0, 'calendar_event_id': None, 'capture_checkpoint_seconds': 0.0, 'capture_failure': None, ...}} != {'list_row': {'action_item_count': 0, 'attendees': [], 'calendar_event_id': None, 'capture_checkpoint_seconds': 0.0, ...}}
+E         {'detail': {'bookmarks': [], 'calendar_event_id': None, 'capture_checkpoint_at': None, 'capture_checkpoint_seconds': 0.0, ...}} != {'detail': {'bookmarks': [], 'calendar_event_id': None, 'capture_checkpoint_at': None, 'capture_checkpoint_seconds': 0.0, ...}}
+E         Use -v to get more diff
+
+tests/unit/test_philo6_01_import_badge.py:149: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  holdspeak.services.meeting_service:meeting_service.py:323 meeting import ae07677c failed: No cues could be parsed from tmpk4qaekhl.vtt. The file has a WEBVTT header but no readable cue blocks — nothing was imported.
+=========================== short test summary info ============================
+FAILED tests/unit/test_philo10_atlas.py::test_the_counts_over_every_atlas_file
+FAILED tests/unit/test_philo9_atlas.py::test_the_counts_over_every_atlas_file
+FAILED tests/unit/test_phase200_doc_claims.py::test_registered_claim_matches_its_state[holds:UX-CANON.md:179]
+FAILED tests/unit/test_phase200_doc_claims.py::test_registered_claim_matches_its_state[holds:useDeskChangedRefresh.ts:15]
+FAILED tests/unit/test_graph_walk_calibration.py::test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires
+FAILED tests/unit/test_hs172_people_sources.py::TestBriefEnrichment::test_watch_summary_prs_waiting
+FAILED tests/unit/test_hs172_people_sources.py::TestBriefEnrichment::test_watch_summary_jira_overdue
+FAILED tests/unit/test_hs172_people_sources.py::TestBriefEnrichment::test_watch_summary_no_writes
+FAILED tests/unit/test_hs172_people_sources.py::TestBriefEnrichment::test_last_meeting_present
+FAILED tests/unit/test_hs172_people_sources.py::TestNoPronounInWire::test_watch_summary_no_pronouns
+FAILED tests/unit/test_philo4_01_atlas_contracts.py::test_the_reload_claim_points_at_the_quiet_branch
+FAILED tests/unit/test_hs175_calendar_sources.py::TestCalendarSourcesRoute::test_source_stats_from_db
+FAILED tests/unit/test_hs175_calendar_sources.py::TestCalendarSourcesRoute::test_matched_this_week
+FAILED tests/unit/test_hs175_calendar_sources.py::TestSourcesPayloadClocks::test_event_count_names_what_it_counts
+FAILED tests/unit/test_hs175_calendar_sources.py::TestSourcesPayloadClocks::test_last_read_is_an_instant_and_a_local_clock
+FAILED tests/unit/test_hs175_calendar_sources.py::TestSourcesPayloadClocks::test_matched_this_week_uses_the_local_week
+FAILED tests/unit/test_hs175_calendar_sources.py::TestDstEdgeSources::test_matched_this_week_across_fall_back
+FAILED tests/unit/test_decisions.py::test_meeting_delete_severs_source_without_deleting_decision
+FAILED tests/unit/test_product_copy.py::test_primary_copy_has_no_prohibited_operational_drift
+FAILED tests/unit/test_phase143_routing_authority_census.py::test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer
+FAILED tests/unit/test_interior_canon_guard.py::test_no_left_border_rails_in_web_css
+FAILED tests/unit/test_phase143_inference_capability_census.py::test_phase143_every_product_runner_entrance_has_one_owner
+FAILED tests/unit/test_phase143_inference_capability_census.py::test_phase143_shared_helpers_have_semantic_callers
+FAILED tests/unit/test_philo3_summary_detail.py::test_summary_wire_fixture_matches_real_producer_states
+FAILED tests/unit/test_ux_canon_ratchet.py::test_ratchet - AssertionError: UX...
+FAILED tests/unit/test_desk_locks.py::test_the_front_door_is_the_desk_with_the_guard
+FAILED tests/unit/test_philo9_compat.py::test_the_http_routes_keep_their_envelopes_and_statuses
+FAILED tests/unit/test_philo6_01_import_badge.py::test_empty_vtt_import_leaves_import_failed_on_the_wire
+28 failed, 1 passed in 18.03s
