@@ -23,23 +23,43 @@ import { writeFailureReason } from "../desk/hooks/useWriteReceipt";
 const clock = (d: Date) =>
   `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
-export function MeetingDecideWell({ meetingId, title, startedAt, summary }: {
+/** An unfinished title, per meeting: a draft never moves to another meeting
+ * (Astra's single pass: a title typed under A posted under B when the
+ * Meetings record reused the well). Back on A, A's own draft returns. */
+const drafts = new Map<string, string>();
+
+interface DecideWellProps {
   meetingId: string;
   title: string;
   startedAt?: string | null;
   summary?: string | null;
-}) {
+}
+
+/** One well per meeting: keyed by the meeting, so no state crosses meetings. */
+export function MeetingDecideWell(props: DecideWellProps) {
+  return <DecideWellFor key={props.meetingId} {...props} />;
+}
+
+function DecideWellFor({ meetingId, title, startedAt, summary }: DecideWellProps) {
   const decisions = useDesk((s) => s.items.decision);
   const made = decisionsFromMeeting(decisions, meetingId);
-  const [naming, setNaming] = useState(false);
-  const [draft, setDraft] = useState("");
+  const [naming, setNaming] = useState(() => drafts.has(meetingId));
+  const [draft, setDraftState] = useState(() => drafts.get(meetingId) ?? "");
+  const setDraft = (next: string) => {
+    drafts.set(meetingId, next);
+    setDraftState(next);
+  };
+  const forget = () => {
+    drafts.delete(meetingId);
+    setDraftState("");
+  };
   const [busy, setBusy] = useState(false);
   const [refusal, setRefusal] = useState("");
   const [receipt, setReceipt] = useState<{ id: string; at: string } | null>(null);
 
   const abandon = () => {
     setNaming(false);
-    setDraft("");
+    forget();
     setRefusal("");
   };
   const save = async () => {
@@ -53,7 +73,7 @@ export function MeetingDecideWell({ meetingId, title, startedAt, summary }: {
       });
       setReceipt({ id: decision.id, at: clock(new Date()) });
       setNaming(false);
-      setDraft("");
+      forget();
       await useDesk.getState().refresh();
     } catch (cause) {
       setRefusal(writeFailureReason(cause));
@@ -112,7 +132,7 @@ export function MeetingDecideWell({ meetingId, title, startedAt, summary }: {
         </div>
       ) : (
         <div className="meeting-decide-line">
-          <Button dense variant="primary" data-testid="meeting-decide" onClick={() => setNaming(true)}>
+          <Button dense variant="primary" data-testid="meeting-decide" onClick={() => { setNaming(true); setDraft(""); }}>
             Decide
           </Button>
         </div>

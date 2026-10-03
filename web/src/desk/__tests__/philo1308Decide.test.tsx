@@ -171,3 +171,40 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
     expect((screen.getByRole("button", { name: "Save" }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
+
+describe("PHILO-13-08 a draft belongs to its meeting (Astra's single pass)", () => {
+  const props = (id: string) => ({
+    meetingId: id, title: `Meeting ${id}`, startedAt: "2026-10-01T09:00:00", summary: null,
+  });
+
+  it("a title typed under A never files under B; back on A it is A's again", async () => {
+    const view = render(<MeetingDecideWell {...props("m-A")} />);
+    fireEvent.click(screen.getByRole("button", { name: "Decide" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Decision title" }), { target: { value: "Typed under A" } });
+
+    // He selects meeting B: the same seat, a new meeting.
+    view.rerender(<MeetingDecideWell {...props("m-B")} />);
+    expect(screen.queryByDisplayValue("Typed under A")).toBeNull();
+    const save = screen.queryByRole("button", { name: "Save" });
+    if (save) await act(async () => { fireEvent.click(save); });
+    expect(hub.posts).toEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Decide" }));
+    const b = screen.getByRole("textbox", { name: "Decision title" });
+    fireEvent.change(b, { target: { value: "Typed under B" } });
+    await act(async () => { fireEvent.keyDown(b, { key: "Enter" }); });
+    await waitFor(() => expect(hub.posts).toHaveLength(1));
+    expect(hub.posts[0].title).toBe("Typed under B");
+    expect(hub.posts[0].tags).toEqual(["meeting:m-B", "project:proj-1"]);
+    expect(String(hub.posts[0].context_markdown)).toContain("Meeting: Meeting m-B");
+
+    // Back on A: A's own draft, and it files under A.
+    view.rerender(<MeetingDecideWell {...props("m-A")} />);
+    const a = screen.getByRole("textbox", { name: "Decision title" }) as HTMLInputElement;
+    expect(a.value).toBe("Typed under A");
+    await act(async () => { fireEvent.keyDown(a, { key: "Enter" }); });
+    await waitFor(() => expect(hub.posts).toHaveLength(2));
+    expect(hub.posts[1].title).toBe("Typed under A");
+    expect(hub.posts[1].tags).toEqual(["meeting:m-A", "project:proj-1"]);
+  });
+});

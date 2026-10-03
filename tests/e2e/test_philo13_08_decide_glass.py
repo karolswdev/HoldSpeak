@@ -36,6 +36,8 @@ SIZES = {1440: 900, 393: 852}
 T = 20_000
 MEETING = "p13-checkout"
 MEETING_TITLE = "Checkout latency review"
+MEETING_B = "p13-hiring"
+MEETING_B_TITLE = "Hiring debrief"
 RECEIPT = re.compile(r"^✓ DECIDED \d\d:\d\d$")
 
 
@@ -51,6 +53,17 @@ def _seed_meeting(db: Any) -> None:
         ],
         intel=IntelSnapshot(timestamp=8.0, topics=["Latency"], summary="p99 doubled after the cache change.",
                             action_items=[{"id": "p13-08-a1", "task": "Roll back the cache", "owner": "Priya"}])))
+
+
+def _seed_second_meeting(db: Any) -> None:
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    db.meetings.save_meeting(MeetingState(
+        id=MEETING_B, started_at=datetime(2026, 9, 30, 14, 0, 0), ended_at=datetime(2026, 9, 30, 14, 20, 0),
+        title=MEETING_B_TITLE,
+        segments=[TranscriptSegment(text="We hire for the platform team.", speaker="Sam", start_time=0.0, end_time=3.0)],
+        intel=IntelSnapshot(timestamp=3.0, topics=["Hiring"], summary="Run a second ops interview.",
+                            action_items=[])))
 
 
 def _decision_rows(db: Any) -> list[dict[str, Any]]:
@@ -168,6 +181,31 @@ class TestDecideGlass:
         gestures += 1  # type + confirm
         return gestures
 
+    def _switch_to(self, page: Any, meeting_id: str) -> None:
+        """Select another meeting in the SAME Meetings record."""
+        if not self.touch:
+            self._press(page.get_by_test_id(f"meeting-row-{meeting_id}").locator(".meetings-stream-row-body"))
+            return
+        # 393: one window at a time, and the record folds its list. He sends
+        # Meetings to the back (it stays open, the same record), steps to the
+        # Chair's week and presses Open on the other meeting: the Meetings
+        # window comes back with that meeting selected (HistoryCore's scope).
+        title = MEETING_B_TITLE if meeting_id == MEETING_B else MEETING_TITLE
+        self._press(page.get_by_role("button", name="To back Meetings", exact=True))
+        page.wait_for_timeout(400)
+        opener = page.locator("li, .surface-row", has_text=title).get_by_test_id("arrival-meeting-open").first
+        for _ in range(6):
+            if opener.count() and opener.is_visible():
+                break
+            front = page.evaluate("""() => [...document.querySelectorAll('.desk-window-shell')]
+                .filter((w) => w.checkVisibility() && w.getBoundingClientRect().width > 0 && w.getAttribute('aria-label') !== 'Meetings')
+                .map((w) => w.getAttribute('aria-label'))[0] || null""")
+            assert front, "no Chair window to step past"
+            self._press(page.get_by_role("button", name=f"To back {front}", exact=True))
+            page.wait_for_timeout(400)
+        self._press(opener)
+        page.locator(".desk-window-shell[aria-label='Meetings']").wait_for(timeout=T)
+
     def _read_back(self, page: Any, decision_id: str, project_id: str) -> dict[str, Any]:
         hub = _api(page, "GET", f"/api/decisions/{decision_id}", token=TOKEN)["decision"]
         rel = _api(page, "GET", f"/api/desk/relationships/decision:{decision_id}", token=TOKEN)
@@ -279,6 +317,61 @@ class TestDecideGlass:
                 titles = [r["title"] for r in _decision_rows(self.db)]
                 assert titles == [title, f"Adopt feature flags {width}"], titles
                 assert "New decision" not in titles
+                assert not [e for e in errors if "ResizeObserver" not in e], errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_draft_never_moves_to_another_meeting(self, width: int) -> None:
+        """Astra's single pass: a title typed under A, then B selected, then
+        Save -- A's title filed under B. Now the draft stays with A."""
+        from playwright.sync_api import sync_playwright
+
+        _seed_meeting(self.db)
+        _seed_second_meeting(self.db)
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                project_id = self._project(page)
+                well = self._meetings_record(page)  # meeting A selected
+                self._press(well.get_by_role("button", name="Decide", exact=True))
+                well.get_by_role("textbox", name="Decision title").fill("Typed under A")
+                self._shot(page, "09-draft-under-a", width)
+                # He opens meeting B in the same record: the list row at 1440;
+                # at 393 the list folds behind the record, so the Chair's Open.
+                self._switch_to(page, MEETING_B)
+                page.get_by_text(MEETING_B_TITLE, exact=True).last.wait_for(timeout=T)
+                well_b = page.get_by_test_id("meeting-decide-well").first
+                well_b.wait_for(timeout=T)
+                assert well_b.get_by_role("textbox", name="Decision title").count() == 0, \
+                    "A's unfinished title is in B's well"
+                save = well_b.get_by_role("button", name="Save", exact=True)
+                if save.count():
+                    self._press(save)
+                    page.wait_for_timeout(600)
+                assert _decision_rows(self.db) == [], _decision_rows(self.db)
+                self._shot(page, "10-meeting-b-no-draft", width)
+                # B's own decision files under B only.
+                assert self._decide(page, well_b, "Typed under B") == 2
+                page.get_by_test_id("decide-receipt").wait_for(timeout=T)
+                rows = _decision_rows(self.db)
+                assert [(r["title"], r["tags"]) for r in rows] == [("Typed under B", [f"meeting:{MEETING_B}"])], rows
+                assert rows[0]["context"].startswith(f"Meeting: {MEETING_B_TITLE}"), rows
+                # Back on A: A's own draft returns and files under A.
+                self._switch_to(page, MEETING)
+                box = page.get_by_test_id("meeting-decide-well").first.get_by_role("textbox", name="Decision title")
+                box.wait_for(timeout=T)
+                assert box.input_value() == "Typed under A"
+                self._shot(page, "11-back-on-a-own-draft", width)
+                self._press(page.get_by_test_id("meeting-decide-well").first.get_by_role("button", name="Save", exact=True))
+                page.wait_for_function("() => !document.querySelector('[data-testid=decide-naming]')", timeout=T)
+                rows = _decision_rows(self.db)
+                by_title = {r["title"]: r["tags"] for r in rows}
+                assert by_title == {
+                    "Typed under B": [f"meeting:{MEETING_B}"],
+                    "Typed under A": [f"meeting:{MEETING}", f"project:{project_id}"],
+                }, rows
                 assert not [e for e in errors if "ResizeObserver" not in e], errors
             finally:
                 browser.close()
