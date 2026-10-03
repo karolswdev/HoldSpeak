@@ -172,6 +172,7 @@ class TestLiveDock:
         words = "READ MEETINGS FAILED · HUB UNREACHABLE"
         label = page.locator(".write-receipt", has_text=words).first
         label.wait_for(timeout=T)
+        _settle(page)  # the phone window yields to the receipt row in a layout pass; measure after it
         text = " ".join(label.locator(".write-receipt-label").inner_text().split())
         assert text == words, text
         owned: dict[str, Any] = {}
