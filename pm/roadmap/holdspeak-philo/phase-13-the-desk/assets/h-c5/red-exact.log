@@ -1,0 +1,140 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+_ TestLatestPublishedOrdering.test_no_published_update_is_null_and_draft_order_is_preserved _
+
+self = <tests.integration.test_h_c5_exact.TestLatestPublishedOrdering object at 0x10cd45bd0>
+rig = (<holdspeak.db.core.Database object at 0x10cccfa10>, <starlette.testclient.TestClient object at 0x10d07a900>)
+
+    def test_no_published_update_is_null_and_draft_order_is_preserved(self, rig) -> None:
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-order-drafts")
+    
+        empty = client.get(f"/api/projects/{pid}/updates")
+        assert empty.status_code == 200
+>       assert empty.json() == {
+            "updates": [],
+            "latest_published_update_id": None,
+        }
+E       AssertionError: assert {'updates': []} == {'latest_publ...'updates': []}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Right contains 1 more item:
+E         {'latest_published_update_id': None}
+E         Use -v to get more diff
+
+tests/integration/test_h_c5_exact.py:260: AssertionError
+_ TestLatestPublishedOrdering.test_same_second_equal_revision_uses_later_rowid _
+
+self = <tests.integration.test_h_c5_exact.TestLatestPublishedOrdering object at 0x10cd460d0>
+rig = (<holdspeak.db.core.Database object at 0x10cf3e0d0>, <starlette.testclient.TestClient object at 0x10cf3df90>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d0910f0>
+
+    def test_same_second_equal_revision_uses_later_rowid(self, rig, monkeypatch) -> None:
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-order-tie")
+        _set_update_clock(monkeypatch, "2026-07-01T10:00:00")
+    
+        first = _draft(client, pid)
+        first_published = _publish(client, first["id"])
+        second = _draft(client, pid)
+        second_published = _publish(client, second["id"])
+        assert first_published["draft_revision"] == second_published["draft_revision"] == 1
+        assert first_published["published_at"] == second_published["published_at"]
+    
+        first_rowid = _rowid(db, first["id"])
+        second_rowid = _rowid(db, second["id"])
+        assert second_rowid > first_rowid
+    
+        response = client.get(f"/api/projects/{pid}/updates")
+        assert response.status_code == 200
+        body = response.json()
+>       assert [row["id"] for row in body["updates"][:2]] == [
+            second["id"], first["id"],
+        ]
+E       AssertionError: assert ['pupd_8688b2...f8b0b21c3342'] == ['pupd_b78bc7...bc138deb84f4']
+E         
+E         At index 0 diff: 'pupd_8688b2fb8d354b7c918cbc138deb84f4' != 'pupd_b78bc75814b24c21a78cf8b0b21c3342'
+E         Use -v to get more diff
+
+tests/integration/test_h_c5_exact.py:309: AssertionError
+_ TestLatestPublishedOrdering.test_same_second_published_tie_ignores_high_draft_revision _
+
+self = <tests.integration.test_h_c5_exact.TestLatestPublishedOrdering object at 0x10cd85940>
+rig = (<holdspeak.db.core.Database object at 0x10d365f90>, <starlette.testclient.TestClient object at 0x10d477390>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d3d45f0>
+
+    def test_same_second_published_tie_ignores_high_draft_revision(self, rig, monkeypatch) -> None:
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-order-revision")
+    
+        _set_update_clock(monkeypatch, "2026-08-01T12:00:00")
+        first = _draft(client, pid)
+        second = _regenerate(client, first["id"])
+        third = _regenerate(client, second["id"])
+        assert third["draft_revision"] == 3
+        high_revision = _publish(client, third["id"])
+    
+        # The later route publication starts at revision 1, but has the same
+        # second-precision timestamp as the high-revision publication.
+        _set_update_clock(monkeypatch, "2026-08-01T12:00:00")
+        later = _draft(client, pid)
+        assert later["draft_revision"] == 1
+        later_published = _publish(client, later["id"])
+        assert high_revision["published_at"] == later_published["published_at"]
+        assert _rowid(db, later["id"]) > _rowid(db, high_revision["id"])
+    
+        response = client.get(f"/api/projects/{pid}/updates")
+        assert response.status_code == 200
+        body = response.json()
+>       assert [row["id"] for row in body["updates"][:2]] == [
+            later["id"], high_revision["id"],
+        ]
+E       AssertionError: assert ['pupd_6e1855...7aa2cf871df2'] == ['pupd_48e480...7cb0bc748697']
+E         
+E         At index 0 diff: 'pupd_6e18555ae466438c9f557cb0bc748697' != 'pupd_48e4805467dc4f509825819360445248'
+E         Use -v to get more diff
+
+tests/integration/test_h_c5_exact.py:347: AssertionError
+_______ TestLatestPublishedOrdering.test_published_at_beats_later_rowid ________
+
+self = <tests.integration.test_h_c5_exact.TestLatestPublishedOrdering object at 0x10cd85cd0>
+rig = (<holdspeak.db.core.Database object at 0x10d477b10>, <starlette.testclient.TestClient object at 0x10d6228b0>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d4ff8a0>
+
+    def test_published_at_beats_later_rowid(self, rig, monkeypatch) -> None:
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-order-published-at")
+    
+        # The first publication has the lower rowid and the newer timestamp.
+        _set_update_clock(monkeypatch, "2026-08-02T12:00:00")
+        newer = _draft(client, pid)
+        newer_published = _publish(client, newer["id"])
+    
+        # Regenerate the later draft to revision 2.  Its rowid is greater, but
+        # its controlled publication time is older than the first row.
+        _set_update_clock(monkeypatch, "2026-08-01T12:00:00")
+        older = _draft(client, pid)
+        older_revision_two = _regenerate(client, older["id"])
+        assert older_revision_two["draft_revision"] == 2
+        older_published = _publish(client, older_revision_two["id"])
+        assert newer_published["published_at"] > older_published["published_at"]
+        assert _rowid(db, newer["id"]) < _rowid(db, older_published["id"])
+    
+        response = client.get(f"/api/projects/{pid}/updates")
+        assert response.status_code == 200
+        body = response.json()
+>       assert [row["id"] for row in body["updates"][:2]] == [
+            newer["id"], older_published["id"],
+        ]
+E       AssertionError: assert ['pupd_acb698...d23de9eeaf14'] == ['pupd_76e03c...115c9887fc2a']
+E         
+E         At index 0 diff: 'pupd_acb698e5f8dc47b68994115c9887fc2a' != 'pupd_76e03cf64e874260908dd23de9eeaf14'
+E         Use -v to get more diff
+
+tests/integration/test_h_c5_exact.py:384: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/test_h_c5_exact.py::TestLatestPublishedOrdering::test_no_published_update_is_null_and_draft_order_is_preserved
+FAILED tests/integration/test_h_c5_exact.py::TestLatestPublishedOrdering::test_same_second_equal_revision_uses_later_rowid
+FAILED tests/integration/test_h_c5_exact.py::TestLatestPublishedOrdering::test_same_second_published_tie_ignores_high_draft_revision
+FAILED tests/integration/test_h_c5_exact.py::TestLatestPublishedOrdering::test_published_at_beats_later_rowid
+4 failed in 1.54s

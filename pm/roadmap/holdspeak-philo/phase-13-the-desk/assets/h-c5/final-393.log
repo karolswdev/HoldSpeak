@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 2d1d791a0b12b1f42fecdec0903a74a86a1e7d0b dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-h-c5.json
+RUNTIME: build=['index-NBVXyeen.js'] hub=http://127.0.0.1:63350 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-y1dyfjwp/.local/share/holdspeak/holdspeak.db engine=none
+JOB: p9
+VERDICT: pass terminal=settled
+EVIDENCE: ['.tmp/h-c5/final-393/20261003T165435Z-case.h_c5.update.latest_first-astra-393/before.png', '.tmp/h-c5/final-393/20261003T165435Z-case.h_c5.update.latest_first-astra-393/after.png']
+NOTE: predicate: all_of: readable_text: 'PUBLISHED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 20, 'y': 230, 'w': 147, 'h': 18} | readable_text: 'REV 1' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 20, 'y': 230, 'w': 147, 'h': 18}
