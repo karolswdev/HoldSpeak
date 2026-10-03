@@ -380,7 +380,12 @@ def _run_recall(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> 
             assert (page.get_by_test_id("recall-display").text_content() or "").strip() == "Nothing matches"
             assert page.get_by_test_id("recall-display").get_attribute("data-accent") is None
             assert page.get_by_test_id("recall-miss").text_content().strip() == "▤One project searched, it does not hold this"
-            assert page.get_by_role("group", name="Filter the memory").get_by_role("button").count() == 5
+            # the filters are kept: five tokens, or at 393 (C8's 12 px floor) the
+            # one folded strip menu the ratified frame draws when they do not fit
+            filters = page.get_by_role("group", name="Filter the memory")
+            folded = filters.locator(".surface-filter-menu").count()
+            assert filters.get_by_role("button").count() == (1 if folded else 5)
+            assert not folded or width == 393, "the filters folded at the desktop width"
             assert page.get_by_role("button", name="Clear").count() == 0
             assert page.locator("[data-testid='recall-card']").count() == 0
             _canon(page, width)

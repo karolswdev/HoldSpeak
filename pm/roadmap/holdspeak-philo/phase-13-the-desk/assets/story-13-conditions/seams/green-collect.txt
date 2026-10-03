@@ -1,0 +1,20 @@
+src/desk/components/window/dockState.test.ts > H-C3 Dock live reducer > shows REC only after the hub confirms a meeting start
+src/desk/components/window/dockState.test.ts > H-C3 Dock live reducer > maps a settled send outcome: sent
+src/desk/components/window/dockState.test.ts > H-C3 Dock live reducer > maps a settled send outcome: failed
+src/desk/components/window/dockState.test.ts > H-C3 Dock live reducer > maps a settled send outcome: unknown
+src/desk/components/window/dockState.test.ts > H-C3 Dock live reducer > keeps the one membership meaning and suppresses zero project badges
+src/desk/components/window/dockState.test.ts > H-C3 Dock live reducer > reads the earliest B4 next one-to-one and terminal send
+src/desk/components/window/dockState.test.ts > H-C3 Dock live reducer > settles recording and marks a ready meeting
+src/desk/components/window/dockState.test.ts > H-C3 Dock live reducer > uses the meeting id carried by an intel completion frame
+src/desk/components/window/dockState.test.ts > H-C3 Dock live reducer > removes a meeting after its durable readiness is read
+src/desk/components/window/dockState.test.ts > H-C3 Dock live reducer > uses the scheduled recording id and the terminal timestamp
+src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > renders durable state marks and one membership badge while suppressing zero
+src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > passes the explicit Dock origin when an active project opens
+src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > keeps a successful Send snapshot when the People projection fails
+src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > reads People readiness before protected relationships
+src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > clears the stale 1:1 mark and gates relationships when People is unconfigured
+src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > clears the stale 1:1 mark and gates relationships when People is unavailable
+src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > clears the 1:1 mark when the readiness request fails without advancing its read
+src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > shows REC only after the real recording producer receives hub confirmation
+src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > renders the durable readiness transition and reconciles an acknowledged stale frame
+collection_exit=0

@@ -313,6 +313,11 @@ Missing shards: **none**.
 | `desk.dock.live` | `linux_wayland` | unknown | partial |
 | `desk.dock.live` | `linux_x11` | unknown | partial |
 | `desk.dock.live` | `macos` | unknown | partial |
+| `project.update.linked_week` | `aipi` | unknown | built_unreleased |
+| `project.update.linked_week` | `ipad` | unknown | built_unreleased |
+| `project.update.linked_week` | `linux_wayland` | unknown | built_unreleased |
+| `project.update.linked_week` | `linux_x11` | unknown | built_unreleased |
+| `project.update.linked_week` | `macos` | unknown | built_unreleased |
 | `agents.thread_persistent` | `aipi` | not_applicable | experimental |
 | `agents.thread_persistent` | `ipad` | best_effort | experimental |
 | `agents.thread_persistent` | `linux_wayland` | degraded | experimental |

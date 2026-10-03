@@ -1,25 +1,46 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createRecordingSlice } from "../../store/recordingSlice";
 import type { DeskState } from "../../store/types";
 
 const mocks = vi.hoisted(() => {
+  type RuntimeListener = (frame: { type: string; data: unknown }) => void;
+  const runtimeListeners = new Map<string, Set<RuntimeListener>>();
+  const durable = { readyRows: [] as Record<string, unknown>[] };
+  const people = {
+    readiness: { readiness: "ready" as string },
+    readinessError: null as Error | null,
+  };
+  const subscribe = (type: string, listener: RuntimeListener) => {
+    const listeners = runtimeListeners.get(type) ?? new Set<RuntimeListener>();
+    listeners.add(listener);
+    runtimeListeners.set(type, listeners);
+    return () => listeners.delete(listener);
+  };
+  const emitRuntime = (type: string, data: unknown = {}) => {
+    for (const listener of runtimeListeners.get(type) ?? []) listener({ type, data });
+  };
   const desk = {
     panelMin: [],
     panelOrder: [],
     windowsById: {},
     recording: "idle",
-    recordingStartedAt: null,
+    recordingStartedAt: null as number | null,
     projects: [
       { id: "p1", name: "Alpha", is_archived: false },
       { id: "p0", name: "Quiet", is_archived: false },
     ],
-    items: { meeting: [{ id: "meeting-1", hasSummary: true, intelStatus: "ready" }] },
+    // These are the client-side Meeting rows produced from the real list wire.
+    // They are historical summaries, not producer-created unread readiness.
+    items: { meeting: [
+      { id: "historical-1", title: "Yesterday's review", hasSummary: true, intelStatus: "ready" },
+      { id: "historical-2", title: "Last week's review", hasSummary: true, intelStatus: "complete" },
+    ] },
   };
   const shortcut = { open: false, setOpen: vi.fn() };
   const settle = { settled: false };
-  const runtime = { state: "connected", subscribe: () => () => {} };
+  const runtime = { state: "connected", subscribe };
   const useDesk = (selector: (state: typeof desk) => unknown) => selector(desk);
   useDesk.getState = () => ({
     ...desk,
@@ -28,14 +49,21 @@ const mocks = vi.hoisted(() => {
     closeSurfaceWindow: vi.fn(),
     resetLayout: vi.fn(),
   });
-  return {
-    apiFetch: vi.fn(async (path: string): Promise<unknown> => {
+  const defaultApiFetch = async (path: string): Promise<unknown> => {
       if (path === "/api/channels/sends") {
         return { sends: [{ state: "failed", dispatch_seq: 7 }] };
       }
+      if (path === "/api/meetings/ready") return { meetings: durable.readyRows };
+      if (path === "/api/people/readiness") {
+        if (people.readinessError) throw people.readinessError;
+        return people.readiness;
+      }
       if (path === "/api/people/relationships") return { relationships: [{ id: "r1" }] };
       return { brief: { next_one_on_one: "2026-10-03T15:00:00Z" } };
-    }),
+  };
+  return {
+    apiFetch: vi.fn(defaultApiFetch),
+    defaultApiFetch,
     apiRequest: vi.fn(),
     refreshNeedsYou: vi.fn(async () => {}),
     useNeedsYou: vi.fn(() => ({
@@ -47,6 +75,10 @@ const mocks = vi.hoisted(() => {
     shortcut,
     settle,
     runtime,
+    runtimeListeners,
+    emitRuntime,
+    durable,
+    people,
   };
 });
 
@@ -138,9 +170,14 @@ function mirrorRecording(producer: ReturnType<typeof makeRecordingProducer>) {
 
 describe("H-C3 Dock rendering", () => {
   beforeEach(() => {
-    mocks.apiFetch.mockClear();
+    mocks.apiFetch.mockReset();
+    mocks.apiFetch.mockImplementation(mocks.defaultApiFetch);
     mocks.apiRequest.mockReset();
     mocks.refreshNeedsYou.mockClear();
+    mocks.runtimeListeners.clear();
+    mocks.durable.readyRows.length = 0;
+    mocks.people.readiness = { readiness: "ready" };
+    mocks.people.readinessError = null;
     mocks.desk.recording = "idle";
     mocks.desk.recordingStartedAt = null;
     __resetSurfaces();
@@ -149,13 +186,13 @@ describe("H-C3 Dock rendering", () => {
   it("renders durable state marks and one membership badge while suppressing zero", async () => {
     render(<Dock />);
 
-    expect(screen.getByRole("button", { name: "Alpha, 1 need you" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Alpha, 1 open here" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Quiet" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Intelligence, 1 need you" })).toBeTruthy();
     expect(screen.queryByText("0")).toBeNull();
 
     await waitFor(() => expect(screen.getByTestId("desk-dock-send-state")).toHaveTextContent("SEND FAILED"));
-    expect(screen.getByTestId("desk-dock-meetings-state")).toHaveTextContent("READY 1");
+    expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull();
     expect(screen.getByTestId("desk-dock-people-state")).toHaveTextContent("1:1");
     expect(mocks.refreshNeedsYou).toHaveBeenCalledWith(true);
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/people/relationships/r1/brief");
@@ -168,7 +205,7 @@ describe("H-C3 Dock rendering", () => {
     });
     render(<Dock />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Alpha, 1 need you" }));
+    fireEvent.click(screen.getByRole("button", { name: "Alpha, 1 open here" }));
     await waitFor(() => expect(opened).toHaveBeenCalledWith("dock"));
     off();
   });
@@ -186,6 +223,53 @@ describe("H-C3 Dock rendering", () => {
     expect(screen.queryByTestId("desk-dock-people-state")).toBeNull();
   });
 
+  it("reads People readiness before protected relationships", async () => {
+    render(<Dock />);
+
+    await waitFor(() => expect(screen.getByTestId("desk-dock-people-state")).toHaveTextContent("1:1"));
+    const paths = mocks.apiFetch.mock.calls.map(([path]) => path);
+    const readinessIndex = paths.indexOf("/api/people/readiness");
+    const relationshipsIndex = paths.indexOf("/api/people/relationships");
+    expect(readinessIndex).toBeGreaterThanOrEqual(0);
+    expect(relationshipsIndex).toBeGreaterThanOrEqual(0);
+    expect(readinessIndex).toBeLessThan(relationshipsIndex);
+  });
+
+  it.each([
+    ["unconfigured", { readiness: "unconfigured" }],
+    ["unavailable", { readiness: "unavailable" }],
+  ] as const)("clears the stale 1:1 mark and gates relationships when People is %s", async (_label, readiness) => {
+    render(<Dock />);
+
+    await waitFor(() => expect(screen.getByTestId("desk-dock-people-state")).toHaveTextContent("1:1"));
+    const relationshipReads = () => mocks.apiFetch.mock.calls
+      .filter(([path]) => path === "/api/people/relationships").length;
+    const before = relationshipReads();
+    mocks.people.readiness = readiness;
+    act(() => {
+      mocks.emitRuntime("desk_changed", { kind: "people_changed" });
+    });
+
+    await waitFor(() => expect(screen.queryByTestId("desk-dock-people-state")).toBeNull());
+    expect(relationshipReads()).toBe(before);
+  });
+
+  it("clears the 1:1 mark and withholds relationships when the readiness request fails", async () => {
+    render(<Dock />);
+
+    await waitFor(() => expect(screen.getByTestId("desk-dock-people-state")).toHaveTextContent("1:1"));
+    const relationshipReads = () => mocks.apiFetch.mock.calls
+      .filter(([path]) => path === "/api/people/relationships").length;
+    const before = relationshipReads();
+    mocks.people.readinessError = new Error("readiness unavailable");
+    act(() => {
+      mocks.emitRuntime("desk_changed", { kind: "people_changed" });
+    });
+
+    await waitFor(() => expect(screen.queryByTestId("desk-dock-people-state")).toBeNull());
+    expect(relationshipReads()).toBe(before);
+  });
+
   it("shows REC only after the real recording producer receives hub confirmation", async () => {
     const producer = makeRecordingProducer();
     mocks.apiRequest.mockReturnValue(new Promise<Response>(() => {}));
@@ -194,13 +278,55 @@ describe("H-C3 Dock rendering", () => {
     mirrorRecording(producer);
 
     const view = render(<Dock />);
-    expect(screen.getByTestId("desk-dock-meetings-state")).toHaveTextContent("READY 1");
-    expect(screen.getByTestId("desk-dock-meetings-state")).not.toHaveTextContent("REC");
+    expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull();
 
     producer.applyRecordingActivity({ state: "meeting_live" });
     mirrorRecording(producer);
     view.rerender(<Dock />);
 
     expect(screen.getByTestId("desk-dock-meetings-state")).toHaveTextContent(/^REC/);
+  });
+
+  it("renders the durable readiness transition and reconciles an acknowledged stale frame", async () => {
+    const view = render(<Dock />);
+
+    // Historical summary rows do not create a READY mark. The endpoint below
+    // is the durable read; this test does not claim that a producer emitted it.
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/meetings/ready"));
+    expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull();
+    expect(mocks.runtimeListeners.get("aftercare_ready")?.size).toBeGreaterThan(0);
+
+    // Simulate the two observable halves of a producer completion: its frame
+    // carries the same id as the mutable durable read.
+    mocks.durable.readyRows.push({
+      id: "meeting-new",
+      title: "Newly summarized meeting",
+      ready_at: "2026-10-03T12:00:00Z",
+    });
+    act(() => {
+      mocks.emitRuntime("aftercare_ready", { meeting_id: "meeting-new" });
+    });
+    expect(await screen.findByTestId("desk-dock-meetings-state")).toHaveTextContent("READY 1");
+
+    // Opening the record ACKs readiness. The hub's read frame must remove the
+    // mark immediately, and a replayed completion frame must not leave it up.
+    mocks.durable.readyRows.length = 0;
+    act(() => {
+      mocks.emitRuntime("desk_changed", { kind: "meeting_ready_read", id: "meeting-new" });
+    });
+    await waitFor(() => expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull());
+
+    act(() => {
+      mocks.emitRuntime("aftercare_ready", { meeting_id: "meeting-new" });
+    });
+    await waitFor(() => expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull(), {
+      timeout: 1500,
+    });
+
+    // A remount reads the same durable empty snapshot; no frame-only state is
+    // allowed to survive the face lifecycle.
+    view.unmount();
+    render(<Dock />);
+    await waitFor(() => expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull());
   });
 });

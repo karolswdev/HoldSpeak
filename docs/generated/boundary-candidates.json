@@ -6823,7 +6823,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 930,
+      "line": 820,
       "kinds": [
         "http_client"
       ],
@@ -6833,7 +6833,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1081,
+      "line": 969,
       "kinds": [
         "http_client"
       ],
@@ -6843,7 +6843,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1615,
+      "line": 1505,
       "kinds": [
         "http_client"
       ],
@@ -6853,7 +6853,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1929,
+      "line": 1819,
       "kinds": [
         "http_client"
       ],
@@ -6863,7 +6863,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1983,
+      "line": 1875,
       "kinds": [
         "http_client"
       ],
@@ -6873,7 +6873,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 2036,
+      "line": 1928,
       "kinds": [
         "http_client"
       ],
@@ -7263,7 +7263,7 @@
     },
     {
       "path": "web/src/desk/pullouts/MeetingPullout.tsx",
-      "line": 52,
+      "line": 53,
       "kinds": [
         "http_client"
       ],
@@ -7273,7 +7273,7 @@
     },
     {
       "path": "web/src/desk/pullouts/MeetingPullout.tsx",
-      "line": 56,
+      "line": 57,
       "kinds": [
         "http_client"
       ],
@@ -7283,7 +7283,7 @@
     },
     {
       "path": "web/src/desk/pullouts/MeetingPullout.tsx",
-      "line": 117,
+      "line": 118,
       "kinds": [
         "http_client"
       ],
@@ -7473,7 +7473,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 370,
+      "line": 380,
       "kinds": [
         "http_client"
       ],
@@ -7483,7 +7483,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 538,
+      "line": 548,
       "kinds": [
         "http_client"
       ],
@@ -7493,7 +7493,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 574,
+      "line": 584,
       "kinds": [
         "http_client"
       ],
@@ -7503,7 +7503,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 650,
+      "line": 660,
       "kinds": [
         "http_client"
       ],
@@ -7513,7 +7513,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 689,
+      "line": 699,
       "kinds": [
         "http_client"
       ],
@@ -7523,7 +7523,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 702,
+      "line": 712,
       "kinds": [
         "http_client"
       ],
@@ -7533,7 +7533,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 715,
+      "line": 725,
       "kinds": [
         "http_client"
       ],
@@ -7543,7 +7543,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 727,
+      "line": 737,
       "kinds": [
         "http_client"
       ],
@@ -7553,7 +7553,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 741,
+      "line": 751,
       "kinds": [
         "http_client"
       ],
@@ -7563,7 +7563,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 746,
+      "line": 756,
       "kinds": [
         "http_client"
       ],
@@ -7573,7 +7573,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 768,
+      "line": 778,
       "kinds": [
         "http_client"
       ],
@@ -7583,7 +7583,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 853,
+      "line": 863,
       "kinds": [
         "http_client"
       ],
@@ -7593,7 +7593,7 @@
     },
     {
       "path": "web/src/desk/store/dataSlice.ts",
-      "line": 870,
+      "line": 880,
       "kinds": [
         "http_client"
       ],
@@ -8323,7 +8323,17 @@
     },
     {
       "path": "web/src/pages/cores/HistoryCore.tsx",
-      "line": 491,
+      "line": 61,
+      "kinds": [
+        "http_client"
+      ],
+      "excerpt": "void apiFetch(`/api/meetings/${encodeURIComponent(meetingId)}/ready/read`, {",
+      "line_sha256": "a7bb84f22b7252fa195c8578b34975687ce101c64829c1fabaabece0ab9c28b6",
+      "review": "candidate_only"
+    },
+    {
+      "path": "web/src/pages/cores/HistoryCore.tsx",
+      "line": 510,
       "kinds": [
         "http_client"
       ],
@@ -8863,7 +8873,7 @@
     },
     {
       "path": "web/src/pages/cores/history/CatalogRail.tsx",
-      "line": 278,
+      "line": 280,
       "kinds": [
         "http_client"
       ],
@@ -8893,7 +8903,7 @@
     },
     {
       "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-      "line": 110,
+      "line": 111,
       "kinds": [
         "http_client"
       ],
@@ -8903,7 +8913,7 @@
     },
     {
       "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-      "line": 156,
+      "line": 157,
       "kinds": [
         "http_client"
       ],
@@ -8913,7 +8923,7 @@
     },
     {
       "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-      "line": 160,
+      "line": 161,
       "kinds": [
         "http_client"
       ],

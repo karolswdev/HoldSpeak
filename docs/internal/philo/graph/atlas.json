@@ -9369,7 +9369,7 @@
         {
           "kind": "ui",
           "action": "click_role",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "role": "button",
           "name": "Continue later",
           "optional": true,
@@ -9378,7 +9378,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
           "timeout_s": 1
@@ -9386,7 +9386,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
           "optional": true,
           "timeout_s": 10
@@ -9400,7 +9400,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=concierge-add-engine]"
         },
         {
@@ -9413,7 +9413,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=concierge-add-check]"
         },
         {
@@ -9425,7 +9425,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
@@ -9505,7 +9505,7 @@
         {
           "kind": "ui",
           "action": "click_role",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "role": "button",
           "name": "Continue later",
           "optional": true,
@@ -9514,7 +9514,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
@@ -9522,7 +9522,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
@@ -9530,7 +9530,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
@@ -9553,7 +9553,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -9561,7 +9561,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -9569,7 +9569,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -9598,7 +9598,7 @@
       "trigger": {
         "kind": "ui",
         "action": "click",
-        "adapter": "ui-pointer",
+        "adapter": "ui-by-viewport",
         "selector": "[data-testid=arrival-run-intel]",
         "trigger_route": {
           "method": "POST",
@@ -9612,28 +9612,42 @@
           "value": "MEETING READY",
           "slot_selector": "[data-testid=arrival-aftercare-slot]",
           "scroll_target_selector": "[data-testid=arrival-aftercare-slot]",
-          "clear_of": [
-            {
-              "selector": "[data-testid=meeting-summary-text]",
-              "required": true,
-              "require_hit_test": true
-            },
-            {
-              "selector": "[data-testid=arrival-capture-bar]",
-              "required": true,
-              "require_hit_test": true
-            },
-            {
-              "selector": "[data-testid=arrival-brief-row]",
-              "required": false,
-              "require_hit_test": false
-            }
-          ],
           "auto_scroll_calls_by_viewport": {
             "393": 1,
             "1440": 0
           },
-          "no_field_focus": true
+          "no_field_focus": true,
+          "clear_of_by_viewport": {
+            "1440": [
+              {
+                "selector": "[data-testid=meeting-summary-text]",
+                "required": true,
+                "require_hit_test": true
+              },
+              {
+                "selector": "[data-testid=arrival-capture-bar]",
+                "required": true,
+                "require_hit_test": true
+              },
+              {
+                "selector": "[data-testid=arrival-brief-row]",
+                "required": false,
+                "require_hit_test": false
+              }
+            ],
+            "393": [
+              {
+                "selector": "[data-testid=meeting-summary-text]",
+                "required": true,
+                "require_hit_test": true
+              },
+              {
+                "selector": ".desk-dock",
+                "required": true,
+                "require_hit_test": true
+              }
+            ]
+          }
         },
         "observe_at": ".ambient-aftercare",
         "dismiss_selector": ".ambient-aftercare button:has-text('Dismiss')",
@@ -10778,7 +10792,7 @@
         {
           "path": "web/src/desk/components/SystemShade.tsx",
           "symbol": "hasDoor",
-          "line": 385,
+          "line": 388,
           "claim": "the Finished section withholds Open when there is no door"
         }
       ],
@@ -11145,7 +11159,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "!briefLoading && !brief",
-          "line": 1316,
+          "line": 1204,
           "claim": "the Chair draws 'No brief yet' and Generate only when the read ANSWERED null (a failed read takes the branch above it, PHILO-3-03)"
         }
       ],
@@ -11164,7 +11178,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setBriefLoading",
-          "line": 551,
+          "line": 481,
           "claim": "the Chair starts with briefLoading true"
         },
         {
@@ -11195,7 +11209,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "generating",
-          "line": 750,
+          "line": 631,
           "claim": "the Chair's head Generate is disabled and GENERATING… holds the status slot in flight (PHILO-4-01)"
         }
       ],
@@ -11233,7 +11247,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "setGenerateFailed",
-          "line": 719,
+          "line": 488,
           "claim": "the Chair names a failed generation BRIEF DID NOT GENERATE · <cause> in the status slot, no Retry (PHILO-4-01)"
         }
       ],
@@ -11289,7 +11303,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefItems",
-          "line": 887,
+          "line": 777,
           "claim": "the Chair reads items only from a brief that is not empty"
         }
       ],
@@ -11309,7 +11323,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "arrival-brief",
-          "line": 1375,
+          "line": 171,
           "claim": "a brief with nothing untriaged keeps its own section, headline and Generate after a reload (the quiet branch)"
         }
       ],
@@ -11336,7 +11350,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "briefShelf",
-          "line": 895,
+          "line": 785,
           "claim": "the Chair's untriaged list is the items with no shelf key"
         }
       ],
@@ -11760,7 +11774,7 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "hasTranscript",
-          "line": 2392,
+          "line": 2287,
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
       ],
@@ -12436,13 +12450,13 @@
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
           "symbol": "addEngineState",
-          "line": 567,
+          "line": 568,
           "claim": "Use this for summaries is enabled only when the added engine checked READY"
         },
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
           "symbol": "concierge-add-model",
-          "line": 550,
+          "line": 551,
           "claim": "the checked model name is shown beside it"
         }
       ],
@@ -12466,7 +12480,7 @@
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
           "symbol": "concierge-add-reason",
-          "line": 558,
+          "line": 559,
           "claim": "a refused check states its reason in an alert beside the field"
         }
       ],
@@ -13314,13 +13328,13 @@
         {
           "path": "web/src/desk/components/SystemShade.tsx",
           "symbol": "hasDoor",
-          "line": 334,
+          "line": 337,
           "claim": "the needs section withholds Open"
         },
         {
           "path": "web/src/desk/components/SystemShade.tsx",
           "symbol": "hasDoor",
-          "line": 385,
+          "line": 388,
           "claim": "the finished section withholds Open"
         }
       ],
@@ -13454,13 +13468,13 @@
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "re-reads",
-          "line": 658,
+          "line": 577,
           "claim": "the Chair is a face that re-reads on arrival"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "apiFetch",
-          "line": 554,
+          "line": 18,
           "claim": "the brief read is one of those re-reads"
         }
       ],

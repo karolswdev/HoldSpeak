@@ -347,10 +347,46 @@ def _settle(page: Any) -> None:
 # words are not on the glass); and no two visible things (text runs outside
 # controls, and controls) overlap.
 
-_RENDERED_TEXT_JS = """(sel) => {
+_RENDERED_TEXT_JS = """(args) => {
+  const [sel, onGlass] = Array.isArray(args) ? args : [args, false];
+  // PHILO-13-18 (onGlass, opt-in): read what is ON THE GLASS.
+  //  * A text box a vertical scroll container scrolls to is reachable, so it
+  //    is not clipped there (sideways scrolling and a hidden clip still fail).
+  //  * Content a closed <details> does not render is not read
+  //    (checkVisibility, content-visibility).
+  //  * Overlap compares the PAINTED part of each box: the box cut to every
+  //    clipping ancestor and the viewport. A row scrolled under a footer, or
+  //    the hidden tail of an ellipsis, is not on the glass.
+  //  * A single-line ellipsis (text-overflow: ellipsis, nowrap; UX-CANON A.6,
+  //    the canvas fence's rule) is recorded in `ellipsis`, not failed.
+  //  * A visually-hidden (sr-only, 1 x 1) box is not on the glass.
+  //  * An inset (see below) is recorded in `inset`, not failed.
+  //  * Words inside a control are read for overlap too.
+  // Off (the default), the reader is exactly the #734 reader.
+  // a vertical scroller exempts only text the reader can scroll to: the text
+  // lies inside the scroll range (an auto box with words shifted above its
+  // top, or past its scrollHeight, cannot be scrolled into view)
+  const scrollY = (e, tr) => {
+    if (!['auto', 'scroll'].includes(getComputedStyle(e).overflowY)) return false;
+    const er = e.getBoundingClientRect(), top = tr.top - er.top - e.clientTop + e.scrollTop;
+    return top >= -1 && top + tr.height <= e.scrollHeight + 1;
+  };
+  const painted = (r, el) => {  // el: the first box that may clip r (the text's own element; a control's parent)
+    let L = Math.max(r.left, 0), T = Math.max(r.top, 0), R = Math.min(r.right, innerWidth), B = Math.min(r.bottom, innerHeight);
+    for (let a = el; a && a !== document.documentElement; a = a.parentElement) {
+      const cs = getComputedStyle(a);
+      if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
+      const ar = a.getBoundingClientRect();
+      if (cs.overflowX !== 'visible') { L = Math.max(L, ar.left); R = Math.min(R, ar.right); }
+      if (cs.overflowY !== 'visible') { T = Math.max(T, ar.top); B = Math.min(B, ar.bottom); }
+    }
+    return (R - L > 1 && B - T > 1) ? {left: L, top: T, right: R, bottom: B} : null;
+  };
+  const rendered = (e) => !onGlass || !e.checkVisibility || e.checkVisibility({contentVisibilityAuto: true});
   const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
-    return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && Number(cs.opacity) > 0.05; };
-  const out = {scopes: 0, clipped: [], overlaps: []};
+    return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && Number(cs.opacity) > 0.05
+      && rendered(e) && !(onGlass && (r.width <= 1 || r.height <= 1 || cs.clip === 'rect(0px, 0px, 0px, 0px)')); };  // a visually-hidden (sr-only) box is not on the glass
+  const out = {scopes: 0, clipped: [], overlaps: [], ellipsis: [], inset: []};
   const ctl = 'button, [role=button], input, textarea, select, a[href]';
   for (const scope of [...document.querySelectorAll(sel)].filter(visible)) {
     out.scopes++;
@@ -367,33 +403,69 @@ _RENDERED_TEXT_JS = """(sel) => {
         const clipX = cs.overflowX !== 'visible', clipY = cs.overflowY !== 'visible';
         if (!clipX && !clipY) continue;
         const ar = a.getBoundingClientRect();
-        const past = (clipX && (tr.left < ar.left - 1 || tr.right > ar.right + 1 || a.scrollWidth > a.clientWidth + 1))
-          || (clipY && (tr.top < ar.top - 1 || tr.bottom > ar.bottom + 1));
-        if (past) out.clipped.push({text: text.slice(0, 60), in: (a.className || a.tagName).toString().slice(0, 60)});
+        // on the glass, only a box the reader can scroll sideways (auto/scroll) is "sideways";
+        // a hidden overflow that pokes past by its own frame is judged by the text box alone
+        const side = a.scrollWidth > a.clientWidth + 1 && (!onGlass || ['auto', 'scroll'].includes(cs.overflowX));
+        const pastX = clipX && (tr.left < ar.left - 1 || tr.right > ar.right + 1 || side);
+        const pastY = clipY && !(onGlass && scrollY(a, tr)) && (tr.top < ar.top - 1 || tr.bottom > ar.bottom + 1);
+        // the ellipsis is drawn by the box that clips (`a`), or by the text's own box
+        const es = getComputedStyle(a), hs = getComputedStyle(n.parentElement);
+        const ell = onGlass && pastX && !pastY && es.textOverflow === 'ellipsis' && es.whiteSpace === 'nowrap'
+          && (a === n.parentElement || hs.whiteSpace === 'nowrap' || es.whiteSpace === 'nowrap');
+        if (ell) out.ellipsis.push({text: text.slice(0, 60), in: (a.className || a.tagName).toString().slice(0, 60)});
+        else if (pastX || pastY) out.clipped.push(Object.assign({text: text.slice(0, 60), in: (a.className || a.tagName).toString().slice(0, 60)},
+          onGlass ? {box: [tr.left, tr.top, tr.right, tr.bottom].map(Math.round), clip: [ar.left, ar.top, ar.right, ar.bottom].map(Math.round),
+                     sideways: side} : {}));
         break;
       }
+      const tp = onGlass ? painted(tr, n.parentElement) : tr;
+      if (!tp) continue;
       const holder = n.parentElement.closest(ctl);
-      if (!holder || !scope.contains(holder)) boxes.push({what: text.slice(0, 40), r: tr, el: n.parentElement});
+      // on the glass, words INSIDE a control are read too: two words of one
+      // control drawn over each other are an overlap (a control and its own
+      // words are one thing: `contains` skips that pair)
+      if (onGlass || !holder || !scope.contains(holder)) boxes.push({what: text.slice(0, 40), r: tp, el: n.parentElement});
     }
     for (const c of [...scope.querySelectorAll(ctl)].filter(visible)) {
       if (c.parentElement && c.parentElement.closest(ctl)) continue;
-      boxes.push({what: (c.getAttribute('aria-label') || c.textContent || '').trim().slice(0, 40), r: c.getBoundingClientRect(), el: c});
+      const cp = onGlass ? painted(c.getBoundingClientRect(), c.parentElement) : c.getBoundingClientRect();
+      if (!cp) continue;
+      boxes.push({what: (c.getAttribute('aria-label') || c.textContent || '').trim().slice(0, 40), r: cp, el: c});
     }
     for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
       const a = boxes[i], b = boxes[j];
       if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
       const w = Math.min(a.r.right, b.r.right) - Math.max(a.r.left, b.r.left);
       const h = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
-      if (w > 1 && h > 1) out.overlaps.push([a.what, b.what]);
+      if (!(w > 1 && h > 1)) continue;
+      if (onGlass) {
+        // An inset: a box drawn wholly INSIDE a control's painted box by design
+        // -- an aria-hidden nontext glyph (the cycle gadget's arrow), or a
+        // control inside a text entry (the in-well mic). Recorded, not failed.
+        const inside = (x, y) => x.r.left >= y.r.left - 1 && x.r.right <= y.r.right + 1
+          && x.r.top >= y.r.top - 1 && x.r.bottom <= y.r.bottom + 1;
+        const glyph = (x) => /^[^\\p{L}\\p{N}]+$/u.test(x.what) && x.el.closest('[aria-hidden="true"]');
+        const inset = (x, y) => y.el.matches(ctl) && inside(x, y)
+          && (glyph(x) || (x.el.matches(ctl) && y.el.matches('textarea, input')));
+        if (inset(a, b) || inset(b, a)) { out.inset.push([a.what, b.what]); continue; }
+      }
+      out.overlaps.push(onGlass ? [a.what, b.what, [a.r, b.r].map((q) => [q.left, q.top, q.right, q.bottom].map(Math.round))]
+        : [a.what, b.what]);
     }
   }
   return out;
 }"""
 
 
-def _rendered_text_faults(page: Any, selector: str) -> dict[str, Any]:
-    """Clipped text and overlapping text or controls inside ``selector``, as rendered."""
-    return page.evaluate(_RENDERED_TEXT_JS, selector)
+def _rendered_text_faults(page: Any, selector: str, *, on_glass: bool = False) -> dict[str, Any]:
+    """Clipped text and overlapping text or controls inside ``selector``, as rendered.
+
+    ``on_glass`` (PHILO-13-18, opt-in) reads only what is on the glass: text a
+    vertical scroll container scrolls to is not clipped, a box scrolled out of
+    view is not read for overlap, and a single-line ellipsis is recorded in
+    ``ellipsis``. Off, the reader is unchanged.
+    """
+    return page.evaluate(_RENDERED_TEXT_JS, [selector, on_glass])
 
 
 def _assert_readable(page: Any, selector: str, where: str = "") -> None:

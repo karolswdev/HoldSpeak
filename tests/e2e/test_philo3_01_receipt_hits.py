@@ -5,7 +5,7 @@ each driven to a real failure on a real rig hub (scripts/graph_walk.py Hub, a
 fresh HOME) with the fault injected at the BROWSER boundary (Playwright
 page.route; the hub never sees the faulted request):
 
-  * the chrome receipt  -- Search > New Decision, POST /api/decisions -> 500
+  * the chrome receipt  -- Search > New Decision > a title, POST /api/decisions -> 500
   * a Thread receipt    -- New Thread, rename, PATCH /api/threads/<id> -> 500
   * a footer receipt    -- the Brief view (SurfaceFooter), Acknowledge,
                            POST /api/brief/items/<id>/shelf -> 500
@@ -239,6 +239,10 @@ def test_receipt_verbs_own_their_areas(hub, width: int) -> None:
         # 1. the chrome receipt (the desk backstop)
         _fault(page, "POST", "/api/decisions")
         _search(page, "New Decision", "[id='desk-palette-option-desk.new-decision']")
+        # PHILO-13-08 (B3): the decision is named before it is created; the
+        # refused POST is the named one.
+        page.get_by_test_id("palette-name").fill("Adopt the one bus")
+        page.keyboard.press("Enter")
         # the owner's ruling (2026-09-23): at phone width the backstop is a
         # full-width row in the desk flow, not a seat in the bar
         seat = ".desk-receipt-row" if width <= 720 else ".desk-chrome-receipt"

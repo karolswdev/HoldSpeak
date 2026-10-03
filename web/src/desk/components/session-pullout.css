@@ -23,7 +23,7 @@
   background: var(--desk-window-well);
   box-shadow: var(--desk-window-etch);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.5;
   color: var(--text);
   white-space: pre-wrap;
@@ -99,7 +99,7 @@
 }
 .desk-next .desk-steer-sent {
   color: var(--ok);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono);
 }
 /* HS-111-04 — the budget is a CTX meter + a CAP token, never a caption
@@ -120,7 +120,7 @@
 }
 .desk-next .desk-keypad-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -129,7 +129,7 @@
    the bespoke desk-key caps and the node chip's remote glow ring died
    with the gadget rerender (NodeChip is a CycleGadget now). */
 .desk-next .desk-key-fate {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   margin-left: 2px;
 }
 
@@ -195,7 +195,7 @@
   min-width: 34px;
 }
 .desk-next .desk-panepicker-meta {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -231,7 +231,7 @@
 }
 .desk-next .desk-factory-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -261,7 +261,7 @@
 /* HS-111: section labels — mono, 10px, 600 */
 .desk-next .desk-classify-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--text-faint);
   text-transform: uppercase;
@@ -282,7 +282,7 @@
   background: var(--surface-1);
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 /* A manual pin is a HOLLOW ring — never the correlator's filled verdict. */
 .desk-next .desk-mc-pin.manual {

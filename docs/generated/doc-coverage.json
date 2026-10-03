@@ -1657,6 +1657,33 @@
         "operational": 0,
         "security": 0
       },
+      "id": "project.update.linked_week",
+      "kind": "capabilities",
+      "path_presence": {
+        "docs": [
+          1,
+          1
+        ],
+        "sources": [
+          1,
+          1
+        ],
+        "tests": [
+          2,
+          2
+        ]
+      },
+      "semantic_status": "partially_evidenced",
+      "semantic_status_reason": "At least one same-row assertion has a recorded passing test. This does not resolve every behavior, platform or authority claim.",
+      "tests_executed": 2
+    },
+    {
+      "assertions_inspected": 2,
+      "docs": {
+        "api": 0,
+        "operational": 0,
+        "security": 0
+      },
       "id": "agents.thread_persistent",
       "kind": "capabilities",
       "path_presence": {
@@ -4056,28 +4083,28 @@
   ],
   "snapshot": "675401a857b85336d4acaa8c65383dfc9636e4c8",
   "totals": {
-    "assertions_inspected": 205,
+    "assertions_inspected": 207,
     "doc_paths": [
-      226,
-      226
+      227,
+      227
     ],
     "docs": {
       "api": 0,
       "operational": 65,
       "security": 19
     },
-    "records": 150,
-    "records_with_executed_assertions": 75,
+    "records": 151,
+    "records_with_executed_assertions": 76,
     "semantics_unresolved": 75,
     "source_paths": [
-      264,
-      264
+      265,
+      265
     ],
     "test_paths": [
-      205,
-      205
+      207,
+      207
     ],
-    "tests_executed": 173
+    "tests_executed": 175
   },
   "validation_errors": 0
 }

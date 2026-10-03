@@ -186,7 +186,7 @@
 
 .desk-next .thought-note-ask-label {
   color: var(--text-faint);
-  font: 700 11px/1 var(--font-mono);
+  font: 700 var(--font-size-xs)/1 var(--font-mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -209,7 +209,7 @@
 
 .desk-next .thought-note-ask-kicker {
   color: var(--accent-hover);
-  font: 700 11px/1 var(--font-mono);
+  font: 700 var(--font-size-xs)/1 var(--font-mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }

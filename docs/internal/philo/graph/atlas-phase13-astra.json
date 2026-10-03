@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "atlas_version": "phase13-astra-wave1",
-  "source_commit": "27b915538b792f4a80d0cf1c46a0600cb68756e3",
+  "source_commit": "76c3615379cc9bf1d6b1ba174407bfc7c684e557",
   "cases": [
     {
       "id": "case.p13.directory.zone_window.op",
@@ -3400,7 +3400,7 @@
           "observe_at": "[data-testid=desk-dock-offline]",
           "predicate": {
             "kind": "readable_text",
-            "value": "OFFLINE \u00b7 AS OF"
+            "value": "OFFLINE · AS OF"
           },
           "timeout_s": 30,
           "capture_shot": true
@@ -3429,6 +3429,1513 @@
         "words": "A real owned hub stop closes its socket: the Dock shows OFFLINE and AS OF. A new process opens the same DB and the Dock reads SENT again. No browser network stub."
       },
       "completion_bound_s": 40,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.update.linked_week",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.room_updates"
+      ],
+      "state_id": "state.desk_presentation.p13_week",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        "the producer prefix mints one linked meeting summary, one decision, and two owned action items from the real queue"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "B5 Payments ledger cutover"
+          },
+          "expect_status": 200,
+          "why": "create the real project Room for the linked B5 week sources",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p13-b5-week-model",
+              "profile_id": "p13-b5-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "p13-b5-week-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "select the owner disclosed summary route"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo13_b5_week_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider edge while retaining the real queue and hub"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo13_b5_week_transcript.vtt",
+            "title": "B5 ledger cutover sync"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "import the transcript through the owner meeting route"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/meetings/{meeting_id}",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "file the imported meeting in the real Room before its proposal is bridged"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30,
+          "why": "wait for the real transcript importer"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the imported transcript has durable segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the route hash is read from the durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the route hash before the summary operation"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "p13-b5-decision-plugin",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "meeting.plugin.decision_capture"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign the recorded provider to the real decision extractor"
+        },
+        {
+          "kind": "cli",
+          "action": "queue_meeting_intelligence",
+          "meeting_id": "{meeting_id}",
+          "adapter": "production-queue",
+          "why": "enqueue the imported transcript through the real Stop-style queue producer; the summary-only Run intentionally excludes plugins"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the replayed engine result to settle"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}/follow-through-proposals",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "proposals",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the actual plugin artifact and proposal bridge, not merely for summary text"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}/follow-through-proposals",
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "proposal_id",
+          "capture_path": "proposals",
+          "capture_match": {
+            "kind": "decision"
+          },
+          "why": "read the proposal minted by the real meeting intelligence chain",
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/proposals/{proposal_id}/confirm",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "confirmed_id",
+          "capture_path": "decision_record_id",
+          "why": "confirm the real meeting proposal through the proposal bridge"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/decision-records",
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "record_id",
+          "capture_path": "/",
+          "capture_match": {
+            "id": "{confirmed_id}"
+          },
+          "why": "read the confirmed meeting record before attaching it to the Room project",
+          "body": null
+        },
+        {
+          "kind": "op",
+          "name": "project.resource.add",
+          "args": {
+            "project_id": "{project_id}",
+            "resource_ref": "decision_record:{record_id}",
+            "relationship": "member"
+          },
+          "adapter": "mcp-http",
+          "why": "attach the confirmed meeting decision record to the Room project"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the persisted project Room after the real producer chain"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[aria-controls=desk-tool-shelf]",
+          "why": "open the Desk palette"
+        },
+        {
+          "kind": "ui",
+          "action": "fill",
+          "adapter": "ui-keyboard",
+          "selector": "[aria-controls=desk-palette-listbox]",
+          "value": "B5 Payments ledger cutover",
+          "why": "find the real project Room by its producer-captured name"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[id='desk-palette-option-project.open.{project_id}']",
+          "why": "open the project Room through its real palette object id"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=room-body]",
+          "why": "wait for the project Room body"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[data-testid=updates-verb]",
+          "why": "enter the Room Updates posture through its library Button"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": "[data-testid=update-verb-draft-deterministic]",
+          "why": "wait for the deterministic draft verb"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": "[data-testid=update-verb-draft-deterministic]",
+        "trigger_route": {
+          "method": "POST",
+          "path": "/api/projects/{project_id}/updates/draft"
+        },
+        "why": "draft the linked week through the deterministic Room update Button without an engine"
+      },
+      "expected": {
+        "observe_at": "[data-testid=update-body-editor]",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "protocol_status",
+              "method": "POST",
+              "path": "/api/projects/{project_id}/updates/draft",
+              "status": 200,
+              "body_fields": {
+                "success": true,
+                "update.id": {
+                  "nonempty": true
+                },
+                "update.generator": "deterministic",
+                "update.lifecycle": "draft"
+              }
+            },
+            {
+              "kind": "text_contains",
+              "value": "The ledger cutover is ready for the controlled migration."
+            },
+            {
+              "kind": "text_contains",
+              "value": "Decision: Use the controlled migration window"
+            },
+            {
+              "kind": "text_contains",
+              "value": "Action: Confirm the migration window"
+            },
+            {
+              "kind": "text_contains",
+              "value": "owner Avery"
+            },
+            {
+              "kind": "text_contains",
+              "value": "Action: Send the rollback checklist"
+            },
+            {
+              "kind": "text_contains",
+              "value": "owner Morgan"
+            },
+            {
+              "kind": "text_contains",
+              "value": "All sources consulted successfully."
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "updates",
+                    "match": {
+                      "generator": "deterministic",
+                      "lifecycle": "draft"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/projects/{project_id}/updates"
+          }
+        ],
+        "words": "The real meeting queue and proposal bridge link one persisted summary and decision to the project. The Updates verb drafts the linked week deterministically with both owned actions and reads the stored draft."
+      },
+      "completion_bound_s": 90,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.update.linked_week.op",
+      "job": "j1",
+      "edge_ids": [
+        "edge.tool.project_draft_update"
+      ],
+      "state_id": "state.desk_presentation.p13_week",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated hub with no browser; every id is captured from this run's real producer chain"
+      ],
+      "setup": [
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "op",
+          "name": "project.create",
+          "args": {
+            "name": "B5 Payments ledger cutover"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "project_id",
+          "capture_path": "project.id",
+          "why": "create the real project Room for the linked week"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p13-b5-week-model",
+              "profile_id": "p13-b5-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "p13-b5-week-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "select the owner disclosed summary route"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo13_b5_week_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider edge while retaining the real queue and hub"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo13_b5_week_transcript.vtt",
+            "title": "B5 ledger cutover sync"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "import the transcript through the owner meeting route"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/meetings/{meeting_id}",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "file the imported meeting in the real Room before its proposal is bridged"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30,
+          "why": "wait for the real transcript importer"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the imported transcript has durable segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the route hash is read from the durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the route hash before the summary operation"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "p13-b5-decision-plugin",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "meeting.plugin.decision_capture"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign the recorded provider to the real decision extractor"
+        },
+        {
+          "kind": "cli",
+          "action": "queue_meeting_intelligence",
+          "meeting_id": "{meeting_id}",
+          "adapter": "production-queue",
+          "why": "enqueue the imported transcript through the real Stop-style queue producer; the summary-only Run intentionally excludes plugins"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "intel.summary",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the replayed engine result to settle"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings/{meeting_id}/follow-through-proposals",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "proposals",
+            "nonempty": true
+          },
+          "timeout_s": 60,
+          "why": "wait for the actual plugin artifact and proposal bridge, not merely for summary text"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/meetings/{meeting_id}/follow-through-proposals",
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "proposal_id",
+          "capture_path": "proposals",
+          "capture_match": {
+            "kind": "decision"
+          },
+          "why": "read the proposal minted by the real meeting intelligence chain",
+          "body": null
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/proposals/{proposal_id}/confirm",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "confirmed_id",
+          "capture_path": "decision_record_id",
+          "why": "confirm the real meeting proposal through the proposal bridge"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/decision-records",
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "record_id",
+          "capture_path": "/",
+          "capture_match": {
+            "id": "{confirmed_id}"
+          },
+          "why": "read the confirmed meeting record before attaching it to the Room project",
+          "body": null
+        },
+        {
+          "kind": "op",
+          "name": "project.resource.add",
+          "args": {
+            "project_id": "{project_id}",
+            "resource_ref": "decision_record:{record_id}",
+            "relationship": "member"
+          },
+          "adapter": "mcp-http",
+          "why": "attach the confirmed meeting decision record to the Room project"
+        }
+      ],
+      "trigger": {
+        "kind": "op",
+        "name": "project.draft_update",
+        "args": {
+          "project_id": "{project_id}",
+          "generator": "deterministic"
+        },
+        "adapter": "mcp-http",
+        "capture_as": "update_id",
+        "capture_path": "update.id",
+        "why": "draft the linked week through the canonical deterministic operation with no engine call"
+      },
+      "expected": {
+        "observe_at": {
+          "kind": "op",
+          "name": "project.list_updates",
+          "args": {
+            "project_id": "{project_id}"
+          }
+        },
+        "predicate": {
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "path": "update.id",
+              "value": "{update_id}"
+            },
+            {
+              "source": "trigger",
+              "path": "update.generator",
+              "value": "deterministic"
+            },
+            {
+              "source": "trigger",
+              "path": "update.lifecycle",
+              "value": "draft"
+            },
+            {
+              "source": "trigger",
+              "path": "update.body_md",
+              "nonempty": true
+            },
+            {
+              "source": "trigger",
+              "path": "update.claims_json",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "updates",
+              "contains": {
+                "id": "{update_id}",
+                "generator": "deterministic",
+                "lifecycle": "draft"
+              }
+            },
+            {
+              "source": "observe",
+              "path": "updates.0.body_md",
+              "nonempty": true
+            },
+            {
+              "source": "observe",
+              "path": "updates.0.claims_json",
+              "nonempty": true
+            }
+          ]
+        },
+        "reads": [
+          {
+            "kind": "op",
+            "name": "project.list_updates",
+            "args": {
+              "project_id": "{project_id}"
+            }
+          }
+        ],
+        "words": "The headless sibling invokes project.draft_update with deterministic generation and reads the stored draft from project.list_updates, including its id, body, claims, and lifecycle."
+      },
+      "viewports": [],
+      "completion_bound_s": 30
+    },
+    {
+      "id": "case.p13.dock.meeting_open_clears_ready",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.dock_needs_you"
+      ],
+      "state_id": "state.desk_presentation.p13_live_dock",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub and browser; every durable source is minted through a real producer. No microphone or external send."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present",
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "Dock live project"
+          },
+          "expect_status": 200,
+          "why": "create the real project Room for the decision record",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p11-06-model",
+              "profile_id": "p11-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "p11-06-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "select the owner disclosed summary route"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider edge while retaining the real queue and hub"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "import the transcript through the owner meeting route"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/meetings/{meeting_id}",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "file the imported meeting in the real Room before its proposal is bridged"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30,
+          "why": "wait for the real transcript importer"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the imported transcript has durable segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the route hash is read from the durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the route hash before the summary operation"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "p11-decision-plugin",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "meeting.plugin.decision_capture"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign the recorded provider to the real decision extractor"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-dock",
+          "adapter": "ui-pointer",
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "observe_at": ".desk-dock",
+          "predicate": {
+            "kind": "text_absent",
+            "value": "READY"
+          },
+          "timeout_s": 5
+        },
+        {
+          "kind": "cli",
+          "action": "queue_meeting_intelligence",
+          "meeting_id": "{meeting_id}",
+          "adapter": "production-queue",
+          "why": "enqueue the imported transcript through the real Stop-style queue producer; the summary-only Run intentionally excludes plugins"
+        },
+        {
+          "kind": "check",
+          "observe_at": "[data-testid=desk-dock-meetings-state]",
+          "predicate": {
+            "kind": "readable_text",
+            "value": "READY 1"
+          },
+          "timeout_s": 40,
+          "capture_shot": true,
+          "why": "read and photograph real producer readiness before opening the meeting"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-dock button[aria-label=\"Meetings\"]",
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"meeting-row-{meeting_id}\"] .meetings-stream-row-body",
+          "adapter": "ui-pointer",
+          "timeout_s": 30
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "selector": "[data-testid=\"meeting-row-{meeting_id}\"] .meetings-stream-row-body",
+        "adapter": "ui-by-viewport",
+        "why": "open the produced meeting through its real Meetings row"
+      },
+      "expected": {
+        "observe_at": ".desk-dock",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "text_absent",
+              "value": "READY"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "meetings",
+                    "match": {},
+                    "count": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "words": "Opening the real newly-ready meeting clears READY and its durable unread row without a page reload.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/ready"
+          }
+        ]
+      },
+      "completion_bound_s": 10,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.dock.meeting_read_survives_reload",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.dock_needs_you"
+      ],
+      "state_id": "state.desk_presentation.p13_live_dock",
+      "applicability": "applicable",
+      "preconditions": [
+        "A fresh isolated hub and browser; every durable source is minted through a real producer. No microphone or external send."
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-by-viewport",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present",
+          "timeout_s": 10
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects",
+          "adapter": "http-route",
+          "body": {
+            "name": "Dock live project"
+          },
+          "expect_status": 200,
+          "why": "create the real project Room for the decision record",
+          "capture_as": "project_id",
+          "capture_path": "project.id"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "p11-06-model",
+              "profile_id": "p11-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "p11-06-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "select the owner disclosed summary route"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "replay only the provider edge while retaining the real queue and hub"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.import",
+          "args": {
+            "path": "tests/fixtures/philo11_documents/meeting_transcript.vtt",
+            "title": "Document source review"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "meeting_id",
+          "capture_path": "meeting_id",
+          "why": "import the transcript through the owner meeting route"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/projects/{project_id}/meetings/{meeting_id}",
+          "body": {},
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "file the imported meeting in the real Room before its proposal is bridged"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "transcription_status",
+            "value": "complete"
+          },
+          "timeout_s": 30,
+          "why": "wait for the real transcript importer"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "segments",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the imported transcript has durable segments"
+        },
+        {
+          "kind": "check",
+          "observe_at": {
+            "kind": "op",
+            "name": "meeting.read",
+            "args": {
+              "meeting_id": "{meeting_id}"
+            }
+          },
+          "predicate": {
+            "kind": "op_field",
+            "path": "planned_route.selection_hash",
+            "nonempty": true
+          },
+          "timeout_s": 30,
+          "why": "the route hash is read from the durable meeting"
+        },
+        {
+          "kind": "op",
+          "name": "meeting.read",
+          "args": {
+            "meeting_id": "{meeting_id}"
+          },
+          "adapter": "mcp-http",
+          "capture_as": "selection_hash",
+          "capture_path": "planned_route.selection_hash",
+          "why": "capture the route hash before the summary operation"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "p11-decision-plugin",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "capability",
+              "capability_id": "meeting.plugin.decision_capture"
+            },
+            "entries": [
+              {
+                "profile_id": "{profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign the recorded provider to the real decision extractor"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": ".desk-dock",
+          "adapter": "ui-pointer",
+          "timeout_s": 30
+        },
+        {
+          "kind": "check",
+          "observe_at": ".desk-dock",
+          "predicate": {
+            "kind": "text_absent",
+            "value": "READY"
+          },
+          "timeout_s": 5
+        },
+        {
+          "kind": "cli",
+          "action": "queue_meeting_intelligence",
+          "meeting_id": "{meeting_id}",
+          "adapter": "production-queue",
+          "why": "enqueue the imported transcript through the real Stop-style queue producer; the summary-only Run intentionally excludes plugins"
+        },
+        {
+          "kind": "check",
+          "observe_at": "[data-testid=desk-dock-meetings-state]",
+          "predicate": {
+            "kind": "readable_text",
+            "value": "READY 1"
+          },
+          "timeout_s": 40,
+          "capture_shot": true,
+          "why": "read and photograph real producer readiness before opening the meeting"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": ".desk-dock button[aria-label=\"Meetings\"]",
+          "adapter": "ui-by-viewport"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "[data-testid=\"meeting-row-{meeting_id}\"] .meetings-stream-row-body",
+          "adapter": "ui-pointer",
+          "timeout_s": 30
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "[data-testid=\"meeting-row-{meeting_id}\"] .meetings-stream-row-body",
+          "adapter": "ui-by-viewport",
+          "why": "open the produced meeting through its real Meetings row"
+        },
+        {
+          "kind": "check",
+          "observe_at": ".desk-dock",
+          "predicate": {
+            "kind": "text_absent",
+            "value": "READY"
+          },
+          "timeout_s": 10,
+          "capture_shot": true,
+          "why": "the opening gesture must visibly clear READY before reload"
+        },
+        {
+          "kind": "check",
+          "observe_at": "protocol: GET /api/meetings/ready",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "meetings",
+            "value": []
+          },
+          "timeout_s": 10,
+          "why": "read the persisted acknowledgement before the reload"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "why": "reload after opening; the acknowledged meeting must remain seen"
+      },
+      "expected": {
+        "observe_at": ".desk-dock",
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "text_absent",
+              "value": "READY"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "meetings",
+                    "match": {},
+                    "count": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "words": "After the real meeting was opened and acknowledged, a page reload still shows no READY and the durable unread list stays empty.",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/meetings/ready"
+          }
+        ]
+      },
+      "completion_bound_s": 30,
       "viewports": [
         1440,
         393
@@ -3523,7 +5030,7 @@
       "sources": [
         {
           "path": "holdspeak/db/meetings.py",
-          "line": 1150,
+          "line": 1223,
           "symbol": "def delete_meeting",
           "claim": "The normal removal path retains the row through park; this case reads it after restart and restore."
         }
@@ -3563,7 +5070,7 @@
           "path": "web/src/desk/needsYou.ts",
           "line": 233,
           "symbol": "export function computeNeedsYou",
-          "claim": "The Dock reads the one R1\u2013R3 membership rule."
+          "claim": "The Dock reads the one R1–R3 membership rule."
         }
       ],
       "reachable_by": [
@@ -3592,6 +5099,33 @@
         "case.p13.dock.meeting_ready",
         "case.p13.dock.recording_refused",
         "case.p13.dock.reconnect"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_week",
+      "family": "desk_presentation",
+      "values": {
+        "surface": "Project Room update editor",
+        "material": "deterministic linked week"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "holdspeak/services/project_update_service.py",
+          "line": 1529,
+          "symbol": "def draft_update",
+          "claim": "The project update composer persists a deterministic draft after reading the pinned Room and linked week sources."
+        },
+        {
+          "path": "holdspeak/services/project_update_service.py",
+          "line": 1997,
+          "symbol": "def _read_week_sources",
+          "claim": "The composer reads active project-linked meeting summaries, owned actions, decisions, and truthful caveats."
+        }
+      ],
+      "reachable_by": [
+        "case.p13.update.linked_week",
+        "case.p13.update.linked_week.op"
       ]
     }
   ],

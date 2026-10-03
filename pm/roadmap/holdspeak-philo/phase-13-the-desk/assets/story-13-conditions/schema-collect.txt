@@ -1,0 +1,6 @@
+tests/unit/test_db.py::TestDatabaseShape::test_meeting_database_has_no_duplicate_method_definitions
+tests/unit/test_db.py::TestDatabaseShape::test_fresh_schema_matches_canonical_snapshot
+
+2 tests collected in 0.39s
+
+collection_exit=0

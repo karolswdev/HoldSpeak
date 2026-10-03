@@ -111,7 +111,11 @@ class MeetingGlueMixin:
         )
         if self.server is not None:
             try:
-                self.server.broadcast("intel_complete", intel.to_dict())
+                payload = intel.to_dict()
+                active = self._active_meeting_session()
+                if active is not None and active.state is not None:
+                    payload["meeting_id"] = active.state.id
+                self.server.broadcast("intel_complete", payload)
             except Exception as exc:
                 log.debug(f"Failed to broadcast intel_complete: {exc}")
         self._broadcast_intel_status()

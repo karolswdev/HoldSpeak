@@ -70,6 +70,22 @@ describe("H-C3 Dock live reducer", () => {
     expect(next.readyMeetingIds).toEqual(["m1"]);
   });
 
+  it("uses the meeting id carried by an intel completion frame", () => {
+    const next = reduceDockFrame(EMPTY_DOCK_LIVE, {
+      type: "intel_complete",
+      data: { meeting_id: "m-intel", summary: "Ready" },
+    });
+    expect(next.readyMeetingIds).toEqual(["m-intel"]);
+  });
+
+  it("removes a meeting after its durable readiness is read", () => {
+    const next = reduceDockFrame(
+      { ...EMPTY_DOCK_LIVE, readyMeetingIds: ["m-read", "m-keep"] },
+      { type: "desk_changed", data: { kind: "meeting_ready_read", id: "m-read" } },
+    );
+    expect(next.readyMeetingIds).toEqual(["m-keep"]);
+  });
+
   it("uses the scheduled recording id and the terminal timestamp", () => {
     const started = reduceDockFrame(EMPTY_DOCK_LIVE, {
       type: "scheduled_recording.started",

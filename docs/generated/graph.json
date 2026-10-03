@@ -6,19 +6,19 @@
  "inputs": [
   {
    "path": "docs/generated/components.yaml",
-   "sha256": "a9cef5e82ab88c5a05c4bb70d04a3d9f3a0e7aacbc4e348e210170e0636c6715"
+   "sha256": "7214c6fd09878b8c30937ed71fd66c0dba57e883fb18c92d081d878f0b54fbcf"
   },
   {
    "path": "docs/generated/domain-model.yaml",
-   "sha256": "99138364437bd5c80247d48ca07752a1a3a685e2214c1dcd15ad6f4d705881b1"
+   "sha256": "2519cc78c85df226a64582ffeff8eb249b24f7b661f19dc4013aee3e709a7013"
   },
   {
    "path": "docs/generated/openapi.json",
-   "sha256": "32dad2a06a1c57db0359a6ff4ee9356493a2a4a601efc997b12a019a81c7976b"
+   "sha256": "6e3a034d013c71ed1b12f5958fa03f16dddb637e7f24a6d900e5ce77a1ef4e17"
   },
   {
    "path": "docs/internal/philo/data/desk.json",
-   "sha256": "175549a3e0f3bbc83d9e43547f39fa7b258ceed39935437656ee5cde23368c76"
+   "sha256": "adfd3ec67b662b458c215f48f1976db923d025b31964a7db012a5d49e1756120"
   },
   {
    "path": "docs/internal/philo/data/integrations.json",
@@ -34,7 +34,7 @@
   },
   {
    "path": "docs/internal/philo/graph/atlas.json",
-   "sha256": "383bb826b160c1bdc37d6aa0bbb14ff6ad05f5e9bb71c4048668a0a31fb24c7c"
+   "sha256": "e16bca4bb8e80e650ab3f9ff310f32ae15f3c9a3504e75c7dba7baaa34b94ac7"
   },
   {
    "path": "docs/internal/philo/graph/council-resolutions.json",
@@ -150655,7 +150655,7 @@
     {
      "kind": "ui",
      "action": "click_role",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "role": "button",
      "name": "Continue later",
      "optional": true,
@@ -150664,7 +150664,7 @@
     {
      "kind": "ui",
      "action": "click",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "selector": "[data-testid=arrival-blocker-verb-engines]",
      "optional": true,
      "timeout_s": 1
@@ -150672,7 +150672,7 @@
     {
      "kind": "ui",
      "action": "click",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "selector": "[data-testid=arrival-blocker-verb-summary]",
      "optional": true,
      "timeout_s": 10
@@ -150686,7 +150686,7 @@
     {
      "kind": "ui",
      "action": "click",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "selector": "[data-testid=concierge-add-engine]"
     },
     {
@@ -150699,7 +150699,7 @@
     {
      "kind": "ui",
      "action": "click",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "selector": "[data-testid=concierge-add-check]"
     },
     {
@@ -150711,7 +150711,7 @@
     {
      "kind": "ui",
      "action": "click",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "selector": "[data-testid=concierge-add-submit]"
     },
     {
@@ -150791,7 +150791,7 @@
     {
      "kind": "ui",
      "action": "click_role",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "role": "button",
      "name": "Continue later",
      "optional": true,
@@ -150800,7 +150800,7 @@
     {
      "kind": "ui",
      "action": "click",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "selector": ".desk-verbbar-item[data-menu-id='go'] button",
      "at_width": 393,
      "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
@@ -150808,7 +150808,7 @@
     {
      "kind": "ui",
      "action": "click",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
      "at_width": 393,
      "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
@@ -150816,7 +150816,7 @@
     {
      "kind": "ui",
      "action": "click",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
      "at_width": 393,
      "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
@@ -150839,7 +150839,7 @@
     {
      "kind": "ui",
      "action": "click",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "selector": ".desk-verbbar-item[data-menu-id='go'] button",
      "at_width": 393,
      "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -150847,7 +150847,7 @@
     {
      "kind": "ui",
      "action": "click",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
      "at_width": 393,
      "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -150855,7 +150855,7 @@
     {
      "kind": "ui",
      "action": "click",
-     "adapter": "ui-pointer",
+     "adapter": "ui-by-viewport",
      "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
      "at_width": 393,
      "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -150884,7 +150884,7 @@
    "trigger": {
     "kind": "ui",
     "action": "click",
-    "adapter": "ui-pointer",
+    "adapter": "ui-by-viewport",
     "selector": "[data-testid=arrival-run-intel]",
     "trigger_route": {
      "method": "POST",
@@ -150898,28 +150898,42 @@
      "value": "MEETING READY",
      "slot_selector": "[data-testid=arrival-aftercare-slot]",
      "scroll_target_selector": "[data-testid=arrival-aftercare-slot]",
-     "clear_of": [
-      {
-       "selector": "[data-testid=meeting-summary-text]",
-       "required": true,
-       "require_hit_test": true
-      },
-      {
-       "selector": "[data-testid=arrival-capture-bar]",
-       "required": true,
-       "require_hit_test": true
-      },
-      {
-       "selector": "[data-testid=arrival-brief-row]",
-       "required": false,
-       "require_hit_test": false
-      }
-     ],
      "auto_scroll_calls_by_viewport": {
       "393": 1,
       "1440": 0
      },
-     "no_field_focus": true
+     "no_field_focus": true,
+     "clear_of_by_viewport": {
+      "1440": [
+       {
+        "selector": "[data-testid=meeting-summary-text]",
+        "required": true,
+        "require_hit_test": true
+       },
+       {
+        "selector": "[data-testid=arrival-capture-bar]",
+        "required": true,
+        "require_hit_test": true
+       },
+       {
+        "selector": "[data-testid=arrival-brief-row]",
+        "required": false,
+        "require_hit_test": false
+       }
+      ],
+      "393": [
+       {
+        "selector": "[data-testid=meeting-summary-text]",
+        "required": true,
+        "require_hit_test": true
+       },
+       {
+        "selector": ".desk-dock",
+        "required": true,
+        "require_hit_test": true
+       }
+      ]
+     }
     },
     "observe_at": ".ambient-aftercare",
     "dismiss_selector": ".ambient-aftercare button:has-text('Dismiss')",

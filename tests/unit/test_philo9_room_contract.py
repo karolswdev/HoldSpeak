@@ -219,6 +219,16 @@ def test_f7_the_rooms_receipts_are_its_writes_not_its_reads(hub: Hub) -> None:
 
 def test_f13_one_needs_you_count_with_a_muted_project(hub: Hub) -> None:
     loud, quiet = _project(hub, "Loud room"), _project(hub, "Muted room")
+    # Mint the meeting the proposals cite through the real producer: since
+    # PHILO-13-02 needs-you shows only proposals of a visible (unparked,
+    # existing) meeting, so a made-up meeting id is a double that lies.
+    from datetime import datetime as _dt
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+    hub.db.meetings.save_meeting(MeetingState(
+        id="m-philo9", started_at=_dt(2026, 9, 20, 9, 0), ended_at=_dt(2026, 9, 20, 9, 30),
+        title="Cutover planning", tags=[],
+        segments=[TranscriptSegment(text="Send the cutover plan.", speaker="Me",
+                                    start_time=0.0, end_time=2.0)]))
     for pid, text in ((loud, "Send the cutover plan"), (quiet, "Book the rehearsal room")):
         assert hub.db.proposals.create_proposal(
             meeting_id="m-philo9", project_id=pid, kind="action", text=text,

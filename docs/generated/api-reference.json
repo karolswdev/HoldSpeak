@@ -5750,6 +5750,7 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/e2e/test_philo13_11_chair_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/integration/test_philo11_slack_operations.py",
         "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_email_channel.py",
@@ -5816,6 +5817,7 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/e2e/test_philo13_11_chair_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/integration/test_philo11_slack_operations.py",
         "tests/unit/test_philo10_cli_channels.py",
         "tests/unit/test_philo10_email_channel.py",
@@ -8884,6 +8886,7 @@
         "tests/e2e/test_hs161_github_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_05_close_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_04_empty_decision_heads_glass.py",
@@ -8972,6 +8975,7 @@
         "tests/e2e/test_hs161_github_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_05_close_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_04_empty_decision_heads_glass.py",
@@ -9079,6 +9083,7 @@
         "tests/e2e/test_hs161_github_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_05_close_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo3_01_receipt_hits.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_04_empty_decision_heads_glass.py",
@@ -9172,6 +9177,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9213,6 +9219,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9290,6 +9297,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9375,6 +9383,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9416,6 +9425,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9457,6 +9467,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9498,6 +9509,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9539,6 +9551,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9580,6 +9593,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9667,6 +9681,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9708,6 +9723,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -9788,6 +9804,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo7_delete_receipt_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_decision_records.py",
@@ -12206,6 +12223,7 @@
         }
       ],
       "test_candidates": [
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/integration/test_one_place_relationships.py",
         "tests/integration/test_project_routes_characterization.py"
       ],
@@ -20364,6 +20382,7 @@
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_03_needs_you_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_device_meeting_session.py",
@@ -20398,6 +20417,7 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo13_a3h_meeting_summary.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo3_summary_rig.py",
@@ -20576,7 +20596,7 @@
             "GET"
           ],
           "symbol": "api_list_meetings",
-          "line": 46,
+          "line": 62,
           "parameters": [
             {
               "name": "request",
@@ -20662,6 +20682,7 @@
         "tests/e2e/test_hs202_first_use_smoke.py",
         "tests/e2e/test_phase200_daily_loop.py",
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_03_needs_you_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/integration/test_actuator_presence_broadcasts.py",
         "tests/integration/test_history_slack_surfaces.py",
@@ -20691,6 +20712,7 @@
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
         "tests/unit/test_philo13_a3h_meeting_summary.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo3_summary_rig.py",
@@ -20733,7 +20755,7 @@
             "GET"
           ],
           "symbol": "api_meeting_facets",
-          "line": 96,
+          "line": 112,
           "parameters": [
             {
               "name": "request",
@@ -20892,6 +20914,62 @@
       }
     },
     {
+      "path": "/api/meetings/ready",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.meetings.crud",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/meetings/crud.py",
+      "handler_evidence": [
+        {
+          "path": "/api/meetings/ready",
+          "methods": [
+            "GET"
+          ],
+          "symbol": "api_list_unread_ready_meetings",
+          "line": 46,
+          "parameters": [
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [],
+          "calls": [
+            "JSONResponse",
+            "_principal",
+            "_service",
+            "_service(ctx).list_ready",
+            "router.get"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": "Read producer-created meeting readiness that is still unseen."
+        }
+      ],
+      "test_candidates": [
+        "tests/unit/test_philo13_c3_ready.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
       "path": "/api/meetings/{meeting_id}",
       "methods": [
         "DELETE"
@@ -20909,7 +20987,7 @@
             "DELETE"
           ],
           "symbol": "api_delete_meeting",
-          "line": 147,
+          "line": 163,
           "parameters": [
             {
               "name": "meeting_id",
@@ -20977,6 +21055,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -21018,7 +21097,7 @@
             "GET"
           ],
           "symbol": "api_get_meeting",
-          "line": 105,
+          "line": 121,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21090,6 +21169,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -21131,7 +21211,7 @@
             "PUT"
           ],
           "symbol": "api_rename_meeting",
-          "line": 120,
+          "line": 136,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21205,6 +21285,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -21310,6 +21391,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -21419,6 +21501,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -21529,6 +21612,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -21567,7 +21651,7 @@
             "POST"
           ],
           "symbol": "api_recover_meeting_capture",
-          "line": 174,
+          "line": 190,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21633,6 +21717,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -21673,7 +21758,7 @@
             "GET"
           ],
           "symbol": "api_export_meeting",
-          "line": 216,
+          "line": 232,
           "parameters": [
             {
               "name": "meeting_id",
@@ -21747,6 +21832,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -21846,6 +21932,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -21953,6 +22040,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -22055,6 +22143,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -22159,6 +22248,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -22266,6 +22356,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -22370,6 +22461,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -22480,6 +22572,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -22590,6 +22683,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -22695,6 +22789,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -22807,6 +22902,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -22836,7 +22932,9 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": [],
+      "consumers": [
+        "web"
+      ],
       "source": "holdspeak/web/routes/projects.py",
       "handler_evidence": [
         {
@@ -22911,6 +23009,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -23020,6 +23119,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -23126,6 +23226,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -23240,6 +23341,114 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
+        "tests/unit/test_philo13_meeting_parking.py",
+        "tests/unit/test_philo3_summary_rig.py",
+        "tests/unit/test_philo5_his_words.py",
+        "tests/unit/test_philo5_loop_compat.py",
+        "tests/unit/test_philo5_pairs.py",
+        "tests/unit/test_philo5_the_loop.py",
+        "tests/unit/test_philo5_the_loop_r2.py",
+        "tests/unit/test_philo6_01_import_badge.py",
+        "tests/unit/test_philo_graph_atlas.py"
+      ],
+      "test_candidate_meaning": "literal route mentions, not inspected assertion or passing-test evidence",
+      "contract_review": {
+        "request_schema": "See handler parameters/body keys and called validators; extraction is incomplete for raw Request and helpers.",
+        "response_schema": "Declared annotation/model only; Any/Response and helper results require semantic review.",
+        "auth": "Application authentication plus route/service principal checks; inspect calls. Not certified per endpoint.",
+        "errors": "Literal/decorator statuses only; helpers/middleware add responses.",
+        "side_effects": "Not inferred from method. Consult mapped capability and service.",
+        "idempotency": "Not established by this mechanical census.",
+        "approval": "Operation-specific; no universal confirmation rule.",
+        "boundary": "Transport boundary does not establish downstream data/compute placement.",
+        "stability": "Internal application surface unless a linked contract states otherwise."
+      }
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/ready/read",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.crud",
+      "consumers": [
+        "web"
+      ],
+      "source": "holdspeak/web/routes/meetings/crud.py",
+      "handler_evidence": [
+        {
+          "path": "/api/meetings/{meeting_id}/ready/read",
+          "methods": [
+            "POST"
+          ],
+          "symbol": "api_mark_meeting_ready_read",
+          "line": 51,
+          "parameters": [
+            {
+              "name": "meeting_id",
+              "annotation": "str"
+            },
+            {
+              "name": "request",
+              "annotation": "Request"
+            }
+          ],
+          "return_annotation": "Any",
+          "declared_response_model": null,
+          "declared_responses": {},
+          "literal_error_statuses": [
+            404
+          ],
+          "calls": [
+            "JSONResponse",
+            "_principal",
+            "_service",
+            "_service(ctx).mark_ready_read",
+            "ctx.broadcast",
+            "router.post"
+          ],
+          "body_access_keys": [],
+          "raw_request": true,
+          "docstring": "Acknowledge the readiness marker opened by the Meetings face."
+        }
+      ],
+      "test_candidates": [
+        "tests/e2e/test_graph_walk_smoke.py",
+        "tests/e2e/test_hs200_meeting_outcomes_glass.py",
+        "tests/e2e/test_hs201_lane_a_glass.py",
+        "tests/e2e/test_hs201_summary_face_glass.py",
+        "tests/e2e/test_hs201_summary_trust_glass.py",
+        "tests/e2e/test_hs202_02_first_use_glass.py",
+        "tests/e2e/test_hs202_first_use_smoke.py",
+        "tests/e2e/test_phase200_daily_loop.py",
+        "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/integration/test_actuator_presence_broadcasts.py",
+        "tests/integration/test_history_slack_surfaces.py",
+        "tests/integration/test_meeting_conflict_recovery.py",
+        "tests/integration/test_meeting_import_parity.py",
+        "tests/integration/test_meeting_intel_recovery.py",
+        "tests/integration/test_philo11_slack_rewrite.py",
+        "tests/integration/test_primitive_framework_sync.py",
+        "tests/integration/test_project_routes_characterization.py",
+        "tests/integration/test_web_aftercare_file_issue.py",
+        "tests/integration/test_web_history_import_ui.py",
+        "tests/integration/test_web_intent_timeline_api.py",
+        "tests/integration/test_web_meeting_aftercare_api.py",
+        "tests/integration/test_web_meeting_import_api.py",
+        "tests/integration/test_web_meeting_proposals_api.py",
+        "tests/integration/test_web_meeting_rename_api.py",
+        "tests/integration/test_web_meetings_facets_api.py",
+        "tests/integration/test_web_server.py",
+        "tests/integration/test_web_slack_export.py",
+        "tests/integration/test_web_transcript_import_api.py",
+        "tests/uat/test_egress_cloud.py",
+        "tests/uat/test_functional_bootstrap.py",
+        "tests/unit/test_graph_walk_calibration.py",
+        "tests/unit/test_hs170_faces_wire.py",
+        "tests/unit/test_hs201_refusal_history.py",
+        "tests/unit/test_hs201_route_counsel.py",
+        "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -23280,7 +23489,7 @@
             "POST"
           ],
           "symbol": "api_restore_meeting",
-          "line": 161,
+          "line": 177,
           "parameters": [
             {
               "name": "meeting_id",
@@ -23348,6 +23557,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -23388,7 +23598,7 @@
             "GET"
           ],
           "symbol": "api_meeting_sync_conflicts",
-          "line": 184,
+          "line": 200,
           "parameters": [
             {
               "name": "meeting_id",
@@ -23455,6 +23665,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -23495,7 +23706,7 @@
             "POST"
           ],
           "symbol": "api_resolve_meeting_sync_conflict",
-          "line": 195,
+          "line": 211,
           "parameters": [
             {
               "name": "meeting_id",
@@ -23574,6 +23785,7 @@
         "tests/unit/test_hs201_refusal_history.py",
         "tests/unit/test_hs201_route_counsel.py",
         "tests/unit/test_hs201_route_http.py",
+        "tests/unit/test_philo13_c3_ready.py",
         "tests/unit/test_philo13_meeting_parking.py",
         "tests/unit/test_philo3_summary_rig.py",
         "tests/unit/test_philo5_his_words.py",
@@ -27663,6 +27875,8 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
+        "tests/e2e/test_philo13_18_editor_wrap_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27684,6 +27898,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -27797,6 +28013,8 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
+        "tests/e2e/test_philo13_18_editor_wrap_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -27818,6 +28036,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -27983,6 +28203,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28004,6 +28225,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28107,6 +28330,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28128,6 +28352,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28241,6 +28467,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28262,6 +28489,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28362,6 +28591,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28383,6 +28613,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28485,6 +28717,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28506,6 +28739,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28614,6 +28849,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28635,6 +28871,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28740,6 +28978,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28761,6 +29000,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28870,6 +29111,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -28891,6 +29133,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -28992,6 +29236,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29013,6 +29258,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29132,6 +29379,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29153,6 +29401,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29254,6 +29504,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29275,6 +29526,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29383,6 +29636,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29404,6 +29658,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29472,6 +29728,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29493,6 +29750,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29610,6 +29869,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29631,6 +29891,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29744,6 +30006,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29765,6 +30028,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -29880,6 +30145,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -29901,6 +30167,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30018,6 +30286,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30039,6 +30308,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30149,6 +30420,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30170,6 +30442,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30283,6 +30557,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30304,6 +30579,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30417,6 +30694,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30438,6 +30716,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30546,6 +30826,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30567,6 +30848,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30669,6 +30952,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30690,6 +30974,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30795,6 +31081,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30816,6 +31103,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -30920,6 +31209,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -30941,6 +31231,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31056,6 +31348,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31077,6 +31370,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31192,6 +31487,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31213,6 +31509,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31327,6 +31625,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31348,6 +31647,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31416,6 +31717,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31437,6 +31739,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31505,6 +31809,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31526,6 +31831,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31594,6 +31901,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31615,6 +31923,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31683,6 +31993,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31704,6 +32015,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31807,6 +32120,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31828,6 +32142,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -31930,6 +32246,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -31951,6 +32268,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32053,6 +32372,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32074,6 +32394,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32176,6 +32498,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32197,6 +32520,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32308,6 +32633,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32329,6 +32655,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32438,6 +32766,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32459,6 +32788,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32570,6 +32901,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32591,6 +32923,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32694,6 +33028,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32715,6 +33050,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32831,6 +33168,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32852,6 +33190,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -32961,6 +33301,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -32982,6 +33323,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -33082,6 +33425,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -33103,6 +33447,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -33212,6 +33558,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -33233,6 +33580,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -33349,6 +33698,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -33370,6 +33720,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -33475,6 +33827,7 @@
         "tests/e2e/test_philo10_04_send_face_glass.py",
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/e2e/test_philo9_07_project_grant_glass.py",
         "tests/integration/test_one_place_relationships.py",
@@ -33496,6 +33849,8 @@
         "tests/unit/test_philo10_send_contract.py",
         "tests/unit/test_philo10_send_restart.py",
         "tests/unit/test_philo11_atlas.py",
+        "tests/unit/test_philo13_astra_atlas.py",
+        "tests/unit/test_philo13_b5_week.py",
         "tests/unit/test_philo13_needs_you_fixture.py",
         "tests/unit/test_philo13_needs_you_route.py",
         "tests/unit/test_philo5_the_loop_r2.py",
@@ -38300,12 +38655,17 @@
         "tests/e2e/test_philo11_05a_brief_decision_send_glass.py",
         "tests/e2e/test_philo11_05b_meeting_faces_glass.py",
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_03_needs_you_glass.py",
         "tests/e2e/test_philo13_04_faces_glass.py",
         "tests/e2e/test_philo13_05_close_glass.py",
         "tests/e2e/test_philo13_06_open_glass.py",
+        "tests/e2e/test_philo13_08_decide_glass.py",
         "tests/e2e/test_philo13_11_chair_glass.py",
         "tests/e2e/test_philo13_11_frame_glass.py",
         "tests/e2e/test_philo13_12_gadgets_glass.py",
+        "tests/e2e/test_philo13_18_editor_wrap_glass.py",
+        "tests/e2e/test_philo13_18_strip_escape_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo9_03_room_face_glass.py",
         "tests/integration/test_setup_first_value_journey.py",
         "tests/integration/test_web_welcome_wizard.py"
@@ -43865,6 +44225,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -43933,6 +44294,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44001,6 +44363,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44070,6 +44433,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44138,6 +44502,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44168,6 +44533,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44198,6 +44564,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44228,6 +44595,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44258,6 +44626,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44288,6 +44657,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44361,6 +44731,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44434,6 +44805,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44507,6 +44879,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44580,6 +44953,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44653,6 +45027,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44726,6 +45101,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44799,6 +45175,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44863,6 +45240,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44927,6 +45305,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -44998,6 +45377,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -45028,6 +45408,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -45058,6 +45439,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -45088,6 +45470,7 @@
       "handler_evidence": [],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -45159,6 +45542,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -45223,6 +45607,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -45290,6 +45675,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -45365,6 +45751,7 @@
       ],
       "test_candidates": [
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/integration/test_web_automations_api.py",
         "tests/unit/test_philo13_workbench_parking.py"
@@ -46472,6 +46859,7 @@
         "tests/e2e/test_hs141_thought_workbench_glass.py",
         "tests/e2e/test_hs143_assignments_glass.py",
         "tests/e2e/test_philo13_02_park_glass.py",
+        "tests/e2e/test_philo13_18_type_floor_glass.py",
         "tests/e2e/test_philo8_one_delete_glass.py",
         "tests/e2e/test_route_preflight.py",
         "tests/integration/test_web_automations_api.py",

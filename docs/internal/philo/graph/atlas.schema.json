@@ -1014,6 +1014,22 @@
               "type": "string",
               "minLength": 1,
               "description": "Imported meeting id passed to the real Stop-style intelligence queue producer; no result rows are injected."
+            },
+            "then": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "ui"
+                  }
+                }
+              },
+              "description": "On a restart trigger, UI steps after the hub restarts and the page reloads, before observation."
             }
           }
         },
@@ -1292,6 +1308,74 @@
                     "protocol_reads",
                     "all_of"
                   ]
+                },
+                "clear_of_by_viewport": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "additionalProperties": false,
+                  "properties": {
+                    "1440": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "object",
+                            "required": [
+                              "selector"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                              "selector": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "required": {
+                                "type": "boolean"
+                              },
+                              "require_hit_test": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "393": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "object",
+                            "required": [
+                              "selector"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                              "selector": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "required": {
+                                "type": "boolean"
+                              },
+                              "require_hit_test": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "description": "Clearance targets for each declared viewport. A missing viewport blocks the rig instead of waiving clearance."
                 }
               }
             },

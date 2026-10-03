@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** the owner's ratification of this charter
 - **Unblocks:** A2-W (the faces lane's wiring step), PHILO-13-13 (C3's counts)
 - **Owner:** Astra (Luna, xhigh); Muad'Dib checks. Wiring step A2-W: Muad'Dib (Fedaykin, Opus 5.5) on `feat/philo-13-muaddib`; Astra checks
@@ -93,3 +93,7 @@ Grounding size: not sized as a move. PROVISIONAL.
 - 2026-10-01 — H-A2 built in Astra's lane; [handoff](handoff-a2-astra.md), [proof](lane-03-astra.md), [actual walks](walks-03-astra.md). DRAFT — UNCHECKED — awaiting Muad'Dib. Story remains in-progress until H-A2 and A2-W both merge; acceptance boxes remain open for that closing verification.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two". The membership rule is Muad'Dib's ruling (the Chair's existing membership). `history/helpers.ts` and the Room headline are Muad'Dib's (A2-W), not this lane's.
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+## Closed — 2026-10-03
+
+Both halves: H-A2 (Astra, #728 — R1–R3 membership, bounded FAILED/RETRYING server read, cached route) and A2-W (faces lane): the Chair headline, the bell and the Dock read the ONE number from `useNeedsYou`; the Chair's own copies deleted; refresh after Done/Mark done/Confirm/Run summary and on `desk_changed` (6 → 5 in 48 ms at 1440, 32 ms at 393, no reload); every narrower count names what it counts (ACTIONS n OF m; All summaries done / n meeting failed; n open here / Clear here / OPEN HERE; TO REVIEW n; n OPEN; TO REPAIR n; WAITING n). **Muad'Dib's rulings:** the bell shows the one number only (held proposals stay inside the shade as "Needs attention · n"); the relabels accepted. Vitest red on d4765b97 ('5 need you' vs 6) → green; glass 2/2 at 1440 + touch 393 through Astra's real-producer week. Capture `evidence-story-03.md` (vitest 2766, tsc, guard, pytest 132).

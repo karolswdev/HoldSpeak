@@ -19,7 +19,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     apiRequest: vi.fn((url: string, init?: RequestInit) => {
       if (url === "/api/decisions" && init?.method === "POST") {
         const decision = {
-          id: "decision_keep", title: "New decision", status: "proposed", deciders: [],
+          id: "decision_keep", title: "Adopt the one bus", status: "proposed", deciders: [],
           decided_at: null, context_markdown: "", decision_markdown: "", alternatives: [],
           consequences_markdown: "", tags: [], created_at: "2026-09-23T00:00:00Z",
           updated_at: "2026-09-23T00:00:00Z", deleted: false,
@@ -61,7 +61,8 @@ beforeEach(() => {
 describe("PHILO-3-01 no data loss on an immediate reopen", () => {
   it("save -> close -> reopen inside the marker -> Done keeps the text", async () => {
     await act(async () => {
-      await useDesk.getState().createPrimitive("decision");
+      // PHILO-13-08 (B3): a decision is created only once it is named.
+      await useDesk.getState().createPrimitive("decision", { title: "Adopt the one bus" });
     });
     expect(useDesk.getState().newIds).toContain("decision_keep");
 

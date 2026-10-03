@@ -1,0 +1,9 @@
+PASS: live
+BRAIN: astra
+SOURCE: 987e7b270e2aa216c405b611efd72b2e4d76f3d2 dirty=True
+CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase13-astra.json
+RUNTIME: build=['index-CroTYvWH.js'] hub=http://127.0.0.1:54224 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-95pux34z/.local/share/holdspeak/holdspeak.db engine=replayed
+JOB: j1
+VERDICT: pass terminal=settled
+EVIDENCE: ['.tmp/c3-conditions/walks/reload-1440/20261003T055517Z-case.p13.dock.meeting_read_survives_reload-astra-1440/before.png', '.tmp/c3-conditions/walks/reload-1440/20261003T055517Z-case.p13.dock.meeting_read_survives_reload-astra-1440/after.png']
+NOTE: predicate: all_of: text_absent: 'READY' absent at observe_at | protocol_reads: GET /api/meetings/ready answered 200 with 0 row(s) {}

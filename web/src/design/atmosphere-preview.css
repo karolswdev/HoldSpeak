@@ -66,7 +66,7 @@
   );
 }
 .atmosphere-preview-kicker {
-  font: 10px var(--font-mono);
+  font: var(--font-size-xs) var(--font-mono);
   letter-spacing: 0.17em;
   color: var(--text-muted);
 }
@@ -117,7 +117,7 @@
   display: flex;
   padding: 10px 8px;
   gap: 8px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   min-height: 46px;
   align-items: baseline;
   white-space: normal;
@@ -145,7 +145,7 @@
   .atmosphere-preview-brand span {
     display: block;
     margin: 5px 0 0;
-    font-size: 10px;
+    font-size: var(--font-size-xs);
   }
   .atmosphere-preview-controls {
     flex-direction: column;
@@ -153,7 +153,7 @@
   }
   .atmosphere-preview-controls button {
     min-height: 36px;
-    font-size: 10px;
+    font-size: var(--font-size-xs);
   }
   .atmosphere-preview-foot {
     padding: 55px 18px 20px;

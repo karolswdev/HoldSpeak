@@ -48,7 +48,7 @@
   border-radius: 2px;
   background: var(--surface-1);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .desk-next .desk-attention-counts b {
   display: block;
@@ -64,7 +64,7 @@
 .desk-next .desk-attention-filters label {
   min-width: 0;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
 }
 .desk-next .desk-attention-filters label span {
   display: block;
@@ -120,7 +120,7 @@
 .desk-next .desk-attention-list em {
   margin-top: 3px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-style: normal;
 }
 /* HS-111: status indicators — square, no glow */

@@ -1,0 +1,16 @@
+# red: the glass headline fence against the HEAD 1e562b76 web bundle (built from git archive HEAD web)
+E               AssertionError: ('running', 'All summaries done', 'running')
+tests/e2e/test_philo13_03_needs_you_glass.py:319: AssertionError
+E               AssertionError: ('retrying', 'All summaries done', 'queued')
+tests/e2e/test_philo13_03_needs_you_glass.py:319: AssertionError
+WARNING  holdspeak.intel_queue:intel_queue.py:143 Deferred intel failed for meeting philo13-a2w-headline (attempt 1/3): retrying in 30s
+E               AssertionError: ('running', 'All summaries done', 'running')
+tests/e2e/test_philo13_03_needs_you_glass.py:319: AssertionError
+E               AssertionError: ('retrying', 'All summaries done', 'queued')
+tests/e2e/test_philo13_03_needs_you_glass.py:319: AssertionError
+WARNING  holdspeak.intel_queue:intel_queue.py:143 Deferred intel failed for meeting philo13-a2w-headline (attempt 1/3): retrying in 30s
+FAILED tests/e2e/test_philo13_03_needs_you_glass.py::TestMeetingsHeadlineTellsTheTruth::test_the_meetings_headline_names_the_live_fact[1440-running]
+FAILED tests/e2e/test_philo13_03_needs_you_glass.py::TestMeetingsHeadlineTellsTheTruth::test_the_meetings_headline_names_the_live_fact[1440-retrying]
+FAILED tests/e2e/test_philo13_03_needs_you_glass.py::TestMeetingsHeadlineTellsTheTruth::test_the_meetings_headline_names_the_live_fact[393-running]
+FAILED tests/e2e/test_philo13_03_needs_you_glass.py::TestMeetingsHeadlineTellsTheTruth::test_the_meetings_headline_names_the_live_fact[393-retrying]
+4 failed, 2 passed, 2 deselected in 37.35s

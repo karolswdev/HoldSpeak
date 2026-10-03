@@ -189,8 +189,8 @@ function ConfigStrip({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="chrome"
       className="wb-config-strip"
       onClick={onClick}
       aria-label="Expand configuration"
@@ -222,7 +222,7 @@ function ConfigStrip({
         </span>
       ) : null}
       <span className="wb-config-strip-chevron" aria-hidden="true">▾</span>
-    </button>
+    </Button>
   );
 }
 
@@ -740,8 +740,8 @@ function WorkbenchItemCard({
       data-restored={restored || undefined}
     >
       {/* ── head line ──────────────────────────────────────────── */}
-      <button
-        type="button"
+      <Button
+        variant="chrome"
         className="wb-card-head"
         onClick={onToggle}
         aria-expanded={expanded}
@@ -759,7 +759,7 @@ function WorkbenchItemCard({
         <span className="desk-chip" data-tone={chip.tone}>
           {chip.label}
         </span>
-      </button>
+      </Button>
       <WhyControl workType="workbench_item" workRef={item.id} />
 
       {/* ── collapsed result preview ───────────────────────────── */}
@@ -1570,8 +1570,8 @@ export function WorkbenchWindow({
         />
       }
       actions={
-        <button
-          type="button"
+        <Button
+          variant="chrome"
           className="desk-chip"
           data-tone={running ? "warn" : undefined}
           disabled={!!runDisabledReason}
@@ -1587,7 +1587,7 @@ export function WorkbenchWindow({
           {runDisabledReason && !running ? (
             <small className="quiet"> · {runDisabledReason}</small>
           ) : null}
-        </button>
+        </Button>
       }
       minW={480}
       minH={340}
@@ -1887,17 +1887,17 @@ export function WorkbenchWindow({
                   }}
                   aria-label="New item instruction"
                 />
-                <button
-                  type="button"
+                <Button
+                  variant="chrome"
                   className="desk-chip wb-priority-cycle"
                   data-priority={newPriority}
                   onClick={() => setNewPriority((p) => (p >= 3 ? 1 : p + 1))}
                   title={`Priority ${newPriority}. Click to cycle`}
                 >
                   P{newPriority}
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="chrome"
                   className="desk-chip is-primary"
                   disabled={!newTitle.trim()}
                   title={
@@ -1906,7 +1906,7 @@ export function WorkbenchWindow({
                   onClick={() => void addItem()}
                 >
                   Add
-                </button>
+                </Button>
               </div>
             </div>
           </>

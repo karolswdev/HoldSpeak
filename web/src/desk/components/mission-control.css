@@ -80,7 +80,7 @@
   gap: 8px;
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -185,7 +185,7 @@
   background: var(--surface-2);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -218,7 +218,7 @@
   background: var(--warn);
   color: var(--bg);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -231,7 +231,7 @@
 }
 .desk-next .desk-mc-sessions .gadget-fold > summary {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -441,7 +441,7 @@
   border-radius: 0;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -548,7 +548,7 @@
 .desk-next .desk-ground-day,
 .desk-next .desk-ground-loading {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono);
   white-space: nowrap;
 }
@@ -556,7 +556,7 @@
   margin: 6px 0 0;
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -565,14 +565,14 @@
   margin: 0;
   color: var(--danger);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
 }
 /* HS-88-02: the rail object's kind, a quiet monospace tag before its title. */
 .desk-next .desk-rails-kind {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--font-size-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-faint);
@@ -620,7 +620,7 @@
   margin: 0;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
@@ -629,7 +629,7 @@
   margin: 0;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 /* The console footer composes directly with the frame-owned foot. */
 .desk-next .desk-ask-foot {
@@ -643,7 +643,7 @@
 /* The Runs-on caption reads as mono tokens, not a sentence. */
 .desk-next .runs-on-facts {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -657,7 +657,7 @@
 }
 .desk-next .desk-mc-repo-name {
   color: var(--text-faint);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -667,7 +667,7 @@
   gap: var(--space-2);
 }
 .desk-next .desk-mc-light {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--text-faint);
   text-decoration: none;
 }
@@ -694,7 +694,7 @@
 }
 .desk-next .desk-mc-light.gate-refusal {
   color: var(--danger);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   max-width: 340px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -722,7 +722,7 @@
 }
 .desk-next .desk-mc-evidence-path {
   color: var(--text-faint);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono);
 }
 .desk-next .desk-mc-evidence-body {
@@ -730,7 +730,7 @@
   max-height: 260px;
   overflow: auto;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.5;
   color: var(--text);
   white-space: pre-wrap;

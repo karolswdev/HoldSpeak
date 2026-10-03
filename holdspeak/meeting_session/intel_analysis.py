@@ -185,6 +185,7 @@ class IntelAnalysisMixin:
                     "Discarding a late live-analysis window: the stop handoff already fired"
                 )
                 return False
+            saved_state = self._state
             if self._state:
                 self._state.intel = snapshot
                 self._state.intel_status = "ready"
@@ -194,6 +195,23 @@ class IntelAnalysisMixin:
                     else "Final meeting intelligence ready."
                 )
                 self._state.intel_completed_at = datetime.now()
+
+        # Durable-before-observable: persist the real winning live result and
+        # create its unread revision before any frame or callback can announce it.
+        if saved_state is not None:
+            from ..db import get_database
+
+            db = get_database()
+            db.meetings.save_meeting(saved_state)
+            completion_revision = (
+                saved_state.intel_completed_at.isoformat()
+                if saved_state.intel_completed_at is not None
+                else None
+            )
+            db.meetings.mark_ready_unseen(
+                saved_state.id,
+                ready_at=completion_revision,
+            )
 
         # Emit completion to any observer (web dashboard)
         self._emit_broadcast("intel_complete", snapshot.to_dict())

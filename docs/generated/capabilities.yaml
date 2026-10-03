@@ -6422,13 +6422,13 @@
         },
         {
           "claim": "/desk and unknown paths redirect to /.",
-          "line": 67,
+          "line": 46,
           "path": "web/src/App.tsx",
           "symbol": "App"
         },
         {
           "claim": "DeskApp composes the Workbench shell.",
-          "line": 184,
+          "line": 86,
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "DeskApp"
         }
@@ -6522,13 +6522,13 @@
       "sources": [
         {
           "claim": "Window rectangles are clamped to the work band and minimum dimensions.",
-          "line": 119,
+          "line": 175,
           "path": "web/src/desk/components/window/windowGeometry.ts",
           "symbol": "clampRect"
         },
         {
           "claim": "The shared frame owns geometry and focus callbacks.",
-          "line": 556,
+          "line": 586,
           "path": "web/src/desk/components/DeskWindow.tsx",
           "symbol": "DeskWindowFrame"
         }
@@ -6744,13 +6744,13 @@
       "sources": [
         {
           "claim": "Definitions include ids, labels, availability and runner behavior.",
-          "line": 28,
+          "line": 57,
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "Verb"
         },
         {
           "claim": "The registry enumerates Desk verbs.",
-          "line": 136,
+          "line": 167,
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "VERBS"
         }
@@ -6857,13 +6857,13 @@
       "sources": [
         {
           "claim": "The matrix enumerates supported kind pairs and named effects.",
-          "line": 9,
+          "line": 22,
           "path": "web/src/desk/dropMatrix.ts",
           "symbol": "DROP_MATRIX"
         },
         {
           "claim": "External files are accepted only over a release target.",
-          "line": 9,
+          "line": 17,
           "path": "web/src/desk/components/GlassDropLayer.tsx",
           "symbol": "GlassDropLayer"
         }
@@ -6961,13 +6961,13 @@
       "sources": [
         {
           "claim": "The key is hs.desk.workspace.v1.",
-          "line": 8,
+          "line": 10,
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "DESK_WORKSPACE_STORAGE_KEY"
         },
         {
           "claim": "Wrong version, invalid JSON and invalid shape return an empty workspace.",
-          "line": 112,
+          "line": 82,
           "path": "web/src/desk/store/workspaceStorage.ts",
           "symbol": "loadDeskWorkspace"
         }
@@ -7063,7 +7063,7 @@
       "sources": [
         {
           "claim": "RuntimeBus owns the socket, states, ping and bounded reconnect policy.",
-          "line": 13,
+          "line": 26,
           "path": "web/src/runtime/RuntimeBus.tsx",
           "symbol": "RuntimeBusProvider"
         },
@@ -7178,9 +7178,11 @@
       "apis": [
         "GET /api/channels/sends",
         "GET /api/people/relationships",
-        "GET /api/people/relationships/{relationship_id}/brief"
+        "GET /api/people/relationships/{relationship_id}/brief",
+        "GET /api/meetings/ready",
+        "POST /api/meetings/{meeting_id}/ready/read"
       ],
-      "authority": "The hub owns recording and send outcomes; the Dock projects them.",
+      "authority": "The hub owns recording and send outcomes. Completion producers store unseen readiness; opening a meeting acknowledges it.",
       "configuration": [],
       "dependencies": [
         "RuntimeBus",
@@ -7210,7 +7212,7 @@
       "inputs": [
         "runtime frames",
         "durable sends",
-        "meeting summaries",
+        "durable unseen meeting readiness",
         "People briefs",
         "active projects",
         "A2 membership"
@@ -7220,7 +7222,7 @@
         "C3-W must finish styling and adopt launch origin in Chair.",
         "No physical recording was attempted; the rig refuses microphone starts.",
         "The People clock requires H-B4.",
-        "Muad'Dib has not checked this candidate."
+        "Muad'Dib's single-pass conditions are recorded in checks/c3-744-conditions.md; C3-W and the owner's sitting remain open."
       ],
       "model_requirements": [],
       "name": "Read live Dock state",
@@ -7236,7 +7238,9 @@
         "explicit Dock launch origin"
       ],
       "owner_observed": false,
-      "persistence": [],
+      "persistence": [
+        "meeting_ready_reads: ready_at and read_at"
+      ],
       "platforms": {
         "aipi": "unknown",
         "ipad": "unknown",
@@ -7247,11 +7251,11 @@
       "purpose": "Read meeting, send, recording and connection state from Dock AppIcons.",
       "release_availability": "unverified",
       "replacement": null,
-      "side_effect": "none",
+      "side_effect": "local_reversible",
       "sources": [
         {
           "claim": "The Dock projects hub state and sends explicit launch origin to the shell.",
-          "line": 214,
+          "line": 260,
           "path": "web/src/desk/components/window/Dock.tsx",
           "symbol": "Dock"
         }
@@ -7270,6 +7274,96 @@
         }
       ],
       "trust_boundary": "Authenticated hub frames and owner routes provide state. Opening an AppIcon uses the existing shell."
+    },
+    {
+      "apis": [
+        "POST /api/projects/{project_id}/updates/draft"
+      ],
+      "authority": "The existing project.draft_update operation admits the write.",
+      "configuration": [],
+      "dependencies": [
+        "ProjectService",
+        "ProjectUpdateService"
+      ],
+      "docs": [
+        "pm/roadmap/holdspeak-philo/phase-13-the-desk/story-10-b5-the-update-writes-the-week.md"
+      ],
+      "domain": "desk",
+      "egress": "Draft creation writes locally. Send is a separate action.",
+      "egress_possible": false,
+      "entry_points": [
+        "holdspeak/services/project_update_service.py::ProjectUpdateService.draft_update"
+      ],
+      "evidence_level": "tests_executed",
+      "exposure": "user",
+      "failure_states": [
+        "Named source-coverage caveats when a stored source cannot be read."
+      ],
+      "id": "project.update.linked_week",
+      "inputs": [
+        "project id",
+        "linked meetings",
+        "Room decisions",
+        "owned open actions"
+      ],
+      "kernel_operations": [
+        "project.draft_update"
+      ],
+      "limitations": [
+        "Pending Muad'Dib counsel and merge; no owner sitting is claimed."
+      ],
+      "model_requirements": [],
+      "name": "Draft a project update",
+      "network_requirements": [],
+      "outputs": [
+        "update body",
+        "source claims",
+        "source coverage"
+      ],
+      "owner_observed": false,
+      "persistence": [
+        "project_updates"
+      ],
+      "platforms": {
+        "aipi": "unknown",
+        "ipad": "unknown",
+        "linux_wayland": "unknown",
+        "linux_x11": "unknown",
+        "macos": "unknown"
+      },
+      "purpose": "Draft an update from linked meeting summaries, decisions and owned actions.",
+      "release_availability": "unverified",
+      "replacement": null,
+      "side_effect": "local_reversible",
+      "sources": [
+        {
+          "claim": "Reads active linked meeting summaries, owned open actions and Room decisions.",
+          "line": 1997,
+          "path": "holdspeak/services/project_update_service.py",
+          "symbol": "ProjectUpdateService._read_week_sources"
+        }
+      ],
+      "status": "built_unreleased",
+      "status_reason": "Implemented in the PHILO-13-10 candidate; the paired producer tests passed. Muad'Dib has not checked this candidate.",
+      "surfaces": [
+        "Project Room",
+        "Update draft"
+      ],
+      "tests": [
+        {
+          "assertion": "The draft includes real persisted meeting summary, decision and two owned actions with source refs.",
+          "execution": "passed",
+          "node": "test_deterministic_draft_reads_real_linked_week",
+          "path": "tests/unit/test_philo13_b5_week.py"
+        },
+        {
+          "assertion": "The deterministic path does not access the model broker.",
+          "execution": "passed",
+          "node": "test_deterministic_draft_never_calls_model_boundary",
+          "path": "tests/unit/test_philo13_b5_week.py"
+        }
+      ],
+      "trust_boundary": "The deterministic generator reads stored project and meeting data. It does not call a model."
     },
     {
       "apis": [

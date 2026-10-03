@@ -7,6 +7,10 @@ import { deskQueryClient } from "../lib/queryClient";
 // window without exercising that test's API contract.
 beforeEach(() => {
   deskQueryClient.clear();
+  // PHILO-13-03: the one needs-you snapshot is shared; a prior case's read
+  // must not answer the next (registered by desk/needsYou.ts, never imported
+  // here, so a test's API mock still binds).
+  (globalThis as { __resetNeedsYou?: () => void }).__resetNeedsYou?.();
 });
 
 class ResizeObserverStub {

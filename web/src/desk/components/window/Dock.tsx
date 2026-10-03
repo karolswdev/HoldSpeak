@@ -48,15 +48,21 @@ const DOCK_LIVE_FRAMES = [
 interface DockReadState {
   sendOutcome: ReturnType<typeof latestSendOutcome>;
   nextOneOnOne: string | null;
+  peopleReadiness: PeopleReadinessState | null;
+  readyMeetingIds: string[];
   sendReadAt: number | null;
   peopleReadAt: number | null;
+  readyReadAt: number | null;
 }
 
 const EMPTY_DOCK_READ: DockReadState = {
   sendOutcome: null,
   nextOneOnOne: null,
+  peopleReadiness: null,
+  readyMeetingIds: [],
   sendReadAt: null,
   peopleReadAt: null,
+  readyReadAt: null,
 };
 
 function wireRows<T>(body: unknown, key: string): T[] {
@@ -66,10 +72,36 @@ function wireRows<T>(body: unknown, key: string): T[] {
   return Array.isArray(rows) ? rows as T[] : [];
 }
 
-async function readPeopleProjection(): Promise<{
+type PeopleReadinessState = "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "ready";
+const PEOPLE_READINESS_STATES: readonly PeopleReadinessState[] = [
+  "unconfigured",
+  "locked",
+  "key_unavailable",
+  "corrupt",
+  "unavailable",
+  "ready",
+];
+
+interface PeopleProjectionRead {
+  readiness: PeopleReadinessState | null;
   nextOneOnOne: string | null;
   complete: boolean;
-}> {
+}
+
+function peopleReadinessOf(body: unknown): PeopleReadinessState | null {
+  if (!body || typeof body !== "object") return null;
+  const value = (body as Record<string, unknown>).state ??
+    (body as Record<string, unknown>).readiness;
+  return PEOPLE_READINESS_STATES.includes(value as PeopleReadinessState)
+    ? value as PeopleReadinessState
+    : null;
+}
+
+async function readPeopleProjection(): Promise<PeopleProjectionRead> {
+  const readinessBody = await apiFetch<unknown>("/api/people/readiness");
+  const readiness = peopleReadinessOf(readinessBody);
+  if (readiness !== "ready") return { readiness, nextOneOnOne: null, complete: readiness !== null };
+
   const body = await apiFetch<unknown>("/api/people/relationships");
   const relationships = wireRows<DockRelationshipRead>(body, "relationships");
   const direct = relationships.filter((relationship) =>
@@ -99,9 +131,17 @@ async function readPeopleProjection(): Promise<{
   const complete = relationships.length === 0 || direct.length === relationships.length ||
     (ids.length === relationships.length && successfulDetails.length === ids.length);
   return {
+    readiness,
     nextOneOnOne: nextOneOnOneLabel([...relationships, ...successfulDetails]),
     complete,
   };
+}
+
+async function readUnreadReadyMeetings(): Promise<string[]> {
+  const body = await apiFetch<unknown>("/api/meetings/ready");
+  return wireRows<{ id?: string }>(body, "meetings")
+    .map((row) => typeof row.id === "string" ? row.id : "")
+    .filter(Boolean);
 }
 
 /** HS-100-11 — the dock IS the launcher: the four applications ride it
@@ -138,12 +178,15 @@ function useDockLiveReads(): {
   const [reads, setReads] = useState<DockReadState>(EMPTY_DOCK_READ);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastState = useRef<string | null>(runtimeState);
+  const readyReadGeneration = useRef(0);
 
   const refresh = useCallback(async () => {
     if (runtimeState !== "connected") return;
-    const [sends, people] = await Promise.allSettled([
+    const requestedReadyGeneration = readyReadGeneration.current;
+    const [sends, people, ready] = await Promise.allSettled([
       apiFetch<unknown>("/api/channels/sends"),
       readPeopleProjection(),
+      readUnreadReadyMeetings(),
     ]);
     // A live invalidation always refreshes A2 through its shared read. This
     // explicit refresh is the event path; the Dock does not start the hook's
@@ -156,11 +199,28 @@ function useDockLiveReads(): {
         sendOutcome: latestSendOutcome(wireRows<DockSendRead>(sends.value, "sends")),
         sendReadAt: readAt,
       } : {}),
-      ...(people.status === "fulfilled" && people.value.complete ? {
-        nextOneOnOne: people.value.nextOneOnOne,
-        peopleReadAt: readAt,
+      ...(people.status === "fulfilled" ? {
+        peopleReadiness: people.value.readiness,
+        ...(people.value.complete ? {
+          nextOneOnOne: people.value.nextOneOnOne,
+          peopleReadAt: readAt,
+        } : { nextOneOnOne: null }),
+      } : {
+        nextOneOnOne: null,
+        peopleReadiness: null,
+      }),
+      ...(ready.status === "fulfilled" &&
+        requestedReadyGeneration === readyReadGeneration.current ? {
+        readyMeetingIds: ready.value,
+        readyReadAt: readAt,
       } : {}),
     }));
+    if (ready.status === "fulfilled" &&
+      requestedReadyGeneration === readyReadGeneration.current) {
+      // The durable snapshot is authoritative. Reconcile live frame IDs so a
+      // replayed frame cannot resurrect an acknowledged row.
+      setLive((previous) => ({ ...previous, readyMeetingIds: ready.value }));
+    }
   }, [runtimeState]);
 
   useEffect(() => {
@@ -171,6 +231,23 @@ function useDockLiveReads(): {
     const unsubscribers = DOCK_LIVE_FRAMES.map((type) =>
       subscribe(type, (frame) => {
         setLive((previous) => reduceDockFrame(previous, frame));
+        if (frame.type === "desk_changed") {
+          const value = frame.data && typeof frame.data === "object"
+            ? frame.data as Record<string, unknown>
+            : {};
+          if (value.kind === "meeting_ready_read") {
+            const readId = typeof value.id === "string"
+              ? value.id
+              : typeof value.meeting_id === "string" ? value.meeting_id : "";
+            if (readId) {
+              readyReadGeneration.current += 1;
+              setReads((previous) => ({
+                ...previous,
+                readyMeetingIds: previous.readyMeetingIds.filter((id) => id !== readId),
+              }));
+            }
+          }
+        }
         if (timer.current !== null) clearTimeout(timer.current);
         timer.current = setTimeout(() => {
           timer.current = null;
@@ -189,13 +266,17 @@ function useDockLiveReads(): {
     const state = runtimeState;
     const reconnected = state === "connected" && lastState.current !== "connected";
     lastState.current = state;
-    const hasSnapshot = reads.sendReadAt !== null || reads.peopleReadAt !== null;
+    const hasSnapshot = reads.sendReadAt !== null || reads.peopleReadAt !== null || reads.readyReadAt !== null;
     if (state === "connected" && (reconnected || !hasSnapshot)) {
       void refresh();
     }
-  }, [reads.peopleReadAt, reads.sendReadAt, refresh, runtimeState]);
+  }, [reads.peopleReadAt, reads.readyReadAt, reads.sendReadAt, refresh, runtimeState]);
 
-  const lastSuccessfulAt = Math.max(reads.sendReadAt ?? 0, reads.peopleReadAt ?? 0) || null;
+  const lastSuccessfulAt = Math.max(
+    reads.sendReadAt ?? 0,
+    reads.peopleReadAt ?? 0,
+    reads.readyReadAt ?? 0,
+  ) || null;
 
   return {
     live,
@@ -302,14 +383,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const shown = launchers.filter((l) => !windows.some((w) => w.id === l.id));
   const activeProjects = useDesk((s) => s.projects).filter((project) => !project.is_archived);
   const projectCounts = projectNeedsYouCounts(needsYouItems);
-  const meetingRows = useDesk((s) => s.items.meeting);
-  const readyMeetingIds = new Set(live.readyMeetingIds);
-  for (const meeting of meetingRows) {
-    if (
-      meeting.hasSummary ||
-      ["ready", "complete", "completed", "settled"].includes(String(meeting.intelStatus || ""))
-    ) readyMeetingIds.add(meeting.id);
-  }
+  const readyMeetingIds = new Set([...live.readyMeetingIds, ...reads.readyMeetingIds]);
   const readyMeetingBadge = !offline && readyMeetingIds.size > 0
     ? `READY ${readyMeetingIds.size}`
     : null;
@@ -324,7 +398,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     ? `REC${recording.startedAt ? ` ${formatDockTime(recording.startedAt)}` : ""}`
     : null;
   const sendLabel = !offline ? dockStateLabel(live.sendOutcome || reads.sendOutcome) : null;
-  const peopleLabel = !offline && reads.nextOneOnOne
+  const peopleLabel = !offline && reads.peopleReadiness === "ready" && reads.nextOneOnOne
     ? `1:1 ${formatDockTime(reads.nextOneOnOne)}`
     : null;
   const hiddenProjectWindowIds = new Set(
@@ -442,7 +516,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             key={`project:${project.id}`}
             variant="chrome"
             className={`desk-dock-launch desk-dock-project${projectWindow ? " is-run" : ""}`}
-            aria-label={count > 0 ? `${project.name}, ${count} need you` : project.name}
+            aria-label={count > 0 ? `${project.name}, ${count} open here` : project.name}
             onClick={() => {
               void import("../../shell").then((m) =>
                 m.openSurfaceOr(

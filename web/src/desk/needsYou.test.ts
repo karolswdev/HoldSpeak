@@ -21,6 +21,9 @@ vi.mock("../lib/api", async (original) => ({
 }));
 
 const NOW = new Date("2026-10-01T12:00:00Z");
+/** The real-producer fixture spawns Python; under the parallel baseline run
+ * it outlives vitest's 5 s default (a timing limit, never the oracle). */
+const REAL_PRODUCER_TIMEOUT_MS = 60_000;
 
 function room(
   id: string,
@@ -305,7 +308,7 @@ describe("the shared needs-you read", () => {
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
-  });
+  }, REAL_PRODUCER_TIMEOUT_MS);
 
   it("uses the cached Room read on mount and poll, and fresh only for explicit refresh", async () => {
     vi.useFakeTimers();
@@ -593,7 +596,7 @@ describe("the real producer membership oracle", () => {
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
-  });
+  }, REAL_PRODUCER_TIMEOUT_MS);
 
   it("rejects a code mutant that skips dedupAttention on the real producer oracle", async () => {
     const home = mkdtempSync(join(tmpdir(), "philo13-a2-c4-dedup-"));
@@ -675,5 +678,5 @@ describe("the real producer membership oracle", () => {
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
-  });
+  }, REAL_PRODUCER_TIMEOUT_MS);
 });

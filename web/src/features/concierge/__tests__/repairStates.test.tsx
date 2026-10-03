@@ -182,7 +182,7 @@ describe("Concierge repair states (HS-200-04)", () => {
       }),
     ]);
 
-    expect(screen.getByTestId("concierge-repairs-label")).toHaveTextContent("NEEDS YOU 4");
+    expect(screen.getByTestId("concierge-repairs-label")).toHaveTextContent("TO REPAIR 4");
     for (const token of [
       "credential-expired",
       "endpoint-unreachable",

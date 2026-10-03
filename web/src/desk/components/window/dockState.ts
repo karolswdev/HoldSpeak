@@ -98,6 +98,12 @@ export function reduceDockFrame(
     case "desk_changed": {
       const value = record(frame.data);
       const kind = text(value.kind);
+      if (kind === "meeting_ready_read") {
+        const readId = text(value.id) || text(value.meeting_id);
+        return readId
+          ? { ...state, readyMeetingIds: state.readyMeetingIds.filter((id) => id !== readId) }
+          : state;
+      }
       if (kind !== "send") return state;
       const outcome = frameOutcome(value);
       return outcome ? { ...state, sendOutcome: outcome } : state;

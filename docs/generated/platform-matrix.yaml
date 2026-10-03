@@ -3449,6 +3449,56 @@
       "status": "partial"
     },
     {
+      "availability": "unknown",
+      "capability_id": "project.update.linked_week",
+      "id": "project.update.linked_week@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "holdspeak/services/project_update_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "project.update.linked_week",
+      "id": "project.update.linked_week@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "holdspeak/services/project_update_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "project.update.linked_week",
+      "id": "project.update.linked_week@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "holdspeak/services/project_update_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "project.update.linked_week",
+      "id": "project.update.linked_week@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "holdspeak/services/project_update_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "project.update.linked_week",
+      "id": "project.update.linked_week@macos",
+      "platform": "macos",
+      "source_ids": [
+        "holdspeak/services/project_update_service.py"
+      ],
+      "status": "built_unreleased"
+    },
+    {
       "availability": "not_applicable",
       "capability_id": "agents.thread_persistent",
       "id": "agents.thread_persistent@aipi",

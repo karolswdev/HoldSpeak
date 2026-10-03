@@ -45,7 +45,7 @@
 }
 
 .door-outcome-caption {
-  font: 600 11px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-faint);
@@ -61,7 +61,7 @@
 }
 
 .door-section-label {
-  font: 600 11px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted, #9ba2b0);
@@ -278,7 +278,7 @@
 }
 
 .door-picker-card-known {
-  font: 600 10px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--accent, #a86e4a);
@@ -311,7 +311,7 @@
 }
 
 .door-adjust-label {
-  font: 600 11px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted, #9ba2b0);
@@ -324,7 +324,7 @@
 }
 
 .door-adjust-check-label {
-  font: 600 11px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted, #9ba2b0);
@@ -359,7 +359,7 @@
 /* ── Footer receipt ── */
 
 .door-receipt {
-  font: 600 11px/1 "JetBrains Mono", monospace;
+  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted, #9ba2b0);

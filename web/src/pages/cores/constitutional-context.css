@@ -16,7 +16,7 @@
 .constitutional-context-fact {
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 
 .constitutional-context-editor-section {

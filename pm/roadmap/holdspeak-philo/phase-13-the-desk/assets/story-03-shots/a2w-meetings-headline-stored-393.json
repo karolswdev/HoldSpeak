@@ -1,0 +1,19 @@
+{
+  "case": "stored",
+  "width": 393,
+  "headline": "All summaries done",
+  "wire": {
+    "id": "philo13-a2w-headline",
+    "intel_status": "ready",
+    "has_summary": true,
+    "intel_job": {
+      "status": "succeeded",
+      "attempts": 1,
+      "requested_at": "2026-10-02T21:44:22.114005",
+      "updated_at": "2026-10-02T21:44:22.442116",
+      "last_error": null,
+      "retry_scheduled": false,
+      "next_retry_at": null
+    }
+  }
+}

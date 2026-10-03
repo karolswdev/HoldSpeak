@@ -1,0 +1,9 @@
+tests/unit/test_philo13_c3_ready.py::test_old_summary_is_not_unseen_but_new_ready_is_durable_and_readable
+tests/unit/test_philo13_c3_ready.py::test_ready_read_route_is_idempotent_and_survives_reload
+tests/unit/test_philo13_c3_ready.py::test_real_bound_queue_completion_creates_unread_ready_marker
+tests/unit/test_philo13_c3_dock.py::test_real_channel_settlement_emits_dock_invalidation[sent]
+tests/unit/test_philo13_c3_dock.py::test_real_channel_settlement_emits_dock_invalidation[failed]
+tests/unit/test_philo13_c3_dock.py::test_real_channel_settlement_emits_dock_invalidation[unknown]
+tests/unit/test_intel_process_aftercare_callback.py::test_on_meeting_ready_broadcasts_aftercare_ready
+
+7 tests collected in 3.76s

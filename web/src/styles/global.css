@@ -59,6 +59,12 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* PHILO-13-18 (C8): the 12 px floor holds for the browser's own relative
+   sizes too. `small` is `font-size: smaller` (10 px inside a 12 px chip). */
+small {
+  font-size: max(var(--font-size-xs), 0.83em);
+}
+
 :focus-visible {
   outline: var(--focus-outline-width) solid var(--accent);
   outline-offset: var(--focus-outline-offset);
@@ -499,7 +505,7 @@ pre {
   width: fit-content;
   min-height: 18px;
   padding: 0 8px;
-  font: 600 10px / 1 var(--font-mono);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   border-radius: 0;

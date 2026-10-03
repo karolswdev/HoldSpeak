@@ -37,7 +37,7 @@
 }
 
 .review-queue-materiality {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   white-space: nowrap;
 }
 
@@ -85,7 +85,7 @@
 /* ── ID token (quiet mono inside the fold) ── */
 .review-detail-id {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-faint);
 }
 
@@ -131,7 +131,7 @@
 
 .review-edit-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -191,7 +191,7 @@
 /* ── Position indicator ── */
 .review-position {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--text-faint);

@@ -161,7 +161,7 @@
   display: grid;
   gap: 4px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -178,7 +178,7 @@
 
 .desk-next .runs-on-picker p {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .desk-next .desk-chip.is-primary {
   background: var(--accent);
@@ -281,7 +281,7 @@
 }
 .desk-next .desk-wing-door {
   padding: 4px 9px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 /* HS-202-03 — the wing strip owes its rows a 44px target at the phone
    width. Story 05's ruling: a plated Button owns 44px through its halo,
@@ -333,7 +333,7 @@
 .desk-next .desk-chat-hello small {
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
 }
 .desk-next .desk-chat-foot {
   display: flex;
@@ -531,7 +531,7 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
 }
 .desk-next .thought-context-picker-head small {
   color: var(--text-faint);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .desk-next .thought-context-close {
   width: 34px;

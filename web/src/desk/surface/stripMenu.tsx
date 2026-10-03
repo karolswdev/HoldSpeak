@@ -125,6 +125,11 @@ export function StripMenuButton({
           // on the first row, so the arrows walk the choices at once.
           setAt(at ? null : { x: r.left, y: r.bottom, keys: e.detail === 0 });
         }}
+        // PHILO-13-18: a pointer open leaves focus here, so Escape reaches this
+        // Button first. It closes the menu and stops: the window does not close.
+        onKeyDown={(e) => {
+          if (e.key === "Escape" && at) { e.preventDefault(); e.stopPropagation(); setAt(null); }
+        }}
       >
         {shown} ▾
       </Button>

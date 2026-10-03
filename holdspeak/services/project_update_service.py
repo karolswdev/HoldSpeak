@@ -1556,8 +1556,8 @@ class ProjectUpdateService:
         room = self._project_service.room(principal, project_id)
         revision = room.get("revision", 0)
 
-        # 2. Scan for caveats (degraded/absent sections)
-        caveats = _scan_caveats(room)
+        # 2. Scan caveats and read the linked, non-parked week.
+        caveats = _scan_caveats(room) + (week := self._read_week_sources(principal, project_id, room))["caveats"]
 
         # 3. Read the open review's proposals (if any)
         review_id: str | None = None
@@ -1607,7 +1607,7 @@ class ProjectUpdateService:
                 room, caveats, det_claims, source_version),
         }
 
-        det_body_md = _assemble_body(det_sections)
+        det_body_md = _assemble_body(_append_week_sources(det_sections, det_claims, source_version, week))
         det_claims_json = json.dumps(
             [c.to_dict() for c in det_claims],
             sort_keys=True,
@@ -1618,9 +1618,9 @@ class ProjectUpdateService:
         manifest = _build_source_manifest(
             room, review_id, observation_ids, caveats,
         )
-        manifest_json = json.dumps(
-            manifest, sort_keys=True, separators=(",", ":"),
-        )
+        manifest_json = json.dumps({
+            **manifest, "week_source_refs": week["source_refs"],
+        }, sort_keys=True, separators=(",", ":"))
 
         # 7. Choose body + claims based on generator.
         actual_host: str | None = None
@@ -1994,6 +1994,167 @@ class ProjectUpdateService:
             raise NotFound("delivery", operation_id)
         return {"success": True, "delivery": existing}
 
+    def _read_week_sources(
+        self,
+        principal: Principal,
+        project_id: str,
+        room: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Read the persisted, non-parked sources linked to a project."""
+        meeting_summaries: list[dict[str, Any]] = []
+        linked_actions: list[dict[str, Any]] = []
+        linked_decisions: list[dict[str, Any]] = []
+        caveats: list[dict[str, str]] = []
+        source_refs: list[str] = []
+
+        meetings: list[dict[str, Any]] = []
+        try:
+            # Read every active linked page.  A single bounded page would
+            # make the success line dishonest for projects with >500 meetings.
+            offset = 0
+            while True:
+                page = self._project_service.list_meetings(
+                    principal, project_id, limit=500, offset=offset,
+                )
+                meetings.extend(page)
+                if len(page) < 500:
+                    break
+                offset += len(page)
+        except Exception:
+            caveats.append({
+                "section": "meetings",
+                "state": "degraded",
+                "reason": "meetings_read_failed",
+            })
+
+        for meeting_row in sorted(
+            meetings,
+            key=lambda row: (
+                str(row.get("started_at") or ""),
+                str(row.get("id") or ""),
+            ),
+            reverse=True,
+        ):
+            meeting_id = str(meeting_row.get("id") or "").strip()
+            if not meeting_id:
+                caveats.append({
+                    "section": "meetings",
+                    "state": "degraded",
+                    "reason": "meeting_id_missing",
+                })
+                continue
+            try:
+                meeting = self._db.meetings.get_meeting(meeting_id)
+                if meeting is None:
+                    caveats.append({
+                        "section": "meetings",
+                        "state": "degraded",
+                        "reason": "meeting_unavailable",
+                    })
+                    continue
+                intel = meeting.intel
+                summary = " ".join(
+                    str(getattr(intel, "summary", "") or "").split()
+                )
+                if not summary:
+                    caveats.append({
+                        "section": "meetings",
+                        "state": "degraded",
+                        "reason": "meeting_summary_unavailable",
+                    })
+                    continue
+                meeting_ref = format_ref("meeting", meeting_id)
+                meeting_summaries.append({
+                    "id": meeting_id,
+                    "title": str(
+                        meeting.title or meeting_row.get("title") or "Meeting"
+                    ),
+                    "summary": summary,
+                })
+                source_refs.append(meeting_ref)
+            except Exception:
+                caveats.append({
+                    "section": "meetings",
+                    "state": "degraded",
+                    "reason": "meeting_summary_read_failed",
+                })
+
+        try:
+            actions = self._project_service.list_action_items(
+                principal, project_id,
+            )
+            for action in actions:
+                owner = " ".join(str(action.get("owner") or "").split())
+                action_id = str(action.get("id") or "").strip()
+                status = str(action.get("status") or "pending").strip().lower()
+                if (
+                    action_id
+                    and owner
+                    and status in {"pending", "open"}
+                ):
+                    linked_actions.append({
+                        "id": action_id,
+                        "task": action.get("task"),
+                        "owner": owner,
+                        "due": action.get("due"),
+                        "status": status,
+                        "created_at": action.get("created_at"),
+                    })
+                    source_refs.append(format_ref("action_item", action_id))
+        except Exception:
+            caveats.append({
+                "section": "meetings",
+                "state": "degraded",
+                "reason": "action_items_read_failed",
+            })
+
+        decisions_section = room.get("decisions", {})
+        if decisions_section.get("state") == "degraded":
+            caveats.append({
+                "section": "decisions",
+                "state": "degraded",
+                "reason": str(
+                    decisions_section.get("error_code")
+                    or "decisions_read_failed"
+                ),
+            })
+        else:
+            for decision in decisions_section.get("items", []):
+                # The Room keeps action-kind confirmed proposals in its
+                # decision projection for continuity.  Their action item is
+                # already read above; drawing them as decisions duplicates
+                # the source and changes its meaning.
+                if str(decision.get("kind") or "decision").strip() != "decision":
+                    continue
+                decision_id = str(decision.get("id") or "").strip()
+                decision_text = " ".join(
+                    str(decision.get("text") or "").split()
+                )
+                if not decision_id or not decision_text:
+                    continue
+                linked_decisions.append({
+                    "id": decision_id,
+                    "text": decision_text,
+                    "lifecycle": decision.get("lifecycle"),
+                })
+                source_refs.append(format_ref("decision", decision_id))
+
+        linked_actions.sort(key=lambda action: (
+            str(action.get("created_at") or ""),
+            str(action.get("id") or ""),
+        ), reverse=True)
+        linked_decisions.sort(key=lambda decision: str(decision.get("id") or ""))
+        caveats.sort(key=lambda caveat: (
+            caveat.get("section", ""), caveat.get("reason", ""),
+        ))
+        return {
+            "meeting_summaries": meeting_summaries,
+            "linked_decisions": linked_decisions,
+            "linked_actions": linked_actions,
+            "caveats": caveats,
+            "source_refs": sorted(set(source_refs)),
+        }
+
     def publish_update(
         self,
         principal: Principal,
@@ -2240,6 +2401,90 @@ class ProjectUpdateService:
                     result_json, now_iso, now_iso,
                 ),
             )
+
+
+def _append_week_sources(
+    sections: dict[str, str],
+    claims: list[Claim],
+    source_version: str,
+    week: dict[str, Any],
+) -> dict[str, str]:
+    """Add linked week lines while retaining the existing Room builders."""
+    def add_lines(key: str, lines: list[str]) -> None:
+        if not lines:
+            return
+        current = sections.get(key, _HONEST_MINIMAL[key])
+        if current == _HONEST_MINIMAL[key]:
+            sections[key] = "\n".join(lines)
+        else:
+            sections[key] = current + "\n" + "\n".join(lines)
+
+    progress: list[str] = []
+    for ordinal, meeting in enumerate(week.get("meeting_summaries", [])):
+        meeting_id = str(meeting.get("id") or "").strip()
+        title = str(meeting.get("title") or "Meeting").strip() or "Meeting"
+        summary = " ".join(str(meeting.get("summary") or "").split())
+        if not meeting_id or not summary:
+            continue
+        text = f"Meeting summary: {title} -- {summary}"
+        ref = format_ref("meeting", meeting_id)
+        claims.append(Claim(
+            span_id=f"s_progress_meeting_{ordinal}", text=text, refs=[ref],
+            section="progress", kind=KIND_OBSERVATION,
+            support=SUPPORT_SUPPORTED,
+            support_record=_field_mapping_support(
+                source_version, [ref], ["meeting_id", "title", "summary"],
+            ),
+        ))
+        progress.append(f"- {text}")
+    add_lines("progress", progress)
+
+    decisions: list[str] = []
+    for ordinal, decision in enumerate(week.get("linked_decisions", [])):
+        decision_id = str(decision.get("id") or "").strip()
+        decision_text = " ".join(str(decision.get("text") or "").split())
+        lifecycle = str(decision.get("lifecycle") or "recorded").strip()
+        if not decision_id or not decision_text:
+            continue
+        text = f"Decision: {decision_text} -- {lifecycle}"
+        ref = format_ref("decision", decision_id)
+        claims.append(Claim(
+            span_id=f"s_decisions_meeting_{ordinal}", text=text, refs=[ref],
+            section="decisions", kind=KIND_DECISION,
+            support=SUPPORT_SUPPORTED,
+            acceptance=_PROPOSAL_ACCEPTANCE.get(
+                lifecycle, ACCEPTANCE_UNREVIEWED,
+            ),
+            support_record=_field_mapping_support(
+                source_version, [ref], ["text", "lifecycle"],
+            ),
+        ))
+        decisions.append(f"- {text}")
+    add_lines("decisions", decisions)
+
+    actions: list[str] = []
+    for ordinal, action in enumerate(week.get("linked_actions", [])):
+        action_id = str(action.get("id") or "").strip()
+        task = " ".join(str(action.get("task") or "").split())
+        owner = " ".join(str(action.get("owner") or "").split())
+        status = str(action.get("status") or "pending").strip() or "pending"
+        due = action.get("due")
+        if not action_id or not task or not owner:
+            continue
+        due_text = f", due {due}" if due else ""
+        text = f"Action: {task} -- {status}, owner {owner}{due_text}"
+        ref = format_ref("action_item", action_id)
+        claims.append(Claim(
+            span_id=f"s_next_actions_meeting_{ordinal}", text=text, refs=[ref],
+            section="next_actions", kind=KIND_OBSERVATION,
+            support=SUPPORT_SUPPORTED,
+            support_record=_field_mapping_support(
+                source_version, [ref], ["task", "owner", "status", "due"],
+            ),
+        ))
+        actions.append(f"- {text}")
+    add_lines("next_actions", actions)
+    return sections
 
 
 def _invalidate_edited_support(

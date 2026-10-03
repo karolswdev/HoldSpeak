@@ -48,7 +48,7 @@
 }
 .desk-next .wb-config-strip-skills {
   margin-left: auto;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   height: 20px;
   padding: 0 8px;
 }
@@ -65,7 +65,7 @@
   justify-content: flex-end;
   padding: 6px var(--desk-window-pad-x);
   border-bottom: 1px solid var(--border-subtle);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
 }
 .desk-next .wb-config-current-agent {
   display: flex;
@@ -216,7 +216,7 @@
   padding: 0 var(--desk-surface-row-pad-x) 6px;
   color: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
 }
 .desk-next .wb-automation-detail {
   background: var(--desk-window-well);
@@ -229,7 +229,7 @@
 .desk-next .wb-workspace-path {
   padding: 8px var(--desk-surface-row-pad-x);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-faint);
   border-top: 1px solid var(--border-subtle);
 }
@@ -305,7 +305,7 @@
   flex-shrink: 0;
 }
 .desk-next .wb-item-priority {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono);
   min-width: 24px;
   justify-content: center;
@@ -346,7 +346,7 @@
 .desk-next .wb-card-grounding .desk-chip {
   height: 22px;
   padding: 0 8px;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
 }
 
 /* result section */
@@ -365,7 +365,7 @@
 }
 .desk-next .wb-card-result-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   color: var(--text-faint);
   letter-spacing: 0.05em;
@@ -382,7 +382,7 @@
 /* tokens */
 .desk-next .wb-item-tokens {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-faint);
 }
 
@@ -440,7 +440,7 @@
 }
 .desk-next .wb-priority-cycle {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   min-width: 28px;
   justify-content: center;
 }
@@ -462,7 +462,7 @@
   padding: 6px 0;
 }
 .desk-next .wb-run-detail .surface-facts {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 
 /* ── memory wing (HS-116-16) ── */
@@ -482,12 +482,12 @@
 }
 .desk-next .wb-memory-source {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-faint);
 }
 .desk-next .wb-memory-model {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-faint);
 }
 .desk-next .wb-memory-verbs {
@@ -557,7 +557,7 @@
 }
 .desk-next .wb-picker-card-meta {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-faint);
   margin-top: 2px;
 }
@@ -669,7 +669,7 @@
   align-items: center;
   gap: 8px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-faint);
 }
 .desk-next .wb-home-card-assignment {

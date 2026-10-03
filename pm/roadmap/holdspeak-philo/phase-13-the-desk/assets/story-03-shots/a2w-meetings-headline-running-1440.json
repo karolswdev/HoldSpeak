@@ -1,0 +1,19 @@
+{
+  "case": "running",
+  "width": 1440,
+  "headline": "1 summary running",
+  "wire": {
+    "id": "philo13-a2w-headline",
+    "intel_status": "running",
+    "has_summary": false,
+    "intel_job": {
+      "status": "running",
+      "attempts": 1,
+      "requested_at": "2026-10-02T21:44:10.442064",
+      "updated_at": "2026-10-02T21:44:10.540349",
+      "last_error": null,
+      "retry_scheduled": false,
+      "next_retry_at": null
+    }
+  }
+}

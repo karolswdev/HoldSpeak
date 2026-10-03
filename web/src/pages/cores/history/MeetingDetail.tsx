@@ -23,6 +23,7 @@ import { MeetingHeader } from "./MeetingHeader";
 import { CaptureSlab } from "./CaptureSlab";
 import { ArtifactsLibrary } from "./ArtifactsLibrary";
 import { MeetingSendWellLazy as MeetingSendWell } from "../../../meetings/MeetingSendWellLazy";
+import { MeetingDecideWell } from "../../../meetings/MeetingDecideWell";
 import { NeedsYouTable } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
 import { SettledList } from "./SettledList";
@@ -174,6 +175,10 @@ export function MeetingDetail({
             <MeetingSendWell meetingId={id} title={meetingTitle}
               startedAt={String((detail ?? meeting)?.started_at ?? "") || null} />
           ) : null}
+          {/* PHILO-13-08 (B3): Decide, next to SEND; with or without a summary. */}
+          <MeetingDecideWell meetingId={id} title={meetingTitle}
+            startedAt={String((detail ?? meeting)?.started_at ?? "") || null}
+            summary={summaryIntel?.summary ?? null} />
           <TranscriptWell
             id={id}
             segments={segments}

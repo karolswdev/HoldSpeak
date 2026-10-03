@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 715 (plus static mounts). iOS-consumed: 89. Web-consumed: 549.
+Routes: 717 (plus static mounts). iOS-consumed: 89. Web-consumed: 552.
 
 ## device_audio_ws
 
@@ -496,11 +496,13 @@ Routes: 715 (plus static mounts). iOS-consumed: 89. Web-consumed: 549.
 |---|---|---|
 | GET | `/api/meetings` | ios, web |
 | GET | `/api/meetings/facets` | ios, web |
+| GET | `/api/meetings/ready` | web |
 | DELETE | `/api/meetings/{meeting_id}` | ios, web |
 | GET | `/api/meetings/{meeting_id}` | ios, web |
 | PUT | `/api/meetings/{meeting_id}` | ios, web |
 | POST | `/api/meetings/{meeting_id}/capture/recover` | server only |
 | GET | `/api/meetings/{meeting_id}/export` | web |
+| POST | `/api/meetings/{meeting_id}/ready/read` | web |
 | POST | `/api/meetings/{meeting_id}/restore` | web |
 | GET | `/api/meetings/{meeting_id}/sync-conflicts` | web |
 | POST | `/api/meetings/{meeting_id}/sync-conflicts/{conflict_id}/resolve` | web |
@@ -917,7 +919,7 @@ Routes: 715 (plus static mounts). iOS-consumed: 89. Web-consumed: 549.
 | POST | `/api/ask-tasks/{task_id}/stopped` | web |
 | GET | `/api/desk/needs-you` | web |
 | GET | `/api/desk/relationships/{resource_ref:path}` | web |
-| GET | `/api/meetings/{meeting_id}/projects` | server only |
+| GET | `/api/meetings/{meeting_id}/projects` | web |
 | GET | `/api/projects` | web |
 | POST | `/api/projects` | web |
 | DELETE | `/api/projects/{project_id}` | web |

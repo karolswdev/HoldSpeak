@@ -315,6 +315,8 @@ let snapshot: NeedsYouSnapshot = {
   room: null,
 };
 let inflight: Promise<void> | null = null;
+/** Bumped by `resetNeedsYou`: a read begun before a reset never publishes. */
+let generation = 0;
 let inflightFresh = false;
 const listeners = new Set<() => void>();
 let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -366,6 +368,7 @@ async function refreshNeedsYou(fresh = true): Promise<void> {
   }
   publish({ loading: true });
   inflightFresh = fresh;
+  const started = generation;
   const request = (async () => {
     const reads = await Promise.allSettled([
       apiFetch<NeedsYouDoorProjection>("/api/door"),
@@ -383,6 +386,7 @@ async function refreshNeedsYou(fresh = true): Promise<void> {
       readMeetings(),
       apiFetch<{ muted_projects?: unknown }>("/api/settings/heartbeat"),
     ]);
+    if (started !== generation) return;
     const names: SourceName[] = ["door", "room", "assignments", "meetings", "mutedProjects"];
     const errors: NeedsYouErrors = {};
     const loaded = { ...sourceState.loaded };
@@ -394,7 +398,8 @@ async function refreshNeedsYou(fresh = true): Promise<void> {
     if (doorRead.status === "fulfilled") sourceState.door = doorRead.value;
     const roomRead = reads[1];
     if (roomRead.status === "fulfilled") {
-      const value = roomRead.value;
+      // A null body is an empty Room, never a crash of the whole read.
+      const value = roomRead.value ?? {};
       sourceState.room = {
         items: Array.isArray(value.items) ? value.items : [],
         projects: Array.isArray(value.projects) ? value.projects.map(String) : [],
@@ -415,7 +420,7 @@ async function refreshNeedsYou(fresh = true): Promise<void> {
     if (meetingsRead.status === "fulfilled") sourceState.meetings = meetingsRead.value;
     const mutedRead = reads[4];
     if (mutedRead.status === "fulfilled") {
-      const raw = mutedRead.value.muted_projects;
+      const raw = mutedRead.value?.muted_projects;
       sourceState.mutedProjectIds = Array.isArray(raw) ? raw.map(String) : [];
     }
     if (reads[2].status === "rejected") sourceState.assignmentRead = "failed";
@@ -446,8 +451,10 @@ async function refreshNeedsYou(fresh = true): Promise<void> {
   })().catch((error) => {
     // A transport-level failure outside the individual reads keeps the last
     // result visible and names the retryable state.
+    if (started !== generation) return;
     publish({ loading: false, errors: { ...snapshot.errors, room: errorText(error) } });
   }).finally(() => {
+    if (started !== generation) return;
     inflight = null;
     inflightFresh = false;
   });
@@ -498,6 +505,28 @@ export function useNeedsYou(
 }
 
 export { refreshNeedsYou };
+
+/** Test seam (the pattern of `deskQueryClient.clear()` in the test setup):
+ * one shared snapshot must not carry a prior case's read into the next. */
+export function resetNeedsYou(): void {
+  if (pollTimer !== null) clearInterval(pollTimer);
+  pollTimer = null;
+  listeners.clear();
+  inflight = null;
+  inflightFresh = false;
+  generation += 1;
+  sourceState = {
+    door: null, room: null, assignments: null, assignmentRead: "pending", meetings: [], mutedProjectIds: [],
+    loaded: { door: false, room: false, assignments: false, meetings: false, mutedProjects: false },
+    errors: {},
+  };
+  snapshot = { ...computeNeedsYou({}), complete: false, loading: false, errors: {}, room: null };
+}
+// The test setup resets through this handle and never imports this module:
+// an import there would bind the real API client before a test's mock.
+if (import.meta.env?.MODE === "test") {
+  (globalThis as { __resetNeedsYou?: () => void }).__resetNeedsYou = resetNeedsYou;
+}
 
 // Keep this import in the public module's type surface for consumers that
 // re-home existing Room source metadata without importing attention.ts.

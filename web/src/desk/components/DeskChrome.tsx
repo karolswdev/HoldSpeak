@@ -20,7 +20,7 @@ import { DeskMenuBar } from "./DeskMenuBar";
 import { useLaunchers } from "./DeskWindow";
 import { useFrontWindowId, useAllOpenWindows } from "./window/windowRegistry";
 import { useChairState } from "../chairState";
-import { useGate } from "../gate";
+import { useNeedsYou } from "../needsYou";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { useCompactViewport } from "../useCompactViewport";
@@ -37,17 +37,19 @@ const MARK_VERBS = ["desk.toggle-view", "desk.arrange", "desk.refresh"];
  * the system bar, not the dock (the dock carries the applications). */
 function AttentionBell() {
   const launchers = useLaunchers();
-  const heldCount = useGate((s) => s.held.length);
+  // PHILO-13-03 (A2-W; canvas C1-1): the bell carries the ONE needs-you
+  // number, the same snapshot the Chair head and the Dock read.
+  const { count } = useNeedsYou();
   const attention = launchers.find((l) => l.id === "attention");
   if (!attention) return null;
-  const badge = (attention.badge ?? 0) + heldCount;
+  const badge = count > 0 ? count : 0;
   return (
     <Button
       variant="chrome"
       className={`desk-bell${attention.open ? " is-open" : ""}`}
       aria-label={
         badge
-          ? `Desk memory: ${badge} need attention`
+          ? `Desk memory: ${badge} need you`
           : "Desk memory"
       }
       title="Desk memory"

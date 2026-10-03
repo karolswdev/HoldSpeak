@@ -63,4 +63,4 @@ Grounding size: M (`grounding/structure.md:302`; `grounding/faces-jobs.md:156`).
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
 
-- 2026-10-03 — H-C3 and H-C3-origin candidate: [Astra lane report](lane-13-astra.md). UNCHECKED — awaiting Muad'Dib. C3-W remains a named handoff; no done flip.
+- 2026-10-03 — H-C3 and H-C3-origin: Muad'Dib MERGE-WITH-CONDITIONS; C1 unseen READY and C2 main integration paid under the owner's no-further-check-round ruling. [Astra lane report and failure ledger](lane-13-astra.md). C3-W remains a named handoff; no done flip.

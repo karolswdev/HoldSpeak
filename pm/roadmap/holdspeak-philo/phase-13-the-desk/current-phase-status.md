@@ -1,6 +1,6 @@
 # Phase 13 - The Desk
 
-**Last updated:** 2026-10-03 (RATIFIED by the owner, "Ratify, build it". #726 merged as 44ec934a. #727 r4 merged at `03c220e8` after the duplicate B0 commits dropped, both `has_summary` and `parked` preserved, and the marker-bearing history repaired; 42 source references are re-anchored, generated outputs refreshed, and the 377-test scoped A1/shared selection plus all 12 Documentation Navigation commands and generated-reference checks pass. Stories 01–03 remain in-progress for their named gates. Earlier: r3: Astra r2 paid (close→reopen place, Trust returns, H-B0b contract); Astra r3 RATIFY-WITH-CONDITIONS paid (anchor `:492`, this status). Earlier r2: Astra's check r1 DO-NOT-RATIFY paid — disjoint files with named handoffs, B2 covers every window family and named draft, A2's membership oracle, the Parked artboard, the gates as merge-record evidence, C4's query collision; unchecked r2.) Earlier: 2026-10-01 (DRAFTED by the Fedaykin docs lane for Muad'Dib from PROPOSAL r2 and the five forks the owner ruled; unchecked.) #728 r4 is rebased onto current `main` at #731 (`8485874f6`), tested A2 source revision `0f32ddb87613638725ec80c471a6ced7b0b3e070`. The `dedupAttention` skip mutant is rejected by the real-producer duplicate, returning 7 instead of the required 6. On the rebased head, the 132-test shared/A2 Python selection, 63-test seven-file serial web selection, typecheck, ten documentation generators, all 12 Documentation Navigation commands and generated-reference checks pass. The actual Dock case reads 6→5 at 1440 and 393 native touch on this source revision. PHILO-13-03 remains in-progress for A2-W; the r3 product conditions and r4 integration gates are paid, and the merge record will be posted on #728.
+**Last updated:** 2026-10-03 (H-C3 #744 C1/C2 paid; story 13 stays in-progress for C3-W; H-B4 #742 rebased and held. Earlier: RATIFIED by the owner, "Ratify, build it". #726 merged as 44ec934a. #727 r4 merged at `03c220e8` after the duplicate B0 commits dropped, both `has_summary` and `parked` preserved, and the marker-bearing history repaired; 42 source references are re-anchored, generated outputs refreshed, and the 377-test scoped A1/shared selection plus all 12 Documentation Navigation commands and generated-reference checks pass. Stories 01–03 remain in-progress for their named gates. Earlier: r3: Astra r2 paid (close→reopen place, Trust returns, H-B0b contract); Astra r3 RATIFY-WITH-CONDITIONS paid (anchor `:492`, this status). Earlier r2: Astra's check r1 DO-NOT-RATIFY paid — disjoint files with named handoffs, B2 covers every window family and named draft, A2's membership oracle, the Parked artboard, the gates as merge-record evidence, C4's query collision; unchecked r2.) Earlier: 2026-10-01 (DRAFTED by the Fedaykin docs lane for Muad'Dib from PROPOSAL r2 and the five forks the owner ruled; unchecked.) #728 r4 is rebased onto current `main` at #731 (`8485874f6`), tested A2 source revision `0f32ddb87613638725ec80c471a6ced7b0b3e070`. The `dedupAttention` skip mutant is rejected by the real-producer duplicate, returning 7 instead of the required 6. On the rebased head, the 132-test shared/A2 Python selection, 63-test seven-file serial web selection, typecheck, ten documentation generators, all 12 Documentation Navigation commands and generated-reference checks pass. The actual Dock case reads 6→5 at 1440 and 393 native touch on this source revision. PHILO-13-03 remains in-progress for A2-W; the r3 product conditions and r4 integration gates are paid, and the merge record will be posted on #728.
 
 **Status:** RATIFIED by the owner 2026-10-01 ("Ratify, build it") after Astra's checks r1–r3 (all paid, `checks/`).
 
@@ -135,14 +135,14 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | --- | --- | --- | --- | --- |
 | PHILO-13-01 | B0 — Walk what was not walked | in-progress | [story-01-b0-walk-what-was-not-walked](./story-01-b0-walk-what-was-not-walked.md) | — |
 | PHILO-13-02 | A1 — Park, never delete | done | [story-02-a1-park-never-delete](./story-02-a1-park-never-delete.md) | [evidence-story-02](./evidence-story-02.md) |
-| PHILO-13-03 | A2 — One meaning of "needs you" | in-progress | [story-03-a2-one-meaning-of-needs-you](./story-03-a2-one-meaning-of-needs-you.md) | [H-A2 draft proof](lane-03-astra.md); awaiting A2-W and Muad'Dib |
+| PHILO-13-03 | A2 — One meaning of "needs you" | done | [story-03-a2-one-meaning-of-needs-you](./story-03-a2-one-meaning-of-needs-you.md) | [evidence-story-03](./evidence-story-03.md) |
 | PHILO-13-04 | A3 — Faces that do not lie | done | [story-04-a3-faces-that-do-not-lie](./story-04-a3-faces-that-do-not-lie.md) | [evidence-story-04](./evidence-story-04.md) |
 | PHILO-13-05 | A4 — Close means gone | done | [story-05-a4-close-means-gone](./story-05-a4-close-means-gone.md) | [evidence-story-05](./evidence-story-05.md) |
 | PHILO-13-06 | B1 — One open grammar | done | [story-06-b1-one-open-grammar](./story-06-b1-one-open-grammar.md) | [evidence-story-06](./evidence-story-06.md) |
 | PHILO-13-07 | B2 — The Desk remembers | backlog | [story-07-b2-the-desk-remembers](./story-07-b2-the-desk-remembers.md) | — |
-| PHILO-13-08 | B3 — Decide where the meeting is | backlog | [story-08-b3-decide-where-the-meeting-is](./story-08-b3-decide-where-the-meeting-is.md) | — |
+| PHILO-13-08 | B3 — Decide where the meeting is | done | [story-08-b3-decide-where-the-meeting-is](./story-08-b3-decide-where-the-meeting-is.md) | [evidence-story-08](./evidence-story-08.md) |
 | PHILO-13-09 | B4 — The 1:1 finds its person | backlog | [story-09-b4-the-one-on-one-finds-its-person](./story-09-b4-the-one-on-one-finds-its-person.md) | — |
-| PHILO-13-10 | B5 — The update writes the week | backlog | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | — |
+| PHILO-13-10 | B5 — The update writes the week | in-progress | [story-10-b5-the-update-writes-the-week](./story-10-b5-the-update-writes-the-week.md) | — |
 | PHILO-13-11 | C1 — The Workbench look (the canvases; the face gate) | in-progress | [story-11-c1-the-workbench-look](./story-11-c1-the-workbench-look.md) | — |
 | PHILO-13-12 | C2 — The gadgets that are missing | done | [story-12-c2-the-gadgets-that-are-missing](./story-12-c2-the-gadgets-that-are-missing.md) | [evidence-story-12](./evidence-story-12.md) |
 | PHILO-13-13 | C3 — A live Dock (AppIcons) | in-progress | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
@@ -150,7 +150,7 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | PHILO-13-15 | C5 — Send to from any document window (the Phase 12 fold) | backlog | [story-15-c5-send-to-from-any-document-window](./story-15-c5-send-to-from-any-document-window.md) | — |
 | PHILO-13-16 | C6 — Capture from anywhere | backlog | [story-16-c6-capture-from-anywhere](./story-16-c6-capture-from-anywhere.md) | — |
 | PHILO-13-17 | C7 — The phone desk | backlog | [story-17-c7-the-phone-desk](./story-17-c7-the-phone-desk.md) | — |
-| PHILO-13-18 | C8 — The 12 px floor | backlog | [story-18-c8-the-12-px-floor](./story-18-c8-the-12-px-floor.md) | — |
+| PHILO-13-18 | C8 — The 12 px floor | done | [story-18-c8-the-12-px-floor](./story-18-c8-the-12-px-floor.md) | [evidence-story-18](./evidence-story-18.md) |
 Numbers follow the build order in PROPOSAL r2 (B0 first: it gates B2); the five-column story index follows Delivery Workbench.
 ## Lanes
 
@@ -246,6 +246,10 @@ D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
 
+2026-10-03: **H-rig-clearof RATIFIED by Muad'Dib; main integration confirmed before merge.** Per-width clearance and restart UI follow-ups are available; real replayed retention passes at both widths. Arrival passes at 1440 and retains the inherited missing-Capture-slot failure at 393. No story closes. [Astra lane record](lane-rig-clearof-astra.md).
+
+2026-10-03: **B5 candidate — UNCHECKED, awaiting Muad'Dib.** Deterministic linked-week data and real-producer fences implemented in `feat/philo-13-10-astra`. Both widths and the operation sibling ran; phone editor line clipping remains a named face-lane limitation. [Lane report](lane-10-astra.md). Story 10 remains in-progress.
+
 2026-10-03: **PHILO-13-12 (C2) done** — To back (every window, menu, ⌃B, tap at 393), Intuition zoom (two remembered rects, persisted), the window's menu bar on the right button / long press with live key caps (Iconify ⌘M, Zoom ⌃M, To back ⌃B, Close ⌘W). Ledger: off-Mac Ctrl+M binds Zoom (⌃ chords first); `static-muaddib.json` still names Minimize/Maximize.
 
 2026-10-02: **PHILO-13-11 slice two, atlas round** (Astra counsel r3 on #730): 76 atlas cases in 7 files open the right Chair window through the real doors at 393 (Go ▸ Chair ▸ window; the Dock's Speak for Capture); 34 first-value preconditions read `[data-testid=chair-desk]`; walked one case per run at both widths: 59 pass, 14 blocked outside the Chair, 3 fail at 393 only. **Muad'Dib's rulings:** Capture grows to 300 px while an aftercare card stands (accepted product fix); `case.p11.meeting_summary.chair.picked` keeps a 1440 zoom step, and 'scroll Send into view on pick' goes to C5's ledger; **homed reds** — `case.closure.chain.s3_same_summary_after_restart` (+`.replayed`) at 393 → B2 (story 07 remembers the open Chair window), and `case.philo603.toast.arrival` at 393 → new handoff **H-rig-clearof** (Astra: per-width `clear_of` in graph_walk.py + atlas.schema.json). The React architecture guard: `library-css-outside: chair.css` red → green.
@@ -318,4 +322,6 @@ Astra r2 (`checks/charter-astra-r2.md`): r1's five fixes present; three conditio
 
 ## Wave 2 — H-C3 candidate, 2026-10-03
 
-H-C3 and H-C3-origin are DRAFT, UNCHECKED — awaiting Muad'Dib. [Lane report and C3-W contract](lane-13-astra.md). Live send/ready/offline/restart and refused-recording cases pass at 1440 and 393. C3-W owns the material and removal of Chair's Dock-press timer. Story 13 stays in-progress.
+H-C3 / #744: Muad'Dib MERGE-WITH-CONDITIONS; C1 and C2 paid under the owner's single-pass merge instruction. READY is durable and unseen, clears on open, and stays clear after reload. [Lane report, proof and full failure ledger](lane-13-astra.md). Eight condition walks pass at 1440/393. Full-suite failures are classified, with two Dock clipping cases assigned to C3-W. C3-W retains CSS, SENT time and Chair's Dock-press timer. Story 13 stays in-progress. H-B4 / #742 was rebased and pushed as `f9106fd9`; it remains open for B4-W and must not merge alone.
+
+2026-10-03: H-rig-clearof counsel and mechanical integration are recorded in [the lane report](lane-rig-clearof-astra.md). Muad'Dib homes the remaining 393 arrival face fix to PHILO-13-17/C7.
