@@ -146,7 +146,7 @@ describe("ProjectRoomCore — room head (was: orientation band, WEB-NOW-001)", (
     render(<WindowHarness scope="project:p1" />);
     // HS-169-03: the headline replaces the SurfaceIdentity name
     const headline = await screen.findByTestId("room-headline");
-    expect(headline.textContent).toBe("Nothing needs you");
+    expect(headline.textContent).toBe("Clear here");
   });
 
   it("renders health chip when health data is present", async () => {

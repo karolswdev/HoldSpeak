@@ -195,7 +195,8 @@ class TestMeetingAfterRun:
             all_tokens = state_tokens.all_text_contents()
             # At least one token should say RAN or NEEDS YOU
             has_ran_or_needs = any(
-                "RAN" in t or "NEEDS YOU" in t or "NEED YOU" in t
+                # PHILO-13-03: a meeting's proposals are TO REVIEW.
+                "RAN" in t or "TO REVIEW" in t
                 for t in all_tokens
             )
             assert has_ran_or_needs, (
@@ -247,8 +248,8 @@ class TestMeetingAfterRun:
                 needs = page.locator("[data-testid='meeting-needs-you']")
                 expect(needs).to_be_visible(timeout=5_000)
                 needs_text = needs.text_content() or ""
-                assert "3" in needs_text or "NEEDS YOU" in needs_text, (
-                    f"Expected NEEDS YOU 3 at {width}: {needs_text[:200]}"
+                assert "TO REVIEW 3" in needs_text, (
+                    f"Expected TO REVIEW 3 at {width}: {needs_text[:200]}"
                 )
 
                 # Confirm and Dismiss buttons

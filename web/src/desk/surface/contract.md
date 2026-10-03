@@ -326,7 +326,8 @@ back.
 
 The cap and the remainder as one grammar under a capped ledger: the TRUE
 total lives in the head (the display line), the cap in the section caption
-(`NEEDS YOU 5 OF 17`, via `attentionCaption` in `desk/attention.ts`), and
+(`ACTIONS 5 OF 17` on the Chair since PHILO-13-03, via `attentionCaption` in
+`desk/attention.ts`), and
 the remainder is this row — a real count and a real verb:
 `12 MORE · Show all`. Pressing it reveals the rest IN PLACE (A.4) and the
 verb becomes `Show fewer`.

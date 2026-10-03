@@ -373,8 +373,9 @@ class TestMeetingsGlass:
                     needs_head = page.locator(".meetings-detail-needs-head .surface-caption")
                     expect(needs_head).to_be_visible(timeout=5_000)
                     needs_text = needs_head.text_content() or ""
-                    assert "3" in needs_text, (
-                        f"Expected 'NEEDS YOU 3', got '{needs_text}'"
+                    # PHILO-13-03: the meeting's proposals are TO REVIEW.
+                    assert needs_text.strip() == "TO REVIEW 3", (
+                        f"Expected 'TO REVIEW 3', got '{needs_text}'"
                     )
                     outcome_rows = page.locator(".meetings-detail-outcome-row")
                     assert outcome_rows.count() == 3, (

@@ -232,7 +232,7 @@ describe("Project Memory", () => {
   it("renders the Room headline and ask well (was: timeline)", async () => {
     render(<WindowHarness />);
     const headline = await screen.findByTestId("room-headline");
-    expect(headline.textContent).toBe("Nothing needs you");
+    expect(headline.textContent).toBe("Clear here");
     expect(screen.getByTestId("room-ask-well")).toBeTruthy();
   });
 
@@ -248,7 +248,7 @@ describe("Project Memory", () => {
     });
     render(<WindowHarness />);
     const headline = await screen.findByTestId("room-headline");
-    expect(headline.textContent).toBe("Nothing needs you");
+    expect(headline.textContent).toBe("Clear here");
   });
 
   // HS-169-03 SELECTOR EDIT: Search wing → removed. Search lives in HISTORY.

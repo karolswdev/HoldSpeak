@@ -103,8 +103,8 @@ describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
     expect(token("err")).toBe("FAILED");
     expect(token("run")).toBe("RUNNING");
     expect(token("que")).toBe("QUEUED");
-    expect(token("dis")).toBe("1 NEEDS YOU");
-    expect(token("rdy")).toBe("1 NEEDS YOU");
+    expect(token("dis")).toBe("1 TO REVIEW");
+    expect(token("rdy")).toBe("1 TO REVIEW");
     expect(token("non")).toBe("SUMMARY STORED");
   });
 

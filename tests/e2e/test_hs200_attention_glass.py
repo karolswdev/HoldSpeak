@@ -470,7 +470,8 @@ def _run_one_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
             assert boxes["coverage"] < boxes["needs"], boxes
 
             section = page.get_by_test_id("arrival-needs-you")
-            assert "NEEDS YOU 3" in (section.text_content() or "")
+            # PHILO-13-03: the list is narrower than "needs you": ACTIONS.
+            assert "ACTIONS 3" in (section.text_content() or "")
             rows = section.locator("[data-testid='arrival-needs-you-row']")
             assert rows.count() == 3
             assert page.get_by_test_id("arrival-needs-you-remainder").count() == 0, \
@@ -531,7 +532,7 @@ def _run_three_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
             assert verbs >= {"Reconnect", "Retry"}, verbs
 
             section = page.get_by_test_id("arrival-needs-you")
-            assert "NEEDS YOU 5 OF 17" in (section.text_content() or "")
+            assert "ACTIONS 5 OF 17" in (section.text_content() or "")
             rows = section.locator("[data-testid='arrival-needs-you-row'], [data-testid='arrival-proposal-row']")
             assert rows.count() == 5, _row_texts(page, "arrival-needs-you-row")
             first_row = rows.nth(0)
@@ -566,7 +567,7 @@ def _run_three_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
             page.get_by_role("button", name="Show all: the remaining 12").click()
             _settle(page)
             assert rows.count() == 17
-            assert "NEEDS YOU 17" in (section.text_content() or "")
+            assert "ACTIONS 17" in (section.text_content() or "")
             _no_horizontal_scroll(page, width)
             _shot(page, "three-projects-all", width)
             page.get_by_role("button", name="Show fewer: hide the remaining 12").click()
