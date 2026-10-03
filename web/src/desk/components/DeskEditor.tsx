@@ -50,6 +50,9 @@ interface DeskEditorProps {
   /** The formatting rail is on by default; compact embeds may opt out. */
   showToolbar?: boolean;
   editable?: boolean;
+  /** PHILO-13-18: long lines wrap by default at every width (the Update
+   * draft cut owners and due dates at 393, Astra's B5 check #739). A code
+   * embed that needs one line per line passes `lineWrapping={false}`. */
   lineWrapping?: boolean;
 }
 
@@ -175,7 +178,7 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
       onAIBarToggle,
       showToolbar = true,
       editable = true,
-      lineWrapping = false,
+      lineWrapping = true,
     },
     forwardedRef,
   ) {

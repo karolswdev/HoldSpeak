@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-philo
 - **Phase:** 13
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** PHILO-13-11 (C1 canvas ratified: the type tokens sit in the material)
 - **Unblocks:** none
 - **Owner:** Muad'Dib (Fedaykin, Opus 5.5); Astra checks
@@ -54,3 +54,7 @@ Grounding size: not sized as one move (157 declarations, 25 faces). PROVISIONAL.
 
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.
+
+## Closed — 2026-10-03
+
+Readable text under 12 px: 269 declarations → 0 (14 explicit, fenced glyph exemptions — icons, image-only mics, carets — UX-CANON's nontext rule); on glass 525 / 196 small texts at 1440 / 393 → 0, with zero clipped and zero overlapping text across 29 / 27 states (Chair windows, all Dock apps and wings, the meeting record, People, the Room, the Workbench, the decision window). Also paid here: the library editor wraps long lines (the B5 finding), the 393 strip menu's Escape closes only the menu, the Workbench raw buttons and the EgressChip are library Buttons, AgentAvatar no longer draws a hex colour over the name. **Muad'Dib's rulings:** the opt-in `on_glass` mode of the readable reader (scrolled-to content is not "clipped") accepted, the default reader unchanged; the 14 glyph exemptions accepted. The bundle byte budget is gone (owner ruling 2026-10-03). Capture `evidence-story-18.md` (140 passed; web baseline zero branch-new).
