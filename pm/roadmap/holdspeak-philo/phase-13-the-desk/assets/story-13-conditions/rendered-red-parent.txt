@@ -1,0 +1,874 @@
+
+ RUN  v4.1.9 /private/tmp/holdspeak-c1-baseline.mRFbNp/web
+
+ ❯ src/pages/cores/__tests__/meetingRefresh202.test.tsx (9 tests | 2 failed) 2568ms
+     × ACKs readiness when the owner opens a real Meetings row 1016ms
+     × ACKs readiness when a deep link opens the meeting 13ms
+stderr | src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > shows REC only after the real recording producer receives hub confirmation
+An update to Dock inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ❯ src/desk/components/window/Dock.test.tsx (5 tests | 3 failed) 1112ms
+     × renders durable state marks and one membership badge while suppressing zero 76ms
+     × shows REC only after the real recording producer receives hub confirmation 4ms
+     × renders the durable readiness transition and reconciles an acknowledged stale frame 1007ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/cores/__tests__/meetingRefresh202.test.tsx > C1 readiness acknowledgement > ACKs readiness when the owner opens a real Meetings row
+AssertionError: expected "vi.fn()" to be called with arguments: [ Array(2) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/facets",
+  ]
+
+  2nd vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings?limit=100",
+  ]
+
+  3rd vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/all-action-items",
+  ]
+
+  4th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/speakers",
+  ]
+
+  5th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/projects",
+  ]
+
+  6th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/intel/jobs",
+  ]
+
+  7th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/plugin-jobs",
+  ]
+
+  8th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings?parked=true",
+  ]
+
+  9th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings?parked=true",
+  ]
+
+  10th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/sync-conflicts",
+  ]
+
+  11th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/intel-recovery",
+  ]
+
+  12th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1",
+  ]
+
+  13th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/artifacts",
+  ]
+
+  14th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/aftercare",
+  ]
+
+  15th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/intent-timeline",
+  ]
+
+  16th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/proposals",
+  ]
+
+  17th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/authority/policy",
+  ]
+
+  18th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/follow-through-proposals",
+  ]
+
+
+Number of calls: 18
+
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"meetings-headline"[39m
+        [33mdata-accent[39m=[32m"true"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"surface-display"[39m
+          [33mdata-testid[39m=[32m"meetings-headline"[39m
+        [36m>[39m
+          [0m1 meeting needs a summary[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"meetings-head-verbs"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--secondary btn--sm "[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mRecord meeting[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn btn--ghost btn--sm "[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mImport[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"meetings-search"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"gadget-string"[39m
+        [36m>[39m
+          [36m<input[39m
+            [33maria-label[39m=[32m"Search meetings"[39m
+            [33mplaceholder[39m=[32m"Search meetings"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Speak Search meetings · NO MICROPHONE IN THIS BROWSER"[39m
+            [33mclass[39m=[32m"btn--chrome desk-mic is-unsupported"[39m
+            [33mdisabled[39m=[32m""[39m
+            [33mtitle[39m=[32m"NO MICROPHONE IN THIS BROWSER"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m""[39m
+                [33mclass[39m=[32m"desk-chrome-sprite"[39m
+                [33mdraggable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"16"[39m
+                [33msrc[39m=[32m"/desk/sprites/system/mic.png"[39m
+                [33mwidth[39m=[32m"16"[39m
+              [36m/>[39m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"parked-strip"[39m
+        [33mdata-testid[39m=[32m"meetings-parked"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"parked-strip-facet"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"gadget-check-token is-off"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33maria-label[39m=[32m"PARKED 1"[39m
+              [33mtype[39m=[32m"checkbox"[39m
+            [36m/>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"gadget-check-token-face"[39m
+            [36m>[39m
+              [0mPARKED 1[0m
+            [36m</span>[39m
+          [36m</label>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"surface-split-railed"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"surface-split surface-split-open"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"surface-split-main"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"meetings-stream"[39m
+              [33mdata-narrowed[39m=[32m"true"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"meetings-stream-rows"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"meetings-stream-row"[39m
+                  [33mdata-selected[39m=[32m"true"[39m
+                  [33mdata-testid[39m=[32m"meeting-row-m-1"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn--chrome meetings-stream-row-body"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"meetings-stream-row-head"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"surface-primary meetings-stream-title"[39m
+                      [36m>[39m
+                        [0mImported meeting[0m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"meetings-stream-compact-facts"[39m
+                      [36m>[39m
+                        [0mSEP 20 · OFF[0m
+                      [36m</span>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"meetings-stream-tokens"[39m
+                    [36m>[39m
+                      [36m<span>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"meetings-stream-fact"[39m
+                        [36m>[39m
+                          [0mSEP 20[0m
+                        [36m</span>[39m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33maria-hidden[39m=[32m"true"[39m
+                        [33mclass[39m=[32m"meetings-stream-dot"[39m
+                      [36m>[39m
+                        [0m·[0m
+                      [36m</span>[39m
+                      [36m<span>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"meetings-stream-fact"[39m
+                        [36m>[39m
+                          [0m1 MIN[0m
+                        [36m</span>[39m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33maria-hidden[39m=[32m"true"[39m
+                        [33mclass[39m=[32m"meetings-stream-dot"[39m
+                      [36m>[39m
+                        [0m·[0m
+                      [36m</span>[39m
+                      [36m<span>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"meetings-stream-fact"[39m
+                        [36m>[39m
+                          [0m9 WORDS[0m
+                        [36m</span>[39m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33maria-hidden[39m=[32m"true"[39m
+                        [33mclass[39m=[32m"meetings-stream-dot"[39m
+                      [36m>[39m
+                        [0m·[0m
+                      [36m</span>[39m
+                      [36m<span>[39m
+                        [36m<span[39m
+       ...
+ ❯ src/pages/cores/__tests__/meetingRefresh202.test.tsx:410:24
+    408|     fireEvent.click(rowBody);
+    409|     await waitFor(() =>
+    410|       expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m-1/ready/r…
+       |                        ^
+    411|         method: "POST",
+    412|       }),
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../../Users/karol/dev/tools/wt-philo-13-13-astra/web/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../../Users/karol/dev/tools/wt-philo-13-13-astra/web/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../../Users/karol/dev/tools/wt-philo-13-13-astra/web/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/pages/cores/__tests__/meetingRefresh202.test.tsx > C1 readiness acknowledgement > ACKs readiness when a deep link opens the meeting
+AssertionError: expected "vi.fn()" to be called with arguments: [ Array(2) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/facets",
+  ]
+
+  2nd vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings?limit=100",
+  ]
+
+  3rd vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/all-action-items",
+  ]
+
+  4th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/speakers",
+  ]
+
+  5th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/projects",
+  ]
+
+  6th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/intel/jobs",
+  ]
+
+  7th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/plugin-jobs",
+  ]
+
+  8th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings?parked=true",
+  ]
+
+  9th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings?parked=true",
+  ]
+
+  10th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/sync-conflicts",
+  ]
+
+  11th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/intel-recovery",
+  ]
+
+  12th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1",
+  ]
+
+  13th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/artifacts",
+  ]
+
+  14th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/aftercare",
+  ]
+
+  15th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/intent-timeline",
+  ]
+
+  16th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/proposals",
+  ]
+
+  17th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/authority/policy",
+  ]
+
+  18th vi.fn() call:
+
+  [
+-   "/api/meetings/m-1/ready/read",
+-   {
+-     "method": "POST",
+-   },
++   "/api/meetings/m-1/follow-through-proposals",
+  ]
+
+
+Number of calls: 18
+
+ ❯ src/pages/cores/__tests__/meetingRefresh202.test.tsx:423:22
+    421|       expect(document.querySelector(".meetings-detail-head")).toBeTrut…
+    422|     );
+    423|     expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m-1/ready/rea…
+       |                      ^
+    424|       method: "POST",
+    425|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > renders durable state marks and one membership badge while suppressing zero
+AssertionError: expected <span …(2)></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="desk-dock-state"
+  data-testid="desk-dock-meetings-state"
+>
+  READY 2
+</span>
+
+ ❯ src/desk/components/window/Dock.test.tsx:181:62
+    179|
+    180|     await waitFor(() => expect(screen.getByTestId("desk-dock-send-stat…
+    181|     expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull(…
+       |                                                              ^
+    182|     expect(screen.getByTestId("desk-dock-people-state")).toHaveTextCon…
+    183|     expect(mocks.refreshNeedsYou).toHaveBeenCalledWith(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > shows REC only after the real recording producer receives hub confirmation
+AssertionError: expected <span …(2)></span> to be null
+
+- Expected:
+null
+
++ Received:
+<span
+  class="desk-dock-state"
+  data-testid="desk-dock-meetings-state"
+>
+  READY 2
+</span>
+
+ ❯ src/desk/components/window/Dock.test.tsx:220:62
+    218|
+    219|     const view = render(<Dock />);
+    220|     expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull(…
+       |                                                              ^
+    221|
+    222|     producer.applyRecordingActivity({ state: "meeting_live" });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/desk/components/window/Dock.test.tsx > H-C3 Dock rendering > renders the durable readiness transition and reconciles an acknowledged stale frame
+AssertionError: expected "vi.fn()" to be called with arguments: [ '/api/meetings/ready' ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "/api/meetings/ready",
++   "/api/channels/sends",
+  ]
+
+  2nd vi.fn() call:
+
+  [
+-   "/api/meetings/ready",
++   "/api/people/relationships",
+  ]
+
+  3rd vi.fn() call:
+
+  [
+-   "/api/meetings/ready",
++   "/api/people/relationships/r1/brief",
+  ]
+
+
+Number of calls: 3
+
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mstyle[39m=[32m"--desk-dock-h: 0px;"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33maria-label[39m=[32m"Dock"[39m
+        [33mclass[39m=[32m"desk-dock"[39m
+        [33mrole[39m=[32m"toolbar"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Intelligence, 1 need you"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-app is-attention"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mI[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mIntelligence[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-chip desk-dock-badge"[39m
+            [33mdata-tone[39m=[32m"warn"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-state"[39m
+            [33mdata-testid[39m=[32m"desk-dock-send-state"[39m
+          [36m>[39m
+            [0mSEND FAILED[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Meetings"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mM[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mMeetings[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-state"[39m
+            [33mdata-testid[39m=[32m"desk-dock-meetings-state"[39m
+          [36m>[39m
+            [0mREADY 2[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"People"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mP[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mPeople[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-state"[39m
+            [33mdata-testid[39m=[32m"desk-dock-people-state"[39m
+          [36m>[39m
+            [0m1:1 09:00 AM[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Agents"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mA[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mAgents[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Settings"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-app"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0mS[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mSettings[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Alpha, 1 need you"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-project"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0m▤[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mAlpha[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-chip desk-dock-badge"[39m
+            [33mdata-tone[39m=[32m"warn"[39m
+          [36m>[39m
+            [0m1[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Quiet"[39m
+          [33mclass[39m=[32m"desk-dock-launch desk-dock-project"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+          [36m>[39m
+            [0m▤[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mQuiet[0m
+          [36m</span>[39m
+        [36m</button>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Floor"[39m
+          [33maria-pressed[39m=[32m"false"[39m
+          [33mclass[39m=[32m"desk-dock-launch"[39m
+          [33mdata-testid[39m=[32m"chair-floor-toggle"[39m
+          [33mvariant[39m=[32m"chrome"[39m
+        [36m>[39m
+          [36m<img[39m
+            [33malt[39m=[32m""[39m
+            [33mclass[39m=[32m"desk-dock-sprite"[39m
+            [33mdraggable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"32"[39m
+            [33msrc[39m=[32m"floor.svg"[39m
+            [33mwidth[39m=[32m"32"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"desk-dock-label"[39m
+          [36m>[39m
+            [0mFloor[0m
+          [36m</span>[39m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/desk/components/window/Dock.test.tsx:234:48
+    232|     // Historical summary rows do not create a READY mark. The endpoin…
+    233|     // is the durable read; this test does not claim that a producer e…
+    234|     await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/…
+       |                                                ^
+    235|     expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull(…
+    236|     expect(mocks.runtimeListeners.get("aftercare_ready")?.size).toBeGr…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../../Users/karol/dev/tools/wt-philo-13-13-astra/web/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../../Users/karol/dev/tools/wt-philo-13-13-astra/web/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../../Users/karol/dev/tools/wt-philo-13-13-astra/web/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 9 passed (14)
+   Start at  23:55:44
+   Duration  6.06s (transform 726ms, setup 190ms, import 1.03s, tests 3.68s, environment 961ms)
+

@@ -39,6 +39,8 @@ describe("floorMenuEntries", () => {
       news.entries.map((e) => (e.type === "item" ? e.label : e.type)),
     ).toEqual([
       "New Note",
+      // PHILO-13-16 (C6): the pop-key verb is a create (group "new").
+      "Write a thought",
       "New Decision",
       "New Knowledge",
       "New Agent",

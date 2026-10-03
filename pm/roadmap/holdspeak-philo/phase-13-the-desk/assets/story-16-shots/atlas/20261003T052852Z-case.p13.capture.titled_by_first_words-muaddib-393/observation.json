@@ -1,0 +1,1094 @@
+{
+  "id": "obs-20261003T052852Z-case.p13.capture.titled_by_first_words-muaddib-393",
+  "run_id": "20261003T052852Z-case.p13.capture.titled_by_first_words-muaddib-393",
+  "case_id": "case.p13.capture.titled_by_first_words",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-muaddib.json",
+  "job": "j11",
+  "edge_ids": [
+    "edge.face.desk_new_thought"
+  ],
+  "state_id": "state.desk_presentation.p13_thought_titled",
+  "provenance": {
+    "revision": "76c3615379cc9bf1d6b1ba174407bfc7c684e557",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "5433f72d6b8f31bf7f96041975f2fba1ef7cf4e4e19988efebc39efa017bcbd7",
+      "assets": [
+        "index-CKZp9DJ9.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:55388",
+      "port": 55388,
+      "pid": 22526,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iozci8cr",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iozci8cr/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T05:28:53.244928+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-muaddib.json",
+      "sha256": "e42b45ac324185dcca422028896afa5c5b28360258926201508802ed5a6cabcf",
+      "version": "phase13-muaddib"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "browser_context": {
+      "viewport": 393,
+      "has_touch": true
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iozci8cr",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iozci8cr",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iozci8cr/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iozci8cr"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-pointer",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "press",
+      "adapter": "ui-keyboard",
+      "done": false,
+      "skipped": "at_width 1440; this run is 393"
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "at_width": 393,
+      "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click",
+      "adapter": "ui-touch",
+      "adapter_requested": "ui-by-viewport",
+      "at_width": 393,
+      "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Write a thought')",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "wait_for",
+      "adapter": "ui-pointer",
+      "selector": ".desk-window[aria-label='Thought'] [aria-label=\"Note body\"]",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "kind": "prose",
+      "text": "the desk shown",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    },
+    {
+      "checked": true,
+      "kind": "check",
+      "observe_at": "[data-testid=chair-desk]",
+      "predicate": {
+        "kind": "attr_equals",
+        "attr": "data-testid",
+        "value": "chair-desk"
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "data-testid='chair-desk', wanted 'chair-desk'"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iozci8cr"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "fill",
+    "adapter": "ui-keyboard",
+    "done": true
+  },
+  "diff": {
+    "text": {
+      "before": "Thought",
+      "after": "Ask Priya about the ledger ADR"
+    },
+    "document_text_sha256": {
+      "before": "0f994b82761a1c883b0953cd188ba6361dffa4a386339425fd03101ad69fd28f",
+      "after": "078e07d13d74fdccee1780ed698882e060b3ca2dc2aaf6ead4237cbb6f369ef1"
+    },
+    "document_text_len": {
+      "before": 339,
+      "after": 366
+    },
+    "api_reads": {
+      "before": [
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "payload": {
+            "items": [
+              {
+                "id": "thought_1ffc4108636e",
+                "working_note_id": "note_8dfcd6807e00",
+                "source_kind": "note",
+                "title": "Thought",
+                "body_preview": "",
+                "updated_at": "2026-10-03T05:28:59Z",
+                "state": "working",
+                "aggregate_revision": 1,
+                "lifecycle_revision": 1,
+                "working_revision": 1,
+                "attachment_revision": 0,
+                "continuity_state": "idle",
+                "filing_status": "filed"
+              }
+            ],
+            "next_cursor": null
+          },
+          "body_sha256": "bae81ab859725218f373cfa7349ce199251f3d72963170d12fad210f8414795e"
+        }
+      ],
+      "after": [
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "payload": {
+            "items": [
+              {
+                "id": "thought_1ffc4108636e",
+                "working_note_id": "note_8dfcd6807e00",
+                "source_kind": "note",
+                "title": "Ask Priya about the ledger ADR",
+                "body_preview": "Ask Priya about the ledger ADR",
+                "updated_at": "2026-10-03T05:29:01Z",
+                "state": "working",
+                "aggregate_revision": 2,
+                "lifecycle_revision": 1,
+                "working_revision": 2,
+                "attachment_revision": 0,
+                "continuity_state": "idle",
+                "filing_status": "filed"
+              }
+            ],
+            "next_cursor": null
+          },
+          "body_sha256": "e38ca821eb618fbae0c2fd6584fd30dee17ae22a613420558d5c8635cfd2f5a1"
+        }
+      ]
+    }
+  },
+  "before": {
+    "observe_at": ".desk-window[aria-label='Thought'] .thought-note-title",
+    "target_present": true,
+    "text": "Thought",
+    "attrs": {
+      "type": "button",
+      "class": "btn--chrome surface-edit-in-place thought-note-title",
+      "aria-label": "Edit Title"
+    },
+    "rect": {
+      "x": 18,
+      "y": 116,
+      "w": 357,
+      "h": 32
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 18,
+        "y": 116,
+        "w": 357,
+        "h": 32
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 62.625,
+          "y": 119.94921875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 62.625,
+          "y": 131.796875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 62.625,
+          "y": 143.64453125,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 196.5,
+          "y": 119.94921875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 196.5,
+          "y": 131.796875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 196.5,
+          "y": 143.64453125,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 330.375,
+          "y": 119.94921875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 330.375,
+          "y": 131.796875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 330.375,
+          "y": 143.64453125,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:55388/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 0,
+          "y": 54,
+          "w": 393,
+          "h": 746
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "0f994b82761a1c883b0953cd188ba6361dffa4a386339425fd03101ad69fd28f",
+    "document_text_len": 339,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "payload": {
+          "items": [
+            {
+              "id": "thought_1ffc4108636e",
+              "working_note_id": "note_8dfcd6807e00",
+              "source_kind": "note",
+              "title": "Thought",
+              "body_preview": "",
+              "updated_at": "2026-10-03T05:28:59Z",
+              "state": "working",
+              "aggregate_revision": 1,
+              "lifecycle_revision": 1,
+              "working_revision": 1,
+              "attachment_revision": 0,
+              "continuity_state": "idle",
+              "filing_status": "filed"
+            }
+          ],
+          "next_cursor": null
+        },
+        "body_sha256": "bae81ab859725218f373cfa7349ce199251f3d72963170d12fad210f8414795e"
+      }
+    ],
+    "at_utc": "2026-10-03T05:29:01.253001+00:00"
+  },
+  "after": {
+    "observe_at": ".desk-window[aria-label='Thought'] .thought-note-title",
+    "target_present": true,
+    "text": "Ask Priya about the ledger ADR",
+    "attrs": {
+      "type": "button",
+      "class": "btn--chrome surface-edit-in-place thought-note-title",
+      "aria-label": "Edit Title"
+    },
+    "rect": {
+      "x": 18,
+      "y": 116,
+      "w": 357,
+      "h": 32
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 18,
+        "y": 116,
+        "w": 357,
+        "h": 32
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 62.625,
+          "y": 119.94921875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 62.625,
+          "y": 131.796875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 62.625,
+          "y": 143.64453125,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 196.5,
+          "y": 119.94921875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 196.5,
+          "y": 131.796875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 196.5,
+          "y": 143.64453125,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 330.375,
+          "y": 119.94921875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 330.375,
+          "y": 131.796875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 330.375,
+          "y": 143.64453125,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:55388/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 0,
+          "y": 54,
+          "w": 393,
+          "h": 746
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "078e07d13d74fdccee1780ed698882e060b3ca2dc2aaf6ead4237cbb6f369ef1",
+    "document_text_len": 366,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "payload": {
+          "items": [
+            {
+              "id": "thought_1ffc4108636e",
+              "working_note_id": "note_8dfcd6807e00",
+              "source_kind": "note",
+              "title": "Ask Priya about the ledger ADR",
+              "body_preview": "Ask Priya about the ledger ADR",
+              "updated_at": "2026-10-03T05:29:01Z",
+              "state": "working",
+              "aggregate_revision": 2,
+              "lifecycle_revision": 1,
+              "working_revision": 2,
+              "attachment_revision": 0,
+              "continuity_state": "idle",
+              "filing_status": "filed"
+            }
+          ],
+          "next_cursor": null
+        },
+        "body_sha256": "e38ca821eb618fbae0c2fd6584fd30dee17ae22a613420558d5c8635cfd2f5a1"
+      }
+    ],
+    "at_utc": "2026-10-03T05:29:02.363127+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:55388) non-GET response after the click",
+      "chosen": {
+        "method": "PATCH",
+        "path": "/api/thoughts/thought_1ffc4108636e/working",
+        "status": 200,
+        "body_sha256": "5773da3fa056d02c381f19d0116e574d41d644607f64427087855c40441beb81",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:55388) non-GET response after the click"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:55388) non-GET response after the click",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "PATCH",
+          "path": "/api/thoughts/thought_1ffc4108636e/working",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "PATCH",
+      "path": "/api/thoughts/thought_1ffc4108636e/working",
+      "status": 200,
+      "body_sha256": "5773da3fa056d02c381f19d0116e574d41d644607f64427087855c40441beb81",
+      "body": {
+        "thought": {
+          "id": "thought_1ffc4108636e",
+          "raw_id": "thought_1ffc4108636e",
+          "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source": {
+            "kind": "note"
+          },
+          "raw_captured_at": "2026-10-03T05:28:59Z",
+          "state": "working",
+          "aggregate_revision": 2,
+          "lifecycle_revision": 1,
+          "working_revision": 2,
+          "attachment_revision": 0,
+          "attachment_sha256": "ed9a4f51536a2236e642c2e65a20fa4af1ef1d7ccf9da67da4aa7abf3e4486b8",
+          "attachments": [],
+          "working_note": {
+            "id": "note_8dfcd6807e00",
+            "title": "Ask Priya about the ledger ADR",
+            "body_markdown": "Ask Priya about the ledger ADR",
+            "tags": [],
+            "deleted": false,
+            "last_modified": "2026-10-03T05:29:01Z"
+          },
+          "filing_status": "filed",
+          "continuity": {
+            "state": "idle",
+            "code": ""
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox"
+        },
+        "workbench": {
+          "schema_version": 1,
+          "process_scope": {
+            "kind": "hub_local",
+            "hub_id": "hub_4eb764a8cdd32ac91373b46ac3508666",
+            "state": "unavailable"
+          },
+          "workspace_cursor": {
+            "hub_id": "hub_4eb764a8cdd32ac91373b46ac3508666",
+            "thought_id": "thought_1ffc4108636e",
+            "aggregate_revision": 2,
+            "continuity_revision": 1
+          },
+          "thought": {
+            "id": "thought_1ffc4108636e",
+            "raw_id": "thought_1ffc4108636e",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-10-03T05:28:59Z",
+            "state": "working",
+            "aggregate_revision": 2,
+            "lifecycle_revision": 1,
+            "working_revision": 2,
+            "attachment_revision": 0,
+            "attachment_sha256": "ed9a4f51536a2236e642c2e65a20fa4af1ef1d7ccf9da67da4aa7abf3e4486b8",
+            "attachments": [],
+            "working_note": {
+              "id": "note_8dfcd6807e00",
+              "title": "Ask Priya about the ledger ADR",
+              "body_markdown": "Ask Priya about the ledger ADR",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-10-03T05:29:01Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          },
+          "workspace_state": "idle",
+          "actions": {
+            "primary": {
+              "kind": "configure_ai"
+            },
+            "state": [
+              {
+                "kind": "configure_ai"
+              }
+            ],
+            "ambient": [
+              "update_working",
+              "attach_context",
+              "complete"
+            ]
+          },
+          "review": null,
+          "context_status": {
+            "summary": "",
+            "state": "empty",
+            "repair_ref": null
+          },
+          "inference": {
+            "availability": "unavailable",
+            "continuation_admission": "unavailable",
+            "intended_placement": {
+              "target_id": "this_machine",
+              "target_name": "This device",
+              "target_kind": "this_device",
+              "boundary": "same_device",
+              "readiness": "unavailable"
+            }
+          },
+          "terminal_status": null
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:55388) non-GET response after the click"
+    }
+  },
+  "initial_feedback": {
+    "observe_at": ".desk-window[aria-label='Thought'] .thought-note-title",
+    "target_present": true,
+    "text": "Ask Priya about the ledger ADR",
+    "attrs": {
+      "type": "button",
+      "class": "btn--chrome surface-edit-in-place thought-note-title",
+      "aria-label": "Edit Title"
+    },
+    "rect": {
+      "x": 18,
+      "y": 116,
+      "w": 357,
+      "h": 32
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 18,
+        "y": 116,
+        "w": 357,
+        "h": 32
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 62.625,
+          "y": 119.94921875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 62.625,
+          "y": 131.796875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 62.625,
+          "y": 143.64453125,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 196.5,
+          "y": 119.94921875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 196.5,
+          "y": 131.796875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 196.5,
+          "y": 143.64453125,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 330.375,
+          "y": 119.94921875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 330.375,
+          "y": 131.796875,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        },
+        {
+          "x": 330.375,
+          "y": 143.64453125,
+          "owned": true,
+          "owner": "div#pullout:note:note_8dfcd6807e00 > div.thought-workspace-preserved > div.thought-note-window > section.thought-note-document > button.btn--chrome.surface-edit-in-place"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div.thought-note-field > div.desk-editor > div.desk-code-editor.thought-note-body > div.cm-editor.cm-focused > div.cm-scroller > div.cm-content.cm-lineWrapping",
+    "focus_label": "Note body",
+    "url": "http://127.0.0.1:55388/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Thought",
+        "rect": {
+          "x": 0,
+          "y": 54,
+          "w": 393,
+          "h": 746
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "078e07d13d74fdccee1780ed698882e060b3ca2dc2aaf6ead4237cbb6f369ef1",
+    "document_text_len": 366,
+    "replay_identity": null,
+    "api_reads": [
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "payload": {
+          "items": [
+            {
+              "id": "thought_1ffc4108636e",
+              "working_note_id": "note_8dfcd6807e00",
+              "source_kind": "note",
+              "title": "Ask Priya about the ledger ADR",
+              "body_preview": "Ask Priya about the ledger ADR",
+              "updated_at": "2026-10-03T05:29:01Z",
+              "state": "working",
+              "aggregate_revision": 2,
+              "lifecycle_revision": 1,
+              "working_revision": 2,
+              "attachment_revision": 0,
+              "continuity_state": "idle",
+              "filing_status": "filed"
+            }
+          ],
+          "next_cursor": null
+        },
+        "body_sha256": "e38ca821eb618fbae0c2fd6584fd30dee17ae22a613420558d5c8635cfd2f5a1"
+      }
+    ],
+    "at_utc": "2026-10-03T05:29:02.231308+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:55388) non-GET response after the click",
+      "chosen": {
+        "method": "PATCH",
+        "path": "/api/thoughts/thought_1ffc4108636e/working",
+        "status": 200,
+        "body_sha256": "5773da3fa056d02c381f19d0116e574d41d644607f64427087855c40441beb81",
+        "source": "ui-network",
+        "chosen_by": "the first same-origin (http://127.0.0.1:55388) non-GET response after the click"
+      },
+      "why": "chosen by the first same-origin (http://127.0.0.1:55388) non-GET response after the click",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "PATCH",
+          "path": "/api/thoughts/thought_1ffc4108636e/working",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "trigger_response": {
+      "method": "PATCH",
+      "path": "/api/thoughts/thought_1ffc4108636e/working",
+      "status": 200,
+      "body_sha256": "5773da3fa056d02c381f19d0116e574d41d644607f64427087855c40441beb81",
+      "body": {
+        "thought": {
+          "id": "thought_1ffc4108636e",
+          "raw_id": "thought_1ffc4108636e",
+          "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source": {
+            "kind": "note"
+          },
+          "raw_captured_at": "2026-10-03T05:28:59Z",
+          "state": "working",
+          "aggregate_revision": 2,
+          "lifecycle_revision": 1,
+          "working_revision": 2,
+          "attachment_revision": 0,
+          "attachment_sha256": "ed9a4f51536a2236e642c2e65a20fa4af1ef1d7ccf9da67da4aa7abf3e4486b8",
+          "attachments": [],
+          "working_note": {
+            "id": "note_8dfcd6807e00",
+            "title": "Ask Priya about the ledger ADR",
+            "body_markdown": "Ask Priya about the ledger ADR",
+            "tags": [],
+            "deleted": false,
+            "last_modified": "2026-10-03T05:29:01Z"
+          },
+          "filing_status": "filed",
+          "continuity": {
+            "state": "idle",
+            "code": ""
+          },
+          "directory_id": "hs-seed-inbox",
+          "directory_name": "Inbox"
+        },
+        "workbench": {
+          "schema_version": 1,
+          "process_scope": {
+            "kind": "hub_local",
+            "hub_id": "hub_4eb764a8cdd32ac91373b46ac3508666",
+            "state": "unavailable"
+          },
+          "workspace_cursor": {
+            "hub_id": "hub_4eb764a8cdd32ac91373b46ac3508666",
+            "thought_id": "thought_1ffc4108636e",
+            "aggregate_revision": 2,
+            "continuity_revision": 1
+          },
+          "thought": {
+            "id": "thought_1ffc4108636e",
+            "raw_id": "thought_1ffc4108636e",
+            "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "source": {
+              "kind": "note"
+            },
+            "raw_captured_at": "2026-10-03T05:28:59Z",
+            "state": "working",
+            "aggregate_revision": 2,
+            "lifecycle_revision": 1,
+            "working_revision": 2,
+            "attachment_revision": 0,
+            "attachment_sha256": "ed9a4f51536a2236e642c2e65a20fa4af1ef1d7ccf9da67da4aa7abf3e4486b8",
+            "attachments": [],
+            "working_note": {
+              "id": "note_8dfcd6807e00",
+              "title": "Ask Priya about the ledger ADR",
+              "body_markdown": "Ask Priya about the ledger ADR",
+              "tags": [],
+              "deleted": false,
+              "last_modified": "2026-10-03T05:29:01Z"
+            },
+            "filing_status": "filed",
+            "continuity": {
+              "state": "idle",
+              "code": ""
+            },
+            "directory_id": "hs-seed-inbox",
+            "directory_name": "Inbox"
+          },
+          "workspace_state": "idle",
+          "actions": {
+            "primary": {
+              "kind": "configure_ai"
+            },
+            "state": [
+              {
+                "kind": "configure_ai"
+              }
+            ],
+            "ambient": [
+              "update_working",
+              "attach_context",
+              "complete"
+            ]
+          },
+          "review": null,
+          "context_status": {
+            "summary": "",
+            "state": "empty",
+            "repair_ref": null
+          },
+          "inference": {
+            "availability": "unavailable",
+            "continuation_admission": "unavailable",
+            "intended_placement": {
+              "target_id": "this_machine",
+              "target_name": "This device",
+              "target_kind": "this_device",
+              "boundary": "same_device",
+              "readiness": "unavailable"
+            }
+          },
+          "terminal_status": null
+        }
+      },
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:55388) non-GET response after the click"
+    },
+    "predicate_satisfied": true,
+    "reading": "all_of: text_contains: 'Ask Priya about the ledger ADR' in observe_at text | protocol_reads: GET /api/thoughts answered 200 with 1 row(s) {'title': 'Ask Priya about the ledger ADR'}",
+    "elapsed_s": 0.918
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "all_of: text_contains: 'Ask Priya about the ledger ADR' in observe_at text | protocol_reads: GET /api/thoughts answered 200 with 1 row(s) {'title': 'Ask Priya about the ledger ADR'}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 1.048,
+    "first_satisfied_at_s": 0.918,
+    "completion_bound_s": 45.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: all_of: text_contains: 'Ask Priya about the ledger ADR' in observe_at text | protocol_reads: GET /api/thoughts answered 200 with 1 row(s) {'title': 'Ask Priya about the ledger ADR'}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:55388) non-GET response after the click",
+    "chosen": {
+      "method": "PATCH",
+      "path": "/api/thoughts/thought_1ffc4108636e/working",
+      "status": 200,
+      "body_sha256": "5773da3fa056d02c381f19d0116e574d41d644607f64427087855c40441beb81",
+      "source": "ui-network",
+      "chosen_by": "the first same-origin (http://127.0.0.1:55388) non-GET response after the click"
+    },
+    "why": "chosen by the first same-origin (http://127.0.0.1:55388) non-GET response after the click",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/thoughts/thought_1ffc4108636e/working",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-16-shots/atlas/20261003T052852Z-case.p13.capture.titled_by_first_words-muaddib-393/before.png",
+    "pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-16-shots/atlas/20261003T052852Z-case.p13.capture.titled_by_first_words-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iozci8cr/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-iozci8cr/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:55388"
+  ],
+  "duration_s": 9.623
+}

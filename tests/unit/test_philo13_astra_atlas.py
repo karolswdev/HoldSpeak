@@ -44,6 +44,18 @@ NEEDS_YOU_CASES = {"case.p13.dock.needs_you_week"}
 WEEK_CASES = {"case.p13.update.linked_week"}
 PEOPLE_PREP_CASES = {"case.p13.people.prep", "case.p13.people.prep.protocol"}
 
+LIVE_DOCK_CASES = {
+    'case.p13.dock.send_sent',
+    'case.p13.dock.send_failed',
+    'case.p13.dock.send_unknown',
+    'case.p13.dock.meeting_ready',
+    'case.p13.dock.meeting_open_clears_ready',
+    'case.p13.dock.meeting_read_survives_reload',
+    'case.p13.dock.recording_refused',
+    'case.p13.dock.reconnect',
+}
+EXPECTED_CASES |= LIVE_DOCK_CASES
+
 LIFECYCLE_CASES = {
     "case.p13.roadmap.window": {
         "first_observe": ".desk-roadmap-window",
@@ -516,9 +528,11 @@ def test_phase13_case_and_sibling_manifest_is_local() -> None:
     # C6 is already folded: this atlas owns the B0 and B5 .op siblings; the
     # historical 69 stays only in the shared Phase 1–12 population fence.
     assert sum(case["id"].endswith(".op") for case in cases.values()) == 2
-    faces = [case for case in cases.values()
-             if not case["id"].endswith(".op")
-             and case["id"] not in PARKING_CASES | NEEDS_YOU_CASES | WEEK_CASES | PEOPLE_PREP_CASES]
+    faces = [
+        case for case in cases.values()
+        if not case["id"].endswith(".op")
+        and case["id"] not in PARKING_CASES | NEEDS_YOU_CASES | LIVE_DOCK_CASES | WEEK_CASES | PEOPLE_PREP_CASES
+    ]
     assert len(faces) == 9
     for case in faces:
         assert case["viewports"] == [1440, 393]
@@ -785,3 +799,20 @@ def test_phase13_spatial_reload_fence_accepts_only_floor_reentry() -> None:
 
 def test_phase13_repository_cases_name_the_real_router_seam() -> None:
     _assert_phase13_repository_seam_fence(_atlas())
+
+
+def test_live_dock_cases_keep_real_producers_and_no_reload_after_send():
+    cases = _cases()
+    for outcome in ("sent", "failed", "unknown"):
+        case = cases[f"case.p13.dock.send_{outcome}"]
+        assert case["trigger"]["name"] == "channel.send"
+        assert case["expected"]["reads"][0]["name"] == "channel.sends"
+        assert not case["trigger"].get("then")
+        assert any(step.get("substitute") == "cli_runner" for step in case["setup"])
+    ready = cases["case.p13.dock.meeting_ready"]
+    assert ready["trigger"]["action"] == "queue_meeting_intelligence"
+    assert any(step.get("name") == "meeting.import" for step in ready["setup"])
+    reconnect = cases["case.p13.dock.reconnect"]
+    assert any(step.get("action") == "stop_hub" for step in reconnect["setup"])
+    assert any(step.get("capture_shot") and step.get("observe_at") == "[data-testid=desk-dock-offline]" for step in reconnect["setup"])
+    assert reconnect["trigger"]["action"] == "restart_hub"

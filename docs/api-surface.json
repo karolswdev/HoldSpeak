@@ -3466,6 +3466,16 @@
       ]
     },
     {
+      "path": "/api/meetings/ready",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.meetings.crud",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/meetings/{meeting_id}",
       "methods": [
         "DELETE"
@@ -3680,6 +3690,16 @@
       "module": "web.routes.meetings.aftercare",
       "consumers": [
         "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/ready/read",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.crud",
+      "consumers": [
         "web"
       ]
     },

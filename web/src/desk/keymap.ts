@@ -32,8 +32,9 @@ export function parseKey(cap: string): KeySpec | null {
 }
 
 /** Plain-letter chords stay quiet while the user is typing (the HS-101
- * rule: ⌘W/⌘M never eat a word in a field). */
-const TYPING_GUARDED = new Set(["w", "m", "b"]);
+ * rule: ⌘W/⌘M never eat a word in a field). PHILO-13-16: ⌃T too — in a
+ * field it is the field's own key (on a Mac it swaps two letters). */
+const TYPING_GUARDED = new Set(["w", "m", "b", "t"]);
 
 function typing(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null;

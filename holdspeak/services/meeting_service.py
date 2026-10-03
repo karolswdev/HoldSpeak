@@ -344,6 +344,21 @@ class MeetingService:
         state.intel_status_detail = detail
         self._db.meetings.save_meeting(state)
 
+    def list_ready(self, principal: Principal) -> dict[str, Any]:
+        """Return producer-created meeting readiness for the Dock."""
+        return {"meetings": self._db.meetings.list_unread_ready()}
+
+    def mark_ready_read(self, principal: Principal, meeting_id: str) -> dict[str, Any]:
+        """Acknowledge a meeting opened by the Meetings face."""
+        result = self._db.meetings.mark_ready_read(meeting_id)
+        if result is None:
+            raise NotFound("meeting", meeting_id)
+        return {
+            "meeting_id": result["id"],
+            "ready_at": result["ready_at"],
+            "read": True,
+        }
+
     def list_meetings(
         self,
         principal: Principal,

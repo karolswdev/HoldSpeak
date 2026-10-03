@@ -6,19 +6,19 @@
  "inputs": [
   {
    "path": "docs/generated/components.yaml",
-   "sha256": "a9cef5e82ab88c5a05c4bb70d04a3d9f3a0e7aacbc4e348e210170e0636c6715"
+   "sha256": "7214c6fd09878b8c30937ed71fd66c0dba57e883fb18c92d081d878f0b54fbcf"
   },
   {
    "path": "docs/generated/domain-model.yaml",
-   "sha256": "99138364437bd5c80247d48ca07752a1a3a685e2214c1dcd15ad6f4d705881b1"
+   "sha256": "2519cc78c85df226a64582ffeff8eb249b24f7b661f19dc4013aee3e709a7013"
   },
   {
    "path": "docs/generated/openapi.json",
-   "sha256": "32dad2a06a1c57db0359a6ff4ee9356493a2a4a601efc997b12a019a81c7976b"
+   "sha256": "6e3a034d013c71ed1b12f5958fa03f16dddb637e7f24a6d900e5ce77a1ef4e17"
   },
   {
    "path": "docs/internal/philo/data/desk.json",
-   "sha256": "351403a288934eded403bb296ee0ab70af3fde87d41b810e3599c1089f5b0d10"
+   "sha256": "885a9feb876a7c5ffec481db38406dbae49f239322c96ffec1c3d4aa210ba5b2"
   },
   {
    "path": "docs/internal/philo/data/integrations.json",

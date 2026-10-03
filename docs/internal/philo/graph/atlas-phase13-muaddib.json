@@ -286,6 +286,139 @@
       ]
     },
     {
+      "id": "case.p13.capture.titled_by_first_words",
+      "job": "j11",
+      "edge_ids": [
+        "edge.face.desk_new_thought"
+      ],
+      "state_id": "state.desk_presentation.p13_thought_titled",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME",
+        "the desk shown",
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "chair-desk"
+          },
+          "observe_at": "[data-testid=chair-desk]",
+          "why": "the desk is really past the first-value gate (the Chair screen renders only past it)"
+        }
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-dock-launch[aria-label^='Intelligence']",
+          "at_width": 1440,
+          "why": "a body window first: Intelligence from the Dock"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window[aria-label='Intelligence'] .desk-window-title",
+          "at_width": 1440,
+          "why": "focus on the window, not in a field"
+        },
+        {
+          "kind": "ui",
+          "action": "press",
+          "adapter": "ui-keyboard",
+          "key": "Control+t",
+          "at_width": 1440,
+          "why": "the pop-key: ONE key press from a body window (desk.new-thought, key ⌃T, keymap.ts)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "at_width": 393,
+          "why": "at 393 no hardware key is assumed: the phone's one menu door (Go carries the Desk menu's verbs, DeskMenuBar.tsx)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Write a thought')",
+          "at_width": 393,
+          "why": "the same verb from the menu, a touch tap"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window[aria-label='Thought'] [aria-label=\"Note body\"]",
+          "why": "the Thought window is open on a new note"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "fill",
+        "adapter": "ui-keyboard",
+        "selector": ".desk-window[aria-label='Thought'] [aria-label=\"Note body\"]",
+        "value": "Ask Priya about the ledger ADR",
+        "why": "he types the thought; the writer saves 450 ms after the edit (useThoughtNoteWriter.ts)"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "text_contains",
+              "value": "Ask Priya about the ledger ADR"
+            },
+            {
+              "kind": "protocol_reads",
+              "expect": [
+                {
+                  "status": 200,
+                  "row": {
+                    "path": "items",
+                    "match": {
+                      "title": "Ask Priya about the ledger ADR"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "observe_at": ".desk-window[aria-label='Thought'] .thought-note-title",
+        "reads": [
+          {
+            "method": "GET",
+            "path": "/api/thoughts"
+          }
+        ],
+        "words": "the owner opens a thought in one key press (1440) or from the menu (393, a tap), types its first words, and the thought is titled by them: the Thought window's title shows the hub's saved title, and the hub's thought list (the read the Chair's THOUGHTS rows draw, ChairHome.tsx) holds a thought titled with those words. Red on main: no ⌃T verb, and every thought kept the title `Thought` (newThought.ts:29)."
+      },
+      "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
       "id": "case.p13.people.prep_link",
       "job": "j7",
       "edge_ids": [
@@ -478,6 +611,38 @@
       ]
     },
     {
+      "id": "state.desk_presentation.p13_thought_titled",
+      "family": "desk_presentation",
+      "values": {
+        "opened_by": "the Write a thought verb (⌃T at 1440; the menu at 393)",
+        "title": "the first words of the note"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/verbRegistry.ts",
+          "symbol": "id: \"desk.new-thought\",",
+          "line": 184,
+          "claim": "one registered verb with the key ⌃T, in the Desk menu"
+        },
+        {
+          "path": "web/src/desk/thoughtTitle.ts",
+          "symbol": "export function thoughtTitle(",
+          "line": 32,
+          "claim": "an untitled thought takes the first words of its note"
+        },
+        {
+          "path": "web/src/desk/pullouts/editors/useThoughtNoteWriter.ts",
+          "symbol": "const title = thoughtTitle(",
+          "line": 143,
+          "claim": "the one writer sends that title on save"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.capture.titled_by_first_words"
+      ]
+    },
+    {
       "id": "state.people.p13_prep_face",
       "family": "briefs",
       "values": {
@@ -537,6 +702,12 @@
       "applicability": "not_applicable",
       "combination": "touch taps at 393, the J1 Retry leg under an injected brief 500, every other qualified opener, and the People/brief failure faces as atlas cases",
       "reason": "the rig drives a mouse at 393 and has no route-injection step (scripts/graph_walk.py UI_ACTIONS). They are fenced as rendered at 1440 and 393 (touch) by tests/e2e/test_philo13_05_close_glass.py and tests/e2e/test_philo13_04_faces_glass.py."
+    },
+    {
+      "id": "excluded.p13.capture_op",
+      "applicability": "not_applicable",
+      "combination": "case.p13.capture.titled_by_first_words with an .op sibling",
+      "reason": "its durable half is read in the same case: expected.reads GET /api/thoughts must hold the thought titled with the typed words (protocol_reads), beside the face half."
     }
   ],
   "council_readings": []

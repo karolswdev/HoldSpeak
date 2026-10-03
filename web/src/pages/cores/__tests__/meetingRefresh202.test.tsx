@@ -385,3 +385,43 @@ describe("the open record follows the ledger", () => {
     ).toBeVisible();
   });
 });
+
+describe("C1 readiness acknowledgement", () => {
+  beforeEach(() => {
+    vi.mocked(apiFetch).mockReset();
+    frameListeners.clear();
+    route = NO_ROUTE;
+    detailReads = 0;
+    wire();
+  });
+
+  it("ACKs readiness when the owner opens a real Meetings row", async () => {
+    render(<HistoryCore />);
+    const rowBody = await waitFor(() => {
+      const found = document.querySelector(
+        '[data-testid="meeting-row-m-1"] .meetings-stream-row-body',
+      );
+      expect(found, "the real Meetings ledger draws the row").toBeTruthy();
+      return found as Element;
+    });
+
+    fireEvent.click(rowBody);
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m-1/ready/read", {
+        method: "POST",
+      }),
+    );
+    expect(document.querySelector(".meetings-detail-head")).toBeTruthy();
+  });
+
+  it("ACKs readiness when a deep link opens the meeting", async () => {
+    render(<HistoryCore scope="meeting:m-1" />);
+
+    await waitFor(() =>
+      expect(document.querySelector(".meetings-detail-head")).toBeTruthy(),
+    );
+    expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m-1/ready/read", {
+      method: "POST",
+    });
+  });
+});

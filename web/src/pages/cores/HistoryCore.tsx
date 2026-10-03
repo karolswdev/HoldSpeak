@@ -57,6 +57,20 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     : null;
   const wings = useCoreWings(WINGS, "outcomes", "Meeting plumbing");
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
+  const markReadyRead = useCallback((meetingId: string) => {
+    void apiFetch(`/api/meetings/${encodeURIComponent(meetingId)}/ready/read`, {
+      method: "POST",
+    }).catch((reason) => {
+      setReceipt({
+        text: `READY READ FAILED · ${readableError(reason)}`,
+        tone: "danger",
+      });
+    });
+  }, []);
+  const openMeeting = useCallback((row: Record<string, unknown> | null) => {
+    setSelected(row);
+    if (row?.id) markReadyRead(String(row.id));
+  }, [markReadyRead]);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   // PHILO-13-02 (A1-F): Park, never delete. One press, no confirm (Restore
   // undoes it); the outcome is a receipt in the footer's receipt slot.
@@ -195,17 +209,22 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     wings.setView("outcomes");
     if (requestedMeeting) {
       setSelected(requestedMeeting);
+      markReadyRead(requestedMeetingId);
       return;
     }
     void apiFetch<MeetingDetailResponse>(
       `/api/meetings/${encodeURIComponent(requestedMeetingId)}`,
     )
-      .then(setSelected)
+      .then((detail) => {
+        setSelected(detail);
+        markReadyRead(requestedMeetingId);
+      })
       .catch((reason) => setRequestedMeetingError(readableError(reason)));
   }, [
     meetings.loading,
     openedRequestedMeetingId,
     requestedMeeting,
+    markReadyRead,
     requestedMeetingId,
   ]);
 
@@ -546,7 +565,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       restoredId={restoredId}
       meetings={meetings}
       selected={selected}
-      setSelected={setSelected}
+      setSelected={openMeeting}
       onRunIntelligence={(id, route) => void handleRunIntelligence(id, route)}
       runningId={runningId}
       drainerAbsent={drainerAbsent}

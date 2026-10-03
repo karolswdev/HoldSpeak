@@ -3099,7 +3099,7 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"desk.new-zone\"",
-          "line": 238,
+          "line": 255,
           "claim": "the face makes a zone with the New Zone verb (Floor only: needsZones)"
         }
       ],
@@ -3134,7 +3134,7 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"object.delete\"",
-          "line": 586,
+          "line": 603,
           "claim": "the face deletes an object with the Delete verb"
         }
       ],

@@ -28,7 +28,7 @@ At 393 the menu bar (48 px, only Go; the clock wraps), the capture bar and a two
 
 ## Acceptance criteria
 
-- [ ] Canvas ratified by the owner (his word recorded) before the first face commit.
+- [x] Canvas ratified by the owner (his word recorded) before the first face commit. **RATIFIED 2026-10-03: "Ratify, build it (Recommended)"** on the page https://claude.ai/artifact/EvmqHZkrnKGfxdQgAqNX7Y, after Astra p13-c57-canvas-check RATIFY-WITH-CONDITIONS (six conditions paid in round two, 3ed1ba43); all six recommended defaults stand.
 - [ ] Window content ≥ 700 of 852 px at 393 on every walked surface (red on main: ~540–631).
 - [ ] One window at a time; a touch swipe moves to the next open window and back.
 - [ ] No chrome owns a content verb's hit point (`elementFromPoint` at each verb's centre and its 44 px band, touch); the capture-bar overlap and G5 are red on main, green here.
@@ -54,5 +54,6 @@ Grounding size: not sized as one move. PROVISIONAL.
 
 ## Notes
 
+- 2026-10-02 — canvas drawn for the owner's ruling, NOT RATIFIED: `assets/story-17-canvas/` (README lists the boards, the acceptance line each answers, the forks and the limits; it includes the owner's ruling that an arriving aftercare card opens Capture at 393). Drawn by a Fedaykin on main `76c361537`; unchecked, awaiting Astra's check, then the owner.
 - 2026-10-01 — r2: Astra charter check r1 (DO-NOT-RATIFY) paid; see the status file, "Round two".
 - 2026-10-01 — drafted by the Fedaykin docs lane for Muad'Dib; unratified.

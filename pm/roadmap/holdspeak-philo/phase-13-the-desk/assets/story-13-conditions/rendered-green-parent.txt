@@ -1,0 +1,9 @@
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-13-13-astra/web
+
+
+ Test Files  3 passed (3)
+      Tests  24 passed (24)
+   Start at  23:50:43
+   Duration  9.64s (transform 2.01s, setup 796ms, import 2.75s, tests 2.02s, environment 3.54s)
+

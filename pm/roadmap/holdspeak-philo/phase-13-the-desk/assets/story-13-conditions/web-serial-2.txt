@@ -1,0 +1,13 @@
+
+> holdspeak-web@0.0.1 test:web
+> vitest run --maxWorkers=2 src/pages/cores/__tests__/peopleReopenLens.philo1306.test.tsx
+
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-13-13-astra/web
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  01:37:04
+   Duration  964ms (transform 348ms, setup 60ms, import 465ms, tests 183ms, environment 183ms)
+

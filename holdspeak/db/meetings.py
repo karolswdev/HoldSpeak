@@ -64,6 +64,79 @@ class MeetingRepository(BaseRepository):
 
     table = "meetings"
 
+    # === C3 Dock readiness ===
+
+    def mark_ready_unseen(
+        self, meeting_id: str, *, ready_at: Optional[str] = None
+    ) -> Optional[dict[str, Any]]:
+        """Record one real completion as unread Dock attention.
+
+        This seam is called by the producer after it has durably completed the
+        meeting. Historical summaries never receive a row, so they cannot
+        manufacture a READY badge during a later list read.
+        """
+        clean_id = str(meeting_id or "").strip()
+        if not clean_id:
+            return None
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT id, title, intel_completed_at FROM meetings WHERE id = ? AND parked = 0",
+                (clean_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            revision = str(ready_at or row["intel_completed_at"] or datetime.now().isoformat())
+            conn.execute(
+                """INSERT INTO meeting_ready_reads (meeting_id, ready_at, read_at)
+                   VALUES (?, ?, NULL)
+                   ON CONFLICT(meeting_id) DO UPDATE SET
+                       ready_at = excluded.ready_at,
+                       read_at = CASE
+                           WHEN meeting_ready_reads.ready_at = excluded.ready_at
+                           THEN meeting_ready_reads.read_at
+                           ELSE NULL
+                       END""",
+                (clean_id, revision),
+            )
+            return {"id": str(row["id"]), "title": row["title"], "ready_at": revision}
+
+    def list_unread_ready(self) -> list[dict[str, Any]]:
+        """Return only producer-created readiness rows still unseen."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT r.meeting_id AS id, m.title, r.ready_at
+                   FROM meeting_ready_reads r
+                   JOIN meetings m ON m.id = r.meeting_id
+                   WHERE r.read_at IS NULL AND m.parked = 0
+                   ORDER BY r.ready_at DESC, r.meeting_id"""
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def mark_ready_read(self, meeting_id: str) -> Optional[dict[str, Any]]:
+        """Acknowledge the current readiness revision, idempotently."""
+        clean_id = str(meeting_id or "").strip()
+        if not clean_id:
+            return None
+        with self._connection() as conn:
+            meeting = conn.execute(
+                "SELECT id FROM meetings WHERE id = ? AND parked = 0", (clean_id,)
+            ).fetchone()
+            if meeting is None:
+                return None
+            row = conn.execute(
+                "SELECT meeting_id, ready_at FROM meeting_ready_reads WHERE meeting_id = ?",
+                (clean_id,),
+            ).fetchone()
+            if row is None:
+                # Opening an old summary is a harmless acknowledgement. It
+                # must not create readiness state or turn history into READY.
+                return {"id": clean_id, "ready_at": None, "read": True}
+            conn.execute(
+                "UPDATE meeting_ready_reads SET read_at = COALESCE(read_at, datetime('now')) WHERE meeting_id = ?",
+                (clean_id,),
+            )
+            return {"id": str(row["meeting_id"]), "ready_at": str(row["ready_at"]), "read": True}
+
     def _normalize_action_item_status(self, status: object) -> str:
         """Validate and normalize an action item status value."""
         normalized = str(status).strip().lower()

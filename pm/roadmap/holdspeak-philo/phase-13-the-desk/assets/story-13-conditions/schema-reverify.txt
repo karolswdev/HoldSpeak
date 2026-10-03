@@ -1,0 +1,7 @@
+producer_reverify_exit=0
+generated_lines=     532
+new_table_entries=2
+fixture_diff_check:
+diff_stat:
+ tests/fixtures/db_schema_canonical.txt | 2 ++
+ 1 file changed, 2 insertions(+)

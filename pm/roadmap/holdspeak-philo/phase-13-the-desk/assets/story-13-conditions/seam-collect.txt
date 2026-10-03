@@ -1,0 +1,25 @@
+tests/unit/test_db.py::TestDatabaseShape::test_fresh_schema_matches_canonical_snapshot
+tests/e2e/test_hs176_journal_glass.py::test_journal_live_frame_obeys_the_active_filter
+tests/e2e/test_hs141_thought_workbench_glass.py::test_thought_workbench_real_glass[1440]
+tests/e2e/test_hs141_thought_workbench_glass.py::test_thought_workbench_real_glass[393]
+tests/e2e/test_hs144_door_glass.py::test_hs144_door_populated_glass_action_refusal_and_shots
+tests/e2e/test_hs144_door_glass.py::test_hs144_door_empty_and_error_shots[1440]
+tests/e2e/test_hs144_door_glass.py::test_hs144_door_empty_and_error_shots[393]
+tests/e2e/test_hs144_door_glass.py::test_upcoming_rail_real_hub_states_and_dimensions
+tests/e2e/test_hs144_door_glass.py::test_upcoming_rail_schedule_create_round_trip_and_form_cancel
+tests/e2e/test_hs144_door_glass.py::test_go_menu_is_usable_at_393
+tests/e2e/test_hs144_door_glass.py::test_meetings_settings_calendar_glass_and_egress_fact
+tests/e2e/test_hs144_door_glass.py::test_meetings_deep_link_waits_for_registered_surface_x15
+tests/e2e/test_hs145_door_polish_glass.py::test_hs145_connect_calendar_affordance_and_quiet_state
+tests/e2e/test_hs152_hands_glass.py::test_deny_shows_tool_denied_row
+tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_is_one_clean_note[1440]
+tests/e2e/test_hs201_12_thought_note_glass.py::test_thought_note_is_one_clean_note[393]
+tests/e2e/test_hs201_one_thing_glass.py::TestQuietDesk::test_cold_arrival_is_quiet[1440]
+tests/e2e/test_hs201_one_thing_glass.py::TestQuietDesk::test_cold_arrival_is_quiet[393]
+tests/e2e/test_hs175_rhythm_brief_glass.py::TestRhythmWeeklyBrief::test_rhythm_brief_row_with_calendar
+tests/e2e/test_hs175_rhythm_brief_glass.py::TestRhythmWeeklyBrief::test_brief_this_week_section
+tests/e2e/test_hs175_rhythm_brief_glass.py::TestRhythmMondayBrief::test_no_calendar_monday_brief
+tests/e2e/test_philo13_03_needs_you_glass.py::TestOneNeedsYou::test_one_number_everywhere_and_done_moves_all_three[1440]
+tests/e2e/test_philo13_03_needs_you_glass.py::TestOneNeedsYou::test_one_number_everywhere_and_done_moves_all_three[393]
+
+23 tests collected in 0.43s

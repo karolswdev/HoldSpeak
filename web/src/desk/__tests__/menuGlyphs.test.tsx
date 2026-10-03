@@ -40,6 +40,8 @@ describe("glyph population (HS-148-02)", () => {
     const creates = VERBS.filter((v) => v.group === "new");
     const kindMap: Record<string, string> = {
       "desk.new-note": "note",
+      // PHILO-13-16 (C6): a thought is a note (newThought.ts mints one).
+      "desk.new-thought": "note",
       "desk.new-decision": "decision",
       "desk.new-knowledge": "kb",
       "desk.new-agent": "recipe",
@@ -279,6 +281,8 @@ describe("bound-key-set byte-identical proof (HS-148-02)", () => {
     const keys = VERBS.filter((v) => v.key).map((v) => [v.id, v.key]);
     expect(Object.fromEntries(keys)).toEqual({
       "desk.new-note": "⌘N",
+      // PHILO-13-16 (C6): the pop-key, a thought from any window.
+      "desk.new-thought": "⌃T",
       "desk.settle": "⌘⇧F",
       "go.change-places": "⌘⇧P",
       "desk.new-decision": "⌘⇧N",

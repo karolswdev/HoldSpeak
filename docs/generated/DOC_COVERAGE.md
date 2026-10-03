@@ -93,6 +93,7 @@ Validation errors at generation: **0**.
 | `desk.persist` | capabilities | 2/2 | 1/1 | 1 | 0 | 0 | unresolved |
 | `desk.runtime` | capabilities | 2/2 | 2/2 | 2 | 0 | 1 | unresolved |
 | `desk.native_host` | capabilities | 1/1 | 0/0 | 0 | 0 | 0 | unresolved |
+| `desk.dock.live` | capabilities | 1/1 | 1/1 | 1 | 1 | 0 | partially_evidenced |
 | `project.update.linked_week` | capabilities | 1/1 | 2/2 | 2 | 2 | 0 | partially_evidenced |
 | `people.prep.read` | capabilities | 1/1 | 1/1 | 1 | 1 | 0 | partially_evidenced |
 | `agents.thread_persistent` | capabilities | 3/3 | 2/2 | 2 | 2 | 0 | partially_evidenced |

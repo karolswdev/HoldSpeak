@@ -3400,6 +3400,56 @@
     },
     {
       "availability": "unknown",
+      "capability_id": "desk.dock.live",
+      "id": "desk.dock.live@aipi",
+      "platform": "aipi",
+      "source_ids": [
+        "web/src/desk/components/window/Dock.tsx"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.dock.live",
+      "id": "desk.dock.live@ipad",
+      "platform": "ipad",
+      "source_ids": [
+        "web/src/desk/components/window/Dock.tsx"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.dock.live",
+      "id": "desk.dock.live@linux_wayland",
+      "platform": "linux_wayland",
+      "source_ids": [
+        "web/src/desk/components/window/Dock.tsx"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.dock.live",
+      "id": "desk.dock.live@linux_x11",
+      "platform": "linux_x11",
+      "source_ids": [
+        "web/src/desk/components/window/Dock.tsx"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "unknown",
+      "capability_id": "desk.dock.live",
+      "id": "desk.dock.live@macos",
+      "platform": "macos",
+      "source_ids": [
+        "web/src/desk/components/window/Dock.tsx"
+      ],
+      "status": "partial"
+    },
+    {
+      "availability": "unknown",
       "capability_id": "project.update.linked_week",
       "id": "project.update.linked_week@aipi",
       "platform": "aipi",

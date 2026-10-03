@@ -245,6 +245,31 @@ beforeEach(() => {
 });
 
 describe("the shared needs-you read", () => {
+  it("keeps one poll when an event-only Dock subscribes beside a polling face", async () => {
+    installWire();
+    const interval = vi.spyOn(globalThis, "setInterval");
+    const clear = vi.spyOn(globalThis, "clearInterval");
+    const face = renderHook(() => useNeedsYou());
+    const dock = renderHook(() => useNeedsYou({ poll: false }));
+    try {
+      await waitFor(() => expect(face.result.current.loading).toBe(false));
+      const polls = interval.mock.calls.filter((call) => call[1] === 60_000);
+      expect(polls).toHaveLength(1);
+      const timer = interval.mock.results[
+        interval.mock.calls.findIndex((call) => call[1] === 60_000)
+      ].value;
+      dock.unmount();
+      expect(clear).not.toHaveBeenCalledWith(timer);
+      face.unmount();
+      expect(clear.mock.calls.filter((call) => call[0] === timer)).toHaveLength(1);
+    } finally {
+      dock.unmount();
+      face.unmount();
+      interval.mockRestore();
+      clear.mockRestore();
+    }
+  });
+
   it("uses the producer-backed summary filter and never reads an unfiltered meeting page", async () => {
     const home = mkdtempSync(join(tmpdir(), "philo13-a2-c1-hook-"));
     try {

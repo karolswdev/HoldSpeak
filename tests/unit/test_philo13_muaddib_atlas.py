@@ -8,6 +8,7 @@ is Astra's (H-B0b); this lane adds no ``.op`` sibling.
 
 * PHILO-13-05 (A4): ``case.p13.close.intelligence_gone``
 * PHILO-13-04 (A3): ``case.p13.record.refused_not_recording``
+* PHILO-13-16 (C6): ``case.p13.capture.titled_by_first_words``
 * PHILO-13-09 (B4-W): ``case.p13.people.prep_link``
 """
 from __future__ import annotations
@@ -28,6 +29,7 @@ ATLAS = REPO / "docs/internal/philo/graph/atlas-phase13-muaddib.json"
 CASES = {
     "case.p13.close.intelligence_gone",  # PHILO-13-05
     "case.p13.record.refused_not_recording",  # PHILO-13-04
+    "case.p13.capture.titled_by_first_words",  # PHILO-13-16
     "case.p13.people.prep_link",  # PHILO-13-09 (B4-W)
 }
 
@@ -82,7 +84,7 @@ def test_the_file_validates_against_the_atlas_schema(atlas: dict) -> None:
 def test_the_lane_case_count_and_names(atlas: dict) -> None:
     ids = {case["id"] for case in atlas["cases"]}
     assert ids == CASES
-    assert len(atlas["cases"]) == 3
+    assert len(atlas["cases"]) == 4
     # No `.op` sibling here: the shared count at test_philo_graph_atlas.py:492
     # stays Astra's (H-B0b).
     assert not [i for i in ids if i.endswith(".op") or i.endswith(".op.replayed")]

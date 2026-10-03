@@ -8323,7 +8323,17 @@
     },
     {
       "path": "web/src/pages/cores/HistoryCore.tsx",
-      "line": 491,
+      "line": 61,
+      "kinds": [
+        "http_client"
+      ],
+      "excerpt": "void apiFetch(`/api/meetings/${encodeURIComponent(meetingId)}/ready/read`, {",
+      "line_sha256": "a7bb84f22b7252fa195c8578b34975687ce101c64829c1fabaabece0ab9c28b6",
+      "review": "candidate_only"
+    },
+    {
+      "path": "web/src/pages/cores/HistoryCore.tsx",
+      "line": 510,
       "kinds": [
         "http_client"
       ],
