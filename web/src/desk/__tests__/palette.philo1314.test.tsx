@@ -30,8 +30,8 @@ vi.mock("../shell", async () => {
   };
 });
 
-import { EMPTY_ITEMS } from "../api";
-import type { Note } from "../../lib/primitives";
+import { EMPTY_ITEMS, fromWireMeeting } from "../api";
+import type { Meeting, Note } from "../../lib/primitives";
 import { useDesk } from "../store";
 import { usePalette } from "../chromeState";
 import { DeskToolShelf, rankRow } from "../components/DeskToolShelf";
@@ -183,5 +183,24 @@ describe("PHILO-13-14 the palette knows his week", () => {
     await type(input, "People");
     fireEvent.keyDown(document, { key: "Escape" });
     expect(usePalette.getState().open).toBe(false);
+  });
+});
+
+describe("PHILO-13-14 H-C4: a meeting is found by an attendee's name", () => {
+  it("fromWireMeeting keeps the list row's `attendees`", () => {
+    const m = fromWireMeeting({ id: "m-1", title: "Weekly sync", started_at: "2026-10-03T09:00:00Z", attendees: ["Priya Nair", "", 7, "Sam"] });
+    expect(m?.attendees).toEqual(["Priya Nair", "Sam"]);
+    expect(fromWireMeeting({ id: "m-2", title: "x", started_at: "" })?.attendees).toEqual([]);
+  });
+
+  it("`Priya` finds a meeting whose attendees name her (no segments loaded)", async () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, meeting: [
+      { kind: "meeting", id: "m-sync", title: "Weekly sync", startedAt: "", attendees: ["Priya Nair"], segments: [] } as Meeting,
+    ] } });
+    const input = await deck();
+    await type(input, "Priya");
+    expect(options().some((o) => o.includes("Weekly sync"))).toBe(true);
+    fireEvent.click(screen.getByRole("option", { name: /Weekly sync/ }));
+    expect(useDesk.getState().openPullout).toHaveBeenCalledWith("meeting:m-sync");
   });
 });

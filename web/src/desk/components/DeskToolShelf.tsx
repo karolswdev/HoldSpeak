@@ -237,11 +237,14 @@ export function oneDoorPerName<
 function objectBody(ref: unknown): string | undefined {
   const r = (ref ?? {}) as Record<string, unknown>;
   if (r.kind === "note") return typeof r.bodyMarkdown === "string" ? r.bodyMarkdown : undefined;
-  if (r.kind === "meeting" && Array.isArray(r.segments)) {
-    const speakers = new Set<string>();
-    for (const s of r.segments as Array<{ speaker?: unknown }>)
-      if (typeof s?.speaker === "string" && s.speaker.trim()) speakers.add(s.speaker.trim());
-    return speakers.size ? [...speakers].join(" ") : undefined;
+  if (r.kind === "meeting") {
+    // H-C4: the list row's attendees, and the speakers of loaded segments.
+    const names = new Set<string>();
+    for (const a of Array.isArray(r.attendees) ? r.attendees : [])
+      if (typeof a === "string" && a.trim()) names.add(a.trim());
+    for (const s of (Array.isArray(r.segments) ? r.segments : []) as Array<{ speaker?: unknown }>)
+      if (typeof s?.speaker === "string" && s.speaker.trim()) names.add(s.speaker.trim());
+    return names.size ? [...names].join(" ") : undefined;
   }
   return undefined;
 }
