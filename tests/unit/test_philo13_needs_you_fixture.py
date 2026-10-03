@@ -114,6 +114,49 @@ def test_export_reads_same_real_ids_and_mutates_a1_through_http_route(
     assert exported["before"]["needsYou"]["items"]
 
 
+def test_dedup_probe_mints_same_title_door_and_room_rows_through_real_routes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Before this probe, the canonical week has no duplicate producer pair, so
+    # a no-dedup browser mutant also returns six and escapes the C4 fence.
+    home, db_path = _isolated(tmp_path, monkeypatch)
+
+    from scripts.philo13_needs_you_fixture import dedup_probe
+
+    probe = dedup_probe(db_path, home=home)
+    assert probe["mode"] == "dedup-probe"
+    assert probe["expectedRefs"] == [
+        A1_ID, A2_TASK, A3_ID, A4_ID, "blocker:engines", FAILED_MEETING_ID,
+    ]
+    assert probe["expectedCount"] == 6
+    assert probe["expectedMutantCount"] == 7
+
+    evidence = probe["producerEvidence"]
+    door = evidence["doorRoute"]
+    room = evidence["roomRoute"]
+    assert door["path"] == "/api/door"
+    assert door["id"] == evidence["duplicateDoorRef"]
+    assert door["title"] == A2_TASK
+    assert room["path"] == "/api/desk/needs-you?fresh=1"
+    assert room["ref"] == A2_TASK
+    assert room["title"] == A2_TASK
+    assert room["source"] == "commitment"
+    assert room["projectId"] == evidence["duplicateProjectId"]
+    assert room["actionItemId"] != evidence["duplicateDoorRef"]
+    linked = evidence["linkedMeeting"]
+    assert linked["route"] == (
+        f"POST /api/projects/{evidence['duplicateProjectId']}/meetings/{linked['meetingId']}"
+    )
+    assert linked["projectId"] == evidence["duplicateProjectId"]
+    assert linked["actionItemId"] == evidence["duplicateDoorRef"]
+    assert linked["title"] == A2_TASK
+    assert linked["success"] is True
+
+    room_rows = [row for row in probe["before"]["roomItems"] if row.get("title") == A2_TASK]
+    assert len(room_rows) == 1
+    assert room_rows[0]["projectId"] == evidence["duplicateProjectId"]
+
+
 def test_cli_stdout_is_json_and_export_keeps_seed_ids(tmp_path: Path) -> None:
     home = tmp_path / "cli-home"
     home.mkdir()

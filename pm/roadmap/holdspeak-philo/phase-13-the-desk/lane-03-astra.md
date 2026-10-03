@@ -38,3 +38,19 @@ UNKNOWN: Muad'Dib's re-check, A2-W's shared-hook wiring, and merged-main behavio
 ## r3 condition amendments
 
 Muad'Dib's R1 ruling re-anchors the five atlas source fences at current symbols; R2 requires milestones to remain independent of meeting-action titles. The r2 temporary same-title suppression is removed. The primary oracle fixture now seeds a distinct, future-dated Room milestone. A real-route regression fence creates an overdue same-title milestone separately and proves its project-health overdue count remains 1→1 when the linked meeting action becomes done. See the r3 red/green test evidence linked from story 03. H-A2 remains in-progress pending A2-W.
+
+## r4 integration payment
+
+LANE: PHILO-13-03 H-A2, PR #728; rebased worktree `/Users/karol/dev/tools/wt-philo-13-astra`, branch `feat/philo-13-astra` (remote PR branch `feat/philo-13-a2-astra`).
+
+OUTCOME: Paid the remaining C4 condition on Muad'Dib's r3 verdict on the post-#727 head. The code-mutant fence now rejects skipped dedup with a separate real-producer case; PHILO-13-03 remains in-progress until A2-W merges. Remote `main` has since advanced through #730, so one final rebase and recheck remain before merge.
+
+PROOF: The old fence was red before the repair: `rejection: NONE`, expected 6 and actual 6 ([receipt](assets/story-03-needs-you/r4-c4-before.txt)). The repaired probe keeps the canonical six-ref oracle unchanged and creates a real duplicate through meeting save, the project-meeting route, Door and Room reads. Normal dedup returns 6; the mutant returns 7 with the extra real action ID ([receipt](assets/story-03-needs-you/r4-c4-after.txt)). The shared/A2 Python selection collected and passed 132 ([collection](assets/story-03-needs-you/r4-final-collection.txt), [run](assets/story-03-needs-you/r4-final-run.txt)); the seven-file web selection passed 63 and typecheck passed ([Vitest](assets/story-03-needs-you/r4-final-vitest.txt), [typecheck](assets/story-03-needs-you/r4-final-typecheck.txt)). The 12 Documentation Navigation commands and the operations, OpenAPI and graph generated-reference checks exited 0 ([log](assets/story-03-needs-you/r4-doc-navigation.txt)).
+
+The first post-rebase shared selection before regeneration passed 125 ([receipt](assets/story-03-needs-you/r4-shared-before-regeneration.txt)); the ten generator runs and their outputs are preserved separately ([receipt](assets/story-03-needs-you/r4-generation.txt)). Final tests and drift checks above were rerun after fixture repair and regeneration.
+
+LEDGER: The extra graph census returned 1 with 42 source entries without graph edges and 5 miscited references. The required generated graph `--check` passed with 14 recorded subtype-conflict notes. The census findings sit outside the named r4 merge gate; attribution is unknown and the full receipt is preserved in the [census log](assets/story-03-needs-you/r4-graph-census-backlog.txt). The prior r3 actual Dock case remains the only 1440/393 glass evidence; r4 changed fixture/test code and generated references, not a face.
+
+AMENDMENTS: None to acceptance or ownership. The A1 milestone title remains distinct in the canonical oracle; the duplicate exists only in the separate C4 probe. No disagreement with Muad'Dib's condition.
+
+UNKNOWN: No new glass run was made after this fixture/test-only change. A2-W wiring, its all-face shots and owner desk sitting remain open. The proof above predates #730 and must be refreshed after rebasing. No full suite ran.

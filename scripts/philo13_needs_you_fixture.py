@@ -48,6 +48,8 @@ A3_ID = "philo13-a2-A3"
 A4_ID = "philo13-a2-A4"
 M1_ID = "philo13-a2-M1"
 D1_ID = "philo13-a2-D1"
+DEDUP_MEETING_ID = "philo13-a2-dedup-meeting"
+DEDUP_ACTION_ID = "philo13-a2-dedup-A2"
 
 A1_TASK = "A1 close the overdue release note"
 A2_TASK = "A2 confirm the room commitment"
@@ -834,10 +836,128 @@ def export_week(db_path: Path, *, home: Path | None = None, now: datetime | None
         db.close()
 
 
+def dedup_probe(db_path: Path, *, home: Path | None = None, now: datetime | None = None) -> dict[str, Any]:
+    """Mint a separate real-producer case with one Door/Room duplicate.
+
+    The canonical week deliberately keeps the A1 Room milestone title
+    separate from the A1 Door action.  This probe adds a second real Door
+    action with the A2 title, then links its meeting to the canonical project
+    through the project meeting route.  The canonical A2 Room commitment
+    covers only the original A2 action ID, so the second Door action remains
+    as a duplicate projection for the browser's merge.  The six-member oracle
+    returned by ``seed`` and ``export`` is unchanged.
+    """
+    path, isolated_home = validate_isolated_db(db_path, home)
+    clock = now or datetime.now().replace(microsecond=0)
+    seeded = seed_week(path, home=isolated_home, now=clock)
+    from holdspeak.db import Database
+
+    db = Database(path)
+    try:
+        project_id = str(seeded["ids"]["project"])
+        tomorrow = (clock.date() + timedelta(days=1)).isoformat()
+        db.meetings.save_meeting(_meeting(
+            DEDUP_MEETING_ID,
+            "A2 dedup producer meeting",
+            clock.replace(hour=11, minute=0, second=0, microsecond=0),
+            intel_status="completed",
+            summary="A2 duplicate action producer",
+            action_items=[_action(
+                DEDUP_ACTION_ID,
+                A2_TASK,
+                owner="Priya",
+                due=tomorrow,
+                created_at=clock.isoformat(),
+            )],
+            segments=[(A2_TASK, 1.0)],
+        ))
+        with _route_client(db, clock) as client:
+            response = client.post(
+                f"/api/projects/{project_id}/meetings/{DEDUP_MEETING_ID}",
+                json={},
+            )
+            if response.status_code != 200 or not response.json().get("success"):
+                raise RuntimeError(
+                    f"real dedup-probe project meeting route failed: {response.status_code} {response.text}"
+                )
+            linked_meeting = response.json()
+
+        inputs = _inputs(db, clock)
+        board = inputs.get("door", {}).get("board", {})
+        door_cards = [
+            card
+            for lane in ("overdue", "now", "waiting", "unassigned")
+            for card in board.get(lane, [])
+        ]
+        door_card = next((card for card in door_cards if str(card.get("id")) == DEDUP_ACTION_ID), None)
+        room_row = next(
+            (
+                row for row in inputs.get("roomItems", [])
+                if row.get("source") == "commitment"
+                and row.get("ref") == A2_TASK
+                and row.get("projectId") == project_id
+            ),
+            None,
+        )
+        if door_card is None:
+            raise RuntimeError("dedup probe Door route omitted the second genuine A2 action")
+        if room_row is None:
+            raise RuntimeError("dedup probe Room route omitted the canonical A2 commitment")
+        if str(door_card.get("text")) != A2_TASK:
+            raise RuntimeError("dedup probe Door title does not match the Room title")
+        if str(room_row.get("title")) != A2_TASK:
+            raise RuntimeError("dedup probe Room title does not match the Door title")
+        if str(room_row.get("actionItemId")) == DEDUP_ACTION_ID:
+            raise RuntimeError("dedup probe Room commitment unexpectedly covers the duplicate action")
+        return {
+            "schema": ORACLE_SCHEMA,
+            "mode": "dedup-probe",
+            "db": str(path),
+            "home": str(isolated_home),
+            "now": clock.isoformat(),
+            "before": inputs,
+            # These remain the canonical six-ref oracle.  The probe changes
+            # only the producer inputs used by the C4 mutation fence.
+            "expectedRefs": seeded["expectedRefs"],
+            "expectedCount": seeded["expectedCount"],
+            "expectedMutantCount": seeded["expectedCount"] + 1,
+            "producerEvidence": {
+                "doorRoute": {
+                    "path": "/api/door",
+                    "id": str(door_card.get("id")),
+                    "title": str(door_card.get("text")),
+                    "projectId": str(door_card.get("project_id") or ""),
+                },
+                "roomRoute": {
+                    "path": "/api/desk/needs-you?fresh=1",
+                    "id": str(room_row.get("id")),
+                    "ref": str(room_row.get("ref")),
+                    "title": str(room_row.get("title")),
+                    "projectId": str(room_row.get("projectId")),
+                    "source": str(room_row.get("source")),
+                    "actionItemId": str(room_row.get("actionItemId") or ""),
+                },
+                "linkedMeeting": {
+                    "projectId": project_id,
+                    "meetingId": DEDUP_MEETING_ID,
+                    "actionItemId": DEDUP_ACTION_ID,
+                    "title": A2_TASK,
+                    "route": f"POST /api/projects/{project_id}/meetings/{DEDUP_MEETING_ID}",
+                    "success": bool(linked_meeting.get("success")),
+                },
+                "duplicateDoorRef": str(door_card.get("id")),
+                "duplicateProjectId": project_id,
+                "duplicateTitle": A2_TASK,
+            },
+        }
+    finally:
+        db.close()
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="mode", required=True)
-    for name in ("seed", "export"):
+    for name in ("seed", "export", "dedup-probe"):
         command = sub.add_parser(name)
         command.add_argument("--db", type=Path, required=True)
         command.add_argument("--home", type=Path, default=None,
@@ -848,7 +968,12 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        result = seed_week(args.db, home=args.home) if args.mode == "seed" else export_week(args.db, home=args.home)
+        if args.mode == "seed":
+            result = seed_week(args.db, home=args.home)
+        elif args.mode == "export":
+            result = export_week(args.db, home=args.home)
+        else:
+            result = dedup_probe(args.db, home=args.home)
         print(json.dumps(_jsonable(result), indent=2, sort_keys=True))
         return 0
     except Exception as exc:  # pragma: no cover - CLI boundary
@@ -863,5 +988,5 @@ if __name__ == "__main__":
 __all__ = [
     "A1_ID", "A2_ID", "A3_ID", "A4_ID", "M1_ID", "D1_ID",
     "FAILED_MEETING_ID", "STORED_MEETING_ID", "PROJECT_ID", "MUTED_PROJECT_ID",
-    "export_week", "main", "seed_week", "validate_isolated_db",
+    "dedup_probe", "export_week", "main", "seed_week", "validate_isolated_db",
 ]

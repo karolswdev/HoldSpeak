@@ -429,7 +429,7 @@ const ORACLE_REFS = [
   "philo13-a2-failed-meeting",
 ];
 
-function runFixture(home: string, mode: "seed" | "export"): Record<string, any> {
+function runFixture(home: string, mode: "seed" | "export" | "dedup-probe"): Record<string, any> {
   const db = join(home, ".local", "share", "holdspeak", "holdspeak.db");
   const text = execFileSync(
     FIXTURE_PYTHON,
@@ -573,18 +573,64 @@ describe("the real producer membership oracle", () => {
   it("rejects a code mutant that skips dedupAttention on the real producer oracle", async () => {
     const home = mkdtempSync(join(tmpdir(), "philo13-a2-c4-dedup-"));
     try {
-      const seeded = runFixture(home, "seed");
-      const before = oracleInputs(seeded, "before");
-      const expectedRefs = ORACLE_REFS;
-      expect(seeded.expectedRefs).toEqual(expectedRefs);
-      const actualDuplicateRef = "A1 close the overdue release note";
+      // The pre-fix canonical week had no duplicate producer pair, so this
+      // mutant returned six and escaped the C4 fence.
+      const probe = runFixture(home, "dedup-probe");
+      const before = oracleInputs(probe, "before");
+      const expectedRefs = probe.expectedRefs as string[];
+      const expectedCount = Number(probe.expectedCount);
+      const expectedMutantCount = Number(probe.expectedMutantCount);
+      expect(expectedRefs).toEqual(ORACLE_REFS);
+      expect(expectedCount).toBe(6);
+      expect(expectedMutantCount).toBe(expectedCount + 1);
+
+      const evidence = probe.producerEvidence as Record<string, any>;
+      const doorEvidence = evidence.doorRoute as Record<string, any>;
+      const roomEvidence = evidence.roomRoute as Record<string, any>;
+      expect(doorEvidence.path).toBe("/api/door");
+      expect(doorEvidence.id).toBe(evidence.duplicateDoorRef);
+      expect(doorEvidence.title).toBe(evidence.duplicateTitle);
+      expect(roomEvidence.path).toBe("/api/desk/needs-you?fresh=1");
+      expect(roomEvidence.ref).toBe(evidence.duplicateTitle);
+      expect(roomEvidence.title).toBe(evidence.duplicateTitle);
+      expect(roomEvidence.source).toBe("commitment");
+      expect(roomEvidence.projectId).toBe(evidence.duplicateProjectId);
+      expect(roomEvidence.actionItemId).not.toBe(evidence.duplicateDoorRef);
+      const linkedMeeting = evidence.linkedMeeting as Record<string, any>;
+      expect(linkedMeeting.projectId).toBe(evidence.duplicateProjectId);
+      expect(linkedMeeting.actionItemId).toBe(evidence.duplicateDoorRef);
+      expect(linkedMeeting.title).toBe(evidence.duplicateTitle);
+      expect(linkedMeeting.success).toBe(true);
+
+      const door = ((before.door as Record<string, any>).board ?? {}) as Record<string, any[]>;
+      const duplicateDoorCard = Object.values(door)
+        .flat()
+        .find((card) => String(card.id) === doorEvidence.id);
+      expect(duplicateDoorCard).toBeDefined();
+      expect(duplicateDoorCard?.text).toBe(evidence.duplicateTitle);
+      const roomDuplicate = before.roomItems?.find(
+        (item) => item.ref === evidence.duplicateTitle && item.source === "commitment",
+      );
+      expect(roomDuplicate).toMatchObject({
+        title: evidence.duplicateTitle,
+        projectId: evidence.duplicateProjectId,
+        source: "commitment",
+      });
+
+      const normal = oracleAssert(before, expectedRefs, expectedCount);
+      const mergedA2 = normal.unmutedItems.find(
+        (item) => item.ref === evidence.duplicateTitle,
+      );
+      expect(mergedA2?.sources).toHaveLength(2);
+      expect(normal.members.map(({ ref }) => ref)).not.toContain(evidence.duplicateDoorRef);
+
       const mutant = {
         dedupAttention: (items: readonly NeedsYouRoomItem[]) => [...items],
       };
       const projected = computeNeedsYou(before, mutant);
       let rejection: unknown;
       try {
-        expect(projected.count).toBe(6);
+        expect(projected.count).toBe(expectedCount);
         expect(projected.members.map(({ ref }) => ref).sort()).toEqual([...expectedRefs].sort());
       } catch (error) {
         rejection = error;
@@ -592,15 +638,15 @@ describe("the real producer membership oracle", () => {
       console.log(JSON.stringify({
         mutant: "skip dedupAttention",
         rejection: rejection instanceof Error ? rejection.message : "NONE",
-        expectedCount: 6,
+        expectedCount,
         actualCount: projected.count,
         expectedRefs: [...expectedRefs].sort(),
         actualRefs: projected.members.map(({ ref }) => ref).sort(),
-        extraRef: actualDuplicateRef,
+        extraRef: evidence.duplicateDoorRef,
       }));
       expect(rejection).toBeInstanceOf(Error);
-      expect(projected.count).toBe(7);
-      expect(projected.members.map(({ ref }) => ref)).toContain(actualDuplicateRef);
+      expect(projected.count).toBe(expectedMutantCount);
+      expect(projected.members.map(({ ref }) => ref)).toContain(evidence.duplicateDoorRef);
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
