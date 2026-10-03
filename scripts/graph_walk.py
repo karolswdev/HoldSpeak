@@ -1336,8 +1336,19 @@ def placement_contract(predicate: Any) -> bool:
     """True for the opt-in Phase 6 card placement fence."""
     return isinstance(predicate, dict) and predicate.get("kind") == "readable_text" and any(
         key in predicate
-        for key in ("slot_selector", "clear_of", "auto_scroll_calls_by_viewport")
+        for key in ("slot_selector", "clear_of", "clear_of_by_viewport", "auto_scroll_calls_by_viewport")
     )
+
+
+def placement_clear_of(predicate: dict[str, Any], width: Any) -> list[Any]:
+    """Select the declared clearance targets for this viewport, without waiver."""
+    by_viewport = predicate.get("clear_of_by_viewport")
+    if by_viewport is None:
+        return predicate.get("clear_of") or []
+    key = str(width)
+    if key not in by_viewport:
+        raise Blocked(f"no clearance contract for viewport {key}")
+    return by_viewport[key]
 
 
 def arm_placement_probe(page: Any, case: dict[str, Any]) -> dict[str, Any] | None:
@@ -1347,7 +1358,7 @@ def arm_placement_probe(page: Any, case: dict[str, Any]) -> dict[str, Any] | Non
     predicate = case_predicate(case)
     if not placement_contract(predicate):
         return None
-    clear_of = predicate.get("clear_of") or []
+    clear_of = placement_clear_of(predicate, (page.viewport_size or {}).get("width"))
     selectors = []
     for entry in clear_of:
         selector = entry.get("selector") if isinstance(entry, dict) else entry
@@ -1876,7 +1887,10 @@ def check_predicate(
             card_x2 = float(card_rect.get("x", 0)) + float(card_rect.get("w", 0))
             card_y2 = float(card_rect.get("y", 0)) + float(card_rect.get("h", 0))
             missing: list[str] = []
-            declared_clear = predicate.get("clear_of") or []
+            try:
+                declared_clear = placement_clear_of(predicate, (hit.get("viewport") or {}).get("width"))
+            except Blocked as exc:
+                return False, f"BLOCKED: {exc}"
             declarations_by_selector = {
                 declaration.get("selector"): declaration
                 for declaration in declared_clear

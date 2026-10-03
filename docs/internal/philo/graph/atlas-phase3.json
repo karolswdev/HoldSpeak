@@ -1449,7 +1449,7 @@
         {
           "kind": "ui",
           "action": "click_role",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "role": "button",
           "name": "Continue later",
           "optional": true,
@@ -1458,7 +1458,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
           "timeout_s": 1
@@ -1466,7 +1466,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
           "optional": true,
           "timeout_s": 10
@@ -1480,7 +1480,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=concierge-add-engine]"
         },
         {
@@ -1493,7 +1493,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=concierge-add-check]"
         },
         {
@@ -1505,7 +1505,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
@@ -1557,7 +1557,7 @@
         {
           "kind": "ui",
           "action": "click_role",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "role": "button",
           "name": "Continue later",
           "optional": true,
@@ -1566,7 +1566,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -1574,7 +1574,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -1582,7 +1582,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -1611,7 +1611,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-run-intel]"
         },
         {
@@ -1646,7 +1646,41 @@
       "trigger": {
         "kind": "cli",
         "action": "restart_hub",
-        "adapter": "process"
+        "adapter": "process",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 393,
+            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+            "at_width": 393,
+            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+            "at_width": 393,
+            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+            "at_width": 393,
+            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+          }
+        ]
       },
       "expected": {
         "predicate": {
@@ -6653,7 +6687,7 @@
         {
           "kind": "ui",
           "action": "click_role",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "role": "button",
           "name": "Continue later",
           "optional": true,
@@ -6662,7 +6696,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
           "timeout_s": 1
@@ -6670,7 +6704,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
           "optional": true,
           "timeout_s": 10
@@ -6684,7 +6718,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=concierge-add-engine]"
         },
         {
@@ -6697,7 +6731,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=concierge-add-check]"
         },
         {
@@ -6709,7 +6743,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
@@ -6761,7 +6795,7 @@
         {
           "kind": "ui",
           "action": "click_role",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "role": "button",
           "name": "Continue later",
           "optional": true,
@@ -6770,7 +6804,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -6778,7 +6812,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -6786,7 +6820,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -6815,7 +6849,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-run-intel]"
         },
         {
@@ -6858,7 +6892,41 @@
       "trigger": {
         "kind": "cli",
         "action": "restart_hub",
-        "adapter": "process"
+        "adapter": "process",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 393,
+            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+            "at_width": 393,
+            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-by-viewport",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+            "at_width": 393,
+            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+            "at_width": 393,
+            "why": "H-rig-clearof: reopen The week after the real restart; automatic window return remains PHILO-13-07."
+          }
+        ]
       },
       "expected": {
         "predicate": {

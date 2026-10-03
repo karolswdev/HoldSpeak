@@ -246,6 +246,8 @@ D1 runs only on a later word from the owner (fork 4: "Later").
 
 ## Where we are
 
+2026-10-03: **H-rig-clearof built, DRAFT — UNCHECKED — awaiting Muad'Dib.** Per-width clearance and restart UI follow-ups are available; real replayed retention passes at both widths. Arrival passes at 1440 and retains the inherited missing-Capture-slot failure at 393. No story closes. [Astra lane record](lane-rig-clearof-astra.md).
+
 2026-10-03: **PHILO-13-12 (C2) done** — To back (every window, menu, ⌃B, tap at 393), Intuition zoom (two remembered rects, persisted), the window's menu bar on the right button / long press with live key caps (Iconify ⌘M, Zoom ⌃M, To back ⌃B, Close ⌘W). Ledger: off-Mac Ctrl+M binds Zoom (⌃ chords first); `static-muaddib.json` still names Minimize/Maximize.
 
 2026-10-02: **PHILO-13-11 slice two, atlas round** (Astra counsel r3 on #730): 76 atlas cases in 7 files open the right Chair window through the real doors at 393 (Go ▸ Chair ▸ window; the Dock's Speak for Capture); 34 first-value preconditions read `[data-testid=chair-desk]`; walked one case per run at both widths: 59 pass, 14 blocked outside the Chair, 3 fail at 393 only. **Muad'Dib's rulings:** Capture grows to 300 px while an aftercare card stands (accepted product fix); `case.p11.meeting_summary.chair.picked` keeps a 1440 zoom step, and 'scroll Send into view on pick' goes to C5's ledger; **homed reds** — `case.closure.chain.s3_same_summary_after_restart` (+`.replayed`) at 393 → B2 (story 07 remembers the open Chair window), and `case.philo603.toast.arrival` at 393 → new handoff **H-rig-clearof** (Astra: per-width `clear_of` in graph_walk.py + atlas.schema.json). The React architecture guard: `library-css-outside: chair.css` red → green.

@@ -9369,7 +9369,7 @@
         {
           "kind": "ui",
           "action": "click_role",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "role": "button",
           "name": "Continue later",
           "optional": true,
@@ -9378,7 +9378,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-blocker-verb-engines]",
           "optional": true,
           "timeout_s": 1
@@ -9386,7 +9386,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=arrival-blocker-verb-summary]",
           "optional": true,
           "timeout_s": 10
@@ -9400,7 +9400,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=concierge-add-engine]"
         },
         {
@@ -9413,7 +9413,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=concierge-add-check]"
         },
         {
@@ -9425,7 +9425,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": "[data-testid=concierge-add-submit]"
         },
         {
@@ -9505,7 +9505,7 @@
         {
           "kind": "ui",
           "action": "click_role",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "role": "button",
           "name": "Continue later",
           "optional": true,
@@ -9514,7 +9514,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
@@ -9522,7 +9522,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
@@ -9530,7 +9530,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open Brief the way the owner does (tests/e2e/chair_windows.py)"
@@ -9553,7 +9553,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -9561,7 +9561,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -9569,7 +9569,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "adapter": "ui-pointer",
+          "adapter": "ui-by-viewport",
           "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
           "at_width": 393,
           "why": "PHILO-13-11 (slice two, R2): at 393 the Chair is one window at a time; open The week the way the owner does (tests/e2e/chair_windows.py)"
@@ -9598,7 +9598,7 @@
       "trigger": {
         "kind": "ui",
         "action": "click",
-        "adapter": "ui-pointer",
+        "adapter": "ui-by-viewport",
         "selector": "[data-testid=arrival-run-intel]",
         "trigger_route": {
           "method": "POST",
@@ -9612,28 +9612,42 @@
           "value": "MEETING READY",
           "slot_selector": "[data-testid=arrival-aftercare-slot]",
           "scroll_target_selector": "[data-testid=arrival-aftercare-slot]",
-          "clear_of": [
-            {
-              "selector": "[data-testid=meeting-summary-text]",
-              "required": true,
-              "require_hit_test": true
-            },
-            {
-              "selector": "[data-testid=arrival-capture-bar]",
-              "required": true,
-              "require_hit_test": true
-            },
-            {
-              "selector": "[data-testid=arrival-brief-row]",
-              "required": false,
-              "require_hit_test": false
-            }
-          ],
           "auto_scroll_calls_by_viewport": {
             "393": 1,
             "1440": 0
           },
-          "no_field_focus": true
+          "no_field_focus": true,
+          "clear_of_by_viewport": {
+            "1440": [
+              {
+                "selector": "[data-testid=meeting-summary-text]",
+                "required": true,
+                "require_hit_test": true
+              },
+              {
+                "selector": "[data-testid=arrival-capture-bar]",
+                "required": true,
+                "require_hit_test": true
+              },
+              {
+                "selector": "[data-testid=arrival-brief-row]",
+                "required": false,
+                "require_hit_test": false
+              }
+            ],
+            "393": [
+              {
+                "selector": "[data-testid=meeting-summary-text]",
+                "required": true,
+                "require_hit_test": true
+              },
+              {
+                "selector": ".desk-dock",
+                "required": true,
+                "require_hit_test": true
+              }
+            ]
+          }
         },
         "observe_at": ".ambient-aftercare",
         "dismiss_selector": ".ambient-aftercare button:has-text('Dismiss')",
