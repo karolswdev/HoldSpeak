@@ -1,0 +1,33 @@
+# Post-merge CI setup follow-up for PHILO-13-03
+
+Candidate branch: `feat/philo-13-web-quality-python`, HEAD `e2904fbb4f78a4b1b8af2db8e4c6ebd6e1d456f4`.
+
+The merged #728 run `37091231743` failed DeskOS Web Quality. GitHub annotations at `web/src/desk/needsYou.test.ts:434` report `.venv/bin/python ENOENT` for real-producer test calls at lines 248, 481, and 578. The follow-up workflow change provisions Python 3.12 and uv, then runs `uv sync --extra test` before `npm run check`; it preserves the real fixture producer.
+
+Luna reported `uv sync --extra test` and `npm ci` passed in this worktree. The focused producer file is collected and rerun below with isolated HOME/TMPDIR. Local Node 25 is unusable because its Homebrew llhttp library is missing, so Node 22.21.0 was used, matching the workflow's Node 22. The local `.venv` Python is 3.14.2; the workflow explicitly sets Python 3.12. No full suite was run locally.
+
+Focused command: `npx vitest run src/desk/needsYou.test.ts --maxWorkers=1 --testTimeout=30000`.
+
+v22.21.0
+Python 3.14.2
+src/desk/needsYou.test.ts > the one needs-you membership > counts a settled R1-R3 example once and preserves each ref
+src/desk/needsYou.test.ts > the one needs-you membership > keeps a retried job as RETRYING after its due time
+src/desk/needsYou.test.ts > the one needs-you membership > does not infer a missing engine from an absent roster row
+src/desk/needsYou.test.ts > the one needs-you membership > makes a failed assignment read unknown instead of clear
+src/desk/needsYou.test.ts > the shared needs-you read > uses the producer-backed summary filter and never reads an unfiltered meeting page
+src/desk/needsYou.test.ts > the shared needs-you read > uses the cached Room read on mount and poll, and fresh only for explicit refresh
+src/desk/needsYou.test.ts > the shared needs-you read > paginates meetings by offset when the HTTP route omits next_cursor
+src/desk/needsYou.test.ts > the shared needs-you read > uses shared coverage semantics when complete is true over a failed row
+src/desk/needsYou.test.ts > the shared needs-you read > keeps the meeting-path blocker unknown when the roster read fails
+src/desk/needsYou.test.ts > the shared needs-you read > retains the last Room rows after a later Room read fails
+src/desk/needsYou.test.ts > the shared needs-you read > shares one in-flight read between two mounted consumers
+src/desk/needsYou.test.ts > the real producer membership oracle > matches before/after real wire and rejects controlled wrong projections
+src/desk/needsYou.test.ts > the real producer membership oracle > rejects a code mutant that skips dedupAttention on the real producer oracle
+
+ RUN  v4.1.9 /Users/karol/dev/tools/wt-philo-13-web-quality-python/web
+
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  21:31:49
+   Duration  7.49s (transform 105ms, setup 60ms, import 146ms, tests 7.03s, environment 180ms)
