@@ -50,7 +50,7 @@
      "id": "surface-people",
      "kind": "surface",
      "applicationKey": "open-people",
-     "scope": "people:8153a1b9-78c4-4b7e-a8b8-b0953f136aed",
+     "scope": "people:0745eff1-b2fc-4e4f-890f-1f22bdb68eb0",
      "persistence": "workspace"
     },
     "surface-project-memory": {
@@ -84,13 +84,13 @@
     "workbench": []
    },
    "drafts": {
-    "people/1on1/8153a1b9-78c4-4b7e-a8b8-b0953f136aed": "Ask Priya about the EU shard backup plan",
-    "room/update-body/pupd_3c91eedb806d4824ad997c86ca3c8858": "## Progress\n\n- Meeting summary: Ledger cutover sync -- Dual-write is stable. The team agreed to freeze the old ledger on Nov 5. Jordan owns the rollback plan.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers i Dry run passed Tuesday; EU shard backup plan due Friday; Priya owns the rollback runbook.n this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+    "people/1on1/0745eff1-b2fc-4e4f-890f-1f22bdb68eb0": "Ask Priya about the EU shard backup plan",
+    "room/update-body/pupd_aadf9b104da04178bad5e9d6abf6536b": "## Progress\n\n- Meeting summary: Ledger cutover sync -- Dual-write is stable. The team agreed to freeze the old ledger on Nov 5. Jordan owns the rollback plan.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers i Dry run passed Tuesday; EU shard backup plan due Friday; Priya owns the rollback runbook.n this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
    },
    "places": {
-    "people/person": "8153a1b9-78c4-4b7e-a8b8-b0953f136aed",
-    "people/lens/8153a1b9-78c4-4b7e-a8b8-b0953f136aed": "one-on-ones",
-    "room/update/p-ledger": "editor:pupd_3c91eedb806d4824ad997c86ca3c8858"
+    "people/person": "0745eff1-b2fc-4e4f-890f-1f22bdb68eb0",
+    "people/lens/0745eff1-b2fc-4e4f-890f-1f22bdb68eb0": "one-on-ones",
+    "room/update/p-ledger": "editor:pupd_aadf9b104da04178bad5e9d6abf6536b"
    }
   },
   "room_rect": [
@@ -156,11 +156,7 @@
  ],
  "dock_chips": [
   "Focus Freeze the old ledger on Nov 5",
-  "Close Freeze the old ledger on Nov 5",
-  "Focus People",
-  "Close People",
-  "Focus Payments ledger cutover",
-  "Close Payments ledger cutover"
+  "Close Freeze the old ledger on Nov 5"
  ],
  "writes_after_reload": []
 }

@@ -1,0 +1,1428 @@
+{
+  "id": "obs-20261003T210349Z-case.p13.remember.trust_window-muaddib-393",
+  "run_id": "20261003T210349Z-case.p13.remember.trust_window-muaddib-393",
+  "case_id": "case.p13.remember.trust_window",
+  "brain": "muaddib",
+  "pass": "live",
+  "viewport": 393,
+  "atlas": "docs/internal/philo/graph/atlas-phase13-muaddib.json",
+  "job": "j1",
+  "edge_ids": [
+    "edge.face.window_return"
+  ],
+  "state_id": "state.desk_presentation.p13_remember_trust",
+  "provenance": {
+    "revision": "ab9bd1ea57c388288c5b02812179bc21da265b54",
+    "revision_source": "git",
+    "dirty": true,
+    "frontend_build": {
+      "built": true,
+      "index_sha256": "d84516940a8671827fad725c86d6306b48e39fab111ad14cba23a388223d442f",
+      "assets": [
+        "index-yocudMGr.js"
+      ]
+    },
+    "hub": {
+      "url": "http://127.0.0.1:50479",
+      "port": 50479,
+      "pid": 42631,
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1z8ne3y2",
+      "scheduler_thread": false
+    },
+    "db_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1z8ne3y2/.local/share/holdspeak/holdspeak.db",
+    "fixture_hashes": {},
+    "clock": {
+      "tz": null,
+      "started_utc": "2026-10-03T21:03:49.563529+00:00",
+      "mechanism": "none \u2014 the real clock; no case may claim an advance",
+      "scheduler_thread": false
+    },
+    "engine_mode": "none",
+    "engine_identity": null,
+    "boundary_substitutions": [],
+    "restarts": [],
+    "rig_version": "1.5.2",
+    "brief_sha256": "ba5477fd07dba564a4e38fcf479838a511444eed3ed0c02e61aaa522358c7800",
+    "atlas": {
+      "path": "docs/internal/philo/graph/atlas-phase13-muaddib.json",
+      "sha256": "7a332b13de9afa59d4ce76c98e95b2573a3695e1c565f46442cfbc6309b30b4d",
+      "version": "phase13-muaddib"
+    },
+    "touch_mode": {
+      "adapter": "ui-by-viewport",
+      "resolved_adapter": "ui-touch",
+      "requested": true,
+      "viewport": 393,
+      "has_touch": true,
+      "mode": "native-touch"
+    },
+    "browser_context": {
+      "viewport": 393,
+      "has_touch": true
+    },
+    "product_wiring": {
+      "has": [
+        "MeetingWebServer routes",
+        "isolated tmux socket directory",
+        "the database owner lock (port published)",
+        "the intelligence queue drainer"
+      ],
+      "lacks": [
+        "AudioRecorder (the microphone is forbidden to this rig)",
+        "HotkeyListener (no native keystrokes)",
+        "voice_session / device registry",
+        "transcriber warm-up",
+        "the deferred plugin-queue thread",
+        "the Cadence Engine tick",
+        "a CLI process edge (no recording runner requested; gh and acli are never run)",
+        "the brief producer clock seam (not requested; the wall clock)",
+        "the heartbeat conductor loop (not requested by the case)"
+      ]
+    },
+    "tmux_isolation": {
+      "tmpdir": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1z8ne3y2",
+      "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1z8ne3y2",
+      "inherited_socket": false,
+      "inherited_pane": false,
+      "teardown": "run_case finally -> tmux kill-server in the run-owned tmpdir",
+      "teardown_result": {
+        "attempted": true,
+        "available": true,
+        "returncode": 1,
+        "stderr": "error connecting to /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1z8ne3y2/tmux-501/default (No such file or directory)",
+        "no_server": true,
+        "server_stopped": false,
+        "tmpdir": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1z8ne3y2"
+      }
+    },
+    "engine_replay_sha256": null,
+    "engine_provider_url": null,
+    "cli_runner_sha256": null
+  },
+  "setup": [
+    {
+      "kind": "ui",
+      "action": "goto",
+      "adapter": "ui-navigation",
+      "url": "/?token=graph-walk-token",
+      "done": true
+    },
+    {
+      "kind": "ui",
+      "action": "click_role",
+      "adapter": "ui-pointer",
+      "name": "Continue later",
+      "done": true
+    },
+    {
+      "kind": "api",
+      "method": "PUT",
+      "path": "/api/setup/onboarding",
+      "adapter": "http-route",
+      "status": 200,
+      "response": {
+        "success": true,
+        "onboarding": {
+          "disposition": "completed",
+          "updated_at": "2026-10-03T15:03:53.391426"
+        }
+      },
+      "response_sha256": "b5da0ef6e0fe71c550fcd88940ee43b772f61608baf72503e9dd3a78dc6c3795"
+    },
+    {
+      "kind": "check",
+      "observe_at": "protocol: GET /api/setup/status",
+      "predicate": {
+        "kind": "protocol_field",
+        "path": "arrival_required",
+        "value": false
+      },
+      "adapter": "observation",
+      "waited_s": 0.0,
+      "holds": true,
+      "reading": "arrival_required equals the declared value"
+    },
+    {
+      "kind": "ui",
+      "action": "reload",
+      "adapter": "ui-navigation",
+      "done": true
+    }
+  ],
+  "preconditions": [
+    {
+      "kind": "prose",
+      "text": "a fresh isolated HOME and browser profile; the hub started against that HOME",
+      "checked": false,
+      "note": "prose precondition: recorded, not checked by the rig"
+    }
+  ],
+  "variables": {
+    "hub_home": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1z8ne3y2"
+  },
+  "trigger": {
+    "kind": "ui",
+    "action": "click",
+    "adapter": "ui-touch",
+    "adapter_requested": "ui-by-viewport",
+    "selector": "[aria-label^='Privacy and trust']",
+    "done": true,
+    "then": [
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "#trust",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "done": true
+      },
+      {
+        "kind": "ui",
+        "action": "wait_for",
+        "adapter": "ui-observation",
+        "selector": "#trust",
+        "done": true
+      }
+    ]
+  },
+  "diff": {
+    "target_present": {
+      "before": false,
+      "after": true
+    },
+    "text": {
+      "before": null,
+      "after": "Data boundaries\n\nAll data stays on this device\n\nCurrent scope\nthis device\nOpen to the network\nno \u00b7 Token: not set\nEnabled destinations\nNone\nMEETING SUMMARY\nSENDS NOTHING\nDestination\nSummary route unavailable\nOperation\nGenerate meeting summary\nWhere it goes\nunavailable\nData\nMeeting transcript\nAllowed by\nAssigned summary route\nRuns without you\nOnly runs for an explicit summary request\nHow to stop sending\nChange the summary assignment\nLast receipt\nNone recorded\nDICTATION INTELLIGENCE\nSENDS NOTHING\nDestination\nThis machine\nOperation\nRewrite final dictation\nWhere it goes\nConfigured runtime destination\nData\nFinal dictation text and selected context\nAllowed by\nEnabled pipeline and Runs on selection\nRuns without you\nOnly runs for an explicit dictation request\nHow to stop sending\nUse a model on this device for dictation, or stop the rewrite. Then no text goes out.\nLast receipt\nNone recorded\nSLACK\nSENDS NOTHING\nDestination\nSlack channel destinations\nOperation\nSend approved text\nWhere it goes\nOne configured webhook destination\nData\nThe exact previewed digest or card text\nAllowed by\nConfigured credential plus per-action approval\nRuns without you\nNo; sends only after approval\nHow to stop sending\nDelete the Slack secret in Settings\nLast receipt\nNone recorded\nCUSTOM WEBHOOK\nSENDS NOTHING\nDestination\nNot configured\nOperation\nPOST approved text\nWhere it goes\nOne configured webhook destination\nData\nThe exact previewed card text\nAllowed by\nConfigured credential plus per-action approval\nRuns without you\nNo; sends only after approval\nHow to stop sending\nDelete the custom webhook secret in Settings\nLast receipt\nNone recorded\nGITHUB ISSUES\nSENDS NOTHING\nDestination\nNot configured\nOperation\nCreate approved issue\nWhere it goes\nThe configured repository through local gh\nData\nThe exact previewed issue title and body\nAllowed by\nConfigured repository plus per-action approval\nRuns without you\nNo; files only after approval\nHow to stop sending\nClear the repository or log out of gh\nLast receipt\nNone recorded\nTELEGRAM CONTROL\nSENDS NOTHING\nDestination\nNot configured\nOperation\nReceive paired commands and send responses\nWhere it goes\nThe paired Telegram bot\nData\nCommands, status, and explicitly requested output\nAllowed by\nConfigured bot token and pairing policy\nRuns without you\nMay receive commands while the bot is enabled\nHow to stop sending\nDelete the Telegram bot token in Settings\nLast receipt\nNone recorded\nFAILURE ALERTS\nSENDS NOTHING\nDestination\nNot configured\nOperation\nPOST sustained-failure alert\nWhere it goes\nOne configured alert webhook\nData\nQueue counts and failure rates; never transcript text\nAllowed by\nExplicit webhook configuration\nRuns without you\nMay send after sustained deferred-job failures\nHow to stop sending\nDelete the failure webhook secret in Settings\nLast receipt\nNone recorded\n\nReview privacy settings"
+    },
+    "attrs": {
+      "before": null,
+      "after": {
+        "id": "trust",
+        "tabindex": "-1",
+        "class": "desk-trust-window desk-window desk-window-shell is-sheet is-front",
+        "role": "region",
+        "aria-label": "Data boundaries",
+        "style": "z-index: 43; opacity: 1; transform: none;"
+      }
+    },
+    "rect": {
+      "before": null,
+      "after": {
+        "x": 0,
+        "y": 44,
+        "w": 393,
+        "h": 752
+      }
+    },
+    "visible": {
+      "before": null,
+      "after": true
+    },
+    "focus": {
+      "before": "body",
+      "after": "div#trust"
+    },
+    "focus_label": {
+      "before": "",
+      "after": "Data boundaries"
+    },
+    "windows": {
+      "before": [],
+      "after": [
+        {
+          "title": "Needs you",
+          "rect": {
+            "x": 0,
+            "y": 44,
+            "w": 393,
+            "h": 752
+          },
+          "visible": true
+        },
+        {
+          "title": "Data boundaries",
+          "rect": {
+            "x": 0,
+            "y": 44,
+            "w": 393,
+            "h": 752
+          },
+          "visible": true
+        }
+      ]
+    },
+    "document_text_sha256": {
+      "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after": "47b7000fad0d2afd987a2c9e7985e03b88e69ee48e1c19192fb315d8ae763357"
+    },
+    "document_text_len": {
+      "before": 0,
+      "after": 3055
+    }
+  },
+  "before": {
+    "observe_at": "#trust",
+    "target_present": false,
+    "text": null,
+    "attrs": null,
+    "rect": null,
+    "visible": null,
+    "hit_test": null,
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "body",
+    "focus_label": "",
+    "url": "http://127.0.0.1:50479/",
+    "windows": [],
+    "pending_marker_present": null,
+    "document_text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "document_text_len": 0,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T21:03:54.034095+00:00"
+  },
+  "after": {
+    "observe_at": "#trust",
+    "target_present": true,
+    "text": "Data boundaries\n\nAll data stays on this device\n\nCurrent scope\nthis device\nOpen to the network\nno \u00b7 Token: not set\nEnabled destinations\nNone\nMEETING SUMMARY\nSENDS NOTHING\nDestination\nSummary route unavailable\nOperation\nGenerate meeting summary\nWhere it goes\nunavailable\nData\nMeeting transcript\nAllowed by\nAssigned summary route\nRuns without you\nOnly runs for an explicit summary request\nHow to stop sending\nChange the summary assignment\nLast receipt\nNone recorded\nDICTATION INTELLIGENCE\nSENDS NOTHING\nDestination\nThis machine\nOperation\nRewrite final dictation\nWhere it goes\nConfigured runtime destination\nData\nFinal dictation text and selected context\nAllowed by\nEnabled pipeline and Runs on selection\nRuns without you\nOnly runs for an explicit dictation request\nHow to stop sending\nUse a model on this device for dictation, or stop the rewrite. Then no text goes out.\nLast receipt\nNone recorded\nSLACK\nSENDS NOTHING\nDestination\nSlack channel destinations\nOperation\nSend approved text\nWhere it goes\nOne configured webhook destination\nData\nThe exact previewed digest or card text\nAllowed by\nConfigured credential plus per-action approval\nRuns without you\nNo; sends only after approval\nHow to stop sending\nDelete the Slack secret in Settings\nLast receipt\nNone recorded\nCUSTOM WEBHOOK\nSENDS NOTHING\nDestination\nNot configured\nOperation\nPOST approved text\nWhere it goes\nOne configured webhook destination\nData\nThe exact previewed card text\nAllowed by\nConfigured credential plus per-action approval\nRuns without you\nNo; sends only after approval\nHow to stop sending\nDelete the custom webhook secret in Settings\nLast receipt\nNone recorded\nGITHUB ISSUES\nSENDS NOTHING\nDestination\nNot configured\nOperation\nCreate approved issue\nWhere it goes\nThe configured repository through local gh\nData\nThe exact previewed issue title and body\nAllowed by\nConfigured repository plus per-action approval\nRuns without you\nNo; files only after approval\nHow to stop sending\nClear the repository or log out of gh\nLast receipt\nNone recorded\nTELEGRAM CONTROL\nSENDS NOTHING\nDestination\nNot configured\nOperation\nReceive paired commands and send responses\nWhere it goes\nThe paired Telegram bot\nData\nCommands, status, and explicitly requested output\nAllowed by\nConfigured bot token and pairing policy\nRuns without you\nMay receive commands while the bot is enabled\nHow to stop sending\nDelete the Telegram bot token in Settings\nLast receipt\nNone recorded\nFAILURE ALERTS\nSENDS NOTHING\nDestination\nNot configured\nOperation\nPOST sustained-failure alert\nWhere it goes\nOne configured alert webhook\nData\nQueue counts and failure rates; never transcript text\nAllowed by\nExplicit webhook configuration\nRuns without you\nMay send after sustained deferred-job failures\nHow to stop sending\nDelete the failure webhook secret in Settings\nLast receipt\nNone recorded\n\nReview privacy settings",
+    "attrs": {
+      "id": "trust",
+      "tabindex": "-1",
+      "class": "desk-trust-window desk-window desk-window-shell is-sheet is-front",
+      "role": "region",
+      "aria-label": "Data boundaries",
+      "style": "z-index: 43; opacity: 1; transform: none;"
+    },
+    "rect": {
+      "x": 0,
+      "y": 44,
+      "w": 393,
+      "h": 752
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 0,
+        "y": 44,
+        "w": 393,
+        "h": 752
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 49.125,
+          "y": 138,
+          "owned": true,
+          "owner": "div#trust > div.desk-surface-body > section.surface-group-wrap > div.surface-group > div.surface-setting-row"
+        },
+        {
+          "x": 49.125,
+          "y": 420,
+          "owned": true,
+          "owner": "section.surface-section > section.surface-group-wrap > div.surface-group > div.surface-setting-row > span.surface-setting-text > strong"
+        },
+        {
+          "x": 49.125,
+          "y": 702,
+          "owned": true,
+          "owner": "div#trust > div.desk-surface-body > section.surface-section > section.surface-group-wrap > div.surface-group"
+        },
+        {
+          "x": 196.5,
+          "y": 138,
+          "owned": true,
+          "owner": "div#trust > div.desk-surface-body > section.surface-group-wrap > div.surface-group > div.surface-setting-row"
+        },
+        {
+          "x": 196.5,
+          "y": 420,
+          "owned": true,
+          "owner": "section.surface-section > section.surface-group-wrap > div.surface-group > div.surface-setting-row > span.surface-setting-text > strong"
+        },
+        {
+          "x": 196.5,
+          "y": 702,
+          "owned": true,
+          "owner": "div#trust > div.desk-surface-body > section.surface-section > section.surface-group-wrap > div.surface-group"
+        },
+        {
+          "x": 343.875,
+          "y": 138,
+          "owned": true,
+          "owner": "div#trust > div.desk-surface-body > section.surface-group-wrap > div.surface-group > div.surface-setting-row"
+        },
+        {
+          "x": 343.875,
+          "y": 420,
+          "owned": true,
+          "owner": "section.surface-section > section.surface-group-wrap > div.surface-group > div.surface-setting-row > span.surface-setting-control > span.surface-setting-value"
+        },
+        {
+          "x": 343.875,
+          "y": 702,
+          "owned": true,
+          "owner": "div#trust > div.desk-surface-body > section.surface-section > section.surface-group-wrap > div.surface-group"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#trust",
+    "focus_label": "Data boundaries",
+    "url": "http://127.0.0.1:50479/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Data boundaries",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "47b7000fad0d2afd987a2c9e7985e03b88e69ee48e1c19192fb315d8ae763357",
+    "document_text_len": 3055,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T21:03:57.767320+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:50479) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:50479) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/follow-through/board",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decision-records/review",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/people/readiness",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings/ready",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-agents.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-meetings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-people.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-bell.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-speak.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    }
+  },
+  "initial_feedback": {
+    "observe_at": "#trust",
+    "target_present": true,
+    "text": "Data boundaries\n\nAll data stays on this device\n\nCurrent scope\nthis device\nOpen to the network\nno \u00b7 Token: not set\nEnabled destinations\nNone\nMEETING SUMMARY\nSENDS NOTHING\nDestination\nSummary route unavailable\nOperation\nGenerate meeting summary\nWhere it goes\nunavailable\nData\nMeeting transcript\nAllowed by\nAssigned summary route\nRuns without you\nOnly runs for an explicit summary request\nHow to stop sending\nChange the summary assignment\nLast receipt\nNone recorded\nDICTATION INTELLIGENCE\nSENDS NOTHING\nDestination\nThis machine\nOperation\nRewrite final dictation\nWhere it goes\nConfigured runtime destination\nData\nFinal dictation text and selected context\nAllowed by\nEnabled pipeline and Runs on selection\nRuns without you\nOnly runs for an explicit dictation request\nHow to stop sending\nUse a model on this device for dictation, or stop the rewrite. Then no text goes out.\nLast receipt\nNone recorded\nSLACK\nSENDS NOTHING\nDestination\nSlack channel destinations\nOperation\nSend approved text\nWhere it goes\nOne configured webhook destination\nData\nThe exact previewed digest or card text\nAllowed by\nConfigured credential plus per-action approval\nRuns without you\nNo; sends only after approval\nHow to stop sending\nDelete the Slack secret in Settings\nLast receipt\nNone recorded\nCUSTOM WEBHOOK\nSENDS NOTHING\nDestination\nNot configured\nOperation\nPOST approved text\nWhere it goes\nOne configured webhook destination\nData\nThe exact previewed card text\nAllowed by\nConfigured credential plus per-action approval\nRuns without you\nNo; sends only after approval\nHow to stop sending\nDelete the custom webhook secret in Settings\nLast receipt\nNone recorded\nGITHUB ISSUES\nSENDS NOTHING\nDestination\nNot configured\nOperation\nCreate approved issue\nWhere it goes\nThe configured repository through local gh\nData\nThe exact previewed issue title and body\nAllowed by\nConfigured repository plus per-action approval\nRuns without you\nNo; files only after approval\nHow to stop sending\nClear the repository or log out of gh\nLast receipt\nNone recorded\nTELEGRAM CONTROL\nSENDS NOTHING\nDestination\nNot configured\nOperation\nReceive paired commands and send responses\nWhere it goes\nThe paired Telegram bot\nData\nCommands, status, and explicitly requested output\nAllowed by\nConfigured bot token and pairing policy\nRuns without you\nMay receive commands while the bot is enabled\nHow to stop sending\nDelete the Telegram bot token in Settings\nLast receipt\nNone recorded\nFAILURE ALERTS\nSENDS NOTHING\nDestination\nNot configured\nOperation\nPOST sustained-failure alert\nWhere it goes\nOne configured alert webhook\nData\nQueue counts and failure rates; never transcript text\nAllowed by\nExplicit webhook configuration\nRuns without you\nMay send after sustained deferred-job failures\nHow to stop sending\nDelete the failure webhook secret in Settings\nLast receipt\nNone recorded\n\nReview privacy settings",
+    "attrs": {
+      "id": "trust",
+      "tabindex": "-1",
+      "class": "desk-trust-window desk-window desk-window-shell is-sheet is-front",
+      "role": "region",
+      "aria-label": "Data boundaries",
+      "style": "z-index: 43; opacity: 1; transform: none;"
+    },
+    "rect": {
+      "x": 0,
+      "y": 44,
+      "w": 393,
+      "h": 752
+    },
+    "visible": true,
+    "hit_test": {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "rect": {
+        "x": 0,
+        "y": 44,
+        "w": 393,
+        "h": 752
+      },
+      "in_viewport": true,
+      "samples": [
+        {
+          "x": 49.125,
+          "y": 138,
+          "owned": true,
+          "owner": "div#trust > div.desk-surface-body > section.surface-group-wrap > div.surface-group > div.surface-setting-row"
+        },
+        {
+          "x": 49.125,
+          "y": 420,
+          "owned": true,
+          "owner": "section.surface-section > section.surface-group-wrap > div.surface-group > div.surface-setting-row > span.surface-setting-text > strong"
+        },
+        {
+          "x": 49.125,
+          "y": 702,
+          "owned": true,
+          "owner": "div#trust > div.desk-surface-body > section.surface-section > section.surface-group-wrap > div.surface-group"
+        },
+        {
+          "x": 196.5,
+          "y": 138,
+          "owned": true,
+          "owner": "div#trust > div.desk-surface-body > section.surface-group-wrap > div.surface-group > div.surface-setting-row"
+        },
+        {
+          "x": 196.5,
+          "y": 420,
+          "owned": true,
+          "owner": "section.surface-section > section.surface-group-wrap > div.surface-group > div.surface-setting-row > span.surface-setting-text > strong"
+        },
+        {
+          "x": 196.5,
+          "y": 702,
+          "owned": true,
+          "owner": "div#trust > div.desk-surface-body > section.surface-section > section.surface-group-wrap > div.surface-group"
+        },
+        {
+          "x": 343.875,
+          "y": 138,
+          "owned": true,
+          "owner": "div#trust > div.desk-surface-body > section.surface-group-wrap > div.surface-group > div.surface-setting-row"
+        },
+        {
+          "x": 343.875,
+          "y": 420,
+          "owned": true,
+          "owner": "section.surface-section > section.surface-group-wrap > div.surface-group > div.surface-setting-row > span.surface-setting-control > span.surface-setting-value"
+        },
+        {
+          "x": 343.875,
+          "y": 702,
+          "owned": true,
+          "owner": "div#trust > div.desk-surface-body > section.surface-section > section.surface-group-wrap > div.surface-group"
+        }
+      ],
+      "all_owned": true
+    },
+    "arrival_clearance": null,
+    "values": [],
+    "field_value": null,
+    "focus": "div#trust",
+    "focus_label": "Data boundaries",
+    "url": "http://127.0.0.1:50479/",
+    "windows": [
+      {
+        "title": "Needs you",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      },
+      {
+        "title": "Data boundaries",
+        "rect": {
+          "x": 0,
+          "y": 44,
+          "w": 393,
+          "h": 752
+        },
+        "visible": true
+      }
+    ],
+    "pending_marker_present": null,
+    "document_text_sha256": "47b7000fad0d2afd987a2c9e7985e03b88e69ee48e1c19192fb315d8ae763357",
+    "document_text_len": 3055,
+    "replay_identity": null,
+    "at_utc": "2026-10-03T21:03:57.632213+00:00",
+    "trigger_response_capture": {
+      "rule": "the first same-origin (http://127.0.0.1:50479) non-GET response after the click",
+      "chosen": null,
+      "why": "NO response matched the first same-origin (http://127.0.0.1:50479) non-GET response after the click; the click fired none",
+      "seen": [
+        {
+          "method": "GET",
+          "path": "/api/roadmaps",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": false
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/thoughts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/status",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/events",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/sessions",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/missioncontrol/receipts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/coders/steering/grants",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/follow-through/board",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/projections",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/decision-records/review",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/snapshot",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/channels/sends",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/state",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/people/readiness",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings/ready",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-agents.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-meetings.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-people.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-bell.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-mark.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/dock-speak.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/nodes",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/door",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/_built/desk/sprites/system/menu-search.png",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/delivery/attempts",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/inference/assignments",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/desk/needs-you",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/meetings",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        },
+        {
+          "method": "GET",
+          "path": "/api/settings/heartbeat",
+          "status": 200,
+          "same_origin": true,
+          "after_arming": true
+        }
+      ]
+    },
+    "predicate_satisfied": true,
+    "reading": "'Data boundaries' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 0, 'y': 44, 'w': 393, 'h': 752}",
+    "elapsed_s": 3.562
+  },
+  "terminal_outcome": {
+    "state": "settled",
+    "predicate_satisfied": true,
+    "reading": "'Data boundaries' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 0, 'y': 44, 'w': 393, 'h': 752}",
+    "pending_marker": null,
+    "pending_marker_present": null,
+    "elapsed_s": 3.697,
+    "first_satisfied_at_s": 3.562,
+    "completion_bound_s": 30.0,
+    "late_result_s": null,
+    "within_bound": true
+  },
+  "verdict": "pass",
+  "notes": [
+    "predicate: 'Data boundaries' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 0, 'y': 44, 'w': 393, 'h': 752}"
+  ],
+  "complete": true,
+  "trigger_response_capture": {
+    "rule": "the first same-origin (http://127.0.0.1:50479) non-GET response after the click",
+    "chosen": null,
+    "why": "NO response matched the first same-origin (http://127.0.0.1:50479) non-GET response after the click; the click fired none",
+    "seen": [
+      {
+        "method": "GET",
+        "path": "/api/roadmaps",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings/heartbeat",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/thoughts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/status",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/events",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/sessions",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/missioncontrol/receipts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/coders/steering/grants",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/follow-through/board",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/projections",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/decision-records/review",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/snapshot",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/channels/sends",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/state",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/people/readiness",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings/ready",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/assets/space-grotesk-latin-700-normal-RjhwGPKo.woff2",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/brief/latest",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-agents.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-meetings.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-people.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-bell.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-mark.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/dock-speak.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/nodes",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/door",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/_built/desk/sprites/system/menu-search.png",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/attempts",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/inference/assignments",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/desk/needs-you",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/meetings",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/settings/heartbeat",
+        "status": 200,
+        "same_origin": true,
+        "after_arming": true
+      }
+    ]
+  },
+  "shots": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs4/atlas-phase13-muaddib/20261003T210349Z-case.p13.remember.trust_window-muaddib-393/before.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/9430a806-6f30-44d3-b495-42e07ddac893/scratchpad/runs4/atlas-phase13-muaddib/20261003T210349Z-case.p13.remember.trust_window-muaddib-393/after.png"
+  ],
+  "console_errors": [],
+  "hub_log": [
+    "DB_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1z8ne3y2/.local/share/holdspeak/holdspeak.db",
+    "CONFIG_PATH /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1z8ne3y2/.config/holdspeak/config.json",
+    "WIRING {\"has\": [\"MeetingWebServer routes\", \"isolated tmux socket directory\", \"the database owner lock (port published)\", \"the intelligence queue drainer\"], \"lacks\": [\"AudioRecorder (the microphone is forbidden to this rig)\", \"HotkeyListener (no native keystrokes)\", \"voice_session / device registry\", \"transcriber warm-up\", \"the deferred plugin-queue thread\", \"the Cadence Engine tick\", \"a CLI process edge (no recording runner requested; gh and acli are never run)\", \"the brief producer clock seam (not requested; the wall clock)\", \"the heartbeat conductor loop (not requested by the case)\"]}",
+    "HUB_READY http://127.0.0.1:50479"
+  ],
+  "duration_s": 8.809
+}

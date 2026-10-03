@@ -9,7 +9,7 @@
      14,
      42,
      698,
-     681
+     656
     ]
    },
    {
@@ -19,7 +19,7 @@
      728,
      42,
      698,
-     500
+     484
     ]
    },
    {
@@ -27,9 +27,9 @@
     "title": "The week",
     "rect": [
      728,
-     558,
+     542,
      698,
-     277
+     268
     ]
    },
    {
@@ -37,7 +37,7 @@
     "title": "Capture",
     "rect": [
      14,
-     735,
+     710,
      698,
      100
     ]
@@ -70,7 +70,7 @@
      "id": "surface-people",
      "kind": "surface",
      "applicationKey": "open-people",
-     "scope": "people:49f485a7-fbb3-480c-8c83-f6d2dc7b5457",
+     "scope": "people:2cd8b320-5de0-486e-912b-ad0b99c323e1",
      "persistence": "workspace"
     },
     "surface-project-memory": {
@@ -115,13 +115,13 @@
     "workbench": []
    },
    "drafts": {
-    "people/1on1/49f485a7-fbb3-480c-8c83-f6d2dc7b5457": "Ask Priya about the EU shard backup plan",
-    "room/update-body/pupd_7c2a00e1dcb741d9810eb6a586a84be7": "## Progress\n\n- Meeting summary: Ledger cutover sync -- Dual-write is stable. The team agreed to freeze the old ledger on Nov 5. Jordan owns the rollback plan.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n Dry run passed Tuesday; EU shard backup plan due Friday; Priya owns the rollback runbook.\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+    "people/1on1/2cd8b320-5de0-486e-912b-ad0b99c323e1": "Ask Priya about the EU shard backup plan",
+    "room/update-body/pupd_2eff0c6493cb471abdc55bf9d4c15768": "## Progress\n\n- Meeting summary: Ledger cutover sync -- Dual-write is stable. The team agreed to freeze the old ledger on Nov 5. Jordan owns the rollback plan.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n Dry run passed Tuesday; EU shard backup plan due Friday; Priya owns the rollback runbook.\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
    },
    "places": {
-    "people/person": "49f485a7-fbb3-480c-8c83-f6d2dc7b5457",
-    "people/lens/49f485a7-fbb3-480c-8c83-f6d2dc7b5457": "one-on-ones",
-    "room/update/p-ledger": "editor:pupd_7c2a00e1dcb741d9810eb6a586a84be7"
+    "people/person": "2cd8b320-5de0-486e-912b-ad0b99c323e1",
+    "people/lens/2cd8b320-5de0-486e-912b-ad0b99c323e1": "one-on-ones",
+    "room/update/p-ledger": "editor:pupd_2eff0c6493cb471abdc55bf9d4c15768"
    }
   },
   "room_rect": [
@@ -140,7 +140,7 @@
     14,
     42,
     698,
-    681
+    656
    ]
   },
   {
@@ -150,7 +150,7 @@
     728,
     42,
     698,
-    500
+    484
    ]
   },
   {
@@ -158,9 +158,9 @@
    "title": "The week",
    "rect": [
     728,
-    558,
+    542,
     698,
-    277
+    268
    ]
   },
   {
@@ -168,7 +168,7 @@
    "title": "Capture",
    "rect": [
     14,
-    735,
+    710,
     698,
     100
    ]
@@ -207,11 +207,7 @@
  ],
  "dock_chips": [
   "Restore Freeze the old ledger on Nov 5",
-  "Close Freeze the old ledger on Nov 5",
-  "Focus People",
-  "Close People",
-  "Focus Payments ledger cutover",
-  "Close Payments ledger cutover"
+  "Close Freeze the old ledger on Nov 5"
  ],
  "writes_after_reload": []
 }
