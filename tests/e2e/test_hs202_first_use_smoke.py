@@ -28,7 +28,7 @@ from .test_hs201_09_connect_engine_glass import _StubHandler
 from .test_hs201_one_thing_glass import _quiet_concierge
 from .test_hs201_summary_face_glass import _FixtureImportTranscriber, _chip_label
 from tests._evidence import evidence_dir
-from .chair_windows import open_chair_window
+from .chair_windows import go_group, open_chair_window
 
 TOKEN = "hs202-first-use"
 WAV = REPO / "tests/fixtures/core_path_smoke_16k.wav"
@@ -294,9 +294,25 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             dock = page.locator(".desk-dock")
             doors = {}
             for key, name in (("speak", "Speak"), ("meetings", "Meetings"), ("memory", "Desk memory")):
-                doors[key] = check("dock-" + key,
-                                   _hit(dock.get_by_role("button", name=name, exact=True)),
+                door = dock.get_by_role("button", name=name, exact=True)
+                # PHILO-13-13 C3-W (the ratified C1 393 Dock): the shelf ends on a
+                # whole icon and More AppIcons pages it; a door past the page is
+                # one More press away, never a sideways page scroll.
+                more = dock.get_by_test_id("desk-dock-more")
+                for _ in range(3):
+                    if _hit(door) or width > 720 or not more.is_visible():
+                        break
+                    more.click()
+                    page.wait_for_timeout(400)
+                doors[key] = check("dock-" + key, _hit(door),
                                    name + " dock door fits and owns its hit target")
+                # page back to the first page (More wraps at the end) for the next door
+                first = dock.get_by_role("button", name="Speak", exact=True)
+                for _ in range(3):
+                    if width > 720 or _hit(first) or not more.is_visible():
+                        break
+                    more.click()
+                    page.wait_for_timeout(400)
             meetings_ok = doors["meetings"]
             if meetings_ok:
                 _meetings(page)
@@ -321,14 +337,19 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                     separate_title = page.locator(".desk-verbbar").get_by_role(
                         "button", name=key.removeprefix("menu-"), exact=True
                     )
+                    # PHILO-13-17 (C7, Q3; ratified 2026-10-03): Go is grouped
+                    # at 393, so each menu is one row of Go (Go ▸ Desk ▸ ...).
+                    go_group(page, key.removeprefix("menu-"))
                     item = folded.get_by_role("menuitem").filter(has=page.locator(
                         ".desk-menu-label").filter(has_text=re.compile(
                             r"^" + re.escape(label) + r"(?:\s*·|$)")))
                     if item.count() != 1:
+                        folded.locator(".desk-menu-back").click()
                         return check(key, False, message + " (missing from Go)")
                     try:
                         item.scroll_into_view_if_needed(timeout=2500)
                     except BrowserTimeout:
+                        folded.locator(".desk-menu-back").click()
                         return check(key, False, message + " (cannot scroll to Go item)")
                     title_ok = separate_title.count() == 0
                     row_ok = item.is_visible() and _hit(item)
@@ -341,6 +362,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                     else:
                         print("MENU GEOMETRY", key, item.bounding_box(),
                               folded.evaluate("e => ({height:e.clientHeight, scrollHeight:e.scrollHeight, overflow:getComputedStyle(e).overflowY})"))
+                    folded.locator(".desk-menu-back").click()
                     return passed
 
                 folded_item(
@@ -390,13 +412,14 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             before_notes = {note["id"] for note in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]}
             desk_menu = page.locator(".desk-verbbar").get_by_role("button", name="Desk", exact=True, include_hidden=True)
             if width <= 720 and "menu-Desk" not in failures:
-                # At 393 the actual create path is Go -> New Note. The old
+                # At 393 the actual create path is Go -> Desk -> New Note. The old
                 # keyboard recovery is allowed only after that named check
                 # records its inventory failure.
                 go_title = page.locator(".desk-verbbar").get_by_role("button", name="Go", exact=True)
                 assert _hit(go_title), "Go menu door is unreachable for New Note"
                 go_title.click()
                 folded = page.get_by_role("menu", name="Go menu", exact=True)
+                go_group(page, "Desk")  # PHILO-13-17 (C7, Q3): Go ▸ Desk ▸ New Note
                 new_note = folded.get_by_role(
                     "menuitem", name=re.compile(r"^New Note(?:\s|$)")
                 )

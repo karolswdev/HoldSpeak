@@ -1,0 +1,73 @@
+{
+ "facts": {
+  "width": 1440,
+  "menus": [
+   "desk",
+   "object",
+   "go",
+   "window"
+  ],
+  "go_submenus": 0,
+  "C7-1-the-frame": {
+   "menubar": 28,
+   "dock": 51,
+   "content": 651,
+   "front": [
+    "Needs you"
+   ],
+   "title": "Needs you",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 2,
+    "clipped": [],
+    "overlaps": []
+   }
+  },
+  "C7-6a-aftercare-arrives": {
+   "menubar": 28,
+   "dock": 51,
+   "content": 451,
+   "front": [
+    "Needs you"
+   ],
+   "title": "Needs you",
+   "fixed_card": false,
+   "card_in_capture": true,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 2,
+    "clipped": [],
+    "overlaps": []
+   }
+  },
+  "chair_windows": [
+   "Needs you",
+   "Brief",
+   "The week",
+   "Capture"
+  ],
+  "C7-9-control-two-windows": {
+   "menubar": 28,
+   "dock": 53,
+   "content": 427,
+   "front": [
+    "Ledger cutover sync"
+   ],
+   "title": "Ledger cutover sync",
+   "fixed_card": false,
+   "card_in_capture": false,
+   "chrome_owns_content": [],
+   "body_under_44": [],
+   "on_glass": {
+    "scopes": 2,
+    "clipped": [],
+    "overlaps": []
+   }
+  }
+ },
+ "fails": []
+}

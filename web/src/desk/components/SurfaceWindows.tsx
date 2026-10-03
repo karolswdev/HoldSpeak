@@ -5,6 +5,7 @@
 import {
   Suspense,
   lazy,
+  useCallback,
   useEffect,
   useState,
   type ComponentType,
@@ -163,7 +164,18 @@ export function SurfaceWindowHost({
 }) {
   const [wings, setWings] = useState<ReactNode>(null);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
-  const [titleOverride, setTitleOverride] = useState<string | null>(null);
+  const [titleOverride, setTitleOverrideState] = useState<string | null>(null);
+  // PHILO-13-17 (C7; Astra r1 #751, condition 1): an iconified window
+  // unmounts its core (unmountOnMinimize), and the core's cleanup clears
+  // the title it published. The window keeps that title while iconified:
+  // it is still the same open window (the Dock chip, the 393 switcher).
+  const setTitleOverride = useCallback(
+    (next: string | null) => {
+      if (next === null && useDesk.getState().panelMin.includes(row.id)) return;
+      setTitleOverrideState(next);
+    },
+    [row.id],
+  );
   return (
     <DeskWindowFrame
       id={row.id}

@@ -38749,6 +38749,7 @@
         "tests/e2e/test_philo13_12_gadgets_glass.py",
         "tests/e2e/test_philo13_13_dock_glass.py",
         "tests/e2e/test_philo13_16_capture_glass.py",
+        "tests/e2e/test_philo13_17_phone_desk_glass.py",
         "tests/e2e/test_philo13_18_editor_wrap_glass.py",
         "tests/e2e/test_philo13_18_strip_escape_glass.py",
         "tests/e2e/test_philo13_18_type_floor_glass.py",

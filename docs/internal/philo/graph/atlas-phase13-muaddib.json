@@ -353,7 +353,15 @@
           "adapter": "ui-by-viewport",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
           "at_width": 393,
-          "why": "at 393 no hardware key is assumed: the phone's one menu door (Go carries the Desk menu's verbs, DeskMenuBar.tsx)"
+          "why": "at 393 no hardware key is assumed: the phone's one menu door, Go (DeskMenuBar.tsx)"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Desk')",
+          "at_width": 393,
+          "why": "PHILO-13-17 (C7, Q3): Go is grouped at 393, Chair ▸ Desk ▸ Object ▸ Window ▸; the Desk menu's verbs are one tap in (DeskMenuBar.tsx groupGoForPhone)"
         },
         {
           "kind": "ui",
@@ -413,6 +421,238 @@
         "words": "the owner opens a thought in one key press (1440) or from the menu (393, a tap), types its first words, and the thought is titled by them: the Thought window's title shows the hub's saved title, and the hub's thought list (the read the Chair's THOUGHTS rows draw, ChairHome.tsx) holds a thought titled with those words. Red on main: no ⌃T verb, and every thought kept the title `Thought` (newThought.ts:29)."
       },
       "completion_bound_s": 45,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.phone.switcher_two_taps",
+      "job": "j1",
+      "edge_ids": [
+        "edge.face.phone_switcher"
+      ],
+      "state_id": "state.desk_presentation.p13_phone_switcher",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the Desk past the closed gate"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "the Chair screen is drawn: its Needs you window is open"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": "[data-testid=desk-screen-switcher]",
+          "why": "tap 1 at 393: the screen title is the window switcher, `<window> ▾` (ScreenSwitcher.tsx)",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
+          "why": "1440: the Window menu (the switcher is a 393 face; the same Chair rows live in Window ▸ Chair)",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Chair')",
+          "why": "1440: Window ▸ Chair",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+          "why": "the open windows are listed, a check on the front one"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
+        "why": "tap 2: the Brief row brings Brief to the work area"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "attr_equals",
+          "attr": "aria-label",
+          "value": "Brief"
+        },
+        "observe_at": ".desk-window-shell.is-front",
+        "words": "at 393 the owner reaches any open window in two taps: the screen title's switcher, then the window's row; Brief is the one front window. At 1440 the same rows in Window ▸ Chair do the same. Red on main 2d1d791a: the screen title is a label (no switcher), and Brief is Go ▸ Chair ▸ Brief, three taps."
+      },
+      "completion_bound_s": 20,
+      "viewports": [
+        1440,
+        393
+      ]
+    },
+    {
+      "id": "case.p13.phone.go_desk_menu",
+      "job": "j11",
+      "edge_ids": [
+        "edge.face.desk_new_thought"
+      ],
+      "state_id": "state.desk_presentation.p13_phone_go_grouped",
+      "applicability": "applicable",
+      "preconditions": [
+        "a fresh isolated HOME and browser profile; the hub started against that HOME"
+      ],
+      "setup": [
+        {
+          "kind": "ui",
+          "action": "goto",
+          "adapter": "ui-navigation",
+          "url": "/"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "adapter": "ui-pointer",
+          "role": "button",
+          "name": "Continue later",
+          "optional": true,
+          "why": "dismiss the first-use arrival when it is present"
+        },
+        {
+          "kind": "api",
+          "method": "PUT",
+          "path": "/api/setup/onboarding",
+          "adapter": "http-route",
+          "body": {
+            "disposition": "completed"
+          },
+          "expect_status": 200,
+          "why": "complete the first-use arrival on the isolated hub"
+        },
+        {
+          "kind": "check",
+          "predicate": {
+            "kind": "protocol_field",
+            "path": "arrival_required",
+            "value": false
+          },
+          "observe_at": "protocol: GET /api/setup/status",
+          "timeout_s": 10,
+          "why": "confirm the arrival gate is closed before the Desk read"
+        },
+        {
+          "kind": "ui",
+          "action": "reload",
+          "adapter": "ui-navigation",
+          "why": "read the Desk past the closed gate"
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-window-shell.chair-window[aria-label='Needs you']",
+          "why": "the Chair screen is drawn: its Needs you window is open"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+          "why": "393: Go, the phone's one menu door",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']:has-text('Desk')",
+          "why": "393: Go ▸ Desk, the Desk menu as a menu (the panel is replaced, a back row first)",
+          "at_width": 393
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "adapter": "ui-by-viewport",
+          "selector": ".desk-verbbar-item[data-menu-id='desk'] button",
+          "why": "1440: the Desk menu on the bar",
+          "at_width": 1440
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-pointer",
+          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Write a thought')",
+          "why": "the Desk menu's verbs are listed"
+        }
+      ],
+      "trigger": {
+        "kind": "ui",
+        "action": "click",
+        "adapter": "ui-by-viewport",
+        "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Write a thought')",
+        "why": "a Desk menu verb, reached as a menu"
+      },
+      "expected": {
+        "predicate": {
+          "kind": "attr_equals",
+          "attr": "aria-label",
+          "value": "Thought"
+        },
+        "observe_at": ".desk-window-shell.is-front",
+        "words": "at 393 the Desk menu is reachable as a menu: Go ▸ Desk ▸ Write a thought opens a Thought window in front (1440: the Desk menu on the bar). Red on main 2d1d791a: Go is one flat list with no Desk ▸ row (the selector Go ▸ Desk does not exist)."
+      },
+      "completion_bound_s": 20,
       "viewports": [
         1440,
         393
@@ -514,6 +754,51 @@
       ],
       "reachable_by": [
         "case.p13.capture.titled_by_first_words"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_phone_switcher",
+      "family": "desk_presentation",
+      "values": {
+        "title": "the front window's name, then a painted ▾",
+        "rows": "the phone's ring: the open Chair windows, then the desk windows as they opened"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/window/ScreenSwitcher.tsx",
+          "symbol": "export function ScreenSwitcher(",
+          "line": 15,
+          "claim": "at 393 the screen title is a library menu Button listing the ring"
+        },
+        {
+          "path": "web/src/desk/components/window/phoneRing.ts",
+          "symbol": "export function phoneRing(",
+          "line": 32,
+          "claim": "one ring order for the switcher and the swipe"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.phone.switcher_two_taps"
+      ]
+    },
+    {
+      "id": "state.desk_presentation.p13_phone_go_grouped",
+      "family": "desk_presentation",
+      "values": {
+        "go": "Chair ▸ Desk ▸ Object ▸ Window ▸, then Go's own rows"
+      },
+      "phase1_refs": [],
+      "sources": [
+        {
+          "path": "web/src/desk/components/DeskMenuBar.tsx",
+          "symbol": "export function groupGoForPhone(",
+          "line": 39,
+          "claim": "at 393 Go leads with the four menus as submenus"
+        }
+      ],
+      "reachable_by": [
+        "case.p13.phone.go_desk_menu"
       ]
     }
   ],

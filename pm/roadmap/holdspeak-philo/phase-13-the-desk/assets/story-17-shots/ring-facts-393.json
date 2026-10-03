@@ -1,0 +1,30 @@
+{
+ "facts": {
+  "width": 393,
+  "front_after_swipe": [
+   "Needs you"
+  ],
+  "ring_after_iconify": [
+   "Needs you",
+   "Brief",
+   "The week",
+   "Payments ledger cutover",
+   "Meetings",
+   "Ledger cutover sync"
+  ],
+  "menu_after_second_tap": 0,
+  "menu_after_third_tap": 1,
+  "room_restored": {
+   "menubar": 44,
+   "dock": 56,
+   "content": 704,
+   "front": [
+    "Payments ledger cutover"
+   ],
+   "title": "Payments ledger cutover",
+   "fixed_card": false,
+   "card_in_capture": false
+  }
+ },
+ "fails": []
+}
