@@ -148,7 +148,7 @@ The proof is new capability through the real hub on an isolated HOME, minted thr
 | PHILO-13-13 | C3 — A live Dock (AppIcons) | backlog | [story-13-c3-a-live-dock](./story-13-c3-a-live-dock.md) | — |
 | PHILO-13-14 | C4 — A palette that knows his week and does verbs | backlog | [story-14-c4-a-palette-that-knows-his-week](./story-14-c4-a-palette-that-knows-his-week.md) | — |
 | PHILO-13-15 | C5 — Send to from any document window (the Phase 12 fold) | backlog | [story-15-c5-send-to-from-any-document-window](./story-15-c5-send-to-from-any-document-window.md) | — |
-| PHILO-13-16 | C6 — Capture from anywhere | backlog | [story-16-c6-capture-from-anywhere](./story-16-c6-capture-from-anywhere.md) | — |
+| PHILO-13-16 | C6 — Capture from anywhere | done | [story-16-c6-capture-from-anywhere](./story-16-c6-capture-from-anywhere.md) | [evidence-story-16](./evidence-story-16.md) |
 | PHILO-13-17 | C7 — The phone desk | backlog | [story-17-c7-the-phone-desk](./story-17-c7-the-phone-desk.md) | — |
 | PHILO-13-18 | C8 — The 12 px floor | done | [story-18-c8-the-12-px-floor](./story-18-c8-the-12-px-floor.md) | [evidence-story-18](./evidence-story-18.md) |
 Numbers follow the build order in PROPOSAL r2 (B0 first: it gates B2); the five-column story index follows Delivery Workbench.
