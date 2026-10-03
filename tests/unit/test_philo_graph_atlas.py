@@ -504,6 +504,8 @@ def test_operation_siblings_use_headless_reads_and_canonical_steps() -> None:
         'zone.update',
         # PHILO-9-05: the Room's delivery record.
         'project.mark_update_delivered',
+        # PHILO-13-10: the canonical deterministic draft producer.
+        'project.draft_update',
         # PHILO-10-05: the Send's admitted writes.
         'channel.save_destination', 'channel.prepare', 'channel.send', 'channel.discard',
     }

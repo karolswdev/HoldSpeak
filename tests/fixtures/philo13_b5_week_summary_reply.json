@@ -1,0 +1,20 @@
+{
+  "provider": "replayed",
+  "model": "philo13-b5-atlas",
+  "summary": "The ledger cutover is ready for the controlled migration.",
+  "topics": ["ledger cutover", "controlled migration"],
+  "action_items": [
+    {
+      "task": "Confirm the migration window",
+      "owner": "Avery",
+      "due": "2026-10-06"
+    },
+    {
+      "task": "Send the rollback checklist",
+      "owner": "Morgan",
+      "due": "2026-10-07"
+    }
+  ],
+  "raw_text": "```json\n{\"decisions\":[{\"decision\":\"Use the controlled migration window\",\"rationale\":\"The rollback path is tested\",\"source_timestamp\":4.0}],\"open_questions\":[]}\n```",
+  "capabilities": ["meeting.deferred_analysis", "meeting.plugin.decision_capture"]
+}

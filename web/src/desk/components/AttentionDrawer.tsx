@@ -24,6 +24,29 @@ import {
 } from "./DeskWindow";
 import { MicButton } from "./MicButton";
 import { SystemShade } from "./SystemShade";
+import { refreshNeedsYou, useNeedsYou } from "../needsYou";
+import { useRuntimeBus } from "../../runtime/RuntimeBus";
+
+/** PHILO-13-03 (A2-W): a write anywhere on the Desk moves the ONE needs-you
+ * number. The hub's `desk_changed` frame (debounced, as
+ * `useDeskChangedRefresh` does) re-reads the shared snapshot fresh, so the
+ * bell, the Dock and the Chair follow within a second -- never the minute
+ * poll. */
+export const NEEDS_YOU_CHANGED_DEBOUNCE_MS = 300;
+function useNeedsYouOnDeskChanged(): void {
+  const { subscribe } = useRuntimeBus();
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = subscribe("desk_changed", () => {
+      if (timer !== null) clearTimeout(timer);
+      timer = setTimeout(() => { timer = null; void refreshNeedsYou(true); }, NEEDS_YOU_CHANGED_DEBOUNCE_MS);
+    });
+    return () => {
+      if (timer !== null) clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [subscribe]);
+}
 
 function when(raw: string) {
   const date = new Date(raw);
@@ -46,6 +69,10 @@ export function AttentionDrawer() {
   const actualDest = selected?.actual_destination;
   const effectCls = selected?.effect_class;
   const needs = Number(store.counts.needs_attention || 0);
+  // PHILO-13-03 (canvas C1-1): the Desk memory icon carries the ONE
+  // needs-you number; the window's own counts stay below.
+  const { count: needsYouCount } = useNeedsYou();
+  useNeedsYouOnDeskChanged();
   const intelligence = useIntelligenceAttention();
   // HS-132-08 — a finished meeting is desk attention, not mascot business.
   const aftercare = useAftercare();
@@ -79,12 +106,12 @@ export function AttentionDrawer() {
       label: "Desk memory",
       glyph: "◎",
       open: store.open,
-      badge: needs > 0 ? needs : undefined,
+      badge: needsYouCount > 0 ? needsYouCount : undefined,
       activate: () => setShadeOpen(true),
     });
     return () => retractLauncher("attention");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store.open, needs]);
+  }, [store.open, needsYouCount]);
 
   return (
     <>

@@ -6823,7 +6823,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 930,
+      "line": 820,
       "kinds": [
         "http_client"
       ],
@@ -6833,7 +6833,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1081,
+      "line": 969,
       "kinds": [
         "http_client"
       ],
@@ -6843,7 +6843,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1615,
+      "line": 1505,
       "kinds": [
         "http_client"
       ],
@@ -6853,7 +6853,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1929,
+      "line": 1819,
       "kinds": [
         "http_client"
       ],
@@ -6863,7 +6863,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 1983,
+      "line": 1875,
       "kinds": [
         "http_client"
       ],
@@ -6873,7 +6873,7 @@
     },
     {
       "path": "web/src/desk/chair/ChairHome.tsx",
-      "line": 2036,
+      "line": 1928,
       "kinds": [
         "http_client"
       ],
@@ -8863,7 +8863,7 @@
     },
     {
       "path": "web/src/pages/cores/history/CatalogRail.tsx",
-      "line": 278,
+      "line": 280,
       "kinds": [
         "http_client"
       ],

@@ -16,7 +16,7 @@ describe("meetingsHeadline", () => {
 
   it("keeps the existing grammar", () => {
     expect(meetingsHeadline([], false)).toEqual({ text: "No meetings yet", accent: false });
-    expect(meetingsHeadline([RAN], false)).toEqual({ text: "Nothing needs you", accent: false });
+    expect(meetingsHeadline([RAN], false)).toEqual({ text: "All summaries done", accent: false });
     expect(meetingsHeadline([OFF_WITH_WORDS], false))
       .toEqual({ text: "1 meeting needs a summary", accent: true });
     expect(meetingsHeadline([RAN], true)).toEqual({ text: "", accent: false });

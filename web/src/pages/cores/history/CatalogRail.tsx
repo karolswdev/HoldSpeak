@@ -121,7 +121,9 @@ function MeetingStreamRow({
   let displayLabel = state.label;
   let displayTone = state.tone;
   if (needsYouCount > 0 && !PROCESS_LEADS.has(token.label)) {
-    displayLabel = countToken(needsYouCount, "NEEDS YOU", "NEED YOU") ?? displayLabel;
+    // PHILO-13-03: a meeting's proposed outcomes are narrower than the
+    // Desk's one "needs you" number, so the token says what it counts.
+    displayLabel = countToken(needsYouCount, "TO REVIEW", "TO REVIEW") ?? displayLabel;
     displayTone = "accent";
   }
 

@@ -272,16 +272,17 @@ def _run_projects_rig(
             # Alpha (2 items) should have badge
             assert badges[0].count() == 1, "Alpha should have a badge"
             badge_text_0 = badges[0].text_content() or ""
-            assert "NEED YOU" in badge_text_0, \
-                f"Alpha badge should say NEED YOU: {badge_text_0}"
+            # PHILO-13-03: a Room's own count is OPEN, not "needs you".
+            assert badge_text_0 == "2 OPEN", \
+                f"Alpha badge should say 2 OPEN: {badge_text_0}"
             assert badge_text_0.startswith("2"), \
                 f"Alpha badge should start with 2: {badge_text_0}"
 
             # Beta (1 item) should have badge
             assert badges[1].count() == 1, "Beta should have a badge"
             badge_text_1 = badges[1].text_content() or ""
-            assert "NEEDS YOU" in badge_text_1, \
-                f"Beta badge should say NEEDS YOU (singular): {badge_text_1}"
+            assert badge_text_1 == "1 OPEN", \
+                f"Beta badge should say 1 OPEN: {badge_text_1}"
 
             # Gamma (0 items) should have no badge
             assert badges[2].count() == 0, \

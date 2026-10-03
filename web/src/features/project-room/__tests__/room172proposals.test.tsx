@@ -317,7 +317,7 @@ describe("HS-172-03: Proposals in NEEDS YOU", () => {
     await waitFor(() => expect(screen.getByTestId("room-headline")).toBeTruthy());
 
     // Count is 3 (2 proposals + 1 GH item)
-    expect(screen.getByTestId("room-headline").textContent).toContain("3 need you");
+    expect(screen.getByTestId("room-headline").textContent).toContain("3 open here");
   });
 });
 

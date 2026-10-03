@@ -465,7 +465,8 @@ class TestRoomFaceGlass:
                 # Muad'Dib's ruling 3 (2026-09-28): the canvas words on the face,
                 # the hub's words unchanged (test_the_late_words_are_the_canvas_words).
                 assert "1 MILESTONE LATE" in first["head_chips"], first["head_chips"]
-                assert first["headline"] == "1 needs you", first["headline"]
+                # PHILO-13-03: the Room's own count names what it counts.
+                assert first["headline"] == "1 open here", first["headline"]
                 assert any("Cutover rehearsal" in r for r in first["needs_you"]), first["needs_you"]
                 assert facts["small_text_count"] == 0, facts["small_text"]
                 assert facts["raw_buttons"] == [], facts["raw_buttons"]

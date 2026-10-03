@@ -1,0 +1,19 @@
+{
+  "case": "retrying",
+  "width": 393,
+  "headline": "1 summary queued",
+  "wire": {
+    "id": "philo13-a2w-headline",
+    "intel_status": "queued",
+    "has_summary": false,
+    "intel_job": {
+      "status": "retrying",
+      "attempts": 1,
+      "requested_at": "2026-10-02T21:45:04.135264",
+      "updated_at": "2026-10-02T21:44:34.136111",
+      "last_error": "PROVIDER FAILED",
+      "retry_scheduled": true,
+      "next_retry_at": "2026-10-02T21:45:04.135264"
+    }
+  }
+}

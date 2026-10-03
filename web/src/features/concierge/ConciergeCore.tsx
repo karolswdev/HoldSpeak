@@ -482,7 +482,8 @@ export function ConciergeCore({ scope }: CoreProps) {
         <div className="concierge-section">
           <div className="concierge-section-header">
             <span className="concierge-section-label" data-testid="concierge-repairs-label">
-              {`NEEDS YOU ${ctrl.repairs.length}`}
+              {/* PHILO-13-03: the repairs, narrower than the Desk's "needs you". */}
+              {`TO REPAIR ${ctrl.repairs.length}`}
             </span>
           </div>
           <ul className="concierge-repair-list" data-testid="concierge-repair-list">
