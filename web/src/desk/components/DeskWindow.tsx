@@ -832,10 +832,14 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           win.style
         : maxed
         ? {
-            top: "var(--desk-work-top)",
+            // PHILO-13-11 close (board C1-2d): zoom fills the SCREEN — the
+            // head flush under the screen bar, the foot (and its sizing
+            // gadget) clear of the shelf at its measured height (the 76 px
+            // C3-W shelf; the shell-wide 52 px band left it buried).
+            top: "var(--wb-screen-h, var(--desk-work-top))",
             left: MARGIN,
             right: MARGIN,
-            bottom: "var(--desk-work-bottom)",
+            bottom: "var(--desk-dock-h, var(--desk-work-bottom))",
             width: "auto",
             height: "auto",
             maxHeight: "none",
