@@ -1,3 +1,4 @@
+import { wireDate } from "../../surface/format";
 import { useEffect, useState } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
@@ -54,8 +55,8 @@ function shortId(id: string): string {
 
 function humanDate(value: string | null | undefined): string {
   if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
+  const date = wireDate(value);
+  return !date ? value : date.toLocaleDateString();
 }
 
 /** Search-first, in-place decision history for the Intelligence pullout. */
@@ -210,7 +211,10 @@ export function DecisionsView({
                   onToggle={() => openReceipt(receipt.id)}
                   cells={
                     <>
-                      <span className="surface-ledger-cell receipts-id">D-{shortId(receipt.id)}</span>
+                      {/* Inventory 2026-10-03: the raw id cell (`D-19dbe10e895b`)
+                          took the row's width and cut the decision's own
+                          words to "F…". A row names the decision, not its
+                          key; the id stays on the receipt it opens. */}
                       <span className="surface-ledger-cell">{receipt.owner || "UNASSIGNED"}</span>
                       <span className="surface-ledger-cell">
                         <span className="surface-token" data-tone={status === "superseded" ? "muted" : "ok"}>

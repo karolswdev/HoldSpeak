@@ -13,6 +13,7 @@ import { openPrimitive, openProjectRoom, openSurfaceOr } from "../shell";
 import { ChairHome } from "../chair/ChairHome";
 import { BriefView } from "../pullouts/views/BriefView";
 import { __resetOwnerCache } from "../openObject";
+import { asHub } from "../../test/hubNeedsYou";
 
 vi.mock("../../lib/api", async (original) => ({
   ...(await original<typeof import("../../lib/api")>()),
@@ -96,7 +97,7 @@ function decisionRead(url: string): unknown {
 let chairBrief: unknown = BRIEF;
 
 function wireChair() {
-  vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+  vi.mocked(apiFetch).mockImplementation(asHub(async (path: string, init?: unknown) => {
     const url = String(path);
     const body = (init as { json?: { identity?: string } } | undefined)?.json;
     if (url === "/api/inference/assignments") return { schema: "InferenceAssignmentSummary@1", rows: [], task_overrides: [], issue_count: 0 } as never;
@@ -105,7 +106,7 @@ function wireChair() {
     if (url.startsWith("/api/brief/latest")) return chairBrief as never;
     if (url === "/api/people/resolve") return { relationship_id: body?.identity === "Priya" ? "rel-priya" : null } as never;
     return decisionRead(url) as never;
-  });
+  }));
 }
 
 beforeEach(() => {
@@ -199,8 +200,8 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
 
 describe("PHILO-13-06: Intelligence BRIEF opens its rows; Brief → People works", () => {
   it("a row opens its decision and names the selection in words, not a raw id", async () => {
-    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
-      (String(path).startsWith("/api/brief/latest") ? BRIEF : decisionRead(String(path))) as never);
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) =>
+      (String(path).startsWith("/api/brief/latest") ? BRIEF : decisionRead(String(path))) as never));
     render(<BriefView header={null} />);
     const row = await screen.findByText("Freeze the old ledger on Nov 5");
     fireEvent.click(row);
@@ -211,8 +212,8 @@ describe("PHILO-13-06: Intelligence BRIEF opens its rows; Brief → People works
   });
 
   it("Open person opens People on that relationship", async () => {
-    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
-      (String(path).startsWith("/api/brief/latest") ? BRIEF : null) as never);
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) =>
+      (String(path).startsWith("/api/brief/latest") ? BRIEF : null) as never));
     render(<BriefView header={null} />);
     fireEvent.click(await screen.findByTestId("person-row-rel-priya"));
     fireEvent.click(screen.getByTestId("verb-open-person"));
@@ -221,9 +222,9 @@ describe("PHILO-13-06: Intelligence BRIEF opens its rows; Brief → People works
   });
 
   it("a failed read withholds Acknowledge, Defer and Speak (A.11)", async () => {
-    vi.mocked(apiFetch).mockImplementation(async () => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async () => {
       throw new ApiError(500, "injected", null);
-    });
+    }));
     render(<BriefView header={null} />);
     await screen.findByText(/BRIEF DID NOT LOAD/);
     expect(screen.queryByRole("button", { name: "Acknowledge" })).toBeNull();

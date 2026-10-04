@@ -1298,6 +1298,10 @@ class MeetingWebServer:
             except Exception as e:
                 log.error(f"desk startup recovery failed: {e}")
             self._loop = asyncio.get_running_loop()
+            # MCP tool bodies run their coroutines on this loop (mcp/aio.py).
+            from .mcp import aio as _mcp_aio
+
+            _mcp_aio.set_hub_loop(self._loop)
             self._duration_task = asyncio.create_task(self._duration_loop())
             self._coder_frames_task = asyncio.create_task(self._coder_frames_loop())
             self._rails_observer_task = asyncio.create_task(self._rails_observer_loop())
@@ -1430,6 +1434,9 @@ class MeetingWebServer:
                     getattr(module, attribute)()
                 except Exception as e:
                     log.error(f"{name} conductor shutdown failed: {e}")
+            from .mcp import aio as _mcp_aio
+
+            _mcp_aio.set_hub_loop(None)
             await refinement_coordinator.shutdown()
             for task in (
                 self._duration_task,

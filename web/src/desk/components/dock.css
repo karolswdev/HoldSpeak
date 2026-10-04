@@ -405,7 +405,8 @@
 }
 .desk-next .desk-dock-x {
   color: var(--wb-ink);
-  border-left: 1px solid var(--wb-ink);
+  /* the hairline on the left edge is an inset shadow (HS-101 rule 6: no left rail) */
+  box-shadow: inset 1px 0 0 var(--wb-ink);
   border-radius: 0;
 }
 .desk-next .desk-dock-reset {
@@ -652,10 +653,10 @@
     margin: 0 0 0 auto;
     padding: 0;
     border: 0;
-    border-left: 1px solid var(--wb-ink);
     border-radius: 0;
     background: var(--wb-steel);
-    box-shadow: var(--wb-raised), -6px 0 8px -4px rgba(0, 0, 0, 0.35);
+    /* the hairline on the left edge is an inset shadow (HS-101 rule 6: no left rail) */
+    box-shadow: inset 1px 0 0 var(--wb-ink), var(--wb-raised), -6px 0 8px -4px rgba(0, 0, 0, 0.35);
     color: var(--wb-ink);
     font: 700 18px var(--font-mono);
     z-index: 2;

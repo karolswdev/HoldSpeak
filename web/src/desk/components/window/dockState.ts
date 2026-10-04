@@ -7,6 +7,8 @@
  * proof.
  */
 
+import { wireDate } from "../../surface/format";
+
 export type DockSendOutcome = "sent" | "failed" | "unknown";
 
 export interface DockRecording {
@@ -217,7 +219,7 @@ export function dockStateLabel(
 
 export function formatDockTime(value: string | number | null | undefined): string {
   if (value === null || value === undefined || value === "") return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
+  const date = wireDate(value);
+  if (!date) return String(value);
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 }

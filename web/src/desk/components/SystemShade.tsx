@@ -45,6 +45,9 @@ type NeedsYouAggregate = {
   mutedCount?: number;
   projects: string[];
   items: NeedsYouItem[];
+  /** The Room rows alone. `items` is every row of the one needs-you rule
+   *  (Door cards too); the Projects list is per Room, so it reads these. */
+  roomItems?: NeedsYouItem[];
   next?: { label: string; at: string } | null;
   computedAt?: string;
   stale?: boolean;
@@ -430,7 +433,8 @@ export function SystemShade({
           HS-200-07 (C4): "Nothing missed" is an ALL-CLEAR — it is spoken
           only over complete coverage; a partial read shows the coverage
           section above instead. */}
-      {!needsYou?.items?.length && !brief && !(needsAttentionCount + gate.held.length) && !finished.length && !learned.length
+      {/* The all-clear reads the one needs-you number (`count`). */}
+      {!(needsYou?.count ?? needsYou?.items?.length) && !brief && !(needsAttentionCount + gate.held.length) && !finished.length && !learned.length
         && readCoverage(needsYou?.coverage, needsYou?.complete, needsYouUnread).complete ? (
         <p className="desk-shade-quiet">Nothing missed</p>
       ) : null}
@@ -521,7 +525,7 @@ function ShadeProjects({
   needsYou: NeedsYouAggregate | null;
   onClose: () => void;
 }) {
-  const rooms = needsYou ? groupByRoom(needsYou.items) : [];
+  const rooms = needsYou ? groupByRoom(needsYou.roomItems ?? needsYou.items) : [];
   // Absent when no Room has items.
   if (rooms.length === 0) return null;
 
@@ -706,7 +710,7 @@ function ShadePeople({
 
   // Derive distinct Room ids from the needs-you aggregate
   const roomIds = needsYou
-    ? groupByRoom(needsYou.items)
+    ? groupByRoom(needsYou.roomItems ?? needsYou.items)
         .filter((r) => !r.muted)
         .map((r) => ({ id: r.projectId, name: r.projectName }))
     : [];

@@ -1,3 +1,4 @@
+import { wireDate } from "../surface/format";
 import "./chrome-menus.css";
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
@@ -8,7 +9,7 @@ import {
   effectClassLabel,
   humanizeWireValue,
 } from "../../lib/productLanguage";
-import { createThread } from "../threads";
+import { openNewThread } from "../newThread";
 import { contextualIntegrationActions } from "../contextual";
 import { useProjections } from "../projections";
 import { useDesk } from "../store";
@@ -74,8 +75,8 @@ function Fact({ label, value }: { label: string; value: unknown }) {
 }
 
 function when(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.valueOf()) ? value : date.toLocaleString();
+  const date = wireDate(value);
+  return !date ? value : date.toLocaleString();
 }
 
 export function DeskToolInspector() {
@@ -330,7 +331,7 @@ export function DeskToolInspector() {
                 type="button"
                 className="desk-chip"
                 disabled={!target.readiness.available}
-                onClick={() => void createThread({ title: target.model, profile_override: target.model }).then((t) => { openPullout(`thread:${t.id}`); void refresh(); })}
+                onClick={() => void openNewThread({ title: target.model, profile_override: target.model })}
               >
                 Continue in thread
               </button>

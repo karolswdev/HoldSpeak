@@ -1,7 +1,7 @@
 {
   "generated_at": "2026-09-25T07:19:00-11:00",
   "generated_label": "GENERATED SEP 25 07:19",
-  "headline": "1 meeting this week, 1 thing changed, 2 things broke.",
+  "headline": "1 meeting this week, 1 thing changed, 2 things broke, 2 things waiting.",
   "id": "brief-philo6-00",
   "is_empty": false,
   "ledger": {
@@ -65,7 +65,26 @@
         "text": "Next: Design review at 10:00"
       }
     ],
-    "waiting": []
+    "waiting": [
+      {
+        "created_at": null,
+        "detail": "Choose an engine",
+        "id": "brief-item-philo6-06",
+        "priority": 120,
+        "section": "waiting",
+        "source_ref": "blocker:engines",
+        "text": "No engine yet"
+      },
+      {
+        "created_at": null,
+        "detail": null,
+        "id": "brief-item-philo6-07",
+        "priority": 110,
+        "section": "waiting",
+        "source_ref": "meeting:m-arch",
+        "text": "Summary failed: Architecture review"
+      }
+    ]
   },
   "shelf": {
     "brief-break-pipeline-brief-philo6-00-philo6-01": "acknowledged"

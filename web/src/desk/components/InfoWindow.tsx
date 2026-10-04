@@ -17,6 +17,10 @@ import { CycleGadget, FoldGadget, StringGadget } from "../surface/gadgets";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import { DeskWindowFrame } from "./DeskWindow";
 
+/** The kinds whose hub route names the object by `title` (the rest take
+ * `name`). A decision renamed with `name` answered 200 and kept its title. */
+const TITLE_KINDS = new Set(["note", "meeting", "decision", "thread"]);
+
 function IdentityName({ o }: { o: WorldObject }) {
   const { updatePrimitive, renameZone } = useDesk.getState();
   const [editing, setEditing] = useState(false);
@@ -26,7 +30,7 @@ function IdentityName({ o }: { o: WorldObject }) {
     setEditing(false);
     if (!name || name === o.title) return;
     if (o.kind === "directory") void renameZone(o.id, name);
-    else if (o.kind === "note" || o.kind === "meeting")
+    else if (TITLE_KINDS.has(o.kind))
       void updatePrimitive(o.kind, o.id, { title: name }, "RENAME");
     else void updatePrimitive(o.kind, o.id, { name }, "RENAME");
   };
@@ -85,7 +89,10 @@ function IdentityName({ o }: { o: WorldObject }) {
 export function InfoWindow({
   refId,
   origin,
+  onOpenZone,
 }: {
+  /** Where a Filed zone opens. The list has no zone windows: it dives. */
+  onOpenZone?: (zoneId: string) => void;
   /** `kind:id` or bare id (objects) — or `zone:<id>` for a drawer. */
   refId: string;
   origin?: { x: number; y: number } | null;
@@ -179,7 +186,7 @@ export function InfoWindow({
                   key={String(z.id)}
                   type="button"
                   className="desk-chip quiet"
-                  onClick={() => openZoneWindow(String(z.id))}
+                  onClick={() => (onOpenZone ?? openZoneWindow)(String(z.id))}
                 >
                   ▦ {String(z.name || z.id)}
                 </button>

@@ -1,5 +1,6 @@
 // HS-135-04: People is a single protected Desk application.  Its roster is
 // a relationship projection, never a field of person tiles or a scorecard.
+import { wireDate } from "../../desk/surface/format";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CoreProps } from "./core-types";
 import { Button } from "../../components/signal/Signal";
@@ -407,8 +408,8 @@ function RelationshipPane({ relationship, initialLens, lensRequest = null, onRef
 
 function shortWhen(isoDate: string): string {
   try {
-    const d = new Date(isoDate);
-    if (Number.isNaN(d.getTime())) return "";
+    const d = wireDate(isoDate);
+    if (!d) return "";
     const now = new Date();
     const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); // calendar days, not 24 h blocks
     const diffDays = Math.round((startOf(d) - startOf(now)) / 86_400_000);
@@ -532,7 +533,7 @@ function PrepLens({ relationship, onRefresh, onProtectedFailure, onOpenConcern }
             <span className="people-prep-row-primary" data-testid="prep-commitments-label">{overdueCount} {overdueCount === 1 ? "COMMITMENT" : "COMMITMENTS"} OVERDUE</span>
             <span className="people-prep-row-tokens">
               {overdueCommitments[0] ? <span className="people-prep-token people-prep-token-muted">{overdueCommitments[0].body.length > 30 ? overdueCommitments[0].body.slice(0, 30) : overdueCommitments[0].body}</span> : null}
-              {overdueCommitments[0]?.due ? <span className="people-prep-token" data-warning="true">BY {new Date(overdueCommitments[0].due).toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}</span> : null}
+              {overdueCommitments[0]?.due ? <span className="people-prep-token" data-warning="true">BY {shortDay(overdueCommitments[0].due)}</span> : null}
             </span>
             <span className="people-prep-row-spacer" />
             <Button dense variant="ghost" onClick={() => onOpenConcern("commitments", brief)} data-testid="prep-commitments-open">Open</Button>
@@ -583,7 +584,11 @@ function PrepLens({ relationship, onRefresh, onProtectedFailure, onOpenConcern }
     {prep.projects.length ? (
       <div data-testid="prep-projects">
         <SurfaceSection label="Projects">
-          <SurfaceRows>{prep.projects.map((project) => <SurfaceRow key={project.id} title={project.name} onOpen={refOpener(`project:${project.id}`) ?? undefined} />)}</SurfaceRows>
+          <SurfaceRows>{prep.projects.map((project) => <SurfaceRow
+            key={project.id}
+            title={project.name}
+            onOpen={refOpener(`project:${project.id}`) ?? undefined}
+          />)}</SurfaceRows>
         </SurfaceSection>
       </div>
     ) : null}
@@ -601,9 +606,8 @@ function PrepLens({ relationship, onRefresh, onProtectedFailure, onOpenConcern }
  * calendar day in the desk's zone; `new Date("2026-10-06")` would read it as
  * UTC midnight and show the day before west of UTC. */
 function shortDay(isoDate: string): string {
-  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate.trim());
-  const d = day ? new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3])) : new Date(isoDate);
-  return Number.isNaN(d.getTime()) ? isoDate : d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
+  const d = wireDate(isoDate);
+  return !d ? isoDate : d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
 }
 
 /** The relationship's linked series, as one key: a change re-reads the brief. */
@@ -739,7 +743,7 @@ function CalendarLinkSection({ relationship, onRefresh, onProtectedFailure, upco
     {links.length ? <SurfaceRows>{links.map((link) => <SurfaceRow
       key={`${link.uid}:${link.source_id}`}
       title={link.label || "Linked series"}
-      detail={link.linked_at ? `Linked ${new Date(link.linked_at).toLocaleDateString()}` : undefined}
+      detail={link.linked_at ? `Linked ${wireDate(link.linked_at)?.toLocaleDateString() ?? ""}` : undefined}
       verbs={<ConfirmVerb label="Unlink" confirmLabel="Unlink?" busy={busy} onConfirm={() => void unlinkSeries(link)} />}
     />)}</SurfaceRows> : null}
     {pickerOpen ? (
@@ -895,7 +899,7 @@ function NowLens({ relationship, onRefresh, onProtectedFailure, concern, prepBri
               wrap
               cells={
                 <span className="people-now-caption">
-                  {c.due ? <span className="people-now-caption-warning">BY {new Date(c.due).toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}</span> : null}
+                  {c.due ? <span className="people-now-caption-warning">BY {shortDay(c.due)}</span> : null}
                   {c.due ? " · " : ""}<span className="people-now-caption-warning">OVERDUE</span>
                 </span>
               }
