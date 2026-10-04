@@ -13,7 +13,12 @@ The commit gate is removed. The rules are:
 
 1. Branch from `main` in your own worktree. Commit plainly.
 2. Open a PR.
-3. Astra gives one review of the PR (one check, one confirmation).
+3. Astra gives one final review round, when the work is finished (owner ruling
+   2026-10-03: "maybe we chill out about two brains? Only one final review
+   round? With a maximum of 2 iterations?"). At most 2 iterations: the
+   review, then one re-check of the fixes. After the second iteration the
+   author merges; anything still open goes to `pm/STATUS.md`. No reviews
+   of plans, briefs, canvases or work in progress.
 4. Merge. CI does not gate the merge.
 5. At merge, update `pm/STATUS.md` (open work, last merged).
 
