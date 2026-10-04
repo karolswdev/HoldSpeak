@@ -95,12 +95,118 @@ def test_helper_is_bounded_and_empty_without_scope(rig):
 
     assert not memory_context(rig)  # no project, no query: nothing
     assert memory_context(rig).prompt_block() == ""
-    bounded = memory_context(rig, project_id=project_id, excerpt_chars=20)
-    assert all(len(e.text) <= 20 + len(" [cut]") for e in bounded.excerpts)
+    bounded = memory_context(rig, project_id=project_id, excerpt_chars=80)
+    assert bounded and all(len(e.line()) <= 80 for e in bounded.excerpts)
     held = memory_context(
         rig, project_id=project_id, exclude_refs=[f"desk_decision:{inside}"],
     )
     assert f"desk_decision:{inside}" not in held.refs  # the drafter already holds it
+
+
+def test_a_huge_title_cannot_grow_the_block(rig):
+    """Astra #768 finding 3: only the text was capped; a long decision title
+    made a 22,648-character prompt.  The whole rendered excerpt and the whole
+    block are bounded."""
+    from holdspeak.services.memory_grounding import (
+        MEMORY_BLOCK_CHARS,
+        MEMORY_EXCERPT_CHARS,
+    )
+
+    svc = _make_service(rig)
+    project_id = svc._project_service.create_project(OWNER, {"name": "Atlas"})["id"]
+    for index in range(12):
+        huge = _decide(rig, f"Ledger {index} " + "very long title " * 1500, "Short body.")
+        svc._project_service.add_resource(OWNER, project_id, f"desk_decision:{huge}")
+
+    memory = memory_context(rig, project_id=project_id, query="ledger")
+
+    assert memory
+    assert all(len(e.line()) <= MEMORY_EXCERPT_CHARS for e in memory.excerpts)
+    assert len(memory.prompt_block("PROJECT MEMORY")) <= MEMORY_BLOCK_CHARS
+    assert sum(len(t) for t in memory.texts.values()) <= MEMORY_BLOCK_CHARS
+    small = memory_context(rig, project_id=project_id, query="ledger", block_chars=900)
+    assert small and len(small.prompt_block("PROJECT MEMORY")) <= 900
+
+
+def test_every_ref_the_helper_returns_is_one_the_desk_opens(rig):
+    """Astra #768 finding 1.  The kinds are fenced against the real opener in
+    web/src/desk/__tests__/memoryRefsOpen.test.ts; here: real mixed memory
+    gives only those kinds, under the Desk's names."""
+    from datetime import datetime
+
+    from holdspeak.intel.models import ActionItem
+    from holdspeak.meeting_session.models import IntelSnapshot, MeetingState, TranscriptSegment
+    from holdspeak.services.memory_grounding import DESK_REF_KINDS
+
+    project_id, inside = _project_with_decision(rig)  # desk decision + project items
+    projects = _make_service(rig)._project_service
+    rig.meetings.save_meeting(MeetingState(
+        id="m-ledger", started_at=datetime(2026, 9, 1, 9, 0), ended_at=datetime(2026, 9, 1, 9, 30),
+        title="Ledger sync",
+        segments=[TranscriptSegment(text="the ledger launch needs a vendor review", speaker="Me",
+                                    start_time=0.0, end_time=4.0)],
+        intel=IntelSnapshot(
+            timestamp=1.0, topics=["ledger"], summary="Ledger launch reviewed.",
+            action_items=[ActionItem(task="Draft the ledger vendor checklist", owner="Dana")],
+        ),
+    ))
+    projects.associate_meeting(OWNER, project_id, "m-ledger")
+
+    memory = memory_context(
+        rig, project_id=project_id, query="ledger launch vendor checklist backend",
+    )
+
+    kinds = {e.kind for e in memory.excerpts}
+    assert kinds <= set(DESK_REF_KINDS), kinds
+    assert {"desk_decision", "meeting", "action_item"} <= kinds, memory.refs
+    assert f"desk_decision:{inside}" in memory.refs
+    assert all(ref.split(":", 1)[0] in DESK_REF_KINDS for ref in memory.refs)
+    assert not any(ref.startswith(("action:", "project_item:", "transcript:")) for ref in memory.refs)
+
+
+def test_exclusions_apply_before_the_selection_limit(rig):
+    """Astra #768 finding 2: 17 meetings the drafter already holds filled the
+    16 selected sources, and the one older relevant transcript never arrived."""
+    from datetime import datetime, timedelta
+
+    from holdspeak.meeting_session.models import IntelSnapshot, MeetingState, TranscriptSegment
+
+    svc = _make_service(rig)
+    projects = svc._project_service
+    project_id = projects.create_project(OWNER, {"name": "Atlas"})["id"]
+    start = datetime(2026, 9, 1, 9, 0)
+
+    def meeting(meeting_id: str, when: datetime, text: str, summary: str | None) -> None:
+        rig.meetings.save_meeting(MeetingState(
+            id=meeting_id, started_at=when, ended_at=when + timedelta(minutes=30),
+            title=f"Atlas ledger sync {meeting_id}",
+            segments=[TranscriptSegment(text=text, speaker="Me", start_time=0.0, end_time=4.0)],
+            intel=IntelSnapshot(timestamp=1.0, topics=["ledger"], summary=summary, action_items=[])
+            if summary else None,
+        ))
+        projects.associate_meeting(OWNER, project_id, meeting_id)
+
+    # The older, relevant transcript: no summary, so no drafter inventory holds it.
+    meeting("m-old", start - timedelta(days=30),
+            "the atlas ledger cutover rehearsal failed on the quorumdb replica", None)
+    held = []
+    for index in range(17):
+        meeting(f"m-{index:02d}", start + timedelta(days=index),
+                "atlas ledger status sync", f"Atlas ledger status sync {index}.")
+        held.append(f"meeting:m-{index:02d}")
+
+    memory = memory_context(
+        rig, project_id=project_id, query="Atlas ledger status sync", exclude_refs=held,
+    )
+    assert "meeting:m-old" in memory.refs, memory.refs
+
+    # And through the drafter: the older transcript reaches the prompt.
+    det, draft, runner = _model_draft(rig, project_id)
+    inventory = {ref for c in json.loads(det["claims_json"]) for ref in c["refs"]}
+    assert set(held) <= inventory and "meeting:m-old" not in inventory
+    prompt = runner.invoke_calls[0].payload["user_prompt"]
+    assert "cutover rehearsal failed on the quorumdb replica" in prompt
+    assert "meeting:m-old" in json.loads(draft["source_manifest_json"])["memory_refs"]
 
 
 # ── The project update drafter ───────────────────────────────────────

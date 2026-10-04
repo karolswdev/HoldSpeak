@@ -94,6 +94,16 @@ export function refOpener(ref: string | null | undefined): Opener | null {
   return null;
 }
 
+/** Open a cited ref (a claim's source, a memory citation): the one open
+ * grammar first; a ref it does not name goes to the citation species. Memory
+ * ranks the child message that matched; the Desk opens the parent thread. */
+export function openRef(ref: string): void {
+  const clean = ref.startsWith("thread:") ? ref.split("#", 1)[0] : ref.trim();
+  const open = refOpener(clean);
+  if (open) open();
+  else openSourceRef(clean);
+}
+
 /** A decision ref names a Desk decision (its own window) or a decision a
  * meeting recorded (`decisions` lifecycle rows, no Desk window): that one
  * opens its meeting, where it was made. One read tells which. */
