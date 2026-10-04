@@ -214,10 +214,10 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     ),
     # HS-153-03/05: chat practice capabilities (guardrail + compaction).
     # HS-153-06: line numbers shifted by M1 redaction + response_format + robust parser additions.
-    "holdspeak/services/thread_practice.py:222|run_guardrail|call": ProposedRoute(
+    "holdspeak/services/thread_practice.py:210|run_guardrail|call": ProposedRoute(
         "chat.guardrail", "services.thread_practice", "InferenceRunner admitted child",
     ),
-    "holdspeak/services/thread_practice.py:347|run_compact|call": ProposedRoute(
+    "holdspeak/services/thread_practice.py:335|run_compact|call": ProposedRoute(
         "chat.compact", "services.thread_practice", "InferenceRunner admitted child",
     ),
     # HS-162-03: model drafter for project update drafting.

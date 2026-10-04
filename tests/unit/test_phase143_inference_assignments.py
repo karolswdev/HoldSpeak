@@ -48,7 +48,12 @@ def _profile(
     context_ceiling: int = 32768,
     modalities: tuple[str, ...] = ("language",),
     capability_manifest: dict[str, object] | None = None,
+    model: str | None = None,
 ) -> str:
+    # ``model``: the model name the deployment runs. The default (the profile
+    # id) is NOT what a real desk has; a test of route resolution passes a
+    # different name (HS-200-08: a profile id is not a model name).
+    model = model or profile_id
     profiles = ModelProfileService(db)
     manifest = capability_manifest or _manifest(*claims)
     profiles.create_profile(
@@ -70,7 +75,7 @@ def _profile(
     deployment = DeploymentRevision.from_artifact(
         destination_id="this_machine",
         engine="configured_local_engine",
-        model=profile_id,
+        model=model,
         runtime_id="llama_cpp_prompt_v1",
         runtime_revision="1",
         artifact_id=f"artifact-{profile_id}",
@@ -112,7 +117,7 @@ def _profile(
                 "llama_cpp_prompt_v1",
                 "1",
                 f"artifact-{profile_id}",
-                profile_id,
+                model,
                 context_ceiling,
                 context_ceiling,
                 "{}",

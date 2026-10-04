@@ -1213,33 +1213,25 @@ class TestGuardrailM1CapabilityBoundary:
         # If we need a different boundary for chat.guardrail, create a NEW
         # profile+deployment and re-point the chat.guardrail assignment to it.
         if guardrail_boundary != "same_device":
-            # Create a deployment revision with the desired boundary.
-            # Use a unique model name that has NO v2 deployment row.
-            gr_profile = "m1-guardrail-cloud"
-            v1_dep = DeploymentRevision.from_identity(DeploymentIdentity(
-                destination_id="cloud_service",
-                kind="cloud",
-                engine="configured_local_engine",
-                model=gr_profile,
-                node="",
-                boundary=guardrail_boundary,
-                endpoint="",
-                secret_slot="",
-            ))
-            db.deployment_revisions.upsert(v1_dep)
-
-            # Update the chat.guardrail assignment to point to gr_profile.
+            # The capability's engine resolves by route (profile -> binding ->
+            # deployment revision), never by a model name. Give the BOUND
+            # deployment revision the requested boundary.
             with db._connection() as conn:
-                head = conn.execute(
-                    "SELECT assignment_id, revision FROM inference_assignment_heads "
-                    "WHERE assignment_key='capability:chat.guardrail' AND cleared=0",
+                bound = conn.execute(
+                    """SELECT b.deployment_revision_id AS rev
+                         FROM inference_assignment_heads ah
+                         JOIN inference_assignments a
+                           ON a.assignment_id=ah.assignment_id AND a.assignment_revision=ah.revision
+                         JOIN model_profile_binding_heads h ON h.profile_id=a.profile_id
+                         JOIN model_profile_binding_revisions b
+                           ON b.binding_id=h.binding_id AND b.revision=h.revision
+                        WHERE ah.assignment_key='capability:chat.guardrail' AND ah.cleared=0""",
                 ).fetchone()
-                if head:
-                    conn.execute(
-                        "UPDATE inference_assignments SET profile_id=? "
-                        "WHERE assignment_id=? AND assignment_revision=?",
-                        (gr_profile, head["assignment_id"], head["revision"]),
-                    )
+                assert bound is not None
+                conn.execute(
+                    "UPDATE deployment_revisions SET boundary=? WHERE id=?",
+                    (guardrail_boundary, bound["rev"]),
+                )
 
         return db, owner
 

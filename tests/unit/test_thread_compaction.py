@@ -239,6 +239,7 @@ class TestRealCoordinatorCompact:
         control_mode: str = "yolo",
         compact_summary: str = "This is a summary of the conversation.",
         compact_raise: bool = False,
+        model: str | None = None,
     ):
         """Boot a real hub with fake engines for chat.turn and chat.compact."""
         import holdspeak.config as config_module
@@ -274,7 +275,7 @@ class TestRealCoordinatorCompact:
 
         owner = Principal(PrincipalKind.OWNER, "owner-session")
         profile_id = "compact-test"
-        _profile(db, profile_id, claims=("language", _result_claim("chat.turn")))
+        _profile(db, profile_id, claims=("language", _result_claim("chat.turn")), model=model)
         InferenceAssignmentService(db).set_assignment(owner, {
             "command_id": "assign-turn",
             "expected_revision": 0,
@@ -355,6 +356,35 @@ class TestRealCoordinatorCompact:
         hub["server"].stop()
         os.environ["HOME"] = hub["old_home"]
         reset_database()
+
+    def test_compact_runs_when_the_profile_id_is_not_the_model_name(
+        self, tmp_path: Path,
+    ) -> None:
+        """A real desk's profile id differs from the model its deployment runs
+        (the owner's "Migrated intel endpoint"). The compaction engine lookup
+        matched ``deployment_revisions.model`` against the profile id (the
+        pattern HS-200-08 named a bug), found nothing, and /compact failed."""
+        hub = self._hub(tmp_path, compact_summary="Summary by the routed engine.",
+                        model="qwen3-30b-a3b-instruct")
+        try:
+            svc, db, owner = hub["svc"], hub["db"], hub["owner"]
+            with db._connection() as conn:
+                assert conn.execute(
+                    "SELECT 1 FROM deployment_revisions WHERE model='compact-test'"
+                ).fetchone() is None, "the rig must not name a deployment after the profile id"
+            tid = svc.create(title="route")["id"]
+            r1 = asyncio.run(svc.start_turn(owner, tid, "Hello world"))
+            self._wait_done(db, r1["assistant_message_id"])
+            r2 = asyncio.run(svc.start_turn(owner, tid, "Tell me more"))
+            self._wait_done(db, r2["assistant_message_id"])
+
+            result = asyncio.run(svc.compact_thread(owner, tid))
+
+            assert result["status"] == "ok", f"compact failed: {result}"
+            parts = db.threads.get_parts(result["message_id"])
+            assert [p.text for p in parts if p.kind == "text"] == ["Summary by the routed engine."]
+        finally:
+            self._cleanup(hub)
 
     def test_compact_creates_cut_row_and_next_turn_excludes_pre_cut(
         self, tmp_path: Path,
@@ -590,29 +620,25 @@ class TestCompactM1CapabilityBoundary:
             _backfill_chat_practice_assignments(conn)
 
         if compact_boundary != "same_device":
-            cp_profile = "m1-compact-cloud"
-            v1_dep = DeploymentRevision.from_identity(DeploymentIdentity(
-                destination_id="cloud_service",
-                kind="cloud",
-                engine="configured_local_engine",
-                model=cp_profile,
-                node="",
-                boundary=compact_boundary,
-                endpoint="",
-                secret_slot="",
-            ))
-            db.deployment_revisions.upsert(v1_dep)
+            # The capability's engine resolves by route (profile -> binding ->
+            # deployment revision), never by a model name. Give the BOUND
+            # deployment revision the requested boundary.
             with db._connection() as conn:
-                head = conn.execute(
-                    "SELECT assignment_id, revision FROM inference_assignment_heads "
-                    "WHERE assignment_key='capability:chat.compact' AND cleared=0",
+                bound = conn.execute(
+                    """SELECT b.deployment_revision_id AS rev
+                         FROM inference_assignment_heads ah
+                         JOIN inference_assignments a
+                           ON a.assignment_id=ah.assignment_id AND a.assignment_revision=ah.revision
+                         JOIN model_profile_binding_heads h ON h.profile_id=a.profile_id
+                         JOIN model_profile_binding_revisions b
+                           ON b.binding_id=h.binding_id AND b.revision=h.revision
+                        WHERE ah.assignment_key='capability:chat.compact' AND ah.cleared=0""",
                 ).fetchone()
-                if head:
-                    conn.execute(
-                        "UPDATE inference_assignments SET profile_id=? "
-                        "WHERE assignment_id=? AND assignment_revision=?",
-                        (cp_profile, head["assignment_id"], head["revision"]),
-                    )
+                assert bound is not None
+                conn.execute(
+                    "UPDATE deployment_revisions SET boundary=? WHERE id=?",
+                    (compact_boundary, bound["rev"]),
+                )
 
         return db, owner
 
