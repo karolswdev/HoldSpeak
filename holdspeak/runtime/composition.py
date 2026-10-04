@@ -32,11 +32,13 @@ to the composition root that owns the wiring, not to the registry.
 
 from __future__ import annotations
 
+import contextlib
+import contextvars
 import dataclasses
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Callable, Iterator, Optional, TypeVar
 
 T = TypeVar("T")
 
@@ -194,6 +196,50 @@ class RuntimeServices:
             )
         except Exception:  # pragma: no cover - a dead socket never fails a write
             pass
+        seen = _announced.get()
+        if seen is not None:
+            seen.append((kind, obj_id, op))
+
+
+#: The ``desk_changed`` frames sent inside the current write (an HTTP request or
+#: one ``OperationRegistry.invoke``). The two roots read it, so a write whose
+#: service announced itself gets no second frame. A list, not a flag: the
+#: request handler runs in a child task or a worker thread that COPIES the
+#: context, and a shared list is the one thing both sides see.
+_announced: contextvars.ContextVar[Optional[list]] = contextvars.ContextVar(
+    "desk_changed_announced", default=None
+)
+
+
+@contextlib.contextmanager
+def announce_scope() -> Iterator[Callable[[str, str, str], None]]:
+    """One write at a root (an HTTP request, one ``OperationRegistry.invoke``).
+
+    Yields ``announce(kind, id, op)``: it sends one ``desk_changed`` frame
+    unless a service sent one since the scope opened. A scope inside a scope
+    (an ``invoke`` inside a request) shares the outer list, so the request's
+    root stays quiet after the operation's root announced.
+    """
+    seen = _announced.get()
+    token = None
+    if seen is None:
+        seen = []
+        token = _announced.set(seen)
+    before = len(seen)
+
+    def announce(kind: str, obj_id: str, op: str) -> None:
+        if len(seen) > before:
+            return
+        notify_desk_changed(kind, obj_id, op)
+        if len(seen) == before:
+            # No bus (a bare composition): still mark the write announced.
+            seen.append((kind, obj_id, op))
+
+    try:
+        yield announce
+    finally:
+        if token is not None:
+            _announced.reset(token)
 
 
 _lock = threading.Lock()
