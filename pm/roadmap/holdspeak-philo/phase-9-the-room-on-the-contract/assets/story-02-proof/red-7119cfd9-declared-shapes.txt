@@ -1,7 +1,0 @@
-E       AssertionError: nudge.send declares ['step_id', 'state', 'receipt ...']; the producer returned ['receipt', 'success']
-E       AssertionError: project.stop_steward declares ['success', 'run_id', 'operation_id', 'receipt']; the producer returned ['run_id', 'success']
-E       AssertionError: project.watch.evaluate declares ['success', '...the evaluation']; the producer returned ['evaluation_id', 'message', 'observation_ids', 'state', 'transitions', 'watch_id']
-FAILED tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[nudge.send]
-FAILED tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[project.stop_steward]
-FAILED tests/unit/test_philo5_the_loop_r2.py::test_the_declared_result_shape_is_the_producers_shape[project.watch.evaluate]
-3 failed, 25 passed in 7.87s

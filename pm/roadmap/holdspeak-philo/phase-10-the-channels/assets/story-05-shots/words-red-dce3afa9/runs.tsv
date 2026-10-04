@@ -1,3 +1,0 @@
-file	case	width	verdict	seconds	load1	reading	run_dir
-atlas-phase10.json	case.p10.send.failed	1440	fail	42	3.09	predicate: all_of part readable_text: 'ISSUE NOT FOUND' NOT in observe_at text	case.p10.send.failed--1440/20260929T155118Z-case.p10.send.failed-muaddib-1440
-atlas-phase10.json	case.p10.send.failed	393	fail	42	3.09	predicate: all_of part readable_text: 'ISSUE NOT FOUND' NOT in observe_at text	case.p10.send.failed--393/20260929T155118Z-case.p10.send.failed-muaddib-393

@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase9-steward.json
-RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:65439 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-zhw9x6fv/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p9
-VERDICT: pass terminal=settled
-EVIDENCE: []
-NOTE: predicate: all 4 facts hold: the trigger tools holds; the trigger tools holds; the trigger operation_id is absent; observe_at tools holds

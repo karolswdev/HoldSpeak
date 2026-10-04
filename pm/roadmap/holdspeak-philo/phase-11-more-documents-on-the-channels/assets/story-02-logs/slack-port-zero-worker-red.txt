@@ -1,3 +1,0 @@
-Traceback (most recent call last):
-  File "<stdin>", line 27, in <module>
-AssertionError: the pre-fix producer accepted an explicit port 0

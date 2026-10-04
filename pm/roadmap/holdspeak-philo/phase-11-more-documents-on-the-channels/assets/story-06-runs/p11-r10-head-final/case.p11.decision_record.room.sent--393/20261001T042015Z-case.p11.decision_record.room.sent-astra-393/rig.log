@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:61399 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-4cuzx1hd/.local/share/holdspeak/holdspeak.db engine=replayed
-JOB: p11
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b1/case.p11.decision_record.room.sent--393/20261001T042015Z-case.p11.decision_record.room.sent-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b1/case.p11.decision_record.room.sent--393/20261001T042015Z-case.p11.decision_record.room.sent-astra-393/after.png']
-NOTE: predicate: all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 2da8710dabd5); response body matches its declared fields | readable_text: 'SAVED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 87, 'y': 199, 'w': 71, 'h': 18} | protocol_reads: GET /api/channels/sends?document_ref=decision_record:record-9a1a6cab4d1d46f0 answered 200 with 1 row(s) {'document_ref': 'decision_record:record-9a1a6cab4d1d46f0', 'destination_id': 'chd_0bd5be82845f5fadfb9264c0', 'channel': 'file', 'state': 'sent'}

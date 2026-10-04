@@ -1,9 +1,0 @@
-E               AssertionError: 'Not set up' != 'Never checked'
-E               AssertionError: 'Not set up' != 'Never checked'
-E               AssertionError: 'Not set up' != 'acli missing'
-E               AssertionError: 'Not set up' != 'acli missing'
-FAILED tests/e2e/test_philo9_b1_connections_glass.py::test_the_empty_jira_card_shows_its_own_state[present-1440]
-FAILED tests/e2e/test_philo9_b1_connections_glass.py::test_the_empty_jira_card_shows_its_own_state[present-393]
-FAILED tests/e2e/test_philo9_b1_connections_glass.py::test_the_empty_jira_card_shows_its_own_state[absent-1440]
-FAILED tests/e2e/test_philo9_b1_connections_glass.py::test_the_empty_jira_card_shows_its_own_state[absent-393]
-4 failed, 2 passed in 32.75s

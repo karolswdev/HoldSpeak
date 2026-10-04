@@ -1,6 +1,0 @@
-RED-HEAD-06116f5c case.p13.remember.editor_refused_field_kept 1440 VERDICT: fail terminal=settled | NOTE: predicate: value is 'Original name', wanted 'Unsaved name'
-RED-HEAD-06116f5c case.p13.remember.editor_refused_field_kept 393 VERDICT: fail terminal=settled | NOTE: predicate: value is 'Original name', wanted 'Unsaved name'
-RED-HEAD-06116f5c case.p13.remember.schedule_empty_time_kept 1440 VERDICT: fail terminal=settled | NOTE: predicate: value is '2026-10-03T14:58', wanted ''
-RED-HEAD-06116f5c case.p13.remember.schedule_empty_time_kept 393 VERDICT: fail terminal=settled | NOTE: predicate: value is '2026-10-03T14:59', wanted ''
-RED-HEAD-06116f5c case.p13.remember.editor_survives_url_open 1440 VERDICT: fail terminal=None | NOTE: TRIGGER lifecycle failed: ui step wait_for on '.desk-pullout input[aria-label="Name"]' failed: TimeoutError: Locator.wait_for: Timeout 15000ms exceeded.
-RED-HEAD-06116f5c case.p13.remember.editor_survives_url_open 393 VERDICT: fail terminal=None | NOTE: TRIGGER lifecycle failed: ui step wait_for on '.desk-pullout input[aria-label="Name"]' failed: TimeoutError: Locator.wait_for: Timeout 15000ms exceeded.

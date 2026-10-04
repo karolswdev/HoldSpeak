@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:53234 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-pguonl8c/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p10
-VERDICT: pass terminal=settled
-EVIDENCE: []
-NOTE: predicate: all_of: op_facts: all 10 facts hold: the trigger operation_id holds; the trigger send.state holds; the trigger send.proof.url holds; observe_at sends holds; observe_at sends.0.state holds; op read #0 (kernel.receipt.read) objects.0.operation.name holds; op read #0 (kernel.receipt.read) objects.0.receipt.operation_id holds; op read #0 (kernel.receipt.read) objects.0.receipt.state holds; op read #0 (kernel.receipt.read) objects.0.receipt.actor_kind holds; op read #1 (project.list_updates) updates.0.deliveries holds | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [23097]; 3 call(s) in all), wanted 1

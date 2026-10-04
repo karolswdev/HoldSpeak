@@ -1,7 +1,0 @@
-tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_meeting_park_parked_filter_restore_and_reload[1440] PASSED [ 16%]
-tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_meeting_park_parked_filter_restore_and_reload[393] PASSED [ 33%]
-tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_workbench_item_park_single_bulk_restore_and_reload[1440] PASSED [ 50%]
-tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_workbench_item_park_single_bulk_restore_and_reload[393] PASSED [ 66%]
-tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_a_claimed_item_is_refused_in_place[1440] PASSED [ 83%]
-tests/e2e/test_philo13_02_park_glass.py::TestParkGlass::test_a_claimed_item_is_refused_in_place[393] PASSED [100%]
-======================== 6 passed in 100.86s (0:01:40) =========================

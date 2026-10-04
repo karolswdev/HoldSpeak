@@ -1,4 +1,0 @@
-
-Suite totals: 3080 passed, 0 failed, 0 skipped
-
-VERDICT: baseline-subset, zero branch-new

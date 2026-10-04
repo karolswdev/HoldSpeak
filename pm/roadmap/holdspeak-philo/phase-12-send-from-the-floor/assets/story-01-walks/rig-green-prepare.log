@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 27d8bf1acffa2a93637e42724949f0426b1dd9b6 dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase12-source.json
-RUNTIME: build=['index-ChQW1Esz.js'] hub=http://127.0.0.1:59968 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-xlpq5y63/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p12
-VERDICT: pass terminal=settled
-EVIDENCE: []
-NOTE: predicate: all 4 facts hold: the trigger send.document_ref holds; the trigger send.preview.text holds; observe_at sends holds; observe_at sends holds

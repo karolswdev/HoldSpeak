@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase8.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:58375 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-0_emihqq/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p8
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r6-serial-r2/case.p8.list_delete.undo--393/20261001T045422Z-case.p8.list_delete.undo-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r6-serial-r2/case.p8.list_delete.undo--393/20261001T045422Z-case.p8.list_delete.undo-astra-393/after.png']
-NOTE: predicate: all_of: protocol_reads: GET /api/decisions/decision_f02b6cf219a0 answered 200 | readable_text: 'Restored Atlas list delete' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 98, 'y': 668, 'w': 198, 'h': 27}

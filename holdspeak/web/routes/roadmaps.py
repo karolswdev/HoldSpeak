@@ -57,13 +57,56 @@ def _run(repo_root: Path, *args: str) -> tuple[int, str]:
         return 2, str(exc)
 
 
-def _issues(output: str) -> list[dict[str, str]]:
+_BROKEN_LINK = re.compile(r"^broken (?:asset reference|evidence link[^:]*):\s*(?P<target>\S+)\s*$")
+_ARCHIVE_CACHE: dict[str, tuple[int, frozenset[str], frozenset[str]]] = {}
+
+
+def _archived(repo_root: Path) -> tuple[frozenset[str], frozenset[str]]:
+    """Files that moved to the evidence archive branch, and their directories
+    (``pm/ARCHIVE.md``; the list is ``pm/archive-manifest.txt``)."""
+    manifest = repo_root / "pm" / "archive-manifest.txt"
+    try:
+        stamp = manifest.stat().st_mtime_ns
+    except OSError:
+        return frozenset(), frozenset()
+    cached = _ARCHIVE_CACHE.get(str(manifest))
+    if cached and cached[0] == stamp:
+        return cached[1], cached[2]
+    files = frozenset(line for line in _safe_text(manifest).splitlines() if line)
+    dirs = frozenset(parent.as_posix() for name in files for parent in Path(name).parents)
+    _ARCHIVE_CACHE[str(manifest)] = (stamp, files, dirs)
+    return files, dirs
+
+
+def _is_archived_link(repo_root: Path, path: str, issue: str) -> bool:
+    """True when ``dw check`` reports a link broken and its target is in the
+    archive manifest. The file is archived, not missing. A target that is not
+    in the manifest stays an issue."""
+    match = _BROKEN_LINK.match(issue)
+    if not match or not path:
+        return False
+    target = match.group("target").split("#", 1)[0]
+    source = repo_root / path
+    base = source if source.is_dir() else source.parent
+    try:
+        relative = (base / target).resolve().relative_to(repo_root.resolve()).as_posix()
+    except ValueError:
+        return False
+    files, dirs = _archived(repo_root)
+    return relative in files or relative in dirs
+
+
+def _issues(output: str, repo_root: Path | None = None) -> list[dict[str, str]]:
     found: list[dict[str, str]] = []
     for line in output.splitlines():
         line = line.strip()
         if not line or line.lower() == "dw check: ok":
             continue
         match = _ERROR.match(line)
+        if match and repo_root is not None and _is_archived_link(
+            repo_root, (match.group("path") or "").strip(), match.group("issue").strip()
+        ):
+            continue
         if match:
             found.append(
                 {
@@ -73,6 +116,12 @@ def _issues(output: str) -> list[dict[str, str]]:
                 }
             )
     return found
+
+
+def _health(exit_code: int, issues: list[dict[str, str]]) -> str:
+    if exit_code == 0 or (exit_code == 1 and not issues):
+        return "green"  # the only reports were links to archived files
+    return "warn" if exit_code == 1 else "red"
 
 
 def _phase(phase_dir: Path) -> dict[str, Any] | None:
@@ -137,8 +186,8 @@ def _project(repo_root: Path, slug: str, include_phases: bool = True) -> dict[st
     current_number = int(current_match.group(1)) if current_match else (phases[0]["number"] if phases else 0)
     current = next((phase for phase in phases if phase["number"] == current_number), phases[0] if phases else None)
     exit_code, check_output = _run(repo_root, "check", slug)
-    issues = _issues(check_output)
-    health = "green" if exit_code == 0 else ("warn" if exit_code == 1 else "red")
+    issues = _issues(check_output, repo_root)
+    health = _health(exit_code, issues)
     _, next_output = _run(repo_root, "next", slug, "--json")
     try:
         next_data = json.loads(next_output)
@@ -203,7 +252,8 @@ def build_roadmaps_router(ctx: WebContext, *, repo_root: Path | None = None) -> 
         if _project_path(root, slug) is None:
             return JSONResponse({"error": "Roadmap not found"}, status_code=404)
         code, output = await asyncio.to_thread(_run, root, "check", slug)
-        return JSONResponse({"health": "green" if code == 0 else ("warn" if code == 1 else "red"), "issues": _issues(output)})
+        issues = _issues(output, root)
+        return JSONResponse({"health": _health(code, issues), "issues": issues})
 
     @router.get("/api/roadmaps/{slug}/next")
     async def api_roadmap_next(slug: str) -> Any:

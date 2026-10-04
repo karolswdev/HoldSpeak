@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
-RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:50748 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-4h991s6f/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p10
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.resend_unknown--393/20260930T141237Z-case.p10.send.resend_unknown-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.resend_unknown--393/20260930T141237Z-case.p10.send.resend_unknown-astra-393/after.png']
-NOTE: predicate: all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 216c60bd1d42); response body contains the declared admission facts | readable_text: 'Check priya@example.com' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 408, 'w': 184, 'h': 24} | attr_equals: data-href='https://resend.com/emails', wanted 'https://resend.com/emails' | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_ccd92333ec254c35b84f2631189de5ab answered 200 with 1 row(s) {'state': 'unknown', 'reason': 'unpinned_503'}; GET /api/projects/proj-6b1a759a5fdc/updates answered 200 with 1 row(s) {'id': 'pupd_ccd92333ec254c35b84f2631189de5ab', 'deliveries.0.outcome': 'unknown'} | cli_calls: 1 call(s) starting ['https', 'POST', 'api.resend.com', '/emails'] at the recording runner (pids [12510]; 1 call(s) in all), wanted 1

@@ -1,6 +1,0 @@
-send_failed 1440 exit=0 VERDICT: pass terminal=settled
-send_failed 393 exit=0 VERDICT: pass terminal=settled
-send_unknown 1440 exit=0 VERDICT: pass terminal=settled
-send_unknown 393 exit=0 VERDICT: pass terminal=settled
-needs_you_week 1440 exit=0 VERDICT: pass terminal=settled
-needs_you_week 393 exit=0 VERDICT: pass terminal=settled

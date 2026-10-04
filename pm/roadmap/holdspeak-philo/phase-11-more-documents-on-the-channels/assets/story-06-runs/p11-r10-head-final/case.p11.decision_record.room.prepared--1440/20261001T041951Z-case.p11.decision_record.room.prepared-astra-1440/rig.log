@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:60994 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-obn7br0q/.local/share/holdspeak/holdspeak.db engine=replayed
-JOB: p11
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b2/case.p11.decision_record.room.prepared--1440/20261001T041951Z-case.p11.decision_record.room.prepared-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b2/case.p11.decision_record.room.prepared--1440/20261001T041951Z-case.p11.decision_record.room.prepared-astra-1440/after.png']
-NOTE: predicate: all_of: readable_text: 'PREPARED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 75, 'y': 493, 'w': 714, 'h': 56} | readable_text: 'BY YOU' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 75, 'y': 493, 'w': 714, 'h': 56} | protocol_reads: GET /api/channels/sends?document_ref=decision_record:record-7409c754c2984f37 answered 200 with 1 row(s) {'document_ref': 'decision_record:record-7409c754c2984f37', 'destination_id': 'chd_3909567b1fccb76fef9edc95', 'channel': 'file', 'state': 'prepared', 'prepared_by.kind': 'owner'}

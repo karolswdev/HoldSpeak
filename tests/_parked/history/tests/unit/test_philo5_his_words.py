@@ -1,7 +1,4 @@
 """Structural fences for the PHILO-5-04 ordinary-language rehearsal driver."""
-# History reads are parked: tests/_parked/history/tests/unit/test_philo5_his_words.py holds this file as it was, with the
-# 1 test function(s) that read evidence archived on branch
-# archive/evidence-2026-10-04 (pm/ARCHIVE.md).
 from __future__ import annotations
 
 import json
@@ -222,6 +219,19 @@ def test_resource_calls_never_satisfy_a_required_tool(tmp_path: Path) -> None:
     for required in ({"list_mcp_resources"}, {"read_mcp_resource"}, {"thought.create"}):
         with pytest.raises(RuntimeError, match="did not produce through MCP"):
             driver._audit_codex_turn(stage, "turn", hub, required, 0)
+
+
+def test_retained_decision_turn_reconciles_whole(tmp_path: Path) -> None:
+    """The run recorded BLOCKED at 20260925T060854Z reconciles every call."""
+    stage = RETAINED_RUN / "codex" / "decision_thought"
+    window = json.loads((stage / "transcript-window.json").read_text())
+    hub = _TranscriptHub(tmp_path / "hub-home", RETAINED_RUN / "rehearsal-transcript.jsonl")
+    audit = driver._reconcile_mcp_calls(stage, hub, window["exchange_start"])
+    kinds = [m["kind"] for m in audit["matches"]]
+    assert audit["codex_calls"] == len(audit["matches"]) == 11
+    assert kinds.count("tools/call") == 7
+    assert kinds.count("resources/read") == 2
+    assert kinds.count("resources/list") == kinds.count("resources/templates/list") == 1
 
 
 def test_canonical_result_projection_preserves_content_and_errors() -> None:

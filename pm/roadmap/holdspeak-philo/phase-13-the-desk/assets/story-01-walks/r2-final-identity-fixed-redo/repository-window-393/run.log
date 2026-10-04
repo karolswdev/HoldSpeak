@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: c7073f9cac59e898e53f425f4a437966a10aaa0b dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase13-astra.json
-RUNTIME: build=['index-ChQW1Esz.js'] hub=http://127.0.0.1:50842 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-q0n7tb87/.local/share/holdspeak/holdspeak.db engine=none
-JOB: j1
-VERDICT: pass terminal=settled
-EVIDENCE: ['.tmp/graph-walk/philo-13-b0-r2-final-redo/repository-window-393/20261002T122216Z-case.p13.repository.window-astra-393/before.png', '.tmp/graph-walk/philo-13-b0-r2-final-redo/repository-window-393/20261002T122216Z-case.p13.repository.window-astra-393/after.png']
-NOTE: predicate: 'atlas_repository.py' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 446, 'w': 363, 'h': 164}

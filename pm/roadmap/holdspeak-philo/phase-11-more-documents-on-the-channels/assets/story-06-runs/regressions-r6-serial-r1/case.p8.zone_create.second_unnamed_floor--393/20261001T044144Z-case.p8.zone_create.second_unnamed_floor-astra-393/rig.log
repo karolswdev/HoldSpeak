@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase8.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:54657 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3939qfu4/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p8
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r6-serial-r1/case.p8.zone_create.second_unnamed_floor--393/20261001T044144Z-case.p8.zone_create.second_unnamed_floor-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r6-serial-r1/case.p8.zone_create.second_unnamed_floor--393/20261001T044144Z-case.p8.zone_create.second_unnamed_floor-astra-393/after.png']
-NOTE: predicate: all_of: protocol_status: POST /api/directories answered 201, wanted 201 (body sha256 1c7b7de1fd3e) | protocol_reads: GET /api/directories answered 200 with 1 row(s) {'name': 'New zone'}; GET /api/directories answered 200 with 1 row(s) {'name': 'New zone 2'} | input_value: value is 'New zone 2', wanted 'New zone 2' | hit_target: control owns all 9 hit points in viewport {'width': 393, 'height': 852} with rect {'x': 145, 'y': 270, 'w': 64, 'h': 36}

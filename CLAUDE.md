@@ -136,6 +136,8 @@ and the owner's real DB stay out of it. Times are from the owner's machine
   `tests/unit/test_evidence_scratch_guard.py`).
   Tests write `pm/roadmap/` only with `HOLDSPEAK_EVIDENCE_WRITE=1`; do not set it.
   The tree is clean after any run: no restore of tracked evidence is needed.
+  Old evidence (shots, run dumps, proof databases) is not in the tree: it is on
+  branch `archive/evidence-2026-10-04`. `pm/ARCHIVE.md` says how to get a file back.
 - Generated docs: `scripts/gen_docs.sh` runs every generator. Three outputs
   are not in git (`docs/generated/api-reference.json`,
   `boundary-candidates.json`, `graph.json`): generate them when you need to

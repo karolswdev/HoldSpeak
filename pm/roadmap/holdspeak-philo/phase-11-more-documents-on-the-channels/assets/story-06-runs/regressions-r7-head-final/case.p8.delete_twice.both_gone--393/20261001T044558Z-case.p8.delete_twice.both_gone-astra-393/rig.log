@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase8.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:55535 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-j3tsdcem/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p8
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r6-serial-r1/case.p8.delete_twice.both_gone--393/20261001T044558Z-case.p8.delete_twice.both_gone-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r6-serial-r1/case.p8.delete_twice.both_gone--393/20261001T044558Z-case.p8.delete_twice.both_gone-astra-393/after.png']
-NOTE: predicate: all_of: protocol_reads: GET /api/decisions/decision_391745943aea answered 404; GET /api/decisions/decision_ebd6b0d997ba answered 404 | readable_text: 'Removal committed' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 127, 'y': 628, 'w': 138, 'h': 27}

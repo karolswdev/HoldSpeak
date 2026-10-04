@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11-slack.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:63507 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bju4u1c8/.local/share/holdspeak/holdspeak.db engine=replayed
-JOB: p11
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b3/case.p11.transition.slack_limit--393/20261001T042243Z-case.p11.transition.slack_limit-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b3/case.p11.transition.slack_limit--393/20261001T042243Z-case.p11.transition.slack_limit-astra-393/after.png']
-NOTE: predicate: all_of: protocol_status: POST /api/channels/preview answered 400, wanted 400 (body sha256 2d46b0f60d7d); response body matches its declared fields | readable_text: 'TOO LARGE FOR SLACK' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 57, 'y': 413, 'w': 295, 'h': 66} | readable_text: '41,097 / 39,000 CHARACTERS' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 57, 'y': 413, 'w': 295, 'h': 66} | readable_text: 'NOTHING SENT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 57, 'y': 413, 'w': 295, 'h': 66} | protocol_reads: GET /api/channels/sends?document_ref=meeting_summary:905b3c80 answered 200 with 0 row(s) {'document_ref': 'meeting_summary:905b3c80'}
