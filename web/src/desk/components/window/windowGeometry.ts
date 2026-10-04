@@ -11,6 +11,10 @@ const CASCADE = DESK_WINDOW.cascade;
 /** The window head strip considered for title-bar occlusion (px). */
 const HEAD = 44;
 
+/** Sent on `window` when the Dock's published height (`--desk-dock-h`)
+ * arrives or changes: the working band moved, so open windows clamp again. */
+export const DOCK_HEIGHT_EVENT = "desk:dock-height";
+
 /** The usable desktop is one contract: below the system bar, above the dock.
  * CSS owns the dimensions so shell changes cannot make window physics drift. */
 export function workBand() {
@@ -22,10 +26,15 @@ export function workBand() {
     return fallback;
   const style = getComputedStyle(document.documentElement);
   const top = parseFloat(style.getPropertyValue("--desk-work-top"));
-  const bottom = parseFloat(style.getPropertyValue("--desk-work-bottom"));
+  const band = parseFloat(style.getPropertyValue("--desk-work-bottom"));
+  // The Dock publishes its measured height (`--desk-dock-h`, Dock.tsx). The
+  // shelf (76 px) is higher than the shell band (52 px); a window placed or
+  // clamped to the band alone had its foot and its verbs under the Dock.
+  const dock = parseFloat(style.getPropertyValue("--desk-dock-h"));
+  const bottom = Number.isFinite(band) ? band : fallback.bottom;
   return {
     top: Number.isFinite(top) ? top : fallback.top,
-    bottom: Number.isFinite(bottom) ? bottom : fallback.bottom,
+    bottom: Number.isFinite(dock) ? Math.max(bottom, dock) : bottom,
   };
 }
 

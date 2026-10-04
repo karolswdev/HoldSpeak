@@ -596,8 +596,13 @@ class TestSendFaceGlass(_Rig):
                 self._pick(page, "Folder Payments")
                 _mode(page, "POST ^/api/channels/send$", "lose-once")
                 self._send(page, "Folder Payments")
-                lost = shots.shoot(page, "21-lost-answer-a", [f"{self._open_sel('Folder Payments')} [data-testid=send-lost]",
-                                                              f"{self._open_sel('Folder Payments')} [data-testid=send-retry]"])
+                # Seated at the centre: Retry is above the lost line, and the default
+                # seat (120 px above the first named element) leaves it under the
+                # Room's pinned head at 393.
+                lost_line = f"{self._open_sel('Folder Payments')} [data-testid=send-lost]"
+                lost = shots.shoot(page, "21-lost-answer-a", [lost_line,
+                                                              f"{self._open_sel('Folder Payments')} [data-testid=send-retry]"],
+                                   seat=f"CENTER:{lost_line}")
                 assert lost["receipts"][0]["text"] == "⚠ NO ANSWER · RESULT UNKNOWN", lost["receipts"]
 
                 # Update B stays clean; back on A the lost line and Retry are there.

@@ -37,6 +37,7 @@ import {
   type DockLiveState,
 } from "./dockState";
 import { burstTimer } from "../../burstTimer";
+import { DOCK_HEIGHT_EVENT } from "./windowGeometry";
 
 const DOCK_LIVE_FRAMES = [
   "aftercare_ready",
@@ -359,7 +360,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     const root = document.documentElement;
     if (!el) return;
     const publish = () => {
-      root.style.setProperty("--desk-dock-h", `${Math.ceil(el.offsetHeight)}px`);
+      const next = `${Math.ceil(el.offsetHeight)}px`;
+      if (root.style.getPropertyValue("--desk-dock-h") === next) return;
+      root.style.setProperty("--desk-dock-h", next);
+      // The working band moved: open windows clamp above the Dock again.
+      window.dispatchEvent(new Event(DOCK_HEIGHT_EVENT));
     };
     publish();
     if (typeof ResizeObserver !== "function") return;

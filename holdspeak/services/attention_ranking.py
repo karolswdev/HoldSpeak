@@ -230,8 +230,17 @@ def _head_key(item: dict[str, Any], now: datetime) -> tuple[int, float, int, str
 def _merge(group: list[dict[str, Any]], now: datetime) -> dict[str, Any]:
     ordered = sorted(group, key=lambda row: _head_key(row, now))
     head = dict(ordered[0])
-    head["sources"] = [_projection(row) for row in ordered]
-    head["dedupCount"] = len(ordered)
+    # A row that already arrived merged keeps its projections; a second
+    # dedup of merged rows flattens them (the browser twin does the same).
+    sources: list[dict[str, Any]] = []
+    for row in ordered:
+        carried = row.get("sources")
+        if isinstance(carried, list) and carried:
+            sources.extend(dict(source) for source in carried)
+        else:
+            sources.append(_projection(row))
+    head["sources"] = sources
+    head["dedupCount"] = len(sources)
     # The most severe projection colours the row.
     head["severity"] = min(
         (str(row.get("severity", "info")) for row in ordered),

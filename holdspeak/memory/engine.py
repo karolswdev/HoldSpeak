@@ -70,7 +70,7 @@ class EmbeddingAdapter:
     #: The embedding model is its own small in-process model.  The runner
     #: gives this adapter its own local runtime slot: an embed call takes no
     #: chat lease, so it never refuses a live local call and is never refused
-    #: by one (kernel/inference_runner.py, ``_OWN_LOCAL_SLOTS``).
+    #: by one (kernel/local_runtime_slot.py, ``OWN_LOCAL_SLOTS``).
     local_runtime_slot = "embedding"
 
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: threading.Event) -> dict[str, Any]:

@@ -31,6 +31,7 @@ import { DESK_WINDOW, DESK_Z } from "../../lib/tokens.gen";
 import {
   MARGIN,
   workBand,
+  DOCK_HEIGHT_EVENT,
   placeWindow,
   clampIntoBand,
   snapForPointer,
@@ -159,17 +160,56 @@ function reClampOpenWindows() {
   }
 }
 
+/** Lift every window whose foot is under the working band's foot (the Dock).
+ * Only the foot moves: a window is never widened or grown here. */
+function liftAboveDock() {
+  if (typeof window === "undefined") return;
+  if (
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(max-width: 720px)").matches
+  )
+    return; // sheets own their own form
+  const state = useDesk.getState();
+  const vh = window.innerHeight || 800;
+  const { top, bottom } = workBand();
+  const lift = (r: PanelRect): PanelRect | null => {
+    if (r.y + r.h <= vh - bottom) return null;
+    const h = Math.min(r.h, Math.max(0, vh - top - bottom));
+    return { ...r, y: Math.max(top, vh - bottom - h), h };
+  };
+  for (const { id } of registrySnapshot) {
+    if (state.panelMax.includes(id)) {
+      const zr = state.panelZoom?.[id];
+      const kept = zr ? lift(zr) : null;
+      if (kept) state.setZoomRect(id, kept, true);
+      continue;
+    }
+    const rect = state.panelRects[id];
+    const kept = rect ? lift(rect) : null;
+    if (kept) state.setPanelRect(id, kept, state.panelSaved.includes(id));
+  }
+}
+
 function onWindowResize() {
   clearTimeout(resizeClampTimer);
   resizeClampTimer = setTimeout(reClampOpenWindows, 150);
 }
 
 function subscribeResizeClamp() {
-  if (resizeClampUsers++ === 0)
+  if (resizeClampUsers++ === 0) {
     window.addEventListener("resize", onWindowResize);
+    // The Dock publishes its measured height AFTER a restored window's
+    // layout effect clamped it (to the 52 px band alone). When the height
+    // arrives or changes, every window under it is lifted, at once.
+    window.addEventListener(DOCK_HEIGHT_EVENT, liftAboveDock);
+  }
+  // The Dock's effect can run before this one: clamp once now, with the
+  // height that is already published.
+  liftAboveDock();
   return () => {
     if (--resizeClampUsers === 0) {
       window.removeEventListener("resize", onWindowResize);
+      window.removeEventListener(DOCK_HEIGHT_EVENT, liftAboveDock);
       clearTimeout(resizeClampTimer);
     }
   };

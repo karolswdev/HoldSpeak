@@ -45,6 +45,7 @@ from .glass_infra import (
     _ensure_build,
     _normal_chair,
     _settle,
+    pick_wing,
 )
 from tests._evidence import evidence_dir
 
@@ -211,7 +212,7 @@ def _open_journal(page: Any) -> None:
     )
     page.reload(wait_until="load")
     _normal_chair(page)
-    page.get_by_role("tab", name="Journal").click()
+    pick_wing(page, "Journal")  # at 393 the strip folds into one menu (PHILO-13-11)
     page.locator(".speak-journal").wait_for(timeout=10000)
     _settle(page)
 

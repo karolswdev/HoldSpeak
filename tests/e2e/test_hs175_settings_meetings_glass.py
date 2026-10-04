@@ -150,6 +150,9 @@ def _seed_calendar_sources(tmp_path: Path) -> dict[str, str]:
     now = time.time()
 
     class _Evt:
+        # The projection writes every event's attendees (calendar_events.py:128).
+        attendees: tuple[str, ...] = ()
+
         def __init__(self, **kw: Any):
             for k, v in kw.items():
                 setattr(self, k, v)

@@ -36,6 +36,7 @@ from .glass_infra import (
     _ensure_build,
     _normal_chair,
     _settle,
+    pick_wing,
 )
 from tests._evidence import evidence_dir
 
@@ -157,15 +158,56 @@ def _land(page: Any, text: str) -> Any:
     well = page.locator(".speak-well textarea")
     well.click()
     well.fill(text)
+    # The result of the utterance before stays on the face until this one
+    # lands. Waiting for `.speak-result` alone returned that old result when
+    # the hub was slow (seen at 1440 under load: the first utterance's text
+    # read as the second's). Wait for the text to change.
+    shown = page.locator(".speak-result .speak-result-text")
+    before = shown.first.inner_text() if shown.count() else None
     well.press("Control+Enter")
+    page.wait_for_function(
+        """(before) => {
+          const el = document.querySelector('.speak-result .speak-result-text');
+          return !!el && (before === null || el.innerText !== before);
+        }""",
+        arg=before, timeout=15000,
+    )
     result = page.locator(".speak-result")
-    result.wait_for(timeout=15000)
     _settle(page)
     return result
 
 
 def _wing(page: Any, name: str) -> None:
-    page.get_by_role("tab", name=name).click()
+    pick_wing(page, name)
+
+
+def _folded(page: Any) -> Any:
+    """The one strip menu Button a wing strip folds into at 393 (PHILO-13-11,
+    C1 §3a: a strip that does not fit the head's 44 px row). Tabs at 1440."""
+    return page.locator(".desk-wings .surface-strip-menu")
+
+
+def _wing_names(page: Any) -> list[str]:
+    """Every face of the window, in order: the tabs, or the rows of the menu."""
+    strip = _folded(page)
+    if not strip.count():
+        return [t.strip().upper() for t in page.locator(".desk-wings-tabs [role=tab]").all_inner_texts()]
+    strip.first.click()
+    page.locator(".desk-menu-list").first.wait_for()
+    names = [t.strip().upper() for t in page.locator(".desk-menu-list [role=menuitemcheckbox]").all_inner_texts()]
+    # Escape closes the menu, not the window (test_philo13_18_strip_escape_glass).
+    page.keyboard.press("Escape")
+    page.locator(".desk-menu-list").first.wait_for(state="detached")
+    return names
+
+
+def _wing_is_on(page: Any, name: str) -> bool:
+    """The named face is the current one: the selected tab, or the strip
+    menu Button that names it."""
+    strip = _folded(page)
+    if strip.count():
+        return strip.first.get_attribute("aria-label") == f"Window faces: {name}"
+    return page.get_by_role("tab", name=name).get_attribute("aria-selected") == "true"
 
 
 # ── the artboard assertions ────────────────────────────────────────
@@ -319,9 +361,7 @@ def _loop(page: Any, width: int) -> None:
     # ── 6. `Review` reviews: it crosses to the JOURNAL wing ────────
     page.get_by_role("button", name="Review").click()
     page.locator(".speak-journal").wait_for(timeout=8000)
-    assert (
-        page.get_by_role("tab", name="Journal").get_attribute("aria-selected") == "true"
-    )
+    assert _wing_is_on(page, "Journal")
     # not the Configure door — that stays the gear's job
     assert page.locator(".surface-door").count() == 0
 
@@ -346,11 +386,10 @@ def _run(tmp_path, monkeypatch, width: int, height: int) -> None:
             _stage_speak(page)
             # The four wings are always present (design D2(c)).
             # (the strip renders its labels uppercase — canon C's caption step)
-            wings = [
-                t.strip().upper()
-                for t in page.locator(".desk-wings-tabs [role=tab]").all_inner_texts()
-            ]
-            assert wings == ["SPEAK", "JOURNAL", "BLOCKS", "LEARNED"], wings
+            wings = _wing_names(page)
+            # Folded, the menu also holds the configuration door, after the faces.
+            door = ["CONFIGURE DICTATION"] if _folded(page).count() else []
+            assert wings == ["SPEAK", "JOURNAL", "BLOCKS", "LEARNED"] + door, wings
             _loop(page, width)
             _assert_clean(page, errors)
             browser.close()
