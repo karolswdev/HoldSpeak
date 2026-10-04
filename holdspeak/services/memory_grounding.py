@@ -28,7 +28,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Iterable
 
-from ..grounding import GroundingBlock, hydrate_refs_detailed
+from ..grounding import GroundingBlock, hydrate_refs_detailed, memory_defense
+from ..memory.defense import redact
 from ..logging_config import get_logger
 
 log = get_logger("memory_grounding")
@@ -165,8 +166,11 @@ def _excerpt(block: GroundingBlock, cap: int) -> MemoryExcerpt | None:
     prefix = len(f"- {probe.label}: ")
     if cap - prefix <= len(_CUT):
         return None  # the bound has no room for any words
-    title = _clip(block.title, min(MEMORY_TITLE_CHARS, cap - prefix))
-    text = " ".join(str(block.text or "").split())
+    # Redact the WHOLE title and text, then cut: a cut never ends inside a
+    # secret.  (The blocks are already redacted by grounding; this is the
+    # same rule at the last cut.)
+    title = _clip(redact(str(block.title or "")), min(MEMORY_TITLE_CHARS, cap - prefix))
+    text = " ".join(redact(str(block.text or "")).split())
     if text == title or (title and text.startswith(title) and len(text) <= len(title) + 1):
         text = ""
     if not text and not title:
@@ -214,14 +218,15 @@ def memory_context(
     used = 2 * (len(MEMORY_BLOCK_HEADING) + 16)
     for pass_query in passes:
         try:
-            result = hydrate_refs_detailed(
-                db, [], [], "summary",
-                qualified_refs=scope,
-                query=pass_query,
-                include_memory=True,
-                # Applied by grounding BEFORE its selection limit.
-                exclude_refs=sorted(seen),
-            )
+            with memory_defense():  # a drafter reads memory, redacted
+                result = hydrate_refs_detailed(
+                    db, [], [], "summary",
+                    qualified_refs=scope,
+                    query=pass_query,
+                    include_memory=True,
+                    # Applied by grounding BEFORE its selection limit.
+                    exclude_refs=sorted(seen),
+                )
         except Exception as exc:  # memory never fails a drafter
             log.warning("memory read failed (%s); the drafter runs without it", exc)
             continue
