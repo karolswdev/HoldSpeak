@@ -50,6 +50,18 @@ describe("useOnDeskChanged", () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
+  it("reloads while frames keep coming (20 frames 250 ms apart)", () => {
+    const reload = vi.fn();
+    render(<Window reload={reload} />);
+    act(() => {
+      for (let i = 0; i < 20; i += 1) {
+        frame();
+        vi.advanceTimersByTime(250);
+      }
+    });
+    expect(reload.mock.calls.length).toBeGreaterThanOrEqual(3);
+  });
+
   it("calls the newest reload and keeps one subscription", () => {
     const first = vi.fn();
     const second = vi.fn();

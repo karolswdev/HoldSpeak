@@ -63,6 +63,7 @@ import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { presentValue } from "../../desk/surface/format";
 import { countToken } from "../../desk/surface/count";
 import { intelEgressBadge } from "./liveEgress";
+import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
 
 type Segment = Record<string, unknown>;
@@ -80,17 +81,14 @@ export function LiveCore({ hero }: CoreProps) {
      remounted. It rides the same signals the Meetings face does. */
   const reloadRuntimeStatus = runtimeStatus.reload;
   useEffect(() => {
-    let timer = 0;
-    const bump = () => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => void reloadRuntimeStatus(), 300);
-    };
+    const burst = burstTimer(() => void reloadRuntimeStatus(), 300);
+    const bump = burst.bump;
     const offDeskChanged = subscribe("desk_changed", bump);
     const offReturn = onReturnToTask(() => void reloadRuntimeStatus());
     const onFocus = () => void reloadRuntimeStatus();
     window.addEventListener("focus", onFocus);
     return () => {
-      window.clearTimeout(timer);
+      burst.cancel();
       offDeskChanged();
       offReturn();
       window.removeEventListener("focus", onFocus);

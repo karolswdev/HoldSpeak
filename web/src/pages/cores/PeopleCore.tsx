@@ -208,12 +208,17 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   // here with no reload. A quiet re-read: no loading state, the person stays
   // open, and the last read stays when it fails or the store is not ready.
   const followed = useRef({ ready: false, selectedId: null as string | null });
+  const quietReads = useRef(0);
   followed.current = { ready: stateOf(readiness) === "ready", selectedId };
   useOnDeskChanged(() => {
     if (!followed.current.ready) return;
+    // Only the newest quiet re-read lands; an older one that answers late is dropped.
+    const order = ++quietReads.current;
+    const newest = () => order === quietReads.current;
     void (async () => {
       try {
         const list = await apiFetch<{ relationships?: Relationship[] }>("/api/people/relationships");
+        if (!newest()) return;
         setRelationships(list.relationships ?? []);
         const id = followed.current.selectedId;
         if (!id) return;
@@ -221,7 +226,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
           apiFetch<{ relationship: Relationship }>(`/api/people/relationships/${encodeURIComponent(id)}`),
           apiFetch<{ one_on_ones: Session[] }>(`/api/people/relationships/${encodeURIComponent(id)}/one-on-ones`),
         ]);
-        if (followed.current.selectedId === id) setDetail({ ...relationship.relationship, sessions: sessions.one_on_ones });
+        if (newest() && followed.current.selectedId === id) setDetail({ ...relationship.relationship, sessions: sessions.one_on_ones });
       } catch { /* the last read stays */ }
     })();
   });

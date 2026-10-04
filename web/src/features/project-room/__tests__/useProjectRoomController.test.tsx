@@ -235,3 +235,87 @@ describe("useProjectRoomController — /room first render (HS-158-05)", () => {
     expect(kinds).toContain("decision");
   });
 });
+
+// Astra, #785 finding 1: the Room marks itself read after its first paint.
+// A bus re-read then got an empty catch-up list and a new marker, and
+// "2 changes since you looked" became "Nothing since ..." within a second.
+describe("useProjectRoomController — the catch-up list is the visit's baseline", () => {
+  const away = {
+    state: "ok",
+    readAt: "2026-10-01T09:00:00",
+    groups: [
+      { source: "github", summary: "2 changes", entries: [
+        { phrase: "PR 12 merged", at: "2026-10-02T10:00:00", url: null },
+        { phrase: "CI failed on main", at: "2026-10-02T11:00:00", url: null },
+      ] },
+    ],
+  };
+  const afterMarker = { state: "ok", readAt: "2026-10-03T21:00:00", groups: [] };
+
+  function serve(sinceRead: () => unknown, name: () => string) {
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url.includes("/room")) {
+        const room = roomResponse();
+        return Promise.resolve({ ...room, sinceRead: sinceRead(), project: { ...room.project, name: name() } });
+      }
+      return Promise.resolve(response(url));
+    });
+  }
+
+  it("a quiet re-read keeps the list and the marker; the rest of the Room follows", async () => {
+    let marked = false;
+    let name = "Test project";
+    serve(() => (marked ? afterMarker : away), () => name);
+    const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
+    await waitFor(() => expect(result.current.loadStatus).toBe("ready"));
+    expect(result.current.readAt).toBe(away.readAt);
+
+    marked = true; // the Room's own read marker landed on the hub
+    name = "Renamed in another window";
+    await act(async () => { await result.current.load(true); });
+
+    const since = result.current.room?.sinceRead;
+    expect(since?.state === "ok" && since.groups[0].entries.length).toBe(2);
+    expect(since?.state === "ok" && since.readAt).toBe(away.readAt);
+    expect(result.current.readAt).toBe(away.readAt);
+    expect(result.current.loadStatus).toBe("ready");
+    expect(result.current.projectName).toBe("Renamed in another window");
+  });
+
+  it("Refresh (a full load) takes the new list and marker", async () => {
+    let marked = false;
+    serve(() => (marked ? afterMarker : away), () => "Test project");
+    const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
+    await waitFor(() => expect(result.current.loadStatus).toBe("ready"));
+    marked = true;
+    await act(async () => { await result.current.load(); });
+    const since = result.current.room?.sinceRead;
+    expect(since?.state === "ok" && since.groups.length).toBe(0);
+    expect(result.current.readAt).toBe(afterMarker.readAt);
+  });
+
+  it("a quiet re-read asked for during a full load runs after it and keeps its list", async () => {
+    let roomReads = 0;
+    let release: () => void = () => undefined;
+    apiFetchMock.mockImplementation((url: string) => {
+      if (url.includes("/room")) {
+        roomReads += 1;
+        const body = { ...roomResponse(), sinceRead: roomReads === 1 ? away : afterMarker };
+        return roomReads === 1
+          ? new Promise((resolve) => { release = () => resolve(body); })
+          : Promise.resolve(body);
+      }
+      return Promise.resolve(response(url));
+    });
+    const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
+    await waitFor(() => expect(roomReads).toBe(1));
+    await act(async () => { await result.current.load(true); }); // a frame during the open
+    expect(roomReads).toBe(1);
+    await act(async () => { release(); });
+    await waitFor(() => expect(roomReads).toBe(2));
+    await waitFor(() => expect(result.current.loadStatus).toBe("ready"));
+    const since = result.current.room?.sinceRead;
+    expect(since?.state === "ok" && since.groups[0].entries.length).toBe(2);
+  });
+});
+

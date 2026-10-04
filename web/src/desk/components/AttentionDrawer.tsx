@@ -26,6 +26,7 @@ import {
 import { MicButton } from "./MicButton";
 import { SystemShade } from "./SystemShade";
 import { refreshNeedsYou, useNeedsYou } from "../needsYou";
+import { burstTimer } from "../burstTimer";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 
 /** PHILO-13-03 (A2-W): a write anywhere on the Desk moves the ONE needs-you
@@ -37,13 +38,10 @@ export const NEEDS_YOU_CHANGED_DEBOUNCE_MS = 300;
 function useNeedsYouOnDeskChanged(): void {
   const { subscribe } = useRuntimeBus();
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const unsubscribe = subscribe("desk_changed", () => {
-      if (timer !== null) clearTimeout(timer);
-      timer = setTimeout(() => { timer = null; void refreshNeedsYou(true); }, NEEDS_YOU_CHANGED_DEBOUNCE_MS);
-    });
+    const burst = burstTimer(() => { void refreshNeedsYou(true); }, NEEDS_YOU_CHANGED_DEBOUNCE_MS);
+    const unsubscribe = subscribe("desk_changed", burst.bump);
     return () => {
-      if (timer !== null) clearTimeout(timer);
+      burst.cancel();
       unsubscribe();
     };
   }, [subscribe]);

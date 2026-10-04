@@ -36,6 +36,7 @@ import {
   type DockSendRead,
   type DockLiveState,
 } from "./dockState";
+import { burstTimer } from "../../burstTimer";
 
 const DOCK_LIVE_FRAMES = [
   "aftercare_ready",
@@ -181,7 +182,6 @@ function useDockLiveReads(): {
   const needs = useNeedsYou({ poll: false });
   const [live, setLive] = useState<DockLiveState>(EMPTY_DOCK_LIVE);
   const [reads, setReads] = useState<DockReadState>(EMPTY_DOCK_READ);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastState = useRef<string | null>(runtimeState);
   const readyReadGeneration = useRef(0);
 
@@ -237,6 +237,7 @@ function useDockLiveReads(): {
       void refresh();
       return;
     }
+    const burst = burstTimer(() => { void refresh(); }, 250);
     const unsubscribers = DOCK_LIVE_FRAMES.map((type) =>
       subscribe(type, (frame) => {
         setLive((previous) => reduceDockFrame(previous, frame));
@@ -255,17 +256,12 @@ function useDockLiveReads(): {
             }
           }
         }
-        if (timer.current !== null) clearTimeout(timer.current);
-        timer.current = setTimeout(() => {
-          timer.current = null;
-          void refresh();
-        }, 250);
+        burst.bump();
       }),
     );
     return () => {
       unsubscribers.forEach((unsubscribe) => unsubscribe());
-      if (timer.current !== null) clearTimeout(timer.current);
-      timer.current = null;
+      burst.cancel();
     };
   }, [refresh, subscribe]);
 

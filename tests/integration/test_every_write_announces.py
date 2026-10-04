@@ -266,6 +266,19 @@ def test_the_quiet_routes_are_real_named_and_quiet(hub: Hub, seeded: dict[str, s
     assert frames == []
 
 
+def test_the_room_read_marker_sends_no_frame(hub: Hub, seeded: dict[str, str]) -> None:
+    """Astra, #785 finding 1: each Room writes its read marker when it opens.
+
+    A frame for it made the Room re-read at once and erase its catch-up list.
+    The marker is written and no window is told.
+    """
+    answer: list[tuple[int, Any]] = []
+    frames = hub.frames_from(
+        lambda: answer.append(hub.call("POST", f"/api/projects/{seeded['project']}/room/read")), wait_s=0.6)
+    assert answer[0][0] == 200, answer
+    assert frames == []
+
+
 def test_ready_read_sends_one_frame(hub: Hub, seeded: dict[str, str]) -> None:
     """Astra, #771 finding 2: the route broadcast for itself and the root added a second frame."""
     from holdspeak.db import get_database

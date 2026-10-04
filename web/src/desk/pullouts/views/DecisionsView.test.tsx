@@ -4,6 +4,17 @@ import { DecisionsView } from "./DecisionsView";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 
+const bus = vi.hoisted(() => ({ handlers: new Set<(frame: unknown) => void>() }));
+vi.mock("../../../runtime/RuntimeBus", () => ({
+  useRuntimeBus: () => ({
+    subscribe: (type: string, handler: (frame: unknown) => void) => {
+      if (type !== "desk_changed") return () => undefined;
+      bus.handlers.add(handler);
+      return () => bus.handlers.delete(handler);
+    },
+  }),
+}));
+
 vi.mock("../../../lib/api", () => ({
   apiFetch,
   readableError: (reason: unknown) => reason instanceof Error ? reason.message : "Request failed",
@@ -78,5 +89,43 @@ describe("HS-128-04 Receipts view", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "← RESULTS" }));
     expect(screen.getByText(receipt.decision_text)).toBeInTheDocument();
+  });
+
+  // Astra, #785 finding 2: a slow bus re-read for the old query landed after
+  // the new query's rows and showed "alpha" rows under the field "beta".
+  it("drops a late answer for an older query", async () => {
+    const alpha = { ...receipt, id: "receipt-alpha", decision_text: "Alpha decision" };
+    const beta = { ...receipt, id: "receipt-beta", decision_text: "Beta decision" };
+    let releaseAlpha: (rows: unknown[]) => void = () => undefined;
+    let alphaReads = 0;
+    apiFetch.mockImplementation((path: string) => {
+      if (path.includes("q=alpha")) {
+        alphaReads += 1;
+        // The first alpha read is the search; the second is the bus re-read, held.
+        return alphaReads === 1
+          ? Promise.resolve([alpha])
+          : new Promise((resolve) => { releaseAlpha = resolve; });
+      }
+      if (path.includes("q=beta")) return Promise.resolve([beta]);
+      return Promise.resolve([receipt]);
+    });
+
+    render(<DecisionsView />);
+    const field = screen.getByRole("searchbox", { name: "Search decisions" });
+    fireEvent.change(field, { target: { value: "alpha" } });
+    await screen.findByText("Alpha decision");
+
+    // A write somewhere: the view re-reads "alpha"; that read is slow.
+    bus.handlers.forEach((handler) => handler({ type: "desk_changed", data: {} }));
+    await waitFor(() => expect(alphaReads).toBe(2));
+
+    fireEvent.change(field, { target: { value: "beta" } });
+    await screen.findByText("Beta decision");
+
+    releaseAlpha([alpha]);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.getByText("Beta decision")).toBeTruthy();
+    expect(screen.queryByText("Alpha decision")).toBeNull();
+    expect((field as HTMLInputElement).value).toBe("beta");
   });
 });

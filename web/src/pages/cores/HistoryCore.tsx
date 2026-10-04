@@ -36,6 +36,7 @@ import {
 import { egressFor } from "../../desk/surface/egress";
 import { useCoreWings } from "./core-hooks";
 import { useRuntimeBus, useRuntimeFrame } from "../../runtime/RuntimeBus";
+import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
 import { renderHeroSlot } from "./core-layout";
 import {
@@ -328,18 +329,15 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const refreshRef = useRef(refreshFace);
   refreshRef.current = refreshFace;
   useEffect(() => {
-    let timer = 0;
     const refresh = () => void refreshRef.current();
-    const bump = () => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(refresh, 300);
-    };
+    const burst = burstTimer(refresh, 300);
+    const bump = burst.bump;
     const offDeskChanged = subscribeFrames("desk_changed", bump);
     const offAftercare = subscribeFrames("aftercare_ready", bump);
     const offReturn = onReturnToTask(refresh);
     window.addEventListener("focus", refresh);
     return () => {
-      window.clearTimeout(timer);
+      burst.cancel();
       offDeskChanged();
       offAftercare();
       offReturn();

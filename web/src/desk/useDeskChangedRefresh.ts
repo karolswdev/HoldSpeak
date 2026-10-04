@@ -29,6 +29,9 @@
  * UI -- the existing `refresh()` already loads the desk consistently, and a
  * patch-by-kind reducer would be a second, divergent model of the same data.
  *
+ * A burst that does not stop still refreshes: the wait has a hard cap
+ * (`BURST_MAX_WAIT_MS`, `burstTimer.ts`).
+ *
  * Debounced trailing, not leading: a burst (a steward run publishing an update,
  * a zone of notes filed at once) arrives as many frames in a few hundred
  * milliseconds, and the desk needs the state AFTER the burst, not a re-read per
@@ -36,6 +39,7 @@
  */
 import { useEffect, useRef } from "react";
 import { useRuntimeBus } from "../runtime/RuntimeBus";
+import { burstTimer } from "./burstTimer";
 import { useDesk } from "./store";
 
 /** Trailing-edge debounce window for a `desk_changed` burst, in ms. */
@@ -47,21 +51,13 @@ export function useDeskChangedRefresh(
   const { subscribe } = useRuntimeBus();
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const unsubscribe = subscribe("desk_changed", () => {
-      if (timer !== null) clearTimeout(timer);
-      timer = setTimeout(() => {
-        timer = null;
-        // Read the store imperatively: this hook must not re-subscribe every
-        // time the desk's data changes, which is exactly what depending on a
-        // selected `refresh` would cause.
-        void useDesk.getState().refresh();
-      }, debounceMs);
-    });
-
+    // Read the store imperatively: this hook must not re-subscribe every
+    // time the desk's data changes, which is exactly what depending on a
+    // selected `refresh` would cause.
+    const burst = burstTimer(() => void useDesk.getState().refresh(), debounceMs);
+    const unsubscribe = subscribe("desk_changed", burst.bump);
     return () => {
-      if (timer !== null) clearTimeout(timer);
+      burst.cancel();
       unsubscribe();
     };
   }, [subscribe, debounceMs]);
@@ -88,16 +84,10 @@ export function useOnDeskChanged(
 
   useEffect(() => {
     if (!subscribe) return;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const unsubscribe = subscribe("desk_changed", () => {
-      if (timer !== null) clearTimeout(timer);
-      timer = setTimeout(() => {
-        timer = null;
-        latest.current();
-      }, debounceMs);
-    });
+    const burst = burstTimer(() => latest.current(), debounceMs);
+    const unsubscribe = subscribe("desk_changed", burst.bump);
     return () => {
-      if (timer !== null) clearTimeout(timer);
+      burst.cancel();
       if (typeof unsubscribe === "function") unsubscribe();
     };
   }, [subscribe, debounceMs]);

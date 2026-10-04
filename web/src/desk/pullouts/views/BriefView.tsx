@@ -1,5 +1,5 @@
 import { wireDate } from "../../surface/format";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api"; import { plainFailure } from "../../surface/plainFailure"; // PHILO-13-04: plain words, never the hub's `detail`
 import { useWriteReceipt } from "../../hooks/useWriteReceipt";
@@ -161,13 +161,18 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const [addingAgenda, setAddingAgenda] = useState(false);
   const { attempt, receipt } = useWriteReceipt();
 
+  const reads = useRef({ started: 0, landed: 0 });
   const load = useCallback(async (quiet = false) => {
     if (!quiet) {
       setLoading(true);
       setError("");
     }
+    const order = ++reads.current.started;
     try {
       const latest = await apiFetch<MondayBrief | null>("/api/brief/latest");
+      // A read that started earlier and answers later never replaces a newer one.
+      if (order < reads.current.landed) return;
+      reads.current.landed = order;
       setBrief(latest);
       setShelf(latest?.shelf ?? {});
     } catch (requestError) {
