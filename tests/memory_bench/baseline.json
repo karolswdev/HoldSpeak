@@ -1,0 +1,46 @@
+{
+  "fused_256": {
+    "paraphrase": {
+      "mrr": 0.4214,
+      "n": 16,
+      "recall@10": 0.875,
+      "recall@5": 0.8125
+    },
+    "same_word": {
+      "mrr": 0.9231,
+      "n": 13,
+      "recall@10": 1.0,
+      "recall@5": 1.0
+    }
+  },
+  "fused_768": {
+    "paraphrase": {
+      "mrr": 0.4516,
+      "n": 16,
+      "recall@10": 0.9375,
+      "recall@5": 0.8125
+    },
+    "same_word": {
+      "mrr": 0.9231,
+      "n": 13,
+      "recall@10": 1.0,
+      "recall@5": 1.0
+    }
+  },
+  "keyword": {
+    "paraphrase": {
+      "mrr": 0.0,
+      "n": 16,
+      "recall@10": 0.0,
+      "recall@5": 0.0
+    },
+    "same_word": {
+      "mrr": 0.8269,
+      "n": 13,
+      "recall@10": 1.0,
+      "recall@5": 1.0
+    }
+  },
+  "model_id": "nomic-embed-text-v1.5.Q8_0@256",
+  "note": "Written by scripts/memory_bench_vectors.py. 'keyword' is the search with no embedding engine (the baseline). The fused rows are the real model on the day the fixture was made."
+}

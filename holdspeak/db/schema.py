@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 80  # informational; 79→80: additive parked flags for meetings and workbench items (PHILO-13-02)
+SCHEMA_VERSION = 81  # informational; 80→81: the memory index tables (memory_sources, memory_chunks, memory_embeddings)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -4583,5 +4583,44 @@ CREATE TABLE IF NOT EXISTS needs_you_last_known (
     observed_at TEXT NOT NULL,
     items_json TEXT NOT NULL DEFAULT '[]',
     updated_at TEXT NOT NULL
+);
+
+-- The native memory index, slice 1 (docs/internal/MEMORY-DESIGN.md §2).
+-- Derived rows only: `holdspeak memory rebuild` drops and rebuilds them from
+-- the source tables.  The source tables do not change.
+--
+-- The ledger: one row per source object memory has seen.
+CREATE TABLE IF NOT EXISTS memory_sources (
+    source_ref TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    occurred_at TEXT,
+    content_sha TEXT NOT NULL,
+    chunker_version INTEGER NOT NULL,
+    extracted_sha TEXT,
+    extractor_version INTEGER,
+    state TEXT NOT NULL DEFAULT 'live',
+    updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS memory_chunks (
+    id TEXT PRIMARY KEY,
+    source_ref TEXT NOT NULL,
+    ordinal INTEGER NOT NULL,
+    anchor TEXT NOT NULL DEFAULT '',
+    text TEXT NOT NULL,
+    occurred_at TEXT,
+    content_sha TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_memory_chunks_source
+    ON memory_chunks(source_ref, ordinal);
+-- One table of vectors.  `vector` is float32, unit length, `dim` values.
+CREATE TABLE IF NOT EXISTS memory_embeddings (
+    item_kind TEXT NOT NULL,
+    item_id TEXT NOT NULL,
+    model_id TEXT NOT NULL,
+    dim INTEGER NOT NULL,
+    vector BLOB NOT NULL,
+    content_sha TEXT NOT NULL,
+    PRIMARY KEY (item_kind, item_id, model_id)
 );
 """

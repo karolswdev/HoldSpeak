@@ -1,0 +1,35 @@
+{
+  "note": "group same_word: the question uses words of the source. group paraphrase: the question shares NO content word with any source that answers it; the keyword search fails these by construction (the test checks this).",
+  "questions": [
+    {"id": "s01", "group": "same_word", "q": "accounting cutover date", "expect": ["n-cutover"]},
+    {"id": "s02", "group": "same_word", "q": "Northwind contract renewal", "expect": ["n-vendor", "m-vendor-call"], "project": "atlas"},
+    {"id": "s03", "group": "same_word", "q": "database backups every six hours", "expect": ["n-backup"]},
+    {"id": "s04", "group": "same_word", "q": "budget travel cut", "expect": ["n-budget"]},
+    {"id": "s05", "group": "same_word", "q": "hire backend engineers", "expect": ["n-hiring"]},
+    {"id": "s06", "group": "same_word", "q": "offsite in Lisbon", "expect": ["n-offsite"]},
+    {"id": "s07", "group": "same_word", "q": "customer churn third quarter", "expect": ["n-churn"], "project": "harbor"},
+    {"id": "s08", "group": "same_word", "q": "duplicate payments retry bug", "expect": ["a-incident"]},
+    {"id": "s09", "group": "same_word", "q": "offline mode on the roadmap", "expect": ["a-roadmap"]},
+    {"id": "s10", "group": "same_word", "q": "currency accounts rounding", "expect": ["m-atlas-sync"]},
+    {"id": "s11", "group": "same_word", "q": "Postgres monthly partitions", "expect": ["dd-postgres"]},
+    {"id": "s12", "group": "same_word", "q": "CSV export of invoices", "expect": ["th-export"]},
+    {"id": "s13", "group": "same_word", "q": "photo uploads timeout", "expect": ["m-support"]},
+
+    {"id": "p01", "group": "paraphrase", "q": "when do we switch the finance system over", "expect": ["n-cutover"], "project": "atlas"},
+    {"id": "p02", "group": "paraphrase", "q": "supplier agreement extension", "expect": ["n-vendor"]},
+    {"id": "p03", "group": "paraphrase", "q": "how often do we snapshot the data store", "expect": ["n-backup"]},
+    {"id": "p04", "group": "paraphrase", "q": "are we losing clients", "expect": ["n-churn"]},
+    {"id": "p05", "group": "paraphrase", "q": "who covers pager duty on Saturdays", "expect": ["n-oncall"]},
+    {"id": "p06", "group": "paraphrase", "q": "why did the app launch slip", "expect": ["n-login"]},
+    {"id": "p07", "group": "paraphrase", "q": "spending plan for the coming twelve months", "expect": ["n-budget"]},
+    {"id": "p08", "group": "paraphrase", "q": "where is the company retreat", "expect": ["n-offsite"]},
+    {"id": "p09", "group": "paraphrase", "q": "crews that cannot get online at the job site", "expect": ["a-research", "dd-offline"], "project": "harbor"},
+    {"id": "p10", "group": "paraphrase", "q": "is it time to break the invoicing backend into microservices", "expect": ["dd-single-deploy", "m-arch"]},
+    {"id": "p11", "group": "paraphrase", "q": "money paid out two times by mistake", "expect": ["a-incident"]},
+    {"id": "p12", "group": "paraphrase", "q": "what locales do we support for launch", "expect": ["dd-languages"]},
+    {"id": "p13", "group": "paraphrase", "q": "blind customers cannot complete a purchase", "expect": ["a-accessibility"]},
+    {"id": "p14", "group": "paraphrase", "q": "deployment ban ahead of go-live", "expect": ["dd-freeze"]},
+    {"id": "p15", "group": "paraphrase", "q": "picture sending breaks on bad reception", "expect": ["m-support"]},
+    {"id": "p16", "group": "paraphrase", "q": "history of modifications for bookkeeping records", "expect": ["th-audit"]}
+  ]
+}

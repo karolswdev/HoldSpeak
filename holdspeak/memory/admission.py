@@ -1,0 +1,69 @@
+"""The one admission rule for memory (MEMORY-DESIGN.md §3.1 step 1, §5).
+
+``memory_admits(kind, row)`` holds every exclusion in one place.  The chunk
+sweep and the keyword (FTS) rebuild both call it, so a source that one index
+refuses can never be in the other.
+
+There is no People kind here.  A kind this module does not name is refused,
+so People store content has no way in.
+"""
+from __future__ import annotations
+
+from typing import Any, Mapping
+
+
+def _flag(row: Mapping[str, Any], key: str) -> bool:
+    try:
+        return bool(int(row.get(key) or 0))
+    except (TypeError, ValueError):
+        return bool(row.get(key))
+
+
+def _live(row: Mapping[str, Any]) -> bool:
+    return not _flag(row, "deleted")
+
+
+_RULES = {
+    # A decision whose source is gone is not memory (the FTS rule).
+    "decision": lambda row: _live(row) and str(row.get("source_state") or "linked") == "linked",
+    "decision_record": _live,
+    "desk_decision": _live,
+    "artifact": lambda row: True,
+    # A parked meeting is out of memory.
+    "meeting": lambda row: not _flag(row, "parked"),
+    "note": _live,
+    "thread": lambda row: row.get("deleted_at") is None,
+    # One part of a thread message: never a sensitive part, never a draft.
+    "thread_part": lambda row: (
+        row.get("deleted_at") is None
+        and row.get("message_deleted_at") is None
+        and not _flag(row, "sensitive")
+        and not _flag(row, "draft")
+        and str(row.get("part_kind") or "text") == "text"
+    ),
+    "action": lambda row: True,
+    "project_item": lambda row: True,
+    "workbench_item": lambda row: str(row.get("status") or "") != "dismissed",
+    "cadence": lambda row: str(row.get("status") or "") != "killed",
+}
+
+ADMITTED_KINDS = frozenset(_RULES)
+
+
+def memory_admits(kind: str, row: Mapping[str, Any]) -> bool:
+    """True when this source row may enter memory.
+
+    ``row`` carries the source row's own flags (``deleted``, ``parked``,
+    ``sensitive``, ``draft`` …) and ``promoted``: true when the row is the
+    target of a context promotion.  A promoted row is never memory, for any
+    kind.  An unknown kind is refused.
+    """
+    rule = _RULES.get(str(kind or ""))
+    if rule is None:
+        return False
+    if _flag(row, "promoted"):
+        return False
+    return bool(rule(row))
+
+
+__all__ = ["ADMITTED_KINDS", "memory_admits"]

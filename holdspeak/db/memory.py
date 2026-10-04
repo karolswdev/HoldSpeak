@@ -226,6 +226,10 @@ _RELATION_SEED_LIMIT = 32
 _RELATION_RESULT_LIMIT = 64
 _RELATION_NEIGHBOURS_PER_SEED = 2
 _QUERY_TERM_LIMIT = 24
+# The vector retriever (docs/internal/MEMORY-DESIGN.md §3.2): top 50 sources,
+# and a bound on how many candidates one question may hydrate.
+_VECTOR_RESULT_LIMIT = 50
+_VECTOR_WALK_LIMIT = 400
 _WORD = re.compile(r"\w+", re.UNICODE)
 _QUERY_STOPWORDS = frozenset(
     "a an and are about did do does for from how i in is it of on or the to was what when where which who why with we you".split()
@@ -261,8 +265,18 @@ class MemorySearchResult:
     offset: int
     lexical_total: int = 0
     expanded_total: int = 0
+    # Set only when the vector retriever ran and its list was fused in.  With
+    # no embedding engine this stays None and the result is the keyword +
+    # relation result, unchanged.
+    fusion: Optional[dict[str, Any]] = None
 
     def to_dict(self) -> dict[str, Any]:
+        payload = self._to_dict()
+        if self.fusion is not None:
+            payload["ranking"]["fusion"] = dict(self.fusion)
+        return payload
+
+    def _to_dict(self) -> dict[str, Any]:
         return {
             "hits": [hit.to_dict() for hit in self.hits],
             "page": {
@@ -314,29 +328,60 @@ def _query_terms(query: str) -> list[str]:
 
 
 def rebuild_memory_index(conn: sqlite3.Connection) -> dict[str, int]:
-    """Rebuild all three FTS tables from canonical rows, safely and idempotently."""
+    """Rebuild all three FTS tables from canonical rows, safely and idempotently.
+
+    Admission is ``memory_admits`` (holdspeak/memory/admission.py): the same
+    function the chunk sweep calls, so the keyword index and the chunk index
+    can never disagree about what memory may hold.
+    """
+    from ..memory.admission import memory_admits
+
+    promoted = {
+        str(row[0]) for row in conn.execute("SELECT DISTINCT target_ref FROM context_promotions")
+    }
+
+    def admitted(kind: str, sql: str) -> list[dict[str, Any]]:
+        rows = []
+        for raw in conn.execute(sql):
+            row = dict(raw)
+            # HS-200-10 (F0/L1, part 3): a full re-index cannot re-admit what
+            # the guarded triggers excluded.  Keyed on the EXISTENCE of a
+            # promotion rather than on its disclosure_state.
+            row["promoted"] = kind == "note" and f"note:{row['id']}" in promoted
+            if memory_admits(kind, row):
+                rows.append(row)
+        return rows
+
     conn.execute("DELETE FROM decisions_memory_fts")
-    conn.execute(
-        """INSERT INTO decisions_memory_fts(source_id,text,rationale)
-           SELECT id,text,COALESCE(rationale,'') FROM decisions
-           WHERE deleted=0 AND source_state='linked'"""
+    conn.executemany(
+        "INSERT INTO decisions_memory_fts(source_id,text,rationale) VALUES (?,?,?)",
+        [
+            (row["id"], row["text"], row["rationale"] or "")
+            for row in admitted(
+                "decision",
+                "SELECT id,text,rationale,deleted,source_state FROM decisions ORDER BY rowid",
+            )
+        ],
     )
     conn.execute("DELETE FROM artifacts_memory_fts")
-    conn.execute(
-        """INSERT INTO artifacts_memory_fts(source_id,title,body_markdown)
-           SELECT id,title,body_markdown FROM artifacts"""
+    conn.executemany(
+        "INSERT INTO artifacts_memory_fts(source_id,title,body_markdown) VALUES (?,?,?)",
+        [
+            (row["id"], row["title"], row["body_markdown"])
+            for row in admitted(
+                "artifact", "SELECT id,title,body_markdown FROM artifacts ORDER BY rowid"
+            )
+        ],
     )
     conn.execute("DELETE FROM notes_memory_fts")
-    # HS-200-10 (F0/L1, part 3): a full re-index cannot re-admit what the
-    # guarded triggers excluded.  Same predicate as `notes_memory_ai` /
-    # `notes_memory_au` (holdspeak/db/schema.py), keyed on the EXISTENCE of a
-    # promotion rather than on its disclosure_state.
-    conn.execute(
-        """INSERT INTO notes_memory_fts(source_id,title,body_markdown)
-           SELECT n.id,n.title,n.body_markdown FROM notes n
-           WHERE n.deleted=0
-             AND NOT EXISTS (SELECT 1 FROM context_promotions
-                              WHERE target_ref = 'note:' || n.id)"""
+    conn.executemany(
+        "INSERT INTO notes_memory_fts(source_id,title,body_markdown) VALUES (?,?,?)",
+        [
+            (row["id"], row["title"], row["body_markdown"])
+            for row in admitted(
+                "note", "SELECT id,title,body_markdown,deleted FROM notes ORDER BY rowid"
+            )
+        ],
     )
     counts = {
         "decisions": int(
@@ -361,6 +406,19 @@ class MemoryRepository(BaseRepository):
     def rebuild(self) -> dict[str, int]:
         with self._connection() as conn:
             return rebuild_memory_index(conn)
+
+    def set_embedder(self, embedder: Any) -> None:
+        """Give recall the engine that embeds a question, or None.
+
+        The memory conductor sets this when ``memory.embed`` has an engine.
+        With None, ``search`` is the keyword + relation search and nothing
+        else runs.
+        """
+        self._embedder = embedder
+
+    @property
+    def embedder(self) -> Any:
+        return getattr(self, "_embedder", None)
 
     @staticmethod
     def _promoted_refs(conn: sqlite3.Connection) -> set[str]:
@@ -540,6 +598,7 @@ class MemoryRepository(BaseRepository):
             )
         )
         lexical_total = len(interleaved)
+        lexical_rows = list(interleaved)
         with self._connection() as conn:
             expanded = self._expand_related_rows(
                 conn,
@@ -568,6 +627,23 @@ class MemoryRepository(BaseRepository):
                 woven.append(row)
                 woven.extend(by_seed.get(self._base_ref(str(row["source_ref"])), ()))
             interleaved = woven
+
+        fusion: Optional[dict[str, Any]] = None
+        embedder = self.embedder
+        if embedder is not None:
+            fused = self._fuse_with_vectors(
+                query,
+                embedder,
+                lexical_rows=lexical_rows,
+                woven=interleaved,
+                selected=selected,
+                project=project,
+                start=start,
+                end=end,
+                excluded=excluded,
+            )
+            if fused is not None:
+                interleaved, fusion = fused
 
         total = len(interleaved)
         page = interleaved[bounded_offset : bounded_offset + bounded_limit]
@@ -598,8 +674,163 @@ class MemoryRepository(BaseRepository):
             bounded_limit,
             bounded_offset,
             lexical_total=lexical_total,
-            expanded_total=max(0, total - lexical_total),
+            expanded_total=(
+                max(0, total - lexical_total)
+                if fusion is None
+                else int(fusion["relation_count"])
+            ),
+            fusion=fusion,
         )
+
+    # ── the vector retriever and the fusion (MEMORY-DESIGN.md §3.2) ──
+
+    def _fuse_with_vectors(
+        self,
+        query: str,
+        embedder: Any,
+        *,
+        lexical_rows: list[dict[str, Any]],
+        woven: list[dict[str, Any]],
+        selected: tuple[str, ...],
+        project: Optional[str],
+        start: Optional[str],
+        end: Optional[str],
+        excluded: set[str],
+    ) -> Optional[tuple[list[dict[str, Any]], dict[str, Any]]]:
+        """Fuse keyword, relation and vector lists by reciprocal rank.
+
+        Returns None when the vector retriever gives nothing (no vectors yet,
+        or the engine failed): the caller then keeps the keyword + relation
+        result exactly as it is.
+        """
+        from ..memory.fusion import RRF_K, reciprocal_rank_fusion
+
+        try:
+            vector_rows = self._vector_rows(
+                query, embedder, selected=selected, project=project,
+                start=start, end=end, excluded=excluded,
+            )
+        except Exception as exc:  # the engine is optional; recall never fails on it
+            from ..logging_config import get_logger
+
+            get_logger("db.memory").warning("memory vector retriever skipped: %s", exc)
+            return None
+        if not vector_rows:
+            return None
+        relation_rows = [row for row in woven if row.get("related_to")]
+        lists = {
+            "keyword": [self._base_ref(str(row["source_ref"])) for row in lexical_rows],
+            "relation": [self._base_ref(str(row["source_ref"])) for row in relation_rows],
+            "vector": [self._base_ref(str(row["source_ref"])) for row in vector_rows],
+        }
+        first: dict[str, dict[str, Any]] = {}
+        for rows in (lexical_rows, relation_rows, vector_rows):
+            for row in rows:
+                first.setdefault(self._base_ref(str(row["source_ref"])), row)
+        fused_rows = [
+            first[str(key)] for key, _score, _found in reciprocal_rank_fusion(lists)
+        ]
+        meta = {
+            "method": "reciprocal_rank_fusion",
+            "k": RRF_K,
+            "retrievers": [name for name, keys in lists.items() if keys],
+            "model_id": str(embedder.model_id),
+            "keyword_count": len(lexical_rows),
+            "relation_count": len(relation_rows),
+            "vector_count": len(vector_rows),
+        }
+        return fused_rows, meta
+
+    def _vector_rows(
+        self,
+        query: str,
+        embedder: Any,
+        *,
+        selected: tuple[str, ...],
+        project: Optional[str],
+        start: Optional[str],
+        end: Optional[str],
+        excluded: set[str],
+    ) -> list[dict[str, Any]]:
+        """The best chunk per source, nearest first, inside the scope.
+
+        The scope (kinds, project, time, excluded refs) is applied to each
+        candidate BEFORE it takes a place in the top 50, so nothing from
+        outside a project is ever a candidate.
+        """
+        import numpy as np
+
+        index = self._db.memory_index
+        matrix, chunk_ids, source_refs = index.matrix(str(embedder.model_id))
+        if matrix.shape[0] == 0:
+            return []
+        question = np.asarray(embedder.embed_query(query), dtype=np.float32)
+        if question.shape != (matrix.shape[1],):
+            return []
+        scores = matrix @ question
+        rows: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        with self._connection() as conn:
+            for position in np.argsort(-scores, kind="stable"):
+                if len(rows) >= _VECTOR_RESULT_LIMIT or len(seen) >= _VECTOR_WALK_LIMIT:
+                    break
+                ref = source_refs[int(position)]
+                if ref in seen:
+                    continue
+                seen.add(ref)
+                kind = ref.partition(":")[0]
+                if kind not in selected or ref in excluded:
+                    continue
+                row = self._load_related_row(conn, ref, project=project)
+                if row is None or not self._vector_row_live(conn, kind, ref):
+                    continue
+                occurred_at = str(row.get("occurred_at") or "")
+                if not self._in_time(kind, occurred_at, start, end):
+                    continue
+                chunk = conn.execute(
+                    "SELECT anchor,text FROM memory_chunks WHERE id=?",
+                    (chunk_ids[int(position)],),
+                ).fetchone()
+                if chunk is not None:
+                    row["snippet"] = str(chunk["text"])[:420]
+                    if kind == "thread" and str(chunk["anchor"] or ""):
+                        # The keyword pass names the matching message; so does this.
+                        row["source_ref"] = f"{ref}#{chunk['anchor']}"
+                score = float(scores[int(position)])
+                row["bm25"] = 0.0
+                row["normalized_score"] = max(0.0, min(1.0, score))
+                row["kind_rank"] = len(rows) + 1
+                row["retrieval_origin"] = "vector"
+                rows.append(row)
+        return rows
+
+    @staticmethod
+    def _vector_row_live(conn: sqlite3.Connection, kind: str, ref: str) -> bool:
+        """The admission check at read time, for the gap between two sweeps.
+
+        The sweep removes a parked meeting's chunks; until it runs, this keeps
+        the meeting out of the vector list (the keyword pass has the same
+        ``parked = 0`` rule).
+        """
+        if kind != "meeting":
+            return True
+        row = conn.execute(
+            "SELECT parked FROM meetings WHERE id=?", (ref.partition(":")[2],)
+        ).fetchone()
+        return row is not None and not int(row[0] or 0)
+
+    @staticmethod
+    def _in_time(kind: str, occurred_at: str, start: Optional[str], end: Optional[str]) -> bool:
+        if not start and not end:
+            return True
+        if kind == "thread":
+            # A thread time is 'YYYY-MM-DD HH:MM:SS'; compare like with like.
+            def norm(value: str) -> str:
+                return value.replace("T", " ")[:19]
+
+            value = norm(occurred_at)
+            return not ((start and value < norm(start)) or (end and value > norm(end)))
+        return not ((start and occurred_at < start) or (end and occurred_at > end))
 
     @staticmethod
     def _normalize_kinds(kinds: Optional[Iterable[str]]) -> tuple[str, ...]:

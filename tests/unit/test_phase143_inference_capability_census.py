@@ -122,8 +122,8 @@ holdspeak/kernel/inference_runner.py:621|InferenceRunner._attempt|_issue_dispatc
 holdspeak/kernel/inference_runner.py:81|InferenceRunner.__init__|build_intel_for_revision|ref
 holdspeak/kernel/prompt_adapter.py:25|CanonicalPromptAdapter.dispatch|run_prompt|call
 holdspeak/kernel/prompt_adapter.py:71|StreamingPromptAdapter.dispatch|run_prompt|call
-holdspeak/main.py:765|_run_meeting_mode|transcribe|call
-holdspeak/main.py:774|_run_meeting_mode|transcribe|call
+holdspeak/main.py:783|_run_meeting_mode|transcribe|call
+holdspeak/main.py:792|_run_meeting_mode|transcribe|call
 holdspeak/meeting_import.py:349|_transcribe_import_windows|transcribe|call
 holdspeak/meeting_session/deferred_bound.py:93|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
 holdspeak/meeting_session/deferred_bound.py:105|bound_auto_title_dispatch.call|generate_title|call
@@ -617,8 +617,8 @@ holdspeak/target_profile.py:199|apply_model_assisted_target|rewrite|ref
 holdspeak/target_profile.py:202|apply_model_assisted_target|rewrite|call
 """),
     _group(ProposedRoute("speech.transcribe", "speech_session.transcription", "InferenceRunner via TranscriptionAdmission"), """
-holdspeak/main.py:765|_run_meeting_mode|transcribe|call
-holdspeak/main.py:774|_run_meeting_mode|transcribe|call
+holdspeak/main.py:783|_run_meeting_mode|transcribe|call
+holdspeak/main.py:792|_run_meeting_mode|transcribe|call
 holdspeak/meeting_import.py:349|_transcribe_import_windows|transcribe|call
 holdspeak/meeting_session/transcribe_loop.py:84|TranscribeLoopMixin._transcribe_audio|transcribe|call
 holdspeak/runtime/dictation_capture.py:108|DictationCaptureMixin._transcribe_and_type|transcribe|call

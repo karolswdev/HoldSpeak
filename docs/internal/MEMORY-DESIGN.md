@@ -6,7 +6,8 @@ Hindsight's ideas, built native in HoldSpeak.
   robust with this solution." B = the same ideas inside HoldSpeak's own database,
   engine router, egress badges and People custody. No second database. No
   Hindsight server.
-- **Status:** build design. Not built. Each slice in section 8 is one PR.
+- **Status:** build design. Slice 1 is in build (schema, sweep, chunk index,
+  vector retriever, fusion, benchmark). Each slice in section 8 is one PR or two.
 - **Source of ideas:** <https://github.com/vectorize-io/hindsight> (MIT), read at
   a shallow clone on 2026-10-03. Paper: arXiv 2512.12818 (linked from their
   `README.md:5`; not read for this design).
@@ -596,6 +597,26 @@ group passes.
 - A new face before the owner's canvas.
 
 ---
+
+## Measured in slice 1 (2026-10-03, this Mac: Apple M2 Max, load average 75+)
+
+| Probe | Result |
+|---|---|
+| `llama-cpp-python` 0.3.35 loads `nomic-embed-text-v1.5` `Q8_0` (146,146,432 bytes) in process | Yes. Load 0.78 s. Pooling type 1 (mean). Output 768 values, not unit length. |
+| Throughput, 100 short texts in batches of 16 | 0.26 s: about 380 texts each second. One text at a time: about 130 each second. |
+| One question embedded | 7.5 ms. `memory.search` with the vector retriever on a small desk: 8 ms in all. |
+| A batch and one text give the same vector | Yes (cosine 1.0). |
+| **Trap:** the default `n_ubatch` (512) | llama.cpp ABORTS the process (`GGML_ASSERT ... encoder requires n_ubatch >= n_tokens`) when one call carries more than 512 tokens. The engine must set `n_ubatch = n_batch = n_ctx`. |
+| The 256 cut (cut, then unit length) against 768, on the benchmark | Paraphrase recall@5 0.812 for both. recall@10 0.875 (256) and 0.938 (768). Same-word 1.000 for both. |
+| Two bare phrases ("the accounting cutover" and "ledger migration") | NOT clearly apart from unrelated phrases (cosine 0.41 against 0.34 to 0.44 at 256). The model needs a sentence on one side: the question "when is the ledger migration" ranks the cutover note first of 10 with a margin of 0.05. |
+| Benchmark (`tests/memory_bench/`, 33 sources, 29 questions), keyword + relation | same-word recall@5 1.000, MRR 0.827; paraphrase recall@5 0.000 |
+| Benchmark, fused (RRF k = 60), 256 values | same-word recall@5 1.000, MRR 0.923; paraphrase recall@5 0.812, recall@10 0.875, MRR 0.421 |
+
+On a corpus this small the vector top 50 holds almost every source, so a
+keyword hit on a common word is in both lists and can rank above the one
+right vector hit. One paraphrase question (p11) is first in the vector list
+and outside the fused top 5 for this reason. A real desk has thousands of
+sources; the top 50 is then a small part of them.
 
 ## Unknown (not verified for this design)
 
