@@ -1,5 +1,7 @@
 # Phase MIR-01: Dynamic Multi-Intent Routing and Artifact Synthesis
 
+> **History, not canon (2026-10-04).** This plan names modules that no longer exist. It was removed from the Source canon list in `CLAUDE.md` on the owner's word. Read it for background only.
+
 ## 1. Phase Charter
 
 ### 1.1 Objective

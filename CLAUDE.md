@@ -82,11 +82,13 @@ disagrees with one of these, canon wins:
 - `docs/internal/POSITIONING.md` — the positioning canon: the story, the
   pillars, the named competitive frame, canonical feature names, and the
   voice rules every user-facing doc must align to.
-- `docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md` — parent plugin RFC.
-- `docs/internal/PLAN_PHASE_MULTI_INTENT_ROUTING.md` — meeting-side multi-intent routing (MIR-01).
-- `docs/internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md` — dictation pipeline (DIR-01).
-- `docs/internal/PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md` — web-first runtime migration.
 - `pyproject.toml` — package contract.
+
+History, not canon (owner ruling 2026-10-04): the four June plans
+`docs/internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`,
+`PLAN_PHASE_MULTI_INTENT_ROUTING.md`, `PLAN_PHASE_DICTATION_INTENT_ROUTING.md`
+and `PLAN_PHASE_WEB_FLAGSHIP_RUNTIME.md` name modules that no longer exist.
+Read them for background only.
 
 ## Test commands
 
