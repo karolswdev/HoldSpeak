@@ -501,6 +501,14 @@ class ChannelService:
             document = (contract.document_from_json(document_ref, row["document_json"])
                         if row.get("document_json") else None)
             document_json = row.get("document_json")
+            # A prepared Brief is sent only when its frozen bytes are the bytes
+            # the Brief renders NOW (inventory gap 5, 2026-10-03). A row frozen
+            # by the renderer that carried the People overlay never leaves:
+            # it refuses PREVIEW CHANGED and he takes a fresh preview.
+            if str(document_ref).startswith("monday_brief:"):
+                fresh = contract.serialize_for(destination, contract.render_document(self._db, document_ref))
+                if contract.sha256(fresh) != row["payload_digest"]:
+                    raise ChannelRefused("preview_changed", "The document changed since this send was prepared")
         else:
             if not (document_ref and destination_id and preview_digest):
                 raise ValidationError("A send names send_id, or document_ref + destination_id + preview_digest",
