@@ -45,6 +45,12 @@ first user is a Senior Software Architect with reports.
 
 ## Two brains (owner ruling 2026-09-19)
 
+**Astra is the reviewer, not a builder (owner ruling 2026-10-03: "let
+Astra be the uber-reviewer").** Muad'Dib's workers build everything,
+backend included. Astra owns no lanes and writes no product code; she
+gives the one final review round of each PR (at most 2 iterations).
+Text below that gives Astra lanes or file ownership is history.
+
 This repo has two orchestrators of equal standing: Muad'Dib (Claude,
 this harness) and Astra (`gpt-6-astra` via `codex exec --yolo`). Each
 checks the other before anything either authored is acted on; each

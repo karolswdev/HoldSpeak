@@ -1,5 +1,11 @@
 # Two Brains — Muad'Dib and Astra, equals of orchestration
 
+**Astra is the reviewer, not a builder (owner ruling 2026-10-03: "let
+Astra be the uber-reviewer").** Muad'Dib's workers build everything,
+backend included. Astra owns no lanes and writes no product code; she
+gives the one final review round of each PR (at most 2 iterations).
+Text below that gives Astra lanes or file ownership is history.
+
 **Status:** canon, ratified by the owner's direction of 2026-09-19.
 Where this document and [CONSTITUTION.md](CONSTITUTION.md) or
 [UX-CANON.md](UX-CANON.md) disagree, they win. Where this document and
