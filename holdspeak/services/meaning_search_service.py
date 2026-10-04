@@ -52,13 +52,16 @@ PROFILE_ID = "meaning-search-embed"
 _ASSIGNMENT_KEY = f"capability:{MEMORY_EMBED_CAPABILITY}"
 _SCOPE = {"kind": "capability", "capability_id": MEMORY_EMBED_CAPABILITY}
 
+#: code -> the plain words the row shows.  Short sentences: the row wraps
+#: them at 393.  Each one says what to do.
 _ERRORS = {
-    "network": "The download stopped. Press Turn on to continue.",
-    "integrity": "The downloaded file is not the correct file. Press Turn on to download it again.",
-    "refused": "The download was not permitted.",
-    "unsafe": "The model folder on this hub holds a link. Remove the link, then press Turn on.",
-    "runtime": "The local model runtime (llama-cpp-python) is not installed on this hub.",
-    "setup": "Meaning search did not start. Press Turn on to try again.",
+    "network": "The download stopped. Press Try again to continue.",
+    "integrity": "The file was not correct. Press Try again to download it again.",
+    "refused": "The hub did not permit the download. Press Try again.",
+    "unsafe": "The model folder holds a link. Remove the link. Then press Try again.",
+    "runtime": "llama-cpp-python is not installed on this hub. Install it. Then press Try again.",
+    "setup": "Meaning search did not start. Press Try again.",
+    "index": "The index stopped. It continues automatically.",
 }
 
 
@@ -153,7 +156,8 @@ class MeaningSearchService:
             "bytes_total": model.size,
             "indexed": 0,
             "total": 0,
-            "error": self._error,
+            "error": _ERRORS.get(self._error, ""),
+            "error_code": self._error,
             "model": {
                 "label": model.label,
                 "size_bytes": model.size,
@@ -172,7 +176,9 @@ class MeaningSearchService:
                 # ON only when the conductor gave the engine to recall and
                 # every chunk has its vector.
                 state="on" if self._db.memory.embedder is not None and done >= total else "indexing",
-                indexed=done, total=total, error=self._conductor_error(), egress=None,
+                indexed=done, total=total, egress=None,
+                error_code=self._conductor_error(),
+                error=_ERRORS.get(self._conductor_error(), ""),
             )
             return payload
         if self._downloading():
@@ -180,7 +186,7 @@ class MeaningSearchService:
                 state="downloading",
                 bytes_done=self._bytes,
                 percent=min(99, int(self._bytes * 100 / model.size)) if model.size else 0,
-                error="",
+                error="", error_code="",
             )
         return payload
 
@@ -202,7 +208,7 @@ class MeaningSearchService:
         from .. import memory_conductor
 
         report = memory_conductor.last_report()
-        return "The index stopped. It continues automatically." if report.get("error") else ""
+        return "index" if report.get("error") else ""
 
     # ── commands ─────────────────────────────────────────────────────
 
@@ -290,15 +296,15 @@ class MeaningSearchService:
         except ModelFetchCancelled:
             return
         except ModelFetchError as exc:
-            self._error = _ERRORS.get(exc.code, _ERRORS["network"])
+            self._error = exc.code if exc.code in _ERRORS else "network"
             return
         except EgressOperationRefused as exc:
             log.warning("meaning search download refused: %s", exc.reason)
-            self._error = _ERRORS["refused"]
+            self._error = "refused"
             return
         except Exception as exc:
             log.warning("meaning search download failed: %s", exc)
-            self._error = _ERRORS["network"]
+            self._error = "network"
             return
         if self._cancel.is_set():
             return
@@ -312,11 +318,11 @@ class MeaningSearchService:
             self._activate(principal, path)
         except ServiceError as exc:
             log.warning("meaning search setup failed: %s (%s)", exc.detail, exc.code)
-            self._error = _ERRORS["runtime" if exc.code == "meaning_search_runtime_unavailable" else "setup"]
+            self._error = "runtime" if exc.code == "meaning_search_runtime_unavailable" else "setup"
             return
         except Exception as exc:
             log.warning("meaning search setup failed: %s", exc)
-            self._error = _ERRORS["setup"]
+            self._error = "setup"
             return
         self._wake()
 

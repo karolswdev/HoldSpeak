@@ -3,10 +3,14 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "../../../lib/api";
 import { MeaningSearchRow, type MeaningSearchStatus } from "../MeaningSearchRow";
 
 const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
-vi.mock("../../../lib/api", () => ({ apiFetch: mocks.apiFetch }));
+vi.mock("../../../lib/api", async () => {
+  const actual = await vi.importActual<typeof import("../../../lib/api")>("../../../lib/api");
+  return { ...actual, apiFetch: mocks.apiFetch };
+});
 
 function status(over: Partial<MeaningSearchStatus>): MeaningSearchStatus {
   return {
@@ -66,19 +70,56 @@ describe("MeaningSearchRow", () => {
     expect(mocks.apiFetch.mock.calls[1]).toEqual(["/api/memory/meaning-search/turn-off", { method: "POST" }]);
   });
 
-  it("shows the server's error text", async () => {
-    mocks.apiFetch.mockResolvedValue(status({ error: "The download stopped. Press Turn on to continue." }));
+  it("a failure the hub reports has a name, a reason and Try again", async () => {
+    mocks.apiFetch
+      .mockResolvedValueOnce(status({
+        error: "The file was not correct. Press Try again to download it again.", error_code: "integrity",
+      }))
+      .mockResolvedValue(status({ state: "downloading", percent: 3 }));
     render(<ul><MeaningSearchRow /></ul>);
     expect((await screen.findByTestId("meaning-search-error")).textContent).toBe(
-      "The download stopped. Press Turn on to continue.",
+      "The file was not correct. Press Try again to download it again.",
     );
+    expect(screen.getByTestId("meaning-search-state").textContent).toContain("WRONG FILE");
+    expect(screen.getByTestId("meaning-search-verb").textContent).toBe("Try again");
+    fireEvent.click(screen.getByTestId("meaning-search-verb"));
+    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("DOWNLOADING 3%"));
+    expect(mocks.apiFetch.mock.calls[1][0]).toBe("/api/memory/meaning-search/turn-on");
+    expect(screen.queryByTestId("meaning-search-error")).toBeNull();
   });
 
-  it("draws nothing when no status is read", async () => {
-    mocks.apiFetch.mockResolvedValue({ code: "meaning_search_unavailable" });
+  it.each([
+    [new ApiError(401, "missing_right: owner", { missing_right: "owner" }), "NOT PERMITTED", "Only the owner can do this."],
+    [new ApiError(403, "Owner access is required.", {}), "NOT PERMITTED", "Only the owner can do this."],
+    [new ApiError(500, "boom", {}), "HUB ERROR", "The hub did not do this (error 500)."],
+    [new TypeError("Failed to fetch"), "NO ANSWER", "The hub did not answer."],
+  ])("a refused or failed press is never silent: %s", async (error, token, words) => {
+    mocks.apiFetch
+      .mockResolvedValueOnce(status({}))
+      .mockImplementationOnce(async () => { throw error; })
+      .mockResolvedValue(status({ state: "downloading", percent: 1 }));
     render(<ul><MeaningSearchRow /></ul>);
-    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalled());
-    await Promise.resolve();
-    expect(screen.queryByTestId("concierge-meaning-search")).toBeNull();
+    fireEvent.click(await screen.findByTestId("meaning-search-verb"));
+    const alert = await screen.findByTestId("meaning-search-error");
+    expect(alert.getAttribute("role")).toBe("alert");
+    expect(alert.textContent).toContain(words);
+    expect(alert.textContent).toContain("Try again");
+    expect(screen.getByTestId("meaning-search-state").textContent).toContain(token);
+    // The recovery action repeats the press that failed.
+    expect(screen.getByTestId("meaning-search-verb").textContent).toBe("Try again");
+    fireEvent.click(screen.getByTestId("meaning-search-verb"));
+    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("DOWNLOADING 1%"));
+    expect(mocks.apiFetch.mock.calls[2]).toEqual(["/api/memory/meaning-search/turn-on", { method: "POST" }]);
+  });
+
+  it("a status read that fails says so and offers Try again", async () => {
+    mocks.apiFetch
+      .mockImplementationOnce(async () => { throw new TypeError("Failed to fetch"); })
+      .mockResolvedValue(status({}));
+    render(<ul><MeaningSearchRow /></ul>);
+    expect((await screen.findByTestId("meaning-search-state")).textContent).toContain("NO ANSWER");
+    fireEvent.click(screen.getByTestId("meaning-search-verb"));
+    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("OFF"));
+    expect(mocks.apiFetch.mock.calls[1][0]).toBe("/api/memory/meaning-search");
   });
 });
