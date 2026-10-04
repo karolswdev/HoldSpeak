@@ -210,6 +210,40 @@ def test_trigger_lifecycle_error_is_recorded_as_fail(tmp_path) -> None:
     assert "wanted 200" in record["trigger_error"]["error"]
 
 
+def test_an_expired_delivery_guard_in_the_trigger_is_blocked_not_fail(tmp_path) -> None:
+    """The rig was late: the guarded `then` step was never delivered, so nothing
+    was observed of the product. That is `blocked`; `fail` is for the product.
+
+    The real rig on the real calibration page: the trigger click is delivered,
+    the `then` click needs a pending undo receipt that the page never has."""
+    pytest.importorskip("playwright.sync_api")
+    guard = {"visible": ".undo-receipt.is-pending", "text": "Undo",
+             "seconds_left": {"selector": ".undo-receipt-time", "min": 2}}
+    case = {
+        "id": "philo8-guard-expired-in-then",
+        "job": "a guarded follow-up whose window is over",
+        "edge_ids": ["cal:a"], "state_id": "cal:page",
+        "applicability": {"applicable": True},
+        "preconditions": "the calibration page is loaded",
+        "setup": [],
+        "trigger": {"kind": "ui", "action": "click", "selector": "#a-btn", "adapter": "ui-pointer",
+                    "then": [{"kind": "ui", "action": "click", "selector": "#b-btn",
+                              "adapter": "ui-pointer", "requires": guard}]},
+        "expected": {"observe_at": "#a-out",
+                     "predicate": {"kind": "text_contains", "value": "saved"}},
+        "completion_bound_s": 5, "viewports": [1440],
+    }
+
+    record = gw.calibrate(tmp_path, cases=[case])[0]
+    notes = " | ".join(record.get("notes", []))
+
+    assert record["verdict"] == "blocked", (record["verdict"], notes)
+    assert record["trigger_error"]["lifecycle"] == "blocked", record["trigger_error"]
+    assert "did not hold at delivery" in notes, notes
+    assert "TRIGGER lifecycle failed" not in notes, notes
+    assert issubclass(gw.NotDelivered, gw.Blocked)
+
+
 def test_hit_test_probes_use_interior_points_for_rounded_sheet() -> None:
     """Both hit-test probes must sample the painted area of a 393px sheet."""
     from playwright.sync_api import sync_playwright

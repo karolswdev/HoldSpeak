@@ -291,6 +291,12 @@ class Blocked(RuntimeError):
     """The case cannot be exercised; it is recorded `blocked` with the reason."""
 
 
+class NotDelivered(Blocked):
+    """A guarded step whose guard did not hold at delivery: the rig sent
+    nothing. The rig was late (or the face was not ready); nothing was observed
+    of the product, so wherever the step sits the case is `blocked`."""
+
+
 # ────────────────────────────────────────────────────────── the guards ──
 
 
@@ -4414,7 +4420,7 @@ def _guarded_delivery(page: Any, step: dict[str, Any], record: dict[str, Any],
             record[field] = step[field]
     if not result["delivered"]:
         record["done"] = False
-        raise Blocked(
+        raise NotDelivered(
             f"ui step {action} not delivered: its guard {guard!r} did not hold at "
             f"delivery ({record['guard']['reading']})")
     record["done"] = True
@@ -6505,11 +6511,16 @@ def exercise(
         # prepared is still a setup/precondition refusal: nothing was sent.
         # Once the trigger record exists, the same error belongs to its
         # lifecycle (for example, a `then` step) and is a failure.
+        # One more refusal sends nothing: an expired delivery guard
+        # (`NotDelivered`). The rig was late and the guarded step never
+        # reached the product (PHILO-8-03), so it is `blocked` too; `fail`
+        # is kept for what the product was seen to do.
         prefire_placeholder = (
             recorder.record.get("trigger") is None
             and "unresolved placeholder" in str(exc)
         )
-        lifecycle = "blocked" if prefire_placeholder else "fail"
+        not_delivered = isinstance(exc, NotDelivered)
+        lifecycle = "blocked" if prefire_placeholder or not_delivered else "fail"
         recorder.set(
             trigger_error={"step": trigger, "error": str(exc)[:800],
                            "lifecycle": lifecycle},
