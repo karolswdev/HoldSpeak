@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.graph_walk import VERDICTS, run_case
+from scripts.graph_walk import VERDICTS, case_engine_replay, run_case
 
 CASE = "J9-sweep-receipt-open"
 REPO = Path(__file__).resolve().parents[2]
@@ -96,8 +96,13 @@ def test_the_rig_drives_the_real_atlas(case_id, tmp_path):
         if case_id not in present:
             pytest.skip(f"{case_id} is not in the atlas yet (W2 is adding it); "
                         "reserved slot, flip when it lands")
+    # A case that declares a provider replay runs only as an explicit replayed
+    # run (scripts/graph_walk.py run_case). The J10 brief cases declare one:
+    # they pin the summary engine so the fresh window is empty.
+    case = next(c for c in json.loads(REAL_ATLAS.read_text())["cases"] if c["id"] == case_id)
+    engine = "replayed" if case_engine_replay(case) else "none"
     record = run_case(REAL_ATLAS, case_id, brain="muaddib", viewport=1440,
-                      out=tmp_path, engine="none")
+                      out=tmp_path, engine=engine)
 
     assert record["verdict"] == want_verdict, (
         f"{case_id}: {why}\n" + json.dumps(record["notes"], indent=2))
