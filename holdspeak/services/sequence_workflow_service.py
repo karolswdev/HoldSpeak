@@ -457,7 +457,7 @@ class SequenceWorkflowService:
                     raise ServiceError(
                         "inference_failed",
                         str(routed.get("error") or routed["outcome"]),
-                        context={"status": 502, "recipe_id": recipe.id, "receipt": routed["receipt"]},
+                        context={"status": 409 if routed["outcome"] == "cancelled" else 502, "recipe_id": recipe.id, "receipt": routed["receipt"]},
                     )
                 iid = str(routed["winning_reservation"]["child_invocation_id"])
                 checkpoint = self.broker.projection_stager.finalize(iid)

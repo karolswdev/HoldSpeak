@@ -118,3 +118,40 @@ def test_recipe_service_ast_fence_and_forged_materializer_permit(rig: tuple[Data
     with db._connection() as conn:
         with pytest.raises(KernelRefused, match="projection_publication_permit_invalid"):
             materialize_run(conn, object(), object())
+
+
+def test_recipe_cancelled_after_provider_return_publishes_and_returns_no_output(
+    rig: tuple[Database, object], monkeypatch
+) -> None:
+    """A direct cancel of the Recipe child lands while the provider is in flight.
+
+    The provider then returns. The receipt records the return; the late output
+    is not staged, not published and not returned to the caller.
+    """
+    from tests._cancel_after_return import (
+        SIGNAL_FIRST, assert_provider_return_on_record, cancel_child_in_flight,
+        force_cancel_order, invoke_child_operation_id,
+    )
+
+    db, broker = rig
+    service = RecipeService(db, broker=broker)
+    settled = force_cancel_order(monkeypatch, SIGNAL_FIRST)
+    seen: list[str] = []
+
+    class CancelledInFlight(Engine):
+        def run_prompt(self, **_kwargs: object) -> str:
+            seen.append(cancel_child_in_flight(db, settled, lambda iid: service.cancel(OWNER, iid)))
+            return "late recipe output"
+
+    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: CancelledInFlight()
+    try:
+        output: object = asyncio.run(service.run(OWNER, "r1", input="first"))
+    except Exception as exc:  # noqa: BLE001 - the refusal is the answer here
+        output = exc
+    assert len(seen) == 1
+    assert "late recipe output" not in repr(output)
+    assert isinstance(output, Exception), output
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM kernel_projection_stages").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 0
+    assert_provider_return_on_record(db, invoke_child_operation_id(db, seen[0]), fenced=True)

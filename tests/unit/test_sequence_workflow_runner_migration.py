@@ -304,23 +304,18 @@ def test_parent_cancel_fences_admission_and_late_output_while_child_receipts_sur
         state["release"].set()
         status = run.result(timeout=45).status_code
     child = _children(db, parent_id)[0]
-    child_receipt = _receipt(db, child["operation_id"])
-    if order == "parent_closes_first":
-        # The signal found a closed child: the provider's return is the receipt.
-        assert status == 409
-        assert child_receipt["outcome"] == "succeeded" and child_receipt["result_ref"]
-    else:
-        # CanonicalPromptAdapter answers the cancel with ``cancelled`` (a
-        # confirmed abort), so the child closes as ``cancelled``: a distinct
-        # outcome from ``not_supported``, which keeps the provider's return.
-        # The route answers 502 for this cancelled child today.
-        assert status == 502
-        assert child_receipt["outcome"] == "cancelled" and not child_receipt["result_ref"]
+    from tests._cancel_after_return import assert_provider_return_on_record
+
+    # The owner cancelled the run: 409 in both orders, never a 502.
+    assert status == 409
+    # The provider returned and the receipt says so. With the signal first, a
+    # cancel was requested for this child: its result is fenced and not staged.
+    assert_provider_return_on_record(db, child["operation_id"], fenced=order == "signal_first")
     assert _receipt(db, parent_id)["outcome"] == "cancelled"
     with db._connection() as conn:
         checkpoint = conn.execute("SELECT advanced FROM kernel_parent_checkpoints WHERE parent_operation_id=?", (parent_id,)).fetchone()
-    # Nothing advanced the Sequence in either order: a retained stage that did
-    # not advance, or (confirmed abort) no stage at all.
+        artifacts = conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0]
+    assert artifacts == 0
     assert (checkpoint is not None and checkpoint["advanced"] == 0) if order == "parent_closes_first" else checkpoint is None
     broker = _configure(db)
     # Restart does not reconstruct a bearer context from a durable row.

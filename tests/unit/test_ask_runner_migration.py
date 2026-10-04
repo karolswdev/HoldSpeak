@@ -108,3 +108,37 @@ def test_ask_service_ast_fence_and_ask_materializer_forged_permit(rig):
     with db._connection() as conn:
         with pytest.raises(KernelRefused, match="projection_publication_permit_invalid"):
             materialize(conn, object(), object())
+
+
+def test_ask_cancelled_after_provider_return_publishes_and_returns_no_answer(rig, monkeypatch):
+    """A direct cancel of the Ask child lands while the provider is in flight.
+
+    The provider then returns. The receipt records the return; the late answer
+    is not staged, not published and not returned to the caller.
+    """
+    from tests._cancel_after_return import (
+        SIGNAL_FIRST, assert_provider_return_on_record, cancel_child_in_flight,
+        force_cancel_order, invoke_child_operation_id,
+    )
+
+    db, broker, engine = rig
+    service = AskService(db, broker=broker)
+    settled = force_cancel_order(monkeypatch, SIGNAL_FIRST)
+    seen: list[str] = []
+
+    def run_prompt(**_kwargs):
+        seen.append(cancel_child_in_flight(db, settled, lambda iid: service.cancel(OWNER, iid)))
+        return "late answer"
+
+    monkeypatch.setattr(engine, "run_prompt", run_prompt)
+    try:
+        answer: object = asyncio.run(service.ask(OWNER, "What changed?", lens="Brief"))
+    except Exception as exc:  # noqa: BLE001 - the refusal is the answer here
+        answer = exc
+    assert len(seen) == 1
+    assert "late answer" not in repr(answer)
+    assert isinstance(answer, Exception), answer
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM ask_results").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM kernel_projection_stages").fetchone()[0] == 0
+    assert_provider_return_on_record(db, invoke_child_operation_id(db, seen[0]), fenced=True)

@@ -507,14 +507,13 @@ def test_cancellation_after_provider_return_is_one_child_one_receipt_one_physica
     children = _assert_reconciled(
         db, parent_operation_id=parent_id, counts=counts, leaf=leaf, expect_children=1,
     )
-    child_receipt = _receipt(db, children[0]["operation_id"])
-    assert child_receipt["outcome"] == "succeeded" and child_receipt["result_ref"]
-    with db._connection() as conn:
-        attested = conn.execute(
-            "SELECT material_json FROM kernel_inference_receipt_attestations WHERE operation_id=?",
-            (children[0]["operation_id"],),
-        ).fetchone()
-    assert attested is not None and "provider_returned" in attested[0]
+    from tests._cancel_after_return import assert_provider_return_on_record
+
+    # The provider returned in both orders and the receipt says so. With the
+    # signal first, a cancel was requested for this child: its result is fenced.
+    assert_provider_return_on_record(
+        db, children[0]["operation_id"], fenced=order == "signal_first"
+    )
     # The parent's OWN receipt is cancelled -- a separate row, never counted as
     # a child, and never conflated with the child's earned outcome.
     parent_receipt = _receipt(db, parent_id)
@@ -583,6 +582,73 @@ def test_cancellation_reaches_the_adapter_before_publish_bare_rig(tmp_path):
     )
     assert _receipt(db, children[0]["operation_id"])["outcome"] == "cancelled"
     assert counts == {"engine_factory": 1, "dispatch": 1}
+
+
+def test_deadline_watchdog_on_an_unsupported_cancel_stages_nothing_bare_rig(tmp_path, monkeypatch):
+    """Scenario: the deadline watchdog fires mid-dispatch; the adapter cannot cancel.
+
+    Surface: bare runner. The adapter answers ``not_supported`` and the
+    provider then returns. The receipt records the return; the late result is
+    not staged (``publish`` is never called) and not returned.
+
+    Determinism: the runner's own watchdog callback is captured in place of a
+    wall-clock ``threading.Timer`` and fired by the provider while it is in
+    flight. The provider returns only after the adapter has answered.
+    """
+    import threading
+
+    from tests._cancel_after_return import (
+        SIGNAL_FIRST, assert_provider_return_on_record, force_cancel_order,
+        invoke_child_operation_id,
+    )
+
+    db, broker, revision = _bare_rig(tmp_path)
+    settled = force_cancel_order(monkeypatch, SIGNAL_FIRST)
+    watchdogs: list[Any] = []
+
+    class _CapturedTimer:
+        daemon = True
+
+        def __init__(self, _interval: float, function: Any) -> None:
+            watchdogs.append(function)
+
+        def start(self) -> None: ...
+        def cancel(self) -> None: ...
+
+    monkeypatch.setattr("holdspeak.kernel.inference_runner.threading.Timer", _CapturedTimer)
+    leaf = _Leaf()
+
+    class _DeadlineInFlight(_LeafEngine):
+        def run_prompt(self, **kwargs: Any) -> str:
+            real_thread(target=watchdogs[-1], daemon=True).start()
+            assert settled.wait(120), "the watchdog cancel never settled"
+            return super().run_prompt(**kwargs)
+
+    real_thread = threading.Thread
+
+    class _Unsupported(_Adapter):
+        def cancel(self) -> str:
+            return "not_supported"
+
+    runner = _bare_runner(broker, db, engine_factory=lambda _revision, **_: _DeadlineInFlight(leaf, result="late result"))
+    counts = _instrument(runner)
+    staged: list[Any] = []
+
+    def publish(result: Any) -> str:
+        staged.append(result)
+        return "inference-result:must-not-exist"
+
+    outcome = runner.invoke(
+        InvocationRequest(**{**_bare_request(revision).__dict__, "invocation_id": "cardinality_deadline"}),
+        _Unsupported(), publish=publish,
+    )
+
+    assert staged == [], "a fenced result was staged"
+    assert outcome.outcome == "cancelled" and outcome.result_ref == ""
+    assert leaf.attempts == 1 and counts == {"engine_factory": 1, "dispatch": 1}
+    assert_provider_return_on_record(
+        db, invoke_child_operation_id(db, "cardinality_deadline"), fenced=True
+    )
 
 
 # ==================================================================== RETRY / FALLBACK

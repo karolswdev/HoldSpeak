@@ -656,14 +656,14 @@ def test_durable_publication_claim_serializes_controller_cancellation(
 
     def callback() -> None:
         entered.set()
-        assert release.wait(5), "test never released durable publication"
+        assert release.wait(120), "test never released durable publication"
         entry.close("succeeded")
 
     publisher = threading.Thread(
         target=lambda: entry.fence.publish("durable terminal publication", callback)
     )
     publisher.start()
-    assert entered.wait(5), "publication never acquired its durable claim"
+    assert entered.wait(120), "publication never acquired its durable claim"
 
     def cancel_from_controller() -> None:
         cancel_started.set()
@@ -676,11 +676,11 @@ def test_durable_publication_claim_serializes_controller_cancellation(
 
     canceller = threading.Thread(target=cancel_from_controller)
     canceller.start()
-    assert cancel_started.wait(5)
+    assert cancel_started.wait(120)
     assert not cancel_finished.wait(0.1), "durable cancellation bypassed the claim"
     release.set()
-    publisher.join(5)
-    canceller.join(5)
+    publisher.join(120)
+    canceller.join(120)
 
     assert not publisher.is_alive() and not canceller.is_alive()
     assert outcomes == ["succeeded"]

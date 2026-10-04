@@ -439,7 +439,11 @@ def test_service_refuses_missing_principal_before_child_admission(tmp_path):
         assert conn.execute("SELECT COUNT(*) FROM kernel_operations").fetchone()[0] == 0
 
 
-def test_service_deadline_cancellation_returns_timeout_and_closes_parent(tmp_path):
+@pytest.mark.parametrize("order", ["parent_closes_first", "signal_first"])
+def test_service_deadline_cancellation_returns_timeout_and_closes_parent(tmp_path, monkeypatch, order):
+    from tests._cancel_after_return import assert_provider_return_on_record, force_cancel_order
+
+    force_cancel_order(monkeypatch, order)
     db, service, broker, workbench_id = _admitted_voice_rig(tmp_path)
 
     class CancellingIntel:
@@ -462,3 +466,11 @@ def test_service_deadline_cancellation_returns_timeout_and_closes_parent(tmp_pat
     receipt = broker.store.receipt(parent[0])
     assert parent[1] == "CANCELLED"
     assert receipt is not None and receipt["outcome"] == "cancelled"
+    with db._connection() as conn:
+        child_id = conn.execute(
+            "SELECT operation_id FROM kernel_operations WHERE parent_operation_id=? AND name='inference.invoke'",
+            (parent[0],),
+        ).fetchone()[0]
+    # The provider returned in both orders and the receipt says so; with the
+    # signal first its result is fenced.
+    assert_provider_return_on_record(db, child_id, fenced=order == "signal_first")
