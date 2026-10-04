@@ -39,6 +39,16 @@ _KIND_ORDER = {
 }
 _VALID_KINDS = frozenset(_KIND_ORDER)
 
+
+def _not_parked(meeting_column: str) -> str:
+    """A parked meeting and what it made (its actions, artifacts, decisions)
+    stay out of memory: the lexical passes, the recent read and the
+    relationship walk all wear this predicate."""
+    return (
+        "NOT EXISTS (SELECT 1 FROM meetings pk"
+        f" WHERE pk.id={meeting_column} AND pk.parked=1)"
+    )
+
 _ECOSYSTEM_SPECS: dict[str, dict[str, str]] = {
     "decision_record": {
         "table": "decision_records",
@@ -94,7 +104,7 @@ _ECOSYSTEM_SPECS: dict[str, dict[str, str]] = {
         "title": "a.task",
         "body": "COALESCE(a.owner,'')||' '||COALESCE(a.due,'')||' '||a.status",
         "time": "COALESCE(a.completed_at,a.created_at)",
-        "active": "1=1",
+        "active": _not_parked("a.meeting_id"),
         "project_id": "COALESCE((SELECT mp.project_id FROM meeting_projects mp WHERE mp.meeting_id=a.meeting_id ORDER BY mp.project_id LIMIT 1),(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='action:'||a.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1))",
         "project": "(EXISTS (SELECT 1 FROM meeting_projects mp WHERE mp.project_id=? AND mp.meeting_id=a.meeting_id) OR EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref='action:'||a.id AND pr.deleted=0))",
     },
@@ -145,6 +155,7 @@ _ECOSYSTEM_SPECS: dict[str, dict[str, str]] = {
             " WHERE cd.id=s.destination_id),'')"
             "||' · '||s.channel"
             "||COALESCE(' · '||json_extract(s.target_json,'$.to'),'')"
+            "||COALESCE(' · cc '||json_extract(s.target_json,'$.cc'),'')"
             "||COALESCE(' · '||json_extract(s.target_json,'$.repo'),'')"
             "||COALESCE(' · '||json_extract(s.target_json,'$.key'),'')"
             "||COALESCE(' · '||json_extract(s.account_json,'$.channel_label'),'')"
@@ -253,7 +264,7 @@ _RECENT_SPECS: dict[str, dict[str, str]] = {
             " ORDER BY start_time LIMIT 4) s),'')"
         ),
         "time": "m.started_at",
-        "active": "1=1",
+        "active": "m.parked=0",
         "project_id": (
             "(SELECT mp.project_id FROM meeting_projects mp"
             " WHERE mp.meeting_id=m.id ORDER BY mp.project_id LIMIT 1)"
@@ -285,7 +296,7 @@ _RECENT_SPECS: dict[str, dict[str, str]] = {
         "title": "COALESCE(NULLIF(a.title,''),a.id)",
         "body": "COALESCE(a.body_markdown,'')",
         "time": "a.updated_at",
-        "active": "1=1",
+        "active": _not_parked("a.meeting_id"),
         "project_id": (
             "(SELECT pr.project_id FROM project_resources pr"
             " WHERE pr.resource_ref='artifact:'||a.id AND pr.deleted=0"
@@ -327,7 +338,7 @@ _RECENT_SPECS: dict[str, dict[str, str]] = {
         "title": "d.text",
         "body": "COALESCE(d.text,'')",
         "time": "d.decided_at",
-        "active": "1=1",
+        "active": _not_parked("d.source_meeting_id"),
         "project_id": "d.project_key",
     },
 }
@@ -756,7 +767,7 @@ class MemoryRepository(BaseRepository):
 
     @staticmethod
     def _decision_rows(conn, match, project, start, end) -> list[dict[str, Any]]:
-        clauses = ["decisions_memory_fts MATCH ?"]
+        clauses = ["decisions_memory_fts MATCH ?", _not_parked("d.source_meeting_id")]
         params: list[Any] = [match]
         if project:
             clauses.append(
@@ -791,7 +802,7 @@ class MemoryRepository(BaseRepository):
 
     @staticmethod
     def _artifact_rows(conn, match, project, start, end) -> list[dict[str, Any]]:
-        clauses = ["artifacts_memory_fts MATCH ?"]
+        clauses = ["artifacts_memory_fts MATCH ?", _not_parked("a.meeting_id")]
         params: list[Any] = [match]
         if project:
             clauses.append("""(EXISTS (SELECT 1 FROM project_resources pr
@@ -1434,7 +1445,8 @@ class MemoryRepository(BaseRepository):
                             THEN '' ELSE ' — '||rationale END,1,420) snippet,
                           decided_at occurred_at,project_key project_id
                    FROM decisions
-                   WHERE id=? AND deleted=0 AND source_state='linked'""",
+                   WHERE id=? AND deleted=0 AND source_state='linked'
+                     AND """ + _not_parked("decisions.source_meeting_id"),
                 (resource_id,),
             ).fetchone()
         elif kind == "artifact":
@@ -1444,7 +1456,7 @@ class MemoryRepository(BaseRepository):
                           (SELECT project_id FROM project_resources
                            WHERE resource_ref='artifact:'||artifacts.id AND deleted=0
                            ORDER BY project_id LIMIT 1) project_id
-                   FROM artifacts WHERE id=?""",
+                   FROM artifacts WHERE id=? AND """ + _not_parked("artifacts.meeting_id"),
                 (resource_id,),
             ).fetchone()
         elif kind == "meeting":
@@ -1457,7 +1469,7 @@ class MemoryRepository(BaseRepository):
                           m.started_at occurred_at,
                           (SELECT project_id FROM meeting_projects
                            WHERE meeting_id=m.id ORDER BY project_id LIMIT 1) project_id
-                   FROM meetings m WHERE m.id=?""",
+                   FROM meetings m WHERE m.id=? AND m.parked=0""",
                 (resource_id,),
             ).fetchone()
         elif kind == "note":
@@ -1512,7 +1524,7 @@ class MemoryRepository(BaseRepository):
                           substr(a.task||' '||COALESCE(a.owner,'')||' '||COALESCE(a.due,'')||' '||a.status,1,420) snippet,
                           COALESCE(a.completed_at,a.created_at) occurred_at,
                           COALESCE((SELECT project_id FROM meeting_projects WHERE meeting_id=a.meeting_id ORDER BY project_id LIMIT 1),(SELECT project_id FROM project_resources WHERE resource_ref='action:'||a.id AND deleted=0 ORDER BY project_id LIMIT 1)) project_id
-                   FROM action_items a WHERE a.id=?""",
+                   FROM action_items a WHERE a.id=? AND """ + _not_parked("a.meeting_id"),
                 (resource_id,),
             ).fetchone()
         elif kind == "project_item":

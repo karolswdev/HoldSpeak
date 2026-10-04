@@ -43,6 +43,7 @@ import {
   SurfaceSection,
   StringGadget,
   openSourceRef,
+  NO_WINDOW_REF_KINDS,
   useRovingRows,
 } from "../../../desk/surface";
 import { ProjectButton } from "../../../desk/surface/patterns";
@@ -273,7 +274,7 @@ function OwedRowView({ row, ctrl }: { row: OwedRow; ctrl: RecallController }) {
 
 /** Kinds memory finds that have no window of their own: the row draws no
  * open (a verb that does nothing is a lie). */
-const NO_WINDOW_KINDS = new Set(["brief", "send", "project_update", "prep_brief", "calendar_event"]);
+const NO_WINDOW_KINDS = new Set(["brief", ...NO_WINDOW_REF_KINDS]);
 
 function hitOpener(hit: MemoryHitRow): (() => void) | undefined {
   if (NO_WINDOW_KINDS.has(hit.kind)) return undefined;

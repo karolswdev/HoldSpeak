@@ -418,6 +418,7 @@ def _hydrate_qualified(
                 "'Sent: '||s.document_ref"
                 "||'\nTo: '||COALESCE((SELECT cd.name FROM channel_destinations cd WHERE cd.id=s.destination_id),'')"
                 "||COALESCE(' '||json_extract(s.target_json,'$.to'),'')"
+                "||COALESCE('\nCc: '||json_extract(s.target_json,'$.cc'),'')"
                 "||COALESCE(' '||json_extract(s.target_json,'$.repo'),'')"
                 "||COALESCE(' '||json_extract(s.target_json,'$.key'),'')"
                 "||COALESCE(' '||json_extract(s.account_json,'$.channel_label'),'')"
