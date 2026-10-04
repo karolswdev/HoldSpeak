@@ -46,6 +46,7 @@ import {
   useRovingRows,
 } from "../../../desk/surface";
 import { ProjectButton } from "../../../desk/surface/patterns";
+import { refOpener } from "../../../desk/openObject";
 import { countLabel } from "../../../desk/surface/count";
 import {
   axisTone,
@@ -270,6 +271,19 @@ function OwedRowView({ row, ctrl }: { row: OwedRow; ctrl: RecallController }) {
 
 /* ── memory hits (meetings, briefs, the rest) ── */
 
+/** Kinds memory finds that have no window of their own: the row draws no
+ * open (a verb that does nothing is a lie). */
+const NO_WINDOW_KINDS = new Set(["brief", "send", "project_update", "prep_brief", "calendar_event"]);
+
+function hitOpener(hit: MemoryHitRow): (() => void) | undefined {
+  if (NO_WINDOW_KINDS.has(hit.kind)) return undefined;
+  // A settled action item opens where action items live: Follow-through.
+  if (hit.kind === "action") {
+    return refOpener(`action_item:${hit.source_ref.slice("action:".length)}`) ?? undefined;
+  }
+  return () => openSourceRef(hit.source_ref);
+}
+
 function HitRows({ rows, testid }: { rows: MemoryHitRow[]; testid: string }) {
   return (
     <SurfaceRows>
@@ -280,7 +294,7 @@ function HitRows({ rows, testid }: { rows: MemoryHitRow[]; testid: string }) {
           detail={hit.snippet ? <MemorySnippet value={hit.snippet} /> : undefined}
           meta={
             <span className="project-memory-meta" data-testid={testid}>
-              <span className="surface-token">{hit.section ? hit.section.replaceAll("_", " ") : hit.kind}</span>
+              <span className="surface-token">{(hit.section || hit.kind).replaceAll("_", " ")}</span>
               {hit.retrieval_origin === "relationship" ? (
                 <span className="surface-token">
                   Related · {String(hit.relationship || "linked source").replaceAll("_", " ")}
@@ -288,7 +302,7 @@ function HitRows({ rows, testid }: { rows: MemoryHitRow[]; testid: string }) {
               ) : null}
             </span>
           }
-          onOpen={hit.kind === "brief" ? undefined : () => openSourceRef(hit.source_ref)}
+          onOpen={hitOpener(hit)}
         />
       ))}
     </SurfaceRows>
