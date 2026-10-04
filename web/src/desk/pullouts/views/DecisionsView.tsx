@@ -196,7 +196,10 @@ export function DecisionsView({
                   onToggle={() => openReceipt(receipt.id)}
                   cells={
                     <>
-                      <span className="surface-ledger-cell receipts-id">D-{shortId(receipt.id)}</span>
+                      {/* Inventory 2026-10-03: the raw id cell (`D-19dbe10e895b`)
+                          took the row's width and cut the decision's own
+                          words to "F…". A row names the decision, not its
+                          key; the id stays on the receipt it opens. */}
                       <span className="surface-ledger-cell">{receipt.owner || "UNASSIGNED"}</span>
                       <span className="surface-ledger-cell">
                         <span className="surface-token" data-tone={status === "superseded" ? "muted" : "ok"}>

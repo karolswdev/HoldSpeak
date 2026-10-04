@@ -7,7 +7,7 @@ import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
-import { createThread } from "../threads";
+import { openNewThread } from "../newThread";
 import { useWriteReceipt } from "../hooks/useWriteReceipt";
 import { DeskFilingStrip } from "../components/DeskFilingStrip";
 import { AgentAvatar } from "../components/AgentAvatar";
@@ -32,9 +32,7 @@ export function RecipePullout({ object: o }: PulloutContentProps) {
     if (threadBusy) return;
     setThreadBusy(true);
     await attempt("open thread", async () => {
-      const t = await createThread({ recipe_id: o.id });
-      openPullout(`thread:${t.id}`);
-      void refresh();
+      await openNewThread({ recipe_id: o.id });
     });
     setThreadBusy(false);
   };

@@ -278,10 +278,8 @@ export const VERBS: Verb[] = [
     keywords: ["create", "chat", "conversation"],
     ghost: never,
     run: async () => {
-      const { createThread } = await import("./threads");
-      const t = await createThread({});
-      useDesk.getState().openPullout(`thread:${t.id}`);
-      void useDesk.getState().refresh();
+      const { openNewThread } = await import("./newThread");
+      await openNewThread();
     },
   },
   // HS-159-05: Project creation joins the shared creation grammar (WEB-CR-001)
@@ -517,12 +515,8 @@ export const VERBS: Verb[] = [
     run: async (ctx) => {
       const o = selected(ctx);
       if (!o) return;
-      const { createThread } = await import("./threads");
-      const t = await createThread({
-        seed_refs: [{ ref_kind: o.kind, ref_id: o.id }],
-      });
-      useDesk.getState().openPullout(`thread:${t.id}`);
-      void useDesk.getState().refresh();
+      const { openNewThread } = await import("./newThread");
+      await openNewThread({ seed_refs: [{ ref_kind: o.kind, ref_id: o.id }] });
     },
   },
   {

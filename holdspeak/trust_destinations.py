@@ -151,6 +151,62 @@ def destination_inventory(
                 revoke_action="Change the summary assignment",
             )
         rows.append(value)
+    rows.extend(_saved_send_destinations(database))
+    return rows
+
+
+def _short_target(target: Mapping[str, Any]) -> str:
+    """A saved destination's target in plain words (a home folder reads as ~)."""
+    for key in ("folder", "repo", "repository", "space", "project", "to", "address"):
+        text = str(target.get(key) or "").strip()
+        if not text:
+            continue
+        if key == "folder":
+            home = str(Path.home())
+            for prefix in (home, str(Path(home).resolve())):
+                if text == prefix or text.startswith(prefix + "/"):
+                    return "~" + text[len(prefix):]
+        return text
+    return "Saved destination"
+
+
+def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
+    """The owner's saved Send destinations (Settings, Connections).
+
+    Inventory 2026-10-03 (UX-CANON A.10): Trust said "Enabled destinations
+    None" with a saved destination. Each active saved destination is a row.
+    ``enabled`` keeps its one meaning (data can leave this device): a folder
+    on this device is ``saved`` and not ``enabled``.
+    """
+    channels = getattr(database, "channel_destinations", None)
+    if channels is None:
+        return []
+    try:
+        saved = channels.list()
+    except Exception:
+        return []
+    rows: list[dict[str, Any]] = []
+    for row in saved:
+        channel = str(row.get("channel") or "")
+        local = channel == "file" and not bool(row.get("synced"))
+        try:
+            target = json.loads(row.get("target_json") or "{}")
+        except (TypeError, ValueError):
+            target = {}
+        rows.append({
+            "id": f"channel:{row['id']}",
+            "name": str(row.get("name") or "Saved destination"),
+            "operation": "Send a document",
+            "boundary": "This device" if local else "Outside this device",
+            "data_class": "The document you send",
+            "authority_basis": "You press Send",
+            "background_ability": "No. Each send needs your press",
+            "revoke_action": "Park the destination in Settings, Connections",
+            "enabled": not local,
+            "saved": True,
+            "destination": _short_target(target if isinstance(target, dict) else {}),
+            "last_receipt": None,
+        })
     return rows
 
 

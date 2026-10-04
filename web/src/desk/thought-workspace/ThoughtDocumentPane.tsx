@@ -3,6 +3,7 @@ import { EditInPlace } from "../surface";
 import { MicButton } from "../components/MicButton";
 import { DeskEditor, type DeskEditorHandle } from "../components/DeskEditor";
 import type { ThoughtDraft } from "../pullouts/editors/useThoughtNoteWriter";
+import { claimThoughtKeys } from "../thoughtKeys";
 
 /* HS-201-12 — bands 1 and 2 of the one clean note (the owner's first-use
    verdict of 2026-09-20).  The title wraps and is edited in place; the note
@@ -12,12 +13,16 @@ import type { ThoughtDraft } from "../pullouts/editors/useThoughtNoteWriter";
    the kept state moved to the window foot.  The mic is the note field's own
    (it writes at the cursor), never a button beside the field. */
 export function ThoughtDocumentPane({
+  noteId,
   draft,
   onEdit,
   disabled,
   lockedReason,
   revealRange,
 }: {
+  /** The thought's note. With it, the field takes the keys typed between
+   *  `Write a thought` and this window (thoughtKeys.ts). */
+  noteId?: string;
   draft: ThoughtDraft;
   onEdit: (patch: Partial<ThoughtDraft>) => void;
   disabled: boolean;
@@ -36,6 +41,11 @@ export function ThoughtDocumentPane({
     if (!revealRange || !bodyRef.current) return;
     bodyRef.current.revealRange(revealRange.start, revealRange.end, { focus: revealRange.focus });
   }, [revealRange, draft.body]);
+
+  useEffect(() => {
+    if (!noteId) return;
+    return claimThoughtKeys(noteId, (text) => bodyRef.current?.insertAtCursor(text));
+  }, [noteId]);
 
   return <section className="thought-note-document" aria-label="Note">
     <EditInPlace

@@ -955,6 +955,18 @@ function NeedsYouSection({
                     }}>Decide</Button>
                   ) : item.url ? (
                     <Button dense variant="ghost" onClick={() => window.open(item.url!, "_blank", "noopener")}>Open</Button>
+                  ) : item.actionItemId ? (
+                    /* A meeting's open action: Open lands on its card in
+                       Follow-through, where the owner and the date are set
+                       (review of #789: the row had no control). */
+                    <Button
+                      dense
+                      variant="ghost"
+                      data-testid="needs-you-open-action"
+                      onClick={() => refOpener(`action_item:${item.actionItemId}`)?.()}
+                    >
+                      Open
+                    </Button>
                   ) : null
                 }
               />

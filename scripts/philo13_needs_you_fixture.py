@@ -623,9 +623,11 @@ def _inputs(db: Any, now: datetime) -> dict[str, Any]:
     meeting_rows = meetings_wire.get("meetings", [])
     if not isinstance(meeting_rows, list):
         raise RuntimeError("meeting route did not return a meetings list")
-    room_items = room.get("items", [])
+    # ``items`` is the full membership answer (Door cards merged in);
+    # ``roomItems`` is the Room rows alone, the browser twin's input.
+    room_items = room.get("roomItems", [])
     if not isinstance(room_items, list):
-        raise RuntimeError("needs-you route did not return an items list")
+        raise RuntimeError("needs-you route did not return a roomItems list")
     return {
         "now": now.isoformat(),
         "door": door,
