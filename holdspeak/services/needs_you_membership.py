@@ -200,6 +200,14 @@ def meeting_needs_you(meeting: dict[str, Any]) -> bool:
 # ── the rule ──────────────────────────────────────────────────────────
 
 
+PEOPLE_SOURCE = "people_commitment"
+
+
+def is_people_row(row: dict[str, Any]) -> bool:
+    """True for a row that carries People content (a 1:1 commitment)."""
+    return row.get("source") == PEOPLE_SOURCE
+
+
 def _item_ref(item: dict[str, Any]) -> str:
     ref = item.get("ref")
     return str(ref if ref is not None else item.get("id") or "")
@@ -231,7 +239,12 @@ def compute_needs_you(
     }
     board = (door or {}).get("board") if isinstance((door or {}).get("board"), dict) else (door or {})
     combined = door_items(board, covered, clock) + room
-    ranked = rank_items(dedup(combined, clock), clock)
+    # A People commitment never merges with another row. A merge would put
+    # its text and its record ref inside another row's ``sources``, past the
+    # custody boundary; it stays one row of its own.
+    people = [row for row in combined if is_people_row(row)]
+    others = [row for row in combined if not is_people_row(row)]
+    ranked = rank_items(dedup(others, clock) + people, clock)
     muted_projects = {str(pid) for pid in muted_project_ids}
     unmuted_items: list[dict[str, Any]] = []
     muted_items: list[dict[str, Any]] = []
@@ -437,7 +450,9 @@ def compose(
     return answer
 
 
-_MEMBERSHIP_KEYS = ("members", "blockers", "failedMeetings", "sourceErrors", "peopleStoreState")
+_MEMBERSHIP_KEYS = (
+    "members", "blockers", "failedMeetings", "sourceErrors", "peopleStoreState", "peopleWithheld",
+)
 
 
 def room_part(answer: dict[str, Any]) -> dict[str, Any]:
@@ -463,24 +478,47 @@ def room_part(answer: dict[str, Any]) -> dict[str, Any]:
 PEOPLE_ROW_TITLE = "1:1 commitment"
 
 
+def _opaque_people_ref(ref: Any) -> str:
+    """A stable ref for one commitment that names neither its record nor its text."""
+    import hashlib
+
+    return f"{PEOPLE_SOURCE}:{hashlib.sha256(str(ref).encode('utf-8')).hexdigest()[:12]}"
+
+
+def _carries_people(row: dict[str, Any]) -> bool:
+    if is_people_row(row):
+        return True
+    card = row.get("_doorCard")
+    if isinstance(card, dict) and card.get("source") == PEOPLE_SOURCE:
+        return True
+    return any(
+        isinstance(source, dict) and source.get("source") == PEOPLE_SOURCE
+        for source in row.get("sources") or []
+    )
+
+
 def withhold_people_content(answer: dict[str, Any]) -> dict[str, Any]:
     """The same answer and the same number, with People content withheld.
 
-    For a reader outside the People custody boundary (an MCP agent, a stored
-    Brief). The commitment is still a member and still counted; its text, its
-    Door card and its record ref are not disclosed.
+    For every reader outside the People custody boundary: the observed
+    service call (its result is written to ``pipeline_events``), an MCP agent,
+    a stored Brief, a notification. The commitment is still a member and is
+    still counted; its text, its Door card and its record ref are not
+    disclosed. A row is withheld whole when ANY part of it carries People
+    content: its own source, its Door card, or a merged ``sources`` entry.
     """
     out = dict(answer)
     refs: dict[str, str] = {}
     items: list[dict[str, Any]] = []
-    for index, row in enumerate(answer.get("items") or []):
-        if row.get("source") != "people_commitment":
+    for row in answer.get("items") or []:
+        if not _carries_people(row):
             items.append(row)
             continue
-        ref = f"people_commitment:{index}"
-        refs[str(row.get("ref") or row.get("id") or "")] = ref
+        own = str(row.get("ref") or row.get("id") or "")
+        ref = _opaque_people_ref(own)
+        refs[own] = ref
         items.append({
-            "id": ref, "ref": ref, "source": "people_commitment", "kind": row.get("kind"),
+            "id": ref, "ref": ref, "source": PEOPLE_SOURCE, "kind": row.get("kind"),
             "title": PEOPLE_ROW_TITLE, "why": row.get("why"), "severity": row.get("severity"),
             "rankClass": row.get("rankClass"), "rank": row.get("rank"),
             "projectId": "", "muted": bool(row.get("muted")),
@@ -490,11 +528,14 @@ def withhold_people_content(answer: dict[str, Any]) -> dict[str, Any]:
         {**member, "ref": refs.get(str(member.get("ref")), member.get("ref"))}
         for member in answer.get("members") or []
     ]
+    out["peopleWithheld"] = True
     return out
 
 
 __all__ = [
     "PEOPLE_ROW_TITLE",
+    "PEOPLE_SOURCE",
+    "is_people_row",
     "room_part",
     "withhold_people_content",
     "DOOR_COLUMNS",

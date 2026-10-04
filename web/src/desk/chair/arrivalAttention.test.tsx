@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { ChairHome, headlineFor } from "./ChairHome";
 import { asHub } from "../../test/hubNeedsYou";
+import { useDesk } from "../store";
 
 vi.mock("../../lib/api", async (original) => ({
   ...await original<typeof import("../../lib/api")>(),
@@ -288,8 +289,20 @@ describe("Arrival attention (HS-200-15)", () => {
 
   // Inventory gap 11: Dana's item is pending review and HAS an owner. The
   // Chair says "To review" and offers Review; only an item with no owner
-  // reads "Unassigned" and offers Name an owner.
-  it("an owned item not reviewed yet reads TO REVIEW; only an item with no owner asks for an owner", async () => {
+  // reads "Unassigned" and offers Name an owner. The cards are the REAL
+  // producer's shape (`DoorService._follow_through_card`: `text`, a
+  // `target_ref` of `action_item:<id>`, verb objects, and NO `open_ref`).
+  it("an owned item not reviewed yet reads TO REVIEW, and Review opens it in Follow-through", async () => {
+    const producerCard = (id: string, text: string, owner: string | null) => ({
+      id, text, owner, due: null, status: "pending", meeting_id: "m-1", decision_id: null,
+      stale_score: null, source: "action_item", lane: "unassigned", provenance: null,
+      delegated_at: null, created_at: "2026-10-03T09:00:00",
+      target_ref: `action_item:${id}`,
+      lawful_verbs: [
+        { name: "done", arguments: { card_id: id, verb: "done" }, required_arguments: [] },
+        { name: "delegate", arguments: { card_id: id, verb: "delegate" }, required_arguments: ["to"] },
+      ],
+    });
     vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
       if (String(path).startsWith("/api/desk/needs-you")) {
         return { count: 0, projects: [], items: [], next: null, coverage: [], complete: true };
@@ -298,26 +311,43 @@ describe("Arrival attention (HS-200-15)", () => {
         return { schema: "InferenceAssignmentSummary@1", rows: [], task_overrides: [], issue_count: 0 };
       if (String(path).startsWith("/api/door")) {
         return { board: { unassigned: [
-          { id: "ai-owned", title: "Draft the onboarding checklist", owner: "Dana",
-            source: "action_item", lawful_verbs: [], open_ref: "action:ai-owned" },
-          { id: "ai-no-owner", title: "Book the room", owner: null,
-            source: "action_item", lawful_verbs: [], open_ref: "action:ai-no-owner" },
+          producerCard("ai-owned", "Draft the onboarding checklist", "Dana"),
+          producerCard("ai-no-owner", "Book the room", null),
         ] }, counts: {}, upcoming: [], calendar_configured: false };
       }
       return null;
     }));
-    render(<ChairHome />);
-    const section = await screen.findByTestId("arrival-needs-you");
-    const rows = within(section).getAllByTestId("arrival-needs-you-row");
-    const owned = rows.find((r) => r.textContent?.includes("Draft the onboarding checklist"))!;
-    const bare = rows.find((r) => r.textContent?.includes("Book the room"))!;
-    expect(owned.textContent).toContain("TO REVIEW");
-    expect(owned.textContent).not.toContain("UNASSIGNED");
-    expect(within(owned).getByTestId("arrival-to-review").textContent).toBe("Review");
-    expect(within(owned).queryByTestId("arrival-name-owner")).toBeNull();
-    expect(bare.textContent).toContain("UNASSIGNED");
-    expect(within(bare).getByTestId("arrival-name-owner").textContent).toBe("Name an owner");
-    expect(within(bare).queryByTestId("arrival-to-review")).toBeNull();
+    const openPullout = vi.fn();
+    const navigations: unknown[] = [];
+    const onNavigate = (event: Event) => navigations.push((event as CustomEvent).detail);
+    window.addEventListener("holdspeak:intelligence-navigate", onNavigate);
+    const realOpen = useDesk.getState().openPullout;
+    useDesk.setState({ openPullout } as never);
+    try {
+      render(<ChairHome />);
+      const section = await screen.findByTestId("arrival-needs-you");
+      const rows = within(section).getAllByTestId("arrival-needs-you-row");
+      const owned = rows.find((r) => r.textContent?.includes("Draft the onboarding checklist"))!;
+      const bare = rows.find((r) => r.textContent?.includes("Book the room"))!;
+      expect(owned.textContent).toContain("TO REVIEW");
+      expect(owned.textContent).not.toContain("UNASSIGNED");
+      expect(within(owned).queryByTestId("arrival-name-owner")).toBeNull();
+      expect(bare.textContent).toContain("UNASSIGNED");
+      expect(within(bare).getByTestId("arrival-name-owner").textContent).toBe("Name an owner");
+      expect(within(bare).queryByTestId("arrival-to-review")).toBeNull();
+
+      // The press: the Follow-through window opens on this card.
+      const review = within(owned).getByTestId("arrival-to-review");
+      expect(review.textContent).toBe("Review");
+      fireEvent.click(review);
+      expect(openPullout).toHaveBeenCalledWith("intelligence:desk");
+      await waitFor(() => expect(navigations).toEqual([
+        { view: "follow-through", followThroughId: "ai-owned" },
+      ]));
+    } finally {
+      window.removeEventListener("holdspeak:intelligence-navigate", onNavigate);
+      useDesk.setState({ openPullout: realOpen } as never);
+    }
   });
 
   it("Mark done is the verb only when owner and date are known, and it posts the explicit act", async () => {

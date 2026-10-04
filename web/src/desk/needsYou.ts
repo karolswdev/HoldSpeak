@@ -256,7 +256,14 @@ export function computeNeedsYou(
   );
   const now = input.now ?? new Date();
   const combined = [...doorItems(asBoard(input), covered, now), ...room];
-  const ranked = rankAttention(dependencies.dedupAttention(combined, now), now) as NeedsYouRoomItem[];
+  // A People commitment never merges with another row: a merge would put its
+  // text and its record ref inside another row's `sources`, past the custody
+  // boundary. It stays one row of its own.
+  const people = combined.filter((item) => item.source === "people_commitment");
+  const others = combined.filter((item) => item.source !== "people_commitment");
+  const ranked = rankAttention(
+    [...dependencies.dedupAttention(others, now), ...people], now,
+  ) as NeedsYouRoomItem[];
   const mutedProjects = mutedSet(input);
   const mutedItems: NeedsYouRoomItem[] = [];
   const unmutedItems: NeedsYouRoomItem[] = [];

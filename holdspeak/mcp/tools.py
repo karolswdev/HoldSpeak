@@ -1090,13 +1090,12 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         # held by the transport, as the route holds it.
         door = runtime_service("door_service", lambda: None)
         # The one rule, the one count. People commitments are members and are
-        # counted; their text stays inside the People custody boundary (an
-        # agent reads People content through the people.* tools and policy).
-        from holdspeak.services.needs_you_membership import withhold_people_content
-
-        return withhold_people_content(ops().invoke(
+        # counted; their text never leaves the People custody boundary: the
+        # operation itself withholds it (its result is observed), before any
+        # transport sees it.
+        return ops().invoke(
             principal, "desk.needs_you", {},
-            held={"door_upcoming": getattr(door, "_upcoming", None) if door else None}))
+            held={"door_upcoming": getattr(door, "_upcoming", None) if door else None})
     if name == "settings.hub":
         from holdspeak.config import Config, CONFIG_FILE
         from holdspeak.services.inference_assignment_service import InferenceAssignmentService

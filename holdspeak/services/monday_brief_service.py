@@ -546,10 +546,10 @@ class MondayBriefService:
         and gives no ``needs you`` number).
         """
         try:
-            from holdspeak.services.needs_you_membership import withhold_people_content
             from holdspeak.services.project_service import ProjectService
 
-            answer = withhold_people_content(ProjectService(self._db).needs_you(principal))
+            # The operation's answer already withholds People content.
+            answer = ProjectService(self._db).needs_you(principal)
         except Exception as exc:  # pragma: no cover - defensive
             log.warning("brief: the needs-you rule is unavailable: %s", exc)
             return None

@@ -580,7 +580,7 @@ class ProjectService:
         transport; ``None`` when the process has none.
         """
         from .needs_you_aggregate import build_aggregate, shared_last_known
-        from .needs_you_membership import compose
+        from .needs_you_membership import compose, withhold_people_content
 
         aggregate = build_aggregate(
             list_projects=self.list_projects,
@@ -592,7 +592,12 @@ class ProjectService:
         # The one rule (needs_you_membership): the Door's asking columns, the
         # Room rows, the meeting-path blockers and the failed summaries. The
         # heartbeat's muted projects are applied by the rule.
-        return compose(self._db, principal, aggregate)
+        # This method is OBSERVED: its result is summarized into the
+        # plaintext ``pipeline_events`` table. People content must never pass
+        # through it, so the commitments are counted here and their text is
+        # withheld. The owner's own HTTP route composes the full rows outside
+        # any observed call (``needs_you_membership.compose``, unobserved).
+        return withhold_people_content(compose(self._db, principal, aggregate))
 
     # ── room projection (HS-158-04, SS6.2) ────────────────────────────
 

@@ -1863,7 +1863,11 @@ function NeedsYouRowVerbs({
         variant={lead}
         dense
         onClick={() => {
-          if (doorCard?.open_ref) useDesk.getState().openPullout(doorCard.open_ref);
+          // The real producer's card names itself in `target_ref`
+          // (`action_item:<id>`, DoorService._follow_through_card); `open_ref`
+          // is optional. Review opens the card in Follow-through, where the
+          // owner reviews it.
+          (refOpener(doorCard?.open_ref) ?? refOpener(doorCard?.target_ref))?.();
         }}
         aria-label={`Review: ${item.title}`}
         data-testid="arrival-to-review"

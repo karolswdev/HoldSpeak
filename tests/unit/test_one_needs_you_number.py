@@ -117,6 +117,7 @@ def test_every_reader_reports_the_same_number(hub: Hub) -> None:
     is_error, mcp = hub.mcp("desk.needs_you", {})
     assert not is_error and "Review the promotion case" not in str(mcp)
     assert minted["commitment"] not in str(mcp)
+    assert minted["commitment"].removeprefix("people:") not in str(mcp)
     with hub.db._connection() as conn:
         stored = " ".join(str(r["text"]) for r in conn.execute("SELECT text FROM monday_brief_items"))
     assert "Review the promotion case" not in stored and "1:1 commitment" in stored
@@ -165,3 +166,116 @@ def test_an_owned_item_not_reviewed_yet_reads_to_review(hub: Hub) -> None:
     assert "To review: Draft the onboarding checklist" in waiting
     assert "Unassigned: Book the room" in waiting
     assert "Unassigned: Draft the onboarding checklist" not in waiting
+
+
+# ── People custody (Astra's review of #788, P1-1 and P1-2) ───────────────
+
+SENTINEL = "ZQ-SENTINEL-7f3a91 promotion case for Dana"
+
+
+def _commit(hub: Hub, body: str) -> str:
+    """Mint one People commitment through the real People routes; its record id."""
+    _ok(hub.client.post("/api/people/setup"))
+    relationship = _ok(hub.client.post(
+        "/api/people/relationships", json={"display_name": "Dana"}), 201)["relationship"]
+    request = _ok(hub.client.post(
+        f"/api/people/relationships/{relationship['id']}/requests", json={"body": body}), 201)["request"]
+    return str(_ok(hub.client.post(f"/api/people/requests/{request['id']}/accept", json={}))["commitment"]["id"])
+
+
+def _every_table_text(db: Any) -> dict[str, str]:
+    out: dict[str, str] = {}
+    with db._connection() as conn:
+        tables = [str(r["name"]) for r in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
+        for table in tables:
+            try:
+                rows = conn.execute(f'SELECT * FROM "{table}"').fetchall()
+            except Exception:  # a virtual table's shadow that cannot be read
+                continue
+            out[table] = "\n".join(repr(tuple(row)) for row in rows)
+    return out
+
+
+def test_people_text_reaches_no_table_and_no_log(hub: Hub, caplog: pytest.LogCaptureFixture, tmp_path: Path) -> None:
+    """A sentinel commitment, read through every reader, is in no plaintext store."""
+    import logging
+
+    from holdspeak.services.heartbeat_service import HeartbeatService
+
+    caplog.set_level(logging.DEBUG)
+    commitment_id = _commit(hub, SENTINEL)
+
+    # Every reader. The owner's own route is the only one that may carry it.
+    route = _ok(hub.client.get("/api/desk/needs-you"))
+    fresh = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+    assert SENTINEL in str(route) and SENTINEL in str(fresh)
+    is_error, mcp = hub.mcp("desk.needs_you", {})
+    assert not is_error, mcp
+    heartbeat = HeartbeatService(hub.db)
+    assert heartbeat.notification_count(OWNER) == route["count"] == mcp["count"]
+    heartbeat.run_sweep(OWNER)
+    brief = _ok(hub.client.post("/api/brief/generate"))
+    latest = _ok(hub.client.get("/api/brief/latest"))
+    # The service call itself (observed) withholds the text.
+    direct = hub.root.project_service.needs_you(OWNER)
+
+    leaks = [table for table, text in _every_table_text(hub.db).items()
+             if SENTINEL in text or commitment_id in text]
+    assert leaks == [], f"People text or id in plaintext tables: {leaks}"
+    for name, value in (("mcp", mcp), ("brief", brief), ("latest", latest), ("service", direct)):
+        assert SENTINEL not in str(value), name
+        assert commitment_id not in str(value), name
+
+    assert SENTINEL not in caplog.text and commitment_id not in caplog.text
+    # No file under the hub's home holds it in the clear either (the People
+    # sidecar is encrypted; the main database and its WAL are plaintext).
+    needle = SENTINEL.encode("utf-8")
+    holders = [str(path) for path in tmp_path.rglob("*") if path.is_file() and needle in path.read_bytes()]
+    assert holders == [], holders
+
+
+def test_a_people_row_never_merges_with_another_row(hub: Hub) -> None:
+    """Astra's repro: a commitment and an overdue action share a normalized title."""
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    title = "Send the capacity plan"
+    commitment_id = _commit(hub, title)
+    is_error, action = hub.mcp("door.add_item", {"task": "send the  capacity plan", "owner": "Dana", "due": yesterday})
+    assert not is_error, action
+
+    route = _ok(hub.client.get("/api/desk/needs-you"))
+    refs = [member["ref"] for member in route["members"]]
+    # Two obligations, two members: no merge on the owner's route either.
+    assert f"people:{commitment_id}" in refs and str(action["id"]) in refs
+    assert not any(
+        source.get("source") == "people_commitment"
+        for row in route["items"] if row.get("source") != "people_commitment"
+        for source in row.get("sources") or []
+    )
+
+    is_error, mcp = hub.mcp("desk.needs_you", {})
+    assert not is_error, mcp
+    assert mcp["count"] == route["count"]
+    assert commitment_id not in str(mcp)
+    people_rows = [row for row in mcp["items"] if row.get("source") == "people_commitment"]
+    assert [row["title"] for row in people_rows] == ["1:1 commitment"]
+    assert "sources" not in people_rows[0] and "_doorCard" not in people_rows[0]
+    # The action item's own text is plain work data and stays readable.
+    assert any(row.get("ref") == str(action["id"]) for row in mcp["items"])
+
+
+def test_withhold_redacts_a_row_that_carries_people_in_a_merged_source() -> None:
+    """Belt: even a merged row that holds a People projection is withheld whole."""
+    from holdspeak.services.needs_you_membership import withhold_people_content
+
+    merged = {
+        "id": "door:ai_1", "ref": "ai_1", "source": "action_item", "title": "Send the plan",
+        "sources": [
+            {"id": "door:ai_1", "source": "action_item", "title": "Send the plan"},
+            {"id": "door:people:c-9", "source": "people_commitment", "title": "Send the plan (private)"},
+        ],
+    }
+    out = withhold_people_content({"items": [merged], "members": [{"ref": "ai_1", "kind": "attention"}], "count": 1})
+    assert "private" not in str(out) and "c-9" not in str(out)
+    assert out["count"] == 1 and len(out["members"]) == 1
+    assert out["members"][0]["ref"] == out["items"][0]["ref"]
