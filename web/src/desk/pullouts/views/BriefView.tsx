@@ -3,6 +3,7 @@ import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api"; import { plainFailure } from "../../surface/plainFailure"; // PHILO-13-04: plain words, never the hub's `detail`
 import { useWriteReceipt } from "../../hooks/useWriteReceipt";
 import { refreshIntelligenceAttention } from "../../intelligenceAttention";
+import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { openSurfaceOr } from "../../shell";
 import { SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
 import { SurfaceFooter } from "../../surface/SurfaceFooter";
@@ -164,19 +165,24 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const [addingAgenda, setAddingAgenda] = useState(false);
   const { attempt, receipt } = useWriteReceipt();
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const load = useCallback(async (quiet = false) => {
+    if (!quiet) {
+      setLoading(true);
+      setError("");
+    }
     try {
       const latest = await apiFetch<MondayBrief | null>("/api/brief/latest");
       setBrief(latest);
       setShelf(latest?.shelf ?? {});
     } catch (requestError) {
-      setError(plainFailure("BRIEF DID NOT LOAD", requestError));
+      // A quiet re-read (the bus) that fails keeps the last Brief.
+      if (!quiet) setError(plainFailure("BRIEF DID NOT LOAD", requestError));
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
+  // A Brief made in another window, or by an agent, shows here.
+  useOnDeskChanged(() => { void load(true); });
 
   useEffect(() => { void load(); }, [load]);
 

@@ -16,8 +16,14 @@
  * when an import ends, success or failure (`MeetingService._run_import_job`),
  * from the summary queue after durable running and settled transitions
  * (`_notify_queue_meeting_changed`), and when a meeting is parked or restored
- * (`MeetingService.delete_meeting`, `restore_meeting`). Other meeting writes, project rooms,
- * thoughts and sync emit no frame; their surfaces carry their own signals.
+ * (`MeetingService.delete_meeting`, `restore_meeting`).
+ *
+ * Since 2026-10-03 every write announces: `OperationRegistry.invoke` sends the
+ * frame for each write operation, and one HTTP middleware
+ * (`holdspeak/web/announce.py`) sends it for each mutating `/api` request that
+ * answers 2xx. A window that reads its own data (the Room, People, the
+ * Follow-through, Decisions and Brief views) follows the bus with
+ * {@link useOnDeskChanged}.
  * This hook is the
  * whole client half: subscribe, and re-read. No per-kind patching and no new
  * UI -- the existing `refresh()` already loads the desk consistently, and a
@@ -28,8 +34,8 @@
  * milliseconds, and the desk needs the state AFTER the burst, not a re-read per
  * frame. A frame that arrives during the wait extends it.
  */
-import { useEffect } from "react";
-import { useRuntimeBus } from "../runtime/RuntimeBus";
+import { useEffect, useRef } from "react";
+import { useOptionalRuntimeBus, useRuntimeBus } from "../runtime/RuntimeBus";
 import { useDesk } from "./store";
 
 /** Trailing-edge debounce window for a `desk_changed` burst, in ms. */
@@ -65,4 +71,35 @@ export function useDeskChangedRefresh(
 export function DeskChangedRefresh(): null {
   useDeskChangedRefresh();
   return null;
+}
+
+/** A window that reads its own data: call *reload* after a `desk_changed`
+ * burst (trailing debounce, as {@link useDeskChangedRefresh}). The reload
+ * must be quiet: no loading state, no cleared error, and the last read stays
+ * on the glass when it fails. Without a bus (a component test) it does
+ * nothing. */
+export function useOnDeskChanged(
+  reload: () => void,
+  debounceMs: number = DESK_CHANGED_DEBOUNCE_MS,
+): void {
+  const bus = useOptionalRuntimeBus();
+  const subscribe = bus?.subscribe;
+  const latest = useRef(reload);
+  latest.current = reload;
+
+  useEffect(() => {
+    if (!subscribe) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = subscribe("desk_changed", () => {
+      if (timer !== null) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        latest.current();
+      }, debounceMs);
+    });
+    return () => {
+      if (timer !== null) clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [subscribe, debounceMs]);
 }

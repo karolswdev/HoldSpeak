@@ -3,6 +3,7 @@ import { apiFetch, readableError } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
 import { qualifiedRef } from "../../api";
 import { useDesk } from "../../store";
+import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
 import { countLabel } from "../../surface/count";
 import { MicButton } from "../../surface";
@@ -83,18 +84,32 @@ export function DecisionsView({
     setWhyOnly(initialWhyOnly);
   }, [initialQuery, initialWhyOnly]);
 
+  const listEndpoint = () => {
+    const [workType, ...workRefParts] = workRef?.split(":") ?? [];
+    const linkedWorkRef = workRefParts.join(":");
+    return workType && linkedWorkRef
+      ? `/api/decision-records/work/${encodeURIComponent(workType)}/${encodeURIComponent(linkedWorkRef)}`
+      : query.trim()
+        ? `/api/decision-records/search?q=${encodeURIComponent(query.trim())}`
+        : "/api/decision-records";
+  };
+  // A decision made or changed in another window shows in this list. A quiet
+  // re-read: no loading state, and the last list stays when it fails.
+  useOnDeskChanged(() => {
+    const endpoint = listEndpoint();
+    void apiFetch<Receipt[]>(endpoint)
+      .then((receipts) => {
+        if (endpoint === listEndpoint() && Array.isArray(receipts)) setResults(receipts);
+      })
+      .catch(() => undefined);
+  });
+
   useEffect(() => {
     let current = true;
     const timer = window.setTimeout(() => {
       setLoading(true);
       setError("");
-      const [workType, ...workRefParts] = workRef?.split(":") ?? [];
-      const linkedWorkRef = workRefParts.join(":");
-      const endpoint = workType && linkedWorkRef
-        ? `/api/decision-records/work/${encodeURIComponent(workType)}/${encodeURIComponent(linkedWorkRef)}`
-        : query.trim()
-          ? `/api/decision-records/search?q=${encodeURIComponent(query.trim())}`
-          : "/api/decision-records";
+      const endpoint = listEndpoint();
       void apiFetch<Receipt[]>(endpoint)
         .then((receipts) => {
           if (current) setResults(Array.isArray(receipts) ? receipts : []);

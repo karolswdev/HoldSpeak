@@ -1,6 +1,6 @@
 // HS-135-04: People is a single protected Desk application.  Its roster is
 // a relationship projection, never a field of person tiles or a scorecard.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CoreProps } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch } from "../../lib/api";
@@ -9,6 +9,7 @@ import { openSurfaceOr } from "../../desk/shell";
 import { PERSON_OPEN_EVENT, refOpener, type PersonOpenRequest } from "../../desk/openObject";
 import { composePeoplePrep, readPeoplePrep, type PeoplePrepData, type PrepCalendarEvent } from "../../desk/people/prepData";
 import { announceTaskReturn, taskFocusPending } from "../../desk/returnToTask";
+import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { keepPlace, keptPlace, useDeskDraft } from "../../desk/deskMemory";
 import { CycleGadget, EgressChip, PadGadget, StringGadget } from "../../desk/surface/gadgets";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
@@ -202,6 +203,27 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     } finally { setLoading(false); }
   }, [clearProtected]);
   useEffect(() => { void load(); }, [load]);
+  // A write in another window (a commitment, a 1:1, an agent's write) shows
+  // here with no reload. A quiet re-read: no loading state, the person stays
+  // open, and the last read stays when it fails or the store is not ready.
+  const followed = useRef({ ready: false, selectedId: null as string | null });
+  followed.current = { ready: stateOf(readiness) === "ready", selectedId };
+  useOnDeskChanged(() => {
+    if (!followed.current.ready) return;
+    void (async () => {
+      try {
+        const list = await apiFetch<{ relationships?: Relationship[] }>("/api/people/relationships");
+        setRelationships(list.relationships ?? []);
+        const id = followed.current.selectedId;
+        if (!id) return;
+        const [relationship, sessions] = await Promise.all([
+          apiFetch<{ relationship: Relationship }>(`/api/people/relationships/${encodeURIComponent(id)}`),
+          apiFetch<{ one_on_ones: Session[] }>(`/api/people/relationships/${encodeURIComponent(id)}/one-on-ones`),
+        ]);
+        if (followed.current.selectedId === id) setDetail({ ...relationship.relationship, sessions: sessions.one_on_ones });
+      } catch { /* the last read stays */ }
+    })();
+  });
   // HS-200-14 (AC4): the way back to the task. When this window was
   // opened from a Room verb (`rememberTaskFocus` on the way in), closing
   // it announces the return: the Room re-reads and focus lands back on

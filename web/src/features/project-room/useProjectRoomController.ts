@@ -82,10 +82,14 @@ export function useProjectRoomController(
     }
   };
 
-  const load = async () => {
+  // `quiet`: a re-read after a write somewhere else (the bus). It keeps the
+  // face on the glass: no loading state, and the last read stays when it fails.
+  const load = async (quiet = false) => {
     if (!projectId) return;
-    setLoadStatus("loading");
-    setError("");
+    if (!quiet) {
+      setLoadStatus("loading");
+      setError("");
+    }
     try {
       // Phase 1: one /room request gives orientation + focus + counts
       const snapshot = await api.fetchProjectRoom(projectId);
@@ -105,14 +109,15 @@ export function useProjectRoomController(
         setReadAt(snapshot.sinceRead.readAt);
       }
     } catch (reason) {
+      if (quiet) return;
       setError(plainFailure("ROOM DID NOT LOAD", reason));
     } finally {
-      setLoadStatus("ready");
+      if (!quiet) setLoadStatus("ready");
     }
 
     // Phase 2: progressive detail fetches for timeline/decisions wings
     // These are non-blocking; the first paint does not wait for them.
-    setDetailStatus("loading");
+    if (!quiet) setDetailStatus("loading");
     try {
       const [meetingBody, decisionBody, artifactBody, sinceBody] =
         await Promise.all([
@@ -127,9 +132,9 @@ export function useProjectRoomController(
       setSince(sinceBody);
     } catch (reason) {
       // Detail failure does not blank the room face (WEB-STA-002)
-      if (!error) setError(plainFailure("ROOM DID NOT LOAD", reason));
+      if (!error && !quiet) setError(plainFailure("ROOM DID NOT LOAD", reason));
     } finally {
-      setDetailStatus("ready");
+      if (!quiet) setDetailStatus("ready");
     }
 
     // Phase 3: HS-172-03/06 proposals + suggested sources + HS-173-04 nudges (non-blocking)
