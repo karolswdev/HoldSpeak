@@ -120,7 +120,10 @@ describe("HS-128-10 Desk Intelligence walk", () => {
 
     expect(await screen.findByText("Now")).toBeInTheDocument();
     expect(screen.getByText("Waiting")).toBeInTheDocument();
-    expect(screen.getByText("Unassigned")).toBeInTheDocument();
+    // Inventory gap 11: the lane is named for what it holds (an item not
+    // reviewed yet can have an owner).
+    expect(screen.getByText("To review")).toBeInTheDocument();
+    expect(screen.queryByText("Unassigned")).toBeNull();
     expect(screen.getByText("Overdue")).toBeInTheDocument();
     expect(screen.getByText(board.now[0].text)).toBeInTheDocument();
   });
