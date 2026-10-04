@@ -482,26 +482,28 @@ CLAIMS: list[Claim] = [
     # ── owned by HS-200-44 ────────────────────────────────────────────
     Claim(
         doc="docs/internal/UX-CANON.md",
-        anchor="A1 (raw `<button>`) is held to a\ndated, down-only ratchet of 102, measured on 2026-09-28 by #694",
+        anchor="A1 (raw `<button>`) is held to a\ndated, down-only ratchet of 90, set on 2026-10-02 by PHILO-13-18",
         sentence=(
-            "A1 (raw `<button>`) is held to a dated, down-only ratchet of 102, "
-            "measured on 2026-09-28 by #694 (the live count once the Phase 9 and "
-            "10 faces landed; 105 the same day by PHILO-9-04, the sortable table's "
+            "A1 (raw `<button>`) is held to a dated, down-only ratchet of 90, "
+            "set on 2026-10-02 by PHILO-13-18 (the Workbench's raw buttons became "
+            "the library Button; 102 on 2026-09-28 by #694, the live count once "
+            "the Phase 9 and 10 faces landed; 105 the same day by PHILO-9-04, the sortable table's "
             "sort headers; 106 on 2026-09-21 by HS-202-03; 175 on 2026-09-17 by "
             "HS-200-44, once the matcher could see a multi-line opening tag). "
             "That number can only shrink."
         ),
         predicate=lambda: (
-            ux_canon_ceiling_a1() == 102
+            ux_canon_ceiling_a1() == 90
             and int(re.search(r"down-only ratchet of (\d+)", _read("docs/internal/UX-CANON.md")).group(1))
             == ux_canon_ceiling_a1()
             and canon_scanner_a1_total() <= ux_canon_ceiling_a1()
         ),
         state="holds",
         truth=(
-            "tests/ux_canon_ceiling.json holds A1 = 102 with a dated reason, the "
+            "tests/ux_canon_ceiling.json holds A1 = 90 with a dated reason, the "
             "canon scanner's A1 count over web/src is at or under it, and the "
-            "document states the same number. Lowered 105 -> 102 on 2026-09-28 by "
+            "document states the same number. Lowered 102 -> 90 on 2026-10-02 by "
+            "PHILO-13-18 (the row re-pinned on 2026-10-03). Lowered 105 -> 102 on 2026-09-28 by "
             "#694 (the ceiling rewritten to the live counts). Lowered 106 -> 105 on 2026-09-28 by "
             "PHILO-9-04 (the sortable table's sort headers became the library "
             "Button). Lowered 175 -> 106 on 2026-09-21 by "
@@ -720,8 +722,10 @@ CLAIMS: list[Claim] = [
         sentence=(
             "Meeting changes announce themselves from the import worker when an "
             "import ends, success or failure (`MeetingService._run_import_job`), "
-            "and from the summary queue after durable running and settled "
-            "transitions (`_notify_queue_meeting_changed`). Other meeting writes, "
+            "from the summary queue after durable running and settled "
+            "transitions (`_notify_queue_meeting_changed`), and when a meeting is "
+            "parked or restored (`MeetingService.delete_meeting`, "
+            "`restore_meeting`). Other meeting writes, "
             "project rooms, thoughts and sync emit no frame; their surfaces "
             "carry their own signals."
         ),
@@ -729,7 +733,8 @@ CLAIMS: list[Claim] = [
         state="holds",
         truth=(
             "literal-kind 'meeting' desk_changed calls under holdspeak/ are in "
-            "MeetingService._run_import_job and _notify_queue_meeting_changed; "
+            "MeetingService._run_import_job, delete_meeting and restore_meeting "
+            "(PHILO-13-02, row updated 2026-10-03) and _notify_queue_meeting_changed; "
             "real-producer queue fences verify durable running and settled "
             "publication. No literal thought/project/room/sync kind exists "
             "(PHILO-3-02, updated 2026-09-23)"
@@ -945,6 +950,8 @@ def desk_changed_comment_holds() -> bool:
     kinds = desk_changed_literal_kinds()
     if kinds.get("meeting") != {
         ("holdspeak/services/meeting_service.py", "_run_import_job"),
+        ("holdspeak/services/meeting_service.py", "delete_meeting"),
+        ("holdspeak/services/meeting_service.py", "restore_meeting"),
         ("holdspeak/intel_queue.py", "_notify_queue_meeting_changed"),
     }:
         return False

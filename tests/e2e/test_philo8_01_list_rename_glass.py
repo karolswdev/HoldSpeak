@@ -77,7 +77,38 @@ def _ensure_view(page: Any, want: str) -> None:
         page.locator(".desk-world").wait_for(timeout=T)
 
 
+def _track_api(page: Any) -> None:
+    """Keep the set of API requests still in flight (the event stream excluded)."""
+    live: set[Any] = set()
+    page.on("request", lambda r: live.add(r) if "/api/" in r.url and r.resource_type != "eventsource" else None)
+    page.on("requestfinished", lambda r: live.discard(r))
+    page.on("requestfailed", lambda r: live.discard(r))
+    page._api_live = live
+
+
+def _settled(page: Any) -> None:
+    """Wait until no API request is in flight for 400 ms.
+
+    The window is longer than the desk's trailing refresh after a write
+    (DESK_CHANGED_DEBOUNCE_MS, 300 ms, web/src/desk/useDeskChangedRefresh.ts),
+    so that refresh starts, and ends, inside the wait.
+    """
+    quiet = 0
+    for _ in range(400):
+        quiet = quiet + 1 if not page._api_live else 0
+        if quiet >= 8:
+            return
+        page.wait_for_timeout(50)
+    raise AssertionError(f"the desk never went quiet: {[r.url for r in page._api_live]}")
+
+
 def _new_zone(page: Any) -> None:
+    # The store picks the default name from the zones it holds. A refresh that
+    # started before a rename can land after it and put the old name back
+    # until the next refresh; "New zone" then counts as taken and the new zone
+    # is "New zone 2". On the GPU the rig is faster than those refreshes
+    # (software rendering hid the race), so each New Zone waits for a quiet desk.
+    _settled(page)
     _palette(page, "New Zone")
     with page.expect_response(
         lambda r: r.url.split("?")[0].endswith("/api/directories") and r.request.method == "POST",
@@ -114,6 +145,7 @@ class TestListRenameGlass:
         puts: list[tuple[str, int]] = []
         page.on("response", lambda r: puts.append((r.url.split("?")[0].rsplit("/", 1)[-1], r.status))
                 if r.request.method == "PUT" and "/api/directories/" in r.url else None)
+        _track_api(page)
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         _normal_chair(page)
         page.locator("[data-testid=chair-floor-toggle]").click()

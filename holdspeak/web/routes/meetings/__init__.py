@@ -20,6 +20,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from ...context import WebContext
+from .._mount import mount_router
 from .action_items import build_action_items_router
 from .aftercare import build_aftercare_router
 from .crud import build_crud_router
@@ -33,11 +34,11 @@ __all__ = ["build_meetings_router"]
 
 def build_meetings_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-    router.include_router(build_live_router(ctx))
-    router.include_router(build_crud_router(ctx))
-    router.include_router(build_speakers_router(ctx))
-    router.include_router(build_insights_router(ctx))
-    router.include_router(build_aftercare_router(ctx))
-    router.include_router(build_action_items_router(ctx))
-    router.include_router(build_intel_router(ctx))
+    mount_router(router, build_live_router(ctx))
+    mount_router(router, build_crud_router(ctx))
+    mount_router(router, build_speakers_router(ctx))
+    mount_router(router, build_insights_router(ctx))
+    mount_router(router, build_aftercare_router(ctx))
+    mount_router(router, build_action_items_router(ctx))
+    mount_router(router, build_intel_router(ctx))
     return router

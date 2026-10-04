@@ -303,6 +303,58 @@ def mock_llama():
 # ============================================================
 
 
+# ============================================================
+# Browser tests draw on the real GPU (owner ruling 2026-10-03: fast tests)
+# ============================================================
+#
+# Headless Chromium draws WebGL in software (SwiftShader). The Floor's
+# atmosphere is a full-viewport WebGL scene that draws every frame
+# (web/src/desk/gl/atmosphereRuntime.ts), so one frame took 0.2 s to 1 s of
+# CPU and every Playwright action waits for a frame. Measured on the desk
+# debts rig at 1440: a 90-point pointer pass took 36.8 s in software and
+# 0.8 s on Metal. That one cause was most of the browser suite's time.
+#
+# On macOS every Chromium a test launches gets `--use-angle=metal`, unless the
+# test passes its own ANGLE flag. A CI runner is a VM with no dependable GPU,
+# so the flag is off when CI is set. HOLDSPEAK_GLASS_GPU=0 turns it off;
+# HOLDSPEAK_GLASS_GPU=1 turns it on anywhere.
+
+
+def _glass_gpu_enabled() -> bool:
+    import os
+    import sys
+
+    choice = os.environ.get("HOLDSPEAK_GLASS_GPU", "")
+    if choice in ("0", "1"):
+        return choice == "1"
+    return sys.platform == "darwin" and not os.environ.get("CI")
+
+
+def _launch_chromium_on_the_gpu() -> None:
+    if not _glass_gpu_enabled():
+        return
+    try:
+        from playwright.sync_api import BrowserType
+    except ImportError:  # the base test environment has no Playwright
+        return
+    original = BrowserType.launch
+    if getattr(original, "_holdspeak_gpu", False):
+        return
+
+    def launch(self, *args, **kwargs):
+        if self.name == "chromium":
+            flags = list(kwargs.get("args") or [])
+            if not any("use-angle" in flag or "use-gl" in flag for flag in flags):
+                kwargs["args"] = [*flags, "--use-angle=metal"]
+        return original(self, *args, **kwargs)
+
+    launch._holdspeak_gpu = True
+    BrowserType.launch = launch
+
+
+_launch_chromium_on_the_gpu()
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--run-metal",

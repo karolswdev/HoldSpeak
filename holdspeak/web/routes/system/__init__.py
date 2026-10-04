@@ -10,6 +10,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from ...context import WebContext
+from .._mount import mount_router
 from .agent_capabilities import build_agent_capabilities_router
 from .coder_steering_routes import build_coder_steering_router
 from .coders import build_coders_router
@@ -25,15 +26,15 @@ def build_system_router(
     ctx: WebContext, *, commands=None, targets=None
 ) -> APIRouter:
     router = APIRouter()
-    router.include_router(build_health_router(ctx))
-    router.include_router(build_agent_capabilities_router())
-    router.include_router(build_coders_router(ctx))
-    router.include_router(
+    mount_router(router, build_health_router(ctx))
+    mount_router(router, build_agent_capabilities_router())
+    mount_router(router, build_coders_router(ctx))
+    mount_router(router, 
         build_coder_steering_router(ctx, commands=commands, targets=targets)
     )
-    router.include_router(build_gate_router(ctx))
-    router.include_router(build_kernel_router())
-    router.include_router(build_settings_router(ctx))
-    router.include_router(build_voice_router(ctx))
-    router.include_router(build_ws_router(ctx))
+    mount_router(router, build_gate_router(ctx))
+    mount_router(router, build_kernel_router())
+    mount_router(router, build_settings_router(ctx))
+    mount_router(router, build_voice_router(ctx))
+    mount_router(router, build_ws_router(ctx))
     return router

@@ -19,6 +19,7 @@ The four defects this file fences (red on main 267f692a, recorded in
 """
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from typing import Any
 
@@ -66,6 +67,20 @@ def _decision(page: Any, title: str) -> str:
 def _status(page: Any, decision_id: str) -> int:
     status, _payload = _api_allow_error(page, "GET", f"/api/decisions/{decision_id}", token=TOKEN)
     return status
+
+
+def _wait_deleted(page: Any, *decision_ids: str) -> None:
+    """Wait until the hub answers 404 for each id, at most the old fixed wait.
+
+    These cases assert a 404 after the undo window. The fixed 12 s wait is the
+    limit, not the wait: the read returns when the hub has the delete (about
+    8 s). A case that asserts a 200 keeps the full fixed wait.
+    """
+    deadline = time.monotonic() + WINDOW_WAIT_MS / 1000
+    while time.monotonic() < deadline:
+        if all(_status(page, decision_id) == 404 for decision_id in decision_ids):
+            return
+        page.wait_for_timeout(250)
 
 
 def _palette(page: Any, query: str, option_id: str) -> None:
@@ -361,7 +376,7 @@ class TestOneDelete:
                 page.keyboard.press("Delete")
                 page.wait_for_timeout(300)
                 receipt = page.evaluate("() => document.querySelector('.undo-receipt')?.innerText || ''")
-                page.wait_for_timeout(WINDOW_WAIT_MS)
+                _wait_deleted(page, a_id, b_id)
                 result = {"A": _status(page, a_id), "B": _status(page, b_id)}
                 print(f"{face} {order} {width}: selected before B {selected_before_b!r};"
                       f" receipt after B {receipt!r}; {result}; DELETE {len(self.deletes)}")
@@ -413,7 +428,7 @@ class TestOneDelete:
                 page.wait_for_timeout(1_500)
                 page.locator("[data-testid=chair-floor-toggle]").click()  # to the Chair
                 page.locator(".chair").wait_for(timeout=10_000)
-                page.wait_for_timeout(WINDOW_WAIT_MS)
+                _wait_deleted(page, decision_id)
                 status = _status(page, decision_id)
                 print(f"{face} {width}: {status}; DELETE {len(self.deletes)}")
                 assert status == 404, (status, self.deletes)

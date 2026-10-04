@@ -98,3 +98,37 @@ def _no_hub_outlives_its_database():
         if patched_pkg:
             db_pkg.reset_database = original_reset
         _stop_live_hubs()
+
+
+# ── Fast tests (owner ruling 2026-10-03): one roadmap read per process ──
+#
+# The desk asks `GET /api/roadmaps` two times on each page load. The route
+# reads the repository's own `pm/roadmap/` and runs `.githooks/dw check` and
+# `dw next` for each of the four projects there: eight child processes, 0.8 s,
+# for each request (measured). A rig's hub serves the real repository root, so
+# every `goto` and `reload` in every browser test paid 1.7 s for answers that
+# do not change during a run. The answers for the real root are kept for the
+# process. A test that gives the route its own root is not changed.
+
+@pytest.fixture(scope="session", autouse=True)
+def _one_roadmap_read_per_process():
+    from pathlib import Path
+
+    import holdspeak.web.routes.roadmaps as roadmaps
+
+    real_root = Path(roadmaps.__file__).resolve().parents[3]
+    original = roadmaps._run
+    kept: dict[tuple[str, ...], tuple[int, str]] = {}
+
+    def _run(repo_root, *args):
+        if Path(repo_root) != real_root:
+            return original(repo_root, *args)
+        if args not in kept:
+            kept[args] = original(repo_root, *args)
+        return kept[args]
+
+    roadmaps._run = _run
+    try:
+        yield
+    finally:
+        roadmaps._run = original

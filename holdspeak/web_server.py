@@ -17,6 +17,7 @@ from datetime import datetime
 from typing import Any, Callable, Optional, TYPE_CHECKING
 
 from .logging_config import get_logger
+from .web.routes._mount import mount_router
 from .web.runtime_support import _parse_iso_datetime
 
 if TYPE_CHECKING:
@@ -1156,36 +1157,36 @@ class MeetingWebServer:
             lifecycle=DeskActuatorLifecycle(web_ctx, get_database()),
         )
         _runtime_services.actuator_service = web_ctx.actuator_service
-        app.include_router(build_core_router(web_ctx))
-        app.include_router(build_authority_router(web_ctx))
-        app.include_router(build_cadence_router(web_ctx))
-        app.include_router(build_calendar_events_router(web_ctx))
-        app.include_router(build_calendar_snapshot_router(web_ctx))
-        app.include_router(build_calendar_sources_router(web_ctx))
-        app.include_router(build_follow_through_router(web_ctx))
-        app.include_router(build_proposal_router(web_ctx))
-        app.include_router(build_door_router(web_ctx))
-        app.include_router(build_concierge_router(web_ctx))
-        app.include_router(build_front_door_router(web_ctx))
-        app.include_router(build_people_router(web_ctx))
-        app.include_router(build_automations_router(web_ctx))
-        app.include_router(build_decision_records_router(web_ctx))
-        app.include_router(build_decisions_router(web_ctx))
-        app.include_router(build_memory_router(web_ctx))
-        app.include_router(build_model_library_router(web_ctx))
-        app.include_router(build_inference_assignments_router(web_ctx))
-        app.include_router(build_monday_brief_router(web_ctx))
-        app.include_router(build_meetings_router(web_ctx))
-        app.include_router(build_desk_actuators_router(web_ctx))
-        app.include_router(build_desk_seed_router(web_ctx))
-        app.include_router(build_meeting_import_router(web_ctx))
-        app.include_router(build_mesh_router(web_ctx))
-        app.include_router(build_missioncontrol_router(web_ctx))
-        app.include_router(build_delivery_router(web_ctx))
-        app.include_router(build_delivery_attempts_router(web_ctx))
-        app.include_router(build_delivery_dossiers_router(web_ctx))
-        app.include_router(build_delivery_prs_router(web_ctx))
-        app.include_router(build_repositories_router(web_ctx))
+        mount_router(app, build_core_router(web_ctx))
+        mount_router(app, build_authority_router(web_ctx))
+        mount_router(app, build_cadence_router(web_ctx))
+        mount_router(app, build_calendar_events_router(web_ctx))
+        mount_router(app, build_calendar_snapshot_router(web_ctx))
+        mount_router(app, build_calendar_sources_router(web_ctx))
+        mount_router(app, build_follow_through_router(web_ctx))
+        mount_router(app, build_proposal_router(web_ctx))
+        mount_router(app, build_door_router(web_ctx))
+        mount_router(app, build_concierge_router(web_ctx))
+        mount_router(app, build_front_door_router(web_ctx))
+        mount_router(app, build_people_router(web_ctx))
+        mount_router(app, build_automations_router(web_ctx))
+        mount_router(app, build_decision_records_router(web_ctx))
+        mount_router(app, build_decisions_router(web_ctx))
+        mount_router(app, build_memory_router(web_ctx))
+        mount_router(app, build_model_library_router(web_ctx))
+        mount_router(app, build_inference_assignments_router(web_ctx))
+        mount_router(app, build_monday_brief_router(web_ctx))
+        mount_router(app, build_meetings_router(web_ctx))
+        mount_router(app, build_desk_actuators_router(web_ctx))
+        mount_router(app, build_desk_seed_router(web_ctx))
+        mount_router(app, build_meeting_import_router(web_ctx))
+        mount_router(app, build_mesh_router(web_ctx))
+        mount_router(app, build_missioncontrol_router(web_ctx))
+        mount_router(app, build_delivery_router(web_ctx))
+        mount_router(app, build_delivery_attempts_router(web_ctx))
+        mount_router(app, build_delivery_dossiers_router(web_ctx))
+        mount_router(app, build_delivery_prs_router(web_ctx))
+        mount_router(app, build_repositories_router(web_ctx))
         # One shared NodeLinkState feeds both the node link and the terminal
         # command claim leg: commands issued at the hub reach a remote node
         # through the same authenticated long-poll. The terminal command
@@ -1214,12 +1215,12 @@ class MeetingWebServer:
             kernel_broker=_kernel_service(),
         )
         _delivery_link.command_source = _delivery_cmd.claim_for_node
-        app.include_router(
+        mount_router(app, 
             build_delivery_node_router(
                 web_ctx, link=_delivery_link, web_token=self.auth_token
             )
         )
-        app.include_router(
+        mount_router(app, 
             build_delivery_terminal_router(
                 web_ctx,
                 service=_delivery_cmd,
@@ -1230,40 +1231,40 @@ class MeetingWebServer:
         # The factory shares the terminal command service and target
         # registry so a launch issues its worktree.create/spawn envelopes
         # and pins the spawned pane's immutable target on the same spine.
-        app.include_router(
+        mount_router(app, 
             build_delivery_factory_router(
                 web_ctx, commands=_delivery_cmd, targets=_delivery_targets
             )
         )
-        app.include_router(build_dictation_router(web_ctx))
-        app.include_router(build_activity_router(web_ctx))
-        app.include_router(build_pages_router(web_ctx))
-        app.include_router(
+        mount_router(app, build_dictation_router(web_ctx))
+        mount_router(app, build_activity_router(web_ctx))
+        mount_router(app, build_pages_router(web_ctx))
+        mount_router(app, 
             build_system_router(
                 web_ctx, commands=_delivery_cmd, targets=_delivery_targets
             )
         )
-        app.include_router(build_projects_router(web_ctx))
-        app.include_router(build_roadmaps_router(web_ctx))
-        app.include_router(build_primitives_router(web_ctx))
-        app.include_router(build_projections_router(web_ctx))
-        app.include_router(build_constitutional_router())
-        app.include_router(build_scheduled_recordings_router(web_ctx))
-        app.include_router(build_setup_router(web_ctx))
-        app.include_router(build_sync_router(web_ctx))
-        app.include_router(build_threads_router(web_ctx))
-        app.include_router(build_tts_router(web_ctx))
-        app.include_router(build_project_reviews_router(web_ctx))
-        app.include_router(build_project_door_router(web_ctx))
-        app.include_router(build_project_setup_router(web_ctx))
-        app.include_router(build_project_updates_router(web_ctx))
-        app.include_router(build_channels_router(web_ctx))  # PHILO-10-01: the Send
-        app.include_router(build_project_briefs_router(web_ctx))
-        app.include_router(build_providers_router(web_ctx))
-        app.include_router(build_connections_router(web_ctx))
-        app.include_router(build_steward_router(web_ctx))
-        app.include_router(build_watches_router(web_ctx))
-        app.include_router(build_mcp_http_router(web_ctx))
+        mount_router(app, build_projects_router(web_ctx))
+        mount_router(app, build_roadmaps_router(web_ctx))
+        mount_router(app, build_primitives_router(web_ctx))
+        mount_router(app, build_projections_router(web_ctx))
+        mount_router(app, build_constitutional_router())
+        mount_router(app, build_scheduled_recordings_router(web_ctx))
+        mount_router(app, build_setup_router(web_ctx))
+        mount_router(app, build_sync_router(web_ctx))
+        mount_router(app, build_threads_router(web_ctx))
+        mount_router(app, build_tts_router(web_ctx))
+        mount_router(app, build_project_reviews_router(web_ctx))
+        mount_router(app, build_project_door_router(web_ctx))
+        mount_router(app, build_project_setup_router(web_ctx))
+        mount_router(app, build_project_updates_router(web_ctx))
+        mount_router(app, build_channels_router(web_ctx))  # PHILO-10-01: the Send
+        mount_router(app, build_project_briefs_router(web_ctx))
+        mount_router(app, build_providers_router(web_ctx))
+        mount_router(app, build_connections_router(web_ctx))
+        mount_router(app, build_steward_router(web_ctx))
+        mount_router(app, build_watches_router(web_ctx))
+        mount_router(app, build_mcp_http_router(web_ctx))
 
         @app.on_event("startup")
         async def _startup() -> None:
