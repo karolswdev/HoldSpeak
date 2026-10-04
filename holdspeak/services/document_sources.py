@@ -205,8 +205,15 @@ def _source_read_context() -> Any:
     return Principal(PrincipalKind.OWNER, "channel-document-source")
 
 
-def _brief_person_overlay(db: Any, brief: Any) -> dict[str, Any]:
-    """Compose the same read-time People overlay as the brief face.
+def _parked_brief_person_overlay(db: Any, brief: Any) -> dict[str, Any]:
+    """PARKED (2026-10-03, inventory gap 5): the sent Brief carries no People data.
+
+    People records are in custody. A sent document leaves the desk and stays
+    in ``channel_sends.payload`` as plain text, and Send has no People gate.
+    The Brief face on the desk still shows the overlay
+    (``web/routes/monday_brief.py``). No caller uses this function.
+
+    Compose the same read-time People overlay as the brief face.
 
     The sidecar may be unavailable on a machine without People access.  That
     state is retained as an explicit empty result; it never causes a renderer
@@ -241,7 +248,8 @@ def _brief_person_overlay(db: Any, brief: Any) -> dict[str, Any]:
         return {"state": "unavailable", "sections": []}
 
 
-def _brief_markdown(brief: Any, overlay: dict[str, Any]) -> str:
+def _brief_markdown(brief: Any) -> str:
+    """The Brief as a sent document: the stored items only, no People data."""
     lines = [
         "# Monday Brief",
         f"Period: {_format_period(brief.period_start, brief.period_end)}",
@@ -269,6 +277,12 @@ def _brief_markdown(brief: Any, overlay: dict[str, Any]) -> str:
             if detail:
                 lines.append(f"  {detail}")
 
+    return "\n".join(lines).strip() + "\n"
+
+
+def _parked_brief_people_lines(overlay: dict[str, Any]) -> list[str]:
+    """PARKED with ``_parked_brief_person_overlay``: the People lines of a sent Brief."""
+    lines: list[str] = []
     if overlay.get("state") == "unavailable":
         lines.extend(["", "PEOPLE · UNAVAILABLE"])
     elif overlay.get("state") == "ready":
@@ -291,7 +305,7 @@ def _brief_markdown(brief: Any, overlay: dict[str, Any]) -> str:
                     title = str(upcoming.get("title") or "One-on-one")
                     starts = str(upcoming.get("starts_at") or "")
                     lines.append(f"- Next: {title}" + (f" ({starts})" if starts else ""))
-    return "\n".join(lines).strip() + "\n"
+    return lines
 
 
 class _ProjectUpdateSource:
@@ -313,13 +327,12 @@ class _MondayBriefSource:
         brief = MondayBriefService(db).get_by_id(source_id)
         if brief is None:
             raise _document_not_found("Monday brief", source_id)
-        overlay = _brief_person_overlay(db, brief)
         period = _date_text(brief.period_end) or _date_text(brief.generated_at)
         title = f"Monday Brief — {period}" if period else "Monday Brief"
         return _make_document(
             ref=f"{self.kind}:{brief.id}",
             title=title,
-            body_md=_brief_markdown(brief, overlay),
+            body_md=_brief_markdown(brief),
             slug=f"brief-{_slug(period, 'brief')}",
             label=f"BRIEF {period}" if period else "BRIEF",
         )
