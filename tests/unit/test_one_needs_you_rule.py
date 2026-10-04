@@ -79,3 +79,36 @@ def test_the_hub_rule_deduplicates_as_the_browser_twin_does(
     # The mutant that omits deduplication is rejected by the same contract.
     mutant = compute_needs_you(**kwargs, dedup=lambda items, _now: list(items))
     assert mutant["count"] == probe["expectedMutantCount"]
+
+
+def test_a_room_row_merged_by_the_aggregate_keeps_its_sources() -> None:
+    """The Room aggregate merges two projections of one obligation
+    (``rank_and_dedup``); the rule then deduplicates the Door and Room rows
+    again. The second pass must keep the first pass's ``sources`` and
+    ``dedupCount`` (the browser twin flattens the same way): the face shows
+    "2 SOURCES" from them. #788 lost them: the merged row came back with
+    ``dedupCount`` 1 and one source.
+    """
+    from holdspeak.services.attention_ranking import rank_and_dedup
+
+    now = datetime(2026, 10, 4, 9, 0, 0)
+    projections = [
+        {"id": "p1:jira:KAN-7", "projectId": "p1", "source": "jira",
+         "title": "KAN-7 Payments cut-over runbook", "why": "OVERDUE · 2D",
+         "severity": "danger", "dueAt": "2026-10-02"},
+        {"id": "p1:proposal:1", "projectId": "p1", "source": "proposal",
+         "title": "Payments cut-over runbook", "why": "PROPOSED", "severity": "info"},
+        {"id": "p1:github:9", "projectId": "p1", "source": "github",
+         "title": "#9 Review the retry change", "why": "REVIEW", "severity": "warning"},
+    ]
+    aggregate_items = rank_and_dedup(projections, now)
+    merged = next(row for row in aggregate_items if row["title"].startswith("KAN-7"))
+    assert merged["dedupCount"] == 2
+
+    result = compute_needs_you(door={}, room_items=aggregate_items, now=now)
+    assert result["count"] == 2
+    head = next(row for row in result["unmutedItems"] if row["title"].startswith("KAN-7"))
+    assert head["dedupCount"] == 2, head
+    assert {source["source"] for source in head["sources"]} == {"jira", "proposal"}, head
+    single = next(row for row in result["unmutedItems"] if row["title"].startswith("#9"))
+    assert single["dedupCount"] == 1 and len(single["sources"]) == 1, single
