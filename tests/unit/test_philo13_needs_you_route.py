@@ -170,11 +170,14 @@ def test_cached_needs_you_route_rebuilds_after_real_action_item_status_mutation(
         """
         door = client.get("/api/door").json()
         board = door["board"]
+        # Owner ruling 2026-10-04: a card in ``waiting`` names another owner;
+        # the owner waits on it, and it is not a member.
         door_ids = {
             str(card["id"])
-            for column in ("overdue", "now", "waiting", "unassigned")
+            for column in ("overdue", "now", "unassigned")
             for card in board.get(column, [])
         }
+        assert A3_ID in {str(card["id"]) for card in board.get("waiting", [])}
         room_items = room_payload["roomItems"]
         unmuted_room_refs = {
             str(item["ref"])
@@ -203,6 +206,11 @@ def test_cached_needs_you_route_rebuilds_after_real_action_item_status_mutation(
             refs.add("blocker:engines")
         if any(row["id"] == FAILED_MEETING_ID for row in meetings["meetings"]):
             refs.add(FAILED_MEETING_ID)
+        # A Desk decision that is ``proposed`` waits for the owner's review.
+        refs.update(
+            f"decision:{decision.id}" for decision in db.desk_decisions.list()
+            if decision.status == "proposed"
+        )
         return [ref for ref in seeded["expectedRefs"] if ref in refs]
 
     try:

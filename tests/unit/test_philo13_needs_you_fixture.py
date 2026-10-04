@@ -18,6 +18,7 @@ from scripts.philo13_needs_you_fixture import (
     A3_ID,
     A4_ID,
     D1_ID,
+    DECISION_REF,
     FAILED_MEETING_ID,
     seed_week,
 )
@@ -60,7 +61,7 @@ def test_seed_accepts_existing_empty_hub_and_refuses_oracle_reseed(
         "body": {"status": "done"},
     }
     assert seeded["expectedRefs"] == [
-        A1_ID, A2_TASK, A3_ID, A4_ID, "blocker:engines", FAILED_MEETING_ID,
+        A1_ID, A2_TASK, A4_ID, DECISION_REF, "blocker:engines", FAILED_MEETING_ID,
     ]
     assert seeded["ids"]["project"].startswith("proj-")
     assert seeded["ids"]["project"] != "philo13-a2-project"
@@ -126,7 +127,7 @@ def test_dedup_probe_mints_same_title_door_and_room_rows_through_real_routes(
     probe = dedup_probe(db_path, home=home)
     assert probe["mode"] == "dedup-probe"
     assert probe["expectedRefs"] == [
-        A1_ID, A2_TASK, A3_ID, A4_ID, "blocker:engines", FAILED_MEETING_ID,
+        A1_ID, A2_TASK, A4_ID, DECISION_REF, "blocker:engines", FAILED_MEETING_ID,
     ]
     assert probe["expectedCount"] == 6
     assert probe["expectedMutantCount"] == 7

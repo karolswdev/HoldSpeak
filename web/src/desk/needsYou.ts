@@ -60,7 +60,19 @@ export interface NeedsYouRoomItem extends RankableItem {
   /** Kept for A2-W: a row remains openable after it joins the membership. */
   openRef?: string | null;
   proposalId?: string;
+  /** True when the owner waits on someone else for this row: it is listed
+   * (the WAITING filter shows it) and it is not counted. */
+  waiting?: boolean;
   [key: string]: unknown;
+}
+
+/** A decision that waits for the owner's review, as the hub's rule reads it
+ * (`needs_you_membership._read_decisions`). */
+export interface NeedsYouDecision {
+  id: string;
+  title?: string | null;
+  projectId?: string | null;
+  since?: string | null;
 }
 
 export interface NeedsYouDoorProjection {
@@ -76,6 +88,10 @@ export interface NeedsYouInputs {
   assignments?: AssignmentSummary | null;
   assignmentRead?: AssignmentRead;
   meetings?: readonly Meeting[];
+  /** R4: the decisions that wait for the owner's review. */
+  decisions?: readonly NeedsYouDecision[];
+  /** The names that mean the owner himself (the hub's `ownerNames`). */
+  selfNames?: readonly string[];
   now?: Date;
 }
 
@@ -91,9 +107,15 @@ export interface NeedsYouMember {
 
 export interface NeedsYouResult {
   members: NeedsYouMember[];
+  /** What needs the owner. A row he waits on someone else for is not in it. */
   count: number;
-  /** Ranked, deduplicated rows that are visible to the owner. */
+  /** The unmuted rows the owner waits on someone else for. */
+  waitingCount: number;
+  /** Ranked, deduplicated rows that are visible to the owner. Each row is
+   * marked `waiting`: the counted rows and the waiting rows are both here. */
   unmutedItems: NeedsYouRoomItem[];
+  /** The rows of `unmutedItems` that wait on someone else. */
+  waitingItems: NeedsYouRoomItem[];
   /** Ranked, deduplicated rows retained for the muted section. */
   mutedItems: NeedsYouRoomItem[];
   blockers: MeetingPathBlocker[];
@@ -202,6 +224,66 @@ function doorItems(
   return rows;
 }
 
+/** R4: decisions awaiting review, as attention rows. The ref is the Desk
+ * route token `decision:<id>`; Review opens it. */
+function decisionItems(decisions: readonly NeedsYouDecision[]): NeedsYouRoomItem[] {
+  const rows: NeedsYouRoomItem[] = [];
+  for (const decision of decisions) {
+    const decisionId = String(decision.id ?? "");
+    if (!decisionId) continue;
+    const ref = `decision:${decisionId}`;
+    const since = String(decision.since ?? "");
+    rows.push({
+      id: ref,
+      ref,
+      projectId: String(decision.projectId ?? ""),
+      projectName: "",
+      title: String(decision.title || "Untitled"),
+      why: "TO REVIEW",
+      ageToken: since,
+      since,
+      dueAt: null,
+      kind: "decision",
+      source: "decision",
+      verbHref: null,
+      openRef: ref,
+      severity: "warning",
+    });
+  }
+  return rows;
+}
+
+/** The names that mean the owner himself. The People store reserves `me`
+ * and `you` and its follow-through projection names the owner `you` /
+ * `manager`; the hub adds the configured meeting speaker label (`ownerNames`
+ * on its answer). */
+export const SELF_OWNER_NAMES: readonly string[] = ["me", "you", "manager"];
+
+/** The reason token of a row the owner himself holds with no nearer due date. */
+const YOURS = "YOURS";
+
+function isSelf(owner: unknown, selfNames: readonly string[]): boolean {
+  const name = String(owner ?? "").trim().toLowerCase();
+  return name !== "" && selfNames.some((n) => String(n).trim().toLowerCase() === name);
+}
+
+function waitingOn(row: { owner?: unknown; why?: unknown }): boolean {
+  const owner = String(row.owner ?? "").trim();
+  return owner !== "" && String(row.why ?? "").trim().toUpperCase() === `WAITING ON ${owner.toUpperCase()}`;
+}
+
+/** True when the owner waits on SOMEONE ELSE for this row: it names an owner
+ * who is not the owner himself, and its reason is `WAITING ON <that owner>`
+ * (a Door card in the `waiting` column, or a Room commitment with an owner
+ * and a later due date). `WAITING ON YOUR REVIEW` names no owner and is the
+ * owner's own work. */
+export function waitsOnOther(
+  row: { owner?: unknown; why?: unknown },
+  selfNames: readonly string[] = SELF_OWNER_NAMES,
+): boolean {
+  return waitingOn(row) && !isSelf(row.owner, selfNames);
+}
+
 function mutedSet(input: NeedsYouInputs): ReadonlySet<string> {
   const values = input.mutedProjectIds ?? [];
   return values instanceof Set ? values : new Set([...values].map(String));
@@ -243,6 +325,11 @@ export function meetingNeedsYou(meeting: Meeting): boolean {
  * action item, so its matching Door card is removed before mute handling.
  * The merged rows then use the shared deduplication and ranking functions.
  * R2 and R3 are appended as members with stable refs of their own.
+ * R4 is the decisions that wait for the owner's review, as attention rows.
+ *
+ * Owner ruling 2026-10-04: a row the owner waits on someone else for
+ * (`waitsOnOther`) is listed, marked `waiting`, and is not a member.
+ * `count` is what needs him; `waitingCount` is what he waits on.
  */
 export function computeNeedsYou(
   input: NeedsYouInputs,
@@ -255,15 +342,42 @@ export function computeNeedsYou(
       .map((item) => String(item.actionItemId)),
   );
   const now = input.now ?? new Date();
-  const combined = [...doorItems(asBoard(input), covered, now), ...room];
+  const selfNames = input.selfNames ?? SELF_OWNER_NAMES;
+  // An item the owner himself holds is his: it reads `YOURS`, never
+  // `WAITING ON ME`, and it is counted.
+  const combined = [...doorItems(asBoard(input), covered, now), ...room].map((row) =>
+    waitingOn(row) && isSelf(row.owner, selfNames) ? { ...row, why: YOURS } : row,
+  );
   // A People commitment never merges with another row: a merge would put its
   // text and its record ref inside another row's `sources`, past the custody
   // boundary. It stays one row of its own.
   const people = combined.filter((item) => item.source === "people_commitment");
   const others = combined.filter((item) => item.source !== "people_commitment");
-  const ranked = rankAttention(
-    [...dependencies.dedupAttention(others, now), ...people], now,
-  ) as NeedsYouRoomItem[];
+  // A decision keeps its own row and its own ref (`decision:<id>`): the Brief
+  // names the same ref, so the two count it once.
+  // A merged row waits on someone else only when EVERY merged projection
+  // does. When one projection is the owner's own (YOURS, due, overdue), the
+  // row is his: it leads with his reason and it is counted.
+  // Each projection keeps its own reason and owner through every merge (the
+  // Room aggregate's and this one), so the test reads the projections.
+  const merged = dependencies.dedupAttention(others, now).map((row) => {
+    const sources = row.sources ?? [];
+    if (sources.length < 2) return { ...row, waiting: waitsOnOther(row, selfNames) };
+    const marks = sources.map((source) => waitsOnOther(source, selfNames));
+    const waiting = marks.every(Boolean);
+    if (waiting || !waitsOnOther(row, selfNames)) return { ...row, waiting };
+    const his = sources[marks.indexOf(false)];
+    return {
+      ...row,
+      waiting,
+      why: waitingOn(his) ? YOURS : (his.why || row.why),
+      severity: his.severity || row.severity,
+    };
+  });
+  const singles = [...people, ...decisionItems(input.decisions ?? [])].map((row) => (
+    { ...row, waiting: waitsOnOther(row, selfNames) }
+  ));
+  const ranked = rankAttention([...merged, ...singles], now) as NeedsYouRoomItem[];
   const mutedProjects = mutedSet(input);
   const mutedItems: NeedsYouRoomItem[] = [];
   const unmutedItems: NeedsYouRoomItem[] = [];
@@ -272,6 +386,9 @@ export function computeNeedsYou(
       mutedItems.push(item);
     else unmutedItems.push(item);
   }
+  // What the owner waits on someone else for is listed and is not counted.
+  const waitingItems = unmutedItems.filter((item) => item.waiting);
+  const countedItems = unmutedItems.filter((item) => !item.waiting);
 
   const assignmentRead = input.assignmentRead ?? "pending";
   const assignments = input.assignments ?? null;
@@ -281,21 +398,23 @@ export function computeNeedsYou(
   );
   const failedMeetings = [...(input.meetings ?? [])].filter(meetingNeedsYou);
   const members: NeedsYouMember[] = [
-    ...unmutedItems.map((item) => ({ ref: itemRef(item), kind: "attention" as const, item })),
+    ...countedItems.map((item) => ({ ref: itemRef(item), kind: "attention" as const, item })),
     ...blockers.map((blocker) => ({ ref: `blocker:${blocker.key}`, kind: "blocker" as const, blocker })),
     ...failedMeetings.map((meeting) => ({ ref: meeting.id, kind: "meeting" as const, meeting })),
   ];
   return {
     members,
     count: members.length,
+    waitingCount: waitingItems.length,
     unmutedItems,
+    waitingItems,
     mutedItems,
     blockers,
     failedMeetings,
   };
 }
 
-type SourceName = "door" | "room" | "assignments" | "meetings" | "mutedProjects";
+type SourceName = "door" | "room" | "assignments" | "meetings" | "decisions" | "mutedProjects";
 export type NeedsYouErrors = Partial<Record<SourceName, string>>;
 
 export interface NeedsYouSnapshot extends NeedsYouResult {
@@ -314,6 +433,10 @@ export interface NeedsYouSnapshot extends NeedsYouResult {
  * to the live data, so the numbers cannot disagree. */
 export interface NeedsYouAnswer {
   count?: number;
+  /** The unmuted rows the owner waits on someone else for (not in `count`). */
+  waitingCount?: number;
+  /** The names that mean the owner himself. */
+  ownerNames?: string[];
   members?: Array<{ ref: string; kind: NeedsYouMemberKind }>;
   /** Every attention row, ranked: the counted rows, then the muted rows. */
   items?: NeedsYouRoomItem[];
@@ -323,7 +446,7 @@ export interface NeedsYouAnswer {
   /** The Room rows alone (the Room input of R1). */
   roomItems?: NeedsYouRoomItem[];
   /** A hub source that could not be read, by name. */
-  sourceErrors?: Partial<Record<"door" | "assignments" | "meetings", string>>;
+  sourceErrors?: Partial<Record<"door" | "assignments" | "meetings" | "decisions", string>>;
   projects?: unknown;
   coverage?: CoverageRecord[];
   complete?: unknown;
@@ -345,16 +468,23 @@ export function readNeedsYouAnswer(answer: NeedsYouAnswer | null | undefined): N
   const failedMeetings = (Array.isArray(value.failedMeetings) ? value.failedMeetings : [])
     .map(fromWireMeeting)
     .filter((meeting): meeting is Meeting => meeting !== null);
+  // The hub marks each row: a `waiting` row is listed and is not a member.
+  const waitingItems = unmutedItems.filter((item) => Boolean(item.waiting));
   const members: NeedsYouMember[] = [
-    ...unmutedItems.map((item) => ({ ref: itemRef(item), kind: "attention" as const, item })),
+    ...unmutedItems.filter((item) => !item.waiting)
+      .map((item) => ({ ref: itemRef(item), kind: "attention" as const, item })),
     ...blockers.map((blocker) => ({ ref: `blocker:${blocker.key}`, kind: "blocker" as const, blocker })),
     ...failedMeetings.map((meeting) => ({ ref: meeting.id, kind: "meeting" as const, meeting })),
   ];
-  return { members, count: members.length, unmutedItems, mutedItems, blockers, failedMeetings };
+  return {
+    members, count: members.length, waitingCount: waitingItems.length,
+    unmutedItems, waitingItems, mutedItems, blockers, failedMeetings,
+  };
 }
 
 const EMPTY_RESULT: NeedsYouResult = {
-  members: [], count: 0, unmutedItems: [], mutedItems: [], blockers: [], failedMeetings: [],
+  members: [], count: 0, waitingCount: 0, unmutedItems: [], waitingItems: [], mutedItems: [],
+  blockers: [], failedMeetings: [],
 };
 
 let snapshot: NeedsYouSnapshot = {

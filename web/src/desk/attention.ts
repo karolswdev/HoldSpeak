@@ -64,6 +64,8 @@ export interface AttentionSource {
   fromLastObservation?: boolean;
   observedAt?: string | null;
   verbHref?: string | null;
+  /** The owner the projection names, when it names one. */
+  owner?: string | null;
 }
 
 /** What the ranking and the dedup read. Every attention row has these. */
@@ -223,7 +225,12 @@ function clusters<T extends RankableItem>(group: T[]): T[][] {
 }
 
 function projection(item: RankableItem): AttentionSource {
+  // `owner` rides with the projection when the row names one: the one
+  // needs-you rule reads each projection's own reason and owner, also after
+  // a merge (`waitsOnOther`).
+  const owner = String((item as { owner?: string | null }).owner ?? "").trim();
   return {
+    ...(owner ? { owner } : {}),
     id: item.id,
     source: item.source,
     title: item.title,
