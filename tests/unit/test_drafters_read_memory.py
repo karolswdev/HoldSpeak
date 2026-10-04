@@ -483,3 +483,47 @@ def test_one_on_one_brief_memory_is_empty_without_a_project_and_indexes_nothing(
     assert people.one_on_one_brief(OWNER, sam)["memory"] == {"excerpts": [], "refs": []}
     # Custody: the People store stays out of memory.
     assert rig.memory.search("Quillfeather").hits == []
+# ── The wire fixture for the web click test ──────────────────────────
+
+UPDATE_FIXTURE = "tests/fixtures/update_draft_action_citation.json"
+_VOLATILE = ("id", "created_at", "updated_at")
+
+
+def _real_draft_with_an_action_citation(db: Database) -> dict:
+    """A draft the real drafter makes over a project whose meeting left one
+    owned, open action item: its claim cites ``action_item:<id>``."""
+    from datetime import datetime
+
+    from holdspeak.intel.models import ActionItem
+    from holdspeak.meeting_session.models import IntelSnapshot, MeetingState, TranscriptSegment
+
+    svc = _make_service(db)
+    project_id = svc._project_service.create_project(OWNER, {"name": "Atlas"})["id"]
+    db.meetings.save_meeting(MeetingState(
+        id="m-fixture", started_at=datetime(2026, 9, 1, 9, 0), ended_at=datetime(2026, 9, 1, 9, 30),
+        title="Ledger sync",
+        segments=[TranscriptSegment(text="dana drafts the checklist", speaker="Me",
+                                    start_time=0.0, end_time=4.0)],
+        intel=IntelSnapshot(
+            timestamp=1.0, topics=["ledger"], summary="Ledger launch reviewed.",
+            action_items=[ActionItem(id="act-fixture-01", task="Draft the ledger vendor checklist", owner="Dana")],
+        ),
+    ))
+    svc._project_service.associate_meeting(OWNER, project_id, "m-fixture")
+    row = json.loads(
+        json.dumps(dict(svc.draft_update(OWNER, project_id)), default=str)
+        .replace(project_id, "proj-fixture")
+    )
+    return {key: ("<volatile>" if key in _VOLATILE else value) for key, value in row.items()}
+
+
+def test_the_web_click_fixture_is_what_the_real_drafter_makes(rig):
+    """web/.../UpdatePostureCitationOpens.test.tsx clicks a citation on this
+    draft.  The fixture must stay the real drafter's output."""
+    from pathlib import Path
+
+    real = _real_draft_with_an_action_citation(rig)
+    refs = [ref for claim in json.loads(real["claims_json"]) for ref in claim["refs"]]
+    assert "action_item:act-fixture-01" in refs
+    fixture = Path(__file__).resolve().parents[2] / UPDATE_FIXTURE
+    assert json.loads(fixture.read_text()) == real

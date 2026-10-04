@@ -156,10 +156,10 @@
   place-items: center;
   width: 18px;
   height: 16px;
-  border-left: 1px solid var(--wb-ink);
   border-top: 1px solid var(--wb-ink);
   background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
+  /* the hairline on the left edge is an inset shadow (HS-101 rule 6: no left rail) */
+  box-shadow: inset 1px 0 0 var(--wb-ink), var(--wb-raised);
   cursor: nwse-resize;
   touch-action: none;
 }
@@ -922,7 +922,8 @@
 .desk-next .desk-pullout-head .desk-wings.is-folded {
   flex: 1 1 auto;
   min-width: 0;
-  border-left: 1px solid var(--wb-ink);
+  /* the hairline on the left edge is an inset shadow (HS-101 rule 6: no left rail) */
+  box-shadow: inset 1px 0 0 var(--wb-ink);
 }
 .desk-next .desk-pullout-head .desk-wings.is-folded .desk-wings-menu {
   width: 100%;

@@ -756,8 +756,7 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
     --wb-screen-h: 44px;
   }
   .desk-next .desk-window.desk-window-shell.is-sheet {
-    border-left-width: 0;
-    border-right-width: 0;
+    border-inline-width: 0;
   }
   /* PHILO-13-17 (C7, Q5; C1 R2 on every host): at 393 every control in a
      window's body and footer owns 44 x 44. */

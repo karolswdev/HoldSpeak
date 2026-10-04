@@ -56,6 +56,17 @@ vi.mock("../../../../lib/api", async () => {
   return { ...actual, apiFetch: (...args: unknown[]) => apiFetch(...args) };
 });
 
+const mockOpenIntelligence = vi.fn();
+vi.mock("../../../../desk/intelligenceNavigation", async () => {
+  const actual = await vi.importActual<
+    typeof import("../../../../desk/intelligenceNavigation")
+  >("../../../../desk/intelligenceNavigation");
+  return {
+    ...actual,
+    openIntelligence: (...args: unknown[]) => mockOpenIntelligence(...args),
+  };
+});
+
 const mockOpenPrimitive = vi.fn();
 const mockOpenSurfaceOr = vi.fn();
 vi.mock("../../../../desk/shell", async () => {
@@ -441,7 +452,7 @@ describe("Source rows: deduplicated refs and open source", () => {
     expect(actionItemChip!.getAttribute("data-ref")).toBe("action_item:ai-01");
   });
 
-  it("clicking a ref chip with action_item: opens the primitive", async () => {
+  it("clicking a ref chip with action_item: opens Follow-through", async () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
@@ -461,7 +472,13 @@ describe("Source rows: deduplicated refs and open source", () => {
     expect(actionItemChip!.textContent).toBe("AI-01");
     fireEvent.click(actionItemChip!);
 
-    expect(mockOpenPrimitive).toHaveBeenCalledWith("action_item:ai-01");
+    // The one open grammar: an action item opens in Follow-through. The
+    // primitive opener has no window for it ("unknown id").
+    expect(mockOpenIntelligence).toHaveBeenCalledWith({
+      view: "follow-through",
+      followThroughId: "ai-01",
+    });
+    expect(mockOpenPrimitive).not.toHaveBeenCalledWith("action_item:ai-01");
   });
 
   it("clicking a meeting ref opens via openSurfaceOr", async () => {
@@ -511,7 +528,7 @@ describe("Source rows: deduplicated refs and open source", () => {
     expect(decisionChip!.textContent).toBe("D-01");
     fireEvent.click(decisionChip!);
 
-    expect(mockOpenPrimitive).toHaveBeenCalledWith("decision:d-01");
+    await waitFor(() => expect(mockOpenPrimitive).toHaveBeenCalledWith("decision:d-01"));
   });
 });
 

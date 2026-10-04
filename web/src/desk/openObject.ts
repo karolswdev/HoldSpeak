@@ -62,7 +62,8 @@ export function takeRoomUpdatesRequest(projectId: string | null | undefined): bo
 
 /** Refs the citation species opens in a window of their own. */
 const WINDOW_REF = /^(meeting|decision|note|artifact|thread):\S/;
-const FOLLOW_THROUGH_REF = /^(?:follow-through|action_item):(.+)$/;
+// `action:` is memory's name for the same action item (a recall hit, a chat citation).
+const FOLLOW_THROUGH_REF = /^(?:follow-through|action_item|action):(.+)$/;
 
 /** The opener for a qualified ref, or null when the ref names nothing that
  * opens (a count, a coverage line, a pipeline event). */

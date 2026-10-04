@@ -223,7 +223,7 @@ def test_kernel_target_names_document_ref_and_external_agent_send_is_refused_ove
     assert _rows(hub, "SELECT * FROM channel_sends WHERE id=?", (prepared["send"]["id"],))[0]["state"] == "prepared"
 
 
-def test_agent_brief_preview_and_prepare_keep_owner_overlay_and_payload(
+def test_agent_brief_preview_and_prepare_match_the_owner_payload_without_people(
     hub: Hub, documents: dict[str, str], tmp_path: Path,
 ) -> None:
     ref = documents["monday_brief"]
@@ -233,8 +233,9 @@ def test_agent_brief_preview_and_prepare_keep_owner_overlay_and_payload(
     })
     assert owner_preview.status_code == 200, owner_preview.text
     expected = owner_preview.json()
-    assert "Avery" in expected["preview"]["text"]
-    assert "You owe: 1" in expected["preview"]["text"]
+    # Inventory gap 5 (2026-10-03): the sent Brief carries no People data.
+    assert "Avery" not in expected["preview"]["text"]
+    assert "You owe" not in expected["preview"]["text"]
 
     agent = _agent(hub, identity=f"{AGENT_ID}-brief")
     is_error, agent_preview = _tool(agent, "channel.preview", {
@@ -282,7 +283,7 @@ def test_thread_palette_discovers_destination_then_prepares_without_send_admissi
          "arguments": {"document_ref": ref, "destination_id": found["id"]}},
     ))
     assert prepared.payload["send"]["state"] == "prepared"
-    assert "Avery" in prepared.payload["send"]["preview"]["text"]
+    assert "Avery" not in prepared.payload["send"]["preview"]["text"]
     before = len(_rows(hub, "SELECT * FROM kernel_operations"))
     with pytest.raises(ValueError, match="Tool outside the admitted palette"):
         executor.admit("turn-send", thread.id, {"id": "send", "name": "channel.send", "arguments": {}})

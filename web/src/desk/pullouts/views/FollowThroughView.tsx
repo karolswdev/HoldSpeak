@@ -45,7 +45,9 @@ type FollowThroughBoard = Record<Lane, FollowThroughCard[]>;
 const LANES: ReadonlyArray<{ id: Lane; label: string }> = [
   { id: "now", label: "Now" },
   { id: "waiting", label: "Waiting" },
-  { id: "unassigned", label: "Unassigned" },
+  // Inventory gap 11 (2026-10-03): this lane holds the items with no owner
+  // AND the items not reviewed yet (those can have an owner). One true name.
+  { id: "unassigned", label: "To review" },
   { id: "overdue", label: "Overdue" },
 ];
 

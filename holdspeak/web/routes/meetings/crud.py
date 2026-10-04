@@ -54,8 +54,11 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             result = _service(ctx).mark_ready_read(_principal(request), meeting_id)
         except NotFound:
             return JSONResponse({"error": "Meeting not found"}, status_code=404)
-        if ctx.broadcast is not None and result["ready_at"] is not None:
-            ctx.broadcast("desk_changed", {"kind": "meeting_ready_read", "id": meeting_id})
+        if result["ready_at"] is not None:
+            # Through the one seam, so the request sends one frame, not two.
+            from ....runtime.composition import notify_desk_changed
+
+            notify_desk_changed("meeting_ready_read", meeting_id, "read")
         return JSONResponse(result)
 
     @router.get("/api/meetings")

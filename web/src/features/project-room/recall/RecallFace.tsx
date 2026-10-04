@@ -42,9 +42,9 @@ import {
   SurfaceRows,
   SurfaceSection,
   StringGadget,
-  openSourceRef,
   useRovingRows,
 } from "../../../desk/surface";
+import { openRef } from "../../../desk/openObject";
 import { ProjectButton } from "../../../desk/surface/patterns";
 import { countLabel } from "../../../desk/surface/count";
 import {
@@ -288,7 +288,7 @@ function HitRows({ rows, testid }: { rows: MemoryHitRow[]; testid: string }) {
               ) : null}
             </span>
           }
-          onOpen={hit.kind === "brief" ? undefined : () => openSourceRef(hit.source_ref)}
+          onOpen={hit.kind === "brief" ? undefined : () => openRef(hit.source_ref)}
         />
       ))}
     </SurfaceRows>
