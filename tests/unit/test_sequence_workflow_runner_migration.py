@@ -72,7 +72,11 @@ def route_rig(tmp_path: Path, monkeypatch):
             state["payloads"].append({"system_prompt": system_prompt, "user_prompt": user_prompt})
             state["entered"].set()
             if state["block"]:
-                assert state["release"].wait(5), "test provider was never released"
+                # 30 s, under the run's 60 s deadline. At 5 s a loaded machine
+                # (the cancel request took longer) timed this wait out, the
+                # provider "failed", and the route answered 502 where the test
+                # wants the cancel's 409.
+                assert state["release"].wait(30), "test provider was never released"
             if state["fail"] or "[FAIL]" in user_prompt:
                 raise RuntimeError("provider failed")
             return f"out:{user_prompt}"
@@ -288,13 +292,13 @@ def test_parent_cancel_fences_admission_and_late_output_while_child_receipts_sur
     state["block"] = True
     with ThreadPoolExecutor(max_workers=1) as executor:
         run = executor.submit(client.post, f"/api/chains/{chain}/run", json={"input": "x"})
-        assert state["entered"].wait(5)
+        assert state["entered"].wait(30)
         with db._connection() as conn:
             parent_id = conn.execute("SELECT operation_id FROM kernel_operations WHERE name='sequence.run' ORDER BY created_at DESC LIMIT 1").fetchone()[0]
         cancel = client.post(f"/api/chains/runs/{parent_id}/cancel")
         assert cancel.status_code == 200 and cancel.json()["parent_operation_id"] == parent_id
         state["release"].set()
-        assert run.result(timeout=10).status_code == 409
+        assert run.result(timeout=45).status_code == 409
     child = _children(db, parent_id)[0]
     assert _receipt(db, child["operation_id"])["outcome"] == "succeeded"
     with db._connection() as conn:
@@ -536,7 +540,7 @@ def test_sequence_subject_assignment_mutation_after_admission_only_moves_next_ru
         pending = executor.submit(
             client.post, f"/api/chains/{chain}/run", json={"input": "x"}
         )
-        assert state["entered"].wait(5)
+        assert state["entered"].wait(30)
         assignments.set_assignment(
             OWNER,
             {
@@ -546,7 +550,7 @@ def test_sequence_subject_assignment_mutation_after_admission_only_moves_next_ru
             },
         )
         state["release"].set()
-        first = pending.result(timeout=10)
+        first = pending.result(timeout=45)
     assert first.status_code == 200, first.text
     first_body = first.json()
     first_child = _children(db, first_body["parent_operation_id"])[0]

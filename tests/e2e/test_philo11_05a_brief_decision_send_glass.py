@@ -424,11 +424,10 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 assert any(h.startswith(f"✓ Team folder SAVED {path}") for h in a3["history"]), a3["history"]
                 a3["kernel_send"] = k_a3
 
-                # A5: the brief changes after the send -- a new person signal (an agenda item
-                # for Priya's 1:1, through the same routes BriefView's "Add to 1:1 agenda" uses),
-                # and a same-day Generate returns the SAME brief id. The brief's People section
-                # is read at render time, so its words change; the well reads the new preview and
-                # offers Send again; the press sends the new words.
+                # A5 (inventory gap 5, 2026-10-03): the sent Brief carries no People data. A new
+                # person signal (an agenda item for Priya's 1:1, through the same routes
+                # BriefView's "Add to 1:1 agenda" uses) changes the Brief on the desk only: the
+                # preview and the sent file hold no person words; the well offers Send again.
                 one = _api(page, "POST", f"/api/people/relationships/{priya}/one-on-ones",
                            {"visibility": "shared_intent"}, token=TOKEN)["one_on_one"]["id"]
                 _api(page, "POST", f"/api/people/one-on-ones/{one}/agenda",
@@ -439,16 +438,10 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 # The same Intelligence -> BRIEF window, still open: picking reads a fresh preview.
                 self._pick(page, IB, "Team folder")
                 body = f"{opened(IB, 'Team folder')} [data-testid=send-preview-body]"
-                page.wait_for_function("(s) => (document.querySelector(s)?.innerText || '').includes('Priya Nair')", arg=body, timeout=T)
+                page.wait_for_function("(s) => (document.querySelector(s)?.innerText || '').includes('Freeze the old ledger')", arg=body, timeout=T)
+                assert "Priya" not in page.locator(body).inner_text()
                 verb = self._text(page, f"{opened(IB, 'Team folder')} [data-testid=send-verb]")
-                page.evaluate("""(sel) => { const b = document.querySelector(sel);
-                  const all = [...b.querySelectorAll('*')].filter((e) => e.innerText.includes('Priya Nair'));
-                  const el = all.find((e) => ![...e.children].some((c) => c.innerText.includes('Priya Nair')));
-                  if (el) { el.dataset.mark = 'a5-new-words'; el.scrollIntoView({block: 'center'}); } }""", body)
-                page.wait_for_timeout(300)
-                a5 = shots.shoot(page, "A5-brief-changed-send-again", IB, ["[data-mark=a5-new-words]"], seat=None)
                 assert verb == "Send again", verb
-                a5["verb"] = verb
                 page.evaluate("(sel) => document.querySelectorAll(sel + ' *').forEach((e) => { e.scrollTop = 0; })", opened(IB, "Team folder"))
                 shots.shoot(page, "A5b-brief-changed-verb", IB, [f"{opened(IB, 'Team folder')} [data-testid=send-verb]",
                                                                f"{row(IB, 'Team folder')} [data-testid=send-last-sent]"],
@@ -456,8 +449,8 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 self._press(page, IB, "Team folder")
                 newer = [s for s in self._sends(page, ref) if s["destination_id"] == team and s["state"] == "sent" and s["id"] != sent[0]["id"]]
                 assert len(newer) == 1, newer
-                assert "Priya Nair" in Path(newer[0]["proof"]["path"]).read_text()
-                assert "Priya Nair" not in Path(path).read_text()   # the first send kept its own words
+                assert "Priya" not in Path(newer[0]["proof"]["path"]).read_text()
+                assert "Priya" not in Path(path).read_text()
                 self._face_row_receipt(newer[0], ref)
                 latest_team = newer[0]
                 self._unpick(page, IB, "Team folder")
@@ -922,9 +915,9 @@ class TestChairMeetingsAndBriefToSlack(_Rig):
                 if width > 720:   # PHILO-13-11: the Chair's screen again (The week un-zoomed)
                     page.get_by_role("button", name="Zoom The week").click()
                     page.wait_for_timeout(400)
-                # A6: the brief to Slack. A person signal (an agenda item on Priya's 1:1) puts a
-                # People section in the brief; one item is acknowledged on the shelf. The
-                # Slack-text preview carries the person lines and no Ack/Defer mark.
+                # A6: the brief to Slack. A person signal (an agenda item on Priya's 1:1) is on the
+                # desk; one item is acknowledged on the shelf. The Slack-text preview carries no
+                # People data (inventory gap 5, 2026-10-03) and no Ack/Defer mark.
                 _api(page, "POST", "/api/decisions", {"title": "Freeze the old ledger on Nov 3", "status": "proposed",
                                                      "decision_markdown": "Freeze the old ledger on Nov 3."}, token=TOKEN)
                 _api(page, "POST", "/api/decisions", {"title": "Cut over by space, not by region", "status": "proposed",
@@ -946,25 +939,9 @@ class TestChairMeetingsAndBriefToSlack(_Rig):
                 self._pick(page, CH, SLACK)
                 body = f"{opened(CH, SLACK)} [data-testid=send-preview-body]"
                 text = page.locator(body).inner_text()
-                assert "*People*" in text and "Priya Nair" in text, text[-600:]
+                assert "*People*" not in text and "Priya" not in text, text[-600:]
                 assert not any(w in text.upper() for w in ("ACKNOWLEDGED", "DEFERRED", " ACK ", "DEFER")), text
-                # The person line itself on screen (the Slack text is one text block: the line's own
-                # range is scrolled into view and must be on top where it is drawn).
-                on = page.evaluate("""([sel, t]) => { const b = document.querySelector(sel); if (!b) return false;
-                  const w = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
-                  for (let n = w.nextNode(); n; n = w.nextNode()) { const i = n.textContent.indexOf(t); if (i < 0) continue;
-                    const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + t.length);
-                    for (let s = n.parentElement; s; s = s.parentElement) {
-                      if (!(s.scrollHeight > s.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(s).overflowY))) continue;
-                      const rr = r.getBoundingClientRect(), sr = s.getBoundingClientRect();
-                      s.scrollTop += rr.top - (sr.top + Math.min(sr.height / 3, 120)); }
-                    const q = r.getBoundingClientRect(); const h = document.elementFromPoint(q.left + 2, q.top + q.height / 2);
-                    return q.top >= 0 && q.bottom <= innerHeight && !!h && b.contains(h); }
-                  return false; }""", [body, "Priya Nair"])
-                page.wait_for_timeout(300)
-                a6 = shots.shoot(page, "A6-brief-slack-person-sections", CH, [], seat=None)
-                a6["person_line_on_screen"] = on
-                assert on, "the person line is not on screen"
+                shots.shoot(page, "A6-brief-slack-preview", CH, [], seat=None)
                 page.evaluate("(sel) => document.querySelectorAll(sel + ' *').forEach((e) => { e.scrollTop = 0; })", opened(CH, SLACK))
                 self._press(page, CH, SLACK)
                 hub_s = [s for s in self._sends(page, bref) if s["destination_id"] == slack]
@@ -972,7 +949,7 @@ class TestChairMeetingsAndBriefToSlack(_Rig):
                 posted = json.loads(self.edge.requests[-1]["body"])["text"]
                 assert self.edge.requests[-1]["host"] == "hooks.slack.com" and len(self.edge.requests) == 1, self.edge.requests
                 # The bytes that went are the text he read: the preview is parsed back from them.
-                assert "Priya Nair" in posted, posted[-400:]
+                assert "Priya" not in posted, posted[-400:]
                 assert " ".join(posted.split()) == " ".join(text.split()), (posted[:300], text[:300])
                 a6b = shots.shoot(page, "A6b-brief-slack-posted", CH, [f"{opened(CH, SLACK)} [data-receipt=latest]"],
                                   seat=row(CH, SLACK))

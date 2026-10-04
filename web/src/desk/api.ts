@@ -624,8 +624,64 @@ const WIRE_MAPPERS = {
 // Ensure the registry is referenced so tree-shaking doesn't remove it.
 void WIRE_MAPPERS;
 
+/* ── objects held by ref (inventory gap 9) ──
+ * The desk's lists have limits (24 meetings, 24 artifacts, 100 threads, 200
+ * decisions). A thing found by its content (the palette's MEMORY band) can be
+ * older than its list, and a window whose object is not in the store is never
+ * drawn. A held ref is read by its id on each load and kept in its bucket. */
+const HELD_KINDS = ["meeting", "artifact", "note", "decision", "thread"] as const;
+type HeldKind = (typeof HELD_KINDS)[number];
+const heldRefs = new Set<string>();
+
+/** Keep the object of `ref` (`kind:id`, a `#` part is ignored) in the store
+ * from the next load on. True when the kind is one the desk reads by id. */
+export function holdObject(ref: string): boolean {
+  const base = ref.trim().split("#", 1)[0];
+  const at = base.indexOf(":");
+  if (at <= 0 || !base.slice(at + 1)) return false;
+  if (!(HELD_KINDS as readonly string[]).includes(base.slice(0, at))) return false;
+  heldRefs.add(base);
+  return true;
+}
+
+export function __resetHeldObjects(): void {
+  heldRefs.clear();
+}
+
+/** One object by its id, from the same routes its window reads. */
+async function loadHeld(kind: HeldKind, id: string, pulledArtifacts: unknown[]): Promise<Primitive | null> {
+  const key = encodeURIComponent(id);
+  if (kind === "meeting") {
+    const d = await apiFetch<Record<string, unknown>>(`/api/meetings/${key}`);
+    return fromWireMeeting(wireRecord(wireRaw(d, "meeting")) ?? d);
+  }
+  if (kind === "note") {
+    const d = await apiFetch<Record<string, unknown>>(`/api/notes/${key}`);
+    const note = wireRaw(d, "note");
+    return wireBool(note, "deleted") ? null : fromWireNote(note);
+  }
+  if (kind === "decision") {
+    const d = await apiFetch<Record<string, unknown>>(`/api/decisions/${key}`);
+    const decision = wireRaw(d, "decision");
+    return wireBool(decision, "deleted") ? null : fromWireDecision(decision);
+  }
+  if (kind === "thread") {
+    return fromWireThread(await apiFetch<Record<string, unknown>>(`/api/threads/${key}`));
+  }
+  // An artifact has no read by id: it comes with the pull. The first pull
+  // covers the 50 newest meetings; an older one takes one wider pull.
+  const find = (rows: unknown[]) => rows.find((a) => wireString(a, "id") === id);
+  let found = find(pulledArtifacts);
+  if (!found) {
+    const wide = await apiFetch<Record<string, unknown>>("/api/sync/pull?limit=500");
+    found = find(liveValues(wireArray(wide, "artifacts")));
+  }
+  return found ? fromWireArtifact(found) : null;
+}
+
 /** Load every kind — the same allSettled sweep the original desk ran. */
 export async function loadAll(): Promise<LoadResult> {
+  let pulledArtifacts: unknown[] = [];
   const items: TypedItems = { ...EMPTY_ITEMS };
   const status: Status = {};
   let profiles: Array<Record<string, unknown>> = [];
@@ -649,7 +705,8 @@ export async function loadAll(): Promise<LoadResult> {
       .catch((e) => fail("meeting", "Meetings", e)),
     apiFetch<Record<string, unknown>>("/api/sync/pull?limit=50")
       .then((d) => {
-        items.artifact = liveValues(wireArray(d, "artifacts"))
+        pulledArtifacts = liveValues(wireArray(d, "artifacts"));
+        items.artifact = pulledArtifacts
           .slice(0, 24)
           .map(fromWireArtifact).filter((x): x is Artifact => x !== null);
         status.artifact = "live";
@@ -800,6 +857,18 @@ export async function loadAll(): Promise<LoadResult> {
         items.coder = []; /* companion off = honest empty lane */
       }),
   ]);
+
+  // The held objects (see holdObject): each one its list did not bring is
+  // read by its id. A read that fails (the thing is gone) leaves it out.
+  await Promise.allSettled([...heldRefs].map(async (ref) => {
+    const at = ref.indexOf(":");
+    const kind = ref.slice(0, at) as HeldKind;
+    const id = ref.slice(at + 1);
+    const bucket = (items[kind] ?? []) as Array<{ id: string }>;
+    if (status[kind] !== "live" || bucket.some((item) => item.id === id)) return;
+    const one = await loadHeld(kind, id, pulledArtifacts);
+    if (one) (items[kind] as unknown as Primitive[]) = [...(bucket as unknown as Primitive[]), one];
+  }));
 
   // HS-134-02: derive profiles from inference targets (read routes retired).
   // Consumers (RecipeEditor, Pullout, PersonaChat) need {id, name, kind, base_url, node}.

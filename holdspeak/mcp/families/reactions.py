@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 
-import asyncio
 from typing import Any
 
 from holdspeak.db import get_database, get_observer
@@ -58,12 +57,8 @@ TOOLS = [
 ]
 
 
-def _run(coro: Any) -> Any:
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(coro)
-    raise ValueError("async MCP tools cannot execute inside an active event loop")
+# The one helper every family shares (holdspeak/mcp/aio.py).
+from holdspeak.mcp.aio import run_async as _run  # noqa: E402
 
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:

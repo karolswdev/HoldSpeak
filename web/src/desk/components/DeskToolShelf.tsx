@@ -7,14 +7,15 @@
 // the ONE verb registry plus the same stores every face reads.
 // Deferred riders (named, not built): Settings deep-pane search plugs
 // in as more SETTINGS rows once settingsPrefs exports its module
-// index; meeting CONTENT search plugs in as more MEETINGS rows via the
-// History program's existing query. Both ride this same ranking.
+// index. Content search (inventory gap 9, 2026-10-03) is the MEMORY
+// band: `/api/memory/search`, debounced, after the local matches; each
+// row opens its object through `refOpener`.
 import "./chrome-menus.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { openSurface } from "../shell";
 import { SYSTEM } from "../systemSprites";
-import { qualifiedRef } from "../api";
+import { holdObject, qualifiedRef } from "../api";
 import { apiFetch } from "../../lib/api";
 import { createThread } from "../threads";
 import {
@@ -31,7 +32,7 @@ import { useChairState } from "../chairState";
 import {
   VERBS, offeredHere, verbLabel, weekVerbs, type VerbContext, type WeekPerson,
 } from "../verbRegistry";
-import { openPerson } from "../openObject";
+import { openPerson, refOpener } from "../openObject";
 import { primeSendTo, sendChoices, useSendToTick } from "../windowSend";
 import { useAllOpenWindows, useFrontWindowId } from "./window/windowRegistry";
 import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
@@ -51,6 +52,7 @@ const SECTIONS = [
   "OBJECTS",
   "SETTINGS",
   "MEETINGS",
+  "MEMORY",
 ] as const;
 type Section = (typeof SECTIONS)[number];
 
@@ -76,6 +78,8 @@ interface DeckRow {
   wrap?: boolean;
   /** HS-171-07: trailing badge chip (e.g. "2 NEED YOU"); absent when falsy. */
   badge?: string;
+  /** A MEMORY row: the words that matched, after the title. */
+  detail?: string;
   run(): void;
 }
 
@@ -233,6 +237,30 @@ export function oneDoorPerName<
   return out;
 }
 
+/* ── MEMORY: content search (inventory gap 9) ── */
+export const MEMORY_MIN_QUERY = 3;
+export const MEMORY_DEBOUNCE_MS = 250;
+const MEMORY_ROWS = 6;
+
+interface MemoryHit {
+  kind?: string;
+  source_ref?: string;
+  title?: string;
+  snippet?: string;
+}
+
+/** The parent object of a hit: a transcript segment or a message part names
+ * its meeting or thread before the `#`. */
+function memoryBaseRef(ref: string): string {
+  return ref.split("#", 1)[0];
+}
+
+/** The search answer's snippet marks its match with `<mark>`; the row shows
+ * plain words. */
+function plainSnippet(snippet: string | undefined): string {
+  return (snippet ?? "").replace(/<\/?mark>/g, "").replace(/\s+/g, " ").trim();
+}
+
 /** PHILO-13-14 (C4): the words inside an object the palette can match. */
 function objectBody(ref: unknown): string | undefined {
   const r = (ref ?? {}) as Record<string, unknown>;
@@ -279,6 +307,8 @@ export function DeskToolShelf() {
   const frontId = useFrontWindowId();
   const windows = useAllOpenWindows();
   const sendTick = useSendToTick(open);
+  // Inventory gap 9: the hits of the content search, with the query they answer.
+  const [memory, setMemory] = useState<{ query: string; hits: MemoryHit[] }>({ query: "", hits: [] });
 
   // HS-171-07: needs-you counts per project for the PROJECTS section.
   // Fetches the cached aggregate once on mount (the server cache is
@@ -388,6 +418,22 @@ export function DeskToolShelf() {
   const normalized = query.trim().toLocaleLowerCase();
   const recents = useMemo(() => readRecents(), [open]);
 
+  // Inventory gap 9: one debounced content search per settled query. A short
+  // query, a closed shelf or a name prompt reads nothing.
+  useEffect(() => {
+    if (!open || prompt || normalized.length < MEMORY_MIN_QUERY) return;
+    let live = true;
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams({ query: normalized, limit: "12" });
+      void apiFetch<{ hits?: MemoryHit[] }>(`/api/memory/search?${params}`)
+        .then((body) => {
+          if (live) setMemory({ query: normalized, hits: Array.isArray(body?.hits) ? body.hits : [] });
+        })
+        .catch(() => { if (live) setMemory({ query: normalized, hits: [] }); });
+    }, MEMORY_DEBOUNCE_MS);
+    return () => { live = false; window.clearTimeout(timer); };
+  }, [open, prompt, normalized]);
+
   const close = () => {
     usePalette.getState().setOpen(false);
     setQuery("");
@@ -397,7 +443,7 @@ export function DeskToolShelf() {
     selectedRef: selectedIds.length === 1 ? selectedIds[0] : null,
   };
 
-  const rows: DeckRow[] = useMemo(() => {
+  const localRows: DeckRow[] = useMemo(() => {
     const out: DeckRow[] = [];
     const push = (row: DeckRow) => out.push(row);
 
@@ -685,6 +731,46 @@ export function DeskToolShelf() {
     targets,
   ]);
 
+  // ── MEMORY: the content hits, after the local matches. Only the hits of
+  // THIS query; an object a local row already shows is not shown twice; a
+  // hit that opens nothing is left out. ──
+  const rows: DeckRow[] = useMemo(() => {
+    if (normalized.length < MEMORY_MIN_QUERY || memory.query !== normalized) return localRows;
+    const shown = new Set(localRows.map((row) => row.id));
+    const out: DeckRow[] = [];
+    for (const hit of memory.hits) {
+      const ref = String(hit.source_ref ?? "").trim();
+      const base = memoryBaseRef(ref);
+      const opener = refOpener(ref) ?? refOpener(base);
+      if (!opener || shown.has(base) || shown.has(`memory:${base}`)) continue;
+      shown.add(`memory:${base}`);
+      const kind = String(hit.kind ?? base.split(":", 1)[0]);
+      const detail = plainSnippet(hit.snippet);
+      const title = String(hit.title ?? "").trim() || detail;
+      if (!title) continue;
+      out.push({
+        id: `memory:${base}`,
+        section: "MEMORY",
+        glyph: KIND_GLYPH[kind] ?? (kind === "meeting" ? "▣" : "○"),
+        label: title,
+        kind: (KIND_LABEL[kind] ?? kind.replace(/_/g, " ")).toUpperCase(),
+        detail: detail && detail !== title ? detail : undefined,
+        // The hit can be older than its desk list (24 meetings, 24
+        // artifacts, ...): hold its object so the next load reads it by id,
+        // load, then open. A window whose object is not in the store is
+        // never drawn.
+        run: () => {
+          const present = allObjects(useDesk.getState().items)
+            .some((o) => qualifiedRef(o.kind, o.id) === base);
+          if (present || !holdObject(base)) { opener(); return; }
+          void useDesk.getState().refresh().then(opener, opener);
+        },
+      });
+      if (out.length >= MEMORY_ROWS) break;
+    }
+    return out.length ? [...localRows, ...out] : localRows;
+  }, [localRows, memory, normalized]);
+
   // The runnable list the selection index walks (ghosts stay visible
   // but are never selected, never run).
   const runnable = rows.filter((r) => !r.ghost);
@@ -834,6 +920,8 @@ export function DeskToolShelf() {
                             {row.label}
                             {row.ghost ? (
                               <small className="quiet"> · {row.ghost}</small>
+                            ) : row.detail ? (
+                              <small className="quiet"> · {row.detail}</small>
                             ) : null}
                           </span>
                           {row.badge ? (

@@ -207,20 +207,18 @@ def _setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, Any]:
     return db, config
 
 
-class _FakeEvent:
-    """Minimal CalendarEventProjection for seeding."""
-    def __init__(self, id: str, uid: str, title: str, starts_at: str, ends_at: str):
-        self.id = id
-        self.uid = uid
-        self.title = title
-        self.starts_at = starts_at
-        self.ends_at = ends_at
-        self.location = None
-        self.meeting_url = None
+def _make_event(eid: str, uid: str, title: str, starts: str, ends: str):
+    """One real ``CalendarEventCandidate`` (the type the ICS parser mints).
 
+    A hand-made double went stale when the projection began to read
+    ``attendees``; the real dataclass cannot drift from the producer.
+    """
+    from holdspeak.calendar_ingest import CalendarEventCandidate
 
-def _make_event(eid: str, uid: str, title: str, starts: str, ends: str) -> _FakeEvent:
-    return _FakeEvent(eid, uid, title, starts, ends)
+    return CalendarEventCandidate(
+        id=eid, uid=uid, title=title, starts_at=starts, ends_at=ends,
+        location=None, meeting_url=None,
+    )
 
 
 # ── HS-175 counsel C8 / C9(b) / C10 ───────────────────────────────
