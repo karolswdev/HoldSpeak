@@ -96,9 +96,11 @@ def _fixture_producer(service: MondayBriefService, monkeypatch: Any) -> None:
 
     fixture = _fixture()
     monkeypatch.setattr(service, "_collect_coverage_gaps", lambda _principal: [])
+    # The WAITING rows come from the one needs-you rule; this case is about
+    # storage, so the rows are the fixture's own.
     monkeypatch.setattr(
         service,
-        "_collect_waiting",
+        "_collect_needs_you",
         lambda _principal: _items(fixture, "waiting"),
     )
     monkeypatch.setattr(

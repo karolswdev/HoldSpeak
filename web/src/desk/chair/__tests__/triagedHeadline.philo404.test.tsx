@@ -13,6 +13,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiFetch } from "../../../lib/api";
 import { ChairHome } from "../ChairHome";
 import headlineFixture from "../../../../../docs/internal/philo/phase-4/headline/fixture.json";
+import { asHub } from "../../../test/hubNeedsYou";
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -81,7 +82,7 @@ let generationFailure: unknown = null;
 let generationGate: Promise<unknown> | null = null;
 
 function wire() {
-  vi.mocked(apiFetch).mockImplementation(
+  vi.mocked(apiFetch).mockImplementation(asHub(
     async (path: string, init?: unknown) => {
       const url = String(path);
       if (url === "/api/inference/assignments") {
@@ -113,7 +114,7 @@ function wire() {
       }
       return null as never;
     },
-  );
+  ));
 }
 
 function expectHandledOrder(

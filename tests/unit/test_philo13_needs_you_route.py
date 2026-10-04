@@ -164,9 +164,9 @@ def test_cached_needs_you_route_rebuilds_after_real_action_item_status_mutation(
     def oracle_refs(client, room_payload: dict[str, object]) -> list[str]:
         """Read the six member refs from the real producer routes.
 
-        The cached route supplies Room rows.  Door, assignment, and meeting
-        reads supply the other member classes that the Dock merges in its
-        ``needsYou.ts`` hook.
+        An independent derivation from the four producer routes: the Room
+        rows (``roomItems``), the Door, the assignment roster and the
+        meetings. The route's own ``members`` must agree with it.
         """
         door = client.get("/api/door").json()
         board = door["board"]
@@ -175,7 +175,7 @@ def test_cached_needs_you_route_rebuilds_after_real_action_item_status_mutation(
             for column in ("overdue", "now", "waiting", "unassigned")
             for card in board.get(column, [])
         }
-        room_items = room_payload["items"]
+        room_items = room_payload["roomItems"]
         unmuted_room_refs = {
             str(item["ref"])
             for item in room_items
@@ -210,9 +210,12 @@ def test_cached_needs_you_route_rebuilds_after_real_action_item_status_mutation(
             before_response = client.get("/api/desk/needs-you")
             assert before_response.status_code == 200, before_response.text
             before = before_response.json()
-            assert before["count"] == 1
+            # One rule, one number: the route counts the six members.
+            assert before["count"] == len(seeded["expectedRefs"]) == 6
+            assert len(before["roomItems"]) == 2
             assert not any(row["ref"] == A1_TASK and row["source"] == "item" for row in before["items"])
             assert oracle_refs(client, before) == seeded["expectedRefs"]
+            assert sorted(m["ref"] for m in before["members"]) == sorted(seeded["expectedRefs"])
             before_computed_at = before["computedAt"]
             before_health = client.get(
                 f"/api/projects/{seeded['ids']['project']}/room"
@@ -234,7 +237,8 @@ def test_cached_needs_you_route_rebuilds_after_real_action_item_status_mutation(
             after_response = client.get("/api/desk/needs-you")
             assert after_response.status_code == 200, after_response.text
             after = after_response.json()
-            assert after["count"] == 1
+            assert after["count"] == 5
+            assert sorted(m["ref"] for m in after["members"]) == sorted(seeded["expectedRefs"][1:])
             assert after["computedAt"] != before_computed_at
             assert not any(row["ref"] == A1_TASK for row in after["items"])
             room_item = db.projects.get_project_item(seeded["ids"]["A1Room"])

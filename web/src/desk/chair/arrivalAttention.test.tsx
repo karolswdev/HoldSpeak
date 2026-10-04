@@ -8,6 +8,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { ChairHome, headlineFor } from "./ChairHome";
+import { asHub } from "../../test/hubNeedsYou";
+import { useDesk } from "../store";
 
 vi.mock("../../lib/api", async (original) => ({
   ...await original<typeof import("../../lib/api")>(),
@@ -50,7 +52,7 @@ function row(id: string, extra: Record<string, unknown> = {}) {
 }
 
 function wire(payload: unknown) {
-  vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+  vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
     // HS-201-01 (counsel fix round): the Chair re-reads the assignment
     // roster, and an UNREAD roster is now its own row. This face is not
     // about the meeting path, so the roster read lands and names nothing.
@@ -61,7 +63,7 @@ function wire(payload: unknown) {
       return { board: {}, counts: {}, upcoming: [], calendar_configured: false };
     }
     return null;
-  });
+  }));
 }
 
 const SEVENTEEN = Array.from({ length: 17 }, (_, i) => {
@@ -248,7 +250,7 @@ describe("Arrival attention (HS-200-15)", () => {
       commitmentId: "cmt-1", actionItemId: "action-1", owner: null, unknowns: ["owner", "due"],
       nextAction: "name_owner", verbHref: null,
     });
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
       if (String(path).startsWith("/api/desk/needs-you")) {
         return { count: 1, projects: ["p1"], items: [commitment], next: null,
           coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true };
@@ -260,7 +262,7 @@ describe("Arrival attention (HS-200-15)", () => {
       }
       if (String(path) === "/api/follow-through/complete") return { card_id: "action-1", verb: "delegate" };
       return null;
-    });
+    }));
     render(<ChairHome />);
     const section = await screen.findByTestId("arrival-needs-you");
     const rows = within(section).getAllByTestId("arrival-needs-you-row");
@@ -295,7 +297,9 @@ describe("Arrival attention (HS-200-15)", () => {
     ...(verb === "snooze" ? { required_arguments: ["payload.until"] } : {}),
   }));
   it("Name an owner on an UNASSIGNED Door row unfolds the owner well and saves through delegate", async () => {
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
+      if (String(path) === "/api/inference/assignments")
+        return { schema: "InferenceAssignmentSummary@1", rows: [], task_overrides: [], issue_count: 0 };
       if (String(path).startsWith("/api/desk/needs-you")) {
         return { count: 0, projects: ["p1"], items: [], next: null,
           coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true };
@@ -308,7 +312,7 @@ describe("Arrival attention (HS-200-15)", () => {
       }
       if (String(path) === "/api/follow-through/complete") return { card_id: "action-9", verb: "delegate" };
       return null;
-    });
+    }));
     render(<ChairHome />);
     const section = await screen.findByTestId("arrival-needs-you");
     const line = within(section).getByTestId("arrival-needs-you-row");
@@ -334,35 +338,10 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(why).not.toContain("UNASSIGNED");
   });
 
-  // Astra on #775: the Door's `unassigned` lane also holds an item with an
-  // owner that is not reviewed yet (`review_state=pending`). It is TO REVIEW
-  // (the wording of #776), never UNASSIGNED, and it has no owner verb.
-  it("an owned, not-reviewed Door row reads TO REVIEW and does not offer Name an owner", async () => {
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
-      if (String(path).startsWith("/api/desk/needs-you")) {
-        return { count: 0, projects: ["p1"], items: [], next: null,
-          coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true };
-      }
-      if (String(path).startsWith("/api/door")) {
-        return { board: { unassigned: [{ id: "action-7", title: "Draft the migration runbook",
-          source: "action_item", target_ref: "action_item:action-7", owner: "Priya", due: null,
-          review_state: "pending", lawful_verbs: doorVerbs("action-7") }] },
-          counts: {}, upcoming: [], calendar_configured: false };
-      }
-      return null;
-    });
-    render(<ChairHome />);
-    const section = await screen.findByTestId("arrival-needs-you");
-    const line = within(section).getByTestId("arrival-needs-you-row");
-    expect(within(line).queryByTestId("arrival-name-owner")).toBeNull();
-    expect(within(line).queryByRole("button", { name: /Name an owner/ })).toBeNull();
-    const why = within(line).getByTestId("arrival-why").textContent ?? "";
-    expect(why).toContain("TO REVIEW");
-    expect(why).not.toContain("UNASSIGNED");
-  });
-
   it("an UNASSIGNED Door row that can take no owner and has nothing to open draws no Name an owner (A.11)", async () => {
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
+      if (String(path) === "/api/inference/assignments")
+        return { schema: "InferenceAssignmentSummary@1", rows: [], task_overrides: [], issue_count: 0 };
       if (String(path).startsWith("/api/desk/needs-you")) {
         return { count: 0, projects: ["p1"], items: [], next: null,
           coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true };
@@ -374,12 +353,75 @@ describe("Arrival attention (HS-200-15)", () => {
           counts: {}, upcoming: [], calendar_configured: false };
       }
       return null;
-    });
+    }));
     render(<ChairHome />);
     const section = await screen.findByTestId("arrival-needs-you");
     const line = within(section).getByTestId("arrival-needs-you-row");
     expect(within(line).queryByTestId("arrival-name-owner")).toBeNull();
     expect(within(line).queryByRole("button", { name: /Name an owner/ })).toBeNull();
+  });
+
+  // Inventory gap 11: Dana's item is pending review and HAS an owner. The
+  // Chair says "To review" and offers Review; only an item with no owner
+  // reads "Unassigned" and offers Name an owner. The cards are the REAL
+  // producer's shape (`DoorService._follow_through_card`: `text`, a
+  // `target_ref` of `action_item:<id>`, verb objects, and NO `open_ref`).
+  it("an owned item not reviewed yet reads TO REVIEW, and Review opens it in Follow-through", async () => {
+    const producerCard = (id: string, text: string, owner: string | null) => ({
+      id, text, owner, due: null, status: "pending", meeting_id: "m-1", decision_id: null,
+      stale_score: null, source: "action_item", lane: "unassigned", provenance: null,
+      delegated_at: null, created_at: "2026-10-03T09:00:00",
+      target_ref: `action_item:${id}`,
+      lawful_verbs: [
+        { name: "done", arguments: { card_id: id, verb: "done" }, required_arguments: [] },
+        { name: "delegate", arguments: { card_id: id, verb: "delegate" }, required_arguments: ["to"] },
+      ],
+    });
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        return { count: 0, projects: [], items: [], next: null, coverage: [], complete: true };
+      }
+      if (String(path) === "/api/inference/assignments")
+        return { schema: "InferenceAssignmentSummary@1", rows: [], task_overrides: [], issue_count: 0 };
+      if (String(path).startsWith("/api/door")) {
+        return { board: { unassigned: [
+          producerCard("ai-owned", "Draft the onboarding checklist", "Dana"),
+          producerCard("ai-no-owner", "Book the room", null),
+        ] }, counts: {}, upcoming: [], calendar_configured: false };
+      }
+      return null;
+    }));
+    const openPullout = vi.fn();
+    const navigations: unknown[] = [];
+    const onNavigate = (event: Event) => navigations.push((event as CustomEvent).detail);
+    window.addEventListener("holdspeak:intelligence-navigate", onNavigate);
+    const realOpen = useDesk.getState().openPullout;
+    useDesk.setState({ openPullout } as never);
+    try {
+      render(<ChairHome />);
+      const section = await screen.findByTestId("arrival-needs-you");
+      const rows = within(section).getAllByTestId("arrival-needs-you-row");
+      const owned = rows.find((r) => r.textContent?.includes("Draft the onboarding checklist"))!;
+      const bare = rows.find((r) => r.textContent?.includes("Book the room"))!;
+      expect(owned.textContent).toContain("TO REVIEW");
+      expect(owned.textContent).not.toContain("UNASSIGNED");
+      expect(within(owned).queryByTestId("arrival-name-owner")).toBeNull();
+      expect(bare.textContent).toContain("UNASSIGNED");
+      expect(within(bare).getByTestId("arrival-name-owner").textContent).toBe("Name an owner");
+      expect(within(bare).queryByTestId("arrival-to-review")).toBeNull();
+
+      // The press: the Follow-through window opens on this card.
+      const review = within(owned).getByTestId("arrival-to-review");
+      expect(review.textContent).toBe("Review");
+      fireEvent.click(review);
+      expect(openPullout).toHaveBeenCalledWith("intelligence:desk");
+      await waitFor(() => expect(navigations).toEqual([
+        { view: "follow-through", followThroughId: "ai-owned" },
+      ]));
+    } finally {
+      window.removeEventListener("holdspeak:intelligence-navigate", onNavigate);
+      useDesk.setState({ openPullout: realOpen } as never);
+    }
   });
 
   it("Mark done is the verb only when owner and date are known, and it posts the explicit act", async () => {
@@ -389,7 +431,7 @@ describe("Arrival attention (HS-200-15)", () => {
       commitmentId: "cmt-1", actionItemId: "action-1", owner: "Priya", unknowns: [],
       nextAction: "mark_done", verbHref: null,
     });
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
       if (String(path).startsWith("/api/desk/needs-you")) {
         return { count: 1, projects: ["p1"], items: [commitment], next: null,
           coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true };
@@ -397,7 +439,7 @@ describe("Arrival attention (HS-200-15)", () => {
       if (String(path).startsWith("/api/door")) return { board: {}, counts: {}, upcoming: [], calendar_configured: false };
       if (String(path) === "/api/follow-through/complete") return { card_id: "action-1", verb: "done" };
       return null;
-    });
+    }));
     render(<ChairHome />);
     const section = await screen.findByTestId("arrival-needs-you");
     const verb = within(section).getByTestId("arrival-commitment-verb");

@@ -379,3 +379,27 @@ def test_breakage_failed_connector_run_appears(tmp_path):
     assert items[0].text == "Connector github failed"
     assert items[0].detail == "token expired"
     assert items[0].source_ref == "connector-run:1"
+
+
+def test_an_item_with_an_owner_is_never_named_unassigned(tmp_path):
+    """Inventory gap 11: a meeting's action item is born `pending` review. With
+    an owner it is "To review", never "Unassigned ... Needs an owner". The
+    item is saved by the real producer (``save_meeting``)."""
+    from holdspeak.intel.models import ActionItem
+    from holdspeak.meeting_session.models import IntelSnapshot, MeetingState
+
+    service = _service(tmp_path)
+    start = datetime.now().replace(microsecond=0) - timedelta(hours=2)
+    service._db.meetings.save_meeting(MeetingState(
+        id="m-owned", started_at=start, ended_at=start + timedelta(minutes=30), title="Planning",
+        intel=IntelSnapshot(timestamp=0.0, summary="Planned.", action_items=[
+            ActionItem(task="Draft the migration runbook", owner="Dana"),
+            ActionItem(task="Book the dry run"),
+        ]), intel_status="completed"))
+
+    by_text = {item.text: item.detail for item in service._collect_waiting(None)}
+
+    assert by_text == {
+        "To review: Draft the migration runbook": "Not reviewed",
+        "Unassigned: Book the dry run": "Needs an owner",
+    }

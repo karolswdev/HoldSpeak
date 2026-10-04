@@ -4,6 +4,7 @@
 // The lane vocabulary is PARKED; the arrival composes directly from
 // the surface library and the needs-you wire.
 
+import { wireDate } from "../surface/format";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chair } from "./Chair";
 import { ChairDesk } from "./ChairDesk";
@@ -250,8 +251,8 @@ const MONTHS = [
 ];
 
 function ledgerDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(iso);
+  if (!d) return "";
   return `${MONTHS[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")}`;
 }
 
@@ -383,8 +384,8 @@ function nextLine(next: NeedsYouPayload["next"] & { room?: string } | null): str
 
 /** Format event time: HH:MM for today, DOW HH:MM for other days. */
 function formatEventTime(startsAt: string): string {
-  const d = new Date(startsAt);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(startsAt);
+  if (!d) return "";
   const hh = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
   const now = new Date();
@@ -399,8 +400,8 @@ function formatEventTime(startsAt: string): string {
 
 /** Format arms_at ISO to local HH:MM. */
 function formatArmsTime(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(iso);
+  if (!d) return "";
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
@@ -1534,21 +1535,16 @@ function NeedsYouRow({
   }
   const ext = item as NeedsYouItem & { _isDoor?: boolean; _isUnassigned?: boolean; _doorCard?: DoorCard };
   const isDoor = ext._isDoor === true;
-  // A Door row that just took an owner is no longer UNASSIGNED; it says who
-  // it waits on until the board is read again.
-  // Only until the board is read again: once the hub's card carries the
-  // owner, the hub's own lane names the row (WAITING ON <owner>, or TO REVIEW
-  // for an item not reviewed yet).
+  // An item that HAS an owner and is not reviewed yet: "To review", never
+  // "Name an owner".
+  const isToReview = (ext as { _toReview?: boolean })._toReview === true;
+  // A Door row that just took an owner is no longer UNASSIGNED. It says who
+  // it waits on only until the board is read again; then the hub's own lane
+  // names the row (WAITING ON <owner>, or TO REVIEW for an item not reviewed).
   const doorOwnerNamed = isDoor && !item.actionItemId && Boolean(commitResult.owner)
     && !String(item.owner ?? "").trim();
-  // The Door's `unassigned` lane also holds an item that HAS an owner and is
-  // not reviewed yet (`FollowThroughService._lane`). That row is TO REVIEW,
-  // never UNASSIGNED, and it does not offer `Name an owner`.
-  const toReview = ext._isUnassigned === true && isDoor && !doorOwnerNamed
-    && Boolean(String(item.owner ?? "").trim());
-  const isUnassigned = ext._isUnassigned === true && !doorOwnerNamed && !toReview;
+  const isUnassigned = ext._isUnassigned === true && !doorOwnerNamed && !isToReview;
   if (doorOwnerNamed) rowItem.why = `WAITING ON ${String(commitResult.owner).toUpperCase()}`;
-  if (toReview) rowItem.why = "TO REVIEW";
   const isProposal = Boolean(item.proposalId);
   const emblem = isDoor ? doorEmblem(item.source) : sourceEmblem(item.source);
   const proposalPrefix = isProposal
@@ -1604,7 +1600,7 @@ function NeedsYouRow({
             data-rank-class={cls}
             data-testid="arrival-why"
           >
-            {reasonToken(doorOwnerNamed || toReview ? rowItem : item, now)}
+            {reasonToken(doorOwnerNamed ? rowItem : item, now)}
           </span>
           {muted ? (
             <span className="arrival-project-token">MUTED</span>
@@ -1647,6 +1643,7 @@ function NeedsYouRow({
           item={rowItem}
           isDoor={isDoor}
           isUnassigned={isUnassigned}
+          isToReview={isToReview}
           doorCard={ext._doorCard}
           ownerCardId={doorOwnerCardId}
           primary={primary}
@@ -1801,7 +1798,7 @@ function SourceVerb({
  *  its lawful `follow_through.complete` / `delegate` verb, or null. */
 function doorDelegateCardId(card?: DoorCard): string | null {
   for (const verb of card?.lawful_verbs ?? []) {
-    if (verb.name === "follow_through.complete" && verb.arguments?.verb === "delegate") {
+    if (verb.arguments?.verb === "delegate") {
       const id = verb.arguments.card_id;
       return id ? String(id) : null;
     }
@@ -1815,6 +1812,7 @@ function NeedsYouRowVerbs({
   item,
   isDoor,
   isUnassigned,
+  isToReview,
   doorCard,
   primary = false,
   onProposalConfirm,
@@ -1825,6 +1823,7 @@ function NeedsYouRowVerbs({
   item: NeedsYouItem;
   isDoor: boolean;
   isUnassigned: boolean;
+  isToReview?: boolean;
   doorCard?: DoorCard;
   /** The action item an UNASSIGNED Door card can write an owner to. */
   ownerCardId?: string | null;
@@ -1883,6 +1882,26 @@ function NeedsYouRowVerbs({
         }}
       >
         {busy ? "..." : label}
+      </Button>
+    );
+  }
+
+  if (isToReview) {
+    return (
+      <Button
+        variant={lead}
+        dense
+        onClick={() => {
+          // The real producer's card names itself in `target_ref`
+          // (`action_item:<id>`, DoorService._follow_through_card); `open_ref`
+          // is optional. Review opens the card in Follow-through, where the
+          // owner reviews it.
+          (refOpener(doorCard?.open_ref) ?? refOpener(doorCard?.target_ref))?.();
+        }}
+        aria-label={`Review: ${item.title}`}
+        data-testid="arrival-to-review"
+      >
+        Review
       </Button>
     );
   }

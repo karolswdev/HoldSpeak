@@ -9,6 +9,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { ChairHome, headlineFor } from "./ChairHome";
+import { asHub } from "../../test/hubNeedsYou";
 
 vi.mock("../../lib/api", async (original) => ({
   ...await original<typeof import("../../lib/api")>(),
@@ -86,13 +87,13 @@ const GLOBAL_ONLY = {
 };
 
 function wire(overrides: Record<string, unknown>[]) {
-  vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+  vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
     if (String(path) === "/api/inference/assignments") return summary(overrides) as never;
     if (String(path).startsWith("/api/desk/needs-you"))
       return { count: 0, items: [], projects: [], next: null, coverage: [], complete: true } as never;
     if (String(path) === "/api/door") return { board: {}, upcoming: [] } as never;
     return null as never;
-  });
+  }));
 }
 
 describe("HS-201-01 the Chair names the one thing", () => {
@@ -134,13 +135,13 @@ describe("HS-201-01 the Chair names the one thing", () => {
   // draws NO setup row -- no noise on every arrival (tenet 3) -- and the
   // headline still withholds the all-clear over the unknown.
   it("draws no setup row while the roster read is still in flight", async () => {
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
       if (String(path) === "/api/inference/assignments")
         return new Promise(() => {}) as never; // never settles
       if (String(path).startsWith("/api/desk/needs-you"))
         return { count: 0, items: [], projects: [], next: null, coverage: [], complete: true } as never;
       return null as never;
-    });
+    }));
     render(<ChairHome />);
     await waitFor(() => {
       expect(screen.queryByTestId("arrival-blocker")).toBeNull();
@@ -152,12 +153,12 @@ describe("HS-201-01 the Chair names the one thing", () => {
   // and an unknown is never drawn as a clear desk. The Chair names the
   // unknown as its own row instead (UX-CANON A10 - honest states).
   it("names the unknown as its own row when the roster could not be read", async () => {
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
       if (String(path) === "/api/inference/assignments") throw new Error("offline");
       if (String(path).startsWith("/api/desk/needs-you"))
         return { count: 0, items: [], projects: [], next: null, coverage: [], complete: true } as never;
       return null as never;
-    });
+    }));
     render(<ChairHome />);
     const row = await screen.findByText("Could not read setup");
     expect(row).toBeTruthy();
@@ -224,7 +225,7 @@ describe("HS-201-01 a microphone action never opens Models", () => {
 
   it("draws no blocker row for a microphone primary_action", async () => {
     const asked: string[] = [];
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
       asked.push(String(path));
       if (String(path) === "/api/inference/assignments") return summary([ASSIGNED]) as never;
       if (String(path) === "/api/setup/status")
@@ -235,7 +236,7 @@ describe("HS-201-01 a microphone action never opens Models", () => {
       if (String(path).startsWith("/api/desk/needs-you"))
         return { count: 0, items: [], projects: [], next: null, coverage: [], complete: true } as never;
       return null as never;
-    });
+    }));
     render(<ChairHome />);
     await waitFor(() =>
       expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
