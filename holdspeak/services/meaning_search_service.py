@@ -37,7 +37,7 @@ from ..memory.local_model import (
     PinnedModel,
     fetch,
     find_on_device,
-    looks_on_device,
+    check_destination,
     model_dir,
 )
 from ..principals import Principal, PrincipalKind
@@ -56,6 +56,7 @@ _ERRORS = {
     "network": "The download stopped. Press Turn on to continue.",
     "integrity": "The downloaded file is not the correct file. Press Turn on to download it again.",
     "refused": "The download was not permitted.",
+    "unsafe": "The model folder on this hub holds a link. Remove the link, then press Turn on.",
     "runtime": "The local model runtime (llama-cpp-python) is not installed on this hub.",
     "setup": "Meaning search did not start. Press Turn on to try again.",
 }
@@ -141,7 +142,10 @@ class MeaningSearchService:
     def status(self, principal: Optional[Principal] = None) -> dict[str, Any]:
         """OFF / DOWNLOADING n% / INDEXING n of m / ON, from the real stores."""
         model = self._model
-        on_device = looks_on_device(model, self._home())
+        # The same verified decision the press uses (the hash is checked
+        # once and kept by path, size and time): "on this device" is never
+        # said for a file the press would not adopt.
+        on_device = find_on_device(model, self._home()) is not None
         payload: dict[str, Any] = {
             "state": "off",
             "percent": 0,
@@ -269,6 +273,7 @@ class MeaningSearchService:
         if self._allowed_host is not None:
             kwargs["allowed_host"] = self._allowed_host
         try:
+            check_destination(destination)  # before any request leaves
             path = run_external_egress(
                 connector_id="model-download",
                 destination=model.host,

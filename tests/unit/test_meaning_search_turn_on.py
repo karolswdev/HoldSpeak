@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
@@ -254,18 +255,124 @@ def test_a_file_on_this_device_is_adopted_with_no_download(desk) -> None:
     assert desk.service.status(OWNER)["state"] == "on"
 
 
-def test_a_file_on_this_device_with_a_different_hash_is_not_adopted(desk) -> None:
+def test_a_cached_file_with_a_different_hash_is_disclosed_as_a_download(desk) -> None:
+    """Review of #817, finding 1: the right size is not the right file.  The
+    row may say "on this device" only for a file whose hash is verified."""
     cached = desk.home / ".cache" / "holdspeak-models" / "embed" / PINNED.filename
     cached.parent.mkdir(parents=True)
-    cached.write_bytes(b"GGUF" + bytes(len(CONTENT) - 4))
+    cached.write_bytes(b"GGUF" + bytes(len(CONTENT) - 4))  # the pinned size, other bytes
+
+    before = desk.service.status(OWNER)
+    assert before["model"]["on_device"] is False
+    assert before["egress"] == {"destination": "huggingface.co", "what": "model file request"}
+    assert desk.source.requests == [] and _egress_receipts(desk.db) == []
 
     desk.service.turn_on(OWNER)
     desk.service.wait(30)
 
-    # It was not used: the hub downloaded the pinned file to its own place.
+    # The press did what the row said: one download, one egress receipt.
     assert desk.source.requests == [""]
+    receipts = _egress_receipts(desk.db)
+    assert [row["outcome"] for row in receipts] == ["succeeded"]
+    assert "egress:huggingface.co" in receipts[0]["refs_json"]
     memory_conductor.tick(desk.db, desk.broker)
     assert set(desk.loaded) == {str(model_dir(desk.home) / PINNED.filename)}
+    assert desk.service.status(OWNER)["egress"] is None
+
+
+def test_the_hash_is_checked_once_for_an_unchanged_file(desk, monkeypatch) -> None:
+    from holdspeak.memory import local_model
+
+    cached = desk.home / ".cache" / "holdspeak-models" / "embed" / PINNED.filename
+    cached.parent.mkdir(parents=True)
+    cached.write_bytes(CONTENT)
+    hashed: list[str] = []
+    real = local_model.hash_file
+    monkeypatch.setattr(local_model, "hash_file", lambda path: hashed.append(str(path)) or real(path))
+    for _ in range(5):
+        assert desk.service.status(OWNER)["model"]["on_device"] is True
+    assert hashed == [str(cached)]
+    # A changed file is hashed again, and is no longer "on this device".
+    cached.write_bytes(b"GGUF" + bytes(len(CONTENT) - 4))
+    assert desk.service.status(OWNER)["model"]["on_device"] is False
+    assert len(hashed) == 2
+
+
+def test_a_part_file_that_is_a_link_is_never_written_through(desk) -> None:
+    """Review of #817, finding 2: with `.part` a link to another file, the
+    download wrote into that file."""
+    victim = desk.home / "victim.txt"
+    victim.write_bytes(b"the owner's own file")
+    folder = model_dir(desk.home)
+    folder.mkdir(parents=True)
+    (folder / (PINNED.filename + ".part")).symlink_to(victim)
+
+    desk.service.turn_on(OWNER)
+    desk.service.wait(30)
+
+    assert victim.read_bytes() == b"the owner's own file"
+    status = desk.service.status(OWNER)
+    assert status["state"] == "off" and "link" in status["error"]
+    # Refused before any request left this device.
+    assert desk.source.requests == [] and _egress_receipts(desk.db) == []
+    assert not _assigned(desk.db)
+
+
+def test_a_model_file_that_is_a_link_is_not_adopted_and_not_replaced(desk) -> None:
+    elsewhere = desk.home / "elsewhere.gguf"
+    elsewhere.write_bytes(CONTENT)  # the pinned bytes, behind a link
+    folder = model_dir(desk.home)
+    folder.mkdir(parents=True)
+    (folder / PINNED.filename).symlink_to(elsewhere)
+
+    before = desk.service.status(OWNER)
+    assert before["model"]["on_device"] is False and before["egress"] is not None
+    desk.service.turn_on(OWNER)
+    desk.service.wait(30)
+
+    assert not _assigned(desk.db) and desk.loaded == []
+    assert (folder / PINNED.filename).is_symlink() and elsewhere.read_bytes() == CONTENT
+    assert desk.source.requests == [] and "link" in desk.service.status(OWNER)["error"]
+
+
+def test_a_model_folder_that_is_a_link_is_refused(desk) -> None:
+    outside = desk.home / "outside"
+    outside.mkdir()
+    (outside / PINNED.filename).write_bytes(CONTENT)
+    model_dir(desk.home).parent.mkdir(parents=True)
+    model_dir(desk.home).symlink_to(outside, target_is_directory=True)
+
+    assert desk.service.status(OWNER)["model"]["on_device"] is False
+    desk.service.turn_on(OWNER)
+    desk.service.wait(30)
+
+    assert not _assigned(desk.db) and desk.source.requests == []
+    assert sorted(path.name for path in outside.iterdir()) == [PINNED.filename]
+
+
+def test_the_fetch_opens_the_part_file_without_following_a_link(desk, tmp_path) -> None:
+    """The link appears AFTER the check (a race): the open itself refuses it."""
+    from holdspeak.memory import local_model
+
+    victim = tmp_path / "victim.bin"
+    victim.write_bytes(b"keep")
+    destination = model_dir(desk.home) / PINNED.filename
+    real_check = local_model.check_destination
+
+    def check_then_link(path: Path) -> None:
+        real_check(path)
+        path.with_name(path.name + ".part").symlink_to(victim)
+
+    import pytest as _pytest
+    from unittest import mock
+
+    with mock.patch.object(local_model, "check_destination", check_then_link):
+        with _pytest.raises(OSError):
+            local_model.fetch(
+                PINNED, destination, url=desk.source.url,
+                allowed_host=lambda host: host == "127.0.0.1",
+            )
+    assert victim.read_bytes() == b"keep"
 
 
 def test_turn_off_clears_the_assignment_and_keyword_search_continues(desk) -> None:
@@ -308,21 +415,42 @@ def test_the_embedding_model_is_not_offered_for_a_chat_capability(desk) -> None:
     assert "embedding_model_only" in str(refused.value.context) + str(refused.value.detail) + refused.value.code
 
 
-def test_a_write_on_the_bus_wakes_the_conductor(monkeypatch) -> None:
-    """Every producer's write ends in one desk_changed send.  That send wakes
-    the conductor, so a new item is in the index in seconds."""
+def test_a_write_on_the_bus_tells_the_conductor_what_changed(monkeypatch) -> None:
+    """Every producer's write ends in one desk_changed send.  That send gives
+    the conductor the kind and the id of each change."""
     from holdspeak.runtime.composition import RuntimeServices
 
-    woken: list[int] = []
-    monkeypatch.setattr(memory_conductor, "wake", lambda: woken.append(1))
+    woken: list[list[tuple[str, str]]] = []
+    monkeypatch.setattr(memory_conductor, "wake", lambda changes=None: woken.append(list(changes)))
     RuntimeServices(db=None, observer=None).emit_desk_changed("note", "n1", "create")
-    assert woken == [1]
+    assert woken == [[("note", "n1")]]
 
 
-def test_a_woken_conductor_indexes_a_new_note_in_seconds(desk, monkeypatch) -> None:
+def _count_source_reads(monkeypatch) -> list[str]:
+    """Every source the sweep (full or by ref) reads and hashes."""
+    from holdspeak.memory import retain
+
+    reads: list[str] = []
+    real = retain._redacted
+    monkeypatch.setattr(retain, "_redacted", lambda source: reads.append(source.ref) or real(source))
+    return reads
+
+
+DESK_NOTES = 1500
+EDITS = 12
+
+
+def _big_desk(db: Database) -> None:
+    for index in range(DESK_NOTES):
+        db.notes.upsert(
+            note_id=f"big-{index}", title=f"Site visit {index}",
+            body_markdown=f"Visit {index}: the crew checked pump {index % 17}.",
+        )
+
+
+def _run_worker(desk, monkeypatch):
     from holdspeak import intel_queue_conductor
     from holdspeak.kernel import runtime as kernel_runtime
-    from holdspeak.runtime.composition import RuntimeServices
     import holdspeak.db as db_package
 
     monkeypatch.setattr(intel_queue_conductor, "owns_database", lambda: True)
@@ -330,23 +458,94 @@ def test_a_woken_conductor_indexes_a_new_note_in_seconds(desk, monkeypatch) -> N
     monkeypatch.setattr(kernel_runtime, "_service", lambda: desk.broker)
     monkeypatch.setattr(memory_conductor, "WAKE_GAP_SECONDS", 0.05)
     worker = memory_conductor.start_memory_conductor(poll_seconds=120)
-    try:
-        import time
+    deadline = time.time() + 60
+    while not worker.last_report and time.time() < deadline:
+        time.sleep(0.05)
+    assert worker.last_report, "the first (full) pass did not run"
+    return worker
 
-        deadline = time.time() + 20
-        while not worker.last_report and time.time() < deadline:
-            time.sleep(0.05)
-        assert worker.last_report, "the first tick did not run"
-        desk.db.notes.upsert(note_id="kiln", title="Kiln schedule", body_markdown="The kiln is fired on the first Tuesday.")
-        # The producer's announcement (the real seam every write uses).
-        RuntimeServices(db=None, observer=None).emit_desk_changed("note", "any", "create")
-        deadline = time.time() + 10  # far below the 120 s poll
-        while time.time() < deadline and "note:kiln" not in desk.db.memory_index.ledger(["note"]):
-            time.sleep(0.05)
-        assert "note:kiln" in desk.db.memory_index.ledger(["note"])
-        with desk.db._connection() as conn:
-            assert conn.execute(
-                "SELECT count(*) FROM memory_chunks WHERE text LIKE '%kiln is fired%'"
-            ).fetchone()[0] == 1
+
+def test_writes_cost_nothing_while_meaning_search_is_off(desk, monkeypatch) -> None:
+    """Review of #817, finding 3: 12 edits on a 5,000-note desk ran three
+    full sweeps with meaning search OFF.  Now a wake while memory.embed is
+    unassigned reads no source at all."""
+    from holdspeak.runtime.composition import RuntimeServices
+
+    _big_desk(desk.db)
+    worker = _run_worker(desk, monkeypatch)
+    try:
+        reads = _count_source_reads(monkeypatch)
+        bus = RuntimeServices(db=None, observer=None)
+        for index in range(EDITS):
+            desk.db.notes.upsert(note_id=f"big-{index}", title="Edited", body_markdown=f"Edit {index}.")
+            bus.emit_desk_changed("note", f"big-{index}", "update")
+            time.sleep(0.1)
+        time.sleep(1.0)
+        assert reads == []
+        assert memory_conductor.tick(desk.db, desk.broker, refs=["note:big-0"]).get("skipped") == 1
     finally:
         memory_conductor.stop_memory_conductor(timeout=10)
+
+
+def test_n_edits_cost_n_source_reads_when_meaning_search_is_on(desk, monkeypatch) -> None:
+    """Work proportional to the number of changes, not to the desk."""
+    from holdspeak.runtime.composition import RuntimeServices
+
+    _big_desk(desk.db)
+    _profile(desk.db, "embed-model", model=MODEL, claims=("embedding",))
+    _assign(desk.db, MEMORY_EMBED_CAPABILITY, ["embed-model"])
+    full = _count_source_reads(monkeypatch)
+    from holdspeak.memory.retain import sweep
+
+    sweep(desk.db)
+    assert len(full) >= DESK_NOTES  # what one full sweep reads
+    worker = _run_worker(desk, monkeypatch)
+    try:
+        del full[:]
+        bus = RuntimeServices(db=None, observer=None)
+        for index in range(EDITS):
+            desk.db.notes.upsert(
+                note_id=f"big-{index}", title="Kiln schedule",
+                body_markdown=f"The kiln is fired on Tuesday {index}.",
+            )
+            bus.emit_desk_changed("note", f"big-{index}", "update")
+            time.sleep(0.1)
+        wanted = {f"note:big-{index}" for index in range(EDITS)}
+        deadline = time.time() + 20  # far below the 120 s poll
+        while time.time() < deadline:
+            with desk.db._connection() as conn:
+                found = conn.execute(
+                    "SELECT count(DISTINCT source_ref) FROM memory_chunks WHERE text LIKE '%kiln is fired%'"
+                ).fetchone()[0]
+            if found == EDITS:
+                break
+            time.sleep(0.05)
+        assert found == EDITS
+        # Each changed source was read; no other source was.  Twelve edits
+        # close together are at most a few passes, each over its own refs.
+        assert set(full) == wanted
+        assert len(full) <= 2 * EDITS, len(full)
+    finally:
+        memory_conductor.stop_memory_conductor(timeout=10)
+
+
+def test_a_change_names_only_the_kinds_memory_holds() -> None:
+    from holdspeak.memory.retain import refs_for_change
+
+    assert refs_for_change("note", "n1") == ["note:n1"]
+    assert refs_for_change("decision", "d1") == ["decision:d1", "decision_record:d1", "desk_decision:d1"]
+    assert refs_for_change("directory", "z1") == []  # the slow full sweep sees it
+    assert refs_for_change("note", "") == []
+
+
+def test_a_deleted_source_named_by_a_wake_leaves_the_index(desk) -> None:
+    _profile(desk.db, "embed-model", model=MODEL, claims=("embedding",))
+    _assign(desk.db, MEMORY_EMBED_CAPABILITY, ["embed-model"])
+    desk.db.notes.upsert(note_id="gone-soon", title="Kiln", body_markdown="The kiln is fired on Tuesday.")
+    memory_conductor.tick(desk.db, desk.broker, refs=["note:gone-soon"])
+    assert desk.db.memory_index.ledger_for(["note:gone-soon"])["note:gone-soon"]["state"] == "live"
+    with desk.db._connection() as conn:
+        conn.execute("UPDATE notes SET deleted=1 WHERE id='gone-soon'")
+    report = memory_conductor.tick(desk.db, desk.broker, refs=["note:gone-soon"])
+    assert report["swept"]["gone"] == 1
+    assert desk.db.memory_index.ledger_for(["note:gone-soon"])["note:gone-soon"]["state"] == "gone"

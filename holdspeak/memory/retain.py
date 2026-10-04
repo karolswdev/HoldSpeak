@@ -533,6 +533,80 @@ def sweep(
     return {**stats, "complete": 1}
 
 
+#: A ``desk_changed`` kind that names more than one memory kind.
+_CHANGE_KINDS: dict[str, tuple[str, ...]] = {
+    "decision": ("decision", "decision_record", "desk_decision"),
+    "workbench": ("workbench_item",),
+    "update": ("project_update",),
+    "brief": ("prep_brief",),
+    "event": ("calendar_event",),
+}
+
+
+def refs_for_change(kind: str, resource_id: str) -> list[str]:
+    """The memory source refs one ``desk_changed`` change can name.
+
+    A kind memory does not hold gives no ref: the slow full sweep sees it.
+    """
+    kind, resource_id = str(kind or "").strip(), str(resource_id or "").strip()
+    if not kind or not resource_id:
+        return []
+    kinds = _CHANGE_KINDS.get(kind) or ((kind,) if kind in SOURCE_READERS else ())
+    return [f"{name}:{resource_id}" for name in kinds if name in SOURCE_READERS]
+
+
+def sweep_refs(db: Any, refs: Iterable[str]) -> dict[str, int]:
+    """The sweep for named sources only: the work is one read per ref.
+
+    The same reader, admission, redaction and hash as ``sweep``.  A ref whose
+    source is gone, parked or not admitted is marked ``gone`` when the index
+    holds it.
+    """
+    index = db.memory_index
+    wanted = list(dict.fromkeys(str(ref) for ref in refs))
+    stats = {"seen": 0, "written": 0, "unchanged": 0, "gone": 0}
+    if not wanted:
+        return stats
+    ledger = index.ledger_for(wanted)
+    secret_refs: list[str] = []
+    for ref in wanted:
+        with db._connection() as conn:
+            source = current_source(conn, ref)
+        known = ledger.get(ref)
+        chunks: list[dict[str, Any]] = []
+        if source is not None:
+            title, units, content_sha = _redacted(source)
+            if _holds_secret(source, title, units):
+                secret_refs.append(source.ref)
+            stats["seen"] += 1
+            if (
+                known is not None
+                and known["state"] == "live"
+                and known["content_sha"] == content_sha
+                and int(known["chunker_version"]) == CHUNKER_VERSION
+            ):
+                stats["unchanged"] += 1
+                continue
+            chunks = _chunks(source, title, units)
+        if source is None or not chunks:
+            if known is not None and known["state"] == "live":
+                index.mark_gone(ref)
+                stats["gone"] += 1
+            continue
+        index.replace_source(
+            source_ref=source.ref,
+            kind=source.kind,
+            title=title,
+            occurred_at=source.occurred_at,
+            content_sha=content_sha,
+            chunker_version=CHUNKER_VERSION,
+            chunks=chunks,
+        )
+        stats["written"] += 1
+    stats["scrubbed"] = db.memory.scrub_keyword_rows(secret_refs)
+    return stats
+
+
 def embed_pending(
     db: Any,
     embedder: MemoryEmbedder,
@@ -602,6 +676,8 @@ def rebuild(db: Any, embedder: Optional[MemoryEmbedder] = None) -> dict[str, int
 __all__ = [
     "MemorySource",
     "SOURCE_READERS",
+    "refs_for_change",
+    "sweep_refs",
     "current_source",
     "embed_pending",
     "prepare",

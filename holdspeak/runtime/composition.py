@@ -197,13 +197,14 @@ class RuntimeServices:
         """One frame: the first change at the top level (the shape every
         listener already reads), and every change under ``changes``."""
         if changes:
-            # Every producer's write comes through here.  Wake the memory
-            # conductor so the new item is in the index in seconds, not at
-            # the next poll (MEMORY-DESIGN.md 3.1: speed, not correctness).
+            # Every producer's write comes through here.  Tell the memory
+            # conductor WHAT changed, so the new item is in the index in
+            # seconds and the pass reads only those sources
+            # (MEMORY-DESIGN.md 3.1: speed, not correctness).
             try:
                 from holdspeak import memory_conductor
 
-                memory_conductor.wake()
+                memory_conductor.wake([(change[0], change[1]) for change in changes])
             except Exception:  # pragma: no cover - a wake never fails a write
                 pass
         if self.broadcast is None or not changes:
