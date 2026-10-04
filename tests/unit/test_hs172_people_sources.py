@@ -34,71 +34,10 @@ def service(tmp_path: Path) -> PeopleService:
 
 @pytest.fixture
 def plain_db(tmp_path: Path) -> Any:
-    """Minimal plain DB with connector_watches, projects, and source_suggestions."""
-    db_path = tmp_path / "plain.sqlite3"
-    conn = sqlite3.connect(str(db_path))
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = OFF")
-    conn.execute("""CREATE TABLE IF NOT EXISTS projects (
-        id TEXT PRIMARY KEY, name TEXT, description TEXT, keywords_json TEXT,
-        team_members_json TEXT, context_json TEXT, detection_threshold REAL,
-        revision INTEGER DEFAULT 0, purpose TEXT, outcome_text TEXT,
-        lifecycle TEXT DEFAULT 'active', created_at TEXT, updated_at TEXT,
-        posture TEXT, posture_reason TEXT, start_at TEXT, target_at TEXT,
-        review_cadence_json TEXT, next_review_at TEXT, template_key TEXT,
-        modules_json TEXT, last_review_id TEXT, last_review_at TEXT,
-        room_read_at TEXT
-    )""")
-    conn.execute("""CREATE TABLE IF NOT EXISTS connector_watches (
-        id TEXT PRIMARY KEY, project_id TEXT, connector_id TEXT,
-        query_kind TEXT, query TEXT, snapshot_json TEXT, enabled INTEGER DEFAULT 1,
-        state TEXT DEFAULT 'active', baseline_state TEXT DEFAULT 'established',
-        last_error TEXT, created_at TEXT DEFAULT (datetime('now')),
-        updated_at TEXT DEFAULT (datetime('now'))
-    )""")
-    conn.execute("""CREATE TABLE IF NOT EXISTS source_suggestions (
-        id TEXT PRIMARY KEY, project_id TEXT NOT NULL,
-        meeting_id TEXT NOT NULL, provider TEXT NOT NULL,
-        reference TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending',
-        created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    )""")
-    conn.execute("""CREATE TABLE IF NOT EXISTS calendar_events (
-        id TEXT PRIMARY KEY, uid TEXT NOT NULL, title TEXT, starts_at TEXT,
-        ends_at TEXT, location TEXT, meeting_url TEXT, last_seen_at REAL,
-        subscription_revision TEXT, source_id TEXT NOT NULL DEFAULT '',
-        source_label TEXT NOT NULL DEFAULT '')""")
-    conn.execute("""CREATE TABLE IF NOT EXISTS meetings (
-        id TEXT PRIMARY KEY, started_at TEXT NOT NULL, ended_at TEXT,
-        title TEXT, calendar_event_id TEXT)""")
-    conn.execute("""CREATE TABLE IF NOT EXISTS action_items (
-        id TEXT PRIMARY KEY, meeting_id TEXT NOT NULL, task TEXT NOT NULL,
-        owner TEXT, due TEXT, status TEXT NOT NULL DEFAULT 'pending',
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        delegated_at TEXT)""")
-    conn.execute("""CREATE TABLE IF NOT EXISTS decision_records (
-        id TEXT PRIMARY KEY, decision_text TEXT NOT NULL, rationale TEXT,
-        lifecycle TEXT NOT NULL DEFAULT 'active',
-        source_type TEXT NOT NULL, source_id TEXT NOT NULL,
-        deleted INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now')))""")
-    conn.execute("""CREATE TABLE IF NOT EXISTS decision_record_sources (
-        id TEXT PRIMARY KEY, record_id TEXT NOT NULL,
-        source_type TEXT NOT NULL, source_ref TEXT NOT NULL,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')))""")
-    # project_relationships for add_resource (may not exist in the minimal db)
-    conn.execute("""CREATE TABLE IF NOT EXISTS project_relationships (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, project_id TEXT NOT NULL,
-        resource_ref TEXT NOT NULL, relationship TEXT DEFAULT 'member',
-        source TEXT DEFAULT 'manual', confidence REAL DEFAULT 1.0,
-        created_at TEXT DEFAULT (datetime('now')),
-        updated_at TEXT DEFAULT (datetime('now')),
-        UNIQUE(project_id, resource_ref)
-    )""")
-    conn.commit()
-    db = SimpleNamespace()
-    db._connection = lambda: conn
-    return db
+    """The real plain DB on the real schema (a hand-made table set went stale: it had no ``meetings.parked``)."""
+    from holdspeak.db.core import Database
+
+    return Database(tmp_path / "plain.sqlite3")
 
 
 def _seed_watch(
@@ -106,18 +45,17 @@ def _seed_watch(
     connector_id: str, query_kind: str, entities: list[dict],
 ) -> None:
     """Seed a project and a watch with a persisted snapshot."""
-    conn = db._connection()
-    conn.execute(
-        "INSERT OR IGNORE INTO projects (id, name, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))",
-        (project_id, project_name),
-    )
-    snapshot = json.dumps({"schema": 1, "entities": {str(i): e for i, e in enumerate(entities)}})
-    conn.execute(
-        "INSERT INTO connector_watches (id, project_id, connector_id, query_kind, snapshot_json, query) "
-        "VALUES (?, ?, ?, ?, ?, '{}')",
-        (f"w_{project_id}_{connector_id}_{query_kind}", project_id, connector_id, query_kind, snapshot),
-    )
-    conn.commit()
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO projects (id, name, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))",
+            (project_id, project_name),
+        )
+        snapshot = json.dumps({"schema": 1, "entities": {str(i): e for i, e in enumerate(entities)}})
+        conn.execute(
+            "INSERT INTO connector_watches (id, project_id, connector_id, query_kind, snapshot_json, query_json) "
+            "VALUES (?, ?, ?, ?, ?, '{}')",
+            (f"w_{project_id}_{connector_id}_{query_kind}", project_id, connector_id, query_kind, snapshot),
+        )
 
 
 # ==============================================================================
@@ -312,11 +250,13 @@ class TestBriefEnrichment:
              "reviewRequests": ["spy-login"], "url": "", "updatedAt": ""},
         ])
 
-        conn = plain_db._connection()
+        def _counts() -> dict[str, int]:
+            with plain_db._connection() as conn:
+                return {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
         tables = ["connector_watches", "projects", "source_suggestions"]
-        before = {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
+        before = _counts()
         service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
-        after = {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
+        after = _counts()
         assert after == before, "Brief wrote to the plain DB"
 
     def test_last_meeting_present(self, service: PeopleService, plain_db: Any) -> None:
@@ -324,21 +264,20 @@ class TestBriefEnrichment:
         rel = service.create_relationship(OWNER, {"display_name": "Jan"})
         service.link_calendar_series(OWNER, rel["id"], "uid-weekly", "cal-1", "Weekly")
 
-        conn = plain_db._connection()
-        conn.execute(
-            "INSERT INTO calendar_events (id, uid, title, starts_at, ends_at, last_seen_at, subscription_revision, source_id) "
-            "VALUES ('ev-1', 'uid-weekly', 'Weekly', '2026-08-01', '2026-08-01', 0.0, 'r1', 'cal-1')",
-        )
-        conn.execute(
-            "INSERT INTO meetings (id, started_at, ended_at, title, calendar_event_id) "
-            "VALUES ('m-1', '2026-08-01T10:00:00', '2026-08-01T11:00:00', 'Weekly', 'ev-1')",
-        )
-        conn.execute(
-            "INSERT INTO action_items (id, meeting_id, task, owner, status) VALUES "
-            "('ai-1', 'm-1', 'Ship it', 'Jan', 'pending'), "
-            "('ai-2', 'm-1', 'Done', 'Jan', 'completed')",
-        )
-        conn.commit()
+        with plain_db._connection() as conn:
+            conn.execute(
+                "INSERT INTO calendar_events (id, uid, title, starts_at, ends_at, last_seen_at, subscription_revision, source_id) "
+                "VALUES ('ev-1', 'uid-weekly', 'Weekly', '2026-08-01', '2026-08-01', 0.0, 'r1', 'cal-1')",
+            )
+            conn.execute(
+                "INSERT INTO meetings (id, started_at, ended_at, title, calendar_event_id) "
+                "VALUES ('m-1', '2026-08-01T10:00:00', '2026-08-01T11:00:00', 'Weekly', 'ev-1')",
+            )
+            conn.execute(
+                "INSERT INTO action_items (id, meeting_id, task, owner, status) VALUES "
+                "('ai-1', 'm-1', 'Ship it', 'Jan', 'pending'), "
+                "('ai-2', 'm-1', 'Done', 'Jan', 'completed')",
+            )
 
         brief = service.one_on_one_brief(OWNER, rel["id"], db=plain_db)
         lm = brief["last_meeting"]

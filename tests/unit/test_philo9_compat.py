@@ -119,7 +119,8 @@ def test_the_http_routes_keep_their_envelopes_and_statuses(hub: Hub, room: dict[
         ("GET", f"/api/projects/{pid}/items", None, {"items", "limit", "offset"}),
         ("POST", f"/api/projects/{pid}/items", {"item_type": "milestone", "title": "M"}, {"success", "item"}),
         ("GET", f"/api/projects/{pid}/resources", None, {"resources"}),
-        ("GET", f"/api/projects/{pid}/updates", None, {"updates"}),
+        # PHILO-10: the envelope gained ``latest_published_update_id`` (additive).
+        ("GET", f"/api/projects/{pid}/updates", None, {"updates", "latest_published_update_id"}),
         ("PATCH", f"/api/projects/{pid}", {"description": "d"}, {"success", "project"}),
     ]
     for method, path, body, keys in ok:

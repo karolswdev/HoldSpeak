@@ -22,6 +22,7 @@
     },
     "last_refusal": null,
     "mic_label": "Me",
+    "parked": false,
     "planned_route": {
       "legs": [],
       "reason_code": "no assignment",
@@ -43,12 +44,14 @@
   },
   "list_row": {
     "action_item_count": 0,
+    "attendees": [],
     "calendar_event_id": null,
     "capture_checkpoint_seconds": 0.0,
     "capture_failure": null,
     "capture_status": "finalized",
     "duration_seconds": 0.0,
     "ended_at": null,
+    "has_summary": false,
     "id": "philo6-import-failed",
     "intel_duration_s": null,
     "intel_job": null,
@@ -57,6 +60,7 @@
     "intel_status_detail": "NO TRANSCRIPT LINES",
     "last_refusal": null,
     "needs_you_count": 0,
+    "parked": false,
     "planned_route": {
       "legs": [],
       "reason_code": "no assignment",
