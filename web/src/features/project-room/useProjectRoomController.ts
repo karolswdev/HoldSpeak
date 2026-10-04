@@ -206,7 +206,7 @@ export function useProjectRoomController(
   };
 
   const openProjectRef = (ref: string) => {
-    if (ref.startsWith("decision:")) {
+    if (ref.startsWith("decision:") || ref.startsWith("desk_decision:")) {
       wings.setView("decisions");
       return;
     }

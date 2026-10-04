@@ -43,6 +43,12 @@ export function openSourceRef(ref: string) {
       return;
     }
   }
+  // A desk decision's ref is `desk_decision:<id>` (memory, Send, a Project);
+  // the Desk store keeps its window under `decision:<id>`.
+  if (ref.startsWith("desk_decision:")) {
+    openPrimitive(`decision:${ref.slice("desk_decision:".length)}`);
+    return;
+  }
   openPrimitive(ref);
 }
 
