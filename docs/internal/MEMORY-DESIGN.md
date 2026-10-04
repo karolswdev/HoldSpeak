@@ -276,8 +276,20 @@ meeting-keyed and carries the meeting lease machinery.
 compares `(ref, content hash)` with `memory_sources`. A new or changed source
 gets jobs. A producer may call `wake()` after a write so the sweep runs at once;
 that is speed, not correctness. A missed hook can never lose a memory.
-Alternative: a hook in each of about 30 producers; refused, one forgotten hook
-is a silent hole.
+**Built (2026-10-04):** one seam, not a hook per producer. Every write ends in
+one `desk_changed` send (`RuntimeServices._send_desk_changed`,
+`runtime/composition.py`); that send gives `memory_conductor.wake()` the kind
+and id of each change.
+
+- **OFF costs nothing.** While `memory.embed` is unassigned a wake reads no
+  source (one row read of the assignment head).
+- **ON: the pass reads only what changed.** The conductor waits 2 s after a
+  wake (`WAKE_GAP_SECONDS`), then runs `sweep_refs` over the named sources
+  and embeds their chunks. N edits cost N source reads, whatever the size of
+  the desk. A change kind that memory does not hold gives no ref.
+- **The full sweep stays on the slow timer** (120 s) and on a changed
+  assignment. A wake never moves that timer. The full sweep is what keeps
+  correctness: a kind with no ref, a missed wake, the keyword-table scrub.
 
 | Source kind | Table | Wake after | Chunks | Facts |
 |---|---|---|---|---|
@@ -450,9 +462,43 @@ Reflect uses the existing `ask.answer` and `chat.turn`.
 model is trained for that cut). Prefixes `search_document:` and `search_query:`.
 
 - **How it runs:** in the hub process through `llama-cpp-python` in embedding
-  mode. No server, no egress; boundary `local`, lamp LOCAL. The model is a new
-  preset in the packaged catalogue (`inference_setup_catalog.py:33`), downloaded
-  by the existing acquisition flow.
+  mode. No server, no egress; boundary `local`, lamp LOCAL.
+- **How the hub gets the model (owner ruling 2026-10-04: no signing):** the
+  packaged catalogue is ed25519-signed and its key is not in the repository,
+  so this one model class has its own local, unsigned source
+  (`holdspeak/memory/local_model.py`). The hub adopts a copy on this device
+  (`~/.local/share/holdspeak/models/embed/`, `~/.cache/holdspeak-models/embed/`,
+  or `HOLDSPEAK_MEMORY_EMBED_MODEL`) or downloads the file from its public
+  Hugging Face URL at a pinned revision. The pinned sha256 is the integrity
+  check; no signature claim is made. A download continues a partial file. A
+  file with a different hash is renamed `.invalid` and is never used. The
+  signed catalogue is not changed.
+- **The row says what the press does.** "On this device" is said only for a
+  regular file whose sha256 is verified (hashed once, kept by path, size and
+  modification time). A file with the right size and a different hash is
+  shown as a download, and the press downloads.
+- **No symbolic links.** The hub writes only into its own model directory.
+  The directory, the `.part` file and the final file must not be links; the
+  part file is opened with `O_NOFOLLOW` (and `O_EXCL` when new). A link in
+  the directory stops the press before any request leaves. Only a regular
+  file is adopted.
+- **A download is egress and needs the press.** It starts only in
+  `MeaningSearchService.turn_on` (`POST /api/memory/meaning-search/turn-on`),
+  only when no copy with the pinned hash is on this device. Each download
+  request is one `external.egress` operation with a receipt (connector
+  `model-download`, destination `huggingface.co`, data class
+  `model_file_request`), for the owner who pressed.
+- **One step.** Turn on: get the file → make the profile → assign
+  `memory.embed` → wake the conductor. Turn off: clear the assignment; keyword
+  search continues. State (`GET /api/memory/meaning-search`): OFF, DOWNLOADING
+  n%, INDEXING n of m (chunks with a current vector, from the index), ON. The
+  download state is in the hub process: after a restart the state is OFF and
+  the partial file stays for the next press.
+- **The `embedding` claim.** `memory.embed` requires the capability class
+  `embedding`, so only a profile with that claim can be assigned to it. A
+  profile with the claim serves no other capability (`embedding_model_only`),
+  so the embedding model is not offered for chat. Not done: a product path to
+  put the claim on a remote endpoint profile (a LAN or cloud `/v1/embeddings`).
 - **How it is assigned:** the same assignment a chat capability has
   (`inference_assignment_service.py:382`). A remote OpenAI-compatible endpoint
   (`/v1/embeddings`; the owner's LAN llama.cpp, or a cloud key) is also a valid
@@ -680,7 +726,8 @@ sources; the top 50 is then a small part of them.
   `speech.transcribe` is a non-chat capability in the registry
   (`inference_capabilities.py:1063`); its runner path was not traced.
 - How a preset is added to the signed packaged catalogue
-  (`inference_setup_catalog.py:25-32` holds a trust root). Not traced.
+  (`inference_setup_catalog.py:25-32` holds a trust root). Not needed: the
+  embedding model has its own unsigned local source (section 4).
 - Whether a base install (no `meeting` extra) must embed. If yes,
   `llama-cpp-python` moves to core or the default becomes endpoint-only there.
 - The real size of the owner's desk. No real database was read. The scale in

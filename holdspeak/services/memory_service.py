@@ -14,6 +14,9 @@ class MemoryService:
     def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
         self._observer = observer or NullObserver()
+        #: ``MeaningSearchService`` (turn on / turn off / state), set where the
+        #: hub composes its services.  None outside a hub.
+        self.meaning: Any = None
 
     def search(
         self,

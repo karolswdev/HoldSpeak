@@ -16615,6 +16615,71 @@
         "summary": "Api Resolve Meeting Sync Conflict"
       }
     },
+    "/api/memory/meaning-search": {
+      "get": {
+        "description": "OFF / DOWNLOADING / INDEXING / ON for the Settings row.",
+        "operationId": "meaning_search_status_api_memory_meaning_search_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Meaning Search Status Api Memory Meaning Search Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Meaning Search Status",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/memory/meaning-search/turn-off": {
+      "post": {
+        "operationId": "meaning_search_turn_off_api_memory_meaning_search_turn_off_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Meaning Search Turn Off Api Memory Meaning Search Turn Off Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Meaning Search Turn Off",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/memory/meaning-search/turn-on": {
+      "post": {
+        "description": "The owner's press.  The only path that can start the model download.",
+        "operationId": "meaning_search_turn_on_api_memory_meaning_search_turn_on_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Meaning Search Turn On Api Memory Meaning Search Turn On Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Meaning Search Turn On",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
     "/api/memory/recall": {
       "get": {
         "description": "HS-200-13: the Desk memory face's one read -- CURRENT / SUPERSEDED /\nDISPUTED / OWED over one query (holdspeak/services/recall_service.py).\n\nHS-202-02: `recent=1` with no query answers the desk's newest memory,\nso the face named \"Desk memory\" is not a blank field on a desk that\nholds a meeting, decisions and a brief.",

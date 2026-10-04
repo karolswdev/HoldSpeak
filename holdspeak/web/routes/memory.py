@@ -63,4 +63,38 @@ def build_memory_router(ctx: WebContext) -> APIRouter:
             response = exc.context.get("response")
             return JSONResponse(response if isinstance(response, dict) else {"error": exc.detail}, status_code=int(exc.context.get("status") or 400))
 
+    def _meaning() -> Any:
+        meaning = getattr(service, "meaning", None)
+        if meaning is None:
+            raise ServiceError("meaning_search_unavailable", "Meaning search is not available on this hub.", context={"status": 503})
+        return meaning
+
+    def _meaning_error(exc: ServiceError) -> JSONResponse:
+        return JSONResponse(
+            {"code": exc.code, "message": exc.detail}, status_code=int(exc.context.get("status") or 400)
+        )
+
+    @router.get("/meaning-search")
+    async def meaning_search_status(request: Request) -> Any:
+        """OFF / DOWNLOADING / INDEXING / ON for the Settings row."""
+        try:
+            return JSONResponse(await run_in_threadpool(_meaning().status, request.state.principal))
+        except ServiceError as exc:
+            return _meaning_error(exc)
+
+    @router.post("/meaning-search/turn-on")
+    async def meaning_search_turn_on(request: Request) -> Any:
+        """The owner's press.  The only path that can start the model download."""
+        try:
+            return JSONResponse(await run_in_threadpool(_meaning().turn_on, request.state.principal))
+        except ServiceError as exc:
+            return _meaning_error(exc)
+
+    @router.post("/meaning-search/turn-off")
+    async def meaning_search_turn_off(request: Request) -> Any:
+        try:
+            return JSONResponse(await run_in_threadpool(_meaning().turn_off, request.state.principal))
+        except ServiceError as exc:
+            return _meaning_error(exc)
+
     return router

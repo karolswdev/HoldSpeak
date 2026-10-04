@@ -57,7 +57,7 @@ def desk(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         EmbeddingAdapter, "_local_model", staticmethod(lambda path: (model, threading.Lock()))
     )
-    _profile(db, "embed-model", model=MODEL)
+    _profile(db, "embed-model", model=MODEL, claims=("embedding",))
     _assign(db, MEMORY_EMBED_CAPABILITY, ["embed-model"])
     return SimpleNamespace(db=db, refs=refs, broker=broker, model=model, tmp_path=tmp_path)
 
@@ -211,7 +211,7 @@ def test_an_endpoint_search_keeps_caller_egress_and_boundary(desk, monkeypatch) 
     # The engine's egress path asks the process for its broker, as the hub does.
     monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
     broker = _configure(db)
-    _profile(db, "lan-embed", model=MODEL, boundary="private_network")
+    _profile(db, "lan-embed", model=MODEL, boundary="private_network", claims=("embedding",))
     _assign(db, MEMORY_EMBED_CAPABILITY, ["lan-embed"])
     fixture = FixtureModel()
     calls: list[int] = []

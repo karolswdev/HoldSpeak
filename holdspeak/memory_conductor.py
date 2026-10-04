@@ -16,7 +16,8 @@ database.
 from __future__ import annotations
 
 import threading
-from typing import Any, Optional
+import time
+from typing import Any, Iterable, Optional
 
 from .logging_config import get_logger
 
@@ -32,6 +33,9 @@ LOCAL_BATCH = 16
 LOCAL_PAUSE_SECONDS = 0.25
 REMOTE_BATCH = 64
 STOP_JOIN_SECONDS = 60.0
+#: Seconds the conductor waits after a wake before it runs.  A write that
+#: touches many objects (or many writes close together) is then one tick.
+WAKE_GAP_SECONDS = 2.0
 
 _conductor: Optional["MemoryWorker"] = None
 _lock = threading.Lock()
@@ -43,12 +47,35 @@ def _principal() -> Any:
     return Principal(PrincipalKind.OWNER, "memory-conductor")
 
 
-def tick(db: Any, broker: Any, *, should_stop: Any = None) -> dict[str, Any]:
-    """One pass: sweep, find the engine, embed.  Returns what it did."""
-    from .memory.engine import resolve_embedder
-    from .memory.retain import embed_pending, sweep
+def _assigned(db: Any) -> bool:
+    """True when ``memory.embed`` has its own assignment now (one row read)."""
+    from .memory.engine import _assignment_head
 
-    report: dict[str, Any] = {"swept": sweep(db), "engine": "", "embedded": 0, "error": ""}
+    with db._connection() as conn:
+        return _assignment_head(conn) is not None
+
+
+def tick(
+    db: Any, broker: Any, *, should_stop: Any = None, refs: Optional[Iterable[str]] = None
+) -> dict[str, Any]:
+    """One pass: sweep, find the engine, embed.  Returns what it did.
+
+    ``refs`` is None on the slow timer: the full sweep.  A wake gives the
+    refs of the sources that changed, and the pass reads only those: its
+    work is proportional to the number of changes, not to the desk.  A wake
+    while ``memory.embed`` is unassigned does no work at all; the slow full
+    sweep keeps the chunk index (and the keyword tables) current.
+    """
+    from .memory.engine import resolve_embedder
+    from .memory.retain import embed_pending, sweep, sweep_refs
+
+    if refs is not None:
+        if not _assigned(db):
+            return {"swept": {}, "engine": "", "embedded": 0, "error": "", "skipped": 1}
+        swept = sweep_refs(db, refs)
+    else:
+        swept = sweep(db)
+    report: dict[str, Any] = {"swept": swept, "engine": "", "embedded": 0, "error": ""}
     try:
         embedder = resolve_embedder(broker, _principal())
     except Exception as exc:  # a route that cannot resolve is "no engine"
@@ -77,8 +104,9 @@ def tick(db: Any, broker: Any, *, should_stop: Any = None) -> dict[str, Any]:
             pause_seconds=LOCAL_PAUSE_SECONDS if local else 0.0,
             should_stop=should_stop,
         )
-        # The new model's set is complete: the old model's vectors can go.
-        db.memory_index.drop_other_models(embedder.model_id)
+        if refs is None:
+            # The new model's set is complete: the old model's vectors can go.
+            db.memory_index.drop_other_models(embedder.model_id)
     except Exception as exc:
         report["error"] = str(exc)
         log.info("memory embed pass stopped; the next tick goes on: %s", exc)
@@ -90,6 +118,11 @@ class MemoryWorker:
         self.poll_seconds = max(5.0, float(poll_seconds))
         self._stop = threading.Event()
         self._wake = threading.Event()
+        self._changes_lock = threading.Lock()
+        #: Refs of the sources that changed since the last pass.
+        self._changed: set[str] = set()
+        #: A wake with no named change (the assignment changed): a full pass.
+        self._full = False
         self._thread = threading.Thread(target=self._run, name="memory-conductor", daemon=True)
         self.last_report: dict[str, Any] = {}
 
@@ -100,7 +133,12 @@ class MemoryWorker:
     def is_alive(self) -> bool:
         return self._thread.is_alive()
 
-    def wake(self) -> None:
+    def wake(self, refs: Optional[Iterable[str]] = None) -> None:
+        with self._changes_lock:
+            if refs is None:
+                self._full = True
+            else:
+                self._changed.update(refs)
         self._wake.set()
 
     def stop(self, timeout: float = STOP_JOIN_SECONDS) -> None:
@@ -109,20 +147,41 @@ class MemoryWorker:
         if self._thread.is_alive():
             self._thread.join(timeout)
 
-    def _run(self) -> None:
-        while not self._stop.is_set():
-            wait = self.poll_seconds
-            try:
-                from .db import get_database
-                from .kernel.runtime import _service
+    def _take(self) -> tuple[bool, list[str]]:
+        with self._changes_lock:
+            full, refs = self._full, sorted(self._changed)
+            self._full = False
+            self._changed.clear()
+        return full, refs
 
-                self.last_report = tick(get_database(), _service(), should_stop=self._stop.is_set)
-                if self.last_report.get("error"):
-                    wait = min(wait, RETRY_SECONDS)
+    def _run(self) -> None:
+        from .db import get_database
+        from .kernel.runtime import _service
+
+        next_full = 0.0  # the first pass is a full one
+        while not self._stop.is_set():
+            retry = False
+            try:
+                full, refs = self._take()
+                if full or time.monotonic() >= next_full:
+                    # The slow timer (or a changed assignment): the full sweep.
+                    self.last_report = tick(get_database(), _service(), should_stop=self._stop.is_set)
+                    next_full = time.monotonic() + self.poll_seconds
+                elif refs:
+                    report = tick(
+                        get_database(), _service(), should_stop=self._stop.is_set, refs=refs
+                    )
+                    if not report.get("skipped"):
+                        self.last_report = report
+                retry = bool(self.last_report.get("error"))
             except Exception as exc:  # the thread must not die on one bad tick
                 log.warning("memory conductor tick failed: %s", exc)
-                wait = min(wait, RETRY_SECONDS)
-            self._wake.wait(wait)
+                retry = True
+            if retry:
+                next_full = min(next_full, time.monotonic() + RETRY_SECONDS)
+            # A wake never moves the slow timer: the full sweep stays on it.
+            if self._wake.wait(max(0.0, next_full - time.monotonic())):
+                self._stop.wait(WAKE_GAP_SECONDS)
             self._wake.clear()
 
 
@@ -162,11 +221,30 @@ def stop_memory_conductor(*, timeout: float = STOP_JOIN_SECONDS) -> None:
         )
 
 
-def wake() -> None:
-    """Ask for a tick now.  Speed only: the next tick sees the source anyway."""
+def last_report() -> dict[str, Any]:
+    """What the last tick did, or {} when no conductor runs here."""
     worker = _conductor
-    if worker is not None:
+    return dict(worker.last_report) if worker is not None else {}
+
+
+def wake(changes: Optional[Iterable[tuple[str, str]]] = None) -> None:
+    """Ask for a pass now.  Speed only: the slow full sweep sees every source.
+
+    ``changes`` is the ``(kind, id)`` list of one ``desk_changed`` frame: the
+    pass then reads only those sources.  With no ``changes`` (the assignment
+    changed) the pass is a full one.
+    """
+    worker = _conductor
+    if worker is None:
+        return
+    if changes is None:
         worker.wake()
+        return
+    from .memory.retain import refs_for_change
+
+    refs = [ref for kind, resource_id in changes for ref in refs_for_change(kind, resource_id)]
+    if refs:
+        worker.wake(refs)
 
 
-__all__ = ["MemoryWorker", "start_memory_conductor", "stop_memory_conductor", "tick", "wake"]
+__all__ = ["MemoryWorker", "last_report", "start_memory_conductor", "stop_memory_conductor", "tick", "wake"]
