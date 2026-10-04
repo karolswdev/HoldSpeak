@@ -346,7 +346,10 @@ class TestArrivalProposals:
             initial_count = confirm_btns.count()
             assert initial_count >= 1, "No Confirm buttons to click"
 
-            headline_text = headline.text_content() or ""
+            before = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
+            proposals_before = {
+                row["id"]: row["title"] for row in before["items"] if row.get("source") == "proposal"
+            }
 
             confirm_btns.first.click()
 
@@ -358,9 +361,28 @@ class TestArrivalProposals:
                 f"Confirm count didn't drop: {initial_count} -> {new_count}"
             )
 
-            new_headline = headline.text_content() or ""
-            assert new_headline != headline_text or initial_count == 1, (
-                f"Headline unchanged after confirm: {new_headline}"
+            # Since #788 the hub's one rule counts the Door's asking columns.
+            # A confirmed proposal becomes an action item with no owner: its
+            # proposal row leaves and its Door card (UNASSIGNED) joins. The
+            # number can stay the same; the headline is the hub's number.
+            after = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
+            proposals_after = {
+                row["id"]: row["title"] for row in after["items"] if row.get("source") == "proposal"
+            }
+            left = set(proposals_before) - set(proposals_after)
+            assert len(left) == 1 and not set(proposals_after) - set(proposals_before), (
+                proposals_before, proposals_after,
+            )
+            confirmed_title = proposals_before[left.pop()]
+            door_rows = [
+                row for row in after["items"]
+                if row.get("source") == "action_item" and row["title"] == confirmed_title
+            ]
+            assert [row["why"] for row in door_rows] == ["UNASSIGNED"], after["items"]
+            assert door_rows[0]["ref"] in {member["ref"] for member in after["members"]}
+            new_headline = (headline.text_content() or "").strip()
+            assert new_headline.startswith(f"{after['count']} need"), (
+                f"Headline is not the hub's number {after['count']}: {new_headline}"
             )
 
             result = _api(page, "GET",

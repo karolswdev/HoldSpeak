@@ -384,23 +384,34 @@ class TestOneThing:
     # ── an unknown is never drawn as a clear desk (Astra finding 3) ──
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
-    def test_unknown_setup_is_its_own_row(self, width: int) -> None:
+    def test_unknown_setup_is_its_own_row(
+        self, width: int, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         from playwright.sync_api import sync_playwright
+
+        import holdspeak.services.needs_you_membership as membership
 
         SHOTS.mkdir(parents=True, exist_ok=True)
         errors: list[str] = []
+
+        # The roster read fails. Since #788 the hub applies the needs-you
+        # rule and reads the roster itself (the browser's own roster request
+        # no longer decides the row), so the failure is made where the read
+        # is: the hub's `_read_assignments`. The rest of the path is real:
+        # `compose` names the failed source, the route answers, the Chair
+        # draws the hub's `unknown` blocker.
+        def roster_unreadable(db, principal):
+            raise RuntimeError("the roster read failed")
+
+        monkeypatch.setattr(membership, "_read_assignments", roster_unreadable)
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
             page = browser.new_page(viewport={"width": width, "height": 900})
             page.emulate_media(reduced_motion="reduce")
             page.on("pageerror", lambda err: errors.append(str(err)))
 
-            # The roster read fails. The Chair knows nothing about the
-            # meeting path, and an unknown is not a clear desk.
-            page.route(
-                "**/api/inference/assignments",
-                lambda route: route.abort(),
-            )
+            # The Chair knows nothing about the meeting path, and an unknown
+            # is not a clear desk.
             _arrive(page, self.base)
 
             section = page.locator("[data-testid='arrival-blocker']")
