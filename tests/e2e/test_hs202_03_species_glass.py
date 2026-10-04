@@ -175,27 +175,33 @@ def _library_species(
 TOUCH = 44.0
 
 
-def _strip_targets(page: Any, selector: str, *, subject: str) -> list[dict]:
+def _strip_targets(page: Any, selector: str, *, subject: str, pager: str | None = None) -> list[dict]:
     """Every row of a strip is a 44px target, and no two rows overlap.
 
     Measured at 393 only. Bounding boxes, not CSS: a `min-height` that a
     flex parent squashes is not a target, and only the box on the glass
     says so.
+
+    `pager` names a gadget that is pinned over a paged shelf (the Dock's
+    More AppIcons, `dock.css` `.desk-dock > .desk-dock-more`, sticky at the
+    right edge: PHILO-13-17 C7). The next page's rows are under it on
+    purpose, so it is a 44px target but is not held to the overlap rule.
     """
     rows = page.evaluate(
-        """(sel) => Array.from(document.querySelectorAll(sel)).map(el => {
+        """([sel, pager]) => Array.from(document.querySelectorAll(sel)).map(el => {
              const r = el.getBoundingClientRect();
              return {
                label: (el.getAttribute('aria-label') || el.textContent || '')
                         .trim().slice(0, 26),
                classes: Array.from(el.classList).join(' '),
+               pager: !!pager && el.matches(pager),
                chrome: el.classList.contains('btn--chrome'),
                h: Math.round(r.height * 10) / 10,
                w: Math.round(r.width * 10) / 10,
                top: r.top, bottom: r.bottom, left: r.left, right: r.right,
              };
            })""",
-        selector,
+        [selector, pager],
     )
     assert rows, f"{subject}: nothing matched {selector!r}"
     short = [r for r in rows if r["h"] < TOUCH]
@@ -213,6 +219,8 @@ def _strip_targets(page: Any, selector: str, *, subject: str) -> list[dict]:
     overlaps = []
     for i, a in enumerate(rows):
         for b in rows[i + 1:]:
+            if a["pager"] or b["pager"]:
+                continue
             dx = min(a["right"], b["right"]) - max(a["left"], b["left"])
             dy = min(a["bottom"], b["bottom"]) - max(a["top"], b["top"])
             if dx > 1 and dy > 1:
@@ -298,14 +306,21 @@ class TestSharedControlsAreSpecies:
             # ── the dock: every chip is the species ────────────────────
             _library_species(page, ".desk-dock button", subject="the dock")
             if width <= 720:
-                _strip_targets(page, ".desk-dock button", subject="the dock")
+                _strip_targets(page, ".desk-dock button", subject="the dock",
+                               pager=".desk-dock-more")
             _shot(page, f"dock-{tag}.png")
 
             # ── the dock tab-walks in DOM order, every stop with a ring ─
             order = page.evaluate(
+                # Every Tab stop of the dock in DOM order: the AppIcons, the
+                # nested gadgets, and at 393 the More AppIcons gadget (last in
+                # the DOM; `display: none` at 1440, dock.css). Only the stops
+                # on the glass: a button that is not drawn takes no Tab.
                 """() => Array.from(
-                     document.querySelectorAll('.desk-dock > button')
-                   ).map(el => (el.getAttribute('aria-label') || '').trim())"""
+                     document.querySelectorAll('.desk-dock button')
+                   ).filter(el => el.checkVisibility() && !el.disabled && el.tabIndex >= 0)
+                    .map(el => (el.getAttribute('aria-label') || el.textContent || '')
+                                 .trim().slice(0, 40))"""
             )
             assert len(order) >= 3, order
             _tab_into(page, ".desk-dock")
@@ -403,7 +418,8 @@ class TestSharedControlsAreSpecies:
                     "the dock drew no overview/reset keys with a window "
                     "open: those targets were NOT ASSESSED"
                 )
-                _strip_targets(page, ".desk-dock button", subject="the dock, with a window open")
+                _strip_targets(page, ".desk-dock button", subject="the dock, with a window open",
+                               pager=".desk-dock-more")
                 _shot(page, f"wings-{tag}.png")
                 before = strip.text_content().strip()
                 ring = _tab_into(page, ".desk-wings")
@@ -456,6 +472,7 @@ class TestSharedControlsAreSpecies:
                     _strip_targets(
                         page, ".desk-dock button",
                         subject="the dock, with a window open",
+                        pager=".desk-dock-more",
                     )
                 _shot(page, f"wings-{tag}.png")
                 stops = page.evaluate(
