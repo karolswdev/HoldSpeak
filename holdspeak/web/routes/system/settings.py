@@ -161,6 +161,11 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             engines = 0
             groups_set = 0
             default_set = False
+            # Inventory 2026-10-03 (UX-CANON A.10): the hub rows said
+            # "Voice LIVE" and "SUMMARY SET ON" with no engine assigned. A
+            # switch is not a working path; each row also carries whether its
+            # group has an engine (its own assignment or the default).
+            group_engine: dict[str, bool] = {}
             if ctx.model_library_service is not None:
                 try:
                     lib = ctx.model_library_service.get_library(p)
@@ -177,6 +182,8 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                             default_set = row.get("status") == "assigned"
                         elif row.get("status") == "assigned":
                             groups_set += 1
+                        if row.get("id"):
+                            group_engine[str(row["id"])] = row.get("status") == "assigned"
                 except Exception:
                     pass
 
@@ -264,9 +271,14 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                     "defaultSet": default_set,
                 },
                 "connections": {"connected": connected},
-                "voice": {"live": voice_live, "target": voice_target},
+                "voice": {
+                    "live": voice_live,
+                    "target": voice_target,
+                    "engineSet": group_engine.get("speech_recognition", False),
+                },
                 "meetings": {
                     "intelligence": intel_on,
+                    "engineSet": group_engine.get("meetings", False),
                     "auto": config.meeting.intelligence_auto,
                     "auto_record": config.meeting.auto_record,
                     "host": _resolve_meetings_host(config),

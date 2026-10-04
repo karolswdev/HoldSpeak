@@ -339,8 +339,10 @@ export function DeskModule() {
 export type SettingsHubWire = {
   models: { engines: number; groupsSet: number; defaultSet: boolean };
   connections: { connected: number };
-  voice: { live: boolean; target: string };
-  meetings: { intelligence: boolean; auto?: string; host?: string; lastRunAt?: string | null; lastRunS?: number | null };
+  /** `engineSet`: the group resolves to an engine (its own or the default).
+   *  A switch that is on with no engine is not a working path (A.10). */
+  voice: { live: boolean; target: string; engineSet?: boolean };
+  meetings: { intelligence: boolean; engineSet?: boolean; auto?: string; host?: string; lastRunAt?: string | null; lastRunS?: number | null };
   rhythm: {
     loops: number;
     sweepEveryMinutes?: number;
@@ -493,10 +495,14 @@ export function PrefsFace({
           onToggle={() => onOpen("voice")}
           trailing={openVerb("voice")}
           cells={<>
-            {hub.voice.live
-              ? <StateChip state="success" label="LIVE" />
-              : null}
-            {hub.voice.live && hub.voice.target
+            {/* Inventory 2026-10-03: this row said LIVE with no speech engine
+                while Speak said NOT SET. LIVE needs the switch and an engine. */}
+            {hub.voice.live && hub.voice.engineSet === false
+              ? <StateChip state="warning" label="NO ENGINE" />
+              : hub.voice.live
+                ? <StateChip state="success" label="LIVE" />
+                : null}
+            {hub.voice.live && hub.voice.engineSet !== false && hub.voice.target
               ? <span className="surface-token" data-chip>{hub.voice.target.toUpperCase()}</span>
               : null}
           </>}
@@ -516,7 +522,12 @@ export function PrefsFace({
                 says SET; whether an engine can run now is the Chair's fact
                 ("No engine for summaries"), and a stored summary is the
                 record's. No green: a setting is not a result (A.10). */}
-            {hub.meetings.intelligence
+            {/* Inventory 2026-10-03: with the switch on and no engine the row
+                said SET ON beside the headline "No default model". The row
+                names the missing engine, as the Chair does. */}
+            {hub.meetings.intelligence && hub.meetings.engineSet === false
+              ? <StateChip state="warning" label="SUMMARY · NO ENGINE" />
+              : hub.meetings.intelligence
               ? <StateChip state="idle" label={`SUMMARY SET ON${hub.meetings.auto && hub.meetings.auto !== "off" ? ` · ${autoLabel(hub.meetings.auto)}` : ""}`} />
               : <StateChip state="warning" label="SUMMARY SET OFF" />}
           </>}

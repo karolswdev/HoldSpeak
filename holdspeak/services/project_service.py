@@ -1103,6 +1103,15 @@ class ProjectService:
         except Exception as exc:
             _log.warning("room commitments as attention failed for %s: %s", project_id, exc)
 
+        # Inventory 2026-10-03 (UX-CANON A.10): a Room read "Clear here /
+        # Nothing open" while its meeting had an open action with no owner
+        # (the Chair showed the same action as needing an owner). The Room's
+        # meetings' open actions are open here.
+        try:
+            needs.extend(self._room_meeting_action_items(project_id, now))
+        except Exception as exc:
+            _log.warning("room meeting actions as attention failed for %s: %s", project_id, exc)
+
         # HS-173: review bottleneck items (resolved reviewers whose median
         # exceeds the threshold get a NEEDS YOU row).
         try:
@@ -1295,6 +1304,70 @@ class ProjectService:
                 "owner": owner,
                 "unknowns": unknowns,
                 "next_action": next_action,
+            })
+        return items
+
+    def _room_meeting_action_items(self, project_id: str, now: datetime) -> list[dict[str, Any]]:
+        """Open actions from the Room's meetings, as attention rows.
+
+        The same set the follow-through board reads for this project
+        (``FollowThroughService._action_rows``): actions of the Room's
+        meetings that are not parked and not settled. An action that a
+        decision commitment owns is left to ``_room_commitment_items`` (one
+        obligation, one row). The Desk reads these actions through the
+        follow-through board, so the Desk aggregate skips this kind.
+        """
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                """SELECT a.id, a.task, a.owner, a.due, a.status, a.created_at,
+                          a.meeting_id, m.title AS meeting_title
+                   FROM action_items a
+                   JOIN meeting_projects mp ON mp.meeting_id = a.meeting_id
+                   JOIN meetings m ON m.id = a.meeting_id
+                   WHERE mp.project_id = ? AND m.parked = 0
+                     AND NOT EXISTS (SELECT 1 FROM decision_commitments dc
+                                     WHERE dc.action_item_id = a.id)
+                   ORDER BY a.created_at ASC""",
+                (project_id,),
+            ).fetchall()
+        items: list[dict[str, Any]] = []
+        today = now.date()
+        for row in rows:
+            if str(row["status"] or "").lower() in self._COMMITMENT_SETTLED:
+                continue
+            owner = (row["owner"] or "").strip() or None
+            due_at = (str(row["due"] or "")).strip() or None
+            due_date = None
+            if due_at:
+                try:
+                    due_date = datetime.fromisoformat(due_at.replace("Z", "+00:00").split("T")[0]).date()
+                except (ValueError, TypeError):
+                    due_date = None
+            overdue_days = (today - due_date).days if due_date is not None else 0
+            if due_date is not None and overdue_days > 0:
+                why, severity = f"OVERDUE · {overdue_days} D", "danger"
+            elif due_date is not None and overdue_days == 0:
+                why, severity = "DUE TODAY", "warning"
+            elif not owner:
+                why, severity = "OWNER · UNKNOWN", "warning"
+            elif not due_at:
+                why, severity = "DUE · UNKNOWN", "info"
+            else:
+                why, severity = f"WAITING ON {owner.upper()}", "info"
+            items.append({
+                "source": "meeting",
+                "kind": "action_item",
+                "title": str(row["task"] or "").strip() or "Untitled action",
+                "why": why,
+                "since": str(row["created_at"] or ""),
+                "due_at": due_at,
+                "url": None,
+                "verb": "open",
+                "severity": severity,
+                "action_item_id": str(row["id"]),
+                "meeting_id": str(row["meeting_id"] or ""),
+                "meeting_title": str(row["meeting_title"] or ""),
+                "owner": owner,
             })
         return items
 
