@@ -4,6 +4,7 @@
 // The lane vocabulary is PARKED; the arrival composes directly from
 // the surface library and the needs-you wire.
 
+import { wireDate } from "../surface/format";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chair } from "./Chair";
 import { ChairDesk } from "./ChairDesk";
@@ -250,8 +251,8 @@ const MONTHS = [
 ];
 
 function ledgerDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(iso);
+  if (!d) return "";
   return `${MONTHS[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")}`;
 }
 
@@ -383,8 +384,8 @@ function nextLine(next: NeedsYouPayload["next"] & { room?: string } | null): str
 
 /** Format event time: HH:MM for today, DOW HH:MM for other days. */
 function formatEventTime(startsAt: string): string {
-  const d = new Date(startsAt);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(startsAt);
+  if (!d) return "";
   const hh = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
   const now = new Date();
@@ -399,8 +400,8 @@ function formatEventTime(startsAt: string): string {
 
 /** Format arms_at ISO to local HH:MM. */
 function formatArmsTime(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(iso);
+  if (!d) return "";
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
