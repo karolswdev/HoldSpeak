@@ -17,6 +17,11 @@ Contract:
   a query.
 - Memory is an enrichment, never a precondition.  No index, no hits or any
   read failure give the empty context, and the drafter runs as it did before.
+- Every ref it returns is one the Desk opens (``DESK_REF_KINDS``; fenced by
+  ``web/src/desk/__tests__/memoryRefsOpen.test.ts`` against the real opener).
+  A source with no Desk window is left out.
+- The size is bounded whole: each rendered excerpt (ref, title and text) and
+  the complete block.
 """
 from __future__ import annotations
 
@@ -29,21 +34,59 @@ from ..logging_config import get_logger
 log = get_logger("memory_grounding")
 
 MEMORY_MAX_EXCERPTS = 8
-MEMORY_EXCERPT_CHARS = 600
+MEMORY_EXCERPT_CHARS = 600   # one rendered excerpt: ref, title and text
+MEMORY_TITLE_CHARS = 120
+MEMORY_BLOCK_CHARS = 5200    # the complete block, heading lines included
 MEMORY_BLOCK_HEADING = "MEMORY"
+_CUT = " [cut]"
 
-# The same record under the two names the product uses for it.  A drafter's
-# own inventory says ``action_item:`` / ``item:``; memory says ``action:`` /
-# ``project_item:``.  Exclusion compares on the memory name.
-_REF_KIND_ALIASES = {"action_item": "action", "item": "project_item"}
+# The ref kinds this helper returns: the names the Desk opens
+# (web/src/desk/openObject.ts ``refOpener``).  The web test
+# ``memoryRefsOpen.test.ts`` reads this tuple from this file and puts every
+# kind through the real opener; keep it one flat tuple of string literals.
+DESK_REF_KINDS = ("meeting", "note", "artifact", "thread", "decision", "desk_decision", "action_item")
+
+# Memory's name for a source -> the name the Desk opens.  A kind that is in
+# neither this map nor ``DESK_REF_KINDS`` has no Desk window and is left out.
+_DESK_KIND = {"action": "action_item", "transcript": "meeting"}
+
+# The same record under the other names the product uses for it.  A drafter's
+# inventory says ``action_item:`` / ``item:`` / ``decision:``; memory says
+# ``action:`` / ``project_item:`` / ``decision_record:`` or ``desk_decision:``.
+# Exclusion covers every name, so it works before the selection limit.
+_EXCLUDE_ALIASES = {
+    "action_item": ("action",),
+    "action": ("action_item",),
+    "item": ("project_item",),
+    "meeting": ("transcript",),
+    "transcript": ("meeting",),
+    "decision": ("decision_record", "desk_decision"),
+    "decision_record": ("decision",),
+    "desk_decision": ("decision",),
+}
 
 
-def _canonical(ref: str) -> str:
+def _split(ref: str) -> tuple[str, str]:
     kind, sep, rest = str(ref or "").strip().partition(":")
-    if not sep:
-        return str(ref or "").strip()
-    kind = kind.strip().lower()
-    return f"{_REF_KIND_ALIASES.get(kind, kind)}:{rest.split('#', 1)[0].strip()}"
+    return (kind.strip().lower(), rest.split("#", 1)[0].strip()) if sep else ("", "")
+
+
+def _exclusion_names(refs: Iterable[str]) -> set[str]:
+    names: set[str] = set()
+    for ref in refs:
+        kind, rest = _split(ref)
+        if not kind or not rest:
+            continue
+        names.add(f"{kind}:{rest}")
+        names.update(f"{alias}:{rest}" for alias in _EXCLUDE_ALIASES.get(kind, ()))
+    return names
+
+
+def _clip(text: str, cap: int) -> str:
+    text = " ".join(str(text or "").split())
+    if len(text) <= cap:
+        return text
+    return text[: max(0, cap - len(_CUT))].rstrip() + _CUT
 
 
 @dataclass(frozen=True)
@@ -56,11 +99,9 @@ class MemoryExcerpt:
     text: str
 
     def line(self) -> str:
-        body = " ".join(self.text.split())
-        title = " ".join(self.title.split())
-        if title and body and body != title and not body.startswith(title):
-            return f"- {self.ref}: {title} -- {body}"
-        return f"- {self.ref}: {body or title}"
+        if self.title and self.text:
+            return f"- {self.ref}: {self.title} -- {self.text}"
+        return f"- {self.ref}: {self.text or self.title}"
 
 
 @dataclass(frozen=True)
@@ -95,15 +136,26 @@ EMPTY_MEMORY = MemoryContext()
 
 
 def _excerpt(block: GroundingBlock, cap: int) -> MemoryExcerpt | None:
-    text = str(block.text or "").strip()
-    title = str(block.title or "").strip()
+    """One block as a Desk-openable excerpt whose RENDERED line fits ``cap``."""
+    kind = _DESK_KIND.get(block.kind, block.kind)
+    if kind not in DESK_REF_KINDS:
+        return None  # no Desk window opens it: not a citable source
+    ref = f"{kind}:{str(block.ref).split('#', 1)[0]}"
+    prefix = len(f"- {ref}: ")
+    if cap - prefix <= len(_CUT):
+        return None  # the bound has no room for any words
+    title = _clip(block.title, min(MEMORY_TITLE_CHARS, cap - prefix))
+    text = " ".join(str(block.text or "").split())
+    if text == title or (title and text.startswith(title) and len(text) <= len(title) + 1):
+        text = ""
     if not text and not title:
         return None
-    if len(text) > cap:
-        text = text[:cap].rstrip() + " [cut]"
-    return MemoryExcerpt(
-        ref=f"{block.kind}:{block.ref}", kind=block.kind, title=title, text=text,
-    )
+    # "- <ref>: <title> -- <text>": the text takes what the line has left.
+    room = cap - prefix - (len(title) + len(" -- ") if title else 0)
+    text = _clip(text, room) if text and room > len(_CUT) else ""
+    if not text and not title:
+        return None
+    return MemoryExcerpt(ref=ref, kind=kind, title=title, text=text)
 
 
 def memory_context(
@@ -114,6 +166,7 @@ def memory_context(
     exclude_refs: Iterable[str] = (),
     max_excerpts: int = MEMORY_MAX_EXCERPTS,
     excerpt_chars: int = MEMORY_EXCERPT_CHARS,
+    block_chars: int = MEMORY_BLOCK_CHARS,
 ) -> MemoryContext:
     """Read memory for one scope with the grounding call Ask uses.
 
@@ -125,7 +178,7 @@ def memory_context(
     question = " ".join(str(query or "").split())
     if not project and not question:
         return EMPTY_MEMORY
-    excluded = {_canonical(ref) for ref in exclude_refs if str(ref).strip()}
+    excluded = _exclusion_names(exclude_refs)
     scope = [f"project:{project}"] if project else None
 
     passes: list[str | None] = []
@@ -136,6 +189,8 @@ def memory_context(
 
     excerpts: list[MemoryExcerpt] = []
     seen: set[str] = set(excluded)
+    # The whole block is bounded: the two marker lines, then each line.
+    used = 2 * (len(MEMORY_BLOCK_HEADING) + 16)
     for pass_query in passes:
         try:
             result = hydrate_refs_detailed(
@@ -143,16 +198,21 @@ def memory_context(
                 qualified_refs=scope,
                 query=pass_query,
                 include_memory=True,
-                exclude_refs=sorted(excluded),
+                # Applied by grounding BEFORE its selection limit.
+                exclude_refs=sorted(seen),
             )
         except Exception as exc:  # memory never fails a drafter
             log.warning("memory read failed (%s); the drafter runs without it", exc)
             continue
         for block in result.blocks:
             excerpt = _excerpt(block, excerpt_chars)
-            if excerpt is None or _canonical(excerpt.ref) in seen:
+            if excerpt is None or excerpt.ref in seen:
                 continue
-            seen.add(_canonical(excerpt.ref))
+            cost = len(excerpt.line()) + 1
+            if used + cost > block_chars:
+                return MemoryContext(tuple(excerpts))
+            used += cost
+            seen.update(_exclusion_names([excerpt.ref]))
             excerpts.append(excerpt)
             if len(excerpts) >= max_excerpts:
                 return MemoryContext(tuple(excerpts))

@@ -166,6 +166,11 @@ def hydrate_refs_detailed(
         "overflow_count": 0,
     }
     visited: set[str] = set()
+    excluded = {
+        str(ref).split("#", 1)[0]
+        for ref in (exclude_refs or [])
+        if str(ref).strip()
+    }
     for mid in meeting_ids:
         try:
             state = db.meetings.get_meeting(mid)
@@ -228,7 +233,8 @@ def hydrate_refs_detailed(
             unknown.append(str(raw_ref))
             continue
         more, missing = _hydrate_qualified(
-            db, ref, expand, visited, query=query, stats=stats
+            db, ref, expand, visited, query=query, stats=stats,
+            exclude_refs=excluded,
         )
         blocks.extend(more)
         unknown.extend(missing)
@@ -251,11 +257,6 @@ def hydrate_refs_detailed(
         and not has_project_ref
         and not has_explicit_sources
     ):
-        excluded = {
-            str(ref).split("#", 1)[0]
-            for ref in (exclude_refs or [])
-            if str(ref).strip()
-        }
         search = memory.search(
             str(query),
             limit=GROUNDING_MAX_REFS + len(excluded),
@@ -324,6 +325,7 @@ def _hydrate_qualified(
     *,
     query: Optional[str] = None,
     stats: Optional[dict[str, Any]] = None,
+    exclude_refs: Optional[set[str]] = None,
 ) -> tuple[list[GroundingBlock], list[str]]:
     if ref in visited:
         return [], []
@@ -380,7 +382,13 @@ def _hydrate_qualified(
     if kind == "decision":
         decision = db.decisions.get(resource_id)
         if decision is None:
-            return [], [ref]
+            # A desk decision filed under the old ref name (`decision:<id>`,
+            # the Decide button before 2026-10-03) reads as what it is.
+            blocks, missing = _hydrate_qualified(
+                db, f"desk_decision:{resource_id}", expand, visited,
+                query=query, stats=stats,
+            )
+            return blocks, ([ref] if missing else [])
         rationale = f"\n\nRationale: {decision.rationale}" if decision.rationale else ""
         return [
             GroundingBlock(
@@ -514,10 +522,13 @@ def _hydrate_qualified(
         # No index on this handle: fall through to the relationship listing
         # below, which is the honest recency answer rather than an error.
         if memory is not None and query and str(query).strip():
+            # Exclusions (what the caller already holds) apply BEFORE the
+            # selection limit, so they never use up the bounded slots.
             search = memory.search(
                 str(query),
                 project_id=resource_id,
                 limit=GROUNDING_MAX_REFS,
+                exclude_refs=exclude_refs or (),
             )
             # HS-200-10 (F0/L3): the second relevance call site.  Applied to
             # the RELEVANCE branch only.  The `recency_fallback` branch below
@@ -536,6 +547,7 @@ def _hydrate_qualified(
             all_members = [
                 row.resource_ref
                 for row in db.project_relationships.list_for_project(resource_id)
+                if str(row.resource_ref).split("#", 1)[0] not in (exclude_refs or ())
             ]
             members = all_members[:GROUNDING_MAX_REFS]
             if stats is not None:
