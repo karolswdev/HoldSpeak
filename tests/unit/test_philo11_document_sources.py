@@ -64,8 +64,9 @@ def test_real_producers_render_all_nine_sources(db, tmp_path: Path) -> None:
         assert document.label.strip(), kind
 
     brief = rendered["monday_brief"].body_md
-    assert "Avery" in brief
-    assert "You owe: 1" in brief
+    # Inventory gap 5 (2026-10-03): the sent Brief carries no People data.
+    assert "Avery" not in brief
+    assert "You owe" not in brief and "## People" not in brief
     assert "Check the frozen bytes" in brief
     assert "acknowledged" not in brief.lower()
     assert "deferred" not in brief.lower()
@@ -109,12 +110,12 @@ def test_real_producers_render_all_nine_sources(db, tmp_path: Path) -> None:
     assert "## Still open" in rendered["meeting_digest"].body_md
     assert "Follow-up" in rendered["meeting_followup"].body_md
     contract_brief = contract_render_document(db, refs["monday_brief"])
-    assert "Avery" in contract_brief.body_md
+    assert "Avery" not in contract_brief.body_md
     for kind, ref in refs.items():
         assert contract_render_document(db, ref).body_md.strip(), kind
 
 
-def test_monday_brief_names_unavailable_people_once(
+def test_monday_brief_never_names_people_state(
     db, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     refs = mint_documents(
@@ -127,7 +128,8 @@ def test_monday_brief_names_unavailable_people_once(
 
     body = render_document(db, refs["monday_brief"]).body_md
 
-    assert sum(line == "PEOPLE · UNAVAILABLE" for line in body.splitlines()) == 1
+    # The sent Brief reads no People store: a closed store leaves no line.
+    assert "PEOPLE" not in body
 
 
 def test_meeting_sources_never_copy_transcript(db, tmp_path: Path) -> None:

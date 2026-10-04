@@ -26,6 +26,7 @@ import {
 import { verbById } from "../../verbRegistry";
 import { openSurfaceOr } from "../../shell";
 import { useChairWindows } from "../chairWindows";
+import { asHub } from "../../../test/hubNeedsYou";
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -57,7 +58,7 @@ const NEEDS = {
 };
 
 function wire() {
-  vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+  vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
     const p = String(path);
     // a cold roster: the meeting path names its SETUP row
     if (p === "/api/inference/assignments")
@@ -68,7 +69,7 @@ function wire() {
     if (p.startsWith("/api/desk/needs-you")) return NEEDS;
     if (p.startsWith("/api/door")) return { board: {}, counts: {}, upcoming: [], calendar_configured: false };
     return null;
-  });
+  }));
 }
 
 function setCompact(on: boolean) {
@@ -259,7 +260,7 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
       } as never,
     });
     const base = vi.mocked(apiFetch).getMockImplementation()!;
-    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string, init?: unknown) => {
       if (String(path) === "/api/meetings/m-2")
         return {
           id: "m-2", title: "Ledger cutover sync", started_at: "2026-09-19T09:00:00Z",
@@ -269,7 +270,7 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
           segments: [{ text: "Dual-write is stable.", speaker: "Me", start_time: 1 }],
         };
       return (base as (p: string, i?: unknown) => Promise<unknown>)(path, init);
-    });
+    }));
     render(<ChairHome />);
     await waitFor(() => expect(screen.getByTestId("arrival-meeting-badge").textContent).toBe("SUMMARY STORED"));
     const row = screen.getByTestId("arrival-meeting-row");

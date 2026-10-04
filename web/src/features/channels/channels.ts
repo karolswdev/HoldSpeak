@@ -13,6 +13,7 @@
  * Words (ASD-STE100): verbs and states, no prose. A provider's acceptance is
  * never "delivered" (ACCEPTED BY SENDGRID, ACCEPTED BY RESEND).
  */
+import { wireDate } from "../../desk/surface/format";
 import { apiFetch, ApiError } from "../../lib/api";
 import { refusalWord } from "../../desk/surface/egress";
 
@@ -336,8 +337,8 @@ export const unknownWord = (c: string) => word(UNKNOWN, UNKNOWN_PREFIX, c);
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 export function stamp(iso: string | null | undefined): string {
   if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return String(iso);
+  const d = wireDate(iso);
+  if (!d) return String(iso);
   return `${MONTHS[d.getMonth()]} ${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 

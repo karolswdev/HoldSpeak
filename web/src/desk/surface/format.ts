@@ -2,20 +2,64 @@
 // idiom" rule 4): times humanized, labels de-snaked, unknowns OMITTED —
 // a surface never prints "unknown"/"none" theater.
 
+/** The ONE parse of a wire time. Every face reads a hub time through
+ * this helper; no face slices the string or calls `new Date(wire)`.
+ *
+ * The hub sends three shapes:
+ *  - an ISO string with a zone (`...Z`, `...+00:00`): exact;
+ *  - a bare SQLite stamp `YYYY-MM-DD HH:MM:SS`: SQLite writes UTC, so
+ *    it reads as UTC (not as local time);
+ *  - a bare ISO string `YYYY-MM-DDTHH:MM:SS`: the hub wrote its local
+ *    wall time, so it reads as local time;
+ *  - a bare date `YYYY-MM-DD`: a local day (not UTC midnight, which is
+ *    the day before in a zone west of UTC);
+ *  - a number: epoch seconds (below 1e12) or epoch milliseconds.
+ * Junk reads as null. */
+export function wireDate(value: unknown): Date | null {
+  if (value === null || value === undefined || value === "") return null;
+  let date: Date;
+  if (value instanceof Date) {
+    date = value;
+  } else if (typeof value === "number") {
+    if (!Number.isFinite(value)) return null;
+    date = new Date(value < 1e12 ? value * 1000 : value);
+  } else {
+    const text = String(value).trim();
+    const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+    if (day) return new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]));
+    date = new Date(
+      /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(text)
+        ? `${text.replace(" ", "T")}Z`
+        : text,
+    );
+  }
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** A wire time as the local 24-hour clock `HH:MM` (`HH:MM:SS` with
+ * `seconds`); empty string when the value is not a time. */
+export function wireClock(value: unknown, seconds = false): string {
+  const date = wireDate(value);
+  if (!date) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const clock = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return seconds ? `${clock}:${pad(date.getSeconds())}` : clock;
+}
+
+/** A wire time as the local day and clock, `Oct 3, 21:06`; empty string
+ * when the value is not a time. */
+export function wireDayClock(value: unknown): string {
+  const date = wireDate(value);
+  if (!date) return "";
+  const day = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${day}, ${wireClock(date)}`;
+}
+
 /** A wire timestamp (ISO string or epoch seconds/ms) as a short human
  * phrase; empty string when the value is not a time. */
 export function humanTime(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "";
-  let date: Date;
-  if (typeof value === "number") {
-    date = new Date(value < 1e12 ? value * 1000 : value);
-  } else {
-    const text = String(value);
-    // Bare "YYYY-MM-DD HH:MM:SS" (SQLite) parses as local time once the
-    // space becomes a T; a full ISO string passes through unchanged.
-    date = new Date(/^\d{4}-\d{2}-\d{2} /.test(text) ? text.replace(" ", "T") : text);
-  }
-  if (Number.isNaN(date.getTime())) return "";
+  const date = wireDate(value);
+  if (!date) return "";
   const diff = Date.now() - date.getTime();
   if (Math.abs(diff) < 45_000) return "just now";
   if (diff > 0) {
@@ -57,14 +101,7 @@ export function presentValue(value: unknown): string {
  * seconds, epoch millis, or ISO strings; junk reads as null and the
  * stream files it under "Undated" rather than inventing a date. */
 export function streamDate(value: unknown): Date | null {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return new Date(value > 1e12 ? value : value * 1000);
-  }
-  if (typeof value === "string" && value) {
-    const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) return parsed;
-  }
-  return null;
+  return wireDate(value);
 }
 
 function sameDay(a: Date, b: Date): boolean {

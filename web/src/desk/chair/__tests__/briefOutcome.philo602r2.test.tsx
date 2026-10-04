@@ -47,9 +47,10 @@ describe("PHILO-6-02 round 2: a failed operation never reads as a success", () =
     const text = section.textContent ?? "";
     expect(text).not.toMatch(SUCCESS);
     expect(text).not.toMatch(IMPLEMENTATION);
-    // Every waiting row is a failure or the recorded meeting; the fold holds
-    // the rest (its destination is the Brief view, below).
-    expect(text).toContain("BRIEF · 6 THINGS WAITING");
+    // The rows not triaged yet: the failures, the recorded meeting, and the
+    // two members of the one needs-you rule the real producer now writes
+    // (no engine; the failed summary). The fold holds the rest.
+    expect(text).toContain("BRIEF · 8 THINGS WAITING");
   });
 
   it("the Brief view (the fold's destination) shows no success line and no implementation word", async () => {

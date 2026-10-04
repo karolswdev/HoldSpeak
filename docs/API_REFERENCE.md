@@ -6,7 +6,7 @@ It does not invent request/response schemas for raw `Request` handlers.
 
 Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **717 method/route entries**.
 
-**Verification boundary:** inspect the [full endpoint ledger](generated/api-reference.json)
+**Verification boundary:** inspect the full endpoint ledger, `docs/generated/api-reference.json` (not in git; run `scripts/gen_docs.sh` to write it),
 and the [declared OpenAPI schemas](generated/openapi.json) for transport models.
 The ledger records parameters, body-key reads, declared responses, literal errors,
 service calls, source line, client tags and candidate tests. Candidate tests are

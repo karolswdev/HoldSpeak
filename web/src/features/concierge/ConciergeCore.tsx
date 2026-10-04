@@ -1,6 +1,7 @@
 // HS-170-03 — The Concierge: one screen for engine discovery + assignment.
 // Its own surface window (not inside Settings). Every verb is the library Button.
 
+import { wireDate } from "../../desk/surface/format";
 import { useContext, useEffect } from "react";
 import {
   SurfaceLedgerRow,
@@ -433,7 +434,7 @@ export function ConciergeCore({ scope }: CoreProps) {
 
   const hwToken = hardwareToken(ctrl.hardware);
   const checkedTime = ctrl.checkedAt
-    ? new Date(ctrl.checkedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    ? (wireDate(ctrl.checkedAt)?.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) ?? "")
     : "";
 
   // Section label (UX-CANON A8: no counters of zero)

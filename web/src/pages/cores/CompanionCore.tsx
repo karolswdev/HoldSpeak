@@ -1,5 +1,5 @@
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { countLabel } from "../../desk/surface";
 import { openCoderSession, openPersona } from "../../desk/shell";
 import type {
@@ -21,6 +21,8 @@ import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { renderHeroSlot } from "./core-layout";
 import { DeliveryListSection } from "../../desk/components/DeliveryListSection";
 import { PrReceiptsSection } from "../../desk/components/PrReceiptsSection";
+import { deliveryListRows, useDelivery } from "../../desk/delivery";
+import { usePrReceipts } from "../../desk/prReceipts";
 
 const WINGS = [
   { id: "roster", label: "Roster" },
@@ -28,26 +30,41 @@ const WINGS = [
 ];
 
 export function CompanionCore({ hero }: CoreProps) {
-  const [view, setView] = useState("roster");
+  const [chosenView, setView] = useState("roster");
+  // The Delivery wing shows repository work and pull request receipts. With
+  // neither, both sections draw nothing and the wing was a blank window
+  // (inventory 2026-10-03). An empty wing is withheld.
+  const deliverySources = useDelivery((s) => s.sources);
+  const deliveryAttempts = useDelivery((s) => s.attempts);
+  const prSources = usePrReceipts((s) => s.sources);
+  useEffect(() => {
+    void usePrReceipts.getState().load();
+  }, []);
+  const hasDelivery =
+    deliveryListRows(deliverySources, deliveryAttempts).length > 0 ||
+    prSources.some((source) => source.prs !== null || source.status !== "unavailable");
+  const wings = hasDelivery ? WINGS : WINGS.filter((wing) => wing.id !== "delivery");
+  const view = hasDelivery ? chosenView : "roster";
   const [doorOpen, setDoorOpen] = useState(false);
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
   useWindowWings(
     <SurfaceWings
-      wings={WINGS}
+      wings={wings}
       active={view}
       onChange={setView}
       door="How it connects"
       doorOpen={doorOpen}
       onDoor={() => setDoorOpen((v) => !v)}
     />,
-    [view, doorOpen],
+    [view, doorOpen, hasDelivery],
   );
   const recipes = useResource<RecipesResponse>("/api/recipes", {});
   const coders = useResource<CodersStatusResponse>("/api/coders/status", {});
-  const recipeRows = asRows(recipes.data, ["recipes"]).filter(
-    // Thread modes (kind='mode', HS-153-01) are practices, not crew.
-    (row) => !row.deleted && (row as Record<string, unknown>).kind !== "mode",
-  );
+  // Inventory 2026-10-03 (defect 9): the roster dropped every seeded agent
+  // (Chase, Desk, Draft, ...: kind='mode') while the Floor showed them as
+  // agents, so the roster read "New Agent" rows only. The roster reads the
+  // same set the Floor does (desk/api.ts: every recipe that is not deleted).
+  const recipeRows = asRows(recipes.data, ["recipes"]).filter((row) => !row.deleted);
   const allSessions = asRows(
     coders.data.agent?.sessions,
     ["items", "sessions"],
@@ -131,7 +148,15 @@ export function CompanionCore({ hero }: CoreProps) {
       ) : null}
       <SurfaceLedger
         cols="crew"
-        count={[countLabel("CREW", recipeRows.length), countLabel("SESSIONS", allSessions.length), countLabel("BLOCKED", blocked.length)].filter(Boolean).join(" · ")}
+        count={
+          // A count of zero is not said (UX-CANON A8): the head read
+          // "CREW · SESSIONS · BLOCKED" with no sessions.
+          [
+            recipeRows.length ? countLabel("CREW", recipeRows.length) : "",
+            allSessions.length ? countLabel("SESSIONS", allSessions.length) : "",
+            blocked.length ? countLabel("BLOCKED", blocked.length) : "",
+          ].filter(Boolean).join(" · ")
+        }
       >
         <h4 className="surface-ledger-band">Sessions</h4>
         {allSessions.length ? (

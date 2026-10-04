@@ -114,14 +114,8 @@ class DoorService:
         if now.tzinfo is None:
             now = now.astimezone()
         now_utc = now.astimezone(timezone.utc)
-        board = self._follow_through_service.board(principal)
-        # HS-150-02: resolve mapped owner strings to person labels.
-        owner_person_index = self._build_owner_person_index(board)
         projected_board = {
-            "now": [self._follow_through_card(card, owner_person_index=owner_person_index) for card in board.now],
-            "waiting": [self._follow_through_card(card, owner_person_index=owner_person_index) for card in board.waiting],
-            "unassigned": [self._follow_through_card(card, owner_person_index=owner_person_index) for card in board.unassigned],
-            "overdue": [self._follow_through_card(card, owner_person_index=owner_person_index) for card in board.overdue],
+            **self.asking_board(principal),
             "active": self._active_thoughts(principal),
         }
         upcoming = self._upcoming(now_utc)
@@ -141,10 +135,36 @@ class DoorService:
         }
         # L2 (HS-149-01): carry the People store state so the Door never
         # renders a broken/locked/absent sidecar as silent emptiness.
-        people_state = self._follow_through_service.people_store_state(principal)
+        people_state = self.people_store_state(principal)
         if people_state is not None:
             result["people_store_state"] = people_state
         return result
+
+    def asking_board(self, principal: Any) -> dict[str, list[dict[str, Any]]]:
+        """The four board columns that ask the owner, as the Door projects them.
+
+        The same cards ``get`` returns under ``board`` (overdue, now, waiting,
+        unassigned), without the active thoughts, the calendar and the week.
+        It is the Door input of the one ``needs you`` rule
+        (``needs_you_membership``).
+        """
+        board = self._follow_through_service.board(principal)
+        # HS-150-02: resolve mapped owner strings to person labels.
+        owner_person_index = self._build_owner_person_index(board)
+
+        def cards(lane: list[Any]) -> list[dict[str, Any]]:
+            return [self._follow_through_card(card, owner_person_index=owner_person_index) for card in lane]
+
+        return {
+            "now": cards(board.now),
+            "waiting": cards(board.waiting),
+            "unassigned": cards(board.unassigned),
+            "overdue": cards(board.overdue),
+        }
+
+    def people_store_state(self, principal: Any) -> str | None:
+        """The People store readiness the follow-through projection reports."""
+        return self._follow_through_service.people_store_state(principal)
 
     def _calendar_configured(self) -> bool:
         """HS-146-01: True iff at least one enabled source passes validation."""

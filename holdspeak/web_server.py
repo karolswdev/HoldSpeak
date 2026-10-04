@@ -659,6 +659,12 @@ class MeetingWebServer:
                 return JSONResponse(refusal(principal, right), status_code=status)
             return await call_next(request)
 
+        # Every HTTP write sends one desk_changed frame (the root for routes
+        # that do not go through OperationRegistry.invoke).
+        from .web import announce as _announce
+
+        _announce.install(app)
+
         # HS-117-11: unified domain-error handler. HoldSpeakError subclasses
         # produce a structured JSON response instead of a raw 500.
         from .errors import HoldSpeakError, error_response
