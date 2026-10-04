@@ -14,6 +14,8 @@
 // ref. Two projections that share a source and carry distinct refs are
 // never one obligation (counsel P0-1).
 
+import { wireDate } from "./surface/format";
+
 export type RankClass =
   | "overdue"
   | "due_today"
@@ -90,14 +92,8 @@ export interface RankableItem {
 
 function parseStamp(value: string | null | undefined): Date | null {
   if (!value || typeof value !== "string") return null;
-  const text = value.trim();
-  if (!text) return null;
   // A bare date is a local day, never a UTC midnight that lands yesterday.
-  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
-  const parsed = day
-    ? new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]))
-    : new Date(text);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return wireDate(value);
 }
 
 function epoch(value: string | null | undefined): number {

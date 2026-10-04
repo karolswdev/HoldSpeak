@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 
-import asyncio
 from typing import Any
 
 from holdspeak.config import Config
@@ -167,13 +166,8 @@ TOOLS: list[dict[str, Any]] = [
 ]
 
 
-def _run(coro: Any) -> Any:
-    """Run an async coroutine synchronously; mirrors tools.py:411-416."""
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(coro)
-    raise ValueError("async MCP tools cannot execute inside an active event loop")
+# The one helper every family shares (holdspeak/mcp/aio.py).
+from holdspeak.mcp.aio import run_async as _run  # noqa: E402
 
 
 def _build_service() -> CadenceService:

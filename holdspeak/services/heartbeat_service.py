@@ -704,6 +704,13 @@ class HeartbeatService:
             for it in unmuted
         }
         present_ids = {_id_of(it) for it in all_items}
+        # The members that are not attention rows (an engine blocker, a
+        # failed summary) are counted by the one rule, so they are edges too.
+        for member in agg.get("members", []):
+            if member.get("kind") == "attention" or not member.get("ref"):
+                continue
+            current_ids[str(member["ref"])] = {"project": "", "class": str(member["kind"])}
+            present_ids.add(str(member["ref"]))
         # Prune only where the Project was FULLY observed on this pass: an
         # id whose Project has any source cant_check / stale / failed stays
         # remembered (recovery re-notifies nothing); an id whose Project no
@@ -886,37 +893,14 @@ class HeartbeatService:
         Muted Rooms' items get ``muted: true`` and are excluded from ``count``
         but included in ``mutedCount``.
         """
-        from holdspeak.services.needs_you_aggregate import build_aggregate, shared_last_known
         from holdspeak.services.project_service import ProjectService
 
+        # The one rule: the same answer ``desk.needs_you`` gives every face
+        # (Door cards, Room rows, engine blockers, failed summaries; the
+        # muted projects marked and not counted).
         ps = ProjectService(self._db, observer=self._observer)
         _p = principal or Principal(PrincipalKind.OWNER, "heartbeat")
-        settings = self.get_settings()
-        muted_ids = set(settings.get("muted_projects", []))
-
-        aggregate = build_aggregate(
-            list_projects=ps.list_projects,
-            room=ps.room,
-            principal=_p,
-            # HS-200-13 (counsel P1-4): the same durable memory the arrival reads.
-            last_known=shared_last_known(lambda: self._db),
-        )
-
-        # M1: apply mute list -- mark muted items and split counts.
-        items = aggregate.get("items", [])
-        unmuted_items: list[dict[str, Any]] = []
-        muted_count = 0
-        for item in items:
-            if item.get("projectId") in muted_ids:
-                item["muted"] = True
-                muted_count += 1
-            else:
-                item["muted"] = False
-                unmuted_items.append(item)
-
-        aggregate["count"] = len(unmuted_items)
-        aggregate["mutedCount"] = muted_count
-        return aggregate
+        return ps.needs_you(_p)
 
     def refresh_aggregate(
         self, principal: Principal | None = None, *, sweep_id: str | None = None,

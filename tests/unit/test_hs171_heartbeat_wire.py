@@ -365,8 +365,10 @@ class TestMuteList:
         ):
             agg = hb._build_aggregate_via_canonical()
 
-        # count excludes muted
-        assert agg["count"] == 1
+        # count excludes muted (the one rule also counts a meeting-path
+        # blocker on a hub with no engine; the attention members are the rows)
+        assert [m["kind"] for m in agg["members"]].count("attention") == 1
+        assert agg["count"] == len(agg["members"])
         assert agg["mutedCount"] == 1
         # The muted item is marked
         muted_items = [i for i in agg["items"] if i.get("muted")]
@@ -388,8 +390,11 @@ class TestMuteList:
             return_value=self._fake_aggregate(),
         ):
             count = hb.notification_count()
+            agg = hb._build_aggregate_via_canonical()
 
-        assert count == 1  # only the unmuted project counted
+        # Only the unmuted project is counted; the notification count is the
+        # one rule's count (attention rows plus any meeting-path blocker).
+        assert count == agg["count"] == 1 + len(agg["blockers"])
 
     def test_edge_does_not_fire_on_muted_room_rise(self, db: Database) -> None:
         """M1: an edge driven by only muted items does not fire."""
@@ -887,6 +892,10 @@ class TestZeroEgressOnLANWatches:
         now = datetime.now()
         hb.update_settings({
             "quiet_hours": {"start": (now.hour + 3) % 24, "end": (now.hour + 5) % 24},
+            # The desktop notification is a local subprocess, not HTTP egress;
+            # a hub with no engine has one member (the blocker), so it is off
+            # here to keep the subprocess probe on the sweep itself.
+            "notify": "off",
         })
 
         # Monkeypatch subprocess.run and urllib.request.urlopen to detect egress

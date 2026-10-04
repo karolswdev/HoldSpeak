@@ -471,7 +471,9 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   }, [faceRoute]);
 
   // The headline
-  const headline = meetingsHeadline(meetingRows, meetings.loading);
+  const headline = meetingsHeadline(
+    meetingRows, meetings.loading, Boolean(faceRoute) && !routeReady(faceRoute),
+  );
 
   // Verbs in the head
   const verbs = (

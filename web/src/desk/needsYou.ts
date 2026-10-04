@@ -149,6 +149,7 @@ function doorItems(
       if (!cardId || coveredActionItems.has(cardId)) continue;
       const dueAt = card.due ?? null;
       const owner = card.owner ?? null;
+      const hasOwner = String(owner ?? "").trim() !== "";
       let why = "";
       let severity = "info";
       if (column === "overdue") {
@@ -163,6 +164,12 @@ function doorItems(
         severity = "warning";
       } else if (column === "waiting") {
         why = owner ? `WAITING ON ${String(owner).toUpperCase()}` : "WAITING";
+      } else if (hasOwner) {
+        // The `unassigned` column also holds an item that HAS an owner and
+        // is not reviewed yet. It reads "To review"; only an item with no
+        // owner reads "Unassigned".
+        why = "TO REVIEW";
+        severity = "warning";
       } else {
         why = "UNASSIGNED";
         severity = "warning";
@@ -187,7 +194,8 @@ function doorItems(
         owner,
         _doorCard: card,
         _isDoor: true,
-        _isUnassigned: column === "unassigned",
+        _isUnassigned: column === "unassigned" && !hasOwner,
+        _toReview: column === "unassigned" && hasOwner,
       });
     }
   }
@@ -223,7 +231,13 @@ export function meetingNeedsYou(meeting: Meeting): boolean {
 }
 
 /**
- * The one meaning of `needs you`.
+ * The one meaning of `needs you`, as a pure function.
+ *
+ * The hub applies this rule (`holdspeak/services/needs_you_membership.py`
+ * is its line-for-line twin) and the faces read the hub's answer through
+ * `useNeedsYou`. This function is the browser's statement of the same rule:
+ * the real-producer oracle (`needsYou.test.ts`) holds it and the hub's answer
+ * to the same six refs, so the two cannot drift.
  *
  * R1 is Door's four asking columns plus Room rows. A Room commitment owns its
  * action item, so its matching Door card is removed before mute handling.
@@ -242,7 +256,14 @@ export function computeNeedsYou(
   );
   const now = input.now ?? new Date();
   const combined = [...doorItems(asBoard(input), covered, now), ...room];
-  const ranked = rankAttention(dependencies.dedupAttention(combined, now), now) as NeedsYouRoomItem[];
+  // A People commitment never merges with another row: a merge would put its
+  // text and its record ref inside another row's `sources`, past the custody
+  // boundary. It stays one row of its own.
+  const people = combined.filter((item) => item.source === "people_commitment");
+  const others = combined.filter((item) => item.source !== "people_commitment");
+  const ranked = rankAttention(
+    [...dependencies.dedupAttention(others, now), ...people], now,
+  ) as NeedsYouRoomItem[];
   const mutedProjects = mutedSet(input);
   const mutedItems: NeedsYouRoomItem[] = [];
   const unmutedItems: NeedsYouRoomItem[] = [];
@@ -284,31 +305,60 @@ export interface NeedsYouSnapshot extends NeedsYouResult {
   room: NeedsYouRoomEnvelope | null;
 }
 
-interface SourceState {
-  door: NeedsYouDoorProjection | null;
-  room: NeedsYouRoomEnvelope | null;
-  assignments: AssignmentSummary | null;
-  assignmentRead: AssignmentRead;
-  meetings: Meeting[];
-  mutedProjectIds: string[];
-  loaded: Record<SourceName, boolean>;
-  errors: NeedsYouErrors;
+/** The hub's answer (`desk.needs_you`, `GET /api/desk/needs-you`).
+ *
+ * The hub applies the one rule (`holdspeak/services/needs_you_membership.py`,
+ * the line-for-line twin of `computeNeedsYou` above) and every face reads
+ * this answer: the bell, the Chair, the Dock, the system shade, the palette,
+ * the Brief, notifications and MCP. The browser applies no rule of its own
+ * to the live data, so the numbers cannot disagree. */
+export interface NeedsYouAnswer {
+  count?: number;
+  members?: Array<{ ref: string; kind: NeedsYouMemberKind }>;
+  /** Every attention row, ranked: the counted rows, then the muted rows. */
+  items?: NeedsYouRoomItem[];
+  blockers?: MeetingPathBlocker[];
+  /** Meetings whose summary failed, as `/api/meetings` rows. */
+  failedMeetings?: unknown[];
+  /** The Room rows alone (the Room input of R1). */
+  roomItems?: NeedsYouRoomItem[];
+  /** A hub source that could not be read, by name. */
+  sourceErrors?: Partial<Record<"door" | "assignments" | "meetings", string>>;
+  projects?: unknown;
+  coverage?: CoverageRecord[];
+  complete?: unknown;
+  roomComplete?: unknown;
+  computedAt?: unknown;
+  stale?: unknown;
+  next?: unknown;
+  sweepId?: unknown;
 }
 
-const EMPTY_SOURCE: SourceState = {
-  door: null,
-  room: null,
-  assignments: null,
-  assignmentRead: "pending",
-  meetings: [],
-  mutedProjectIds: [],
-  loaded: { door: false, room: false, assignments: false, meetings: false, mutedProjects: false },
-  errors: {},
+/** Read the hub's answer into the shared result. No rule is applied here:
+ * the rows, the blockers and the meetings are the hub's, in the hub's order. */
+export function readNeedsYouAnswer(answer: NeedsYouAnswer | null | undefined): NeedsYouResult {
+  const value = answer ?? {};
+  const items = Array.isArray(value.items) ? value.items : [];
+  const unmutedItems = items.filter((item) => !item.muted);
+  const mutedItems = items.filter((item) => Boolean(item.muted));
+  const blockers = Array.isArray(value.blockers) ? value.blockers : [];
+  const failedMeetings = (Array.isArray(value.failedMeetings) ? value.failedMeetings : [])
+    .map(fromWireMeeting)
+    .filter((meeting): meeting is Meeting => meeting !== null);
+  const members: NeedsYouMember[] = [
+    ...unmutedItems.map((item) => ({ ref: itemRef(item), kind: "attention" as const, item })),
+    ...blockers.map((blocker) => ({ ref: `blocker:${blocker.key}`, kind: "blocker" as const, blocker })),
+    ...failedMeetings.map((meeting) => ({ ref: meeting.id, kind: "meeting" as const, meeting })),
+  ];
+  return { members, count: members.length, unmutedItems, mutedItems, blockers, failedMeetings };
+}
+
+const EMPTY_RESULT: NeedsYouResult = {
+  members: [], count: 0, unmutedItems: [], mutedItems: [], blockers: [], failedMeetings: [],
 };
 
-let sourceState: SourceState = EMPTY_SOURCE;
 let snapshot: NeedsYouSnapshot = {
-  ...computeNeedsYou({}),
+  ...EMPTY_RESULT,
   complete: false,
   loading: false,
   errors: {},
@@ -331,35 +381,6 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : "Request failed. Retry the read.";
 }
 
-function bodyRows<T>(body: unknown, key: string): T[] {
-  if (Array.isArray(body)) return body as T[];
-  if (!body || typeof body !== "object") return [];
-  const rows = (body as Record<string, unknown>)[key];
-  return Array.isArray(rows) ? rows as T[] : [];
-}
-
-async function readMeetings(): Promise<Meeting[]> {
-  const out: Meeting[] = [];
-  let offset = 0;
-  for (;;) {
-    const params = new URLSearchParams({
-      summary_attention: "true",
-      limit: "500",
-      offset: String(offset),
-    });
-    const body = await apiFetch<unknown>(`/api/meetings?${params.toString()}`);
-    const rows = bodyRows<unknown>(body, "meetings");
-    out.push(...rows.map(fromWireMeeting).filter((meeting): meeting is Meeting => meeting !== null));
-    if (!body || typeof body !== "object") break;
-    const total = Number((body as Record<string, unknown>).total);
-    const nextOffset = offset + rows.length;
-    if ((Number.isFinite(total) && nextOffset >= total) || rows.length < 500) break;
-    if (!Number.isFinite(nextOffset) || nextOffset <= offset) throw new Error("Meeting read returned an invalid page cursor.");
-    offset = nextOffset;
-  }
-  return out;
-}
-
 async function refreshNeedsYou(fresh = true): Promise<void> {
   if (inflight) {
     if (!fresh || inflightFresh) return inflight;
@@ -370,89 +391,47 @@ async function refreshNeedsYou(fresh = true): Promise<void> {
   inflightFresh = fresh;
   const started = generation;
   const request = (async () => {
-    const reads = await Promise.allSettled([
-      apiFetch<NeedsYouDoorProjection>("/api/door"),
-      apiFetch<{
-        items?: NeedsYouRoomItem[];
-        projects?: unknown;
-        coverage?: CoverageRecord[];
-        complete?: unknown;
-        computedAt?: unknown;
-        stale?: unknown;
-        next?: unknown;
-        sweepId?: unknown;
-      }>(fresh ? "/api/desk/needs-you?fresh=1" : "/api/desk/needs-you"),
-      apiFetch<AssignmentSummary>("/api/inference/assignments"),
-      readMeetings(),
-      apiFetch<{ muted_projects?: unknown }>("/api/settings/heartbeat"),
-    ]);
+    // ONE read. The hub's answer is the membership.
+    const answer = await apiFetch<NeedsYouAnswer | null>(
+      fresh ? "/api/desk/needs-you?fresh=1" : "/api/desk/needs-you",
+    );
     if (started !== generation) return;
-    const names: SourceName[] = ["door", "room", "assignments", "meetings", "mutedProjects"];
+    // A null body is an empty desk, never a crash of the whole read.
+    const value = answer ?? {};
+    const roomComplete = typeof value.roomComplete === "boolean"
+      ? value.roomComplete
+      : typeof value.complete === "boolean" ? value.complete : null;
+    const room: NeedsYouRoomEnvelope = {
+      items: Array.isArray(value.roomItems)
+        ? value.roomItems
+        : Array.isArray(value.items) ? value.items : [],
+      projects: Array.isArray(value.projects) ? value.projects.map(String) : [],
+      coverage: Array.isArray(value.coverage) ? value.coverage : [],
+      complete: roomComplete,
+      computedAt: typeof value.computedAt === "string" ? value.computedAt : null,
+      stale: value.stale === true,
+      next: value.next,
+      sweepId: typeof value.sweepId === "string" ? value.sweepId : null,
+    };
     const errors: NeedsYouErrors = {};
-    const loaded = { ...sourceState.loaded };
-    reads.forEach((result, index) => {
-      if (result.status === "rejected") errors[names[index]] = errorText(result.reason);
-      else loaded[names[index]] = true;
-    });
-    const doorRead = reads[0];
-    if (doorRead.status === "fulfilled") sourceState.door = doorRead.value;
-    const roomRead = reads[1];
-    if (roomRead.status === "fulfilled") {
-      // A null body is an empty Room, never a crash of the whole read.
-      const value = roomRead.value ?? {};
-      sourceState.room = {
-        items: Array.isArray(value.items) ? value.items : [],
-        projects: Array.isArray(value.projects) ? value.projects.map(String) : [],
-        coverage: Array.isArray(value.coverage) ? value.coverage : [],
-        complete: typeof value.complete === "boolean" ? value.complete : null,
-        computedAt: typeof value.computedAt === "string" ? value.computedAt : null,
-        stale: value.stale === true,
-        next: value.next,
-        sweepId: typeof value.sweepId === "string" ? value.sweepId : null,
-      };
+    for (const [name, text] of Object.entries(value.sourceErrors ?? {})) {
+      if (text) errors[name as SourceName] = String(text);
     }
-    const assignmentRead = reads[2];
-    if (assignmentRead.status === "fulfilled") {
-      sourceState.assignments = assignmentRead.value;
-      sourceState.assignmentRead = "ok";
-    }
-    const meetingsRead = reads[3];
-    if (meetingsRead.status === "fulfilled") sourceState.meetings = meetingsRead.value;
-    const mutedRead = reads[4];
-    if (mutedRead.status === "fulfilled") {
-      const raw = mutedRead.value?.muted_projects;
-      sourceState.mutedProjectIds = Array.isArray(raw) ? raw.map(String) : [];
-    }
-    if (reads[2].status === "rejected") sourceState.assignmentRead = "failed";
-    sourceState = { ...sourceState, loaded, errors };
-    const result = computeNeedsYou({
-      door: sourceState.door,
-      roomItems: sourceState.room?.items,
-      mutedProjectIds: sourceState.mutedProjectIds,
-      assignments: sourceState.assignments,
-      assignmentRead: sourceState.assignmentRead,
-      meetings: sourceState.meetings,
-    });
     publish({
-      ...result,
+      ...readNeedsYouAnswer(value),
       complete:
-        names.every((name) => sourceState.loaded[name]) &&
         Object.keys(errors).length === 0 &&
-        readCoverage(
-          sourceState.room?.coverage,
-          sourceState.room?.complete ?? undefined,
-          Boolean(errors.room),
-        ).complete &&
-        sourceState.room?.stale !== true,
+        readCoverage(room.coverage, room.complete ?? undefined, false).complete &&
+        room.stale !== true,
       loading: false,
       errors,
-      room: sourceState.room,
+      room,
     });
   })().catch((error) => {
-    // A transport-level failure outside the individual reads keeps the last
-    // result visible and names the retryable state.
+    // The read failed: the last result stays visible and the retryable state
+    // is named. An unread desk is never drawn as a clear desk.
     if (started !== generation) return;
-    publish({ loading: false, errors: { ...snapshot.errors, room: errorText(error) } });
+    publish({ loading: false, complete: false, errors: { room: errorText(error) } });
   }).finally(() => {
     if (started !== generation) return;
     inflight = null;
@@ -515,12 +494,7 @@ export function resetNeedsYou(): void {
   inflight = null;
   inflightFresh = false;
   generation += 1;
-  sourceState = {
-    door: null, room: null, assignments: null, assignmentRead: "pending", meetings: [], mutedProjectIds: [],
-    loaded: { door: false, room: false, assignments: false, meetings: false, mutedProjects: false },
-    errors: {},
-  };
-  snapshot = { ...computeNeedsYou({}), complete: false, loading: false, errors: {}, room: null };
+  snapshot = { ...EMPTY_RESULT, complete: false, loading: false, errors: {}, room: null };
 }
 // The test setup resets through this handle and never imports this module:
 // an import there would bind the real API client before a test's mock.

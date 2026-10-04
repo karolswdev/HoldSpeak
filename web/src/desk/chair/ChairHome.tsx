@@ -4,6 +4,7 @@
 // The lane vocabulary is PARKED; the arrival composes directly from
 // the surface library and the needs-you wire.
 
+import { wireDate } from "../surface/format";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chair } from "./Chair";
 import { ChairDesk } from "./ChairDesk";
@@ -250,8 +251,8 @@ const MONTHS = [
 ];
 
 function ledgerDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(iso);
+  if (!d) return "";
   return `${MONTHS[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")}`;
 }
 
@@ -383,8 +384,8 @@ function nextLine(next: NeedsYouPayload["next"] & { room?: string } | null): str
 
 /** Format event time: HH:MM for today, DOW HH:MM for other days. */
 function formatEventTime(startsAt: string): string {
-  const d = new Date(startsAt);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(startsAt);
+  if (!d) return "";
   const hh = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
   const now = new Date();
@@ -399,8 +400,8 @@ function formatEventTime(startsAt: string): string {
 
 /** Format arms_at ISO to local HH:MM. */
 function formatArmsTime(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(iso);
+  if (!d) return "";
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
@@ -1529,6 +1530,9 @@ function NeedsYouRow({
   const ext = item as NeedsYouItem & { _isDoor?: boolean; _isUnassigned?: boolean; _doorCard?: DoorCard };
   const isDoor = ext._isDoor === true;
   const isUnassigned = ext._isUnassigned === true;
+  // An item that HAS an owner and is not reviewed yet: "To review", never
+  // "Name an owner".
+  const isToReview = (ext as { _toReview?: boolean })._toReview === true;
   const isProposal = Boolean(item.proposalId);
   const emblem = isDoor ? doorEmblem(item.source) : sourceEmblem(item.source);
   const proposalPrefix = isProposal
@@ -1627,6 +1631,7 @@ function NeedsYouRow({
           item={rowItem}
           isDoor={isDoor}
           isUnassigned={isUnassigned}
+          isToReview={isToReview}
           doorCard={ext._doorCard}
           primary={primary}
           onProposalConfirm={onProposalConfirm}
@@ -1782,6 +1787,7 @@ function NeedsYouRowVerbs({
   item,
   isDoor,
   isUnassigned,
+  isToReview,
   doorCard,
   primary = false,
   onProposalConfirm,
@@ -1791,6 +1797,7 @@ function NeedsYouRowVerbs({
   item: NeedsYouItem;
   isDoor: boolean;
   isUnassigned: boolean;
+  isToReview?: boolean;
   doorCard?: DoorCard;
   /** HS-200-15: ONE filled primary per face: the top-ranked row's verb. */
   primary?: boolean;
@@ -1847,6 +1854,26 @@ function NeedsYouRowVerbs({
         }}
       >
         {busy ? "..." : label}
+      </Button>
+    );
+  }
+
+  if (isToReview) {
+    return (
+      <Button
+        variant={lead}
+        dense
+        onClick={() => {
+          // The real producer's card names itself in `target_ref`
+          // (`action_item:<id>`, DoorService._follow_through_card); `open_ref`
+          // is optional. Review opens the card in Follow-through, where the
+          // owner reviews it.
+          (refOpener(doorCard?.open_ref) ?? refOpener(doorCard?.target_ref))?.();
+        }}
+        aria-label={`Review: ${item.title}`}
+        data-testid="arrival-to-review"
+      >
+        Review
       </Button>
     );
   }

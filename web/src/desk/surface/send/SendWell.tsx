@@ -633,7 +633,10 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
     account: { ...s.account, ...(typeof dest?.account.key_present === "boolean" ? { key_present: dest.account.key_present } : {}) } }, conns);
   // A named destination refusal is final for this row: Send would only
   // refuse again, so only Discard stays.
-  const dead = o.kind === "refused" && (o.code === "destination_changed" || o.code === "destination_parked");
+  // PREVIEW CHANGED on a prepared row is final too (its frozen words are not
+  // the document's words now): only Discard stays; a new pick reads a new preview.
+  const dead = o.kind === "refused" && (o.code === "destination_changed" || o.code === "destination_parked"
+    || o.code === "preview_changed");
   const [discardBusy, setDiscardBusy] = useState(false);
   const [discardOutcome, setDiscardOutcome] = useState<string | null>(null);
   const waiting = s.state === "prepared";

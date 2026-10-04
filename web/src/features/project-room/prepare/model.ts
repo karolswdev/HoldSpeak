@@ -3,6 +3,7 @@
 // (C4); the claims are the update posture's `UpdateClaim` unchanged, because
 // only the binding is new (design D3, "the claim seam").
 
+import { wireDate } from "../../../desk/surface/format";
 import { decodeClaim, type UpdateClaim } from "../update/model";
 
 export type ManifestSourceState = "available" | "stale" | "failed" | "unavailable";
@@ -305,16 +306,16 @@ export function sourceStateToken(source: ManifestSource): { label: string; state
 /** `OBSERVED 09:10` or nothing at all — never `OBSERVED —`. */
 export function observedToken(observedAt: string | null): string | null {
   if (!observedAt) return null;
-  const d = new Date(observedAt);
-  if (Number.isNaN(d.getTime())) return null;
+  const d = wireDate(observedAt);
+  if (!d) return null;
   const pad = (n: number) => String(n).padStart(2, "0");
   return `OBSERVED ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export function clockToken(prefix: string, iso: string | null): string | null {
   if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
+  const d = wireDate(iso);
+  if (!d) return null;
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${prefix} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
@@ -332,8 +333,8 @@ export function dueDayToken(prefix: string, iso: string | null): string | null {
   if (!iso) return null;
   const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
   if (dateOnly) return `${prefix} ${dateOnly[2]}-${dateOnly[3]}`;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
+  const d = wireDate(iso);
+  if (!d) return null;
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${prefix} ${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
@@ -360,8 +361,8 @@ export function sourceEmblem(kind: string): string {
 export function refLabel(ref: string, manifest: BriefManifest): string {
   const short = (iso: string | null | undefined): string => {
     if (!iso) return "";
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return "";
+    const d = wireDate(iso);
+    if (!d) return "";
     const pad = (n: number) => String(n).padStart(2, "0");
     return `${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   };

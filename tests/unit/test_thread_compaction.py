@@ -239,6 +239,7 @@ class TestRealCoordinatorCompact:
         control_mode: str = "yolo",
         compact_summary: str = "This is a summary of the conversation.",
         compact_raise: bool = False,
+        model: str | None = None,
     ):
         """Boot a real hub with fake engines for chat.turn and chat.compact."""
         import holdspeak.config as config_module
@@ -274,7 +275,7 @@ class TestRealCoordinatorCompact:
 
         owner = Principal(PrincipalKind.OWNER, "owner-session")
         profile_id = "compact-test"
-        _profile(db, profile_id, claims=("language", _result_claim("chat.turn")))
+        _profile(db, profile_id, claims=("language", _result_claim("chat.turn")), model=model)
         InferenceAssignmentService(db).set_assignment(owner, {
             "command_id": "assign-turn",
             "expected_revision": 0,
@@ -355,6 +356,35 @@ class TestRealCoordinatorCompact:
         hub["server"].stop()
         os.environ["HOME"] = hub["old_home"]
         reset_database()
+
+    def test_compact_runs_when_the_profile_id_is_not_the_model_name(
+        self, tmp_path: Path,
+    ) -> None:
+        """A real desk's profile id differs from the model its deployment runs
+        (the owner's "Migrated intel endpoint"). The compaction engine lookup
+        matched ``deployment_revisions.model`` against the profile id (the
+        pattern HS-200-08 named a bug), found nothing, and /compact failed."""
+        hub = self._hub(tmp_path, compact_summary="Summary by the routed engine.",
+                        model="qwen3-30b-a3b-instruct")
+        try:
+            svc, db, owner = hub["svc"], hub["db"], hub["owner"]
+            with db._connection() as conn:
+                assert conn.execute(
+                    "SELECT 1 FROM deployment_revisions WHERE model='compact-test'"
+                ).fetchone() is None, "the rig must not name a deployment after the profile id"
+            tid = svc.create(title="route")["id"]
+            r1 = asyncio.run(svc.start_turn(owner, tid, "Hello world"))
+            self._wait_done(db, r1["assistant_message_id"])
+            r2 = asyncio.run(svc.start_turn(owner, tid, "Tell me more"))
+            self._wait_done(db, r2["assistant_message_id"])
+
+            result = asyncio.run(svc.compact_thread(owner, tid))
+
+            assert result["status"] == "ok", f"compact failed: {result}"
+            parts = db.threads.get_parts(result["message_id"])
+            assert [p.text for p in parts if p.kind == "text"] == ["Summary by the routed engine."]
+        finally:
+            self._cleanup(hub)
 
     def test_compact_creates_cut_row_and_next_turn_excludes_pre_cut(
         self, tmp_path: Path,
@@ -578,41 +608,48 @@ class TestCompactM1CapabilityBoundary:
         owner = Principal(PrincipalKind.OWNER, "m1-compact-owner")
 
         turn_profile = "m1-cp-turn"
-        _profile(db, turn_profile, claims=("language", _result_claim("chat.turn")))
-        InferenceAssignmentService(db).set_assignment(owner, {
-            "command_id": "assign-turn",
-            "expected_revision": 0,
-            "scope": {"kind": "capability", "capability_id": "chat.turn"},
-            "entries": [{"profile_id": turn_profile, "profile_revision": 1}],
-        })
+        assignments = InferenceAssignmentService(db)
         from holdspeak.db.reconcile import _backfill_chat_practice_assignments
+
+        def assign_turn(profile_id: str, expected_revision: int) -> None:
+            assignments.set_assignment(owner, {
+                "command_id": f"assign-turn-{expected_revision}",
+                "expected_revision": expected_revision,
+                "scope": {"kind": "capability", "capability_id": "chat.turn"},
+                "entries": [{"profile_id": profile_id, "profile_revision": 1}],
+            })
+
+        _profile(db, turn_profile, claims=("language", _result_claim("chat.turn")))
+        if compact_boundary == "same_device":
+            assign_turn(turn_profile, 0)
+            with db._connection() as conn:
+                _backfill_chat_practice_assignments(conn)
+            return db, owner
+
+        # The helper capabilities are internal: no one assigns them. A helper
+        # differs from chat the way it does on a real desk: the backfill copies
+        # chat.turn's assignment ONCE, then chat.turn is assigned again. Every
+        # row here comes from the real services. The helper keeps its OWN
+        # profile, deployment and binding (cloud); chat.turn ends local. A
+        # lookup that reads chat.turn's boundary (the wrong capability) sees
+        # `same_device` and the cloud test fails.
+        helper_profile = "m1-compact-cloud"
+        _profile(db, helper_profile, model="cloud-helper-model", boundary=compact_boundary,
+                 claims=("language", _result_claim("chat.turn")))
+        assign_turn(helper_profile, 0)
         with db._connection() as conn:
             _backfill_chat_practice_assignments(conn)
+        assign_turn(turn_profile, 1)
 
-        if compact_boundary != "same_device":
-            cp_profile = "m1-compact-cloud"
-            v1_dep = DeploymentRevision.from_identity(DeploymentIdentity(
-                destination_id="cloud_service",
-                kind="cloud",
-                engine="configured_local_engine",
-                model=cp_profile,
-                node="",
-                boundary=compact_boundary,
-                endpoint="",
-                secret_slot="",
-            ))
-            db.deployment_revisions.upsert(v1_dep)
-            with db._connection() as conn:
-                head = conn.execute(
-                    "SELECT assignment_id, revision FROM inference_assignment_heads "
-                    "WHERE assignment_key='capability:chat.compact' AND cleared=0",
-                ).fetchone()
-                if head:
-                    conn.execute(
-                        "UPDATE inference_assignments SET profile_id=? "
-                        "WHERE assignment_id=? AND assignment_revision=?",
-                        (cp_profile, head["assignment_id"], head["revision"]),
-                    )
+        from holdspeak.services.thread_practice import _resolve_deployment_revision
+
+        class _Routes:
+            database = db
+
+        turn_rev, turn_boundary = _resolve_deployment_revision(_Routes(), "chat.turn")
+        helper_rev, helper_boundary = _resolve_deployment_revision(_Routes(), "chat.compact")
+        assert turn_rev != helper_rev, "chat and the helper must have distinct deployments"
+        assert (turn_boundary, helper_boundary) == ("same_device", compact_boundary)
 
         return db, owner
 

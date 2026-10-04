@@ -572,10 +572,11 @@ describe("Step rows: human labels and receipt refs", () => {
     fireEvent.click(itemRef!);
     expect(mockOpenPrimitive).toHaveBeenCalledWith("item:itm-001");
 
-    // Click the decision ref -> openPrimitive
+    // Click the decision ref -> the one open grammar reads which decision
+    // it is, then opens it.
     const decRef = refChips.find((el) => el.getAttribute("data-ref") === "decision:dec-001");
     fireEvent.click(decRef!);
-    expect(mockOpenPrimitive).toHaveBeenCalledWith("decision:dec-001");
+    await waitFor(() => expect(mockOpenPrimitive).toHaveBeenCalledWith("decision:dec-001"));
   });
 });
 
@@ -1514,7 +1515,8 @@ describe("Scroll hint: data-scroll-hint is set on the posture root", () => {
     await waitFor(() => screen.getByTestId("steward-posture"));
 
     const posture = screen.getByTestId("steward-posture");
-    expect(posture.hasAttribute("data-scroll-hint")).toBe(true);
+    // The hint is set by a passive effect: wait for it, do not race it.
+    await waitFor(() => expect(posture.hasAttribute("data-scroll-hint")).toBe(true));
   });
 });
 

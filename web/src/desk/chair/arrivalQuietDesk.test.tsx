@@ -12,6 +12,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { ChairHome, headlineFor } from "./ChairHome";
+import { asHub } from "../../test/hubNeedsYou";
 
 vi.mock("../../lib/api", async (original) => ({
   ...await original<typeof import("../../lib/api")>(),
@@ -64,7 +65,7 @@ const ASSIGNED = {
  *  NEXT line empty, which is exactly when the face draws NO CALENDAR with
  *  its `Connect calendar` Button (ChairHome.tsx, the head token row). */
 function wire(overrides: Record<string, unknown>[], calendarConfigured: boolean) {
-  vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+  vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
     if (String(path) === "/api/inference/assignments")
       return {
         schema: "InferenceAssignmentSummary@1",
@@ -77,7 +78,7 @@ function wire(overrides: Record<string, unknown>[], calendarConfigured: boolean)
     if (String(path) === "/api/door")
       return { board: {}, upcoming: [], calendar_configured: calendarConfigured } as never;
     return null as never;
-  });
+  }));
 }
 
 describe("HS-201-11 the arrival head and its asking rows agree", () => {

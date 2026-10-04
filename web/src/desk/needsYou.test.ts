@@ -14,6 +14,7 @@ import {
   type NeedsYouInputs,
   type NeedsYouRoomItem,
 } from "./needsYou";
+import { asHub } from "../test/hubNeedsYou";
 
 vi.mock("../lib/api", async (original) => ({
   ...await original<typeof import("../lib/api")>(),
@@ -217,7 +218,7 @@ function installWire(options: {
   meetingTotal?: number;
 } = {}) {
   const paths: string[] = [];
-  vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+  vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
     paths.push(String(path));
     if (path === "/api/door") return { board: {} } as never;
     if (path.startsWith("/api/desk/needs-you")) {
@@ -236,7 +237,7 @@ function installWire(options: {
     }
     if (path === "/api/settings/heartbeat") return { muted_projects: [] } as never;
     throw new Error(`unexpected needs-you read: ${path}`);
-  });
+  }));
   return paths;
 }
 
@@ -270,40 +271,35 @@ describe("the shared needs-you read", () => {
     }
   });
 
-  it("uses the producer-backed summary filter and never reads an unfiltered meeting page", async () => {
+  it("reads the hub's answer in ONE read, and the hub's members are the browser rule's members", async () => {
     const home = mkdtempSync(join(tmpdir(), "philo13-a2-c1-hook-"));
     try {
       const seeded = runFixture(home, "seed");
       const wire = seeded.before as Record<string, any>;
-      const allMeetings = wire.meetingsWire.meetings as Array<Record<string, unknown>>;
-      const attentionMeetings = allMeetings.filter(
-        (row) => row.id === "philo13-a2-failed-meeting",
-      );
       const paths: string[] = [];
+      // The hub's own answer, from the real route over the real producers.
       vi.mocked(apiFetch).mockImplementation(async (path: string) => {
         paths.push(String(path));
-        if (path === "/api/door") return wire.door as never;
         if (path.startsWith("/api/desk/needs-you")) return wire.needsYou as never;
-        if (path === "/api/inference/assignments") return wire.assignments as never;
-        if (path === "/api/settings/heartbeat") return wire.heartbeat as never;
-        if (path.startsWith("/api/meetings?summary_attention=true")) {
-          return { meetings: attentionMeetings, total: attentionMeetings.length } as never;
-        }
-        if (path.startsWith("/api/meetings?")) {
-          return wire.meetingsWire as never;
-        }
         throw new Error(`unexpected needs-you read: ${path}`);
       });
 
       const hook = renderHook(() => useNeedsYou());
       await waitFor(() => expect(hook.result.current.loading).toBe(false));
+      expect(paths).toEqual(["/api/desk/needs-you"]);
       expect(hook.result.current.complete).toBe(true);
       expect(hook.result.current.failedMeetings.map((meeting) => meeting.id)).toEqual([
         "philo13-a2-failed-meeting",
       ]);
-      expect(paths.filter((path) => path.startsWith("/api/meetings?"))).toEqual([
-        "/api/meetings?summary_attention=true&limit=500&offset=0",
-      ]);
+      // One number: the hook's count is the hub's count.
+      expect(hook.result.current.count).toBe(wire.needsYou.count);
+      const hubRefs = hook.result.current.members.map((member) => member.ref);
+      expect([...hubRefs].sort()).toEqual([...(seeded.expectedRefs as string[])].sort());
+      // The cross-check: the browser statement of the rule, over the same
+      // producer inputs, names the same members in the same order.
+      const twin = computeNeedsYou(oracleInputs(seeded, "before"));
+      expect(twin.members.map((member) => member.ref)).toEqual(hubRefs);
+      expect(wire.needsYou.members.map((member: { ref: string }) => member.ref)).toEqual(hubRefs);
       hook.unmount();
     } finally {
       rmSync(home, { recursive: true, force: true });
@@ -341,29 +337,6 @@ describe("the shared needs-you read", () => {
     }
   });
 
-  it("paginates meetings by offset when the HTTP route omits next_cursor", async () => {
-    const firstPage = Array.from({ length: 500 }, (_, index) => meetingWire(`M${index}`));
-    const paths: string[] = [];
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
-      paths.push(String(path));
-      if (path === "/api/door") return { board: {} } as never;
-      if (path.startsWith("/api/desk/needs-you")) return emptyRoom() as never;
-      if (path === "/api/inference/assignments") return { ...noEngines, task_overrides: [] } as never;
-      if (path === "/api/settings/heartbeat") return { muted_projects: [] } as never;
-      if (path === "/api/meetings?summary_attention=true&limit=500&offset=0")
-        return { meetings: firstPage, total: 501 } as never;
-      if (path === "/api/meetings?summary_attention=true&limit=500&offset=500")
-        return { meetings: [meetingWire("F501", { status: "failed", attempts: 1, last_error: "worker failed" })], total: 501 } as never;
-      throw new Error(`unexpected needs-you read: ${path}`);
-    });
-
-    const hook = renderHook(() => useNeedsYou());
-    await waitFor(() => expect(hook.result.current.loading).toBe(false));
-    expect(paths).toContain("/api/meetings?summary_attention=true&limit=500&offset=500");
-    expect(hook.result.current.failedMeetings.map((meeting) => meeting.id)).toEqual(["F501"]);
-    hook.unmount();
-  });
-
   it("uses shared coverage semantics when complete is true over a failed row", async () => {
     installWire({ room: emptyRoom({ coverage: [HEALTHY_COVERAGE, FAILED_COVERAGE], complete: true }) });
     const hook = renderHook(() => useNeedsYou());
@@ -386,7 +359,7 @@ describe("the shared needs-you read", () => {
 
   it("retains the last Room rows after a later Room read fails", async () => {
     let roomError = false;
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
       if (path === "/api/door") return { board: {} } as never;
       if (path.startsWith("/api/desk/needs-you")) {
         if (roomError) throw new Error("Room unavailable");
@@ -396,7 +369,7 @@ describe("the shared needs-you read", () => {
       if (path.startsWith("/api/meetings?")) return { meetings: [], total: 0 } as never;
       if (path === "/api/settings/heartbeat") return { muted_projects: [] } as never;
       throw new Error(`unexpected needs-you read: ${path}`);
-    });
+    }));
     const hook = renderHook(() => useNeedsYou());
     await waitFor(() => expect(hook.result.current.loading).toBe(false));
     expect(hook.result.current.unmutedItems.map((item) => item.ref)).toContain("kept-room-row");
@@ -414,7 +387,7 @@ describe("the shared needs-you read", () => {
     const roomPending = new Promise((resolve) => { releaseRoom = resolve; });
     const paths: string[] = [];
     let freshRoomReads = 0;
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
       paths.push(String(path));
       if (path === "/api/door") return { board: {} } as never;
       if (path === "/api/desk/needs-you") return roomPending as never;
@@ -426,11 +399,10 @@ describe("the shared needs-you read", () => {
       if (path.startsWith("/api/meetings?")) return { meetings: [], total: 0 } as never;
       if (path === "/api/settings/heartbeat") return { muted_projects: [] } as never;
       throw new Error(`unexpected needs-you read: ${path}`);
-    });
+    }));
     const first = renderHook(() => useNeedsYou());
     const second = renderHook(() => useNeedsYou());
     expect(paths.filter((path) => path.startsWith("/api/desk/needs-you"))).toHaveLength(1);
-    expect(paths.filter((path) => path === "/api/inference/assignments")).toHaveLength(1);
 
     const refreshes = [first.result.current.refresh(), second.result.current.refresh()];
     await act(async () => {
