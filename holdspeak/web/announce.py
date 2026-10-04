@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from holdspeak.runtime.composition import announce_scope
+from holdspeak.runtime.announce_scope import announce_scope
 
 _WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 

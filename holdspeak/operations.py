@@ -2185,7 +2185,7 @@ class OperationRegistry:
         """
         if self._bound(name).descriptor.effect != "write":
             return self._run(principal, name, args, held=held)
-        from holdspeak.runtime.composition import announce_scope
+        from holdspeak.runtime.announce_scope import announce_scope
 
         with announce_scope() as announce:
             result = self._run(principal, name, args, held=held)

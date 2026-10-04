@@ -1669,14 +1669,28 @@ class TestDashboardLifecycleStateTransitions:
         assert final_status.status_code == 200
         assert final_status.json()["meeting_active"] is True
         assert final_status.json()["state"]["id"] == "meeting-2"
+        # Each write (start, stop, start) sends its lifecycle frame, then ONE
+        # ``desk_changed`` announcement when the request ends
+        # (holdspeak/web/announce.py). The four reads send nothing.
         assert [event[0] for event in broadcast_events] == [
             "meeting_started",
+            "desk_changed",
             "stopped",
+            "desk_changed",
             "meeting_started",
+            "desk_changed",
         ]
         assert broadcast_events[0][1]["id"] == "meeting-1"
-        assert broadcast_events[1][1]["meeting"]["id"] == "meeting-1"
-        assert broadcast_events[2][1]["id"] == "meeting-2"
+        assert broadcast_events[2][1]["meeting"]["id"] == "meeting-1"
+        assert broadcast_events[4][1]["id"] == "meeting-2"
+        # The route has no id in its path, so the announcement names the kind
+        # only: POST /api/meeting/start and /api/meeting/stop are both
+        # ``meeting "" create`` by the middleware rule.
+        announcement = {
+            "kind": "meeting", "id": "", "op": "create", "origin": "hub",
+            "changes": [{"kind": "meeting", "id": "", "op": "create"}],
+        }
+        assert [broadcast_events[i][1] for i in (1, 3, 5)] == [announcement] * 3
 
     def test_websocket_supports_ping_pong_keepalive(self):
         server = MeetingWebServer(
@@ -2495,8 +2509,16 @@ class TestPluginRunQueueApiEndpoints:
         assert payload["processed"] == 2
         assert payload["mode"] == "retry_now"
         assert callback_calls == [{"max_jobs": 5, "include_scheduled": True}]
-        assert broadcasts[0][0] == "plugin_jobs_processed"
+        # The route's own frame, then ONE ``desk_changed`` announcement when
+        # the request ends (holdspeak/web/announce.py). The route has no id in
+        # its path, so the announcement names the kind only.
+        announcement = {
+            "kind": "plugin_job", "id": "", "op": "create", "origin": "hub",
+            "changes": [{"kind": "plugin_job", "id": "", "op": "create"}],
+        }
+        assert [name for name, _ in broadcasts] == ["plugin_jobs_processed", "desk_changed"]
         assert broadcasts[0][1]["processed"] == 2
+        assert broadcasts[1][1] == announcement
 
         default_mode = client.post("/api/plugin-jobs/process", json={"max_jobs": 2})
         assert default_mode.status_code == 200
@@ -2506,8 +2528,9 @@ class TestPluginRunQueueApiEndpoints:
         assert default_payload["processed"] == 0
         assert default_payload["skipped_active_meeting"] is True
         assert callback_calls[1] == {"max_jobs": 2, "include_scheduled": False}
-        assert broadcasts[1][0] == "plugin_jobs_processed"
-        assert broadcasts[1][1]["mode"] == "respect_backoff"
+        assert [name for name, _ in broadcasts[2:]] == ["plugin_jobs_processed", "desk_changed"]
+        assert broadcasts[2][1]["mode"] == "respect_backoff"
+        assert broadcasts[3][1] == announcement
 
         invalid_mode = client.post("/api/plugin-jobs/process", json={"mode": "invalid"})
         assert invalid_mode.status_code == 400
@@ -2516,6 +2539,8 @@ class TestPluginRunQueueApiEndpoints:
         invalid_max_jobs = client.post("/api/plugin-jobs/process", json={"max_jobs": 0})
         assert invalid_max_jobs.status_code == 400
         assert invalid_max_jobs.json()["success"] is False
+        # The two refused writes sent nothing.
+        assert len(broadcasts) == 4
 
 
 # ============================================================
