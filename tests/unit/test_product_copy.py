@@ -221,6 +221,28 @@ def test_markdown_code_is_not_copy_and_does_not_exempt_surrounding_prose(
     }
 
 
+def test_a_dom_selector_is_code_and_real_failure_copy_beside_it_is_still_read(
+    tmp_path: Path,
+) -> None:
+    """``querySelector("[data-testid=preview-failed]")`` holds the word
+    "failed", and it is not a failure statement: nobody reads a selector."""
+    face = tmp_path / "face.tsx"
+    face.write_text(
+        'const ready = open?.querySelector("[data-testid=send-preview], '
+        '[data-testid=preview-refused], [data-testid=preview-failed]");\n'
+        'const message = "The preview request failed.";\n'
+    )
+    contract = replace(
+        PRODUCT_LANGUAGE.copy_contract,
+        primary_surfaces={"web": ("face.tsx",)},
+    )
+    items = inventory(tmp_path, contract)
+    assert [item.text for item in items] == ["The preview request failed."]
+    assert {item.rule_id for item in violations(items, contract)} == {
+        "failure-missing-facts"
+    }
+
+
 def test_copy_contract_covers_postures_failures_and_bounded_exceptions() -> None:
     contract = PRODUCT_LANGUAGE.copy_contract
     assert contract.generic_consequential_verbs == (

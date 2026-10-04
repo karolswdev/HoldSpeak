@@ -561,7 +561,11 @@ function PrepLens({ relationship, onRefresh, onProtectedFailure, onOpenConcern }
     {prep.projects.length ? (
       <div data-testid="prep-projects">
         <SurfaceSection label="Projects">
-          <SurfaceRows>{prep.projects.map((project) => <SurfaceRow key={project.id} title={project.name} onOpen={refOpener(`project:${project.id}`) ?? undefined} />)}</SurfaceRows>
+          <SurfaceRows>{prep.projects.map((project) => <SurfaceRow
+            key={project.id}
+            title={project.name}
+            onOpen={refOpener(`project:${project.id}`) ?? undefined}
+          />)}</SurfaceRows>
         </SurfaceSection>
       </div>
     ) : null}
