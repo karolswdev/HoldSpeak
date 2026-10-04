@@ -229,7 +229,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     # HS-200-16: moved down five lines by `build_manifest` carrying each row's
     # `kind`; RE-ANCHORED, the site unchanged -- same file, same qualname, same
     # call, same capability and owner. The entrance count is still 9.
-    "holdspeak/services/preparation_brief_service.py:1034|PreparationBriefService._draft_with_model|call": ProposedRoute(
+    "holdspeak/services/preparation_brief_service.py:1069|PreparationBriefService._draft_with_model|call": ProposedRoute(
         "project.brief_prepare", "services.preparation_brief_service", "InferenceRunner admitted child",
     ),
 }

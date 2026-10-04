@@ -159,3 +159,64 @@ def test_update_draft_without_memory_or_engine_is_as_before(rig):
     plain = _make_service(rig).draft_update(OWNER, with_memory)
     assert "memory_refs" not in json.loads(plain["source_manifest_json"])
     assert "quorumdb" not in plain["body_md"]
+
+
+# ── The Prep brief ───────────────────────────────────────────────────
+
+def _prep_service(db: Database, runner):
+    from holdspeak.services.preparation_brief_service import (
+        PREPARATION_BRIEF_CAPABILITY,
+        PreparationBriefService,
+    )
+    from tests.unit.test_update_drafter import _MockBroker, _seed_assignment
+
+    _seed_assignment(db, PREPARATION_BRIEF_CAPABILITY)
+    return PreparationBriefService(
+        db, project_service=_make_service(db)._project_service,
+        broker=_MockBroker(db, runner),
+    )
+
+
+def test_prep_prompt_carries_the_earlier_decision_and_keeps_its_ref(rig):
+    from tests.unit.test_update_drafter import _MockRunner
+
+    project_id, inside = _project_with_decision(rig)
+    ref = f"desk_decision:{inside}"
+    runner = _MockRunner(output=json.dumps({
+        "priorities": [{"text": "Confirm quorumdb for the ledger", "cited_refs": [ref]}],
+        "questions": [], "obligations": [],
+    }))
+
+    brief = _prep_service(rig, runner).prepare(
+        OWNER, project_id, "ledger review with the team", generator="model",
+    )
+
+    prompt = runner.invoke_calls[0].payload["user_prompt"]
+    assert "[PROJECT MEMORY]" in prompt and "[END PROJECT MEMORY]" in prompt
+    assert "We adopt quorumdb for the Atlas ledger" in prompt
+    assert "Borealis" not in prompt
+    assert brief["manifest"]["memory_refs"] == [ref]
+    cited = [c for c in json.loads(brief["claims_json"]) if ref in c["refs"]]
+    assert cited and cited[0]["support"] == "source_linked"
+
+
+def test_prep_without_memory_is_as_before(rig):
+    from tests.unit.test_update_drafter import _MockRunner
+
+    svc = _make_service(rig)
+    project_id = svc._project_service.create_project(OWNER, {"name": "Bare"})["id"]
+    runner = _MockRunner(output=json.dumps(
+        {"priorities": [], "questions": [], "obligations": []}))
+
+    brief = _prep_service(rig, runner).prepare(
+        OWNER, project_id, "first sync", generator="model",
+    )
+
+    assert "MEMORY" not in runner.invoke_calls[0].payload["user_prompt"]
+    assert "memory_refs" not in brief["manifest"]
+    # No engine: the deterministic brief reads no memory.
+    with_memory, _inside = _project_with_decision(rig, items=False)
+    plain = _prep_service(rig, _MockRunner(output="{}")).prepare(
+        OWNER, with_memory, "ledger review", generator="deterministic",
+    )
+    assert "memory_refs" not in plain["manifest"]
