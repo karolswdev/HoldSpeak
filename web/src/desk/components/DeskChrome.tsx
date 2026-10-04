@@ -170,6 +170,7 @@ export function DeskChrome({
   // is its own full-width row in the desk flow (DeskReceiptRow), not a seat
   // in the bar.
   const compact = useCompactViewport();
+  const frontWindow = useFrontWindowId();
 
   const anyLive = Object.values(status).some((v) => v === "live");
   const hubState = error ? "degraded" : anyLive ? "live" : "connecting";
@@ -301,7 +302,10 @@ export function DeskChrome({
         <MicLamp />
         <AttentionBell />
         <DeskToolShelf />
-        <DeskClock />
+        {/* Muad'Dib's ruling 2026-10-04: at 393 the clock leaves the bar
+            while a window is in front, and the window's name takes its
+            width (the bar has no free width: 393 px of parts). */}
+        {compact && frontWindow ? null : <DeskClock />}
       </div>
     </div>
   );

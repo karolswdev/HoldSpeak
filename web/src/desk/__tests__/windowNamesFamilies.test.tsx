@@ -93,6 +93,18 @@ describe("a window that shows one record of a program", () => {
     await waitFor(() => expect(registrySnapshot.find((w) => w.id === "surface-project-memory")?.label).toBe("Desk memory"));
   });
 
+  it("People custody: a person's name is never a window name; the People window stays `People`", async () => {
+    const row: SurfaceRow = { key: "open-people", id: "surface-people", title: "People", glyph: "P", eyebrow: "", Core: core(() => <p>her window</p>) };
+    const items = { ...EMPTY_ITEMS, project: [project] } as typeof EMPTY_ITEMS;
+    for (const scope of ["people:rel-priya", "people:rel-priya:prep", "project:p-ledger"]) {
+      const { unmount } = render(<SurfaceWindowHost row={row} scope={scope} items={items} />);
+      await screen.findByText("her window");
+      expect(registrySnapshot.find((w) => w.id === "surface-people")?.label).toBe("People");
+      expect(screen.getByRole("region", { name: "People" })).toBeTruthy();
+      unmount();
+    }
+  });
+
   it("a core names its window by the open section: Settings · Connections", async () => {
     const Section = () => { useWindowTitle(windowName({ kind: "settings", section: "Connections" }), []); return <p>section</p>; };
     const row: SurfaceRow = { key: "configure-settings", id: "surface-settings", title: "Settings", glyph: "⚙", eyebrow: "", Core: core(Section) };

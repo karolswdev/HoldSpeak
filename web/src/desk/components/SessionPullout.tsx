@@ -760,6 +760,9 @@ export function SessionPullout() {
       </div>
 
       <SurfaceFooter
+        // The session id is not in the title (the window is named by its
+        // project); it stays findable here, a quiet token.
+        egress={<span className="surface-token desk-session-id" title="Session id" data-testid="session-id-token">SESSION · {sessionId}</span>}
         receipt={<ReceiptLine sessionKey={openKey} />}
         verbs={<>
           <ArmStrip />
