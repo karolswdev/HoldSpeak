@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import logging
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -11,6 +12,8 @@ from typing import Any, Callable
 
 from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
+
+log = logging.getLogger(__name__)
 
 
 _SECTIONS = ("this_week", "changed", "broke", "waiting", "decisions")
@@ -396,8 +399,14 @@ class MondayBriefService:
         # HS-200-07 (C4): the needs-you half of the brief names what was
         # NOT observed, so an empty brief cannot read as an all-clear over
         # a source that failed.
-        waiting_items = self._collect_coverage_gaps(principal) + \
-            self._collect_waiting(principal)
+        # The WAITING rows are the members of the one ``needs you`` rule, so
+        # ``N things waiting`` is the number the bell, the Chair and the
+        # notification show. Read before the brief's own connection.
+        member_items = self._collect_needs_you(principal)
+        needs_you_count = None if member_items is None else len(member_items)
+        waiting_items = self._collect_coverage_gaps(principal) + (
+            self._collect_waiting(principal) if member_items is None else member_items
+        )
 
         with self._db._connection() as conn:
             row = conn.execute(
@@ -486,7 +495,7 @@ class MondayBriefService:
                     },
                 ),
             }
-            headline, sections = self._compose(sections)
+            headline, sections = self._compose(sections, waiting_count=needs_you_count)
             generated_at = period_end.isoformat()
             conn.execute(
                 """INSERT INTO monday_briefs
@@ -526,16 +535,80 @@ class MondayBriefService:
             brief.ledger = ledger
             return brief
 
+    def _collect_needs_you(self, principal: Any) -> list[BriefItem] | None:
+        """One WAITING row per member of the one ``needs you`` rule.
+
+        The rule is ``desk.needs_you`` (``needs_you_membership``): the same
+        members, in the same order, that the bell and the Chair show. A
+        People commitment is a member and is counted; its text stays inside
+        the People store and is not written into the brief. ``None`` when the
+        rule cannot be read (the caller then uses the brief's own collector
+        and gives no ``needs you`` number).
+        """
+        try:
+            from holdspeak.services.needs_you_membership import withhold_people_content
+            from holdspeak.services.project_service import ProjectService
+
+            answer = withhold_people_content(ProjectService(self._db).needs_you(principal))
+        except Exception as exc:  # pragma: no cover - defensive
+            log.warning("brief: the needs-you rule is unavailable: %s", exc)
+            return None
+
+        def item(text: str, detail: str | None, source_ref: str, priority: int) -> BriefItem:
+            return BriefItem(
+                id=f"brief-item-{uuid.uuid4().hex}", section="waiting", text=text,
+                detail=detail, source_ref=source_ref, priority=priority,
+            )
+
+        rows: list[BriefItem] = []
+        # Rank order is kept: a higher priority sorts first in the section.
+        priority = 300
+        for row in answer.get("items") or []:
+            if row.get("muted"):
+                continue
+            card = row.get("_doorCard") if isinstance(row.get("_doorCard"), dict) else None
+            title = str(row.get("title") or "Untitled")
+            why = str(row.get("why") or "").strip()
+            if card is not None:
+                source_ref = f"{card.get('source') or 'action_item'}:{card.get('id')}"
+                due = card.get("due")
+                if why.startswith("OVERDUE"):
+                    text, detail = f"Overdue: {title}", f"Due {due}" if due else None
+                elif row.get("_isUnassigned"):
+                    text, detail = f"Unassigned: {title}", f"Due {due}" if due else "Needs an owner"
+                else:
+                    text, detail = title, why or None
+            else:
+                text, detail = title, why or None
+                source_ref = f"needs_you:{row.get('ref') or row.get('id')}"
+            rows.append(item(text, detail, source_ref, priority))
+            priority = max(priority - 1, 130)
+        for blocker in answer.get("blockers") or []:
+            rows.append(item(str(blocker.get("label")), str(blocker.get("verb") or "") or None,
+                             f"blocker:{blocker.get('key')}", 120))
+        for meeting in answer.get("failedMeetings") or []:
+            rows.append(item(f"Summary failed: {meeting.get('title') or 'Meeting with no title'}",
+                             None, f"meeting:{meeting.get('id')}", 110))
+        return rows
+
     def _compose(
-        self, sections: dict[str, list[BriefItem]]
+        self, sections: dict[str, list[BriefItem]], *, waiting_count: int | None = None,
     ) -> tuple[str, dict[str, list[BriefItem]]]:
-        """Compose an honest, deterministic headline and ordered fixed sections."""
+        """Compose an honest, deterministic headline and ordered fixed sections.
+
+        ``waiting_count`` is the one ``needs you`` number. When given, it is
+        the ``N things waiting`` count; the section's own row count is not a
+        second number.
+        """
         finalized_sections = {
             section: self._sort_section(section, sections.get(section, []))
             for section in _SECTIONS
         }
         counts = {section: len(items) for section, items in finalized_sections.items()}
         total_items = sum(counts.values())
+        if waiting_count is not None:
+            counts["waiting"] = waiting_count
+            total_items += waiting_count
         if total_items == 0:
             return "No changes", finalized_sections
 

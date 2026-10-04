@@ -534,7 +534,12 @@ class ProjectService:
     # ── the desk's NEEDS YOU (PHILO-9-01, F13) ────────────────────────
 
     def needs_you(self, principal: Principal, *, door_upcoming: Any = None) -> dict[str, Any]:
-        """What needs the owner across every Room: ONE aggregate, ONE count.
+        """What needs the owner: ONE rule, ONE count, every face.
+
+        The answer is the R1-R3 membership (``needs_you_membership``): Door
+        cards, Room rows, meeting-path blockers and failed summaries. ``count``
+        is the number the bell, the Chair, the Dock, the Brief, notifications,
+        the palette, the system shade and MCP all show.
 
         PHILO-9-01 (F13): the HTTP route applied the heartbeat's muted
         projects and MCP ``desk.needs_you`` did not, so the two counts
@@ -543,7 +548,8 @@ class ProjectService:
         is the hub's calendar read (``DoorService._upcoming``), held by the
         transport; ``None`` when the process has none.
         """
-        from .needs_you_aggregate import apply_mute, build_aggregate, shared_last_known
+        from .needs_you_aggregate import build_aggregate, shared_last_known
+        from .needs_you_membership import compose
 
         aggregate = build_aggregate(
             list_projects=self.list_projects,
@@ -552,13 +558,19 @@ class ProjectService:
             door_upcoming=door_upcoming,
             last_known=shared_last_known(lambda: self._db),
         )
+        # The one rule (needs_you_membership): the Door's asking columns, the
+        # Room rows, the meeting-path blockers and the failed summaries. The
+        # heartbeat's muted projects are applied by the rule.
+        return compose(self._db, principal, aggregate, muted_project_ids=self.muted_project_ids())
+
+    def muted_project_ids(self) -> set[str]:
+        """The heartbeat's muted projects (empty when the setting is unreadable)."""
         try:
             from .heartbeat_service import HeartbeatService
 
-            muted_ids = set(HeartbeatService(self._db).get_settings().get("muted_projects", []))
+            return {str(pid) for pid in HeartbeatService(self._db).get_settings().get("muted_projects", [])}
         except Exception:
-            muted_ids = set()
-        return apply_mute(aggregate, muted_ids)
+            return set()
 
     # ── room projection (HS-158-04, SS6.2) ────────────────────────────
 

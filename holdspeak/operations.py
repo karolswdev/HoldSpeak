@@ -1812,12 +1812,13 @@ PROJECT_PUBLISH_UPDATE = OperationDescriptor(
 DESK_NEEDS_YOU = OperationDescriptor(
     name="desk.needs_you",
     version=1,
-    description="What needs me: every Room's attention items in one list (overdue milestones, reviews waiting, "
-                "proposals, commitments ...), with one count. Muted projects are marked and not counted.",
+    description="What needs me, by the one rule every face uses: Door cards that ask me, every Room's attention "
+                "items, meeting-path engine blockers and failed summaries, with one count. Muted projects are "
+                "marked and not counted.",
     args_schema={"type": "object", "properties": {}, "additionalProperties": False},
     principal=_ROOM_PRINCIPAL,
     effect="read",
-    result="the needs-you aggregate (items, count, projects, mutedCount when a project is muted, computedAt, coverage, complete)",
+    result="the needs-you answer (count, members, items, blockers, failedMeetings, roomItems, projects, mutedCount, computedAt, coverage, complete, sourceErrors)",
     refusals=_CONTRACT_REFUSALS,
     completion="synchronous; the HTTP route serves it from a cache (computedAt, stale, sweepId)",
     exposure=("http:GET /api/desk/needs-you", "mcp:desk.needs_you"),

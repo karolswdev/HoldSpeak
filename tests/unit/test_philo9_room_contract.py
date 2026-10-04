@@ -238,7 +238,11 @@ def test_f13_one_needs_you_count_with_a_muted_project(hub: Hub) -> None:
     http = hub.client.get("/api/desk/needs-you?fresh=1").json()
     is_error, mcp = _tool(hub.client, "desk.needs_you", {})
     assert not is_error, mcp
-    assert http["count"] == 1 and http["mutedCount"] == 1, http
+    # One rule: the loud Room's proposal is the one attention member (a hub
+    # with no summary engine also has the meeting-path blocker, counted).
+    attention = [m for m in http["members"] if m["kind"] == "attention"]
+    assert len(attention) == 1 and http["mutedCount"] == 1, http
+    assert http["count"] == len(http["members"]), http
     assert mcp["count"] == http["count"], (mcp["count"], http["count"])
     assert mcp.get("mutedCount") == 1
     assert sorted(mcp["projects"]) == sorted(http["projects"]) == [loud]

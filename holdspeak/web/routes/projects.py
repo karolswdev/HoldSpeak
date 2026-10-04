@@ -601,7 +601,13 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         # are the hub's, held by this transport.
         door = ctx.door_service
         door_upcoming = getattr(door, "_upcoming", None) if door else None
-        return ops().invoke(_owner_principal, "desk.needs_you", {}, held={"door_upcoming": door_upcoming})
+        answer = ops().invoke(_owner_principal, "desk.needs_you", {}, held={"door_upcoming": door_upcoming})
+        # Only the Room read is cached. The Door rows (People commitments
+        # among them) never enter a cache: the route applies the rule again
+        # on every request, over ``roomItems``.
+        from holdspeak.services.needs_you_membership import room_part
+
+        return room_part(answer)
 
     _needs_you_cache = NeedsYouCache(
         _build_needs_you, max_age_s=900.0, db_factory=_get_db,
@@ -622,6 +628,15 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             _owner_principal = principal(request)
             force = fresh == "1"
             data = _needs_you_cache.get(force=force)
+            # The Room read is cached; the Door, the engine blockers and the
+            # failed summaries are local reads, so the one rule is applied on
+            # every request and the number is current.
+            from holdspeak.services.needs_you_membership import compose
+            from holdspeak.services.project_service import ProjectService
+
+            db = _get_db()
+            data = compose(db, _owner_principal, data,
+                           muted_project_ids=ProjectService(db).muted_project_ids())
             return JSONResponse(data)
         except Exception as exc:
             return error_500(exc, log, "Failed to build desk needs-you")
