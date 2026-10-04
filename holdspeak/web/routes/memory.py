@@ -5,6 +5,7 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ...services.errors import ServiceError, ValidationError
 from ..context import WebContext
@@ -23,7 +24,13 @@ def build_memory_router(ctx: WebContext) -> APIRouter:
         time_to: Optional[str] = None, limit: int = 50, offset: int = 0,
     ) -> Any:
         try:
-            return JSONResponse(service.search(request.state.principal, query, kind=kind, project_id=project_id, time_from=time_from, time_to=time_to, limit=limit, offset=offset))
+            # Off the event loop: a search reads the database and may wait
+            # (a bounded time) for the question's embedding.
+            return JSONResponse(await run_in_threadpool(
+                service.search, request.state.principal, query, kind=kind,
+                project_id=project_id, time_from=time_from, time_to=time_to,
+                limit=limit, offset=offset,
+            ))
         except ValidationError as exc:
             return JSONResponse({"error": exc.detail}, status_code=400)
         except ServiceError as exc:

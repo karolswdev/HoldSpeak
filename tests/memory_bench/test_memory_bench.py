@@ -68,7 +68,11 @@ def test_an_engine_that_fails_or_has_no_vectors_changes_nothing(desk) -> None:
             raise RuntimeError("engine is gone")
 
     db.memory.set_embedder(Broken())
-    assert bench.keyword_snapshot(db, refs) == golden
+    broken = bench.keyword_snapshot(db, refs)
+    for answer in broken.values():
+        # The failed call is named; the rest is the keyword answer.
+        assert answer["ranking"].pop("engine")["outcome"] == "failed"
+    assert broken == golden
 
 
 def test_recall_before_and_after(desk, capsys) -> None:

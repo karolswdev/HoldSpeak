@@ -34,15 +34,20 @@ class MemoryService:
                 "principal does not permit memory reads",
                 context={"status": status, "response": refusal(principal, PrincipalRight.READ)},
             )
+        from ..memory.engine import memory_caller
+
         try:
-            return self._db.memory.search(
-                query,
-                kinds=kind,
-                project_id=project_id,
-                time_from=time_from,
-                time_to=time_to,
-                limit=limit,
-                offset=offset,
-            ).to_dict()
+            # The question's embedding call, when there is one, is admitted
+            # for THIS principal: the receipt names who searched.
+            with memory_caller(principal):
+                return self._db.memory.search(
+                    query,
+                    kinds=kind,
+                    project_id=project_id,
+                    time_from=time_from,
+                    time_to=time_to,
+                    limit=limit,
+                    offset=offset,
+                ).to_dict()
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc

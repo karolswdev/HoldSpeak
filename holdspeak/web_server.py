@@ -1407,6 +1407,14 @@ class MeetingWebServer:
                 )
             except Exception as e:
                 log.error(f"intel queue conductor startup failed: {e}")
+            # The memory conductor (MEMORY-DESIGN.md §3): sweeps the source
+            # tables into the chunk index and embeds through memory.embed.
+            try:
+                from .memory_conductor import start_memory_conductor
+
+                start_memory_conductor()
+            except Exception as e:
+                log.error(f"memory conductor startup failed: {e}")
             self._started.set()
             log.debug("Meeting web server startup complete")
 
@@ -1425,6 +1433,7 @@ class MeetingWebServer:
                 ("workbench", "workbench_conductor.stop_conductor"),
                 ("scheduled recording", "scheduled_recording_conductor.stop_scheduled_recording_conductor"),
                 ("intel queue", "intel_queue_conductor.stop_intel_queue_conductor"),
+                ("memory", "memory_conductor.stop_memory_conductor"),
             ):
                 module_name, _, attribute = stop.partition(".")
                 try:

@@ -151,6 +151,9 @@ holdspeak/kernel/prompt_adapter.py|StreamingPromptAdapter.dispatch|run_prompt|ca
 holdspeak/main.py|_run_meeting_mode|transcribe|call
 holdspeak/main.py|_run_meeting_mode|transcribe|call#2
 holdspeak/meeting_import.py|_transcribe_import_windows|transcribe|call
+holdspeak/memory/engine.py|EmbeddingAdapter._local_model|Llama|call
+holdspeak/memory/engine.py|EmbeddingAdapter._endpoint_vectors|_ensure_openai_client_loaded|call
+holdspeak/memory/engine.py|EmbeddingAdapter._endpoint_vectors|_remote_completion|call
 holdspeak/meeting_session/deferred_bound.py|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
 holdspeak/meeting_session/deferred_bound.py|bound_auto_title_dispatch.call|generate_title|call
 holdspeak/meeting_session/deferred_bound.py|bound_analysis_dispatch.call|analyze|call
@@ -240,6 +243,10 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     ),
     # HS-153-03/05: chat practice capabilities (guardrail + compaction).
     # HS-153-06: line numbers shifted by M1 redaction + response_format + robust parser additions.
+    # Memory slice 1: one admitted child per embedding batch and per question.
+    "holdspeak/memory/engine.py|RouterEmbedder._invoke|call": ProposedRoute(
+        "memory.embed", "memory.engine", "InferenceRunner admitted child",
+    ),
     "holdspeak/services/thread_practice.py|run_guardrail|call": ProposedRoute(
         "chat.guardrail", "services.thread_practice", "InferenceRunner admitted child",
     ),
@@ -648,6 +655,14 @@ holdspeak/target_profile.py|apply_model_assisted_target|rewrite|ref
 holdspeak/target_profile.py|apply_model_assisted_target|rewrite|ref#2
 holdspeak/target_profile.py|apply_model_assisted_target|rewrite|call
 """),
+    # Memory slice 1: the memory.embed adapter's two physical leaves (the
+    # embedding-mode llama.cpp load and the endpoint client).  Both run only
+    # inside EmbeddingAdapter.dispatch, for an admitted memory.embed child.
+    _group(ProposedRoute("memory.embed", "memory.engine", "InferenceRunner admitted child"), """
+holdspeak/memory/engine.py|EmbeddingAdapter._local_model|Llama|call
+holdspeak/memory/engine.py|EmbeddingAdapter._endpoint_vectors|_ensure_openai_client_loaded|call
+holdspeak/memory/engine.py|EmbeddingAdapter._endpoint_vectors|_remote_completion|call
+"""),
     _group(ProposedRoute("speech.transcribe", "speech_session.transcription", "InferenceRunner via TranscriptionAdmission"), """
 holdspeak/main.py|_run_meeting_mode|transcribe|call
 holdspeak/main.py|_run_meeting_mode|transcribe|call#2
@@ -698,7 +713,9 @@ def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
     # HS-151-02/D3: streaming seam adds _chat_completion_deltas (3 sites)
     # and _attempt_stream (1 site); line shifts update 6 existing sites.
     # HS-151-04: +1 StreamingPromptAdapter.dispatch run_prompt fallback, +1 line shift
-    assert len(live) == 109
+    # Memory slice 1: +3, the memory.embed adapter's local load, its endpoint
+    # client and the engine's egress-warranted remote call.
+    assert len(live) == 112
 
 
 def test_phase143_every_product_runner_entrance_has_one_owner() -> None:
