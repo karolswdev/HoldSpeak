@@ -43,7 +43,7 @@ def test_dashboard_owns_first_value_without_redirecting() -> None:
     resp = _client().get("/")
     assert resp.status_code == 200
     desk = (_REPO / "web" / "src" / "desk" / "DeskApp.tsx").read_text()
-    assert "setup?.arrival_required" in desk
+    assert "shownSetup?.arrival_required === true" in desk
     assert "arrivalRequired" in desk
     assert 'navigate("/welcome"' not in desk
     assert 'navigate("/setup"' not in desk

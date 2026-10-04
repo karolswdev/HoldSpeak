@@ -48,4 +48,6 @@ def test_history_keeps_approval_and_export_governance() -> None:
     assert "commitment" in data and "authority_basis" in data
     # Export still goes through the blob verb on the shell's footer.
     assert "apiBlob" in shell
-    assert "ConfirmVerb" in shell
+    # PHILO-13-02: the footer's destructive verb is Park (one press, Restore
+    # undoes it), in place of the confirmed Delete.
+    assert "parkMeeting(" in shell and "onClick={() => void parkSelected()}" in shell

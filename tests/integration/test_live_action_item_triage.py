@@ -41,9 +41,24 @@ class _ArchiveSpy:
 
     meetings = property(lambda self: self)
 
-    def __init__(self, *, found: bool = True) -> None:
+    def __init__(self, *, found: bool = True, db: Database | None = None) -> None:
         self.found = found
         self.calls: list[tuple[str, Any]] = []
+        # A saved-meeting write marks the Needs You aggregate dirty through
+        # ``db._connection()``. The spy has no connection of its own: a test
+        # that reaches that write passes a real ``Database``.
+        self._db = db
+
+    def _connection(self) -> Any:
+        assert self._db is not None, "this path writes the plain DB: pass a real Database"
+        return self._db._connection()
+
+    def dirty_marker(self) -> Any:
+        with self._connection() as conn:
+            return conn.execute(
+                "SELECT attention_state FROM desk_projection_state "
+                "WHERE projection_id = 'needs_you_aggregate'"
+            ).fetchone()
 
     def update_action_item_status(self, item_id: str, status: str) -> bool:
         self.calls.append(("status", (item_id, status)))
@@ -95,17 +110,18 @@ class TestLiveFirstResolutionOrder:
         edit.assert_called_once_with("a-1", task="Edited", owner="Me", due="Friday")
         assert archive.calls == []
 
-    def test_falls_through_to_the_saved_meeting_when_no_live_session_owns_it(self):
-        archive = _ArchiveSpy(found=True)
+    def test_falls_through_to_the_saved_meeting_when_no_live_session_owns_it(self, tmp_path):
+        archive = _ArchiveSpy(found=True, db=Database(tmp_path / "plain.db"))
         live = MagicMock(return_value=None)
         _service(archive, on_update=live).update_action_item(
             UNAUTHENTICATED, "saved-1", {"status": "dismissed"}
         )
         live.assert_called_once_with("saved-1", "dismissed")
         assert archive.calls[0] == ("status", ("saved-1", "dismissed"))
+        assert archive.dirty_marker() is not None, "a saved write marks Needs You dirty"
 
-    def test_saved_meetings_still_work_with_no_live_session_bound_at_all(self):
-        archive = _ArchiveSpy(found=True)
+    def test_saved_meetings_still_work_with_no_live_session_bound_at_all(self, tmp_path):
+        archive = _ArchiveSpy(found=True, db=Database(tmp_path / "plain.db"))
         service = _service(archive)
         service.update_action_item(UNAUTHENTICATED, "saved-1", {"status": "done"})
         service.review_action_item(UNAUTHENTICATED, "saved-1", {"review_state": "accepted"})

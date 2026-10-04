@@ -204,8 +204,10 @@ def test_lifecycle_transitions_and_bidirectional_supersession(tmp_path) -> None:
     ]
 
 
-def test_meeting_delete_severs_source_without_deleting_decision(tmp_path) -> None:
-    db = Database(tmp_path / "sever.db")
+def test_meeting_delete_parks_and_the_decision_stays_linked(tmp_path) -> None:
+    """``delete_meeting`` parks (PHILO-13: never delete). The meeting row, its
+    artifact and the decision's source link all stay."""
+    db = Database(tmp_path / "park.db")
     _meeting(db, "meeting-1")
     _artifact(db, "artifact-1", "meeting-1", [{"decision": "Memory survives"}])
     db.decisions.reconcile_artifact("artifact-1")
@@ -214,10 +216,32 @@ def test_meeting_delete_severs_source_without_deleting_decision(tmp_path) -> Non
     assert db.meetings.delete_meeting("meeting-1") is True
     survivor = db.decisions.get(decision_id)
     assert survivor is not None
-    assert survivor.source_state == "source_deleted"
+    assert survivor.source_state == "linked"
     assert survivor.source_meeting_id == "meeting-1"
     with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 0
+        assert conn.execute(
+            "SELECT parked FROM meetings WHERE id = 'meeting-1'"
+        ).fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 1
+
+
+def test_a_removed_meeting_row_severs_source_without_deleting_decision(tmp_path) -> None:
+    """The schema trigger still holds: if a meeting row ever leaves the table,
+    the decision survives and says its source is gone. No product path deletes
+    a meeting row today (``delete_meeting`` parks), so the row is removed here
+    by SQL."""
+    db = Database(tmp_path / "sever.db")
+    _meeting(db, "meeting-1")
+    _artifact(db, "artifact-1", "meeting-1", [{"decision": "Memory survives"}])
+    db.decisions.reconcile_artifact("artifact-1")
+    decision_id = db.decisions.list()[0].id
+
+    with db._connection() as conn:
+        conn.execute("DELETE FROM meetings WHERE id = 'meeting-1'")
+    survivor = db.decisions.get(decision_id)
+    assert survivor is not None
+    assert survivor.source_state == "source_deleted"
+    assert survivor.source_meeting_id == "meeting-1"
 
 
 def test_identity_survives_provenance_reruns() -> None:

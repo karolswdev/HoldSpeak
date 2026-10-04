@@ -4,7 +4,7 @@
  * placeholder (grounding F9). One made from a meeting carries:
  *   - the meeting: the tag `meeting:<id>` and the meeting in its context;
  *   - the meeting's project: the tag `project:<id>` and the project's
- *     membership edge (`PUT /api/projects/{id}/resources/decision:<id>`,
+ *     membership edge (`PUT /api/projects/{id}/resources/desk_decision:<id>`,
  *     the same edge the filing strip writes).
  * Both go through the existing routes (`POST /api/decisions`, the project
  * resource route); no backend field is added (story Notes, Tenet 1). */
@@ -85,7 +85,7 @@ export async function decideFromMeeting(input: {
   if (!decision) throw new Error("The hub returned no decision");
   if (project) {
     await apiFetch(
-      `/api/projects/${encodeURIComponent(project.id)}/resources/${encodeURIComponent(`decision:${decision.id}`)}`,
+      `/api/projects/${encodeURIComponent(project.id)}/resources/${encodeURIComponent(`desk_decision:${decision.id}`)}`,
       { method: "PUT", json: { relationship: "member" } },
     ).catch(() => undefined);
   }
