@@ -23,6 +23,7 @@ import {
 } from "../verbRegistry";
 import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { useCompactViewport } from "../useCompactViewport";
+import { CHAIR_WINDOW_IDS } from "../chair/chairWindows";
 import { Button } from "../../components/signal/Signal";
 import { frontSendTo, primeSendTo, useSendToTick } from "../windowSend";
 import {
@@ -187,8 +188,15 @@ export function DeskMenuBar() {
       lastGroup = v.group;
       out.push(item);
     }
+    // One window, one row: Window ▸ Chair already offers the Chair windows
+    // (a check on each open one), so the open-windows list leaves them out.
     if (id === "window")
-      appendOpenWindows(out, registrySnapshot, frontWindowId(), (w) => { focusOrRestoreApp(w); });
+      appendOpenWindows(
+        out,
+        registrySnapshot.filter((w) => !CHAIR_WINDOW_IDS.includes(w.id)),
+        frontWindowId(),
+        (w) => { focusOrRestoreApp(w); },
+      );
   };
 
   const entries = (id: MenuId): WorkMenuEntry[] => {
