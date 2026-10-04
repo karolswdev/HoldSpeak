@@ -12,14 +12,15 @@ with ``on_changed``. The repair is two roots, and this file fences both:
    says ``effect="write"`` (``holdspeak/operations.py``).
 2. One HTTP middleware announces every mutating ``/api`` request that answers
    2xx (``holdspeak/web/announce.py``) -- the routes that do not go through
-   the registry.
+   the registry. The only quiet routes are named there, one by one.
 
-Everything here runs against a real hub (``MeetingWebServer.start()``, a real
-port, a real ``/ws`` client). The walk in ``test_no_registered_write_is_silent``
-swaps each operation's SERVICE METHOD for a stand-in that returns at once: it
-proves the registry's root (validation, the kernel path for admitted
-operations, the bus, the socket), not the 68 services. The eight named writes
-run their real services over HTTP.
+One write sends ONE frame. Announcements made inside the write are held and
+leave together; ``changes`` names each object. Every count here is exact.
+
+Everything runs against a real hub (``MeetingWebServer.start()``, a real port,
+a real ``/ws`` client). The two roots are fenced apart: the registry tests call
+``registry.invoke`` with no HTTP request (so the middleware cannot cover for
+it), and the HTTP tests use routes that never reach the registry.
 """
 from __future__ import annotations
 
@@ -198,16 +199,17 @@ NAMED_WRITES: dict[str, Callable[[Hub, dict[str, str]], tuple[int, Any]]] = {
 }
 
 
-def test_the_named_writes_each_send_a_frame(hub: Hub, seeded: dict[str, str]) -> None:
-    silent: list[str] = []
+def test_the_named_writes_each_send_one_frame(hub: Hub, seeded: dict[str, str]) -> None:
+    counts: dict[str, int] = {}
     for label, write in NAMED_WRITES.items():
         answer: list[tuple[int, Any]] = []
         frames = hub.frames_from(lambda: answer.append(write(hub, seeded)))
         status, body = answer[0]
         assert 200 <= status < 300, f"{label}: the write itself failed ({status}): {body!r}"
-        if not frames:
-            silent.append(label)
+        counts[label] = len(frames)
+    silent = [label for label, count in counts.items() if count == 0]
     assert not silent, f"these writes sent no desk_changed frame: {silent}"
+    assert counts == {label: 1 for label in NAMED_WRITES}, counts
 
 
 def test_a_write_sends_one_frame_not_two(hub: Hub, seeded: dict[str, str]) -> None:
@@ -215,6 +217,7 @@ def test_a_write_sends_one_frame_not_two(hub: Hub, seeded: dict[str, str]) -> No
     frames = hub.frames_from(lambda: hub.call("POST", "/api/notes", {"title": "One frame", "body_markdown": "x"}))
     assert len(frames) == 1, frames
     assert frames[0]["kind"] == "note" and frames[0]["op"] == "create"
+    assert frames[0]["changes"] == [{"kind": "note", "id": frames[0]["id"], "op": "create"}]
     frames = hub.frames_from(lambda: hub.call("POST", "/api/projects", {"name": "One frame room"}))
     assert len(frames) == 1, frames
     assert frames[0]["kind"] == "project" and frames[0]["op"] == "create" and frames[0]["id"]
@@ -227,6 +230,102 @@ def test_a_read_and_a_refused_write_send_no_frame(hub: Hub, seeded: dict[str, st
         lambda: answer.append(hub.call("PUT", "/api/meetings/no-such-meeting", {"title": "x"})), wait_s=0.5)
     assert answer[0][0] == 404
     assert frames == []
+
+
+def test_a_settings_write_is_not_silenced_by_its_last_path_word(hub: Hub, seeded: dict[str, str]) -> None:
+    """Astra, #771 finding 1: ``PUT /api/settings/heartbeat`` wrote and sent nothing.
+
+    A suffix rule (``heartbeat``, meant for node traffic) silenced it. No rule
+    by prefix or suffix is left: only the routes named in ``QUIET_ROUTES``.
+    """
+    answer: list[tuple[int, Any]] = []
+    frames = hub.frames_from(
+        lambda: answer.append(hub.call("PUT", "/api/settings/heartbeat", {"sweep_every_minutes": 17})))
+    assert answer[0][0] == 200, answer
+    assert hub.call("GET", "/api/settings/heartbeat")[1]["sweep_every_minutes"] == 17
+    assert len(frames) == 1, frames
+    assert (frames[0]["kind"], frames[0]["op"]) == ("setting", "update")
+
+
+def test_the_quiet_routes_are_real_named_and_quiet(hub: Hub, seeded: dict[str, str]) -> None:
+    from holdspeak.web.announce import QUIET_ROUTES
+
+    live = {
+        (method, route.path)
+        for route in hub.server.app.routes
+        for method in (getattr(route, "methods", None) or ())
+    }
+    stale = sorted(key for key in QUIET_ROUTES if key not in live)
+    assert not stale, f"QUIET_ROUTES names routes the hub does not have: {stale}"
+    assert all(reason.strip() for reason in QUIET_ROUTES.values())
+
+    answer: list[tuple[int, Any]] = []
+    frames = hub.frames_from(
+        lambda: answer.append(hub.call("POST", "/api/grounding/resolve", {"refs": []})), wait_s=0.5)
+    assert 200 <= answer[0][0] < 300, answer
+    assert frames == []
+
+
+def test_ready_read_sends_one_frame(hub: Hub, seeded: dict[str, str]) -> None:
+    """Astra, #771 finding 2: the route broadcast for itself and the root added a second frame."""
+    from holdspeak.db import get_database
+
+    assert get_database().meetings.mark_ready_unseen(seeded["meeting"]) is not None
+    answer: list[tuple[int, Any]] = []
+    frames = hub.frames_from(
+        lambda: answer.append(hub.call("POST", f"/api/meetings/{seeded['meeting']}/ready/read")))
+    assert answer[0][0] == 200 and answer[0][1]["ready_at"], answer
+    assert len(frames) == 1, frames
+    # The Dock reads these two fields (web/src/desk/components/window/Dock.tsx).
+    assert (frames[0]["kind"], frames[0]["id"]) == ("meeting_ready_read", seeded["meeting"])
+
+
+def test_a_bulk_write_sends_one_frame_that_names_each_item(hub: Hub, seeded: dict[str, str]) -> None:
+    """Astra, #771 finding 2: parking three items sent three frames."""
+    status, body = hub.call("POST", "/api/workbenches", {"name": "Bulk fence"})
+    assert status == 201, body
+    workbench = body["workbench"]["id"]
+    items = []
+    for title in ("one", "two", "three"):
+        status, body = hub.call("POST", f"/api/workbenches/{workbench}/items", {"title": title})
+        assert status == 201, body
+        items.append(body["item"]["id"])
+
+    for verb in ("park", "restore"):
+        answer: list[tuple[int, Any]] = []
+        frames = hub.frames_from(lambda: answer.append(
+            hub.call("POST", f"/api/workbenches/{workbench}/items/{verb}", {"item_ids": items})))
+        assert answer[0][0] == 200, answer
+        assert len(frames) == 1, f"{verb}: {frames}"
+        named = {change["id"] for change in frames[0]["changes"]}
+        assert set(items) <= named, f"{verb}: the frame names {named}, not every item of {items}"
+
+
+def test_an_admitted_write_with_no_http_request_sends_one_frame(hub: Hub, seeded: dict[str, str]) -> None:
+    """Astra, #771 finding 3: the registry's root, with nothing to cover for it.
+
+    ``project.resource.add`` is admitted (the kernel path) and its service has
+    no ``on_changed``. Called on the registry, with no HTTP request, only
+    ``OperationRegistry.invoke`` can announce it. With that announcement
+    removed this test fails; the HTTP middleware cannot make it pass.
+    """
+    from holdspeak.principals import Principal, PrincipalKind
+
+    registry = hub.root.operations
+    owner = Principal(PrincipalKind.OWNER, "the-owner")
+    status, body = hub.call("POST", "/api/notes", {"title": "Filed directly", "body_markdown": "x"})
+    assert status == 201, body
+    ref = f"note:{body['note']['id'] if 'note' in body else body['id']}"
+
+    for name, op in (("project.resource.add", "resource.add"), ("project.resource.remove", "resource.remove")):
+        assert registry.descriptor(name).admission.rule == "admitted"
+        frames = hub.frames_from(lambda: registry.invoke(
+            owner, name, {"project_id": seeded["project"], "resource_ref": ref}))
+        assert len(frames) == 1, f"{name}: {frames}"
+        assert (frames[0]["kind"], frames[0]["id"], frames[0]["op"]) == ("project", seeded["project"], op)
+        listed = {row["resource_ref"] for row in registry.invoke(
+            owner, "project.resource.list", {"project_id": seeded["project"]})}
+        assert (ref in listed) == (name == "project.resource.add")
 
 
 def _minimal(schema: Any) -> Any:
@@ -258,14 +357,12 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
     """
     from holdspeak import operations
     from holdspeak.principals import Principal, PrincipalKind
-    from holdspeak.runtime import composition
-
-    registry = composition.current().operations
+    registry = hub.root.operations
     owner = Principal(PrincipalKind.OWNER, "the-owner")
     writes = [name for name, bound in registry.operations.items() if bound.descriptor.effect == "write"]
     assert len(writes) >= 60, "the walk lost the catalogue"
 
-    silent: list[str] = []
+    counts: dict[str, int] = {}
     failed: dict[str, str] = {}
     for name in writes:
         bound = registry.operations[name]
@@ -289,7 +386,8 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
             frames = hub.frames_from(write, wait_s=1.0)
         finally:
             registry.operations[name] = bound
-        if name not in failed and not frames:
-            silent.append(name)
+        counts[name] = len(frames)
     assert not failed, f"the walk could not call: {failed}"
+    silent = [name for name, count in counts.items() if count == 0]
     assert not silent, f"these write operations sent no desk_changed frame: {silent}"
+    assert set(counts.values()) == {1}, {name: count for name, count in counts.items() if count != 1}

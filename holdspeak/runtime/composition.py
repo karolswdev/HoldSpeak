@@ -179,34 +179,65 @@ class RuntimeServices:
     label: str = "hub"
 
     def emit_desk_changed(self, kind: str, obj_id: str, op: str) -> None:
-        """Put one ``desk_changed`` frame on the bus, if there is a bus."""
-        if self.broadcast is None:
-            return
-        origin = "hub"
-        try:
-            from holdspeak.services.observer import _caller_identity
+        """Announce one changed desk object on the bus, if there is a bus.
 
-            origin = _caller_identity.get("") or "hub"
-        except Exception:  # pragma: no cover - the bus must not break a write
-            pass
+        Inside a write (:func:`announce_scope`) the change is held: the write
+        sends ONE ``desk_changed`` frame at its end, naming all it touched.
+        Outside one (a worker thread, a conductor) the frame goes now.
+        """
+        change = (kind, obj_id, op, _origin())
+        scope = _announced.get()
+        if scope is not None and not scope.closed:
+            scope.changes.append(change)
+            scope.emitters.append(self)
+            return
+        self._send_desk_changed([change])
+
+    def _send_desk_changed(self, changes: list) -> None:
+        """One frame: the first change at the top level (the shape every
+        listener already reads), and every change under ``changes``."""
+        if self.broadcast is None or not changes:
+            return
+        unique = list(dict.fromkeys(changes))
+        kind, obj_id, op, origin = unique[0]
         try:
             self.broadcast(
                 "desk_changed",
-                {"kind": kind, "id": obj_id, "op": op, "origin": origin},
+                {
+                    "kind": kind, "id": obj_id, "op": op, "origin": origin,
+                    "changes": [{"kind": k, "id": i, "op": o} for k, i, o, _ in unique],
+                },
             )
         except Exception:  # pragma: no cover - a dead socket never fails a write
             pass
-        seen = _announced.get()
-        if seen is not None:
-            seen.append((kind, obj_id, op))
 
 
-#: The ``desk_changed`` frames sent inside the current write (an HTTP request or
-#: one ``OperationRegistry.invoke``). The two roots read it, so a write whose
-#: service announced itself gets no second frame. A list, not a flag: the
-#: request handler runs in a child task or a worker thread that COPIES the
-#: context, and a shared list is the one thing both sides see.
-_announced: contextvars.ContextVar[Optional[list]] = contextvars.ContextVar(
+def _origin() -> str:
+    try:
+        from holdspeak.services.observer import _caller_identity
+
+        return _caller_identity.get("") or "hub"
+    except Exception:  # pragma: no cover - the bus must not break a write
+        return "hub"
+
+
+class _AnnounceScope:
+    """The changes of one write, held until the write ends."""
+
+    __slots__ = ("changes", "emitters", "closed")
+
+    def __init__(self) -> None:
+        self.changes: list = []
+        self.emitters: list = []
+        self.closed = False
+
+
+#: The current write (an HTTP request, or one ``OperationRegistry.invoke``
+#: outside a request). An object, not a flag: the request handler runs in a
+#: child task or a worker thread that COPIES the context, and a shared object
+#: is the one thing both sides see. ``closed`` covers a task that outlives its
+#: request: its later changes go out at once, never into a dead list.
+_announced: contextvars.ContextVar[Optional[_AnnounceScope]] = contextvars.ContextVar(
     "desk_changed_announced", default=None
 )
 
@@ -215,31 +246,33 @@ _announced: contextvars.ContextVar[Optional[list]] = contextvars.ContextVar(
 def announce_scope() -> Iterator[Callable[[str, str, str], None]]:
     """One write at a root (an HTTP request, one ``OperationRegistry.invoke``).
 
-    Yields ``announce(kind, id, op)``: it sends one ``desk_changed`` frame
-    unless a service sent one since the scope opened. A scope inside a scope
-    (an ``invoke`` inside a request) shares the outer list, so the request's
-    root stays quiet after the operation's root announced.
+    Service announcements inside the scope are held. Yields
+    ``announce(kind, id, op)``, the root's own name for the write: it counts
+    only when no service announced since this scope (or this nested scope)
+    opened. When the outermost scope ends, ONE ``desk_changed`` frame goes
+    out with every change. A scope inside a scope (an ``invoke`` inside a
+    request) adds to the outer one and sends nothing itself.
     """
-    seen = _announced.get()
-    token = None
-    if seen is None:
-        seen = []
-        token = _announced.set(seen)
-    before = len(seen)
+    outer = _announced.get()
+    nested = outer is not None and not outer.closed
+    scope = outer if nested else _AnnounceScope()
+    token = None if nested else _announced.set(scope)
+    before = len(scope.changes)
 
     def announce(kind: str, obj_id: str, op: str) -> None:
-        if len(seen) > before:
-            return
-        notify_desk_changed(kind, obj_id, op)
-        if len(seen) == before:
-            # No bus (a bare composition): still mark the write announced.
-            seen.append((kind, obj_id, op))
+        if len(scope.changes) == before and not scope.closed:
+            scope.changes.append((kind, obj_id, op, _origin()))
 
     try:
         yield announce
     finally:
-        if token is not None:
+        if not nested:
+            scope.closed = True
             _announced.reset(token)
+            if scope.changes:
+                sender = next((e for e in scope.emitters if e.broadcast is not None), None) or _installed
+                if sender is not None:
+                    sender._send_desk_changed(scope.changes)
 
 
 _lock = threading.Lock()
