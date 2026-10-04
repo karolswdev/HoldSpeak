@@ -1827,11 +1827,7 @@ class ProjectService:
         ci_signal = _ci_health(ci_history, queue=queue_depth)
 
         # Overdue commitments from follow-through
-        ft_overdue = 0
-        try:
-            ft_overdue = self._count_overdue_commitments(project_id)
-        except Exception:
-            pass
+        ft_overdue = self._count_overdue_commitments(project_id)
 
         # Blocker count: issues with priority blocker/critical or labels
         # containing "blocker"
@@ -1920,23 +1916,17 @@ class ProjectService:
         return None
 
     def _count_overdue_commitments(self, project_id: str) -> int:
-        """Count overdue commitments for a project from decision_commitments."""
-        from datetime import date as _date
-        today = _date.today()
-        try:
-            with self._db._connection() as conn:
-                row = conn.execute(
-                    "SELECT COUNT(*) as cnt FROM decision_commitments c "
-                    "JOIN decision_records dr ON dr.source_id = c.decision_id "
-                    "JOIN project_meetings pm ON pm.meeting_id = dr.source_meeting_id "
-                    "WHERE pm.project_id = ? "
-                    "AND c.status NOT IN ('completed', 'dismissed', 'done') "
-                    "AND c.due_at IS NOT NULL AND c.due_at < ?",
-                    (project_id, today.isoformat()),
-                ).fetchone()
-                return int(row["cnt"]) if row else 0
-        except Exception:
-            return 0
+        """Count the Room's open commitments that are past their due date.
+
+        One walk, one rule: the rows are the Room's commitment attention rows
+        (``_room_commitment_items``: decision -> source meeting linked to the
+        Room, or a decision record filed on the Room; settled rows left out).
+        A SQL error is not a count of zero: it surfaces.
+        """
+        return sum(
+            1 for item in self._room_commitment_items(project_id, datetime.now())
+            if item["severity"] == "danger"
+        )
 
     def _resolve_review_people(
         self,

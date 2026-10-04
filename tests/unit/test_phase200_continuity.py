@@ -329,6 +329,34 @@ def test_commitments_are_real_attention_items(tmp_path: Path) -> None:
 # ── AC4 ──────────────────────────────────────────────────────────────
 
 
+def test_room_health_counts_the_overdue_commitment(tmp_path: Path) -> None:
+    """The Room's readiness reads its overdue commitments from the real rows.
+
+    The count joined a table that does not exist and a bare ``except`` turned
+    the SQL error into 0. Real producers: a confirmed commitment, an owner, a
+    due date two days past.
+    """
+    db = _db(tmp_path)
+    chain = _chain(db)
+    ps = ProjectService(db)
+    assert ps._count_overdue_commitments("p-q4") == 0  # no due date yet
+    assert ps.room(OWNER, "p-q4")["health"]["signals"]["release"]["signals"]["overdue"] == "green"
+    aid = chain["cmt"]["action_item_id"]
+    ft = FollowThroughService(db)
+    ft.complete(OWNER, aid, "delegate", {"to": "Priya"})
+    ft.complete(OWNER, aid, "due", {"due_at": (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d")})
+
+    assert ps._count_overdue_commitments("p-q4") == 1
+    release = ps.room(OWNER, "p-q4")["health"]["signals"]["release"]
+    assert release["signals"]["overdue"] == "amber" and "overdue" in release["blockers"], release
+    # A Room with no link to the commitment's meeting counts none.
+    _seed_room(db, "p-other", "Other")
+    assert ps._count_overdue_commitments("p-other") == 0
+
+    ft.complete(OWNER, aid, "done", {})
+    assert ps._count_overdue_commitments("p-q4") == 0
+
+
 def test_assignment_and_association_never_complete_a_commitment(tmp_path: Path) -> None:
     db = _db(tmp_path)
     chain = _chain(db)
