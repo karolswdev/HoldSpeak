@@ -24,6 +24,7 @@ from .dispatch_context import (
 from .inference import executor_identity
 from .inference_cancel_signal import perform_cancel
 from .invocation_sequence import SequenceRegistry
+from .local_runtime_slot import takes_local_runtime_lease
 from .model import KernelRefused, valid_ref
 from .projection_stager import retarget_publisher
 from .provider_signals import (
@@ -77,19 +78,6 @@ class _Active:
     cancelled: threading.Event=field(default_factory=threading.Event)
     condition: threading.Condition=field(default_factory=threading.Condition)
     state: str="RUNNING"; cancel_principal: Principal|None=None; disposition: str=""; cancel_performing: bool=False; closing: bool=False; terminal_outcome: str=""; closure_error: BaseException|None=None; dispatch_intent: bool=False; routed: bool=False
-#: Adapters that load their OWN small in-process model, never the assigned
-#: chat artifact.  The local runtime lease exists so that two large local
-#: artifacts are not loaded at one time; an embedding model is a separate,
-#: small model, so its calls neither take the lease nor wait for it.  A live
-#: local chat or dictation call is then never refused by a background embed
-#: batch, and the reverse.  The set is closed: a new slot is a reviewed line.
-_OWN_LOCAL_SLOTS = frozenset({"embedding"})
-
-
-def _own_local_slot(adapter: Any) -> bool:
-    return str(getattr(adapter, "local_runtime_slot", "") or "") in _OWN_LOCAL_SLOTS
-
-
 class InferenceRunner:
     def __init__(self, broker, database, *, engine_factory=build_intel_for_revision, principal_provider=None, clock=time.time, cancel_timeout=3.0, receipt_attempts=3, routed_attempt_runtime=None):
         self._broker,self._database,self._engine_factory=broker,database,engine_factory; self._principal_provider=principal_provider or self._runtime_principal; self._clock=clock; self._cancel_timeout=cancel_timeout; self._receipt_attempts=receipt_attempts; self._routed_attempt_runtime=routed_attempt_runtime; self._active={}; self._pending={}; self._pending_cancellations=self._pending; self._active_lock=threading.Lock(); self._sequences=SequenceRegistry()
@@ -340,7 +328,7 @@ class InferenceRunner:
                 raise KernelRefused(CONTEXT_MISMATCH)
             warrant = child["warrant"]
             context = _issue_dispatch_context(witness=child.get("claim_witness"), revision=revision, attempt_ordinal=request.attempt_ordinal, warrant=warrant)
-            if revision.schema_version >= 2 and revision.boundary == "same_device" and not _own_local_slot(adapter):
+            if takes_local_runtime_lease(revision, adapter):
                 from .local_runtime_lease import acquire_local_runtime_lease
                 local_runtime_lease = acquire_local_runtime_lease(
                     self._database, operation_id=op["operation_id"],
@@ -632,9 +620,8 @@ class InferenceRunner:
             if str(child.get("operation_id") or "")!=op["operation_id"]: raise KernelRefused(CONTEXT_MISMATCH)
             warrant=child["warrant"]
             context=_issue_dispatch_context(witness=child.get("claim_witness"), revision=revision, attempt_ordinal=request.attempt_ordinal, warrant=warrant)
-            if revision.schema_version >= 2 and revision.boundary == "same_device" and not _own_local_slot(adapter):
+            if takes_local_runtime_lease(revision, adapter):
                 from .local_runtime_lease import acquire_local_runtime_lease
-
                 local_runtime_lease = acquire_local_runtime_lease(
                     self._database,
                     operation_id=op["operation_id"],

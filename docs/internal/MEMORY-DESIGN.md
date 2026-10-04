@@ -624,7 +624,7 @@ group passes.
 - **The embedding model has its own local runtime slot.** The local runtime
   lease lets one large local artifact run at a time. The embedding model is a
   separate small model, so the `memory.embed` adapter takes no lease
-  (`kernel/inference_runner.py`, `_OWN_LOCAL_SLOTS`). A background embed batch
+  (`kernel/local_runtime_slot.py`, `OWN_LOCAL_SLOTS`). A background embed batch
   never refuses a live local chat or dictation call, and the reverse. A local
   engine still gets batches of 16 with a 0.25 s gap, to leave the processor
   to the live call.
