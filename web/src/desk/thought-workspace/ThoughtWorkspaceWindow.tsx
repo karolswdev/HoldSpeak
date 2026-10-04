@@ -157,7 +157,10 @@ function WorkspaceReady({
   const shownTitle = writer.draft.title;
   const shownBody = writer.draft.body;
   const withdrawWords = useRef<() => void>(() => undefined);
-  useEffect(() => { withdrawWords.current = publishThoughtDraft(draftNoteId, { title: shownTitle, body: shownBody }); }, [draftNoteId, shownTitle, shownBody]);
+  // The kept note is the writer's current saved record (it changes on each
+  // save), never the record the window opened with.
+  const keptBody = documentThought.working_note.body_markdown;
+  useEffect(() => { withdrawWords.current = publishThoughtDraft(draftNoteId, { title: shownTitle, body: shownBody, keptBody }); }, [draftNoteId, shownTitle, shownBody, keptBody]);
   useEffect(() => () => withdrawWords.current(), [draftNoteId]);
 
   useEffect(() => {
@@ -556,7 +559,7 @@ export function ThoughtWorkspaceWindow({
     kind: "thought",
     title: words?.title ?? thought.working_note.title,
     body: words?.body ?? thought.working_note.body_markdown,
-    keptBody: thought.working_note.body_markdown,
+    keptBody: words?.keptBody ?? thought.working_note.body_markdown,
   }, thought.working_note.id);
   return <DeskWindowFrame
     id={`pullout:${pulloutId ?? object.id}`}
