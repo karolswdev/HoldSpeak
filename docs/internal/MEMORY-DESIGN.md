@@ -612,6 +612,27 @@ group passes.
 | Benchmark (`tests/memory_bench/`, 33 sources, 29 questions), keyword + relation | same-word recall@5 1.000, MRR 0.827; paraphrase recall@5 0.000 |
 | Benchmark, fused (RRF k = 60), 256 values | same-word recall@5 1.000, MRR 0.923; paraphrase recall@5 0.812, recall@10 0.875, MRR 0.421 |
 
+**Rules found in the review of slice 1 (Astra, 2026-10-03):**
+
+- **Admission is checked at read time.** Each vector candidate is read again
+  through the sweep's reader and `memory_admits`, and cut again; the snippet
+  is that fresh text. The index is only a way to find a candidate. A source
+  that is gone, parked, sensitive, promoted or changed since the last sweep
+  does not surface.
+- **Scope before the cut.** Kinds, excluded refs, project and time are
+  checked before a candidate takes one of the 50 places. The walk has no
+  bound.
+- **The vector cache is keyed on a generation** (`memory_index_state`),
+  moved in the same transaction as every index write.
+- **Parked is out for every kind.**
+- **Secrets.** Every title and snippet memory returns is redacted. The
+  keyword tables `*_memory_fts` are filled by triggers in the writer's own
+  transaction, so the sweep (and the rebuild) replaces the copy of a source
+  that holds a secret and merges the index. Not done: `segments_fts` and
+  `thread_messages_fts` hold no copy of the text, only tokens; a secret said
+  in a meeting or a thread is still a search key there (the result is
+  redacted).
+
 On a corpus this small the vector top 50 holds almost every source, so a
 keyword hit on a common word is in both lists and can rank above the one
 right vector hit. One paraphrase question (p11) is first in the vector list
