@@ -134,7 +134,7 @@ jobs:
           # Isolate before pytest collection: a unit fixture can build the
           # default database while the runner HOME is still its passwd home,
           # which makes the suite's own HOME guard fail later in the run.
-          HOME=$(mktemp -d) uv run --extra test pytest tests/unit/ -q --cov=holdspeak --cov-report=xml --cov-report=term-missing
+          HOME=$(mktemp -d) uv run --extra test pytest tests/unit/ -q -n auto -m "not slow" --cov=holdspeak --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -198,7 +198,7 @@ jobs:
           # It skips on backends-absent environments (e.g. the Linux unit job)
           # rather than being gated behind the never-in-CI metal/spoken_e2e
           # markers.
-          uv run --extra test python -m pytest tests/integration/ -v --cov=holdspeak --cov-report=xml --cov-report=term-missing
+          uv run --extra test python -m pytest tests/integration/ -q -n auto -m "not slow" --cov=holdspeak --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -211,7 +211,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   e2e-tests:
-    name: E2E Tests (macOS)
+    name: Scoped Browser Tests (macOS)
     runs-on: macos-14  # Apple Silicon
     env:
       # Several real-hub fixtures isolate HOME. Keep browser discovery
@@ -227,6 +227,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # scripts/glass_for.py diffs against the base branch.
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
@@ -281,28 +284,23 @@ jobs:
           HOME_REAL=$HOME
           HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm uv run --extra test python -m pytest tests/e2e/test_live_bus.py -v
 
-      - name: Run E2E tests with coverage
+      - name: Run the browser tests that cover the change
         run: |
-          # Mock-based e2e (excluding metal hardware tests). The live-bus file
-          # ran above as a mandatory no-skip browser gate.
+          # Owner ruling 2026-10-03: a pull request runs only the browser
+          # tests that read the changed code (scripts/glass_for.py). Every
+          # browser test runs in the nightly workflow (nightly.yml).
           #
           # HOME is isolated so no rig can touch an installation, but the
           # caches the browsers live in are carried across explicitly:
           # PLAYWRIGHT_BROWSERS_PATH and PUPPETEER_CACHE_DIR (job env, both
-          # outside HOME) and the warm npm cache. This mirrors the local
-          # invocation documented in CLAUDE.md.
+          # outside HOME) and the warm npm cache.
+          BASE="origin/${{ github.base_ref || 'main' }}"
+          if [ "${{ github.event_name }}" = "push" ]; then BASE="${{ github.event.before }}"; fi
+          TESTS=$(uv run --extra test python scripts/glass_for.py --base "$BASE" --paths)
+          echo "browser tests: ${TESTS:-none}"
+          if [ -z "$TESTS" ]; then exit 0; fi
           HOME_REAL=$HOME
-          HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm uv run --extra test python -m pytest tests/e2e/ -v -m "e2e and not metal" --ignore=tests/e2e/test_live_bus.py --cov=holdspeak --cov-report=xml --cov-report=term-missing
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage.xml
-          flags: e2e
-          name: e2e-tests
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm uv run --extra test python -m pytest $TESTS -q -n auto -m "e2e and not metal" --ignore=tests/e2e/test_live_bus.py
 
   linux-smoke:
     name: Linux Smoke

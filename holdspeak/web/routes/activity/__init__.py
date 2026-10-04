@@ -26,6 +26,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from ...context import WebContext
+from .._mount import mount_router
 from .candidates import build_candidates_router
 from .enrichment import build_enrichment_router
 from .ledger import build_ledger_router
@@ -38,10 +39,10 @@ __all__ = ["build_activity_router"]
 
 def build_activity_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-    router.include_router(build_ledger_router(ctx))
-    router.include_router(build_rules_router(ctx))
-    router.include_router(build_enrichment_router(ctx))
-    router.include_router(build_candidates_router(ctx))
-    router.include_router(build_plugin_jobs_router(ctx))
-    router.include_router(build_nudges_router(ctx))
+    mount_router(router, build_ledger_router(ctx))
+    mount_router(router, build_rules_router(ctx))
+    mount_router(router, build_enrichment_router(ctx))
+    mount_router(router, build_candidates_router(ctx))
+    mount_router(router, build_plugin_jobs_router(ctx))
+    mount_router(router, build_nudges_router(ctx))
     return router

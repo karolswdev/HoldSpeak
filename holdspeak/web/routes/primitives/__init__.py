@@ -10,6 +10,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from ...context import WebContext
+from .._mount import mount_router
 
 # The public wire-vocabulary surface (tests + callers import these from the
 # package root, as they did from the module): re-exported unchanged.
@@ -32,17 +33,17 @@ from .invocations import build_invocations_router
 
 def build_primitives_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-    router.include_router(build_notes_router(ctx))
-    router.include_router(build_thoughts_router(ctx))
-    router.include_router(build_desk_decisions_router(ctx))
-    router.include_router(build_ask_router(ctx))
-    router.include_router(build_recipes_router(ctx))
-    router.include_router(build_profiles_router(ctx))
-    router.include_router(build_model_profiles_router())
-    router.include_router(build_kbs_router(ctx))
-    router.include_router(build_chains_router(ctx))
-    router.include_router(build_workflows_router(ctx))
-    router.include_router(build_invocations_router(ctx))
-    router.include_router(build_directories_router(ctx))
-    router.include_router(build_workbenches_router(ctx))
+    mount_router(router, build_notes_router(ctx))
+    mount_router(router, build_thoughts_router(ctx))
+    mount_router(router, build_desk_decisions_router(ctx))
+    mount_router(router, build_ask_router(ctx))
+    mount_router(router, build_recipes_router(ctx))
+    mount_router(router, build_profiles_router(ctx))
+    mount_router(router, build_model_profiles_router())
+    mount_router(router, build_kbs_router(ctx))
+    mount_router(router, build_chains_router(ctx))
+    mount_router(router, build_workflows_router(ctx))
+    mount_router(router, build_invocations_router(ctx))
+    mount_router(router, build_directories_router(ctx))
+    mount_router(router, build_workbenches_router(ctx))
     return router

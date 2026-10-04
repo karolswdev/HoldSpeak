@@ -303,6 +303,121 @@ def mock_llama():
 # ============================================================
 
 
+# ============================================================
+# Browser tests draw on the real GPU (owner ruling 2026-10-03: fast tests)
+# ============================================================
+#
+# Headless Chromium draws WebGL in software (SwiftShader). The Floor's
+# atmosphere is a full-viewport WebGL scene that draws every frame
+# (web/src/desk/gl/atmosphereRuntime.ts), so one frame took 0.2 s to 1 s of
+# CPU and every Playwright action waits for a frame. Measured on the desk
+# debts rig at 1440: a 90-point pointer pass took 36.8 s in software and
+# 0.8 s on Metal. That one cause was most of the browser suite's time.
+#
+# On macOS every Chromium a test launches gets `--use-angle=metal`, unless the
+# test passes its own ANGLE flag. A CI runner is a VM with no dependable GPU,
+# so the flag is off when CI is set. HOLDSPEAK_GLASS_GPU=0 turns it off;
+# HOLDSPEAK_GLASS_GPU=1 turns it on anywhere.
+
+
+def _glass_gpu_enabled() -> bool:
+    import os
+    import sys
+
+    choice = os.environ.get("HOLDSPEAK_GLASS_GPU", "")
+    if choice in ("0", "1"):
+        return choice == "1"
+    return sys.platform == "darwin" and not os.environ.get("CI")
+
+
+def _launch_chromium_on_the_gpu() -> None:
+    if not _glass_gpu_enabled():
+        return
+    try:
+        from playwright.sync_api import BrowserType
+    except ImportError:  # the base test environment has no Playwright
+        return
+    original = BrowserType.launch
+    if getattr(original, "_holdspeak_gpu", False):
+        return
+
+    def launch(self, *args, **kwargs):
+        if self.name == "chromium":
+            flags = list(kwargs.get("args") or [])
+            if not any("use-angle" in flag or "use-gl" in flag for flag in flags):
+                kwargs["args"] = [*flags, "--use-angle=metal"]
+        return original(self, *args, **kwargs)
+
+    launch._holdspeak_gpu = True
+    BrowserType.launch = launch
+
+
+_launch_chromium_on_the_gpu()
+
+
+# ============================================================
+# One pydantic adapter per route field shape (fast tests, 2026-10-03)
+# ============================================================
+#
+# FastAPI builds one pydantic TypeAdapter for each parameter of each route.
+# A hub has about 700 routes, and thousands of tests build a hub each, so the
+# same few hundred adapters (`str` path parameter, `Optional[int]` query, ...)
+# were built again for every hub: 0.08 s of the 0.22 s one hub costs
+# (measured; 280 distinct adapters, every later hub is all hits). An adapter
+# has no state, so one per (annotation, field description) serves every hub.
+# The key holds the annotation object itself, so two classes never share an
+# adapter; a class made inside a function is not kept; a model that was
+# rebuilt gets a new adapter. If FastAPI moves the
+# seam, the suite runs as before.
+
+
+def _share_route_field_adapters() -> None:
+    try:
+        import fastapi._compat.v2 as compat
+    except ImportError:
+        return
+    real = getattr(compat, "TypeAdapter", None)
+    if real is None or getattr(real, "_holdspeak_shared", False):
+        return
+    kept: dict = {}
+
+    def schemas(annotation, seen=None):
+        """Each pydantic class inside the annotation, with its current core schema."""
+        import typing
+
+        seen = [] if seen is None else seen
+        schema = getattr(annotation, "__dict__", {}).get("__pydantic_core_schema__") if isinstance(annotation, type) else None
+        if schema is not None:
+            seen.append((annotation, schema))
+        for inner in typing.get_args(annotation):
+            schemas(inner, seen)
+        return seen
+
+    def shared(type_, *, config=None):
+        try:
+            annotation = type_.__origin__
+            if "<locals>" in repr(annotation) or len(kept) > 5000:
+                raise TypeError
+            key = (annotation, tuple(repr(m) for m in type_.__metadata__), repr(config))
+            hash(key)
+        except Exception:
+            return real(type_, config=config)
+        entry = kept.get(key)
+        # A model rebuilt after the adapter was made (a new constraint) has a
+        # new core schema object: the kept adapter is stale (Astra on #763).
+        if entry is not None and all(cls.__dict__.get("__pydantic_core_schema__") is schema for cls, schema in entry[1]):
+            return entry[0]
+        adapter = real(type_, config=config)
+        kept[key] = (adapter, schemas(annotation))
+        return adapter
+
+    shared._holdspeak_shared = True
+    compat.TypeAdapter = shared
+
+
+_share_route_field_adapters()
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--run-metal",

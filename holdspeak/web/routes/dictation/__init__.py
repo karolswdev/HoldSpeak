@@ -27,6 +27,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from ...context import WebContext
+from .._mount import mount_router
 from .agent import build_agent_router
 from .blocks import build_blocks_router
 from .floor import build_floor_router
@@ -48,16 +49,16 @@ def build_dictation_router(ctx: WebContext) -> APIRouter:
     # suggestion doesn't re-surface for a near-duplicate utterance.
     dismissed_suggestion_signatures: set[str] = set()
 
-    router.include_router(build_intents_router(ctx))
-    router.include_router(build_agent_router(ctx))
-    router.include_router(
+    mount_router(router, build_intents_router(ctx))
+    mount_router(router, build_agent_router(ctx))
+    mount_router(router, 
         build_project_docs_router(ctx, project_doc_suggestions, dismissed_suggestion_signatures)
     )
-    router.include_router(build_blocks_router(ctx, project_doc_suggestions))
-    router.include_router(build_kb_router(ctx))
+    mount_router(router, build_blocks_router(ctx, project_doc_suggestions))
+    mount_router(router, build_kb_router(ctx))
     # HS-112-06: the audio floor, read + claimable by the browser's open mic.
-    router.include_router(build_floor_router(ctx))
-    router.include_router(
+    mount_router(router, build_floor_router(ctx))
+    mount_router(router, 
         build_pipeline_router(ctx, project_doc_suggestions, dismissed_suggestion_signatures)
     )
 

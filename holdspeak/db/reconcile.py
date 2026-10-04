@@ -10,6 +10,7 @@ or DELETEs a row.
 from __future__ import annotations
 
 import re
+import functools
 import sqlite3
 from pathlib import Path
 from typing import Optional
@@ -546,6 +547,23 @@ def _rebuild_thread_message_parts_for_kind_drift(conn: sqlite3.Connection) -> bo
     return True
 
 
+@functools.lru_cache(maxsize=4)
+def _reference_triggers(schema_sql: str, names: tuple[str, ...]) -> tuple[tuple[str, str], ...]:
+    """The canonical SQL of each named trigger; built one time per schema text."""
+    reference = sqlite3.connect(":memory:")
+    try:
+        reference.executescript(schema_sql)
+        return tuple(
+            (str(name), str(row[0]))
+            for name in names
+            if (row := reference.execute(
+                "SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?", (name,)
+            ).fetchone()) is not None
+        )
+    finally:
+        reference.close()
+
+
 def _refresh_revised_triggers(conn: sqlite3.Connection) -> bool:
     """Bring historical trigger BODIES forward to the canonical ones.
 
@@ -581,18 +599,7 @@ def _refresh_revised_triggers(conn: sqlite3.Connection) -> bool:
         "notes_memory_ai",
         "notes_memory_au",
     )
-    reference = sqlite3.connect(":memory:")
-    try:
-        reference.executescript(SCHEMA_SQL)
-        expected = {
-            str(name): str(row[0])
-            for name in names
-            if (row := reference.execute(
-                "SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?", (name,)
-            ).fetchone()) is not None
-        }
-    finally:
-        reference.close()
+    expected = dict(_reference_triggers(SCHEMA_SQL, names))
     changed = False
     for name, sql in expected.items():
         row = conn.execute("SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?", (name,)).fetchone()
@@ -809,9 +816,17 @@ def _build_reference_schema() -> dict[str, list[dict]]:
     keys returned by ``PRAGMA table_info``: *cid*, *name*, *type*, *notnull*,
     *dflt_value*, *pk*.
     """
+    # The reference is a pure function of the schema text, and every new
+    # Database asked for it two times (0.02 s each). Build it one time per
+    # schema text; give each caller its own copy.
+    return {table: [dict(col) for col in cols] for table, cols in _reference_schema_for(SCHEMA_SQL).items()}
+
+
+@functools.lru_cache(maxsize=4)
+def _reference_schema_for(schema_sql: str) -> dict[str, list[dict]]:
     ref = sqlite3.connect(":memory:")
     try:
-        ref.executescript(SCHEMA_SQL)
+        ref.executescript(schema_sql)
 
         # Identify FTS virtual tables by their CREATE VIRTUAL TABLE sql.
         fts_parents: set[str] = set()

@@ -36,6 +36,7 @@ Every list edit requires a recorded phase decision.
 from __future__ import annotations
 
 import ast
+import functools
 import hashlib
 from pathlib import Path
 from typing import Iterator, NamedTuple
@@ -375,7 +376,17 @@ def sites_in_source(relative: str, source: str) -> Iterator[Site]:
 
 
 def census() -> list[Site]:
-    """Every model-execution site in production ``holdspeak/`` (tests excluded)."""
+    """Every model-execution site in production ``holdspeak/`` (tests excluded).
+
+    The walk parses every production file (seconds); 14 callers in two files
+    asked for it again each time. No test writes production files, so one walk
+    per process serves them all; each caller gets its own list.
+    """
+    return list(_census())
+
+
+@functools.lru_cache(maxsize=1)
+def _census() -> tuple[Site, ...]:
     sites: list[Site] = []
     for path in sorted(PRODUCTION.rglob("*.py")):
         if "__pycache__" in path.parts:
@@ -383,7 +394,7 @@ def census() -> list[Site]:
         sites.extend(
             sites_in_source(path.relative_to(REPO).as_posix(), path.read_text(encoding="utf-8"))
         )
-    return sorted(sites)
+    return tuple(sorted(sites))
 
 
 # ------------------------------------------------------------ bucket 1: gateway

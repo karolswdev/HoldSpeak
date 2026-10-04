@@ -22,7 +22,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair
+from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the delete-receipt glass needs Playwright")
@@ -72,6 +72,10 @@ def _readable_receipt(page: Any, want: str, timeout_ms: int) -> dict[str, Any]:
         arg=want,
         timeout=timeout_ms,
     )
+    # The receipt animates in from opacity 0. Read it after that motion, as the
+    # owner reads it (the PHILO-8-02 rig does the same). On the GPU the probe
+    # is otherwise faster than the first painted frame.
+    _settle(page)
     probe = page.locator(".undo-receipt").first.evaluate(_PROBE_JS)
     assert want in probe["text"], probe
     assert probe["visible"] and probe["inViewport"], f"{want!r}: not in the viewport: {probe['rect']}"

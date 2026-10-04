@@ -37,6 +37,10 @@ from typing import Any
 
 import pytest
 
+# Owner ruling 2026-10-03 (fast tests): each case boots, kills and boots a real hub process (40 s in all). It is marked slow: the fast
+# run (`-m "not slow"`) leaves it out; the nightly full run and a direct run keep it.
+pytestmark = pytest.mark.slow
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOKEN = "philo10-01-restart-token"
 

@@ -17,7 +17,7 @@ committing generated docs and line-number test maps; split the tests.
 
 | Item | Owner | PR |
 |---|---|---|
-| Split the tests (fast default run, scoped browser tests, nightly full) | Muad'Dib | building |
+| Fast tests, second pass: new-database cost (6,932 databases = most of the fast run), FULL with worksteal, 30 red browser tests | — | — |
 | Older line-pinned census tests (test_phase143_*census, test_philo9_compat) | — | — |
 | C1-4e: the Chair reopens 12 px low | — | — |
 | The Roadmap window shows the wrong name | — | — |
@@ -27,6 +27,7 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Last merged (newest first)
 
+- #763 — Fast tests: 5 min 40 s default run, scoped browser tests, nightly full
 - #762 — Generated docs out of git; test maps cite text, not lines; no count checks
 - #761 — The commit gate is removed (branch, PR, one review, merge)
 - #755 — Phase 13 close, Astra's record (B0 done; 18/18)
