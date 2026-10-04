@@ -23,7 +23,7 @@ vi.mock("../shell", async () => {
   };
 });
 
-import { EMPTY_ITEMS } from "../api";
+import { EMPTY_ITEMS, __resetHeldObjects } from "../api";
 import type { Meeting, Note } from "../../lib/primitives";
 import { useDesk } from "../store";
 import { usePalette } from "../chromeState";
@@ -33,6 +33,7 @@ let searches: string[] = [];
 let hits: Array<Record<string, unknown>> = [];
 
 beforeEach(() => {
+  __resetHeldObjects();
   localStorage.clear();
   opened.surfaces = [];
   searches = [];
@@ -96,7 +97,9 @@ describe("the palette finds a word inside a meeting", () => {
     expect(row.textContent).not.toContain("<mark>");
     expect(row.textContent).toContain("MEETING");
     fireEvent.click(row);
-    expect(opened.surfaces).toContainEqual(["review-meetings", "meeting:m-77"]);
+    // The meeting is not in the store: it is held and loaded, then opened.
+    await vi.waitFor(() => expect(opened.surfaces).toContainEqual(["review-meetings", "meeting:m-77"]));
+    expect(useDesk.getState().refresh).toHaveBeenCalled();
   });
 
   it("Enter runs the memory row when it is the only match", async () => {
@@ -106,6 +109,32 @@ describe("the palette finds a word inside a meeting", () => {
     fireEvent.keyDown(input, { key: "Enter" });
     // The shell's opener refreshes the desk, then opens the pull-out.
     await vi.waitFor(() => expect(useDesk.getState().openPullout).toHaveBeenCalledWith("note:n-9"));
+  });
+
+  it("an object that is not in the store is held and loaded BEFORE it opens (older than its desk list)", async () => {
+    hits = [{ kind: "artifact", source_ref: "artifact:a-old", title: "Old notes", snippet: "the <mark>quokka</mark> key" }];
+    const order: string[] = [];
+    const refresh = vi.fn(async () => {
+      order.push("refresh");
+      const { loadAll } = await import("../api");
+      useDesk.setState({ items: (await loadAll()).items });
+    });
+    useDesk.setState({ refresh, openPullout: vi.fn(() => { order.push("open"); }) });
+    apiFetch.mockImplementation((path: string) => {
+      if (path.startsWith("/api/memory/search?")) return Promise.resolve({ hits });
+      if (path === "/api/sync/pull?limit=50") return Promise.resolve({ artifacts: Array.from({ length: 30 }, (_, i) => ({
+        meta: { id: i === 29 ? "a-old" : `a-${i}`, deleted: false },
+        value: { id: i === 29 ? "a-old" : `a-${i}`, title: `A ${i}`, artifact_type: "notes" } })) });
+      return Promise.resolve({});
+    });
+    const input = await deck();
+    await type(input, "quokka");
+    fireEvent.click(screen.getByRole("option", { name: /Old notes/ }));
+    await vi.waitFor(() => expect(useDesk.getState().openPullout).toHaveBeenCalledWith("artifact:a-old"));
+    expect(order[0]).toBe("refresh");
+    // The object is in the store when its window opens: the 25th artifact, past the list's 24.
+    expect(useDesk.getState().items.artifact.map((a) => a.id)).toContain("a-old");
+    expect(useDesk.getState().items.artifact).toHaveLength(25);
   });
 
   it("the MEMORY band comes after the local matches, and an object a local row shows is not shown twice", async () => {

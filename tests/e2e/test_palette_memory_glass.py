@@ -26,6 +26,13 @@ SIZES = {1440: 900, 393: 852}
 WORD = "quokka"
 TITLE = "Ledger cutover sync"
 ROW = "[id='desk-palette-option-memory:meeting:m-sync']"
+OLD_WORD, OLD_ARTIFACT = "wombat", "Second key notes"
+OLD_MEETING_WORD, OLD_MEETING = "numbat", "Finance migration sync"
+VISIBLE_WINDOW_WITH = """(t) => !document.getElementById('desk-tool-shelf') &&
+  [...document.querySelectorAll('.desk-window-shell, .desk-window, .desk-pullout')]
+    .some((w) => { const r = w.getBoundingClientRect(); const cs = getComputedStyle(w);
+      return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'
+        && (w.innerText || '').includes(t); })"""
 
 
 class TestPaletteFindsAWordInsideAMeeting:
@@ -51,6 +58,23 @@ class TestPaletteFindsAWordInsideAMeeting:
             id="m-other", started_at=start - timedelta(days=1), ended_at=start - timedelta(days=1, minutes=-30),
             title="Hiring review",
             segments=[TranscriptSegment(text="We open one more role.", speaker="Me", start_time=1.0, end_time=3.0)]))
+        # Astra's repro on #774: things OLDER than the desk's lists (24 meetings,
+        # 24 artifacts). 25 artifacts with `wombat` only in the oldest; 26 more
+        # meetings with `numbat` only in the transcript of the oldest.
+        base = start - timedelta(days=40)
+        for i in range(25):
+            db.plugins.record_artifact(
+                artifact_id=f"art-{i:02d}", meeting_id="m-other", artifact_type="notes",
+                title=OLD_ARTIFACT if i == 0 else f"Follow-up notes {i:02d}", plugin_id="palette-glass", status="draft",
+                body_markdown=f"The {OLD_WORD} ledger needs a second key." if i == 0 else f"Routine notes {i}.",
+                updated_at=(base + timedelta(hours=i)).isoformat())   # art-00 is the oldest
+        for i in range(26):
+            at = base + timedelta(days=i)
+            text = f"The {OLD_MEETING_WORD} migration waits for finance." if i == 0 else "Routine status."
+            db.meetings.save_meeting(MeetingState(
+                id=f"m-old-{i:02d}", started_at=at, ended_at=at + timedelta(minutes=20),
+                title=OLD_MEETING if i == 0 else f"Status sync {i:02d}",
+                segments=[TranscriptSegment(text=text, speaker="Me", start_time=1.0, end_time=3.0)]))
         try:
             yield
         finally:
@@ -127,6 +151,54 @@ class TestPaletteFindsAWordInsideAMeeting:
                     arg=TITLE, timeout=15_000)
                 page.wait_for_timeout(600)
                 page.screenshot(path=str(SHOTS / f"palette-memory-opened-{width}.png"))
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    @pytest.mark.parametrize("word,row_id,shown", [
+        (OLD_WORD, "memory:artifact:art-00", f"The {OLD_WORD} ledger needs a second key."),
+        (OLD_MEETING_WORD, "memory:meeting:m-old-00", f"The {OLD_MEETING_WORD} migration waits for finance."),
+    ])
+    def test_a_thing_older_than_its_desk_list_opens_from_its_memory_row(
+        self, width: int, word: str, row_id: str, shown: str,
+    ) -> None:
+        """The rendered result: the window of the matched object stands on the
+        glass with the object's own words (not only a closed palette)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                      device_scale_factor=1, has_touch=width < 720)
+            page = ctx.new_page()
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(1500)
+                _settle(page)
+                # The premise: the object is NOT in the desk's loaded lists.
+                kind, obj = row_id.split(":")[1:]
+                listed = page.evaluate(
+                    """async ([kind, id, token]) => { const h = {Authorization: 'Bearer ' + token};
+                      if (kind === 'meeting') { const d = await (await fetch('/api/meetings?limit=24', {headers: h})).json();
+                        return (d.meetings || []).some((m) => m.id === id); }
+                      const d = await (await fetch('/api/sync/pull?limit=50', {headers: h})).json();
+                      return (d.artifacts || []).filter((a) => !(a.meta && a.meta.deleted)).slice(0, 24)
+                        .some((a) => (a.meta ? a.meta.id : a.id) === id); }""", [kind, obj, TOKEN])
+                assert listed is False, "the rig's object is inside the desk list; the repro proves nothing"
+
+                self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
+                page.locator("[aria-controls=desk-palette-listbox]").fill(word)
+                row = page.locator(f"[id='desk-palette-option-{row_id}']")
+                row.wait_for(timeout=8_000)
+                self._press(page, row, width)
+                page.wait_for_function(VISIBLE_WINDOW_WITH, arg=shown, timeout=15_000)
+                page.wait_for_timeout(500)
+                page.screenshot(path=str(SHOTS / f"palette-memory-old-{kind}-{width}.png"))
                 assert not errors, errors
             finally:
                 browser.close()

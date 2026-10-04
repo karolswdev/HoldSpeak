@@ -15,7 +15,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { openSurface } from "../shell";
 import { SYSTEM } from "../systemSprites";
-import { qualifiedRef } from "../api";
+import { holdObject, qualifiedRef } from "../api";
 import { apiFetch } from "../../lib/api";
 import { createThread } from "../threads";
 import {
@@ -753,7 +753,16 @@ export function DeskToolShelf() {
         label: title,
         kind: (KIND_LABEL[kind] ?? kind.replace(/_/g, " ")).toUpperCase(),
         detail: detail && detail !== title ? detail : undefined,
-        run: opener,
+        // The hit can be older than its desk list (24 meetings, 24
+        // artifacts, ...): hold its object so the next load reads it by id,
+        // load, then open. A window whose object is not in the store is
+        // never drawn.
+        run: () => {
+          const present = allObjects(useDesk.getState().items)
+            .some((o) => qualifiedRef(o.kind, o.id) === base);
+          if (present || !holdObject(base)) { opener(); return; }
+          void useDesk.getState().refresh().then(opener, opener);
+        },
       });
       if (out.length >= MEMORY_ROWS) break;
     }
