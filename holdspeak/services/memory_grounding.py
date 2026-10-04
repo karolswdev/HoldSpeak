@@ -53,11 +53,12 @@ _CUT = " [cut]"
 DESK_REF_KINDS = ("meeting", "note", "artifact", "thread", "decision", "desk_decision", "action_item")
 
 # Memory kinds with no window of their own: a send, a published update, a
-# Prep brief, a calendar event.  The SAME list as ``NO_WINDOW_REF_KINDS`` in
+# Prep brief, a calendar event, a Brief item, a dictation, a steward run and
+# a Room ask answer (no window opens one of these by its id).  The SAME list as ``NO_WINDOW_REF_KINDS`` in
 # web/src/desk/surface/citations.tsx (memoryRefsOpen.test.ts holds the two
 # equal).  They reach a prompt as plain context with no ref, so no face ever
 # draws a citation that opens nothing.  Keep it one flat tuple of literals.
-NO_WINDOW_REF_KINDS = ("send", "project_update", "prep_brief", "calendar_event")
+NO_WINDOW_REF_KINDS = ("send", "project_update", "prep_brief", "calendar_event", "brief_item", "dictation", "steward_run", "ask_answer")
 
 # Memory's name for a source -> the name the Desk opens.  A kind that is in
 # neither this map nor ``DESK_REF_KINDS`` has no Desk window and is left out.

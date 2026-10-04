@@ -51,6 +51,19 @@ _RULES = {
     "project_update": lambda row: str(row.get("lifecycle") or "") == "published",
     "prep_brief": lambda row: str(row.get("lifecycle") or "") != "discarded",
     "calendar_event": lambda row: True,
+    # Slice 2 (MEMORY-DESIGN.md §3.1).
+    # A Brief item, never its 1:1 rows: the Brief writes them with no People
+    # text, and memory leaves them out whole (People custody, §5).
+    "brief_item": lambda row: (
+        "people_commitment:" not in str(row.get("source_ref") or "")
+        and not str(row.get("source_ref") or "").startswith("people:")
+    ),
+    # A dry run tests the pipeline; it is not something he said.
+    "dictation": lambda row: str(row.get("source") or "") != "dry_run",
+    # A finished run only: a queued or running run has said nothing yet.
+    "steward_run": lambda row: str(row.get("state") or "") in ("completed", "failed", "interrupted"),
+    # A Room ask that has its answer, until he discards it.
+    "ask_answer": lambda row: str(row.get("state") or "") != "discarded" and _flag(row, "answered"),
 }
 
 ADMITTED_KINDS = frozenset(_RULES)

@@ -579,7 +579,12 @@ def test_cadence_memory_never_carries_its_source_under_the_meeting(rig, tmp_path
 
 
 def test_promotion_memory_never_carries_the_decision_under_another_name(rig):
-    """A decision record minted from the meeting decision repeats its words."""
+    """The decision's own words under other refs: a decision record minted
+    from it, and the accepted ADR its real promotion minted.  Neither ref is
+    the decision's or its meeting's, so only the job's own-text exclusion
+    (``exclude_texts=[decision.text]``) keeps them out.  Without it the ADR
+    is in the block: this fails."""
+    from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
     from holdspeak.services.decision_record_service import DecisionRecordService
     from tests.unit.test_decision_record_service import _accepted_meeting_decision
 
@@ -595,12 +600,16 @@ def test_promotion_memory_never_carries_the_decision_under_another_name(rig):
     broker = _configure(rig)
     engine = _Engine("Adopt this.")
     broker.inference_runner._engine_factory = lambda _revision, **_: engine
-    from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
+    lifecycle = DecisionLifecycleService(rig, kernel=broker)
 
-    asyncio.run(
-        DecisionLifecycleService(rig, kernel=broker).draft_promoted_with_model(OWNER, "dec-own", "note", {})
-    )
+    # The real producer: an accepted ADR artifact that repeats the decision.
+    adr = lifecycle.promote(OWNER, "dec-own", "adr")["artifact"]
+    found = rig.memory.search("record-backed decisions", kinds="artifact")
+    assert [hit.source_ref for hit in found.hits] == [f"artifact:{adr['id']}"]
+
+    asyncio.run(lifecycle.draft_promoted_with_model(OWNER, "dec-own", "note", {}))
     block = _memory_block(engine.prompts[0])
     assert f"desk_decision:{inside}" in block  # memory did run
     assert str(record["id"]) not in block
+    assert str(adr["id"]) not in block
     assert "use record-backed decisions" not in block.casefold()

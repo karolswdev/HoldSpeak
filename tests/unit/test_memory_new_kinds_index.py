@@ -27,11 +27,13 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 
 def _chunks(hub: Hub) -> dict[str, str]:
+    """Every chunk of each source, joined (a summary and each topic are
+    chunks of their own)."""
+    joined: dict[str, list[str]] = {}
     with hub.db._connection() as conn:
-        return {
-            str(row["source_ref"]): str(row["text"])
-            for row in conn.execute("SELECT source_ref,text FROM memory_chunks ORDER BY id")
-        }
+        for row in conn.execute("SELECT source_ref,text FROM memory_chunks ORDER BY source_ref,ordinal"):
+            joined.setdefault(str(row["source_ref"]), []).append(str(row["text"]))
+    return {ref: "\n".join(texts) for ref, texts in joined.items()}
 
 
 def test_the_summary_sends_and_updates_are_chunked_embedded_and_recalled(hub: Hub, tmp_path: Path) -> None:

@@ -43,6 +43,9 @@ class MemorySource:
     units: list[tuple[str, str]] = field(default_factory=list)
     #: False: each unit is its own chunk (a thread message).
     pack: bool = True
+    #: Anchor prefixes of units that are chunks of their own even when the
+    #: rest is packed (a meeting's summary, each topic).
+    alone: tuple[str, ...] = ()
 
 
 def _promoted(conn: sqlite3.Connection) -> set[str]:
@@ -153,6 +156,7 @@ def _meetings(
         ]
         # The summary and the topics as the meeting reads now (the keyword
         # search finds a word that is only there; so does the vector search).
+        # One chunk for the summary and one for each topic (§3.1).
         summary = conn.execute(
             "SELECT summary FROM intel_snapshots WHERE meeting_id=?"
             " ORDER BY timestamp DESC,id DESC LIMIT 1",
@@ -160,19 +164,18 @@ def _meetings(
         ).fetchone()
         if summary is not None and str(summary[0] or "").strip():
             units.append(("summary", "Summary: " + str(summary[0])))
-        topics = [
-            str(row[0])
+        units.extend(
+            (f"topic:{row[0]}", "Topic: " + str(row[1]))
             for row in conn.execute(
-                "SELECT topic FROM topics WHERE meeting_id=? ORDER BY id", (meeting["id"],)
+                "SELECT id,topic FROM topics WHERE meeting_id=? ORDER BY id", (meeting["id"],)
             )
-            if str(row[0] or "").strip()
-        ]
-        if topics:
-            units.append(("topics", "Topics: " + " · ".join(topics)))
+            if str(row[1] or "").strip()
+        )
         if not units:
             continue
         yield MemorySource(
-            ref, "meeting", str(meeting["title"] or meeting["id"]), meeting["started_at"], units
+            ref, "meeting", str(meeting["title"] or meeting["id"]), meeting["started_at"], units,
+            alone=("summary", "topic:"),
         )
 
 
@@ -216,6 +219,33 @@ def _threads(
         yield MemorySource(
             ref, "thread", str(thread["title"] or ""), thread["occurred_at"], units, pack=False
         )
+
+
+def _steward_text(raw: Any) -> list[tuple[str, str]]:
+    """What a steward run did, in words: the outcome, why it stopped, what it
+    proposed and how many actions it took.  Never the raw JSON."""
+    try:
+        summary = json.loads(str(raw or "{}"))
+    except (TypeError, ValueError):
+        summary = {}
+    if not isinstance(summary, dict):
+        summary = {}
+    lines = [f"Outcome: {summary.get('outcome') or 'unknown'}"]
+    if summary.get("reason"):
+        lines.append(f"Reason: {summary['reason']}")
+    error = summary.get("error")
+    if isinstance(error, dict) and error.get("message"):
+        lines.append(f"Error: {error['message']}")
+    phases = summary.get("phase_results")
+    phases = phases if isinstance(phases, dict) else {}
+    proposed = phases.get("propose") or phases.get("compare") or {}
+    for proposal in (proposed.get("proposals") or []) if isinstance(proposed, dict) else []:
+        if isinstance(proposal, dict) and str(proposal.get("title") or "").strip():
+            lines.append(_text("Proposed:", proposal.get("title"), proposal.get("rationale")))
+    act = phases.get("act")
+    if isinstance(act, dict) and "actions_taken" in act:
+        lines.append(f"Actions taken: {act['actions_taken']}")
+    return [("", "\n".join(lines))]
 
 
 def _readers() -> dict[str, Reader]:
@@ -316,6 +346,24 @@ def _readers() -> dict[str, Reader]:
         "project_update": _spec("project_update", "u.lifecycle lifecycle"),
         "prep_brief": _spec("prep_brief", "b.lifecycle lifecycle"),
         "calendar_event": _spec("calendar_event"),
+        # Slice 2 (§3.1): the Brief's items, dictation, steward runs and Room
+        # asks.  Keyword search reads them from memory_chunks_fts.
+        "brief_item": _spec("brief_item", "bi.source_ref source_ref,bi.text item_text"),
+        "dictation": _spec("dictation", "j.source source"),
+        "steward_run": _simple(
+            "steward_run",
+            "SELECT sr.id id,sr.state state,sr.summary_json summary_json,"
+            "COALESCE(sr.completed_at,sr.updated_at) occurred_at,"
+            "COALESCE((SELECT p.name FROM projects p WHERE p.id=sr.project_id),sr.project_id)"
+            "||' steward run' title FROM steward_runs sr",
+            "sr.id",
+            lambda row: (str(row["title"]), row["occurred_at"], _steward_text(row["summary_json"])),
+        ),
+        "ask_answer": _spec(
+            "ask_answer",
+            "q.state state,EXISTS (SELECT 1 FROM ask_results a"
+            " WHERE a.invocation_id=q.invocation_id) answered",
+        ),
     }
 
 
@@ -413,7 +461,16 @@ def _holds_secret(source: MemorySource, title: str, units: list[tuple[str, str]]
 
 def _chunks(source: MemorySource, title: str, units: list[tuple[str, str]]) -> list[dict[str, Any]]:
     if source.pack:
-        cut = chunk_units(title, units)
+        def alone(anchor: str) -> bool:
+            return any(anchor.startswith(prefix) for prefix in source.alone)
+
+        packed = [unit for unit in units if not alone(unit[0])]
+        # With no packed unit, chunk_units would give a chunk that is only the title.
+        cut = chunk_units(title, packed) if packed or len(packed) == len(units) else []
+        for anchor, text in units:
+            if alone(anchor):
+                for chunk in chunk_units(title, [(anchor, text)]):
+                    cut.append(type(chunk)(ordinal=len(cut), anchor=anchor, text=chunk.text))
     else:
         cut = []
         for anchor, text in units:
@@ -540,6 +597,11 @@ _CHANGE_KINDS: dict[str, tuple[str, ...]] = {
     "update": ("project_update",),
     "brief": ("prep_brief",),
     "event": ("calendar_event",),
+    # POST /api/ask-tasks/{id}/discard|resume|stopped (web/announce.py).
+    "ask_task": ("ask_answer",),
+    # POST /api/steward/runs/{id}/stop.  A run that ends on its own thread
+    # sends no change: the slow full sweep sees it.
+    "steward": ("steward_run",),
 }
 
 

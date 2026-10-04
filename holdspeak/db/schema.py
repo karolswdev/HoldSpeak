@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 81  # informational; 80→81: the memory index tables (memory_sources, memory_chunks, memory_embeddings)
+SCHEMA_VERSION = 82  # informational; 81→82: memory_chunks_fts (keyword search over memory chunks)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -4613,6 +4613,15 @@ CREATE TABLE IF NOT EXISTS memory_chunks (
 );
 CREATE INDEX IF NOT EXISTS idx_memory_chunks_source
     ON memory_chunks(source_ref, ordinal);
+-- Keyword search over the chunks (MEMORY-DESIGN.md §3.2): the keyword
+-- retriever for the kinds that have no older FTS table, so they are found
+-- with no embedding engine.  rowid = memory_chunks.rowid; the write that
+-- replaces a source's chunks writes these rows in the same transaction
+-- (db/memory_index.py).  A read joins on rowid AND chunk_id, so a row whose
+-- rowid no longer names its chunk is never served.
+CREATE VIRTUAL TABLE IF NOT EXISTS memory_chunks_fts USING fts5(
+    text, chunk_id UNINDEXED, source_ref UNINDEXED
+);
 -- One table of vectors.  `vector` is float32, unit length, `dim` values.
 CREATE TABLE IF NOT EXISTS memory_embeddings (
     item_kind TEXT NOT NULL,

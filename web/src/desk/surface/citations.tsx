@@ -25,6 +25,7 @@ export function groundedMatchCount(
  * drafters' helper) must name the same kinds. */
 export const NO_WINDOW_REF_KINDS: readonly string[] = [
   "send", "project_update", "prep_brief", "calendar_event",
+  "brief_item", "dictation", "steward_run", "ask_answer",
 ];
 
 /** True when a ref names something the Desk can open in a window. */

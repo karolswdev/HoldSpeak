@@ -107,6 +107,7 @@ class MemoryIndexRepository(BaseRepository):
             ]
             gone = [chunk_id for chunk_id in old if chunk_id not in set(keep)]
             self._delete_vectors(conn, gone)
+            self._delete_keyword_rows(conn, source_ref)
             conn.execute("DELETE FROM memory_chunks WHERE source_ref=?", (source_ref,))
             conn.executemany(
                 "INSERT INTO memory_chunks"
@@ -124,6 +125,12 @@ class MemoryIndexRepository(BaseRepository):
                     )
                     for chunk in chunks
                 ],
+            )
+            # The keyword rows, in the same transaction as the chunks.
+            conn.execute(
+                "INSERT INTO memory_chunks_fts(rowid,text,chunk_id,source_ref)"
+                " SELECT rowid,text,id,source_ref FROM memory_chunks WHERE source_ref=?",
+                (source_ref,),
             )
             conn.execute(
                 "INSERT INTO memory_sources"
@@ -149,12 +156,23 @@ class MemoryIndexRepository(BaseRepository):
                 )
             ]
             self._delete_vectors(conn, ids)
+            self._delete_keyword_rows(conn, source_ref)
             conn.execute("DELETE FROM memory_chunks WHERE source_ref=?", (source_ref,))
             conn.execute(
                 "UPDATE memory_sources SET state='gone',updated_at=? WHERE source_ref=?",
                 (_now(), source_ref),
             )
             self._bump(conn)
+
+    @staticmethod
+    def _delete_keyword_rows(conn: sqlite3.Connection, source_ref: str) -> None:
+        """Remove the source's ``memory_chunks_fts`` rows (by the chunks'
+        rowids, read through the source index).  Call BEFORE the chunks go."""
+        conn.execute(
+            "DELETE FROM memory_chunks_fts WHERE rowid IN"
+            " (SELECT rowid FROM memory_chunks WHERE source_ref=?)",
+            (source_ref,),
+        )
 
     @staticmethod
     def _delete_vectors(conn: sqlite3.Connection, chunk_ids: Sequence[str]) -> None:
@@ -293,6 +311,7 @@ class MemoryIndexRepository(BaseRepository):
         """Drop every derived memory row.  The sweep builds them again."""
         with self._connection() as conn:
             conn.execute("DELETE FROM memory_embeddings")
+            conn.execute("DELETE FROM memory_chunks_fts")
             conn.execute("DELETE FROM memory_chunks")
             conn.execute("DELETE FROM memory_sources")
             self._bump(conn)
@@ -305,6 +324,7 @@ class MemoryIndexRepository(BaseRepository):
                 "sources": int(conn.execute("SELECT count(*) FROM memory_sources WHERE state='live'").fetchone()[0]),
                 "gone": int(conn.execute("SELECT count(*) FROM memory_sources WHERE state='gone'").fetchone()[0]),
                 "chunks": int(conn.execute("SELECT count(*) FROM memory_chunks").fetchone()[0]),
+                "keyword_rows": int(conn.execute("SELECT count(*) FROM memory_chunks_fts").fetchone()[0]),
                 "vectors": int(conn.execute("SELECT count(*) FROM memory_embeddings").fetchone()[0]),
             }
 

@@ -11,7 +11,10 @@ import re
 from dataclasses import dataclass
 from typing import Iterable, Sequence
 
-CHUNKER_VERSION = 1
+#: 2 (2026-10-04): every chunk has its row in ``memory_chunks_fts``, and a
+#: meeting's summary and each topic are chunks of their own.  The bump makes
+#: the sweep cut every source again once, which fills the keyword table.
+CHUNKER_VERSION = 2
 CHUNK_CHARS = 1200
 
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
