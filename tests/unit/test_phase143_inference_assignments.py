@@ -49,6 +49,7 @@ def _profile(
     modalities: tuple[str, ...] = ("language",),
     capability_manifest: dict[str, object] | None = None,
     model: str | None = None,
+    boundary: str = "",
 ) -> str:
     # ``model``: the model name the deployment runs. The default (the profile
     # id) is NOT what a real desk has; a test of route resolution passes a
@@ -84,6 +85,7 @@ def _profile(
         architecture="qwen",
         context_ceiling=context_ceiling,
         capability_sha256=str(manifest["sha256"]),
+        boundary=boundary,
     )
     db.deployment_revisions.upsert(deployment)
     with db._connection() as conn:

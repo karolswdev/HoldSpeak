@@ -608,37 +608,48 @@ class TestCompactM1CapabilityBoundary:
         owner = Principal(PrincipalKind.OWNER, "m1-compact-owner")
 
         turn_profile = "m1-cp-turn"
-        _profile(db, turn_profile, claims=("language", _result_claim("chat.turn")))
-        InferenceAssignmentService(db).set_assignment(owner, {
-            "command_id": "assign-turn",
-            "expected_revision": 0,
-            "scope": {"kind": "capability", "capability_id": "chat.turn"},
-            "entries": [{"profile_id": turn_profile, "profile_revision": 1}],
-        })
+        assignments = InferenceAssignmentService(db)
         from holdspeak.db.reconcile import _backfill_chat_practice_assignments
+
+        def assign_turn(profile_id: str, expected_revision: int) -> None:
+            assignments.set_assignment(owner, {
+                "command_id": f"assign-turn-{expected_revision}",
+                "expected_revision": expected_revision,
+                "scope": {"kind": "capability", "capability_id": "chat.turn"},
+                "entries": [{"profile_id": profile_id, "profile_revision": 1}],
+            })
+
+        _profile(db, turn_profile, claims=("language", _result_claim("chat.turn")))
+        if compact_boundary == "same_device":
+            assign_turn(turn_profile, 0)
+            with db._connection() as conn:
+                _backfill_chat_practice_assignments(conn)
+            return db, owner
+
+        # The helper capabilities are internal: no one assigns them. A helper
+        # differs from chat the way it does on a real desk: the backfill copies
+        # chat.turn's assignment ONCE, then chat.turn is assigned again. Every
+        # row here comes from the real services. The helper keeps its OWN
+        # profile, deployment and binding (cloud); chat.turn ends local. A
+        # lookup that reads chat.turn's boundary (the wrong capability) sees
+        # `same_device` and the cloud test fails.
+        helper_profile = "m1-compact-cloud"
+        _profile(db, helper_profile, model="cloud-helper-model", boundary=compact_boundary,
+                 claims=("language", _result_claim("chat.turn")))
+        assign_turn(helper_profile, 0)
         with db._connection() as conn:
             _backfill_chat_practice_assignments(conn)
+        assign_turn(turn_profile, 1)
 
-        if compact_boundary != "same_device":
-            # The capability's engine resolves by route (profile -> binding ->
-            # deployment revision), never by a model name. Give the BOUND
-            # deployment revision the requested boundary.
-            with db._connection() as conn:
-                bound = conn.execute(
-                    """SELECT b.deployment_revision_id AS rev
-                         FROM inference_assignment_heads ah
-                         JOIN inference_assignments a
-                           ON a.assignment_id=ah.assignment_id AND a.assignment_revision=ah.revision
-                         JOIN model_profile_binding_heads h ON h.profile_id=a.profile_id
-                         JOIN model_profile_binding_revisions b
-                           ON b.binding_id=h.binding_id AND b.revision=h.revision
-                        WHERE ah.assignment_key='capability:chat.compact' AND ah.cleared=0""",
-                ).fetchone()
-                assert bound is not None
-                conn.execute(
-                    "UPDATE deployment_revisions SET boundary=? WHERE id=?",
-                    (compact_boundary, bound["rev"]),
-                )
+        from holdspeak.services.thread_practice import _resolve_deployment_revision
+
+        class _Routes:
+            database = db
+
+        turn_rev, turn_boundary = _resolve_deployment_revision(_Routes(), "chat.turn")
+        helper_rev, helper_boundary = _resolve_deployment_revision(_Routes(), "chat.compact")
+        assert turn_rev != helper_rev, "chat and the helper must have distinct deployments"
+        assert (turn_boundary, helper_boundary) == ("same_device", compact_boundary)
 
         return db, owner
 
