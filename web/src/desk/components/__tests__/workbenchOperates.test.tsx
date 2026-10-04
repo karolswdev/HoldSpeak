@@ -1,5 +1,5 @@
 /** HS-135-15 — workbench creation operates: Run ghosting, AGENT empty state. */
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../api";
 import { useDesk } from "../../store";
@@ -30,8 +30,12 @@ import { WorkbenchWindow } from "../WorkbenchWindow";
 function mockHub(opts: {
   recipeId?: string | null;
   recipes?: Array<{ id: string; name: string; avatar: string; role: string }>;
+  /** `effective.status` of the workbench.item assignment; omitted = the read does not land. */
+  engineStatus?: "assigned" | "no_assignment";
+  /** The hub's answer to POST /run. */
+  runRefusal?: { status: number; body: unknown };
 } = {}) {
-  const { recipeId = null, recipes = [] } = opts;
+  const { recipeId = null, recipes = [], engineStatus, runRefusal } = opts;
   const wb = {
     id: "wb1",
     name: "Test WB",
@@ -48,6 +52,13 @@ function mockHub(opts: {
     const json = (body: unknown) =>
       new Response(JSON.stringify(body), {
         status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    if (/\/api\/inference\/assignments\/editor$/.test(url) && engineStatus)
+      return json({ effective: { status: engineStatus, inherited_from: null, assignment: null, repair: null } });
+    if (/\/api\/workbenches\/wb1\/run$/.test(url) && runRefusal)
+      return new Response(JSON.stringify(runRefusal.body), {
+        status: runRefusal.status,
         headers: { "content-type": "application/json" },
       });
     if (/\/runs$/.test(url)) return json({ runs: [] });
@@ -168,5 +179,54 @@ describe("HS-135-15 AGENT section empty vs filtered labels", () => {
     await waitFor(() =>
       expect(screen.getByText("No agents match")).toBeInTheDocument(),
     );
+  });
+});
+
+// Inventory 2026-10-03: Run was live with no engine; the press gave
+// "RUN FAILED · HTTP 500" and the hub's reason never reached the face.
+describe("Run with no engine", () => {
+  const AGENT = [{ id: "r1", name: "Agent", avatar: "", role: "" }];
+  beforeEach(() => {
+    localStorage.clear();
+    mocks.listeners.clear();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("does not offer Run and shows the Choose an engine door", async () => {
+    mockHub({ recipeId: "r1", recipes: AGENT, engineStatus: "no_assignment" });
+    render(<WorkbenchWindow workbenchId="wb1" />);
+    const door = await screen.findByTestId("wb-no-engine");
+    expect(door.textContent).toContain("No engine");
+    expect(screen.getByRole("button", { name: "Choose an engine" })).toBeTruthy();
+    const run = screen.getByRole("button", { name: "Run: No engine" });
+    expect(run).toBeDisabled();
+  });
+
+  it("offers Run and no door when an engine is assigned", async () => {
+    mockHub({ recipeId: "r1", recipes: AGENT, engineStatus: "assigned" });
+    render(<WorkbenchWindow workbenchId="wb1" />);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Run this workbench now" })).not.toBeDisabled(),
+    );
+    expect(screen.queryByTestId("wb-no-engine")).toBeNull();
+  });
+
+  it("a named 409 from the hub reads as NO ENGINE with the door, never as HTTP", async () => {
+    // The engine read did not land, so Run is live; the hub then refuses by name.
+    mockHub({
+      recipeId: "r1", recipes: AGENT,
+      runRefusal: { status: 409, body: { error: "No engine is set for this workbench.", code: "no_assignment" } },
+    });
+    const { container } = render(<WorkbenchWindow workbenchId="wb1" />);
+    const run = await screen.findByRole("button", { name: "Run this workbench now" });
+    await waitFor(() => expect(run).not.toBeDisabled());
+    await act(async () => { fireEvent.click(run); });
+    await screen.findByTestId("wb-no-engine");
+    expect(screen.getByRole("button", { name: "Choose an engine" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Run: No engine" })).toBeDisabled();
+    expect(container.textContent).not.toMatch(/HTTP \d+/);
+    expect(container.textContent).not.toContain("RUN FAILED");
   });
 });

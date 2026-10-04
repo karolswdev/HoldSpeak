@@ -95,6 +95,9 @@ import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
 import type { MicState } from "./MicButton";
 import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
+import { getAssignmentEditor } from "../../pages/cores/assignmentExperience";
+import { openSurfaceOr } from "../shell";
+import { onReturnToTask, rememberTaskFocus } from "../returnToTask";
 import {
   CheckGadget,
   EgressChip,
@@ -151,6 +154,14 @@ const SCHEDULE_PRESETS: { label: string; cron: string | null }[] = [
   { label: "Every hour", cron: "0 * * * *" },
   { label: "Manual", cron: null },
 ];
+
+/** The hub's named Run refusal for a workbench with no usable engine
+ *  (`holdspeak/web/routes/primitives/workbenches.py`, HTTP 409). */
+function isNoEngineRefusal(cause: unknown): boolean {
+  if (!(cause instanceof ApiError) || cause.status !== 409) return false;
+  const code = (cause.payload as { code?: unknown } | null)?.code;
+  return code === "no_assignment" || code === "no_compatible_assignment";
+}
 
 function humanSchedule(cron: string | null): string {
   if (!cron) return "Manual";
@@ -242,7 +253,10 @@ function ConfigPanel({
   onAutomationsChanged,
   onResourcefulChanged,
   onCollapse,
+  onEngineChanged,
 }: {
+  /** The RUNS ON assignment was saved: the window reads its engine again. */
+  onEngineChanged?: () => void;
   detail: WorkbenchDetail;
   recipes: any[];
   skills: Skill[];
@@ -408,6 +422,7 @@ function ConfigPanel({
         <ContextualAssignment
           label="Item assignment"
           capabilityId="workbench.item"
+          onChanged={onEngineChanged}
           scope={{
             kind: "subject",
             subject_kind: "workbench",
@@ -1190,6 +1205,32 @@ export function WorkbenchWindow({
 
   const bus = useRuntimeBus();
 
+  /* ── the engine this workbench runs on ─────────────────────────── */
+  /* Run is not offered when no engine is assigned (A.11). The read is the
+     same projection the RUNS ON editor shows. A read that has not landed is
+     UNKNOWN: Run stays live and the hub's own named refusal decides. */
+  const [engine, setEngine] = useState<"unknown" | "set" | "none">("unknown");
+  const readEngine = useCallback(async () => {
+    try {
+      const editor = await getAssignmentEditor(
+        { kind: "subject", subject_kind: "workbench", subject_id: workbenchId, capability_id: "workbench.item" },
+        "workbench.item",
+      );
+      const status = editor?.effective?.status;
+      setEngine(status === "assigned" ? "set" : status ? "none" : "unknown");
+    } catch {
+      setEngine("unknown");
+    }
+  }, [workbenchId]);
+  useEffect(() => { void readEngine(); }, [readEngine]);
+  // He comes back from Models, or the desk changed: read again.
+  useEffect(() => onReturnToTask(() => { void readEngine(); }), [readEngine]);
+  useEffect(() => bus.subscribe("desk_changed", () => { void readEngine(); }), [bus, readEngine]);
+  const chooseEngine = () => {
+    rememberTaskFocus();
+    openSurfaceOr("configure-runs-on", "/settings", "models");
+  };
+
   useEffect(() => {
     const handleRunFrame = (frame: RuntimeFrame) => {
       const plan = planWorkbenchRunFrame(workbenchId, frame);
@@ -1351,7 +1392,24 @@ export function WorkbenchWindow({
       dispatchRun({ type: "request_timed_out" });
     }, 60_000);
     runTimeoutRef.current = timeout;
-    const result = await write("RUN", () => triggerWorkbenchRun(workbenchId));
+    let refusedNoEngine = false;
+    const result = await write("RUN", async () => {
+      try {
+        await triggerWorkbenchRun(workbenchId);
+      } catch (cause) {
+        refusedNoEngine = isNoEngineRefusal(cause);
+        throw cause;
+      }
+    });
+    if (refusedNoEngine) {
+      // The hub named the state: no engine. The face shows that state and
+      // its door (NO ENGINE · Choose an engine), not "RUN FAILED · HTTP 409".
+      clearRunTimeout();
+      clearWrite();
+      setEngine("none");
+      dispatchRun({ type: "request_refused", reason: "NO ENGINE" });
+      return;
+    }
     if (result.ok) {
       clearRunTimeout();
       dispatchRun({ type: "request_succeeded" });
@@ -1530,7 +1588,9 @@ export function WorkbenchWindow({
       ? "Workbench still loading"
       : !detail.recipe_id
         ? "Bind an agent first"
-        : null;
+        : engine === "none"
+          ? "No engine"
+          : null;
 
   return (
     <DeskWindowFrame
@@ -1632,6 +1692,7 @@ export function WorkbenchWindow({
 
         {detail && showConfig ? (
           <ConfigPanel
+            onEngineChanged={() => void readEngine()}
             detail={detail}
             recipes={recipes}
             skills={skills}
@@ -2010,7 +2071,14 @@ export function WorkbenchWindow({
               data-testid="wb-park-receipt"
             />
           ) : null) ||
-          copyReceipt || (
+          copyReceipt || (engine === "none" ? (
+            <span className="wb-footer-status" data-testid="wb-no-engine">
+              <LampGadget label="No engine" on tone="warn" />
+              <Button dense variant="ghost" onClick={chooseEngine}>
+                Choose an engine
+              </Button>
+            </span>
+          ) : null) || (
             <span className="wb-footer-status">
               {countToken(items.length, "ITEM") ?? "No items"}
               {lastRun
