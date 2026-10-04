@@ -88,6 +88,25 @@ describe("H-C3 Dock live reducer", () => {
     expect(next.readyMeetingIds).toEqual(["m-keep"]);
   });
 
+  it("reads every object one write names, not only the first", () => {
+    const next = reduceDockFrame(
+      { ...EMPTY_DOCK_LIVE, readyMeetingIds: ["m-read", "m-keep"] },
+      {
+        type: "desk_changed",
+        data: {
+          kind: "meeting", id: "m-read", op: "update",
+          changes: [
+            { kind: "meeting", id: "m-read", op: "update" },
+            { kind: "meeting_ready_read", id: "m-read", op: "read" },
+            { kind: "send", id: "send-1", op: "sent" },
+          ],
+        },
+      },
+    );
+    expect(next.readyMeetingIds).toEqual(["m-keep"]);
+    expect(next.sendOutcome).toBe("sent");
+  });
+
   it("uses the scheduled recording id and the terminal timestamp", () => {
     const started = reduceDockFrame(EMPTY_DOCK_LIVE, {
       type: "scheduled_recording.started",

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
 import { refreshIntelligenceAttention } from "../../intelligenceAttention";
+import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { openSurfaceOr } from "../../shell";
 import {
   SurfaceLedger,
@@ -121,17 +122,28 @@ export function FollowThroughView({
   const [delegateTo, setDelegateTo] = useState("");
   const [busyCardId, setBusyCardId] = useState<string | null>(null);
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const reads = useRef({ started: 0, landed: 0 });
+  const reload = useCallback(async (quiet = false) => {
+    if (!quiet) {
+      setLoading(true);
+      setError("");
+    }
+    const order = ++reads.current.started;
     try {
-      setBoard(await apiFetch<FollowThroughBoard>("/api/follow-through/board"));
+      const next = await apiFetch<FollowThroughBoard>("/api/follow-through/board");
+      // A read that started earlier and answers later never replaces a newer one.
+      if (order < reads.current.landed) return;
+      reads.current.landed = order;
+      setBoard(next);
     } catch (cause) {
-      setError(readableError(cause));
+      // A quiet re-read (the bus) that fails keeps the last board.
+      if (!quiet) setError(readableError(cause));
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
+  // A write in another window (an action item done, a decision) moves this board.
+  useOnDeskChanged(() => { void reload(true); });
 
   useEffect(() => {
     void reload();

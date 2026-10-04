@@ -6,7 +6,7 @@
 // orientation renders before slow sections; one failed section never
 // blanks the rest.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { plainFailure } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
 import { openRef } from "../../desk/openObject";
@@ -58,6 +58,9 @@ export function useProjectRoomController(
   const [decisionBusy, setDecisionBusy] = useState("");
   const [successors, setSuccessors] = useState<Record<string, string>>({});
   const [readAt, setReadAt] = useState<string | null>(null);
+  const loadSeq = useRef(0);
+  const fullLoads = useRef(0);
+  const quietWaiting = useRef(false);
 
   // HS-172-03: proposals
   const [proposals, setProposals] = useState<RoomProposalItem[]>([]);
@@ -82,14 +85,49 @@ export function useProjectRoomController(
     }
   };
 
-  const load = async () => {
+  // `quiet`: a re-read after a write somewhere else (the bus). It keeps the
+  // face on the glass: no loading state, and the last read stays when it fails.
+  const load = async (quiet = false): Promise<void> => {
     if (!projectId) return;
-    setLoadStatus("loading");
-    setError("");
+    if (quiet && fullLoads.current > 0) {
+      // A full load is on its way (the open, or Refresh). It owns the
+      // catch-up baseline; the quiet re-read runs after it.
+      quietWaiting.current = true;
+      return;
+    }
+    if (!quiet) {
+      setLoadStatus("loading");
+      setError("");
+      fullLoads.current += 1;
+      try {
+        await loadOnce(false);
+      } finally {
+        fullLoads.current -= 1;
+      }
+      if (fullLoads.current === 0 && quietWaiting.current) {
+        quietWaiting.current = false;
+        await loadOnce(true);
+      }
+      return;
+    }
+    await loadOnce(true);
+  };
+
+  const loadOnce = async (quiet: boolean) => {
+    // The newest read wins: an older read that lands late is dropped whole.
+    const seq = ++loadSeq.current;
+    const stale = () => seq !== loadSeq.current;
     try {
       // Phase 1: one /room request gives orientation + focus + counts
       const snapshot = await api.fetchProjectRoom(projectId);
-      setRoom(snapshot);
+      if (stale()) return;
+      // The catch-up list ("since you looked") is the visit's baseline. The
+      // Room marks itself read after its first paint, so a quiet re-read
+      // would get an empty list and a new marker. A quiet re-read keeps the
+      // list and the marker the visit opened with; Refresh (a full load)
+      // takes new ones.
+      setRoom((previous) =>
+        quiet && previous ? { ...snapshot, sinceRead: previous.sinceRead } : snapshot);
       // Populate project from the room orientation for backward compat
       setProject({
         id: snapshot.project.id,
@@ -101,18 +139,19 @@ export function useProjectRoomController(
         updated_at: snapshot.project.updatedAt,
       });
       // HS-169-03: readAt from the wire's sinceRead section (the PREVIOUS read).
-      if (snapshot.sinceRead.state === "ok") {
+      if (!quiet && snapshot.sinceRead.state === "ok") {
         setReadAt(snapshot.sinceRead.readAt);
       }
     } catch (reason) {
+      if (quiet) return;
       setError(plainFailure("ROOM DID NOT LOAD", reason));
     } finally {
-      setLoadStatus("ready");
+      if (!quiet) setLoadStatus("ready");
     }
 
     // Phase 2: progressive detail fetches for timeline/decisions wings
     // These are non-blocking; the first paint does not wait for them.
-    setDetailStatus("loading");
+    if (!quiet) setDetailStatus("loading");
     try {
       const [meetingBody, decisionBody, artifactBody, sinceBody] =
         await Promise.all([
@@ -121,15 +160,16 @@ export function useProjectRoomController(
           api.fetchProjectArtifacts(projectId),
           api.fetchSinceLastMeeting(projectId),
         ]);
+      if (stale()) return;
       setMeetings(meetingBody.meetings || []);
       setDecisions(decisionBody.decisions || []);
       setArtifacts(artifactBody.artifacts || []);
       setSince(sinceBody);
     } catch (reason) {
       // Detail failure does not blank the room face (WEB-STA-002)
-      if (!error) setError(plainFailure("ROOM DID NOT LOAD", reason));
+      if (!error && !quiet) setError(plainFailure("ROOM DID NOT LOAD", reason));
     } finally {
-      setDetailStatus("ready");
+      if (!quiet) setDetailStatus("ready");
     }
 
     // Phase 3: HS-172-03/06 proposals + suggested sources + HS-173-04 nudges (non-blocking)
@@ -140,6 +180,7 @@ export function useProjectRoomController(
         api.fetchSuggestedSources(projectId),
         api.fetchNudges(projectId, "proposed"),
       ]);
+      if (stale()) return;
       setProposals(pendingProps);
       setSuggestedSources(suggestions);
       setNudges(proposedNudges);

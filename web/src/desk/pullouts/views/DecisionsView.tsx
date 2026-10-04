@@ -1,9 +1,10 @@
 import { wireDate } from "../../surface/format";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
 import { qualifiedRef } from "../../api";
 import { useDesk } from "../../store";
+import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface/Surface";
 import { countLabel } from "../../surface/count";
 import { MicButton } from "../../surface";
@@ -84,34 +85,63 @@ export function DecisionsView({
     setWhyOnly(initialWhyOnly);
   }, [initialQuery, initialWhyOnly]);
 
+  const listEndpoint = () => {
+    const [workType, ...workRefParts] = workRef?.split(":") ?? [];
+    const linkedWorkRef = workRefParts.join(":");
+    return workType && linkedWorkRef
+      ? `/api/decision-records/work/${encodeURIComponent(workType)}/${encodeURIComponent(linkedWorkRef)}`
+      : query.trim()
+        ? `/api/decision-records/search?q=${encodeURIComponent(query.trim())}`
+        : "/api/decision-records";
+  };
+  // A decision made or changed in another window shows in this list. A quiet
+  // re-read: no loading state, and the last list stays when it fails.
+  // Reads can answer out of order. Two rules decide which may land:
+  // `query` -- a read made for an older query or work ref never lands (it
+  // must not show under the new query); `order` -- of two reads for the same
+  // query, the one that started later wins, and an earlier one that answers
+  // after it is dropped.
+  const reads = useRef({ query: 0, started: 0, landed: 0 });
+  const beginRead = () => {
+    const mine = { query: reads.current.query, order: ++reads.current.started };
+    return () => {
+      if (mine.query !== reads.current.query || mine.order < reads.current.landed) return false;
+      reads.current.landed = mine.order;
+      return true;
+    };
+  };
+  useOnDeskChanged(() => {
+    const lands = beginRead();
+    void apiFetch<Receipt[]>(listEndpoint())
+      .then((receipts) => {
+        if (Array.isArray(receipts) && lands()) setResults(receipts);
+      })
+      .catch(() => undefined);
+  });
+
   useEffect(() => {
-    let current = true;
+    let active = true;
+    reads.current.query += 1; // every read already on its way is obsolete
     const timer = window.setTimeout(() => {
       setLoading(true);
       setError("");
-      const [workType, ...workRefParts] = workRef?.split(":") ?? [];
-      const linkedWorkRef = workRefParts.join(":");
-      const endpoint = workType && linkedWorkRef
-        ? `/api/decision-records/work/${encodeURIComponent(workType)}/${encodeURIComponent(linkedWorkRef)}`
-        : query.trim()
-          ? `/api/decision-records/search?q=${encodeURIComponent(query.trim())}`
-          : "/api/decision-records";
-      void apiFetch<Receipt[]>(endpoint)
+      const lands = beginRead();
+      void apiFetch<Receipt[]>(listEndpoint())
         .then((receipts) => {
-          if (current) setResults(Array.isArray(receipts) ? receipts : []);
+          if (lands()) setResults(Array.isArray(receipts) ? receipts : []);
         })
         .catch((reason) => {
-          if (current) {
+          if (lands()) {
             setResults([]);
             setError(readableError(reason));
           }
         })
         .finally(() => {
-          if (current) setLoading(false);
+          if (active) setLoading(false);
         });
     }, query.trim() ? 200 : 0);
     return () => {
-      current = false;
+      active = false;
       window.clearTimeout(timer);
     };
   }, [query, workRef]);

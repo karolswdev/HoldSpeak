@@ -47,6 +47,7 @@ import {
   type AskTask,
 } from "../../desk/ask";
 import { onReturnToTask, rememberTaskFocus } from "../../desk/returnToTask";
+import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
@@ -2133,6 +2134,9 @@ function computeHistoryCounts(changes: RoomChangeRow[]): { todayCount: number; w
 export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   const ctrl = useProjectRoomController(scope, scopeLabel);
   const loading = ctrl.loadStatus === "loading";
+  // A write in another window (a meeting filed, an update published, an
+  // agent's write) shows in this Room with no reload.
+  useOnDeskChanged(() => { void ctrl.load(true); });
 
   const reviewData: RoomReviewData | null =
     ctrl.room?.review.state === "ok"

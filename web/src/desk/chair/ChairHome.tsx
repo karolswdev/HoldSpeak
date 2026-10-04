@@ -22,6 +22,7 @@ import { MicButton } from "../components/MicButton";
 import { intelBadge } from "./intelBadge";
 import { onReturnToTask } from "../returnToTask";
 import { refreshNeedsYou, useNeedsYou } from "../needsYou";
+import { burstTimer } from "../burstTimer";
 import { useRuntimeBus, useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { labelFor, supportsDoorVerb, commandForDoorVerb } from "./doorVerbs";
 import {
@@ -591,15 +592,12 @@ function Arrival() {
   useEffect(() => onReturnToTask(() => { void readAssignments(); }), [readAssignments]);
   const { subscribe: subscribeFrames } = useRuntimeBus();
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const unsubscribe = subscribeFrames("desk_changed", () => {
-      if (timer !== null) clearTimeout(timer);
-      timer = setTimeout(() => { timer = null; void refreshNeedsYou(true); }, 300);
-    });
+    const burst = burstTimer(() => { void refreshNeedsYou(true); }, 300);
+    const unsubscribe = subscribeFrames("desk_changed", burst.bump);
     const onFocus = () => { void readAssignments(); };
     window.addEventListener("focus", onFocus);
     return () => {
-      if (timer !== null) clearTimeout(timer);
+      burst.cancel();
       unsubscribe();
       window.removeEventListener("focus", onFocus);
     };

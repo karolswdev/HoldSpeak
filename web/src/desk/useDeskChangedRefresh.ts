@@ -16,20 +16,30 @@
  * when an import ends, success or failure (`MeetingService._run_import_job`),
  * from the summary queue after durable running and settled transitions
  * (`_notify_queue_meeting_changed`), and when a meeting is parked or restored
- * (`MeetingService.delete_meeting`, `restore_meeting`). Other meeting writes, project rooms,
- * thoughts and sync emit no frame; their surfaces carry their own signals.
+ * (`MeetingService.delete_meeting`, `restore_meeting`).
+ *
+ * Since 2026-10-03 every write announces: `OperationRegistry.invoke` sends the
+ * frame for each write operation, and one HTTP middleware
+ * (`holdspeak/web/announce.py`) sends it for each mutating `/api` request that
+ * answers 2xx. A window that reads its own data (the Room, People, the
+ * Follow-through, Decisions and Brief views) follows the bus with
+ * {@link useOnDeskChanged}.
  * This hook is the
  * whole client half: subscribe, and re-read. No per-kind patching and no new
  * UI -- the existing `refresh()` already loads the desk consistently, and a
  * patch-by-kind reducer would be a second, divergent model of the same data.
+ *
+ * A burst that does not stop still refreshes: the wait has a hard cap
+ * (`BURST_MAX_WAIT_MS`, `burstTimer.ts`).
  *
  * Debounced trailing, not leading: a burst (a steward run publishing an update,
  * a zone of notes filed at once) arrives as many frames in a few hundred
  * milliseconds, and the desk needs the state AFTER the burst, not a re-read per
  * frame. A frame that arrives during the wait extends it.
  */
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRuntimeBus } from "../runtime/RuntimeBus";
+import { burstTimer } from "./burstTimer";
 import { useDesk } from "./store";
 
 /** Trailing-edge debounce window for a `desk_changed` burst, in ms. */
@@ -41,21 +51,13 @@ export function useDeskChangedRefresh(
   const { subscribe } = useRuntimeBus();
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const unsubscribe = subscribe("desk_changed", () => {
-      if (timer !== null) clearTimeout(timer);
-      timer = setTimeout(() => {
-        timer = null;
-        // Read the store imperatively: this hook must not re-subscribe every
-        // time the desk's data changes, which is exactly what depending on a
-        // selected `refresh` would cause.
-        void useDesk.getState().refresh();
-      }, debounceMs);
-    });
-
+    // Read the store imperatively: this hook must not re-subscribe every
+    // time the desk's data changes, which is exactly what depending on a
+    // selected `refresh` would cause.
+    const burst = burstTimer(() => void useDesk.getState().refresh(), debounceMs);
+    const unsubscribe = subscribe("desk_changed", burst.bump);
     return () => {
-      if (timer !== null) clearTimeout(timer);
+      burst.cancel();
       unsubscribe();
     };
   }, [subscribe, debounceMs]);
@@ -65,4 +67,39 @@ export function useDeskChangedRefresh(
 export function DeskChangedRefresh(): null {
   useDeskChangedRefresh();
   return null;
+}
+
+/** A window that reads its own data: call *reload* after a `desk_changed`
+ * burst (trailing debounce, as {@link useDeskChangedRefresh}). The reload
+ * must be quiet: no loading state, no cleared error, and the last read stays
+ * on the glass when it fails. Without a bus (a component test) it does
+ * nothing. */
+export function useOnDeskChanged(
+  reload: () => void,
+  debounceMs: number = DESK_CHANGED_DEBOUNCE_MS,
+): void {
+  const subscribe = useBusSubscribe();
+  const latest = useRef(reload);
+  latest.current = reload;
+
+  useEffect(() => {
+    if (!subscribe) return;
+    const burst = burstTimer(() => latest.current(), debounceMs);
+    const unsubscribe = subscribe("desk_changed", burst.bump);
+    return () => {
+      burst.cancel();
+      if (typeof unsubscribe === "function") unsubscribe();
+    };
+  }, [subscribe, debounceMs]);
+}
+
+/** The bus's `subscribe`, or nothing when the window is drawn with no bus
+ * (a component test with no provider). The context read always runs, so the
+ * hook order is the same on every render. */
+function useBusSubscribe(): ReturnType<typeof useRuntimeBus>["subscribe"] | undefined {
+  try {
+    return useRuntimeBus().subscribe;
+  } catch {
+    return undefined;
+  }
 }

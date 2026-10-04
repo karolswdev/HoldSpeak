@@ -60,6 +60,9 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     ("POST", "/api/kernel/executor/claim"): "noise: executor polling",
     ("POST", "/api/kernel/executor/operations/{operation_id}/receipt"): "noise: executor traffic",
     ("POST", "/api/setup/first-value/{attempt_id}/event"): "noise: setup progress ticks",
+    # Each Room writes this by itself when it opens. No window shows it live,
+    # and a frame for it made the Room re-read and erase its catch-up list.
+    ("POST", "/api/projects/{project_id}/room/read"): "noise: the Room's own read marker",
 }
 
 _KIND = {"people": "person", "all_action_items": "action_item"}
