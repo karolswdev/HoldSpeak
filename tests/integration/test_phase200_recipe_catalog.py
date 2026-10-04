@@ -645,11 +645,21 @@ class TestTheScheduledOwnerReallyFires:
         # It is a loop over a stop event, not a one-shot call.
         assert {"is_set", "wait"} <= names
         # The tick is a real number of seconds.
+        # Read from the instructions, not ``co_consts``: from Python 3.14 a
+        # small integer is an operand (``LOAD_SMALL_INT``) and never enters
+        # ``co_consts``; before 3.14 it is a ``LOAD_CONST``. ``argval`` is the
+        # integer on both.
+        import dis
+
+        loaded = [
+            ins.argval for ins in dis.get_instructions(loop)
+            if ins.opname in ("LOAD_CONST", "LOAD_SMALL_INT")
+        ]
         ticks = [
-            c for c in loop.__code__.co_consts
+            c for c in loaded
             if isinstance(c, int) and not isinstance(c, bool) and c >= 10
         ]
-        assert ticks, loop.__code__.co_consts
+        assert ticks, loaded
 
         # And a thread is actually started on it.
         starter = HeartbeatMixin._start_heartbeat_thread
