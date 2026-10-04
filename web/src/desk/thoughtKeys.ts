@@ -8,8 +8,10 @@
  * `startThoughtKeys` keeps the typed text from the press; the Thought
  * window's note field takes it when it is ready (`claimThoughtKeys`), with
  * the cursor after it, so the next key continues the same line. The keeping
- * stops when the field takes the text, when the owner puts the cursor in
- * another field, or after ten seconds. */
+ * stops when the field takes the text, when the owner presses in another
+ * field, or after ten seconds. A field that only still has the focus from
+ * before the press (the last thought's note, after the menu closed) does not
+ * get the keys: the press asked for a new thought. */
 
 const KEEP_MS = 10_000;
 
@@ -25,8 +27,6 @@ function editable(target: EventTarget | null): boolean {
 
 function onKeyDown(event: KeyboardEvent): void {
   if (kept === null || event.isComposing) return;
-  // The owner put the cursor in a field: the keys are that field's.
-  if (editable(event.target)) { stopThoughtKeys(); return; }
   if (event.metaKey || event.ctrlKey || event.altKey) return;
   let next: string;
   if (event.key.length === 1) next = kept + event.key;
@@ -38,9 +38,14 @@ function onKeyDown(event: KeyboardEvent): void {
   event.stopPropagation();
 }
 
+/** The owner pressed in a field: the keys are that field's from now. */
+function onPointerDown(event: PointerEvent): void {
+  if (kept !== null && editable(event.target)) stopThoughtKeys();
+}
+
 function onKeyUp(event: KeyboardEvent): void {
   // A kept Space must not press the button that still has the focus.
-  if (kept === null || editable(event.target)) return;
+  if (kept === null) return;
   if (event.key === " " || event.key === "Enter") {
     event.preventDefault();
     event.stopPropagation();
@@ -55,6 +60,7 @@ export function stopThoughtKeys(): void {
   timer = null;
   window.removeEventListener("keydown", onKeyDown, true);
   window.removeEventListener("keyup", onKeyUp, true);
+  window.removeEventListener("pointerdown", onPointerDown, true);
 }
 
 /** Keep every typed key from now (the press of `Write a thought`). */
@@ -64,6 +70,7 @@ export function startThoughtKeys(): void {
   wanted = null;
   window.addEventListener("keydown", onKeyDown, true);
   window.addEventListener("keyup", onKeyUp, true);
+  window.addEventListener("pointerdown", onPointerDown, true);
   timer = window.setTimeout(stopThoughtKeys, KEEP_MS);
 }
 

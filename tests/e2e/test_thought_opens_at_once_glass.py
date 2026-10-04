@@ -202,3 +202,34 @@ class TestTheThoughtOpensAtOnce:
                 assert not real, real
             finally:
                 browser.close()
+
+    # Astra's condition on #790: the second thought started before the first was saved.
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_a_second_thought_before_the_save_is_its_own_note(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, errors, notes = self._page(pw, width)
+            try:
+                self._menu_thought(page, width)
+                self._opens(page, f"the first thought at {width}")
+                field = page.locator(f"{THOUGHT} .thought-note-body .cm-content").first
+                field.wait_for()
+                if width < 720:
+                    self._press(page, field, width)
+                page.keyboard.type("First thought")
+                # At once: no wait for the save, no close.
+                self._menu_thought(page, width)
+                page.keyboard.type("Second thought")
+                page.wait_for_function(
+                    "(sel) => document.querySelectorAll(sel).length === 2", arg=THOUGHT, timeout=OPENS_WITHIN_MS + 1000)
+                page.locator(f"{THOUGHT} .thought-note-title", has_text="Second thought").wait_for(timeout=15_000)
+                page.wait_for_timeout(2500)  # both saves land
+                page.screenshot(path=str(SHOTS / f"second-before-save-{width}.png"))
+                assert len(notes) == 2, ("the second thought did not get its own note", notes)
+                kept = sorted((n["title"], n["body_markdown"].strip()) for n in self._thought_notes(page))
+                assert kept == [("First thought", "First thought"), ("Second thought", "Second thought")], kept
+                real = [e for e in errors if "ResizeObserver" not in e]
+                assert not real, real
+            finally:
+                browser.close()

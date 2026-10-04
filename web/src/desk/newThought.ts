@@ -28,6 +28,9 @@
  *    the press and the note field takes them (thoughtKeys.ts).
  *  - Every press made another note named `Thought` (six after one walk). A
  *    thought with no words is used again: one empty thought, never six.
+ *    "No words" is the hub's record AND the draft on the glass: a thought
+ *    with unsaved words is saved first and is never used again
+ *    (thoughtDrafts.ts).
  */
 import { apiFetch } from "../lib/api";
 import { useDesk } from "./store";
@@ -35,6 +38,7 @@ import { reportWriteFailure, clearWriteFailure } from "./hooks/useWriteReceipt";
 import { adoptThought, thoughtForNote, type NoteThoughtStatus } from "./thoughts";
 import { NEW_THOUGHT_TITLE } from "./thoughtTitle";
 import { sendThoughtKeysTo, startThoughtKeys, stopThoughtKeys } from "./thoughtKeys";
+import { keepOpenThoughts, thoughtDraftHasWords } from "./thoughtDrafts";
 
 /** The one press in flight: a second press before the window opens joins it. */
 let opening: Promise<void> | null = null;
@@ -56,7 +60,8 @@ async function adopt(noteId: string, status: NoteThoughtStatus): Promise<void> {
  * store's copy of a note can be older than its last save). */
 async function emptyThoughtNote(): Promise<string | null> {
   const notes = (useDesk.getState().items.note ?? [])
-    .filter((note) => noWords(note.title, note.bodyMarkdown))
+    // A draft with words the hub has not kept yet is not an empty thought.
+    .filter((note) => noWords(note.title, note.bodyMarkdown) && !thoughtDraftHasWords(note.id))
     .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
     .slice(0, 3);
   for (const note of notes) {
@@ -75,6 +80,8 @@ async function emptyThoughtNote(): Promise<string | null> {
 
 async function open(): Promise<void> {
   const desk = useDesk.getState();
+  // The thought on the glass is kept first; then the next one starts.
+  await keepOpenThoughts();
   let noteId = await emptyThoughtNote();
   if (!noteId) {
     try {

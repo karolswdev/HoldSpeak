@@ -45,11 +45,12 @@ describe("the keys of the gap", () => {
     expect(take).toHaveBeenCalledWith("");
   });
 
-  it("stops when the owner types in another field", () => {
+  it("stops when the owner presses in another field", () => {
     const input = document.createElement("input");
     document.body.append(input);
     startThoughtKeys();
     key("a");
+    input.dispatchEvent(new Event("pointerdown", { bubbles: true }));
     const typed = new KeyboardEvent("keydown", { key: "b", bubbles: true, cancelable: true });
     input.dispatchEvent(typed);
     expect(typed.defaultPrevented).toBe(false);
@@ -57,5 +58,18 @@ describe("the keys of the gap", () => {
     claimThoughtKeys("note_4", take);
     sendThoughtKeysTo("note_4");
     expect(take).not.toHaveBeenCalled();
+  });
+
+  it("keeps the keys from a field that only still has the focus (the last thought)", () => {
+    const last = document.createElement("textarea");
+    document.body.append(last);
+    startThoughtKeys();
+    const typed = new KeyboardEvent("keydown", { key: "S", bubbles: true, cancelable: true });
+    last.dispatchEvent(typed);
+    expect(typed.defaultPrevented).toBe(true);
+    sendThoughtKeysTo("note_5");
+    const take = vi.fn();
+    claimThoughtKeys("note_5", take);
+    expect(take).toHaveBeenCalledWith("S");
   });
 });

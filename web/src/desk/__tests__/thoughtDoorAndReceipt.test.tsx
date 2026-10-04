@@ -110,6 +110,28 @@ describe("Write a thought opens a note in the Thought window", () => {
     expect(openPullout).toHaveBeenCalledWith("note:note_new");
   });
 
+  /* Astra's condition on #790: `First thought`, at once Write a thought,
+     `Second thought` gave one note `First thoughtSecond thought`. */
+  it("saves a draft with unsaved words first and never uses it again", async () => {
+    const { seatThoughtDraft } = await import("../thoughtDrafts");
+    storeNotes = [{ id: "note_first", title: "Thought", bodyMarkdown: "", createdAt: "t1" }];
+    const flush = vi.fn(async () => undefined);
+    const release = seatThoughtDraft("note_first", { words: () => true, flush });
+    // The hub still holds the empty record (the save is refused or late).
+    thoughtForNote.mockImplementation(async (id: string) => id === "note_first"
+      ? { ownership: "thought", thought: { state: "working", working_note: { id, title: "Thought", body_markdown: "", tags: [] } } }
+      : { ownership: "ordinary", note: { id }, source_precondition: { content_sha256: "abc", last_modified: "t0" } });
+    apiFetch.mockResolvedValue({ note: { id: "note_second" } });
+    const { openNewThought } = await import("../newThought");
+
+    await openNewThought();
+    release();
+
+    expect(flush).toHaveBeenCalledTimes(1);
+    expect(flush.mock.invocationCallOrder[0]).toBeLessThan(apiFetch.mock.invocationCallOrder[0]);
+    expect(openPullout).toHaveBeenCalledWith("note:note_second");
+  });
+
   it("joins a second press to the one in flight: one note", async () => {
     apiFetch.mockResolvedValue({ note: { id: "note_once" } });
     thoughtForNote.mockRejectedValue(new Error("offline"));
