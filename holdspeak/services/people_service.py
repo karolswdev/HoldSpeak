@@ -489,15 +489,18 @@ class PeopleService:
                     db,
                     project_id=str(project.get("id") or ""),
                     query=" ".join(owner_aliases),
-                    exclude_refs=[row["ref"] for row in excerpts],
+                    exclude_refs=[row["ref"] for row in excerpts if row["ref"]],
                     max_excerpts=_BRIEF_MEMORY_PER_PROJECT,
                 )
+                # A kind with no window (a send, a published update) is plain
+                # context: its row carries no ref, so no face draws a dead open.
                 excerpts.extend(
-                    {"ref": e.ref, "kind": e.kind, "title": e.title, "text": e.text,
+                    {"ref": e.ref if e.citable else "", "kind": e.kind,
+                     "title": e.title, "text": e.text,
                      "project_id": str(project.get("id") or "")}
                     for e in found.excerpts
                 )
-        return {"excerpts": excerpts, "refs": [row["ref"] for row in excerpts]}
+        return {"excerpts": excerpts, "refs": [row["ref"] for row in excerpts if row["ref"]]}
 
     @staticmethod
     def _calendar_event_view(row: Any) -> dict[str, Any]:
