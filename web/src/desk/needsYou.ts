@@ -149,6 +149,7 @@ function doorItems(
       if (!cardId || coveredActionItems.has(cardId)) continue;
       const dueAt = card.due ?? null;
       const owner = card.owner ?? null;
+      const hasOwner = String(owner ?? "").trim() !== "";
       let why = "";
       let severity = "info";
       if (column === "overdue") {
@@ -163,6 +164,12 @@ function doorItems(
         severity = "warning";
       } else if (column === "waiting") {
         why = owner ? `WAITING ON ${String(owner).toUpperCase()}` : "WAITING";
+      } else if (hasOwner) {
+        // The `unassigned` column also holds an item that HAS an owner and
+        // is not reviewed yet. It reads "To review"; only an item with no
+        // owner reads "Unassigned".
+        why = "TO REVIEW";
+        severity = "warning";
       } else {
         why = "UNASSIGNED";
         severity = "warning";
@@ -187,7 +194,8 @@ function doorItems(
         owner,
         _doorCard: card,
         _isDoor: true,
-        _isUnassigned: column === "unassigned",
+        _isUnassigned: column === "unassigned" && !hasOwner,
+        _toReview: column === "unassigned" && hasOwner,
       });
     }
   }

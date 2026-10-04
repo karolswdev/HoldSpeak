@@ -77,6 +77,7 @@ def door_items(
                 continue
             due_at = card.get("due")
             owner = card.get("owner")
+            has_owner = bool(str(owner or "").strip())
             severity = "info"
             if column == "overdue":
                 due_ms = _due_epoch_ms(due_at)
@@ -88,6 +89,12 @@ def door_items(
                 severity = "warning"
             elif column == "waiting":
                 why = f"WAITING ON {str(owner).upper()}" if owner else "WAITING"
+            elif has_owner:
+                # The ``unassigned`` column also holds an item that HAS an
+                # owner and is not reviewed yet. It reads "To review"; only
+                # an item with no owner reads "Unassigned".
+                why = "TO REVIEW"
+                severity = "warning"
             else:
                 why = "UNASSIGNED"
                 severity = "warning"
@@ -110,7 +117,8 @@ def door_items(
                 "owner": owner,
                 "_doorCard": card,
                 "_isDoor": True,
-                "_isUnassigned": column == "unassigned",
+                "_isUnassigned": column == "unassigned" and not has_owner,
+                "_toReview": column == "unassigned" and has_owner,
             })
     return rows
 
@@ -277,7 +285,10 @@ def _read_door(db: Any, principal: Any) -> dict[str, Any]:
             db.scheduled_recordings, db.calendar_events, db=db, config_loader=Config.load,
         )
 
-    return _hub_service("door_service", bare).get(principal)
+    # The four asking columns only: the rule does not read the active
+    # thoughts, the calendar or the week.
+    door = _hub_service("door_service", bare)
+    return {"board": door.asking_board(principal), "people_store_state": door.people_store_state(principal)}
 
 
 def _read_assignments(db: Any, principal: Any) -> dict[str, Any]:
@@ -315,6 +326,16 @@ def _is_owner(principal: Any) -> bool:
     return getattr(principal, "kind", None) is PrincipalKind.OWNER
 
 
+def heartbeat_muted_projects(db: Any) -> set[str]:
+    """The heartbeat's muted projects (empty when the setting is unreadable)."""
+    try:
+        from .heartbeat_service import HeartbeatService
+
+        return {str(pid) for pid in HeartbeatService(db).get_settings().get("muted_projects", [])}
+    except Exception:
+        return set()
+
+
 def _reason(exc: Exception) -> str:
     return str(exc).split("\n")[0][:200] or type(exc).__name__
 
@@ -324,10 +345,12 @@ def compose(
     principal: Any,
     aggregate: dict[str, Any],
     *,
-    muted_project_ids: Iterable[str] = (),
+    muted_project_ids: Iterable[str] | None = None,
     now: datetime | None = None,
 ) -> dict[str, Any]:
     """The full ``desk.needs_you`` answer over a Room aggregate.
+
+    ``muted_project_ids`` defaults to the heartbeat's muted projects.
 
     ``aggregate`` is ``needs_you_aggregate.build_aggregate``'s payload (or an
     earlier answer of this function: ``roomItems`` holds the Room rows, so a
@@ -342,6 +365,8 @@ def compose(
         room_items = aggregate.get("items") or []
     # The current mute list decides; a mark left on a cached Room row does not.
     room_items = [{key: value for key, value in row.items() if key != "muted"} for row in room_items]
+    if muted_project_ids is None:
+        muted_project_ids = heartbeat_muted_projects(db)
     muted = {str(pid) for pid in muted_project_ids}
     room_complete = bool(aggregate.get("roomComplete", aggregate.get("complete", True)))
     errors: dict[str, str] = {}

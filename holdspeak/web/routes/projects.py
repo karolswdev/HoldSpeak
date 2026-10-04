@@ -632,11 +632,8 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             # failed summaries are local reads, so the one rule is applied on
             # every request and the number is current.
             from holdspeak.services.needs_you_membership import compose
-            from holdspeak.services.project_service import ProjectService
 
-            db = _get_db()
-            data = compose(db, _owner_principal, data,
-                           muted_project_ids=ProjectService(db).muted_project_ids())
+            data = compose(_get_db(), _owner_principal, data)
             return JSONResponse(data)
         except Exception as exc:
             return error_500(exc, log, "Failed to build desk needs-you")

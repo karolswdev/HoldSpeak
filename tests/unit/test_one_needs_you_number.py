@@ -111,6 +111,15 @@ def test_every_reader_reports_the_same_number(hub: Hub) -> None:
     assert refs == sorted([minted["action"], "blocker:summary", minted["commitment"]]), refs
     assert readers["route"] == 3, readers
     assert "1 decision waiting" in minted_brief_headline(hub)
+    # Custody stays as it is: the owner's own route carries the commitment;
+    # an MCP agent and the stored Brief get the count, never the text.
+    assert "Review the promotion case" in [row["title"] for row in answer["items"]]
+    is_error, mcp = hub.mcp("desk.needs_you", {})
+    assert not is_error and "Review the promotion case" not in str(mcp)
+    assert minted["commitment"] not in str(mcp)
+    with hub.db._connection() as conn:
+        stored = " ".join(str(r["text"]) for r in conn.execute("SELECT text FROM monday_brief_items"))
+    assert "Review the promotion case" not in stored and "1:1 commitment" in stored
     assert answer["peopleStoreState"] == "ready"
     assert answer["sourceErrors"] == {}
 
@@ -123,3 +132,36 @@ def test_the_number_follows_the_door_without_a_fresh_read(hub: Hub) -> None:
     after = _ok(hub.client.get("/api/desk/needs-you"))
     assert after["count"] == before + 1
     assert str(action["id"]) in [member["ref"] for member in after["members"]]
+
+
+def test_an_owned_item_not_reviewed_yet_reads_to_review(hub: Hub) -> None:
+    """Dana's item is pending review: it HAS an owner, so it is never "Unassigned"."""
+    from datetime import datetime
+
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState
+
+    started = datetime.now().replace(microsecond=0)
+    hub.db.meetings.save_meeting(MeetingState(
+        id="m-to-review", started_at=started, ended_at=started, title="Staffing",
+        intel=IntelSnapshot(timestamp=started.timestamp(), summary="", action_items=[
+            {"id": "ai-owned", "task": "Draft the onboarding checklist", "owner": "Dana",
+             "due": None, "status": "pending", "review_state": "pending",
+             "source_timestamp": None, "created_at": started.isoformat()},
+            {"id": "ai-no-owner", "task": "Book the room", "owner": None,
+             "due": None, "status": "pending", "review_state": "pending",
+             "source_timestamp": None, "created_at": started.isoformat()},
+        ]),
+        intel_status="completed", capture_status="finalized",
+    ))
+    answer = _ok(hub.client.get("/api/desk/needs-you"))
+    rows = {row["ref"]: row for row in answer["items"]}
+    assert rows["ai-owned"]["why"] == "TO REVIEW"
+    assert rows["ai-owned"]["_toReview"] is True and rows["ai-owned"]["_isUnassigned"] is False
+    assert rows["ai-no-owner"]["why"] == "UNASSIGNED"
+    assert rows["ai-no-owner"]["_isUnassigned"] is True and rows["ai-no-owner"]["_toReview"] is False
+
+    brief = _ok(hub.client.post("/api/brief/generate"))
+    waiting = [item["text"] for item in (brief.get("brief") or brief)["sections"]["waiting"]]
+    assert "To review: Draft the onboarding checklist" in waiting
+    assert "Unassigned: Book the room" in waiting
+    assert "Unassigned: Draft the onboarding checklist" not in waiting

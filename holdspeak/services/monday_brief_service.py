@@ -554,6 +554,11 @@ class MondayBriefService:
             log.warning("brief: the needs-you rule is unavailable: %s", exc)
             return None
 
+        if (answer.get("sourceErrors") or {}).get("door"):
+            # The Door could not be read: the rule has no follow-through
+            # cards to give, so the brief keeps its own collector.
+            return None
+
         def item(text: str, detail: str | None, source_ref: str, priority: int) -> BriefItem:
             return BriefItem(
                 id=f"brief-item-{uuid.uuid4().hex}", section="waiting", text=text,
@@ -574,6 +579,9 @@ class MondayBriefService:
                 due = card.get("due")
                 if why.startswith("OVERDUE"):
                     text, detail = f"Overdue: {title}", f"Due {due}" if due else None
+                elif row.get("_toReview"):
+                    # An item that has an owner and is not reviewed yet.
+                    text, detail = f"To review: {title}", f"Due {due}" if due else "Not reviewed"
                 elif row.get("_isUnassigned"):
                     text, detail = f"Unassigned: {title}", f"Due {due}" if due else "Needs an owner"
                 else:

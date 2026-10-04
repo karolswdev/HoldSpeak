@@ -561,16 +561,7 @@ class ProjectService:
         # The one rule (needs_you_membership): the Door's asking columns, the
         # Room rows, the meeting-path blockers and the failed summaries. The
         # heartbeat's muted projects are applied by the rule.
-        return compose(self._db, principal, aggregate, muted_project_ids=self.muted_project_ids())
-
-    def muted_project_ids(self) -> set[str]:
-        """The heartbeat's muted projects (empty when the setting is unreadable)."""
-        try:
-            from .heartbeat_service import HeartbeatService
-
-            return {str(pid) for pid in HeartbeatService(self._db).get_settings().get("muted_projects", [])}
-        except Exception:
-            return set()
+        return compose(self._db, principal, aggregate)
 
     # ── room projection (HS-158-04, SS6.2) ────────────────────────────
 

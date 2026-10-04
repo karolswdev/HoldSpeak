@@ -11,6 +11,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { ChairHome } from "./ChairHome";
+import { asHub } from "../../test/hubNeedsYou";
 
 vi.mock("../../lib/api", async (original) => ({
   ...await original<typeof import("../../lib/api")>(),
@@ -53,13 +54,13 @@ const ASSIGNED = {
 let roster = [NO_ENGINE as Record<string, unknown>];
 
 function wire() {
-  vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+  vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
     if (String(path) === "/api/inference/assignments")
       return { schema: "InferenceAssignmentSummary@1", rows: [], task_overrides: roster, issue_count: 0 } as never;
     if (String(path).startsWith("/api/desk/needs-you"))
       return { count: 0, items: [], projects: [], next: null, coverage: [], complete: true } as never;
     return null as never;
-  });
+  }));
 }
 
 function emitDeskChanged() {
