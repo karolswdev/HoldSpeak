@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:52636 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-611lx89z/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p10
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b4/case.p10.send.resend_accepted--1440/20261001T043329Z-case.p10.send.resend_accepted-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b4/case.p10.send.resend_accepted--1440/20261001T043329Z-case.p10.send.resend_accepted-astra-1440/after.png']
-NOTE: predicate: all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 b5e646bacb8e); response body matches its declared fields | readable_text: 'ACCEPTED BY RESEND' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 313, 'y': 375, 'w': 366, 'h': 18} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_0926f2d0f6f2400d9197490e0a8bce19 answered 200 with 1 row(s) {'state': 'sent', 'destination_id': 'chd_1363d38f207db33edda650d9', 'proof.provider': 'resend', 'proof.word': 'ACCEPTED BY RESEND'}; GET /api/projects/proj-e4778934ed7f/updates answered 200 with 1 row(s) {'id': 'pupd_0926f2d0f6f2400d9197490e0a8bce19', 'deliveries.0.channel': 'email', 'deliveries.0.outcome': 'sent'} | cli_calls: 1 call(s) starting ['https', 'POST', 'api.resend.com', '/emails'] at the recording runner (pids [22023]; 1 call(s) in all), wanted 1

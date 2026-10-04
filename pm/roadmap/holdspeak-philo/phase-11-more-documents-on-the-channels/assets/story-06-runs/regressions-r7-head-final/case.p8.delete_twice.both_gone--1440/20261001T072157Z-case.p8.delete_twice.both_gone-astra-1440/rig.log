@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5e82b65dd3f103c0f984a199bdfcb765d138ce08 dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase8.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:53854 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-lc_t8mvu/.local/share/holdspeak/holdspeak.db engine=real
-JOB: p8
-VERDICT: pass terminal=settled
-EVIDENCE: ['.tmp/philo11-06/p8-current-head-1440-r2/20261001T072157Z-case.p8.delete_twice.both_gone-astra-1440/before.png', '.tmp/philo11-06/p8-current-head-1440-r2/20261001T072157Z-case.p8.delete_twice.both_gone-astra-1440/after.png']
-NOTE: predicate: all_of: protocol_reads: GET /api/decisions/decision_dc882d8fadd1 answered 404; GET /api/decisions/decision_5a192342ab9e answered 404 | readable_text: 'Removal committed' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 651, 'y': 748, 'w': 138, 'h': 27}

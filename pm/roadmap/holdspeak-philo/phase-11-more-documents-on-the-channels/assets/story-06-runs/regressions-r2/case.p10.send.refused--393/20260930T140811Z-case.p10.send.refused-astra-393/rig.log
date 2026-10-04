@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
-RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:49499 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-d8c2ttxf/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p10
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.refused--393/20260930T140811Z-case.p10.send.refused-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.refused--393/20260930T140811Z-case.p10.send.refused-astra-393/after.png']
-NOTE: predicate: all_of: protocol_status: POST /api/channels/send answered 409, wanted 409 (body sha256 2d637bf44f67); response body contains the declared admission facts | readable_text: 'DESTINATION PARKED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 394, 'w': 307, 'h': 42} | readable_text: 'NOTHING SENT' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 394, 'w': 307, 'h': 42} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_0dfa3b8d71444d07b1d84ca27eec02c3 answered 200 with 0 row(s) {}; GET /api/projects/proj-89fdbfee9fb2/updates answered 200 with 1 row(s) {'id': 'pupd_0dfa3b8d71444d07b1d84ca27eec02c3', 'deliveries': []}

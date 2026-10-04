@@ -1,1 +1,0 @@
-Imported as **Architecture review** (meeting `ece833f5`). HoldSpeak reports transcription **complete**, with 81 words stored. Ready for your next request.

@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
-RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:49385 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-3cgk03yc/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p10
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.github_posted--1440/20260930T140741Z-case.p10.send.github_posted-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.github_posted--1440/20260930T140741Z-case.p10.send.github_posted-astra-1440/after.png']
-NOTE: predicate: all_of: protocol_status: POST /api/channels/send answered 200, wanted 200 (body sha256 c9fe9543a5b5); response body contains the declared admission facts | readable_text: 'POSTED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 281, 'y': 372, 'w': 246, 'h': 27} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_25d354df9dff4cffb27a05736f859864 answered 200 with 1 row(s) {'state': 'sent', 'destination_id': 'chd_bad8a735f0d2edc989d7e716', 'channel': 'github'}; GET /api/projects/proj-b3d0001387c9/updates answered 200 with 1 row(s) {'id': 'pupd_25d354df9dff4cffb27a05736f859864', 'deliveries.0.channel': 'github', 'deliveries.0.outcome': 'sent'} | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [5429]; 3 call(s) in all), wanted 1

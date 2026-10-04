@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase9.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:52156 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tbj0pxok/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p9
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b1/case.p9.update.delivered_row--393/20261001T043245Z-case.p9.update.delivered_row-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b1/case.p9.update.delivered_row--393/20261001T043245Z-case.p9.update.delivered_row-astra-393/after.png']
-NOTE: predicate: all_of: protocol_status: POST /api/updates/pupd_4f015dd5ed7a43fca3fca500bb140f06/delivered answered 200, wanted 200 (body sha256 0d90d2b1d8d4); response body matches its declared fields | readable_text: 'Priya' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 432, 'w': 363, 'h': 72} | protocol_reads: GET /api/projects/proj-affb2cd1e28e/updates answered 200 with 1 row(s) {'id': 'pupd_4f015dd5ed7a43fca3fca500bb140f06', 'lifecycle': 'published', 'deliveries.0.delivered_to': 'Priya'}

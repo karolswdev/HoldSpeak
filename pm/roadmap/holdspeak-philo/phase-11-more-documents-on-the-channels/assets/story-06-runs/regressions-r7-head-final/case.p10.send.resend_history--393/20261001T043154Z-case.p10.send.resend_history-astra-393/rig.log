@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:51644 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-39eizl61/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p10
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b2/case.p10.send.resend_history--393/20261001T043154Z-case.p10.send.resend_history-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b2/case.p10.send.resend_history--393/20261001T043154Z-case.p10.send.resend_history-astra-393/after.png']
-NOTE: predicate: all_of: readable_text: 'ACCEPTED BY RESEND' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 310, 'w': 363, 'h': 96} | readable_text: 'ID re-atlas-4ef9-0001' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 310, 'w': 363, 'h': 96} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_25f592d8d7434aa1b49bfdf8924246b7 answered 200 with 1 row(s) {'state': 'sent', 'destination_id': 'chd_07fae8ba5ac977ba490d5ef0', 'proof.provider': 'resend', 'proof.word': 'ACCEPTED BY RESEND'}; GET /api/projects/proj-ad2fc6a82c43/updates answered 200 with 1 row(s) {'id': 'pupd_25f592d8d7434aa1b49bfdf8924246b7', 'deliveries.0.channel': 'email', 'deliveries.0.outcome': 'sent'} | cli_calls: 1 call(s) starting ['https', 'POST', 'api.resend.com', '/emails'] at the recording runner (pids [19983]; 1 call(s) in all), wanted 1

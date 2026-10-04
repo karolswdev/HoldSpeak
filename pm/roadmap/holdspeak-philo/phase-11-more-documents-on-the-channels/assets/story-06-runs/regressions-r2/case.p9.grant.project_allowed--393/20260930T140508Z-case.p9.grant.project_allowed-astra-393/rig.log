@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase9.json
-RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:65258 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-1mv17zik/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p9
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p9.grant.project_allowed--393/20260930T140508Z-case.p9.grant.project_allowed-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p9.grant.project_allowed--393/20260930T140508Z-case.p9.grant.project_allowed-astra-393/after.png']
-NOTE: predicate: all_of: protocol_status: PUT /api/settings/remote/delegations/sweep-runner/projects/proj-0351de18b9b0 answered 200, wanted 200 (body sha256 55fcfbd7b06a); response body contains the declared admission facts | readable_text: 'RUN AND PUBLISH ALLOWED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 144, 'y': 479, 'w': 218, 'h': 18} | protocol_reads: GET /api/settings/remote answered 200 with 1 row(s) {'identity': 'sweep-runner', 'project_delegations.0.project_id': 'proj-0351de18b9b0', 'project_delegations.0.state': 'LIVE'}

@@ -1,3 +1,0 @@
-file	case	width	verdict	seconds	load1	reading
-atlas-phase3.json	case.closure.chain.s5_next_day_brief_more_opened	1440	blocked	48	3.85	BLOCKED: ui step wait_for on '[data-testid=arrival-brief-more]' failed: TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.
-atlas-phase3.json	case.closure.chain.s5_next_day_brief_more_opened	393	blocked	51	3.85	BLOCKED: ui step wait_for on '[data-testid=arrival-brief-more]' failed: TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.

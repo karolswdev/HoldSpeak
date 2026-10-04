@@ -1,1 +1,0 @@
-Imported as **Architecture review** (meeting `00613634`). HoldSpeak reports transcription **complete**, with 80 words. The meeting is ready for your next request.

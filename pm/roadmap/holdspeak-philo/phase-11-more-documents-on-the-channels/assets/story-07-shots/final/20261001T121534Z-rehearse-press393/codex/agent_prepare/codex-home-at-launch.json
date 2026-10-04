@@ -1,9 +1,0 @@
-{
-  "codex_home": [
-    "auth.json"
-  ],
-  "codex_process_home": [
-    ".codex/auth.json"
-  ],
-  "work": []
-}

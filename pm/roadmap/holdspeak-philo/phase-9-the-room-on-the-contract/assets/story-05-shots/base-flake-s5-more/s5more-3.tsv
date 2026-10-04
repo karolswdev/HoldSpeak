@@ -1,3 +1,0 @@
-file	case	width	verdict	seconds	load1	reading
-atlas-phase3.json	case.closure.chain.s5_next_day_brief_more_opened	1440	pass	38	3.37	predicate: 'Keep summary retrieval on the local desk' in observe_at text
-atlas-phase3.json	case.closure.chain.s5_next_day_brief_more_opened	393	pass	44	3.37	predicate: 'Keep summary retrieval on the local desk' in observe_at text

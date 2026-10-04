@@ -95,3 +95,15 @@ docs/generated/graph.json
 # SQLite lock state: a reader that opens a tracked proof database writes these.
 *.sqlite-shm
 *.sqlite-wal
+
+# Evidence is on branch archive/evidence-2026-10-04 (pm/ARCHIVE.md). Tests
+# write new shots to .tmp/evidence-shots/ (tests/_evidence.py). Keep images,
+# proof databases and failed tries out of pm/.
+pm/roadmap/**/*.png
+pm/roadmap/**/*.jpg
+pm/roadmap/**/*.jpeg
+pm/roadmap/**/attempts/
+!pm/roadmap/**/harness/**
+pm/roadmap/**/*.sqlite
+*.sqlite-shm
+*.sqlite-wal

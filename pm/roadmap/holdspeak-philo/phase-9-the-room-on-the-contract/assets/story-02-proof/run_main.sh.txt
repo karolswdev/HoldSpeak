@@ -1,6 +1,0 @@
-#!/bin/bash
-# Run pytest against an export of main d05e0eb5 (the fences copied in).
-set -u
-WT=/Users/karol/dev/tools/wt-philo-9-02
-for f in "$@"; do case "$f" in tests/*) mkdir -p "$WT/.tmp/main-copy/$(dirname $f)"; cp "$WT/$f" "$WT/.tmp/main-copy/$f";; esac; done
-cd "$WT/.tmp/main-copy" && HOME=$(mktemp -d) PYTHONPATH="$WT/.tmp/main-copy" "$WT/.venv/bin/python" -m pytest -p no:cacheprovider "$@"

@@ -1,7 +1,8 @@
 # Status
 
 The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we work now".
-The old roadmap under `pm/roadmap/` is history; it is not updated.
+The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
+dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 **Last updated:** 2026-10-04
 
@@ -41,7 +42,6 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 | The Thought window title always says "Thought"; 1:1 memory has no face; route chip for Ask and chat: each needs a canvas | — | — |
 | The Dock overflows 1440 with five projects; a 5 px strip of the next page shows at 393 | — | — |
 | Raw paths and ids on some faces (SEND well, Connections, Setup, Processes) | — | — |
-| Evidence out of the working tree (pm/ = 2.3 GB): waits for the owner's word | — | — |
 | Four June PLAN docs in the Source canon list name dead modules: waits for the owner's word | — | — |
 | Backend: 219 routes with no web caller; two watch systems; three decision surfaces; 2,800 lines with no importer | — | — |
 | Test rig: the Delivery board may show the machine's real tmux sessions | — | — |
@@ -51,6 +51,7 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 
 ## Last merged (newest first)
 
+- (this PR) — Evidence moved to branch `archive/evidence-2026-10-04` (16,391 files, 2.3 GB; `pm/ARCHIVE.md`); the tree is 10,607 files, 172 MB
 - #812, #814, #799–#811 — The long-standing red browser tests fixed (29 stale tests, the rig's late-step verdict)
 - #798, #801–#805 — Regressions from the 2026-10-03 merges fixed (merged rows keep sources, lamp labels, windows clear the Dock)
 - #797 — The default run is green after "every write announces"

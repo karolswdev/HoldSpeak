@@ -1,1 +1,0 @@
-{'window': 'pullout:note:note_cab5a768a989', 'centre': [196, 368], 'hit': {'tag': 'span', 'cls': 'surface-ledger-primary', 'testid': 'arrival-brief-row', 'window': None, 'desk': True}, 'left_in_dom': []}

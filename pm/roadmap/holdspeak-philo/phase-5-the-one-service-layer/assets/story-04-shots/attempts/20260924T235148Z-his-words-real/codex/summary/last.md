@@ -1,1 +1,0 @@
-The summary is saved on **Architecture review** (`a7e04281`) and ready to view. Verified on the meeting record: summary status **ready**, job **succeeded**.

@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11.json
-RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:52389 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-llxwie7r/.local/share/holdspeak/holdspeak.db engine=replayed
-JOB: p11
-VERDICT: blocked terminal=None
-EVIDENCE: []
-NOTE: BLOCKED: precondition not met: {'kind': 'protocol_field', 'path': 'proposals', 'nonempty': True} at 'protocol: GET /api/meetings/d294a0b7/follow-through-proposals' — proposals is empty

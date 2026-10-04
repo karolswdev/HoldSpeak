@@ -68,6 +68,8 @@ def test_no_test_writes_into_tracked_evidence() -> None:
         rel = path.relative_to(REPO).as_posix()
         if rel in ALLOWLIST:
             continue
+        if rel.startswith("tests/_parked/"):
+            continue  # parked tests are not collected; they cannot write
         source = path.read_text(encoding="utf-8")
         if "pm/roadmap" not in source or not WRITE_RE.search(source):
             continue

@@ -1,4 +1,0 @@
-     × Room: a body cleared to empty stays empty and UNSAVED after a reload and a close/reopen; Save clears the draft 18ms
-     × every keyed draft: an emptied field is kept as ""; forgetting removes it 4ms
-⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
-      Tests  2 failed | 12 passed (14)

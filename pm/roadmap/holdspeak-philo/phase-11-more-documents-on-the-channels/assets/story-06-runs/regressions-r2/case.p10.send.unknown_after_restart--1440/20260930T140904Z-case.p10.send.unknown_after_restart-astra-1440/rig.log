@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
-RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:49732 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-tmwxuvi5/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p10
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.unknown_after_restart--1440/20260930T140904Z-case.p10.send.unknown_after_restart-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.unknown_after_restart--1440/20260930T140904Z-case.p10.send.unknown_after_restart-astra-1440/after.png']
-NOTE: predicate: all_of: readable_text: 'INTERRUPTED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 365, 'w': 770, 'h': 28} | readable_text: 'RESULT UNKNOWN' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 39, 'y': 365, 'w': 770, 'h': 28} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_d7dc557141ee4d1093184a4e98e31b94 answered 200 with 1 row(s) {'state': 'unknown', 'reason': 'interrupted'}; GET /api/projects/proj-7cf6f1b8e730/updates answered 200 with 1 row(s) {'id': 'pupd_d7dc557141ee4d1093184a4e98e31b94', 'deliveries.0.outcome': 'unknown'} | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [6709]; 3 call(s) in all), wanted 1

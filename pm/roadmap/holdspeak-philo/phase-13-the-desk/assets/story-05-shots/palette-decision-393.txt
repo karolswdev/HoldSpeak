@@ -1,1 +1,0 @@
-{'window': 'pullout:decision:decision_fb3a2b428854', 'centre': [196, 485], 'hit': {'tag': 'div', 'cls': 'surface-ledger-line', 'testid': 'arrival-brief-row', 'window': None, 'desk': True}, 'left_in_dom': []}

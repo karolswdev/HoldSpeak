@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11.json
-RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:52055 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-s40eoejx/.local/share/holdspeak/holdspeak.db engine=replayed
-JOB: p11
-VERDICT: blocked terminal=None
-EVIDENCE: []
-NOTE: BLOCKED: POST /api/inference/assignments/set answered 400, wanted 200: {"code":"inference_assignment_incompatible","message":"Assignment contains an incompatible model."}
