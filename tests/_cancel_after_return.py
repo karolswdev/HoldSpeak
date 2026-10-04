@@ -1,56 +1,75 @@
-"""One deterministic order for the "cancel after provider return" tests.
+"""Force each order of the parent-cancel race, one at a time.
 
 A parent cancel that lands while a child's provider call is in flight starts a
 daemon thread that sends the physical cancel signal to the child
 (``holdspeak/kernel/parent_terminal.py``, ``cancel_parent``). That thread races
 the caller, which closes the parent:
 
-* the parent closes first (the usual order on an idle machine): the signal is
-  refused, the provider returns, the child keeps its earned ``succeeded``
-  receipt, and publication is fenced;
-* the signal thread is first (a loaded machine): the child is cancelled
-  mid-flight and its receipt is ``cancelled``.
+* ``PARENT_CLOSES_FIRST``: the signal arrives after the child is closed and
+  does nothing;
+* ``SIGNAL_FIRST``: the adapter answers the cancel while the child is
+  ``DISPATCHING``, and only then does the parent close.
 
-The two orders are lawful product behaviour, but these tests name the first
-one: the provider returned, the child earned its receipt, nothing publishes.
-They got it only from thread timing, so they failed in full runs under load.
+The law is the same in the two orders (``cancel_fences_child`` in
+``holdspeak/kernel/inference_cancel_signal.py``): an adapter that answers
+``not_supported`` did not stop the provider call, so a provider that then
+returns earns ``succeeded / provider_returned`` with its result reference. A
+confirmed abort (``cancelled``) closes the child as ``cancelled``. The parent
+is ``cancelled`` and publication is fenced in every case.
 
-``hold_child_cancel_until_provider_returns`` makes the order a fact: the
-signal thread waits on an event that is set when the child's own terminal
-receipt is durable. No wall-clock budget decides the result. The deadline on
-the wait is only a guard against a hung test.
+Before the kernel fix, ``SIGNAL_FIRST`` wrote a ``cancelled`` child receipt
+with no result reference for a provider call that had returned. Thread timing
+chose the order, so the tests were green on an idle machine and red in full
+runs under load. ``force_cancel_order`` makes the order a fact: each side
+waits on an event from the other. The deadline on a wait is only a guard
+against a hung test.
 """
 from __future__ import annotations
 
 import threading
 from typing import Any
 
+PARENT_CLOSES_FIRST = "parent_closes_first"
+SIGNAL_FIRST = "signal_first"
+BOTH_ORDERS = (PARENT_CLOSES_FIRST, SIGNAL_FIRST)
+
 _GUARD_SECONDS = 120.0
 
 
-def hold_child_cancel_until_provider_returns(monkeypatch: Any) -> threading.Event:
-    """Hold the child cancel signal until the child's receipt is durable.
+def force_cancel_order(monkeypatch: Any, order: str) -> None:
+    """Make the child cancel signal and the parent close run in ``order``.
 
-    Returns the event that is set when the child's terminal receipt is
-    written. Every other part of the path is the real product code.
+    Only the order is forced. The controller, the runner, the adapter and the
+    receipts are the real product code.
     """
     from holdspeak.kernel.inference_runner import InferenceRunner
+    from holdspeak.kernel.parent_run import ParentRunController
 
+    assert order in BOTH_ORDERS, order
     child_receipt_durable = threading.Event()
+    signal_settled = threading.Event()
     real_persist = InferenceRunner._persist_receipt
     real_cancel = InferenceRunner._cancel_internal
+    real_close = ParentRunController.close
 
     def persist(self: Any, active: Any, operation_id: str, *args: Any, **kwargs: Any) -> Any:
         try:
             return real_persist(self, active, operation_id, *args, **kwargs)
         finally:
-            if operation_id == active.operation_id:
-                child_receipt_durable.set()
+            # The child's own receipt, or the receipt of the cancel signal
+            # (written when the adapter has answered).
+            (child_receipt_durable if operation_id == active.operation_id else signal_settled).set()
 
     def cancel_internal(self: Any, invocation_id: str, principal: Any) -> str:
-        child_receipt_durable.wait(_GUARD_SECONDS)
+        if order == PARENT_CLOSES_FIRST:
+            assert child_receipt_durable.wait(_GUARD_SECONDS), "the child never closed"
         return real_cancel(self, invocation_id, principal)
+
+    def close(self: Any, context: Any, outcome: str, *args: Any, **kwargs: Any) -> Any:
+        if order == SIGNAL_FIRST and outcome == "cancelled":
+            assert signal_settled.wait(_GUARD_SECONDS), "the cancel signal never settled"
+        return real_close(self, context, outcome, *args, **kwargs)
 
     monkeypatch.setattr(InferenceRunner, "_persist_receipt", persist)
     monkeypatch.setattr(InferenceRunner, "_cancel_internal", cancel_internal)
-    return child_receipt_durable
+    monkeypatch.setattr(ParentRunController, "close", close)

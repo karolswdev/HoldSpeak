@@ -407,10 +407,11 @@ def test_search_finds_kafka_in_decision_text_and_linked_work(tmp_path):
 # --- admitted promotion fence (HS-131-07) -----------------------------------
 
 
-def test_promotion_cancellation_after_provider_return_never_publishes_artifact(tmp_path, monkeypatch):
-    from tests._cancel_after_return import hold_child_cancel_until_provider_returns
+@pytest.mark.parametrize("order", ["parent_closes_first", "signal_first"])
+def test_promotion_cancellation_after_provider_return_never_publishes_artifact(tmp_path, monkeypatch, order):
+    from tests._cancel_after_return import force_cancel_order
 
-    hold_child_cancel_until_provider_returns(monkeypatch)
+    force_cancel_order(monkeypatch, order)
     db = Database(tmp_path / "promotion.db")
     _accepted_meeting_decision(db, "dec-fence")
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
@@ -457,6 +458,7 @@ def test_promotion_cancellation_after_provider_return_never_publishes_artifact(t
     parent_receipt = broker.store.receipt(parent_id)
     assert artifact_count == 0
     assert child_receipt is not None and child_receipt["outcome"] == "succeeded"
+    assert child_receipt["result_ref"]
     assert parent_receipt is not None and parent_receipt["outcome"] == "cancelled"
 
 

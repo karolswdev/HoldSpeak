@@ -20,6 +20,18 @@ import uuid
 from typing import Any
 
 
+def cancel_fences_child(disposition: str) -> bool:
+    """True when a cancel answer taken during dispatch closes the child as cancelled.
+
+    ``completed`` and ``not_supported`` do not: the adapter did not stop the
+    provider call, so the call's own result decides the child receipt
+    (``succeeded / provider_returned`` with its result reference, or its own
+    failure). ``cancelled`` is a confirmed abort; ``unknown`` is indeterminate.
+    The parent's durable cancel fences publication in every case.
+    """
+    return bool(disposition) and disposition not in {"completed", "not_supported"}
+
+
 def perform_cancel(runner: Any, iid: str, active: Any, principal: Any) -> str:
     """Win the election, submit the admitted cancel signal, and close out."""
     with active.condition:
@@ -69,7 +81,7 @@ def perform_cancel(runner: Any, iid: str, active: Any, principal: Any) -> str:
         if dispatching:
             # DISPATCHING is cooperative: except for unknown, the dispatcher
             # elects invocation closure only after adapter.dispatch returns.
-            if acknowledged: active.cancelled.set()
+            if acknowledged and cancel_fences_child(disposition): active.cancelled.set()
             with active.condition: active.disposition = disposition; active.condition.notify_all()
             if disposition == "unknown":
                 runner._finish(active, iid, "indeterminate", cancellation_owner=True)
@@ -97,4 +109,4 @@ def perform_cancel(runner: Any, iid: str, active: Any, principal: Any) -> str:
         return "refused"
 
 
-__all__ = ["perform_cancel"]
+__all__ = ["cancel_fences_child", "perform_cancel"]

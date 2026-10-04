@@ -22,7 +22,7 @@ from .dispatch_context import (
     require_dispatch_context,
 )
 from .inference import executor_identity
-from .inference_cancel_signal import perform_cancel
+from .inference_cancel_signal import cancel_fences_child, perform_cancel
 from .invocation_sequence import SequenceRegistry
 from .local_runtime_slot import takes_local_runtime_lease
 from .model import KernelRefused, valid_ref
@@ -436,7 +436,7 @@ class InferenceRunner:
                 while active.state == "CANCELLING" or active.closing or (active.state == "DISPATCHING" and active.cancel_performing and not active.disposition):
                     active.condition.wait()
                 pending_principal = None
-                if active.state == "DISPATCHING" and active.disposition and active.disposition != "completed":
+                if active.state == "DISPATCHING" and cancel_fences_child(active.disposition):
                     publishing = False
                 elif active.state == "DISPATCHING":
                     active.state = "PUBLISHING"
@@ -672,7 +672,7 @@ class InferenceRunner:
             with active.condition:
                 while active.state=="CANCELLING" or active.closing or (active.state=="DISPATCHING" and active.cancel_performing and not active.disposition): active.condition.wait()
                 pending_principal=None
-                if active.state=="DISPATCHING" and active.disposition and active.disposition!="completed":
+                if active.state=="DISPATCHING" and cancel_fences_child(active.disposition):
                     publishing=False
                 elif active.state=="DISPATCHING":
                     active.state="PUBLISHING"; active.condition.notify_all(); publishing=True
@@ -825,7 +825,7 @@ class InferenceRunner:
             while active.state=="DISPATCHING" and active.cancel_performing and not active.disposition: active.condition.wait()
             while active.closing: active.condition.wait()
             if active.state=="CLOSURE_FAILED": self._terminal_disposition(active)
-            if active.state=="DISPATCHING" and active.disposition and active.disposition!="completed":
+            if active.state=="DISPATCHING" and cancel_fences_child(active.disposition):
                 outcome="indeterminate" if active.disposition=="unknown" else "cancelled"
             if active.state in {"CANCELLED","INDETERMINATE","PUBLISHED","FAILED","REFUSED"}:
                 disposition=self._terminal_disposition(active)

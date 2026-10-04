@@ -451,7 +451,8 @@ def _accepted_meeting_decision(db: Database, decision_id: str) -> None:
         )
 
 
-def test_cancellation_after_provider_return_is_one_child_one_receipt_one_physical_attempt(tmp_path, monkeypatch):
+@pytest.mark.parametrize("order", ["parent_closes_first", "signal_first"])
+def test_cancellation_after_provider_return_is_one_child_one_receipt_one_physical_attempt(tmp_path, monkeypatch, order):
     """Scenario: cancellation (durable parent cancel lands while provider is in flight).
 
     Surface: Decision promotion. The child's provider work completed and EARNED
@@ -462,9 +463,9 @@ def test_cancellation_after_provider_return_is_one_child_one_receipt_one_physica
     """
     from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
     from holdspeak.services.errors import ConflictError
-    from tests._cancel_after_return import hold_child_cancel_until_provider_returns
+    from tests._cancel_after_return import force_cancel_order
 
-    hold_child_cancel_until_provider_returns(monkeypatch)
+    force_cancel_order(monkeypatch, order)
 
     db = Database(tmp_path / "promotion-cardinality.db")
     _accepted_meeting_decision(db, "dec-cardinality")
@@ -506,7 +507,14 @@ def test_cancellation_after_provider_return_is_one_child_one_receipt_one_physica
     children = _assert_reconciled(
         db, parent_operation_id=parent_id, counts=counts, leaf=leaf, expect_children=1,
     )
-    assert _receipt(db, children[0]["operation_id"])["outcome"] == "succeeded"
+    child_receipt = _receipt(db, children[0]["operation_id"])
+    assert child_receipt["outcome"] == "succeeded" and child_receipt["result_ref"]
+    with db._connection() as conn:
+        attested = conn.execute(
+            "SELECT material_json FROM kernel_inference_receipt_attestations WHERE operation_id=?",
+            (children[0]["operation_id"],),
+        ).fetchone()
+    assert attested is not None and "provider_returned" in attested[0]
     # The parent's OWN receipt is cancelled -- a separate row, never counted as
     # a child, and never conflated with the child's earned outcome.
     parent_receipt = _receipt(db, parent_id)

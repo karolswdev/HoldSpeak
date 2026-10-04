@@ -285,11 +285,12 @@ def test_late_or_superseded_child_output_cannot_advance_sequence_or_graph(rig):
     assert run.context.epoch == 1
 
 
-def test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive(route_rig, monkeypatch):
+@pytest.mark.parametrize("order", ["parent_closes_first", "signal_first"])
+def test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive(route_rig, monkeypatch, order):
     """Route-level interleaving: cancel wins while provider dispatch is blocked."""
-    from tests._cancel_after_return import hold_child_cancel_until_provider_returns
+    from tests._cancel_after_return import force_cancel_order
 
-    hold_child_cancel_until_provider_returns(monkeypatch)
+    force_cancel_order(monkeypatch, order)
     client, db, state = route_rig
     chain = _sequence(client, [_recipe(client, "slow")])
     state["block"] = True
@@ -301,12 +302,26 @@ def test_parent_cancel_fences_admission_and_late_output_while_child_receipts_sur
         cancel = client.post(f"/api/chains/runs/{parent_id}/cancel")
         assert cancel.status_code == 200 and cancel.json()["parent_operation_id"] == parent_id
         state["release"].set()
-        assert run.result(timeout=45).status_code == 409
+        status = run.result(timeout=45).status_code
     child = _children(db, parent_id)[0]
-    assert _receipt(db, child["operation_id"])["outcome"] == "succeeded"
+    child_receipt = _receipt(db, child["operation_id"])
+    if order == "parent_closes_first":
+        # The signal found a closed child: the provider's return is the receipt.
+        assert status == 409
+        assert child_receipt["outcome"] == "succeeded" and child_receipt["result_ref"]
+    else:
+        # CanonicalPromptAdapter answers the cancel with ``cancelled`` (a
+        # confirmed abort), so the child closes as ``cancelled``: a distinct
+        # outcome from ``not_supported``, which keeps the provider's return.
+        # The route answers 502 for this cancelled child today.
+        assert status == 502
+        assert child_receipt["outcome"] == "cancelled" and not child_receipt["result_ref"]
+    assert _receipt(db, parent_id)["outcome"] == "cancelled"
     with db._connection() as conn:
         checkpoint = conn.execute("SELECT advanced FROM kernel_parent_checkpoints WHERE parent_operation_id=?", (parent_id,)).fetchone()
-    assert checkpoint is not None and checkpoint["advanced"] == 0
+    # Nothing advanced the Sequence in either order: a retained stage that did
+    # not advance, or (confirmed abort) no stage at all.
+    assert (checkpoint is not None and checkpoint["advanced"] == 0) if order == "parent_closes_first" else checkpoint is None
     broker = _configure(db)
     # Restart does not reconstruct a bearer context from a durable row.
     assert _reason(lambda: broker.parent_run_controller.reserve_child(object(), OWNER, planned_node="later", invocation_id="later")) == "parent_context_invalid"
