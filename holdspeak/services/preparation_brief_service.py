@@ -48,6 +48,7 @@ from urllib.parse import urlparse
 
 from ..principals import Principal
 from .errors import ConflictError, NotFound, ServiceError, ValidationError
+from .memory_grounding import memory_context
 from .project_update_service import (
     ACCEPTANCE_ACCEPTED,
     ACCEPTANCE_UNREVIEWED,
@@ -67,6 +68,9 @@ from .project_update_service import (
 )
 
 PREPARATION_BRIEF_CAPABILITY = "project.brief_prepare"
+
+#: The marked block the project's memory travels in, inside the brief prompt.
+MEMORY_BLOCK_HEADING = "PROJECT MEMORY"
 
 # ── The bounded shape (AC3) ───────────────────────────────────────────
 
@@ -548,7 +552,12 @@ _MODEL_OUTPUT_SCHEMA: dict[str, Any] = {
 }
 
 
-def build_model_prompt(purpose: str, inventory: list[Claim], manifest: dict[str, Any]) -> dict[str, Any]:
+def build_model_prompt(
+    purpose: str, inventory: list[Claim], manifest: dict[str, Any], memory: Any | None = None,
+) -> dict[str, Any]:
+    """``memory`` (a ``MemoryContext``) adds the project's remembered sources
+    in one marked block; its refs are citable.  With no memory the prompt is
+    byte-identical to the one before memory existed."""
     lines: list[str] = [f"PURPOSE: {purpose}"]
     lines.append("\n[decisions carried in]")
     for decision in manifest["decisions"]:
@@ -575,6 +584,15 @@ def build_model_prompt(purpose: str, inventory: list[Claim], manifest: dict[str,
         '{"priorities": [{"text": "...", "cited_refs": ["..."]}], '
         '"questions": [...], "obligations": [...]}'
     )
+    memory_block = memory.prompt_block(MEMORY_BLOCK_HEADING) if memory else ""
+    if memory_block:
+        lines.append("\n" + memory_block)
+        system_prompt += (
+            "\n\nThe user message also has a "
+            f"[{MEMORY_BLOCK_HEADING}] block: earlier decisions, notes and "
+            "meetings of this project. Use it to name what is still open "
+            "and what changed. Its refs count as inventory refs: cite them exactly."
+        )
     return {
         "system_prompt": system_prompt,
         "user_prompt": "\n".join(lines),
@@ -919,11 +937,22 @@ class PreparationBriefService:
             if route["state"] != ROUTE_READY:
                 # Nothing has been sent; the purpose goes back with the reason.
                 raise PreparationRefused(route, purpose)
+            # The model brief reads the project's memory for this purpose
+            # (the grounding call Ask uses), less what the manifest holds.
+            memory = memory_context(
+                self._db, project_id=project_id, query=purpose,
+                exclude_refs=[ref for claim in draft.claims for ref in claim.refs]
+                + [row["ref"] for row in manifest["decisions"]],
+            )
             try:
                 draft, gen_label, gen_host, gen_model = self._draft_with_model(
                     principal, purpose, draft.claims, manifest, route,
                     known_names=_known_names_for_room(room), attempt_id=attempt_id,
+                    memory=memory,
                 )
+                if memory:
+                    # What the draft was given from memory, frozen with the rest.
+                    manifest["memory_refs"] = memory.refs
             except _ModelDraftFailed as exc:
                 refused = dict(route)
                 refused.update({
@@ -976,6 +1005,7 @@ class PreparationBriefService:
         *,
         known_names: Any = (),
         attempt_id: str = "",
+        memory: Any | None = None,
     ) -> tuple[Draft, str, str | None, str | None]:
         from ..kernel.inference_runner import InvocationRequest, ServiceContract
         from ..kernel.prompt_adapter import CanonicalPromptAdapter
@@ -1010,7 +1040,12 @@ class PreparationBriefService:
                 inventory_refs.add(ref)
                 inventory_texts[ref] = " ".join([src["label"], *src["tokens"]])
 
-        payload = build_model_prompt(purpose, inventory, manifest)
+        if memory:
+            inventory_refs.update(memory.refs)
+            for ref, text in memory.texts.items():
+                inventory_texts.setdefault(ref, text)
+
+        payload = build_model_prompt(purpose, inventory, manifest, memory)
         invocation_id = _invocation_id_for(attempt_id) if attempt_id else ""
         request = InvocationRequest(
             deployment_revision=deployment_id,

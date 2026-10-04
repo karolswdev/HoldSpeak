@@ -249,6 +249,11 @@ export interface DeskState {
     kind: "note" | "decision" | "kb" | "recipe" | "zone" | "workflow" | "workbench",
     overrides?: Record<string, unknown>,
   ): Promise<void>;
+  /** Put a record the hub has just created into the store at once, from
+   * its create answer, so its window opens without a wait for the next desk
+   * read. A desk read that started before the create keeps the object.
+   * Returns the object id, or null when the answer carries no record. */
+  adoptCreated(kind: import("../api").CreatedKind, wire: unknown): string | null;
   /** Register a Delivery source (or local worktree) as a repository drawer. */
   registerRepository(input: { sourceId?: string; path?: string; label?: string }): Promise<void>;
   markNew(id: string): void;

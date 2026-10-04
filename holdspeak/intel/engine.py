@@ -876,8 +876,8 @@ class MeetingIntel:
             log.error(f"Vision prompt failed: {exc}", exc_info=True)
             raise MeetingIntelError(f"Vision prompt failed: {exc}") from exc
 
-    def _analyze_once(self, transcript: str) -> IntelResult:
-        messages = _json_only_messages(transcript)
+    def _analyze_once(self, transcript: str, memory_context: str = "") -> IntelResult:
+        messages = _json_only_messages(transcript, memory_context)
         try:
             raw_text = self._chat_completion_text(
                 messages,
@@ -911,7 +911,7 @@ class MeetingIntel:
         )
 
     def analyze(
-        self, transcript: str, *, stream: bool = False
+        self, transcript: str, *, stream: bool = False, memory_context: str = "",
     ) -> Union[IntelResult, Iterator[Union[str, IntelResult]]]:
         """Analyze transcript and return structured intelligence.
 
@@ -919,6 +919,9 @@ class MeetingIntel:
             transcript: Full transcript text to analyze.
             stream: If True, returns a generator yielding streamed text chunks
                 followed by a final `IntelResult` as the last yielded item.
+            memory_context: The marked block of earlier decisions and open
+                work on the meeting's project (services/memory_grounding.py).
+                Empty leaves the prompt as it was.
 
         Returns:
             IntelResult when stream=False.
@@ -928,7 +931,7 @@ class MeetingIntel:
 
         if not stream:
             try:
-                return self._analyze_once(transcript)
+                return self._analyze_once(transcript, memory_context)
             except CONTROL_SIGNALS:
                 raise
             except Exception as exc:
@@ -941,9 +944,11 @@ class MeetingIntel:
                     error=str(exc),
                 )
 
-        return self._analyze_stream(transcript)
+        return self._analyze_stream(transcript, memory_context)
 
-    def _analyze_stream(self, transcript: str) -> Iterator[Union[str, IntelResult]]:
+    def _analyze_stream(
+        self, transcript: str, memory_context: str = "",
+    ) -> Iterator[Union[str, IntelResult]]:
         """Stream analysis token-by-token, then a final parsed IntelResult.
 
         Both providers stream now: the local GGUF and the cloud/endpoint path
@@ -952,7 +957,7 @@ class MeetingIntel:
         provider output private until semantic validation and receipt election.
         """
         raw_parts: list[str] = []
-        messages = _json_only_messages(transcript)
+        messages = _json_only_messages(transcript, memory_context)
 
         try:
             for piece in self._chat_completion_stream(

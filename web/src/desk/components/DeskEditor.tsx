@@ -202,7 +202,9 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
           const view = viewRef.current;
           if (!view) return;
           const { from, to } = view.state.selection.main;
-          view.dispatch({ changes: { from, to, insert: text } });
+          // The cursor goes after the inserted text, so the next words
+          // (typed or spoken) continue it.
+          view.dispatch({ changes: { from, to, insert: text }, selection: { anchor: from + text.length } });
           view.focus();
         },
         revealRange(from, to, options) {
