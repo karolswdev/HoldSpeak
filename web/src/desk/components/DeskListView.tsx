@@ -21,6 +21,7 @@ import { objectMenuEntries } from "../floorMenu";
 import { WorkMenu } from "./DeskMenu";
 import { InlineEditor } from "./InlineEditor";
 import { Pullout } from "./Pullout";
+import { InfoWindow } from "./InfoWindow";
 import { AskBar, AskPanel } from "./AskPanel";
 import { DeliveryListSection } from "./DeliveryListSection";
 import { PrReceiptsSection } from "./PrReceiptsSection";
@@ -28,6 +29,22 @@ import { DeskSortableTable, type Column } from "./DeskSortableTable";
 import { DeskDeleteSeat } from "../deleteReceipt";
 import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { ZoneRenameRow } from "./ZoneRenameRow";
+
+/** True when a press on a row's name button landed on its `[ ]` mark. At
+ * phone width the button's own touch target covers its children, so the
+ * mark is never the event target there: the press is placed by its point. */
+function pressOnMark(event: React.MouseEvent<HTMLElement>): boolean {
+  const mark = event.currentTarget.querySelector(".desk-list-mark");
+  if (!mark) return false;
+  if (event.target instanceof Node && mark.contains(event.target)) return true;
+  const box = mark.getBoundingClientRect();
+  if (box.width === 0) return false;
+  const row = event.currentTarget.getBoundingClientRect();
+  return (
+    event.clientX >= box.left - 8 && event.clientX <= box.right + 4 &&
+    event.clientY >= row.top && event.clientY <= row.bottom
+  );
+}
 
 /* PHILO-9-04 (the owner ratified the list canvas, 2026-09-27) — the second
  * line under the name in a `surface` of 720 px or less (hidden wider): the
@@ -123,6 +140,7 @@ export function DeskListView() {
   const items = useDesk((s) => s.items);
   const divedZone = useDesk((s) => s.divedZone);
   const selectedIds = useDesk((s) => s.selectedIds);
+  const infoWindows = useDesk((s) => s.infoWindows);
   const pullouts = useDesk((s) => s.pullouts);
   const editingId = useDesk((s) => s.editingId);
   const askOpen = useDesk((s) => s.askOpen);
@@ -283,7 +301,21 @@ export function DeskListView() {
         const ref = qualifiedRef(row.object.kind, row.object.id);
         const selected = selectedIds.includes(ref) || selectedIds.includes(row.object.id);
         return (
-          <Button variant="ghost" dense className="desk-sortable-table-open desk-list-name-cell" aria-label={selected ? `${row.object.title}, in Ask context` : row.object.title}>
+          <Button
+            variant="ghost"
+            dense
+            className="desk-sortable-table-open desk-list-name-cell"
+            aria-label={selected ? `${row.object.title}, in Ask context` : row.object.title}
+            // A press on the mark selects the row (the pointer's Space): the
+            // Object menu and the Ask bar then act on it. A press anywhere
+            // else on the row opens it, as before.
+            onClick={(event) => {
+              if (!pressOnMark(event)) return;
+              event.preventDefault();
+              event.stopPropagation();
+              toggleSelected(ref);
+            }}
+          >
             <span className="desk-list-mark" data-selected={selected || undefined} aria-hidden="true">
               {selected ? "[x]" : "[ ]"}
             </span>
@@ -410,6 +442,9 @@ export function DeskListView() {
       <PrReceiptsSection />
       {editing && <InlineEditor key={editing.id} o={editing} u={{ x: 0.5, y: 0.4 }} />}
       {openCards.map((p) => <Pullout key={p.id} o={p.obj!} pulloutId={p.id} origin={p.origin} />)}
+      {/* Get Info opened nothing in list mode: only the spatial Floor
+          (WorldStage) mounted the Info windows the store holds. */}
+      {infoWindows.map((w) => <InfoWindow key={w.ref} refId={w.ref} origin={w.origin} />)}
       {/* PHILO-8-02 — the Floor's foot (#665): the delete receipt sits in
           flow directly above the selection bar it acted on. */}
       <div className="desk-world-foot" ref={footRef}>

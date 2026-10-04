@@ -3,7 +3,7 @@
 // honestly, and legible to a screen reader.
 // HS-111-07 — re-locked to the SurfaceLedger face: 26px mono rows under
 // kind bands, Space = Ask-context, ContextMenu = the object WorkMenu.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Meeting, Note, Persona, KB } from "../../lib/primitives";
@@ -13,6 +13,8 @@ import { usePalette } from "../chromeState";
 import { useProjections } from "../projections";
 import { allObjects, objectByRef } from "../world";
 import { DeskListView, LIST_PAGE } from "./DeskListView";
+import { keyContext } from "../keymap";
+import { verbById } from "../verbRegistry";
 import { DeskChrome } from "./DeskChrome";
 import { DeskToolShelf } from "./DeskToolShelf";
 
@@ -52,6 +54,7 @@ function resetStore(seed: Items) {
     selectedIds: [],
     divedZone: null,
     pullouts: [],
+    infoWindows: [],
     editingId: null,
     askOpen: false,
     panelRects: {},
@@ -141,6 +144,64 @@ describe("HS-111-07 the ledger face: same records", () => {
       { key: " " },
     );
     expect(useDesk.getState().selectedIds).toEqual([]);
+  });
+
+  // Inventory 2026-10-03: a pointer could not select a list row (a press
+  // opens it), so the Object menu stayed all ghost; and Get Info opened
+  // nothing, because only the spatial Floor mounted the Info windows.
+  it("a press on the mark selects the row and does not open it", () => {
+    const { container } = renderList();
+    const row = screen.getByRole("button", { name: "Release checklist" });
+    fireEvent.click(row.querySelector(".desk-list-mark")!);
+    expect(useDesk.getState().selectedIds).toEqual([qualifiedRef("note", "n1")]);
+    expect(useDesk.getState().pullouts).toEqual([]);
+    expect(container.querySelector(".desk-pullout")).toBeNull();
+    // The Object menu reads this selection: its verbs are live.
+    const ctx = keyContext();
+    expect(ctx.selectedRef).toBe(qualifiedRef("note", "n1"));
+    expect(verbById("object.info")!.ghost(ctx)).toBeNull();
+    expect(verbById("object.open")!.ghost(ctx)).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Release checklist, in Ask context" })
+        .querySelector(".desk-list-mark")!,
+    );
+    expect(useDesk.getState().selectedIds).toEqual([]);
+    expect(verbById("object.info")!.ghost(keyContext())).toBe("Select an object");
+  });
+
+  it("Get Info on a selected row opens its Info window in list mode", () => {
+    const { container } = renderList();
+    const row = screen.getByRole("button", { name: "Release checklist" });
+    fireEvent.click(row.querySelector(".desk-list-mark")!);
+    act(() => verbById("object.info")!.run(keyContext()));
+    const info = container.querySelector(".desk-info-window");
+    expect(info).not.toBeNull();
+    expect(info!.getAttribute("aria-label") ?? info!.textContent).toContain("Release checklist");
+  });
+
+  // Found on the glass: Get Info on a decision threw "Unknown HoldSpeak
+  // product term: decision" and the whole desk fell to the reset screen.
+  it("Get Info opens for a kind the product-language registry does not hold", () => {
+    resetStore({
+      ...items,
+      decision: [{ kind: "decision", id: "d1", title: "Freeze the old ledger" } as never],
+      workbench: [{ kind: "workbench", id: "w1", name: "Cutover bench" } as never],
+    });
+    const { container } = renderList();
+    for (const [name, word] of [["Freeze the old ledger", "Decision"], ["Cutover bench", "Workbench"]]) {
+      fireEvent.contextMenu(screen.getByRole("button", { name }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "Get Info" }));
+      const info = [...container.querySelectorAll(".desk-info-window")].at(-1)!;
+      expect(info.querySelector(".info-kind")?.textContent).toBe(word);
+    }
+    expect(container.querySelectorAll(".desk-info-window")).toHaveLength(2);
+  });
+
+  it("Get Info from the row's own menu opens the Info window", () => {
+    const { container } = renderList();
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Q3 kickoff" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Get Info" }));
+    expect(container.querySelector(".desk-info-window")).not.toBeNull();
   });
 
   it("the ContextMenu key opens the object WorkMenu on the row", () => {
