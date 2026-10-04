@@ -3,6 +3,7 @@
 // since I last looked? What did we decide and what do I owe people?
 // Two wings: ROOM · HISTORY. Ask well at the foot. No counters of zero,
 // no REV, no raw field names, the name said once.
+import { wireDate } from "../../desk/surface/format";
 import React, { useEffect, useRef, useState, useMemo, useCallback, useReducer } from "react";
 import {
   countLabel,
@@ -145,8 +146,8 @@ function emblemFor(source: string): string {
 
 function formatReadAt(iso: string | null): string {
   if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(iso);
+  if (!d) return "";
   const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${days[d.getDay()]} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -154,23 +155,23 @@ function formatReadAt(iso: string | null): string {
 
 function formatTimeShort(iso: string | null): string {
   if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(iso);
+  if (!d) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function formatTargetDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
+  const d = wireDate(iso);
+  if (!d) return iso;
   const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
   return `${months[d.getMonth()]} ${d.getDate()}`;
 }
 
 /** Format a due date as a short day name (FRI) when within ~7 days, else MMM DD. */
 function formatDueShort(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
+  const d = wireDate(iso);
+  if (!d) return iso;
   const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
   const now = new Date();
   const diffMs = d.getTime() - now.getTime();
@@ -201,8 +202,8 @@ function maxCheckedAt(items: RoomSourceItem[]): string | null {
 
 function formatMMDD(iso: string | null | undefined): string {
   if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(iso);
+  if (!d) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
@@ -614,8 +615,8 @@ function NudgeCard({
 
 export function nudgeCooldownToken(nudge: RoomHealthPerson["nudge"]): string | null {
   if (!nudge || nudge.state !== "sent" || !nudge.sentAt) return null;
-  const sentDate = new Date(nudge.sentAt);
-  if (Number.isNaN(sentDate.getTime())) return null;
+  const sentDate = wireDate(nudge.sentAt);
+  if (!sentDate) return null;
   const diffMs = Date.now() - sentDate.getTime();
   const diffDays = diffMs / 86_400_000;
   if (diffDays > 7) return null; // past cooldown

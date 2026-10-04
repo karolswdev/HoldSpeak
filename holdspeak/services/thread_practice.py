@@ -74,31 +74,19 @@ def _resolve_deployment_revision(broker: Any, capability_id: str) -> tuple[str, 
     M1 redaction scoped to THIS capability's egress, not the chat.turn
     thread egress.
     """
-    db = broker.database
-    key = f"capability:{capability_id}"
-    with db._connection() as conn:
-        head = conn.execute(
-            "SELECT assignment_id, revision FROM inference_assignment_heads "
-            "WHERE assignment_key=? AND cleared=0",
-            (key,),
-        ).fetchone()
-        if head is None:
-            raise RuntimeError(f"No assignment for {capability_id}")
-        entry = conn.execute(
-            "SELECT profile_id FROM inference_assignments "
-            "WHERE assignment_id=? AND assignment_revision=? ORDER BY ordinal LIMIT 1",
-            (head["assignment_id"], head["revision"]),
-        ).fetchone()
-        if entry is None:
-            raise RuntimeError(f"No entries in assignment for {capability_id}")
-        profile_id = entry["profile_id"]
+    # HS-200-08 named the old lookup here a bug: it ran
+    # ``SELECT ... FROM deployment_revisions WHERE model=<profile id>``, and a
+    # profile id is not a model name.  Resolution now goes through the same
+    # path as the update drafter and Ask: profile -> plan -> frozen leg.
+    from .project_update_service import _resolve_for_capability
+
+    revision_id, _assignment_id, _profile_id = _resolve_for_capability(broker, capability_id)
+    with broker.database._connection() as conn:
         rev = conn.execute(
-            "SELECT id, boundary FROM deployment_revisions WHERE model=? LIMIT 1",
-            (profile_id,),
+            "SELECT boundary FROM deployment_revisions WHERE id=?", (revision_id,),
         ).fetchone()
-        if rev is None:
-            raise RuntimeError(f"No deployment revision for profile {profile_id}")
-        return str(rev["id"]), str(rev["boundary"] or "")
+    boundary = str(rev["boundary"] or "") if rev is not None else ""
+    return revision_id, boundary
 
 
 def run_guardrail(

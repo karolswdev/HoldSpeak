@@ -2177,7 +2177,29 @@ class OperationRegistry:
         *held* carries the transport-held inputs the descriptor names in
         ``held`` (PHILO-5-02, gap E) -- exactly those, or the call is a
         transport bug and fails before the service runs.
+
+        A write that returns is announced here, once: one ``desk_changed``
+        frame, unless the service sent its own during the call. No operation
+        wires the bus for itself, so a new write cannot be silent.
         """
+        if self._bound(name).descriptor.effect != "write":
+            return self._run(principal, name, args, held=held)
+        from holdspeak.runtime.composition import announce_scope
+
+        with announce_scope() as announce:
+            result = self._run(principal, name, args, held=held)
+            announce(*_changed(name, args, result))
+        return result
+
+    def _run(
+        self,
+        principal: Any,
+        name: str,
+        args: Optional[Mapping[str, Any]] = None,
+        *,
+        held: Optional[Mapping[str, Any]] = None,
+    ) -> Any:
+        """:meth:`invoke` without the announcement (every path in it returns to ``invoke``)."""
         _LAST_KERNEL.set(None)
         bound = self._bound(name)
         self.authorize(principal, name)
@@ -2317,6 +2339,34 @@ class OperationRegistry:
         except OperationRefused as exc:
             self._refusal_receipt(exc, principal, operation, data)
             raise
+
+
+#: Argument names that say which object a write touched, most specific first
+#: after ``<kind>_id``. Never ``command_id`` or ``expected_*``.
+_ID_ARGUMENTS = (
+    "item_id", "resource_ref", "meeting_id", "update_id", "watch_id", "run_id",
+    "step_id", "send_id", "destination_id", "primitive_id", "directory_id",
+    "project_id", "provider_id",
+)
+
+
+def _changed(name: str, args: Any, result: Any) -> tuple[str, str, str]:
+    """``(kind, id, op)`` for the ``desk_changed`` frame of the write *name*.
+
+    ``project.resource.add`` is kind ``project``, op ``resource.add``. The id is
+    the most specific object id in the arguments, else the result's ``id``.
+    """
+    kind, _, op = name.partition(".")
+    payload = args if isinstance(args, Mapping) else {}
+    obj_id: Any = payload.get(f"{kind}_id")
+    if not obj_id:
+        obj_id = next((payload[key] for key in _ID_ARGUMENTS if payload.get(key)), None)
+    if not obj_id and isinstance(result, Mapping):
+        obj_id = result.get("id") or result.get(f"{kind}_id")
+        inner = result.get(kind)
+        if not obj_id and isinstance(inner, Mapping):
+            obj_id = inner.get("id")
+    return kind, str(obj_id or ""), op or "write"
 
 
 def _database_of(target: Any) -> Any:

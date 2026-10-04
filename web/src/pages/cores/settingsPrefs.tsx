@@ -1,3 +1,4 @@
+import { wireClock } from "../../desk/surface/format";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-111-01 — the Prefs program's face (audit §3.1-§3.4): a drawer of
 // pref modules, authored — never wire-derived. The module registry is a
@@ -548,7 +549,7 @@ export function PrefsFace({
               : null}
             {hub.rhythm.nextSweepAt
               ? <span className="surface-token" data-chip data-muted>
-                  NEXT {hub.rhythm.nextSweepAt.slice(11, 16)}
+                  NEXT {wireClock(hub.rhythm.nextSweepAt)}
                 </span>
               : null}
             {hub.rhythm.sweepEveryMinutes == null && hub.rhythm.loops > 0

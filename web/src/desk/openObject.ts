@@ -83,6 +83,12 @@ export function refOpener(ref: string | null | undefined): Opener | null {
     const id = followThrough[1];
     return () => openIntelligence({ view: "follow-through", followThroughId: id });
   }
+  // A desk decision has one ref name (`desk_decision:<id>`); its window is
+  // the decision window.
+  if (clean.startsWith("desk_decision:")) {
+    const id = clean.slice("desk_decision:".length);
+    return id ? () => openSourceRef(`decision:${id}`) : null;
+  }
   if (clean.startsWith("decision:")) return () => openDecision(clean);
   if (WINDOW_REF.test(clean)) return () => openSourceRef(clean);
   return null;

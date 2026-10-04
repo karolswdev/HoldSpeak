@@ -63,4 +63,8 @@ def test_real_channel_settlement_emits_dock_invalidation(
         data for frame_type, data in hub.frames[frame_start:]
         if frame_type == "desk_changed" and data.get("kind") == "send"
     ]
-    assert changed == [{"kind": "send", "id": send_id, "op": state, "origin": "hub"}]
+    assert changed == [{
+        "kind": "send", "id": send_id, "op": state, "origin": "hub",
+        # One frame for the write; `changes` names each object it touched.
+        "changes": [{"kind": "send", "id": send_id, "op": state}],
+    }]

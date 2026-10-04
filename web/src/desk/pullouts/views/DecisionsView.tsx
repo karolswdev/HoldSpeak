@@ -1,3 +1,4 @@
+import { wireDate } from "../../surface/format";
 import { useEffect, useState } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
@@ -53,8 +54,8 @@ function shortId(id: string): string {
 
 function humanDate(value: string | null | undefined): string {
   if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
+  const date = wireDate(value);
+  return !date ? value : date.toLocaleDateString();
 }
 
 /** Search-first, in-place decision history for the Intelligence pullout. */

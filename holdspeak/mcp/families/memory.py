@@ -13,12 +13,12 @@ from holdspeak.services.memory_service import MemoryService
 TOOLS: list[dict[str, Any]] = [
     {
         "name": "memory.search",
-        "description": "Search memory: decisions, meetings, notes, threads, actions, project milestones/risks. Returns records; use project.list for projects; read permission applies.",
+        "description": "Search memory: decisions, meetings (transcript, summary), notes, threads, actions, project milestones/risks, sends, published updates, prep briefs, calendar events. Returns records; use project.list for projects; read permission applies.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "Search query."},
-                "kind": {"type": "string", "description": "Kinds: decision, decision_record, desk_decision, artifact, meeting, note, thread, action, project_item, workbench_item, cadence."},
+                "kind": {"type": "string", "description": "Kinds: decision, decision_record, desk_decision, artifact, meeting, note, thread, action, project_item, workbench_item, cadence, send, project_update, prep_brief, calendar_event."},
                 "project_id": {"type": "string", "description": "Project ID."},
                 "time_from": {"type": "string", "description": "ISO-8601 start."},
                 "time_to": {"type": "string", "description": "ISO-8601 end."},
