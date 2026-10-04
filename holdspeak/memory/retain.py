@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Iterator, Optional
 
@@ -325,6 +326,8 @@ def embed_pending(
     *,
     batch_size: int = EMBED_BATCH,
     max_batches: Optional[int] = None,
+    should_stop: Optional[Callable[[], bool]] = None,
+    pause_seconds: float = 0.0,
 ) -> int:
     """Give every chunk without a current vector to the engine.
 
@@ -336,6 +339,11 @@ def embed_pending(
     written = 0
     batches = 0
     while max_batches is None or batches < max_batches:
+        if should_stop is not None and should_stop():
+            break
+        if batches and pause_seconds > 0:
+            # Leave room between two batches for a live model call.
+            time.sleep(pause_seconds)
         pending = index.pending_chunks(embedder.model_id, limit=batch_size)
         if not pending:
             break

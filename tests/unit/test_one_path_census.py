@@ -477,6 +477,8 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
     ("holdspeak/intel/engine.py", "MeetingIntel.generate_bookmark_label_with_context"): "L: the ONE bookmark-label leaf; both the live and the deferred admitted children dispatch it",
     ("holdspeak/intel/mesh_relay.py", "MeshRelayIntel._chat_completion_text"): "L: the mesh envelope leaf; carries the frozen revision + warrant",
     ("holdspeak/kernel/prompt_adapter.py", "CanonicalPromptAdapter.dispatch"): "L: the canonical adapter the runner hands an engine to",
+    ("holdspeak/memory/engine.py", "EmbeddingAdapter._local_model"): "L: the ONE embedding-mode llama.cpp load, reached only from the memory.embed adapter's dispatch",
+    ("holdspeak/memory/engine.py", "EmbeddingAdapter._endpoint_vectors"): "L: the memory.embed adapter's endpoint leaf; opens the runner-built engine's SDK client for one `/v1/embeddings` call",
     ("holdspeak/kernel/prompt_adapter.py", "StreamingPromptAdapter.dispatch"): "L: the streaming adapter's non-streaming fallback when the engine lacks run_prompt_stream (HS-151-04)",
     ("holdspeak/plugins/dictation/runtime_llama_cpp.py", "LlamaCppRuntime.classify"): "L: local constrained-decoding classify leaf",
     ("holdspeak/plugins/dictation/runtime_llama_cpp.py", "LlamaCppRuntime.rewrite"): "L: local rewrite leaf",
@@ -721,7 +723,8 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # HS-151-02/D3: streaming seam adds _chat_completion_deltas (3) +
     # _attempt_stream (1); line shifts do not change count.
     # HS-151-04: +1 StreamingPromptAdapter.dispatch run_prompt fallback
-    assert len(sites) == 109
+    # Memory slice 1: +2 leaves inside the memory.embed adapter's dispatch.
+    assert len(sites) == 111
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
     assert counts["finding"] == 0

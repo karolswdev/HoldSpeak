@@ -7,7 +7,7 @@ Hindsight's ideas, built native in HoldSpeak.
   engine router, egress badges and People custody. No second database. No
   Hindsight server.
 - **Status:** build design. Slice 1 is in build (schema, sweep, chunk index,
-  vector retriever, fusion, benchmark). Each slice in section 8 is one PR or two.
+  vector retriever, fusion, benchmark, the conductor, the `memory.embed` engine). Each slice in section 8 is one PR or two.
 - **Source of ideas:** <https://github.com/vectorize-io/hindsight> (MIT), read at
   a shallow clone on 2026-10-03. Paper: arXiv 2512.12818 (linked from their
   `README.md:5`; not read for this design).
@@ -611,6 +611,21 @@ group passes.
 | Two bare phrases ("the accounting cutover" and "ledger migration") | NOT clearly apart from unrelated phrases (cosine 0.41 against 0.34 to 0.44 at 256). The model needs a sentence on one side: the question "when is the ledger migration" ranks the cutover note first of 10 with a margin of 0.05. |
 | Benchmark (`tests/memory_bench/`, 33 sources, 29 questions), keyword + relation | same-word recall@5 1.000, MRR 0.827; paraphrase recall@5 0.000 |
 | Benchmark, fused (RRF k = 60), 256 values | same-word recall@5 1.000, MRR 0.923; paraphrase recall@5 0.812, recall@10 0.875, MRR 0.421 |
+| One question through `InferenceRunner.invoke` (real router, real model, warm) | 6 to 13 ms, with a receipt. The first call loads the model. Under the 50 ms limit of section 9, so the question goes through the runner too. The same question again is served from a small cache in the hub. |
+| `InferenceRunner.invoke` with a non-chat adapter | Works with no change to the runner. The adapter gets the runner-built engine and reads its model path (local) or its client (endpoint). |
+| A SERVICE principal on the direct runner path | Refused. The conductor runs as an OWNER principal named `memory-conductor`, as the other conductors do. |
+
+**Rules found in the build (slice 1, part 2):**
+
+- **`memory.embed` is used only with its own assignment.** The route planner
+  lets a capability inherit a wider assignment (the global one). An embedding
+  call must never reach a chat model that way, so the engine exists only when
+  `capability:memory.embed` has an assignment head.
+- **The local runtime lease is shared.** One local artifact runs at a time on
+  a hub. An embed batch is refused while a local chat call runs (the tick
+  ends; the next tick goes on). The reverse is also true: a local chat call
+  that starts during an embed batch is refused. So a local engine gets
+  batches of 16 with a 0.25 s gap, not 64.
 
 On a corpus this small the vector top 50 holds almost every source, so a
 keyword hit on a common word is in both lists and can rank above the one

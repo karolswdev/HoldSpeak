@@ -113,6 +113,12 @@ class DatabaseOwnershipMixin:
             stop_intel_queue_conductor()
         except Exception as exc:
             log.debug(f"Intel drainer stop during shutdown failed: {exc}")
+        try:
+            from ..memory_conductor import stop_memory_conductor
+
+            stop_memory_conductor()
+        except Exception as exc:
+            log.debug(f"Memory conductor stop during shutdown failed: {exc}")
         self._release_database()
 
     def _release_database(self) -> None:
