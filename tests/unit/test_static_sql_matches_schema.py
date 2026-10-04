@@ -58,7 +58,7 @@ _OTHER_DATABASE_SCOPES: dict[tuple[str, str], str] = {
 # Statements that cannot be completed statically today. New dynamic SQL makes
 # this test fail with the list: make the statement static, or raise the ceiling
 # on purpose.
-_UNCHECKED_CEILING = 134  # measured 2026-10-04
+_UNCHECKED_CEILING = 135  # measured 2026-10-04; +1 the time retriever (db/memory.py _time_rows: one read per kind spec, as recent() does)
 
 
 @dataclass

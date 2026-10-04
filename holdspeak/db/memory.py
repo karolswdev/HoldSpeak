@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime, timedelta
 import sqlite3
 from dataclasses import asdict, dataclass
 from typing import Any, Iterable, Optional
@@ -351,6 +352,10 @@ _QUERY_TERM_LIMIT = 24
 # sources INSIDE the scope.  There is no bound on the walk: a bound spent on
 # sources outside the scope would hide the sources inside it.
 _VECTOR_RESULT_LIMIT = 50
+# The time retriever: the top 50 sources inside the range, and the longest
+# text read as a question (a drafter's whole-transcript prompt is not one).
+_TIME_RESULT_LIMIT = 50
+_TIME_QUESTION_MAX_CHARS = 400
 _MARK = re.compile(r"</?mark>")
 _WORD = re.compile(r"\w+", re.UNICODE)
 _QUERY_STOPWORDS = frozenset(
@@ -599,7 +604,7 @@ class MemoryRepository(BaseRepository):
         cut again from the redacted text.  A row whose source cannot be read
         gets no snippet.
         """
-        if str(row.get("retrieval_origin") or "") == "vector":
+        if str(row.get("retrieval_origin") or "") in ("vector", "time"):
             return  # already cut from the redacted text
         from ..memory.retain import current_source, redact_source
 
@@ -759,10 +764,23 @@ class MemoryRepository(BaseRepository):
         limit: int = 50,
         offset: int = 0,
         exclude_refs: Optional[Iterable[str]] = None,
+        now: Optional[datetime] = None,
     ) -> MemorySearchResult:
-        expression = _match_expression(query)
-        terms = _query_terms(query)
+        # The Time retriever (MEMORY-DESIGN.md §3.2): a time phrase in the
+        # question ("last week") names a range, unless the caller gave one.
+        # The phrase leaves the keyword question.  No phrase: nothing below
+        # changes.
+        window = self._time_window(query, time_from, time_to, now)
+        keyword_on = True
+        if window is not None:
+            window, query = window
+            keyword_on = any(
+                term not in _QUERY_STOPWORDS for term in _WORD.findall(query.casefold())
+            )
+        expression = _match_expression(query) if keyword_on else ""
+        terms = _query_terms(query) if keyword_on else []
         selected = self._normalize_kinds(kinds)
+        keyword_kinds = selected if keyword_on else ()
         bounded_limit = max(1, min(int(limit), 500))
         bounded_offset = max(0, int(offset))
         project = str(project_id or "").strip() or None
@@ -789,15 +807,15 @@ class MemoryRepository(BaseRepository):
             # there would over-count, hand back a page shorter than `limit`, and
             # make grounding book withheld sources as mere overflow.
             excluded |= self._promoted_refs(conn)
-            if "decision" in selected:
+            if "decision" in keyword_kinds:
                 by_kind["decision"] = self._decision_rows(
                     conn, expression, project, start, end
                 )
-            if "artifact" in selected:
+            if "artifact" in keyword_kinds:
                 by_kind["artifact"] = self._artifact_rows(
                     conn, expression, project, start, end
                 )
-            if "meeting" in selected:
+            if "meeting" in keyword_kinds:
                 by_kind["meeting"] = self._meeting_rows(
                     conn, expression, project, start, end
                 )
@@ -814,9 +832,9 @@ class MemoryRepository(BaseRepository):
                 by_kind["meeting"].sort(
                     key=lambda row: (float(row["bm25"]), str(row["source_ref"]))
                 )
-            if "note" in selected:
+            if "note" in keyword_kinds:
                 by_kind["note"] = self._note_rows(conn, expression, project, start, end)
-            if "thread" in selected:
+            if "thread" in keyword_kinds:
                 by_kind["thread"] = self._thread_rows(
                     conn, expression, project, start, end
                 )
@@ -832,7 +850,7 @@ class MemoryRepository(BaseRepository):
                 "prep_brief",
                 "calendar_event",
             ):
-                if kind in selected:
+                if kind in keyword_kinds:
                     by_kind[kind] = self._ecosystem_rows(
                         conn, kind, terms, project, start, end
                     )
@@ -910,7 +928,12 @@ class MemoryRepository(BaseRepository):
             # The assignment was cleared or changed since the engine was
             # resolved: no call, keyword answer, at once.
             embedder = None
-        if embedder is not None:
+        time_rows: Optional[list[dict[str, Any]]] = None
+        if window is not None:
+            time_rows = self._time_rows(
+                window, selected=selected, project=project, excluded=excluded, terms=terms
+            )
+        if embedder is not None and keyword_on:
             fused, engine = self._fuse_with_vectors(
                 query,
                 embedder,
@@ -921,9 +944,14 @@ class MemoryRepository(BaseRepository):
                 start=start,
                 end=end,
                 excluded=excluded,
+                time_rows=time_rows,
             )
             if fused is not None:
                 interleaved, fusion = fused
+        if window is not None:
+            interleaved, fusion = self._place_in_time(
+                window, time_rows or [], lexical_rows, interleaved, fusion
+            )
 
         total = len(interleaved)
         page = [dict(row) for row in interleaved[bounded_offset : bounded_offset + bounded_limit]]
@@ -987,6 +1015,7 @@ class MemoryRepository(BaseRepository):
         start: Optional[str],
         end: Optional[str],
         excluded: set[str],
+        time_rows: Optional[list[dict[str, Any]]] = None,
     ) -> tuple[Optional[tuple[list[dict[str, Any]], dict[str, Any]]], Optional[dict[str, Any]]]:
         """Fuse keyword, relation and vector lists by reciprocal rank.
 
@@ -1027,8 +1056,10 @@ class MemoryRepository(BaseRepository):
             "relation": [self._base_ref(str(row["source_ref"])) for row in relation_rows],
             "vector": [self._base_ref(str(row["source_ref"])) for row in vector_rows],
         }
+        if time_rows is not None:
+            lists["time"] = [self._base_ref(str(row["source_ref"])) for row in time_rows]
         first: dict[str, dict[str, Any]] = {}
-        for rows in (lexical_rows, relation_rows, vector_rows):
+        for rows in (lexical_rows, relation_rows, vector_rows, time_rows or []):
             for row in rows:
                 first.setdefault(self._base_ref(str(row["source_ref"])), row)
         fused_rows = [
@@ -1044,7 +1075,165 @@ class MemoryRepository(BaseRepository):
             "relation_count": len(relation_rows),
             "vector_count": len(vector_rows),
         }
+        if time_rows is not None:
+            meta["time_count"] = len(time_rows)
         return (fused_rows, meta), engine
+
+    # ── the time retriever (MEMORY-DESIGN.md §3.2) ──
+
+    @staticmethod
+    def _time_window(
+        query: str, time_from: Optional[str], time_to: Optional[str], now: Optional[datetime]
+    ) -> Optional[tuple[Any, str]]:
+        """``(range, question without the phrase)`` when the question names a
+        time and the caller gave no range; else None.  A caller's
+        ``time_from`` / ``time_to`` always win.  A drafter's long prompt (a
+        whole transcript) is not a question: a "today" inside it is not read.
+        """
+        if str(time_from or "").strip() or str(time_to or "").strip():
+            return None
+        text = str(query or "")
+        if len(text) > _TIME_QUESTION_MAX_CHARS:
+            return None
+        from ..memory.timeparse import read_time_phrase
+
+        return read_time_phrase(text, now)
+
+    def _time_rows(
+        self,
+        window: Any,
+        *,
+        selected: tuple[str, ...],
+        project: Optional[str],
+        excluded: set[str],
+        terms: list[str],
+    ) -> list[dict[str, Any]]:
+        """The sources inside the range, nearest its middle first (top 50).
+
+        The same scope as every other retriever (kinds, project, excluded
+        refs), and the same admission and redaction as the vector retriever:
+        ``current_source`` reads the live row, and the snippet is cut from the
+        redacted text of the whole source.
+        """
+        from ..memory.retain import current_source, redact_source
+        from ..memory.timeparse import instant
+
+        start = instant(window.time_from)
+        end = instant(window.time_to)
+        if start is None or end is None or end <= start:
+            return []
+        middle = start + (end - start) / 2
+        half = max((end - start).total_seconds() / 2, 1.0)
+        # The stores hold three time shapes; a day either side of the range
+        # catches them all, and ``instant`` makes the exact cut.
+        low = (start - timedelta(days=1)).date().isoformat()
+        high = (end + timedelta(days=2)).date().isoformat()
+        candidates: list[tuple[float, int, str, str, str, str]] = []
+        rows: list[dict[str, Any]] = []
+        with self._connection() as conn:
+            for kind in selected:
+                spec = _RECENT_SPECS.get(kind) or _ECOSYSTEM_SPECS.get(kind)
+                if spec is None:
+                    continue
+                try:
+                    found = conn.execute(
+                        f"SELECT {spec['id']} id,{spec['time']} occurred_at"
+                        f" FROM {spec['table']} {spec['alias']}"
+                        f" WHERE {spec['active']} AND {spec['time']}>=? AND {spec['time']}<?",
+                        (low, high),
+                    ).fetchall()
+                except sqlite3.Error:  # pragma: no cover - schema drift
+                    continue
+                for row in found:
+                    at = instant(row["occurred_at"])
+                    if at is None or not (start <= at < end):
+                        continue
+                    ref = f"{kind}:{row['id']}"
+                    if ref in excluded:
+                        continue
+                    candidates.append((
+                        abs((at - middle).total_seconds()), _KIND_ORDER[kind], ref, kind,
+                        str(row["id"]), str(row["occurred_at"]),
+                    ))
+            candidates.sort()
+            for distance, _order, ref, kind, resource_id, occurred_at in candidates:
+                if len(rows) >= _TIME_RESULT_LIMIT:
+                    break
+                if project and not self._ref_in_project(conn, kind, resource_id, project):
+                    continue
+                source = current_source(conn, ref)
+                if source is None:
+                    continue
+                title, units, _held = redact_source(source)
+                rows.append(
+                    {
+                        "kind": kind,
+                        "source_ref": ref,
+                        "title": title,
+                        "snippet": _window("\n".join(text for _anchor, text in units), terms),
+                        "occurred_at": occurred_at,
+                        "project_id": project or self._project_of(conn, kind, resource_id),
+                        "bm25": 0.0,
+                        "normalized_score": max(0.0, 1.0 - distance / half),
+                        "kind_rank": len(rows) + 1,
+                        "retrieval_origin": "time",
+                    }
+                )
+        return rows
+
+    def _place_in_time(
+        self,
+        window: Any,
+        time_rows: list[dict[str, Any]],
+        lexical_rows: list[dict[str, Any]],
+        woven: list[dict[str, Any]],
+        fusion: Optional[dict[str, Any]],
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        """Fuse the time list in (when the vector fusion did not), then put
+        every hit inside the range ahead of every hit outside it: the
+        question named the time, so an older hit with the same words never
+        outranks one from that time."""
+        from ..memory.fusion import RRF_K, reciprocal_rank_fusion
+        from ..memory.timeparse import instant
+
+        rows = woven
+        if fusion is None:
+            relation_rows = [row for row in woven if row.get("related_to")]
+            lists = {
+                "keyword": [self._base_ref(str(row["source_ref"])) for row in lexical_rows],
+                "relation": [self._base_ref(str(row["source_ref"])) for row in relation_rows],
+                "time": [self._base_ref(str(row["source_ref"])) for row in time_rows],
+            }
+            first: dict[str, dict[str, Any]] = {}
+            for group in (lexical_rows, relation_rows, time_rows):
+                for row in group:
+                    first.setdefault(self._base_ref(str(row["source_ref"])), row)
+            rows = [first[str(key)] for key, _score, _found in reciprocal_rank_fusion(lists)]
+            fusion = {
+                "method": "reciprocal_rank_fusion",
+                "k": RRF_K,
+                "retrievers": [name for name, keys in lists.items() if keys],
+                "keyword_count": len(lexical_rows),
+                "relation_count": len(relation_rows),
+                "time_count": len(time_rows),
+            }
+        start = instant(window.time_from)
+        end = instant(window.time_to)
+
+        def inside(row: dict[str, Any]) -> bool:
+            at = instant(row.get("occurred_at"))
+            return at is not None and start is not None and end is not None and start <= at < end
+
+        within = [row for row in rows if inside(row)]
+        outside = [row for row in rows if not inside(row)]
+        fusion = dict(fusion)
+        fusion["time"] = {
+            "phrase": window.phrase,
+            "time_from": window.time_from,
+            "time_to": window.time_to,
+            "in_range": len(within),
+        }
+        return within + outside, fusion
 
     def _vector_rows(
         self,
