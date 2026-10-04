@@ -158,9 +158,21 @@ def _land(page: Any, text: str) -> Any:
     well = page.locator(".speak-well textarea")
     well.click()
     well.fill(text)
+    # The result of the utterance before stays on the face until this one
+    # lands. Waiting for `.speak-result` alone returned that old result when
+    # the hub was slow (seen at 1440 under load: the first utterance's text
+    # read as the second's). Wait for the text to change.
+    shown = page.locator(".speak-result .speak-result-text")
+    before = shown.first.inner_text() if shown.count() else None
     well.press("Control+Enter")
+    page.wait_for_function(
+        """(before) => {
+          const el = document.querySelector('.speak-result .speak-result-text');
+          return !!el && (before === null || el.innerText !== before);
+        }""",
+        arg=before, timeout=15000,
+    )
     result = page.locator(".speak-result")
-    result.wait_for(timeout=15000)
     _settle(page)
     return result
 

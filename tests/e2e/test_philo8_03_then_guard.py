@@ -22,6 +22,12 @@ Expected: `blocked` at both widths, the guard named. Red: PHILO8_GUARD_RED=1
 strips the guard (the round-one atlas shape) and both modes PASS; the r2 rig
 (4905986f) passes `click_wait` with the guard kept (recorded under
 docs/internal/philo/phase-8/atlas/reds/).
+
+PHILO-13-01 (41229db26) made every refusal in a trigger's lifecycle a `fail`,
+and this late, never-delivered follow-up read as a product failure. The rig
+now raises `NotDelivered` for an expired guard and records it `blocked`
+(`scripts/graph_walk.py` `exercise`); `fail` stays for observed product
+failures (`tests/unit/test_philo13_graph_walk.py`).
 """
 from __future__ import annotations
 
@@ -92,7 +98,9 @@ def test_a_follow_up_after_the_window_is_blocked(tmp_path: Path, monkeypatch: py
     print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
     assert state["delayed"], "the delay was never injected (the receipt never showed)"
     assert record["verdict"] == "blocked", (record["verdict"], notes)
-    assert "did not hold at delivery" in notes, notes
+    assert record["trigger_error"]["lifecycle"] == "blocked", record["trigger_error"]
+    assert "TRIGGER lifecycle failed" not in notes, notes
+    assert "not delivered" in notes and "did not hold at delivery" in notes, notes
 
 
 # ── the delivery script on a static page (no hub): it decides and sends in one task ──
