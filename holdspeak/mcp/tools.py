@@ -4,7 +4,6 @@ from __future__ import annotations
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 from holdspeak import operations
 
-import asyncio
 from collections.abc import Callable
 from dataclasses import asdict
 from typing import Any
@@ -807,12 +806,8 @@ def _compose_brief_overlay_mcp(result: dict[str, Any], db: Any, principal: Princ
     return result
 
 
-def _run(coro: Any) -> Any:
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(coro)
-    raise ToolError("async MCP tools cannot execute inside an active event loop")
+# The one helper every family shares (holdspeak/mcp/aio.py).
+from holdspeak.mcp.aio import run_async as _run  # noqa: E402
 
 
 def _require_live_capture(tool: str, meetings: Any) -> None:

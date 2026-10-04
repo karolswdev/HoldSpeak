@@ -986,12 +986,21 @@ class MondayBriefService:
                     seen_loop_ids.add(card.id)
                 elif card.source == "action_item":
                     seen_action_ids.add(card.id)
-                detail = f"Due {card.due}" if card.due else "Needs an owner"
+                # Inventory gap 11 (2026-10-03): the `unassigned` lane also
+                # holds an item that HAS an owner and is not reviewed yet.
+                # The line names the item's own state, never "Unassigned"
+                # for an item with an owner.
+                has_owner = bool(str(card.owner or "").strip())
+                if label == "Unassigned" and has_owner:
+                    label_text, no_due = "To review", "Not reviewed"
+                else:
+                    label_text, no_due = label, "Needs an owner"
+                detail = f"Due {card.due}" if card.due else no_due
                 items.append(
                     BriefItem(
                         id=f"brief-item-{uuid.uuid4().hex}",
                         section="waiting",
-                        text=f"{label}: {card.text}",
+                        text=f"{label_text}: {card.text}",
                         detail=detail,
                         source_ref=f"{card.source}:{card.id}",
                         priority=priority,

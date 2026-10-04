@@ -103,10 +103,12 @@ def main() -> None:
     if args.run and args.results_json:
         parser.error("--run and a results JSON path are mutually exclusive.")
 
-    baseline = load_baseline(Path(args.baseline))
-    if not baseline:
-        print("ERROR: baseline file is empty or missing.", file=sys.stderr)
+    # A missing file is an error. An empty list is the goal: no inherited
+    # failure, so every failure is branch-new.
+    if not Path(args.baseline).is_file():
+        print(f"ERROR: baseline file is missing: {args.baseline}", file=sys.stderr)
         sys.exit(2)
+    baseline = load_baseline(Path(args.baseline))
 
     if args.run:
         print("Running vitest...", flush=True)

@@ -2,9 +2,16 @@
 
 Phase 131's ``test_one_path_census`` is the fail-closed AST authority for
 model-shaped production code.  This companion fixture deliberately pins its
-*individual source positions* to a proposed Phase 143 capability and source
-owner.  A second call in an existing allowlisted function therefore cannot hide
-behind that function's Phase 131 entry: it has no row here and fails this test.
+*individual sites* to a proposed Phase 143 capability and source owner.  A
+second call in an existing allowlisted function therefore cannot hide behind
+that function's Phase 131 entry: it gets the key ``...#2``, has no row here and
+fails this test.
+
+The keys are line-free (owner ruling 2026-10-03; ``tests/unit/_line_free.py``):
+file, enclosing scope, site, and an ordinal for a repeat in one scope.  An edit
+above a site no longer turns the census red; a new site still does.  Comments
+below that say "re-anchored" or name a line are history from the line-pinned
+form.
 
 ``internal.*`` rows are non-assignable implementation capabilities.  They are
 not a proposal for a generic owner-facing model picker; they identify shared
@@ -16,7 +23,9 @@ from __future__ import annotations
 import ast
 from dataclasses import dataclass
 
+from tests.unit import _line_free
 from tests.unit import test_one_path_census as one_path
+from tests.unit._line_free import Record
 
 
 @dataclass(frozen=True)
@@ -26,8 +35,22 @@ class ProposedRoute:
     admission: str
 
 
-def _key(site: one_path.Site) -> str:
-    return f"{site.path}:{site.line}|{site.scope}|{site.target}|{site.kind}"
+def _site_keys() -> dict[str, one_path.Site]:
+    """Every Phase-131 AST site under its line-free key (``tests/unit/_line_free.py``)."""
+    sites = one_path.census()
+    by_record = {
+        Record(site.path, site.line, index, f"{site.scope}|{site.target}|{site.kind}"): site
+        for index, site in enumerate(sites)
+    }
+    ordered = sorted(by_record)
+    seen: dict[str, int] = {}
+    keyed: dict[str, one_path.Site] = {}
+    for record in ordered:
+        base = f"{record.path}|{record.tail}"
+        seen[base] = seen.get(base, 0) + 1
+        keyed[base if seen[base] == 1 else f"{base}#{seen[base]}"] = by_record[record]
+    assert sorted(keyed) == _line_free.ordinal_keys(ordered)
+    return keyed
 
 
 def _runner_entrances() -> list[str]:
@@ -53,7 +76,7 @@ def _runner_entrances() -> list[str]:
         options = [name.body, name.orelse] if isinstance(name, ast.IfExp) else [name]
         return all(isinstance(o, ast.Constant) and o.value in declared for o in options)
 
-    entries: list[str] = []
+    entries: list[Record] = []
     for path in sorted(one_path.PRODUCTION.rglob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"))
         scopes = one_path._scope_index(tree)
@@ -67,123 +90,126 @@ def _runner_entrances() -> list[str]:
         for node in ast.walk(tree):
             if isinstance(node, ast.Attribute) and node.attr == "invoke" and id(node) not in contract:
                 kind = "call" if id(node) in called else "ref"
-                entries.append(f"{relative}:{node.lineno}|{scopes.get(id(node), '<module>')}|{kind}")
-    return sorted(entries)
+                entries.append(Record(
+                    relative, node.lineno, node.col_offset,
+                    f"{scopes.get(id(node), '<module>')}|{kind}",
+                ))
+    return _line_free.ordinal_keys(entries)
 
 
 # Generated from `one_path.census()` on 2026-08-21.  Keep one literal row per
-# AST site, rather than a scope allowlist: line movement and a second invocation
-# both require an intentional capability/owner review.
+# AST site, rather than a scope allowlist: a second invocation in a known scope
+# is the key ``...#2`` and requires an intentional capability/owner review.
 EXPECTED_CALL_SITES = frozenset("""
-holdspeak/commands/dictation.py:166|_cmd_dry_run|build_pipeline|call
-holdspeak/dictation_runner.py:386|run_pipeline_corrections_only|build_pipeline|call
-holdspeak/dictation_runner.py:589|run_dictation_pipeline|build_pipeline|call
-holdspeak/inference_targets.py:672|local_pinned_meeting_intel|_local_pinned_engine|call
-holdspeak/inference_targets.py:695|_local_pinned_engine|MeetingIntel|call
-holdspeak/inference_targets.py:717|build_intel_for_revision|_engine_for_revision|call
-holdspeak/inference_targets.py:744|_engine_for_revision|MeetingIntel|call
-holdspeak/inference_targets.py:751|_engine_for_revision|local_pinned_meeting_intel|call
-holdspeak/inference_targets.py:771|_engine_for_revision|build_meeting_intel_for_profile|call
-holdspeak/intel/engine.py:250|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
-holdspeak/intel/engine.py:290|MeetingIntel._ensure_local_model_loaded|Llama|call
-holdspeak/intel/engine.py:312|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
-holdspeak/intel/engine.py:317|MeetingIntel._ensure_runtime_loaded|_ensure_openai_client_loaded|call
-holdspeak/intel/engine.py:322|MeetingIntel._ensure_model_loaded|_ensure_runtime_loaded|call
-holdspeak/intel/engine.py:386|MeetingIntel._chat_completion_text|create_chat_completion|call
-holdspeak/intel/engine.py:424|MeetingIntel._chat_completion_text|_remote_completion|call
-holdspeak/intel/engine.py:424|MeetingIntel._chat_completion_text|chat.completions.create|ref
-holdspeak/intel/engine.py:474|MeetingIntel._chat_completion_stream|create_chat_completion|call
-holdspeak/intel/engine.py:515|MeetingIntel._chat_completion_stream|_remote_completion|call
-holdspeak/intel/engine.py:515|MeetingIntel._chat_completion_stream|chat.completions.create|ref
-holdspeak/intel/engine.py:595|MeetingIntel._chat_completion_deltas|create_chat_completion|call
-holdspeak/intel/engine.py:686|MeetingIntel._chat_completion_deltas|_remote_completion|call
-holdspeak/intel/engine.py:687|MeetingIntel._chat_completion_deltas|chat.completions.create|ref
-holdspeak/intel/engine.py:798|MeetingIntel.run_prompt_stream|_chat_completion_deltas|call
-holdspeak/intel/engine.py:839|MeetingIntel.run_prompt|_chat_completion_text|call
-holdspeak/intel/engine.py:868|MeetingIntel.run_prompt_messages|_chat_completion_text|call
-holdspeak/intel/engine.py:882|MeetingIntel._analyze_once|_chat_completion_text|call
-holdspeak/intel/engine.py:958|MeetingIntel._analyze_stream|_chat_completion_stream|call
-holdspeak/intel/engine.py:1028|MeetingIntel.generate_title|_chat_completion_text|call
-holdspeak/intel/engine.py:1103|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
-holdspeak/intel/mesh_relay.py:252|MeshRelayIntel._chat_completion_text|run_prompt|call
-holdspeak/intel/providers.py:239|_configured_engine|MeshRelayIntel|call
-holdspeak/intel/providers.py:251|_configured_engine|MeetingIntel|call
-holdspeak/intel/providers.py:276|configured_meeting_intel|_configured_engine|call
-holdspeak/intel/providers.py:783|build_meeting_intel_for_profile|_profile_engine|call
-holdspeak/intel/providers.py:809|_profile_engine|MeshRelayIntel|call
-holdspeak/intel/providers.py:819|_profile_engine|configured_meeting_intel|call
-holdspeak/intel/providers.py:823|_profile_engine|MeetingIntel|call
-holdspeak/intel/providers.py:842|_profile_engine|MeetingIntel|call
-holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
-holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
-holdspeak/kernel/executor.py:88|ExecutorPlane.claim|_issue_claim_witness|call
-holdspeak/kernel/inference_runner.py:329|InferenceRunner._attempt_stream|_issue_dispatch_context|call
-holdspeak/kernel/inference_runner.py:621|InferenceRunner._attempt|_issue_dispatch_context|call
-holdspeak/kernel/inference_runner.py:81|InferenceRunner.__init__|build_intel_for_revision|ref
-holdspeak/kernel/prompt_adapter.py:25|CanonicalPromptAdapter.dispatch|run_prompt|call
-holdspeak/kernel/prompt_adapter.py:71|StreamingPromptAdapter.dispatch|run_prompt|call
-holdspeak/main.py:765|_run_meeting_mode|transcribe|call
-holdspeak/main.py:774|_run_meeting_mode|transcribe|call
-holdspeak/meeting_import.py:349|_transcribe_import_windows|transcribe|call
-holdspeak/meeting_session/deferred_bound.py:93|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/deferred_bound.py:105|bound_auto_title_dispatch.call|generate_title|call
-holdspeak/meeting_session/deferred_bound.py:114|bound_analysis_dispatch.call|analyze|call
-holdspeak/meeting_session/intel_routed_children.py:239|IntelRoutedChildMixin._admitted_live_window.call|analyze|call
-holdspeak/meeting_session/intel_routed_children.py:284|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/intel_routed_children.py:314|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
-holdspeak/meeting_session/transcribe_loop.py:84|TranscribeLoopMixin._transcribe_audio|transcribe|call
-holdspeak/plugins/dictation/assembly.py:336|_try_build_runtime|MeshRelayRuntime|call
-holdspeak/plugins/dictation/builtin/intent_router.py:170|IntentRouter.run|classify|call
-holdspeak/plugins/dictation/builtin/project_rewriter.py:203|ProjectRewriter.run|rewrite|ref
-holdspeak/plugins/dictation/builtin/project_rewriter.py:204|ProjectRewriter.run|rewrite|ref
-holdspeak/plugins/dictation/builtin/project_rewriter.py:241|ProjectRewriter.run|rewrite|call
-holdspeak/plugins/dictation/runtime.py:215|_default_factories._llama_factory|LlamaCppRuntime|call
-holdspeak/plugins/dictation/runtime.py:222|_default_factories._openai_factory|OpenAICompatibleRuntime|call
-holdspeak/plugins/dictation/runtime_counters.py:227|CountingRuntime.classify|classify|call
-holdspeak/plugins/dictation/runtime_counters.py:271|CountingRuntime.rewrite|rewrite|ref
-holdspeak/plugins/dictation/runtime_counters.py:272|CountingRuntime.rewrite|rewrite|ref
-holdspeak/plugins/dictation/runtime_counters.py:277|CountingRuntime.rewrite|rewrite|call
-holdspeak/plugins/dictation/runtime_llama_cpp.py:134|LlamaCppRuntime.classify|create_completion|call
-holdspeak/plugins/dictation/runtime_llama_cpp.py:162|LlamaCppRuntime.rewrite|create_completion|call
-holdspeak/plugins/dictation/runtime_llama_cpp.py:74|LlamaCppRuntime._resolve_factories|Llama|ref
-holdspeak/plugins/dictation/runtime_mesh_relay.py:106|MeshRelayRuntime._run|run_prompt|call
-holdspeak/plugins/dictation/runtime_mesh_relay.py:52|MeshRelayRuntime.load|MeshRelayIntel|call
-holdspeak/plugins/dictation/runtime_openai_compatible.py:143|OpenAICompatibleRuntime.classify|chat.completions.create|call
-holdspeak/plugins/dictation/runtime_openai_compatible.py:196|OpenAICompatibleRuntime.rewrite|chat.completions.create|call
-holdspeak/plugins/dictation/runtime_openai_compatible.py:69|OpenAICompatibleRuntime.load|OpenAI|ref
-holdspeak/services/agent_turn_service.py:44|_PromptToolProviderTransport.dispatch|run_prompt|call
-holdspeak/services/agent_turn_service.py:202|AgentTurnService.dispatch_plugin|_chat_completion_text|call
-holdspeak/project_doc_suggestions.py:72|suggest_project_doc_update|rewrite|ref
-holdspeak/project_doc_suggestions.py:73|suggest_project_doc_update|rewrite|ref
-holdspeak/project_doc_suggestions.py:84|suggest_project_doc_update|rewrite|call
-holdspeak/runtime/dictation_capture.py:108|DictationCaptureMixin._transcribe_and_type|transcribe|call
-holdspeak/runtime/dictation_capture.py:395|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
-holdspeak/runtime/dictation_capture.py:406|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
-holdspeak/runtime/wake_glue.py:368|WakeWordGlueMixin._transcribe_wake_admitted|transcribe|call
-holdspeak/speech_session/provider.py:237|ProviderAdmission.dispatch_through|bound_target|call
-holdspeak/speech_session/provider.py:275|ProviderAdmission.target|bound_target|call
-holdspeak/speech_session/provider.py:452|ProviderAdmission.rewrite.call|rewrite|call
-holdspeak/speech_session/provider.py:493|ProviderAdmission.punctuate.call|rewrite|call
-holdspeak/speech_session/provider.py:545|_ClassifyLeg.run.call|classify|call
-holdspeak/speech_session/provider.py:575|_RoutedSpeechAdapter.dispatch|run_prompt|call
-holdspeak/speech_session/provider.py:589|_RoutedSpeechAdapter.dispatch|run_prompt|call
-holdspeak/speech_session/provider.py:664|_mesh_bound|MeshRelayRuntime|call
-holdspeak/speech_session/provider.py:713|AdmittedDictationRuntime.classify|classify|call
-holdspeak/speech_session/provider.py:720|AdmittedDictationRuntime.rewrite|rewrite|call
-holdspeak/speech_session/revision_target.py:143|rebind|OpenAICompatibleRuntime|call
-holdspeak/speech_session/revision_target.py:165|bound_target|rebind|call
-holdspeak/target_profile.py:198|apply_model_assisted_target|rewrite|ref
-holdspeak/target_profile.py:199|apply_model_assisted_target|rewrite|ref
-holdspeak/target_profile.py:202|apply_model_assisted_target|rewrite|call
-holdspeak/transcribe.py:371|_MlxTranscriber._model_holder_get._run|get_model|call
-holdspeak/transcribe.py:381|_MlxTranscriber._silent_audio_load._run|transcribe|call
-holdspeak/transcribe.py:426|_MlxTranscriber.transcribe._run|transcribe|call
-holdspeak/transcribe.py:511|_FasterWhisperTranscriber.transcribe|transcribe|call
-holdspeak/transcribe.py:648|Transcriber._timed_transcribe|transcribe|call
-holdspeak/transcribe.py:658|Transcriber._timed_transcribe._run|transcribe|call
-holdspeak/web/routes/dictation/_helpers.py:794|_run_dictation_dry_run_text|build_pipeline|call
-holdspeak/web/routes/system/voice.py:193|build_voice_router.api_transcribe|transcribe|call
-holdspeak/web/routes/system/voice_stream.py:245|build_voice_stream_router.ws_dictation_stream|transcribe|call
+holdspeak/commands/dictation.py|_cmd_dry_run|build_pipeline|call
+holdspeak/dictation_runner.py|run_pipeline_corrections_only|build_pipeline|call
+holdspeak/dictation_runner.py|run_dictation_pipeline|build_pipeline|call
+holdspeak/inference_targets.py|local_pinned_meeting_intel|_local_pinned_engine|call
+holdspeak/inference_targets.py|_local_pinned_engine|MeetingIntel|call
+holdspeak/inference_targets.py|build_intel_for_revision|_engine_for_revision|call
+holdspeak/inference_targets.py|_engine_for_revision|MeetingIntel|call
+holdspeak/inference_targets.py|_engine_for_revision|local_pinned_meeting_intel|call
+holdspeak/inference_targets.py|_engine_for_revision|build_meeting_intel_for_profile|call
+holdspeak/intel/engine.py|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
+holdspeak/intel/engine.py|MeetingIntel._ensure_local_model_loaded|Llama|call
+holdspeak/intel/engine.py|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
+holdspeak/intel/engine.py|MeetingIntel._ensure_runtime_loaded|_ensure_openai_client_loaded|call
+holdspeak/intel/engine.py|MeetingIntel._ensure_model_loaded|_ensure_runtime_loaded|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_text|create_chat_completion|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_text|_remote_completion|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_text|chat.completions.create|ref
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_stream|create_chat_completion|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_stream|_remote_completion|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_stream|chat.completions.create|ref
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_deltas|create_chat_completion|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_deltas|_remote_completion|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_deltas|chat.completions.create|ref
+holdspeak/intel/engine.py|MeetingIntel.run_prompt_stream|_chat_completion_deltas|call
+holdspeak/intel/engine.py|MeetingIntel.run_prompt|_chat_completion_text|call
+holdspeak/intel/engine.py|MeetingIntel.run_prompt_messages|_chat_completion_text|call
+holdspeak/intel/engine.py|MeetingIntel._analyze_once|_chat_completion_text|call
+holdspeak/intel/engine.py|MeetingIntel._analyze_stream|_chat_completion_stream|call
+holdspeak/intel/engine.py|MeetingIntel.generate_title|_chat_completion_text|call
+holdspeak/intel/engine.py|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
+holdspeak/intel/mesh_relay.py|MeshRelayIntel._chat_completion_text|run_prompt|call
+holdspeak/intel/providers.py|_configured_engine|MeshRelayIntel|call
+holdspeak/intel/providers.py|_configured_engine|MeetingIntel|call
+holdspeak/intel/providers.py|configured_meeting_intel|_configured_engine|call
+holdspeak/intel/providers.py|build_meeting_intel_for_profile|_profile_engine|call
+holdspeak/intel/providers.py|_profile_engine|MeshRelayIntel|call
+holdspeak/intel/providers.py|_profile_engine|configured_meeting_intel|call
+holdspeak/intel/providers.py|_profile_engine|MeetingIntel|call
+holdspeak/intel/providers.py|_profile_engine|MeetingIntel|call#2
+holdspeak/intel/providers.py|_profile_engine|configured_meeting_intel|call#2
+holdspeak/kernel/executor.py|<module>|_install_claim_issuer|call
+holdspeak/kernel/executor.py|ExecutorPlane.claim|_issue_claim_witness|call
+holdspeak/kernel/inference_runner.py|InferenceRunner._attempt_stream|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py|InferenceRunner._attempt|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py|InferenceRunner.__init__|build_intel_for_revision|ref
+holdspeak/kernel/prompt_adapter.py|CanonicalPromptAdapter.dispatch|run_prompt|call
+holdspeak/kernel/prompt_adapter.py|StreamingPromptAdapter.dispatch|run_prompt|call
+holdspeak/main.py|_run_meeting_mode|transcribe|call
+holdspeak/main.py|_run_meeting_mode|transcribe|call#2
+holdspeak/meeting_import.py|_transcribe_import_windows|transcribe|call
+holdspeak/meeting_session/deferred_bound.py|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/deferred_bound.py|bound_auto_title_dispatch.call|generate_title|call
+holdspeak/meeting_session/deferred_bound.py|bound_analysis_dispatch.call|analyze|call
+holdspeak/meeting_session/intel_routed_children.py|IntelRoutedChildMixin._admitted_live_window.call|analyze|call
+holdspeak/meeting_session/intel_routed_children.py|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/intel_routed_children.py|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
+holdspeak/meeting_session/transcribe_loop.py|TranscribeLoopMixin._transcribe_audio|transcribe|call
+holdspeak/plugins/dictation/assembly.py|_try_build_runtime|MeshRelayRuntime|call
+holdspeak/plugins/dictation/builtin/intent_router.py|IntentRouter.run|classify|call
+holdspeak/plugins/dictation/builtin/project_rewriter.py|ProjectRewriter.run|rewrite|ref
+holdspeak/plugins/dictation/builtin/project_rewriter.py|ProjectRewriter.run|rewrite|ref#2
+holdspeak/plugins/dictation/builtin/project_rewriter.py|ProjectRewriter.run|rewrite|call
+holdspeak/plugins/dictation/runtime.py|_default_factories._llama_factory|LlamaCppRuntime|call
+holdspeak/plugins/dictation/runtime.py|_default_factories._openai_factory|OpenAICompatibleRuntime|call
+holdspeak/plugins/dictation/runtime_counters.py|CountingRuntime.classify|classify|call
+holdspeak/plugins/dictation/runtime_counters.py|CountingRuntime.rewrite|rewrite|ref
+holdspeak/plugins/dictation/runtime_counters.py|CountingRuntime.rewrite|rewrite|ref#2
+holdspeak/plugins/dictation/runtime_counters.py|CountingRuntime.rewrite|rewrite|call
+holdspeak/plugins/dictation/runtime_llama_cpp.py|LlamaCppRuntime.classify|create_completion|call
+holdspeak/plugins/dictation/runtime_llama_cpp.py|LlamaCppRuntime.rewrite|create_completion|call
+holdspeak/plugins/dictation/runtime_llama_cpp.py|LlamaCppRuntime._resolve_factories|Llama|ref
+holdspeak/plugins/dictation/runtime_mesh_relay.py|MeshRelayRuntime._run|run_prompt|call
+holdspeak/plugins/dictation/runtime_mesh_relay.py|MeshRelayRuntime.load|MeshRelayIntel|call
+holdspeak/plugins/dictation/runtime_openai_compatible.py|OpenAICompatibleRuntime.classify|chat.completions.create|call
+holdspeak/plugins/dictation/runtime_openai_compatible.py|OpenAICompatibleRuntime.rewrite|chat.completions.create|call
+holdspeak/plugins/dictation/runtime_openai_compatible.py|OpenAICompatibleRuntime.load|OpenAI|ref
+holdspeak/services/agent_turn_service.py|_PromptToolProviderTransport.dispatch|run_prompt|call
+holdspeak/services/agent_turn_service.py|AgentTurnService.dispatch_plugin|_chat_completion_text|call
+holdspeak/project_doc_suggestions.py|suggest_project_doc_update|rewrite|ref
+holdspeak/project_doc_suggestions.py|suggest_project_doc_update|rewrite|ref#2
+holdspeak/project_doc_suggestions.py|suggest_project_doc_update|rewrite|call
+holdspeak/runtime/dictation_capture.py|DictationCaptureMixin._transcribe_and_type|transcribe|call
+holdspeak/runtime/dictation_capture.py|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
+holdspeak/runtime/dictation_capture.py|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call#2
+holdspeak/runtime/wake_glue.py|WakeWordGlueMixin._transcribe_wake_admitted|transcribe|call
+holdspeak/speech_session/provider.py|ProviderAdmission.dispatch_through|bound_target|call
+holdspeak/speech_session/provider.py|ProviderAdmission.target|bound_target|call
+holdspeak/speech_session/provider.py|ProviderAdmission.rewrite.call|rewrite|call
+holdspeak/speech_session/provider.py|ProviderAdmission.punctuate.call|rewrite|call
+holdspeak/speech_session/provider.py|_ClassifyLeg.run.call|classify|call
+holdspeak/speech_session/provider.py|_RoutedSpeechAdapter.dispatch|run_prompt|call
+holdspeak/speech_session/provider.py|_RoutedSpeechAdapter.dispatch|run_prompt|call#2
+holdspeak/speech_session/provider.py|_mesh_bound|MeshRelayRuntime|call
+holdspeak/speech_session/provider.py|AdmittedDictationRuntime.classify|classify|call
+holdspeak/speech_session/provider.py|AdmittedDictationRuntime.rewrite|rewrite|call
+holdspeak/speech_session/revision_target.py|rebind|OpenAICompatibleRuntime|call
+holdspeak/speech_session/revision_target.py|bound_target|rebind|call
+holdspeak/target_profile.py|apply_model_assisted_target|rewrite|ref
+holdspeak/target_profile.py|apply_model_assisted_target|rewrite|ref#2
+holdspeak/target_profile.py|apply_model_assisted_target|rewrite|call
+holdspeak/transcribe.py|_MlxTranscriber._model_holder_get._run|get_model|call
+holdspeak/transcribe.py|_MlxTranscriber._silent_audio_load._run|transcribe|call
+holdspeak/transcribe.py|_MlxTranscriber.transcribe._run|transcribe|call
+holdspeak/transcribe.py|_FasterWhisperTranscriber.transcribe|transcribe|call
+holdspeak/transcribe.py|Transcriber._timed_transcribe|transcribe|call
+holdspeak/transcribe.py|Transcriber._timed_transcribe._run|transcribe|call
+holdspeak/web/routes/dictation/_helpers.py|_run_dictation_dry_run_text|build_pipeline|call
+holdspeak/web/routes/system/voice.py|build_voice_router.api_transcribe|transcribe|call
+holdspeak/web/routes/system/voice_stream.py|build_voice_stream_router.ws_dictation_stream|transcribe|call
 """.strip().splitlines())
 
 
@@ -194,34 +220,34 @@ holdspeak/web/routes/system/voice_stream.py:245|build_voice_stream_router.ws_dic
 # capability in its frozen plan/offer and Story 02 must preserve that provenance
 # rather than replace it with a made-up generic slug.
 PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
-    "holdspeak/kernel/mesh_local_runner.py:232|MeshLocalRunner.execute|call": ProposedRoute(
+    "holdspeak/kernel/mesh_local_runner.py|MeshLocalRunner.execute|call": ProposedRoute(
         "dynamic:mesh dispatch offer capability", "kernel.mesh_local_runner", "InferenceRunner worker-local admission",
     ),
-    "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
+    "holdspeak/services/ask_service.py|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
     # HS-162-03: line shift 1553 → 1566 from branch additions.
-    "holdspeak/services/inference_adoption_service.py:1566|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    "holdspeak/services/inference_adoption_service.py|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
     ),
-    "holdspeak/speech_session/child.py:181|run_admitted_speech_child|call": ProposedRoute(
+    "holdspeak/speech_session/child.py|run_admitted_speech_child|call": ProposedRoute(
         "dynamic:SpeechSessionPlan capability", "speech_session.child", "InferenceRunner admitted child",
     ),
     # HS-146-07: the snapshot adapter's direct-dispatch fallback (the ask
     # template) when no calendar.snapshot_extract assignment exists.
-    "holdspeak/services/calendar_snapshot_service.py:668|extract_via_router|call": ProposedRoute(
+    "holdspeak/services/calendar_snapshot_service.py|extract_via_router|call": ProposedRoute(
         "calendar.snapshot_extract", "services.calendar_snapshot_service", "InferenceRunner direct dispatch fallback (routed path preferred when assigned)",
     ),
     # HS-153-03/05: chat practice capabilities (guardrail + compaction).
     # HS-153-06: line numbers shifted by M1 redaction + response_format + robust parser additions.
-    "holdspeak/services/thread_practice.py:222|run_guardrail|call": ProposedRoute(
+    "holdspeak/services/thread_practice.py|run_guardrail|call": ProposedRoute(
         "chat.guardrail", "services.thread_practice", "InferenceRunner admitted child",
     ),
-    "holdspeak/services/thread_practice.py:347|run_compact|call": ProposedRoute(
+    "holdspeak/services/thread_practice.py|run_compact|call": ProposedRoute(
         "chat.compact", "services.thread_practice", "InferenceRunner admitted child",
     ),
     # HS-162-03: model drafter for project update drafting.
-    "holdspeak/services/project_update_service.py:1521|ProjectUpdateService._draft_with_model|call": ProposedRoute(
+    "holdspeak/services/project_update_service.py|ProjectUpdateService._draft_with_model|call": ProposedRoute(
         "project.update_draft", "services.project_update_service", "InferenceRunner admitted child",
     ),
     # HS-200-11: model drafter for the preparation brief, constrained to the
@@ -229,7 +255,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     # HS-200-16: moved down five lines by `build_manifest` carrying each row's
     # `kind`; RE-ANCHORED, the site unchanged -- same file, same qualname, same
     # call, same capability and owner. The entrance count is still 9.
-    "holdspeak/services/preparation_brief_service.py:1034|PreparationBriefService._draft_with_model|call": ProposedRoute(
+    "holdspeak/services/preparation_brief_service.py|PreparationBriefService._draft_with_model|call": ProposedRoute(
         "project.brief_prepare", "services.preparation_brief_service", "InferenceRunner admitted child",
     ),
 }
@@ -243,13 +269,13 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
 # variable-name ``.invoke`` still fails the census until someone reads it.
 OPERATION_CONTRACT_VARIABLE_SITES: dict[str, str] = {
     # PHILO-7-01: primitive detail resource reads through DESK_OPERATIONS.
-    "holdspeak/mcp/resources.py:578|read_resource|call": "_ops().invoke(principal, DESK_OPERATIONS[(kind, 'get')], ...)",
+    "holdspeak/mcp/resources.py|read_resource|call": "_ops().invoke(principal, DESK_OPERATIONS[(kind, 'get')], ...)",
     # PHILO-7-01: MCP primitive list/get read through DESK_OPERATIONS.
-    "holdspeak/mcp/tools.py:653|_primitive_list|call": "ops().invoke(principal, _desk_operation(kind, 'list'), {})",
-    "holdspeak/mcp/tools.py:659|_primitive_get|call": "ops().invoke(principal, _desk_operation(kind, 'get'), ...)",
+    "holdspeak/mcp/tools.py|_primitive_list|call": "ops().invoke(principal, _desk_operation(kind, 'list'), {})",
+    "holdspeak/mcp/tools.py|_primitive_get|call": "ops().invoke(principal, _desk_operation(kind, 'get'), ...)",
     # PHILO-7-02: invoke_receipted calls the registry's own invoke with its name.
-    "holdspeak/operations.py:2162|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args)",
-    "holdspeak/operations.py:2163|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args, held=held)",
+    "holdspeak/operations.py|OperationRegistry.invoke_receipted|call": "self.invoke(principal, name, args)",
+    "holdspeak/operations.py|OperationRegistry.invoke_receipted|call#2": "self.invoke(principal, name, args, held=held)",
 }
 
 
@@ -329,7 +355,7 @@ def _semantic_helper_calls(sources: dict[str, str] | None = None) -> list[str]:
     factories = {relative: _service_factories(tree) for relative, tree in trees.items()}
     exported_ask = {name for local_ask, _ in factories.values() for name in local_ask}
     exported_recipe = {name for _, local_recipe in factories.values() for name in local_recipe}
-    entries: list[str] = []
+    entries: list[Record] = []
     for relative, tree in trees.items():
         scopes = one_path._scope_index(tree)
         ask_aliases: set[str] = set()
@@ -363,7 +389,10 @@ def _semantic_helper_calls(sources: dict[str, str] | None = None) -> list[str]:
                 and isinstance(node, ast.Attribute)
                 and node.attr == "_invoke"
             ):
-                entries.append(f"{relative}:{node.lineno}|{scopes.get(id(node), '<module>')}|_invoke")
+                entries.append(Record(
+                    relative, node.lineno, node.col_offset,
+                    f"{scopes.get(id(node), '<module>')}|_invoke",
+                ))
                 continue
             if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)):
                 continue
@@ -386,18 +415,21 @@ def _semantic_helper_calls(sources: dict[str, str] | None = None) -> list[str]:
                 or direct_constructor and receiver_name == "RecipeService"
             )
             if is_ask or is_recipe:
-                entries.append(f"{relative}:{node.lineno}|{scopes.get(id(node), '<module>')}|{verb}")
-    return sorted(entries)
+                entries.append(Record(
+                    relative, node.lineno, node.col_offset,
+                    f"{scopes.get(id(node), '<module>')}|{verb}",
+                ))
+    return _line_free.ordinal_keys(entries)
 
 
 SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
-    "holdspeak/mcp/families/ask.py:136|dispatch|ask": ProposedRoute(
+    "holdspeak/mcp/families/ask.py|dispatch|ask": ProposedRoute(
         "ask.answer", "mcp.families.ask", "AskService semantic caller",
     ),
-        "holdspeak/services/refinement_coordinator.py:419|RefinementCoordinator._coordinate|ask": ProposedRoute(
+        "holdspeak/services/refinement_coordinator.py|RefinementCoordinator._coordinate|ask": ProposedRoute(
         "thought.interview", "services.refinement_coordinator", "AskService semantic caller; question-or-synthesis result branch",
     ),
-    "holdspeak/web/routes/primitives/ask.py:63|build_ask_router.api_ask|ask": ProposedRoute(
+    "holdspeak/web/routes/primitives/ask.py|build_ask_router.api_ask|ask": ProposedRoute(
         "ask.answer", "web.routes.primitives.ask", "AskService semantic caller",
     ),
     # HS-200-41: the resume of a SAVED ask task.  Not a second Ask authority --
@@ -405,19 +437,19 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     # invocation id the row already pinned (ruling B3), so the answer can be
     # claimed instead of paid for twice.  Same capability as the transport row
     # above, because it is the same operation reached a second way.
-    "holdspeak/web/routes/projects.py:171|build_projects_router.api_resume_ask_task.dispatch|ask": ProposedRoute(
+    "holdspeak/web/routes/projects.py|build_projects_router.api_resume_ask_task.dispatch|ask": ProposedRoute(
         "ask.answer", "web.routes.projects", "AskService semantic caller; saved-task resume through the ask transport",
     ),
     # PHILO-5-01/02: re-anchored after the operation contract moved dispatch
     # down; the recipe.run branch itself is unchanged. PHILO-7-01/02: moved
     # down again (852 -> 1008) with the desk operations; re-anchored, same
     # branch, same call.
-    "holdspeak/mcp/tools.py:1020|dispatch|run": ProposedRoute(
+    "holdspeak/mcp/tools.py|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
     # HS-151-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115
     # no longer call RecipeService.chat — they return a 410 retired error.
-    "holdspeak/web/routes/primitives/recipes.py:103|build_recipes_router.api_run_recipe|run": ProposedRoute(
+    "holdspeak/web/routes/primitives/recipes.py|build_recipes_router.api_run_recipe|run": ProposedRoute(
         "recipe.run", "web.routes.primitives.recipes", "RecipeService semantic caller",
     ),
 }
@@ -436,7 +468,7 @@ def _swift_physical_leaves(sources: dict[str, str] | None = None) -> list[str]:
         path.relative_to(one_path.REPO).as_posix(): path.read_text(encoding="utf-8")
         for path in SWIFT_SOURCES.rglob("*.swift")
     }
-    entries: list[str] = []
+    entries: list[Record] = []
     for relative, source in sorted(sources.items()):
         for line_no, line in enumerate(source.splitlines(), start=1):
             marker = ""
@@ -447,30 +479,30 @@ def _swift_physical_leaves(sources: dict[str, str] | None = None) -> list[str]:
             elif relative.startswith("apple/Sources/Providers/Inference/") and ".data(for:" in line:
                 marker = "InferenceProvider.URLSession.data"
             if marker:
-                entries.append(f"{relative}:{line_no}|{marker}")
-    return sorted(entries)
+                entries.append(Record(relative, line_no, 0, marker))
+    return _line_free.ordinal_keys(entries)
 
 
 SWIFT_PHYSICAL_LEAVES: dict[str, ProposedRoute] = {
-    "apple/Sources/InferenceLlama/LlamaProvider.swift:124|LLM.getCompletion": ProposedRoute(
+    "apple/Sources/InferenceLlama/LlamaProvider.swift|LLM.getCompletion": ProposedRoute(
         "apple.local_completion", "apple.inference_llama", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
-    "apple/Sources/Providers/Inference/OpenAIEndpointProvider.swift:48|InferenceProvider.URLSession.data": ProposedRoute(
+    "apple/Sources/Providers/Inference/OpenAIEndpointProvider.swift|InferenceProvider.URLSession.data": ProposedRoute(
         "apple.endpoint_completion", "apple.providers.inference", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
-    "apple/Sources/Providers/Inference/StructuredOutput.swift:64|Swift.complete": ProposedRoute(
+    "apple/Sources/Providers/Inference/StructuredOutput.swift|Swift.complete": ProposedRoute(
         "apple.structured_output", "apple.providers.inference", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
-    "apple/Sources/Providers/Desktop/MeshServeWorker.swift:99|Swift.complete": ProposedRoute(
+    "apple/Sources/Providers/Desktop/MeshServeWorker.swift|Swift.complete": ProposedRoute(
         "apple.mesh_serve", "apple.providers.desktop", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
-    "apple/Sources/RuntimeCore/Companion/CoderAnswer.swift:109|Swift.complete": ProposedRoute(
+    "apple/Sources/RuntimeCore/Companion/CoderAnswer.swift|Swift.complete": ProposedRoute(
         "apple.coder_answer", "apple.runtimecore.companion", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
-    "apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift:333|Swift.complete": ProposedRoute(
+    "apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift|Swift.complete": ProposedRoute(
         "apple.workbench.blueprint", "apple.runtimecore.workbench", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
-    "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:338|Swift.complete": ProposedRoute(
+    "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift|Swift.complete": ProposedRoute(
         "apple.workbench.workflow", "apple.runtimecore.workbench", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
 }
@@ -485,153 +517,153 @@ def _group(route: ProposedRoute, keys: str) -> tuple[ProposedRoute, tuple[str, .
 # unreviewed site (including one in a familiar module) a failure.
 EXPLICIT_ROUTE_GROUPS = (
     _group(ProposedRoute("agent.tool_turn", "services.agent_turn_service", "InferenceRunner ToolTurn transport or admitted compatibility leaf"), """
-holdspeak/services/agent_turn_service.py:44|_PromptToolProviderTransport.dispatch|run_prompt|call
-holdspeak/services/agent_turn_service.py:202|AgentTurnService.dispatch_plugin|_chat_completion_text|call
+holdspeak/services/agent_turn_service.py|_PromptToolProviderTransport.dispatch|run_prompt|call
+holdspeak/services/agent_turn_service.py|AgentTurnService.dispatch_plugin|_chat_completion_text|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "inference_targets", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/inference_targets.py:672|local_pinned_meeting_intel|_local_pinned_engine|call
-holdspeak/inference_targets.py:695|_local_pinned_engine|MeetingIntel|call
-holdspeak/inference_targets.py:717|build_intel_for_revision|_engine_for_revision|call
-holdspeak/inference_targets.py:744|_engine_for_revision|MeetingIntel|call
-holdspeak/inference_targets.py:751|_engine_for_revision|local_pinned_meeting_intel|call
-holdspeak/inference_targets.py:771|_engine_for_revision|build_meeting_intel_for_profile|call
+holdspeak/inference_targets.py|local_pinned_meeting_intel|_local_pinned_engine|call
+holdspeak/inference_targets.py|_local_pinned_engine|MeetingIntel|call
+holdspeak/inference_targets.py|build_intel_for_revision|_engine_for_revision|call
+holdspeak/inference_targets.py|_engine_for_revision|MeetingIntel|call
+holdspeak/inference_targets.py|_engine_for_revision|local_pinned_meeting_intel|call
+holdspeak/inference_targets.py|_engine_for_revision|build_meeting_intel_for_profile|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "intel.engine", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/intel/engine.py:250|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
-holdspeak/intel/engine.py:290|MeetingIntel._ensure_local_model_loaded|Llama|call
-holdspeak/intel/engine.py:312|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
-holdspeak/intel/engine.py:317|MeetingIntel._ensure_runtime_loaded|_ensure_openai_client_loaded|call
-holdspeak/intel/engine.py:322|MeetingIntel._ensure_model_loaded|_ensure_runtime_loaded|call
-holdspeak/intel/engine.py:386|MeetingIntel._chat_completion_text|create_chat_completion|call
-holdspeak/intel/engine.py:424|MeetingIntel._chat_completion_text|_remote_completion|call
-holdspeak/intel/engine.py:424|MeetingIntel._chat_completion_text|chat.completions.create|ref
-holdspeak/intel/engine.py:474|MeetingIntel._chat_completion_stream|create_chat_completion|call
-holdspeak/intel/engine.py:515|MeetingIntel._chat_completion_stream|_remote_completion|call
-holdspeak/intel/engine.py:515|MeetingIntel._chat_completion_stream|chat.completions.create|ref
-holdspeak/intel/engine.py:595|MeetingIntel._chat_completion_deltas|create_chat_completion|call
-holdspeak/intel/engine.py:686|MeetingIntel._chat_completion_deltas|_remote_completion|call
-holdspeak/intel/engine.py:687|MeetingIntel._chat_completion_deltas|chat.completions.create|ref
-holdspeak/intel/engine.py:798|MeetingIntel.run_prompt_stream|_chat_completion_deltas|call
-holdspeak/intel/engine.py:839|MeetingIntel.run_prompt|_chat_completion_text|call
-holdspeak/intel/engine.py:868|MeetingIntel.run_prompt_messages|_chat_completion_text|call
-holdspeak/intel/engine.py:882|MeetingIntel._analyze_once|_chat_completion_text|call
-holdspeak/intel/engine.py:958|MeetingIntel._analyze_stream|_chat_completion_stream|call
-holdspeak/intel/engine.py:1028|MeetingIntel.generate_title|_chat_completion_text|call
-holdspeak/intel/engine.py:1103|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
+holdspeak/intel/engine.py|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
+holdspeak/intel/engine.py|MeetingIntel._ensure_local_model_loaded|Llama|call
+holdspeak/intel/engine.py|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
+holdspeak/intel/engine.py|MeetingIntel._ensure_runtime_loaded|_ensure_openai_client_loaded|call
+holdspeak/intel/engine.py|MeetingIntel._ensure_model_loaded|_ensure_runtime_loaded|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_text|create_chat_completion|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_text|_remote_completion|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_text|chat.completions.create|ref
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_stream|create_chat_completion|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_stream|_remote_completion|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_stream|chat.completions.create|ref
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_deltas|create_chat_completion|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_deltas|_remote_completion|call
+holdspeak/intel/engine.py|MeetingIntel._chat_completion_deltas|chat.completions.create|ref
+holdspeak/intel/engine.py|MeetingIntel.run_prompt_stream|_chat_completion_deltas|call
+holdspeak/intel/engine.py|MeetingIntel.run_prompt|_chat_completion_text|call
+holdspeak/intel/engine.py|MeetingIntel.run_prompt_messages|_chat_completion_text|call
+holdspeak/intel/engine.py|MeetingIntel._analyze_once|_chat_completion_text|call
+holdspeak/intel/engine.py|MeetingIntel._analyze_stream|_chat_completion_stream|call
+holdspeak/intel/engine.py|MeetingIntel.generate_title|_chat_completion_text|call
+holdspeak/intel/engine.py|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "intel.mesh_relay", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/intel/mesh_relay.py:252|MeshRelayIntel._chat_completion_text|run_prompt|call
+holdspeak/intel/mesh_relay.py|MeshRelayIntel._chat_completion_text|run_prompt|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "intel.providers", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/intel/providers.py:239|_configured_engine|MeshRelayIntel|call
-holdspeak/intel/providers.py:251|_configured_engine|MeetingIntel|call
-holdspeak/intel/providers.py:276|configured_meeting_intel|_configured_engine|call
-holdspeak/intel/providers.py:783|build_meeting_intel_for_profile|_profile_engine|call
-holdspeak/intel/providers.py:809|_profile_engine|MeshRelayIntel|call
-holdspeak/intel/providers.py:819|_profile_engine|configured_meeting_intel|call
-holdspeak/intel/providers.py:823|_profile_engine|MeetingIntel|call
-holdspeak/intel/providers.py:842|_profile_engine|MeetingIntel|call
-holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
+holdspeak/intel/providers.py|_configured_engine|MeshRelayIntel|call
+holdspeak/intel/providers.py|_configured_engine|MeetingIntel|call
+holdspeak/intel/providers.py|configured_meeting_intel|_configured_engine|call
+holdspeak/intel/providers.py|build_meeting_intel_for_profile|_profile_engine|call
+holdspeak/intel/providers.py|_profile_engine|MeshRelayIntel|call
+holdspeak/intel/providers.py|_profile_engine|configured_meeting_intel|call
+holdspeak/intel/providers.py|_profile_engine|MeetingIntel|call
+holdspeak/intel/providers.py|_profile_engine|MeetingIntel|call#2
+holdspeak/intel/providers.py|_profile_engine|configured_meeting_intel|call#2
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.executor", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
-holdspeak/kernel/executor.py:88|ExecutorPlane.claim|_issue_claim_witness|call
+holdspeak/kernel/executor.py|<module>|_install_claim_issuer|call
+holdspeak/kernel/executor.py|ExecutorPlane.claim|_issue_claim_witness|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.inference_runner", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/kernel/inference_runner.py:329|InferenceRunner._attempt_stream|_issue_dispatch_context|call
-holdspeak/kernel/inference_runner.py:621|InferenceRunner._attempt|_issue_dispatch_context|call
-holdspeak/kernel/inference_runner.py:81|InferenceRunner.__init__|build_intel_for_revision|ref
+holdspeak/kernel/inference_runner.py|InferenceRunner._attempt_stream|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py|InferenceRunner._attempt|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py|InferenceRunner.__init__|build_intel_for_revision|ref
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.prompt_adapter", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/kernel/prompt_adapter.py:25|CanonicalPromptAdapter.dispatch|run_prompt|call
-holdspeak/kernel/prompt_adapter.py:71|StreamingPromptAdapter.dispatch|run_prompt|call
+holdspeak/kernel/prompt_adapter.py|CanonicalPromptAdapter.dispatch|run_prompt|call
+holdspeak/kernel/prompt_adapter.py|StreamingPromptAdapter.dispatch|run_prompt|call
 """),
     _group(ProposedRoute("internal.speech.runtime_assembly", "speech_session", "InferenceRunner context-gated adapter"), """
-holdspeak/commands/dictation.py:166|_cmd_dry_run|build_pipeline|call
-holdspeak/dictation_runner.py:386|run_pipeline_corrections_only|build_pipeline|call
-holdspeak/dictation_runner.py:589|run_dictation_pipeline|build_pipeline|call
-holdspeak/plugins/dictation/assembly.py:336|_try_build_runtime|MeshRelayRuntime|call
-holdspeak/plugins/dictation/runtime.py:215|_default_factories._llama_factory|LlamaCppRuntime|call
-holdspeak/plugins/dictation/runtime.py:222|_default_factories._openai_factory|OpenAICompatibleRuntime|call
-holdspeak/plugins/dictation/runtime_llama_cpp.py:74|LlamaCppRuntime._resolve_factories|Llama|ref
-holdspeak/plugins/dictation/runtime_mesh_relay.py:106|MeshRelayRuntime._run|run_prompt|call
-holdspeak/plugins/dictation/runtime_mesh_relay.py:52|MeshRelayRuntime.load|MeshRelayIntel|call
-holdspeak/plugins/dictation/runtime_openai_compatible.py:69|OpenAICompatibleRuntime.load|OpenAI|ref
-holdspeak/speech_session/provider.py:237|ProviderAdmission.dispatch_through|bound_target|call
-holdspeak/speech_session/provider.py:275|ProviderAdmission.target|bound_target|call
-holdspeak/speech_session/provider.py:664|_mesh_bound|MeshRelayRuntime|call
-holdspeak/speech_session/revision_target.py:143|rebind|OpenAICompatibleRuntime|call
-holdspeak/speech_session/revision_target.py:165|bound_target|rebind|call
-holdspeak/web/routes/dictation/_helpers.py:794|_run_dictation_dry_run_text|build_pipeline|call
+holdspeak/commands/dictation.py|_cmd_dry_run|build_pipeline|call
+holdspeak/dictation_runner.py|run_pipeline_corrections_only|build_pipeline|call
+holdspeak/dictation_runner.py|run_dictation_pipeline|build_pipeline|call
+holdspeak/plugins/dictation/assembly.py|_try_build_runtime|MeshRelayRuntime|call
+holdspeak/plugins/dictation/runtime.py|_default_factories._llama_factory|LlamaCppRuntime|call
+holdspeak/plugins/dictation/runtime.py|_default_factories._openai_factory|OpenAICompatibleRuntime|call
+holdspeak/plugins/dictation/runtime_llama_cpp.py|LlamaCppRuntime._resolve_factories|Llama|ref
+holdspeak/plugins/dictation/runtime_mesh_relay.py|MeshRelayRuntime._run|run_prompt|call
+holdspeak/plugins/dictation/runtime_mesh_relay.py|MeshRelayRuntime.load|MeshRelayIntel|call
+holdspeak/plugins/dictation/runtime_openai_compatible.py|OpenAICompatibleRuntime.load|OpenAI|ref
+holdspeak/speech_session/provider.py|ProviderAdmission.dispatch_through|bound_target|call
+holdspeak/speech_session/provider.py|ProviderAdmission.target|bound_target|call
+holdspeak/speech_session/provider.py|_mesh_bound|MeshRelayRuntime|call
+holdspeak/speech_session/revision_target.py|rebind|OpenAICompatibleRuntime|call
+holdspeak/speech_session/revision_target.py|bound_target|rebind|call
+holdspeak/web/routes/dictation/_helpers.py|_run_dictation_dry_run_text|build_pipeline|call
 """),
     _group(ProposedRoute("meeting.auto_title", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/meeting_session/deferred_bound.py:105|bound_auto_title_dispatch.call|generate_title|call
-holdspeak/meeting_session/intel_routed_children.py:314|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
+holdspeak/meeting_session/deferred_bound.py|bound_auto_title_dispatch.call|generate_title|call
+holdspeak/meeting_session/intel_routed_children.py|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
 """),
     _group(ProposedRoute("meeting.bookmark_label", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/meeting_session/deferred_bound.py:93|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/intel_routed_children.py:284|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/deferred_bound.py|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/intel_routed_children.py|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
 """),
     _group(ProposedRoute("meeting.deferred_analysis", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/meeting_session/deferred_bound.py:114|bound_analysis_dispatch.call|analyze|call
+holdspeak/meeting_session/deferred_bound.py|bound_analysis_dispatch.call|analyze|call
 """),
     _group(ProposedRoute("meeting.live_analysis", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/meeting_session/intel_routed_children.py:239|IntelRoutedChildMixin._admitted_live_window.call|analyze|call
+holdspeak/meeting_session/intel_routed_children.py|IntelRoutedChildMixin._admitted_live_window.call|analyze|call
 """),
     _group(ProposedRoute("project_doc.suggest_update", "project_doc_suggestions", "InferenceRunner admitted child"), """
-holdspeak/project_doc_suggestions.py:72|suggest_project_doc_update|rewrite|ref
-holdspeak/project_doc_suggestions.py:73|suggest_project_doc_update|rewrite|ref
-holdspeak/project_doc_suggestions.py:84|suggest_project_doc_update|rewrite|call
+holdspeak/project_doc_suggestions.py|suggest_project_doc_update|rewrite|ref
+holdspeak/project_doc_suggestions.py|suggest_project_doc_update|rewrite|ref#2
+holdspeak/project_doc_suggestions.py|suggest_project_doc_update|rewrite|call
 """),
     _group(ProposedRoute("speech.intent_classify", "speech_session", "InferenceRunner admitted child"), """
-holdspeak/plugins/dictation/builtin/intent_router.py:170|IntentRouter.run|classify|call
-holdspeak/plugins/dictation/runtime_counters.py:227|CountingRuntime.classify|classify|call
-holdspeak/plugins/dictation/runtime_llama_cpp.py:134|LlamaCppRuntime.classify|create_completion|call
-holdspeak/plugins/dictation/runtime_openai_compatible.py:143|OpenAICompatibleRuntime.classify|chat.completions.create|call
-holdspeak/speech_session/provider.py:545|_ClassifyLeg.run.call|classify|call
-holdspeak/speech_session/provider.py:575|_RoutedSpeechAdapter.dispatch|run_prompt|call
-holdspeak/speech_session/provider.py:713|AdmittedDictationRuntime.classify|classify|call
+holdspeak/plugins/dictation/builtin/intent_router.py|IntentRouter.run|classify|call
+holdspeak/plugins/dictation/runtime_counters.py|CountingRuntime.classify|classify|call
+holdspeak/plugins/dictation/runtime_llama_cpp.py|LlamaCppRuntime.classify|create_completion|call
+holdspeak/plugins/dictation/runtime_openai_compatible.py|OpenAICompatibleRuntime.classify|chat.completions.create|call
+holdspeak/speech_session/provider.py|_ClassifyLeg.run.call|classify|call
+holdspeak/speech_session/provider.py|_RoutedSpeechAdapter.dispatch|run_prompt|call
+holdspeak/speech_session/provider.py|AdmittedDictationRuntime.classify|classify|call
 """),
     _group(ProposedRoute("speech.preload", "speech_session.transcription", "InferenceRunner via TranscriptionAdmission"), """
-holdspeak/transcribe.py:371|_MlxTranscriber._model_holder_get._run|get_model|call
+holdspeak/transcribe.py|_MlxTranscriber._model_holder_get._run|get_model|call
 """),
     _group(ProposedRoute("speech.punctuate", "speech_session", "InferenceRunner admitted child"), """
-holdspeak/speech_session/provider.py:493|ProviderAdmission.punctuate.call|rewrite|call
+holdspeak/speech_session/provider.py|ProviderAdmission.punctuate.call|rewrite|call
 """),
     _group(ProposedRoute("speech.rewrite", "speech_session", "InferenceRunner admitted child"), """
-holdspeak/plugins/dictation/builtin/project_rewriter.py:203|ProjectRewriter.run|rewrite|ref
-holdspeak/plugins/dictation/builtin/project_rewriter.py:204|ProjectRewriter.run|rewrite|ref
-holdspeak/plugins/dictation/builtin/project_rewriter.py:241|ProjectRewriter.run|rewrite|call
-holdspeak/plugins/dictation/runtime_counters.py:271|CountingRuntime.rewrite|rewrite|ref
-holdspeak/plugins/dictation/runtime_counters.py:272|CountingRuntime.rewrite|rewrite|ref
-holdspeak/plugins/dictation/runtime_counters.py:277|CountingRuntime.rewrite|rewrite|call
-holdspeak/plugins/dictation/runtime_llama_cpp.py:162|LlamaCppRuntime.rewrite|create_completion|call
-holdspeak/plugins/dictation/runtime_openai_compatible.py:196|OpenAICompatibleRuntime.rewrite|chat.completions.create|call
-holdspeak/speech_session/provider.py:452|ProviderAdmission.rewrite.call|rewrite|call
-holdspeak/speech_session/provider.py:589|_RoutedSpeechAdapter.dispatch|run_prompt|call
-holdspeak/speech_session/provider.py:720|AdmittedDictationRuntime.rewrite|rewrite|call
+holdspeak/plugins/dictation/builtin/project_rewriter.py|ProjectRewriter.run|rewrite|ref
+holdspeak/plugins/dictation/builtin/project_rewriter.py|ProjectRewriter.run|rewrite|ref#2
+holdspeak/plugins/dictation/builtin/project_rewriter.py|ProjectRewriter.run|rewrite|call
+holdspeak/plugins/dictation/runtime_counters.py|CountingRuntime.rewrite|rewrite|ref
+holdspeak/plugins/dictation/runtime_counters.py|CountingRuntime.rewrite|rewrite|ref#2
+holdspeak/plugins/dictation/runtime_counters.py|CountingRuntime.rewrite|rewrite|call
+holdspeak/plugins/dictation/runtime_llama_cpp.py|LlamaCppRuntime.rewrite|create_completion|call
+holdspeak/plugins/dictation/runtime_openai_compatible.py|OpenAICompatibleRuntime.rewrite|chat.completions.create|call
+holdspeak/speech_session/provider.py|ProviderAdmission.rewrite.call|rewrite|call
+holdspeak/speech_session/provider.py|_RoutedSpeechAdapter.dispatch|run_prompt|call#2
+holdspeak/speech_session/provider.py|AdmittedDictationRuntime.rewrite|rewrite|call
 """),
     _group(ProposedRoute("speech.target_classify", "target_profile", "InferenceRunner admitted child"), """
-holdspeak/target_profile.py:198|apply_model_assisted_target|rewrite|ref
-holdspeak/target_profile.py:199|apply_model_assisted_target|rewrite|ref
-holdspeak/target_profile.py:202|apply_model_assisted_target|rewrite|call
+holdspeak/target_profile.py|apply_model_assisted_target|rewrite|ref
+holdspeak/target_profile.py|apply_model_assisted_target|rewrite|ref#2
+holdspeak/target_profile.py|apply_model_assisted_target|rewrite|call
 """),
     _group(ProposedRoute("speech.transcribe", "speech_session.transcription", "InferenceRunner via TranscriptionAdmission"), """
-holdspeak/main.py:765|_run_meeting_mode|transcribe|call
-holdspeak/main.py:774|_run_meeting_mode|transcribe|call
-holdspeak/meeting_import.py:349|_transcribe_import_windows|transcribe|call
-holdspeak/meeting_session/transcribe_loop.py:84|TranscribeLoopMixin._transcribe_audio|transcribe|call
-holdspeak/runtime/dictation_capture.py:108|DictationCaptureMixin._transcribe_and_type|transcribe|call
-holdspeak/runtime/dictation_capture.py:395|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
-holdspeak/runtime/dictation_capture.py:406|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
-holdspeak/runtime/wake_glue.py:368|WakeWordGlueMixin._transcribe_wake_admitted|transcribe|call
-holdspeak/transcribe.py:381|_MlxTranscriber._silent_audio_load._run|transcribe|call
-holdspeak/transcribe.py:426|_MlxTranscriber.transcribe._run|transcribe|call
-holdspeak/transcribe.py:511|_FasterWhisperTranscriber.transcribe|transcribe|call
-holdspeak/transcribe.py:648|Transcriber._timed_transcribe|transcribe|call
-holdspeak/transcribe.py:658|Transcriber._timed_transcribe._run|transcribe|call
-holdspeak/web/routes/system/voice.py:193|build_voice_router.api_transcribe|transcribe|call
-holdspeak/web/routes/system/voice_stream.py:245|build_voice_stream_router.ws_dictation_stream|transcribe|call
+holdspeak/main.py|_run_meeting_mode|transcribe|call
+holdspeak/main.py|_run_meeting_mode|transcribe|call#2
+holdspeak/meeting_import.py|_transcribe_import_windows|transcribe|call
+holdspeak/meeting_session/transcribe_loop.py|TranscribeLoopMixin._transcribe_audio|transcribe|call
+holdspeak/runtime/dictation_capture.py|DictationCaptureMixin._transcribe_and_type|transcribe|call
+holdspeak/runtime/dictation_capture.py|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
+holdspeak/runtime/dictation_capture.py|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call#2
+holdspeak/runtime/wake_glue.py|WakeWordGlueMixin._transcribe_wake_admitted|transcribe|call
+holdspeak/transcribe.py|_MlxTranscriber._silent_audio_load._run|transcribe|call
+holdspeak/transcribe.py|_MlxTranscriber.transcribe._run|transcribe|call
+holdspeak/transcribe.py|_FasterWhisperTranscriber.transcribe|transcribe|call
+holdspeak/transcribe.py|Transcriber._timed_transcribe|transcribe|call
+holdspeak/transcribe.py|Transcriber._timed_transcribe._run|transcribe|call
+holdspeak/web/routes/system/voice.py|build_voice_router.api_transcribe|transcribe|call
+holdspeak/web/routes/system/voice_stream.py|build_voice_stream_router.ws_dictation_stream|transcribe|call
 """),
 )
 
@@ -655,7 +687,7 @@ PHYSICAL_LEAF_KEYS = frozenset({
 
 
 def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
-    live = {_key(site) for site in one_path.census()}
+    live = set(_site_keys())
     assert live == EXPECTED_CALL_SITES, (
         "Phase 143 inference/capability census changed; register every new site "
         "with exactly one proposed capability and source owner.\n"
@@ -699,7 +731,7 @@ def test_phase143_shared_helpers_have_semantic_callers() -> None:
         f"stale={sorted(set(SEMANTIC_HELPER_CALLERS) - live)}"
     )
     assert SEMANTIC_HELPER_CALLERS[
-        "holdspeak/services/refinement_coordinator.py:419|RefinementCoordinator._coordinate|ask"
+        "holdspeak/services/refinement_coordinator.py|RefinementCoordinator._coordinate|ask"
     ].capability_id == "thought.interview"
 
     architecture = (one_path.REPO / (
@@ -727,8 +759,8 @@ class Rogue:
         self.recipe_service.chat(principal, "recipe", question="unregistered")
 """})
     assert set(mutated) == {
-        "holdspeak/rogue_semantic.py:9|Rogue.go|ask",
-        "holdspeak/rogue_semantic.py:10|Rogue.go|chat",
+        "holdspeak/rogue_semantic.py|Rogue.go|ask",
+        "holdspeak/rogue_semantic.py|Rogue.go|chat",
     }
     assert not set(mutated) <= set(SEMANTIC_HELPER_CALLERS)
 
@@ -746,7 +778,7 @@ def test_phase143_swift_physical_leaves_remain_explicit_held_scope() -> None:
     assert all(route.admission == held for route in SWIFT_PHYSICAL_LEAVES.values())
     assert len(SWIFT_PHYSICAL_LEAVES) == 7
     workflow = SWIFT_PHYSICAL_LEAVES[
-        "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:338|Swift.complete"
+        "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift|Swift.complete"
     ]
     assert workflow.source_owner == "apple.runtimecore.workbench"
 
@@ -759,14 +791,14 @@ let data = try await URLSession.shared.data(for: request)
 """,
     })
     assert set(mutated) == {
-        "apple/Sources/Providers/Inference/RogueProvider.swift:2|Swift.complete",
-        "apple/Sources/Providers/Inference/RogueProvider.swift:3|InferenceProvider.URLSession.data",
+        "apple/Sources/Providers/Inference/RogueProvider.swift|Swift.complete",
+        "apple/Sources/Providers/Inference/RogueProvider.swift|InferenceProvider.URLSession.data",
     }
     assert not set(mutated) <= set(SWIFT_PHYSICAL_LEAVES)
 
 
 def test_phase143_every_censused_site_has_one_capability_and_source_owner() -> None:
-    live = {_key(site) for site in one_path.census()}
+    live = set(_site_keys())
     declared_keys = [key for _, keys in EXPLICIT_ROUTE_GROUPS for key in keys]
     assert set(PROPOSED_ROUTES) == live == EXPECTED_CALL_SITES
     assert len(declared_keys) == len(set(declared_keys)), "a call site has two proposed routes"
@@ -780,9 +812,26 @@ def test_phase143_every_censused_site_has_one_capability_and_source_owner() -> N
 
 
 def test_phase143_physical_leaves_have_no_legacy_bypass() -> None:
-    sites = {_key(site): site for site in one_path.census()}
+    sites = _site_keys()
     assert PHYSICAL_LEAF_KEYS <= set(sites)
     assert all(one_path._bucket(sites[key]) == "allowlist" for key in PHYSICAL_LEAF_KEYS)
     assert all("InferenceRunner" in PROPOSED_ROUTES[key].admission for key in PHYSICAL_LEAF_KEYS)
     assert one_path.NAMED_FINDINGS == {}
     assert one_path.BLOCKING_FAMILIES == frozenset()
+
+
+def test_line_free_keys_ignore_line_movement_and_name_a_second_site() -> None:
+    """Mutation: an edit above a site changes no key; a second same site adds one."""
+    source = """
+class Rogue:
+    def go(self):
+        self.ask_service = AskService(db)
+        self.ask_service.ask(principal, "one")
+"""
+    one = _semantic_helper_calls({"holdspeak/rogue.py": source})
+    moved = _semantic_helper_calls({"holdspeak/rogue.py": "\n\n# an edit above\n" + source})
+    two = _semantic_helper_calls({
+        "holdspeak/rogue.py": source + '        self.ask_service.ask(principal, "two")\n',
+    })
+    assert one == moved == ["holdspeak/rogue.py|Rogue.go|ask"]
+    assert two == ["holdspeak/rogue.py|Rogue.go|ask", "holdspeak/rogue.py|Rogue.go|ask#2"]
