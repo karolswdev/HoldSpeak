@@ -285,8 +285,12 @@ def test_late_or_superseded_child_output_cannot_advance_sequence_or_graph(rig):
     assert run.context.epoch == 1
 
 
-def test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive(route_rig):
+@pytest.mark.parametrize("order", ["parent_closes_first", "signal_first"])
+def test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive(route_rig, monkeypatch, order):
     """Route-level interleaving: cancel wins while provider dispatch is blocked."""
+    from tests._cancel_after_return import force_cancel_order
+
+    force_cancel_order(monkeypatch, order)
     client, db, state = route_rig
     chain = _sequence(client, [_recipe(client, "slow")])
     state["block"] = True
@@ -298,12 +302,21 @@ def test_parent_cancel_fences_admission_and_late_output_while_child_receipts_sur
         cancel = client.post(f"/api/chains/runs/{parent_id}/cancel")
         assert cancel.status_code == 200 and cancel.json()["parent_operation_id"] == parent_id
         state["release"].set()
-        assert run.result(timeout=45).status_code == 409
+        status = run.result(timeout=45).status_code
     child = _children(db, parent_id)[0]
-    assert _receipt(db, child["operation_id"])["outcome"] == "succeeded"
+    from tests._cancel_after_return import assert_provider_return_on_record
+
+    # The owner cancelled the run: 409 in both orders, never a 502.
+    assert status == 409
+    # The provider returned and the receipt says so. With the signal first, a
+    # cancel was requested for this child: its result is fenced and not staged.
+    assert_provider_return_on_record(db, child["operation_id"], fenced=order == "signal_first")
+    assert _receipt(db, parent_id)["outcome"] == "cancelled"
     with db._connection() as conn:
         checkpoint = conn.execute("SELECT advanced FROM kernel_parent_checkpoints WHERE parent_operation_id=?", (parent_id,)).fetchone()
-    assert checkpoint is not None and checkpoint["advanced"] == 0
+        artifacts = conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0]
+    assert artifacts == 0
+    assert (checkpoint is not None and checkpoint["advanced"] == 0) if order == "parent_closes_first" else checkpoint is None
     broker = _configure(db)
     # Restart does not reconstruct a bearer context from a durable row.
     assert _reason(lambda: broker.parent_run_controller.reserve_child(object(), OWNER, planned_node="later", invocation_id="later")) == "parent_context_invalid"

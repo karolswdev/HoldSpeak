@@ -34,7 +34,10 @@ class CanonicalPromptAdapter:
             "model": str(getattr(engine, "active_model", "") or getattr(engine, "model", ""))}
 
     def cancel(self) -> str:
-        return "cancelled"
+        # ``run_prompt`` blocks until the provider answers; this adapter cannot
+        # stop it. The result of a call that then returns is fenced by the
+        # runner (``cancelled_evidence``), not by a claim made here.
+        return "not_supported"
 
 
 class StreamingPromptAdapter:

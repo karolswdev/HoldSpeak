@@ -407,7 +407,11 @@ def test_search_finds_kafka_in_decision_text_and_linked_work(tmp_path):
 # --- admitted promotion fence (HS-131-07) -----------------------------------
 
 
-def test_promotion_cancellation_after_provider_return_never_publishes_artifact(tmp_path):
+@pytest.mark.parametrize("order", ["parent_closes_first", "signal_first"])
+def test_promotion_cancellation_after_provider_return_never_publishes_artifact(tmp_path, monkeypatch, order):
+    from tests._cancel_after_return import force_cancel_order
+
+    force_cancel_order(monkeypatch, order)
     db = Database(tmp_path / "promotion.db")
     _accepted_meeting_decision(db, "dec-fence")
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
@@ -446,14 +450,15 @@ def test_promotion_cancellation_after_provider_return_never_publishes_artifact(t
             "SELECT operation_id FROM kernel_parent_runs WHERE kind='decision.promotion-draft'"
         ).fetchone()[0]
         child_id = conn.execute(
-            "SELECT operation_id FROM kernel_operations WHERE parent_operation_id=?",
+            "SELECT operation_id FROM kernel_operations WHERE parent_operation_id=? AND name='inference.invoke'",
             (parent_id,),
         ).fetchone()[0]
         artifact_count = conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0]
-    child_receipt = broker.store.receipt(child_id)
     parent_receipt = broker.store.receipt(parent_id)
     assert artifact_count == 0
-    assert child_receipt is not None and child_receipt["outcome"] == "succeeded"
+    from tests._cancel_after_return import assert_provider_return_on_record
+
+    assert_provider_return_on_record(db, child_id, fenced=order == "signal_first")
     assert parent_receipt is not None and parent_receipt["outcome"] == "cancelled"
 
 

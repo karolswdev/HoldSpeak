@@ -369,8 +369,9 @@ def test_an_off_contract_draft_fails_the_parent_and_returns_the_deterministic_ac
 # ============================================ 4. Cadence: late publication
 
 
+@pytest.mark.parametrize("order", ["parent_closes_first", "signal_first"])
 def test_a_cancelled_cadence_parent_never_publishes_its_late_draft(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, order
 ) -> None:
     """Cancellation lands while the provider is in flight: nothing publishes.
 
@@ -380,6 +381,9 @@ def test_a_cancelled_cadence_parent_never_publishes_its_late_draft(
     drafted text reaches the surface.
     """
     db, broker, service, loop, leaf, _revisions = _rig(tmp_path, monkeypatch)
+    from tests._cancel_after_return import force_cancel_order
+
+    force_cancel_order(monkeypatch, order)
 
     class CancellingIntel:
         active_provider = "local"
@@ -399,12 +403,19 @@ def test_a_cancelled_cadence_parent_never_publishes_its_late_draft(
     assert leaf.attempts == 1
     children = _children(db)
     assert len(children) == 1
-    assert _receipt(db, children[0]["operation_id"]) is not None
+    from tests._cancel_after_return import assert_provider_return_on_record
+
+    # The provider returned in both orders: the receipt keeps that fact.
+    assert_provider_return_on_record(
+        db, children[0]["operation_id"], fenced=order == "signal_first"
+    )
     assert _receipt(db, _parents(db)[0]["operation_id"])["outcome"] == "cancelled"
     stages = _rows(db, "SELECT * FROM kernel_projection_stages")
-    assert [(row["kind"], row["state"]) for row in stages] == [
-        ("cadence-next-action", "DISCARDED")
-    ], stages
+    # Parent closes first: the child staged its draft and the cancelled parent
+    # discarded it. Signal first: the fenced result was never staged.
+    assert [(row["kind"], row["state"]) for row in stages] == (
+        [("cadence-next-action", "DISCARDED")] if order == "parent_closes_first" else []
+    ), stages
 
 
 def _wait(predicate, *, timeout: float = 5.0) -> bool:

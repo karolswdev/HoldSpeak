@@ -22,7 +22,7 @@ from .dispatch_context import (
     require_dispatch_context,
 )
 from .inference import executor_identity
-from .inference_cancel_signal import perform_cancel
+from .inference_cancel_signal import cancelled_evidence, perform_cancel
 from .invocation_sequence import SequenceRegistry
 from .local_runtime_slot import takes_local_runtime_lease
 from .model import KernelRefused, valid_ref
@@ -455,7 +455,7 @@ class InferenceRunner:
             if not publishing:
                 if pending_principal:
                     self._perform_cancel(iid, active, pending_principal)
-                return self._finish(active, iid, "indeterminate" if active.disposition == "unknown" else "cancelled")
+                return self._finish(active, iid, "indeterminate" if active.disposition == "unknown" else "cancelled", returned=True)
             result = {
                 "output": "".join(collected_text),
                 "provider": str(getattr(bound_engine, "active_provider", "") or ""),
@@ -682,7 +682,7 @@ class InferenceRunner:
                 else: publishing=False
             if not publishing:
                 if pending_principal: self._perform_cancel(iid,active,pending_principal)
-                return self._finish(active,iid,"indeterminate" if active.disposition=="unknown" else "cancelled")
+                return self._finish(active,iid,"indeterminate" if active.disposition=="unknown" else "cancelled",returned=True)
             try:
                 result_ref=publish(result) if publish else f"inference-result:{iid}"
             except Exception as exc:  # noqa: BLE001 - projection effect may be indeterminate
@@ -816,7 +816,7 @@ class InferenceRunner:
             before_send()
             return adapter.dispatch(engine,payload,active.cancelled)
         return run_external_egress(connector_id=str(getattr(adapter,"connector_id","inference-provider")),destination=destination,data_classes=tuple(getattr(adapter,"egress_data_classes",("instruction",))),payload_material={"payload_hash":""},sender=send,allowed_destinations=(destination,),parent_operation_id=operation_id,principal=principal,broker=self._broker)
-    def _finish(self,active,iid,outcome, *, cancellation_owner=False, error="", runner_signal="none", send_phase="pre_send"):
+    def _finish(self,active,iid,outcome, *, cancellation_owner=False, error="", runner_signal="none", send_phase="pre_send", returned=False):
         with active.condition:
             # Cancellation owns CANCELLING.  A dispatch-side failure cannot
             # overwrite an acknowledged (or unknown) cancellation while its
@@ -837,9 +837,9 @@ class InferenceRunner:
             # Claim closure but do not expose a terminal state until receipt()
             # has committed.  All cancellation callers wait on `closing`.
             active.closing=True
-        if outcome=="cancelled": runner_signal,send_phase="none","dispatch_intent" if active.dispatch_intent else "pre_send"
+        if outcome=="cancelled": runner_signal,send_phase,kept=cancelled_evidence(active,iid,returned)
         elif outcome=="indeterminate": runner_signal,send_phase="physical_outcome_unknown","dispatch_intent"
-        receipt=self._persist_receipt(active,active.operation_id,outcome,"",runner_signal=runner_signal,send_phase=send_phase)
+        receipt=self._persist_receipt(active,active.operation_id,outcome,kept if outcome=="cancelled" else "",runner_signal=runner_signal,send_phase=send_phase)
         with active.condition:
             active.state=outcome.upper(); active.terminal_outcome=outcome; active.closing=False; active.condition.notify_all()
         return InvocationOutcome(active.operation_id,iid,outcome,"",receipt,error,runner_signal,send_phase)

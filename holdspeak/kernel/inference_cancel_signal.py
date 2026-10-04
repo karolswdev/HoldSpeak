@@ -20,6 +20,21 @@ import uuid
 from typing import Any
 
 
+def cancelled_evidence(active: Any, iid: str, returned: bool) -> tuple[str, str, str]:
+    """Runner signal, send phase and kept result reference for a cancelled child.
+
+    Two facts stay apart. What happened: when the provider call returned after
+    a cancel was requested for this child, the send phase is
+    ``provider_returned`` and the result reference is kept for the record.
+    Whether the result may be used: never. The receipt state is ``cancelled``
+    and the signal is ``cancel_fenced``, so the result is not staged, not
+    published and not returned, whatever the adapter answered to the cancel.
+    """
+    if returned:
+        return "cancel_fenced", "provider_returned", f"inference-result:{iid}"
+    return "none", "dispatch_intent" if active.dispatch_intent else "pre_send", ""
+
+
 def perform_cancel(runner: Any, iid: str, active: Any, principal: Any) -> str:
     """Win the election, submit the admitted cancel signal, and close out."""
     with active.condition:
@@ -97,4 +112,4 @@ def perform_cancel(runner: Any, iid: str, active: Any, principal: Any) -> str:
         return "refused"
 
 
-__all__ = ["perform_cancel"]
+__all__ = ["cancelled_evidence", "perform_cancel"]

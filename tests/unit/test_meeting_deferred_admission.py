@@ -549,16 +549,21 @@ def test_stop_handoff_post_commit_cancels_do_not_serially_delay_stop(tmp_path, m
 
     completed: list[str] = []
     all_cancelled = threading.Event()
+    release_cancels = threading.Event()
+    lock = threading.Lock()
 
     def slow_cancel(invocation_id: str) -> str:
-        time.sleep(0.2)
-        completed.append(invocation_id)
-        if len(completed) == 4:
-            all_cancelled.set()
+        # A provider cancel that does not return until the test lets it. A
+        # wall-clock budget (the old 0.2 s sleep and "Stop in < 0.5 s") failed
+        # on a loaded machine; the order of events cannot.
+        assert release_cancels.wait(120), "the test never released the cancels"
+        with lock:
+            completed.append(invocation_id)
+            if len(completed) == 4:
+                all_cancelled.set()
         return "delayed"
 
     monkeypatch.setattr(broker.inference_runner, "cancel", slow_cancel)
-    began = time.monotonic()
     effect = bundles.request_stop_handoff(
         OWNER,
         command_id=f"meeting-stop:{state.id}",
@@ -566,13 +571,14 @@ def test_stop_handoff_post_commit_cancels_do_not_serially_delay_stop(tmp_path, m
         evidence_provider_id=provider.id,
         planning_reference=db.intel.stop_handoff_planning_reference(state.id),
     )
-    elapsed = time.monotonic() - began
 
     assert effect["state"] == "pending_physical_settlement"
-    # Serial cancellation would be roughly 800ms; the Stop response is only the
-    # durable fence/reservation transaction and stays below the hero-action bar.
-    assert elapsed < 0.5
-    assert all_cancelled.wait(timeout=2.0)
+    # Stop returned while every provider cancel was still held: the response is
+    # only the durable fence/reservation transaction, and no cancel, serial or
+    # not, can delay it.
+    assert completed == []
+    release_cancels.set()
+    assert all_cancelled.wait(timeout=120)
     assert len(completed) == 4
 
 

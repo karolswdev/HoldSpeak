@@ -726,7 +726,7 @@ class InferenceFallbackController:
                     "known_no_generation_transient",
                     "provider_permanent_no_generation", "permission_denied",
                     "local_capacity_unavailable", "invalid_typed_output",
-                    "effect_indeterminate",
+                    "effect_indeterminate", "cancel_fenced",
                 }:
                     raise ConflictError("Attested Runner signal is unknown.", code="inference_route_disposition_evidence_invalid")
                 outcome = str(receipt["state"])
@@ -916,6 +916,8 @@ class InferenceFallbackController:
             # A receipt proves kernel closure, not whether a provider generated.
             # Without Runner's typed evidence a post-intent failure is unknown.
             return "dispatch_outcome_unknown", "dispatch_intent"
+        if typed_signal == "cancel_fenced" and outcome == "cancelled":
+            return "owner_cancelled", "provider_returned"
         if typed_signal == "none" and outcome == "cancelled":
             return (
                 "owner_cancelled",

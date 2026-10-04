@@ -54,6 +54,9 @@ def _install_runner_receipt_evidence_issuer() -> RunnerReceiptEvidenceIssuer:
             "dispatch_outcome_unknown": {("failed", "dispatch_intent")},
             "kernel_refused": {("refused", "pre_send"), ("refused", "dispatch_intent")},
             "unclassified_pre_send": {("failed", "pre_send")},
+            # The provider returned after a cancel was requested for this child:
+            # the return is on the record, the result is fenced from every use.
+            "cancel_fenced": {("cancelled", "provider_returned")},
             "none": {
                 ("succeeded", "provider_returned"), ("failed", "provider_returned"),
                 ("failed", "pre_send"), ("refused", "pre_send"),
