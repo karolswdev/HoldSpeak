@@ -246,3 +246,100 @@ def test_an_item_the_owner_himself_holds_is_his_and_is_counted(hub: Hub) -> None
     assert answer["waitingCount"] == 1
     assert "me" in answer["ownerNames"]
     assert _one_number(hub, brief=True) == answer["count"]
+
+
+def _linked_meeting(hub: Hub, meeting_id: str, project: str) -> str:
+    """A saved meeting, linked to a new Project through the real routes."""
+    from datetime import datetime
+
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState
+
+    started = datetime.now().replace(microsecond=0)
+    hub.db.meetings.save_meeting(MeetingState(
+        id=meeting_id, started_at=started, ended_at=started, title="Planning",
+        intel=IntelSnapshot(timestamp=started.timestamp(), summary="", action_items=[]),
+        intel_status="completed", capture_status="finalized",
+    ))
+    created = _ok(hub.client.post("/api/projects", json={"name": project}))
+    project_id = str(created["project"]["id"])
+    _ok(hub.client.post(f"/api/projects/{project_id}/meetings/{meeting_id}", json={}))
+    return project_id
+
+
+def test_his_own_item_is_counted_when_it_merges_with_a_row_that_waits(hub: Hub) -> None:
+    """Astra's repro on #818: his later-due action and Dana's Room commitment
+    name the same thing. The merged row is his and is counted."""
+    from datetime import date, timedelta
+
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    later = (date.today() + timedelta(days=9)).isoformat()
+    title = "Send the capacity plan"
+    _linked_meeting(hub, "m-merge", "Capacity")
+    hub.db.plugins.record_artifact(
+        artifact_id="artifact-merge", meeting_id="m-merge", artifact_type="action_items",
+        title="Actions", structured_json={"action_items": [{"task": title, "owner": "Dana", "due": ""}]},
+        status="accepted", plugin_id="action_owner_enforcer", plugin_version="fence",
+    )
+    proposal = next(
+        row for row in ProposalBridgeService(hub.db).bridge_meeting_artifacts("m-merge") if row.text == title)
+    _ok(hub.client.post(f"/api/proposals/{proposal.id}/confirm", json={"owner": "Dana", "due": later}))
+
+    before = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+    dana = [row for row in before["items"] if row["title"] == title]
+    assert len(dana) == 1 and dana[0]["why"] == "WAITING ON DANA" and dana[0]["waiting"] is True, dana
+
+    is_error, action = hub.mcp("door.add_item", {"task": title, "owner": "Me", "due": later})
+    assert not is_error, action
+
+    after = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+    rows = [row for row in after["items"] if row["title"] == title]
+    assert len(rows) == 1, rows
+    row = rows[0]
+    assert row["dedupCount"] == 2
+    # One projection is his: the row is his, leads with his reason, is counted.
+    assert row["waiting"] is False and row["why"] == "YOURS", row
+    assert row["ref"] in [member["ref"] for member in after["members"]]
+    assert after["count"] == before["count"] + 1
+    assert after["waitingCount"] == before["waitingCount"] - 1
+    assert _one_number(hub, brief=True) == after["count"]
+
+
+def test_one_meeting_decision_with_its_proposal_is_one_member(hub: Hub) -> None:
+    """Astra's repro on #818: the recorded decision and the proposal the
+    bridge makes from the same artifact are ONE member; confirming settles both."""
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    _linked_meeting(hub, "m-bridge", "Release")
+    base = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+
+    hub.db.plugins.record_artifact(
+        artifact_id="artifact-bridge", meeting_id="m-bridge", artifact_type="decisions",
+        title="Decisions", structured_json={"decisions": [{"decision": "Ship on Friday"}]},
+        plugin_id="decision_capture",
+    )
+    hub.db.decisions.reconcile_artifact("artifact-bridge")
+    recorded = hub.db.decisions.list(lifecycle="recorded")
+    assert [decision.text for decision in recorded] == ["Ship on Friday"]
+    proposals = ProposalBridgeService(hub.db).bridge_meeting_artifacts("m-bridge")
+    assert [(row.kind, row.text) for row in proposals] == [("decision", "Ship on Friday")]
+
+    asked = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+    named = [row for row in asked["items"] if "Ship on Friday" in row["title"]]
+    # ONE member: the Room's proposal row. The recorded decision is not a second.
+    assert len(named) == 1 and named[0].get("proposalId") == proposals[0].id, named
+    assert f"decision:{recorded[0].id}" not in [member["ref"] for member in asked["members"]]
+    assert asked["count"] == base["count"] + 1
+    assert _one_number(hub) == asked["count"]
+
+    # Confirming the proposal settles both: neither the proposal nor the
+    # recorded decision asks again. The owner he names is waited on.
+    from datetime import date, timedelta
+
+    later = (date.today() + timedelta(days=9)).isoformat()
+    _ok(hub.client.post(f"/api/proposals/{proposals[0].id}/confirm", json={"owner": "Dana", "due": later}))
+    settled = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+    assert not any(row.get("proposalId") == proposals[0].id for row in settled["items"])
+    assert not any(str(member["ref"]).startswith("decision:") for member in settled["members"])
+    assert settled["count"] == base["count"], [(r["title"], r["why"]) for r in settled["items"]]
+    assert _one_number(hub, brief=True) == settled["count"]

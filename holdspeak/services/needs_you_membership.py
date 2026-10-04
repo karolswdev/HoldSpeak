@@ -338,7 +338,33 @@ def compute_needs_you(
     others = [row for row in combined if not is_people_row(row)]
     # A decision keeps its own row and its own ref (``decision:<id>``): the
     # Brief names the same ref, so the two count it once.
-    ranked = rank_items(dedup(others, clock) + people + decision_items(decisions), clock)
+    # A merged row waits on someone else only when EVERY merged projection
+    # does. When one projection is the owner's own (YOURS, due, overdue), the
+    # row is his: it leads with his reason and it is counted.
+    waits: dict[str, bool] = {}
+    for row in others:
+        mark = waits_on_other(row, names)
+        for key in [row.get("id")] + [
+            source.get("id") for source in row.get("sources") or [] if isinstance(source, dict)
+        ]:
+            if key is not None:
+                waits.setdefault(str(key), mark)
+    merged = dedup(others, clock)
+    for row in merged:
+        sources = [source for source in row.get("sources") or [] if isinstance(source, dict)]
+        if len(sources) < 2:
+            row["waiting"] = waits_on_other(row, names)
+            continue
+        marks = [waits.get(str(source.get("id")), False) for source in sources]
+        row["waiting"] = all(marks)
+        if not row["waiting"] and waits_on_other(row, names):
+            his = next(source for source, mark in zip(sources, marks) if not mark)
+            row["why"] = his.get("why") or row.get("why")
+            row["severity"] = his.get("severity") or row.get("severity")
+    singles = people + decision_items(decisions)
+    for row in singles:
+        row["waiting"] = waits_on_other(row, names)
+    ranked = rank_items(merged + singles, clock)
     muted_projects = {str(pid) for pid in muted_project_ids}
     unmuted_items: list[dict[str, Any]] = []
     muted_items: list[dict[str, Any]] = []
@@ -350,7 +376,6 @@ def compute_needs_you(
         else:
             item["muted"] = False
             unmuted_items.append(item)
-        item["waiting"] = waits_on_other(item, names)
     # What the owner waits on someone else for is listed and is not counted.
     waiting_items = [item for item in unmuted_items if item["waiting"]]
     counted_items = [item for item in unmuted_items if not item["waiting"]]
@@ -454,12 +479,40 @@ def _read_decisions(db: Any, principal: Any) -> list[dict[str, Any]]:
             "projectId": "",
             "since": desk.get("created_at") or "",
         })
+    # One meeting decision is ONE member. The proposal bridge makes a
+    # proposal from the same artifact; when that proposal is in a Room (it
+    # is the row that asks) or the owner has confirmed or dismissed it (he
+    # has decided), the recorded decision does not ask a second time.
+    proposals: dict[str, list[Any]] = {}
+
+    def has_proposal(record: dict[str, Any]) -> bool:
+        meeting_id = str(record.get("source_meeting_id") or "")
+        if not meeting_id:
+            return False
+        if meeting_id not in proposals:
+            proposals[meeting_id] = [
+                proposal for proposal in db.proposals.list_proposals(meeting_id=meeting_id)
+                if proposal.kind == "decision"
+            ]
+        text = _decision_text(record.get("text"))
+        artifact = str(record.get("source_artifact_id") or "")
+        for proposal in proposals[meeting_id]:
+            if str(proposal.source_artifact_id or "") != artifact:
+                continue
+            if text not in (_decision_text(proposal.text), _decision_text(proposal.original_text)):
+                continue
+            if proposal.state != "proposed" or proposal.project_id:
+                return True
+        return False
+
     offset = 0
     while True:
         rows = list(service.list_decisions(
             principal, lifecycle="recorded", limit=500, offset=offset,
         ).get("decisions") or [])
         for record in rows:
+            if has_proposal(record):
+                continue
             out.append({
                 "id": record.get("id"),
                 "title": record.get("text") or record.get("id"),
@@ -470,6 +523,10 @@ def _read_decisions(db: Any, principal: Any) -> list[dict[str, Any]]:
         if len(rows) < 500:
             break
     return out
+
+
+def _decision_text(text: Any) -> str:
+    return " ".join(str(text or "").split()).lower()
 
 
 def _is_owner(principal: Any) -> bool:

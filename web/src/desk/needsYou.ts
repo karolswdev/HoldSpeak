@@ -355,15 +355,33 @@ export function computeNeedsYou(
   const others = combined.filter((item) => item.source !== "people_commitment");
   // A decision keeps its own row and its own ref (`decision:<id>`): the Brief
   // names the same ref, so the two count it once.
-  const ranked = rankAttention(
-    [...dependencies.dedupAttention(others, now), ...people, ...decisionItems(input.decisions ?? [])],
-    now,
-  ) as NeedsYouRoomItem[];
+  // A merged row waits on someone else only when EVERY merged projection
+  // does. When one projection is the owner's own (YOURS, due, overdue), the
+  // row is his: it leads with his reason and it is counted.
+  const waits = new Map<string, boolean>();
+  for (const row of others) {
+    const mark = waitsOnOther(row, selfNames);
+    for (const key of [row.id, ...(row.sources ?? []).map((source) => source.id)]) {
+      if (key != null && !waits.has(String(key))) waits.set(String(key), mark);
+    }
+  }
+  const merged = dependencies.dedupAttention(others, now).map((row) => {
+    const sources = row.sources ?? [];
+    if (sources.length < 2) return { ...row, waiting: waitsOnOther(row, selfNames) };
+    const marks = sources.map((source) => waits.get(String(source.id)) ?? false);
+    const waiting = marks.every(Boolean);
+    if (waiting || !waitsOnOther(row, selfNames)) return { ...row, waiting };
+    const his = sources[marks.indexOf(false)];
+    return { ...row, waiting, why: his.why || row.why, severity: his.severity || row.severity };
+  });
+  const singles = [...people, ...decisionItems(input.decisions ?? [])].map((row) => (
+    { ...row, waiting: waitsOnOther(row, selfNames) }
+  ));
+  const ranked = rankAttention([...merged, ...singles], now) as NeedsYouRoomItem[];
   const mutedProjects = mutedSet(input);
   const mutedItems: NeedsYouRoomItem[] = [];
   const unmutedItems: NeedsYouRoomItem[] = [];
-  for (const ranked_ of ranked) {
-    const item = { ...ranked_, waiting: waitsOnOther(ranked_, selfNames) };
+  for (const item of ranked) {
     if (Boolean(item.muted) || (item.projectId && mutedProjects.has(String(item.projectId))))
       mutedItems.push(item);
     else unmutedItems.push(item);

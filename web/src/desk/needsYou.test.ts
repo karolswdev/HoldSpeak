@@ -152,6 +152,34 @@ describe("the one needs-you membership", () => {
     expect(why).toEqual({ mine: "YOURS", label: "YOURS", "room-mine": "YOURS", priya: "WAITING ON PRIYA" });
   });
 
+  it("counts a merged row when one of its projections is the owner's own", () => {
+    // Astra's repro on #818: his later-due action and Dana's Room commitment
+    // name the same thing.
+    const input: NeedsYouInputs = {
+      door: { board: { waiting: [
+        doorCard("mine", { title: "Send the plan", owner: "Me", due: "2026-10-10" }),
+      ] } },
+      roomItems: [room("dana", {
+        title: "Send the plan", owner: "Dana", why: "WAITING ON DANA", dueAt: "2026-10-10",
+      })],
+      now: NOW,
+    };
+    const result = computeNeedsYou(input);
+    expect(result.unmutedItems).toHaveLength(1);
+    expect(result.unmutedItems[0]).toMatchObject({ waiting: false, why: "YOURS", dedupCount: 2 });
+    expect(result.count).toBe(1);
+    expect(result.waitingCount).toBe(0);
+    // Every projection waits on someone else: the merged row waits.
+    const both = computeNeedsYou({
+      ...input,
+      door: { board: { waiting: [
+        doorCard("priya", { title: "Send the plan", owner: "Priya", due: "2026-10-10" }),
+      ] } },
+    });
+    expect(both.count).toBe(0);
+    expect(both.waitingCount).toBe(1);
+  });
+
   it("keeps a retried job as RETRYING after its due time", () => {
     const retrying = meeting({
       id: "R1",
