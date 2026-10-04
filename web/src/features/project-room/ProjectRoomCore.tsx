@@ -259,9 +259,12 @@ export function kindToPhrase(kind: string): string {
 function RoomHeadline({
   count,
   isAccent,
+  unread,
 }: {
   count: number;
   isAccent: boolean;
+  /** A Room read failed: the Room cannot say it is clear. */
+  unread: boolean;
 }) {
   return (
     <span
@@ -271,7 +274,7 @@ function RoomHeadline({
     >
       {/* PHILO-13-03 (canvas C1-4a): a Room counts its own open items, a
           narrower set than the Desk's one "needs you" number. */}
-      {count > 0 ? `${count} open here` : "Clear here"}
+      {count > 0 ? `${count} open here` : unread ? "Not all read" : "Clear here"}
     </span>
   );
 }
@@ -314,7 +317,11 @@ function RoomHead({
       <span ref={nameRef} className="room-head-name-measure" aria-hidden="true">
         {room.project.name}
       </span>
-      <RoomHeadline count={needsYouCount} isAccent={needsYouCount > 0} />
+      <RoomHeadline
+        count={needsYouCount}
+        isAccent={needsYouCount > 0}
+        unread={room.health.state === "degraded" || room.needsYou.state === "degraded"}
+      />
       {showOutcome ? (
         <p className="room-head-outcome surface-primary" data-testid="room-head-outcome">
           {room.project.outcomeText || room.project.name}
@@ -378,7 +385,25 @@ function healthToneToState(tone: "green" | "amber" | "red"): "success" | "warnin
   return "success";
 }
 
-function HealthSection({ room }: { room: RoomSnapshot }) {
+function HealthSection({ room, onRetry }: { room: RoomSnapshot; onRetry: () => void }) {
+  // A failed health read is named, with Retry. It is never drawn as "no
+  // health rows" (the same species as ITEMS UNAVAILABLE).
+  if (room.health.state === "degraded") {
+    return (
+      <SurfaceSection
+        label="HEALTH"
+        actions={
+          <Button dense variant="ghost" onClick={onRetry} data-testid="health-retry">
+            Retry
+          </Button>
+        }
+      >
+        <span data-testid="health-not-read">
+          <StateChip state="unreachable" label="HEALTH NOT READ" />
+        </span>
+      </SurfaceSection>
+    );
+  }
   const health = room.health.state === "ok"
     ? (room.health as RoomHealthData & { state: "ok" }) : null;
   if (!health?.signals) return null;
@@ -831,7 +856,7 @@ function NeedsYouSection({
     return (
       <SurfaceSection label="OPEN HERE" actions={reviewAction}>
         <p className="room-empty-line" data-testid="needs-you-empty">
-          Nothing open{nextCheck ? ` · next check ${formatTimeShort(nextCheck)}` : ""}
+          {room.health.state === "degraded" ? "Not all read" : "Nothing open"}{nextCheck ? ` · next check ${formatTimeShort(nextCheck)}` : ""}
         </p>
       </SurfaceSection>
     );
@@ -2323,7 +2348,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
                 <RoomHead room={ctrl.room} ctrl={ctrl} updateCtrl={updateCtrl} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "20ms" }}>
-                <HealthSection room={ctrl.room} />
+                <HealthSection room={ctrl.room} onRetry={handleRefresh} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "40ms" }}>
                 <NeedsYouSection room={ctrl.room} ctrl={ctrl} reviewCtrl={reviewCtrl} pendingCount={pendingCount} />
