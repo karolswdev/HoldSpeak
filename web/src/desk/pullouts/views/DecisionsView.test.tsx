@@ -1,18 +1,23 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DecisionsView } from "./DecisionsView";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 
-const bus = vi.hoisted(() => ({ handlers: new Set<(frame: unknown) => void>() }));
+// One `subscribe` for the whole file, as the real provider gives (a
+// `useCallback`). A new function per render made the view subscribe again on
+// each render, and that cancelled a re-read that was waiting.
+const bus = vi.hoisted(() => {
+  const handlers = new Set<(frame: unknown) => void>();
+  const subscribe = (type: string, handler: (frame: unknown) => void) => {
+    if (type !== "desk_changed") return () => undefined;
+    handlers.add(handler);
+    return () => handlers.delete(handler);
+  };
+  return { handlers, subscribe };
+});
 vi.mock("../../../runtime/RuntimeBus", () => ({
-  useRuntimeBus: () => ({
-    subscribe: (type: string, handler: (frame: unknown) => void) => {
-      if (type !== "desk_changed") return () => undefined;
-      bus.handlers.add(handler);
-      return () => bus.handlers.delete(handler);
-    },
-  }),
+  useRuntimeBus: () => ({ subscribe: bus.subscribe }),
 }));
 
 vi.mock("../../../lib/api", () => ({
@@ -52,6 +57,10 @@ const detail = {
 };
 
 describe("HS-128-04 Receipts view", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     apiFetch.mockReset();
     apiFetch.mockImplementation((path: string) => {
@@ -110,20 +119,30 @@ describe("HS-128-04 Receipts view", () => {
       return Promise.resolve([receipt]);
     });
 
+    // The test owns the clock: the search wait (200 ms) and the bus wait
+    // (300 ms) are stepped, so a slow machine cannot change the order. With
+    // real timers each step had one second, and a loaded full run missed it.
+    vi.useFakeTimers();
+    const step = (ms: number) => act(async () => { await vi.advanceTimersByTimeAsync(ms); });
+
     render(<DecisionsView />);
     const field = screen.getByRole("searchbox", { name: "Search decisions" });
     fireEvent.change(field, { target: { value: "alpha" } });
-    await screen.findByText("Alpha decision");
+    await step(200);
+    expect(screen.getByText("Alpha decision")).toBeTruthy();
+    expect(alphaReads).toBe(1);
 
     // A write somewhere: the view re-reads "alpha"; that read is slow.
-    bus.handlers.forEach((handler) => handler({ type: "desk_changed", data: {} }));
-    await waitFor(() => expect(alphaReads).toBe(2));
+    act(() => bus.handlers.forEach((handler) => handler({ type: "desk_changed", data: {} })));
+    await step(300);
+    expect(alphaReads).toBe(2);
 
     fireEvent.change(field, { target: { value: "beta" } });
-    await screen.findByText("Beta decision");
+    await step(200);
+    expect(screen.getByText("Beta decision")).toBeTruthy();
 
-    releaseAlpha([alpha]);
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await act(async () => { releaseAlpha([alpha]); });
+    await step(50);
     expect(screen.getByText("Beta decision")).toBeTruthy();
     expect(screen.queryByText("Alpha decision")).toBeNull();
     expect((field as HTMLInputElement).value).toBe("beta");
