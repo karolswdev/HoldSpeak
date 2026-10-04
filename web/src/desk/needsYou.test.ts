@@ -82,7 +82,7 @@ function meeting(wire: Record<string, unknown>) {
 }
 
 describe("the one needs-you membership", () => {
-  it("counts a settled R1-R3 example once and preserves each ref", () => {
+  it("counts a settled R1-R4 example once and preserves each ref", () => {
     const door: NeedsYouDoorProjection = {
       board: {
         overdue: [doorCard("A1", { due: "2026-09-30" })],
@@ -110,19 +110,28 @@ describe("the one needs-you membership", () => {
         meeting({ id: "F1", title: "Failed", intel_status: "saved", intel_job: { status: "failed", attempts: 1, last_error: "worker failed" } }),
         meeting({ id: "S1", title: "Saved", intel_status: "ready", intel_job: { status: "complete", attempts: 1, last_error: null } }),
       ],
+      decisions: [{ id: "R1", title: "Adopt the queue", since: "2026-09-30T10:00:00Z" }],
       now: NOW,
     });
 
+    // Owner rulings 2026-10-04: A3 waits on Priya, so it is listed and is not
+    // counted; the decision that waits for review is a member.
     expect(result.count).toBe(6);
     expect(result.members.map(({ ref }) => ref).sort()).toEqual([
       "A1",
       "A2",
-      "A3",
       "A4",
       "F1",
       "blocker:engines",
+      "decision:R1",
     ]);
-    expect(result.unmutedItems.map((item) => item.ref)).toEqual(["A1", "A2", "A4", "A3"]);
+    expect(result.waitingCount).toBe(1);
+    expect(result.waitingItems.map((item) => item.ref)).toEqual(["A3"]);
+    expect(result.unmutedItems.map((item) => item.ref)).toEqual(["A1", "A2", "decision:R1", "A4", "A3"]);
+    expect(result.unmutedItems.map((item) => item.waiting)).toEqual([false, false, false, false, true]);
+    const decision = result.unmutedItems.find((item) => item.ref === "decision:R1");
+    // Review opens the decision: the ref is its Desk route token.
+    expect(decision).toMatchObject({ source: "decision", why: "TO REVIEW", openRef: "decision:R1" });
     expect(result.mutedItems.map((item) => item.ref)).toEqual(["M1"]);
   });
 
@@ -299,6 +308,14 @@ describe("the shared needs-you read", () => {
       // producer inputs, names the same members in the same order.
       const twin = computeNeedsYou(oracleInputs(seeded, "before"));
       expect(twin.members.map((member) => member.ref)).toEqual(hubRefs);
+      // What the owner waits on someone else for: the hub and the twin list
+      // the same rows, and neither counts them.
+      expect(seeded.expectedWaitingRefs).toEqual(["philo13-a2-A3"]);
+      expect(wire.needsYou.waitingCount).toBe(1);
+      expect(hook.result.current.waitingCount).toBe(1);
+      expect(hook.result.current.waitingItems.map((item) => item.ref)).toEqual(seeded.expectedWaitingRefs);
+      expect(twin.waitingItems.map((item) => item.ref)).toEqual(seeded.expectedWaitingRefs);
+      expect(hubRefs).not.toContain("philo13-a2-A3");
       expect(wire.needsYou.members.map((member: { ref: string }) => member.ref)).toEqual(hubRefs);
       hook.unmount();
     } finally {
@@ -423,8 +440,8 @@ const FIXTURE_SCRIPT = resolve(REPO_ROOT, "scripts/philo13_needs_you_fixture.py"
 const ORACLE_REFS = [
   "philo13-a2-A1",
   "A2 confirm the room commitment",
-  "philo13-a2-A3",
   "philo13-a2-A4",
+  "decision:philo13-a2-decision",
   "blocker:engines",
   "philo13-a2-failed-meeting",
 ];
@@ -456,6 +473,7 @@ function oracleInputs(payload: Record<string, any>, phase: "before" | "after"): 
     assignments: wire.assignments,
     assignmentRead: wire.assignmentRead,
     meetings,
+    decisions: wire.decisions,
     now: new Date(wire.now),
   };
 }

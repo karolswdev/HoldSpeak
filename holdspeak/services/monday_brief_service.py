@@ -283,6 +283,19 @@ _MEETING_PRIORITY = 50
 SHELF_STATES = ("acknowledged", "deferred")
 
 
+class _NeedsYouRows(list):
+    """The Brief's WAITING rows from the one ``needs you`` rule.
+
+    ``needs_you_count`` is the rule's number. ``counted_decisions`` are the refs of the
+    decisions that number counts; their rows are in DECISIONS.
+    """
+
+    def __init__(self, rows: Any = (), *, needs_you_count: int, counted_decisions: set[str]) -> None:
+        super().__init__(rows)
+        self.needs_you_count = needs_you_count
+        self.counted_decisions = counted_decisions
+
+
 @dataclass
 class BriefItem:
     id: str
@@ -402,8 +415,14 @@ class MondayBriefService:
         # The WAITING rows are the members of the one ``needs you`` rule, so
         # ``N things waiting`` is the number the bell, the Chair and the
         # notification show. Read before the brief's own connection.
+        # Owner ruling 2026-10-04: a decision that waits for his review is a
+        # member, so the number counts it; its row stays in DECISIONS and that
+        # section's own count leaves it out (it is said once). What he waits
+        # on someone else for is not counted and is not a WAITING row.
         member_items = self._collect_needs_you(principal)
-        needs_you_count = None if member_items is None else len(member_items)
+        needs_you_count = None if member_items is None else int(
+            getattr(member_items, "needs_you_count", len(member_items)))
+        counted_decisions = set(getattr(member_items, "counted_decisions", ()))
         waiting_items = self._collect_coverage_gaps(principal) + (
             self._collect_waiting(principal) if member_items is None else member_items
         )
@@ -495,7 +514,9 @@ class MondayBriefService:
                     },
                 ),
             }
-            headline, sections = self._compose(sections, waiting_count=needs_you_count)
+            headline, sections = self._compose(
+                sections, waiting_count=needs_you_count, counted_decisions=counted_decisions,
+            )
             generated_at = period_end.isoformat()
             conn.execute(
                 """INSERT INTO monday_briefs
@@ -536,7 +557,12 @@ class MondayBriefService:
             return brief
 
     def _collect_needs_you(self, principal: Any) -> list[BriefItem] | None:
-        """One WAITING row per member of the one ``needs you`` rule.
+        """The WAITING rows, with the one number and the decisions it counts.
+
+        One WAITING row per member of the one ``needs you`` rule, except a
+        decision that waits for review: its row is in DECISIONS, and its ref
+        is in ``counted_decisions`` so that section does not count it again.
+        ``needs_you_count`` is the rule's ``count`` (:class:`_NeedsYouRows`).
 
         The rule is ``desk.needs_you`` (``needs_you_membership``): the same
         members, in the same order, that the bell and the Chair show. A
@@ -568,8 +594,12 @@ class MondayBriefService:
         rows: list[BriefItem] = []
         # Rank order is kept: a higher priority sorts first in the section.
         priority = 300
+        counted_decisions: set[str] = set()
         for row in answer.get("items") or []:
-            if row.get("muted"):
+            if row.get("muted") or row.get("waiting"):
+                continue
+            if row.get("source") == "decision":
+                counted_decisions.add(str(row.get("ref") or row.get("id")))
                 continue
             card = row.get("_doorCard") if isinstance(row.get("_doorCard"), dict) else None
             title = str(row.get("title") or "Untitled")
@@ -597,16 +627,21 @@ class MondayBriefService:
         for meeting in answer.get("failedMeetings") or []:
             rows.append(item(f"Summary failed: {meeting.get('title') or 'Meeting with no title'}",
                              None, f"meeting:{meeting.get('id')}", 110))
-        return rows
+        return _NeedsYouRows(
+            rows, needs_you_count=int(answer.get("count", len(rows) + len(counted_decisions))),
+            counted_decisions=counted_decisions,
+        )
 
     def _compose(
         self, sections: dict[str, list[BriefItem]], *, waiting_count: int | None = None,
+        counted_decisions: set[str] | None = None,
     ) -> tuple[str, dict[str, list[BriefItem]]]:
         """Compose an honest, deterministic headline and ordered fixed sections.
 
         ``waiting_count`` is the one ``needs you`` number. When given, it is
         the ``N things waiting`` count; the section's own row count is not a
-        second number.
+        second number. ``counted_decisions`` are the decision refs that number
+        already counts; ``N decisions waiting`` leaves their review rows out.
         """
         finalized_sections = {
             section: self._sort_section(section, sections.get(section, []))
@@ -617,6 +652,13 @@ class MondayBriefService:
         if waiting_count is not None:
             counts["waiting"] = waiting_count
             total_items += waiting_count
+            said = counted_decisions or set()
+            again = sum(
+                1 for item in finalized_sections["decisions"]
+                if item.source_ref in said and item.text.startswith("Review decision: ")
+            )
+            counts["decisions"] -= again
+            total_items -= again
         if total_items == 0:
             return "No changes", finalized_sections
 

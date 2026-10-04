@@ -403,7 +403,7 @@ TOOLS.extend([
         ["entry_id"],
     ),
     _mcp_tool("desk.snapshot", "Read one coherent snapshot of the durable HoldSpeak desk.", {}),
-    _mcp_tool("desk.needs_you", "What needs me, by the one rule every face uses: follow-through cards that ask me (overdue, due, waiting, unassigned), every project room's attention items, engine blockers on the meeting path and meetings whose summary failed. One count. Muted projects are marked and not counted. Returns {count, members, items, blockers, failedMeetings, projects, next, coverage, complete} -- coverage names every expected source that was not observed. The text of a 1:1 commitment is withheld; it is still counted.", {}),
+    _mcp_tool("desk.needs_you", "What needs me, by the one rule every face uses: follow-through cards that ask me (overdue, due, unassigned), every project room's attention items, decisions that wait for my review, engine blockers on the meeting path and meetings whose summary failed. One count. An item I wait on someone else for is marked waiting and is not counted (waitingCount). Muted projects are marked and not counted. Returns {count, waitingCount, members, items, blockers, failedMeetings, projects, next, coverage, complete} -- coverage names every expected source that was not observed. The text of a 1:1 commitment is withheld; it is still counted.", {}),
     _mcp_tool("settings.hub", "Read the settings hub row facts: module state tokens for the settings truth table.", {}),
     _mcp_tool(
         "decision_record.list", "List decision records, newest first.",

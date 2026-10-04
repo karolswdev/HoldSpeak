@@ -61,6 +61,10 @@ D1_TASK = "D1 completed action"
 
 PROPOSAL_ARTIFACT_ID = "philo13-a2-action-artifact"
 
+DECISION_ID = "philo13-a2-decision"
+DECISION_TITLE = "R1 adopt the release checklist"
+DECISION_REF = f"decision:{DECISION_ID}"
+
 _ORACLE_MEETING_IDS = frozenset({
     MAIN_MEETING_ID,
     MUTED_MEETING_ID,
@@ -75,8 +79,18 @@ def _expected_refs() -> list[str]:
     The Room producer's ref is its stable title, while Door and meeting refs
     are their persisted IDs.  Keep this contract explicit: an alias such as
     ``A2Room`` would hide a changed producer ref.
+
+    Owner rulings 2026-10-04: A3 names another owner (Priya) and is due
+    later, so the owner WAITS on it; it is listed and is not a member
+    (``_expected_waiting_refs``).  The decision that waits for his review is
+    a member.
     """
-    return [A1_ID, A2_TASK, A3_ID, A4_ID, "blocker:engines", FAILED_MEETING_ID]
+    return [A1_ID, A2_TASK, A4_ID, DECISION_REF, "blocker:engines", FAILED_MEETING_ID]
+
+
+def _expected_waiting_refs() -> list[str]:
+    """The rows the owner waits on someone else for: listed, not counted."""
+    return [A3_ID]
 
 
 def _owner_home() -> Path:
@@ -469,6 +483,22 @@ def _confirm_a2(db: Any, *, due: str) -> dict[str, Any]:
     }
 
 
+def _propose_decision(db: Any) -> dict[str, Any]:
+    """One Desk decision that waits for the owner's review.
+
+    The real producer: ``PrimitiveService.create_decision``, the method the
+    declared ``decision.create`` operation calls (HTTP ``POST /api/decisions``,
+    MCP ``desk.create kind=decisions``).
+    """
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.primitive_service import PrimitiveService
+
+    owner = Principal(PrincipalKind.OWNER, OWNER_IDENTITY)
+    return _jsonable(PrimitiveService(db).create_decision(
+        owner, decision_id=DECISION_ID, title=DECISION_TITLE, status="proposed",
+    ))
+
+
 def _set_mute(db: Any, muted_project_id: str) -> dict[str, Any]:
     from holdspeak.services.heartbeat_service import HeartbeatService
 
@@ -556,6 +586,7 @@ def seed_week(db_path: Path, *, home: Path | None = None, now: datetime | None =
         dates = _seed_meetings_and_projects(db, clock)
         chain = _confirm_a2(db, due=clock.date().isoformat())
         settings = _set_mute(db, dates["muted_project_id"])
+        _propose_decision(db)
         cleared = _clear_existing_assignments(db)
 
         # Router composition and a fresh Database instance must not resurrect
@@ -592,7 +623,8 @@ def seed_week(db_path: Path, *, home: Path | None = None, now: datetime | None =
             "now": clock.isoformat(), "dates": dates, "ids": ids,
             "before": before,
             "mutation": {"method": "PATCH", "path": f"/api/all-action-items/{A1_ID}", "body": {"status": "done"}},
-            "expectedRefs": _expected_refs(), "expectedCount": 6, "producerEvidence": evidence,
+            "expectedRefs": _expected_refs(), "expectedCount": 6,
+            "expectedWaitingRefs": _expected_waiting_refs(), "producerEvidence": evidence,
             "assignments": engines, "heartbeat": settings,
         }
     finally:
@@ -620,6 +652,11 @@ def _inputs(db: Any, now: datetime) -> dict[str, Any]:
             client.get("/api/meetings?limit=500&offset=0"), "meeting"
         )
     heartbeat = HeartbeatService(db).get_settings()
+    # The decisions that wait for review, as the hub's rule reads them.
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.needs_you_membership import _read_decisions
+
+    decisions = _read_decisions(db, Principal(PrincipalKind.OWNER, OWNER_IDENTITY))
     meeting_rows = meetings_wire.get("meetings", [])
     if not isinstance(meeting_rows, list):
         raise RuntimeError("meeting route did not return a meetings list")
@@ -640,6 +677,7 @@ def _inputs(db: Any, now: datetime) -> dict[str, Any]:
         "meetingsWire": _jsonable(meetings_wire),
         "heartbeat": _jsonable(heartbeat),
         "mutedProjects": list(heartbeat.get("muted_projects", [])),
+        "decisions": _jsonable(decisions),
     }
 
 
@@ -827,6 +865,7 @@ def export_week(db_path: Path, *, home: Path | None = None, now: datetime | None
             "schema": ORACLE_SCHEMA, "mode": "export", "db": str(path), "home": str(isolated_home),
             "before": before, "after": after,
             "expectedRefs": _expected_refs(),
+            "expectedWaitingRefs": _expected_waiting_refs(),
             "expectedBeforeCount": 6, "expectedAfterCount": 5,
             "actualMutation": mutation,
             "mutation": mutation,
@@ -922,6 +961,7 @@ def dedup_probe(db_path: Path, *, home: Path | None = None, now: datetime | None
             # only the producer inputs used by the C4 mutation fence.
             "expectedRefs": seeded["expectedRefs"],
             "expectedCount": seeded["expectedCount"],
+            "expectedWaitingRefs": seeded["expectedWaitingRefs"],
             "expectedMutantCount": seeded["expectedCount"] + 1,
             "producerEvidence": {
                 "doorRoute": {
