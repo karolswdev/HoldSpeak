@@ -343,54 +343,69 @@ class TestArrivalProposals:
             _settle(page)
 
             confirm_btns = page.locator("[data-testid='arrival-proposal-confirm']")
-            initial_count = confirm_btns.count()
-            assert initial_count >= 1, "No Confirm buttons to click"
+            assert confirm_btns.count() >= 2, "The seed gives an action and a decision proposal"
 
-            before = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
-            proposals_before = {
-                row["id"]: row["title"] for row in before["items"] if row.get("source") == "proposal"
-            }
+            # The proposal is chosen by its kind, never by its place in the
+            # list (the ids are random, so the order is). Each kind results
+            # in a different member of the hub's one rule (#788):
+            #   action   -> a Room commitment that owns its action item; the
+            #               commitment row is the member, no Door card.
+            #   decision -> an action item with no owner; its Door card
+            #               (UNASSIGNED) is the member.
+            seeded = _api(page, "GET", "/api/projects/proj-a/proposals", token=TOKEN)["proposals"]
+            by_kind = {p["kind"]: p for p in seeded if p["state"] == "proposed"}
+            assert {"action", "decision"} <= set(by_kind), seeded
 
-            confirm_btns.first.click()
+            def proposals(answer: dict) -> dict:
+                return {row["id"]: row["title"] for row in answer["items"]
+                        if row.get("source") == "proposal"}
 
-            page.wait_for_timeout(1500)
-            _settle(page)
+            for kind in ("action", "decision"):
+                proposal = by_kind[kind]
+                title = proposal["text"]
+                before = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
+                count_before = confirm_btns.count()
+                assert f"proposal:{proposal['id']}" in proposals(before), (kind, before["items"])
 
-            new_count = page.locator("[data-testid='arrival-proposal-confirm']").count()
-            assert new_count == initial_count - 1, (
-                f"Confirm count didn't drop: {initial_count} -> {new_count}"
-            )
+                page.get_by_role("button", name=f"Confirm: {title}", exact=True).click()
+                page.wait_for_timeout(1500)
+                _settle(page)
 
-            # Since #788 the hub's one rule counts the Door's asking columns.
-            # A confirmed proposal becomes an action item with no owner: its
-            # proposal row leaves and its Door card (UNASSIGNED) joins. The
-            # number can stay the same; the headline is the hub's number.
-            after = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
-            proposals_after = {
-                row["id"]: row["title"] for row in after["items"] if row.get("source") == "proposal"
-            }
-            left = set(proposals_before) - set(proposals_after)
-            assert len(left) == 1 and not set(proposals_after) - set(proposals_before), (
-                proposals_before, proposals_after,
-            )
-            confirmed_title = proposals_before[left.pop()]
-            door_rows = [
-                row for row in after["items"]
-                if row.get("source") == "action_item" and row["title"] == confirmed_title
-            ]
-            assert [row["why"] for row in door_rows] == ["UNASSIGNED"], after["items"]
-            assert door_rows[0]["ref"] in {member["ref"] for member in after["members"]}
-            new_headline = (headline.text_content() or "").strip()
-            assert new_headline.startswith(f"{after['count']} need"), (
-                f"Headline is not the hub's number {after['count']}: {new_headline}"
-            )
+                assert confirm_btns.count() == count_before - 1, (
+                    f"{kind}: Confirm count didn't drop: {count_before} -> {confirm_btns.count()}"
+                )
+                after = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
+                # Exactly this proposal's row left.
+                assert set(proposals(before)) - set(proposals(after)) == {f"proposal:{proposal['id']}"}, (
+                    kind, proposals(before), proposals(after),
+                )
+                assert not set(proposals(after)) - set(proposals(before))
+                members = {member["ref"] for member in after["members"]}
+                same_title = [row for row in after["items"]
+                              if row["title"] == title and row.get("source") != "proposal"]
+                assert len(same_title) == 1, (kind, after["items"])
+                row = same_title[0]
+                if kind == "action":
+                    assert row["source"] == "commitment" and row.get("actionItemId"), row
+                    # The commitment owns its action item: no Door card for it.
+                    assert not [r for r in after["items"]
+                                if r.get("_isDoor") and r.get("ref") == row["actionItemId"]], after["items"]
+                else:
+                    assert row["source"] == "action_item" and row["why"] == "UNASSIGNED", row
+                    assert row.get("_isDoor"), row
+                assert (row.get("ref") if row.get("ref") is not None else row["id"]) in members, (row, members)
+                # The headline is the hub's number.
+                new_headline = (headline.text_content() or "").strip()
+                assert new_headline.startswith(f"{after['count']} need"), (
+                    f"{kind}: headline is not the hub's number {after['count']}: {new_headline}"
+                )
 
             result = _api(page, "GET",
                 "/api/projects/proj-a/proposals?state=confirmed",
                 token=TOKEN)
             confirmed = result.get("proposals", [])
-            assert len(confirmed) >= 1, (
-                f"No confirmed proposals in API response: {result}"
+            assert {p["id"] for p in confirmed} >= {by_kind["action"]["id"], by_kind["decision"]["id"]}, (
+                f"Both proposals must read confirmed: {result}"
             )
 
             _assert_clean(page, errors)
