@@ -24,7 +24,7 @@ import { CaptureSlab } from "./CaptureSlab";
 import { ArtifactsLibrary } from "./ArtifactsLibrary";
 import { MeetingSendWellLazy as MeetingSendWell } from "../../../meetings/MeetingSendWellLazy";
 import { MeetingDecideWell } from "../../../meetings/MeetingDecideWell";
-import { NeedsYouTable } from "./NeedsYouTable";
+import { NeedsYouTable, showsRunSummary } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
 import { SettledList } from "./SettledList";
 
@@ -178,7 +178,11 @@ export function MeetingDetail({
           {/* PHILO-13-08 (B3): Decide, next to SEND; with or without a summary. */}
           <MeetingDecideWell meetingId={id} title={meetingTitle}
             startedAt={String((detail ?? meeting)?.started_at ?? "") || null}
-            summary={summaryIntel?.summary ?? null} />
+            summary={summaryIntel?.summary ?? null}
+            runSummaryOnFace={showsRunSummary({
+              intelOff, hasTranscript, plannedRoute: displayedRoute,
+              onRunIntelligence: onRunIntelligence ? () => undefined : undefined,
+            })} />
           <TranscriptWell
             id={id}
             segments={segments}

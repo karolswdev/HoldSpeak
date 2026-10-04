@@ -14,6 +14,20 @@ import {
 } from "../../../meetings/summaryRoute";
 import type { NeedsRow } from "./helpers";
 
+/** True when the record draws its filled `Run summary`. One rule, two
+ *  readers: this table draws the verb, and the Decide well steps down to
+ *  ghost while it is on the face (surface/contract.md: one filled primary). */
+export function showsRunSummary({
+  intelOff, hasTranscript, plannedRoute, onRunIntelligence,
+}: {
+  intelOff: boolean;
+  hasTranscript: boolean;
+  plannedRoute?: PlannedRoute | null;
+  onRunIntelligence?: () => void;
+}): boolean {
+  return intelOff && hasTranscript && Boolean(onRunIntelligence) && routeReady(plannedRoute);
+}
+
 export function NeedsYouTable({
   needsRows,
   needsCount,
@@ -53,7 +67,7 @@ export function NeedsYouTable({
   const isFailed = intelState === "error" || intelState === "failed";
   const isQueued = intelState === "queued" || intelState === "pending";
   const wantsRetry = isFailed && Boolean(onRetryIntelligence);
-  const showRunIntel = wantsRun && canRun;
+  const showRunIntel = showsRunSummary({ intelOff, hasTranscript, plannedRoute, onRunIntelligence });
   const showRetry = wantsRetry && canRun;
   const showSkip = (isFailed || isQueued) && Boolean(onSkipIntelligence);
   const showReview = needsRows.length > 0 && Boolean(onReview);

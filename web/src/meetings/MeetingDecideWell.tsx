@@ -34,6 +34,10 @@ interface DecideWellProps {
   title: string;
   startedAt?: string | null;
   summary?: string | null;
+  /** True while the record draws its filled `Run summary`. The face has one
+   *  filled primary (surface/contract.md), so `Decide` and `Save` are ghost
+   *  then. Without it they are filled, as ratified next to SEND (Phase 13 B3). */
+  runSummaryOnFace?: boolean;
 }
 
 /** One well per meeting: keyed by the meeting, so no state crosses meetings. */
@@ -41,7 +45,8 @@ export function MeetingDecideWell(props: DecideWellProps) {
   return <DecideWellFor key={props.meetingId} {...props} />;
 }
 
-function DecideWellFor({ meetingId, title, startedAt, summary }: DecideWellProps) {
+function DecideWellFor({ meetingId, title, startedAt, summary, runSummaryOnFace }: DecideWellProps) {
+  const weight = runSummaryOnFace ? "ghost" : "primary";
   const decisions = useDesk((s) => s.items.decision);
   const made = decisionsFromMeeting(decisions, meetingId);
   // PHILO-13-07 (B2): the unfinished title is also kept in the workspace
@@ -125,7 +130,7 @@ function DecideWellFor({ meetingId, title, startedAt, summary }: DecideWellProps
               }
             }}
           />
-          <Button dense variant="primary" data-testid="decide-save" loading={busy}
+          <Button dense variant={weight} data-testid="decide-save" loading={busy}
             disabled={!draft.trim()} onClick={() => void save()}>
             Save
           </Button>
@@ -138,7 +143,7 @@ function DecideWellFor({ meetingId, title, startedAt, summary }: DecideWellProps
         </div>
       ) : (
         <div className="meeting-decide-line">
-          <Button dense variant="primary" data-testid="meeting-decide" onClick={() => { setNaming(true); setDraft(""); }}>
+          <Button dense variant={weight} data-testid="meeting-decide" onClick={() => { setNaming(true); setDraft(""); }}>
             Decide
           </Button>
         </div>

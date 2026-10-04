@@ -172,6 +172,35 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
   });
 });
 
+// Muad'Dib's ruling 2026-10-04: one filled primary per face. `Decide` is
+// filled, as ratified next to SEND, on a record with no `Run summary`; it is
+// ghost only while `Run summary` is on the face. `Save` follows the same rule.
+describe("the Decide verbs and the record's Run summary", () => {
+  // One meeting per state: an open title well is kept per meeting.
+  const well = (runSummaryOnFace: boolean) =>
+    render(<MeetingDecideWell meetingId={`m-weight-${runSummaryOnFace}`} title="Checkout latency review"
+      runSummaryOnFace={runSummaryOnFace} />);
+
+  it("no Run summary on the face: Decide and Save are filled", () => {
+    well(false);
+    const decide = screen.getByRole("button", { name: "Decide" });
+    expect(decide.className).toContain("btn--primary");
+    fireEvent.click(decide);
+    expect(screen.getByRole("button", { name: "Save" }).className).toContain("btn--primary");
+  });
+
+  it("Run summary on the face: Decide and Save are ghost", () => {
+    well(true);
+    const decide = screen.getByRole("button", { name: "Decide" });
+    expect(decide.className).not.toContain("btn--primary");
+    expect(decide.className).toContain("btn--ghost");
+    fireEvent.click(decide);
+    const save = screen.getByRole("button", { name: "Save" });
+    expect(save.className).not.toContain("btn--primary");
+    expect(save.className).toContain("btn--ghost");
+  });
+});
+
 describe("PHILO-13-08 a draft belongs to its meeting (Astra's single pass)", () => {
   const props = (id: string) => ({
     meetingId: id, title: `Meeting ${id}`, startedAt: "2026-10-01T09:00:00", summary: null,
