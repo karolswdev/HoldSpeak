@@ -83,7 +83,7 @@ class FakeIntel:
             return self.result
         return IntelResult(topics=[], action_items=[], summary="", raw_response="", error=self.error)
 
-    def analyze(self, transcript: str, *, stream: bool = False) -> Any:
+    def analyze(self, transcript: str, *, stream: bool = False, memory_context: str = "") -> Any:
         self.analyzed.append(transcript)
         if not stream:
             return self._result()

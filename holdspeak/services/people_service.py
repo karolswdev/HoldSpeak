@@ -14,6 +14,12 @@ from ..principals import PrincipalKind
 from .follow_through_service import CardProvenance, FollowThroughCard
 
 
+# The 1:1 brief reads memory for at most this many linked projects, and this
+# many excerpts for each: a brief, never a dump.
+_BRIEF_MEMORY_PROJECTS = 3
+_BRIEF_MEMORY_PER_PROJECT = 4
+
+
 class PeopleServiceError(ValueError):
     """A stable, content-free error suitable for a local HTTP edge."""
 
@@ -459,7 +465,39 @@ class PeopleService:
             "projects": calendar_context["projects"],
             "watch_summary": watch_summary,
             "last_meeting": last_meeting,
+            "memory": self._brief_memory(db, calendar_context["projects"], owner_aliases),
         }
+
+    @staticmethod
+    def _brief_memory(
+        db: Any, projects: list[dict[str, str]], owner_aliases: list[str],
+    ) -> dict[str, Any]:
+        """Memory for the 1:1: what the plaintext desk holds on this person's
+        projects (decisions, notes, meetings), newest and most relevant first.
+
+        Custody: the read goes one way.  The person's names are used only as
+        the local search words; nothing from the People store is written or
+        indexed, and the excerpts come from the plaintext desk alone.  Any
+        failure, no project or no database gives the empty answer.
+        """
+        from .memory_grounding import memory_context
+
+        excerpts: list[dict[str, str]] = []
+        if db is not None:
+            for project in projects[:_BRIEF_MEMORY_PROJECTS]:
+                found = memory_context(
+                    db,
+                    project_id=str(project.get("id") or ""),
+                    query=" ".join(owner_aliases),
+                    exclude_refs=[row["ref"] for row in excerpts],
+                    max_excerpts=_BRIEF_MEMORY_PER_PROJECT,
+                )
+                excerpts.extend(
+                    {"ref": e.ref, "kind": e.kind, "title": e.title, "text": e.text,
+                     "project_id": str(project.get("id") or "")}
+                    for e in found.excerpts
+                )
+        return {"excerpts": excerpts, "refs": [row["ref"] for row in excerpts]}
 
     @staticmethod
     def _calendar_event_view(row: Any) -> dict[str, Any]:

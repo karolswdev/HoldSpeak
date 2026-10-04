@@ -220,3 +220,160 @@ def test_prep_without_memory_is_as_before(rig):
         OWNER, with_memory, "ledger review", generator="deterministic",
     )
     assert "memory_refs" not in plain["manifest"]
+
+
+# ── The meeting summary ──────────────────────────────────────────────
+
+def _summary_rig(tmp_path, monkeypatch):
+    """The deferred-admission queue rig, with an engine that records the
+    prompt the real builder makes from what the queue hands it."""
+    from holdspeak.intel.parsing import _json_only_messages
+    from tests.unit.test_meeting_deferred_admission import FakeIntel, _queue_rig
+
+    class PromptIntel(FakeIntel):
+        def __init__(self) -> None:
+            super().__init__()
+            self.prompts: list[str] = []
+
+        def analyze(self, transcript, *, stream=False, memory_context=""):
+            self.prompts.append(_json_only_messages(transcript, memory_context)[1]["content"])
+            return super().analyze(transcript, stream=stream)
+
+    db, _broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    engine = PromptIntel()
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
+    return db, engine
+
+
+def _staged_material(db: Database) -> list[dict]:
+    with db._connection() as conn:
+        rows = conn.execute(
+            "SELECT payload_json FROM inference_adoption_material_snapshots "
+            "WHERE capability_id='meeting.deferred_analysis'"
+        ).fetchall()
+    return [json.loads(row[0]) for row in rows]
+
+
+def test_meeting_summary_prompt_carries_the_projects_earlier_decision(tmp_path, monkeypatch):
+    from holdspeak.intel_queue import process_next_intel_job
+    from tests.unit.test_meeting_deferred_admission import _queued_meeting
+
+    db, engine = _summary_rig(tmp_path, monkeypatch)
+    project_id, inside = _project_with_decision(db, items=False)
+    state = _queued_meeting(db, "m-memory", text="we reviewed the ledger rollout plan")
+    _make_service(db)._project_service.associate_meeting(OWNER, project_id, state.id)
+
+    assert process_next_intel_job() is True
+
+    prompt = engine.prompts[0]
+    assert "[PROJECT MEMORY]" in prompt and "[END PROJECT MEMORY]" in prompt
+    assert "We adopt quorumdb for the Atlas ledger" in prompt
+    assert "Borealis" not in prompt
+    assert prompt.index("[END PROJECT MEMORY]") < prompt.index("we reviewed the ledger rollout plan")
+    # The refs stay on the operation's staged material.
+    staged = [m for m in _staged_material(db) if m.get("memory_refs")]
+    assert staged and staged[0]["memory_refs"] == [f"desk_decision:{inside}"]
+    assert db.meetings.get_meeting(state.id).intel.summary == "The team reviewed the budget."
+
+
+def test_meeting_summary_on_no_project_is_as_before(tmp_path, monkeypatch):
+    from holdspeak.intel.parsing import _json_only_messages
+    from holdspeak.intel_queue import process_next_intel_job
+    from tests.unit.test_meeting_deferred_admission import _queued_meeting
+
+    db, engine = _summary_rig(tmp_path, monkeypatch)
+    _project_with_decision(db, items=False)  # memory exists, on a project
+    _queued_meeting(db, "m-plain", text="we reviewed the ledger rollout plan")
+
+    assert process_next_intel_job() is True
+
+    assert "MEMORY" not in engine.prompts[0]
+    assert all("memory_refs" not in m and "memory_material" not in m for m in _staged_material(db))
+    # No memory: the prompt is the prompt of before, byte for byte.
+    assert _json_only_messages("t", "") == _json_only_messages("t")
+
+
+def test_the_real_engine_sends_the_memory_block(monkeypatch):
+    from holdspeak.intel.engine import MeetingIntel
+
+    sent: list[list[dict]] = []
+    intel = MeetingIntel.__new__(MeetingIntel)
+    intel.temperature, intel.max_tokens = 0.0, 64
+
+    def _text(messages, **_kwargs):
+        sent.append(messages)
+        return '{"summary": "s", "topics": [], "action_items": []}'
+
+    monkeypatch.setattr(intel, "_chat_completion_text", _text, raising=False)
+
+    result = intel.analyze(
+        "Me: hello", memory_context="[PROJECT MEMORY]\n- desk_decision:d1: quorumdb\n[END PROJECT MEMORY]",
+    )
+
+    assert result.summary == "s"
+    assert "- desk_decision:d1: quorumdb" in sent[0][1]["content"]
+
+
+def test_meeting_summary_retry_after_memory_changed_still_runs(tmp_path, monkeypatch):
+    """A failed attempt, then a new decision on the project, then the retry:
+    the changed memory must not wedge the job."""
+    from holdspeak.intel_queue import process_next_intel_job
+    from tests.unit.test_meeting_deferred_admission import _queued_meeting
+
+    db, engine = _summary_rig(tmp_path, monkeypatch)
+    project_id, _inside = _project_with_decision(db, items=False)
+    projects = _make_service(db)._project_service
+    state = _queued_meeting(db, "m-retry", text="we reviewed the ledger rollout plan")
+    projects.associate_meeting(OWNER, project_id, state.id)
+
+    engine.error = "engine asleep"
+    process_next_intel_job(retry_base_seconds=0, retry_max_seconds=0)
+    later = _decide(db, "Freeze the ledger schema", "The ledger schema is frozen until May.")
+    projects.add_resource(OWNER, project_id, f"desk_decision:{later}")
+    engine.error = None
+    process_next_intel_job(include_scheduled=True)
+
+    refreshed = db.meetings.get_meeting(state.id)
+    assert refreshed.intel_status == "ready", refreshed.intel_status
+    assert "The ledger schema is frozen until May" in engine.prompts[-1]
+
+
+# ── The 1:1 brief ────────────────────────────────────────────────────
+
+def _people(tmp_path):
+    from holdspeak.people import EncryptedPeopleStore
+    from holdspeak.people.keys import FileKeyStore
+    from holdspeak.services.people_service import PeopleService
+
+    store = EncryptedPeopleStore(tmp_path / "people.sqlite3", FileKeyStore(tmp_path / "people.key"))
+    store.initialize()
+    return PeopleService(store)
+
+
+def test_one_on_one_brief_carries_the_memory_of_the_persons_projects(rig, tmp_path):
+    project_id, inside = _project_with_decision(rig, items=False)
+    people = _people(tmp_path)
+    priya = people.create_relationship(OWNER, {"display_name": "Priya"})["id"]
+    people.link_project(OWNER, priya, project_id)
+
+    memory = people.one_on_one_brief(OWNER, priya, db=rig)["memory"]
+
+    assert memory["refs"] == [f"desk_decision:{inside}"]
+    assert "quorumdb" in memory["excerpts"][0]["text"]
+    assert memory["excerpts"][0]["project_id"] == project_id
+    assert "Borealis" not in json.dumps(memory)
+
+
+def test_one_on_one_brief_memory_is_empty_without_a_project_and_indexes_nothing(rig, tmp_path):
+    _project_with_decision(rig, items=False)
+    people = _people(tmp_path)
+    sam = people.create_relationship(OWNER, {"display_name": "Samwise Quillfeather"})["id"]
+    people.create_note(OWNER, sam, {"body": "Quillfeather wants the harbour role."})
+
+    brief = people.one_on_one_brief(OWNER, sam, db=rig)
+
+    assert brief["memory"] == {"excerpts": [], "refs": []}
+    assert people.one_on_one_brief(OWNER, sam)["memory"] == {"excerpts": [], "refs": []}
+    # Custody: the People store stays out of memory.
+    assert rig.memory.search("Quillfeather").hits == []

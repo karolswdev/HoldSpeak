@@ -147,8 +147,8 @@ ROUTING_RESOLVER_REFERENCES = {
     # for it, and HS-200-41 did not create the site.
     # HS-200-11 (same stack): moved down with the shared NAME helper's known-name
     # alias rule and `_known_names_for_room`; the site itself is unchanged.
-    "holdspeak/services/project_update_service.py:1134:import:resolve_inference_target",
-    "holdspeak/services/project_update_service.py:1136:ref:resolve_inference_target",
+    "holdspeak/services/project_update_service.py:1156:import:resolve_inference_target",
+    "holdspeak/services/project_update_service.py:1158:ref:resolve_inference_target",
 }
 
 ROUTING_POINTER_ATTRIBUTES = {

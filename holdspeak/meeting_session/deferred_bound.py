@@ -111,7 +111,11 @@ def bound_analysis_dispatch() -> Callable[[Any, Mapping[str, Any], Any], Any]:
     def call(engine: Any, payload: Mapping[str, Any], cancellation: Any) -> Any:
         if cancellation.is_set():
             return None
-        return engine.analyze(payload["transcript_material"], stream=False)
+        # The project's memory, when the job staged any (intel_queue.py).  An
+        # engine is asked for the extra argument only when there is memory.
+        memory = str(payload.get("memory_material") or "")
+        extra = {"memory_context": memory} if memory else {}
+        return engine.analyze(payload["transcript_material"], stream=False, **extra)
     return call
 
 
