@@ -59,7 +59,7 @@ def test_the_rig_drives_the_room_job_through_a_real_hub(tmp_path: Path) -> None:
         again = op("project.resource.add", {"project_id": pid, "resource_ref": f"decision:{made['id']}",
                                             "command_id": "pcmd_rig_file"})
         assert again == first
-        assert op("project.resource.list", {"project_id": pid})["resources"][0]["resource_ref"] == f"decision:{made['id']}"
+        assert op("project.resource.list", {"project_id": pid})["resources"][0]["resource_ref"] == f"desk_decision:{made['id']}"  # the one ref name (2026-10-03)
         assert op("project.resource.remove", {"project_id": pid, "resource_ref": f"decision:{made['id']}"})["removed"] is True
         op("project.draft_update", {"project_id": pid}, capture_as="update_id", capture_path="update.id")
         published = op("project.publish_update", {"update_id": variables["update_id"]})
