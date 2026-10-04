@@ -285,43 +285,56 @@ def test_promotion_draft_runs_without_memory_when_the_read_raises(rig, monkeypat
 
 # ── delivery.pr_review_draft ──────────────────────────────────────────
 
+class _ReviewRig:
+    """The real PR-review route and admission, with a fake PR source."""
+
+    def __init__(self, db: Database, tmp_path, monkeypatch, *, diff: str = "diff --git a/x b/x\n+hi") -> None:
+        from holdspeak.web.context import WebContext
+        from holdspeak.web.routes.delivery_prs import build_delivery_prs_router
+        from tests.unit.test_one_path_spine import _ready_this_machine
+
+        _ready_this_machine(tmp_path, monkeypatch)
+        _assign(db, "delivery.pr_review_draft", "delivery-profile")
+        self.engine = _Engine("Looks fine.")
+        # _decide already built the broker; the engine is bound on its one runner.
+        _configure(db).inference_runner._engine_factory = lambda _revision, **_: self.engine
+        self.diff = diff
+        self.linked: list[dict[str, str]] = []
+        rig = self
+
+        class _Delivery:
+            def action_context(self, source_id, number):
+                return {"status": "ok", "row": {
+                    "verbs": {"draft_review": {"available": True}},
+                    "title": "Move the ledger to quorumdb", "head_ref": "feat/ledger-quorumdb",
+                }}
+
+            def review_material(self, source_id, number):
+                return {"status": "ok", "diff": rig.diff, "revision": "rev-1",
+                        "linked": list(rig.linked), "story_id": ""}
+
+        app = FastAPI()
+
+        @app.middleware("http")
+        async def principal(request: Request, call_next):
+            request.state.principal = OWNER
+            return await call_next(request)
+
+        app.include_router(build_delivery_prs_router(
+            WebContext(get_state=lambda: {}, delivery_service=object()), service=_Delivery(),
+        ))
+        self.client = TestClient(app, raise_server_exceptions=False)
+
+    def post(self):
+        return self.client.post("/api/delivery/prs/src/1/draft-review", json={})
+
+
 def _review_run(db: Database, tmp_path, monkeypatch) -> str:
-    from holdspeak.web.context import WebContext
-    from holdspeak.web.routes.delivery_prs import build_delivery_prs_router
-    from tests.unit.test_one_path_spine import _ready_this_machine
-
-    _ready_this_machine(tmp_path, monkeypatch)
-    _assign(db, "delivery.pr_review_draft", "delivery-profile")
-    engine = _Engine("Looks fine.")
-    # _decide already built the broker; the engine is bound on its one runner.
-    _configure(db).inference_runner._engine_factory = lambda _revision, **_: engine
-
-    class _Delivery:
-        def action_context(self, source_id, number):
-            return {"status": "ok", "row": {
-                "verbs": {"draft_review": {"available": True}},
-                "title": "Move the ledger to quorumdb", "head_ref": "feat/ledger-quorumdb",
-            }}
-
-        def review_material(self, source_id, number):
-            return {"status": "ok", "diff": "diff --git a/x b/x\n+hi", "revision": "rev-1",
-                    "linked": [], "story_id": ""}
-
-    app = FastAPI()
-
-    @app.middleware("http")
-    async def principal(request: Request, call_next):
-        request.state.principal = OWNER
-        return await call_next(request)
-
-    app.include_router(build_delivery_prs_router(
-        WebContext(get_state=lambda: {}, delivery_service=object()), service=_Delivery(),
-    ))
-    with TestClient(app) as client:
-        response = client.post("/api/delivery/prs/src/1/draft-review", json={})
+    rig = _ReviewRig(db, tmp_path, monkeypatch)
+    response = rig.post()
     assert response.status_code == 200, response.text
-    assert len(engine.prompts) == 1
-    return engine.prompts[0]
+    assert len(rig.engine.prompts) == 1
+    return rig.engine.prompts[0]
 
 
 def test_pr_review_draft_carries_memory_on_a_hit(rig, tmp_path, monkeypatch):
@@ -425,3 +438,169 @@ def test_a_thought_never_recalls_its_own_note(rig):
         exclude_refs=coordinator._own_refs(thought),
     )
     assert payload["user_prompt"] == sealed + "\n\nGrounding:\n" + envelope
+
+
+# ── Review round (Astra, PR #830) ─────────────────────────────────────
+
+def _memory_block(prompt: str) -> str:
+    """The MEMORY block of a sent prompt; ``""`` when there is none."""
+    start = prompt.find("[MEMORY]")
+    end = prompt.find("[END MEMORY]")
+    return prompt[start:end] if start >= 0 and end > start else ""
+
+
+def _executions(db: Database, capability_id: str) -> list[Any]:
+    with db._connection() as conn:
+        return conn.execute(
+            """SELECT e.tokens_reserved, e.token_budget, e.terminal_outcome
+                 FROM inference_route_executions e
+                 JOIN inference_route_plans p ON p.id=e.route_plan_id
+                WHERE p.capability_id=?""",
+            (capability_id,),
+        ).fetchall()
+
+
+def _full_memory_would_not_fit(db: Database, capability_id: str, full: Any, reserved_output_tokens: int) -> bool:
+    """The admitted payload with the WHOLE memory block instead of the fitted one."""
+    from holdspeak.services.memory_grounding import admitted_memory_prefix, with_memory
+
+    adoption = _configure(db).inference_adoption_service
+    with db._connection() as conn:
+        row = conn.execute(
+            """SELECT s.operation_id, e.route_plan_id
+                 FROM inference_adoption_material_snapshots s,
+                      inference_route_executions e
+                 JOIN inference_route_plans p ON p.id=e.route_plan_id
+                WHERE s.capability_id=? AND p.capability_id=?""",
+            (capability_id, capability_id),
+        ).fetchone()
+    sent = adoption.admitted_payload(row["operation_id"])
+    own = sent["user_prompt"][len(admitted_memory_prefix(sent["user_prompt"])):]
+    return adoption.payload_room(
+        route_plan_id=row["route_plan_id"], capability_id=capability_id,
+        operation_id=row["operation_id"], payload={**sent, "user_prompt": with_memory(own, full)},
+        reserved_output_tokens=reserved_output_tokens,
+    ) < 0
+
+
+def _long_matching_decisions(db: Database, count: int = 5) -> list[str]:
+    body = "We adopt quorumdb for the ledger. " + "The ledger keeps every quorumdb write. " * 20
+    return [_decide(db, f"Quorumdb ledger decision {index}", body) for index in range(count)]
+
+
+def test_memory_never_turns_a_fitting_pr_review_into_a_failing_one(rig, tmp_path, monkeypatch):
+    """Astra P1 repro: an 11,915-char diff fits the 16,384-token budget alone;
+    five matching notes used to push it to 17,502 tokens and a 500."""
+    _long_matching_decisions(rig)
+    diff = "diff --git a/x b/x\n" + ("+" + "x" * 99 + "\n") * 119
+    diff = diff[:11915]
+    review = _ReviewRig(rig, tmp_path, monkeypatch, diff=diff)
+
+    response = review.post()
+
+    assert response.status_code == 200, response.text
+    assert len(review.engine.prompts) == 1
+    (execution,) = _executions(rig, "delivery.pr_review_draft")
+    assert execution["terminal_outcome"] == "succeeded"
+    assert execution["tokens_reserved"] <= execution["token_budget"] == 16384
+    full = memory_for("delivery.pr_review_draft", rig, query="Move the ledger to quorumdb feat/ledger-quorumdb")
+    sent = _memory_block(review.engine.prompts[0])
+    assert full.excerpts and sent.count("\n- ") < len(full.excerpts)  # the block was cut to fit
+    assert _full_memory_would_not_fit(rig, "delivery.pr_review_draft", full, 1800)
+
+
+def test_memory_never_turns_a_fitting_rails_batch_into_a_failing_one(rig):
+    """The same law for a second job: a rails batch close to its budget."""
+    from holdspeak import rails_observer
+
+    _long_matching_decisions(rig)
+    _assign(rig, "background.rails_summary", "rails")
+    principal = Principal(
+        PrincipalKind.SERVICE, "rails-observer",
+        frozenset({("rails.observer-batch", 1), ("inference.invoke", 1), ("inference.cancel", 1)}),
+        "rails-observer:journal-only",
+    )
+    broker = _configure(rig)
+    engine = _Engine("Only the observed facts.")
+    broker.inference_runner._engine_factory = lambda _revision, **_: engine
+    filler = "quorumdb ledger " + "y" * 230
+    events = [
+        {"ts": f"t{index}", "event": "gate_pass", "story": "", "repo": "code", "detail": {"subject": filler}}
+        for index in range(54)
+    ]
+    batch = rails_observer.summarize_batch(
+        events,
+        summarize_fn=rails_observer.build_profile_summarizer(db=rig, broker=broker, principal=principal),
+    )
+
+    assert not batch["degraded"], batch
+    assert len(engine.prompts) == 1
+    (execution,) = _executions(rig, "background.rails_summary")
+    assert execution["tokens_reserved"] <= execution["token_budget"] == 16384
+    full = memory_for("background.rails_summary", rig, query=rails_observer.format_events_for_model(events)[:2000])
+    assert full.excerpts and _memory_block(engine.prompts[0]).count("\n- ") < len(full.excerpts)
+    assert _full_memory_would_not_fit(rig, "background.rails_summary", full, 220)
+
+
+def test_a_replay_rebuilds_the_reviews_own_material(rig, tmp_path, monkeypatch):
+    """Astra P2 repro: the linked story changed between two reviews of the same
+    commit and diff.  A replay may reuse only its MEMORY block, so the second
+    review never returns the first review's stale artifact as a success."""
+    _decide(rig, "Adopt quorumdb for the ledger", "We adopt quorumdb for the ledger.")
+    review = _ReviewRig(rig, tmp_path, monkeypatch)
+    review.linked = [{"ref": "file:story-02-ledger.md", "text": "Story 02: move the ledger."}]
+    first = review.post()
+    assert first.status_code == 200, first.text
+
+    # The same request again is an exact replay: one model call, one artifact.
+    again = review.post()
+    assert again.status_code == 200 and again.json()["artifact_id"] == first.json()["artifact_id"]
+    assert len(review.engine.prompts) == 1
+
+    review.linked = [{"ref": "file:story-02-ledger.md", "text": "Story 02: move the ledger. EDITED."}]
+    second = review.post()
+    stale = second.status_code == 200 and second.json().get("artifact_id") == first.json()["artifact_id"]
+    assert not stale, "a changed story returned the first review as a success"
+    # What main does with a changed story under the same commit and diff (the
+    # request identity leaves the story out): the second review fails, and
+    # nothing reaches the model.  Memory does not change that.
+    assert second.status_code == 500 and len(review.engine.prompts) == 1
+
+
+def test_cadence_memory_never_carries_its_source_under_the_meeting(rig, tmp_path, monkeypatch):
+    """Astra P2 repro: the parent meeting's digest repeats the action item."""
+    own = _meeting_with_action(rig, "m-ledger", "Ship the quorumdb ledger watchdog")
+    other = _meeting_with_action(rig, "m-other", "Review the quorumdb ledger backups")
+    prompt = _cadence_run(rig, tmp_path, monkeypatch, source_id=own)
+    block = _memory_block(prompt)
+    assert f"action_item:{other}" in block  # memory did run
+    assert "meeting:m-ledger" not in block
+    assert "ship the quorumdb ledger watchdog" not in block.casefold()
+
+
+def test_promotion_memory_never_carries_the_decision_under_another_name(rig):
+    """A decision record minted from the meeting decision repeats its words."""
+    from holdspeak.services.decision_record_service import DecisionRecordService
+    from tests.unit.test_decision_record_service import _accepted_meeting_decision
+
+    with rig._connection() as conn:
+        conn.execute(
+            "INSERT INTO meetings (id, started_at, title) VALUES (?, ?, ?)",
+            ("meeting-127", "2026-08-07T00:00:00+00:00", "Records meeting"),
+        )
+    _accepted_meeting_decision(rig, "dec-own")
+    record = DecisionRecordService(rig).create_from_meeting(None, "dec-own")
+    inside = _decide(rig, "Record-backed decisions for the ledger", "Every decision is record-backed.")
+    _assign(rig, "decision.promotion_draft", "decision-profile")
+    broker = _configure(rig)
+    engine = _Engine("Adopt this.")
+    broker.inference_runner._engine_factory = lambda _revision, **_: engine
+    from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
+
+    asyncio.run(
+        DecisionLifecycleService(rig, kernel=broker).draft_promoted_with_model(OWNER, "dec-own", "note", {})
+    )
+    block = _memory_block(engine.prompts[0])
+    assert f"desk_decision:{inside}" in block  # memory did run
+    assert str(record["id"]) not in block
+    assert "use record-backed decisions" not in block.casefold()

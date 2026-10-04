@@ -325,8 +325,15 @@ class BoundDeferredIntelJob:
         projection_kind: str,
         projection: Callable[[Mapping[str, Any]], Mapping[str, Any]],
         executor_held: Callable[[], bool] | None = None,
+        memory: Any = None,
+        memory_heading: str = "MEMORY",
     ) -> tuple[Mapping[str, Any] | None, Mapping[str, Any]]:
-        """Stage private material and execute one exact frozen bundle member."""
+        """Stage private material and execute one exact frozen bundle member.
+
+        ``memory`` (a ``MemoryContext``) is staged as ``memory_material`` and
+        ``memory_refs``, cut to what the member's route leaves after the
+        material: memory never makes a job that fit fail.
+        """
         if self._closed:
             raise MeetingIntelRefused(SESSION_CLOSED, capability)
         member = self._members.get(capability)
@@ -347,6 +354,23 @@ class BoundDeferredIntelJob:
         ).split(":", 1)[1]
         command_id = "meeting-bound-route:" + operation_id
         adoption = self._broker.inference_adoption_service
+        if memory:
+            from ..services.memory_grounding import fit_memory
+
+            def with_memory(candidate: Any) -> dict[str, Any]:
+                staged = dict(material)
+                if candidate:
+                    staged["memory_material"] = candidate.prompt_block(memory_heading)
+                    staged["memory_refs"] = candidate.refs
+                return staged
+
+            material = with_memory(fit_memory(memory, lambda candidate: adoption.payload_room(
+                route_plan_id=str(member["route_plan_id"]),
+                capability_id=capability,
+                operation_id=operation_id,
+                payload=with_memory(candidate),
+                reserved_output_tokens=512,
+            ) >= 0))
         admitted = adoption.admit_on_frozen_route(
             self._principal,
             command_id=command_id,

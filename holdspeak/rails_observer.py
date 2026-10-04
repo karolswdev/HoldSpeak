@@ -366,22 +366,27 @@ def build_profile_summarizer(
                 principal=principal,
             )
             raise RailsSummaryUnavailable("inference_rails_frozen_member_missing", str(receipt.get("receipt_id") or ""))
-        # Earlier journal entries and notes on the same stories.  The batch
-        # digest above stays the replay identity: it hashes the events only.
-        # A replay of the batch sends the payload it admitted first.
-        from .services.memory_grounding import memory_for, with_memory
+        # Earlier journal entries and notes on the same stories, fitted to
+        # the route.  The batch digest above stays the replay identity: it
+        # hashes the events only; a replay reuses the MEMORY block it admitted.
+        from .services.memory_grounding import admit_with_memory, memory_for
 
         operation_id = "rails-summary:" + batch_sha.removeprefix("sha256:")
-        payload = adoption.admitted_payload(operation_id) or {
-            "system_prompt": system_prompt,
-            "user_prompt": with_memory(
-                user_prompt,
-                memory_for("background.rails_summary", db, query=user_prompt[:2000]),
-            ),
-            "temperature": 0.2,
-            "max_tokens": 220,
-            "event_batch_sha256": batch_sha,
-        }
+        payload = admit_with_memory(
+            adoption,
+            route_plan_id=str(member["route_plan_id"]),
+            capability_id="background.rails_summary",
+            operation_id=operation_id,
+            reserved_output_tokens=220,
+            payload={
+                "system_prompt": system_prompt,
+                "user_prompt": user_prompt,
+                "temperature": 0.2,
+                "max_tokens": 220,
+                "event_batch_sha256": batch_sha,
+            },
+            memory=lambda: memory_for("background.rails_summary", db, query=user_prompt[:2000]),
+        )
         try:
             admitted = adoption.admit_on_frozen_route(
                 principal,

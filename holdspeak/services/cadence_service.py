@@ -10,7 +10,7 @@ from typing import Any
 from ..intel.providers import endpoint_egress
 from ..principals import Principal
 from .errors import ConflictError, NotFound, ValidationError
-from .memory_grounding import memory_for, with_memory
+from .memory_grounding import memory_for
 
 _LOCAL_EGRESS = endpoint_egress(cloud=False, label="Local only")
 #: The kernel projection kind the elected draft is staged as.
@@ -227,7 +227,7 @@ class CadenceService:
             system_prompt, user_prompt = next_action_prompt(loop)
             return {
                 "system_prompt": system_prompt,
-                "user_prompt": with_memory(user_prompt, self._loop_memory(loop)),
+                "user_prompt": user_prompt,
                 "max_tokens": 900,
                 "temperature": None,
                 "loop_id": loop.id,
@@ -261,6 +261,7 @@ class CadenceService:
                 operation_id="cadence-draft:" + digest,
                 reserved_output_tokens=900,
                 payload_factory=payload,
+                memory=lambda: self._loop_memory(loop),
                 projection_kind=_DRAFT_PROJECTION,
                 projection_factory=projection,
                 result_is_usable=lambda value: (
@@ -286,17 +287,41 @@ class CadenceService:
         return action, {"source": "frozen_owner_assignment", "egress": routed["egress"]}
 
     def _loop_memory(self, loop: Any) -> Any:
-        """Memory for one loop's draft: its words, less the loop and its source."""
+        """Memory for one loop's draft: its words, less the loop and its source.
+
+        The source is left out under every name: its own ref, the meeting it
+        came from, and any other source that repeats the loop's own words
+        (a meeting digest lists its action items).
+        """
         own = [f"cadence:{loop.id}"] if loop.id else []
         source_kind = _LOOP_SOURCE_REF_KIND.get(str(loop.source_type or ""))
         if source_kind and loop.source_id:
             own.append(f"{source_kind}:{loop.source_id}")
+            meeting_id = self._source_meeting_id(source_kind, str(loop.source_id))
+            if meeting_id:
+                own.append(f"meeting:{meeting_id}")
         return memory_for(
             "background.cadence_draft",
             self._db,
             query=" ".join(str(part or "") for part in (loop.title, loop.summary, loop.project)),
             exclude_refs=own,
+            exclude_texts=[loop.title],
         )
+
+    def _source_meeting_id(self, source_kind: str, source_id: str) -> str:
+        """The meeting a loop's action item or decision came from; ``""`` if unknown."""
+        statement = {
+            "action_item": "SELECT meeting_id FROM action_items WHERE id=?",
+            "decision": "SELECT source_meeting_id FROM decisions WHERE id=?",
+        }.get(source_kind)
+        if statement is None:
+            return ""
+        try:
+            with self._db._connection() as conn:
+                row = conn.execute(statement, (source_id,)).fetchone()
+        except Exception:
+            return ""
+        return str(row[0] or "") if row else ""
 
     @staticmethod
     def _close_parent(broker: Any, parent: Any, principal: Principal, outcome: str) -> None:

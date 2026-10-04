@@ -818,10 +818,9 @@ class RoutedInferenceCoordinator:
     def admitted_payload(self, operation_id: str) -> dict[str, Any] | None:
         """The payload already admitted under ``operation_id``; ``None`` if none.
 
-        A job whose prompt reads memory builds its payload through this first:
-        a replay of one operation sends the bytes it admitted the first time,
-        so memory that changed between the run and the replay (a journal note,
-        a draft the run made) cannot make the replay conflict.
+        Memory reads it on a replay to reuse only the MEMORY block it admitted
+        (``memory_grounding.admit_with_memory``); the job's own material is
+        always rebuilt.
         """
         with self._db._connection() as conn:
             row = conn.execute(
@@ -829,6 +828,44 @@ class RoutedInferenceCoordinator:
                 (str(operation_id),),
             ).fetchone()
         return None if row is None else dict(json.loads(row["payload_json"]))
+
+    def payload_room(
+        self,
+        *,
+        route_plan_id: str,
+        capability_id: str,
+        operation_id: str,
+        payload: Mapping[str, Any],
+        reserved_output_tokens: int,
+    ) -> int:
+        """Tokens left after ``payload`` for one attempt on every leg of the route.
+
+        The count uses the same law admission uses (``_input_token_upper_bound``
+        over the serialized request, plus the reserved output), against the
+        smaller of each leg's context ceiling and the route's token budget.
+        A negative value means the payload does not fit.  Memory uses this to
+        fit its block: adding memory never makes a job that fit fail.
+        """
+        route = self.plans.get_route_plan(ROUTE_PLANNING_AUTHORITY, str(route_plan_id))
+        capability = self._registry.require(capability_id)
+        budget = (route.get("retry_policy") or {}).get("token_budget")
+        room: int | None = None
+        for leg in route.get("entries") or ():
+            serialized = {
+                "schema": "AdoptedSerializedRequest@1",
+                "capability_id": capability.id,
+                "operation_id": str(operation_id),
+                "contract": capability.operation_contract.name,
+                "contract_revision": str(capability.operation_contract.version),
+                "deployment_revision": str(leg["deployment_revision_id"]),
+                "payload": dict(payload),
+            }
+            used = _input_token_upper_bound(_canonical(serialized)) + int(reserved_output_tokens)
+            ceiling = int(leg["context_support"]["maximum_tokens"])
+            if budget is not None:
+                ceiling = min(ceiling, int(budget))
+            room = ceiling - used if room is None else min(room, ceiling - used)
+        return -1 if room is None else room
 
     def admit(
         self,
