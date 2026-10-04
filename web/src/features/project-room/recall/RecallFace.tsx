@@ -42,12 +42,11 @@ import {
   SurfaceRows,
   SurfaceSection,
   StringGadget,
-  openSourceRef,
   NO_WINDOW_REF_KINDS,
   useRovingRows,
 } from "../../../desk/surface";
+import { openRef } from "../../../desk/openObject";
 import { ProjectButton } from "../../../desk/surface/patterns";
-import { refOpener } from "../../../desk/openObject";
 import { countLabel } from "../../../desk/surface/count";
 import {
   axisTone,
@@ -278,11 +277,9 @@ const NO_WINDOW_KINDS = new Set(["brief", ...NO_WINDOW_REF_KINDS]);
 
 function hitOpener(hit: MemoryHitRow): (() => void) | undefined {
   if (NO_WINDOW_KINDS.has(hit.kind)) return undefined;
-  // A settled action item opens where action items live: Follow-through.
-  if (hit.kind === "action") {
-    return refOpener(`action_item:${hit.source_ref.slice("action:".length)}`) ?? undefined;
-  }
-  return () => openSourceRef(hit.source_ref);
+  // The one open grammar: a settled action item (`action:<id>`) opens where
+  // action items live, Follow-through.
+  return () => openRef(hit.source_ref);
 }
 
 function HitRows({ rows, testid }: { rows: MemoryHitRow[]; testid: string }) {

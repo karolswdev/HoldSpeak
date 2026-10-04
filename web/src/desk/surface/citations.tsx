@@ -4,6 +4,7 @@
 // underlying object: meetings through the Meetings surface, everything
 // else through the primitive opener. Ask and Project Memory both speak
 // this species; a third rendering is a defect.
+import { openRef } from "../openObject";
 import { openPrimitive, openSurfaceOr } from "../shell";
 import { Button } from "../../components/signal/Signal";
 
@@ -69,9 +70,12 @@ export function openSourceRef(ref: string) {
   openPrimitive(ref);
 }
 
+/** A chip opens through the one open grammar (`openRef`): an action item in
+ * Follow-through, a decision in its window; `openSourceRef` is only the
+ * window dispatch under it. */
 export function CitationChips({
   refs,
-  onOpen = openSourceRef,
+  onOpen = openRef,
 }: {
   refs: string[];
   onOpen?: (ref: string) => void;
