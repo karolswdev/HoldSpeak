@@ -95,6 +95,22 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         return bool(store.get("enabled", False))
 
     # ── POST /api/mcp ──────────────────────────────────────────────
+    def _blocking_io_tools() -> frozenset[str]:
+        """The operations that declare blocking I/O (derived from the one declared contract)."""
+        from ... import operations as _operations
+
+        return frozenset(d.name for d in _operations.DESCRIPTORS if d.blocking_io)
+
+    _worker: list[Any] = []
+
+    def _tool_worker() -> Any:
+        """The one thread that runs MCP tool calls, first in, first out."""
+        if not _worker:
+            from concurrent.futures import ThreadPoolExecutor
+
+            _worker.append(ThreadPoolExecutor(max_workers=1, thread_name_prefix="holdspeak-mcp-tools"))
+        return _worker[0]
+
     @router.post("/api/mcp")
     async def mcp_http_endpoint(request: Request) -> JSONResponse:
         """Streamable HTTP transport for MCP JSON-RPC.
@@ -201,18 +217,29 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 _caller.reset(caller_token)
                 _caller_identity.reset(identity_token)
 
-        # Every tool call runs on a worker thread, never on the event loop. A
-        # tool body is synchronous; one that calls an async service hands the
-        # coroutine back to this loop (``holdspeak/mcp/aio.py``) and waits for
-        # it. On the loop that wait is impossible, so before 2026-10-03 every
-        # async tool refused, and only a tool whose operation declared
-        # ``blocking_io`` ran off the loop. No tool depends on that flag now.
-        if body.get("method") == "tools/call":
+        # A tool call never runs on the event loop. A tool body is synchronous;
+        # one that calls an async service hands the coroutine back to this loop
+        # (``holdspeak/mcp/aio.py``) and waits for it, and on the loop that wait
+        # is impossible (before 2026-10-03 every async tool refused here).
+        #
+        # Order (PHILO-10-02 GATE 2, kept): tool calls run ONE AT A TIME, in
+        # arrival order, on the one MCP worker thread. The services are not
+        # safe for two writers (two ``desk.update`` calls on one Note lose a
+        # change). The one exception is unchanged: an operation that DECLARES
+        # blocking I/O (``OperationDescriptor.blocking_io``: a subprocess or the
+        # network) runs on the thread pool, so a slow send holds no other tool.
+        # The flag decides ordering only; no tool needs it to work.
+        params = body.get("params") if isinstance(body.get("params"), dict) else {}
+        if body.get("method") != "tools/call":
+            response = handle()
+        elif params.get("name") in _blocking_io_tools():
             from starlette.concurrency import run_in_threadpool
 
             response = await run_in_threadpool(handle)
         else:
-            response = handle()
+            import asyncio
+
+            response = await asyncio.get_running_loop().run_in_executor(_tool_worker(), handle)
 
         if response is None:
             # Notification (no response expected). A bare Response: a
