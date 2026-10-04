@@ -357,6 +357,23 @@ def test_room_health_counts_the_overdue_commitment(tmp_path: Path) -> None:
     assert ps._count_overdue_commitments("p-q4") == 0
 
 
+def test_a_failed_health_read_is_a_named_degraded_section(tmp_path: Path) -> None:
+    """A SQL failure in the overdue count is not a count of zero.
+
+    The real failure: the table the count reads is gone. The Room read still
+    answers, with the health section named as failed. The web face draws
+    exactly this section as HEALTH NOT READ (ProjectRoomCore.test.tsx).
+    """
+    db = _db(tmp_path)
+    _chain(db)
+    with db._connection() as conn:
+        conn.execute("DROP TABLE decision_commitments")
+
+    room = ProjectService(db).room(OWNER, "p-q4")
+
+    assert room["health"] == {"state": "degraded", "error_code": "health_read_failed"}
+
+
 def test_assignment_and_association_never_complete_a_commitment(tmp_path: Path) -> None:
     db = _db(tmp_path)
     chain = _chain(db)

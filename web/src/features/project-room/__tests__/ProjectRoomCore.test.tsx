@@ -222,6 +222,47 @@ describe("ProjectRoomCore — section degradation (was: degraded section isolati
   });
 });
 
+// A failed health read (the hub answers 200 with the section degraded) is a
+// named failure with Retry. The Room never says "Clear here" over it.
+describe("ProjectRoomCore: a failed health read is named", () => {
+  // The exact section the hub returns when the health read raises
+  // (ProjectService._room_section; pinned by
+  // tests/unit/test_phase200_continuity.py::test_a_failed_health_read_is_a_named_degraded_section).
+  const DEGRADED_HEALTH = { state: "degraded", error_code: "health_read_failed" };
+
+  it("draws HEALTH NOT READ with Retry, and no Clear here / Nothing open", async () => {
+    let roomReads = 0;
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
+      if (url.includes("/room")) {
+        roomReads += 1;
+        return Promise.resolve(roomResponse({ health: DEGRADED_HEALTH }));
+      }
+      return Promise.resolve(detailResponse(url));
+    });
+
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("room-body");
+
+    expect(screen.getByTestId("health-not-read").textContent).toContain("HEALTH NOT READ");
+    expect(screen.getByTestId("room-headline").textContent).toBe("Not all read");
+    expect(screen.getByTestId("needs-you-empty").textContent).toContain("Not all read");
+    expect(screen.queryByText("Clear here")).toBeNull();
+    expect(screen.queryByText(/Nothing open/)).toBeNull();
+
+    const before = roomReads;
+    screen.getByTestId("health-retry").click();
+    await waitFor(() => expect(roomReads).toBeGreaterThan(before));
+  });
+
+  it("a health read that succeeded still says Clear here", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("room-body");
+    expect(screen.getByTestId("room-headline").textContent).toBe("Clear here");
+    expect(screen.queryByTestId("health-not-read")).toBeNull();
+  });
+});
+
 // HS-169-03 SELECTOR EDIT: right rail → removed.
 // The old tests pinned MetricStrip, SurfaceColumns, rail-meetings, etc.
 // 169 removes the two-column layout entirely.
