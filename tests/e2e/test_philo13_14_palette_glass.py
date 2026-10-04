@@ -290,7 +290,7 @@ class TestPaletteKnowsHisWeek:
         self._glass("#desk-tool-shelf", "C4-3")
         self._shot("C4-3-thought-word")
         self._run_top(rows)
-        self._front("Kafka offsets", "Kafka offsets")   # the window is named by the thought's first words
+        self._front("Thought", "Kafka offsets")
         self._shot("C4-3b-thought-window")
 
         # 4. `send` -> Send <front document> to Team updates; the pick opens the preview; nothing sent.
