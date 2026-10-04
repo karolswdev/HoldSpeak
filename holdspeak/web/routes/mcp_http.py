@@ -95,12 +95,6 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         return bool(store.get("enabled", False))
 
     # ── POST /api/mcp ──────────────────────────────────────────────
-    def _blocking_io_tools() -> frozenset[str]:
-        """The operations that declare blocking I/O (derived from the one declared contract)."""
-        from ... import operations as _operations
-
-        return frozenset(d.name for d in _operations.DESCRIPTORS if d.blocking_io)
-
     @router.post("/api/mcp")
     async def mcp_http_endpoint(request: Request) -> JSONResponse:
         """Streamable HTTP transport for MCP JSON-RPC.
@@ -207,13 +201,13 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 _caller.reset(caller_token)
                 _caller_identity.reset(identity_token)
 
-        # PHILO-10-02 GATE 2 (round three, Muad'Dib's ruling on Codex Astra r2
-        # finding 1): a tool runs OFF the event loop exactly when its operation
-        # DECLARES blocking I/O (``OperationDescriptor.blocking_io``: it may run
-        # a subprocess or reach the network). Every other tool keeps the loop's
-        # one-at-a-time order, as before this story.
-        params = body.get("params") if isinstance(body.get("params"), dict) else {}
-        if body.get("method") == "tools/call" and params.get("name") in _blocking_io_tools():
+        # Every tool call runs on a worker thread, never on the event loop. A
+        # tool body is synchronous; one that calls an async service hands the
+        # coroutine back to this loop (``holdspeak/mcp/aio.py``) and waits for
+        # it. On the loop that wait is impossible, so before 2026-10-03 every
+        # async tool refused, and only a tool whose operation declared
+        # ``blocking_io`` ran off the loop. No tool depends on that flag now.
+        if body.get("method") == "tools/call":
             from starlette.concurrency import run_in_threadpool
 
             response = await run_in_threadpool(handle)
