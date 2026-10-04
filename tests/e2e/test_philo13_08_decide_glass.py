@@ -77,11 +77,19 @@ def _decision_rows(db: Any) -> list[dict[str, Any]]:
 
 
 def _project_edges(db: Any, decision_id: str) -> list[str]:
+    """The Project edges of a desk decision, under its one ref name.
+
+    Since #770 a desk decision is `desk_decision:<id>` in project_resources
+    (the name memory, Send and grounding read). A row under the old name
+    `decision:<id>` is a defect: the query reads both and the name is asserted.
+    """
     with db._connection() as conn:
         rows = conn.execute(
-            "SELECT project_id FROM project_resources WHERE resource_ref = ? AND deleted = 0",
-            (f"decision:{decision_id}",),
+            "SELECT project_id, resource_ref FROM project_resources "
+            "WHERE resource_ref IN (?, ?) AND deleted = 0",
+            (f"desk_decision:{decision_id}", f"decision:{decision_id}"),
         ).fetchall()
+    assert all(r[1] == f"desk_decision:{decision_id}" for r in rows), [tuple(r) for r in rows]
     return [r[0] for r in rows]
 
 
