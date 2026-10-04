@@ -81,8 +81,11 @@ _ECOSYSTEM_SPECS: dict[str, dict[str, str]] = {
         "body": "d.context_markdown||' '||d.decision_markdown||' '||d.consequences_markdown||' '||d.alternatives_json",
         "time": "d.updated_at",
         "active": "d.deleted=0",
-        "project_id": "(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='desk_decision:'||d.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1)",
-        "project": "EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref='desk_decision:'||d.id AND pr.deleted=0)",
+        # One ref name for a desk decision: `desk_decision:<id>`. Rows the
+        # Decide button filed before 2026-10-03 carry `decision:<id>`; the
+        # read accepts both, so an old decision stays in its Project.
+        "project_id": "(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref IN ('desk_decision:'||d.id,'decision:'||d.id) AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1)",
+        "project": "EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref IN ('desk_decision:'||d.id,'decision:'||d.id) AND pr.deleted=0)",
     },
     "action": {
         "table": "action_items",
@@ -1499,7 +1502,7 @@ class MemoryRepository(BaseRepository):
                           CASE WHEN d.title='' THEN d.decision_markdown ELSE d.title END title,
                           substr(d.context_markdown||' '||d.decision_markdown||' '||d.consequences_markdown,1,420) snippet,
                           d.updated_at occurred_at,
-                          (SELECT project_id FROM project_resources WHERE resource_ref='desk_decision:'||d.id AND deleted=0 ORDER BY project_id LIMIT 1) project_id
+                          (SELECT project_id FROM project_resources WHERE resource_ref IN ('desk_decision:'||d.id,'decision:'||d.id) AND deleted=0 ORDER BY project_id LIMIT 1) project_id
                    FROM desk_decisions d WHERE d.id=? AND d.deleted=0""",
                 (resource_id,),
             ).fetchone()
@@ -1562,6 +1565,20 @@ class MemoryRepository(BaseRepository):
             (project, ref),
         ).fetchone():
             return True
+        if kind == "desk_decision":
+            # The old ref name (`decision:<id>`), still on rows filed before
+            # the one-name fix.
+            return (
+                conn.execute(
+                    """SELECT 1 FROM project_resources pr
+                       WHERE pr.project_id=? AND pr.deleted=0
+                         AND pr.resource_ref='decision:'||?
+                         AND EXISTS (SELECT 1 FROM desk_decisions d
+                                     WHERE d.id=? AND d.deleted=0)""",
+                    (project, resource_id, resource_id),
+                ).fetchone()
+                is not None
+            )
         if kind == "decision":
             return (
                 conn.execute(

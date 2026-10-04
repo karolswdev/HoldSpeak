@@ -15,6 +15,7 @@ import "./constitutional-context.css";
 
 const CHAR_LIMIT = 32_768;
 const WARN_THRESHOLD = 0.8;
+const NOT_SAVED = "Not saved";
 
 export function ConstitutionalContextCore() {
   const [ctx, setCtx] = useState<ContextState | null>(null);
@@ -63,7 +64,7 @@ export function ConstitutionalContextCore() {
         body: JSON.stringify({ content: draft }),
       });
       if (res.error) {
-        setSaveError(res.error);
+        setSaveError(NOT_SAVED);
       } else {
         setCtx(res.context ?? null);
         setDirty(false);
@@ -72,8 +73,9 @@ export function ConstitutionalContextCore() {
         setTimeout(() => setSaved(false), 2000);
         void loadHistory();
       }
-    } catch (err: any) {
-      setSaveError(err?.message || "Save failed");
+    } catch {
+      // The face never prints a server exception. The hub log has the cause.
+      setSaveError(NOT_SAVED);
     }
     setSaving(false);
   };
