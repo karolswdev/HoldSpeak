@@ -1,3 +1,4 @@
+import { NEW_THOUGHT_TITLE } from "../thoughtTitle";
 import { useEffect, useRef } from "react";
 import { EditInPlace } from "../surface";
 import { MicButton } from "../components/MicButton";
@@ -51,7 +52,10 @@ export function ThoughtDocumentPane({
     <EditInPlace
       className="thought-note-title"
       label="Title"
-      value={draft.title}
+      // A thought with no title of its own has an empty title field: the
+      // stored word `Thought` is not a name (windowName.ts).
+      value={draft.title.trim() === NEW_THOUGHT_TITLE ? "" : draft.title}
+      placeholder="New thought"
       multiline
       disabledReason={lockedReason}
       onCommit={(next) => onEdit({ title: next })}

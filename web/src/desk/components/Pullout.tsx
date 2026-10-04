@@ -12,6 +12,7 @@ import { qualifiedRef } from "../api";
 import { objGlow, type WorldObject } from "../world";
 import { inferenceEgressLamp } from "../inferenceEgress";
 import { DeskWindowFrame } from "./DeskWindow";
+import { kindWord } from "../windowName";
 import { PULLOUT_CONTENT } from "../pullouts";
 import { useEffect, useState, type ReactNode } from "react";
 import { thoughtForNote, type NoteThoughtStatus, type Thought } from "../thoughts";
@@ -63,6 +64,7 @@ function PulloutFrame({
       id={`pullout:${pulloutId}`}
       glyph="▤"
       label={o.title}
+      kindWord={kindWord(o.kind)}
       className="desk-pullout is-card"
       fitContent
       origin={origin}

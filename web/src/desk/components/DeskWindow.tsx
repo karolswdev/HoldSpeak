@@ -48,6 +48,7 @@ import {
   retractWindow,
   useOpenWindows,
   useFrontWindowId,
+  useShownName,
   openWindowCount,
   closeFrontWindow,
   minimizeFrontWindow,
@@ -579,6 +580,9 @@ export interface DeskWindowFrameProps {
   title: ReactNode;
   /** Plain-text name for the tray/dock and aria labels. */
   label?: string;
+  /** The kind word of the thing in the window (`Thought`, `Note`). It goes
+   * first in the name only when another open window has the same name. */
+  kindWord?: string;
   /** A small leading glyph/avatar node (the window's face). */
   icon?: ReactNode;
   /** One-character dock face when `icon` is a node (default ▢). */
@@ -634,6 +638,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     id,
     title,
     label,
+    kindWord,
     icon,
     glyph: glyphProp,
     leading,
@@ -678,7 +683,10 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     open: open && !minimized,
   });
   const glyph = glyphProp ?? (typeof icon === "string" ? icon : "▢");
-  const name = label ?? (typeof title === "string" ? title : id);
+  const ownName = label ?? (typeof title === "string" ? title : id);
+  // One name everywhere: the registry puts the kind first when another open
+  // window has the same name, and the title bar shows that same name.
+  const name = useShownName(id, ownName);
   const dock = chipMode === "always" || minimized;
 
   const closeRef = useRef(onClose);
@@ -829,10 +837,10 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
 
   useEffect(() => {
     if (!open) return;
-    announceWindow(id, name, glyph, () => requestClose(), dock);
+    announceWindow(id, ownName, glyph, () => requestClose(), dock, kindWord);
     return () => retractWindow(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, id, name, glyph, dock]);
+  }, [open, id, ownName, glyph, dock, kindWord]);
 
   // HS-96-05 — window focus management (the ui-styling a11y pattern,
   // WITHOUT a modal trap: windows coexest is the law). Opening moves
@@ -1013,7 +1021,9 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         {icon}
         {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
             title (Article VII.1); the prop survives for callers/AT. */}
-        <span className="desk-pullout-title desk-window-title">{title}</span>
+        <span className="desk-pullout-title desk-window-title">
+          {typeof title === "string" && name !== ownName ? name : title}
+        </span>
         {wings}
         {actions ? <span className="desk-window-actions">{actions}</span> : null}
         <span className="desk-gadgets desk-gadgets-right">

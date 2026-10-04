@@ -1101,10 +1101,14 @@ export function EditInPlace({
   multiline,
   className,
   mic = true,
+  placeholder,
 }: {
   value: string;
   onCommit: (next: string) => void | Promise<void>;
   label: string;
+  /** The words an EMPTY value shows (a field with no name yet). They are
+   * not the value: typing starts from an empty editor. */
+  placeholder?: string;
   disabledReason?: string;
   multiline?: boolean;
   className?: string;
@@ -1143,14 +1147,14 @@ export function EditInPlace({
     return (
       <Button
         variant="chrome"
-        className={cx}
+        className={!value && placeholder ? `${cx} is-placeholder` : cx}
         aria-label={`Edit ${label}`}
         onClick={() => {
           setDraft(value);
           setEditing(true);
         }}
       >
-        {value}
+        {value || placeholder}
       </Button>
     );
   }
@@ -1158,6 +1162,7 @@ export function EditInPlace({
     className: `${cx} is-editing`,
     "aria-label": label,
     value: draft,
+    placeholder,
     autoFocus: true,
     // Placeholder-shaped values ("No knowledge yet. Click to add.")
     // ride the same `value` prop as real content; select it on focus
