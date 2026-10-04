@@ -28,7 +28,7 @@ import { ThoughtWorkspaceWindow } from "./ThoughtWorkspaceWindow";
  */
 
 vi.mock("../components/DeskWindow", () => ({
-  DeskWindowFrame: ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => <section aria-label="Thought"><button onClick={onClose}>Close window</button>{children}</section>,
+  DeskWindowFrame: ({ children, onClose, label }: { children: React.ReactNode; onClose: () => void; label?: string }) => <section aria-label="Thought" data-window-name={label}><button onClick={onClose}>Close window</button>{children}</section>,
 }));
 vi.mock("./ThoughtDocumentPane", () => ({
   ThoughtDocumentPane: ({ draft, onEdit, lockedReason }: { draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; lockedReason?: string }) => <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => onEdit({ body: event.target.value })} /></section>,
@@ -562,5 +562,41 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1);
     expect(body).toHaveValue("B queued");
     await act(async () => { stopped.resolve(savedThought); await Promise.resolve(); });
+  });
+});
+
+/* The window's name follows the draft at once, ALSO after an autosave
+ * (Astra, #821): the save gives the thought the title `Ask Priya` (its first
+ * words); the owner types on, and the name must follow. The fence renders the
+ * real window and the real writer; the hub's save is the double. */
+describe("ThoughtWorkspaceWindow: the name follows the draft across a save", () => {
+  it("type, save, type again: the name is the first words each time", async () => {
+    vi.useFakeTimers();
+    const fresh = { ...thought, working_note: { ...thought.working_note, title: "Thought", body_markdown: "" } } as Thought;
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection({ thought: fresh }));
+    vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(async (current, patch) => {
+      const saved = { ...current, aggregate_revision: current.aggregate_revision + 1, working_revision: current.working_revision + 1,
+        working_note: { ...current.working_note, title: patch.title ?? current.working_note.title, body_markdown: patch.body_markdown ?? "" } } as Thought;
+      return { thought: saved, workbench: projection({ thought: saved, workspace_cursor: { ...cursor, aggregate_revision: saved.aggregate_revision } }) };
+    });
+    render(<ThoughtWorkspaceWindow object={object} thought={fresh} onClose={vi.fn()} />);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    const name = () => screen.getByRole("region", { name: "Thought" }).getAttribute("data-window-name");
+    expect(name()).toBe("New thought");
+
+    const body = screen.getByRole("textbox", { name: "Note body" });
+    fireEvent.change(body, { target: { value: "Ask Priya" } });
+    expect(name()).toBe("Ask Priya");
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(600); await Promise.resolve(); await Promise.resolve(); });
+    expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(saveThoughtWorkingInWorkspace).mock.calls[0][1].title).toBe("Ask Priya");
+    expect(screen.getByTestId("note-title")).toHaveTextContent("Ask Priya");
+    expect(name()).toBe("Ask Priya");
+
+    // The owner types on BEFORE the next save: the name follows at once.
+    fireEvent.change(body, { target: { value: "Ask Priya about the freeze window" } });
+    expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(1);
+    expect(name()).toBe("Ask Priya about the freeze window");
   });
 });

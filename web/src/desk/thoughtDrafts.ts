@@ -21,7 +21,14 @@ const seats = new Map<string, ThoughtDraftSeat>();
 /* The words on the glass now, for the window's name. The window frame is
  * above the writer, and the name follows the draft at once (windowName.ts),
  * before the hub keeps the note. */
-export interface ThoughtDraftWords { title: string; body: string }
+export interface ThoughtDraftWords {
+  title: string;
+  body: string;
+  /** The note of the writer's LAST SAVED record. A title that is the first
+   * words of this note is the save rule's, not the owner's (thoughtTitle.ts),
+   * so the name keeps following the draft after each save. */
+  keptBody: string;
+}
 const words = new Map<string, ThoughtDraftWords>();
 const wordListeners = new Set<() => void>();
 const tellWords = () => { for (const l of wordListeners) l(); };
@@ -29,8 +36,8 @@ const tellWords = () => { for (const l of wordListeners) l(); };
 /** State the draft's title and note. Returns the withdrawal. */
 export function publishThoughtDraft(noteId: string, draft: ThoughtDraftWords): () => void {
   const now = words.get(noteId);
-  if (!now || now.title !== draft.title || now.body !== draft.body) {
-    words.set(noteId, { title: draft.title, body: draft.body });
+  if (!now || now.title !== draft.title || now.body !== draft.body || now.keptBody !== draft.keptBody) {
+    words.set(noteId, { title: draft.title, body: draft.body, keptBody: draft.keptBody });
     tellWords();
   }
   return () => {
