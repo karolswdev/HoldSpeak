@@ -628,9 +628,6 @@ group passes.
   never refuses a live local chat or dictation call, and the reverse. A local
   engine still gets batches of 16 with a 0.25 s gap, to leave the processor
   to the live call.
-- **Admission is checked at read time.** Each vector candidate is read again
-  through the sweep's reader and `memory_admits`, and cut again; the snippet
-  is that fresh text. The index is only a way to find a candidate.
 - **A search never waits long for the engine.** The question is embedded on
   a worker thread with a 0.5 s limit; after it the search answers by keyword
   and says so in `ranking.engine` (`outcome: timeout`). The route runs the
@@ -641,13 +638,6 @@ group passes.
   `inference.invoke` runs as the principal that searched. A remote engine
   writes the `external.egress` operation and receipt. The answer carries
   `ranking.engine.boundary`.
-- **Secrets.** Every title and snippet memory returns is redacted. The
-  keyword tables `*_memory_fts` are filled by triggers in the writer's own
-  transaction, so the sweep (and the rebuild) replaces the copy of a source
-  that holds a secret and merges the index. Not done: `segments_fts` and
-  `thread_messages_fts` hold no copy of the text, only tokens; a secret said
-  in a meeting or a thread is still a search key there (the result is
-  redacted).
 
 **Rules found in the review of slice 1 (Astra, 2026-10-03):**
 
