@@ -95,6 +95,11 @@
   opacity: 0.86;
 }
 
+.desk-next .thought-note-title.is-placeholder,
+.desk-next .thought-note-title.is-editing::placeholder {
+  color: var(--text-muted);
+}
+
 .desk-next .thought-note-field {
   position: relative;
   min-height: 0;

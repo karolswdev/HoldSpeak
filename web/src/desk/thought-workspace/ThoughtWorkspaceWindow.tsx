@@ -1,4 +1,5 @@
-import { seatThoughtDraft } from "../thoughtDrafts";
+import { publishThoughtDraft, seatThoughtDraft, useThoughtDraftWords } from "../thoughtDrafts";
+import { windowName } from "../windowName";
 import { NEW_THOUGHT_TITLE } from "../thoughtTitle";
 import { useEffect, useRef, useState } from "react";
 import { ApiError, readableError } from "../../lib/api";
@@ -152,6 +153,15 @@ function WorkspaceReady({
     words: () => draftSeat.current.words(),
     flush: () => draftSeat.current.flush(),
   }), [draftNoteId]);
+  // The window's name follows the draft at once (windowName.ts).
+  const shownTitle = writer.draft.title;
+  const shownBody = writer.draft.body;
+  const withdrawWords = useRef<() => void>(() => undefined);
+  // The kept note is the writer's current saved record (it changes on each
+  // save), never the record the window opened with.
+  const keptBody = documentThought.working_note.body_markdown;
+  useEffect(() => { withdrawWords.current = publishThoughtDraft(draftNoteId, { title: shownTitle, body: shownBody, keptBody }); }, [draftNoteId, shownTitle, shownBody, keptBody]);
+  useEffect(() => () => withdrawWords.current(), [draftNoteId]);
 
   useEffect(() => {
     if (projection.thought.id === documentThought.id && projection.thought.aggregate_revision > documentThought.aggregate_revision) {
@@ -542,12 +552,22 @@ export function ThoughtWorkspaceWindow({
   useEffect(() => {
     if (useDesk.getState().editingId === thought.working_note.id) useDesk.getState().closeEditor();
   }, [thought.working_note.id]);
+  // The name of the thought: the owner's title, else its first words, else
+  // `New thought`; from the draft on the glass when the window holds one.
+  const words = useThoughtDraftWords(thought.working_note.id);
+  const name = windowName({
+    kind: "thought",
+    title: words?.title ?? thought.working_note.title,
+    body: words?.body ?? thought.working_note.body_markdown,
+    keptBody: words?.keptBody ?? thought.working_note.body_markdown,
+  }, thought.working_note.id);
   return <DeskWindowFrame
     id={`pullout:${pulloutId ?? object.id}`}
     glyph="▤"
-    label="Thought"
+    label={name}
+    kindWord="Thought"
     icon={<img src={spriteUrl("note", object.id)} alt="" width={24} height={24} />}
-    title="Thought"
+    title={name}
     className="desk-pullout thought-workspace-window"
     minW={560}
     minH={520}

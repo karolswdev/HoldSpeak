@@ -38,7 +38,7 @@ BODIES = [
     "Cut the reporting scope for Nov\nTell the team on Monday.",
 ]
 TITLES = [body.split("\n", 1)[0] for body in BODIES]
-THOUGHT = ".desk-window[aria-label='Thought']"
+THOUGHT = ".desk-window.thought-workspace-window"
 
 
 class TestCaptureFromAnywhere:
@@ -116,7 +116,7 @@ class TestCaptureFromAnywhere:
         page.wait_for_timeout(700)
 
     def _close_thought(self, page: Any, width: int) -> None:
-        self._press(page, page.locator(f"{THOUGHT} [aria-label='Close Thought']").first, width)
+        self._press(page, page.locator(f"{THOUGHT} .desk-gadget-close").first, width)
         page.locator(THOUGHT).wait_for(state="detached")
         _settle(page)
 

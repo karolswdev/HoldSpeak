@@ -25,7 +25,12 @@ import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { useCompactViewport } from "../useCompactViewport";
 import { Button } from "../../components/signal/Signal";
 import { frontSendTo, primeSendTo, useSendToTick } from "../windowSend";
-import { frontWindowId } from "./window/windowRegistry";
+import {
+  focusOrRestoreApp,
+  frontWindowId,
+  registrySnapshot,
+  useAllOpenWindows,
+} from "./window/windowRegistry";
 
 const MENUS: { id: MenuId; label: string }[] = [
   { id: "desk", label: "Desk" },
@@ -59,6 +64,28 @@ export function groupGoForPhone(
   return goRows.length ? [...heads, { type: "sep", id: "go-sep" }, ...goRows] : heads;
 }
 
+/** The Window menu ends with the open windows, a check on the front one;
+ * a pick brings that window to the front (owner ratified 2026-10-04). The
+ * rows are windows, not verbs: they come from the window registry, with the
+ * same one name the title bar and the Dock chip show. Pure over its inputs. */
+export function appendOpenWindows(
+  out: WorkMenuEntry[],
+  windows: readonly { id: string; label: string }[],
+  front: string | null,
+  pick: (id: string) => void,
+): void {
+  if (!windows.length) return;
+  if (out.length) out.push({ type: "sep", id: "sep-open-windows" });
+  for (const w of windows)
+    out.push({
+      type: "item",
+      id: `open-window-${w.id}`,
+      label: w.label,
+      checked: w.id === front,
+      onSelect: () => pick(w.id),
+    });
+}
+
 export function DeskMenuBar() {
   const settled = useSettleState((s) => s.settled);
   // HS-202-02 — the phone bar has room for ONE navigator. Go is that door
@@ -80,6 +107,11 @@ export function DeskMenuBar() {
   const selectedIds = useDesk((s) => s.selectedIds);
   // PHILO-8-01 — re-render on a face change: the Chair withholds zone verbs.
   useChairState((s) => s.surface);
+  // The Window menu lists the open windows: re-render on a registry change
+  // and on a change of the front window.
+  useAllOpenWindows();
+  useDesk((s) => s.panelOrder);
+  useDesk((s) => s.panelMin);
   // PHILO-13-15 (C5): an open menu re-renders when a Send to read lands;
   // the Object menu (393: Go) reads the front window's facts as it opens.
   useSendToTick(open !== null);
@@ -155,6 +187,8 @@ export function DeskMenuBar() {
       lastGroup = v.group;
       out.push(item);
     }
+    if (id === "window")
+      appendOpenWindows(out, registrySnapshot, frontWindowId(), (w) => { focusOrRestoreApp(w); });
   };
 
   const entries = (id: MenuId): WorkMenuEntry[] => {

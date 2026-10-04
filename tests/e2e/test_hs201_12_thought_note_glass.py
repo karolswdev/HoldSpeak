@@ -171,7 +171,7 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             note_id = thought["working_note"]["id"]
             page.goto(f"{url}/?token={TOKEN}&open=note%3A{note_id}", wait_until="load")
 
-            workspace = page.get_by_role("region", name="Thought", exact=True)
+            workspace = page.locator(".desk-window.thought-workspace-window")
             workspace.wait_for(timeout=15000)
             band = page.get_by_role("region", name="One question", exact=True)
             band.wait_for(timeout=15000)
@@ -299,7 +299,7 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
 
             # ── …and the finished note is found again, and reopens ──
             page.goto(f"{url}/?token={TOKEN}&open=note%3A{note_id}", wait_until="load")
-            workspace = page.get_by_role("region", name="Thought", exact=True)
+            workspace = page.locator(".desk-window.thought-workspace-window")
             workspace.wait_for(timeout=15000)
             # PHILO-3-04's two lines: the write says KEPT · <time>, the
             # filing line carries FINISHED.
@@ -321,7 +321,7 @@ def test_thought_note_is_one_clean_note(tmp_path: Path, monkeypatch: pytest.Monk
             # ── No engine: one row, one true token, one verb ──
             provider["path"] = None
             page.goto(f"{url}/?token={TOKEN}&open=note%3A{note_id}", wait_until="load")
-            workspace = page.get_by_role("region", name="Thought", exact=True)
+            workspace = page.locator(".desk-window.thought-workspace-window")
             workspace.wait_for(timeout=15000)
             band = page.get_by_role("region", name="One question", exact=True)
             band.wait_for(timeout=15000)
@@ -365,7 +365,7 @@ def test_thought_note_long_note_and_long_question_never_clip(
             thought = _seed(page, long_title.strip(), long_body)
             page.goto(f"{url}/?token={TOKEN}&open=note%3A{thought['working_note']['id']}", wait_until="load")
 
-            workspace = page.get_by_role("region", name="Thought", exact=True)
+            workspace = page.locator(".desk-window.thought-workspace-window")
             workspace.wait_for(timeout=15000)
             band = page.get_by_role("region", name="One question", exact=True)
             band.wait_for(timeout=15000)
@@ -442,7 +442,7 @@ def test_thought_note_draft_is_appended_never_replaced(
             thought = _seed(page, OWNER_TITLE, OWNER_WORDS)
             page.goto(f"{url}/?token={TOKEN}&open=note%3A{thought['working_note']['id']}", wait_until="load")
 
-            workspace = page.get_by_role("region", name="Thought", exact=True)
+            workspace = page.locator(".desk-window.thought-workspace-window")
             workspace.wait_for(timeout=15000)
             band = page.get_by_role("region", name="One question", exact=True)
             band.wait_for(timeout=15000)
@@ -502,7 +502,7 @@ def test_thought_note_long_context_and_open_well_never_clip(
             thought = _seed(page, OWNER_TITLE, OWNER_BODY)
             page.goto(f"{url}/?token={TOKEN}&open=note%3A{thought['working_note']['id']}", wait_until="load")
 
-            workspace = page.get_by_role("region", name="Thought", exact=True)
+            workspace = page.locator(".desk-window.thought-workspace-window")
             workspace.wait_for(timeout=15000)
             workspace.get_by_role("button", name="Change", exact=True).click()
             well = page.get_by_role("region", name="What the AI reads")

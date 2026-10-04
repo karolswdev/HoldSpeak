@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { useDesk } from "../../store";
 import { mruOrder } from "./windowGeometry";
+import { shownNames } from "../../windowName";
 
 /** Dock chip elements by window id — the minimize/restore motion's
  * target (HS-97-04). Populated by the Dock's ref callbacks. */
@@ -19,12 +20,16 @@ export const shellEls = new Map<string, HTMLElement>();
  * (the Chair screen holds its reopen Button). */
 export const windowRegistry = new Map<
   string,
-  { label: string; glyph: string; close: () => void; dock: boolean }
+  { label: string; glyph: string; close: () => void; dock: boolean; kind?: string }
 >();
 export const registryListeners = new Set<() => void>();
 export type RegisteredWindow = {
   id: string;
+  /** The name every face shows. Two open windows with the same name have
+   * their kind first (`Thought · <name>`); see windowName.ts. */
   label: string;
+  /** The name of the thing in the window, with no kind word. */
+  name: string;
   glyph: string;
   close: () => void;
   dock: boolean;
@@ -34,8 +39,11 @@ export let registrySnapshot: RegisteredWindow[] = [];
 export let dockSnapshot: RegisteredWindow[] = [];
 
 export function publishRegistry() {
+  const shown = shownNames(
+    Array.from(windowRegistry.entries(), ([id, v]) => ({ id, name: v.label, kind: v.kind })),
+  );
   registrySnapshot = Array.from(windowRegistry.entries()).map(
-    ([id, v]) => ({ id, ...v }),
+    ([id, v]) => ({ id, ...v, name: v.label, label: shown.get(id) ?? v.label }),
   );
   dockSnapshot = registrySnapshot.filter((w) => w.dock);
   for (const l of registryListeners) l();
@@ -61,9 +69,11 @@ export function announceWindow(
   glyph: string,
   close: () => void,
   dock = true,
+  /** The kind word that goes first when another open window has this name. */
+  kind?: string,
 ) {
   if (!openSeq.has(id)) openSeq.set(id, ++nextSeq);
-  windowRegistry.set(id, { label, glyph, close, dock });
+  windowRegistry.set(id, { label, glyph, close, dock, kind });
   publishRegistry();
 }
 
@@ -92,6 +102,11 @@ export function useOpenWindows() {
  * the front window and the screen title read this. */
 export function useAllOpenWindows() {
   return useSyncExternalStore(subscribeRegistry, () => registrySnapshot);
+}
+
+/** The name one open window shows now (its kind first when names collide). */
+export function useShownName(id: string, fallback: string): string {
+  return useAllOpenWindows().find((w) => w.id === id)?.label ?? fallback;
 }
 
 /** PHILO-13-11 (C1, R4) — ONE front window, from the ONE stacking order:

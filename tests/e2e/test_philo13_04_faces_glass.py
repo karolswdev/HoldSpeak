@@ -418,7 +418,7 @@ class TestFacesDoNotLie:
                 if width <= 720:   # PHILO-13-11 (slice two, R2): Capture from Speak
                     open_chair_window(page, "Capture")
                 self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
-                thought = page.locator(".desk-window[aria-label='Thought']")
+                thought = page.locator(".desk-window.thought-workspace-window")
                 mic = thought.locator("[aria-label='Speak the note']")
                 mic.wait_for()
                 self._press(page, mic, width)

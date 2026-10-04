@@ -778,6 +778,11 @@ button.surface-edit-in-place:hover {
 .surface-edit-in-place.is-locked {
   cursor: default;
 }
+/* An empty value shows its placeholder words, dimmer than a real value. */
+.surface-edit-in-place.is-placeholder,
+.surface-edit-in-place.is-editing::placeholder {
+  color: var(--text-muted);
+}
 .surface-preview > .surface-preview-label {
   font-size: var(--desk-surface-label-size);
   font-family: var(--font-mono);

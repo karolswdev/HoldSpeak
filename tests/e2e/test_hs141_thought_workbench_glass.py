@@ -133,7 +133,7 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
             )
             page.goto(f"{url}/?token={TOKEN}&open=note%3A{thought['working_note']['id']}", wait_until="load")
 
-            workspace = page.get_by_role("region", name="Thought", exact=True)
+            workspace = page.locator(".desk-window.thought-workspace-window")
             try:
                 workspace.wait_for(timeout=10000)
             except Exception:
@@ -248,12 +248,12 @@ def test_thought_workbench_real_glass(tmp_path: Path, monkeypatch: pytest.Monkey
             server = MeetingWebServer(callbacks, port=restart_port, auth_token=TOKEN)
             assert server.start() == url
             page.reload(wait_until="load")
-            page.get_by_role("region", name="Thought", exact=True).wait_for(timeout=10000)
+            page.locator(".desk-window.thought-workspace-window").wait_for(timeout=10000)
             page.get_by_role("region", name="Note", exact=True).get_by_text("Mina owns the launch.").wait_for()
             time.sleep(0.35)
             assert engine.calls == 2, "service restart redispatched settled work"
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
-            workspace = page.get_by_role("region", name="Thought", exact=True)
+            workspace = page.locator(".desk-window.thought-workspace-window")
             assert workspace.locator(".btn--primary:visible").count() == 1
             page.screenshot(path=f"/tmp/holdspeak-thought-workbench-{width}.png", full_page=False)
 
