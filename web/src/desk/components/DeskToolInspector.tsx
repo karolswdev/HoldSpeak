@@ -9,7 +9,7 @@ import {
   effectClassLabel,
   humanizeWireValue,
 } from "../../lib/productLanguage";
-import { createThread } from "../threads";
+import { openNewThread } from "../newThread";
 import { contextualIntegrationActions } from "../contextual";
 import { useProjections } from "../projections";
 import { useDesk } from "../store";
@@ -331,7 +331,7 @@ export function DeskToolInspector() {
                 type="button"
                 className="desk-chip"
                 disabled={!target.readiness.available}
-                onClick={() => void createThread({ title: target.model, profile_override: target.model }).then((t) => { openPullout(`thread:${t.id}`); void refresh(); })}
+                onClick={() => void openNewThread({ title: target.model, profile_override: target.model })}
               >
                 Continue in thread
               </button>

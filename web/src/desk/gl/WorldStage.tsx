@@ -174,16 +174,28 @@ export function WorldStage() {
 
   const { surface } = useDesk.getState();
   const editingIdx = scene.objects.findIndex((o) => o.id === editingId);
+  // The scene key is `kind:id`; the store names Knowledge, Agents and
+  // Sequences by another word (`knowledge:`, `persona:`, `sequence:`), so
+  // the key found no object and their editor never opened on this Floor
+  // (New Knowledge, New Agent, Edit). The selection ref is the store's name.
+  // An object the scene does not draw (past the floater cap, outside the
+  // dived zone) still has its editor.
   const editingObj =
-    editingIdx >= 0 ? objectByRef(items, scene.objects[editingIdx].key) : null;
+    editingIdx >= 0
+      ? objectByRef(items, scene.objects[editingIdx].selectionRef)
+      : editingId
+        ? objectByRef(items, editingId)
+        : null;
   const editorU =
     editingObj && editingId
-      ? objUnit(
-          editingObj,
-          editingIdx,
-          scene.objects.length,
-          editorPos ? { [editingId]: editorPos } : {},
-        )
+      ? editingIdx >= 0
+        ? objUnit(
+            editingObj,
+            editingIdx,
+            scene.objects.length,
+            editorPos ? { [editingId]: editorPos } : {},
+          )
+        : (editorPos ?? { x: 0.5, y: 0.4 })
       : null;
   const openCards = pullouts
     .map((p) => ({ ...p, obj: objectByRef(items, p.id) }))

@@ -148,14 +148,7 @@ export function openPrimitive(ref: string): void {
 
 /** Open a thread bound to a recipe (HS-151-07: replaces the retired PersonaChat). */
 export function openPersona(personaId: string): void {
-  void import("./threads").then((m) =>
-    m.createThread({ recipe_id: personaId }).then((t) =>
-      import("./store").then((s) => {
-        s.useDesk.getState().openPullout(`thread:${t.id}`);
-        void s.useDesk.getState().refresh();
-      }),
-    ),
-  );
+  void import("./newThread").then((m) => m.openNewThread({ recipe_id: personaId }));
 }
 
 /** Open a Coder session's window (the one session surface). */
