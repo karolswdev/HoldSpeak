@@ -11,6 +11,10 @@ const CASCADE = DESK_WINDOW.cascade;
 /** The window head strip considered for title-bar occlusion (px). */
 const HEAD = 44;
 
+/** Sent on `window` when the Dock's published height (`--desk-dock-h`)
+ * arrives or changes: the working band moved, so open windows clamp again. */
+export const DOCK_HEIGHT_EVENT = "desk:dock-height";
+
 /** The usable desktop is one contract: below the system bar, above the dock.
  * CSS owns the dimensions so shell changes cannot make window physics drift. */
 export function workBand() {
