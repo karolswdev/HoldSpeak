@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { plainFailure } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
 import { openSourceRef } from "../../desk/surface/citations";
+import { refOpener } from "../../desk/openObject";
 import { useCoreWings } from "../../pages/cores/core-hooks";
 import type { SinceLastMeetingResponse } from "./model";
 import type { RoomSnapshot, RoomProposalItem, RoomSuggestedSourceItem } from "./model";
@@ -206,8 +207,10 @@ export function useProjectRoomController(
   };
 
   const openProjectRef = (ref: string) => {
+    // A decision opens in its own window (the one open grammar); the Room
+    // and the answer that cited it stay where they are.
     if (ref.startsWith("decision:") || ref.startsWith("desk_decision:")) {
-      wings.setView("decisions");
+      refOpener(ref)?.();
       return;
     }
     // Memory ranks the child message that matched, but the Desk opens the

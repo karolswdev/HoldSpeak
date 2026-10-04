@@ -19,7 +19,9 @@ export function groundedMatchCount(
 
 /** The token's label grammar: `Kind · id`. */
 export function sourceLabel(ref: string): string {
-  const [kind, ...rest] = ref.split(":");
+  const [rawKind, ...rest] = ref.split(":");
+  // A desk decision reads as what it is: a decision.
+  const kind = rawKind === "desk_decision" ? "decision" : rawKind;
   return `${kind[0]?.toUpperCase() || ""}${kind.slice(1)} · ${rest.join(":")}`;
 }
 
