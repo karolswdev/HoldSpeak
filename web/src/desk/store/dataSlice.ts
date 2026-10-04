@@ -13,6 +13,7 @@ import {
 import { PRIMITIVES, type PrimitiveKind } from "../../lib/primitives";
 import {
   EMPTY_ITEMS,
+  fromWireCreated,
   loadAll,
   qualifiedRef,
   type Items,
@@ -156,6 +157,7 @@ export type DataSlice = Pick<
   | "zoneWidths"
   | "refresh"
   | "createPrimitive"
+  | "adoptCreated"
   | "registerRepository"
   | "updatePrimitive"
   | "deletePrimitive"
@@ -306,6 +308,25 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
     return runRefresh();
   },
 
+  adoptCreated(kind, wire) {
+    const made = fromWireCreated(kind, wire);
+    if (!made) return null;
+    const bucket = (get().items[kind] ?? []) as unknown as IdentifiedItem[];
+    const next = bucket.some((item) => item.id === made.id)
+      ? bucket.map((item) => (item.id === made.id ? made : item))
+      : [...bucket, made];
+    // A desk read that started before this create does not hold the new
+    // record: the write version keeps the object through that read
+    // (mergeRefreshItems), so its window does not close under the owner.
+    const key = writeKey(kind, made.id);
+    primitiveWrites.set(key, {
+      version: (primitiveWrites.get(key)?.version || 0) + 1,
+      pending: false,
+    });
+    set({ items: { ...get().items, [kind]: next } as Items });
+    return made.id;
+  },
+
   async createPrimitive(kind, overrides = {}) {
     // HS-130-09 — a Workbench is chosen BEFORE it is persisted. The create
     // gesture opens the pre-persistence chooser; exactly one of its exits
@@ -372,6 +393,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
     const body: Record<string, unknown> = picked ? { ...defaults, name: picked } : defaults;
     const faceAtPress = faceChangeCount();
     let createdId: string | null = null;
+    let created: unknown = null;
     // HS-132-06 — a refused create is named, not swallowed; RETRY re-issues
     // the same create. PHILO-8-01 — RETRY refreshes the store first, so a
     // zone made elsewhere (MCP, another tab) is seen and the free name is
@@ -393,6 +415,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
         return;
       }
       const data = await res.json().catch(() => ({}));
+      created = data?.[wireKey] ?? null;
       createdId = data?.[wireKey]?.id || null;
       clearWriteFailure();
     } catch (cause) {
@@ -408,24 +431,35 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       set({ positions });
       savePositions(positions);
     }
+    const open = (id: string) => {
+      get().markNew(id);
+      // "workbench" never reaches here — it returns early to the
+      // pre-persistence chooser (HS-130-09).
+      if (kind === "zone") {
+        // PHILO-8-01 — only on the face where New Zone was pressed.
+        if (faceChangeCount() === faceAtPress) get().setRenamingZone(id);
+      }
+      // PHILO-3-01 — a decision has no inline editor; its face is the
+      // DecisionPullout, which opens in Edit for a new decision.
+      else if (kind === "decision") get().openPullout(id);
+      else get().openEditor(id);
+    };
+    // The window opens at once, from the create answer. Before, it waited
+    // for a full desk read (every collection; 2 to 5 s on a desk with a
+    // roadmap), so the press showed nothing and the record was made unseen.
+    // A zone is not a window: its name field waits for the read, by the
+    // PHILO-8-01 face rule above.
+    const opened =
+      createdId !== null &&
+      kind !== "zone" &&
+      get().adoptCreated(kind, created) !== null;
+    if (opened && createdId) open(createdId);
     try {
       await get().refresh();
     } finally {
       release();
     }
-    if (createdId) {
-      get().markNew(createdId);
-      // "workbench" never reaches here — it returns early to the
-      // pre-persistence chooser (HS-130-09).
-      if (kind === "zone") {
-        // PHILO-8-01 — only on the face where New Zone was pressed.
-        if (faceChangeCount() === faceAtPress) get().setRenamingZone(createdId);
-      }
-      // PHILO-3-01 — a decision has no inline editor; its face is the
-      // DecisionPullout, which opens in Edit for a new decision.
-      else if (kind === "decision") get().openPullout(createdId);
-      else get().openEditor(createdId);
-    }
+    if (createdId && !opened) open(createdId);
   },
 
   async registerRepository(input) {

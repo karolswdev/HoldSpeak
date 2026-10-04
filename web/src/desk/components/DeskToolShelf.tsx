@@ -16,7 +16,7 @@ import { openSurface } from "../shell";
 import { SYSTEM } from "../systemSprites";
 import { qualifiedRef } from "../api";
 import { apiFetch } from "../../lib/api";
-import { createThread } from "../threads";
+import { openNewThread } from "../newThread";
 import {
   contextualCapabilityActions,
   contextualCoderSessions,
@@ -616,7 +616,7 @@ export function DeskToolShelf() {
         label: model.name,
         kind: "MODEL",
         terms: "model",
-        run: () => void createThread({ title: model.name, profile_override: model.name }).then((t) => { openPullout(`thread:${t.id}`); void refresh(); }),
+        run: () => void openNewThread({ title: model.name, profile_override: model.name }),
       });
 
     // ── one door per name (HS-202-02) ──

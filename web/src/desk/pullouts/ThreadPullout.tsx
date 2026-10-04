@@ -1,3 +1,4 @@
+import { openNewThread } from "../newThread";
 import { countLabel } from "../surface";
 /** HS-151-05 — Thread pullout content: head (in-place title, egress lamp,
  * status line, token meter), body (user/assistant rows with StreamingMaterial,
@@ -33,7 +34,6 @@ import {
   keepMessage,
   branchThread,
   regenerateThread,
-  createThread,
   decideToolCall,
   addAnnotation,
   deleteAnnotation,
@@ -1397,9 +1397,7 @@ function ThreadPulloutInner({
 
   /** HS-151-06: create a new thread (/ new verb). */
   const handleNewThread = useCallback(async () => {
-    const t = await createThread({});
-    useDesk.getState().openPullout(`thread:${t.id}`);
-    void useDesk.getState().refresh();
+    await openNewThread();
   }, []);
 
   const isStreaming = detail?.messages.some((m) => m.streaming) ?? false;
