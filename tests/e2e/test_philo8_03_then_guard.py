@@ -18,10 +18,18 @@ case through the REAL rig and a real hub, and delay the follow-up two ways:
 * `click_wait`   -- the target disabled for 8.5 s from the moment the step
                     starts, so any waiting happens INSIDE the delivery (r2).
 
-Expected: `blocked` at both widths, the guard named. Red: PHILO8_GUARD_RED=1
+Expected: never a pass at both widths, the guard named. Red: PHILO8_GUARD_RED=1
 strips the guard (the round-one atlas shape) and both modes PASS; the r2 rig
 (4905986f) passes `click_wait` with the guard kept (recorded under
 docs/internal/philo/phase-8/atlas/reds/).
+
+The verdict word: until PHILO-13-01 (B0 r3 counsel, 41229db26) the rig
+recorded this refusal as `blocked`. Since then a refusal after the trigger
+fired (a `then` step is in the trigger's lifecycle) is `fail`
+(`scripts/graph_walk.py` `run_case`, "TRIGGER lifecycle failed";
+`tests/unit/test_philo13_graph_walk.py::test_trigger_lifecycle_error_is_recorded_as_fail`).
+The fence reads the verdict the rig gives now; what it proves is the same:
+the late follow-up is not delivered and the case does not pass.
 """
 from __future__ import annotations
 
@@ -91,8 +99,9 @@ def test_a_follow_up_after_the_window_is_blocked(tmp_path: Path, monkeypatch: py
     notes = " | ".join(record.get("notes", []))
     print(f"{width} {mode}: verdict {record['verdict']}; delayed {state['delayed']}; {notes[:420]}")
     assert state["delayed"], "the delay was never injected (the receipt never showed)"
-    assert record["verdict"] == "blocked", (record["verdict"], notes)
-    assert "did not hold at delivery" in notes, notes
+    assert record["verdict"] == "fail", (record["verdict"], notes)
+    assert record["trigger_error"]["lifecycle"] == "fail", record["trigger_error"]
+    assert "not delivered" in notes and "did not hold at delivery" in notes, notes
 
 
 # ── the delivery script on a static page (no hub): it decides and sends in one task ──
