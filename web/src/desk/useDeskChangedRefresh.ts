@@ -35,7 +35,7 @@
  * frame. A frame that arrives during the wait extends it.
  */
 import { useEffect, useRef } from "react";
-import { useOptionalRuntimeBus, useRuntimeBus } from "../runtime/RuntimeBus";
+import { useRuntimeBus } from "../runtime/RuntimeBus";
 import { useDesk } from "./store";
 
 /** Trailing-edge debounce window for a `desk_changed` burst, in ms. */
@@ -82,8 +82,7 @@ export function useOnDeskChanged(
   reload: () => void,
   debounceMs: number = DESK_CHANGED_DEBOUNCE_MS,
 ): void {
-  const bus = useOptionalRuntimeBus();
-  const subscribe = bus?.subscribe;
+  const subscribe = useBusSubscribe();
   const latest = useRef(reload);
   latest.current = reload;
 
@@ -99,7 +98,18 @@ export function useOnDeskChanged(
     });
     return () => {
       if (timer !== null) clearTimeout(timer);
-      unsubscribe();
+      if (typeof unsubscribe === "function") unsubscribe();
     };
   }, [subscribe, debounceMs]);
+}
+
+/** The bus's `subscribe`, or nothing when the window is drawn with no bus
+ * (a component test with no provider). The context read always runs, so the
+ * hook order is the same on every render. */
+function useBusSubscribe(): ReturnType<typeof useRuntimeBus>["subscribe"] | undefined {
+  try {
+    return useRuntimeBus().subscribe;
+  } catch {
+    return undefined;
+  }
 }

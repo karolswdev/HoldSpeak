@@ -51,6 +51,16 @@ function frameTime(data: unknown): string | null {
   return text(value.started_at) || text(value.startedAt) || text(value.recorded_at) || null;
 }
 
+/** Every object a `desk_changed` frame names: its `changes` list, or the frame
+ * itself for a frame with one change and no list. */
+export function deskChanges(data: unknown): Record<string, unknown>[] {
+  const value = record(data);
+  const listed = Array.isArray(value.changes)
+    ? value.changes.filter((change): change is Record<string, unknown> => Boolean(change) && typeof change === "object")
+    : [];
+  return listed.length ? listed : [value];
+}
+
 function frameOutcome(data: unknown): DockSendOutcome | null {
   const value = record(data);
   const raw = text(value.state) || text(value.outcome) || text(value.status) || text(value.op);
@@ -95,19 +105,20 @@ export function reduceDockFrame(
       return meetingId && !state.readyMeetingIds.includes(meetingId)
         ? { ...state, readyMeetingIds: [...state.readyMeetingIds, meetingId] }
         : state;
-    case "desk_changed": {
-      const value = record(frame.data);
-      const kind = text(value.kind);
-      if (kind === "meeting_ready_read") {
-        const readId = text(value.id) || text(value.meeting_id);
-        return readId
-          ? { ...state, readyMeetingIds: state.readyMeetingIds.filter((id) => id !== readId) }
-          : state;
-      }
-      if (kind !== "send") return state;
-      const outcome = frameOutcome(value);
-      return outcome ? { ...state, sendOutcome: outcome } : state;
-    }
+    case "desk_changed":
+      // One write sends one frame; it can name more than one object.
+      return deskChanges(frame.data).reduce((next, value) => {
+        const kind = text(value.kind);
+        if (kind === "meeting_ready_read") {
+          const readId = text(value.id) || text(value.meeting_id);
+          return readId
+            ? { ...next, readyMeetingIds: next.readyMeetingIds.filter((id) => id !== readId) }
+            : next;
+        }
+        if (kind !== "send") return next;
+        const outcome = frameOutcome(value);
+        return outcome ? { ...next, sendOutcome: outcome } : next;
+      }, state);
     default:
       return state;
   }

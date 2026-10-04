@@ -25,6 +25,7 @@ import { RoomActions } from "./RoomActions";
 import {
   dockStateLabel,
   EMPTY_DOCK_LIVE,
+  deskChanges,
   formatDockTime,
   latestSendSettle,
   nextOneOnOneLabel,
@@ -240,10 +241,8 @@ function useDockLiveReads(): {
       subscribe(type, (frame) => {
         setLive((previous) => reduceDockFrame(previous, frame));
         if (frame.type === "desk_changed") {
-          const value = frame.data && typeof frame.data === "object"
-            ? frame.data as Record<string, unknown>
-            : {};
-          if (value.kind === "meeting_ready_read") {
+          for (const value of deskChanges(frame.data)) {
+            if (value.kind !== "meeting_ready_read") continue;
             const readId = typeof value.id === "string"
               ? value.id
               : typeof value.meeting_id === "string" ? value.meeting_id : "";

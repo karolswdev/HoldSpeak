@@ -17,8 +17,10 @@ vi.mock("../runtime/RuntimeBus", () => {
     },
   };
   return {
-    useRuntimeBus: () => value,
-    useOptionalRuntimeBus: () => (bus.present ? value : null),
+    useRuntimeBus: () => {
+      if (!bus.present) throw new Error("useRuntimeBus must be used inside RuntimeBusProvider");
+      return value;
+    },
   };
 });
 
