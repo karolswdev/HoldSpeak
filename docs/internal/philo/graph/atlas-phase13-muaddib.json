@@ -1165,6 +1165,40 @@
           "capture_path": "note.id"
         },
         {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/thoughts/for-note/{note_id}",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "why": "the note's source precondition, the fact the adopt producer checks",
+          "capture_as": "source_sha",
+          "capture_path": "source_precondition.content_sha256"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/thoughts/for-note/{note_id}",
+          "adapter": "http-route",
+          "expect_status": 200,
+          "why": "the note's source precondition, the fact the adopt producer checks",
+          "capture_as": "source_modified",
+          "capture_path": "source_precondition.last_modified"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/thoughts/adopt",
+          "adapter": "http-route",
+          "body": {
+            "request_id": "p13-palette-thought-word",
+            "note_id": "{note_id}",
+            "expected_source_content_sha256": "{source_sha}",
+            "expected_source_last_modified": "{source_modified}"
+          },
+          "expect_status": 201,
+          "why": "the note becomes a thought through the real adopt producer; an ordinary note opens in the Note window, not the Thought window"
+        },
+        {
           "kind": "ui",
           "action": "reload",
           "adapter": "ui-navigation",
