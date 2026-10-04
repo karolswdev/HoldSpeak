@@ -54,7 +54,7 @@ Text below that gives Astra lanes or file ownership is history.
 This repo has two orchestrators of equal standing: Muad'Dib (Claude,
 this harness) and Astra (`gpt-6-astra` via `codex exec --yolo`). Each
 checks the other before anything either authored is acted on; each
-orchestrates down to its own workers (Muad'Dib → Fable 5.1 (owner ruling 2026-10-03) via
+orchestrates down to its own workers (Muad'Dib → Opus 5.5, `claude-opus-5-5` (owner ruling 2026-10-04) via
 `.claude/agents/opus-worker.md`; Astra → `gpt-5.6-luna` at `xhigh`).
 Canon: `docs/internal/TWO-BRAINS.md`. Astra's side of the same rules:
 `AGENTS.md` (repo root; codex reads it). Channel: `scripts/astra <role>

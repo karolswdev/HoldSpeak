@@ -46,9 +46,9 @@ other before anything it authored is acted on.
 
 | | Muad'Dib | Astra |
 |---|---|---|
-| Runtime | Claude Code (this session), `claude-fable-5-1` | `codex exec`, `gpt-6-astra`, reasoning `xhigh` |
+| Runtime | Claude Code (this session), `claude-opus-5-5` | `codex exec`, `gpt-6-astra`, reasoning `xhigh` |
 | Reads on entry | `CLAUDE.md`, memory, this doc | `AGENTS.md` (repo root), this doc |
-| Orchestrates down to | `.claude/agents/opus-worker.md` — Fable 5.1 (`claude-fable-5-1`, ruling 2026-10-03: "Let those feday-kin be fable 5.5 agents. Or, if unable. Fable 5.1."; 5.5 is not available), the Fedaykin | `spawn_agent` with `model="gpt-5.6-luna"`, `reasoning_effort="xhigh"` — the Luna lanes |
+| Orchestrates down to | `.claude/agents/opus-worker.md` — Opus 5.5 (`claude-opus-5-5`, owner ruling 2026-10-04: "our Fedaykin are now claude-opus-5-5"; supersedes the 2026-10-03 Fable 5.1 ruling), the Fedaykin | `spawn_agent` with `model="gpt-5.6-luna"`, `reasoning_effort="xhigh"` — the Luna lanes |
 | Invoked by | the owner, or a Muad'Dib session the owner opens (a `claude -p` run by Astra is advice, not Muad'Dib — §6) | the owner, or Muad'Dib via `scripts/astra` |
 | Session record | Claude Code transcript + memory | `~/.codex/sessions/…/rollout-<ts>-<id>.jsonl` (persisted; never `--ephemeral` for real work) |
 
@@ -202,7 +202,7 @@ When Astra authored something and Muad'Dib is not the caller (the owner
 ran `codex` directly), Astra MAY get a Claude second opinion with:
 
 ```
-claude -p --model claude-fable-5-1 --permission-mode bypassPermissions \
+claude -p --model claude-opus-5-5 --permission-mode bypassPermissions \
   "$(cat <brief.md>)"
 ```
 
@@ -237,8 +237,8 @@ acted on.
 Both brains are orchestrators first. Each fans out to its own workers
 and never to the other's:
 
-- **Muad'Dib → Fable 5.1** (`claude-fable-5-1`; owner ruling 2026-10-03, superseding Opus 5.5) via the `opus-worker` agent
-  (`.claude/agents/opus-worker.md`, `model: opus`; the file is
+- **Muad'Dib → Opus 5.5** (`claude-opus-5-5`; owner ruling 2026-10-04, superseding Fable 5.1) via the `opus-worker` agent
+  (`.claude/agents/opus-worker.md`, `model: claude-opus-5-5`; the file is
   gitignored, re-applied per clone). Worker laws: ORCHESTRATION.md §3
   and the agent file.
 - **Astra → Luna xhigh** via `spawn_agent(model="gpt-5.6-luna",
