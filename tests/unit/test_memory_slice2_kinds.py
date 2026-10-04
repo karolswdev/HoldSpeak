@@ -70,7 +70,7 @@ def _fts_in_step(db: Any) -> None:
     assert [tuple(r) for r in chunks] == [tuple(r) for r in rows]
 
 
-# ── R2: the summary, and each topic, as its own chunk ───────────────────
+# ── R2: a word only in the summary ──────────────────────────────────────
 
 
 def _meeting(hub: Hub) -> None:
@@ -97,17 +97,9 @@ def test_r2_a_word_only_in_the_summary_is_found_by_search_and_memory_context(hub
 
     sweep(hub.db)
     with hub.db._connection() as conn:
-        anchors = {
-            str(row["anchor"]): str(row["text"])
-            for row in conn.execute(
-                "SELECT anchor,text FROM memory_chunks WHERE source_ref='meeting:m-kestrel'"
-            )
-        }
-    assert "zephyrine" in anchors["summary"] and "kestrel" not in anchors["summary"]
-    topics = {anchor: text for anchor, text in anchors.items() if anchor.startswith("topic:")}
-    assert sorted(text.split("\n")[-1] for text in topics.values()) == [
-        "Topic: Obsidianware licence", "Topic: Pellucid rollout",
-    ]
+        held = "\n".join(str(r[0]) for r in conn.execute(
+            "SELECT text FROM memory_chunks WHERE source_ref='meeting:m-kestrel'"))
+    assert "zephyrine" in held and "Pellucid rollout" in held
     _fts_in_step(hub.db)
 
 
@@ -329,3 +321,132 @@ def test_an_existing_database_gets_the_table_and_the_next_sweep_fills_it(tmp_pat
     finally:
         db.close()
         reset_database()
+
+
+# ── Astra's review of #832 ──────────────────────────────────────────────
+
+
+def test_p1_the_version_bump_keeps_every_vector_and_recall_has_no_gap(tmp_path: Path) -> None:
+    """A desk indexed and embedded under chunker 1 (no keyword table rows).
+    Under chunker 2 a question with no keyword match still finds the meeting
+    by its vector: before the sweep, after the sweep, and with an engine that
+    fails every embed call.  The bump writes the same chunks, so no vector
+    is dropped and nothing waits to be embedded."""
+    from holdspeak.db import Database, reset_database
+    from holdspeak.memory.retain import MemorySource, embed_pending, prepare
+    from test_memory_slice1 import HashEngine
+
+    reset_database()
+    db = Database(tmp_path / "v1.db")
+    try:
+        db.meetings.save_meeting(MeetingState(
+            id="short", started_at=datetime(2026, 10, 1, 9, 0, 0), title="Short",
+            segments=[TranscriptSegment(text="We looked at the kestrel dashboards.",
+                                        speaker="Avery", start_time=1.0, end_time=2.0)],
+            intel=IntelSnapshot(timestamp=3.0, topics=["Obsidianware licence"],
+                                summary="Team agreed the zephyrine migration plan."),
+        ))
+        with db._connection() as conn:
+            seg_id = conn.execute("SELECT id FROM segments WHERE meeting_id='short'").fetchone()[0]
+            started = conn.execute("SELECT started_at FROM meetings WHERE id='short'").fetchone()[0]
+        assert started == "2026-10-01T09:00:00"
+        engine = HashEngine()
+        # The index exactly as chunker 1 (main before this PR) wrote it: its
+        # meeting units, packed, version 1, and no keyword table rows.
+        v1 = MemorySource(
+            "meeting:short", "meeting", "Short", "2026-10-01T09:00:00",
+            [
+                (str(seg_id), "Avery: We looked at the kestrel dashboards."),
+                ("summary", "Summary: Team agreed the zephyrine migration plan."),
+                ("topics", "Topics: Obsidianware licence"),
+            ],
+        )
+        content_sha, chunks = prepare(v1)
+        db.memory_index.replace_source(
+            source_ref=v1.ref, kind=v1.kind, title=v1.title, occurred_at=v1.occurred_at,
+            content_sha=content_sha, chunker_version=1, chunks=chunks,
+        )
+        assert embed_pending(db, engine) > 0
+        with db._connection() as conn:
+            conn.execute("DELETE FROM memory_chunks_fts")
+            vectors = conn.execute(
+                "SELECT item_id,content_sha,vector FROM memory_embeddings ORDER BY item_id").fetchall()
+        db.memory.set_embedder(engine)
+
+        def vector_refs() -> list[str]:
+            found = db.memory.search("a question with other words").hits
+            return [hit.source_ref for hit in found if hit.retrieval_origin == "vector"]
+
+        assert vector_refs() == ["meeting:short"]           # before the sweep
+        assert sweep(db)["written"] == 1                      # the bump re-wrote it
+        assert vector_refs() == ["meeting:short"]           # after, before any embed
+        assert db.memory_index.pending_count(engine.model_id) == 0
+        with db._connection() as conn:
+            assert conn.execute(
+                "SELECT item_id,content_sha,vector FROM memory_embeddings ORDER BY item_id"
+            ).fetchall() == vectors
+        failing = HashEngine(fail_on_call=1)
+        assert embed_pending(db, failing) == 0 and failing.calls == 0
+        assert vector_refs() == ["meeting:short"]           # an engine failure changes nothing
+        assert _refs(db, "zephyrine") == ["meeting:short"]
+        _fts_in_step(db)
+    finally:
+        db.close()
+        reset_database()
+
+
+def test_p2_an_edited_dictation_is_not_found_by_its_old_words(hub: Hub) -> None:
+    from holdspeak.plugins.dictation.journal import DictationJournalRecorder
+
+    from types import SimpleNamespace
+
+    run = SimpleNamespace(final_text="", stage_results=[], total_elapsed_ms=0.0, warnings=[], intent=None)
+    entry = DictationJournalRecorder(hub.db.dictation_journal).record(
+        run, source="dictation", transcript="The vellichor launch is Friday")
+    sweep(hub.db)
+    assert _refs(hub.db, "vellichor") == [f"dictation:{entry.id}"]
+
+    assert hub.db.dictation_journal.update_transcript(entry.id, "The tamarack launch is Monday")
+    assert _refs(hub.db, "vellichor") == []  # at once, before any sweep
+    sweep(hub.db)
+    hits = hub.db.memory.search("tamarack").hits
+    assert [hit.source_ref for hit in hits] == [f"dictation:{entry.id}"]
+    assert "tamarack" in hits[0].snippet and "vellichor" not in hits[0].snippet
+
+
+def test_p3_equal_time_ranges_give_equal_answers(hub: Hub, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The journal stores the hub's local wall time (``datetime.now()``).
+    In Denver 09:00 local is 15:00Z; both spellings of the range find it."""
+    import time
+    from datetime import datetime as real_datetime
+
+    from holdspeak.db import journal as journal_module
+    from holdspeak.plugins.dictation.journal import DictationJournalRecorder, passthrough_run
+
+    monkeypatch.setenv("TZ", "America/Denver")
+    time.tzset()
+    try:
+        class Fixed(real_datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return real_datetime(2026, 10, 4, 9, 0, 0)
+
+        monkeypatch.setattr(journal_module, "datetime", Fixed)
+        said = "The quorvane cutover is done"
+        entry = DictationJournalRecorder(hub.db.dictation_journal).record(
+            passthrough_run(said), source="dictation", transcript=said)
+        monkeypatch.setattr(journal_module, "datetime", real_datetime)
+        sweep(hub.db)
+        ref = f"dictation:{entry.id}"
+
+        def within(start: str, end: str) -> list[str]:
+            return _refs(hub.db, "quorvane", time_from=start, time_to=end)
+
+        assert within("2026-10-04T14:30:00+00:00", "2026-10-04T15:30:00+00:00") == [ref]
+        assert within("2026-10-04T08:30:00-06:00", "2026-10-04T09:30:00-06:00") == [ref]
+        assert within("2026-10-04T08:30:00", "2026-10-04T09:30:00") == [ref]  # local wall time
+        assert within("2026-10-04T16:00:00+00:00", "2026-10-04T17:00:00+00:00") == []
+        assert within("2026-10-04T09:30:00-06:00", "2026-10-04T10:30:00-06:00") == []
+    finally:
+        monkeypatch.delenv("TZ", raising=False)
+        time.tzset()

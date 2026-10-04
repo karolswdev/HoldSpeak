@@ -52,8 +52,12 @@ _VALID_KINDS = frozenset(_KIND_ORDER)
 #: `search` does not read them.
 _CHUNK_KEYWORD_KINDS = ("brief_item", "dictation", "steward_run", "ask_answer")
 
-#: Kinds whose time is SQLite's 'YYYY-MM-DD HH:MM:SS' (compared like with like).
-_SPACE_TIME_KINDS = frozenset({"thread", "dictation", "steward_run", "ask_answer"})
+#: Kinds whose filter compares instants (``timeparse.instant``: a SQLite stamp
+#: is UTC, an offset is exact, a bare ISO time is local wall time).  Their
+#: stores mix those shapes, so a string compare is wrong.
+_INSTANT_TIME_KINDS = frozenset(
+    {"thread", "brief_item", "dictation", "steward_run", "ask_answer"}
+)
 
 #: A Brief row that stands for a 1:1 commitment (People custody).  The Brief
 #: already writes it with no People text (`needs_you_membership.
@@ -1473,13 +1477,17 @@ class MemoryRepository(BaseRepository):
     def _in_time(kind: str, occurred_at: str, start: Optional[str], end: Optional[str]) -> bool:
         if not start and not end:
             return True
-        if kind in _SPACE_TIME_KINDS:
-            # A thread time is 'YYYY-MM-DD HH:MM:SS'; compare like with like.
-            def norm(value: str) -> str:
-                return value.replace("T", " ")[:19]
+        if kind in _INSTANT_TIME_KINDS:
+            # Compare the instants, never the strings: 15:00Z and
+            # 09:00-06:00 are one time.
+            from ..memory.timeparse import instant
 
-            value = norm(occurred_at)
-            return not ((start and value < norm(start)) or (end and value > norm(end)))
+            at = instant(occurred_at)
+            low = instant(start) if start else None
+            high = instant(end) if end else None
+            if at is None or (start and low is None) or (end and high is None):
+                return False
+            return not ((low and at < low) or (high and at > high))
         return not ((start and occurred_at < start) or (end and occurred_at > end))
 
     @staticmethod
@@ -1854,10 +1862,11 @@ class MemoryRepository(BaseRepository):
         content since the last sweep is never a hit.  Needs no engine: the
         sweep cuts chunks with no model.
         """
-        from ..memory.retain import current_source
+        from ..memory.retain import current_source, prepare_current
 
         found = conn.execute(
             """SELECT c.source_ref source_ref,s.title title,c.occurred_at occurred_at,
+                      c.id chunk_id,c.content_sha chunk_sha,
                       snippet(memory_chunks_fts,0,'<mark>','</mark>',' … ',24) snippet,
                       bm25(memory_chunks_fts) bm25
                FROM memory_chunks_fts
@@ -1876,21 +1885,32 @@ class MemoryRepository(BaseRepository):
             ref = str(row["source_ref"])
             if ref in seen:
                 continue  # a better chunk of this source is already the hit
-            seen.add(ref)
             resource_id = ref.partition(":")[2]
             if project and not cls._ref_in_project(conn, kind, resource_id, project):
                 continue
-            if not cls._in_time(kind, str(row["occurred_at"] or ""), start, end):
+            source = current_source(conn, ref)
+            if source is None:
                 continue
-            if current_source(conn, ref) is None:
+            # The chunk must be a chunk of the text of NOW (same id, same
+            # hash): an edited source is not found by its old words, and
+            # the snippet is live text.  Its other chunks may still match.
+            _sha, fresh = prepare_current(source)
+            if not any(
+                item["id"] == row["chunk_id"] and item["content_sha"] == row["chunk_sha"]
+                for item in fresh
+            ):
                 continue
+            occurred_at = str(source.occurred_at or "")
+            if not cls._in_time(kind, occurred_at, start, end):
+                continue
+            seen.add(ref)
             rows.append(
                 {
                     "kind": kind,
                     "source_ref": ref,
                     "title": str(row["title"] or ""),
                     "snippet": str(row["snippet"] or ""),
-                    "occurred_at": str(row["occurred_at"] or ""),
+                    "occurred_at": occurred_at,
                     "project_id": cls._project_of(conn, kind, resource_id),
                     "bm25": float(row["bm25"]),
                 }

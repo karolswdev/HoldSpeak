@@ -312,8 +312,11 @@ and id of each change.
 **Built (2026-10-04, slice 2):** the readers are in `memory/retain.py`
 (`SOURCE_READERS`), the rules in `memory/admission.py`.
 
-- Meeting summary and topics: the `meeting` reader. The summary is one
-  chunk (anchor `summary`), each topic is one chunk (anchor `topic:<id>`).
+- Meeting summary and topics: the `meeting` reader holds them (since
+  #786), packed with the transcript turns. One chunk per summary and per
+  topic is not built: a new cut drops every old meeting vector until the
+  new ones are embedded, and nothing yet keeps the old vectors serving
+  (see Versions below).
 - Commitments: no kind of their own. Each commitment writes its
   `action_items` row (task, owner, due) in the same transaction, and the
   `action` kind holds that row.
@@ -328,7 +331,11 @@ and id of each change.
 - None of the four new kinds has a Desk window that opens one record:
   each is in `NO_WINDOW_REF_KINDS`.
 - Keyword search for the four kinds reads `memory_chunks_fts`. The sweep
-  writes it, so it works with no engine. The wake reaches `ask_answer`
+  writes it, so it works with no engine. A hit must be a chunk of the live
+  text (same id and hash), so an edited source is not found by its old
+  words. Their time filter compares instants (`timeparse.instant`).
+- `CHUNKER_VERSION` 2 fills the keyword table. It cuts each source as 1
+  did, so every vector stays. The wake reaches `ask_answer`
   (change kind `ask_task`) and `steward_run` (change kind `steward`, on
   stop). The other writers send no change that names the row; the slow
   sweep (120 s) finds those rows.

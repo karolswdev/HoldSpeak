@@ -43,9 +43,6 @@ class MemorySource:
     units: list[tuple[str, str]] = field(default_factory=list)
     #: False: each unit is its own chunk (a thread message).
     pack: bool = True
-    #: Anchor prefixes of units that are chunks of their own even when the
-    #: rest is packed (a meeting's summary, each topic).
-    alone: tuple[str, ...] = ()
 
 
 def _promoted(conn: sqlite3.Connection) -> set[str]:
@@ -156,7 +153,6 @@ def _meetings(
         ]
         # The summary and the topics as the meeting reads now (the keyword
         # search finds a word that is only there; so does the vector search).
-        # One chunk for the summary and one for each topic (§3.1).
         summary = conn.execute(
             "SELECT summary FROM intel_snapshots WHERE meeting_id=?"
             " ORDER BY timestamp DESC,id DESC LIMIT 1",
@@ -164,18 +160,19 @@ def _meetings(
         ).fetchone()
         if summary is not None and str(summary[0] or "").strip():
             units.append(("summary", "Summary: " + str(summary[0])))
-        units.extend(
-            (f"topic:{row[0]}", "Topic: " + str(row[1]))
+        topics = [
+            str(row[0])
             for row in conn.execute(
-                "SELECT id,topic FROM topics WHERE meeting_id=? ORDER BY id", (meeting["id"],)
+                "SELECT topic FROM topics WHERE meeting_id=? ORDER BY id", (meeting["id"],)
             )
-            if str(row[1] or "").strip()
-        )
+            if str(row[0] or "").strip()
+        ]
+        if topics:
+            units.append(("topics", "Topics: " + " · ".join(topics)))
         if not units:
             continue
         yield MemorySource(
-            ref, "meeting", str(meeting["title"] or meeting["id"]), meeting["started_at"], units,
-            alone=("summary", "topic:"),
+            ref, "meeting", str(meeting["title"] or meeting["id"]), meeting["started_at"], units
         )
 
 
@@ -461,16 +458,7 @@ def _holds_secret(source: MemorySource, title: str, units: list[tuple[str, str]]
 
 def _chunks(source: MemorySource, title: str, units: list[tuple[str, str]]) -> list[dict[str, Any]]:
     if source.pack:
-        def alone(anchor: str) -> bool:
-            return any(anchor.startswith(prefix) for prefix in source.alone)
-
-        packed = [unit for unit in units if not alone(unit[0])]
-        # With no packed unit, chunk_units would give a chunk that is only the title.
-        cut = chunk_units(title, packed) if packed or len(packed) == len(units) else []
-        for anchor, text in units:
-            if alone(anchor):
-                for chunk in chunk_units(title, [(anchor, text)]):
-                    cut.append(type(chunk)(ordinal=len(cut), anchor=anchor, text=chunk.text))
+        cut = chunk_units(title, units)
     else:
         cut = []
         for anchor, text in units:
