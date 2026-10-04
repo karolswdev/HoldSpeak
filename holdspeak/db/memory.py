@@ -432,12 +432,30 @@ _KEYWORD_TABLES: dict[str, tuple[str, tuple[str, ...]]] = {
 }
 
 
+_SNIPPET_CHARS = 420
+_SNIPPET_LEAD = 120
+
+
+def _window(text: str, terms: Iterable[str], size: int = _SNIPPET_CHARS) -> str:
+    """A snippet cut from text that is ALREADY redacted: the part around the
+    first word of the question, or the start."""
+    flat = " ".join(str(text or "").split())
+    lowered = flat.casefold()
+    found = [position for term in terms if (position := lowered.find(str(term).casefold())) >= 0]
+    start = max(0, (min(found) if found else 0) - _SNIPPET_LEAD)
+    if start:
+        space = flat.find(" ", start)
+        start = space + 1 if 0 <= space < start + _SNIPPET_LEAD else start
+    return ("… " if start else "") + flat[start : start + size]
+
+
 def _redacted(text: Any) -> str:
-    """Memory defense on the way OUT: a title or a snippet never carries a
-    secret, whichever retriever found the row and whatever table it came
-    from.  A keyword snippet wraps the matched words in ``<mark>``; the marks
-    are kept when the text holds no secret and dropped when it does (a mark
-    inside ``password=...`` would hide the secret from the pattern)."""
+    """The last belt on a title or a snippet: redact what the patterns can
+    see in this piece.  It is NOT the defense - a piece cut out of a text can
+    hold part of a secret no pattern knows (``_defend_row`` is the defense:
+    it redacts the whole source and cuts the snippet from that).  A keyword
+    snippet wraps the matched words in ``<mark>``; the marks are kept when
+    the piece holds no secret and dropped when it does."""
     from ..memory.defense import redact
 
     value = str(text or "")
@@ -559,6 +577,43 @@ class MemoryRepository(BaseRepository):
         with self._connection() as conn:
             return rebuild_memory_index(conn)
 
+    def _defend_row(
+        self, conn: sqlite3.Connection, row: dict[str, Any], terms: Iterable[str] = ()
+    ) -> None:
+        """Memory defense for one row a keyword pass, the relation walk or
+        the recent read made.
+
+        Those passes cut a snippet in SQL, from raw text, before anything
+        can redact it: a window that starts inside a key block has no header
+        for a pattern to see, and a cut can end inside a secret.  So the
+        order here is the other way round.  The source's COMPLETE admitted
+        text is redacted as one text (``redact_source``).  When it holds no
+        secret, the SQL snippet stands.  When it holds one, the snippet is
+        cut again from the redacted text.  A row whose source cannot be read
+        gets no snippet.
+        """
+        if str(row.get("retrieval_origin") or "") == "vector":
+            return  # already cut from the redacted text
+        from ..memory.retain import current_source, redact_source
+
+        ref = str(row.get("source_ref") or "")
+        source = current_source(conn, self._base_ref(ref))
+        if source is None:
+            row["title"] = _redacted(row.get("title"))
+            row["snippet"] = ""
+            return
+        title, units, held_secret = redact_source(source)
+        if not held_secret:
+            return
+        if str(row.get("title") or "") == str(source.title or ""):
+            row["title"] = title
+        else:
+            row["title"] = _redacted(row.get("title"))
+        anchor = ref.partition("#")[2] if ref.startswith("thread:") else ""
+        chosen = [text for unit_anchor, text in units if anchor and unit_anchor == anchor]
+        body = "\n".join(chosen or [text for _anchor, text in units])
+        row["snippet"] = _window(body, terms)
+
     def scrub_keyword_rows(self, refs: Iterable[str]) -> int:
         """Redact the keyword-table copy of each named source.
 
@@ -676,6 +731,7 @@ class MemoryRepository(BaseRepository):
                     continue
                 for row in found:
                     item = dict(row)
+                    self._defend_row(conn, item)
                     item["title"] = _redacted(item.get("title"))
                     item["snippet"] = _redacted(item.get("snippet"))
                     rows.append(item)
@@ -858,7 +914,12 @@ class MemoryRepository(BaseRepository):
                 interleaved, fusion = fused
 
         total = len(interleaved)
-        page = interleaved[bounded_offset : bounded_offset + bounded_limit]
+        page = [dict(row) for row in interleaved[bounded_offset : bounded_offset + bounded_limit]]
+        # Redact the whole source, THEN cut the snippet: every row on the
+        # page, whichever pass made it.
+        with self._connection() as conn:
+            for row in page:
+                self._defend_row(conn, row, terms)
         hits = [
             MemoryHit(
                 kind=str(row["kind"]),

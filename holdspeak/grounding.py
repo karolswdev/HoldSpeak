@@ -11,7 +11,9 @@ it is not, and expand as individually citable source blocks.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from contextlib import contextmanager
+from contextvars import ContextVar
+from dataclasses import dataclass, replace
 from typing import Any, Literal, Optional
 
 from .db.relationships import qualified_ref
@@ -126,6 +128,32 @@ class GroundingHydrationResult:
         return [f"{block.kind}:{block.ref}" for block in self.blocks]
 
 
+# Memory defense for what MEMORY selected.  A source the owner attached by
+# hand goes to the model as he wrote it.  A source that memory picked by
+# relevance (and everything a drafter reads through ``memory_context``) is
+# redacted: the COMPLETE text first, then any cut to the grounding cap, so a
+# cut can never end inside a secret.
+_MEMORY_DEFENSE: ContextVar[bool] = ContextVar("grounding_memory_defense", default=False)
+
+
+@contextmanager
+def memory_defense():
+    token = _MEMORY_DEFENSE.set(True)
+    try:
+        yield
+    finally:
+        _MEMORY_DEFENSE.reset(token)
+
+
+def _defended(text: str) -> str:
+    """The whole text, redacted, when memory selected this source."""
+    if not _MEMORY_DEFENSE.get():
+        return text
+    from .memory.defense import redact
+
+    return redact(text)
+
+
 def meeting_digest(state: Any) -> str:
     """A meeting's summary-level material: intel summary + action items when
     intel exists, else the opening segments (mirrors the iPad's routableText)."""
@@ -214,14 +242,14 @@ def hydrate_refs_detailed(
         except Exception:
             day = ""
         if expand == "full" and state.segments:
-            text = "\n".join(f"{s.speaker}: {s.text}" for s in state.segments)
+            text = _defended("\n".join(f"{s.speaker}: {s.text}" for s in state.segments))
             if len(text) > GROUNDING_TRANSCRIPT_CAP:
                 text = (
                     text[:GROUNDING_TRANSCRIPT_CAP]
                     + f"\n[transcript cut at {GROUNDING_TRANSCRIPT_CAP} chars]"
                 )
         else:
-            text = meeting_digest(state)
+            text = _defended(meeting_digest(state))
         blocks.append(
             GroundingBlock(
                 kind="meeting", ref=mid, title=title, subtitle=day, text=text
@@ -293,9 +321,10 @@ def hydrate_refs_detailed(
         members = [hit.source_ref for hit in search.hits][:GROUNDING_MAX_REFS]
         # HS-200-10 (F0/L3): reachable by reference, never by relevance.
         members = _drop_promoted(memory, members)
-        more, missing = _hydrate_members(
-            db, members, expand, visited, query=query, stats=stats
-        )
+        with memory_defense():  # memory picked these, not the owner
+            more, missing = _hydrate_members(
+                db, members, expand, visited, query=query, stats=stats
+            )
         blocks.extend(more)
         unknown.extend(missing)
         stats["selection"] = "ecosystem_relevance"
@@ -377,6 +406,7 @@ def _hydrate_qualified(
             if full
             else meeting_digest(state)
         )
+        text = _defended(text)
         if len(text) > GROUNDING_TRANSCRIPT_CAP:
             text = text[:GROUNDING_TRANSCRIPT_CAP] + "\n[content cut at grounding cap]"
         return [
@@ -498,7 +528,7 @@ def _hydrate_qualified(
             row = conn.execute(queries[kind], (resource_id,)).fetchone()
         if row is None:
             return [], [ref]
-        text = str(row["text"] or "")
+        text = _defended(str(row["text"] or ""))
         if len(text) > GROUNDING_TRANSCRIPT_CAP:
             text = text[:GROUNDING_TRANSCRIPT_CAP] + "\n[content cut at grounding cap]"
         return [
@@ -529,7 +559,7 @@ def _hydrate_qualified(
             ).strip()
             if text:
                 lines.append(f"{message.role}: {text}")
-        body = "\n\n".join(lines)
+        body = _defended("\n\n".join(lines))
         if len(body) > GROUNDING_TRANSCRIPT_CAP:
             body = body[:GROUNDING_TRANSCRIPT_CAP] + "\n[content cut at grounding cap]"
         return [
@@ -586,6 +616,7 @@ def _hydrate_qualified(
         if project is None:
             return [], [ref]
         memory = _memory_repo(db)
+        by_relevance = False
         # No index on this handle: fall through to the relationship listing
         # below, which is the honest recency answer rather than an error.
         if memory is not None and query and str(query).strip():
@@ -604,6 +635,7 @@ def _hydrate_qualified(
             # take -- and filtering it would be the P0-A silent-drop defect
             # wearing a different hat.
             members = _drop_promoted(memory, [hit.source_ref for hit in search.hits])
+            by_relevance = True
             if stats is not None:
                 stats["selection"] = "relevance"
                 stats["matched_count"] = int(stats["matched_count"]) + search.total
@@ -625,6 +657,9 @@ def _hydrate_qualified(
                 )
         # A project expands to its selected source blocks. It is not flattened into
         # one anonymous container, so every model-visible block keeps a citable ref.
+        if by_relevance:
+            with memory_defense():  # memory picked these, not the owner
+                return _hydrate_members(db, members, expand, visited, query=query, stats=stats)
         return _hydrate_members(db, members, expand, visited, query=query, stats=stats)
     return [], [ref]
 
@@ -693,6 +728,12 @@ def _hydrate_members(
         )
         children.extend(blocks)
         unknown.extend(missing)
+    if _MEMORY_DEFENSE.get():
+        # Blocks that were not cut above hold their whole text: redact it.
+        children = [
+            replace(block, title=_defended(block.title), text=_defended(block.text))
+            for block in children
+        ]
     return children, unknown
 
 

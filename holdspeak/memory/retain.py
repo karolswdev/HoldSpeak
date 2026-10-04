@@ -27,7 +27,7 @@ from typing import Any, Callable, Iterable, Iterator, Optional
 from ..logging_config import get_logger
 from .admission import memory_admits
 from .chunker import CHUNKER_VERSION, chunk_units, paragraphs
-from .defense import redact
+from .defense import redact_parts
 from .embedder import EMBED_BATCH, MemoryEmbedder
 
 log = get_logger("memory.retain")
@@ -381,29 +381,33 @@ def _sha(value: Any) -> str:
     ).hexdigest()
 
 
+def redact_source(source: MemorySource) -> tuple[str, list[tuple[str, str]], bool]:
+    """The COMPLETE admitted text of one source, redacted as one text.
+
+    Returns ``(title, units, held_secret)``.  The title and every unit are
+    read together, so a secret that runs across units (a key read aloud over
+    many transcript turns) is one secret.  Every chunk and every snippet is
+    cut from this, never from the raw text.
+    """
+    raw = [(anchor, str(text)) for anchor, text in source.units if str(text or "").strip()]
+    parts, changed = redact_parts([str(source.title or "")] + [text for _anchor, text in raw])
+    units = [(anchor, text) for (anchor, _raw), text in zip(raw, parts[1:])]
+    return parts[0], units, changed
+
+
 def _redacted(source: MemorySource) -> tuple[str, list[tuple[str, str]], str]:
     """Redact one admitted source and hash it.
 
     The hash is over the REDACTED text, so a secret is never in a hash input
     that is stored.
     """
-    title = redact(source.title)
-    raw = [(anchor, str(text)) for anchor, text in source.units if str(text or "").strip()]
-    # One pass over the whole source first.  A secret inside any unit is also
-    # a match in the joined text, so "the joined text did not change" proves
-    # that no unit needs the per-unit pass (the common case, and the cost of
-    # a long transcript).
-    joined = "\n".join(text for _anchor, text in raw)
-    if redact(joined) == joined:
-        units = raw
-    else:
-        units = [(anchor, redact(text)) for anchor, text in raw]
+    title, units, _changed = redact_source(source)
     return title, units, _sha([title, source.occurred_at, units, source.pack])
 
 
 def _holds_secret(source: MemorySource, title: str, units: list[tuple[str, str]]) -> bool:
-    raw = [(anchor, text) for anchor, text in source.units if str(text or "").strip()]
-    return title != source.title or units != raw
+    raw = [(anchor, str(text)) for anchor, text in source.units if str(text or "").strip()]
+    return title != str(source.title or "") or units != raw
 
 
 def _chunks(source: MemorySource, title: str, units: list[tuple[str, str]]) -> list[dict[str, Any]]:
@@ -595,5 +599,6 @@ __all__ = [
     "prepare",
     "prepare_current",
     "rebuild",
+    "redact_source",
     "sweep",
 ]

@@ -46,6 +46,10 @@ def _card(match: re.Match[str]) -> str:
     return REDACTED if 13 <= len(digits) <= 19 and _luhn(digits) else match.group(0)
 
 
+#: A key block with no header: three or more lines of base64 in a row.  A
+#: source can hold the body of a key and not its ``-----BEGIN`` line.
+_BLOB = re.compile(r"(?:^|(?<=\n))[ \t]*(?:[A-Za-z0-9+/]{40,}={0,2}[ \t]*(?:\n|$)[ \t]*){3,}")
+
 #: Each pattern runs only when a word it needs is in the text.  A plain
 #: substring test over a long transcript costs far less than the pattern.
 _SECRET_WORDS = (
@@ -54,25 +58,94 @@ _SECRET_WORDS = (
     "sk-", "akia",
 )
 _DIGIT = re.compile(r"\d")
+_LONG_WORD = re.compile(r"[A-Za-z0-9+/]{40}")
+
+
+def redaction_spans(text: str) -> list[tuple[int, int]]:
+    """Where the secrets are in ``text``: merged ``(start, end)`` spans.
+
+    Every pattern reads the WHOLE text, so a secret of many lines (a key
+    block) is one span however the text is cut afterwards.
+    """
+    value = str(text or "")
+    if not value:
+        return []
+    spans: list[tuple[int, int]] = []
+    if "-----BEGIN" in value:
+        spans.extend(match.span() for match in _PEM.finditer(value))
+    if "://" in value:
+        spans.extend(match.span() for match in _DB_URL.finditer(value))
+    if "eyJ" in value:
+        spans.extend(match.span() for match in _JWT.finditer(value))
+    lowered = value.casefold()
+    if any(word in lowered for word in _SECRET_WORDS):
+        spans.extend(match.span() for match in _SECRET.finditer(value))
+    if _DIGIT.search(value):
+        spans.extend(match.span() for match in _CARD.finditer(value) if _card(match) == REDACTED)
+    if _LONG_WORD.search(value):
+        spans.extend(
+            (match.start(), match.start() + len(match.group(0).rstrip()))
+            for match in _BLOB.finditer(value)
+        )
+    if not spans:
+        return []
+    spans.sort()
+    merged = [spans[0]]
+    for start, end in spans[1:]:
+        if start <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((start, end))
+    return merged
+
+
+def _apply(text: str, spans: list[tuple[int, int]], offset: int = 0) -> str:
+    """``text`` (which starts at ``offset`` of the whole) with each span
+    replaced.  A span that started before this piece still redacts the part
+    of it that is here."""
+    out: list[str] = []
+    cursor = 0
+    end_of_text = len(text)
+    for start, end in spans:
+        start, end = start - offset, end - offset
+        if end <= 0 or start >= end_of_text:
+            continue
+        start, end = max(start, 0), min(end, end_of_text)
+        out.append(text[cursor:start])
+        out.append(REDACTED)
+        cursor = end
+    out.append(text[cursor:])
+    return "".join(out)
 
 
 def redact(text: str) -> str:
-    """Return ``text`` with every secret shape replaced by ``[redacted]``."""
+    """Return ``text`` with every secret shape replaced by ``[redacted]``.
+
+    Give it the COMPLETE text.  A piece cut out of a text can hold part of a
+    secret that no pattern knows; cut the snippet from what this returns.
+    """
     value = str(text or "")
-    if not value:
-        return value
-    if "-----BEGIN" in value:
-        value = _PEM.sub(REDACTED, value)
-    if "://" in value:
-        value = _DB_URL.sub(REDACTED, value)
-    if "eyJ" in value:
-        value = _JWT.sub(REDACTED, value)
-    lowered = value.casefold()
-    if any(word in lowered for word in _SECRET_WORDS):
-        value = _SECRET.sub(REDACTED, value)
-    if _DIGIT.search(value):
-        value = _CARD.sub(_card, value)
-    return value
+    spans = redaction_spans(value)
+    return _apply(value, spans) if spans else value
 
 
-__all__ = ["REDACTED", "redact"]
+def redact_parts(parts: list[str]) -> tuple[list[str], bool]:
+    """Redact a text that is held as parts (a title, then the turns of a
+    transcript or the paragraphs of a note) as ONE text, and give the parts
+    back.  A secret that runs across parts is redacted in each of them.
+    Returns ``(parts, changed)``.
+    """
+    texts = [str(part or "") for part in parts]
+    joined = "\n".join(texts)
+    spans = redaction_spans(joined)
+    if not spans:
+        return texts, False
+    out: list[str] = []
+    offset = 0
+    for text in texts:
+        out.append(_apply(text, spans, offset))
+        offset += len(text) + 1
+    return out, True
+
+
+__all__ = ["REDACTED", "redact", "redact_parts", "redaction_spans"]

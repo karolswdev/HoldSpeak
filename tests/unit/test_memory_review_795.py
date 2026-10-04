@@ -298,3 +298,134 @@ def test_a_warm_reader_sees_a_source_replaced_through_another_handle(tmp_path: P
     top = answer.hits[0]
     assert top.source_ref == "note:n9" and top.normalized_score > 0.99  # the NEW vector
     assert "second wording" in top.snippet and "first wording" not in _everything(answer)
+
+
+# ── Second review (P1): redact the WHOLE text, then cut the snippet ────────
+
+
+def _key_block() -> str:
+    lines = [f"KEYLINE{index:02d}" + "Ab9" * 19 for index in range(20)]  # 64 characters each
+    return "-----BEGIN RSA PRIVATE KEY-----\n" + "\n".join(lines) + "\n-----END RSA PRIVATE KEY-----"
+
+
+URL_SECRET = " postgres://admin:URLSENTINEL@db.internal/service"
+LEAKS = ("KEYLINE", "URLSENTINEL")
+
+
+def _leak_desk(tmp_path: Path):
+    """Astra's two cases, through the real producers, in every kind of store:
+    a multi-line key whose header is far from the matched word, and a secret
+    that sits across the 420-character snippet cut."""
+    db = Database(tmp_path / "leak.db")
+    db.projects.create_project(project_id="p", name="P")
+    key = _key_block()
+    # (a) the key, then the word the search matches: an FTS window that starts
+    # inside the key has no header.
+    thread = db.threads.create_thread(title="Deploy chat")
+    message = db.threads.append_message(thread.id, role="user")
+    db.threads.append_part(message.id, kind="text", text=f"NEARWORD here is the key\n{key}\nuse it to deploy the service")
+    db.notes.upsert(note_id="n-key", title="Deploy key", body_markdown=f"NEARWORD the key\n\n{key}\n\nuse it to deploy the service")
+    db.plugins.record_artifact(
+        artifact_id="a-key", meeting_id="", artifact_type="memo", title="Deploy memo",
+        body_markdown=f"NEARWORD memo\n{key}\nuse it to deploy the service",
+    )
+    # The key read aloud: it runs across MANY transcript segments.
+    started = datetime(2026, 9, 1, 10, 0, 0)
+    spoken = ["NEARWORD I will read the key"] + key.split("\n") + ["use it to deploy the service"]
+    db.meetings.save_meeting(MeetingState(
+        id="m-key", started_at=started, ended_at=started, title="Deploy sync",
+        segments=[
+            TranscriptSegment(text=line, speaker="Me", start_time=float(i), end_time=float(i) + 1)
+            for i, line in enumerate(spoken)
+        ],
+    ))
+    # (b) 390 characters, then the secret: a cut at 420 ends inside it.
+    padding = ("NEARWORD deploy notes " + "filler " * 80)[:390]
+    assert len(padding) == 390
+    db.notes.upsert(note_id="n-url", title="Service notes", body_markdown=padding + URL_SECRET)
+    db.plugins.record_artifact(
+        artifact_id="a-url", meeting_id="", artifact_type="memo", title="Service memo",
+        body_markdown=padding + URL_SECRET,
+    )
+    db.workbenches.upsert(workbench_id="wb", name="Bench")
+    db.workbench_items.upsert(item_id="w-url", workbench_id="wb", title="Deploy item", body=padding + URL_SECRET)
+    for ref in ("note:n-key", "note:n-url", "artifact:a-key", "artifact:a-url", f"thread:{thread.id}", "workbench_item:w-url"):
+        db.project_relationships.upsert(project_id="p", resource_ref=ref)
+    db.projects.associate_meeting_project(meeting_id="m-key", project_id="p", source="manual", confidence=1.0)
+    # A second thread that only REFERS to the two notes: the relation walk
+    # returns them as neighbours of a keyword hit.
+    pointer = db.threads.create_thread(title="Pointer")
+    pointing = db.threads.append_message(pointer.id, role="user")
+    db.threads.append_part(pointing.id, kind="text", text="quokkaword see the attached notes")
+    db.threads.freeze_refs(pointer.id, pointing.id, [{"ref_kind": "note", "ref_id": "n-url", "origin": "reference"}, {"ref_kind": "note", "ref_id": "n-key", "origin": "reference"}])
+    return db
+
+
+def _assert_no_leak(db: Database, stage: str) -> None:
+    from holdspeak.grounding import hydrate_refs_detailed
+    from holdspeak.services.memory_grounding import memory_context
+
+    engine = TextEngine(near=("NEARWORD",))
+    seen_kinds: set[str] = set()
+    origins: set[str] = set()
+    for embedder in (None, engine):
+        db.memory.set_embedder(embedder)
+        for query in ("deploy", "deploy the service", "quokkaword", "service notes filler", "KEYLINE00", "admin"):
+            for scope in ({}, {"project_id": "p"}):
+                answer = db.memory.search(query, limit=50, **scope)
+                text = _everything(answer)
+                assert not [word for word in LEAKS if word in text], (stage, query, scope, embedder is not None)
+                seen_kinds |= {hit.kind for hit in answer.hits}
+                origins |= {hit.retrieval_origin for hit in answer.hits}
+        recent = json.dumps(db.memory.recent(limit=200))
+        assert not [word for word in LEAKS if word in recent], (stage, "recent")
+        # Grounding: the relevance pass Ask runs, the project pass, and the
+        # bounded block a drafter gets.
+        for grounded in (
+            hydrate_refs_detailed(db, [], [], "summary", query="deploy the service", include_memory=True),
+            hydrate_refs_detailed(db, [], [], "full", query="deploy the service", include_memory=True),
+            hydrate_refs_detailed(db, [], [], "summary", qualified_refs=["project:p"], query="deploy service notes"),
+        ):
+            assert grounded.blocks, stage
+            blocks = json.dumps([[block.title, block.text] for block in grounded.blocks])
+            assert not [word for word in LEAKS if word in blocks], (stage, "grounding")
+        for context in (
+            memory_context(db, query="deploy the service notes"),
+            memory_context(db, project_id="p", query="deploy the service notes"),
+            memory_context(db, project_id="p"),
+        ):
+            assert context, stage
+            block = context.prompt_block()
+            assert not [word for word in LEAKS if word in block], (stage, "memory_context")
+    # The fence looked at every retriever and at every store that held a secret.
+    assert {"thread", "note", "artifact", "meeting", "workbench_item"} <= seen_kinds, seen_kinds
+    assert {"lexical", "relationship"} <= origins, origins
+
+
+def test_a_snippet_is_cut_from_redacted_text_on_every_path(tmp_path: Path) -> None:
+    db = _leak_desk(tmp_path)
+    # Before any sweep: only the read-time defense stands.
+    _assert_no_leak(db, "before the sweep")
+    engine = TextEngine(near=("NEARWORD",))
+    rebuild(db, engine)
+    db.memory.set_embedder(engine)
+    assert "vector" in {hit.retrieval_origin for hit in db.memory.search("zzzunmatched question", limit=50).hits}
+    _assert_no_leak(db, "after the sweep")
+    # What the sweep stored: no chunk, ledger row or keyword copy holds either
+    # secret, and the key that ran across many segments went as ONE secret.
+    with db._connection() as conn:
+        assert _grep_words(conn, _index_tables(conn), LEAKS) == []
+        meeting = " ".join(str(row[0]) for row in conn.execute("SELECT text FROM memory_chunks WHERE source_ref='meeting:m-key' ORDER BY ordinal"))
+    assert "read the key" in meeting and "deploy the service" in meeting and "[redacted]" in meeting
+
+
+def _grep_words(conn: sqlite3.Connection, tables: list[str], words: tuple[str, ...]) -> list[str]:
+    found = []
+    for table in tables:
+        for row in conn.execute(f'SELECT * FROM "{table}"'):
+            blob = " ".join(
+                value.decode("utf-8", "ignore") if isinstance(value, bytes) else str(value)
+                for value in tuple(row)
+            ).casefold()
+            found.extend(f"{table}: {word}" for word in words if word.casefold() in blob)
+    return sorted(set(found))

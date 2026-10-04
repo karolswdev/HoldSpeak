@@ -625,6 +625,11 @@ group passes.
 - **The vector cache is keyed on a generation** (`memory_index_state`),
   moved in the same transaction as every index write.
 - **Parked is out for every kind.**
+- **Redact the whole text, then cut.** A snippet cut first can start inside
+  a key block (no header for a pattern to see) or end inside a secret. So the
+  source's complete admitted text is redacted as one text (a secret across
+  transcript turns is one secret), and every chunk, snippet, recent row,
+  relation row and memory-selected grounding block is cut from that.
 - **Secrets.** Every title and snippet memory returns is redacted. The
   keyword tables `*_memory_fts` are filled by triggers in the writer's own
   transaction, so the sweep (and the rebuild) replaces the copy of a source
