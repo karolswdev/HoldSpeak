@@ -6,6 +6,8 @@ Through the real hub on an isolated HOME, at 1440x900 (mouse) and 393x852
 and is due later; one Desk decision waits for review.
 
   * The Chair head, the bell and the Dock say 6. A3 is not in that number.
+  * RANKED does not list A3; its caption is the head less SETUP and failed
+    summaries.
   * The WAITING filter lists A3 (``WAITING ON PRIYA``); the head still says 6.
   * The decision row has a Review verb; Review opens the decision's window.
   * Name an owner on A4 (the Door card's delegate verb): the head says 5 and
@@ -128,6 +130,21 @@ class TestNeedsYouMeansYou:
                 assert wire["count"] == 6 and wire["waitingCount"] == 1, record["wire"]
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"chair-headline-{width}.png"))
+
+                # ── RANKED lists what the head counts: no waiting row, and the
+                #    caption is the head less the SETUP rows and failed summaries ──
+                section = page.locator("[data-testid='arrival-needs-you']")
+                caption = section.locator(".surface-caption, .surface-section-label, h2, h3").first.inner_text().strip()
+                record["ranked_caption"] = caption
+                listed = int(re.fullmatch(r"ACTIONS (\d+)(?: OF (\d+))?", caption).group(2) or
+                             re.fullmatch(r"ACTIONS (\d+)(?: OF (\d+))?", caption).group(1))
+                beside = len(wire["blockers"]) + len(wire["failedMeetings"])
+                assert listed + beside == record["before"]["head"] == 6, (caption, beside)
+                assert listed == sum(1 for m in wire["members"] if m["kind"] == "attention"), caption
+                ranked = self._rows(page)
+                record["ranked_rows"] = ranked
+                assert len(ranked) == listed, ranked
+                assert not any(A3_TASK in row or "WAITING ON" in row for row in ranked), ranked
 
                 # ── the WAITING filter lists A3; the head does not move ──
                 self._filter(page, "WAITING")

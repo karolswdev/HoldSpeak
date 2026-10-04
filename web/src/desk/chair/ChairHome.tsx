@@ -1414,9 +1414,11 @@ function NeedsYouSection({
   const remainderRef = useRef<HTMLButtonElement>(null);
   useEffect(() => { setShowAll(false); }, [filter]);
 
+  // Owner ruling 2026-10-04: a row he waits on someone else for shows only
+  // under the WAITING filter. RANKED lists what the headline counts.
   const filtered = filter
     ? items.filter((item) => rankClassOf(item, now) === filter)
-    : items;
+    : items.filter((item) => !item.waiting);
   const visible = showAll ? filtered : filtered.slice(0, ATTENTION_CAP);
   // What the cap hides (the remainder row stays while expanded, as the
   // way back).
@@ -1431,6 +1433,9 @@ function NeedsYouSection({
       window.setTimeout(() => remainderRef.current?.focus(), 0);
     }
   };
+
+  // Every row waits on someone else: RANKED has no row and draws no section.
+  if (filtered.length === 0 && !filter) return null;
 
   return (
     <SurfaceSection label={attentionCaption(visible.length, filtered.length, label)}>

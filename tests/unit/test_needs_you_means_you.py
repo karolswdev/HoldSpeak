@@ -202,3 +202,47 @@ def test_a_meeting_decision_is_a_member_until_it_is_accepted(hub: Hub) -> None:
     after = _ok(hub.client.get("/api/desk/needs-you"))
     assert ref not in [member["ref"] for member in after["members"]]
     assert _one_number(hub) == base - 1
+
+
+def test_an_item_the_owner_himself_holds_is_his_and_is_counted(hub: Hub) -> None:
+    """``Me`` is the owner (the meeting speaker label; the People store reserves it)."""
+    from datetime import date, timedelta
+
+    today = date.today().isoformat()
+    later = (date.today() + timedelta(days=9)).isoformat()
+    made = {}
+    for key, args in {
+        "mine_today": {"task": "Sign the contract", "owner": "Me", "due": today},
+        "mine_later": {"task": "Write the review", "owner": "Me", "due": later},
+        "priya": {"task": "Send the estimate", "owner": "Priya", "due": later},
+    }.items():
+        is_error, action = hub.mcp("door.add_item", args)
+        assert not is_error, action
+        made[key] = str(action["id"])
+
+    # A 1:1 commitment he owes (direction ``leader_owes``), through People.
+    _ok(hub.client.post("/api/people/setup"))
+    relationship = _ok(hub.client.post(
+        "/api/people/relationships", json={"display_name": "Dana"}), 201)["relationship"]
+    request = _ok(hub.client.post(
+        f"/api/people/relationships/{relationship['id']}/requests",
+        json={"body": "Review the promotion case"}), 201)["request"]
+    commitment = _ok(hub.client.post(f"/api/people/requests/{request['id']}/accept", json={}))["commitment"]
+    assert commitment["direction"] == "leader_owes"
+    made["commitment"] = f"people:{commitment['id']}"
+
+    answer = _ok(hub.client.get("/api/desk/needs-you"))
+    rows = {row["ref"]: row for row in answer["items"]}
+    members = [member["ref"] for member in answer["members"]]
+    # His own items count and read as his, at any due date.
+    assert rows[made["mine_today"]]["why"] == "DUE TODAY" and rows[made["mine_today"]]["waiting"] is False
+    assert rows[made["mine_later"]]["why"] == "YOURS" and rows[made["mine_later"]]["waiting"] is False
+    assert rows[made["commitment"]]["waiting"] is False
+    for key in ("mine_today", "mine_later", "commitment"):
+        assert made[key] in members, key
+    # Priya's is waited on.
+    assert rows[made["priya"]]["why"] == "WAITING ON PRIYA" and rows[made["priya"]]["waiting"] is True
+    assert made["priya"] not in members
+    assert answer["waitingCount"] == 1
+    assert "me" in answer["ownerNames"]
+    assert _one_number(hub, brief=True) == answer["count"]

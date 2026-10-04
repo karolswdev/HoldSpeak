@@ -168,18 +168,42 @@ def decision_items(decisions: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
-def waits_on_other(row: dict[str, Any]) -> bool:
-    """True when the owner waits on someone else for this row.
+#: The names that mean the owner himself. The People store reserves ``me``
+#: and ``you`` (no person can take them, ``people_service._RESERVED_OWNER_ALIASES``)
+#: and its follow-through projection names the owner ``you`` / ``manager``.
+#: :func:`owner_names` adds the configured meeting speaker label (``Me``).
+SELF_OWNER_NAMES: frozenset[str] = frozenset({"me", "you", "manager"})
 
-    The row names an owner and its reason is ``WAITING ON <that owner>``: a
-    Door card in the ``waiting`` column, or a Room commitment with an owner
-    and a later due date. ``WAITING ON YOUR REVIEW`` names no owner and is
-    the owner's own work.
-    """
+#: The reason token of a row the owner himself holds with no nearer due date.
+YOURS = "YOURS"
+
+
+def _is_self(owner: Any, self_names: Iterable[str]) -> bool:
+    name = str(owner or "").strip().casefold()
+    return bool(name) and name in {str(n).strip().casefold() for n in self_names}
+
+
+def _waiting_on(row: dict[str, Any]) -> bool:
     owner = str(row.get("owner") or "").strip()
-    if not owner:
-        return False
-    return str(row.get("why") or "").strip().upper() == f"WAITING ON {owner.upper()}"
+    return bool(owner) and str(row.get("why") or "").strip().upper() == f"WAITING ON {owner.upper()}"
+
+
+def waits_on_other(row: dict[str, Any], self_names: Iterable[str] = SELF_OWNER_NAMES) -> bool:
+    """True when the owner waits on SOMEONE ELSE for this row.
+
+    The row names an owner who is not the owner himself, and its reason is
+    ``WAITING ON <that owner>``: a Door card in the ``waiting`` column, or a
+    Room commitment with an owner and a later due date. ``WAITING ON YOUR
+    REVIEW`` names no owner and is the owner's own work.
+    """
+    return _waiting_on(row) and not _is_self(row.get("owner"), self_names)
+
+
+def owner_names(extra: Iterable[Any] = ()) -> list[str]:
+    """The names that mean the owner: the reserved ones and the given ones."""
+    names = set(SELF_OWNER_NAMES)
+    names.update(str(name).strip().casefold() for name in extra if str(name or "").strip())
+    return sorted(names)
 
 
 # ── R2: the meeting-path blockers ─────────────────────────────────────
@@ -281,6 +305,7 @@ def compute_needs_you(
     assignment_read: str = "pending",
     meetings: Iterable[dict[str, Any]] = (),
     decisions: Iterable[dict[str, Any]] = (),
+    self_names: Iterable[str] = SELF_OWNER_NAMES,
     now: datetime | None = None,
     dedup: Callable[[list[dict[str, Any]], datetime], list[dict[str, Any]]] = dedup_items,
 ) -> dict[str, Any]:
@@ -300,6 +325,12 @@ def compute_needs_you(
     }
     board = (door or {}).get("board") if isinstance((door or {}).get("board"), dict) else (door or {})
     combined = door_items(board, covered, clock) + room
+    # An item the owner himself holds is his: it reads ``YOURS``, never
+    # ``WAITING ON ME``, and it is counted.
+    names = list(self_names)
+    for row in combined:
+        if _waiting_on(row) and _is_self(row.get("owner"), names):
+            row["why"] = YOURS
     # A People commitment never merges with another row. A merge would put
     # its text and its record ref inside another row's ``sources``, past the
     # custody boundary; it stays one row of its own.
@@ -319,7 +350,7 @@ def compute_needs_you(
         else:
             item["muted"] = False
             unmuted_items.append(item)
-        item["waiting"] = waits_on_other(item)
+        item["waiting"] = waits_on_other(item, names)
     # What the owner waits on someone else for is listed and is not counted.
     waiting_items = [item for item in unmuted_items if item["waiting"]]
     counted_items = [item for item in unmuted_items if not item["waiting"]]
@@ -525,6 +556,16 @@ def compose(
         log.warning("needs-you: the decision read failed: %s", exc)
         errors["decisions"] = _reason(exc)
 
+    # The names that mean the owner: the reserved ones and his speaker label.
+    speaker_label: list[Any] = []
+    try:
+        from holdspeak.config import Config
+
+        speaker_label = [Config.load().meeting.mic_label]
+    except Exception as exc:
+        log.warning("needs-you: the speaker label read failed: %s", exc)
+    names = owner_names(speaker_label)
+
     result = compute_needs_you(
         door=door,
         room_items=room_items,
@@ -533,6 +574,7 @@ def compose(
         assignment_read=assignment_read,
         meetings=meetings,
         decisions=decisions,
+        self_names=names,
         now=now,
     )
     answer = dict(aggregate)
@@ -541,6 +583,8 @@ def compose(
         # What the owner waits on someone else for: listed, marked
         # ``waiting`` on its row, not counted.
         "waitingCount": result["waitingCount"],
+        # The names that mean the owner (the browser twin's input).
+        "ownerNames": names,
         "members": result["members"],
         # Every attention row, ranked: the unmuted rows, then the muted ones.
         "items": result["unmutedItems"] + result["mutedItems"],
@@ -572,7 +616,7 @@ def compose(
 
 _MEMBERSHIP_KEYS = (
     "members", "blockers", "failedMeetings", "sourceErrors", "peopleStoreState", "peopleWithheld",
-    "waitingCount",
+    "waitingCount", "ownerNames",
 )
 
 
@@ -664,6 +708,8 @@ __all__ = [
     "compose",
     "compute_needs_you",
     "decision_items",
+    "owner_names",
+    "SELF_OWNER_NAMES",
     "waits_on_other",
     "door_items",
     "meeting_needs_you",

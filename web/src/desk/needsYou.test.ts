@@ -135,6 +135,23 @@ describe("the one needs-you membership", () => {
     expect(result.mutedItems.map((item) => item.ref)).toEqual(["M1"]);
   });
 
+  it("counts an item the owner himself holds; only another owner is waited on", () => {
+    const result = computeNeedsYou({
+      door: { board: { waiting: [
+        doorCard("mine", { owner: "Me" }),
+        doorCard("label", { owner: "Karol" }),
+        doorCard("priya", { owner: "Priya" }),
+      ] } },
+      roomItems: [room("room-mine", { owner: "you", why: "WAITING ON YOU" })],
+      selfNames: ["me", "you", "manager", "karol"],
+      now: NOW,
+    });
+    expect(result.members.map(({ ref }) => ref).sort()).toEqual(["label", "mine", "room-mine"]);
+    expect(result.waitingItems.map((item) => item.ref)).toEqual(["priya"]);
+    const why = Object.fromEntries(result.unmutedItems.map((item) => [item.ref, item.why]));
+    expect(why).toEqual({ mine: "YOURS", label: "YOURS", "room-mine": "YOURS", priya: "WAITING ON PRIYA" });
+  });
+
   it("keeps a retried job as RETRYING after its due time", () => {
     const retrying = meeting({
       id: "R1",
@@ -474,6 +491,7 @@ function oracleInputs(payload: Record<string, any>, phase: "before" | "after"): 
     assignmentRead: wire.assignmentRead,
     meetings,
     decisions: wire.decisions,
+    selfNames: wire.ownerNames,
     now: new Date(wire.now),
   };
 }

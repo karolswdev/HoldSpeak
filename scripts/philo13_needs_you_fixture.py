@@ -678,6 +678,7 @@ def _inputs(db: Any, now: datetime) -> dict[str, Any]:
         "heartbeat": _jsonable(heartbeat),
         "mutedProjects": list(heartbeat.get("muted_projects", [])),
         "decisions": _jsonable(decisions),
+        "ownerNames": list(room.get("ownerNames", [])),
     }
 
 

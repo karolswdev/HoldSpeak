@@ -59,6 +59,7 @@ def test_the_hub_answer_is_the_oracle_week(tmp_path: Path, monkeypatch: pytest.M
         assignment_read=inputs["assignmentRead"],
         meetings=inputs["meetings"],
         decisions=inputs["decisions"],
+        self_names=inputs["ownerNames"],
         now=datetime.fromisoformat(seeded["now"]),
     )
     assert _refs(pure["members"]) == _refs(answer["members"])
@@ -78,7 +79,7 @@ def test_the_hub_rule_deduplicates_as_the_browser_twin_does(
         door=before["door"], room_items=before["roomItems"],
         muted_project_ids=before["mutedProjects"], assignments=before["assignments"],
         assignment_read=before["assignmentRead"], meetings=before["meetings"],
-        decisions=before["decisions"], now=now,
+        decisions=before["decisions"], self_names=before["ownerNames"], now=now,
     )
     result = compute_needs_you(**kwargs)
     assert sorted(_refs(result["members"])) == sorted(probe["expectedRefs"])

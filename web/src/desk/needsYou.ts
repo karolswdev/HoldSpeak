@@ -90,6 +90,8 @@ export interface NeedsYouInputs {
   meetings?: readonly Meeting[];
   /** R4: the decisions that wait for the owner's review. */
   decisions?: readonly NeedsYouDecision[];
+  /** The names that mean the owner himself (the hub's `ownerNames`). */
+  selfNames?: readonly string[];
   now?: Date;
 }
 
@@ -251,14 +253,35 @@ function decisionItems(decisions: readonly NeedsYouDecision[]): NeedsYouRoomItem
   return rows;
 }
 
-/** True when the owner waits on someone else for this row: it names an owner
- * and its reason is `WAITING ON <that owner>` (a Door card in the `waiting`
- * column, or a Room commitment with an owner and a later due date).
- * `WAITING ON YOUR REVIEW` names no owner and is the owner's own work. */
-export function waitsOnOther(row: NeedsYouRoomItem): boolean {
+/** The names that mean the owner himself. The People store reserves `me`
+ * and `you` and its follow-through projection names the owner `you` /
+ * `manager`; the hub adds the configured meeting speaker label (`ownerNames`
+ * on its answer). */
+export const SELF_OWNER_NAMES: readonly string[] = ["me", "you", "manager"];
+
+/** The reason token of a row the owner himself holds with no nearer due date. */
+const YOURS = "YOURS";
+
+function isSelf(owner: unknown, selfNames: readonly string[]): boolean {
+  const name = String(owner ?? "").trim().toLowerCase();
+  return name !== "" && selfNames.some((n) => String(n).trim().toLowerCase() === name);
+}
+
+function waitingOn(row: NeedsYouRoomItem): boolean {
   const owner = String(row.owner ?? "").trim();
-  if (!owner) return false;
-  return String(row.why ?? "").trim().toUpperCase() === `WAITING ON ${owner.toUpperCase()}`;
+  return owner !== "" && String(row.why ?? "").trim().toUpperCase() === `WAITING ON ${owner.toUpperCase()}`;
+}
+
+/** True when the owner waits on SOMEONE ELSE for this row: it names an owner
+ * who is not the owner himself, and its reason is `WAITING ON <that owner>`
+ * (a Door card in the `waiting` column, or a Room commitment with an owner
+ * and a later due date). `WAITING ON YOUR REVIEW` names no owner and is the
+ * owner's own work. */
+export function waitsOnOther(
+  row: NeedsYouRoomItem,
+  selfNames: readonly string[] = SELF_OWNER_NAMES,
+): boolean {
+  return waitingOn(row) && !isSelf(row.owner, selfNames);
 }
 
 function mutedSet(input: NeedsYouInputs): ReadonlySet<string> {
@@ -319,7 +342,12 @@ export function computeNeedsYou(
       .map((item) => String(item.actionItemId)),
   );
   const now = input.now ?? new Date();
-  const combined = [...doorItems(asBoard(input), covered, now), ...room];
+  const selfNames = input.selfNames ?? SELF_OWNER_NAMES;
+  // An item the owner himself holds is his: it reads `YOURS`, never
+  // `WAITING ON ME`, and it is counted.
+  const combined = [...doorItems(asBoard(input), covered, now), ...room].map((row) =>
+    waitingOn(row) && isSelf(row.owner, selfNames) ? { ...row, why: YOURS } : row,
+  );
   // A People commitment never merges with another row: a merge would put its
   // text and its record ref inside another row's `sources`, past the custody
   // boundary. It stays one row of its own.
@@ -335,7 +363,7 @@ export function computeNeedsYou(
   const mutedItems: NeedsYouRoomItem[] = [];
   const unmutedItems: NeedsYouRoomItem[] = [];
   for (const ranked_ of ranked) {
-    const item = { ...ranked_, waiting: waitsOnOther(ranked_) };
+    const item = { ...ranked_, waiting: waitsOnOther(ranked_, selfNames) };
     if (Boolean(item.muted) || (item.projectId && mutedProjects.has(String(item.projectId))))
       mutedItems.push(item);
     else unmutedItems.push(item);
@@ -389,6 +417,8 @@ export interface NeedsYouAnswer {
   count?: number;
   /** The unmuted rows the owner waits on someone else for (not in `count`). */
   waitingCount?: number;
+  /** The names that mean the owner himself. */
+  ownerNames?: string[];
   members?: Array<{ ref: string; kind: NeedsYouMemberKind }>;
   /** Every attention row, ranked: the counted rows, then the muted rows. */
   items?: NeedsYouRoomItem[];
