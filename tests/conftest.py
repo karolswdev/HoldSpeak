@@ -366,7 +366,8 @@ _launch_chromium_on_the_gpu()
 # (measured; 280 distinct adapters, every later hub is all hits). An adapter
 # has no state, so one per (annotation, field description) serves every hub.
 # The key holds the annotation object itself, so two classes never share an
-# adapter; a class made inside a function is not kept. If FastAPI moves the
+# adapter; a class made inside a function is not kept; a model that was
+# rebuilt gets a new adapter. If FastAPI moves the
 # seam, the suite runs as before.
 
 
@@ -380,6 +381,18 @@ def _share_route_field_adapters() -> None:
         return
     kept: dict = {}
 
+    def schemas(annotation, seen=None):
+        """Each pydantic class inside the annotation, with its current core schema."""
+        import typing
+
+        seen = [] if seen is None else seen
+        schema = getattr(annotation, "__dict__", {}).get("__pydantic_core_schema__") if isinstance(annotation, type) else None
+        if schema is not None:
+            seen.append((annotation, schema))
+        for inner in typing.get_args(annotation):
+            schemas(inner, seen)
+        return seen
+
     def shared(type_, *, config=None):
         try:
             annotation = type_.__origin__
@@ -389,9 +402,13 @@ def _share_route_field_adapters() -> None:
             hash(key)
         except Exception:
             return real(type_, config=config)
-        adapter = kept.get(key)
-        if adapter is None:
-            adapter = kept[key] = real(type_, config=config)
+        entry = kept.get(key)
+        # A model rebuilt after the adapter was made (a new constraint) has a
+        # new core schema object: the kept adapter is stale (Astra on #763).
+        if entry is not None and all(cls.__dict__.get("__pydantic_core_schema__") is schema for cls, schema in entry[1]):
+            return entry[0]
+        adapter = real(type_, config=config)
+        kept[key] = (adapter, schemas(annotation))
         return adapter
 
     shared._holdspeak_shared = True

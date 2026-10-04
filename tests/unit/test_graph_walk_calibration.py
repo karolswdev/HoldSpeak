@@ -50,9 +50,13 @@ from scripts.graph_walk import (
 REPO = Path(__file__).resolve().parents[2]
 SAMPLE_ATLAS = REPO / "tests/fixtures/graph_walk_sample_atlas.json"
 
-# Owner ruling 2026-10-03 (fast tests): this module drives a real hub and a real browser (130 s in all). It is marked slow: the fast
-# run (`-m "not slow"`) leaves it out; the nightly full run and a direct run keep it.
-pytestmark = [pytest.mark.timeout(300, method="thread"), pytest.mark.slow]
+pytestmark = pytest.mark.timeout(300, method="thread")
+
+# Owner ruling 2026-10-03 (fast tests): the cases that drive a real hub and a
+# real browser (130 s in all) are marked slow: the fast run (`-m "not slow"`)
+# leaves them out; the nightly full run and a direct run keep them. The pure
+# checks (HOME isolation, false-pass, vocabulary) stay in the fast run.
+browser_case = pytest.mark.slow
 
 
 # ── the six calibration cases (brief §7) ───────────────────────────────
@@ -70,6 +74,7 @@ def test_rig_is_versioned():
     assert RIG_VERSION
 
 
+@browser_case
 def test_six_calibration_cases_get_their_expected_verdicts(calibration):
     records, _ = calibration
     assert len(records) == len(CALIBRATION_EXPECTED), [r["case_id"] for r in records]
@@ -81,6 +86,7 @@ def test_six_calibration_cases_get_their_expected_verdicts(calibration):
     assert calibration_table(records)[1] is True
 
 
+@browser_case
 def test_no_calibration_verdict_comes_from_the_presence_of_a_diff(calibration):
     """brief §3 / Astra's finding 1: a diff is evidence, not a criterion.
 
@@ -101,6 +107,7 @@ def test_no_calibration_verdict_comes_from_the_presence_of_a_diff(calibration):
     assert not by_id["CAL-e-idempotent-refresh"]["diff"].get("text")
 
 
+@browser_case
 def test_the_wrong_target_case_records_where_the_result_landed(calibration):
     records, _ = calibration
     wrong = next(r for r in records if r["case_id"] == "CAL-c-wrong-target")
@@ -108,6 +115,7 @@ def test_the_wrong_target_case_records_where_the_result_landed(calibration):
     assert any("WRONG TARGET" in note for note in wrong["notes"]), wrong["notes"]
 
 
+@browser_case
 def test_the_operation_that_never_completes_is_incomplete_not_settled(calibration):
     records, _ = calibration
     never = next(r for r in records if r["case_id"] == "CAL-f-never-completes")
@@ -117,6 +125,7 @@ def test_the_operation_that_never_completes_is_incomplete_not_settled(calibratio
     assert never["terminal_outcome"]["within_bound"] is False
 
 
+@browser_case
 def test_every_observation_carries_provenance_and_before_after(calibration):
     records, out = calibration
     for record in records:
@@ -144,6 +153,7 @@ def test_every_observation_carries_provenance_and_before_after(calibration):
         assert on_disk["verdict"] == record["verdict"]
 
 
+@browser_case
 def test_run_ids_are_unique_per_case_brain_viewport(calibration):
     records, _ = calibration
     ids = [r["run_id"] for r in records]
@@ -214,6 +224,7 @@ def negatives(tmp_path_factory):
     return {r["case_id"]: r for r in records}
 
 
+@browser_case
 def test_every_negative_control_comes_out_as_stated(negatives):
     got = {case_id: record["verdict"] for case_id, record in negatives.items()}
     assert got == CALIBRATION_NEGATIVE_EXPECTED, {
@@ -221,6 +232,7 @@ def test_every_negative_control_comes_out_as_stated(negatives):
         if got[k] != CALIBRATION_NEGATIVE_EXPECTED[k]}
 
 
+@browser_case
 def test_a_refresh_with_its_handler_removed_fails(negatives):
     """(1) The replay identity must be produced by THIS operation."""
     record = negatives["NEG-1-refresh-without-handler"]
@@ -243,6 +255,7 @@ def test_a_replay_identity_must_name_an_attribute_or_the_response():
         None, {"kind": "unchanged", "replay_identity": "trigger:revision"}, {}) is None
 
 
+@browser_case
 def test_a_result_after_the_bound_is_never_a_pass(negatives):
     """(2) `within_bound: false` must make the verdict fail."""
     record = negatives["NEG-2-result-after-the-bound"]
@@ -254,6 +267,7 @@ def test_a_result_after_the_bound_is_never_a_pass(negatives):
     assert any("AFTER the bound" in note for note in record["notes"])
 
 
+@browser_case
 def test_an_absence_needs_a_scope_that_exists(negatives):
     """(3) A missing observe_at is blocked, never an absence."""
     for case_id in ("NEG-3a-absent-without-a-scope", "NEG-3b-attr-without-a-scope"):
@@ -291,6 +305,7 @@ def test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires():
         assert "not in the rig's vocabulary" in str(raised.value)
 
 
+@browser_case
 def test_a_precondition_that_does_not_hold_blocks_the_case(negatives):
     """(5) A starting state never reached is blocked, not failed."""
     record = negatives["NEG-5-precondition-not-met"]
@@ -307,6 +322,7 @@ def test_a_precondition_that_does_not_hold_blocks_the_case(negatives):
     assert record["trigger"] is None
 
 
+@browser_case
 def test_a_precondition_that_holds_lets_the_case_run(tmp_path):
     case = dict(CALIBRATION_NEGATIVE_CASES[4])
     case["id"] = "NEG-5-precondition-met"
@@ -319,6 +335,7 @@ def test_a_precondition_that_holds_lets_the_case_run(tmp_path):
     assert record["preconditions"][0]["holds"] is True
 
 
+@browser_case
 def test_a_words_only_case_is_blocked_and_never_a_keyerror(negatives):
     """(7) An atlas case that states only `words` earns no verdict."""
     record = negatives["NEG-7-words-only"]
@@ -330,6 +347,7 @@ def test_a_words_only_case_is_blocked_and_never_a_keyerror(negatives):
     assert ok is False and why.startswith("BLOCKED:")
 
 
+@browser_case
 def test_an_unreachable_case_keeps_its_reason_verbatim(tmp_path):
     """(7) The atlas's word plus its sibling `reason`, unaltered."""
     reason = ("UNEXERCISED by the rig: the trigger is a native global hotkey "
@@ -352,6 +370,7 @@ def test_an_unreachable_case_keeps_its_reason_verbatim(tmp_path):
 # ── variables and the `check` step kind ────────────────────────────────
 
 
+@browser_case
 def test_a_captured_value_drives_a_later_step_and_the_predicate(predicate_calibration):
     """`capture_as` → `{name}` in a later path AND in the predicate's match."""
     by_id, _ = predicate_calibration
@@ -367,6 +386,7 @@ def test_a_captured_value_drives_a_later_step_and_the_predicate(predicate_calibr
     assert any(row_id in note for note in record["notes"])
 
 
+@browser_case
 def test_an_unresolved_placeholder_is_blocked_and_never_sent(negatives):
     record = negatives["NEG-9-unresolved-placeholder"]
     assert record["verdict"] == "blocked"
@@ -425,6 +445,7 @@ def test_optional_setup_api_keeps_the_real_missing_route_response():
     assert "response retained" in record["skipped"]
 
 
+@browser_case
 def test_a_check_step_in_setup_blocks_where_it_stands(negatives):
     record = negatives["NEG-8-check-in-setup-fails"]
     assert record["verdict"] == "blocked"
@@ -435,6 +456,7 @@ def test_a_check_step_in_setup_blocks_where_it_stands(negatives):
     assert any("never written" in note for note in record["notes"])
 
 
+@browser_case
 def test_a_check_step_that_holds_lets_the_case_run(tmp_path):
     case = dict(CALIBRATION_NEGATIVE_CASES[6])
     case["id"] = "NEG-8-check-in-setup-holds"
@@ -460,6 +482,7 @@ def test_the_step_vocabulary_is_closed_and_exported():
 # ── atlas-to-rig integration (Astra's round two) ───────────────────────
 
 
+@browser_case
 def test_a_relative_goto_resolves_against_the_hub(tmp_path):
     """An atlas case says `goto "/"`. Without a base url Chromium answers
     "Cannot navigate to invalid URL" and the whole case blocks."""
@@ -572,6 +595,7 @@ def test_a_row_match_reaches_a_nested_field():
     assert check_predicate(predicate, before, flat)[0] is False
 
 
+@browser_case
 def test_prose_in_expected_words_is_not_a_placeholder(tmp_path):
     """An atlas case's `words` says `POST …/{attempt_id}/finish` as English."""
     case = {
@@ -659,6 +683,7 @@ def test_the_replay_engine_answers_the_recorded_reply():
 # ── the step kinds that must refuse rather than pretend ────────────────
 
 
+@browser_case
 def test_the_scheduler_wait_adapter_lets_a_timer_edge_produce_the_result(tmp_path):
     """The ONE implemented clock mechanism (W2's `clock.heartbeat_scheduler`).
 
@@ -701,6 +726,7 @@ def predicate_calibration(tmp_path_factory):
     return {r["case_id"]: r for r in records}, out
 
 
+@browser_case
 def test_every_new_predicate_kind_gets_its_verdict(predicate_calibration):
     by_id, _ = predicate_calibration
     assert set(by_id) == {c["id"] for c in CALIBRATION_PREDICATE_CASES}
@@ -710,6 +736,7 @@ def test_every_new_predicate_kind_gets_its_verdict(predicate_calibration):
         assert record["provenance"]["rig_version"], case_id
 
 
+@browser_case
 def test_a_refusal_status_is_read_from_the_triggers_own_response(predicate_calibration):
     by_id, _ = predicate_calibration
     record = by_id["CAL-h-refusal-status"]
@@ -729,6 +756,7 @@ def test_a_refusal_status_is_read_from_the_triggers_own_response(predicate_calib
     assert check_predicate({"kind": "protocol_status", "status": 422}, {}, {})[0] is False
 
 
+@browser_case
 def test_a_row_gone_is_named_never_merely_fewer(predicate_calibration):
     by_id, _ = predicate_calibration
     record = by_id["CAL-i-row-gone"]
@@ -800,6 +828,7 @@ def test_protocol_rows_same_requires_one_matching_identity_before_and_after():
     assert check_predicate(predicate, before, missing)[0] is False
 
 
+@browser_case
 def test_protocol_field_reads_one_named_field(predicate_calibration):
     by_id, _ = predicate_calibration
     record = by_id["CAL-j-protocol-field"]
@@ -832,6 +861,7 @@ def test_protocol_field_reads_one_named_field(predicate_calibration):
                             "value": "SWEEP"}, {}, snap)[0] is True
 
 
+@browser_case
 def test_input_value_reads_the_field_not_the_dom_text(predicate_calibration):
     by_id, _ = predicate_calibration
     record = by_id["CAL-k-retained-draft"]
@@ -854,6 +884,7 @@ def test_input_value_reads_the_field_not_the_dom_text(predicate_calibration):
     assert ok is False and "no form control" in why
 
 
+@browser_case
 def test_a_restart_is_a_real_restart_and_the_value_survives(predicate_calibration):
     """The `cli` restart adapter (serves case.j7.hub_restart.intel_retained).
 
@@ -888,6 +919,7 @@ def test_any_other_cli_command_stays_blocked_with_its_name():
     assert "not implemented" in str(raised.value)
 
 
+@browser_case
 def test_a_refusal_must_name_what_is_missing(predicate_calibration):
     by_id, _ = predicate_calibration
     record = by_id["CAL-m-refusal-names-what-is-missing"]
@@ -904,6 +936,7 @@ def test_a_refusal_must_name_what_is_missing(predicate_calibration):
     assert ok is True
 
 
+@browser_case
 def test_an_asserted_absence_is_earned_by_the_named_bound(predicate_calibration):
     """`min_new: 0, max_new: 0` — the verdict comes from a named bound on a
     named row shape, never from a zero diff."""
@@ -1005,6 +1038,7 @@ def test_an_unknown_step_kind_blocks():
 # ── applicability (no hub, no browser) ─────────────────────────────────
 
 
+@browser_case
 def test_a_not_applicable_case_is_recorded_not_skipped(tmp_path):
     record = run_case(
         SAMPLE_ATLAS, "J8-voice-typing-other-app", brain="astra", viewport=1440,
@@ -1031,6 +1065,7 @@ def _atlas_case(case_id):
     return next(c for c in atlas["cases"] if c["id"] == case_id)
 
 
+@browser_case
 def test_the_real_j4_import_case_fires_the_upload_and_binds_the_meeting_id(tmp_path):
     """Finding 2: the ACTUAL atlas case, through a synthetic import boundary
     that answers like the real route (202 {"meeting_id", "status"}). Before
@@ -1070,6 +1105,7 @@ def test_the_real_j4_import_case_fires_the_upload_and_binds_the_meeting_id(tmp_p
     assert any("/meetings/0/id" in note for note in record["notes"])
 
 
+@browser_case
 def test_a_placeholder_nothing_binds_blocks_before_the_trigger(negatives):
     """The other half: a name no step and not the trigger captures is refused
     BEFORE the upload — zero calls reach the boundary."""
@@ -1081,6 +1117,7 @@ def test_a_placeholder_nothing_binds_blocks_before_the_trigger(negatives):
     assert state.get("upload_calls", 0) == 0
 
 
+@browser_case
 def test_a_placeholder_still_unbound_after_the_trigger_blocks_naming_it(tmp_path):
     """A trigger that binds one name does not excuse another."""
     case = dict(_atlas_case(J4_IMPORT))
@@ -1097,6 +1134,7 @@ def test_a_placeholder_still_unbound_after_the_trigger_blocks_naming_it(tmp_path
     assert state.get("upload_calls", 0) == 0
 
 
+@browser_case
 def test_a_clicked_verb_reads_its_identity_from_its_own_response(predicate_calibration):
     """Finding 3: before the fix a `ui` trigger never set `trigger_response`
     and this case was BLOCKED "no response was recorded"."""
@@ -1115,6 +1153,7 @@ def test_a_clicked_verb_reads_its_identity_from_its_own_response(predicate_calib
     assert record["before"].get("trigger_response") is None
 
 
+@browser_case
 def test_a_clicked_verb_status_is_read_by_its_declared_route(predicate_calibration):
     by_id, _ = predicate_calibration
     record = by_id["CAL-t-clicked-status"]
@@ -1122,6 +1161,7 @@ def test_a_clicked_verb_status_is_read_by_its_declared_route(predicate_calibrati
     assert "trigger_route POST /brief/generate" in record["trigger_response_capture"]["rule"]
 
 
+@browser_case
 def test_a_different_id_beside_unchanged_old_content_fails(negatives):
     """Astra's exact probe: the click minted brief-8; the face still shows
     brief-7 beside the old words. Before the fix it was BLOCKED, never a fail."""
