@@ -1,5 +1,7 @@
 # Phase WFS-01: Web Flagship Runtime and UX Migration
 
+> **History, not canon (2026-10-04).** This plan names modules that no longer exist. It was removed from the Source canon list in `CLAUDE.md` on the owner's word. Read it for background only.
+
 > **Superseded note (HS-32-07, 2026-06-02):** the TUI and the macOS menu-bar
 > runtimes have since been **retired** — the web runtime is now the *sole*
 > interactive runtime. Requirements below that retain the TUI as a fallback

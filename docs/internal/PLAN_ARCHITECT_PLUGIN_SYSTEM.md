@@ -1,5 +1,7 @@
 # HoldSpeak Plugin System - RFC Draft
 
+> **History, not canon (2026-10-04).** This plan names modules that no longer exist. It was removed from the Source canon list in `CLAUDE.md` on the owner's word. Read it for background only.
+
 ## Purpose
 
 Evolve HoldSpeak from meeting transcription + generic intel into a plugin-driven execution system that:

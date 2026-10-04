@@ -1,5 +1,7 @@
 # Phase DIR-01: Dictation Intent Routing and On-Device Transcript Enrichment
 
+> **History, not canon (2026-10-04).** This plan names modules that no longer exist. It was removed from the Source canon list in `CLAUDE.md` on the owner's word. Read it for background only.
+
 ## 1. Phase Charter
 
 ### 1.1 Objective
