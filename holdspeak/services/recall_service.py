@@ -398,15 +398,19 @@ class RecallService:
 
     def _support(self, conn: Any, record_id: str, hint: str) -> str:
         """The support axis: the confirmed proposal's own verdict when the
-        record came through the review face; else LINKED when a transcript
-        moment is anchored; else NO SOURCE."""
+        record came through the review face; else LINKED when the record has
+        a source meeting; else NO SOURCE."""
         prow = conn.execute(
             "SELECT support FROM follow_through_proposals WHERE decision_record_id = ? ORDER BY decided_at DESC LIMIT 1",
             (record_id,),
         ).fetchone()
         if prow is not None and prow["support"]:
             return _SUPPORT_TOKENS.get(str(prow["support"]).lower(), "NO SOURCE")
-        if hint == "linked":
+        # Inventory 2026-10-03 (UX-CANON A.10): a record whose source is a
+        # meeting drew NO SOURCE beside "SOURCE MTG ... Open source". A
+        # source link is LINKED, with or without an anchored moment; NO
+        # SOURCE is only for a record with no source at all.
+        if hint in ("linked", "meeting"):
             return "LINKED"
         return "NO SOURCE"
 
