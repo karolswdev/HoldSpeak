@@ -70,8 +70,12 @@ The text below is the earlier law, kept for its reasoning:
 it.** "Authored" means: a phase charter, a story's settled design, a
 brief that changes a chartered criterion, a merge verdict, a canon edit,
 a face's canvas. "Acted on" means: workers briefed, a PR merged, a doc
-committed as canon. For built work the check is one review of the PR:
-one check, one confirmation.
+committed as canon. For built work the check is one final review round of the
+PR, at most 2 iterations (the review, then one re-check of the fixes);
+after the second the author merges and anything open goes to
+`pm/STATUS.md` (owner ruling 2026-10-03: "Only one final review round?
+With a maximum of 2 iterations?"). No reviews of plans, briefs, canvases
+or work in progress.
 
 The check asks the counsel question, never "approve this":
 

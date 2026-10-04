@@ -98,8 +98,12 @@ working under delivery workbench that has been bogging us down
 BIG-FREAKIN'-TIME ... I want us to move fast. Super-fast."
 
 The commit gate is removed. Branch in your worktree, stage by path,
-commit plainly, open a PR. The other brain gives one review of the PR
-(one check, one confirmation). The lane owner merges; CI does not gate
+commit plainly, open a PR. The other brain gives one final review round, when the work is finished (owner ruling
+2026-10-03: "maybe we chill out about two brains? Only one final review
+round? With a maximum of 2 iterations?"). At most 2 iterations: the
+review, then one re-check of the fixes. After the second iteration the
+author merges; anything still open goes to `pm/STATUS.md`. No reviews
+of plans, briefs, canvases or work in progress. The lane owner merges; CI does not gate
 the merge. At merge, update `pm/STATUS.md`. No contracts, no evidence
 files, no per-story flips. A face gets a canvas before build. The hooks
 are parked in `.githooks/_parked/`; `.githooks/dw next` and
