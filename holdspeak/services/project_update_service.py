@@ -68,6 +68,10 @@ from ..project_contracts import (
     generate_pupd_id,
 )
 from ..refs import format as format_ref, parse as parse_ref
+from .memory_grounding import memory_context
+
+#: The marked block the project's memory travels in, inside the draft prompt.
+MEMORY_BLOCK_HEADING = "PROJECT MEMORY"
 from .errors import ConflictError, NotFound, ValidationError
 from .service_event_ledger import ServiceEventLedger
 
@@ -727,11 +731,17 @@ _MODEL_OUTPUT_SCHEMA: dict[str, Any] = {
 }
 
 
-def _build_model_prompt(inventory_claims: list[Claim]) -> dict[str, Any]:
+def _build_model_prompt(
+    inventory_claims: list[Claim], memory: Any | None = None,
+) -> dict[str, Any]:
     """Build a prompt payload from the deterministic evidence inventory.
 
     The model is given every deterministic claim (with its refs) and asked
     to rewrite the sections with better prose, citing the exact refs.
+
+    ``memory`` (a ``MemoryContext``) adds the project's remembered sources
+    in one marked block.  Its refs are citable like inventory refs.  With no
+    memory the prompt is byte-identical to the one before memory existed.
     """
     by_section: dict[str, list[Claim]] = {}
     for claim in inventory_claims:
@@ -774,9 +784,21 @@ def _build_model_prompt(inventory_claims: list[Claim]) -> dict[str, Any]:
         '[{"text": "<sentence>", "cited_refs": ["<ref1>", ...]}]}]}'
     )
 
+    user_prompt = "EVIDENCE INVENTORY:\n" + "\n".join(inventory_lines)
+    memory_block = memory.prompt_block(MEMORY_BLOCK_HEADING) if memory else ""
+    if memory_block:
+        system_prompt += (
+            "\n\nThe user message also has a "
+            f"[{MEMORY_BLOCK_HEADING}] block: earlier decisions, notes and "
+            "meetings of this project. Use it to say what changed and what "
+            "is still open. Its refs count as inventory refs: cite them "
+            "exactly. Do not state a memory entry as new work of this period."
+        )
+        user_prompt += "\n\n" + memory_block
+
     return {
         "system_prompt": system_prompt,
-        "user_prompt": "EVIDENCE INVENTORY:\n" + "\n".join(inventory_lines),
+        "user_prompt": user_prompt,
         "response_format": {
             "type": "json_schema",
             "json_schema": {
@@ -1407,6 +1429,7 @@ class ProjectUpdateService:
         det_sections: dict[str, str],
         det_body_md: str,
         known_names: Any = (),
+        memory: Any | None = None,
     ) -> tuple[str, str, str, str | None, str | None]:
         """Attempt model drafting over the deterministic evidence inventory.
 
@@ -1457,7 +1480,14 @@ class ProjectUpdateService:
                 prior = inventory_texts.get(ref, "")
                 inventory_texts[ref] = f"{prior} {claim.text}".strip()
 
-        payload = _build_model_prompt(det_claims)
+        # The project's memory is citable context: its refs join the
+        # inventory, and the literal check reads the remembered words.
+        if memory:
+            inventory_refs = inventory_refs | frozenset(memory.refs)
+            for ref, text in memory.texts.items():
+                inventory_texts.setdefault(ref, text)
+
+        payload = _build_model_prompt(det_claims, memory)
 
         # PHILO-9-02 (the steward beat, section 5): a model draft made inside
         # the steward's draft_update effect is that effect's CHILD -- the
@@ -1626,13 +1656,31 @@ class ProjectUpdateService:
         actual_host: str | None = None
         actual_model: str | None = None
         if want_model:
+            # The model draft reads the project's memory (the grounding call
+            # Ask uses), less what the inventory already holds.  The refs it
+            # was given are recorded on the manifest.
+            memory = memory_context(
+                self._db,
+                project_id=project_id,
+                query=" ".join(
+                    [str((room.get("project") or {}).get("name") or "")]
+                    + [claim.text for claim in det_claims]
+                ),
+                exclude_refs=[ref for claim in det_claims for ref in claim.refs],
+            ) if self._broker is not None else None
             try:
                 body_md, claims_json, actual_generator, actual_host, actual_model = (
                     self._draft_with_model(
                         principal, det_claims, det_sections, det_body_md,
                         known_names=_known_names_for_room(room),
+                        memory=memory,
                     )
                 )
+                if memory:
+                    manifest_json = json.dumps({
+                        **manifest, "week_source_refs": week["source_refs"],
+                        "memory_refs": memory.refs,
+                    }, sort_keys=True, separators=(",", ":"))
             except _ModelDraftFailed as exc:
                 _log.warning(
                     "Model drafter failed (%s); falling back to deterministic.",
