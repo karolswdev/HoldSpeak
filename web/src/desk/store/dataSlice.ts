@@ -637,7 +637,8 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
     };
     try {
       const res = await apiRequest(url, {
-        method: kind === "project" ? "PATCH" : "PUT",
+        // The project and thread routes take PATCH; a PUT to a thread is a 405.
+        method: kind === "project" || kind === "thread" ? "PATCH" : "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
       });

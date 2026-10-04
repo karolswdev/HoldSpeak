@@ -30,22 +30,6 @@ import { DeskDeleteSeat } from "../deleteReceipt";
 import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { ZoneRenameRow } from "./ZoneRenameRow";
 
-/** True when a press on a row's name button landed on its `[ ]` mark. At
- * phone width the button's own touch target covers its children, so the
- * mark is never the event target there: the press is placed by its point. */
-function pressOnMark(event: React.MouseEvent<HTMLElement>): boolean {
-  const mark = event.currentTarget.querySelector(".desk-list-mark");
-  if (!mark) return false;
-  if (event.target instanceof Node && mark.contains(event.target)) return true;
-  const box = mark.getBoundingClientRect();
-  if (box.width === 0) return false;
-  const row = event.currentTarget.getBoundingClientRect();
-  return (
-    event.clientX >= box.left - 8 && event.clientX <= box.right + 4 &&
-    event.clientY >= row.top && event.clientY <= row.bottom
-  );
-}
-
 /* PHILO-9-04 (the owner ratified the list canvas, 2026-09-27) — the second
  * line under the name in a `surface` of 720 px or less (hidden wider): the
  * row's Kind, Zone and Attention, the same words as the columns. The
@@ -301,32 +285,35 @@ export function DeskListView() {
         const ref = qualifiedRef(row.object.kind, row.object.id);
         const selected = selectedIds.includes(ref) || selectedIds.includes(row.object.id);
         return (
-          <Button
-            variant="ghost"
-            dense
-            className="desk-sortable-table-open desk-list-name-cell"
-            aria-label={selected ? `${row.object.title}, in Ask context` : row.object.title}
-            // A press on the mark selects the row (the pointer's Space): the
-            // Object menu and the Ask bar then act on it. A press anywhere
-            // else on the row opens it, as before.
-            onClick={(event) => {
-              if (!pressOnMark(event)) return;
-              event.preventDefault();
-              event.stopPropagation();
-              toggleSelected(ref);
-            }}
-          >
-            <span className="desk-list-mark" data-selected={selected || undefined} aria-hidden="true">
+          // The mark is the row's ONE selection control (the pointer's Space):
+          // its own target, 44 px wide. Everything else on the row opens it.
+          <span className="desk-list-name">
+            <Button
+              variant="ghost"
+              dense
+              className="desk-list-mark"
+              data-selected={selected || undefined}
+              data-testid="desk-list-mark"
+              aria-pressed={selected}
+              aria-label={`Select ${row.object.title}`}
+              tabIndex={-1}
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleSelected(ref);
+              }}
+            >
               {selected ? "[x]" : "[ ]"}
-            </span>
-            {row.object.title}
-            {row.zoneName ? <span className="sr-only"> {row.zoneName.toUpperCase()}</span> : null}
-            {row.attention ? <span className="sr-only"> ATTN {row.attention}</span> : null}
-            <FoldLine
-              tokens={[(KIND_LABEL[row.object.kind] ?? row.object.kind).toUpperCase(), row.zoneName.toUpperCase()]}
-              attention={row.attention}
-            />
-          </Button>
+            </Button>
+            <Button variant="ghost" dense className="desk-sortable-table-open desk-list-name-cell" aria-label={selected ? `${row.object.title}, in Ask context` : row.object.title}>
+              {row.object.title}
+              {row.zoneName ? <span className="sr-only"> {row.zoneName.toUpperCase()}</span> : null}
+              {row.attention ? <span className="sr-only"> ATTN {row.attention}</span> : null}
+              <FoldLine
+                tokens={[(KIND_LABEL[row.object.kind] ?? row.object.kind).toUpperCase(), row.zoneName.toUpperCase()]}
+                attention={row.attention}
+              />
+            </Button>
+          </span>
         );
       },
     },
@@ -444,7 +431,12 @@ export function DeskListView() {
       {openCards.map((p) => <Pullout key={p.id} o={p.obj!} pulloutId={p.id} origin={p.origin} />)}
       {/* Get Info opened nothing in list mode: only the spatial Floor
           (WorldStage) mounted the Info windows the store holds. */}
-      {infoWindows.map((w) => <InfoWindow key={w.ref} refId={w.ref} origin={w.origin} />)}
+      {infoWindows.map((w) => <InfoWindow key={w.ref} refId={w.ref} origin={w.origin} onOpenZone={(zoneId) => {
+        // The list has no zone windows: it dives, and the Info window (full
+        // screen at phone width) gets out of the way of the zone it opened.
+        diveInto(zoneId);
+        useDesk.getState().closeInfoWindow(w.ref);
+      }} />)}
       {/* PHILO-8-02 — the Floor's foot (#665): the delete receipt sits in
           flow directly above the selection bar it acted on. */}
       <div className="desk-world-foot" ref={footRef}>

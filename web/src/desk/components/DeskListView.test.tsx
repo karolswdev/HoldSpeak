@@ -3,7 +3,7 @@
 // honestly, and legible to a screen reader.
 // HS-111-07 — re-locked to the SurfaceLedger face: 26px mono rows under
 // kind bands, Space = Ask-context, ContextMenu = the object WorkMenu.
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Meeting, Note, Persona, KB } from "../../lib/primitives";
@@ -136,9 +136,8 @@ describe("HS-111-07 the ledger face: same records", () => {
       qualifiedRef("note", "n1"),
     ]);
     expect(screen.getByText("1 selected")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Release checklist, in Ask context" }),
-    ).toHaveTextContent("[x]");
+    expect(screen.getByRole("button", { name: "Release checklist, in Ask context" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Select Release checklist" })).toHaveTextContent("[x]");
     fireEvent.keyDown(
       screen.getByRole("button", { name: "Release checklist, in Ask context" }),
       { key: " " },
@@ -151,8 +150,7 @@ describe("HS-111-07 the ledger face: same records", () => {
   // nothing, because only the spatial Floor mounted the Info windows.
   it("a press on the mark selects the row and does not open it", () => {
     const { container } = renderList();
-    const row = screen.getByRole("button", { name: "Release checklist" });
-    fireEvent.click(row.querySelector(".desk-list-mark")!);
+    fireEvent.click(screen.getByRole("button", { name: "Select Release checklist" }));
     expect(useDesk.getState().selectedIds).toEqual([qualifiedRef("note", "n1")]);
     expect(useDesk.getState().pullouts).toEqual([]);
     expect(container.querySelector(".desk-pullout")).toBeNull();
@@ -161,18 +159,15 @@ describe("HS-111-07 the ledger face: same records", () => {
     expect(ctx.selectedRef).toBe(qualifiedRef("note", "n1"));
     expect(verbById("object.info")!.ghost(ctx)).toBeNull();
     expect(verbById("object.open")!.ghost(ctx)).toBeNull();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Release checklist, in Ask context" })
-        .querySelector(".desk-list-mark")!,
-    );
+    expect(screen.getByRole("button", { name: "Select Release checklist" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Select Release checklist" }));
     expect(useDesk.getState().selectedIds).toEqual([]);
     expect(verbById("object.info")!.ghost(keyContext())).toBe("Select an object");
   });
 
   it("Get Info on a selected row opens its Info window in list mode", () => {
     const { container } = renderList();
-    const row = screen.getByRole("button", { name: "Release checklist" });
-    fireEvent.click(row.querySelector(".desk-list-mark")!);
+    fireEvent.click(screen.getByRole("button", { name: "Select Release checklist" }));
     act(() => verbById("object.info")!.run(keyContext()));
     const info = container.querySelector(".desk-info-window");
     expect(info).not.toBeNull();
@@ -195,6 +190,48 @@ describe("HS-111-07 the ledger face: same records", () => {
       expect(info.querySelector(".info-kind")?.textContent).toBe(word);
     }
     expect(container.querySelectorAll(".desk-info-window")).toHaveLength(2);
+  });
+
+  // Astra on #794: a Filed zone link opened a zone window the list does not
+  // mount. In list mode it dives into that zone.
+  it("a Filed zone in Get Info dives into that zone in list mode", () => {
+    renderList();
+    act(() => useDesk.getState().openInfoWindow(qualifiedRef("note", "filed1")));
+    const info = document.querySelector(".desk-info-window") as HTMLElement;
+    fireEvent.click(within(info).getByRole("button", { name: /Launch/ }));
+    expect(useDesk.getState().divedZone).toBe("z1");
+    expect(useDesk.getState().zoneWindows ?? []).toEqual([]);
+  });
+
+  // Astra on #794: Rename sent `{name}` to a decision (200, title kept) and
+  // PUT to a thread (405). Each kind sends its own field by its own method.
+  it("Rename sends title to a decision by PUT and to a thread by PATCH", async () => {
+    resetStore({
+      ...items,
+      decision: [{ kind: "decision", id: "d1", title: "Freeze the old ledger" } as never],
+      thread: [{ kind: "thread", id: "t1", title: "Cutover thread" } as never],
+    });
+    const fetchMock = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) =>
+      Promise.resolve(new Response("{}", { status: 200, headers: { "content-type": "application/json" } })));
+    vi.stubGlobal("fetch", fetchMock);
+    const { container } = renderList();
+    for (const [ref, title, next] of [["decision:d1", "Freeze the old ledger", "Freeze on Nov 6"], ["thread:t1", "Cutover thread", "Cutover talk"]]) {
+      act(() => useDesk.getState().openInfoWindow(ref));
+      const info = [...container.querySelectorAll(".desk-info-window")].at(-1)!;
+      fireEvent.click(within(info as HTMLElement).getByTitle("Rename"));
+      const field = within(info as HTMLElement).getByRole("textbox", { name: "Name" });
+      fireEvent.change(field, { target: { value: next } });
+      fireEvent.keyDown(field, { key: "Enter" });
+      expect(title).not.toBe(next);
+    }
+    await vi.waitFor(() => expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT" || init?.method === "PATCH")).toHaveLength(2));
+    const writes = fetchMock.mock.calls
+      .filter(([, init]) => init?.method === "PUT" || init?.method === "PATCH")
+      .map(([input, init]) => [String(input), init!.method, JSON.parse(String(init!.body))]);
+    expect(writes).toEqual([
+      ["/api/decisions/d1", "PUT", { title: "Freeze on Nov 6" }],
+      ["/api/threads/t1", "PATCH", { title: "Cutover talk" }],
+    ]);
   });
 
   it("Get Info from the row's own menu opens the Info window", () => {
