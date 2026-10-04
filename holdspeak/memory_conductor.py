@@ -58,10 +58,17 @@ def tick(db: Any, broker: Any, *, should_stop: Any = None) -> dict[str, Any]:
     if embedder is None:
         db.memory.set_embedder(None)
         return report
-    if current is None or getattr(current, "revision_id", None) != embedder.revision_id:
+    same = (
+        current is not None
+        and getattr(current, "revision_id", None) == embedder.revision_id
+        and getattr(current, "assignment_head", None) == embedder.assignment_head
+    )
+    if same:
+        embedder = current  # keep its question cache
+    else:
         db.memory.set_embedder(embedder)
     report["engine"] = embedder.model_id
-    local = embedder.boundary in ("same_device", "local", "")
+    local = embedder.boundary == "local"
     try:
         report["embedded"] = embed_pending(
             db,

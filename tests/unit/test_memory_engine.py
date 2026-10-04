@@ -120,7 +120,8 @@ def test_the_assigned_engine_embeds_through_the_runner_with_a_receipt(desk, caps
     assert set(desk.loaded) == {"/private/embed-model.gguf"}
 
     embedder = desk.db.memory.embedder
-    assert embedder is not None and embedder.boundary == "same_device"
+    assert embedder is not None and embedder.boundary == "local"
+    assert embedder.deployment_boundary == "same_device"
     # Each batch was one admitted inference.invoke child with a receipt that
     # names the deployment revision.
     receipt = desk.broker.store.receipt(embedder.last_operation_id)
@@ -158,6 +159,7 @@ def test_an_engine_failure_ends_the_tick_and_recall_stays_whole(desk) -> None:
     assert desk.db.memory_index.stats()["vectors"] == 0
     # The engine is set and broken: every search still answers, keyword only.
     assert desk.db.memory.embedder is not None
+    # No vector exists, so the engine is not called for a question at all.
     assert bench.keyword_snapshot(desk.db, desk.refs) == golden
     # The failed call has a receipt too; it is not a success.
     receipt = desk.broker.store.receipt(desk.db.memory.embedder.last_operation_id)
@@ -168,17 +170,22 @@ def test_an_engine_failure_ends_the_tick_and_recall_stays_whole(desk) -> None:
     assert report["error"] == "" and report["embedded"] == desk.db.memory_index.stats()["chunks"]
 
 
-def test_a_busy_local_runtime_refuses_the_batch_and_the_next_tick_goes_on(desk) -> None:
-    from holdspeak.kernel.local_runtime_lease import acquire_local_runtime_lease, release_local_runtime_lease
+def test_the_embedding_slot_takes_no_chat_lease(desk) -> None:
+    """A live local call holds the runtime lease.  The embed batches run all
+    the same, and they leave that lease as it is (the concurrent proof is in
+    test_memory_review_796.py)."""
+    from holdspeak.kernel.local_runtime_lease import acquire_local_runtime_lease
 
     _assign_embed(desk.db)
     revision = resolve_embedder(desk.broker, OWNER).revision_id
-    lease = acquire_local_runtime_lease(desk.db, operation_id="op_live_chat", deployment_revision_id=revision)
+    acquire_local_runtime_lease(desk.db, operation_id="op_live_chat", deployment_revision_id=revision)
     report = memory_conductor.tick(desk.db, desk.broker)
-    assert report["error"] and report["embedded"] == 0 and desk.model.batches == []
-    release_local_runtime_lease(desk.db, lease)
-    report = memory_conductor.tick(desk.db, desk.broker)
-    assert report["error"] == "" and report["embedded"] > 0
+    assert report["error"] == "" and report["embedded"] == desk.db.memory_index.stats()["chunks"] > 0
+    with desk.db._connection() as conn:
+        leases = conn.execute(
+            "SELECT operation_id FROM inference_runtime_leases WHERE state='active'"
+        ).fetchall()
+    assert [row[0] for row in leases] == ["op_live_chat"]
 
 
 def test_clearing_the_assignment_turns_recall_back_to_keyword(desk) -> None:
@@ -266,14 +273,22 @@ def test_the_endpoint_leaf_calls_v1_embeddings_and_cuts_the_vectors() -> None:
         provider = "cloud"
         cloud_model = "nomic-embed-text-v1.5"
         loaded = 0
+        warranted = 0
 
         def _ensure_openai_client_loaded(self):
             self.loaded += 1
             self._openai_client = SimpleNamespace(embeddings=Embeddings())
 
+        def _remote_completion(self, sender, values):
+            # The real engine wraps the send in `run_external_egress`
+            # (the operation and receipt are asserted in test_memory_review_796.py).
+            self.warranted += 1
+            return sender(**values)
+
     engine = Engine()
     out = EmbeddingAdapter().dispatch(engine, {"texts": ["a", "b"], "dim": 256}, threading.Event())
     assert engine.loaded == 1 and calls == [{"model": "nomic-embed-text-v1.5", "input": ["a", "b"]}]
+    assert engine.warranted == 1  # never the SDK client directly
     assert out["provider"] == "cloud" and out["model"] == "nomic-embed-text-v1.5" and out["dim"] == 256
     vectors = np.asarray(out["vectors"], dtype=np.float32)
     assert vectors.shape == (2, 256) and np.allclose(np.linalg.norm(vectors, axis=1), 1.0)
@@ -290,6 +305,9 @@ def test_the_adapter_refuses_vectors_it_cannot_use() -> None:
                     create=lambda **_: SimpleNamespace(data=[SimpleNamespace(index=0, embedding=[1.0] * 64)])
                 )
             )
+
+        def _remote_completion(self, sender, values):
+            return sender(**values)
 
     with pytest.raises(ValueError):  # fewer values than the stored size
         EmbeddingAdapter().dispatch(Short(), {"texts": ["a"], "dim": 256}, threading.Event())
@@ -369,6 +387,14 @@ def test_the_real_model_through_the_real_router(tmp_path: Path) -> None:
     _assign(db, MEMORY_EMBED_CAPABILITY, ["embed-model"])
     report = memory_conductor.tick(db, broker)
     assert report["error"] == "" and report["embedded"] == db.memory_index.stats()["chunks"]
+    # A search waits half a second for its question, then answers by keyword.
+    # On a loaded machine the first call can take longer, so each question is
+    # embedded here with a long wait; the searches below read the cache.
+    for question in bench.load_questions():
+        db.memory.embedder.embed_query(question["q"], timeout=60)
+    db.memory.embedder.embed_query("where is the company retreat", timeout=60)
+    probe = db.memory.search("where is the company retreat")
+    assert probe.engine == {"model_id": f"{MODEL}@256", "boundary": "local", "outcome": "fused"}, probe.engine
     measures = bench.run(db, refs)
     assert measures["groups"]["paraphrase"]["recall@5"] >= 0.7
     receipt = broker.store.receipt(db.memory.embedder.last_operation_id)

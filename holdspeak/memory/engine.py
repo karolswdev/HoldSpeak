@@ -20,6 +20,10 @@ from __future__ import annotations
 import threading
 import time
 from collections import OrderedDict
+from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 from typing import Any, Optional, Sequence
 
@@ -44,6 +48,10 @@ EMBED_DEADLINE_SECONDS = 120.0
 _EMBED_N_CTX = 2048
 #: Question vectors kept in this process.
 QUESTION_CACHE = 256
+#: Seconds a search waits for its question vector.  After that the search
+#: answers by keyword; it never hangs on the engine.
+QUERY_TIMEOUT_SECONDS = 0.5
+_QUESTION_POOL = ThreadPoolExecutor(max_workers=2, thread_name_prefix="memory-question")
 
 _MODELS_LOCK = threading.Lock()
 #: One embedding model per GGUF path in this process, each with its own lock
@@ -59,6 +67,11 @@ class EmbeddingAdapter:
     """The provider adapter for ``memory.embed``: texts in, unit vectors out."""
 
     connector_id = "inference-provider"
+    #: The embedding model is its own small in-process model.  The runner
+    #: gives this adapter its own local runtime slot: an embed call takes no
+    #: chat lease, so it never refuses a live local call and is never refused
+    #: by one (kernel/inference_runner.py, ``_OWN_LOCAL_SLOTS``).
+    local_runtime_slot = "embedding"
 
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: threading.Event) -> dict[str, Any]:
         texts = [str(text) for text in payload["texts"]]
@@ -96,8 +109,12 @@ class EmbeddingAdapter:
     @staticmethod
     def _endpoint_vectors(engine: Any, texts: Sequence[str]) -> np.ndarray:
         engine._ensure_openai_client_loaded()
-        response = engine._openai_client.embeddings.create(
-            model=str(engine.cloud_model), input=list(texts)
+        # The engine's own egress path: the same `external.egress` operation
+        # and receipt every other remote model call writes, with the
+        # endpoint's host as the destination.
+        response = engine._remote_completion(
+            engine._openai_client.embeddings.create,
+            {"model": str(engine.cloud_model), "input": list(texts)},
         )
         rows = sorted(response.data, key=lambda row: int(row.index))
         return np.asarray([row.embedding for row in rows], dtype=np.float32)
@@ -135,6 +152,47 @@ class EmbeddingAdapter:
             return _MODELS[key]
 
 
+def _assignment_head(conn: Any) -> Optional[str]:
+    """The live assignment head of ``memory.embed`` as one value, or None."""
+    row = conn.execute(
+        "SELECT assignment_id,revision FROM inference_assignment_heads"
+        " WHERE assignment_key=? AND cleared=0",
+        (f"capability:{MEMORY_EMBED_CAPABILITY}",),
+    ).fetchone()
+    return f"{row[0]}@{row[1]}" if row is not None else None
+
+
+#: The principal a search runs for.  ``MemoryService.search`` sets it, so the
+#: admitted question call names the real caller.
+_CALLER: ContextVar[Any] = ContextVar("memory_caller", default=None)
+
+
+@contextmanager
+def memory_caller(principal: Any):
+    token = _CALLER.set(principal)
+    try:
+        yield
+    finally:
+        _CALLER.reset(token)
+
+
+#: The boundary words the faces draw a lamp for.
+_BOUNDARY_WORDS = {
+    "same_device": "local", "local": "local", "": "local",
+    "lan": "private_network", "private_network": "private_network",
+    "private_mesh": "mesh", "mesh": "mesh", "paired": "mesh",
+    "cloud": "cloud", "external_service": "cloud",
+}
+
+
+class MemoryEngineTimeout(MemoryEngineError):
+    """The question was not embedded inside the search's time limit."""
+
+
+class MemoryEngineUnassigned(MemoryEngineError):
+    """``memory.embed`` has no assignment now, or a different one."""
+
+
 def assigned_revision(broker: Any) -> Optional[dict[str, str]]:
     """The deployment revision ``memory.embed`` is assigned to, or None.
 
@@ -142,10 +200,7 @@ def assigned_revision(broker: Any) -> Optional[dict[str, str]]:
     """
     db = broker.database
     with db._connection() as conn:
-        head = conn.execute(
-            "SELECT 1 FROM inference_assignment_heads WHERE assignment_key=? AND cleared=0",
-            (f"capability:{MEMORY_EMBED_CAPABILITY}",),
-        ).fetchone()
+        head = _assignment_head(conn)
     if head is None:
         return None
     from ..services.project_update_service import _resolve_for_capability
@@ -166,11 +221,25 @@ def assigned_revision(broker: Any) -> Optional[dict[str, str]]:
         "assignment_id": assignment_id,
         "model": str(row["model"] or ""),
         "boundary": str(row["boundary"] or ""),
+        "head": head,
     }
 
 
 class RouterEmbedder:
-    """``MemoryEmbedder`` over the router: one admitted call per batch."""
+    """``MemoryEmbedder`` over the router: one admitted call per batch.
+
+    * **The assignment is checked at every call.**  The engine is bound to
+      the assignment head it was resolved from.  When the owner clears or
+      changes the assignment, ``live()`` is false at once: no call is made,
+      a search answers by keyword, and the next conductor tick resolves
+      whatever is assigned then.
+    * **A question never waits long.**  ``embed_query`` runs the admitted
+      call on a worker thread and waits ``QUERY_TIMEOUT_SECONDS``.  After
+      that the search goes on without the vector list; the call still ends,
+      and its vector serves the same question next time.
+    * **The caller is named.**  A question runs as the principal the search
+      runs for; a background batch runs as the conductor.
+    """
 
     dim = MEMORY_EMBED_DIM
 
@@ -179,18 +248,44 @@ class RouterEmbedder:
         self._principal = principal
         self.revision_id = revision["revision_id"]
         self.assignment_id = revision["assignment_id"]
-        self.boundary = revision["boundary"]
+        self.assignment_head = revision.get("head")
+        self.deployment_boundary = revision["boundary"]
+        #: local | private_network | mesh | cloud: the word a face shows.
+        self.boundary = _BOUNDARY_WORDS.get(revision["boundary"], revision["boundary"])
         self.model_id = model_id_for(revision["model"] or self.revision_id, self.dim)
         self.last_operation_id = ""
         # The same question asked again (a palette keystroke, a retry, two
         # drafters in one turn) is not a second admitted call.
         self._questions: "OrderedDict[str, np.ndarray]" = OrderedDict()
+        self._in_flight: dict[str, Future] = {}
         self._questions_lock = threading.Lock()
 
-    def _invoke(self, prefixed: Sequence[str]) -> np.ndarray:
+    def live(self) -> bool:
+        """True while ``memory.embed`` is still assigned as it was."""
+        try:
+            with self._broker.database._connection() as conn:
+                return _assignment_head(conn) == self.assignment_head
+        except Exception:
+            return False
+
+    def _caller(self) -> Any:
+        caller = _CALLER.get()
+        if caller is not None:
+            return caller
+        from ..kernel.runtime import _principal as kernel_principal
+        from ..principals import PrincipalKind
+
+        ambient = kernel_principal.get()
+        if getattr(ambient, "kind", PrincipalKind.NONE) is PrincipalKind.OWNER:
+            return ambient
+        return self._principal
+
+    def _invoke(self, prefixed: Sequence[str], principal: Any) -> np.ndarray:
         from ..kernel.inference_runner import InvocationRequest, ServiceContract
         from ..kernel.runtime import _as_principal
 
+        if not self.live():
+            raise MemoryEngineUnassigned("memory.embed is not assigned to this engine now")
         payload = {"texts": list(prefixed), "dim": self.dim}
         request = InvocationRequest(
             deployment_revision=self.revision_id,
@@ -206,7 +301,7 @@ class RouterEmbedder:
             captured.append(value)
             return f"memory-embed:{self.assignment_id or self.revision_id}"
 
-        with _as_principal(self._principal):
+        with _as_principal(principal):
             outcome = self._broker.inference_runner.invoke(request, EmbeddingAdapter(), publish=_capture)
         self.last_operation_id = str(getattr(outcome, "operation_id", "") or "")
         if str(getattr(outcome, "outcome", "")) != "succeeded" or not captured:
@@ -222,21 +317,41 @@ class RouterEmbedder:
     def embed_documents(self, texts: Sequence[str]) -> np.ndarray:
         if not texts:
             return np.zeros((0, self.dim), dtype=np.float32)
-        return self._invoke([DOCUMENT_PREFIX + str(text) for text in texts])
+        return self._invoke([DOCUMENT_PREFIX + str(text) for text in texts], self._principal)
 
-    def embed_query(self, text: str) -> np.ndarray:
+    def _embed_question(self, prefixed: str, principal: Any) -> np.ndarray:
+        try:
+            vector = self._invoke([prefixed], principal)[0]
+            with self._questions_lock:
+                self._questions[prefixed] = vector
+                while len(self._questions) > QUESTION_CACHE:
+                    self._questions.popitem(last=False)
+            return vector
+        finally:
+            with self._questions_lock:
+                self._in_flight.pop(prefixed, None)
+
+    def embed_query(self, text: str, *, timeout: Optional[float] = None) -> np.ndarray:
+        if not self.live():
+            raise MemoryEngineUnassigned("memory.embed is not assigned to this engine now")
         prefixed = query_text(text)
         with self._questions_lock:
             held = self._questions.get(prefixed)
             if held is not None:
                 self._questions.move_to_end(prefixed)
                 return held
-        vector = self._invoke([prefixed])[0]
-        with self._questions_lock:
-            self._questions[prefixed] = vector
-            while len(self._questions) > QUESTION_CACHE:
-                self._questions.popitem(last=False)
-        return vector
+            future = self._in_flight.get(prefixed)
+            if future is None:
+                # The caller is read HERE: a worker thread does not carry the
+                # search's context.
+                future = _QUESTION_POOL.submit(self._embed_question, prefixed, self._caller())
+                self._in_flight[prefixed] = future
+        try:
+            return future.result(QUERY_TIMEOUT_SECONDS if timeout is None else timeout)
+        except FutureTimeout:
+            raise MemoryEngineTimeout(
+                f"memory.embed did not answer in {QUERY_TIMEOUT_SECONDS} s"
+            ) from None
 
 
 def resolve_embedder(broker: Any, principal: Any) -> Optional[RouterEmbedder]:
@@ -250,6 +365,10 @@ __all__ = [
     "EmbeddingAdapter",
     "MEMORY_EMBED_CAPABILITY",
     "MemoryEngineError",
+    "MemoryEngineTimeout",
+    "MemoryEngineUnassigned",
+    "QUERY_TIMEOUT_SECONDS",
+    "memory_caller",
     "RouterEmbedder",
     "assigned_revision",
     "resolve_embedder",

@@ -391,11 +391,18 @@ class MemorySearchResult:
     # no embedding engine this stays None and the result is the keyword +
     # relation result, unchanged.
     fusion: Optional[dict[str, Any]] = None
+    # Set when the embedding engine was CALLED for this search (or its cached
+    # vector was used): the model, the boundary the question crossed, and the
+    # outcome (fused | failed | timeout).  A face or an MCP client reads the
+    # boundary here for the egress badge.  Absent when no engine was used.
+    engine: Optional[dict[str, Any]] = None
 
     def to_dict(self) -> dict[str, Any]:
         payload = self._to_dict()
         if self.fusion is not None:
             payload["ranking"]["fusion"] = dict(self.fusion)
+        if self.engine is not None:
+            payload["ranking"]["engine"] = dict(self.engine)
         return payload
 
     def _to_dict(self) -> dict[str, Any]:
@@ -841,9 +848,14 @@ class MemoryRepository(BaseRepository):
             interleaved = woven
 
         fusion: Optional[dict[str, Any]] = None
+        engine: Optional[dict[str, Any]] = None
         embedder = self.embedder
+        if embedder is not None and not self._engine_live(embedder):
+            # The assignment was cleared or changed since the engine was
+            # resolved: no call, keyword answer, at once.
+            embedder = None
         if embedder is not None:
-            fused = self._fuse_with_vectors(
+            fused, engine = self._fuse_with_vectors(
                 query,
                 embedder,
                 lexical_rows=lexical_rows,
@@ -892,9 +904,15 @@ class MemoryRepository(BaseRepository):
                 else int(fusion["relation_count"])
             ),
             fusion=fusion,
+            engine=engine,
         )
 
     # ── the vector retriever and the fusion (MEMORY-DESIGN.md §3.2) ──
+
+    @staticmethod
+    def _engine_live(embedder: Any) -> bool:
+        live = getattr(embedder, "live", None)
+        return bool(live()) if callable(live) else True
 
     def _fuse_with_vectors(
         self,
@@ -908,15 +926,21 @@ class MemoryRepository(BaseRepository):
         start: Optional[str],
         end: Optional[str],
         excluded: set[str],
-    ) -> Optional[tuple[list[dict[str, Any]], dict[str, Any]]]:
+    ) -> tuple[Optional[tuple[list[dict[str, Any]], dict[str, Any]]], Optional[dict[str, Any]]]:
         """Fuse keyword, relation and vector lists by reciprocal rank.
 
-        Returns None when the vector retriever gives nothing (no vectors yet,
-        or the engine failed): the caller then keeps the keyword + relation
-        result exactly as it is.
+        Returns ``(fused, engine)``.  ``fused`` is None when the vector
+        retriever gives nothing (no vectors yet, the engine failed, or it did
+        not answer in time): the caller then keeps the keyword + relation
+        result exactly as it is.  ``engine`` says what the engine did, and is
+        None when it was not called.
         """
         from ..memory.fusion import RRF_K, reciprocal_rank_fusion
 
+        boundary = str(getattr(embedder, "boundary", "") or "local")
+        engine: Optional[dict[str, Any]] = {
+            "model_id": str(embedder.model_id), "boundary": boundary, "outcome": "fused",
+        }
         try:
             vector_rows = self._vector_rows(
                 query, embedder, selected=selected, project=project,
@@ -926,9 +950,16 @@ class MemoryRepository(BaseRepository):
             from ..logging_config import get_logger
 
             get_logger("db.memory").warning("memory vector retriever skipped: %s", exc)
-            return None
+            name = type(exc).__name__
+            if name == "MemoryEngineUnassigned":
+                return None, None
+            engine["outcome"] = "timeout" if name == "MemoryEngineTimeout" else "failed"
+            return None, engine
+        if vector_rows is None:
+            return None, None  # no vector exists: the engine was not called
         if not vector_rows:
-            return None
+            engine["outcome"] = "no_match"
+            return None, engine
         relation_rows = [row for row in woven if row.get("related_to")]
         lists = {
             "keyword": [self._base_ref(str(row["source_ref"])) for row in lexical_rows],
@@ -947,11 +978,12 @@ class MemoryRepository(BaseRepository):
             "k": RRF_K,
             "retrievers": [name for name, keys in lists.items() if keys],
             "model_id": str(embedder.model_id),
+            "boundary": boundary,
             "keyword_count": len(lexical_rows),
             "relation_count": len(relation_rows),
             "vector_count": len(vector_rows),
         }
-        return fused_rows, meta
+        return (fused_rows, meta), engine
 
     def _vector_rows(
         self,
@@ -963,8 +995,10 @@ class MemoryRepository(BaseRepository):
         start: Optional[str],
         end: Optional[str],
         excluded: set[str],
-    ) -> list[dict[str, Any]]:
-        """The best chunk per source, nearest first, inside the scope.
+    ) -> Optional[list[dict[str, Any]]]:
+        """The best chunk per source, nearest first, inside the scope.  None
+        when the index holds no vector for this model (the engine is not
+        called then).
 
         Three rules, each applied to a candidate BEFORE it takes one of the
         50 places:
@@ -989,7 +1023,7 @@ class MemoryRepository(BaseRepository):
         index = self._db.memory_index
         matrix, chunk_ids, source_refs, chunk_shas = index.matrix(str(embedder.model_id))
         if matrix.shape[0] == 0:
-            return []
+            return None
         question = np.asarray(embedder.embed_query(query), dtype=np.float32)
         if question.shape != (matrix.shape[1],):
             return []

@@ -621,11 +621,33 @@ group passes.
   lets a capability inherit a wider assignment (the global one). An embedding
   call must never reach a chat model that way, so the engine exists only when
   `capability:memory.embed` has an assignment head.
-- **The local runtime lease is shared.** One local artifact runs at a time on
-  a hub. An embed batch is refused while a local chat call runs (the tick
-  ends; the next tick goes on). The reverse is also true: a local chat call
-  that starts during an embed batch is refused. So a local engine gets
-  batches of 16 with a 0.25 s gap, not 64.
+- **The embedding model has its own local runtime slot.** The local runtime
+  lease lets one large local artifact run at a time. The embedding model is a
+  separate small model, so the `memory.embed` adapter takes no lease
+  (`kernel/inference_runner.py`, `_OWN_LOCAL_SLOTS`). A background embed batch
+  never refuses a live local chat or dictation call, and the reverse. A local
+  engine still gets batches of 16 with a 0.25 s gap, to leave the processor
+  to the live call.
+- **Admission is checked at read time.** Each vector candidate is read again
+  through the sweep's reader and `memory_admits`, and cut again; the snippet
+  is that fresh text. The index is only a way to find a candidate.
+- **A search never waits long for the engine.** The question is embedded on
+  a worker thread with a 0.5 s limit; after it the search answers by keyword
+  and says so in `ranking.engine` (`outcome: timeout`). The route runs the
+  search off the event loop.
+- **The assignment is checked at every call.** After a clear, the next
+  search makes no engine call.
+- **A search names its caller and its boundary.** The question's
+  `inference.invoke` runs as the principal that searched. A remote engine
+  writes the `external.egress` operation and receipt. The answer carries
+  `ranking.engine.boundary`.
+- **Secrets.** Every title and snippet memory returns is redacted. The
+  keyword tables `*_memory_fts` are filled by triggers in the writer's own
+  transaction, so the sweep (and the rebuild) replaces the copy of a source
+  that holds a secret and merges the index. Not done: `segments_fts` and
+  `thread_messages_fts` hold no copy of the text, only tokens; a secret said
+  in a meeting or a thread is still a search key there (the result is
+  redacted).
 
 On a corpus this small the vector top 50 holds almost every source, so a
 keyword hit on a common word is in both lists and can rank above the one
