@@ -404,8 +404,47 @@ def _hydrate_qualified(
         "project_item",
         "workbench_item",
         "cadence",
+        "send",
+        "project_update",
+        "prep_brief",
+        "calendar_event",
     }:
         queries = {
+            # What was sent, to whom, when, the outcome. Never the payload:
+            # the document is read under its own ref, and a sent Brief
+            # carries People data.
+            "send": (
+                "SELECT COALESCE(NULLIF(json_extract(s.document_json,'$.title'),''),s.document_ref) title,"
+                "'Sent: '||s.document_ref"
+                "||'\nTo: '||COALESCE((SELECT cd.name FROM channel_destinations cd WHERE cd.id=s.destination_id),'')"
+                "||COALESCE(' '||json_extract(s.target_json,'$.to'),'')"
+                "||COALESCE('\nCc: '||json_extract(s.target_json,'$.cc'),'')"
+                "||COALESCE(' '||json_extract(s.target_json,'$.repo'),'')"
+                "||COALESCE(' '||json_extract(s.target_json,'$.key'),'')"
+                "||COALESCE(' '||json_extract(s.account_json,'$.channel_label'),'')"
+                "||'\nChannel: '||s.channel"
+                "||'\nWhen: '||COALESCE(s.settled_at,s.dispatch_started_at,s.created_at)"
+                "||'\nOutcome: '||s.state||COALESCE(' ('||NULLIF(s.reason,'')||')','') text,"
+                "s.channel||' · '||s.state subtitle "
+                "FROM channel_sends s WHERE s.id=? AND s.state IN ('sent','failed','unknown')"
+            ),
+            "project_update": (
+                "SELECT COALESCE((SELECT p.name FROM projects p WHERE p.id=u.project_id),u.project_id)||' update r'||u.draft_revision title,"
+                "u.body_md text,COALESCE(u.published_at,u.updated_at) subtitle "
+                "FROM project_updates u WHERE u.id=? AND u.lifecycle='published'"
+            ),
+            "prep_brief": (
+                "SELECT COALESCE((SELECT p.name FROM projects p WHERE p.id=b.project_id),b.project_id)||' prep · '||b.purpose title,"
+                "b.body_md text,COALESCE(b.kept_at,b.updated_at) subtitle "
+                "FROM project_briefs b WHERE b.id=? AND b.lifecycle!='discarded'"
+            ),
+            "calendar_event": (
+                "SELECT COALESCE(NULLIF(e.title,''),e.id) title,"
+                "'When: '||e.starts_at||' to '||e.ends_at"
+                "||CASE WHEN e.location IS NULL OR e.location='' THEN '' ELSE '\nWhere: '||e.location END"
+                "||CASE WHEN e.attendees_json IN ('','[]') THEN '' ELSE '\nAttendees: '||e.attendees_json END text,"
+                "e.starts_at subtitle FROM calendar_events e WHERE e.id=?"
+            ),
             "decision_record": (
                 "SELECT decision_text title,COALESCE(rationale,'')||CASE WHEN alternatives IS NULL OR alternatives='' THEN '' ELSE '\n\nAlternatives: '||alternatives END text,updated_at subtitle FROM decision_records WHERE id=? AND deleted=0"
             ),
