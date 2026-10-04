@@ -5,7 +5,7 @@ conductor and future cron consumers share one parser.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, tzinfo
 from typing import Optional
 
 
@@ -56,6 +56,35 @@ def cron_is_due(cron_expr: str, *, now: Optional[datetime] = None) -> bool:
         return True
     except (ValueError, IndexError):
         return False
+
+
+def resolve_tz(tz_name: Optional[str]) -> tzinfo:
+    """A schedule's IANA zone name as a tzinfo; UTC when absent or unknown."""
+    if not tz_name or str(tz_name).upper() == "UTC":
+        return timezone.utc
+    try:
+        from zoneinfo import ZoneInfo
+
+        return ZoneInfo(str(tz_name))
+    except Exception:
+        return timezone.utc
+
+
+def next_cron_fire_in_zone(
+    cron_expr: str, tz_name: Optional[str], *, now_epoch: Optional[float] = None
+) -> Optional[float]:
+    """The next fire (epoch seconds) of a cron written in the schedule's zone.
+
+    The cron fields are wall-clock values in ``tz_name``: "32 21 * * *" with
+    America/Denver fires at 21:32 in Denver, not at 21:32 UTC.
+    """
+    zone = resolve_tz(tz_name)
+    after = (
+        datetime.fromtimestamp(now_epoch, tz=zone)
+        if now_epoch is not None
+        else datetime.now(zone)
+    )
+    return next_cron_fire(cron_expr, after=after)
 
 
 def next_cron_fire(cron_expr: str, *, after: Optional[datetime] = None) -> Optional[float]:

@@ -2,6 +2,7 @@
 // Composed from the barrel only. The face reads `state` from the wire;
 // it never derives "connected" itself. Zero sentences.
 
+import { wireDate } from "../../../desk/surface/format";
 import { useCallback, useEffect, useState } from "react";
 import {
   GadgetGroup,
@@ -61,7 +62,7 @@ export function checkedAgo(
 ): string | undefined {
   let seconds: number | undefined;
   if (lastCheckedAt) {
-    const then = Date.parse(lastCheckedAt);
+    const then = wireDate(lastCheckedAt)?.getTime() ?? Number.NaN;
     if (!Number.isNaN(then)) seconds = Math.max(0, Math.floor((now - then) / 1000));
   }
   if (seconds === undefined && typeof ageSeconds === "number") seconds = Math.max(0, ageSeconds);
@@ -100,7 +101,7 @@ function foldOpen(state: ConnectionState): boolean {
 function formatTime(iso: string | undefined | null): string {
   if (!iso) return "";
   try {
-    return new Date(iso).toLocaleTimeString([], { hour12: false });
+    return wireDate(iso)?.toLocaleTimeString([], { hour12: false }) ?? "";
   } catch {
     return "";
   }

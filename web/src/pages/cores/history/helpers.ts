@@ -3,6 +3,7 @@
 // you, what settled, the transcript as a receipt. Record/import and
 // the typed artifacts are wings; speakers/projects/queues plumbing
 // stacks behind the one gear door.
+import { wireClock } from "../../../desk/surface/format";
 import type { ReactNode } from "react";
 
 export const WINGS = [
@@ -168,9 +169,7 @@ export function intelDurationToken(row: Record<string, unknown>): string {
 
 /** hh:mm — the receipt stamp's clock. */
 export function clockTime(value: unknown): string {
-  const date = new Date(String(value ?? ""));
-  if (Number.isNaN(date.getTime())) return "";
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  return wireClock(value);
 }
 
 export function download(blob: Blob, name: string) {

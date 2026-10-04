@@ -1,3 +1,4 @@
+import { wireDate } from "../surface/format";
 import "./chrome-menus.css";
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
@@ -74,8 +75,8 @@ function Fact({ label, value }: { label: string; value: unknown }) {
 }
 
 function when(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.valueOf()) ? value : date.toLocaleString();
+  const date = wireDate(value);
+  return !date ? value : date.toLocaleString();
 }
 
 export function DeskToolInspector() {

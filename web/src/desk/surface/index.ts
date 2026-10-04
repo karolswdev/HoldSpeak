@@ -78,6 +78,8 @@ export {
 } from "./citations";
 
 export {
+  wireDate,
+  wireClock,
   humanTime,
   deSnake,
   presentValue,

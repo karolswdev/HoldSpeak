@@ -1,3 +1,4 @@
+import { wireClock } from "../../desk/surface/format";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { Fragment, useEffect } from "react";
 import { countLabel } from "../../desk/surface";
@@ -16,11 +17,9 @@ import type { CoreProps } from "./core-types";
 
 /** The fixed HH:MM:SS clock cell (mono, tabular). */
 function clockToken(value: string | number | ""): string {
-  if (value === "" || value === null || value === undefined) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  // The kernel stamps epoch SECONDS; `new Date(seconds)` read them as
+  // milliseconds and printed a clock in January 1970.
+  return wireClock(value, true);
 }
 
 /** State as the etched token it is — tone, never a colored pill. */
