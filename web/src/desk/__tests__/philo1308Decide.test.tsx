@@ -138,7 +138,7 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
     expect(body.tags).toEqual(["meeting:m-42", "project:proj-1"]);
     expect(String(body.context_markdown)).toContain("Meeting: Checkout latency review · 2026-10-01");
     expect(String(body.context_markdown)).toContain("p99 doubled");
-    await waitFor(() => expect(hub.resourcePuts).toEqual(["/api/projects/proj-1/resources/decision:decision_1"]));
+    await waitFor(() => expect(hub.resourcePuts).toEqual(["/api/projects/proj-1/resources/desk_decision:decision_1"]));
     // the receipt is where the click happened: the meeting lists it
     await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^✓ DECIDED \d\d:\d\d$/));
     expect(screen.getByText("Roll back the cache change")).toBeTruthy();

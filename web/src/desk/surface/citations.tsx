@@ -19,7 +19,9 @@ export function groundedMatchCount(
 
 /** The token's label grammar: `Kind · id`. */
 export function sourceLabel(ref: string): string {
-  const [kind, ...rest] = ref.split(":");
+  const [rawKind, ...rest] = ref.split(":");
+  // A desk decision reads as what it is: a decision.
+  const kind = rawKind === "desk_decision" ? "decision" : rawKind;
   return `${kind[0]?.toUpperCase() || ""}${kind.slice(1)} · ${rest.join(":")}`;
 }
 
@@ -42,6 +44,12 @@ export function openSourceRef(ref: string) {
       openPrimitive(threadRef);
       return;
     }
+  }
+  // A desk decision's ref is `desk_decision:<id>` (memory, Send, a Project);
+  // the Desk store keeps its window under `decision:<id>`.
+  if (ref.startsWith("desk_decision:")) {
+    openPrimitive(`decision:${ref.slice("desk_decision:".length)}`);
+    return;
   }
   openPrimitive(ref);
 }

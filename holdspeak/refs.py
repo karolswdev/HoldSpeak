@@ -35,6 +35,7 @@ from typing import FrozenSet, Mapping
 CITIZEN_TYPES: FrozenSet[str] = frozenset({
     "meeting",       # Meeting
     "decision",      # Decision
+    "desk_decision", # Desk decision (the Decide window); never `decision:`
     "action_item",   # Door / follow-through
     "people",        # Person / participant  (canonical; alias "person")
     "thread",        # Thread
