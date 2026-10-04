@@ -320,12 +320,14 @@ export function DeskToolShelf() {
   useEffect(() => {
     void apiFetch<{
       items?: Array<{ projectId?: string; muted?: boolean }>;
+      /** The Room rows alone: a project badge is per Room ("N OPEN"). */
+      roomItems?: Array<{ projectId?: string; muted?: boolean }>;
       coverage?: CoverageRecord[];
     }>("/api/desk/needs-you")
       .then((payload) => {
         const counts: Record<string, number> = {};
         // One count everywhere: muted Rooms' items never inflate a badge (counsel C1).
-        for (const item of (payload?.items ?? []).filter((i) => !i.muted)) {
+        for (const item of (payload?.roomItems ?? payload?.items ?? []).filter((i) => !i.muted)) {
           const pid = item.projectId;
           if (pid) counts[pid] = (counts[pid] ?? 0) + 1;
         }

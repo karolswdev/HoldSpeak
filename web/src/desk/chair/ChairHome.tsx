@@ -1530,6 +1530,9 @@ function NeedsYouRow({
   const ext = item as NeedsYouItem & { _isDoor?: boolean; _isUnassigned?: boolean; _doorCard?: DoorCard };
   const isDoor = ext._isDoor === true;
   const isUnassigned = ext._isUnassigned === true;
+  // An item that HAS an owner and is not reviewed yet: "To review", never
+  // "Name an owner".
+  const isToReview = (ext as { _toReview?: boolean })._toReview === true;
   const isProposal = Boolean(item.proposalId);
   const emblem = isDoor ? doorEmblem(item.source) : sourceEmblem(item.source);
   const proposalPrefix = isProposal
@@ -1628,6 +1631,7 @@ function NeedsYouRow({
           item={rowItem}
           isDoor={isDoor}
           isUnassigned={isUnassigned}
+          isToReview={isToReview}
           doorCard={ext._doorCard}
           primary={primary}
           onProposalConfirm={onProposalConfirm}
@@ -1783,6 +1787,7 @@ function NeedsYouRowVerbs({
   item,
   isDoor,
   isUnassigned,
+  isToReview,
   doorCard,
   primary = false,
   onProposalConfirm,
@@ -1792,6 +1797,7 @@ function NeedsYouRowVerbs({
   item: NeedsYouItem;
   isDoor: boolean;
   isUnassigned: boolean;
+  isToReview?: boolean;
   doorCard?: DoorCard;
   /** HS-200-15: ONE filled primary per face: the top-ranked row's verb. */
   primary?: boolean;
@@ -1848,6 +1854,26 @@ function NeedsYouRowVerbs({
         }}
       >
         {busy ? "..." : label}
+      </Button>
+    );
+  }
+
+  if (isToReview) {
+    return (
+      <Button
+        variant={lead}
+        dense
+        onClick={() => {
+          // The real producer's card names itself in `target_ref`
+          // (`action_item:<id>`, DoorService._follow_through_card); `open_ref`
+          // is optional. Review opens the card in Follow-through, where the
+          // owner reviews it.
+          (refOpener(doorCard?.open_ref) ?? refOpener(doorCard?.target_ref))?.();
+        }}
+        aria-label={`Review: ${item.title}`}
+        data-testid="arrival-to-review"
+      >
+        Review
       </Button>
     );
   }
