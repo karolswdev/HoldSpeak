@@ -3,6 +3,8 @@
 // `GET /api/memory/recall` returns (holdspeak/services/recall_service.py),
 // the five filters, and the token helpers the face draws with.
 
+import { wireDate } from "../../../desk/surface/format";
+
 export type RecallFilter = "all" | "decisions" | "commitments" | "briefs" | "meetings";
 
 /** The same five at both widths (design D2(e), `FilterTokens`). */
@@ -138,8 +140,8 @@ export function axisTone(axis: string): "ok" | "warn" | "danger" | undefined {
 /** `SEARCHED 09:20` — the search's own clock, local. */
 export function searchedToken(iso: string | null | undefined): string {
   if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
+  const d = wireDate(iso);
+  if (!d) return "";
   return `SEARCHED ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 

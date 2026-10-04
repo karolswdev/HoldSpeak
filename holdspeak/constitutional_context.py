@@ -35,11 +35,10 @@ def _db():
 def get_constitutional_context() -> dict:
     """Return the current constitutional context: content, revision, hash."""
     try:
-        db = _db()
-        conn = db._conn
-        row = conn.execute(
-            "SELECT content, revision, content_hash, updated_at FROM constitutional_context WHERE id = 1"
-        ).fetchone()
+        with _db()._connection() as conn:
+            row = conn.execute(
+                "SELECT content, revision, content_hash, updated_at FROM constitutional_context WHERE id = 1"
+            ).fetchone()
         if row:
             return {
                 "content": row[0],
@@ -47,8 +46,8 @@ def get_constitutional_context() -> dict:
                 "content_hash": row[2],
                 "updated_at": row[3],
             }
-    except Exception:
-        pass
+    except Exception as exc:
+        log.error(f"Failed to read constitutional context: {exc}")
     return {"content": "", "revision": 0, "content_hash": _sha256("")}
 
 
@@ -69,31 +68,30 @@ def update_constitutional_context(content: str) -> dict:
     new_hash = _sha256(new_content)
 
     try:
-        db = _db()
-        conn = db._conn
-        conn.execute(
-            """INSERT INTO constitutional_context (id, content, revision, content_hash, updated_at)
-               VALUES (1, ?, ?, ?, datetime('now'))
-               ON CONFLICT(id) DO UPDATE SET
-                 content = excluded.content,
-                 revision = excluded.revision,
-                 content_hash = excluded.content_hash,
-                 updated_at = excluded.updated_at""",
-            (new_content, new_revision, new_hash),
-        )
-        conn.execute(
-            """INSERT INTO constitutional_context_history (content, revision, content_hash)
-               VALUES (?, ?, ?)""",
-            (new_content, new_revision, new_hash),
-        )
-        # Keep only last 10 revisions
-        conn.execute(
-            """DELETE FROM constitutional_context_history
-               WHERE id NOT IN (
-                 SELECT id FROM constitutional_context_history ORDER BY id DESC LIMIT 10
-               )"""
-        )
-        conn.commit()
+        # The connection commits on a clean exit and rolls back on an error.
+        with _db()._connection() as conn:
+            conn.execute(
+                """INSERT INTO constitutional_context (id, content, revision, content_hash, updated_at)
+                   VALUES (1, ?, ?, ?, datetime('now'))
+                   ON CONFLICT(id) DO UPDATE SET
+                     content = excluded.content,
+                     revision = excluded.revision,
+                     content_hash = excluded.content_hash,
+                     updated_at = excluded.updated_at""",
+                (new_content, new_revision, new_hash),
+            )
+            conn.execute(
+                """INSERT INTO constitutional_context_history (content, revision, content_hash)
+                   VALUES (?, ?, ?)""",
+                (new_content, new_revision, new_hash),
+            )
+            # Keep only last 10 revisions
+            conn.execute(
+                """DELETE FROM constitutional_context_history
+                   WHERE id NOT IN (
+                     SELECT id FROM constitutional_context_history ORDER BY id DESC LIMIT 10
+                   )"""
+            )
     except Exception as exc:
         log.error(f"Failed to update constitutional context: {exc}")
         raise
@@ -108,18 +106,18 @@ def update_constitutional_context(content: str) -> dict:
 def get_constitutional_history() -> list[dict]:
     """Return the last 10 revisions, newest first."""
     try:
-        db = _db()
-        conn = db._conn
-        rows = conn.execute(
-            """SELECT content, revision, content_hash, created_at
-               FROM constitutional_context_history
-               ORDER BY id DESC LIMIT 10"""
-        ).fetchall()
+        with _db()._connection() as conn:
+            rows = conn.execute(
+                """SELECT content, revision, content_hash, created_at
+                   FROM constitutional_context_history
+                   ORDER BY id DESC LIMIT 10"""
+            ).fetchall()
         return [
             {"content": r[0], "revision": r[1], "content_hash": r[2], "created_at": r[3]}
             for r in rows
         ]
-    except Exception:
+    except Exception as exc:
+        log.error(f"Failed to read constitutional context history: {exc}")
         return []
 
 

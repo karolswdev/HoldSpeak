@@ -1,3 +1,4 @@
+import { wireDate } from "../surface/format";
 import "./attention.css";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/signal/Signal";
@@ -49,8 +50,8 @@ function useNeedsYouOnDeskChanged(): void {
 }
 
 function when(raw: string) {
-  const date = new Date(raw);
-  return Number.isNaN(date.valueOf()) ? raw : date.toLocaleString();
+  const date = wireDate(raw);
+  return !date ? raw : date.toLocaleString();
 }
 
 export function AttentionDrawer() {

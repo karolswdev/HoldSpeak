@@ -5,6 +5,8 @@
 // coverage is complete. A partial result renders the coverage token and
 // the repair rows instead — never the all-clear line.
 
+import { wireDate } from "./surface/format";
+
 export type CoverageState =
   | "available"
   | "stale"
@@ -119,8 +121,8 @@ export function sourceLabel(record: CoverageRecord): string {
 /** `LAST SEEN 09-06 08:12` — the observation time, or the honest absence. */
 export function observedToken(observedAt: string | null | undefined): string {
   if (!observedAt) return "NEVER OBSERVED";
-  const parsed = new Date(observedAt);
-  if (Number.isNaN(parsed.getTime())) return "NEVER OBSERVED";
+  const parsed = wireDate(observedAt);
+  if (!parsed) return "NEVER OBSERVED";
   const mm = String(parsed.getMonth() + 1).padStart(2, "0");
   const dd = String(parsed.getDate()).padStart(2, "0");
   const hh = String(parsed.getHours()).padStart(2, "0");

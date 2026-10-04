@@ -25,7 +25,7 @@ import {
   humanTime,
   type ChipState,
 } from "../../../desk/surface";
-import { openSourceRef } from "../../../desk/surface/citations";
+import { openRef } from "../../../desk/openObject";
 import { egressFor } from "../../../desk/surface/egress";
 import type { UpdateController } from "./useUpdateController";
 import type { ProjectUpdate, UpdateClaim } from "./model";
@@ -464,7 +464,7 @@ function UpdateEditor({
 
 export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
   const onOpenRef = useCallback((ref: string) => {
-    openSourceRef(ref);
+    openRef(ref);
   }, []);
 
   // ── Loading / error ──

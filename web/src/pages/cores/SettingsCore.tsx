@@ -4,6 +4,7 @@
 // window body; the footer status bar carries the receipt and the
 // refusals; every control is a gadget from the surface kit. The pane
 // roster is a code constant — the wire never mints a pane again.
+import { wireDate, wireClock } from "../../desk/surface/format";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type {
   CoreProps,
@@ -144,8 +145,8 @@ export function projectPendingSettingsChanges(
  * is what a hub-local stamp means; an unparseable value prints nothing. */
 export function formatLocalClock(iso: string | null | undefined): string | null {
   if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
+  const d = wireDate(iso);
+  if (!d) return null;
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
@@ -1870,7 +1871,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         const lastRunAt = meetingsHub?.lastRunAt ? String(meetingsHub.lastRunAt) : null;
         const lastRunS = meetingsHub?.lastRunS != null ? Number(meetingsHub.lastRunS) : null;
         const lastRunReceipt = lastRunAt
-          ? `LAST RAN ${lastRunAt.slice(11, 16)}${lastRunS != null ? " · " + lastRunS + " S" : ""}`
+          ? `LAST RAN ${wireClock(lastRunAt)}${lastRunS != null ? " · " + lastRunS + " S" : ""}`
           : null;
         const sourcesPath: string[] = ["calendar", "sources"];
         const sources: Array<{

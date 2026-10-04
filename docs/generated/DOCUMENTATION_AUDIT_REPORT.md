@@ -85,7 +85,8 @@ model endpoints, mesh nodes, external connectors, MCP and actuators can cross
 boundaries. Voice typing and process launch are effects even when local.
 [Security](../SECURITY_MODEL.md), [authority](../AUTHORITY_MODEL.md) and
 [integrations](../INTEGRATIONS.md) explain the operation-specific paths.
-The lexical [boundary census](boundary-candidates.json) exposes candidates and
+The lexical boundary census, `docs/generated/boundary-candidates.json` (not in
+git; run `scripts/gen_docs.sh` to write it), exposes candidates and
 its false-positive/false-negative limits; it is not an exhaustive security
 certification.
 

@@ -1,3 +1,4 @@
+import { wireDate } from "../../surface/format";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api"; import { plainFailure } from "../../surface/plainFailure"; // PHILO-13-04: plain words, never the hub's `detail`
@@ -84,12 +85,7 @@ function humanizeDate(text: string): string {
  * A bare `YYYY-MM-DD` is a calendar day, not UTC midnight (`new Date`
  * would shift it a day west of UTC); a timestamp parses as an instant. */
 export function parseLocal(iso: string | null | undefined): Date | null {
-  if (!iso) return null;
-  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
-  const d = day
-    ? new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]))
-    : new Date(iso);
-  return Number.isNaN(d.getTime()) ? null : d;
+  return wireDate(iso);
 }
 
 /** Extract day-of-week from an ISO date (local). */

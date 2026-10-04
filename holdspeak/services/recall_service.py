@@ -51,7 +51,17 @@ FILTERS = ("all", "decisions", "commitments", "briefs", "meetings")
 _SETTLED = frozenset({"closed", "completed", "done", "dismissed"})
 
 #: Memory kinds drawn under ``also`` (never decision records: those are cards).
-_ALSO_KINDS = ("artifact", "note", "thread", "desk_decision", "project_item")
+_ALSO_KINDS = (
+    "artifact", "note", "thread", "desk_decision", "project_item",
+    # An action item: an open one is drawn under OWED, a settled one here.
+    "action",
+    # What he sent, published and prepared, and what is on the calendar.
+    "send", "project_update", "prep_brief", "calendar_event",
+)
+
+#: The wordless Desk memory read is newest first. Calendar events are dated
+#: ahead of now and would fill the list; they answer a search, not "recent".
+_RECENT_ALSO_KINDS = tuple(kind for kind in _ALSO_KINDS if kind != "calendar_event")
 
 _SUPPORT_TOKENS = {
     "supported": "SUPPORTED",
@@ -180,9 +190,22 @@ class RecallService:
             # durable relationship edge (a meeting's artifact) still arrives
             # beside its seed; the hits are then split by kind.
             hits = self._memory_hits(
-                q, ("meeting",) + _ALSO_KINDS, bounded, recent=newest)
+                q, ("meeting",) + (_RECENT_ALSO_KINDS if newest else _ALSO_KINDS),
+                bounded, recent=newest)
             result["meetings"] = [h for h in hits if h.get("kind") == "meeting"]
-            result["also"] = [h for h in hits if h.get("kind") != "meeting"]
+            # An action item memory found is OWED while it is open (the same
+            # row species as a commitment); a settled one stays under ALSO.
+            owed_actions, committed = self._owed_actions(hits, clock)
+            drawn = committed | {f"action:{row['action_item_id']}" for row in owed_actions}
+            result["owed"] = (result["owed"] + owed_actions)[:bounded]
+            result["also"] = [
+                h for h in hits
+                if h.get("kind") != "meeting" and h.get("source_ref") not in drawn
+            ]
+
+        if chosen == "commitments":
+            hits = self._memory_hits(q, ("action",), bounded, recent=newest)
+            result["owed"] = (result["owed"] + self._owed_actions(hits, clock)[0])[:bounded]
 
         result["remembered"] = sum(
             len(result[key]) for key in
@@ -375,15 +398,19 @@ class RecallService:
 
     def _support(self, conn: Any, record_id: str, hint: str) -> str:
         """The support axis: the confirmed proposal's own verdict when the
-        record came through the review face; else LINKED when a transcript
-        moment is anchored; else NO SOURCE."""
+        record came through the review face; else LINKED when the record has
+        a source meeting; else NO SOURCE."""
         prow = conn.execute(
             "SELECT support FROM follow_through_proposals WHERE decision_record_id = ? ORDER BY decided_at DESC LIMIT 1",
             (record_id,),
         ).fetchone()
         if prow is not None and prow["support"]:
             return _SUPPORT_TOKENS.get(str(prow["support"]).lower(), "NO SOURCE")
-        if hint == "linked":
+        # Inventory 2026-10-03 (UX-CANON A.10): a record whose source is a
+        # meeting drew NO SOURCE beside "SOURCE MTG ... Open source". A
+        # source link is LINKED, with or without an anchored moment; NO
+        # SOURCE is only for a record with no source at all.
+        if hint in ("linked", "meeting"):
             return "LINKED"
         return "NO SOURCE"
 
@@ -481,6 +508,84 @@ class RecallService:
                     "decision_state": card["state"] if card else None,
                 })
         return rows[:limit]
+
+    def _owed_actions(
+        self, hits: list[dict[str, Any]], clock: datetime,
+    ) -> tuple[list[dict[str, Any]], set[str]]:
+        """Open action items among the memory hits, as OWED rows.
+
+        Inventory C, gap 8: `memory.search` found an action item and the face
+        dropped the kind; OWED read `decision_commitments` only. The row has
+        the shape a commitment row has, so the face draws it with the same
+        species and the same one verb (the follow-through verbs take the
+        action item id).
+
+        An action item that carries a commitment is not answered here: the
+        commitment read (`_owed`) owns it, with its rules (a decision-kind
+        chain row is a decision, never owed; a settled one is not owed).
+        Those refs come back as the second value so the face does not draw
+        the same thing again under ALSO.
+        """
+        ids = [
+            str(hit["source_ref"]).split(":", 1)[1]
+            for hit in hits
+            if hit.get("kind") == "action" and ":" in str(hit.get("source_ref") or "")
+        ]
+        rows: list[dict[str, Any]] = []
+        committed: set[str] = set()
+        if not ids:
+            return rows, committed
+        with self._db._connection() as conn:
+            for action_id in ids:
+                if conn.execute(
+                    "SELECT 1 FROM decision_commitments WHERE action_item_id = ? LIMIT 1",
+                    (action_id,),
+                ).fetchone():
+                    committed.add(f"action:{action_id}")
+                    continue
+                row = conn.execute(
+                    """SELECT a.id, a.task, a.owner, a.due, a.status,
+                              (SELECT mp.project_id FROM meeting_projects mp
+                               WHERE mp.meeting_id = a.meeting_id
+                               ORDER BY mp.project_id LIMIT 1) AS project_id
+                       FROM action_items a
+                       LEFT JOIN meetings m ON m.id = a.meeting_id
+                       WHERE a.id = ? AND (m.id IS NULL OR m.parked = 0)""",
+                    (action_id,),
+                ).fetchone()
+                if row is None:
+                    continue
+                status = str(row["status"] or "pending").lower()
+                if status in _SETTLED:
+                    continue
+                owner = (row["owner"] or "").strip() or None
+                due_at = (row["due"] or "").strip() or None
+                token, tone = due_token(due_at, clock)
+                project = None
+                if row["project_id"]:
+                    prow = conn.execute(
+                        "SELECT id, name FROM projects WHERE id = ?", (row["project_id"],)
+                    ).fetchone()
+                    if prow is not None:
+                        project = {"id": str(prow["id"]), "name": str(prow["name"] or "")}
+                rows.append({
+                    "id": action_id,
+                    "ref": f"action:{action_id}",
+                    "action_item_id": action_id,
+                    "text": str(row["task"] or "").strip() or "Untitled action",
+                    "owner": owner,
+                    "owner_token": f"OWNER · {owner.upper()}" if owner else "OWNER · UNKNOWN",
+                    "due_at": due_at,
+                    "due_token": token,
+                    "due_tone": tone,
+                    "status": status,
+                    "unknowns": [k for k, v in (("owner", owner), ("due", due_at)) if not v],
+                    "next_action": next_action_for(owner, due_at),
+                    "project": project,
+                    "decision_record_id": None,
+                    "decision_state": None,
+                })
+        return rows, committed
 
     # ── the other kinds ──────────────────────────────────────────────
 

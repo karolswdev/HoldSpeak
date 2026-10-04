@@ -224,11 +224,17 @@ def _build_service() -> RefinementApplicationService:
 
 
 def _run(awaitable: Any) -> Any:
-    if _runtime is None:
-        if hasattr(awaitable, "close"):
-            awaitable.close()
-        raise RuntimeError("MCP refinement runtime is not started")
-    return _runtime.call(awaitable)
+    """Run a refinement coroutine on the loop that owns the coordinator.
+
+    A configured sidecar runtime owns its own loop. Inside the hub there is no
+    sidecar runtime: :func:`_service` is the hub's service with the hub's
+    coordinator, and ``run_async`` runs the coroutine on the hub's loop.
+    """
+    if _runtime is not None:
+        return _runtime.call(awaitable)
+    from holdspeak.mcp.aio import run_async
+
+    return run_async(awaitable)
 
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:

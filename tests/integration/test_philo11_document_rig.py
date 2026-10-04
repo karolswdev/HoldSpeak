@@ -76,8 +76,9 @@ def test_each_document_previews_prepares_and_lists_through_the_real_rig(document
     assert row["state"] == "prepared"
     assert preview["preview"]["text"].strip()
     if kind == "monday_brief":
-        assert "Avery" in preview["preview"]["text"]
-        assert "You owe" in preview["preview"]["text"]
+        # Inventory gap 5 (2026-10-03): the sent Brief carries no People data.
+        assert "Avery" not in preview["preview"]["text"]
+        assert "You owe" not in preview["preview"]["text"]
     if kind.startswith("meeting_") and kind != "meeting_decision":
         from tests.unit._philo11_documents import TRANSCRIPT_SENTINEL
         assert TRANSCRIPT_SENTINEL not in preview["preview"]["text"]

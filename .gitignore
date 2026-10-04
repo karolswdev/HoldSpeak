@@ -91,3 +91,7 @@ test-results/
 docs/generated/api-reference.json
 docs/generated/boundary-candidates.json
 docs/generated/graph.json
+
+# SQLite lock state: a reader that opens a tracked proof database writes these.
+*.sqlite-shm
+*.sqlite-wal

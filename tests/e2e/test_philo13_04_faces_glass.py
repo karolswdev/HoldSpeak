@@ -7,7 +7,7 @@ Through the real hub on an isolated HOME, at 1440x900 (mouse) and 393x852
     fetch). The face says ``NOT RECORDING`` + the reason; no ``is-recording``,
     no timer. Red on main 27b91553 (the orb showed recording, a timer ran).
   * The populated week with the engine off: Settings names the CONFIGURED
-    switch (``SUMMARY SET ON``), Trust names whether data leaves
+    switch (``SUMMARY SET ON``; with no engine, ``SUMMARY · NO ENGINE``), Trust names whether data leaves
     (``SENDS NOTHING``, the lamp unlit), the Chair and the Meetings record name
     a STORED summary (never ``OFF`` above it), the Chair names the AVAILABLE
     fact (``No engine for summaries``).
@@ -183,7 +183,9 @@ class TestFacesDoNotLie:
                 # Settings: the CONFIGURED switch.
                 self._press(page, page.locator(".desk-dock-launch[aria-label^='Settings']"), width)
                 settings = page.locator(".desk-window[aria-label='Settings']")
-                settings.get_by_text(re.compile(r"SUMMARY SET (ON|OFF)")).first.wait_for()
+                # 2026-10-03 (inventory A defect 10): with the switch on and no
+                # engine the row names the missing engine, not SET ON.
+                settings.get_by_text(re.compile(r"SUMMARY (SET (ON|OFF)|· NO ENGINE)")).first.wait_for()
                 assert not settings.get_by_text(re.compile(r"SUMMARY (ON|OFF)")).count()
                 self._shot(page, "settings-configured", width)
                 self._close_windows(page, width)

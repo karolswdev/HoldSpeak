@@ -202,6 +202,14 @@ def _normalize_literal(value: str) -> str:
     return value.strip("{} ")
 
 
+# A literal that is ONLY a list of CSS selectors, each with an attribute
+# selector (``[data-testid=send-preview], [data-testid=preview-failed]``).
+# A sentence that holds a bracket (``failed [status=503].``) does not match.
+_CSS_SELECTOR_ONLY = re.compile(
+    r"(?:[\w.#*:-]*(?:\[[a-z][a-z0-9-]*[~|^$*]?=[^\]\s]+\])+[\w.#*:-]*(?:\s*[,>+~]\s*|\s+|$))+"
+)
+
+
 def _looks_like_copy(value: str) -> bool:
     if not value or not re.search(r"[A-Za-z]", value):
         return False
@@ -212,6 +220,9 @@ def _looks_like_copy(value: str) -> bool:
     if re.fullmatch(r"[a-z0-9.-]+\.[a-z0-9.-]+", value):
         return False
     if value.count("_") >= 2 and " " not in value:
+        return False
+    if _CSS_SELECTOR_ONLY.fullmatch(value):
+        # A DOM query (``[data-testid=preview-failed]``) is code, not copy.
         return False
     return True
 
