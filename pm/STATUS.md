@@ -51,7 +51,7 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 
 ## Last merged (newest first)
 
-- #819 — Evidence moved to branch `archive/evidence-2026-10-04` (16,391 files, 2.3 GB; `pm/ARCHIVE.md`); the tree is 10,607 files, 172 MB
+- #819 — Evidence moved to branch `archive/evidence-2026-10-04` (16,391 files, 2.3 GB; `pm/ARCHIVE.md`); the tree is 10,609 files, 172 MB
 - #812, #814, #799–#811 — The long-standing red browser tests fixed (29 stale tests, the rig's late-step verdict)
 - #798, #801–#805 — Regressions from the 2026-10-03 merges fixed (merged rows keep sources, lamp labels, windows clear the Dock)
 - #797 — The default run is green after "every write announces"

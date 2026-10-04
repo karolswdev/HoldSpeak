@@ -26,7 +26,7 @@ Find a path: `grep <word> pm/archive-manifest.txt`.
 | | Files | MB |
 |---|---|---|
 | Tracked tree before | 26,990 | 2,517.3 |
-| Tracked tree after | 10,607 | 171.5 |
+| Tracked tree after | 10,609 | 171.5 |
 | Moved to the archive | 16,391 | 2,348.1 |
 
 ## What moved
