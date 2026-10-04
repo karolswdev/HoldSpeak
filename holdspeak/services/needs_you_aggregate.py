@@ -452,6 +452,11 @@ def build_aggregate(
         observed_at = str(rm.get("observed_at") or clock_now.isoformat())
         fresh: list[dict[str, Any]] = []
         for item in needs.get("items") or []:
+            if item.get("kind") == "action_item":
+                # A meeting's open action is the Room's own "open here" row.
+                # The Desk already reads it through the follow-through board;
+                # counting it here would show one obligation twice.
+                continue
             row: dict[str, Any] = {
                 "projectId": pid,
                 "projectName": pname,

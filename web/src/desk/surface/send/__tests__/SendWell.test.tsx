@@ -225,6 +225,23 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(within(history).getByTestId("history-row").textContent).toContain("RESULT UNKNOWN · CHECK Team folder");
   });
 
+  it("PREPARED, refused PREVIEW CHANGED: the row shows the word, Send goes, Discard stays", async () => {
+    routes["GET /api/channels/sends"] = () => ({ sends: [send({
+      id: "chs_old", state: "prepared", prepare_operation_id: "op_p", prepared_by: { kind: "steward", identity: "" },
+      dispatch_started_at: null, settled_at: null, proof: null, file_path: null,
+    })] });
+    routes["POST /api/channels/send"] = () => {
+      throw new ApiError(409, "changed", { success: false, error_code: "preview_changed" });
+    };
+    render(<SendWells doc={BRIEF} />);
+    fireEvent.click(await screen.findByTestId("prepared-send"));
+    const chip = await screen.findByTestId("prepared-refused-chip");
+    expect(chip.getAttribute("data-code")).toBe("preview_changed");
+    expect(chip.textContent).toContain("PREVIEW CHANGED");
+    expect(screen.queryByTestId("prepared-send")).toBeNull();
+    expect(screen.getByTestId("prepared-discard").textContent).toBe("Discard");
+  });
+
   it("PREPARED: first in SEND, the document's label, BY STEWARD, Send + Discard; the head chip counts it", async () => {
     routes["GET /api/channels/sends"] = () => ({ sends: [send({
       id: "chs_p", state: "prepared", prepare_operation_id: "op_p", prepared_by: { kind: "steward", identity: "" },

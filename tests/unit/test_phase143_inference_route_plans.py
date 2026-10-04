@@ -116,23 +116,30 @@ def test_pure_resolution_is_one_snapshot_zero_write_and_fast(
     def forbidden(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("pure route resolution crossed an external/scan seam")
 
-    monkeypatch.setattr(socket, "create_connection", forbidden)
-    monkeypatch.setattr(urllib.request, "urlopen", forbidden)
-    monkeypatch.setattr(Path, "exists", forbidden)
-    monkeypatch.setattr(Path, "glob", forbidden)
-    for ordinal in range(5):
-        service.resolve_route_plan(
-            ROUTE_PLANNING_AUTHORITY,
-            capability_id="ask.answer",
-            plan_id=f"irp_warm_{ordinal}",
-        )
-    values, timings = [], []
-    for ordinal in range(80):
-        started = time.perf_counter()
-        values.append(service.resolve_route_plan(
-            ROUTE_PLANNING_AUTHORITY, capability_id="ask.answer", plan_id=f"irp_preview_{ordinal}"
-        ))
-        timings.append((time.perf_counter() - started) * 1000)
+    # The seams are closed only while the resolver runs. With ``Path.exists``
+    # still closed at the assertions, a failed assertion made pytest's own
+    # failure report call it, and the xdist worker died with INTERNALERROR:
+    # one slow run ended the whole session.
+    with monkeypatch.context() as seams:
+        seams.setattr(socket, "create_connection", forbidden)
+        seams.setattr(urllib.request, "urlopen", forbidden)
+        seams.setattr(Path, "exists", forbidden)
+        seams.setattr(Path, "glob", forbidden)
+        for ordinal in range(5):
+            service.resolve_route_plan(
+                ROUTE_PLANNING_AUTHORITY,
+                capability_id="ask.answer",
+                plan_id=f"irp_warm_{ordinal}",
+            )
+        values, timings = [], []
+        for ordinal in range(80):
+            # This thread's CPU time, not the wall clock: on a loaded machine
+            # the wall clock measures the other processes.
+            started = time.thread_time()
+            values.append(service.resolve_route_plan(
+                ROUTE_PLANNING_AUTHORITY, capability_id="ask.answer", plan_id=f"irp_preview_{ordinal}"
+            ))
+            timings.append((time.thread_time() - started) * 1000)
     p95 = sorted(timings)[int(len(timings) * 0.95) - 1]
     assert writes == []
     assert p95 < 10

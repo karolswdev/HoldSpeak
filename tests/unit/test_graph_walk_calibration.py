@@ -288,8 +288,11 @@ def test_the_ui_vocabulary_is_closed_and_blocks_before_anything_fires():
     # PHILO-7-03 added `focus` (keyboard travel to a Floor world chip).
     # PHILO-10-05 added `scroll_into_view` (the owner seats Send before he presses).
     # PHILO-11-06 adds `select_option` for native destination selectors.
+    # PHILO-13 adds `world_context_menu` (right-click a Floor world) and
+    # `set_input_files` (a file given to a native file input).
     assert UI_ACTIONS == {"goto", "reload", "click", "click_role", "fill",
-                          "select_option", "press", "wait_for", "focus", "scroll_into_view"}
+                          "select_option", "press", "wait_for", "focus", "scroll_into_view",
+                          "world_context_menu", "set_input_files"}
     # PHILO-10-05: a malformed seat blocks by name, before any page is reached.
     for bad in ({"selector": "#a", "block": "middle"}, {"block": "start"}):
         with pytest.raises(Blocked) as raised:

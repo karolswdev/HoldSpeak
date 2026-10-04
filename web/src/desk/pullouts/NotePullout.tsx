@@ -1,3 +1,4 @@
+import { wireDate } from "../surface/format";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Note pullout content (HS-117-15). */
 import { useEffect, useRef, useState } from "react";
@@ -23,8 +24,8 @@ function isRefining(state?: string): boolean { return !!state && REFINING_STATES
 
 function readableVersion(value: string): string {
   if (!value || /^version\b/i.test(value)) return value;
-  const date = new Date(value);
-  return Number.isNaN(date.valueOf()) ? value : `version from ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+  const date = wireDate(value);
+  return !date ? value : `version from ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
 }
 
 function ContextLeaves({ attachments }: { attachments: Array<Pick<ThoughtAttachment, "ref" | "leaves">> }) {
@@ -361,7 +362,7 @@ export function NotePullout({
         {thought ? (() => {
           const capturedAt = thought.raw_captured_at;
           return <Button variant="ghost" dense onClick={() => void showOriginal()}>
-          Original kept · {sourceLabel(thought.source.kind)} · {new Date(capturedAt).toLocaleString()}
+          Original kept · {sourceLabel(thought.source.kind)} · {wireDate(capturedAt)?.toLocaleString() ?? ""}
         </Button>; })() : null}
         {original ? (() => {
           const rawBody = original.raw_text;

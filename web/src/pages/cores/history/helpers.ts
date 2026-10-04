@@ -3,6 +3,7 @@
 // you, what settled, the transcript as a receipt. Record/import and
 // the typed artifacts are wings; speakers/projects/queues plumbing
 // stacks behind the one gear door.
+import { wireClock } from "../../../desk/surface/format";
 import type { ReactNode } from "react";
 
 export const WINGS = [
@@ -168,9 +169,7 @@ export function intelDurationToken(row: Record<string, unknown>): string {
 
 /** hh:mm — the receipt stamp's clock. */
 export function clockTime(value: unknown): string {
-  const date = new Date(String(value ?? ""));
-  if (Number.isNaN(date.getTime())) return "";
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  return wireClock(value);
 }
 
 export function download(blob: Blob, name: string) {
@@ -246,11 +245,13 @@ function counted(n: number, one: string, many: string): string {
  *  the process state leads, as on the rail: `n meeting(s) failed`, then
  *  `n summary/summaries running`, then `n ... queued`, then `n meeting(s)
  *  need(s) a summary`. `All summaries done` only when no summary is live or
- *  failed and every summary that should exist exists. `No meetings yet` when
+ *  failed, every summary that should exist exists, and a summary can run. `No meetings yet` when
  *  empty. HS-201-01: never the all-clear over a FAILED row. */
 export function meetingsHeadline(
   meetingRows: Record<string, unknown>[],
   loading: boolean,
+  /** The face read a summary route and it cannot run (no engine). */
+  routeMissing = false,
 ): { text: string; accent: boolean } {
   if (loading) return { text: "", accent: false };
   if (meetingRows.length === 0) return { text: "No meetings yet", accent: false };
@@ -273,6 +274,10 @@ export function meetingsHeadline(
   }
   // PHILO-13-03 (canvas C1-4a): Meetings counts summaries, a narrower set
   // than "needs you"; its all-clear says what it counts, and only when true.
+  // Inventory 2026-10-03 (UX-CANON A.10): the all-clear stood over the
+  // footer's "NO SUMMARY ROUTE". With no engine the next meeting gets no
+  // summary; the headline says so in the Chair's words, not "all done".
+  if (routeMissing) return { text: "No engine for summaries", accent: true };
   return { text: "All summaries done", accent: false };
 }
 

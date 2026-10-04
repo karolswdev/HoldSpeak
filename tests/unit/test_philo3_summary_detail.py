@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from datetime import datetime
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -359,6 +360,11 @@ def _normalise_wire(value: Any, key: str = "") -> Any:
             "Retrying at <producer-volatile>.",
             value,
         )
+    if key == "intel_duration_s" and isinstance(value, int):
+        # Wall-clock seconds from request to completion: 0 on a quiet machine,
+        # 1 or more under load. That a number is there is the fact; which
+        # number is the machine's.
+        return "<producer-volatile-seconds>"
     return value
 
 
@@ -372,6 +378,14 @@ def test_summary_wire_fixture_matches_real_producer_states(
     expected_cases = [
         {"state": state, **wire} for state, wire in produced.items()
     ]
+    # The fixture is never hand-written: PHILO3_WRITE_FIXTURE=1 writes it again
+    # from the real producers (the same rule as PHILO6_WRITE_FIXTURE).
+    if os.environ.get("PHILO3_WRITE_FIXTURE") == "1":
+        FIXTURE.write_text(
+            json.dumps({**fixture, "cases": expected_cases}, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        fixture = json.loads(FIXTURE.read_text())
     assert _normalise_wire(fixture["cases"]) == _normalise_wire(expected_cases)
     cases = {case["state"]: case for case in fixture["cases"]}
     assert set(cases) == {

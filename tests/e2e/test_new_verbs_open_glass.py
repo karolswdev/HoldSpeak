@@ -166,10 +166,12 @@ class TestEveryNewVerbOpensItsWindow:
                     assert posts[sent:].count(path) == 1, (label, "one press, one record", posts[sent:])
                     if editor:
                         # The name field has the keys at once; the name stays through both reads.
-                        name = page.evaluate(
-                            "(id) => { const a = document.activeElement; return !!a && a.tagName === 'INPUT' && document.getElementById(id).contains(a); }",
-                            win.get_attribute("id"))
-                        assert name, (label, "the name field does not have the keys")
+                        try:
+                            page.wait_for_function(
+                                "(id) => { const a = document.activeElement; return !!a && a.tagName === 'INPUT' && document.getElementById(id).contains(a); }",
+                                arg=win.get_attribute("id"), timeout=OPENS_WITHIN_MS, polling=50)
+                        except Exception as exc:
+                            raise AssertionError(f"{label}: the name field does not have the keys") from exc
                         page.keyboard.type(" ledger")
                     page.screenshot(path=str(SHOTS / f"{label.replace(' ', '-').lower()}-{face}-{width}.png"))
                     page.wait_for_timeout(READ_DELAY_MS + 1500)  # the old read and the new read land
@@ -210,6 +212,47 @@ class TestEveryNewVerbOpensItsWindow:
                     proof.append("palette New Agent: one POST /api/recipes, its window in front")
 
                 (SHOTS / f"proof-{face}-{width}.txt").write_text("\n".join(proof) + "\n")
+                real = [e for e in errors if "ResizeObserver" not in e]
+                assert not real, real
+            finally:
+                browser.close()
+
+    # Astra's condition on #781: two quick presses made two records and one editor.
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_two_quick_presses_make_one_record(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        def count(page: Any, path: str, key: str) -> int:
+            return len([r for r in _api(page, "GET", path, token=TOKEN)[key] if not r.get("deleted")])
+
+        with sync_playwright() as pw:
+            browser, page, errors, posts = self._page(pw, width)
+            try:
+                proof: list[str] = []
+                legs = [("New Note", "/api/notes", "notes"), ("New Agent", "/api/recipes", "recipes"),
+                        ("New Thread", "/api/threads", "threads")]
+                for label, path, key in legs:
+                    before, sent, kept = page.evaluate(WINDOW_IDS), len(posts), count(page, path, key)
+                    if width >= 720 and label == "New Note":
+                        # The key, twice, with no wait (⌘N from a body window).
+                        page.locator(".chair-window--needs .desk-window-title").first.click()
+                        page.keyboard.press("Meta+n")
+                        page.keyboard.press("Meta+n")
+                    else:
+                        self._menu_verb(page, width, label)
+                        self._menu_verb(page, width, label)
+                    win = self._new_window(page, before, f"{label} twice at {width}")
+                    page.wait_for_timeout(READ_DELAY_MS + 1500)  # every read lands
+                    made = [w for w in page.evaluate(WINDOW_IDS) if w not in before]
+                    assert made == [win.get_attribute("id")], (label, "two presses, more than one window", made)
+                    assert posts[sent:].count(path) == 1, (label, "two presses, more than one POST", posts[sent:])
+                    assert count(page, path, key) == kept + 1, (label, "two presses, more than one record on the hub")
+                    self._new_window(page, before, f"{label} twice at {width}, after the reads")  # still in front
+                    page.screenshot(path=str(SHOTS / f"twice-{label.replace(' ', '-').lower()}-{width}.png"))
+                    proof.append(f"{label} twice: one POST {path}, one record, window {made[0]} in front")
+                    self._close(page, win, width)
+                    page.wait_for_timeout(READ_DELAY_MS + 1000)  # the NEW beat ends; the next leg starts clean
+                (SHOTS / f"proof-twice-{width}.txt").write_text("\n".join(proof) + "\n")
                 real = [e for e in errors if "ResizeObserver" not in e]
                 assert not real, real
             finally:

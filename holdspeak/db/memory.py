@@ -30,8 +30,24 @@ _KIND_ORDER = {
     "project_item": 8,
     "workbench_item": 9,
     "cadence": 10,
+    # What he sent, published, prepared and has on the calendar (inventory C,
+    # gap 7). Each is a spec entry over its canonical table; no new index.
+    "send": 11,
+    "project_update": 12,
+    "prep_brief": 13,
+    "calendar_event": 14,
 }
 _VALID_KINDS = frozenset(_KIND_ORDER)
+
+
+def _not_parked(meeting_column: str) -> str:
+    """A parked meeting and what it made (its actions, artifacts, decisions)
+    stay out of memory: the lexical passes, the recent read and the
+    relationship walk all wear this predicate."""
+    return (
+        "NOT EXISTS (SELECT 1 FROM meetings pk"
+        f" WHERE pk.id={meeting_column} AND pk.parked=1)"
+    )
 
 _ECOSYSTEM_SPECS: dict[str, dict[str, str]] = {
     "decision_record": {
@@ -75,8 +91,11 @@ _ECOSYSTEM_SPECS: dict[str, dict[str, str]] = {
         "body": "d.context_markdown||' '||d.decision_markdown||' '||d.consequences_markdown||' '||d.alternatives_json",
         "time": "d.updated_at",
         "active": "d.deleted=0",
-        "project_id": "(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='desk_decision:'||d.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1)",
-        "project": "EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref='desk_decision:'||d.id AND pr.deleted=0)",
+        # One ref name for a desk decision: `desk_decision:<id>`. Rows the
+        # Decide button filed before 2026-10-03 carry `decision:<id>`; the
+        # read accepts both, so an old decision stays in its Project.
+        "project_id": "(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref IN ('desk_decision:'||d.id,'decision:'||d.id) AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1)",
+        "project": "EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref IN ('desk_decision:'||d.id,'decision:'||d.id) AND pr.deleted=0)",
     },
     "action": {
         "table": "action_items",
@@ -85,7 +104,7 @@ _ECOSYSTEM_SPECS: dict[str, dict[str, str]] = {
         "title": "a.task",
         "body": "COALESCE(a.owner,'')||' '||COALESCE(a.due,'')||' '||a.status",
         "time": "COALESCE(a.completed_at,a.created_at)",
-        "active": "1=1",
+        "active": _not_parked("a.meeting_id"),
         "project_id": "COALESCE((SELECT mp.project_id FROM meeting_projects mp WHERE mp.meeting_id=a.meeting_id ORDER BY mp.project_id LIMIT 1),(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='action:'||a.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1))",
         "project": "(EXISTS (SELECT 1 FROM meeting_projects mp WHERE mp.project_id=? AND mp.meeting_id=a.meeting_id) OR EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref='action:'||a.id AND pr.deleted=0))",
     },
@@ -122,7 +141,107 @@ _ECOSYSTEM_SPECS: dict[str, dict[str, str]] = {
         "project_id": "COALESCE(c.project,(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='cadence:'||c.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1))",
         "project": "(c.project=? OR EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.resource_ref='cadence:'||c.id AND pr.deleted=0))",
     },
+    # A send: what, to whom, when, outcome. The frozen payload is NEVER read
+    # here: a sent Brief carries People data (custody), and the payload of
+    # any document is already found under its own kind. `account_json` is
+    # read for the Slack channel label only.
+    "send": {
+        "table": "channel_sends",
+        "alias": "s",
+        "id": "s.id",
+        "title": "COALESCE(NULLIF(json_extract(s.document_json,'$.title'),''),s.document_ref)",
+        "body": (
+            "'To '||COALESCE((SELECT cd.name FROM channel_destinations cd"
+            " WHERE cd.id=s.destination_id),'')"
+            "||' · '||s.channel"
+            "||COALESCE(' · '||json_extract(s.target_json,'$.to'),'')"
+            "||COALESCE(' · cc '||json_extract(s.target_json,'$.cc'),'')"
+            "||COALESCE(' · '||json_extract(s.target_json,'$.repo'),'')"
+            "||COALESCE(' · '||json_extract(s.target_json,'$.key'),'')"
+            "||COALESCE(' · '||json_extract(s.account_json,'$.channel_label'),'')"
+            "||' · '||s.state||COALESCE(' · '||NULLIF(s.reason,''),'')"
+        ),
+        "time": "COALESCE(s.settled_at,s.dispatch_started_at,s.created_at)",
+        # A send he pressed: sent, failed, or unknown. A prepared or
+        # discarded row left nothing.
+        "active": "s.state IN ('sent','failed','unknown')",
+        "project_id": (
+            "COALESCE((SELECT u.project_id FROM project_updates u"
+            " WHERE s.document_ref='project_update:'||u.id),"
+            "(SELECT pr.project_id FROM project_resources pr"
+            " WHERE pr.resource_ref=s.document_ref AND pr.deleted=0"
+            " ORDER BY pr.project_id LIMIT 1))"
+        ),
+        "project": (
+            "(EXISTS (SELECT 1 FROM project_updates u WHERE u.project_id=?"
+            " AND s.document_ref='project_update:'||u.id)"
+            " OR EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=?"
+            " AND pr.resource_ref=s.document_ref AND pr.deleted=0))"
+        ),
+    },
+    "project_update": {
+        "table": "project_updates",
+        "alias": "u",
+        "id": "u.id",
+        "title": (
+            "COALESCE((SELECT p.name FROM projects p WHERE p.id=u.project_id),u.project_id)"
+            "||' update r'||u.draft_revision"
+        ),
+        "body": "u.body_md",
+        "time": "COALESCE(u.published_at,u.updated_at)",
+        # Published only: a draft is not yet what he said.
+        "active": "u.lifecycle='published'",
+        "project_id": "u.project_id",
+        "project": "u.project_id=?",
+    },
+    "prep_brief": {
+        "table": "project_briefs",
+        "alias": "b",
+        "id": "b.id",
+        "title": (
+            "COALESCE((SELECT p.name FROM projects p WHERE p.id=b.project_id),b.project_id)"
+            "||' prep · '||b.purpose"
+        ),
+        "body": "b.body_md",
+        "time": "COALESCE(b.kept_at,b.updated_at)",
+        "active": "b.lifecycle!='discarded'",
+        "project_id": "b.project_id",
+        "project": "b.project_id=?",
+    },
+    "calendar_event": {
+        "table": "calendar_events",
+        "alias": "e",
+        "id": "e.id",
+        "title": "COALESCE(NULLIF(e.title,''),e.id)",
+        "body": (
+            "COALESCE(e.location,'')||' '||"
+            "CASE WHEN e.attendees_json IN ('','[]') THEN '' ELSE e.attendees_json END"
+            "||' '||e.source_label"
+        ),
+        "time": "e.starts_at",
+        "active": "1=1",
+        "project_id": (
+            "(SELECT cep.project_id FROM calendar_event_projects cep"
+            " WHERE cep.calendar_event_id=e.id ORDER BY cep.project_id LIMIT 1)"
+        ),
+        "project": (
+            "EXISTS (SELECT 1 FROM calendar_event_projects cep"
+            " WHERE cep.project_id=? AND cep.calendar_event_id=e.id)"
+        ),
+    },
 }
+
+# The meeting's summary and topics as it reads now: the newest intel snapshot
+# and the topic rows (inventory C, gap 6). Shared by the lexical summary pass
+# and the RECENT read.
+_MEETING_SUMMARY = (
+    "COALESCE((SELECT i.summary FROM intel_snapshots i WHERE i.meeting_id=m.id"
+    " ORDER BY i.timestamp DESC,i.id DESC LIMIT 1),'')"
+)
+_MEETING_TOPICS = (
+    "COALESCE((SELECT group_concat(t.topic,' · ') FROM topics t"
+    " WHERE t.meeting_id=m.id),'')"
+)
 
 # HS-202-02 (Astra's counsel finding 5 on PR #595) — the RECENT read.
 #
@@ -137,13 +256,15 @@ _RECENT_SPECS: dict[str, dict[str, str]] = {
         "alias": "m",
         "id": "m.id",
         "title": "COALESCE(NULLIF(m.title,''),m.id)",
+        # The summary when the meeting has one; else its first words.
         "body": (
-            "COALESCE((SELECT group_concat(s.text,' ') FROM ("
+            f"COALESCE(NULLIF(trim({_MEETING_SUMMARY}||' '||{_MEETING_TOPICS}),''),"
+            "(SELECT group_concat(s.text,' ') FROM ("
             "SELECT text FROM segments WHERE meeting_id=m.id"
             " ORDER BY start_time LIMIT 4) s),'')"
         ),
         "time": "m.started_at",
-        "active": "1=1",
+        "active": "m.parked=0",
         "project_id": (
             "(SELECT mp.project_id FROM meeting_projects mp"
             " WHERE mp.meeting_id=m.id ORDER BY mp.project_id LIMIT 1)"
@@ -175,7 +296,7 @@ _RECENT_SPECS: dict[str, dict[str, str]] = {
         "title": "COALESCE(NULLIF(a.title,''),a.id)",
         "body": "COALESCE(a.body_markdown,'')",
         "time": "a.updated_at",
-        "active": "1=1",
+        "active": _not_parked("a.meeting_id"),
         "project_id": (
             "(SELECT pr.project_id FROM project_resources pr"
             " WHERE pr.resource_ref='artifact:'||a.id AND pr.deleted=0"
@@ -217,7 +338,7 @@ _RECENT_SPECS: dict[str, dict[str, str]] = {
         "title": "d.text",
         "body": "COALESCE(d.text,'')",
         "time": "d.decided_at",
-        "active": "1=1",
+        "active": _not_parked("d.source_meeting_id"),
         "project_id": "d.project_key",
     },
 }
@@ -485,6 +606,19 @@ class MemoryRepository(BaseRepository):
                 by_kind["meeting"] = self._meeting_rows(
                     conn, expression, project, start, end
                 )
+                # The summary and topics are part of what the meeting said.
+                # A meeting the transcript pass already found keeps that hit.
+                found = {row["source_ref"] for row in by_kind["meeting"]}
+                by_kind["meeting"].extend(
+                    row
+                    for row in self._meeting_summary_rows(
+                        conn, terms, project, start, end
+                    )
+                    if row["source_ref"] not in found
+                )
+                by_kind["meeting"].sort(
+                    key=lambda row: (float(row["bm25"]), str(row["source_ref"]))
+                )
             if "note" in selected:
                 by_kind["note"] = self._note_rows(conn, expression, project, start, end)
             if "thread" in selected:
@@ -498,6 +632,10 @@ class MemoryRepository(BaseRepository):
                 "project_item",
                 "workbench_item",
                 "cadence",
+                "send",
+                "project_update",
+                "prep_brief",
+                "calendar_event",
             ):
                 if kind in selected:
                     by_kind[kind] = self._ecosystem_rows(
@@ -629,7 +767,7 @@ class MemoryRepository(BaseRepository):
 
     @staticmethod
     def _decision_rows(conn, match, project, start, end) -> list[dict[str, Any]]:
-        clauses = ["decisions_memory_fts MATCH ?"]
+        clauses = ["decisions_memory_fts MATCH ?", _not_parked("d.source_meeting_id")]
         params: list[Any] = [match]
         if project:
             clauses.append(
@@ -664,7 +802,7 @@ class MemoryRepository(BaseRepository):
 
     @staticmethod
     def _artifact_rows(conn, match, project, start, end) -> list[dict[str, Any]]:
-        clauses = ["artifacts_memory_fts MATCH ?"]
+        clauses = ["artifacts_memory_fts MATCH ?", _not_parked("a.meeting_id")]
         params: list[Any] = [match]
         if project:
             clauses.append("""(EXISTS (SELECT 1 FROM project_resources pr
@@ -742,6 +880,58 @@ class MemoryRepository(BaseRepository):
                 FROM ranked r WHERE r.rn=1
                 ORDER BY bm25 ASC,r.occurred_at DESC,r.meeting_id ASC""",
             params,
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    @staticmethod
+    def _meeting_summary_rows(conn, terms, project, start, end) -> list[dict[str, Any]]:
+        """Meetings whose summary or topics hold a query word.
+
+        The transcript has its own FTS corpus (`_meeting_rows`). The summary
+        and topics stay canonical (`intel_snapshots`, `topics`) and are read
+        with the same bounded LIKE pass the feature stores use.
+        """
+        haystack = f"lower({_MEETING_SUMMARY}||' '||{_MEETING_TOPICS})"
+        patterns = [f"%{term.casefold()}%" for term in terms]
+        clauses = [
+            "m.parked = 0",
+            "(" + " OR ".join(f"{haystack} LIKE ?" for _ in patterns) + ")",
+        ]
+        params: list[Any] = list(patterns)
+        if project:
+            clauses.append(
+                """(EXISTS (SELECT 1 FROM meeting_projects mp
+                              WHERE mp.project_id=? AND mp.meeting_id=m.id)
+                     OR EXISTS (SELECT 1 FROM project_resources pr
+                              WHERE pr.project_id=? AND pr.deleted=0
+                                AND pr.resource_ref IN
+                                    ('meeting:'||m.id,'transcript:'||m.id)))"""
+            )
+            params.extend((project, project))
+        if start:
+            clauses.append("m.started_at>=?")
+            params.append(start)
+        if end:
+            clauses.append("m.started_at<=?")
+            params.append(end)
+        score = (
+            "-("
+            + "+".join(f"CASE WHEN {haystack} LIKE ? THEN 1 ELSE 0 END" for _ in patterns)
+            + ")"
+        )
+        rows = conn.execute(
+            f"""SELECT 'meeting' kind,'meeting:'||m.id source_ref,
+                       COALESCE(m.title,m.id) title,
+                       substr(trim({_MEETING_SUMMARY}||' '||{_MEETING_TOPICS}),1,420) snippet,
+                       m.started_at occurred_at,
+                       (SELECT mp.project_id FROM meeting_projects mp
+                        WHERE mp.meeting_id=m.id
+                        ORDER BY mp.project_id LIMIT 1) project_id,
+                       {score} bm25
+                FROM meetings m
+                WHERE {" AND ".join(clauses)}
+                ORDER BY bm25 ASC,m.started_at DESC,m.id ASC""",
+            [*patterns, *params],
         ).fetchall()
         return [dict(row) for row in rows]
 
@@ -1255,7 +1445,8 @@ class MemoryRepository(BaseRepository):
                             THEN '' ELSE ' — '||rationale END,1,420) snippet,
                           decided_at occurred_at,project_key project_id
                    FROM decisions
-                   WHERE id=? AND deleted=0 AND source_state='linked'""",
+                   WHERE id=? AND deleted=0 AND source_state='linked'
+                     AND """ + _not_parked("decisions.source_meeting_id"),
                 (resource_id,),
             ).fetchone()
         elif kind == "artifact":
@@ -1265,7 +1456,7 @@ class MemoryRepository(BaseRepository):
                           (SELECT project_id FROM project_resources
                            WHERE resource_ref='artifact:'||artifacts.id AND deleted=0
                            ORDER BY project_id LIMIT 1) project_id
-                   FROM artifacts WHERE id=?""",
+                   FROM artifacts WHERE id=? AND """ + _not_parked("artifacts.meeting_id"),
                 (resource_id,),
             ).fetchone()
         elif kind == "meeting":
@@ -1278,7 +1469,7 @@ class MemoryRepository(BaseRepository):
                           m.started_at occurred_at,
                           (SELECT project_id FROM meeting_projects
                            WHERE meeting_id=m.id ORDER BY project_id LIMIT 1) project_id
-                   FROM meetings m WHERE m.id=?""",
+                   FROM meetings m WHERE m.id=? AND m.parked=0""",
                 (resource_id,),
             ).fetchone()
         elif kind == "note":
@@ -1323,7 +1514,7 @@ class MemoryRepository(BaseRepository):
                           CASE WHEN d.title='' THEN d.decision_markdown ELSE d.title END title,
                           substr(d.context_markdown||' '||d.decision_markdown||' '||d.consequences_markdown,1,420) snippet,
                           d.updated_at occurred_at,
-                          (SELECT project_id FROM project_resources WHERE resource_ref='desk_decision:'||d.id AND deleted=0 ORDER BY project_id LIMIT 1) project_id
+                          (SELECT project_id FROM project_resources WHERE resource_ref IN ('desk_decision:'||d.id,'decision:'||d.id) AND deleted=0 ORDER BY project_id LIMIT 1) project_id
                    FROM desk_decisions d WHERE d.id=? AND d.deleted=0""",
                 (resource_id,),
             ).fetchone()
@@ -1333,7 +1524,7 @@ class MemoryRepository(BaseRepository):
                           substr(a.task||' '||COALESCE(a.owner,'')||' '||COALESCE(a.due,'')||' '||a.status,1,420) snippet,
                           COALESCE(a.completed_at,a.created_at) occurred_at,
                           COALESCE((SELECT project_id FROM meeting_projects WHERE meeting_id=a.meeting_id ORDER BY project_id LIMIT 1),(SELECT project_id FROM project_resources WHERE resource_ref='action:'||a.id AND deleted=0 ORDER BY project_id LIMIT 1)) project_id
-                   FROM action_items a WHERE a.id=?""",
+                   FROM action_items a WHERE a.id=? AND """ + _not_parked("a.meeting_id"),
                 (resource_id,),
             ).fetchone()
         elif kind == "project_item":
@@ -1386,6 +1577,20 @@ class MemoryRepository(BaseRepository):
             (project, ref),
         ).fetchone():
             return True
+        if kind == "desk_decision":
+            # The old ref name (`decision:<id>`), still on rows filed before
+            # the one-name fix.
+            return (
+                conn.execute(
+                    """SELECT 1 FROM project_resources pr
+                       WHERE pr.project_id=? AND pr.deleted=0
+                         AND pr.resource_ref='decision:'||?
+                         AND EXISTS (SELECT 1 FROM desk_decisions d
+                                     WHERE d.id=? AND d.deleted=0)""",
+                    (project, resource_id, resource_id),
+                ).fetchone()
+                is not None
+            )
         if kind == "decision":
             return (
                 conn.execute(
