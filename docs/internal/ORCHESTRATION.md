@@ -20,7 +20,7 @@ owner's nod before every merge.
 
 ## The model rule (owner rulings 2026-09-18 and 2026-09-19)
 
-**Two orchestrators, equals: Muad'Dib (`claude-fable-5-1`, this
+**Two orchestrators, equals: Muad'Dib (`claude-opus-5-5`, this
 harness) and Astra (`gpt-6-astra` at reasoning `xhigh`, via `codex
 exec`).** Each checks the other; nothing one authors is acted on until
 the other has checked it. The protocol is canon in
