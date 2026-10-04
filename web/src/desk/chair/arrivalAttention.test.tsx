@@ -285,6 +285,71 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(screen.queryByTestId("arrival-commit-well")).toBeNull();
   });
 
+  // Inventory 2026-10-03: a meeting action item with no owner is an
+  // UNASSIGNED Door card with NO `open_ref` (door_service emits one only for
+  // thoughts). `Name an owner` opened that absent ref: no window, no field,
+  // no error. The card shape below is what `DoorService._action_verbs` emits.
+  const doorVerbs = (id: string) => ["done", "dismiss", "snooze", "delegate"].map((verb) => ({
+    name: "follow_through.complete", arguments: { card_id: id, verb },
+    ...(verb === "delegate" ? { required_arguments: ["payload.to"] } : {}),
+    ...(verb === "snooze" ? { required_arguments: ["payload.until"] } : {}),
+  }));
+  it("Name an owner on an UNASSIGNED Door row unfolds the owner well and saves through delegate", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        return { count: 0, projects: ["p1"], items: [], next: null,
+          coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true };
+      }
+      if (String(path).startsWith("/api/door")) {
+        return { board: { unassigned: [{ id: "action-9", title: "Pilot OTel in billing",
+          source: "action_item", target_ref: "action_item:action-9", owner: null, due: null,
+          lawful_verbs: doorVerbs("action-9") }] },
+          counts: {}, upcoming: [], calendar_configured: false };
+      }
+      if (String(path) === "/api/follow-through/complete") return { card_id: "action-9", verb: "delegate" };
+      return null;
+    });
+    render(<ChairHome />);
+    const section = await screen.findByTestId("arrival-needs-you");
+    const line = within(section).getByTestId("arrival-needs-you-row");
+    const verb = within(line).getByTestId("arrival-name-owner");
+    expect(verb.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(verb);
+    const well = await screen.findByTestId("arrival-commit-well");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(verb.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.change(within(well).getByRole("textbox", { name: "Owner" }), { target: { value: "Avery" } });
+    fireEvent.click(within(well).getByRole("button", { name: /Save owner/ }));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", {
+      method: "POST", json: { card_id: "action-9", verb: "delegate", payload: { to: "Avery" } },
+    }));
+    // The row stops saying UNASSIGNED and stops offering the verb it just paid.
+    await waitFor(() => expect(screen.queryByTestId("arrival-commit-well")).toBeNull());
+    expect(within(line).queryByTestId("arrival-name-owner")).toBeNull();
+    expect(within(line).getByTestId("arrival-why").textContent).toContain("WAITING ON AVERY");
+  });
+
+  it("an UNASSIGNED Door row that can take no owner and has nothing to open draws no Name an owner (A.11)", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        return { count: 0, projects: ["p1"], items: [], next: null,
+          coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true };
+      }
+      if (String(path).startsWith("/api/door")) {
+        return { board: { unassigned: [{ id: "loop-1", title: "Decide the freeze date",
+          source: "cadence_loop", target_ref: "cadence_loop:loop-1",
+          lawful_verbs: [{ name: "cadence.set_status", arguments: { loop_id: "loop-1", status: "closed" } }] }] },
+          counts: {}, upcoming: [], calendar_configured: false };
+      }
+      return null;
+    });
+    render(<ChairHome />);
+    const section = await screen.findByTestId("arrival-needs-you");
+    const line = within(section).getByTestId("arrival-needs-you-row");
+    expect(within(line).queryByTestId("arrival-name-owner")).toBeNull();
+    expect(within(line).queryByRole("button", { name: /Name an owner/ })).toBeNull();
+  });
+
   it("Mark done is the verb only when owner and date are known, and it posts the explicit act", async () => {
     const commitment = row("p1:commitment:Priya confirms the freeze window", {
       title: "Priya confirms the freeze window", source: "commitment", kind: "commitment",

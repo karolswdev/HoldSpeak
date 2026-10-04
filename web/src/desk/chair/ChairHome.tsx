@@ -1496,23 +1496,29 @@ function NeedsYouRow({
   const [commitDraft, setCommitDraft] = useState("");
   const [commitBusy, setCommitBusy] = useState(false);
   const [commitResult, setCommitResult] = useState<{ owner?: string | null; dueAt?: string | null }>({});
+  // An UNASSIGNED Door card that is an action item takes the same well: its
+  // own lawful `delegate` verb names the card the owner is written to.
+  const doorOwnerCardId = doorDelegateCardId(
+    (item as NeedsYouItem & { _doorCard?: DoorCard })._doorCard,
+  );
+  const commitCardId = item.actionItemId ?? doorOwnerCardId;
   const saveCommit = async () => {
     const value = commitDraft.trim();
-    if (!value || !item.actionItemId || commitBusy) return;
+    if (!value || !commitCardId || commitBusy) return;
     setCommitBusy(true);
     const verb = commitWell === "owner" ? "delegate" : "due";
     try {
       await apiFetch("/api/follow-through/complete", {
         method: "POST",
-        json: { card_id: item.actionItemId, verb, payload: verb === "delegate" ? { to: value } : { due_at: value } },
+        json: { card_id: commitCardId, verb, payload: verb === "delegate" ? { to: value } : { due_at: value } },
       });
       setCommitResult((prev) => (verb === "delegate" ? { ...prev, owner: value } : { ...prev, dueAt: value }));
       setCommitWell(null);
       setCommitDraft("");
-      clearWriteFailure(`action-item:${item.actionItemId}`);
+      clearWriteFailure(`action-item:${commitCardId}`);
       onCommitmentChanged?.();
     } catch (error) {
-      reportWriteFailure(verb === "delegate" ? "Name an owner" : "Set a date", error, () => void saveCommit(), `action-item:${item.actionItemId}`);
+      reportWriteFailure(verb === "delegate" ? "Name an owner" : "Set a date", error, () => void saveCommit(), `action-item:${commitCardId}`);
     } finally { setCommitBusy(false); }
   };
   // The row reflects what it just wrote until the arrival re-reads.
@@ -1528,7 +1534,11 @@ function NeedsYouRow({
   }
   const ext = item as NeedsYouItem & { _isDoor?: boolean; _isUnassigned?: boolean; _doorCard?: DoorCard };
   const isDoor = ext._isDoor === true;
-  const isUnassigned = ext._isUnassigned === true;
+  // A Door row that just took an owner is no longer UNASSIGNED; it says who
+  // it waits on until the board is read again.
+  const doorOwnerNamed = isDoor && !item.actionItemId && Boolean(commitResult.owner);
+  const isUnassigned = ext._isUnassigned === true && !doorOwnerNamed;
+  if (doorOwnerNamed) rowItem.why = `WAITING ON ${String(commitResult.owner).toUpperCase()}`;
   const isProposal = Boolean(item.proposalId);
   const emblem = isDoor ? doorEmblem(item.source) : sourceEmblem(item.source);
   const proposalPrefix = isProposal
@@ -1584,7 +1594,7 @@ function NeedsYouRow({
             data-rank-class={cls}
             data-testid="arrival-why"
           >
-            {reasonToken(item, now)}
+            {reasonToken(doorOwnerNamed ? rowItem : item, now)}
           </span>
           {muted ? (
             <span className="arrival-project-token">MUTED</span>
@@ -1628,6 +1638,7 @@ function NeedsYouRow({
           isDoor={isDoor}
           isUnassigned={isUnassigned}
           doorCard={ext._doorCard}
+          ownerCardId={doorOwnerCardId}
           primary={primary}
           onProposalConfirm={onProposalConfirm}
           commitWell={commitWell}
@@ -1776,6 +1787,18 @@ function SourceVerb({
   return null;
 }
 
+/** The action item an UNASSIGNED Door card writes an owner to: the card of
+ *  its lawful `follow_through.complete` / `delegate` verb, or null. */
+function doorDelegateCardId(card?: DoorCard): string | null {
+  for (const verb of card?.lawful_verbs ?? []) {
+    if (verb.name === "follow_through.complete" && verb.arguments?.verb === "delegate") {
+      const id = verb.arguments.card_id;
+      return id ? String(id) : null;
+    }
+  }
+  return null;
+}
+
 /** Verb buttons for a NEEDS YOU row: door lawful verb (primary dense) + Open (ghost),
  *  or proposal Confirm + Open, or "Name an owner" for unassigned, or external Open. */
 function NeedsYouRowVerbs({
@@ -1787,11 +1810,14 @@ function NeedsYouRowVerbs({
   onProposalConfirm,
   commitWell = null,
   onCommitWell,
+  ownerCardId = null,
 }: {
   item: NeedsYouItem;
   isDoor: boolean;
   isUnassigned: boolean;
   doorCard?: DoorCard;
+  /** The action item an UNASSIGNED Door card can write an owner to. */
+  ownerCardId?: string | null;
   /** HS-200-15: ONE filled primary per face: the top-ranked row's verb. */
   primary?: boolean;
   onProposalConfirm?: (proposalId: string) => void;
@@ -1852,14 +1878,21 @@ function NeedsYouRowVerbs({
   }
 
   if (isUnassigned) {
+    // The verb unfolds the row's owner well when the card can take an owner,
+    // or opens the card's own object. With neither it is withheld (A.11):
+    // a verb that does nothing is not drawn.
+    const openRef = doorCard?.open_ref;
+    if (!ownerCardId && !openRef) return null;
     return (
       <Button
         variant={lead}
         dense
         onClick={() => {
-          if (doorCard?.open_ref) useDesk.getState().openPullout(doorCard.open_ref);
+          if (ownerCardId) onCommitWell?.(commitWell ? null : "owner");
+          else if (openRef) useDesk.getState().openPullout(openRef);
         }}
         aria-label={`Name an owner: ${item.title}`}
+        aria-expanded={ownerCardId ? Boolean(commitWell) : undefined}
         data-testid="arrival-name-owner"
       >
         Name an owner
