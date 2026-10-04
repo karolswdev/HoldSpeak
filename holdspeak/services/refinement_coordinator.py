@@ -133,7 +133,9 @@ class RefinementCoordinator:
                     thought_id, expected_attachment_revision,
                     str(frozen_thought.get("attachment_sha256") or ""),
                 )
-            frozen_payload = self._routed_payload(sealed_prompt, frozen_grounding)
+            frozen_payload = self._routed_payload(
+                sealed_prompt, frozen_grounding, self._own_refs(frozen_thought),
+            )
 
             def routed_admission(conn: Any, _invocation_id: str, ask_id: str) -> dict[str, Any]:
                 return self._ask_factory()._broker.inference_adoption_service.admit_in_transaction(
@@ -255,7 +257,9 @@ class RefinementCoordinator:
                 )
 
             def routed_admission(conn: Any, _invocation_id: str, ask_id: str, body: str) -> dict[str, Any]:
-                payload = self._routed_payload(self._sealed_prompt(body), frozen_grounding)
+                payload = self._routed_payload(
+                    self._sealed_prompt(body), frozen_grounding, self._own_refs(frozen_thought),
+                )
                 return self._ask_factory()._broker.inference_adoption_service.admit_in_transaction(
                     principal, conn, command_id=f"admit-{ask_id}",
                     capability_id="thought.interview", operation_id=ask_id,
@@ -432,6 +436,9 @@ class RefinementCoordinator:
                     invocation_id
                 ) if not invocation.get("route_execution_id") else None,
                 routed_execution_id=invocation.get("route_execution_id"),
+                # The Thought's own note stays out of its memory (the real
+                # AskService only; an injected test Ask has no memory).
+                **({"memory_exclude_refs": self._own_refs(thought)} if self._uses_default_ask else {}),
             )
             await asyncio.to_thread(self._reconcile_exact, principal, thought_id, invocation_id)
         except asyncio.CancelledError:
@@ -543,18 +550,30 @@ class RefinementCoordinator:
                     disposition,
                 )
 
-    def _routed_payload(self, sealed_prompt: str, frozen_grounding: Any) -> dict[str, Any]:
+    @staticmethod
+    def _own_refs(thought: dict[str, Any]) -> list[str]:
+        """The Thought's own note: memory never feeds a Thought itself."""
+        note_id = str((thought.get("working_note") or {}).get("id") or "").strip()
+        return [f"note:{note_id}"] if note_id else []
+
+    def _routed_payload(
+        self, sealed_prompt: str, frozen_grounding: Any, own_refs: list[str] | None = None,
+    ) -> dict[str, Any]:
         ask = self._ask_factory()
         instruction = ""
+        # The same capability and exclusions Ask uses at dispatch, so the
+        # admitted bytes are the dispatched bytes.
+        memory_args = {"capability_id": "thought.interview", "exclude_refs": list(own_refs or [])}
         if frozen_grounding is not None:
             envelope, grounding_echo, context_ids, context_titles, instruction = (
-                ask._frozen_grounding_with_memory(frozen_grounding, sealed_prompt)
+                ask._frozen_grounding_with_memory(frozen_grounding, sealed_prompt, **memory_args)
             )
         else:
             envelope, grounding_echo = ask._grounding(
                 Principal(PrincipalKind.OWNER, "refinement-coordinator"),
                 None,
                 sealed_prompt,
+                **memory_args,
             )
             grounding_echo = dict(grounding_echo or {})
             context_ids = [str(value) for value in grounding_echo.pop("_ids", [])]

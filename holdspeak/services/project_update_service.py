@@ -68,7 +68,7 @@ from ..project_contracts import (
     generate_pupd_id,
 )
 from ..refs import format as format_ref, parse as parse_ref
-from .memory_grounding import memory_context
+from .memory_grounding import memory_for
 
 #: The marked block the project's memory travels in, inside the draft prompt.
 MEMORY_BLOCK_HEADING = "PROJECT MEMORY"
@@ -1659,7 +1659,8 @@ class ProjectUpdateService:
             # The model draft reads the project's memory (the grounding call
             # Ask uses), less what the inventory already holds.  The refs it
             # was given are recorded on the manifest.
-            memory = memory_context(
+            memory = memory_for(
+                "project.update_draft",
                 self._db,
                 project_id=project_id,
                 query=" ".join(

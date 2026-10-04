@@ -21,6 +21,7 @@ from typing import Any, Callable, Optional
 from ..db.core import Database
 from ..db.threads import ThreadRepository
 from ..grounding import GROUNDING_MAX_REFS, hydrate_refs_detailed
+from ..inference_memory_policy import memory_enabled
 from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..kernel.inference_stream import (
     Delta,
@@ -396,7 +397,7 @@ class ThreadService:
                     expand="summary",
                     qualified_refs=grounding_refs,
                     query=text,
-                    include_memory=True,
+                    include_memory=memory_enabled("chat.turn"),
                     exclude_refs=[f"thread:{thread_id}"],
                 )
                 if hydration.unknown:

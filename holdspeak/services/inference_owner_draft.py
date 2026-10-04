@@ -36,6 +36,20 @@ def frozen_route_egress(route: Mapping[str, Any]) -> dict[str, str]:
     return {"scope": max(boundaries, key=lambda boundary: _BOUNDARY_RANK[boundary])}
 
 
+def _with_memory(
+    adoption: Any,
+    memory: Callable[[], Any] | None,
+    payload: dict[str, Any],
+    **route: Any,
+) -> dict[str, Any]:
+    """The draft's payload with its MEMORY block, fitted to the frozen route."""
+    if memory is None:
+        return payload
+    from .memory_grounding import admit_with_memory
+
+    return admit_with_memory(adoption, payload=payload, memory=memory, **route)
+
+
 def run_owner_draft(
     broker: Any,
     principal: Principal,
@@ -55,6 +69,7 @@ def run_owner_draft(
     result_is_usable: Callable[[Mapping[str, Any]], bool] | None = None,
     parent_result_ref: Callable[[Mapping[str, Any]], str] | None = None,
     parent_started: Callable[[Any], None] | None = None,
+    memory: Callable[[], Any] | None = None,
 ) -> dict[str, Any]:
     """Execute exactly one OWNER capability through its frozen bundle member.
 
@@ -132,7 +147,11 @@ def run_owner_draft(
             route_plan_id=route_plan_id,
             capability_id=capability_id,
             operation_id=operation_id,
-            payload=dict(payload_factory()),
+            payload=_with_memory(
+                adoption, memory, dict(payload_factory()),
+                route_plan_id=route_plan_id, capability_id=capability_id,
+                operation_id=operation_id, reserved_output_tokens=reserved_output_tokens,
+            ),
             reserved_output_tokens=reserved_output_tokens,
             parent_operation_id=parent.operation_id,
         )

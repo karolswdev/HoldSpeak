@@ -433,7 +433,7 @@ def _meeting_memory(db, meeting):
     summary is then made exactly as before.
     """
     try:
-        from .services.memory_grounding import EMPTY_MEMORY, memory_context
+        from .services.memory_grounding import EMPTY_MEMORY, memory_for
 
         own_ref = f"meeting:{meeting.id}"
         # The meeting's projects: the meeting link first (strongest first),
@@ -445,7 +445,8 @@ def _meeting_memory(db, meeting):
         ))
         if not project_ids:
             return EMPTY_MEMORY
-        return memory_context(
+        return memory_for(
+            "meeting.deferred_analysis",
             db,
             project_id=project_ids[0],
             query=" ".join(
@@ -522,10 +523,8 @@ def _process_bound_intel_job(
         # what changed and what is still open.  The block and its refs are
         # staged with the transcript: what is admitted is what is sent, and
         # the refs stay on the operation's material record.
+        # bound.execute stages it, cut to what the route leaves.
         memory = _meeting_memory(db, meeting)
-        if memory:
-            material["memory_material"] = memory.prompt_block(MEETING_MEMORY_HEADING)
-            material["memory_refs"] = memory.refs
         projection, routed = bound.execute(
             capability="meeting.deferred_analysis",
             operation_suffix="analysis",
@@ -539,6 +538,8 @@ def _process_bound_intel_job(
                 "action_items": list(result["action_items"]),
             },
             executor_held=lease.held,
+            memory=memory,
+            memory_heading=MEETING_MEMORY_HEADING,
         )
         # The kernel receipt is the source of truth for contacted legs.  The
         # public receipt drops reserved and pre-send rows, retaining only legs

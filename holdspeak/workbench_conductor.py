@@ -202,6 +202,7 @@ def _hydrate_item_grounding(
 
     try:
         from .grounding import hydrate_grounding_blocks
+        from .inference_memory_policy import memory_enabled
         blocks, _, _, unknown = hydrate_grounding_blocks(
             db,
             meeting_ids,
@@ -209,7 +210,7 @@ def _hydrate_item_grounding(
             "full",
             qualified_refs=refs if refs else None,
             query=query,
-            include_memory=True,
+            include_memory=memory_enabled("workbench.item"),
         )
         if unknown:
             log.warning(f"Grounding hydration: {len(unknown)} unknown ref(s) skipped: {unknown}")

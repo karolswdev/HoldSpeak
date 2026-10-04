@@ -295,6 +295,23 @@ def build_delivery_prs_router(
                     ],
                 }
 
+            def review_memory() -> Any:
+                """Decisions and notes on the PR's subject (title, branch, story).
+
+                The diff and the story are already in the prompt.
+                """
+                from ...db import get_database
+                from ...services.memory_grounding import memory_for
+
+                row = context.get("row") or {}
+                return memory_for(
+                    "delivery.pr_review_draft",
+                    get_database(),
+                    query=" ".join(str(part or "") for part in (
+                        row.get("title"), row.get("head_ref"), material.get("story_id"),
+                    )),
+                )
+
             routed = await asyncio.to_thread(
                 run_owner_draft,
                 broker,
@@ -309,6 +326,7 @@ def build_delivery_prs_router(
                 operation_id="delivery-pr-review:" + __import__("hashlib").sha256(identity.encode()).hexdigest(),
                 reserved_output_tokens=1800,
                 payload_factory=prompt_payload,
+                memory=review_memory,
                 projection_kind="delivery-pr-review",
                 projection_factory=lambda value: {
                     "output": str(value.get("draft") or ""),

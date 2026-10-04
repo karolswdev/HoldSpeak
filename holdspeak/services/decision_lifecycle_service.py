@@ -137,6 +137,7 @@ class DecisionLifecycleService:
             operation_id="decision-draft:" + hashlib.sha256(identity.encode()).hexdigest(),
             reserved_output_tokens=1200,
             payload_factory=prompt_payload,
+            memory=lambda: self._decision_memory(decision),
             projection_kind="decision-promotion-draft",
             projection_factory=lambda value: {
                 "output": str(value.get("draft") or ""),
@@ -196,6 +197,24 @@ class DecisionLifecycleService:
             "parent_receipt": dict(routed["parent_receipt"]),
             "placement": {"source": "frozen_owner_assignment", "egress": routed["egress"]},
         }
+    def _decision_memory(self, decision: Any) -> Any:
+        """Earlier decisions and notes on the same subject.
+
+        The decision is left out under every name: its ref, its meeting, and
+        any other source that repeats its words (a decision record minted
+        from it).  Those are already in the prompt.
+        """
+        from .memory_grounding import memory_for
+
+        return memory_for(
+            "decision.promotion_draft",
+            self._db,
+            query=f"{decision.text} {decision.rationale or ''}",
+            exclude_refs=[f"decision:{decision.id}"]
+            + ([f"meeting:{decision.source_meeting_id}"] if decision.source_meeting_id else []),
+            exclude_texts=[decision.text],
+        )
+
     def _require(self, principal: Principal, right: PrincipalRight) -> None:
         if not principal.permits(right):
             status=401 if principal.kind is PrincipalKind.NONE else 403
