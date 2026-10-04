@@ -5525,6 +5525,64 @@
           "adapter": "ui-pointer"
         },
         {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "a loopback provider edge for the engine definition; the brief producer calls no engine. since the one needs-you rule (holdspeak/services/monday_brief_service.py:594) a brief on a HOME with no summary engine carries the blocker 'No engine for summaries', so it is not empty; the case pins the summary engine first, the product's way, and the window is then empty"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "j10-brief-model",
+              "profile_id": "j10-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "j10-brief-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the summary engine is chosen: no meeting-path blocker is in the window"
+        },
+        {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
@@ -5791,6 +5849,64 @@
           "adapter": "ui-pointer"
         },
         {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "a loopback provider edge for the engine definition; the brief producer calls no engine. since the one needs-you rule (holdspeak/services/monday_brief_service.py:594) a brief on a HOME with no summary engine carries the blocker 'No engine for summaries', so it is not empty; the case pins the summary engine first, the product's way, and the window is then empty"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "j10-brief-model",
+              "profile_id": "j10-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "j10-brief-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the summary engine is chosen: no meeting-path blocker is in the window"
+        },
+        {
           "kind": "ui",
           "action": "click",
           "adapter": "ui-pointer",
@@ -5966,6 +6082,64 @@
           "adapter": "ui-pointer"
         },
         {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "a loopback provider edge for the engine definition; the brief producer calls no engine. since the one needs-you rule (holdspeak/services/monday_brief_service.py:594) a brief on a HOME with no summary engine carries the blocker 'No engine for summaries', so it is not empty; the case pins the summary engine first, the product's way, and the window is then empty"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "j10-brief-model",
+              "profile_id": "j10-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "j10-brief-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the summary engine is chosen: no meeting-path blocker is in the window"
+        },
+        {
           "kind": "ui",
           "action": "click",
           "selector": "[data-testid=arrival-brief-generate]",
@@ -6072,6 +6246,64 @@
           "name": "Continue later",
           "optional": true,
           "adapter": "ui-pointer"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded meeting intelligence provider",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "a loopback provider edge for the engine definition; the brief producer calls no engine. since the one needs-you rule (holdspeak/services/monday_brief_service.py:594) a brief on a HOME with no summary engine carries the blocker 'No engine for summaries', so it is not empty; the case pins the summary engine first, the product's way, and the window is then empty"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "j10-brief-model",
+              "profile_id": "j10-recorded-engine",
+              "expected_profile_revision": 0,
+              "label": "Recorded loopback provider",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the immutable replay engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/concierge/summary-selection",
+          "body": {
+            "commandId": "j10-brief-summary",
+            "expectedAssignmentRevision": 0,
+            "profileId": "{profile_id}",
+            "profileRevision": 1
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "the summary engine is chosen: no meeting-path blocker is in the window"
         },
         {
           "kind": "ui",
