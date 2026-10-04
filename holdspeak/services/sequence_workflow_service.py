@@ -42,10 +42,13 @@ class SequenceWorkflowService:
 
         register(broker.projection_stager)
 
-    def _with_memory(self, prompt: str) -> tuple[str, dict[str, Any]]:
+    def _with_memory(self, prompt: str, capability_id: str) -> tuple[str, dict[str, Any]]:
         """Freeze shared retrieval into one Sequence/Workflow model node."""
         from ..grounding import hydrate_grounding_blocks_detailed
+        from ..inference_memory_policy import memory_enabled
 
+        if not memory_enabled(capability_id):
+            return prompt, {}
         blocks, ids, titles, hydration = hydrate_grounding_blocks_detailed(
             self.db,
             [],
@@ -387,7 +390,7 @@ class SequenceWorkflowService:
                         f"Nothing to run for {recipe.name or recipe.id}; input is retained for Retry.",
                         context={"status": 400, "recipe_id": recipe.id},
                     )
-                prompt, memory_context = self._with_memory(prompt)
+                prompt, memory_context = self._with_memory(prompt, "sequence.step")
                 route = routes[f"step:{ordinal}"]
                 target = self._route_target(route)
                 payload = {
@@ -657,7 +660,7 @@ class SequenceWorkflowService:
                 )
                 if not prompt.strip():
                     continue
-                prompt, memory_context = self._with_memory(prompt)
+                prompt, memory_context = self._with_memory(prompt, "workflow.node")
                 route = routes[f"node:{node.id}"]
                 revision = _node_revision(node)
                 payload = {

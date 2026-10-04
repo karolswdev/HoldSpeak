@@ -48,7 +48,7 @@ from urllib.parse import urlparse
 
 from ..principals import Principal
 from .errors import ConflictError, NotFound, ServiceError, ValidationError
-from .memory_grounding import memory_context
+from .memory_grounding import memory_for
 from .project_update_service import (
     ACCEPTANCE_ACCEPTED,
     ACCEPTANCE_UNREVIEWED,
@@ -939,8 +939,8 @@ class PreparationBriefService:
                 raise PreparationRefused(route, purpose)
             # The model brief reads the project's memory for this purpose
             # (the grounding call Ask uses), less what the manifest holds.
-            memory = memory_context(
-                self._db, project_id=project_id, query=purpose,
+            memory = memory_for(
+                "project.brief_prepare", self._db, project_id=project_id, query=purpose,
                 exclude_refs=[ref for claim in draft.claims for ref in claim.refs]
                 + [row["ref"] for row in manifest["decisions"]],
             )

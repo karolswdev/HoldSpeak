@@ -433,7 +433,7 @@ def _meeting_memory(db, meeting):
     summary is then made exactly as before.
     """
     try:
-        from .services.memory_grounding import EMPTY_MEMORY, memory_context
+        from .services.memory_grounding import EMPTY_MEMORY, memory_for
 
         own_ref = f"meeting:{meeting.id}"
         # The meeting's projects: the meeting link first (strongest first),
@@ -445,7 +445,8 @@ def _meeting_memory(db, meeting):
         ))
         if not project_ids:
             return EMPTY_MEMORY
-        return memory_context(
+        return memory_for(
+            "meeting.deferred_analysis",
             db,
             project_id=project_ids[0],
             query=" ".join(

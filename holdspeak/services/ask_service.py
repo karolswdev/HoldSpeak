@@ -7,12 +7,13 @@ import hashlib
 import json
 import time
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import datetime
 from typing import Any
 
 from ..db.core import Database
 from ..deployment_revisions import capture_deployment_revision
+from ..inference_memory_policy import memory_enabled
 from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..kernel.model import KernelRefused
 from ..kernel.prompt_adapter import CanonicalPromptAdapter
@@ -174,7 +175,7 @@ class AskService:
         return {"refs": refs, "titles": titles, "chars": sum(len(block) for block in blocks),
                 "blocks": [{"ref": ref, "title": title, "chars": len(block)} for ref, title, block in zip(refs, titles, blocks)]}
 
-    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None) -> dict[str, Any]:
+    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None, memory_exclude_refs: Sequence[str] = ()) -> dict[str, Any]:
         prompt = str(question or "").strip()
         if not prompt: raise ValidationError("prompt is required")
         lens = str(lens or "Ask").strip() or "Ask"
@@ -192,11 +193,17 @@ class AskService:
                 frozen_ids,
                 frozen_titles,
                 frozen_system_instruction,
-            ) = self._frozen_grounding_with_memory(frozen_grounding, prompt)
+            ) = self._frozen_grounding_with_memory(
+                frozen_grounding, prompt,
+                capability_id=operation_capability, exclude_refs=memory_exclude_refs,
+            )
             context_ids += frozen_ids
             context_titles += frozen_titles
         else:
-            envelope, grounding_echo = self._grounding(principal, grounding, prompt)
+            envelope, grounding_echo = self._grounding(
+                principal, grounding, prompt,
+                capability_id=operation_capability, exclude_refs=memory_exclude_refs,
+            )
             if grounding_echo:
                 context_ids += grounding_echo.pop("_ids"); context_titles += grounding_echo.pop("_titles")
         if frozen_grounding is not None:
@@ -505,11 +512,16 @@ class AskService:
         self,
         frozen_grounding: FrozenGroundingSnapshot,
         prompt: str,
+        *,
+        capability_id: str = "ask.answer",
+        exclude_refs: Sequence[str] = (),
     ) -> tuple[str, dict[str, Any], list[str], list[str], str]:
         """Resolve Thought attachments plus automatic memory deterministically.
 
         The refinement coordinator calls this same helper before transactional
         admission, so the bytes it reserves are exactly the bytes Ask dispatches.
+        The job's memory policy (``inference_memory_policy``) turns the memory
+        pass on or off; ``exclude_refs`` keeps the job's own source out.
         """
         envelope = str(frozen_grounding.material)
         memory_blocks, memory_ids, memory_titles, memory_hydration = (
@@ -519,7 +531,8 @@ class AskService:
                 [],
                 "summary",
                 query=prompt,
-                include_memory=True,
+                include_memory=memory_enabled(capability_id),
+                exclude_refs=list(exclude_refs),
             )
         )
         if memory_blocks:
@@ -548,7 +561,7 @@ class AskService:
         )
         return envelope, echo, ids, titles, instruction
 
-    def _grounding(self, principal: Principal, grounding: Any, prompt: str) -> tuple[str, dict[str, Any] | None]:
+    def _grounding(self, principal: Principal, grounding: Any, prompt: str, *, capability_id: str = "ask.answer", exclude_refs: Sequence[str] = ()) -> tuple[str, dict[str, Any] | None]:
         if grounding is None:
             grounding = {}
         if not isinstance(grounding, dict): raise ValidationError("grounding must be an object")
@@ -577,7 +590,8 @@ class AskService:
             expand,
             qualified_refs=refs,
             query=prompt,
-            include_memory=True,
+            include_memory=memory_enabled(capability_id),
+            exclude_refs=list(exclude_refs),
         )
         unknown=list(hydration.unknown)
         if rails and self._rails_hydrator:

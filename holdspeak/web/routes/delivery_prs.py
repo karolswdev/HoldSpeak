@@ -272,6 +272,9 @@ def build_delivery_prs_router(
                 }, status_code=409)
 
             def prompt_payload() -> dict[str, Any]:
+                from ...db import get_database
+                from ...services.memory_grounding import memory_for, with_memory
+
                 linked_text = "\n\n".join(
                     str(item.get("text") or "") for item in material.get("linked") or []
                 )
@@ -281,9 +284,19 @@ def build_delivery_prs_router(
                     f"Linked story and evidence:\n{linked_text[:48000]}\n\n"
                     f"Diff:\n{str(material.get('diff') or '')[:120000]}"
                 )
+                # Decisions and notes on the PR's subject (its title, branch
+                # and story).  The diff and the story are already above.
+                row = context.get("row") or {}
+                memory = memory_for(
+                    "delivery.pr_review_draft",
+                    get_database(),
+                    query=" ".join(str(part or "") for part in (
+                        row.get("title"), row.get("head_ref"), material.get("story_id"),
+                    )),
+                )
                 return {
                     "system_prompt": "You are a precise code reviewer. Findings first; cite files and lines when possible.",
-                    "user_prompt": prompt,
+                    "user_prompt": with_memory(prompt, memory),
                     "max_tokens": 1800,
                     "temperature": None,
                     "source_id": source_id,

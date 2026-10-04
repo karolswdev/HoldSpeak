@@ -113,9 +113,20 @@ class DecisionLifecycleService:
                 f"Rationale: {decision.rationale or 'Not recorded'}\n"
                 f"Decided at: {decision.decided_at}\nMeeting: {decision.source_meeting_id}"
             )
+            # Earlier decisions and notes on the same subject.  The decision
+            # itself and the meeting it came from are already in the prompt.
+            from .memory_grounding import memory_for, with_memory
+
+            memory = memory_for(
+                "decision.promotion_draft",
+                self._db,
+                query=f"{decision.text} {decision.rationale or ''}",
+                exclude_refs=[f"decision:{decision.id}"]
+                + ([f"meeting:{decision.source_meeting_id}"] if decision.source_meeting_id else []),
+            )
             return {
                 "system_prompt": "Draft one concise artifact from the accepted decision. Preserve the decision's meaning. Return Markdown only and do not invent approval.",
-                "user_prompt": prompt,
+                "user_prompt": with_memory(prompt, memory),
                 "max_tokens": 1200,
                 "temperature": None,
                 "decision_revision": decision.updated_at,

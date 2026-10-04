@@ -815,6 +815,21 @@ class RoutedInferenceCoordinator:
             kernel_receipt_reader=None if broker is None else broker.reconstruct_inference_child_receipt,
         )
 
+    def admitted_payload(self, operation_id: str) -> dict[str, Any] | None:
+        """The payload already admitted under ``operation_id``; ``None`` if none.
+
+        A job whose prompt reads memory builds its payload through this first:
+        a replay of one operation sends the bytes it admitted the first time,
+        so memory that changed between the run and the replay (a journal note,
+        a draft the run made) cannot make the replay conflict.
+        """
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT payload_json FROM inference_adoption_material_snapshots WHERE operation_id=?",
+                (str(operation_id),),
+            ).fetchone()
+        return None if row is None else dict(json.loads(row["payload_json"]))
+
     def admit(
         self,
         principal: Principal,

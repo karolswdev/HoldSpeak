@@ -12,6 +12,7 @@ from typing import Any
 
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 from ..db.core import Database
+from ..inference_memory_policy import memory_enabled
 from ..kernel.prompt_adapter import CanonicalPromptAdapter
 from ..principals import Principal
 from holdspeak.services.errors import NotFound, ServiceError, ValidationError
@@ -115,7 +116,7 @@ class RecipeService:
                 [],
                 "summary",
                 query=user,
-                include_memory=True,
+                include_memory=memory_enabled("recipe.run"),
             )
         )
         rendered_user = (
@@ -206,7 +207,7 @@ class RecipeService:
             expand,
             qualified_refs=refs,
             query=question,
-            include_memory=True,
+            include_memory=memory_enabled("agent.tool_turn"),
         )
         if hydration.unknown: raise ServiceError("grounding_not_found", "grounding ids not on this hub", context={"unknown_ids": hydration.unknown})
         if gblocks: blocks.append("[GROUNDING]\n" + "\n\n".join(gblocks))

@@ -10,10 +10,13 @@ from typing import Any
 from ..intel.providers import endpoint_egress
 from ..principals import Principal
 from .errors import ConflictError, NotFound, ValidationError
+from .memory_grounding import memory_for, with_memory
 
 _LOCAL_EGRESS = endpoint_egress(cloud=False, label="Local only")
 #: The kernel projection kind the elected draft is staged as.
 _DRAFT_PROJECTION = "cadence-next-action"
+#: A loop's source under the name memory uses, so the draft never reads it back.
+_LOOP_SOURCE_REF_KIND = {"meeting_action": "action_item", "meeting_decision": "decision"}
 
 
 @observe_service
@@ -224,7 +227,7 @@ class CadenceService:
             system_prompt, user_prompt = next_action_prompt(loop)
             return {
                 "system_prompt": system_prompt,
-                "user_prompt": user_prompt,
+                "user_prompt": with_memory(user_prompt, self._loop_memory(loop)),
                 "max_tokens": 900,
                 "temperature": None,
                 "loop_id": loop.id,
@@ -281,6 +284,19 @@ class CadenceService:
         if action.generated_by != "llm":
             return None
         return action, {"source": "frozen_owner_assignment", "egress": routed["egress"]}
+
+    def _loop_memory(self, loop: Any) -> Any:
+        """Memory for one loop's draft: its words, less the loop and its source."""
+        own = [f"cadence:{loop.id}"] if loop.id else []
+        source_kind = _LOOP_SOURCE_REF_KIND.get(str(loop.source_type or ""))
+        if source_kind and loop.source_id:
+            own.append(f"{source_kind}:{loop.source_id}")
+        return memory_for(
+            "background.cadence_draft",
+            self._db,
+            query=" ".join(str(part or "") for part in (loop.title, loop.summary, loop.project)),
+            exclude_refs=own,
+        )
 
     @staticmethod
     def _close_parent(broker: Any, parent: Any, principal: Principal, outcome: str) -> None:

@@ -132,7 +132,9 @@ def run_owner_draft(
             route_plan_id=route_plan_id,
             capability_id=capability_id,
             operation_id=operation_id,
-            payload=dict(payload_factory()),
+            # A replay sends the payload it admitted first (the prompt reads
+            # memory, and memory may have changed since).
+            payload=adoption.admitted_payload(operation_id) or dict(payload_factory()),
             reserved_output_tokens=reserved_output_tokens,
             parent_operation_id=parent.operation_id,
         )
