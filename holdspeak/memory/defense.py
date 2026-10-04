@@ -46,14 +46,33 @@ def _card(match: re.Match[str]) -> str:
     return REDACTED if 13 <= len(digits) <= 19 and _luhn(digits) else match.group(0)
 
 
+#: Each pattern runs only when a word it needs is in the text.  A plain
+#: substring test over a long transcript costs far less than the pattern.
+_SECRET_WORDS = (
+    "bearer", "token", "password", "passwd", "secret", "api", "authorization",
+    "ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_", "xox", "sg.", "atatt",
+    "sk-", "akia",
+)
+_DIGIT = re.compile(r"\d")
+
+
 def redact(text: str) -> str:
     """Return ``text`` with every secret shape replaced by ``[redacted]``."""
     value = str(text or "")
-    value = _PEM.sub(REDACTED, value)
-    value = _DB_URL.sub(REDACTED, value)
-    value = _JWT.sub(REDACTED, value)
-    value = _SECRET.sub(REDACTED, value)
-    return _CARD.sub(_card, value)
+    if not value:
+        return value
+    if "-----BEGIN" in value:
+        value = _PEM.sub(REDACTED, value)
+    if "://" in value:
+        value = _DB_URL.sub(REDACTED, value)
+    if "eyJ" in value:
+        value = _JWT.sub(REDACTED, value)
+    lowered = value.casefold()
+    if any(word in lowered for word in _SECRET_WORDS):
+        value = _SECRET.sub(REDACTED, value)
+    if _DIGIT.search(value):
+        value = _CARD.sub(_card, value)
+    return value
 
 
 __all__ = ["REDACTED", "redact"]

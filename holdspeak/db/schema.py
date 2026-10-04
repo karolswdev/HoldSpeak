@@ -4623,4 +4623,11 @@ CREATE TABLE IF NOT EXISTS memory_embeddings (
     content_sha TEXT NOT NULL,
     PRIMARY KEY (item_kind, item_id, model_id)
 );
+-- The index generation: one row, moved in the SAME transaction as every write
+-- to the three tables above.  A reader's cached vector matrix is good only
+-- for the generation it was built at, whichever handle or process wrote.
+CREATE TABLE IF NOT EXISTS memory_index_state (
+    key TEXT PRIMARY KEY,
+    value INTEGER NOT NULL
+);
 """

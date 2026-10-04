@@ -29,8 +29,7 @@ _RULES = {
     "decision_record": _live,
     "desk_decision": _live,
     "artifact": lambda row: True,
-    # A parked meeting is out of memory.
-    "meeting": lambda row: not _flag(row, "parked"),
+    "meeting": lambda row: True,
     "note": _live,
     "thread": lambda row: row.get("deleted_at") is None,
     # One part of a thread message: never a sensitive part, never a draft.
@@ -45,6 +44,13 @@ _RULES = {
     "project_item": lambda row: True,
     "workbench_item": lambda row: str(row.get("status") or "") != "dismissed",
     "cadence": lambda row: str(row.get("status") or "") != "killed",
+    # A send he pressed: sent, failed or unknown.  A prepared or discarded
+    # row left nothing.
+    "send": lambda row: str(row.get("state") or "") in ("sent", "failed", "unknown"),
+    # Published only: a draft is not yet what he said.
+    "project_update": lambda row: str(row.get("lifecycle") or "") == "published",
+    "prep_brief": lambda row: str(row.get("lifecycle") or "") != "discarded",
+    "calendar_event": lambda row: True,
 }
 
 ADMITTED_KINDS = frozenset(_RULES)
@@ -55,13 +61,18 @@ def memory_admits(kind: str, row: Mapping[str, Any]) -> bool:
 
     ``row`` carries the source row's own flags (``deleted``, ``parked``,
     ``sensitive``, ``draft`` …) and ``promoted``: true when the row is the
-    target of a context promotion.  A promoted row is never memory, for any
-    kind.  An unknown kind is refused.
+    target of a context promotion.  A promoted row and a parked row are
+    never memory, for any kind.  An unknown kind is refused.
     """
     rule = _RULES.get(str(kind or ""))
     if rule is None:
         return False
     if _flag(row, "promoted"):
+        return False
+    # Parked is out of memory for EVERY kind: the row's own ``parked`` flag
+    # (a meeting, a workbench item) and the flag of the meeting it came from
+    # (an action, an artifact, a decision of a parked meeting).
+    if _flag(row, "parked"):
         return False
     return bool(rule(row))
 

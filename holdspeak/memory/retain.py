@@ -19,6 +19,8 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+import threading
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Iterator, Optional
 
@@ -54,13 +56,28 @@ def _text(*parts: Any) -> str:
     return " ".join(str(part).strip() for part in parts if str(part or "").strip())
 
 
+_PARKED_MEETING = "EXISTS (SELECT 1 FROM meetings pk WHERE pk.id={column} AND pk.parked=1)"
+
+Reader = Callable[[sqlite3.Connection, set[str], Optional[str]], Iterator[MemorySource]]
+
+
 def _simple(
     kind: str,
-    sql: str,
+    select: str,
+    id_column: str,
     build: Callable[[dict[str, Any]], tuple[str, Optional[str], list[tuple[str, str]]]],
-) -> Callable[[sqlite3.Connection, set[str]], Iterator[MemorySource]]:
-    def read(conn: sqlite3.Connection, promoted: set[str]) -> Iterator[MemorySource]:
-        for raw in conn.execute(sql):
+) -> Reader:
+    """A reader over one table.  ``only_id`` reads one row: the same SQL, the
+    same admission and the same text as the sweep, for the read-time check."""
+
+    def read(
+        conn: sqlite3.Connection, promoted: set[str], only_id: Optional[str] = None
+    ) -> Iterator[MemorySource]:
+        if only_id is None:
+            rows = conn.execute(f"{select} ORDER BY {id_column}")
+        else:
+            rows = conn.execute(f"{select} WHERE {id_column}=?", (only_id,))
+        for raw in rows:
             row = dict(raw)
             ref = f"{kind}:{row['id']}"
             row["promoted"] = ref in promoted
@@ -70,6 +87,29 @@ def _simple(
             yield MemorySource(ref, kind, title, occurred_at, units)
 
     return read
+
+
+def _spec(kind: str, flags: str = "") -> Reader:
+    """A reader made from the keyword search's own spec for the kind (title,
+    body and time are the same expressions), so the two cannot drift."""
+    from ..db.memory import _ECOSYSTEM_SPECS
+
+    spec = _ECOSYSTEM_SPECS[kind]
+    extra = f",{flags}" if flags else ""
+    select = (
+        f"SELECT {spec['id']} id,{spec['title']} title,{spec['body']} body,"
+        f"{spec['time']} occurred_at{extra} FROM {spec['table']} {spec['alias']}"
+    )
+    return _simple(
+        kind,
+        select,
+        spec["id"],
+        lambda row: (
+            str(row["title"] or ""),
+            row["occurred_at"],
+            [("", part) for part in paragraphs(str(row["body"] or ""))],
+        ),
+    )
 
 
 def _desk_decision(row: dict[str, Any]) -> tuple[str, Optional[str], list[tuple[str, str]]]:
@@ -85,10 +125,17 @@ def _desk_decision(row: dict[str, Any]) -> tuple[str, Optional[str], list[tuple[
     return title, row["updated_at"], units
 
 
-def _meetings(conn: sqlite3.Connection, promoted: set[str]) -> Iterator[MemorySource]:
+def _meetings(
+    conn: sqlite3.Connection, promoted: set[str], only_id: Optional[str] = None
+) -> Iterator[MemorySource]:
+    sql = "SELECT id,title,started_at,parked FROM meetings"
     meetings = [
         dict(row)
-        for row in conn.execute("SELECT id,title,started_at,parked FROM meetings ORDER BY id")
+        for row in (
+            conn.execute(sql + " ORDER BY id")
+            if only_id is None
+            else conn.execute(sql + " WHERE id=?", (only_id,))
+        )
     ]
     for meeting in meetings:
         ref = f"meeting:{meeting['id']}"
@@ -103,6 +150,24 @@ def _meetings(conn: sqlite3.Connection, promoted: set[str]) -> Iterator[MemorySo
                 (meeting["id"],),
             )
         ]
+        # The summary and the topics as the meeting reads now (the keyword
+        # search finds a word that is only there; so does the vector search).
+        summary = conn.execute(
+            "SELECT summary FROM intel_snapshots WHERE meeting_id=?"
+            " ORDER BY timestamp DESC,id DESC LIMIT 1",
+            (meeting["id"],),
+        ).fetchone()
+        if summary is not None and str(summary[0] or "").strip():
+            units.append(("summary", "Summary: " + str(summary[0])))
+        topics = [
+            str(row[0])
+            for row in conn.execute(
+                "SELECT topic FROM topics WHERE meeting_id=? ORDER BY id", (meeting["id"],)
+            )
+            if str(row[0] or "").strip()
+        ]
+        if topics:
+            units.append(("topics", "Topics: " + " · ".join(topics)))
         if not units:
             continue
         yield MemorySource(
@@ -110,12 +175,19 @@ def _meetings(conn: sqlite3.Connection, promoted: set[str]) -> Iterator[MemorySo
         )
 
 
-def _threads(conn: sqlite3.Connection, promoted: set[str]) -> Iterator[MemorySource]:
+def _threads(
+    conn: sqlite3.Connection, promoted: set[str], only_id: Optional[str] = None
+) -> Iterator[MemorySource]:
+    sql = (
+        "SELECT id,title,deleted_at,datetime(updated_at,'unixepoch') occurred_at"
+        " FROM threads"
+    )
     threads = [
         dict(row)
-        for row in conn.execute(
-            "SELECT id,title,deleted_at,datetime(updated_at,'unixepoch') occurred_at"
-            " FROM threads ORDER BY id"
+        for row in (
+            conn.execute(sql + " ORDER BY id")
+            if only_id is None
+            else conn.execute(sql + " WHERE id=?", (only_id,))
         )
     ]
     for thread in threads:
@@ -145,84 +217,162 @@ def _threads(conn: sqlite3.Connection, promoted: set[str]) -> Iterator[MemorySou
         )
 
 
-#: One reader per kind memory holds today.  The order is the sweep order.
-SOURCE_READERS: dict[str, Callable[[sqlite3.Connection, set[str]], Iterator[MemorySource]]] = {
-    "decision": _simple(
-        "decision",
-        "SELECT id,text,rationale,decided_at,deleted,source_state FROM decisions ORDER BY id",
-        lambda row: (str(row["text"]), row["decided_at"], [("", str(row["rationale"] or ""))]),
-    ),
-    "decision_record": _simple(
-        "decision_record",
-        "SELECT id,decision_text,rationale,alternatives,owner,updated_at,deleted"
-        " FROM decision_records ORDER BY id",
-        lambda row: (
-            str(row["decision_text"]),
-            row["updated_at"],
-            [("", _text(row["rationale"], row["alternatives"], row["owner"]))],
+def _readers() -> dict[str, Reader]:
+    return {
+        "decision": _simple(
+            "decision",
+            "SELECT id,text,rationale,decided_at,deleted,source_state,"
+            + _PARKED_MEETING.format(column="decisions.source_meeting_id")
+            + " parked FROM decisions",
+            "id",
+            lambda row: (str(row["text"]), row["decided_at"], [("", str(row["rationale"] or ""))]),
         ),
-    ),
-    "desk_decision": _simple(
-        "desk_decision",
-        "SELECT id,title,context_markdown,decision_markdown,consequences_markdown,"
-        "alternatives_json,updated_at,deleted FROM desk_decisions ORDER BY id",
-        _desk_decision,
-    ),
-    "artifact": _simple(
-        "artifact",
-        "SELECT id,title,body_markdown,updated_at FROM artifacts ORDER BY id",
-        lambda row: (
-            str(row["title"] or ""),
-            row["updated_at"],
-            [("", part) for part in paragraphs(row["body_markdown"])],
+        "decision_record": _simple(
+            "decision_record",
+            "SELECT id,decision_text,rationale,alternatives,owner,updated_at,deleted"
+            " FROM decision_records",
+            "id",
+            lambda row: (
+                str(row["decision_text"]),
+                row["updated_at"],
+                [("", _text(row["rationale"], row["alternatives"], row["owner"]))],
+            ),
         ),
-    ),
-    "meeting": _meetings,
-    "note": _simple(
-        "note",
-        "SELECT id,title,body_markdown,updated_at,deleted FROM notes ORDER BY id",
-        lambda row: (
-            str(row["title"] or ""),
-            row["updated_at"],
-            [("", part) for part in paragraphs(row["body_markdown"])],
+        "desk_decision": _simple(
+            "desk_decision",
+            "SELECT id,title,context_markdown,decision_markdown,consequences_markdown,"
+            "alternatives_json,updated_at,deleted FROM desk_decisions",
+            "id",
+            _desk_decision,
         ),
-    ),
-    "thread": _threads,
-    "action": _simple(
-        "action",
-        "SELECT id,task,owner,due,status,COALESCE(completed_at,created_at) occurred_at"
-        " FROM action_items ORDER BY id",
-        lambda row: (
-            str(row["task"]),
-            row["occurred_at"],
-            [("", _text(row["owner"], row["due"], row["status"]))],
+        "artifact": _simple(
+            "artifact",
+            "SELECT id,title,body_markdown,updated_at,"
+            + _PARKED_MEETING.format(column="artifacts.meeting_id")
+            + " parked FROM artifacts",
+            "id",
+            lambda row: (
+                str(row["title"] or ""),
+                row["updated_at"],
+                [("", part) for part in paragraphs(row["body_markdown"])],
+            ),
         ),
-    ),
-    "project_item": _simple(
-        "project_item",
-        "SELECT id,title,summary,details_json,item_type,updated_at FROM project_items ORDER BY id",
-        lambda row: (
-            str(row["title"] or ""),
-            row["updated_at"],
-            [("", _text(row["summary"], row["details_json"]))],
+        "meeting": _meetings,
+        "note": _simple(
+            "note",
+            "SELECT id,title,body_markdown,updated_at,deleted FROM notes",
+            "id",
+            lambda row: (
+                str(row["title"] or ""),
+                row["updated_at"],
+                [("", part) for part in paragraphs(row["body_markdown"])],
+            ),
         ),
-    ),
-    "workbench_item": _simple(
-        "workbench_item",
-        "SELECT id,title,body,result,status,last_modified FROM workbench_items ORDER BY id",
-        lambda row: (
-            str(row["title"] or ""),
-            row["last_modified"],
-            [("", part) for part in paragraphs(_text(row["body"]))]
-            + [("result", str(row["result"] or ""))],
+        "thread": _threads,
+        "action": _simple(
+            "action",
+            "SELECT id,task,owner,due,status,COALESCE(completed_at,created_at) occurred_at,"
+            + _PARKED_MEETING.format(column="action_items.meeting_id")
+            + " parked FROM action_items",
+            "id",
+            lambda row: (
+                str(row["task"]),
+                row["occurred_at"],
+                [("", _text(row["owner"], row["due"], row["status"]))],
+            ),
         ),
-    ),
-    "cadence": _simple(
-        "cadence",
-        "SELECT id,title,summary,status,priority,owner,updated_at FROM cadence_loops ORDER BY id",
-        lambda row: (str(row["title"]), row["updated_at"], [("", _text(row["summary"], row["owner"]))]),
-    ),
-}
+        "project_item": _simple(
+            "project_item",
+            "SELECT id,title,summary,details_json,item_type,updated_at FROM project_items",
+            "id",
+            lambda row: (
+                str(row["title"] or ""),
+                row["updated_at"],
+                [("", _text(row["summary"], row["details_json"]))],
+            ),
+        ),
+        "workbench_item": _simple(
+            "workbench_item",
+            "SELECT id,title,body,result,status,parked,last_modified FROM workbench_items",
+            "id",
+            lambda row: (
+                str(row["title"] or ""),
+                row["last_modified"],
+                [("", part) for part in paragraphs(_text(row["body"]))]
+                + [("result", str(row["result"] or ""))],
+            ),
+        ),
+        "cadence": _simple(
+            "cadence",
+            "SELECT id,title,summary,status,priority,owner,updated_at FROM cadence_loops",
+            "id",
+            lambda row: (
+                str(row["title"]), row["updated_at"], [("", _text(row["summary"], row["owner"]))]
+            ),
+        ),
+        # What he sent, published, prepared and has on the calendar.
+        "send": _spec("send", "s.state state"),
+        "project_update": _spec("project_update", "u.lifecycle lifecycle"),
+        "prep_brief": _spec("prep_brief", "b.lifecycle lifecycle"),
+        "calendar_event": _spec("calendar_event"),
+    }
+
+
+class _Readers(dict):
+    """One reader per kind memory holds.  Built on first use (the spec
+    readers read ``holdspeak.db.memory``, which imports this package)."""
+
+    def _load(self) -> None:
+        if not dict.__len__(self):
+            dict.update(self, _readers())
+
+    def __getitem__(self, key):
+        self._load()
+        return dict.__getitem__(self, key)
+
+    def __iter__(self):
+        self._load()
+        return dict.__iter__(self)
+
+    def __contains__(self, key):
+        self._load()
+        return dict.__contains__(self, key)
+
+    def __len__(self):
+        self._load()
+        return dict.__len__(self)
+
+    def get(self, key, default=None):
+        self._load()
+        return dict.get(self, key, default)
+
+
+#: The order is the sweep order.
+SOURCE_READERS: dict[str, Reader] = _Readers()
+
+
+def current_source(conn: sqlite3.Connection, source_ref: str) -> Optional[MemorySource]:
+    """The source as it is NOW, or None when memory may not hold it.
+
+    Recall calls this for every vector candidate, so the decision to return a
+    source is made against the live row with ``memory_admits`` - the same
+    reader and the same admission as the sweep - never against what the index
+    held when it was built.
+    """
+    kind, _, resource_id = str(source_ref or "").partition(":")
+    reader = SOURCE_READERS.get(kind)
+    if reader is None or not resource_id:
+        return None
+    promoted = (
+        conn.execute(
+            "SELECT 1 FROM context_promotions WHERE target_ref=? LIMIT 1", (source_ref,)
+        ).fetchone()
+        is not None
+    )
+    try:
+        return next(iter(reader(conn, {source_ref} if promoted else set(), resource_id)), None)
+    except sqlite3.Error:
+        return None
 
 
 def _sha(value: Any) -> str:
@@ -231,15 +381,32 @@ def _sha(value: Any) -> str:
     ).hexdigest()
 
 
-def prepare(source: MemorySource) -> tuple[str, list[dict[str, Any]]]:
-    """Redact, hash and chunk one admitted source.
+def _redacted(source: MemorySource) -> tuple[str, list[tuple[str, str]], str]:
+    """Redact one admitted source and hash it.
 
-    Returns ``(content_sha, chunks)``.  The hash is over the REDACTED text, so
-    a secret is never in a hash input that is stored.
+    The hash is over the REDACTED text, so a secret is never in a hash input
+    that is stored.
     """
     title = redact(source.title)
-    units = [(anchor, redact(text)) for anchor, text in source.units if str(text or "").strip()]
-    content_sha = _sha([title, source.occurred_at, units, source.pack])
+    raw = [(anchor, str(text)) for anchor, text in source.units if str(text or "").strip()]
+    # One pass over the whole source first.  A secret inside any unit is also
+    # a match in the joined text, so "the joined text did not change" proves
+    # that no unit needs the per-unit pass (the common case, and the cost of
+    # a long transcript).
+    joined = "\n".join(text for _anchor, text in raw)
+    if redact(joined) == joined:
+        units = raw
+    else:
+        units = [(anchor, redact(text)) for anchor, text in raw]
+    return title, units, _sha([title, source.occurred_at, units, source.pack])
+
+
+def _holds_secret(source: MemorySource, title: str, units: list[tuple[str, str]]) -> bool:
+    raw = [(anchor, text) for anchor, text in source.units if str(text or "").strip()]
+    return title != source.title or units != raw
+
+
+def _chunks(source: MemorySource, title: str, units: list[tuple[str, str]]) -> list[dict[str, Any]]:
     if source.pack:
         cut = chunk_units(title, units)
     else:
@@ -247,7 +414,7 @@ def prepare(source: MemorySource) -> tuple[str, list[dict[str, Any]]]:
         for anchor, text in units:
             for chunk in chunk_units(title, [(anchor, text)]):
                 cut.append(type(chunk)(ordinal=len(cut), anchor=anchor, text=chunk.text))
-    chunks = [
+    return [
         {
             "id": f"{source.ref}#{chunk.ordinal}",
             "ordinal": chunk.ordinal,
@@ -258,7 +425,38 @@ def prepare(source: MemorySource) -> tuple[str, list[dict[str, Any]]]:
         for chunk in cut
         if chunk.text.strip()
     ]
-    return content_sha, chunks
+
+
+def prepare(source: MemorySource) -> tuple[str, list[dict[str, Any]]]:
+    """Redact, hash and chunk one admitted source: ``(content_sha, chunks)``."""
+    title, units, content_sha = _redacted(source)
+    return content_sha, _chunks(source, title, units)
+
+
+_PREPARED_LOCK = threading.Lock()
+_PREPARED: "OrderedDict[str, tuple[str, list[dict[str, Any]]]]" = OrderedDict()
+_PREPARED_MAX = 256
+
+
+def prepare_current(source: MemorySource) -> tuple[str, list[dict[str, Any]]]:
+    """``prepare`` for the read path, with a small cache.
+
+    The key is a hash of the RAW live source (title, time, every unit), so a
+    source that changed in any way is cut again; only an unchanged source
+    reuses its cut.  Recall checks each vector candidate against this.
+    """
+    key = _sha([source.ref, source.title, source.occurred_at, source.units, source.pack])
+    with _PREPARED_LOCK:
+        held = _PREPARED.get(key)
+        if held is not None:
+            _PREPARED.move_to_end(key)
+            return held
+    prepared = prepare(source)
+    with _PREPARED_LOCK:
+        _PREPARED[key] = prepared
+        while len(_PREPARED) > _PREPARED_MAX:
+            _PREPARED.popitem(last=False)
+    return prepared
 
 
 def sweep(
@@ -277,20 +475,21 @@ def sweep(
     index = db.memory_index
     ledger = index.ledger(selected)
     stats = {"seen": 0, "written": 0, "unchanged": 0, "gone": 0}
+    secret_refs: list[str] = []
     for kind in selected:
         with db._connection() as conn:
             try:
-                sources = list(SOURCE_READERS[kind](conn, _promoted(conn)))
+                sources = list(SOURCE_READERS[kind](conn, _promoted(conn), None))
             except sqlite3.Error as exc:  # a store this database does not carry
                 log.warning("memory sweep could not read %s: %s", kind, exc)
                 continue
         seen: set[str] = set()
         for source in sources:
-            content_sha, chunks = prepare(source)
-            if not chunks:
-                continue
-            seen.add(source.ref)
-            stats["seen"] += 1
+            title, units, content_sha = _redacted(source)
+            if _holds_secret(source, title, units):
+                # Checked on EVERY sweep, changed or not: a trigger writes the
+                # raw text into the keyword table again on any source update.
+                secret_refs.append(source.ref)
             known = ledger.get(source.ref)
             if (
                 known is not None
@@ -298,14 +497,23 @@ def sweep(
                 and known["content_sha"] == content_sha
                 and int(known["chunker_version"]) == CHUNKER_VERSION
             ):
+                # Same hash as the ledger: stop.  No chunk work for this source.
+                seen.add(source.ref)
+                stats["seen"] += 1
                 stats["unchanged"] += 1
                 continue
+            chunks = _chunks(source, title, units)
+            if not chunks:
+                continue
+            seen.add(source.ref)
+            stats["seen"] += 1
             if max_sources is not None and stats["written"] >= max_sources:
+                db.memory.scrub_keyword_rows(secret_refs)
                 return {**stats, "complete": 0}
             index.replace_source(
                 source_ref=source.ref,
                 kind=source.kind,
-                title=redact(source.title),
+                title=title,
                 occurred_at=source.occurred_at,
                 content_sha=content_sha,
                 chunker_version=CHUNKER_VERSION,
@@ -316,6 +524,7 @@ def sweep(
             if known["kind"] == kind and known["state"] == "live" and ref not in seen:
                 index.mark_gone(ref)
                 stats["gone"] += 1
+    stats["scrubbed"] = db.memory.scrub_keyword_rows(secret_refs)
     return {**stats, "complete": 1}
 
 
@@ -381,8 +590,10 @@ def rebuild(db: Any, embedder: Optional[MemoryEmbedder] = None) -> dict[str, int
 __all__ = [
     "MemorySource",
     "SOURCE_READERS",
+    "current_source",
     "embed_pending",
     "prepare",
+    "prepare_current",
     "rebuild",
     "sweep",
 ]
