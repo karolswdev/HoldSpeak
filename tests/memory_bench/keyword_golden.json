@@ -1,0 +1,1827 @@
+{
+ "p01|": {
+  "hits": [
+   {
+    "bm25": -2.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-12T08:00:00Z",
+    "project_id": "atlas",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "A late change broke the last trial run. No deploys to the finance services for five days before the cutover. Urgent fixes need two approvals. []",
+    "source_ref": "desk_decision:dd-freeze",
+    "title": "Code freeze before cutover"
+   },
+   {
+    "bm25": -1.0531030502950538,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-03T12:00:00",
+    "project_id": "atlas",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "A retry bug sent some supplier payments twice on Tuesday. <mark>Finance</mark> reversed them the next morning.\n\nWe added an idempotency key.",
+    "source_ref": "artifact:a-incident",
+    "title": "Incident report: duplicate payments"
+   },
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 2,
+    "normalized_score": 0.0,
+    "occurred_at": "2026-09-11T08:00:00Z",
+    "project_id": "atlas",
+    "rank": 3,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The old system runs on a mainframe file store. The new ledger stores entries in Postgres with monthly partitions. Reporting queries move to a read replica. []",
+    "source_ref": "desk_decision:dd-postgres",
+    "title": "Use Postgres for the new ledger"
+   }
+  ],
+  "page": {
+   "count": 3,
+   "limit": 50,
+   "offset": 0,
+   "total": 3
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 3,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p01|atlas": {
+  "hits": [
+   {
+    "bm25": -2.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-12T08:00:00Z",
+    "project_id": "atlas",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "A late change broke the last trial run. No deploys to the finance services for five days before the cutover. Urgent fixes need two approvals. []",
+    "source_ref": "desk_decision:dd-freeze",
+    "title": "Code freeze before cutover"
+   },
+   {
+    "bm25": -1.0531030502950538,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-03T12:00:00",
+    "project_id": "atlas",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "A retry bug sent some supplier payments twice on Tuesday. <mark>Finance</mark> reversed them the next morning.\n\nWe added an idempotency key.",
+    "source_ref": "artifact:a-incident",
+    "title": "Incident report: duplicate payments"
+   },
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 2,
+    "normalized_score": 0.0,
+    "occurred_at": "2026-09-11T08:00:00Z",
+    "project_id": "atlas",
+    "rank": 3,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The old system runs on a mainframe file store. The new ledger stores entries in Postgres with monthly partitions. Reporting queries move to a read replica. []",
+    "source_ref": "desk_decision:dd-postgres",
+    "title": "Use Postgres for the new ledger"
+   }
+  ],
+  "page": {
+   "count": 3,
+   "limit": 50,
+   "offset": 0,
+   "total": 3
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 3,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p02|": {
+  "hits": [
+   {
+    "bm25": -1.0531030502950538,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-03T12:00:00",
+    "project_id": "atlas",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "A retry bug sent some <mark>supplier</mark> payments twice on Tuesday. Finance reversed them the next morning.\n\nWe added an idempotency key.",
+    "source_ref": "artifact:a-incident",
+    "title": "Incident report: duplicate payments"
+   }
+  ],
+  "page": {
+   "count": 1,
+   "limit": 50,
+   "offset": 0,
+   "total": 1
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 1,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p03|": {
+  "hits": [
+   {
+    "bm25": -0.8550712352531414,
+    "graph_score": 0.0,
+    "kind": "thread",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "<thread time>",
+    "project_id": null,
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Store</mark> an append-only change log next to each ledger entry.",
+    "source_ref": "thread:th-audit",
+    "title": "Audit trail"
+   },
+   {
+    "bm25": -2.6429753398468954,
+    "graph_score": 0.0,
+    "kind": "meeting",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-21T10:00:00",
+    "project_id": null,
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The <mark>data</mark> warehouse project needs a product owner.",
+    "source_ref": "meeting:m-planning",
+    "title": "Quarter planning"
+   },
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-11T08:00:00Z",
+    "project_id": "atlas",
+    "rank": 3,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The old system runs on a mainframe file store. The new ledger stores entries in Postgres with monthly partitions. Reporting queries move to a read replica. []",
+    "source_ref": "desk_decision:dd-postgres",
+    "title": "Use Postgres for the new ledger"
+   }
+  ],
+  "page": {
+   "count": 3,
+   "limit": 50,
+   "offset": 0,
+   "total": 3
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 3,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p04|": {
+  "hits": [],
+  "page": {
+   "count": 0,
+   "limit": 50,
+   "offset": 0,
+   "total": 0
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 0,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p05|": {
+  "hits": [],
+  "page": {
+   "count": 0,
+   "limit": 50,
+   "offset": 0,
+   "total": 0
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 0,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p06|": {
+  "hits": [
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-12T08:00:00Z",
+    "project_id": "atlas",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "A late change broke the last trial run. No deploys to the finance services for five days before the cutover. Urgent fixes need two approvals. []",
+    "source_ref": "desk_decision:dd-freeze",
+    "title": "Code freeze before cutover"
+   }
+  ],
+  "page": {
+   "count": 1,
+   "limit": 50,
+   "offset": 0,
+   "total": 1
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 1,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p07|": {
+  "hits": [
+   {
+    "bm25": -1.6393084502320587,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-06T09:00:00Z",
+    "project_id": null,
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Hiring <mark>plan</mark>",
+    "source_ref": "note:n-hiring",
+    "title": "Hiring plan"
+   },
+   {
+    "bm25": -1.566304374573751,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 2,
+    "normalized_score": 0.876001996995176,
+    "occurred_at": "2026-09-01T09:00:00Z",
+    "project_id": "atlas",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Accounting cutover <mark>plan</mark>",
+    "source_ref": "note:n-cutover",
+    "title": "Accounting cutover plan"
+   },
+   {
+    "bm25": -1.050556422867009,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 3,
+    "normalized_score": 0.0,
+    "occurred_at": "2026-09-13T09:00:00Z",
+    "project_id": "harbor",
+    "rank": 3,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The annual <mark>plan</mark> discount test raised conversions by eight percent. We keep the twenty percent discount.",
+    "source_ref": "note:n-pricing",
+    "title": "Pricing experiment"
+   }
+  ],
+  "page": {
+   "count": 3,
+   "limit": 50,
+   "offset": 0,
+   "total": 3
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 3,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p08|": {
+  "hits": [],
+  "page": {
+   "count": 0,
+   "limit": 50,
+   "offset": 0,
+   "total": 0
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 0,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p09|": {
+  "hits": [
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-14T08:00:00Z",
+    "project_id": "harbor",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Most non-English users are in Spain and Germany. The first translations are Spanish and German. French waits for the next release. []",
+    "source_ref": "desk_decision:dd-languages",
+    "title": "Ship Spanish and German first"
+   },
+   {
+    "bm25": -1.4576238338220022,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-08T09:00:00Z",
+    "project_id": null,
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The platform team takes weekend on-call from October. Handover happens Friday <mark>at</mark> four.",
+    "source_ref": "note:n-oncall",
+    "title": "On-call rotation"
+   },
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 2,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-12T08:00:00Z",
+    "project_id": "atlas",
+    "rank": 3,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "A late change broke the last trial run. No deploys to the finance services for five days before the cutover. Urgent fixes need two approvals. []",
+    "source_ref": "desk_decision:dd-freeze",
+    "title": "Code freeze before cutover"
+   },
+   {
+    "bm25": -1.3225792727473165,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 2,
+    "normalized_score": 0.0,
+    "occurred_at": "2026-09-02T09:00:00Z",
+    "project_id": "atlas",
+    "rank": 4,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The vendor contract with Northwind renews in January <mark>at</mark> the same price. Legal wants a ninety day exit clause.",
+    "source_ref": "note:n-vendor",
+    "title": "Northwind contract"
+   },
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 3,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-10T08:00:00Z",
+    "project_id": null,
+    "rank": 5,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Splitting adds operational cost for a small team. We keep one service until the team doubles. Module boundaries are enforced by lint rules. []",
+    "source_ref": "desk_decision:dd-single-deploy",
+    "title": "Keep billing as one deployable"
+   }
+  ],
+  "page": {
+   "count": 5,
+   "limit": 50,
+   "offset": 0,
+   "total": 5
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 5,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p09|harbor": {
+  "hits": [
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-14T08:00:00Z",
+    "project_id": "harbor",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Most non-English users are in Spain and Germany. The first translations are Spanish and German. French waits for the next release. []",
+    "source_ref": "desk_decision:dd-languages",
+    "title": "Ship Spanish and German first"
+   }
+  ],
+  "page": {
+   "count": 1,
+   "limit": 50,
+   "offset": 0,
+   "total": 1
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 1,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p10|": {
+  "hits": [
+   {
+    "bm25": -1.9404331786890237,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-06T09:00:00Z",
+    "project_id": null,
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "We agreed to hire two <mark>backend</mark> engineers and one designer for the platform team before spring.",
+    "source_ref": "note:n-hiring",
+    "title": "Hiring plan"
+   },
+   {
+    "bm25": -1.1684063039769939,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-04T12:00:00",
+    "project_id": "harbor",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Quarter one ships offline mode. Quarter two ships tablet layout.\n\nPush notifications wait until the <mark>backend</mark> supports topics.",
+    "source_ref": "artifact:a-roadmap",
+    "title": "Harbor roadmap"
+   }
+  ],
+  "page": {
+   "count": 2,
+   "limit": 50,
+   "offset": 0,
+   "total": 2
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 2,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p11|": {
+  "hits": [
+   {
+    "bm25": -2.0963622860294597,
+    "graph_score": 0.0,
+    "kind": "meeting",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-14T10:00:00",
+    "project_id": "atlas",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The trial run of the ledger import finished. <mark>Two</mark> currency accounts did not match.",
+    "source_ref": "meeting:m-atlas-sync",
+    "title": "Atlas weekly sync"
+   },
+   {
+    "bm25": -1.4213416127509686,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-13T09:00:00Z",
+    "project_id": "harbor",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The annual plan discount test raised conversions <mark>by</mark> eight percent. We keep the twenty percent discount.",
+    "source_ref": "note:n-pricing",
+    "title": "Pricing experiment"
+   },
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-12T08:00:00Z",
+    "project_id": "atlas",
+    "rank": 3,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "A late change broke the last trial run. No deploys to the finance services for five days before the cutover. Urgent fixes need two approvals. []",
+    "source_ref": "desk_decision:dd-freeze",
+    "title": "Code freeze before cutover"
+   },
+   {
+    "bm25": -0.5285789570506648,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-04T12:00:00",
+    "project_id": "harbor",
+    "rank": 4,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Quarter one ships offline mode. Quarter <mark>two</mark> ships tablet layout.\n\nPush notifications wait until the backend supports topics.",
+    "source_ref": "artifact:a-roadmap",
+    "title": "Harbor roadmap"
+   },
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 2,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-10T08:00:00Z",
+    "project_id": null,
+    "rank": 5,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Splitting adds operational cost for a small team. We keep one service until the team doubles. Module boundaries are enforced by lint rules. []",
+    "source_ref": "desk_decision:dd-single-deploy",
+    "title": "Keep billing as one deployable"
+   },
+   {
+    "bm25": -1.3868217509146883,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 2,
+    "normalized_score": 0.9222146188669048,
+    "occurred_at": "2026-09-05T09:00:00Z",
+    "project_id": null,
+    "rank": 6,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The budget stays flat. Travel is cut <mark>by</mark> a third and the tooling line grows.",
+    "source_ref": "note:n-budget",
+    "title": "Budget for next year"
+   },
+   {
+    "bm25": -0.4959953227119252,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 2,
+    "normalized_score": 0.0,
+    "occurred_at": "2026-09-02T12:00:00",
+    "project_id": "atlas",
+    "rank": 7,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Step one: freeze postings in the old ledger.\n\nStep <mark>two</mark>: export balances.\n\nStep three: reconcile totals before opening the new books.",
+    "source_ref": "artifact:a-runbook",
+    "title": "Cutover runbook"
+   },
+   {
+    "bm25": -1.0773737059466773,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 3,
+    "normalized_score": 0.22491941435858806,
+    "occurred_at": "2026-09-04T09:00:00Z",
+    "project_id": "atlas",
+    "rank": 8,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Report generation got slower after the index change. P95 went from <mark>two</mark> seconds to nine.",
+    "source_ref": "note:n-latency",
+    "title": "Latency regression"
+   },
+   {
+    "bm25": -1.050556422867009,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 4,
+    "normalized_score": 0.16449065032704363,
+    "occurred_at": "2026-09-06T09:00:00Z",
+    "project_id": null,
+    "rank": 9,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "We agreed to hire <mark>two</mark> backend engineers and one designer for the platform team before spring.",
+    "source_ref": "note:n-hiring",
+    "title": "Hiring plan"
+   },
+   {
+    "bm25": -0.9775582008369115,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 5,
+    "normalized_score": 0.0,
+    "occurred_at": "2026-09-12T09:00:00Z",
+    "project_id": "harbor",
+    "rank": 10,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The mobile release was delayed <mark>two</mark> weeks because of a crash on the login screen for older Android phones.",
+    "source_ref": "note:n-login",
+    "title": "Login crash"
+   }
+  ],
+  "page": {
+   "count": 10,
+   "limit": 50,
+   "offset": 0,
+   "total": 10
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 10,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p12|": {
+  "hits": [],
+  "page": {
+   "count": 0,
+   "limit": 50,
+   "offset": 0,
+   "total": 0
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 0,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p13|": {
+  "hits": [
+   {
+    "bm25": -0.9227996499266575,
+    "graph_score": 0.0,
+    "kind": "thread",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "<thread time>",
+    "project_id": null,
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Customers</mark> keep asking for a CSV export of invoices.",
+    "source_ref": "thread:th-export",
+    "title": "Invoices export"
+   }
+  ],
+  "page": {
+   "count": 1,
+   "limit": 50,
+   "offset": 0,
+   "total": 1
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 1,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p14|": {
+  "hits": [],
+  "page": {
+   "count": 0,
+   "limit": 50,
+   "offset": 0,
+   "total": 0
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 0,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p15|": {
+  "hits": [],
+  "page": {
+   "count": 0,
+   "limit": 50,
+   "offset": 0,
+   "total": 0
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 0,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "p16|": {
+  "hits": [],
+  "page": {
+   "count": 0,
+   "limit": 50,
+   "offset": 0,
+   "total": 0
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 0,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s01|": {
+  "hits": [
+   {
+    "bm25": -0.7007726664856573,
+    "graph_score": 0.0,
+    "kind": "thread",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "<thread time>",
+    "project_id": null,
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "A CSV export with <mark>date</mark> range filters would cover most requests. Add it to the billing page.",
+    "source_ref": "thread:th-export",
+    "title": "Invoices export"
+   },
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-12T08:00:00Z",
+    "project_id": "atlas",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "A late change broke the last trial run. No deploys to the finance services for five days before the cutover. Urgent fixes need two approvals. []",
+    "source_ref": "desk_decision:dd-freeze",
+    "title": "Code freeze before cutover"
+   },
+   {
+    "bm25": -1.739909387444002,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-02T12:00:00",
+    "project_id": "atlas",
+    "rank": 3,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Cutover</mark> runbook",
+    "source_ref": "artifact:a-runbook",
+    "title": "Cutover runbook"
+   },
+   {
+    "bm25": -6.535865898637534,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-01T09:00:00Z",
+    "project_id": "atlas",
+    "rank": 4,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Accounting</mark> <mark>cutover</mark> plan",
+    "source_ref": "note:n-cutover",
+    "title": "Accounting cutover plan"
+   }
+  ],
+  "page": {
+   "count": 4,
+   "limit": 50,
+   "offset": 0,
+   "total": 4
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 4,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s02|": {
+  "hits": [
+   {
+    "bm25": -2.3381469153451175,
+    "graph_score": 0.0,
+    "kind": "meeting",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-16T15:00:00",
+    "project_id": "atlas",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Northwind</mark> offered a ten percent discount for a three year term.",
+    "source_ref": "meeting:m-vendor-call",
+    "title": "Northwind call"
+   },
+   {
+    "bm25": -6.535865898637534,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-02T09:00:00Z",
+    "project_id": "atlas",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Northwind</mark> <mark>contract</mark>",
+    "source_ref": "note:n-vendor",
+    "title": "Northwind contract"
+   }
+  ],
+  "page": {
+   "count": 2,
+   "limit": 50,
+   "offset": 0,
+   "total": 2
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 2,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s02|atlas": {
+  "hits": [
+   {
+    "bm25": -2.3381469153451175,
+    "graph_score": 0.0,
+    "kind": "meeting",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-16T15:00:00",
+    "project_id": "atlas",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Northwind</mark> offered a ten percent discount for a three year term.",
+    "source_ref": "meeting:m-vendor-call",
+    "title": "Northwind call"
+   },
+   {
+    "bm25": -6.535865898637534,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-02T09:00:00Z",
+    "project_id": "atlas",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Northwind</mark> <mark>contract</mark>",
+    "source_ref": "note:n-vendor",
+    "title": "Northwind contract"
+   }
+  ],
+  "page": {
+   "count": 2,
+   "limit": 50,
+   "offset": 0,
+   "total": 2
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 2,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s03|": {
+  "hits": [
+   {
+    "bm25": -0.9608532437380661,
+    "graph_score": 0.0,
+    "kind": "thread",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "<thread time>",
+    "project_id": null,
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Every</mark> posting needs who changed it and when.",
+    "source_ref": "thread:th-audit",
+    "title": "Audit trail"
+   },
+   {
+    "bm25": -8.96004669349282,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-03T09:00:00Z",
+    "project_id": "atlas",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Database</mark> <mark>backups</mark> now run <mark>every</mark> <mark>six</mark> <mark>hours</mark>. Restore drills happen on the first Monday of each month.",
+    "source_ref": "note:n-backup",
+    "title": "Backup schedule"
+   },
+   {
+    "bm25": -1.4213416127509686,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 2,
+    "normalized_score": 0.0,
+    "occurred_at": "2026-09-09T09:00:00Z",
+    "project_id": null,
+    "rank": 3,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Every</mark> new engineer gets a buddy and ships a small fix in the first week.",
+    "source_ref": "note:n-onboarding",
+    "title": "New hire onboarding"
+   }
+  ],
+  "page": {
+   "count": 3,
+   "limit": 50,
+   "offset": 0,
+   "total": 3
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 3,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s04|": {
+  "hits": [
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-12T08:00:00Z",
+    "project_id": "atlas",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "A late change broke the last trial run. No deploys to the finance services for five days before the cutover. Urgent fixes need two approvals. []",
+    "source_ref": "desk_decision:dd-freeze",
+    "title": "Code freeze before cutover"
+   },
+   {
+    "bm25": -7.134747904365949,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-05T09:00:00Z",
+    "project_id": null,
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The <mark>budget</mark> stays flat. <mark>Travel</mark> is <mark>cut</mark> by a third and the tooling line grows.",
+    "source_ref": "note:n-budget",
+    "title": "Budget for next year"
+   }
+  ],
+  "page": {
+   "count": 2,
+   "limit": 50,
+   "offset": 0,
+   "total": 2
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 2,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s05|": {
+  "hits": [
+   {
+    "bm25": -5.302207970129016,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-06T09:00:00Z",
+    "project_id": null,
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "We agreed to <mark>hire</mark> two <mark>backend</mark> <mark>engineers</mark> and one designer for the platform team before spring.",
+    "source_ref": "note:n-hiring",
+    "title": "Hiring plan"
+   },
+   {
+    "bm25": -1.1684063039769939,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-04T12:00:00",
+    "project_id": "harbor",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Quarter one ships offline mode. Quarter two ships tablet layout.\n\nPush notifications wait until the <mark>backend</mark> supports topics.",
+    "source_ref": "artifact:a-roadmap",
+    "title": "Harbor roadmap"
+   },
+   {
+    "bm25": -2.2178887927698527,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 2,
+    "normalized_score": 0.0,
+    "occurred_at": "2026-09-09T09:00:00Z",
+    "project_id": null,
+    "rank": 3,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "New <mark>hire</mark> onboarding",
+    "source_ref": "note:n-onboarding",
+    "title": "New hire onboarding"
+   }
+  ],
+  "page": {
+   "count": 3,
+   "limit": 50,
+   "offset": 0,
+   "total": 3
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 3,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s06|": {
+  "hits": [
+   {
+    "bm25": -5.83050229609996,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-07T09:00:00Z",
+    "project_id": null,
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The team <mark>offsite</mark> is in <mark>Lisbon</mark> in March. Priya books the venue.",
+    "source_ref": "note:n-offsite",
+    "title": "Offsite"
+   }
+  ],
+  "page": {
+   "count": 1,
+   "limit": 50,
+   "offset": 0,
+   "total": 1
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 1,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s07|": {
+  "hits": [
+   {
+    "bm25": -8.691939248657258,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-11T09:00:00Z",
+    "project_id": "harbor",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Customer</mark> <mark>churn</mark> rose in the <mark>third</mark> <mark>quarter</mark> among small accounts. Most cancellations cite missing invoices export.",
+    "source_ref": "note:n-churn",
+    "title": "Churn review"
+   },
+   {
+    "bm25": -1.658773716526924,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-04T12:00:00",
+    "project_id": "harbor",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Quarter</mark> one ships offline mode. <mark>Quarter</mark> two ships tablet layout.\n\nPush notifications wait until the backend supports topics.",
+    "source_ref": "artifact:a-roadmap",
+    "title": "Harbor roadmap"
+   },
+   {
+    "bm25": -1.3868217509146883,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 2,
+    "normalized_score": 0.0,
+    "occurred_at": "2026-09-05T09:00:00Z",
+    "project_id": null,
+    "rank": 3,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The budget stays flat. Travel is cut by a <mark>third</mark> and the tooling line grows.",
+    "source_ref": "note:n-budget",
+    "title": "Budget for next year"
+   }
+  ],
+  "page": {
+   "count": 3,
+   "limit": 50,
+   "offset": 0,
+   "total": 3
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 3,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s07|harbor": {
+  "hits": [
+   {
+    "bm25": -8.691939248657258,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-11T09:00:00Z",
+    "project_id": "harbor",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Customer</mark> <mark>churn</mark> rose in the <mark>third</mark> <mark>quarter</mark> among small accounts. Most cancellations cite missing invoices export.",
+    "source_ref": "note:n-churn",
+    "title": "Churn review"
+   },
+   {
+    "bm25": -1.658773716526924,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-04T12:00:00",
+    "project_id": "harbor",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "<mark>Quarter</mark> one ships offline mode. <mark>Quarter</mark> two ships tablet layout.\n\nPush notifications wait until the backend supports topics.",
+    "source_ref": "artifact:a-roadmap",
+    "title": "Harbor roadmap"
+   }
+  ],
+  "page": {
+   "count": 2,
+   "limit": 50,
+   "offset": 0,
+   "total": 2
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 2,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s08|": {
+  "hits": [
+   {
+    "bm25": -5.720547704830062,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-03T12:00:00",
+    "project_id": "atlas",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "A <mark>retry</mark> <mark>bug</mark> sent some supplier <mark>payments</mark> twice on Tuesday. Finance reversed them the next morning.\n\nWe added an idempotency key.",
+    "source_ref": "artifact:a-incident",
+    "title": "Incident report: duplicate payments"
+   }
+  ],
+  "page": {
+   "count": 1,
+   "limit": 50,
+   "offset": 0,
+   "total": 1
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 1,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s09|": {
+  "hits": [
+   {
+    "bm25": -1.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-13T08:00:00Z",
+    "project_id": "harbor",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Technicians lose signal underground. Forms save on the device and sync when a connection returns. Conflict handling is last write wins per field. []",
+    "source_ref": "desk_decision:dd-offline",
+    "title": "Offline first for forms"
+   },
+   {
+    "bm25": -4.147578033800686,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-04T12:00:00",
+    "project_id": "harbor",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Quarter one ships <mark>offline</mark> <mark>mode</mark>. Quarter two ships tablet layout.\n\nPush notifications wait until the backend supports topics.",
+    "source_ref": "artifact:a-roadmap",
+    "title": "Harbor roadmap"
+   }
+  ],
+  "page": {
+   "count": 2,
+   "limit": 50,
+   "offset": 0,
+   "total": 2
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 2,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s10|": {
+  "hits": [
+   {
+    "bm25": -4.1927245720589195,
+    "graph_score": 0.0,
+    "kind": "meeting",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-14T10:00:00",
+    "project_id": "atlas",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The trial run of the ledger import finished. Two <mark>currency</mark> <mark>accounts</mark> did not match.",
+    "source_ref": "meeting:m-atlas-sync",
+    "title": "Atlas weekly sync"
+   },
+   {
+    "bm25": -1.9404331786890237,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-11T09:00:00Z",
+    "project_id": "harbor",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Customer churn rose in the third quarter among small <mark>accounts</mark>. Most cancellations cite missing invoices export.",
+    "source_ref": "note:n-churn",
+    "title": "Churn review"
+   }
+  ],
+  "page": {
+   "count": 2,
+   "limit": 50,
+   "offset": 0,
+   "total": 2
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 2,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s11|": {
+  "hits": [
+   {
+    "bm25": -3.0,
+    "graph_score": 0.0,
+    "kind": "desk_decision",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-11T08:00:00Z",
+    "project_id": "atlas",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "The old system runs on a mainframe file store. The new ledger stores entries in Postgres with monthly partitions. Reporting queries move to a read replica. []",
+    "source_ref": "desk_decision:dd-postgres",
+    "title": "Use Postgres for the new ledger"
+   }
+  ],
+  "page": {
+   "count": 1,
+   "limit": 50,
+   "offset": 0,
+   "total": 1
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 1,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s12|": {
+  "hits": [
+   {
+    "bm25": -0.9228018281444793,
+    "graph_score": 0.0,
+    "kind": "thread",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "<thread time>",
+    "project_id": null,
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Customers keep asking for a <mark>CSV</mark> <mark>export</mark> of <mark>invoices</mark>.",
+    "source_ref": "thread:th-export",
+    "title": "Invoices export"
+   },
+   {
+    "bm25": -3.8808663573780473,
+    "graph_score": 0.0,
+    "kind": "note",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-11T09:00:00Z",
+    "project_id": "harbor",
+    "rank": 2,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Customer churn rose in the third quarter among small accounts. Most cancellations cite missing <mark>invoices</mark> <mark>export</mark>.",
+    "source_ref": "note:n-churn",
+    "title": "Churn review"
+   },
+   {
+    "bm25": -1.0963812578414258,
+    "graph_score": 0.0,
+    "kind": "artifact",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-02T12:00:00",
+    "project_id": "atlas",
+    "rank": 3,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Step one: freeze postings in the old ledger.\n\nStep two: <mark>export</mark> balances.\n\nStep three: reconcile totals before opening the new books.",
+    "source_ref": "artifact:a-runbook",
+    "title": "Cutover runbook"
+   }
+  ],
+  "page": {
+   "count": 3,
+   "limit": 50,
+   "offset": 0,
+   "total": 3
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 3,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ },
+ "s13|": {
+  "hits": [
+   {
+    "bm25": -5.153231226478755,
+    "graph_score": 0.0,
+    "kind": "meeting",
+    "kind_rank": 1,
+    "normalized_score": 1.0,
+    "occurred_at": "2026-09-17T11:00:00",
+    "project_id": "harbor",
+    "rank": 1,
+    "related_to": null,
+    "relationship": null,
+    "retrieval_origin": "lexical",
+    "snippet": "Tickets about failed <mark>photo</mark> <mark>uploads</mark> doubled.",
+    "source_ref": "meeting:m-support",
+    "title": "Support review"
+   }
+  ],
+  "page": {
+   "count": 1,
+   "limit": 50,
+   "offset": 0,
+   "total": 1
+  },
+  "ranking": {
+   "interleave": "lexical_seed_then_typed_one_hop_neighbours",
+   "method": "per_kind_bm25_interleave",
+   "normalization": "min_max_within_kind",
+   "parent_context": "matching transcript segments and message parts return their parent meeting or thread",
+   "relationship_expansion": {
+    "expanded_count": 0,
+    "lexical_count": 1,
+    "max_neighbours_per_seed": 2,
+    "max_results": 64,
+    "max_seeds": 32,
+    "method": "authoritative_typed_one_hop"
+   }
+  }
+ }
+}

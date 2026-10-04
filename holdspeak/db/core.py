@@ -38,6 +38,7 @@ from . import (  # noqa: F401
     steward as _m34,
     proposals as _m35,
     channels as _m36,
+    memory_index as _m37,
 )
 
 from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401  re-exported

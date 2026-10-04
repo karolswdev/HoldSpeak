@@ -126,7 +126,7 @@ _ECOSYSTEM_SPECS: dict[str, dict[str, str]] = {
         "title": "w.title",
         "body": "w.body||' '||COALESCE(w.result,'')",
         "time": "w.last_modified",
-        "active": "w.status!='dismissed'",
+        "active": "w.status!='dismissed' AND w.parked=0",
         "project_id": "COALESCE((SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='workbench_item:'||w.id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1),(SELECT pr.project_id FROM project_resources pr WHERE pr.resource_ref='workbench:'||w.workbench_id AND pr.deleted=0 ORDER BY pr.project_id LIMIT 1))",
         "project": "EXISTS (SELECT 1 FROM project_resources pr WHERE pr.project_id=? AND pr.deleted=0 AND pr.resource_ref IN ('workbench_item:'||w.id,'workbench:'||w.workbench_id))",
     },
@@ -347,6 +347,11 @@ _RELATION_SEED_LIMIT = 32
 _RELATION_RESULT_LIMIT = 64
 _RELATION_NEIGHBOURS_PER_SEED = 2
 _QUERY_TERM_LIMIT = 24
+# The vector retriever (docs/internal/MEMORY-DESIGN.md §3.2): the top 50
+# sources INSIDE the scope.  There is no bound on the walk: a bound spent on
+# sources outside the scope would hide the sources inside it.
+_VECTOR_RESULT_LIMIT = 50
+_MARK = re.compile(r"</?mark>")
 _WORD = re.compile(r"\w+", re.UNICODE)
 _QUERY_STOPWORDS = frozenset(
     "a an and are about did do does for from how i in is it of on or the to was what when where which who why with we you".split()
@@ -382,8 +387,18 @@ class MemorySearchResult:
     offset: int
     lexical_total: int = 0
     expanded_total: int = 0
+    # Set only when the vector retriever ran and its list was fused in.  With
+    # no embedding engine this stays None and the result is the keyword +
+    # relation result, unchanged.
+    fusion: Optional[dict[str, Any]] = None
 
     def to_dict(self) -> dict[str, Any]:
+        payload = self._to_dict()
+        if self.fusion is not None:
+            payload["ranking"]["fusion"] = dict(self.fusion)
+        return payload
+
+    def _to_dict(self) -> dict[str, Any]:
         return {
             "hits": [hit.to_dict() for hit in self.hits],
             "page": {
@@ -407,6 +422,46 @@ class MemorySearchResult:
                 },
             },
         }
+
+
+#: The keyword tables that hold a COPY of the text: kind -> (table, columns).
+_KEYWORD_TABLES: dict[str, tuple[str, tuple[str, ...]]] = {
+    "decision": ("decisions_memory_fts", ("text", "rationale")),
+    "artifact": ("artifacts_memory_fts", ("title", "body_markdown")),
+    "note": ("notes_memory_fts", ("title", "body_markdown")),
+}
+
+
+_SNIPPET_CHARS = 420
+_SNIPPET_LEAD = 120
+
+
+def _window(text: str, terms: Iterable[str], size: int = _SNIPPET_CHARS) -> str:
+    """A snippet cut from text that is ALREADY redacted: the part around the
+    first word of the question, or the start."""
+    flat = " ".join(str(text or "").split())
+    lowered = flat.casefold()
+    found = [position for term in terms if (position := lowered.find(str(term).casefold())) >= 0]
+    start = max(0, (min(found) if found else 0) - _SNIPPET_LEAD)
+    if start:
+        space = flat.find(" ", start)
+        start = space + 1 if 0 <= space < start + _SNIPPET_LEAD else start
+    return ("… " if start else "") + flat[start : start + size]
+
+
+def _redacted(text: Any) -> str:
+    """The last belt on a title or a snippet: redact what the patterns can
+    see in this piece.  It is NOT the defense - a piece cut out of a text can
+    hold part of a secret no pattern knows (``_defend_row`` is the defense:
+    it redacts the whole source and cuts the snippet from that).  A keyword
+    snippet wraps the matched words in ``<mark>``; the marks are kept when
+    the piece holds no secret and dropped when it does."""
+    from ..memory.defense import redact
+
+    value = str(text or "")
+    plain = _MARK.sub("", value)
+    cleaned = redact(plain)
+    return value if cleaned == plain else cleaned
 
 
 def _match_expression(query: str) -> str:
@@ -435,30 +490,69 @@ def _query_terms(query: str) -> list[str]:
 
 
 def rebuild_memory_index(conn: sqlite3.Connection) -> dict[str, int]:
-    """Rebuild all three FTS tables from canonical rows, safely and idempotently."""
+    """Rebuild all three FTS tables from canonical rows, safely and idempotently.
+
+    Admission is ``memory_admits`` (holdspeak/memory/admission.py): the same
+    function the chunk sweep calls, so the keyword index and the chunk index
+    can never disagree about what memory may hold.  The text is redacted
+    (holdspeak/memory/defense.py), as the triggers store it.
+    """
+    from ..memory.admission import memory_admits
+    from ..memory.defense import redact
+
+    promoted = {
+        str(row[0]) for row in conn.execute("SELECT DISTINCT target_ref FROM context_promotions")
+    }
+
+    def admitted(kind: str, sql: str) -> list[dict[str, Any]]:
+        rows = []
+        cursor = conn.execute(sql)
+        # The reconcile calls this on a connection with no row factory.
+        names = [column[0] for column in cursor.description]
+        for raw in cursor:
+            row = dict(zip(names, tuple(raw)))
+            # HS-200-10 (F0/L1, part 3): a full re-index cannot re-admit what
+            # the guarded triggers excluded.  Keyed on the EXISTENCE of a
+            # promotion rather than on its disclosure_state.
+            row["promoted"] = kind == "note" and f"note:{row['id']}" in promoted
+            if memory_admits(kind, row):
+                rows.append(row)
+        return rows
+
     conn.execute("DELETE FROM decisions_memory_fts")
-    conn.execute(
-        """INSERT INTO decisions_memory_fts(source_id,text,rationale)
-           SELECT id,text,COALESCE(rationale,'') FROM decisions
-           WHERE deleted=0 AND source_state='linked'"""
+    conn.executemany(
+        "INSERT INTO decisions_memory_fts(source_id,text,rationale) VALUES (?,?,?)",
+        [
+            (row["id"], redact(row["text"]), redact(row["rationale"] or ""))
+            for row in admitted(
+                "decision",
+                "SELECT id,text,rationale,deleted,source_state FROM decisions ORDER BY rowid",
+            )
+        ],
     )
     conn.execute("DELETE FROM artifacts_memory_fts")
-    conn.execute(
-        """INSERT INTO artifacts_memory_fts(source_id,title,body_markdown)
-           SELECT id,title,body_markdown FROM artifacts"""
+    conn.executemany(
+        "INSERT INTO artifacts_memory_fts(source_id,title,body_markdown) VALUES (?,?,?)",
+        [
+            (row["id"], redact(row["title"]), redact(row["body_markdown"]))
+            for row in admitted(
+                "artifact", "SELECT id,title,body_markdown FROM artifacts ORDER BY rowid"
+            )
+        ],
     )
     conn.execute("DELETE FROM notes_memory_fts")
-    # HS-200-10 (F0/L1, part 3): a full re-index cannot re-admit what the
-    # guarded triggers excluded.  Same predicate as `notes_memory_ai` /
-    # `notes_memory_au` (holdspeak/db/schema.py), keyed on the EXISTENCE of a
-    # promotion rather than on its disclosure_state.
-    conn.execute(
-        """INSERT INTO notes_memory_fts(source_id,title,body_markdown)
-           SELECT n.id,n.title,n.body_markdown FROM notes n
-           WHERE n.deleted=0
-             AND NOT EXISTS (SELECT 1 FROM context_promotions
-                              WHERE target_ref = 'note:' || n.id)"""
+    conn.executemany(
+        "INSERT INTO notes_memory_fts(source_id,title,body_markdown) VALUES (?,?,?)",
+        [
+            (row["id"], redact(row["title"]), redact(row["body_markdown"]))
+            for row in admitted(
+                "note", "SELECT id,title,body_markdown,deleted FROM notes ORDER BY rowid"
+            )
+        ],
     )
+    # A full merge leaves no token of a row that was deleted above.
+    for table in _KEYWORD_TABLES.values():
+        conn.execute(f"INSERT INTO {table[0]}({table[0]}) VALUES('optimize')")
     counts = {
         "decisions": int(
             conn.execute("SELECT count(*) FROM decisions_memory_fts").fetchone()[0]
@@ -482,6 +576,95 @@ class MemoryRepository(BaseRepository):
     def rebuild(self) -> dict[str, int]:
         with self._connection() as conn:
             return rebuild_memory_index(conn)
+
+    def _defend_row(
+        self, conn: sqlite3.Connection, row: dict[str, Any], terms: Iterable[str] = ()
+    ) -> None:
+        """Memory defense for one row a keyword pass, the relation walk or
+        the recent read made.
+
+        Those passes cut a snippet in SQL, from raw text, before anything
+        can redact it: a window that starts inside a key block has no header
+        for a pattern to see, and a cut can end inside a secret.  So the
+        order here is the other way round.  The source's COMPLETE admitted
+        text is redacted as one text (``redact_source``).  When it holds no
+        secret, the SQL snippet stands.  When it holds one, the snippet is
+        cut again from the redacted text.  A row whose source cannot be read
+        gets no snippet.
+        """
+        if str(row.get("retrieval_origin") or "") == "vector":
+            return  # already cut from the redacted text
+        from ..memory.retain import current_source, redact_source
+
+        ref = str(row.get("source_ref") or "")
+        source = current_source(conn, self._base_ref(ref))
+        if source is None:
+            row["title"] = _redacted(row.get("title"))
+            row["snippet"] = ""
+            return
+        title, units, held_secret = redact_source(source)
+        if not held_secret:
+            return
+        if str(row.get("title") or "") == str(source.title or ""):
+            row["title"] = title
+        else:
+            row["title"] = _redacted(row.get("title"))
+        anchor = ref.partition("#")[2] if ref.startswith("thread:") else ""
+        chosen = [text for unit_anchor, text in units if anchor and unit_anchor == anchor]
+        body = "\n".join(chosen or [text for _anchor, text in units])
+        row["snippet"] = _window(body, terms)
+
+    def scrub_keyword_rows(self, refs: Iterable[str]) -> int:
+        """Redact the keyword-table copy of each named source.
+
+        The triggers copy a row into its keyword table as it is written, in
+        the writer's own transaction, so they cannot call the memory defense.
+        The sweep calls this for every source whose text holds a secret: the
+        copy is replaced by the redacted text, and a merge removes the old
+        tokens.  After it, the secret is not a search key and is in no
+        keyword table.  Returns the number of rows changed.
+        """
+        from ..memory.defense import redact
+
+        changed = 0
+        touched: set[str] = set()
+        with self._connection() as conn:
+            for ref in refs:
+                kind, _, resource_id = str(ref).partition(":")
+                spec = _KEYWORD_TABLES.get(kind)
+                if spec is None:
+                    continue
+                table, columns = spec
+                for row in conn.execute(
+                    f"SELECT rowid,{','.join(columns)} FROM {table} WHERE source_id=?",
+                    (resource_id,),
+                ).fetchall():
+                    clean = [redact(str(row[column] or "")) for column in columns]
+                    if clean == [str(row[column] or "") for column in columns]:
+                        continue
+                    conn.execute(
+                        f"UPDATE {table} SET {','.join(f'{column}=?' for column in columns)}"
+                        " WHERE rowid=?",
+                        (*clean, row["rowid"]),
+                    )
+                    changed += 1
+                    touched.add(table)
+            for table in sorted(touched):
+                conn.execute(f"INSERT INTO {table}({table}) VALUES('optimize')")
+        return changed
+
+    def set_embedder(self, embedder: Any) -> None:
+        """Give recall the engine that embeds a question, or None.
+
+        The memory conductor sets this when ``memory.embed`` has an engine.
+        With None, ``search`` is the keyword + relation search and nothing
+        else runs.
+        """
+        self._embedder = embedder
+
+    @property
+    def embedder(self) -> Any:
+        return getattr(self, "_embedder", None)
 
     @staticmethod
     def _promoted_refs(conn: sqlite3.Connection) -> set[str]:
@@ -546,7 +729,12 @@ class MemoryRepository(BaseRepository):
                     # A store this database does not carry is simply not a
                     # source of recent memory; it is never a lie about one.
                     continue
-                rows.extend(dict(row) for row in found)
+                for row in found:
+                    item = dict(row)
+                    self._defend_row(conn, item)
+                    item["title"] = _redacted(item.get("title"))
+                    item["snippet"] = _redacted(item.get("snippet"))
+                    rows.append(item)
         rows.sort(
             key=lambda row: (str(row.get("occurred_at") or ""), str(row.get("source_ref") or "")),
             reverse=True,
@@ -678,6 +866,7 @@ class MemoryRepository(BaseRepository):
             )
         )
         lexical_total = len(interleaved)
+        lexical_rows = list(interleaved)
         with self._connection() as conn:
             expanded = self._expand_related_rows(
                 conn,
@@ -707,14 +896,36 @@ class MemoryRepository(BaseRepository):
                 woven.extend(by_seed.get(self._base_ref(str(row["source_ref"])), ()))
             interleaved = woven
 
+        fusion: Optional[dict[str, Any]] = None
+        embedder = self.embedder
+        if embedder is not None:
+            fused = self._fuse_with_vectors(
+                query,
+                embedder,
+                lexical_rows=lexical_rows,
+                woven=interleaved,
+                selected=selected,
+                project=project,
+                start=start,
+                end=end,
+                excluded=excluded,
+            )
+            if fused is not None:
+                interleaved, fusion = fused
+
         total = len(interleaved)
-        page = interleaved[bounded_offset : bounded_offset + bounded_limit]
+        page = [dict(row) for row in interleaved[bounded_offset : bounded_offset + bounded_limit]]
+        # Redact the whole source, THEN cut the snippet: every row on the
+        # page, whichever pass made it.
+        with self._connection() as conn:
+            for row in page:
+                self._defend_row(conn, row, terms)
         hits = [
             MemoryHit(
                 kind=str(row["kind"]),
                 source_ref=str(row["source_ref"]),
-                title=str(row["title"]),
-                snippet=str(row["snippet"]),
+                title=_redacted(row["title"]),
+                snippet=_redacted(row["snippet"]),
                 occurred_at=str(row["occurred_at"]),
                 project_id=str(row["project_id"]) if row["project_id"] else None,
                 bm25=float(row["bm25"]),
@@ -736,8 +947,213 @@ class MemoryRepository(BaseRepository):
             bounded_limit,
             bounded_offset,
             lexical_total=lexical_total,
-            expanded_total=max(0, total - lexical_total),
+            expanded_total=(
+                max(0, total - lexical_total)
+                if fusion is None
+                else int(fusion["relation_count"])
+            ),
+            fusion=fusion,
         )
+
+    # ── the vector retriever and the fusion (MEMORY-DESIGN.md §3.2) ──
+
+    def _fuse_with_vectors(
+        self,
+        query: str,
+        embedder: Any,
+        *,
+        lexical_rows: list[dict[str, Any]],
+        woven: list[dict[str, Any]],
+        selected: tuple[str, ...],
+        project: Optional[str],
+        start: Optional[str],
+        end: Optional[str],
+        excluded: set[str],
+    ) -> Optional[tuple[list[dict[str, Any]], dict[str, Any]]]:
+        """Fuse keyword, relation and vector lists by reciprocal rank.
+
+        Returns None when the vector retriever gives nothing (no vectors yet,
+        or the engine failed): the caller then keeps the keyword + relation
+        result exactly as it is.
+        """
+        from ..memory.fusion import RRF_K, reciprocal_rank_fusion
+
+        try:
+            vector_rows = self._vector_rows(
+                query, embedder, selected=selected, project=project,
+                start=start, end=end, excluded=excluded,
+            )
+        except Exception as exc:  # the engine is optional; recall never fails on it
+            from ..logging_config import get_logger
+
+            get_logger("db.memory").warning("memory vector retriever skipped: %s", exc)
+            return None
+        if not vector_rows:
+            return None
+        relation_rows = [row for row in woven if row.get("related_to")]
+        lists = {
+            "keyword": [self._base_ref(str(row["source_ref"])) for row in lexical_rows],
+            "relation": [self._base_ref(str(row["source_ref"])) for row in relation_rows],
+            "vector": [self._base_ref(str(row["source_ref"])) for row in vector_rows],
+        }
+        first: dict[str, dict[str, Any]] = {}
+        for rows in (lexical_rows, relation_rows, vector_rows):
+            for row in rows:
+                first.setdefault(self._base_ref(str(row["source_ref"])), row)
+        fused_rows = [
+            first[str(key)] for key, _score, _found in reciprocal_rank_fusion(lists)
+        ]
+        meta = {
+            "method": "reciprocal_rank_fusion",
+            "k": RRF_K,
+            "retrievers": [name for name, keys in lists.items() if keys],
+            "model_id": str(embedder.model_id),
+            "keyword_count": len(lexical_rows),
+            "relation_count": len(relation_rows),
+            "vector_count": len(vector_rows),
+        }
+        return fused_rows, meta
+
+    def _vector_rows(
+        self,
+        query: str,
+        embedder: Any,
+        *,
+        selected: tuple[str, ...],
+        project: Optional[str],
+        start: Optional[str],
+        end: Optional[str],
+        excluded: set[str],
+    ) -> list[dict[str, Any]]:
+        """The best chunk per source, nearest first, inside the scope.
+
+        Three rules, each applied to a candidate BEFORE it takes one of the
+        50 places:
+
+        1. **Scope.**  Kinds, excluded refs, project and time.  The walk has no
+           bound, so sources outside a project can never use up the places of
+           the sources inside it.
+        2. **Admission now.**  ``current_source`` reads the live row through
+           the sweep's own reader and ``memory_admits``.  A source that is
+           gone, parked, sensitive, promoted or deleted since the last sweep
+           is not a candidate, whatever the index holds.
+        3. **The text is the text of now.**  The source is cut again and the
+           candidate must be a chunk of that cut, with the hash its vector was
+           made from.  The snippet is that fresh, redacted text - never the
+           stored chunk - so recall returns nothing the keyword path would
+           not return.  A vector made from an older text is dropped.
+        """
+        import numpy as np
+
+        from ..memory.retain import current_source, prepare_current
+
+        index = self._db.memory_index
+        matrix, chunk_ids, source_refs, chunk_shas = index.matrix(str(embedder.model_id))
+        if matrix.shape[0] == 0:
+            return []
+        question = np.asarray(embedder.embed_query(query), dtype=np.float32)
+        if question.shape != (matrix.shape[1],):
+            return []
+        scores = matrix @ question
+        rows: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        with self._connection() as conn:
+            for position in np.argsort(-scores, kind="stable"):
+                if len(rows) >= _VECTOR_RESULT_LIMIT:
+                    break
+                position = int(position)
+                ref = source_refs[position]
+                if ref in seen:
+                    continue  # a nearer chunk of this source was already judged
+                seen.add(ref)
+                kind, _, resource_id = ref.partition(":")
+                if kind not in selected or ref in excluded:
+                    continue
+                if project and not self._ref_in_project(conn, kind, resource_id, project):
+                    continue
+                source = current_source(conn, ref)
+                if source is None:
+                    continue
+                occurred_at = str(source.occurred_at or "")
+                if not self._in_time(kind, occurred_at, start, end):
+                    continue
+                _sha, fresh = prepare_current(source)
+                chunk = next(
+                    (
+                        item for item in fresh
+                        if item["id"] == chunk_ids[position]
+                        and item["content_sha"] == chunk_shas[position]
+                    ),
+                    None,
+                )
+                if chunk is None:
+                    continue
+                source_ref = ref
+                if kind == "thread" and str(chunk["anchor"] or ""):
+                    # The keyword pass names the matching message; so does this.
+                    source_ref = f"{ref}#{chunk['anchor']}"
+                score = float(scores[position])
+                rows.append(
+                    {
+                        "kind": kind,
+                        "source_ref": source_ref,
+                        "title": _redacted(source.title),
+                        "snippet": str(chunk["text"])[:420],
+                        "occurred_at": occurred_at,
+                        "project_id": project or self._project_of(conn, kind, resource_id),
+                        "bm25": 0.0,
+                        "normalized_score": max(0.0, min(1.0, score)),
+                        "kind_rank": len(rows) + 1,
+                        "retrieval_origin": "vector",
+                    }
+                )
+        return rows
+
+    @classmethod
+    def _ref_in_project(
+        cls, conn: sqlite3.Connection, kind: str, resource_id: str, project: str
+    ) -> bool:
+        """The project rule of the keyword pass, for one ref."""
+        spec = _ECOSYSTEM_SPECS.get(kind)
+        if spec is None:
+            return cls._in_project(conn, kind, resource_id, project)
+        clause = spec["project"]
+        return (
+            conn.execute(
+                f"SELECT 1 FROM {spec['table']} {spec['alias']}"
+                f" WHERE {spec['id']}=? AND {clause}",
+                [resource_id, *([project] * clause.count("?"))],
+            ).fetchone()
+            is not None
+        )
+
+    @staticmethod
+    def _project_of(conn: sqlite3.Connection, kind: str, resource_id: str) -> Optional[str]:
+        """The project a hit names when the search has no project scope."""
+        spec = _ECOSYSTEM_SPECS.get(kind) or (
+            _RECENT_SPECS.get(kind) if kind != "thread" else None
+        )
+        if spec is None:
+            return None
+        row = conn.execute(
+            f"SELECT {spec['project_id']} FROM {spec['table']} {spec['alias']}"
+            f" WHERE {spec['id']}=?",
+            (resource_id,),
+        ).fetchone()
+        return str(row[0]) if row is not None and row[0] else None
+
+    @staticmethod
+    def _in_time(kind: str, occurred_at: str, start: Optional[str], end: Optional[str]) -> bool:
+        if not start and not end:
+            return True
+        if kind == "thread":
+            # A thread time is 'YYYY-MM-DD HH:MM:SS'; compare like with like.
+            def norm(value: str) -> str:
+                return value.replace("T", " ")[:19]
+
+            value = norm(occurred_at)
+            return not ((start and value < norm(start)) or (end and value > norm(end)))
+        return not ((start and occurred_at < start) or (end and occurred_at > end))
 
     @staticmethod
     def _normalize_kinds(kinds: Optional[Iterable[str]]) -> tuple[str, ...]:
@@ -1541,7 +1957,7 @@ class MemoryRepository(BaseRepository):
                           substr(w.body||' '||COALESCE(w.result,''),1,420) snippet,
                           w.last_modified occurred_at,
                           COALESCE((SELECT project_id FROM project_resources WHERE resource_ref='workbench_item:'||w.id AND deleted=0 ORDER BY project_id LIMIT 1),(SELECT project_id FROM project_resources WHERE resource_ref='workbench:'||w.workbench_id AND deleted=0 ORDER BY project_id LIMIT 1)) project_id
-                   FROM workbench_items w WHERE w.id=? AND w.status!='dismissed'""",
+                   FROM workbench_items w WHERE w.id=? AND w.status!='dismissed' AND w.parked=0""",
                 (resource_id,),
             ).fetchone()
         elif kind == "cadence":

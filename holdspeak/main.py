@@ -344,6 +344,10 @@ Logs are written to: {LOG_FILE}
         "rebuild-index",
         help="Rebuild the materialized Decision, Artifact, and Note memory indexes",
     )
+    memory_subparsers.add_parser(
+        "rebuild",
+        help="Drop the memory index and build it again from the source tables",
+    )
 
     # Doctor subcommand
     doctor_parser = subparsers.add_parser(
@@ -522,8 +526,22 @@ Logs are written to: {LOG_FILE}
         raise SystemExit(run_device_psk_command(args))
 
     if args.command == "memory":
-        if getattr(args, "memory_action", None) != "rebuild-index":
-            print("usage: holdspeak memory rebuild-index")
+        action = getattr(args, "memory_action", None)
+        if action == "rebuild":
+            # MEMORY-DESIGN.md §3.1: memory is an index.  Drop every derived
+            # row and build it again from the source tables.
+            # The vectors are made by the hub's memory.embed engine on its
+            # next sweep; this command needs no model.
+            from .db import get_database
+            from .memory.retain import rebuild
+
+            counts = rebuild(get_database())
+            print("Memory rebuilt: " + ", ".join(
+                f"{key}={value}" for key, value in counts.items()
+            ))
+            return
+        if action != "rebuild-index":
+            print("usage: holdspeak memory rebuild-index | rebuild")
             raise SystemExit(2)
         from .db import get_database
 
