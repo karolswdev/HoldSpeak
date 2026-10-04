@@ -309,6 +309,37 @@ and id of each change.
 | Steward run, Ask answer | `steward_runs`, `ask_results` (`schema.py:4294`, `:2274`) | run / answer saved | one | no |
 | Project item, workbench item, cadence | as today | create / update | one | no |
 
+**Built (2026-10-04, slice 2):** the readers are in `memory/retain.py`
+(`SOURCE_READERS`), the rules in `memory/admission.py`.
+
+- Meeting summary and topics: the `meeting` reader holds them (since
+  #786), packed with the transcript turns. One chunk per summary and per
+  topic is not built: a new cut drops every old meeting vector until the
+  new ones are embedded, and nothing yet keeps the old vectors serving
+  (see Versions below).
+- Commitments: no kind of their own. Each commitment writes its
+  `action_items` row (task, owner, due) in the same transaction, and the
+  `action` kind holds that row.
+- The Brief: `brief_item`, one per `monday_brief_items` row. A row for a 1:1
+  commitment is left out whole (People custody).
+- Dictation: `dictation`, one per journal entry. A dry run is left out.
+- Steward run: `steward_run`, a finished run only. The text is the outcome,
+  the reason, the proposals and the action count, not the JSON.
+- Ask answer: `ask_answer`, a Room ask (`project_ask_tasks`, the only Ask
+  that keeps its question) with its answer, until he discards it. Other Ask
+  answers are unkept output; an answer he keeps is an artifact.
+- None of the four new kinds has a Desk window that opens one record:
+  each is in `NO_WINDOW_REF_KINDS`.
+- Keyword search for the four kinds reads `memory_chunks_fts`. The sweep
+  writes it, so it works with no engine. A hit must be a chunk of the live
+  text (same id and hash), so an edited source is not found by its old
+  words. Their time filter compares instants (`timeparse.instant`).
+- `CHUNKER_VERSION` 2 fills the keyword table. It cuts each source as 1
+  did, so every vector stays. The wake reaches `ask_answer`
+  (change kind `ask_task`) and `steward_run` (change kind `steward`, on
+  stop). The other writers send no change that names the row; the slow
+  sweep (120 s) finds those rows.
+
 **Steps, each idempotent and resumable:**
 
 1. **Admit.** One function, `memory_admits(kind, row)`, holds every exclusion

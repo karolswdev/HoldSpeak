@@ -218,6 +218,33 @@ def _threads(
         )
 
 
+def _steward_text(raw: Any) -> list[tuple[str, str]]:
+    """What a steward run did, in words: the outcome, why it stopped, what it
+    proposed and how many actions it took.  Never the raw JSON."""
+    try:
+        summary = json.loads(str(raw or "{}"))
+    except (TypeError, ValueError):
+        summary = {}
+    if not isinstance(summary, dict):
+        summary = {}
+    lines = [f"Outcome: {summary.get('outcome') or 'unknown'}"]
+    if summary.get("reason"):
+        lines.append(f"Reason: {summary['reason']}")
+    error = summary.get("error")
+    if isinstance(error, dict) and error.get("message"):
+        lines.append(f"Error: {error['message']}")
+    phases = summary.get("phase_results")
+    phases = phases if isinstance(phases, dict) else {}
+    proposed = phases.get("propose") or phases.get("compare") or {}
+    for proposal in (proposed.get("proposals") or []) if isinstance(proposed, dict) else []:
+        if isinstance(proposal, dict) and str(proposal.get("title") or "").strip():
+            lines.append(_text("Proposed:", proposal.get("title"), proposal.get("rationale")))
+    act = phases.get("act")
+    if isinstance(act, dict) and "actions_taken" in act:
+        lines.append(f"Actions taken: {act['actions_taken']}")
+    return [("", "\n".join(lines))]
+
+
 def _readers() -> dict[str, Reader]:
     return {
         "decision": _simple(
@@ -316,6 +343,24 @@ def _readers() -> dict[str, Reader]:
         "project_update": _spec("project_update", "u.lifecycle lifecycle"),
         "prep_brief": _spec("prep_brief", "b.lifecycle lifecycle"),
         "calendar_event": _spec("calendar_event"),
+        # Slice 2 (§3.1): the Brief's items, dictation, steward runs and Room
+        # asks.  Keyword search reads them from memory_chunks_fts.
+        "brief_item": _spec("brief_item", "bi.source_ref source_ref,bi.text item_text"),
+        "dictation": _spec("dictation", "j.source source"),
+        "steward_run": _simple(
+            "steward_run",
+            "SELECT sr.id id,sr.state state,sr.summary_json summary_json,"
+            "COALESCE(sr.completed_at,sr.updated_at) occurred_at,"
+            "COALESCE((SELECT p.name FROM projects p WHERE p.id=sr.project_id),sr.project_id)"
+            "||' steward run' title FROM steward_runs sr",
+            "sr.id",
+            lambda row: (str(row["title"]), row["occurred_at"], _steward_text(row["summary_json"])),
+        ),
+        "ask_answer": _spec(
+            "ask_answer",
+            "q.state state,EXISTS (SELECT 1 FROM ask_results a"
+            " WHERE a.invocation_id=q.invocation_id) answered",
+        ),
     }
 
 
@@ -540,6 +585,11 @@ _CHANGE_KINDS: dict[str, tuple[str, ...]] = {
     "update": ("project_update",),
     "brief": ("prep_brief",),
     "event": ("calendar_event",),
+    # POST /api/ask-tasks/{id}/discard|resume|stopped (web/announce.py).
+    "ask_task": ("ask_answer",),
+    # POST /api/steward/runs/{id}/stop.  A run that ends on its own thread
+    # sends no change: the slow full sweep sees it.
+    "steward": ("steward_run",),
 }
 
 

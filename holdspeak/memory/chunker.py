@@ -11,7 +11,13 @@ import re
 from dataclasses import dataclass
 from typing import Iterable, Sequence
 
-CHUNKER_VERSION = 1
+#: 2 (2026-10-04): every chunk has its row in ``memory_chunks_fts``.  The bump
+#: makes the sweep write every source again once, which fills the keyword
+#: table.  The cut itself is the cut of 1: each source gets the same chunk
+#: ids and texts, so each vector stays and recall has no gap.  (A version
+#: that changes the cut must first keep the old vectors serving until the
+#: new ones exist, MEMORY-DESIGN.md §3.1 Versions; nothing does that yet.)
+CHUNKER_VERSION = 2
 CHUNK_CHARS = 1200
 
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")

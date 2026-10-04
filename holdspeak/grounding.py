@@ -540,6 +540,24 @@ def _hydrate_qualified(
                 text,
             )
         ], []
+    if kind in {"brief_item", "dictation", "steward_run", "ask_answer"}:
+        # Memory's slice 2 kinds: the text memory holds, read through the
+        # sweep's own reader and admission (one rule for both).
+        from .memory.retain import current_source
+
+        with db._connection() as conn:
+            source = current_source(conn, ref)
+        if source is None:
+            return [], [ref]
+        text = _defended("\n".join(str(unit) for _anchor, unit in source.units))
+        if len(text) > GROUNDING_TRANSCRIPT_CAP:
+            text = text[:GROUNDING_TRANSCRIPT_CAP] + "\n[content cut at grounding cap]"
+        return [
+            GroundingBlock(
+                kind, resource_id, _defended(source.title or resource_id),
+                str(source.occurred_at or ""), text,
+            )
+        ], []
     if kind == "thread":
         # Search identifies the best matching message as ``thread:id#message``;
         # grounding returns the coherent parent conversation.

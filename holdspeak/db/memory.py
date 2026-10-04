@@ -37,8 +37,35 @@ _KIND_ORDER = {
     "project_update": 12,
     "prep_brief": 13,
     "calendar_event": 14,
+    # MEMORY-DESIGN.md §3.1, slice 2: kinds held in the chunk index only.  The
+    # keyword retriever reads them from `memory_chunks_fts`
+    # (`_CHUNK_KEYWORD_KINDS`); no LIKE pass and no FTS table of their own.
+    "brief_item": 15,
+    "dictation": 16,
+    "steward_run": 17,
+    "ask_answer": 18,
 }
 _VALID_KINDS = frozenset(_KIND_ORDER)
+
+#: The kinds whose keyword search is `memory_chunks_fts`.  Each has a spec in
+#: `_ECOSYSTEM_SPECS` for its scope, time and recent read; the LIKE pass in
+#: `search` does not read them.
+_CHUNK_KEYWORD_KINDS = ("brief_item", "dictation", "steward_run", "ask_answer")
+
+#: Kinds whose filter compares instants (``timeparse.instant``: a SQLite stamp
+#: is UTC, an offset is exact, a bare ISO time is local wall time).  Their
+#: stores mix those shapes, so a string compare is wrong.
+_INSTANT_TIME_KINDS = frozenset(
+    {"thread", "brief_item", "dictation", "steward_run", "ask_answer"}
+)
+
+#: A Brief row that stands for a 1:1 commitment (People custody).  The Brief
+#: already writes it with no People text (`needs_you_membership.
+#: withhold_people_content`); memory leaves the whole row out.
+_PEOPLE_BRIEF_ROW = (
+    "COALESCE(bi.source_ref,'') NOT LIKE '%people_commitment:%'"
+    " AND COALESCE(bi.source_ref,'') NOT LIKE 'people:%'"
+)
 
 
 def _not_parked(meeting_column: str) -> str:
@@ -231,6 +258,82 @@ _ECOSYSTEM_SPECS: dict[str, dict[str, str]] = {
         ),
     },
 }
+
+# Slice 2 kinds (MEMORY-DESIGN.md §3.1).  None has a Desk window that opens
+# one record, and only the steward run and the Room ask belong to a Project.
+_ECOSYSTEM_SPECS.update({
+    # One item of the Brief.  The Brief writes no People text; the belt
+    # leaves its 1:1 rows out whole.
+    "brief_item": {
+        "table": "monday_brief_items",
+        "alias": "bi",
+        "id": "bi.id",
+        "title": (
+            "'Brief '||COALESCE((SELECT substr(mb.period_end,1,10) FROM monday_briefs mb"
+            " WHERE mb.id=bi.brief_id),'')||' · '||replace(bi.section,'_',' ')"
+        ),
+        "body": "bi.text||COALESCE(' · '||NULLIF(bi.detail,''),'')",
+        "time": (
+            "COALESCE((SELECT mb.generated_at FROM monday_briefs mb"
+            " WHERE mb.id=bi.brief_id),bi.created_at)"
+        ),
+        "active": _PEOPLE_BRIEF_ROW,
+        "project_id": "NULL",
+        "project": "1=0",
+    },
+    # One dictation: what got typed (else what was said).  A dry run is a
+    # test of the pipeline, not something he said.
+    "dictation": {
+        "table": "dictation_journal",
+        "alias": "j",
+        "id": "j.id",
+        "title": "'Dictation'",
+        "body": "COALESCE(NULLIF(j.final_text,''),j.transcript)",
+        "time": "j.created_at",
+        "active": "j.source!='dry_run'",
+        "project_id": "NULL",
+        "project": "1=0",
+    },
+    # A finished steward run.  The chunk text is made in memory/retain.py
+    # from the run summary; this body serves the recent read.
+    "steward_run": {
+        "table": "steward_runs",
+        "alias": "sr",
+        "id": "sr.id",
+        "title": (
+            "COALESCE((SELECT p.name FROM projects p WHERE p.id=sr.project_id),sr.project_id)"
+            "||' steward run'"
+        ),
+        "body": (
+            "sr.state||COALESCE(' · '||json_extract(sr.summary_json,'$.reason'),'')"
+            "||COALESCE(' · '||json_extract(sr.summary_json,'$.error.message'),'')"
+        ),
+        "time": "COALESCE(sr.completed_at,sr.updated_at)",
+        "active": "sr.state IN ('completed','failed','interrupted')",
+        "project_id": "sr.project_id",
+        "project": "sr.project_id=?",
+    },
+    # A Room ask with its answer: the question (`project_ask_tasks.purpose`)
+    # and the answer (`ask_results`).  Other Ask answers keep no question and
+    # are unkept output; an answer he keeps is an artifact.
+    "ask_answer": {
+        "table": "project_ask_tasks",
+        "alias": "q",
+        "id": "q.id",
+        "title": "q.purpose",
+        "body": (
+            "COALESCE((SELECT json_extract(a.payload_json,'$.output') FROM ask_results a"
+            " WHERE a.invocation_id=q.invocation_id),'')"
+        ),
+        "time": "COALESCE(q.settled_at,q.updated_at)",
+        "active": (
+            "q.state!='discarded' AND EXISTS (SELECT 1 FROM ask_results a"
+            " WHERE a.invocation_id=q.invocation_id)"
+        ),
+        "project_id": "q.project_id",
+        "project": "q.project_id=?",
+    },
+})
 
 # The meeting's summary and topics as it reads now: the newest intel snapshot
 # and the topic rows (inventory C, gap 6). Shared by the lexical summary pass
@@ -854,6 +957,11 @@ class MemoryRepository(BaseRepository):
                     by_kind[kind] = self._ecosystem_rows(
                         conn, kind, terms, project, start, end
                     )
+            for kind in _CHUNK_KEYWORD_KINDS:
+                if kind in keyword_kinds:
+                    by_kind[kind] = self._chunk_rows(
+                        conn, kind, expression, project, start, end
+                    )
 
         normalized: dict[str, list[dict[str, Any]]] = {}
         for kind, rows in by_kind.items():
@@ -1369,13 +1477,17 @@ class MemoryRepository(BaseRepository):
     def _in_time(kind: str, occurred_at: str, start: Optional[str], end: Optional[str]) -> bool:
         if not start and not end:
             return True
-        if kind == "thread":
-            # A thread time is 'YYYY-MM-DD HH:MM:SS'; compare like with like.
-            def norm(value: str) -> str:
-                return value.replace("T", " ")[:19]
+        if kind in _INSTANT_TIME_KINDS:
+            # Compare the instants, never the strings: 15:00Z and
+            # 09:00-06:00 are one time.
+            from ..memory.timeparse import instant
 
-            value = norm(occurred_at)
-            return not ((start and value < norm(start)) or (end and value > norm(end)))
+            at = instant(occurred_at)
+            low = instant(start) if start else None
+            high = instant(end) if end else None
+            if at is None or (start and low is None) or (end and high is None):
+                return False
+            return not ((low and at < low) or (high and at > high))
         return not ((start and occurred_at < start) or (end and occurred_at > end))
 
     @staticmethod
@@ -1731,6 +1843,79 @@ class MemoryRepository(BaseRepository):
             [*patterns, *where_params],
         ).fetchall()
         return [dict(row) for row in rows]
+
+    @classmethod
+    def _chunk_rows(
+        cls,
+        conn: sqlite3.Connection,
+        kind: str,
+        match: str,
+        project: Optional[str],
+        start: Optional[str],
+        end: Optional[str],
+    ) -> list[dict[str, Any]]:
+        """The keyword retriever over ``memory_chunks_fts`` for one kind.
+
+        The best chunk per source gives the snippet and the score.  Each
+        source is checked as it is NOW (``current_source``: the sweep's reader
+        and ``memory_admits``), so a source deleted, discarded or made People
+        content since the last sweep is never a hit.  Needs no engine: the
+        sweep cuts chunks with no model.
+        """
+        from ..memory.retain import current_source, prepare_current
+
+        found = conn.execute(
+            """SELECT c.source_ref source_ref,s.title title,c.occurred_at occurred_at,
+                      c.id chunk_id,c.content_sha chunk_sha,
+                      snippet(memory_chunks_fts,0,'<mark>','</mark>',' … ',24) snippet,
+                      bm25(memory_chunks_fts) bm25
+               FROM memory_chunks_fts
+               JOIN memory_chunks c ON c.rowid=memory_chunks_fts.rowid
+                AND c.id=memory_chunks_fts.chunk_id
+               JOIN memory_sources s ON s.source_ref=c.source_ref
+                AND s.state='live' AND s.kind=?
+               WHERE memory_chunks_fts MATCH ?
+               ORDER BY bm25 ASC,c.source_ref ASC,c.ordinal ASC""",
+            (kind, match),
+        ).fetchall()
+        rows: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for raw in found:
+            row = dict(raw)
+            ref = str(row["source_ref"])
+            if ref in seen:
+                continue  # a better chunk of this source is already the hit
+            resource_id = ref.partition(":")[2]
+            if project and not cls._ref_in_project(conn, kind, resource_id, project):
+                continue
+            source = current_source(conn, ref)
+            if source is None:
+                continue
+            # The chunk must be a chunk of the text of NOW (same id, same
+            # hash): an edited source is not found by its old words, and
+            # the snippet is live text.  Its other chunks may still match.
+            _sha, fresh = prepare_current(source)
+            if not any(
+                item["id"] == row["chunk_id"] and item["content_sha"] == row["chunk_sha"]
+                for item in fresh
+            ):
+                continue
+            occurred_at = str(source.occurred_at or "")
+            if not cls._in_time(kind, occurred_at, start, end):
+                continue
+            seen.add(ref)
+            rows.append(
+                {
+                    "kind": kind,
+                    "source_ref": ref,
+                    "title": str(row["title"] or ""),
+                    "snippet": str(row["snippet"] or ""),
+                    "occurred_at": occurred_at,
+                    "project_id": cls._project_of(conn, kind, resource_id),
+                    "bm25": float(row["bm25"]),
+                }
+            )
+        return rows
 
     @staticmethod
     def _base_ref(source_ref: str) -> str:
