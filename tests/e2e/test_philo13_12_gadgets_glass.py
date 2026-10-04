@@ -488,3 +488,66 @@ class TestTheGadgets:
                 assert not fails, json.dumps(fails, indent=2, ensure_ascii=False)
             finally:
                 browser.close()
+
+    def test_a_restored_window_is_lifted_above_the_dock_1440(self) -> None:
+        """Astra on PR #805: a window saved at 1440x924 and reopened at
+        1440x900 kept its foot at 848 px, under the Dock (824 px). The
+        window's layout effect runs before the Dock publishes its height;
+        the publish must lift the window. The sizing gadget must own its own
+        centre after the reload, and after the viewport gets smaller.
+        """
+        from playwright.sync_api import sync_playwright
+
+        owns = r"""() => {
+          const shell = document.querySelector(".desk-window-shell[aria-label='Meetings']");
+          const grip = shell.querySelector('.desk-gadget-size');
+          const g = grip.getBoundingClientRect(), s = shell.getBoundingClientRect();
+          const dock = document.querySelector('.desk-dock').getBoundingClientRect();
+          const hit = document.elementFromPoint(g.left + g.width / 2, g.top + g.height / 2);
+          return {owns: Boolean(hit && grip.contains(hit)), hit: hit ? String(hit.className).slice(0, 60) : null,
+            foot: Math.round(s.bottom), dockTop: Math.round(dock.top), vh: innerHeight};
+        }"""
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, 1440)
+            try:
+                page.set_viewport_size({"width": 1440, "height": 924})
+                page.wait_for_timeout(400)
+                _stage(page, "review-meetings")
+                meetings = page.locator(".desk-window-shell[aria-label='Meetings']")
+                meetings.wait_for()
+                page.wait_for_timeout(600)
+                # Snap Meetings to the left half: its foot is the band's foot.
+                title = meetings.locator(".desk-pullout-title").bounding_box()
+                assert title
+                tx, ty = title["x"] + title["width"] / 2, title["y"] + title["height"] / 2
+                page.mouse.move(tx, ty)
+                page.mouse.down()
+                page.mouse.move(1, 460, steps=12)
+                page.mouse.up()
+                page.wait_for_timeout(400)
+                saved = page.evaluate(owns)
+                assert saved["owns"] and saved["foot"] == saved["dockTop"], saved
+                assert saved["foot"] > 900 - 76, saved  # under the Dock at 900 unless lifted
+
+                # The reload at a smaller height: a new page of the same
+                # context (the same saved workspace), never a resize.
+                ctx = page.context
+                page.close()
+                page = ctx.new_page()
+                page.set_viewport_size({"width": 1440, "height": 900})
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _normal_chair(page)
+                meetings = page.locator(".desk-window-shell[aria-label='Meetings']")
+                meetings.wait_for()
+                page.wait_for_timeout(800)
+                reloaded = page.evaluate(owns)
+                assert reloaded["owns"] and reloaded["foot"] <= reloaded["dockTop"], reloaded
+
+                # The viewport gets smaller: the window is clamped again.
+                page.set_viewport_size({"width": 1440, "height": 860})
+                page.wait_for_timeout(700)
+                smaller = page.evaluate(owns)
+                assert smaller["owns"] and smaller["foot"] <= smaller["dockTop"], smaller
+                assert not errors, errors
+            finally:
+                browser.close()

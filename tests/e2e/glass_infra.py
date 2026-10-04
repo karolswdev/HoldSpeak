@@ -562,12 +562,23 @@ def pick_wing(page: Any, label: str) -> None:
     Button (``.surface-strip-menu``, the current face + ▾); the face is then
     a checked row of its menu. A strip that fits stays tabs.
     """
+    # The fold is measured after the first layout: a strip can show as tabs
+    # for a moment and then fold. Wait for the wings, then take the form that
+    # is on the glass; a tab that left before the click is a fold, so look again.
     strip = page.locator(".desk-wings .surface-strip-menu")
-    if strip.count():
-        strip.first.click()
-        page.get_by_role("menuitemcheckbox", name=label).click()
-    else:
-        page.get_by_role("tab", name=label).click()
+    tab = page.get_by_role("tab", name=label)
+    page.locator(".desk-wings").first.wait_for(timeout=15000)
+    for _ in range(20):
+        if strip.count():
+            strip.first.click()
+            page.get_by_role("menuitemcheckbox", name=label).click()
+            return
+        try:
+            tab.click(timeout=1500)
+            return
+        except Exception:  # noqa: BLE001 - the strip folded under the click; look again
+            continue
+    raise AssertionError(f"no window face named {label!r}: no tab and no strip menu")
 
 
 # ── _normal_chair: cross the First Sentence gate ──

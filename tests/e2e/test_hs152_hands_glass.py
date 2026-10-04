@@ -709,19 +709,22 @@ def test_allow_always_auto_admit(hub: dict) -> None:
             tid_once = r2["payload"]["id"]
             _open_thread(page, url, tid_once)
 
-            composer = page.locator(".thread-composer-input")
+            # The Desk restores the first thread's window on this reload, so two
+            # threads are open: every locator stays in the Once Only window.
+            once = page.get_by_role("region", name=f"Once Only {width}")
+            composer = once.locator(".thread-composer-input")
             composer.wait_for(timeout=10000)
             composer.fill("Create a note once")
-            page.locator("button.desk-chip", has_text="Send").click()
+            once.locator("button.desk-chip", has_text="Send").click()
 
-            decision_box = page.locator('[data-testid="decision-box"]')
+            decision_box = once.locator('[data-testid="decision-box"]')
             try:
                 decision_box.wait_for(timeout=15000)
             except Exception:
                 pass
 
             # Click Allow once (not always)
-            allow_once = page.locator('[data-testid="allow-once"]')
+            allow_once = once.locator('[data-testid="allow-once"]')
             if allow_once.count() > 0:
                 allow_once.click()
                 page.wait_for_timeout(5000)

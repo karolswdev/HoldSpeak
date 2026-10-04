@@ -18,6 +18,7 @@ from pathlib import Path
 import pytest
 
 from scripts.graph_walk import TOKEN, Hub
+from tests.e2e.chair_windows import open_chair_window
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(300, method="thread")]
 
@@ -71,6 +72,11 @@ def test_the_receipt_yields_to_the_verbs(viewport: int, window_width: int | None
                 page.get_by_role("button", name="Continue later").click(timeout=8000)
             except Exception:  # noqa: BLE001 — the gate is optional on a returning desk
                 pass
+            # At 393 the Chair is one window at a time; the capture verbs are in
+            # the Capture window, on demand from the Speak AppIcon (PHILO-13-11 R2).
+            if viewport <= 720:
+                page.locator(".chair").wait_for()
+                open_chair_window(page, "Capture")
             # The desk seeds its Inbox on first load; the thought is filed there.
             page.locator("[data-testid=arrival-develop-thought]").wait_for()
             status, answer = hub.api("PUT", "/api/directories/hs-seed-inbox", {"name": DRAWER})

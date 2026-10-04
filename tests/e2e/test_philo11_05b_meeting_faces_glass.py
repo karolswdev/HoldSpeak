@@ -58,7 +58,9 @@ LEGACY = "https://hooks.slack.com/services/LEGACY/ROW/philo11-05b-legacy-sentine
 SENTINEL = "TRANSCRIPT-SENTINEL-7Q"
 SLACK = "Slack #leads"
 FOLDER = "Team folder"
-MR = ".desk-window [data-seat=meeting]"          # the well in the Meetings record
+# The well in the Meetings record. The Chair's meeting rows (Arrival, The week)
+# draw the same well in their own windows, so the record's window is named.
+MR = ".desk-window:has(.meetings-detail-head) [data-seat=meeting]"
 MW = ".desk-pullout [data-seat=meeting]"         # the well in the meeting window
 DS = "[data-testid=destinations]"
 
@@ -563,7 +565,13 @@ class TestMeetingFacesGlass:
                 mw_width = page.evaluate("(s) => Math.round(document.querySelector(s).closest('.desk-window, .desk-pullout').getBoundingClientRect().width)", MW)
                 c6 = boards.shoot(page, "C6-meeting-window-well", [f"{MW} [data-testid=doc-forms] select", self._row(MW, SLACK)],
                                   seat=f"CENTER:{MW} [data-testid=doc-forms]", anchor=MW)
-                assert c6["history_head"] == "SENDS 1", c6["history_head"]
+                # The history is the meeting's (PHILO-13-15, MeetingSendWell.tsx): every
+                # form's sent rows. By here the summary, the digest and the follow-up
+                # went out once each; the face must say what the hub holds.
+                hub_sent = [r for form in ("meeting_summary", "meeting_digest", "meeting_followup")
+                            for r in self._sends(page, f"{form}:{ids['sync']}") if r["state"] == "sent"]
+                assert len(hub_sent) == 3, hub_sent
+                assert c6["history_head"] == f"SENDS {len(hub_sent)}", c6["history_head"]
                 self._pick(page, MW, SLACK)
                 c6b = boards.shoot(page, "C6c-meeting-window-picked", [f"{self._opened(MW, SLACK)} [data-testid=send-verb]"],
                                    seat=f"CENTER:{self._opened(MW, SLACK)} [data-testid=send-verb]", anchor=MW)

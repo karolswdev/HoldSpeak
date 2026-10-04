@@ -555,9 +555,13 @@ class TestRoomFaceGlass:
                 assert after_copy["delivery_head"] == "DELIVERY"
                 # He leaves and returns (R4-3): Copy's 2 s feedback is gone and
                 # no clipboard state is stored; Mark delivered is still offered.
-                self._room(page, pid)
-                self._updates(page)
-                self._open_update(page, uid)
+                # The Desk remembers (PHILO-13-07 B2): the Room returns on the
+                # update he left, not on its front face.
+                self._stage(page, "open-project-memory", f"project:{pid}")
+                page.locator("[data-testid=update-editor]").wait_for(timeout=T)
+                page.wait_for_timeout(900)
+                _settle(page)
+                assert page.locator("[data-testid=room-body]").count() == 0
                 page.evaluate(FETCH_SEAM)
                 returned = self._facts(page)
                 _shot(page, "deliver-2-returned", width)

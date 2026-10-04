@@ -169,12 +169,24 @@ def test_room_shows_its_meeting_action_as_open(desk):
 
 def test_room_actions_are_not_counted_twice_on_the_desk(desk):
     """The Desk reads a meeting's action through the follow-through board; the
-    Room's new row must not add a second one to the Desk aggregate."""
+    Room's new row must not add a second one to the Desk aggregate.
+
+    Since #788 the hub's answer holds the Door cards too (`items`), so an
+    action is in the answer one time, as its Door card. The Room rows
+    (`roomItems`) still carry no action row.
+    """
     open_page, _ = desk
     page = open_page(1440, 900)
     _api(page, "POST", "/api/settings/heartbeat/run-now")
     aggregate = _api(page, "GET", "/api/desk/needs-you")
-    assert not [row for row in aggregate["items"] if row.get("kind") == "action_item"]
+    assert not [row for row in aggregate["roomItems"] if row.get("kind") == "action_item"]
+    actions = [row for row in aggregate["items"] if row.get("kind") == "action_item"]
+    assert actions, aggregate["items"]
+    assert all(row.get("_isDoor") for row in actions), actions
+    refs = [row["ref"] for row in actions]
+    assert len(refs) == len(set(refs)), refs
+    titles = [row["title"] for row in aggregate["items"]]
+    assert len(titles) == len(set(titles)), titles
 
 
 def test_settings_names_the_missing_engine(desk):
