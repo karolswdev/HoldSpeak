@@ -243,6 +243,25 @@ def test_a_dom_selector_is_code_and_real_failure_copy_beside_it_is_still_read(
     }
 
 
+def test_copy_that_holds_a_bracket_is_still_copy(tmp_path: Path) -> None:
+    """Astra on #783: only a selector-ONLY literal is code. A failure
+    statement with ``[status=503]`` inside it is still read and still owes
+    the failure facts."""
+    face = tmp_path / "face.tsx"
+    face.write_text('detail="The preview request failed [status=503]."\n')
+    contract = replace(
+        PRODUCT_LANGUAGE.copy_contract,
+        primary_surfaces={"web": ("face.tsx",)},
+    )
+    items = inventory(tmp_path, contract)
+    assert [item.text for item in items] == [
+        "The preview request failed [status=503]."
+    ]
+    assert {item.rule_id for item in violations(items, contract)} == {
+        "failure-missing-facts"
+    }
+
+
 def test_copy_contract_covers_postures_failures_and_bounded_exceptions() -> None:
     contract = PRODUCT_LANGUAGE.copy_contract
     assert contract.generic_consequential_verbs == (
