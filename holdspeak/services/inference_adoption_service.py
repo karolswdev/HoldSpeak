@@ -1969,8 +1969,8 @@ class RoutedInferenceCoordinator:
         with self._db._connection() as conn:
             row = conn.execute(
                 """SELECT e.id FROM inference_route_executions e
-                   JOIN inference_operation_request_plans o ON o.id=e.operation_plan_id
-                   WHERE o.operation_id=? ORDER BY e.created_at DESC LIMIT 1""",
+                   JOIN inference_operation_route_request_plans o ON o.id=e.operation_plan_id
+                   WHERE o.operation_id=? ORDER BY o.created_at DESC LIMIT 1""",
                 (_safe(operation_id, field="operation_id"),),
             ).fetchone()
         if row is None:

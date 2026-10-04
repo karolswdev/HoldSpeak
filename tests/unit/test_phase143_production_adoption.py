@@ -1034,3 +1034,78 @@ def test_saved_local_to_cloud_boundary_crossing_and_unsaved_zero_egress(
     assert calls == ["same_device"]
     assert failed["receipt"]["outcome"] == "failed"
     assert [entry["boundary"] for entry in unsaved["route_plan"]["entries"]] == ["local"]
+
+
+def test_migrated_ask_cancelled_after_provider_return_publishes_nothing(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """The MIGRATED (routed) Ask path: the owner cancels while the provider is
+    in flight; the provider then returns.
+
+    The cancel reaches the child through ``stop_operation`` (it queried a table
+    that does not exist and raised, so the late answer was published). No
+    ``ask_results`` row, no PUBLISHED stage, and the receipt records the return.
+    """
+    from holdspeak.services.ask_service import AskService
+    from tests._cancel_after_return import (
+        SIGNAL_FIRST, assert_provider_return_on_record, force_cancel_order,
+    )
+
+    db = Database(tmp_path / "routed-ask-cancel.db")
+    _profile(db, "thought-v2", claims=("language", _result_claim("thought.interview")))
+    _profile(db, "writing-v2", claims=("language", _result_claim("speech.intent_classify")))
+    broker = _configure(db)
+    broker.inference_adoption_service.migrate_legacy_config(
+        OWNER,
+        SimpleNamespace(
+            thoughts=SimpleNamespace(inference_target_id="thought-v2"),
+            dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="writing-v2")),
+        ),
+    )
+    service = AskService(db, broker=broker)
+    settled = force_cancel_order(monkeypatch, SIGNAL_FIRST)
+    cancels: list[Any] = []
+    cancel_ended = threading.Event()
+
+    def cancel() -> None:
+        try:
+            cancels.append(service.cancel(OWNER, "ask_migratedcancel"))
+        except BaseException as exc:  # noqa: BLE001 - the failure is the finding
+            cancels.append(exc)
+        finally:
+            cancel_ended.set()
+
+    class Engine:
+        active_provider = "fixture"
+        active_model = "routed-model"
+
+        def run_prompt(self, **_kwargs: Any) -> str:
+            threading.Thread(target=cancel, daemon=True).start()
+            # Return only when the adapter has answered the cancel signal, or
+            # when the cancel ended with no signal (the defect).
+            deadline = time.monotonic() + 120
+            while not settled.is_set() and not cancel_ended.is_set():
+                assert time.monotonic() < deadline, "the cancel neither settled nor ended"
+                settled.wait(0.01)
+            return "late routed answer"
+
+    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: Engine()
+    try:
+        answer: Any = asyncio.run(service.ask(OWNER, "What changed?", invocation_id="ask_migratedcancel"))
+    except Exception as exc:  # noqa: BLE001 - the refusal is the answer here
+        answer = exc
+    assert cancel_ended.wait(120)
+
+    assert len(cancels) == 1 and not isinstance(cancels[0], BaseException), cancels
+    assert "late routed answer" not in repr(answer)
+    assert isinstance(answer, Exception), answer
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM ask_results").fetchone()[0] == 0
+        assert conn.execute(
+            "SELECT COUNT(*) FROM kernel_projection_stages WHERE state='PUBLISHED'"
+        ).fetchone()[0] == 0
+        children = conn.execute(
+            "SELECT operation_id FROM kernel_operations WHERE name='inference.invoke'"
+        ).fetchall()
+    assert len(children) == 1
+    assert_provider_return_on_record(db, str(children[0][0]), fenced=True)

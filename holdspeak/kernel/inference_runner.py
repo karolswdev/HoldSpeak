@@ -368,7 +368,7 @@ class InferenceRunner:
             # --- streaming dispatch ---
             require_dispatch_context(dispatch_context_of(engine) or context, operation_id=op["operation_id"], attempt_ordinal=getattr(context, "attempt_ordinal", 0))
             mark_dispatch_intent()
-            first_delta_seen = False
+            first_delta_seen = done_seen = False
             collected_text: list[str] = []
             usage_meta: dict[str, Any] = {}
             error_text = ""
@@ -394,7 +394,7 @@ class InferenceRunner:
                         usage_meta = dict(delta.meta)
                         on_delta(delta)
                     elif delta.kind == "done":
-                        on_delta(delta)
+                        done_seen = True; on_delta(delta)
                     elif delta.kind == "error":
                         error_text = delta.text
                         if not first_delta_seen:
@@ -424,7 +424,7 @@ class InferenceRunner:
             # Check for cancellation after the loop.
             if active.cancelled.is_set():
                 local_lease_indeterminate = True
-                return self._finish(active, iid, "indeterminate", runner_signal="physical_outcome_unknown", send_phase="dispatch_intent")
+                return self._finish(active, iid, "indeterminate", runner_signal="physical_outcome_unknown", send_phase="dispatch_intent", returned=done_seen)
 
             # If an error delta arrived after the first delta, it's indeterminate.
             if error_text and first_delta_seen:
