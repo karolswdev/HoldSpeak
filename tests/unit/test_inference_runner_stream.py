@@ -360,3 +360,59 @@ def test_usage_meta_in_published_result(tmp_path: Path) -> None:
     usage = [d for d in received if d.kind == "usage"]
     assert usage and usage[0].meta["prompt_tokens"] == 42
     assert usage[0].meta["completion_tokens"] == 17
+
+
+def test_cancel_after_stream_done_records_the_provider_return_and_fences_it(tmp_path: Path, monkeypatch) -> None:
+    """The real streaming adapter: text and ``done`` arrive, a cancel settles,
+    and then the provider returns.
+
+    The receipt records the known completion (``provider_returned`` /
+    ``cancel_fenced``, result reference kept). The state is ``cancelled``:
+    nothing is staged and no result reference goes back to the caller. The
+    order is forced with events; no wall clock decides the result.
+    """
+    from holdspeak.kernel.prompt_adapter import StreamingPromptAdapter
+    from tests._cancel_after_return import (
+        SIGNAL_FIRST, assert_provider_return_on_record, cancel_child_in_flight,
+        force_cancel_order, invoke_child_operation_id,
+    )
+
+    db, broker, revision = _rig(tmp_path)
+    settled = force_cancel_order(monkeypatch, SIGNAL_FIRST)
+
+    class _StreamEngine:
+        active_provider = "stream-provider"
+        active_model = "stream-model"
+
+        def run_prompt_stream(self, **_kwargs: Any):
+            yield Delta(kind="text", text="whole answer")
+            yield Delta(kind="done")
+            # The provider has completed. A cancel now settles before it returns.
+            cancel_child_in_flight(db, settled, runner.cancel)
+
+    runner = InferenceRunner(
+        broker, db, engine_factory=lambda _revision, **_: _StreamEngine(), principal_provider=lambda: OWNER,
+    )
+    payload = {"messages": [{"role": "user", "content": "hello"}], "ts": "stream-done-cancel"}
+    request = InvocationRequest(
+        deployment_revision=revision.id,
+        definition_origin=ServiceContract.for_payload("stream-probe", "v1", payload),
+        deadline_at=time.time() + 30,
+        payload=payload,
+        invocation_id="stream_done_then_cancel",
+    )
+    received: list[Delta] = []
+    staged: list[Any] = []
+
+    def publish(result: Any) -> str:
+        staged.append(result)
+        return "inference-result:must-not-exist"
+
+    outcome = runner.invoke_stream(request, StreamingPromptAdapter(), on_delta=received.append, publish=publish)
+
+    assert [d.kind for d in received] == ["text", "done"]
+    assert staged == [], "a fenced stream result was staged"
+    assert outcome.outcome == "cancelled" and outcome.result_ref == ""
+    assert_provider_return_on_record(
+        db, invoke_child_operation_id(db, "stream_done_then_cancel"), fenced=True
+    )
