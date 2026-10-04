@@ -232,15 +232,18 @@ def _sha(value: Any) -> str:
     ).hexdigest()
 
 
-def prepare(source: MemorySource) -> tuple[str, list[dict[str, Any]]]:
-    """Redact, hash and chunk one admitted source.
+def _redacted(source: MemorySource) -> tuple[str, list[tuple[str, str]], str]:
+    """Redact one admitted source and hash it.
 
-    Returns ``(content_sha, chunks)``.  The hash is over the REDACTED text, so
-    a secret is never in a hash input that is stored.
+    The hash is over the REDACTED text, so a secret is never in a hash input
+    that is stored.
     """
     title = redact(source.title)
     units = [(anchor, redact(text)) for anchor, text in source.units if str(text or "").strip()]
-    content_sha = _sha([title, source.occurred_at, units, source.pack])
+    return title, units, _sha([title, source.occurred_at, units, source.pack])
+
+
+def _chunks(source: MemorySource, title: str, units: list[tuple[str, str]]) -> list[dict[str, Any]]:
     if source.pack:
         cut = chunk_units(title, units)
     else:
@@ -248,7 +251,7 @@ def prepare(source: MemorySource) -> tuple[str, list[dict[str, Any]]]:
         for anchor, text in units:
             for chunk in chunk_units(title, [(anchor, text)]):
                 cut.append(type(chunk)(ordinal=len(cut), anchor=anchor, text=chunk.text))
-    chunks = [
+    return [
         {
             "id": f"{source.ref}#{chunk.ordinal}",
             "ordinal": chunk.ordinal,
@@ -259,7 +262,12 @@ def prepare(source: MemorySource) -> tuple[str, list[dict[str, Any]]]:
         for chunk in cut
         if chunk.text.strip()
     ]
-    return content_sha, chunks
+
+
+def prepare(source: MemorySource) -> tuple[str, list[dict[str, Any]]]:
+    """Redact, hash and chunk one admitted source: ``(content_sha, chunks)``."""
+    title, units, content_sha = _redacted(source)
+    return content_sha, _chunks(source, title, units)
 
 
 def sweep(
@@ -287,11 +295,7 @@ def sweep(
                 continue
         seen: set[str] = set()
         for source in sources:
-            content_sha, chunks = prepare(source)
-            if not chunks:
-                continue
-            seen.add(source.ref)
-            stats["seen"] += 1
+            title, units, content_sha = _redacted(source)
             known = ledger.get(source.ref)
             if (
                 known is not None
@@ -299,14 +303,22 @@ def sweep(
                 and known["content_sha"] == content_sha
                 and int(known["chunker_version"]) == CHUNKER_VERSION
             ):
+                # Same hash as the ledger: stop.  No chunk work for this source.
+                seen.add(source.ref)
+                stats["seen"] += 1
                 stats["unchanged"] += 1
                 continue
+            chunks = _chunks(source, title, units)
+            if not chunks:
+                continue
+            seen.add(source.ref)
+            stats["seen"] += 1
             if max_sources is not None and stats["written"] >= max_sources:
                 return {**stats, "complete": 0}
             index.replace_source(
                 source_ref=source.ref,
                 kind=source.kind,
-                title=redact(source.title),
+                title=title,
                 occurred_at=source.occurred_at,
                 content_sha=content_sha,
                 chunker_version=CHUNKER_VERSION,
