@@ -69,7 +69,7 @@ describe("every ref the drafters' memory helper returns opens on the Desk", () =
   });
 
   it("the memory names with no Desk window are not openers (so the helper leaves them out)", () => {
-    for (const kind of ["action", "project_item", "decision_record", "cadence", "workbench_item"]) {
+    for (const kind of ["project_item", "decision_record", "cadence", "workbench_item"]) {
       expect(refOpener(`${kind}:x1`)).toBeNull();
     }
   });

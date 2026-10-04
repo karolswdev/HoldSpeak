@@ -572,10 +572,11 @@ describe("Step rows: human labels and receipt refs", () => {
     fireEvent.click(itemRef!);
     expect(mockOpenPrimitive).toHaveBeenCalledWith("item:itm-001");
 
-    // Click the decision ref -> openPrimitive
+    // Click the decision ref -> the one open grammar reads which decision
+    // it is, then opens it.
     const decRef = refChips.find((el) => el.getAttribute("data-ref") === "decision:dec-001");
     fireEvent.click(decRef!);
-    expect(mockOpenPrimitive).toHaveBeenCalledWith("decision:dec-001");
+    await waitFor(() => expect(mockOpenPrimitive).toHaveBeenCalledWith("decision:dec-001"));
   });
 });
 
