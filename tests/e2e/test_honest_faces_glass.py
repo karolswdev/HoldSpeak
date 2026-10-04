@@ -154,6 +154,17 @@ def test_room_shows_its_meeting_action_as_open(desk):
         assert listed.count("OWNER · UNKNOWN") == 2
         assert page.get_by_test_id("needs-you-empty").count() == 0
         _shot(page, "room", width)
+        # Each row has a way to act: Open lands on the action's card in
+        # Follow-through, where an owner is named.
+        opens = page.get_by_test_id("needs-you-open-action")
+        assert opens.count() == 2
+        target = rows.first.locator(".surface-primary").first.inner_text().strip()
+        opens.first.evaluate("el => el.click()")
+        intel = page.locator(".desk-window[aria-label='Intelligence']")
+        intel.wait_for(timeout=15000)
+        intel.locator(".intelligence-segment.is-active", has_text=re.compile("follow-through", re.I)).wait_for(timeout=15000)
+        intel.get_by_text(target).first.wait_for(timeout=15000)
+        _shot(page, "room-open-action", width)
 
 
 def test_room_actions_are_not_counted_twice_on_the_desk(desk):
@@ -236,3 +247,27 @@ def test_intelligence_lane_names_and_decision_rows(desk):
         assert "Freeze the old ledger on Nov 5" in row_text
         assert not re.search(r"D-[0-9a-f]{6,}", row_text)
         _shot(page, "intelligence-decisions", width)
+
+
+def test_trust_scope_names_a_saved_external_destination(desk):
+    """A synced folder sends data out: the lede and the scope say the same."""
+    open_page, tmp_path = desk
+    folder = tmp_path / "home" / "Dropbox" / "Team updates"
+    folder.mkdir(parents=True, exist_ok=True)
+    for index, (width, height) in enumerate(WIDTHS):
+        page = open_page(width, height)
+        if index == 0:
+            saved = _api(page, "POST", "/api/channels/destinations",
+                         {"name": "Synced updates", "channel": "file",
+                          "folder": str(folder), "synced": True})
+            assert saved["destination"]["badge"] == "cloud", saved
+        page.evaluate("() => document.querySelector('.egress-badge-button')?.click()")
+        window = page.locator(".desk-trust-window")
+        window.get_by_text("Synced updates").first.wait_for(timeout=15000)
+        text = window.inner_text()
+        assert "External destinations configured" in text
+        assert "All data stays on this device" not in text
+        scope = window.locator(".surface-setting-row", has_text="Current scope").first.inner_text()
+        assert "this device + external" in scope, scope
+        assert "SENDS OUT" in text
+        _shot(page, "trust-external", width)

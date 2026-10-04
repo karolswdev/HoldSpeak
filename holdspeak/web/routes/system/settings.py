@@ -164,7 +164,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             # Inventory 2026-10-03 (UX-CANON A.10): the hub rows said
             # "Voice LIVE" and "SUMMARY SET ON" with no engine assigned. A
             # switch is not a working path; each row also carries whether its
-            # group has an engine (its own assignment or the default).
+            # work has an engine. A missing key means unknown.
             group_engine: dict[str, bool] = {}
             if ctx.model_library_service is not None:
                 try:
@@ -182,10 +182,24 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                             default_set = row.get("status") == "assigned"
                         elif row.get("status") == "assigned":
                             groups_set += 1
-                        if row.get("id"):
-                            group_engine[str(row["id"])] = row.get("status") == "assigned"
                 except Exception:
                     pass
+                # The engine fact is the EFFECTIVE assignment for the capability
+                # the work runs on, as the runner resolves it (capability, then
+                # its group, then the default). A group row misses a selection
+                # made for one capability (the summary selection writes
+                # `capability:meeting.deferred_analysis`), and said NO ENGINE
+                # after a successful selection (review of #789).
+                for wire_key, capability_id in (
+                    ("meetings", "meeting.deferred_analysis"),
+                    ("voice", "speech.rewrite"),
+                ):
+                    try:
+                        resolved = ctx.inference_assignment_service.resolve_effective(
+                            p, capability_id=capability_id)
+                        group_engine[wire_key] = resolved.get("status") == "assigned"
+                    except Exception:
+                        pass  # unknown: the face makes no engine claim
 
             # Connections: count provider connections.
             connected = 0
@@ -274,11 +288,11 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 "voice": {
                     "live": voice_live,
                     "target": voice_target,
-                    "engineSet": group_engine.get("speech_recognition", False),
+                    "engineSet": group_engine.get("voice"),
                 },
                 "meetings": {
                     "intelligence": intel_on,
-                    "engineSet": group_engine.get("meetings", False),
+                    "engineSet": group_engine.get("meetings"),
                     "auto": config.meeting.intelligence_auto,
                     "auto_record": config.meeting.auto_record,
                     "host": _resolve_meetings_host(config),

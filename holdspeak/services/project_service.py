@@ -1397,7 +1397,6 @@ class ProjectService:
                 "severity": severity,
                 "action_item_id": str(row["id"]),
                 "meeting_id": str(row["meeting_id"] or ""),
-                "meeting_title": str(row["meeting_title"] or ""),
                 "owner": owner,
             })
         return items

@@ -75,8 +75,11 @@ export function TrustWindow() {
     trust?.destinations?.filter((item) => item.enabled) ?? [];
   const inUseDestinations =
     trust?.destinations?.filter((item) => item.enabled || item.saved) ?? [];
+  // The scope is external when transcripts can leave OR any destination
+  // sends out (a synced folder, a repository, an address). It read "this
+  // device" under "External destinations configured" (review of #789).
   const egress =
-    trust?.transcript_egress === "none"
+    trust?.transcript_egress === "none" && enabledDestinations.length === 0
       ? "this device"
       : "this device + external";
 
