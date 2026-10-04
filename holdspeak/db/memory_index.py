@@ -166,6 +166,18 @@ class MemoryIndexRepository(BaseRepository):
             ).fetchall()
         return [dict(row) for row in rows]
 
+    def pending_count(self, model_id: str) -> int:
+        """How many chunks have no current vector for ``model_id``."""
+        with self._connection() as conn:
+            return int(conn.execute(
+                """SELECT count(*) FROM memory_chunks c
+                   LEFT JOIN memory_embeddings e
+                     ON e.item_kind=? AND e.item_id=c.id AND e.model_id=?
+                    AND e.content_sha=c.content_sha
+                   WHERE e.item_id IS NULL""",
+                (CHUNK_ITEM_KIND, model_id),
+            ).fetchone()[0])
+
     def store_vectors(
         self,
         model_id: str,

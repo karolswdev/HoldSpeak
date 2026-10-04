@@ -32,6 +32,9 @@ LOCAL_BATCH = 16
 LOCAL_PAUSE_SECONDS = 0.25
 REMOTE_BATCH = 64
 STOP_JOIN_SECONDS = 60.0
+#: Seconds the conductor waits after a wake before it runs.  A write that
+#: touches many objects (or many writes close together) is then one tick.
+WAKE_GAP_SECONDS = 2.0
 
 _conductor: Optional["MemoryWorker"] = None
 _lock = threading.Lock()
@@ -122,7 +125,8 @@ class MemoryWorker:
             except Exception as exc:  # the thread must not die on one bad tick
                 log.warning("memory conductor tick failed: %s", exc)
                 wait = min(wait, RETRY_SECONDS)
-            self._wake.wait(wait)
+            if self._wake.wait(wait):
+                self._stop.wait(WAKE_GAP_SECONDS)
             self._wake.clear()
 
 
@@ -162,6 +166,12 @@ def stop_memory_conductor(*, timeout: float = STOP_JOIN_SECONDS) -> None:
         )
 
 
+def last_report() -> dict[str, Any]:
+    """What the last tick did, or {} when no conductor runs here."""
+    worker = _conductor
+    return dict(worker.last_report) if worker is not None else {}
+
+
 def wake() -> None:
     """Ask for a tick now.  Speed only: the next tick sees the source anyway."""
     worker = _conductor
@@ -169,4 +179,4 @@ def wake() -> None:
         worker.wake()
 
 
-__all__ = ["MemoryWorker", "start_memory_conductor", "stop_memory_conductor", "tick", "wake"]
+__all__ = ["MemoryWorker", "last_report", "start_memory_conductor", "stop_memory_conductor", "tick", "wake"]

@@ -927,6 +927,16 @@ class MeetingWebServer:
                 getattr(broker, "tool_turn_foundation", None), "_foundation", None
             ),
         )
+        # Meaning search: the one step that gets the local embedding model,
+        # assigns it to ``memory.embed`` and wakes the memory conductor.
+        from .services.meaning_search_service import MeaningSearchService
+
+        memory_service = MemoryService(get_database(), observer=obs)
+        memory_service.meaning = MeaningSearchService(
+            get_database(),
+            assignment_service=inference_assignment_service,
+            broker_provider=lambda: broker,
+        )
         # HS-160-05: extract the delta service so the project_service can
         # use it for the room() review section (mutual composition).
         _project_delta_service = ProjectDeltaService(
@@ -990,7 +1000,7 @@ class MeetingWebServer:
             mesh_service=MeshService(
                 get_database(), observer=obs, token_store=_mesh_token_store()
             ),
-            memory_service=MemoryService(get_database(), observer=obs),
+            memory_service=memory_service,
             mission_control_service=MissionControlService(get_database(), observer=obs),
             reaction_service=ReactionService(
                 get_database(), observer=obs,

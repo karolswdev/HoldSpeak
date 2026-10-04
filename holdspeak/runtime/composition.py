@@ -196,6 +196,16 @@ class RuntimeServices:
     def _send_desk_changed(self, changes: list) -> None:
         """One frame: the first change at the top level (the shape every
         listener already reads), and every change under ``changes``."""
+        if changes:
+            # Every producer's write comes through here.  Wake the memory
+            # conductor so the new item is in the index in seconds, not at
+            # the next poll (MEMORY-DESIGN.md 3.1: speed, not correctness).
+            try:
+                from holdspeak import memory_conductor
+
+                memory_conductor.wake()
+            except Exception:  # pragma: no cover - a wake never fails a write
+                pass
         if self.broadcast is None or not changes:
             return
         unique = list(dict.fromkeys(changes))

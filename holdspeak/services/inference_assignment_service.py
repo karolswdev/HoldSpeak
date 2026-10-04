@@ -1879,6 +1879,11 @@ class InferenceAssignmentService:
             return "audio_unsupported"
         if not set(req.capability_classes).issubset(claims):
             return "capability_class_unsupported"
+        # An embedding model gives vectors, not text.  A profile with the
+        # ``embedding`` claim serves only a capability that asks for it
+        # (``memory.embed``); it is never offered for a chat capability.
+        if "embedding" in claims and "embedding" not in req.capability_classes:
+            return "embedding_model_only"
         if (
             profile.context_support == "unavailable"
             or int(deployment.context_ceiling or 0) < req.minimum_context_tokens

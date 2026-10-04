@@ -3734,6 +3734,32 @@
       ]
     },
     {
+      "path": "/api/memory/meaning-search",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.memory",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/memory/meaning-search/turn-off",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.memory",
+      "consumers": []
+    },
+    {
+      "path": "/api/memory/meaning-search/turn-on",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.memory",
+      "consumers": []
+    },
+    {
       "path": "/api/memory/recall",
       "methods": [
         "GET"

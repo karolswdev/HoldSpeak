@@ -233,3 +233,13 @@ Classified in `BACKEND_PRIVATE_DECISIONS` with review tag `200-11`.
 revision for the summary-selection read model. They do not select an assignment,
 choose a route leg, or retry. Both are classified in `BACKEND_PRIVATE_DECISIONS`
 under the existing 143-12 owner-surface migration family.
+
+
+## Meaning search turn-on (2026-10-04)
+
+`holdspeak/services/meaning_search_service.py` adds `_ensure_profile`. It
+composes the one embedding profile (claim `embedding`) for the pinned local
+model. It does not choose a route leg and does not retry. The `memory.embed`
+assignment is written by `InferenceAssignmentService.set_assignment` on the
+owner's press. Classified in `BACKEND_PRIVATE_DECISIONS` under the existing
+143-12 owner-surface migration family.

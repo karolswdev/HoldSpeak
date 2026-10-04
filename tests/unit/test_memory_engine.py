@@ -67,7 +67,7 @@ def desk(tmp_path: Path, monkeypatch):
 
 
 def _assign_embed(db: Database) -> None:
-    _profile(db, "embed-model", model=MODEL)
+    _profile(db, "embed-model", model=MODEL, claims=("embedding",))
     _assign(db, MEMORY_EMBED_CAPABILITY, ["embed-model"])
 
 
@@ -378,7 +378,7 @@ def test_the_real_model_through_the_real_router(tmp_path: Path) -> None:
     db = Database(tmp_path / "real.db")
     refs = build_corpus(db)
     broker = _configure(db)
-    _profile(db, "embed-model", model=MODEL)
+    _profile(db, "embed-model", model=MODEL, claims=("embedding",))
     with db._connection() as conn:
         conn.execute(
             "UPDATE inference_model_artifacts SET local_locator=? WHERE artifact_id='artifact-embed-model'",
