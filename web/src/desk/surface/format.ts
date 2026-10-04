@@ -46,6 +46,15 @@ export function wireClock(value: unknown, seconds = false): string {
   return seconds ? `${clock}:${pad(date.getSeconds())}` : clock;
 }
 
+/** A wire time as the local day and clock, `Oct 3, 21:06`; empty string
+ * when the value is not a time. */
+export function wireDayClock(value: unknown): string {
+  const date = wireDate(value);
+  if (!date) return "";
+  const day = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${day}, ${wireClock(date)}`;
+}
+
 /** A wire timestamp (ISO string or epoch seconds/ms) as a short human
  * phrase; empty string when the value is not a time. */
 export function humanTime(value: unknown): string {

@@ -92,8 +92,20 @@ def next_cron_fire(cron_expr: str, *, after: Optional[datetime] = None) -> Optio
 
     Scans minute-by-minute up to 400 days. Returns None for invalid expressions.
 
-    Known: during a DST fall-back repeated hour, a short-interval schedule
-    CAN fire twice (standard cron semantics). Accepted, not mitigated.
+    An aware ``after`` is walked as REAL instants (UTC), and each instant is
+    read on the wall clock of ``after``'s zone. Wall-clock arithmetic on an
+    aware datetime ignores the offset change at a DST edge, and returned a
+    fire in the past in the repeated hour (review of #778):
+
+    - Fold (the repeated hour): the result is the next matching instant
+      strictly after ``after``. At the second 01:15, "30 1 * * *" is the
+      second 01:30, never the first.
+    - Gap (the skipped hour): a wall time that does not exist that day fires
+      at the first valid instant after the gap. "30 2 * * *" fires at 03:00
+      on the spring-forward day.
+
+    Known: in the repeated hour a schedule CAN fire twice (standard cron
+    semantics). Accepted, not mitigated.
     """
     try:
         parts = cron_expr.strip().split()
@@ -103,11 +115,33 @@ def next_cron_fire(cron_expr: str, *, after: Optional[datetime] = None) -> Optio
         return None
     if after is None:
         after = datetime.now(timezone.utc)
-    # Start from the next full minute
-    candidate = after.replace(second=0, microsecond=0) + timedelta(minutes=1)
-    limit = after + timedelta(days=400)
-    while candidate < limit:
-        if cron_is_due(cron_expr, now=candidate):
-            return candidate.timestamp()
-        candidate += timedelta(minutes=1)
+    if after.tzinfo is None:
+        # A naive clock has no zone to resolve: plain wall-clock scan.
+        candidate = after.replace(second=0, microsecond=0) + timedelta(minutes=1)
+        limit = after + timedelta(days=400)
+        while candidate < limit:
+            if cron_is_due(cron_expr, now=candidate):
+                return candidate.timestamp()
+            candidate += timedelta(minutes=1)
+        return None
+
+    zone = after.tzinfo
+    instant = after.astimezone(timezone.utc).replace(second=0, microsecond=0)
+    previous_wall = instant.astimezone(zone).replace(tzinfo=None)
+    limit = instant + timedelta(days=400)
+    minute = timedelta(minutes=1)
+    while instant < limit:
+        instant += minute
+        wall = instant.astimezone(zone).replace(tzinfo=None)
+        if cron_is_due(cron_expr, now=wall):
+            return instant.timestamp()
+        # A gap: the wall clock jumped forward by more than one minute. A
+        # cron time inside the skipped span fires now, at the first valid
+        # instant after the gap.
+        skipped = previous_wall + minute
+        while skipped < wall:
+            if cron_is_due(cron_expr, now=skipped):
+                return instant.timestamp()
+            skipped += minute
+        previous_wall = wall
     return None

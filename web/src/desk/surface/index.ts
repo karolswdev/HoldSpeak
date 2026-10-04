@@ -80,6 +80,7 @@ export {
 export {
   wireDate,
   wireClock,
+  wireDayClock,
   humanTime,
   deSnake,
   presentValue,
