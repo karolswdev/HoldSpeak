@@ -105,3 +105,100 @@ def test_normalizer_keeps_an_offset_stamp_exact_in_the_repeated_hour(denver):
     assert norm("2026-10-03T21:19:39") == "2026-10-04T03:19:39Z"
     # A SQLite stamp is UTC.
     assert norm("2026-10-04 03:19:39") == "2026-10-04T03:19:39Z"
+
+
+# -- the upgrade: schedules minted before #778 (fire time computed in UTC) --
+
+def _old_style_schedule(db, *, created: datetime, cron: str, one_shot: bool = True, **extra):
+    """A row as the OLD service wrote it: the cron read in UTC at creation."""
+    old_fire = next_cron_fire(cron, after=created.astimezone(timezone.utc))
+    sched = db.scheduled_recordings.create(
+        title="Cutover dry run", cron_expr=cron, tz="America/Denver",
+        one_shot=one_shot, duration_minutes=30, enabled=True,
+        next_fire_at=old_fire, **extra,
+    )
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE scheduled_recordings SET created_at = ? WHERE id = ?",
+            (created.timestamp(), sched.id),
+        )
+    return sched.id, old_fire
+
+
+def _boot_conductor(db, now: datetime):
+    from unittest.mock import MagicMock
+
+    from holdspeak.scheduled_recording_conductor import ScheduledRecordingConductor
+
+    conductor = ScheduledRecordingConductor(
+        clock=lambda: now.timestamp(), db_factory=lambda: db,
+        start_meeting_fn=MagicMock(), stop_meeting_fn=MagicMock(),
+        voice_floor_fn=lambda: None, countdown_seconds=0.01, tick_interval=0.01,
+    )
+    conductor._reconcile_on_boot()
+    return conductor
+
+
+def test_upgrade_keeps_an_old_style_0900_schedule_pending_at_0800(tmp_path):
+    from holdspeak.db.core import Database
+
+    db = Database(tmp_path / "holdspeak.db")
+    monday = datetime(2026, 10, 5, 15, 0, tzinfo=MDT)
+    nine = datetime(2026, 10, 6, 9, 0, tzinfo=MDT)
+    sid, old_fire = _old_style_schedule(db, created=monday, cron="0 9 6 10 *")
+    # The old code stored 09:00 UTC, which is 03:00 in Denver.
+    assert datetime.fromtimestamp(old_fire, tz=MDT) == datetime(2026, 10, 6, 3, 0, tzinfo=MDT)
+
+    _boot_conductor(db, datetime(2026, 10, 6, 8, 0, tzinfo=MDT))
+    sched = db.scheduled_recordings.get(sid)
+    assert sched.enabled is True and sched.state == "idle"
+    assert sched.next_fire_at == nine.timestamp()
+
+    # A second restart shifts nothing: still pending just before 09:00 local.
+    _boot_conductor(db, datetime(2026, 10, 6, 8, 59, tzinfo=MDT))
+    sched = db.scheduled_recordings.get(sid)
+    assert sched.enabled is True and sched.state == "idle"
+    assert sched.next_fire_at == nine.timestamp()
+
+
+def test_upgrade_still_reports_a_fire_that_is_truly_past(tmp_path):
+    from holdspeak.db.core import Database
+
+    db = Database(tmp_path / "holdspeak.db")
+    sid, _ = _old_style_schedule(
+        db, created=datetime(2026, 10, 5, 15, 0, tzinfo=MDT), cron="0 9 6 10 *")
+    _boot_conductor(db, datetime(2026, 10, 6, 10, 0, tzinfo=MDT))
+    sched = db.scheduled_recordings.get(sid)
+    assert sched.enabled is False and sched.last_outcome == "missed"
+
+
+def test_upgrade_repairs_a_recurring_schedule_and_runs_once(tmp_path):
+    from holdspeak.db.core import Database
+
+    db = Database(tmp_path / "holdspeak.db")
+    sid, old_fire = _old_style_schedule(
+        db, created=datetime(2026, 10, 5, 15, 0, tzinfo=MDT), cron="0 9 * * *", one_shot=False)
+    _boot_conductor(db, datetime(2026, 10, 5, 16, 0, tzinfo=MDT))
+    nine = datetime(2026, 10, 6, 9, 0, tzinfo=MDT).timestamp()
+    assert db.scheduled_recordings.get(sid).next_fire_at == nine
+
+    # After the one-time repair, a row that looks old-style is not touched.
+    db.scheduled_recordings.update(sid, next_fire_at=old_fire)
+    _boot_conductor(db, datetime(2026, 10, 5, 17, 0, tzinfo=MDT))
+    assert db.scheduled_recordings.get(sid).next_fire_at == old_fire
+
+
+def test_upgrade_leaves_calendar_linked_and_utc_schedules_alone(tmp_path):
+    from holdspeak.db.core import Database
+
+    db = Database(tmp_path / "holdspeak.db")
+    created = datetime(2026, 10, 5, 15, 0, tzinfo=MDT)
+    linked, linked_fire = _old_style_schedule(
+        db, created=created, cron="0 9 6 10 *", calendar_event_id="evt-1")
+    utc_fire = next_cron_fire("0 9 6 10 *", after=created.astimezone(timezone.utc))
+    utc = db.scheduled_recordings.create(
+        title="UTC", cron_expr="0 9 6 10 *", tz="UTC", one_shot=True,
+        duration_minutes=30, enabled=True, next_fire_at=utc_fire)
+    _boot_conductor(db, datetime(2026, 10, 5, 16, 0, tzinfo=MDT))
+    assert db.scheduled_recordings.get(linked).next_fire_at == linked_fire
+    assert db.scheduled_recordings.get(utc.id).next_fire_at == utc_fire
