@@ -7282,7 +7282,7 @@
       "expected": {
         "predicate": {
           "kind": "window_titled",
-          "value": "Thought"
+          "value": "New thought"
         },
         "observe_at": ".desk-window",
         "words": "the Thought window opens on a new note (POST /api/notes answered 2xx); it is NOT the Speak dictation router, and nothing on the face is hidden behind a disclosure the owner must find [the audit's stated observation location: face: the Thought window]"
