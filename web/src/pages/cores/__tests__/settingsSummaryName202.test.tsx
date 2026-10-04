@@ -56,3 +56,37 @@ describe("the Settings hub's Meetings row (F06)", () => {
     expect(document.body.textContent ?? "").not.toMatch(/INTELLIGENCE/);
   });
 });
+
+// Inventory 2026-10-03 (UX-CANON A.10): the hub said "Voice LIVE" and
+// "SUMMARY SET ON" with no engine, beside the headline "No default model".
+describe("the Settings hub names a missing engine", () => {
+  function faceWith(patch: Partial<ReturnType<typeof hub>>) {
+    return render(
+      <PrefsFace
+        onOpen={vi.fn()}
+        hub={{ ...hub(true), ...patch }}
+        posture="neutral"
+        onPosture={vi.fn()}
+        precedence={[]}
+      />,
+    );
+  }
+
+  it("Meetings: SUMMARY · NO ENGINE when the switch is on and no engine is set", () => {
+    faceWith({ meetings: { intelligence: true, engineSet: false, auto: "room_linked" } });
+    expect(screen.getByText("SUMMARY · NO ENGINE")).toBeInTheDocument();
+    expect(document.body.textContent ?? "").not.toMatch(/SUMMARY SET ON/);
+  });
+
+  it("Voice: NO ENGINE, never LIVE, when the switch is on and no engine is set", () => {
+    faceWith({ voice: { live: true, target: "auto", engineSet: false } });
+    expect(screen.getByText("NO ENGINE")).toBeInTheDocument();
+    expect(screen.queryByText("LIVE")).toBeNull();
+    expect(screen.queryByText("AUTO")).toBeNull();
+  });
+
+  it("Voice: LIVE when the switch is on and an engine is set", () => {
+    faceWith({ voice: { live: true, target: "auto", engineSet: true } });
+    expect(screen.getByText("LIVE")).toBeInTheDocument();
+  });
+});

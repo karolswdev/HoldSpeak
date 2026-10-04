@@ -86,5 +86,9 @@ def test_walk_generates_and_delivers_all_four_sections(db: Database) -> None:
 def test_walk_empty_window_is_honest(db: Database) -> None:
     brief = MondayBriefService(db).generate(OWNER, now=NOW)
 
-    assert brief.headline == "No changes"
-    assert brief.is_empty is True
+    # An empty window on a hub with no summary engine: the one needs-you rule
+    # has one member (the meeting-path blocker, the same one the bell counts),
+    # and the brief says exactly that. No row is invented for the window.
+    assert brief.headline == "1 thing waiting."
+    assert [item.source_ref for item in brief.sections["waiting"]] == ["blocker:engines"]
+    assert not any(brief.sections[name] for name in ("this_week", "changed", "broke", "decisions"))

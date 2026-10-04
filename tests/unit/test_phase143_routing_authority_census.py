@@ -3,12 +3,22 @@
 This is intentionally a static inventory test.  It does not bless the two
 known unsafe seams: they are named blockers until their owning stories replace
 them.  Updating a source anchor therefore requires an explicit census review.
+
+The anchors are line-free (owner ruling 2026-10-03; ``tests/unit/_line_free.py``):
+``path|scope|site``, with ``#2`` for a second same site in one scope.  An edit
+above a site no longer turns the census red; a new resolver, reference or
+pointer read still does.  Comments below that say "re-anchored" or name a line
+are history from the line-pinned form.
 """
 from __future__ import annotations
 
 import ast
 import re
 from pathlib import Path
+
+from tests.unit import _line_free
+from tests.unit._line_free import Record
+from tests.unit.test_one_path_census import _scope_index
 
 
 REPO = Path(__file__).resolve().parents[2]
@@ -53,73 +63,73 @@ ROUTING_RESOLVER_NAMES = frozenset({
 # authority.  A new resolver or a late read cannot silently evade Story 01 by
 # looking like a harmless helper in a new module.
 ROUTING_RESOLVER_DEFINITIONS = {
-    "holdspeak/deployment_revisions.py:206:resolve_workbench_deployment_revision",
-    "holdspeak/deployment_revisions.py:228:resolve_deployment_revision",
-    "holdspeak/inference_targets.py:567:resolve_placement",
-    "holdspeak/inference_targets.py:513:resolve_inference_target",
-    "holdspeak/inference_targets.py:607:resolve_thought_placement",
-    "holdspeak/intel/providers.py:666:resolve_meeting_placement",
+    "holdspeak/deployment_revisions.py|def:resolve_workbench_deployment_revision",
+    "holdspeak/deployment_revisions.py|def:resolve_deployment_revision",
+    "holdspeak/inference_targets.py|def:resolve_placement",
+    "holdspeak/inference_targets.py|def:resolve_inference_target",
+    "holdspeak/inference_targets.py|def:resolve_thought_placement",
+    "holdspeak/intel/providers.py|def:resolve_meeting_placement",
 }
 
 ROUTING_RESOLVER_REFERENCES = {
-    "holdspeak/deployment_revisions.py:209:import:resolve_inference_target",
-    "holdspeak/deployment_revisions.py:218:ref:resolve_inference_target",
-    "holdspeak/inference_targets.py:601:ref:resolve_inference_target",
-    "holdspeak/inference_targets.py:618:ref:resolve_placement",
-    "holdspeak/intel/__init__.py:63:import:resolve_meeting_placement",
-    "holdspeak/intel/providers.py:193:ref:resolve_meeting_placement",
-    "holdspeak/intel/providers.py:235:ref:resolve_meeting_placement",
-    "holdspeak/intel/providers.py:337:ref:resolve_meeting_placement",
-    "holdspeak/intel/providers.py:864:ref:resolve_meeting_placement",
-    "holdspeak/kernel/inference_invoke.py:10:import:resolve_deployment_revision",
-    "holdspeak/kernel/inference_invoke.py:92:ref:resolve_deployment_revision",
-    "holdspeak/kernel/inference_runner.py:13:import:resolve_deployment_revision",
-    "holdspeak/kernel/inference_runner.py:851:ref:resolve_deployment_revision",
-    "holdspeak/services/ask_service.py:309:import:resolve_placement",
-    "holdspeak/services/ask_service.py:310:ref:resolve_placement",
-    "holdspeak/services/inference_setup_service.py:184:ref:resolve_inference_target",
-    "holdspeak/services/inference_setup_service.py:23:import:resolve_inference_target",
-    "holdspeak/services/model_profile_service.py:688:import:resolve_inference_target",
-    "holdspeak/services/model_profile_service.py:695:ref:resolve_inference_target",
-    "holdspeak/services/profile_service.py:139:import:resolve_inference_target",
-    "holdspeak/services/profile_service.py:140:ref:resolve_inference_target",
+    "holdspeak/deployment_revisions.py|resolve_workbench_deployment_revision|import:resolve_inference_target",
+    "holdspeak/deployment_revisions.py|resolve_workbench_deployment_revision|ref:resolve_inference_target",
+    "holdspeak/inference_targets.py|resolve_placement|ref:resolve_inference_target",
+    "holdspeak/inference_targets.py|resolve_thought_placement|ref:resolve_placement",
+    "holdspeak/intel/__init__.py|<module>|import:resolve_meeting_placement",
+    "holdspeak/intel/providers.py|resolve_llm_capability|ref:resolve_meeting_placement",
+    "holdspeak/intel/providers.py|_configured_engine|ref:resolve_meeting_placement",
+    "holdspeak/intel/providers.py|configured_meeting_deployment|ref:resolve_meeting_placement",
+    "holdspeak/intel/providers.py|configured_egress_boundary|ref:resolve_meeting_placement",
+    "holdspeak/kernel/inference_invoke.py|<module>|import:resolve_deployment_revision",
+    "holdspeak/kernel/inference_invoke.py|InferenceInvokeCodec.authorize|ref:resolve_deployment_revision",
+    "holdspeak/kernel/inference_runner.py|<module>|import:resolve_deployment_revision",
+    "holdspeak/kernel/inference_runner.py|InferenceRunner._revision|ref:resolve_deployment_revision",
+    "holdspeak/services/ask_service.py|AskService.ask|import:resolve_placement",
+    "holdspeak/services/ask_service.py|AskService.ask|ref:resolve_placement",
+    "holdspeak/services/inference_setup_service.py|_thought_target|ref:resolve_inference_target",
+    "holdspeak/services/inference_setup_service.py|<module>|import:resolve_inference_target",
+    "holdspeak/services/model_profile_service.py|ModelProfileService._observe_destination_readiness|import:resolve_inference_target",
+    "holdspeak/services/model_profile_service.py|ModelProfileService._observe_destination_readiness|ref:resolve_inference_target",
+    "holdspeak/services/profile_service.py|ProfileService.get_inference_target|import:resolve_inference_target",
+    "holdspeak/services/profile_service.py|ProfileService.get_inference_target|ref:resolve_inference_target",
     # HS-147-05: the HS-146-07 snapshot resolve_placement fallback entries are
     # RETIRED — the direct dispatch now pre-filters the profile list to
     # vision-capable targets and refuses (no_vision_model_assigned) with zero
     # dispatches when none qualify; resolve_placement no longer appears in
     # calendar_snapshot_service.py. Deliberate deregistration, not drift.
-    "holdspeak/services/refinement_application_service.py:63:import:resolve_placement",
-    "holdspeak/services/refinement_application_service.py:64:ref:resolve_placement",
-    "holdspeak/services/refinement_application_service.py:70:import:resolve_thought_placement",
-    "holdspeak/services/refinement_application_service.py:71:ref:resolve_thought_placement",
-    "holdspeak/services/refinement_coordinator.py:309:import:resolve_thought_placement",
-    "holdspeak/services/refinement_coordinator.py:310:ref:resolve_thought_placement",
-    "holdspeak/services/refinement_thought_service.py:640:import:resolve_thought_placement",
-    "holdspeak/services/refinement_thought_service.py:681:ref:resolve_thought_placement",
+    "holdspeak/services/refinement_application_service.py|RefinementApplicationService.get_workbench|import:resolve_placement",
+    "holdspeak/services/refinement_application_service.py|RefinementApplicationService.get_workbench|ref:resolve_placement",
+    "holdspeak/services/refinement_application_service.py|RefinementApplicationService.get_workbench|import:resolve_thought_placement",
+    "holdspeak/services/refinement_application_service.py|RefinementApplicationService.get_workbench|ref:resolve_thought_placement",
+    "holdspeak/services/refinement_coordinator.py|RefinementCoordinator._admission_claim|import:resolve_thought_placement",
+    "holdspeak/services/refinement_coordinator.py|RefinementCoordinator._admission_claim|ref:resolve_thought_placement",
+    "holdspeak/services/refinement_thought_service.py|RefinementThoughtService._validate_current_admission_under_write_fence|import:resolve_thought_placement",
+    "holdspeak/services/refinement_thought_service.py|RefinementThoughtService._validate_current_admission_under_write_fence|ref:resolve_thought_placement",
     # HS-201-03: the Meeting service now reads the disclosed frozen route
     # selection; its former legacy resolver import and call were removed. The
     # execution host remains immutable route evidence in deferred_bound.py.
     # HS-172: resolve_meeting_placement in routing_glue, mcp/tools, settings route
-    "holdspeak/runtime/routing_glue.py:374:import:resolve_meeting_placement",
-    "holdspeak/runtime/routing_glue.py:375:ref:resolve_meeting_placement",
+    "holdspeak/runtime/routing_glue.py|RoutingGlueMixin._maybe_auto_enqueue_intel|import:resolve_meeting_placement",
+    "holdspeak/runtime/routing_glue.py|RoutingGlueMixin._maybe_auto_enqueue_intel|ref:resolve_meeting_placement",
     # HS-201-03: moved down three lines with the added route/receipt transport;
     # re-anchored. PHILO-5-01/02: moved down again with the operation contract
     # (the decision helpers, the loop's new tools and the import intake);
     # re-anchored, the settings.hub read itself unchanged. PHILO-7-01/02: moved
     # down again (985 -> 1148) with the desk operations; re-anchored, same read.
-    "holdspeak/mcp/tools.py:1154:import:resolve_meeting_placement",
-    "holdspeak/web/routes/system/settings.py:44:import:resolve_meeting_placement",
-    "holdspeak/web/routes/system/settings.py:45:ref:resolve_meeting_placement",
-    "holdspeak/services/settings_service.py:77:import:resolve_meeting_placement",
-    "holdspeak/services/settings_service.py:85:ref:resolve_meeting_placement",
-    "holdspeak/speech_session/plan.py:452:import:resolve_placement",
-    "holdspeak/speech_session/plan.py:461:ref:resolve_placement",
-    "holdspeak/speech_session/plan.py:629:import:resolve_placement",
-    "holdspeak/speech_session/plan.py:638:ref:resolve_placement",
-    "holdspeak/speech_session/provider.py:149:import:resolve_deployment_revision",
-    "holdspeak/speech_session/provider.py:151:ref:resolve_deployment_revision",
-    "holdspeak/speech_session/provider.py:226:import:resolve_deployment_revision",
-    "holdspeak/speech_session/provider.py:230:ref:resolve_deployment_revision",
+    "holdspeak/mcp/tools.py|dispatch|import:resolve_meeting_placement",
+    "holdspeak/web/routes/system/settings.py|_resolve_meetings_host|import:resolve_meeting_placement",
+    "holdspeak/web/routes/system/settings.py|_resolve_meetings_host|ref:resolve_meeting_placement",
+    "holdspeak/services/settings_service.py|meeting_placement_summary|import:resolve_meeting_placement",
+    "holdspeak/services/settings_service.py|meeting_placement_summary|ref:resolve_meeting_placement",
+    "holdspeak/speech_session/plan.py|configured_pipeline_egress_boundary|import:resolve_placement",
+    "holdspeak/speech_session/plan.py|configured_pipeline_egress_boundary|ref:resolve_placement",
+    "holdspeak/speech_session/plan.py|DictationSessionPlanResolver._provider_legs|import:resolve_placement",
+    "holdspeak/speech_session/plan.py|DictationSessionPlanResolver._provider_legs|ref:resolve_placement",
+    "holdspeak/speech_session/provider.py|ProviderAdmission.deployment|import:resolve_deployment_revision",
+    "holdspeak/speech_session/provider.py|ProviderAdmission.deployment|ref:resolve_deployment_revision",
+    "holdspeak/speech_session/provider.py|ProviderAdmission.dispatch_through|import:resolve_deployment_revision",
+    "holdspeak/speech_session/provider.py|ProviderAdmission.dispatch_through|ref:resolve_deployment_revision",
     # HS-200-41: resolve_placement inside ``ProjectService._resolve_stop_reason``.
     # A saved ask task stores a bounded refusal CODE; the reason beside it is
     # the destination's own words, so the resolver is read to ask the LIVE
@@ -137,8 +147,8 @@ ROUTING_RESOLVER_REFERENCES = {
     # helper, the proposal row's `meeting_started_at`, and the Room
     # projections carrying each row's `kind`; re-anchored, the site unchanged.
     # The reference count is still 50 and no added line names a resolver.
-    "holdspeak/services/project_service.py:2551:import:resolve_placement",
-    "holdspeak/services/project_service.py:2552:ref:resolve_placement",
+    "holdspeak/services/project_service.py|ProjectService._resolve_stop_reason|import:resolve_placement",
+    "holdspeak/services/project_service.py|ProjectService._resolve_stop_reason|ref:resolve_placement",
     # Pre-existing and previously UNREGISTERED, found by the HS-200-41 sweep and
     # registered here rather than left red: ``_captured_deployment_revision``
     # (project_update_service.py:1034) resolves a profile's target only to
@@ -147,32 +157,32 @@ ROUTING_RESOLVER_REFERENCES = {
     # for it, and HS-200-41 did not create the site.
     # HS-200-11 (same stack): moved down with the shared NAME helper's known-name
     # alias rule and `_known_names_for_room`; the site itself is unchanged.
-    "holdspeak/services/project_update_service.py:1134:import:resolve_inference_target",
-    "holdspeak/services/project_update_service.py:1136:ref:resolve_inference_target",
+    "holdspeak/services/project_update_service.py|_captured_deployment_revision|import:resolve_inference_target",
+    "holdspeak/services/project_update_service.py|_captured_deployment_revision|ref:resolve_inference_target",
 }
 
 ROUTING_POINTER_ATTRIBUTES = {
-    "holdspeak/config/core.py:214:intel_profile_id",
-    "holdspeak/config/core.py:237:intel_profile_id",
-    "holdspeak/config/integrations.py:190:inference_target_id",
-    "holdspeak/config/integrations.py:191:inference_target_id",
-    "holdspeak/config/meeting.py:170:intel_profile_id",
-    "holdspeak/config/meeting.py:169:intel_profile_id",
-    "holdspeak/db/models/__init__.py:1141:resolver_profile_id",
-    "holdspeak/db/models/workbench.py:139:resolver_profile_id",
-    "holdspeak/services/inference_setup_service.py:644:intel_profile_id",
-    "holdspeak/services/inference_setup_service.py:649:inference_target_id",
-    "holdspeak/services/inference_setup_service.py:650:inference_target_id",
-    "holdspeak/services/inference_setup_service.py:654:intel_profile_id",
-    "holdspeak/services/inference_setup_service.py:181:inference_target_id",
-    "holdspeak/services/settings_service.py:665:intel_profile_id",
-    "holdspeak/services/settings_service.py:916:inference_target_id",
-    "holdspeak/services/workbench_service.py:592:resolver_profile_id",
+    "holdspeak/config/core.py|migrate_legacy_endpoints|intel_profile_id",
+    "holdspeak/config/core.py|migrate_legacy_endpoints|intel_profile_id#2",
+    "holdspeak/config/integrations.py|ThoughtsConfig.__post_init__|inference_target_id",
+    "holdspeak/config/integrations.py|ThoughtsConfig.__post_init__|inference_target_id#2",
+    "holdspeak/config/meeting.py|MeetingConfig.__post_init__|intel_profile_id#2",
+    "holdspeak/config/meeting.py|MeetingConfig.__post_init__|intel_profile_id",
+    "holdspeak/db/models/__init__.py|WorkbenchRecord.to_dict|resolver_profile_id",
+    "holdspeak/db/models/workbench.py|WorkbenchRecord.to_dict|resolver_profile_id",
+    "holdspeak/services/inference_setup_service.py|InferenceSetupApplicationService.get_inference_setup|intel_profile_id",
+    "holdspeak/services/inference_setup_service.py|InferenceSetupApplicationService.get_inference_setup|inference_target_id",
+    "holdspeak/services/inference_setup_service.py|InferenceSetupApplicationService.get_inference_setup|inference_target_id#2",
+    "holdspeak/services/inference_setup_service.py|InferenceSetupApplicationService.get_inference_setup|intel_profile_id#2",
+    "holdspeak/services/inference_setup_service.py|_thought_target|inference_target_id",
+    "holdspeak/services/settings_service.py|SettingsService._update|intel_profile_id",
+    "holdspeak/services/settings_service.py|SettingsService._update|inference_target_id",
+    "holdspeak/services/workbench_service.py|WorkbenchService._wb_fields|resolver_profile_id",
     # HS-172: resolve_meeting_placement pointer reads
     # HS-201-03: mcp/tools.py moved down three lines (see the reference set).
     # PHILO-7-01/02: moved down again (984 -> 1147); re-anchored, same read.
-    "holdspeak/mcp/tools.py:1153:intel_profile_id",
-    "holdspeak/web/routes/system/settings.py:41:intel_profile_id",
+    "holdspeak/mcp/tools.py|dispatch|intel_profile_id",
+    "holdspeak/web/routes/system/settings.py|_resolve_meetings_host|intel_profile_id",
 }
 
 # `profile_id` is deliberately not treated as a synonym for routing.  This
@@ -180,48 +190,48 @@ ROUTING_POINTER_ATTRIBUTES = {
 # receipts, DTOs, readiness, and unrelated records out of the assignment lane.
 PROFILE_ID_CLASSIFICATIONS = {
     **{site: "mutable assignment pointer" for site in {
-        "holdspeak/config/core.py:217:profile_id", "holdspeak/config/core.py:248:profile_id",
-        "holdspeak/config/integrations.py:269:profile_id", "holdspeak/config/model.py:80:profile_id",
-        "holdspeak/plugins/dictation/assembly.py:327:profile_id",
-        "holdspeak/services/settings_service.py:817:profile_id",
-        "holdspeak/services/settings_service.py:889:profile_id",
-        "holdspeak/services/sync_service.py:844:profile_id",
-        "holdspeak/services/sync_service.py:859:profile_id",
+        "holdspeak/config/core.py|migrate_legacy_endpoints|profile_id", "holdspeak/config/core.py|migrate_legacy_endpoints|profile_id#2",
+        "holdspeak/config/integrations.py|RailsObserverConfig.__post_init__|profile_id", "holdspeak/config/integrations.py|RailsObserverConfig.__post_init__|profile_id#2", "holdspeak/config/model.py|LLMRuntimeConfig.__post_init__|profile_id", "holdspeak/config/model.py|LLMRuntimeConfig.__post_init__|profile_id#2",
+        "holdspeak/plugins/dictation/assembly.py|_try_build_runtime|profile_id",
+        "holdspeak/services/settings_service.py|SettingsService._update|profile_id",
+        "holdspeak/services/settings_service.py|SettingsService._update|profile_id#2",
+        "holdspeak/services/sync_service.py|_merge_primitive_spec|profile_id",
+        "holdspeak/services/sync_service.py|_merge_primitive_spec|profile_id#2",
     }},
     **{site: "display" for site in {
         # HS-201: the inactive live-analysis endpoint display was retired.
-        "holdspeak/commands/doctor.py:569:profile_id",
-        "holdspeak/commands/doctor.py:577:profile_id", "holdspeak/commands/doctor.py:591:profile_id",
-        "holdspeak/commands/doctor.py:716:profile_id",
-        "holdspeak/db/models/__init__.py:698:profile_id", "holdspeak/inference_targets.py:161:profile_id",
+        "holdspeak/commands/doctor.py|_check_runtime_profiles|profile_id",
+        "holdspeak/commands/doctor.py|_check_runtime_profiles|profile_id#2", "holdspeak/commands/doctor.py|_check_runtime_profiles|profile_id#3",
+        "holdspeak/commands/doctor.py|_check_dictation_runtime|profile_id",
+        "holdspeak/db/models/__init__.py|RecipeRecord.to_dict|profile_id", "holdspeak/inference_targets.py|InferenceTarget.to_dict|profile_id",
         # HS-162-03: front_door.py profile_id reads (display, Phase 156).
-        "holdspeak/web/routes/front_door.py:416:profile_id",
-        "holdspeak/web/routes/front_door.py:417:profile_id",
-        "holdspeak/web/routes/front_door.py:444:profile_id",
-        "holdspeak/services/ask_service.py:320:profile_id",
-        "holdspeak/services/inference_setup_service.py:653:profile_id", "holdspeak/services/settings_service.py:108:profile_id",
-        "holdspeak/setup_status.py:160:profile_id",
-        "holdspeak/services/model_profile_service.py:225:profile_id",
-        "holdspeak/services/model_profile_service.py:264:profile_id",
+        "holdspeak/web/routes/front_door.py|build_front_door_router.get_topology|profile_id",
+        "holdspeak/web/routes/front_door.py|build_front_door_router.get_topology|profile_id#2",
+        "holdspeak/web/routes/front_door.py|build_front_door_router.get_topology|profile_id#3",
+        "holdspeak/services/ask_service.py|AskService.ask|profile_id",
+        "holdspeak/services/inference_setup_service.py|InferenceSetupApplicationService.get_inference_setup|profile_id", "holdspeak/services/settings_service.py|meeting_placement_summary|profile_id",
+        "holdspeak/setup_status.py|_trust_block|profile_id",
+        "holdspeak/services/model_profile_service.py|ModelProfileRevision.to_dict|profile_id",
+        "holdspeak/services/model_profile_service.py|ProfileBinding.to_dict|profile_id",
         # HS-172: meetings host resolve display reads (HS-200-13: +2 lines).
         # PHILO-7-01/02: moved down (987 -> 1150); re-anchored, same read.
-        "holdspeak/mcp/tools.py:1156:profile_id",
-        "holdspeak/web/routes/system/settings.py:46:profile_id",
+        "holdspeak/mcp/tools.py|dispatch|profile_id",
+        "holdspeak/web/routes/system/settings.py|_resolve_meetings_host|profile_id",
     }},
     **{site: "immutable evidence" for site in {
-        "holdspeak/services/model_profile_service.py:1206:profile_id",
-        "holdspeak/services/inference_assignment_service.py:1788:profile_id",
+        "holdspeak/services/model_profile_service.py|ModelProfileService._revision_from_row|profile_id",
+        "holdspeak/services/inference_assignment_service.py|InferenceAssignmentService._compatibility_issues|profile_id",
     }},
     **{site: "migration source" for site in {
-        "holdspeak/db/models/__init__.py:1140:profile_id",
-        "holdspeak/db/models/workbench.py:138:profile_id",
-        "holdspeak/services/recipe_service.py:416:profile_id",
-        "holdspeak/services/workbench_service.py:591:profile_id",
+        "holdspeak/db/models/__init__.py|WorkbenchRecord.to_dict|profile_id",
+        "holdspeak/db/models/workbench.py|WorkbenchRecord.to_dict|profile_id",
+        "holdspeak/services/recipe_service.py|RecipeService._recipe_fields|profile_id",
+        "holdspeak/services/workbench_service.py|WorkbenchService._wb_fields|profile_id",
     }},
     **{site: "credential/provider identity" for site in {
-        "holdspeak/intel/providers.py:687:profile_id", "holdspeak/intel/providers.py:694:profile_id",
-        "holdspeak/intel/providers.py:703:profile_id", "holdspeak/setup_runtime.py:224:profile_id",
-        "holdspeak/trust_destinations.py:69:profile_id",
+        "holdspeak/intel/providers.py|resolve_meeting_placement|profile_id", "holdspeak/intel/providers.py|resolve_meeting_placement|profile_id#2",
+        "holdspeak/intel/providers.py|resolve_meeting_placement|profile_id#3", "holdspeak/setup_runtime.py|probe_runtime|profile_id",
+        "holdspeak/trust_destinations.py|destination_inventory|profile_id",
     }},
 }
 
@@ -280,13 +290,19 @@ def _routing_ast_inventory(root: Path) -> tuple[set[str], set[str], set[str], se
     The source root is an argument so the mutation test below proves that this
     guard catches both a new public resolver and a late mutable-pointer read.
     """
-    definitions: set[str] = set()
-    references: set[str] = set()
-    pointers: set[str] = set()
-    profile_ids: set[str] = set()
+    definitions: list[Record] = []
+    references: list[Record] = []
+    pointers: list[Record] = []
+    profile_ids: list[Record] = []
     for path in sorted((root / "holdspeak").rglob("*.py")):
         relative = path.relative_to(root).as_posix()
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        scopes = _scope_index(tree)
+
+        def site(node: ast.AST, what: str) -> Record:
+            scope = scopes.get(id(node), "<module>")
+            return Record(relative, node.lineno, node.col_offset, f"{scope}|{what}")
+
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 if node.name.startswith("resolve_") and (
@@ -294,21 +310,30 @@ def _routing_ast_inventory(root: Path) -> tuple[set[str], set[str], set[str], se
                     or "deployment_revision" in node.name
                     or "inference_target" in node.name
                 ):
-                    definitions.add(f"{relative}:{node.lineno}:{node.name}")
+                    # ``_scope_index`` names a def by its own dotted name.
+                    definitions.append(Record(
+                        relative, node.lineno, node.col_offset,
+                        f"def:{scopes.get(id(node), node.name)}",
+                    ))
             elif isinstance(node, ast.Name) and node.id in ROUTING_RESOLVER_NAMES:
-                references.add(f"{relative}:{node.lineno}:ref:{node.id}")
+                references.append(site(node, f"ref:{node.id}"))
             elif isinstance(node, ast.ImportFrom):
                 for alias in node.names:
                     if alias.name in ROUTING_RESOLVER_NAMES:
-                        references.add(f"{relative}:{node.lineno}:import:{alias.name}")
+                        references.append(site(node, f"import:{alias.name}"))
             elif isinstance(node, ast.Attribute) and node.attr in {
                 "inference_target_id", "intel_profile_id", "resolver_profile_id",
                 "requested_target_id",
             }:
-                pointers.add(f"{relative}:{node.lineno}:{node.attr}")
+                pointers.append(site(node, node.attr))
             elif isinstance(node, ast.Attribute) and node.attr == "profile_id":
-                profile_ids.add(f"{relative}:{node.lineno}:profile_id")
-    return definitions, references, pointers, profile_ids
+                profile_ids.append(site(node, "profile_id"))
+    return (
+        set(_line_free.ordinal_keys(definitions)),
+        set(_line_free.ordinal_keys(references)),
+        set(_line_free.ordinal_keys(pointers)),
+        set(_line_free.ordinal_keys(profile_ids)),
+    )
 
 
 def _inventory_rows(census: str) -> dict[str, tuple[str, str]]:
@@ -367,8 +392,10 @@ def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() 
     assert pointers == ROUTING_POINTER_ATTRIBUTES
     assert profile_ids == set(PROFILE_ID_CLASSIFICATIONS)
     assert set(PROFILE_ID_CLASSIFICATIONS.values()) <= CLASSES
-    assert len(PROFILE_ID_CLASSIFICATIONS) == 37  # HS-201: retired one inactive live-analysis display.
-    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 9
+    # 39 sites: the line-pinned form counted 37, because two ``__post_init__``
+    # lines read ``profile_id`` twice and one ``path:line`` key hid the second read.
+    assert len(PROFILE_ID_CLASSIFICATIONS) == 39
+    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 11
     assert sum(value == "migration source" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 4
     assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 17
     assert sum(value == "credential/provider identity" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 5
@@ -388,10 +415,12 @@ def test_ast_census_rejects_a_new_public_resolver_or_late_pointer_read(tmp_path:
         encoding="utf-8",
     )
     definitions, references, pointers, profile_ids = _routing_ast_inventory(root)
-    assert definitions == {"holdspeak/kernel/inference.py:1:resolve_late_inference_target"}
+    assert definitions == {"holdspeak/kernel/inference.py|def:resolve_late_inference_target"}
     assert references == set()
-    assert pointers == {"holdspeak/kernel/inference.py:2:requested_target_id"}
-    assert profile_ids == {"holdspeak/kernel/inference.py:4:profile_id"}
+    assert pointers == {
+        "holdspeak/kernel/inference.py|resolve_late_inference_target|requested_target_id"
+    }
+    assert profile_ids == {"holdspeak/kernel/inference.py|public_profile|profile_id"}
     assert definitions != ROUTING_RESOLVER_DEFINITIONS
     assert pointers != ROUTING_POINTER_ATTRIBUTES
 

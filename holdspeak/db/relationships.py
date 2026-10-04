@@ -19,6 +19,8 @@ RESOURCE_KINDS = frozenset({
     "project", "thread", "persona", "workflow", "sequence", "integration",
     "decision_record", "desk_decision", "action", "project_item", "workbench",
     "workbench_item", "cadence",
+    # Memory kinds a relevance pass can hand to grounding (2026-10-03).
+    "send", "project_update", "prep_brief", "calendar_event",
 })
 
 

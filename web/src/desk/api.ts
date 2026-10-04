@@ -624,6 +624,26 @@ const WIRE_MAPPERS = {
 // Ensure the registry is referenced so tree-shaking doesn't remove it.
 void WIRE_MAPPERS;
 
+/** The kinds a `New …` verb makes whose create answer carries the whole
+ * record, so the store can hold the object before the next desk read. */
+const CREATED_MAPPERS = {
+  note: fromWireNote,
+  decision: fromWireDecision,
+  kb: fromWireKb,
+  recipe: fromWireRecipe,
+  directory: fromWireDirectory,
+  workflow: fromWireWorkflow,
+  thread: fromWireThread,
+} as const;
+
+export type CreatedKind = keyof typeof CREATED_MAPPERS;
+
+/** The store object for a record the hub has just created (its create
+ * answer), by the same mapper the desk read uses. */
+export function fromWireCreated(kind: CreatedKind, wire: unknown): Primitive | null {
+  return CREATED_MAPPERS[kind](wire);
+}
+
 /* ── objects held by ref (inventory gap 9) ──
  * The desk's lists have limits (24 meetings, 24 artifacts, 100 threads, 200
  * decisions). A thing found by its content (the palette's MEMORY band) can be

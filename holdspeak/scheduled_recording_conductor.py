@@ -26,7 +26,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Any, Callable, Optional
 
-from .cron import cron_is_due, next_cron_fire
+from .cron import cron_is_due, next_cron_fire, next_cron_fire_in_zone
 from .logging_config import get_logger
 from .principals import Principal, PrincipalKind
 
@@ -232,6 +232,9 @@ class ScheduledRecordingConductor:
         """On startup, reconcile any interrupted states (I7) and detect missed fires."""
         db = self._get_db()
         now = self._clock()
+        # Before anything can be marked missed: repair the fire times the old
+        # code stored in UTC (review of #778).
+        self._repair_utc_fire_times_once(db)
         all_schedules = db.scheduled_recordings.list_all()
 
         for sched in all_schedules:
@@ -332,6 +335,64 @@ class ScheduledRecordingConductor:
                         "at": _now_iso(),
                     })
                     self._advance_after_terminal(db, sched, "missed", receipt_id)
+
+    # -- one-time repair: fire times the old code computed in UTC --
+
+    _ZONE_REPAIR_MILESTONE = "scheduled_recordings.zone_fire_repair.v1"
+
+    def _repair_utc_fire_times_once(self, db: Any) -> None:
+        """Recompute ``next_fire_at`` for manual schedules minted before #778.
+
+        Before #778 the service read a schedule's cron in UTC, so "09:00
+        Denver" was stored as 03:00 Denver. On the first boot of the fixed
+        code the reconcile below saw that time as past, marked a one-shot
+        ``missed`` and disabled it, before the meeting.
+
+        Repaired: an enabled, pending schedule with no calendar event (a
+        calendar-linked schedule has an explicit time), in a zone other than
+        UTC, whose stored fire is the one the old code would have computed
+        from its creation time. The new fire is the first zone-correct fire
+        after creation, so a fire that is truly past still reads as missed.
+        Runs once (a milestone); the stored-value test also means a repaired
+        row is never shifted again.
+        """
+        milestones = getattr(db, "milestones", None)
+        try:
+            if milestones is not None and milestones.is_set(self._ZONE_REPAIR_MILESTONE):
+                return
+            for sched in db.scheduled_recordings.list_all():
+                if not sched.enabled or sched.calendar_event_id:
+                    continue
+                if sched.state not in ("idle", "stopped", "cancelled", "refused", "missed"):
+                    continue
+                if sched.next_fire_at is None or not sched.cron_expr:
+                    continue
+                if not sched.tz or sched.tz.upper() == "UTC":
+                    continue
+                # The old computation ran a moment before the row was written.
+                old_style = {
+                    next_cron_fire(
+                        sched.cron_expr,
+                        after=datetime.fromtimestamp(sched.created_at - back, tz=timezone.utc),
+                    )
+                    for back in (0, 60)
+                }
+                if sched.next_fire_at not in old_style:
+                    continue
+                repaired = next_cron_fire_in_zone(
+                    sched.cron_expr, sched.tz, now_epoch=sched.created_at,
+                )
+                if repaired is None or repaired == sched.next_fire_at:
+                    continue
+                db.scheduled_recordings.update(sched.id, next_fire_at=repaired)
+                log.info(
+                    f"Repaired fire time for schedule '{sched.title}' (id={sched.id}): "
+                    f"{sched.next_fire_at} -> {repaired} ({sched.tz})"
+                )
+            if milestones is not None:
+                milestones.mark(self._ZONE_REPAIR_MILESTONE)
+        except Exception as exc:
+            log.error(f"Schedule fire-time repair failed: {exc}")
 
     # -- tick --
 

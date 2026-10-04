@@ -17,7 +17,7 @@ import { openSurface } from "../shell";
 import { SYSTEM } from "../systemSprites";
 import { holdObject, qualifiedRef } from "../api";
 import { apiFetch } from "../../lib/api";
-import { createThread } from "../threads";
+import { openNewThread } from "../newThread";
 import {
   contextualCapabilityActions,
   contextualCoderSessions,
@@ -320,12 +320,14 @@ export function DeskToolShelf() {
   useEffect(() => {
     void apiFetch<{
       items?: Array<{ projectId?: string; muted?: boolean }>;
+      /** The Room rows alone: a project badge is per Room ("N OPEN"). */
+      roomItems?: Array<{ projectId?: string; muted?: boolean }>;
       coverage?: CoverageRecord[];
     }>("/api/desk/needs-you")
       .then((payload) => {
         const counts: Record<string, number> = {};
         // One count everywhere: muted Rooms' items never inflate a badge (counsel C1).
-        for (const item of (payload?.items ?? []).filter((i) => !i.muted)) {
+        for (const item of (payload?.roomItems ?? payload?.items ?? []).filter((i) => !i.muted)) {
           const pid = item.projectId;
           if (pid) counts[pid] = (counts[pid] ?? 0) + 1;
         }
@@ -662,7 +664,7 @@ export function DeskToolShelf() {
         label: model.name,
         kind: "MODEL",
         terms: "model",
-        run: () => void createThread({ title: model.name, profile_override: model.name }).then((t) => { openPullout(`thread:${t.id}`); void refresh(); }),
+        run: () => void openNewThread({ title: model.name, profile_override: model.name }),
       });
 
     // ── one door per name (HS-202-02) ──

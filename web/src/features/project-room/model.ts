@@ -215,6 +215,8 @@ export type RoomNeedsYouItem = {
   createdAt?: string;
   /** HS-173: review_bottleneck kind. */
   kind?: string;
+  /** A meeting's open action (kind `action_item`): the follow-through card it opens. */
+  actionItemId?: string;
   /** HS-173: relationship_id for People window open. */
   relationshipId?: string;
   /** HS-173: reviewer median wait in days. */
@@ -583,6 +585,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             meetingStartedAt: r.meeting_started_at != null ? String(r.meeting_started_at) : undefined,
             createdAt: r.created_at != null ? String(r.created_at) : undefined,
             kind: r.kind != null ? String(r.kind) : undefined,
+            actionItemId: r.action_item_id != null && r.action_item_id !== "" ? String(r.action_item_id) : undefined,
             relationshipId: r.relationship_id != null ? String(r.relationship_id) : undefined,
             medianDays: r.median_days != null ? Number(r.median_days) : undefined,
             prCount: r.count != null ? Number(r.count) : undefined,

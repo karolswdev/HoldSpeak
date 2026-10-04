@@ -1,3 +1,5 @@
+import { seatThoughtDraft } from "../thoughtDrafts";
+import { NEW_THOUGHT_TITLE } from "../thoughtTitle";
 import { useEffect, useRef, useState } from "react";
 import { ApiError, readableError } from "../../lib/api";
 import { spriteUrl } from "../sprites";
@@ -137,6 +139,19 @@ function WorkspaceReady({
     workspaceCursor: projection.workspace_cursor,
     onCursorConflict: () => reload(false),
   });
+
+  // `Write a thought` asks this window if its draft has words, and saves it
+  // before the next thought starts (thoughtDrafts.ts).
+  const draftSeat = useRef<{ words: () => boolean; flush: () => Promise<unknown> }>({ words: () => false, flush: async () => undefined });
+  draftSeat.current = {
+    words: () => Boolean(writer.draft.body.trim()) || (writer.draft.title.trim() !== "" && writer.draft.title.trim() !== NEW_THOUGHT_TITLE),
+    flush: () => writer.flush(),
+  };
+  const draftNoteId = documentThought.working_note.id;
+  useEffect(() => seatThoughtDraft(draftNoteId, {
+    words: () => draftSeat.current.words(),
+    flush: () => draftSeat.current.flush(),
+  }), [draftNoteId]);
 
   useEffect(() => {
     if (projection.thought.id === documentThought.id && projection.thought.aggregate_revision > documentThought.aggregate_revision) {
@@ -435,6 +450,7 @@ function WorkspaceReady({
     askRow?.act();
   }}>
     <ThoughtDocumentPane
+      noteId={documentThought.working_note.id}
       draft={writer.draft}
       onEdit={(patch) => { setRevealRange(null); writer.edit(patch); }}
       disabled={busy || documentThought.state !== "working"}

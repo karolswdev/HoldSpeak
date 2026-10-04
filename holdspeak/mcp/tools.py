@@ -403,7 +403,7 @@ TOOLS.extend([
         ["entry_id"],
     ),
     _mcp_tool("desk.snapshot", "Read one coherent snapshot of the durable HoldSpeak desk.", {}),
-    _mcp_tool("desk.needs_you", "What needs me: every project room's attention items in one list (overdue milestones, reviews and proposals waiting, commitments ...), with one count. Muted projects are marked and not counted. Returns {count, projects, items, next, coverage, complete} -- coverage names every expected source that was not observed.", {}),
+    _mcp_tool("desk.needs_you", "What needs me, by the one rule every face uses: follow-through cards that ask me (overdue, due, waiting, unassigned), every project room's attention items, engine blockers on the meeting path and meetings whose summary failed. One count. Muted projects are marked and not counted. Returns {count, members, items, blockers, failedMeetings, projects, next, coverage, complete} -- coverage names every expected source that was not observed. The text of a 1:1 commitment is withheld; it is still counted.", {}),
     _mcp_tool("settings.hub", "Read the settings hub row facts: module state tokens for the settings truth table.", {}),
     _mcp_tool(
         "decision_record.list", "List decision records, newest first.",
@@ -1089,8 +1089,13 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         # one count. The hub's calendar read (the Door's upcoming meetings) is
         # held by the transport, as the route holds it.
         door = runtime_service("door_service", lambda: None)
-        return ops().invoke(principal, "desk.needs_you", {},
-                            held={"door_upcoming": getattr(door, "_upcoming", None) if door else None})
+        # The one rule, the one count. People commitments are members and are
+        # counted; their text never leaves the People custody boundary: the
+        # operation itself withholds it (its result is observed), before any
+        # transport sees it.
+        return ops().invoke(
+            principal, "desk.needs_you", {},
+            held={"door_upcoming": getattr(door, "_upcoming", None) if door else None})
     if name == "settings.hub":
         from holdspeak.config import Config, CONFIG_FILE
         from holdspeak.services.inference_assignment_service import InferenceAssignmentService

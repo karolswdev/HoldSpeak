@@ -1,4 +1,5 @@
-import { countLabel } from "../surface";
+import { openNewThread } from "../newThread";
+import { countLabel, wireDayClock } from "../surface";
 /** HS-151-05 — Thread pullout content: head (in-place title, egress lamp,
  * status line, token meter), body (user/assistant rows with StreamingMaterial,
  * reasoning folded behind RAW, error row in-flow, CRASHED + Retry, sibling
@@ -33,7 +34,6 @@ import {
   keepMessage,
   branchThread,
   regenerateThread,
-  createThread,
   decideToolCall,
   addAnnotation,
   deleteAnnotation,
@@ -256,7 +256,7 @@ function ElicitationForm({
 
 /** Meeting chip: SurfaceRow with title, date, intel badge — the same
  *  visual vocabulary as MeetingsLane (ChairLane + intelBadge). */
-function MeetingResultView({ data }: { data: Record<string, unknown> }) {
+export function MeetingResultView({ data }: { data: Record<string, unknown> }) {
   const meetings = Array.isArray(data.meetings) ? data.meetings : null;
   const items = meetings ?? [data];
   return (
@@ -271,7 +271,7 @@ function MeetingResultView({ data }: { data: Record<string, unknown> }) {
               key={String(m.id ?? i)}
               glyph={<span className="thread-result-glyph">{"▣"}</span>}
               title={title}
-              detail={date ? String(date).slice(0, 16) : undefined}
+              detail={wireDayClock(date) || undefined}
               meta={badge}
             />
           );
@@ -1397,9 +1397,7 @@ function ThreadPulloutInner({
 
   /** HS-151-06: create a new thread (/ new verb). */
   const handleNewThread = useCallback(async () => {
-    const t = await createThread({});
-    useDesk.getState().openPullout(`thread:${t.id}`);
-    void useDesk.getState().refresh();
+    await openNewThread();
   }, []);
 
   const isStreaming = detail?.messages.some((m) => m.streaming) ?? false;

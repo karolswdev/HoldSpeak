@@ -218,7 +218,11 @@ export function FollowThroughView({
             className={`follow-through-lane${lane.id === "overdue" ? " is-overdue" : ""}`}
           >
             {cards.length ? (
-              <SurfaceLedger count={countToken(cards.length, lane.label.toUpperCase()) ?? lane.label.toUpperCase()} cols="follow-through">
+              <SurfaceLedger count={
+                  /* A lane name is a state, not a counted noun: `3 NOW`,
+                     never `3 NOWS` (inventory 2026-10-03). */
+                  countToken(cards.length, lane.label.toUpperCase(), lane.label.toUpperCase()) ?? lane.label.toUpperCase()
+                } cols="follow-through">
                 {cards.map((card) => {
                   const open = openCardId === card.id;
                   const source = sourceFor(card);

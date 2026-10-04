@@ -91,9 +91,11 @@ def test_gate1_the_redactors_worst_case_is_bounded() -> None:
         payload = (pattern * (REDACT_SCAN_LIMIT // len(pattern) + 1))[:REDACT_SCAN_LIMIT].encode()
         cases[f"near-miss {pattern[:5]}..({len(pattern)}) at the limit"] = (_rnd(2000, "ab", seed=11), payload)
     for name, (text, payload) in cases.items():
-        started = time.perf_counter()
+        # This thread's CPU time, not the wall clock: on a loaded machine the
+        # wall clock measures the other processes (seen: 2.17 s at load 100).
+        started = time.thread_time()
         cleaned = redact(text, payload)
-        elapsed = time.perf_counter() - started
+        elapsed = time.thread_time() - started
         assert elapsed < 2.0, f"{name}: {elapsed:.2f} s"
         assert len(cleaned) <= ERROR_LIMIT
     # Over the scan limit nothing of the text survives (fail closed, never a leak).

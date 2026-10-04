@@ -15,6 +15,13 @@ from ._shared import _json_body
 
 log = get_logger("web.routes.workbenches")
 
+# The route-plan refusals a Run can meet when no usable engine is assigned
+# (inference_route_plan_service._effective_assignment).
+_NO_ENGINE_WORDS = {
+    "no_assignment": "No engine is set for this workbench.",
+    "no_compatible_assignment": "The engine set for this workbench cannot run it.",
+}
+
 
 def build_workbenches_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
@@ -225,6 +232,10 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except NotFound:
             return _not_found("workbench", workbench_id)
         except ServiceError as exc:
+            # No engine is a state the owner can repair, not a hub fault: a
+            # named 409 with plain words, so the face can show its door.
+            if exc.code in _NO_ENGINE_WORDS:
+                return JSONResponse({"error": _NO_ENGINE_WORDS[exc.code], "code": exc.code}, status_code=409)
             return _service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to run workbench")

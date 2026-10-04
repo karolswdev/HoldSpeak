@@ -9,6 +9,7 @@
 // `features/project-room/update/model.ts` already speaks — SUPPORTED /
 // LINKED / LINKED · EDITED / UNSUPPORTED and UNREVIEWED / ACCEPTED /
 // REJECTED — so a claim reads the same on the brief and on the meeting.
+import { wireDate } from "../../../desk/surface/format";
 import type { ChipState } from "../../../desk/surface/patterns/StateChip";
 
 export type ProposalSupport = "unknown" | "source_linked" | "supported" | "disputed";
@@ -213,7 +214,7 @@ function clockAt(startedAt: string | null, offsetSeconds: number): string {
     const m = Math.floor(offsetSeconds / 60);
     return `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
   }
-  const at = new Date(new Date(startedAt).getTime() + offsetSeconds * 1000);
+  const at = new Date((wireDate(startedAt)?.getTime() ?? Number.NaN) + offsetSeconds * 1000);
   if (Number.isNaN(at.getTime())) return "";
   return `${pad(at.getHours())}:${pad(at.getMinutes())}`;
 }
@@ -251,8 +252,8 @@ export function heldReason(p: ReviewProposal, model: Pick<MeetingReviewModel, "r
 /** hh:mm of an ISO stamp, for `EXTRACTED 12:04` / `OBSERVED 12:04`. */
 export function stamp(value: string | null): string {
   if (!value) return "";
-  const at = new Date(value);
-  if (Number.isNaN(at.getTime())) return "";
+  const at = wireDate(value);
+  if (!at) return "";
   return `${pad(at.getHours())}:${pad(at.getMinutes())}`;
 }
 

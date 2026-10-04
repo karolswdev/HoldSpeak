@@ -12,7 +12,7 @@
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../lib/api";
 import { plainFailure, plainReason } from "../surface/plainFailure";
@@ -214,7 +214,9 @@ describe("People Try again re-reads the person", () => {
     expect(await screen.findByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeTruthy();
     expect(calls["/api/people/relationships/r1"]).toBe(1);
 
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    // The window's own failure row. The Next 1:1 side section has a Try again
+    // too when its read fails; which one is on the face first is a race.
+    fireEvent.click(within(screen.getByTestId("people-failure")).getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(calls["/api/people/relationships/r1"]).toBe(2));
     await waitFor(() => expect(screen.queryByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeNull());
     fireEvent.click(screen.getByRole("tab", { name: "Context" }));
@@ -225,7 +227,9 @@ describe("People Try again re-reads the person", () => {
     const calls = people(["down", "down", "up"]);
     render(<PeopleCore scope="people:r1" />);
     expect(await screen.findByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    // The window's own failure row. The Next 1:1 side section has a Try again
+    // too when its read fails; which one is on the face first is a race.
+    fireEvent.click(within(screen.getByTestId("people-failure")).getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(calls["/api/people/relationships/r1"]).toBe(2));
     await new Promise((r) => setTimeout(r, 50));
     expect(screen.getByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeTruthy();

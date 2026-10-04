@@ -18,6 +18,8 @@ const adoptThought = vi.fn();
 const thoughtForNote = vi.fn();
 const openPullout = vi.fn();
 const refresh = vi.fn(async () => undefined);
+const adoptCreated = vi.fn();
+let storeNotes: Array<{ id: string; title: string; bodyMarkdown: string; createdAt: string }> = [];
 
 vi.mock("../../lib/api", () => ({
   apiFetch: (...args: unknown[]) => apiFetch(...args),
@@ -35,7 +37,7 @@ vi.mock("../thoughts", () => ({
 }));
 vi.mock("../store", () => ({
   useDesk: Object.assign(() => undefined, {
-    getState: () => ({ openPullout, refresh }),
+    getState: () => ({ openPullout, refresh, adoptCreated, items: { note: storeNotes } }),
   }),
 }));
 
@@ -45,6 +47,8 @@ describe("Write a thought opens a note in the Thought window", () => {
     adoptThought.mockReset();
     thoughtForNote.mockReset();
     openPullout.mockReset();
+    adoptCreated.mockReset();
+    storeNotes = [];
   });
 
   it("mints a note, adopts it as a Thought, and opens it", async () => {
@@ -67,6 +71,76 @@ describe("Write a thought opens a note in the Thought window", () => {
       expect.objectContaining({ note_id: "note_1" }),
     );
     expect(openPullout).toHaveBeenCalledWith("note:note_1");
+    // The store takes the create answer first: the window does not wait
+    // for a desk read (inventory 2026-10-03, A-apps row 31).
+    expect(adoptCreated).toHaveBeenCalledWith("note", { id: "note_1" });
+    expect(adoptCreated.mock.invocationCallOrder[0]).toBeLessThan(
+      openPullout.mock.invocationCallOrder[0],
+    );
+  });
+
+  /* Inventory 2026-10-03: "every press makes another note named Thought
+     (six after one walk)". */
+  it("uses the thought with no words again: no second note", async () => {
+    storeNotes = [{ id: "note_empty", title: "Thought", bodyMarkdown: "", createdAt: "t1" }];
+    thoughtForNote.mockResolvedValue({
+      ownership: "thought",
+      thought: { state: "working", working_note: { id: "note_empty", title: "Thought", body_markdown: "", tags: [] } },
+    });
+    const { openNewThought } = await import("../newThought");
+
+    await openNewThought();
+
+    expect(apiFetch).not.toHaveBeenCalled();
+    expect(openPullout).toHaveBeenCalledWith("note:note_empty");
+  });
+
+  it("makes a new thought when the last one has words on the hub", async () => {
+    // The store's copy is older than the save: the hub's record decides.
+    storeNotes = [{ id: "note_old", title: "Thought", bodyMarkdown: "", createdAt: "t1" }];
+    thoughtForNote.mockImplementation(async (id: string) => id === "note_old"
+      ? { ownership: "thought", thought: { state: "working", working_note: { id, title: "Ask Priya", body_markdown: "Ask Priya", tags: [] } } }
+      : { ownership: "ordinary", note: { id }, source_precondition: { content_sha256: "abc", last_modified: "t0" } });
+    apiFetch.mockResolvedValue({ note: { id: "note_new" } });
+    const { openNewThought } = await import("../newThought");
+
+    await openNewThought();
+
+    expect(apiFetch).toHaveBeenCalledTimes(1);
+    expect(openPullout).toHaveBeenCalledWith("note:note_new");
+  });
+
+  /* Astra's condition on #790: `First thought`, at once Write a thought,
+     `Second thought` gave one note `First thoughtSecond thought`. */
+  it("saves a draft with unsaved words first and never uses it again", async () => {
+    const { seatThoughtDraft } = await import("../thoughtDrafts");
+    storeNotes = [{ id: "note_first", title: "Thought", bodyMarkdown: "", createdAt: "t1" }];
+    const flush = vi.fn(async () => undefined);
+    const release = seatThoughtDraft("note_first", { words: () => true, flush });
+    // The hub still holds the empty record (the save is refused or late).
+    thoughtForNote.mockImplementation(async (id: string) => id === "note_first"
+      ? { ownership: "thought", thought: { state: "working", working_note: { id, title: "Thought", body_markdown: "", tags: [] } } }
+      : { ownership: "ordinary", note: { id }, source_precondition: { content_sha256: "abc", last_modified: "t0" } });
+    apiFetch.mockResolvedValue({ note: { id: "note_second" } });
+    const { openNewThought } = await import("../newThought");
+
+    await openNewThought();
+    release();
+
+    expect(flush).toHaveBeenCalledTimes(1);
+    expect(flush.mock.invocationCallOrder[0]).toBeLessThan(apiFetch.mock.invocationCallOrder[0]);
+    expect(openPullout).toHaveBeenCalledWith("note:note_second");
+  });
+
+  it("joins a second press to the one in flight: one note", async () => {
+    apiFetch.mockResolvedValue({ note: { id: "note_once" } });
+    thoughtForNote.mockRejectedValue(new Error("offline"));
+    const { openNewThought } = await import("../newThought");
+
+    await Promise.all([openNewThought(), openNewThought(), openNewThought()]);
+
+    expect(apiFetch).toHaveBeenCalledTimes(1);
+    expect(openPullout).toHaveBeenCalledTimes(1);
   });
 
   it("never opens the dictation router", async () => {

@@ -404,6 +404,62 @@ def _on_intel_complete(db: Any, meeting_id: str, job: Any = None) -> None:
         log.debug("HS-172-03: dirty marker write failed for %s: %s", meeting_id, exc)
 
 
+MEETING_MEMORY_HEADING = "PROJECT MEMORY"
+
+
+# What an earlier run of this same meeting wrote.  A re-run or a retry must
+# not read its own output back as "earlier work".
+_OWN_MEETING_ROWS = (
+    ("action", "SELECT id FROM action_items WHERE meeting_id=?"),
+    ("decision", "SELECT id FROM decisions WHERE source_meeting_id=?"),
+    ("artifact", "SELECT id FROM artifacts WHERE meeting_id=?"),
+    ("decision_record",
+     "SELECT id FROM decision_records WHERE source_type='meeting' AND source_id=?"),
+)
+
+
+def _own_meeting_refs(db, meeting_id: str) -> list[str]:
+    refs: list[str] = []
+    with db._connection() as conn:
+        for kind, query in _OWN_MEETING_ROWS:
+            refs.extend(f"{kind}:{row[0]}" for row in conn.execute(query, (meeting_id,)))
+    return refs
+
+
+def _meeting_memory(db, meeting):
+    """Memory for a meeting summary: the meeting's project, less the meeting.
+
+    A meeting on no project reads no memory.  Any failure reads none: the
+    summary is then made exactly as before.
+    """
+    try:
+        from .services.memory_grounding import EMPTY_MEMORY, memory_context
+
+        own_ref = f"meeting:{meeting.id}"
+        # The meeting's projects: the meeting link first (strongest first),
+        # then any Project that holds the meeting as a resource.
+        project_ids = list(dict.fromkeys(
+            [str(row["project_id"]) for row in db.projects.get_meeting_projects(meeting.id)]
+            + [str(link.project_id)
+               for link in db.project_relationships.list_for_resource(own_ref)]
+        ))
+        if not project_ids:
+            return EMPTY_MEMORY
+        return memory_context(
+            db,
+            project_id=project_ids[0],
+            query=" ".join(
+                [str(meeting.title or "")]
+                + [str(getattr(segment, "text", "") or "") for segment in meeting.segments]
+            ),
+            exclude_refs=[own_ref, f"transcript:{meeting.id}"]
+            + _own_meeting_refs(db, str(meeting.id)),
+        )
+    except Exception as exc:
+        log.warning(f"Meeting memory not read ({exc}); the summary runs without it")
+        return None
+
+
 def _process_bound_intel_job(
     db, job, broker, *, on_meeting_ready, retry_base_seconds: int,
     retry_max_seconds: int, retry_max_attempts: int,
@@ -457,14 +513,23 @@ def _process_bound_intel_job(
                 db.intel.set_intel_job_model_host(job.meeting_id, egress_host)
         except Exception as exc:
             log.debug(f"Execution-time model host not recorded: {exc}")
+        material = {
+            "transcript_sha256": _hash_private(transcript),
+            "template_revision": "1",
+            "transcript_material": transcript,
+        }
+        # The summary reads the memory of the meeting's project, so it can say
+        # what changed and what is still open.  The block and its refs are
+        # staged with the transcript: what is admitted is what is sent, and
+        # the refs stay on the operation's material record.
+        memory = _meeting_memory(db, meeting)
+        if memory:
+            material["memory_material"] = memory.prompt_block(MEETING_MEMORY_HEADING)
+            material["memory_refs"] = memory.refs
         projection, routed = bound.execute(
             capability="meeting.deferred_analysis",
             operation_suffix="analysis",
-            material={
-                "transcript_sha256": _hash_private(transcript),
-                "template_revision": "1",
-                "transcript_material": transcript,
-            },
+            material=material,
             call=bound_analysis_dispatch(),
             projection_kind="meeting-bound-deferred-analysis",
             projection=lambda result: {
