@@ -1536,9 +1536,19 @@ function NeedsYouRow({
   const isDoor = ext._isDoor === true;
   // A Door row that just took an owner is no longer UNASSIGNED; it says who
   // it waits on until the board is read again.
-  const doorOwnerNamed = isDoor && !item.actionItemId && Boolean(commitResult.owner);
-  const isUnassigned = ext._isUnassigned === true && !doorOwnerNamed;
+  // Only until the board is read again: once the hub's card carries the
+  // owner, the hub's own lane names the row (WAITING ON <owner>, or TO REVIEW
+  // for an item not reviewed yet).
+  const doorOwnerNamed = isDoor && !item.actionItemId && Boolean(commitResult.owner)
+    && !String(item.owner ?? "").trim();
+  // The Door's `unassigned` lane also holds an item that HAS an owner and is
+  // not reviewed yet (`FollowThroughService._lane`). That row is TO REVIEW,
+  // never UNASSIGNED, and it does not offer `Name an owner`.
+  const toReview = ext._isUnassigned === true && isDoor && !doorOwnerNamed
+    && Boolean(String(item.owner ?? "").trim());
+  const isUnassigned = ext._isUnassigned === true && !doorOwnerNamed && !toReview;
   if (doorOwnerNamed) rowItem.why = `WAITING ON ${String(commitResult.owner).toUpperCase()}`;
+  if (toReview) rowItem.why = "TO REVIEW";
   const isProposal = Boolean(item.proposalId);
   const emblem = isDoor ? doorEmblem(item.source) : sourceEmblem(item.source);
   const proposalPrefix = isProposal
@@ -1594,7 +1604,7 @@ function NeedsYouRow({
             data-rank-class={cls}
             data-testid="arrival-why"
           >
-            {reasonToken(doorOwnerNamed ? rowItem : item, now)}
+            {reasonToken(doorOwnerNamed || toReview ? rowItem : item, now)}
           </span>
           {muted ? (
             <span className="arrival-project-token">MUTED</span>

@@ -323,10 +323,42 @@ describe("Arrival attention (HS-200-15)", () => {
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", {
       method: "POST", json: { card_id: "action-9", verb: "delegate", payload: { to: "Avery" } },
     }));
-    // The row stops saying UNASSIGNED and stops offering the verb it just paid.
+    // The row STAYS in Needs you (an item waiting on someone is a member,
+    // under WAITING). It moves from UNASSIGNED to WAITING ON <owner>, and the
+    // owner verb is gone.
     await waitFor(() => expect(screen.queryByTestId("arrival-commit-well")).toBeNull());
+    expect(within(section).getAllByTestId("arrival-needs-you-row")).toHaveLength(1);
     expect(within(line).queryByTestId("arrival-name-owner")).toBeNull();
-    expect(within(line).getByTestId("arrival-why").textContent).toContain("WAITING ON AVERY");
+    const why = within(line).getByTestId("arrival-why").textContent ?? "";
+    expect(why).toContain("WAITING ON AVERY");
+    expect(why).not.toContain("UNASSIGNED");
+  });
+
+  // Astra on #775: the Door's `unassigned` lane also holds an item with an
+  // owner that is not reviewed yet (`review_state=pending`). It is TO REVIEW
+  // (the wording of #776), never UNASSIGNED, and it has no owner verb.
+  it("an owned, not-reviewed Door row reads TO REVIEW and does not offer Name an owner", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        return { count: 0, projects: ["p1"], items: [], next: null,
+          coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true };
+      }
+      if (String(path).startsWith("/api/door")) {
+        return { board: { unassigned: [{ id: "action-7", title: "Draft the migration runbook",
+          source: "action_item", target_ref: "action_item:action-7", owner: "Priya", due: null,
+          review_state: "pending", lawful_verbs: doorVerbs("action-7") }] },
+          counts: {}, upcoming: [], calendar_configured: false };
+      }
+      return null;
+    });
+    render(<ChairHome />);
+    const section = await screen.findByTestId("arrival-needs-you");
+    const line = within(section).getByTestId("arrival-needs-you-row");
+    expect(within(line).queryByTestId("arrival-name-owner")).toBeNull();
+    expect(within(line).queryByRole("button", { name: /Name an owner/ })).toBeNull();
+    const why = within(line).getByTestId("arrival-why").textContent ?? "";
+    expect(why).toContain("TO REVIEW");
+    expect(why).not.toContain("UNASSIGNED");
   });
 
   it("an UNASSIGNED Door row that can take no owner and has nothing to open draws no Name an owner (A.11)", async () => {
