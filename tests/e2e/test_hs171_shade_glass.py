@@ -29,6 +29,7 @@ from .glass_infra import (
     _normal_chair,
     _ensure_build,
     _settle,
+    seed_meeting_engines,
 )
 from tests._evidence import evidence_dir
 
@@ -312,6 +313,10 @@ def _run_quiet_rig(
                  {"disposition": "completed"}, token=TOKEN)
 
             _seed_brief()
+            # A cold HOME has no meeting engines; that is one SETUP row and a
+            # Dock badge of 1 (HS-201-01). This rig's subject is the quiet
+            # shade, so it pins the meeting path first.
+            seed_meeting_engines()
 
             page.reload(wait_until="load")
             _normal_chair(page)
