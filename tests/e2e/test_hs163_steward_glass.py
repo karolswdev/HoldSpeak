@@ -272,7 +272,9 @@ def test_dogfood_run_and_dedup(
             page.screenshot(
                 path=str(SHOTS / f"steward-empty-{width}.png"), full_page=False,
             )
-            assert (SHOTS / f"steward-empty-{width}.png").stat().st_size > 20_000
+            # The empty Steward list is one line on a plain ground: on the phone
+            # frame it compresses under 20 kB. The floor proves "not a blank shot".
+            assert (SHOTS / f"steward-empty-{width}.png").stat().st_size > 10_000
 
             # -- Run once --
             t0 = time.monotonic()
