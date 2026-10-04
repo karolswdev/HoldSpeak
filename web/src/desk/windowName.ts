@@ -39,6 +39,12 @@ export function looksLikeId(value: string, id?: string | null): boolean {
     || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 }
 
+/** The title a person gave: not empty and not the record's id. */
+export function ownTitle(value: unknown, id?: string | null): string {
+  const v = text(value);
+  return v && !looksLikeId(v, id) ? v : "";
+}
+
 /** The name of the thing in a window. Never empty, never an id. */
 export function windowName(subject: WindowSubject, id?: string | null): string {
   const named = (value: unknown): string => {
@@ -92,7 +98,9 @@ export function primitiveName(kind: string, record: unknown, id?: string | null,
   const s = (key: string) => (typeof r[key] === "string" ? (r[key] as string) : "");
   switch (kind) {
     case "note": return windowName({ kind: "note", title: s("title"), body: s("bodyMarkdown") }, id);
-    case "thread": return windowName({ kind: "thread", title: s("title"), firstMessage: words ?? "" }, id);
+    // An untitled thread's `title` is the name the mapper gave (`New
+    // thread`), not a title: the first message names it when there is one.
+    case "thread": return windowName({ kind: "thread", title: r.untitled === true ? "" : s("title"), firstMessage: words ?? "" }, id);
     case "meeting": return windowName({ kind: "meeting", title: s("title"), startedAt: r.startedAt }, id);
     case "decision": return windowName({ kind: "decision", title: s("title"), text: s("decisionMarkdown") }, id);
     case "kb": return windowName({ kind: "knowledge", name: s("name") || s("title") }, id);

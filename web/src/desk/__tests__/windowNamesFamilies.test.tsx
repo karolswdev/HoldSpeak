@@ -1,7 +1,7 @@
 // The other window families obey the same rule (owner ratified 2026-10-04):
 // the title is the name of the thing; no face shows a raw id as a name.
 // Real mappers, real world list, real frame and registry.
-import { lazy } from "react";
+import { lazy, type ReactElement } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
@@ -79,7 +79,7 @@ describe("the shared cause: an empty title from the hub", () => {
 });
 
 describe("a window that shows one record of a program", () => {
-  const core = (body: () => JSX.Element) => lazy(async () => ({ default: body }));
+  const core = (body: () => ReactElement) => lazy(async () => ({ default: body }));
   const project = { kind: "project", id: "p-ledger", name: "Payments ledger cutover" };
 
   it("a Project Room is named by its project; Desk memory with no project keeps its word", async () => {

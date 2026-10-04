@@ -414,6 +414,10 @@ export interface Thread {
   kind: "thread";
   id: string;
   title: string;
+  /** The hub holds no title for this thread: `title` is the name `New
+   * thread`, and an open window takes the first words of the first message
+   * (windowName.ts). */
+  untitled?: boolean;
   recipeId?: string | null;
   profileOverride?: string | null;
   directoryId?: string | null;

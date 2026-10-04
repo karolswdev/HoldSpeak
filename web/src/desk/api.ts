@@ -37,7 +37,7 @@ import {
 } from "../meetings/summaryRoute";
 import { fetchRoadmaps, type RoadmapProject } from "./roadmap";
 import { fetchRepositories } from "./repository";
-import { windowName } from "./windowName";
+import { ownTitle, windowName } from "./windowName";
 import {
   wireString,
   wireNumber,
@@ -425,6 +425,9 @@ export const fromWireThread = (t: unknown): Thread | null => {
     id,
     // A thread with no title is `New thread`, never its id (windowName.ts).
     title: windowName({ kind: "thread", title: wireString(t, "title") }, id),
+    // The fact stays with the record: the window names an untitled thread
+    // by its first message when it has one (Pullout.tsx).
+    untitled: !ownTitle(wireString(t, "title"), id),
     recipeId: wireStringOrNull(t, "recipe_id"),
     profileOverride: wireStringOrNull(t, "profile_override"),
     directoryId: wireStringOrNull(t, "directory_id"),
