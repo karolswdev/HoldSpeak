@@ -56,6 +56,39 @@ class TestEnterOpensTheFirstRow:
         else:
             loc.click()
 
+    @staticmethod
+    def _note_ids(page: Any) -> set[str]:
+        """Every note the hub holds now (a thought is a note too)."""
+        return {n["id"] for n in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]}
+
+    def _assert_no_note_made(self, page: Any, before: set[str], what: str) -> None:
+        after = self._note_ids(page)
+        assert after == before, (what, "the palette activation changed the notes on the hub",
+                                 sorted(after - before), sorted(before - after))
+
+    def _open(self, pw: Any, width: int) -> tuple[Any, Any, dict[str, Any], list[str], list[str]]:
+        browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+        ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
+                                  device_scale_factor=1, has_touch=width < 720)
+        page = ctx.new_page()
+        page.set_default_timeout(30_000)
+        errors: list[str] = []
+        writes: list[str] = []
+        page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+        page.on("request", lambda r: writes.append(r.url.split("?")[0].replace(self.base, ""))
+                if r.method == "POST" else None)
+        page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+        _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+        note = _api(page, "POST", "/api/notes", {
+            "title": TITLE, "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
+            "tags": []}, token=TOKEN)["note"]
+        page.reload(wait_until="load")
+        _normal_chair(page)
+        page.wait_for_timeout(1500)
+        _settle(page)
+        del writes[:]
+        return browser, page, note, errors, writes
+
     def _find(self, page: Any, width: int, note_id: str) -> None:
         """Open the palette, type `ledger`, run the first row."""
         self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
@@ -76,29 +109,10 @@ class TestEnterOpensTheFirstRow:
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
-            browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+            browser, page, note, errors, writes = self._open(pw, width)
             try:
-                ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]},
-                                          device_scale_factor=1, has_touch=width < 720)
-                page = ctx.new_page()
-                page.set_default_timeout(30_000)
-                errors: list[str] = []
-                writes: list[str] = []
-                page.on("pageerror", lambda e: errors.append(str(e)[:200]))
-                page.on("request", lambda r: writes.append(r.url.split("?")[0].replace(self.base, ""))
-                        if r.method == "POST" else None)
-                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
-                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
-                note = _api(page, "POST", "/api/notes", {
-                    "title": TITLE, "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
-                    "tags": []}, token=TOKEN)["note"]
-                page.reload(wait_until="load")
-                _normal_chair(page)
-                page.wait_for_timeout(1500)
-                _settle(page)
-                del writes[:]
-
                 # 1. An ordinary note: Enter opens the note's own window. No thought is made.
+                held = self._note_ids(page)
                 self._find(page, width, note["id"])
                 win = page.locator(f"[id='pullout:note:{note['id']}']")
                 win.wait_for()
@@ -106,6 +120,8 @@ class TestEnterOpensTheFirstRow:
                 assert win.get_attribute("aria-label") == TITLE, win.get_attribute("aria-label")
                 assert page.locator(THOUGHT).count() == 0, "an ordinary note opened as a Thought"
                 assert writes == [], ("opening a note wrote to the hub", writes)
+                page.wait_for_timeout(800)
+                self._assert_no_note_made(page, held, "an ordinary note")
                 page.screenshot(path=str(SHOTS / f"ordinary-note-{width}.png"))
 
                 # 2. The owner develops it (the product's verb). It is a thought now.
@@ -117,6 +133,7 @@ class TestEnterOpensTheFirstRow:
                 del writes[:]
 
                 # 3. The same keys open the Thought window OF THAT NOTE. No new note is made.
+                held = self._note_ids(page)
                 self._find(page, width, note["id"])
                 thought = page.locator(f"[id='pullout:note:{note['id']}']")
                 thought.wait_for()
@@ -124,10 +141,32 @@ class TestEnterOpensTheFirstRow:
                 thought.locator(".thought-note-title", has_text=TITLE).wait_for()
                 assert page.locator(THOUGHT).count() == 1
                 page.wait_for_timeout(800)
-                assert "/api/notes" not in writes, ("the palette made a note", writes)
+                # By the hub's own record, whatever route would have made it
+                # (Astra's condition on #792: a POST /api/thoughts adds a note
+                # and a check of POST /api/notes alone did not see it).
+                self._assert_no_note_made(page, held, "a developed note")
                 page.screenshot(path=str(SHOTS / f"developed-note-{width}.png"))
 
                 real = [e for e in errors if "ResizeObserver" not in e]
                 assert not real, real
+            finally:
+                browser.close()
+
+    def test_the_check_fails_when_a_thought_is_made_in_the_gap(self) -> None:
+        """The proof of the check: a REAL thought made between the read and the
+        check (POST /api/thoughts, the route the old assertion did not see)."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser, page, note, _errors, _writes = self._open(pw, 1440)
+            try:
+                held = self._note_ids(page)
+                self._find(page, 1440, note["id"])
+                page.locator(f"[id='pullout:note:{note['id']}']").wait_for()
+                _api(page, "POST", "/api/thoughts",
+                     {"request_id": "palette-enter-injected", "raw_text": "A thought made elsewhere"}, token=TOKEN)
+                assert len(self._note_ids(page)) == len(held) + 1, "the injected thought made no note"
+                with pytest.raises(AssertionError, match="changed the notes on the hub"):
+                    self._assert_no_note_made(page, held, "the injected thought")
             finally:
                 browser.close()
