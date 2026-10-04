@@ -65,6 +65,20 @@ class MemoryIndexRepository(BaseRepository):
             ).fetchall()
         return {str(row["source_ref"]): dict(row) for row in rows}
 
+    def ledger_for(self, refs: Sequence[str]) -> dict[str, dict[str, Any]]:
+        """The ledger rows of the named sources only."""
+        found: dict[str, dict[str, Any]] = {}
+        with self._connection() as conn:
+            for ref in refs:
+                row = conn.execute(
+                    "SELECT source_ref,kind,content_sha,chunker_version,state"
+                    " FROM memory_sources WHERE source_ref=?",
+                    (str(ref),),
+                ).fetchone()
+                if row is not None:
+                    found[str(row["source_ref"])] = dict(row)
+        return found
+
     def replace_source(
         self,
         *,

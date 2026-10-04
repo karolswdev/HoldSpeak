@@ -278,12 +278,18 @@ gets jobs. A producer may call `wake()` after a write so the sweep runs at once;
 that is speed, not correctness. A missed hook can never lose a memory.
 **Built (2026-10-04):** one seam, not a hook per producer. Every write ends in
 one `desk_changed` send (`RuntimeServices._send_desk_changed`,
-`runtime/composition.py`); that send calls `memory_conductor.wake()`. The
-conductor waits 2 s after a wake (`WAKE_GAP_SECONDS`), so many writes close
-together are one tick. Measured on a real hub: a new note is found by a
-paraphrase question 2.4 s after its `POST /api/notes`.
-Alternative: a hook in each of about 30 producers; refused, one forgotten hook
-is a silent hole.
+`runtime/composition.py`); that send gives `memory_conductor.wake()` the kind
+and id of each change.
+
+- **OFF costs nothing.** While `memory.embed` is unassigned a wake reads no
+  source (one row read of the assignment head).
+- **ON: the pass reads only what changed.** The conductor waits 2 s after a
+  wake (`WAKE_GAP_SECONDS`), then runs `sweep_refs` over the named sources
+  and embeds their chunks. N edits cost N source reads, whatever the size of
+  the desk. A change kind that memory does not hold gives no ref.
+- **The full sweep stays on the slow timer** (120 s) and on a changed
+  assignment. A wake never moves that timer. The full sweep is what keeps
+  correctness: a kind with no ref, a missed wake, the keyword-table scrub.
 
 | Source kind | Table | Wake after | Chunks | Facts |
 |---|---|---|---|---|
@@ -467,6 +473,15 @@ model is trained for that cut). Prefixes `search_document:` and `search_query:`.
   check; no signature claim is made. A download continues a partial file. A
   file with a different hash is renamed `.invalid` and is never used. The
   signed catalogue is not changed.
+- **The row says what the press does.** "On this device" is said only for a
+  regular file whose sha256 is verified (hashed once, kept by path, size and
+  modification time). A file with the right size and a different hash is
+  shown as a download, and the press downloads.
+- **No symbolic links.** The hub writes only into its own model directory.
+  The directory, the `.part` file and the final file must not be links; the
+  part file is opened with `O_NOFOLLOW` (and `O_EXCL` when new). A link in
+  the directory stops the press before any request leaves. Only a regular
+  file is adopted.
 - **A download is egress and needs the press.** It starts only in
   `MeaningSearchService.turn_on` (`POST /api/memory/meaning-search/turn-on`),
   only when no copy with the pinned hash is on this device. Each download

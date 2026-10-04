@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import hashlib
 import os
+import stat
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -90,41 +92,79 @@ def candidate_paths(model: PinnedModel, home: Path) -> list[Path]:
     return paths
 
 
+def _open_regular(path: Path) -> int:
+    """Open ``path`` for reading only when it is a regular file, not a link."""
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    if not stat.S_ISREG(os.fstat(fd).st_mode):
+        os.close(fd)
+        raise OSError("not a regular file")
+    return fd
+
+
 def hash_file(path: Path) -> str:
+    """sha256 of a regular file.  A symbolic link is refused, not followed."""
     digest = hashlib.sha256()
-    with path.open("rb") as handle:
+    with os.fdopen(_open_regular(path), "rb") as handle:
         while chunk := handle.read(_CHUNK_BYTES):
             digest.update(chunk)
     return digest.hexdigest()
 
 
+#: (path, size, mtime_ns, pinned sha256) -> True when the file has that hash.
+_VERIFIED: dict[tuple[str, int, int, str], bool] = {}
+_VERIFIED_LOCK = threading.Lock()
+
+
 def is_pinned_file(model: PinnedModel, path: Path) -> bool:
-    """True when ``path`` is a regular file with the pinned size and hash."""
+    """True when ``path`` is a regular file (not a link) with the pinned size
+    and the pinned sha256.
+
+    The file is hashed once; the answer is kept for that path, size and
+    modification time, so a status read can ask every time.
+    """
     try:
-        if path.is_symlink() or not path.is_file() or path.stat().st_size != model.size:
+        info = os.lstat(path)
+        if not stat.S_ISREG(info.st_mode) or info.st_size != model.size:
             return False
-        return hash_file(path) == model.sha256
+        key = (str(path), int(info.st_size), int(info.st_mtime_ns), model.sha256)
+        with _VERIFIED_LOCK:
+            held = _VERIFIED.get(key)
+        if held is None:
+            held = hash_file(path) == model.sha256
+            with _VERIFIED_LOCK:
+                if len(_VERIFIED) > 64:
+                    _VERIFIED.clear()
+                _VERIFIED[key] = held
+        return held
     except OSError:
         return False
 
 
 def find_on_device(model: PinnedModel, home: Path) -> Optional[Path]:
-    """The first copy on this device that has the pinned hash, or None."""
+    """The first copy on this device that has the pinned hash, or None.
+
+    This is the one decision both the status and the press use: "on this
+    device" is said only for a file whose hash is verified.
+    """
     for path in candidate_paths(model, home):
-        if is_pinned_file(model, path):
+        if not path.parent.is_symlink() and is_pinned_file(model, path):
             return path
     return None
 
 
-def looks_on_device(model: PinnedModel, home: Path) -> bool:
-    """A fast check (name and size, no hash) for a status read."""
-    for path in candidate_paths(model, home):
-        try:
-            if path.is_file() and path.stat().st_size == model.size:
-                return True
-        except OSError:
-            continue
-    return False
+def check_destination(destination: Path) -> None:
+    """Refuse a download place that holds a symbolic link.
+
+    The hub writes only into its own model directory, and never through a
+    link: not the directory, not the part file, not the final file.
+    """
+    directory = destination.parent
+    directory.mkdir(parents=True, exist_ok=True)
+    if directory.is_symlink() or not stat.S_ISDIR(os.lstat(directory).st_mode):
+        raise ModelFetchError("unsafe", "the model directory is not a plain directory")
+    for entry in (directory / (destination.name + ".part"), destination):
+        if entry.is_symlink() or (entry.exists() and not stat.S_ISREG(os.lstat(entry).st_mode)):
+            raise ModelFetchError("unsafe", f"{entry.name} in the model directory is not a regular file")
 
 
 def _allowed_host(host: str) -> bool:
@@ -149,9 +189,11 @@ def fetch(
     with a different hash is renamed to ``<destination>.invalid`` and is
     never used.
     """
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    part = destination.with_name(destination.name + ".part")
-    offset = part.stat().st_size if part.is_file() else 0
+    directory = destination.parent
+    part = directory / (destination.name + ".part")
+    invalid = directory / (destination.name + ".invalid")
+    check_destination(destination)
+    offset = os.lstat(part).st_size if part.exists() else 0
     if offset > model.size:
         part.unlink()
         offset = 0
@@ -170,7 +212,12 @@ def fetch(
             append = bool(offset and status == 206 and content_range.startswith(f"bytes {offset}-"))
             total = offset if append else 0
             on_progress(total)
-            with part.open("ab" if append else "wb") as output:
+            if not append and part.exists():
+                part.unlink()
+            # O_NOFOLLOW: a link put there after the check is refused, not
+            # followed.  O_EXCL: a new part file is one this call made.
+            flags = os.O_WRONLY | os.O_NOFOLLOW | (os.O_APPEND if append else os.O_CREAT | os.O_EXCL)
+            with os.fdopen(os.open(part, flags, 0o644), "ab" if append else "wb") as output:
                 while True:
                     if cancelled():
                         raise ModelFetchCancelled()
@@ -184,13 +231,14 @@ def fetch(
                     on_progress(total)
         if total < model.size:
             raise ModelFetchError("network", "the download stopped before the end of the file")
-    if part.stat().st_size != model.size or hash_file(part) != model.sha256:
-        os.replace(part, destination.with_name(destination.name + ".invalid"))
+    if os.lstat(part).st_size != model.size or hash_file(part) != model.sha256:
+        os.replace(part, invalid)
         raise ModelFetchError("integrity", "the downloaded file does not have the pinned sha256")
-    with part.open("rb") as handle:
-        if handle.read(4) != b"GGUF":
-            os.replace(part, destination.with_name(destination.name + ".invalid"))
-            raise ModelFetchError("integrity", "the downloaded file is not a GGUF file")
+    with os.fdopen(_open_regular(part), "rb") as handle:
+        magic = handle.read(4)
+    if magic != b"GGUF":
+        os.replace(part, invalid)
+        raise ModelFetchError("integrity", "the downloaded file is not a GGUF file")
     os.replace(part, destination)
     return destination
 
@@ -201,10 +249,10 @@ __all__ = [
     "ModelFetchError",
     "PinnedModel",
     "candidate_paths",
+    "check_destination",
     "fetch",
     "find_on_device",
     "hash_file",
     "is_pinned_file",
-    "looks_on_device",
     "model_dir",
 ]
