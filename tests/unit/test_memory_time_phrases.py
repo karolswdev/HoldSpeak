@@ -264,3 +264,37 @@ def test_the_time_retriever_keeps_the_project_scope(hub: Hub) -> None:
         )
     found = hub.db.memory.search("what happened yesterday", project_id=pid, now=now)
     assert _refs(found) == ["meeting:m-in-project"]
+
+
+# ── Astra's review of PR #829: the producer-backed repros ────────────────
+
+
+def test_login_last_week_finds_the_login_meeting_among_fifty_others(hub: Hub) -> None:
+    now = datetime.now().astimezone()
+    start, middle, _end = _middle("last week", now)
+    _meeting(hub, "m-login", start + timedelta(hours=33), "Login authentication was fixed.")
+    for index in range(50):
+        _meeting(hub, f"m-other-{index:02d}", middle, f"Standup number {index} about the roadmap.")
+
+    found = hub.db.memory.search("login last week", now=now)
+    assert found.fusion["time"]["phrase"] == "last week"
+    assert _refs(found)[0] == "meeting:m-login"
+
+    answer = _route(hub, "handover last week")
+    assert answer["ranking"]["fusion"]["time"]["phrase"] == "last week"
+
+
+def test_what_happened_last_march_finds_the_meeting(hub: Hub) -> None:
+    now = datetime.now().astimezone()
+    _start, middle, _end = _middle("last March", now)
+    _meeting(hub, "m-march", middle, "Budget planning for the platform team.")
+    _meeting(hub, "m-not-march", middle - timedelta(days=100), "Budget planning for the platform team.")
+
+    found = hub.db.memory.search("what happened last March", now=now)
+    assert found.fusion["time"]["phrase"] == "last March"
+    assert _refs(found) == ["meeting:m-march"]
+
+    _start, may_middle, _end = _middle("last May", now)
+    _meeting(hub, "m-may", may_middle, "Budget review.")
+    found = hub.db.memory.search("budget last May", now=now)
+    assert _refs(found)[0] == "meeting:m-may"

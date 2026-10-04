@@ -257,8 +257,8 @@ def _month(match: re.Match, clock: _Clock) -> Range:
     word = match.group("mon").lower()
     month = _MONTHS[word]
     which = (match.group("which") or "").lower()
-    if word in ("may", "march") and which not in ("in", "during", "") :
-        return None  # "this may take", "the march of": not a month
+    if word in ("may", "march") and which not in ("in", "during", "last", ""):
+        return None  # "this may take", "of march": not a month
     if match.group("y"):
         return _month_range(clock, int(match.group("y")), month)
     if which == "this":
@@ -277,7 +277,9 @@ def _year(match: re.Match, clock: _Clock) -> Range:
     return clock.at(date(year, 1, 1)), clock.at(date(year + 1, 1, 1))
 
 
-_LEAD = r"(?:(?:in|during|over|within|for)\s+)?"
+# Every optional lead word starts on a word boundary: "login last week" is
+# "last week" and the word "login", never "in last week" and "log".
+_LEAD = r"(?:\b(?:in|during|over|within|for)\s+)?"
 _PATTERNS: list[tuple[re.Pattern, Handler]] = [
     (re.compile(r"\bthe\s+day\s+before\s+yesterday\b", re.I), _day_before_yesterday),
     (re.compile(r"\b(?P<which>yesterday|this|earlier\s+this)\s+(?P<part>morning|afternoon|evening)\b", re.I), _part_of_day),
