@@ -5,7 +5,7 @@ conductor and future cron consumers share one parser.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, tzinfo
 from typing import Optional
 
 
@@ -58,13 +58,54 @@ def cron_is_due(cron_expr: str, *, now: Optional[datetime] = None) -> bool:
         return False
 
 
+def resolve_tz(tz_name: Optional[str]) -> tzinfo:
+    """A schedule's IANA zone name as a tzinfo; UTC when absent or unknown."""
+    if not tz_name or str(tz_name).upper() == "UTC":
+        return timezone.utc
+    try:
+        from zoneinfo import ZoneInfo
+
+        return ZoneInfo(str(tz_name))
+    except Exception:
+        return timezone.utc
+
+
+def next_cron_fire_in_zone(
+    cron_expr: str, tz_name: Optional[str], *, now_epoch: Optional[float] = None
+) -> Optional[float]:
+    """The next fire (epoch seconds) of a cron written in the schedule's zone.
+
+    The cron fields are wall-clock values in ``tz_name``: "32 21 * * *" with
+    America/Denver fires at 21:32 in Denver, not at 21:32 UTC.
+    """
+    zone = resolve_tz(tz_name)
+    after = (
+        datetime.fromtimestamp(now_epoch, tz=zone)
+        if now_epoch is not None
+        else datetime.now(zone)
+    )
+    return next_cron_fire(cron_expr, after=after)
+
+
 def next_cron_fire(cron_expr: str, *, after: Optional[datetime] = None) -> Optional[float]:
     """Compute the next fire time (epoch seconds) strictly after ``after``.
 
     Scans minute-by-minute up to 400 days. Returns None for invalid expressions.
 
-    Known: during a DST fall-back repeated hour, a short-interval schedule
-    CAN fire twice (standard cron semantics). Accepted, not mitigated.
+    An aware ``after`` is walked as REAL instants (UTC), and each instant is
+    read on the wall clock of ``after``'s zone. Wall-clock arithmetic on an
+    aware datetime ignores the offset change at a DST edge, and returned a
+    fire in the past in the repeated hour (review of #778):
+
+    - Fold (the repeated hour): the result is the next matching instant
+      strictly after ``after``. At the second 01:15, "30 1 * * *" is the
+      second 01:30, never the first.
+    - Gap (the skipped hour): a wall time that does not exist that day fires
+      at the first valid instant after the gap. "30 2 * * *" fires at 03:00
+      on the spring-forward day.
+
+    Known: in the repeated hour a schedule CAN fire twice (standard cron
+    semantics). Accepted, not mitigated.
     """
     try:
         parts = cron_expr.strip().split()
@@ -74,11 +115,33 @@ def next_cron_fire(cron_expr: str, *, after: Optional[datetime] = None) -> Optio
         return None
     if after is None:
         after = datetime.now(timezone.utc)
-    # Start from the next full minute
-    candidate = after.replace(second=0, microsecond=0) + timedelta(minutes=1)
-    limit = after + timedelta(days=400)
-    while candidate < limit:
-        if cron_is_due(cron_expr, now=candidate):
-            return candidate.timestamp()
-        candidate += timedelta(minutes=1)
+    if after.tzinfo is None:
+        # A naive clock has no zone to resolve: plain wall-clock scan.
+        candidate = after.replace(second=0, microsecond=0) + timedelta(minutes=1)
+        limit = after + timedelta(days=400)
+        while candidate < limit:
+            if cron_is_due(cron_expr, now=candidate):
+                return candidate.timestamp()
+            candidate += timedelta(minutes=1)
+        return None
+
+    zone = after.tzinfo
+    instant = after.astimezone(timezone.utc).replace(second=0, microsecond=0)
+    previous_wall = instant.astimezone(zone).replace(tzinfo=None)
+    limit = instant + timedelta(days=400)
+    minute = timedelta(minutes=1)
+    while instant < limit:
+        instant += minute
+        wall = instant.astimezone(zone).replace(tzinfo=None)
+        if cron_is_due(cron_expr, now=wall):
+            return instant.timestamp()
+        # A gap: the wall clock jumped forward by more than one minute. A
+        # cron time inside the skipped span fires now, at the first valid
+        # instant after the gap.
+        skipped = previous_wall + minute
+        while skipped < wall:
+            if cron_is_due(cron_expr, now=skipped):
+                return instant.timestamp()
+            skipped += minute
+        previous_wall = wall
     return None

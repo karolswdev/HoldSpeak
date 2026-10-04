@@ -7,6 +7,7 @@ this index cannot become a competing audit log or mutate its subject.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from .base import BaseRepository
@@ -252,16 +253,31 @@ class ProjectionRepository(BaseRepository):
 
     @staticmethod
     def _normalize_timestamp(value: str) -> str:
-        """Make SQLite and ISO timestamps sort and render consistently as UTC."""
+        """One UTC wire shape (``...Z``) for every source row's time.
+
+        The source tables hold three shapes. A SQLite stamp
+        (``YYYY-MM-DD HH:MM:SS``, from CURRENT_TIMESTAMP) is UTC. An ISO
+        string with an offset is exact. A bare ISO string
+        (``YYYY-MM-DDTHH:MM:SS``, from ``datetime.now().isoformat()``) is the
+        hub's LOCAL wall time: it is converted to UTC, never stamped ``Z`` as
+        it stands (that showed a new artifact as "6h ago" in Denver).
+        """
         clean = str(value or "").strip()
         if not clean:
             return "1970-01-01T00:00:00Z"
-        if "T" not in clean and " " in clean:
+        sqlite_utc = "T" not in clean and " " in clean
+        if sqlite_utc:
             clean = clean.replace(" ", "T", 1)
         if clean.endswith("+00:00"):
             return clean[:-6] + "Z"
         if clean[-1:] != "Z" and "+" not in clean[10:] and "-" not in clean[10:]:
-            clean += "Z"
+            if sqlite_utc or "T" not in clean:
+                return clean + "Z"
+            try:
+                local = datetime.fromisoformat(clean).astimezone()
+            except ValueError:
+                return clean + "Z"
+            return local.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
         return clean
 
     def _actuators(self, conn: Any, meetings: dict[str, str]) -> list[DeskProjection]:

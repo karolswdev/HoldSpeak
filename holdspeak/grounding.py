@@ -406,8 +406,47 @@ def _hydrate_qualified(
         "project_item",
         "workbench_item",
         "cadence",
+        "send",
+        "project_update",
+        "prep_brief",
+        "calendar_event",
     }:
         queries = {
+            # What was sent, to whom, when, the outcome. Never the payload:
+            # the document is read under its own ref, and a sent Brief
+            # carries People data.
+            "send": (
+                "SELECT COALESCE(NULLIF(json_extract(s.document_json,'$.title'),''),s.document_ref) title,"
+                "'Sent: '||s.document_ref"
+                "||'\nTo: '||COALESCE((SELECT cd.name FROM channel_destinations cd WHERE cd.id=s.destination_id),'')"
+                "||COALESCE(' '||json_extract(s.target_json,'$.to'),'')"
+                "||COALESCE('\nCc: '||json_extract(s.target_json,'$.cc'),'')"
+                "||COALESCE(' '||json_extract(s.target_json,'$.repo'),'')"
+                "||COALESCE(' '||json_extract(s.target_json,'$.key'),'')"
+                "||COALESCE(' '||json_extract(s.account_json,'$.channel_label'),'')"
+                "||'\nChannel: '||s.channel"
+                "||'\nWhen: '||COALESCE(s.settled_at,s.dispatch_started_at,s.created_at)"
+                "||'\nOutcome: '||s.state||COALESCE(' ('||NULLIF(s.reason,'')||')','') text,"
+                "s.channel||' · '||s.state subtitle "
+                "FROM channel_sends s WHERE s.id=? AND s.state IN ('sent','failed','unknown')"
+            ),
+            "project_update": (
+                "SELECT COALESCE((SELECT p.name FROM projects p WHERE p.id=u.project_id),u.project_id)||' update r'||u.draft_revision title,"
+                "u.body_md text,COALESCE(u.published_at,u.updated_at) subtitle "
+                "FROM project_updates u WHERE u.id=? AND u.lifecycle='published'"
+            ),
+            "prep_brief": (
+                "SELECT COALESCE((SELECT p.name FROM projects p WHERE p.id=b.project_id),b.project_id)||' prep · '||b.purpose title,"
+                "b.body_md text,COALESCE(b.kept_at,b.updated_at) subtitle "
+                "FROM project_briefs b WHERE b.id=? AND b.lifecycle!='discarded'"
+            ),
+            "calendar_event": (
+                "SELECT COALESCE(NULLIF(e.title,''),e.id) title,"
+                "'When: '||e.starts_at||' to '||e.ends_at"
+                "||CASE WHEN e.location IS NULL OR e.location='' THEN '' ELSE '\nWhere: '||e.location END"
+                "||CASE WHEN e.attendees_json IN ('','[]') THEN '' ELSE '\nAttendees: '||e.attendees_json END text,"
+                "e.starts_at subtitle FROM calendar_events e WHERE e.id=?"
+            ),
             "decision_record": (
                 "SELECT decision_text title,COALESCE(rationale,'')||CASE WHEN alternatives IS NULL OR alternatives='' THEN '' ELSE '\n\nAlternatives: '||alternatives END text,updated_at subtitle FROM decision_records WHERE id=? AND deleted=0"
             ),
@@ -544,11 +583,11 @@ def _hydrate_qualified(
                     0, search.total - len(members)
                 )
         else:
-            all_members = [
+            all_members = _drop_parked(db, [
                 row.resource_ref
                 for row in db.project_relationships.list_for_project(resource_id)
                 if str(row.resource_ref).split("#", 1)[0] not in (exclude_refs or ())
-            ]
+            ])
             members = all_members[:GROUNDING_MAX_REFS]
             if stats is not None:
                 stats["selection"] = "recency_fallback"
@@ -560,6 +599,48 @@ def _hydrate_qualified(
         # one anonymous container, so every model-visible block keeps a citable ref.
         return _hydrate_members(db, members, expand, visited, query=query, stats=stats)
     return [], [ref]
+
+
+# A parked meeting and what it made stay out of memory.  The relevance pass
+# wears ``_not_parked`` inside ``memory.search``; the recency listing is a
+# plain member list, so it wears the same predicate here, BEFORE the limit.
+_PARKED_PARENT = {
+    "action": ("action_items", "action_items.meeting_id"),
+    "decision": ("decisions", "decisions.source_meeting_id"),
+    "artifact": ("artifacts", "artifacts.meeting_id"),
+}
+
+
+def _drop_parked(db: Any, members: list[str]) -> list[str]:
+    from .db.memory import _not_parked
+
+    connection = getattr(db, "_connection", None)
+    if connection is None:  # a narrow double: nothing to read parked from
+        return members
+    kept: list[str] = []
+    try:
+        with connection() as conn:
+            for member in members:
+                kind, _, resource_id = str(member).partition(":")
+                resource_id = resource_id.split("#", 1)[0]
+                if kind in {"meeting", "transcript"}:
+                    parked = conn.execute(
+                        "SELECT 1 FROM meetings WHERE id=? AND parked=1", (resource_id,)
+                    ).fetchone()
+                elif kind in _PARKED_PARENT:
+                    table, column = _PARKED_PARENT[kind]
+                    parked = conn.execute(
+                        f"SELECT 1 FROM {table} WHERE id=? AND NOT ({_not_parked(column)})",
+                        (resource_id,),
+                    ).fetchone()
+                else:
+                    parked = None
+                if parked is None:
+                    kept.append(member)
+    except Exception as exc:
+        log.warning(f"parked filter not applied ({exc})")
+        return members
+    return kept
 
 
 def _hydrate_members(

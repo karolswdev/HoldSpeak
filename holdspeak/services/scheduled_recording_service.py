@@ -13,7 +13,7 @@ from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from ..cron import next_cron_fire
+from ..cron import next_cron_fire, next_cron_fire_in_zone
 from ..db.scheduled_recordings import ScheduledRecording
 from ..logging_config import get_logger
 from ..principals import Principal
@@ -276,7 +276,8 @@ class ScheduledRecordingService:
             delegation_receipt_id = ""
             nf = None  # type: Optional[float]
             if enabled:
-                nf = next_cron_fire(cron_expr)
+                # The cron is wall-clock time in the schedule's zone.
+                nf = next_cron_fire_in_zone(cron_expr, tz)
                 delegation_receipt_id = _write_receipt(
                     self.db, "pending", "succeeded", "delegation_enabled",
                     detail=f"Bounded delegation for new schedule '{title}' "
@@ -382,8 +383,12 @@ class ScheduledRecordingService:
             kwargs["enabled"] = enabled
 
         # Recompute next_fire_at if cron changed or newly enabled
-        if will_enable and (cron_expr is not None or (enabled is True and not was_enabled)):
-            nf = next_cron_fire(effective_cron)
+        if will_enable and (
+            cron_expr is not None or tz is not None or (enabled is True and not was_enabled)
+        ):
+            nf = next_cron_fire_in_zone(
+                effective_cron, tz if tz is not None else existing.tz
+            )
             kwargs["next_fire_at"] = nf
 
         rec = self.db.scheduled_recordings.update(schedule_id, **kwargs)

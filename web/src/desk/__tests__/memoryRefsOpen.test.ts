@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { openIntelligence } from "../intelligenceNavigation";
 import { openRef, refOpener } from "../openObject";
 import { openPrimitive, openSurfaceOr } from "../shell";
+import { NO_WINDOW_REF_KINDS, refOpensWindow } from "../surface/citations";
 
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
@@ -35,11 +36,12 @@ beforeEach(() => {
 
 const SOURCE = resolve(__dirname, "../../../../holdspeak/services/memory_grounding.py");
 
-function helperRefKinds(): string[] {
-  const match = /^DESK_REF_KINDS = \(([^)]*)\)/m.exec(readFileSync(SOURCE, "utf8"));
-  if (!match) throw new Error("DESK_REF_KINDS not found in memory_grounding.py");
+function helperTuple(name: string): string[] {
+  const match = new RegExp(`^${name} = \\(([^)]*)\\)`, "m").exec(readFileSync(SOURCE, "utf8"));
+  if (!match) throw new Error(`${name} not found in memory_grounding.py`);
   return [...match[1].matchAll(/"([a-z_]+)"/g)].map((m) => m[1]);
 }
+const helperRefKinds = () => helperTuple("DESK_REF_KINDS");
 
 describe("every ref the drafters' memory helper returns opens on the Desk", () => {
   const kinds = helperRefKinds();
@@ -66,6 +68,17 @@ describe("every ref the drafters' memory helper returns opens on the Desk", () =
   it("a desk decision opens the Desk's decision window, under the name the store keeps", () => {
     openRef("desk_decision:decision_7ce0");
     expect(openPrimitive).toHaveBeenCalledWith("decision:decision_7ce0");
+  });
+
+  it("the helper and the Desk hold ONE list of refs with no window", () => {
+    const noWindow = helperTuple("NO_WINDOW_REF_KINDS");
+    expect([...noWindow].sort()).toEqual([...NO_WINDOW_REF_KINDS].sort());
+    for (const kind of noWindow) {
+      expect(kinds).not.toContain(kind);
+      expect(refOpensWindow(`${kind}:x1`)).toBe(false);
+      expect(refOpener(`${kind}:x1`)).toBeNull();
+    }
+    for (const kind of kinds) expect(refOpensWindow(`${kind}:x1`)).toBe(true);
   });
 
   it("the memory names with no Desk window are not openers (so the helper leaves them out)", () => {
