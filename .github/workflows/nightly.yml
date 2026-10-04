@@ -95,7 +95,7 @@ jobs:
           # outside HOME) and the warm npm cache. This mirrors the FULL
           # command in CLAUDE.md.
           HOME_REAL=$HOME
-          HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm uv run --extra test python -m pytest -q -n auto --ignore=tests/e2e/test_metal.py --ignore=tests/e2e/test_live_bus.py -m "not metal" --cov=holdspeak --cov-report=xml
+          HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm uv run --extra test python -m pytest -q -n auto --dist worksteal --ignore=tests/e2e/test_metal.py --ignore=tests/e2e/test_live_bus.py -m "not metal" --cov=holdspeak --cov-report=xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

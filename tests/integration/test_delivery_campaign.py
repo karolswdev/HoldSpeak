@@ -26,10 +26,15 @@ for _p in (str(REPO_ROOT), str(SCRIPTS)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-pytestmark = pytest.mark.skipif(
-    shutil.which("tmux") is None,
-    reason="the delivery campaign's terminal legs require tmux",
-)
+# Owner ruling 2026-10-03 (fast tests): this module runs the whole bounded campaign (20 s to 50 s). It is marked slow: the fast
+# run (`-m "not slow"`) leaves it out; the nightly full run and a direct run keep it.
+pytestmark = [
+    pytest.mark.skipif(
+        shutil.which("tmux") is None,
+        reason="the delivery campaign's terminal legs require tmux",
+    ),
+    pytest.mark.slow,
+]
 
 
 @pytest.fixture(scope="module")

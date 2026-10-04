@@ -154,7 +154,7 @@ def main(argv: list[str]) -> int:
             print(f"#   {test}: {why[test]}", file=sys.stderr)
     print(
         "H=$(mktemp -d); PLAYWRIGHT_BROWSERS_PATH=${PLAYWRIGHT_BROWSERS_PATH:-$HOME/Library/Caches/ms-playwright} HOME=$H "
-        "uv run pytest -q -n auto " + " ".join(selected) + "; rm -rf $H"
+        "uv run pytest -q -n auto --dist worksteal " + " ".join(selected) + "; rm -rf $H"
     )
     return 0
 

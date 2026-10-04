@@ -355,6 +355,52 @@ def _launch_chromium_on_the_gpu() -> None:
 _launch_chromium_on_the_gpu()
 
 
+# ============================================================
+# One pydantic adapter per route field shape (fast tests, 2026-10-03)
+# ============================================================
+#
+# FastAPI builds one pydantic TypeAdapter for each parameter of each route.
+# A hub has about 700 routes, and thousands of tests build a hub each, so the
+# same few hundred adapters (`str` path parameter, `Optional[int]` query, ...)
+# were built again for every hub: 0.08 s of the 0.22 s one hub costs
+# (measured; 280 distinct adapters, every later hub is all hits). An adapter
+# has no state, so one per (annotation, field description) serves every hub.
+# The key holds the annotation object itself, so two classes never share an
+# adapter; a class made inside a function is not kept. If FastAPI moves the
+# seam, the suite runs as before.
+
+
+def _share_route_field_adapters() -> None:
+    try:
+        import fastapi._compat.v2 as compat
+    except ImportError:
+        return
+    real = getattr(compat, "TypeAdapter", None)
+    if real is None or getattr(real, "_holdspeak_shared", False):
+        return
+    kept: dict = {}
+
+    def shared(type_, *, config=None):
+        try:
+            annotation = type_.__origin__
+            if "<locals>" in repr(annotation) or len(kept) > 5000:
+                raise TypeError
+            key = (annotation, tuple(repr(m) for m in type_.__metadata__), repr(config))
+            hash(key)
+        except Exception:
+            return real(type_, config=config)
+        adapter = kept.get(key)
+        if adapter is None:
+            adapter = kept[key] = real(type_, config=config)
+        return adapter
+
+    shared._holdspeak_shared = True
+    compat.TypeAdapter = shared
+
+
+_share_route_field_adapters()
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--run-metal",

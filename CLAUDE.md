@@ -79,25 +79,41 @@ disagrees with one of these, canon wins:
 
 ## Test commands
 
-- All tests: `uv run pytest -q`
-- Doctor only: `uv run pytest -q tests/ -k doctor`
-- A single phase's planned tests: see the relevant story file's "Test plan" section.
-- Full suite the way CI sees it (isolated HOME, so local state and the
-  owner's real DB stay out of it):
-  `HOME_REAL=$HOME; HOME=$(mktemp -d) PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright npm_config_cache=$HOME_REAL/.npm uv run pytest -q --ignore=tests/e2e/test_metal.py`
-  `npm_config_cache` keeps the mermaid-docs renderer on the warm npm cache;
-  without it every fresh-HOME run re-downloads mermaid-cli + Chromium into
-  the throwaway HOME (gigabytes per run, and an interrupted download
-  corrupts the npx lock).
-  `PLAYWRIGHT_BROWSERS_PATH` is not optional: the isolated HOME hides the
-  browser cache, and the three `tests/e2e/test_live_bus.py` tests error on
-  "Executable doesn't exist" without it (green with it).
-- Fast lane: add `-n auto` (pytest-xdist) to any of the above — the full
-  suite drops from ~30-45 min serial to ~5-13 min parallel on the owner's
-  machine. Prefer it for every full run. UAT conductor tests boot real
-  product processes; each xdist worker scans its own port range
-  (uat/conductor/runs.py), so parallel runs cannot cross-boot onto one
-  port.
+Three runs (owner ruling 2026-10-03). Run the tests that cover the change;
+the full suite is nightly. Every run uses an isolated HOME, so local state
+and the owner's real DB stay out of it. Times are from the owner's machine
+(12 cores) on 2026-10-03, with other lanes running tests at the same time.
+
+- **FAST** (run it before every merge; 5 min 40 s, was 7 min 50 s):
+  `HOME_REAL=$HOME; H=$(mktemp -d); HOME=$H PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright npm_config_cache=$HOME_REAL/.npm uv run pytest -q -n auto --dist worksteal -m "not slow" tests/unit tests/integration tests/critical tests/web tests/mcp tests/uat; rm -rf $H`
+  Unit, integration, critical and UAT tests; no browser tests. A test marked
+  `slow` (a clean venv install, a real hub restart, the graph-walk
+  calibration) runs in FULL and when you name its file.
+- **SCOPED browser tests** (run them when the change touches `web/src/` or
+  `holdspeak/`; one browser file takes 10 s to 60 s):
+  `uv run python scripts/glass_for.py` prints the pytest command for the
+  browser tests that cover the diff against `origin/main`, and why it picked
+  each file. `eval "$(uv run python scripts/glass_for.py --quiet)"` runs it.
+  Name paths to ask about them: `scripts/glass_for.py web/src/desk/delivery.ts`.
+- **FULL** (nightly in CI, `.github/workflows/nightly.yml`; not measured with `--dist worksteal` yet; 47 min without it, because three workers held every browser test):
+  `HOME_REAL=$HOME; H=$(mktemp -d); HOME=$H PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright npm_config_cache=$HOME_REAL/.npm uv run pytest -q -n auto --dist worksteal --ignore=tests/e2e/test_metal.py; rm -rf $H`
+  Pull-request CI runs FAST and the scoped browser tests only.
+- One file or one test: the same command with the path in place of the
+  directories. Doctor only: `uv run pytest -q tests/ -k doctor`.
+- `PLAYWRIGHT_BROWSERS_PATH` is not optional: the isolated HOME hides the
+  browser cache, and browser tests error on "Executable doesn't exist"
+  without it. `npm_config_cache` keeps the mermaid-docs renderer on the warm
+  npm cache; without it a fresh-HOME run downloads mermaid-cli and Chromium
+  again (gigabytes per run).
+- Always `-n auto --dist worksteal` (pytest-xdist; an idle worker takes
+  tests from a busy one). UAT conductor tests boot real product
+  processes; each xdist worker scans its own port range
+  (uat/conductor/runs.py), so parallel runs cannot cross-boot onto one port.
+- Browser tests draw on the GPU on macOS (`tests/conftest.py` adds
+  `--use-angle=metal` to every Chromium launch; software WebGL made the
+  browser suite three times slower). `HOLDSPEAK_GLASS_GPU=0` turns it off;
+  it is off when `CI` is set.
+- Remove the scratch HOME after each run (`rm -rf $H`).
 - The suite cannot wedge: pyproject sets a 300s per-test timeout
   (pytest-timeout, thread method), so a hanging test dies with a stack
   trace naming it instead of stalling the run at 98% forever. A test that

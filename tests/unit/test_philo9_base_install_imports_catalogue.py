@@ -37,6 +37,9 @@ def test_base_dependencies_declare_jsonschema() -> None:
     assert "jsonschema" in names
 
 
+# Owner ruling 2026-10-03 (fast tests): this test builds a clean venv and installs the base dependencies (60 s to 130 s). It is marked slow: the fast
+# run (`-m "not slow"`) leaves it out; the nightly full run and a direct run keep it.
+@pytest.mark.slow
 @pytest.mark.timeout(600)
 @pytest.mark.skipif(shutil.which("uv") is None, reason="the clean venv is built with uv")
 @pytest.mark.skipif(tomllib is None, reason="reads pyproject with tomllib")

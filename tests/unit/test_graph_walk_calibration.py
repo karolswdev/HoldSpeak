@@ -50,7 +50,9 @@ from scripts.graph_walk import (
 REPO = Path(__file__).resolve().parents[2]
 SAMPLE_ATLAS = REPO / "tests/fixtures/graph_walk_sample_atlas.json"
 
-pytestmark = pytest.mark.timeout(300, method="thread")
+# Owner ruling 2026-10-03 (fast tests): this module drives a real hub and a real browser (130 s in all). It is marked slow: the fast
+# run (`-m "not slow"`) leaves it out; the nightly full run and a direct run keep it.
+pytestmark = [pytest.mark.timeout(300, method="thread"), pytest.mark.slow]
 
 
 # ── the six calibration cases (brief §7) ───────────────────────────────
