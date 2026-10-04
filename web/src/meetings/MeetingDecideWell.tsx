@@ -138,7 +138,10 @@ function DecideWellFor({ meetingId, title, startedAt, summary }: DecideWellProps
         </div>
       ) : (
         <div className="meeting-decide-line">
-          <Button dense variant="primary" data-testid="meeting-decide" onClick={() => { setNaming(true); setDraft(""); }}>
+          {/* Never primary: the record has one filled primary, its summary
+              verb or the SEND well's (surface/contract.md, "the face's ONE
+              filled primary"). */}
+          <Button dense variant="ghost" data-testid="meeting-decide" onClick={() => { setNaming(true); setDraft(""); }}>
             Decide
           </Button>
         </div>
