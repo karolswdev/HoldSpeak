@@ -37,6 +37,7 @@ import {
 } from "../meetings/summaryRoute";
 import { fetchRoadmaps, type RoadmapProject } from "./roadmap";
 import { fetchRepositories } from "./repository";
+import { ownTitle, windowName } from "./windowName";
 import {
   wireString,
   wireNumber,
@@ -201,7 +202,8 @@ export const fromWireDecision = (d: unknown): Decision | null => {
   return {
     kind: "decision",
     id,
-    title: wireString(d, "title", "Untitled decision"),
+    // The name of a decision with no title: its first words (windowName.ts).
+    title: windowName({ kind: "decision", title: wireString(d, "title"), text: wireString(d, "decision_markdown") }, id),
     status: (wireString(d, "status", "proposed") as Decision["status"]) || "proposed",
     deciders: wireArray(d, "deciders").filter((x): x is string => typeof x === "string"),
     decidedAt: wireStringOrNull(d, "decided_at") ?? undefined,
@@ -421,7 +423,11 @@ export const fromWireThread = (t: unknown): Thread | null => {
   return {
     kind: "thread",
     id,
-    title: wireString(t, "title", "Thread"),
+    // A thread with no title is `New thread`, never its id (windowName.ts).
+    title: windowName({ kind: "thread", title: wireString(t, "title") }, id),
+    // The fact stays with the record: the window names an untitled thread
+    // by its first message when it has one (Pullout.tsx).
+    untitled: !ownTitle(wireString(t, "title"), id),
     recipeId: wireStringOrNull(t, "recipe_id"),
     profileOverride: wireStringOrNull(t, "profile_override"),
     directoryId: wireStringOrNull(t, "directory_id"),
@@ -487,8 +493,9 @@ export const fromWireMeeting = (m: unknown): Meeting | null => {
   return {
     kind: "meeting",
     id,
-    // HS-201-06 (tenet 4, ASD-STE100): plain words, no un- prefix.
-    title: wireString(m, "title", "Meeting with no title"),
+    // A meeting with no title: `Meeting, <day and time>` in his zone
+    // (windowName.ts; supersedes HS-201-06 `Meeting with no title`).
+    title: windowName({ kind: "meeting", title: wireString(m, "title"), startedAt: wireString(m, "started_at") }, id),
     startedAt: wireString(m, "started_at"),
     endedAt: wireStringOrNull(m, "ended_at"),
     segmentCount: wireNumber(m, "segment_count"),

@@ -107,6 +107,20 @@ describe("DeliveryDossierWindow captured runs", () => {
     expect(screen.getByText("RUNS 1 PASS 1 FAIL")).toBeTruthy();
     useDeliveryDossier.setState({ dossier: null });
   });
+
+  it("a story dossier window is named by the story's title, not `Dossier <id>`", () => {
+    const dossier = {
+      kind: "story", bundleId: "bun_1", bundleChanged: false, freshness: "live", detail: "", sourceId: "src_a",
+      project: "holdspeak", storyId: "HS-109-01", phase: 109, status: "done", headSha: "4ad164dd0000", indexTree: "tree_1",
+      summary: { assets: 0, passing: 0, failing: 0 }, members: [], capturedRuns: [],
+      storyMarkdown: "# The long memory keeps its receipts\n\nStatus: done\n", evidenceMarkdown: null,
+    } as StoryDossier;
+    useDeliveryDossier.setState({ dossier, loading: false, refusal: null });
+    render(<DeliveryDossierWindow />);
+    expect(screen.getByRole("region", { name: "The long memory keeps its receipts" })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: /^Dossier / })).toBeNull();
+    useDeliveryDossier.setState({ dossier: null });
+  });
 });
 
 describe("LifecycleChip (pill → token)", () => {

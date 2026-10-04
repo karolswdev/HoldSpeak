@@ -26,6 +26,7 @@ import { objectByRef } from "../world";
 import { DeskWindowFrame } from "./DeskWindow";
 import { FootSlotContext } from "../surface/foot";
 import { TitleSlotContext } from "../surface/title";
+import { windowName } from "../windowName";
 import { WingSlotContext } from "../surface/wings";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { ApplicationBoundary } from "./ApplicationBoundary";
@@ -176,12 +177,19 @@ export function SurfaceWindowHost({
     },
     [row.id],
   );
+  // A Project Room (Desk memory scoped to one project) is named by its
+  // project; Desk memory with no project keeps its own word.
+  const project =
+    row.key === "open-project-memory" && scope?.startsWith("project:")
+      ? objectByRef(items, scope)
+      : null;
+  const scopedName = project ? windowName({ kind: "project", name: project.title }, project.id) : null;
   return (
     <DeskWindowFrame
       id={row.id}
       glyph={row.glyph}
       eyebrow={row.eyebrow}
-      title={titleOverride ?? row.title}
+      title={titleOverride ?? scopedName ?? row.title}
       minW={row.minW}
       defaultH={row.defaultH}
       wings={wings}

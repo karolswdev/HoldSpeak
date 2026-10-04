@@ -1,3 +1,4 @@
+import { windowName } from "../windowName";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 // The session pull-out (HS-87-01/02) — attach + arm, in the desk
 // grammar. Watching is free. Secure/Normal use an exact pane grant; a Hub
@@ -690,13 +691,22 @@ export function SessionPullout() {
 
   const sessionId = openKey.split(":", 2)[1] || openKey;
   const live = paneStatus === "live";
+  // The window is named by the session's project (the last part of its
+  // folder), else its agent. The session id is not a name.
+  const coder = useDesk.getState().items.coder?.find((c) => c.sessionId === sessionId || c.id === sessionId);
+  const sessionName = windowName({
+    kind: "session",
+    project: String(coder?.project ?? "").replace(/[\\/]+$/, "").split(/[\\/]/).pop(),
+    agent: session?.agent || openKey.split(":", 2)[0],
+  }, sessionId);
 
   return (
     <DeskWindowFrame
       id="session"
       glyph="▮"
       minW={420}
-      label={`${session?.agent || openKey.split(":", 2)[0]} · ${sessionId.slice(0, 8)}`}
+      label={sessionName}
+      kindWord="Agent session"
       className="desk-pullout is-session"
       icon={
         <img
@@ -708,11 +718,7 @@ export function SessionPullout() {
           draggable={false}
         />
       }
-      title={
-        <>
-          {session?.agent || openKey.split(":", 2)[0]} · {sessionId.slice(0, 8)}
-        </>
-      }
+      title={sessionName}
       actions={
         <>
           {live && <LampGadget label="LIVE" on tone="ok" />}
@@ -754,6 +760,9 @@ export function SessionPullout() {
       </div>
 
       <SurfaceFooter
+        // The session id is not in the title (the window is named by its
+        // project); it stays findable here, a quiet token.
+        egress={<span className="surface-token desk-session-id" title="Session id" data-testid="session-id-token">SESSION · {sessionId}</span>}
         receipt={<ReceiptLine sessionKey={openKey} />}
         verbs={<>
           <ArmStrip />

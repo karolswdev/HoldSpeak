@@ -9,6 +9,8 @@ import {
   StringGadget,
 } from "../../desk/surface/gadgets";
 import { countLabel } from "../../desk/surface";
+import { useWindowTitle } from "../../desk/surface/title";
+import { windowName } from "../../desk/windowName";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { SurfaceSection } from "../../desk/surface/Surface";
 import { Button } from "../../components/signal/Signal";
@@ -71,6 +73,8 @@ function isAnchorValid(anchor: string): boolean {
 
 export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
   const initial = useMemo(() => parseScope(scope), [scope]);
+  // The window is named by the calendar the import went to, when the hub
+  // has named it (the review payload names no calendar before the import).
 
   const [phase, setPhase] = useState<Phase>(() => {
     if (initial.error) {
@@ -83,6 +87,8 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
       confidence: initial.confidence,
     };
   });
+  const calendarName = phase.step === "done" ? phase.sourceLabel : null;
+  useWindowTitle(calendarName ? windowName({ kind: "calendar", name: calendarName }) : null, [calendarName]);
 
   const handleConfirm = useCallback(async () => {
     if (phase.step !== "review") return;

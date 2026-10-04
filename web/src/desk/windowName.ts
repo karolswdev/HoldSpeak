@@ -34,7 +34,15 @@ export function looksLikeId(value: string, id?: string | null): boolean {
   const v = value.trim();
   if (!v) return false;
   if (id && v === String(id).trim()) return true;
-  return /^[a-z]{1,10}[_-][0-9a-z_-]{6,}$/i.test(v) && /\d/.test(v) && !/\s/.test(v);
+  // The hub's ids: `note_624495deb1f5`, `th_9f8a7b6c5d4e`, or a UUID.
+  return /^[a-z]{1,12}_[0-9a-f]{8,}$/i.test(v)
+    || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+}
+
+/** The title a person gave: not empty and not the record's id. */
+export function ownTitle(value: unknown, id?: string | null): string {
+  const v = text(value);
+  return v && !looksLikeId(v, id) ? v : "";
 }
 
 /** The name of the thing in a window. Never empty, never an id. */
@@ -52,8 +60,13 @@ export function windowName(subject: WindowSubject, id?: string | null): string {
         && (subject.keptBody == null || title !== firstWords(subject.keptBody));
       return own ? title : firstWords(subject.body ?? "") || "New thought";
     }
-    case "note":
+    case "note": {
+      // A note that holds the stored word `Thought` is a thought with no
+      // title of its own: the word is not a name.
+      if (text(subject.title) === NEW_THOUGHT_TITLE)
+        return firstWords(subject.body ?? "") || "New thought";
       return named(subject.title) || firstWords(subject.body ?? "") || "New note";
+    }
     case "thread":
       return named(subject.title) || firstWords(subject.firstMessage ?? "") || "New thread";
     case "meeting": {
@@ -74,6 +87,28 @@ export function windowName(subject: WindowSubject, id?: string | null): string {
       return named(subject.name) ? `Calendar snapshot · ${named(subject.name)}` : "Calendar snapshot";
     case "dossier":
       return named(subject.title) || "Dossier";
+  }
+}
+
+/** The name of a Desk primitive (a note, a thread, a meeting, …) from its
+ * record: what its window, its palette row and its Floor object show. Never
+ * empty, never the record's id. */
+export function primitiveName(kind: string, record: unknown, id?: string | null, words?: string | null): string {
+  const r = (record && typeof record === "object" ? record : {}) as Record<string, unknown>;
+  const s = (key: string) => (typeof r[key] === "string" ? (r[key] as string) : "");
+  switch (kind) {
+    case "note": return windowName({ kind: "note", title: s("title"), body: s("bodyMarkdown") }, id);
+    // An untitled thread's `title` is the name the mapper gave (`New
+    // thread`), not a title: the first message names it when there is one.
+    case "thread": return windowName({ kind: "thread", title: r.untitled === true ? "" : s("title"), firstMessage: words ?? "" }, id);
+    case "meeting": return windowName({ kind: "meeting", title: s("title"), startedAt: r.startedAt }, id);
+    case "decision": return windowName({ kind: "decision", title: s("title"), text: s("decisionMarkdown") }, id);
+    case "kb": return windowName({ kind: "knowledge", name: s("name") || s("title") }, id);
+    case "project": return windowName({ kind: "project", name: s("name") || s("title") }, id);
+    default: {
+      const own = text(s("title")) || text(s("name"));
+      return own && own !== String(id ?? "").trim() ? own : kindWord(kind) || "Object";
+    }
   }
 }
 
