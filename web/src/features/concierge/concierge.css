@@ -434,6 +434,22 @@
   min-width: 0;
 }
 
+/* The Meaning search row. The SET line-2 box is 100% wide PLUS its 46px
+   inset, so it runs 46px past the row and a long line in it is cut at 1440.
+   This row's line 2 and its reason line are 100% wide INCLUDING the inset:
+   nothing in the row runs past its edge. The reason has the repair reason's
+   type, has its own line, and wraps. */
+.concierge-set-line2.concierge-meaning-line,
+.concierge-meaning-reason {
+  flex: 0 0 calc(100% - 46px);
+  margin-left: 46px;
+}
+
+.concierge-meaning-reason {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 /* ── Footer: portaled, receipt left-aligned, never wraps ── */
 
 .desk-next .surface-footer-layout.concierge-footer {
@@ -490,6 +506,12 @@
 
   .concierge-found-line2,
   .concierge-set-line2 {
+    margin-left: 0;
+  }
+
+  .concierge-set-line2.concierge-meaning-line,
+  .concierge-meaning-reason {
+    flex-basis: 100%;
     margin-left: 0;
   }
 

@@ -30,6 +30,7 @@ import {
 } from "./useConciergeController";
 import { endpointHostPort, isLanAddress } from "./endpointDraft";
 import type { Engine, Repair } from "./api";
+import { MeaningSearchRow } from "./MeaningSearchRow";
 import "./concierge.css";
 
 /* ── HS-201-09 (counsel finding 4a): ONE filled primary per window ──
@@ -598,6 +599,7 @@ export function ConciergeCore({ scope }: CoreProps) {
           {ctrl.setRows.map((row) => (
             <SetGroupRow key={row.group} row={row} ctrl={ctrl} engines={ctrl.engines} />
           ))}
+          <MeaningSearchRow />
         </ul>
         <ProbeRow ctrl={ctrl} />
         {ctrl.adjustOpen ? <AdjustWell ctrl={ctrl} /> : null}

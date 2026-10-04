@@ -205,7 +205,8 @@ def test_a_file_with_a_different_hash_is_refused(desk) -> None:
 
     status = desk.service.status(OWNER)
     assert status["state"] == "off"
-    assert status["error"] == "The downloaded file is not the correct file. Press Turn on to download it again."
+    assert status["error_code"] == "integrity"
+    assert status["error"] == "The file was not correct. Press Try again to download it again."
     target = model_dir(desk.home) / PINNED.filename
     assert not target.exists()
     assert target.with_name(target.name + ".invalid").exists()
@@ -224,7 +225,8 @@ def test_a_stopped_download_continues_from_the_partial_file(desk) -> None:
 
     status = desk.service.status(OWNER)
     assert status["state"] == "off"
-    assert status["error"] == "The download stopped. Press Turn on to continue."
+    assert status["error_code"] == "network"
+    assert status["error"] == "The download stopped. Press Try again to continue."
     part = model_dir(desk.home) / (PINNED.filename + ".part")
     assert part.stat().st_size == 100_000 and not _assigned(desk.db)
 

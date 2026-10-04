@@ -494,6 +494,12 @@ model is trained for that cut). Prefixes `search_document:` and `search_query:`.
   n%, INDEXING n of m (chunks with a current vector, from the index), ON. The
   download state is in the hub process: after a restart the state is OFF and
   the partial file stays for the next press.
+- **The row.** Models (the Concierge window), THE SET: one row "Meaning
+  search" after the capability groups (`MeaningSearchRow.tsx`). It composes
+  the species of the other SET rows: the ledger row, the state chip (OFF,
+  DOWNLOADING n%, INDEXING n OF m, ON), the egress chip (THIS DEVICE, or
+  HUGGINGFACE.CO when the press downloads) and one library Button (Turn on /
+  Turn off). No modal.
 - **The `embedding` claim.** `memory.embed` requires the capability class
   `embedding`, so only a profile with that claim can be assigned to it. A
   profile with the claim serves no other capability (`embedding_model_only`),
