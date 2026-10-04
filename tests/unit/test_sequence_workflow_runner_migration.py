@@ -285,8 +285,11 @@ def test_late_or_superseded_child_output_cannot_advance_sequence_or_graph(rig):
     assert run.context.epoch == 1
 
 
-def test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive(route_rig):
+def test_parent_cancel_fences_admission_and_late_output_while_child_receipts_survive(route_rig, monkeypatch):
     """Route-level interleaving: cancel wins while provider dispatch is blocked."""
+    from tests._cancel_after_return import hold_child_cancel_until_provider_returns
+
+    hold_child_cancel_until_provider_returns(monkeypatch)
     client, db, state = route_rig
     chain = _sequence(client, [_recipe(client, "slow")])
     state["block"] = True

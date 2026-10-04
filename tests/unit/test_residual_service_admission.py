@@ -380,6 +380,9 @@ def test_a_cancelled_cadence_parent_never_publishes_its_late_draft(
     drafted text reaches the surface.
     """
     db, broker, service, loop, leaf, _revisions = _rig(tmp_path, monkeypatch)
+    from tests._cancel_after_return import hold_child_cancel_until_provider_returns
+
+    hold_child_cancel_until_provider_returns(monkeypatch)
 
     class CancellingIntel:
         active_provider = "local"

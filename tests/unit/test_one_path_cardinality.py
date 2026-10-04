@@ -451,7 +451,7 @@ def _accepted_meeting_decision(db: Database, decision_id: str) -> None:
         )
 
 
-def test_cancellation_after_provider_return_is_one_child_one_receipt_one_physical_attempt(tmp_path):
+def test_cancellation_after_provider_return_is_one_child_one_receipt_one_physical_attempt(tmp_path, monkeypatch):
     """Scenario: cancellation (durable parent cancel lands while provider is in flight).
 
     Surface: Decision promotion. The child's provider work completed and EARNED
@@ -462,6 +462,9 @@ def test_cancellation_after_provider_return_is_one_child_one_receipt_one_physica
     """
     from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
     from holdspeak.services.errors import ConflictError
+    from tests._cancel_after_return import hold_child_cancel_until_provider_returns
+
+    hold_child_cancel_until_provider_returns(monkeypatch)
 
     db = Database(tmp_path / "promotion-cardinality.db")
     _accepted_meeting_decision(db, "dec-cardinality")
