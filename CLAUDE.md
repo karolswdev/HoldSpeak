@@ -107,6 +107,12 @@ disagrees with one of these, canon wins:
   `tests/unit/test_evidence_scratch_guard.py`).
   Tests write `pm/roadmap/` only with `HOLDSPEAK_EVIDENCE_WRITE=1`; do not set it.
   The tree is clean after any run: no restore of tracked evidence is needed.
+- Generated docs: `scripts/gen_docs.sh` runs every generator. Three outputs
+  are not in git (`docs/generated/api-reference.json`,
+  `boundary-candidates.json`, `graph.json`): generate them when you need to
+  read them. Atlas source references have no `line`; the cited text must be
+  in exactly one place in the cited file, so cite the declaration or render
+  site. Do not add count fences; a new `.op` case needs no list edit.
 - Web-unit inherited baseline:
   `uv run python scripts/check_web_baseline.py --run` — runs the desk
   vitest suite and diffs its failures against

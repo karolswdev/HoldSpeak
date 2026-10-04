@@ -5291,55 +5291,46 @@
         {
           "path": "web/src/desk/applications.ts",
           "symbol": "action: \"review-calendar-snapshot\"",
-          "line": 416,
           "claim": "Calendar snapshot is a mounted Desk application."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "roadmapWindows.map",
-          "line": 277,
           "claim": "Roadmap windows mount in the Desk compositor."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "repositoryWindows.map",
-          "line": 284,
           "claim": "Repository windows mount in the Desk compositor."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
-          "symbol": "DeliveryDossierWindow",
-          "line": 275,
+          "symbol": "{!arrivalRequired && <DeliveryDossierWindow />}",
           "claim": "The Delivery dossier mounts in the Desk."
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
-          "symbol": "DeliveryTerminalWindow",
-          "line": 276,
+          "symbol": "{!arrivalRequired && <DeliveryTerminalWindow />}",
           "claim": "The Delivery terminal mounts in the Desk."
         },
         {
           "path": "web/src/desk/pullouts/registry.ts",
           "symbol": "chain: ChainPullout",
-          "line": 33,
           "claim": "Chain objects have a registered pullout."
         },
         {
           "path": "web/src/desk/pullouts/registry.ts",
           "symbol": "coder: CoderPullout",
-          "line": 35,
           "claim": "Coder objects have a registered pullout."
         },
         {
           "path": "web/src/desk/pullouts/registry.ts",
           "symbol": "directory: DirectoryPullout",
-          "line": 36,
           "claim": "Directory objects have a registered pullout."
         },
         {
           "path": "web/src/desk/gl/WorldStage.tsx",
-          "symbol": "InfoWindow",
-          "line": 276,
+          "symbol": "<InfoWindow key={w.ref} refId={w.ref} origin={w.origin} />",
           "claim": "Info windows mount from the Floor."
         }
       ],
@@ -5366,7 +5357,6 @@
       "sources": [
         {
           "path": "holdspeak/db/meetings.py",
-          "line": 1282,
           "symbol": "def delete_meeting",
           "claim": "The normal removal path retains the row through park; this case reads it after restart and restore."
         }
@@ -5385,7 +5375,6 @@
       "sources": [
         {
           "path": "holdspeak/db/workbenches.py",
-          "line": 362,
           "symbol": "def delete(self, item_id",
           "claim": "The normal removal path retains the row through park; this case reads it after restart and restore."
         }
@@ -5404,7 +5393,6 @@
       "sources": [
         {
           "path": "web/src/desk/needsYou.ts",
-          "line": 233,
           "symbol": "export function computeNeedsYou",
           "claim": "The Dock reads the one R1–R3 membership rule."
         }
@@ -5424,7 +5412,6 @@
         {
           "path": "web/src/desk/components/window/dockState.ts",
           "symbol": "export function reduceDockFrame",
-          "line": 72,
           "claim": "The Dock reduces existing authenticated runtime frames."
         }
       ],
@@ -5448,13 +5435,11 @@
       "sources": [
         {
           "path": "holdspeak/services/project_update_service.py",
-          "line": 1529,
-          "symbol": "def draft_update",
+          "symbol": "def draft_update(",
           "claim": "The project update composer persists a deterministic draft after reading the pinned Room and linked week sources."
         },
         {
           "path": "holdspeak/services/project_update_service.py",
-          "line": 1997,
           "symbol": "def _read_week_sources",
           "claim": "The composer reads active project-linked meeting summaries, owned actions, decisions, and truthful caveats."
         }
@@ -5475,19 +5460,16 @@
       "sources": [
         {
           "path": "scripts/philo13_b4_fixture.py",
-          "line": 160,
           "symbol": "def seed_people_prep",
           "claim": "B4 graph cases mint calendar, meeting, People, project, alias, and agenda data through real producers."
         },
         {
           "path": "holdspeak/services/people_service.py",
-          "line": 373,
           "symbol": "def one_on_one_brief",
           "claim": "The People brief reads the confirmed event, alias-owned open meeting actions, agenda, and linked projects."
         },
         {
           "path": "web/src/pages/cores/PeopleCore.tsx",
-          "line": 421,
           "symbol": "function PrepLens",
           "claim": "The People Prep face reads the brief and renders its preparation lens."
         }

@@ -3614,19 +3614,16 @@
         {
           "path": "holdspeak/operations.py",
           "symbol": "name=\"zone.file\"",
-          "line": 1068,
           "claim": "filing is one declared, ADMITTED operation; filing again moves the object"
         },
         {
           "path": "web/src/desk/components/DeskFilingStrip.tsx",
           "symbol": "aria-pressed={inZone}",
-          "line": 142,
           "claim": "the pullout's Filing strip draws one chip per zone, pressed where the object is filed"
         },
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"desk.new-zone\"",
-          "line": 260,
           "claim": "the face makes a zone with the New Zone verb"
         }
       ],
@@ -3649,19 +3646,16 @@
         {
           "path": "holdspeak/operations.py",
           "symbol": "name=\"kb.member.add\"",
-          "line": 1143,
           "claim": "adding a reference is one declared, ADMITTED operation"
         },
         {
           "path": "web/src/desk/components/DeskFilingStrip.tsx",
           "symbol": "toggleRelationship(\"knowledge\"",
-          "line": 171,
           "claim": "the Filing strip's Knowledge chip adds and removes the reference"
         },
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"desk.new-knowledge\"",
-          "line": 216,
           "claim": "the face makes a knowledge base with the New Knowledge verb"
         }
       ],
@@ -3682,37 +3676,31 @@
         {
           "path": "holdspeak/operations.py",
           "symbol": "name=\"decision.status\"",
-          "line": 1233,
           "claim": "the status change is ADMITTED; HTTP only (over MCP it is decision.update)"
         },
         {
           "path": "web/src/desk/pullouts/DecisionPullout.tsx",
           "symbol": "const cycleDecisionStatus",
-          "line": 71,
           "claim": "the pullout's status control cycles proposed -> accepted -> superseded -> deprecated"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "Review decision: {title}",
-          "line": 1096,
           "claim": "the brief lists each proposed desk decision as 'Review decision: <title>'"
         },
         {
           "path": "web/src/desk/pullouts/DecisionPullout.tsx",
           "symbol": "Supersedes {",
-          "line": 139,
           "claim": "a successor's card names the decision it supersedes"
         },
         {
           "path": "web/src/desk/api.ts",
           "symbol": "export async function supersedeDecision",
-          "line": 259,
           "claim": "the supersede client call exists but no face calls it: the supersede ACTION is not on the face"
         },
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"object.delete\"",
-          "line": 610,
           "claim": "the face deletes a selected object with the Delete verb"
         }
       ],

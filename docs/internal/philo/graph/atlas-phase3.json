@@ -7962,14 +7962,12 @@
       "sources": [
         {
           "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-          "symbol": "documentThought",
-          "line": 114,
+          "symbol": "const [documentThought, setDocumentThought] = useState(projection.thought || initialThought);",
           "claim": "the Thought window holds the note it opened"
         },
         {
           "path": "web/src/desk/thought-workspace/thoughtReceipt.ts",
           "symbol": "filing_status",
-          "line": 42,
           "claim": "its foot states the write (KEPT \u00b7 <time>, SAVING\u2026, DID NOT SAVE \u00b7 <cause>, CHANGED ELSEWHERE) and, on its own line, IN <drawer>, IN A DRAWER or NOT IN A DRAWER"
         }
       ],

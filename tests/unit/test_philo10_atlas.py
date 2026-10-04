@@ -29,18 +29,6 @@ PHASE10 = GRAPH / "atlas-phase10.json"
 PROOF = REPO / "pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-proof"
 SHOTS = REPO / "pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-shots"
 
-COUNTS = {
-    "atlas.json": 85,
-    "atlas-phase3.json": 36,
-    "atlas-phase7.json": 27,
-    "atlas-phase8.json": 19,
-    "atlas-phase9.json": 13,
-    "atlas-phase9-steward.json": 4,
-    "atlas-phase10.json": 32,  # PHILO-10-07: five Resend face cases
-    "atlas-phase11-slack.json": 34,  # PHILO-11-06: Slack outcomes, transitions, and meeting faces
-    "atlas-phase11.json": 22,  # PHILO-11-06: seven sources and fifteen document faces
-    "atlas-phase12-source.json": 2,  # PHILO-12-01: artifact preview and prepare
-}
 
 # The charter's state/width matrix -> its face case (Manual is Phase 9's).
 MATRIX = {
@@ -121,16 +109,17 @@ def test_every_api_step_exists_in_the_generated_openapi() -> None:
         _atlas(), json.loads(general.OPENAPI_PATH.read_text()))
 
 
-def test_the_counts_over_every_atlas_file() -> None:
-    # PHILO-13 (H-B0b principle): each ``atlas-phase13-*`` file is counted by
-    # its own lane's test file (one count, one owner), so this count leaves
-    # them out. Only the count: the general fences still read every file.
-    have = {
-        path.name: len(json.loads(path.read_text())["cases"])
-        for path in general.ATLAS_FILES
-        if not path.name.startswith("atlas-phase13-")
-    }
-    assert have == COUNTS
+def test_every_atlas_file_has_cases_with_unique_ids() -> None:
+    # Structural, not literal (owner ruling 2026-10-03): no per-file count
+    # that every lane must edit.
+    seen: dict[str, str] = {}
+    for path in general.ATLAS_FILES:
+        cases = json.loads(path.read_text())["cases"]
+        assert cases, path.name
+        for case in cases:
+            assert case["id"].startswith("case."), (path.name, case["id"])
+            assert case["id"] not in seen, (case["id"], seen[case["id"]], path.name)
+            seen[case["id"]] = path.name
 
 
 def test_every_matrix_state_and_transition_has_its_case() -> None:

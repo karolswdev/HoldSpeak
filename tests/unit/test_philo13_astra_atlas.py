@@ -537,7 +537,11 @@ def test_phase13_atlas_validates_against_schema_and_openapi() -> None:
 
 def test_phase13_case_and_sibling_manifest_is_local() -> None:
     cases = _cases()
-    assert set(cases) == EXPECTED_CASES
+    # Structural, not literal (owner ruling 2026-10-03): a new case needs no
+    # edit here. The named cases stay; every id is lawful.
+    assert EXPECTED_CASES <= set(cases), sorted(EXPECTED_CASES - set(cases))
+    assert all(case_id.startswith("case.p13.") for case_id in cases), sorted(cases)
+    cases = {case_id: cases[case_id] for case_id in EXPECTED_CASES}
     assert cases["case.p13.directory.zone_window.op"]["viewports"] == []
     # C6 is already folded: this atlas owns the B0 and B5 .op siblings; the
     # historical 69 stays only in the shared Phase 1–12 population fence.

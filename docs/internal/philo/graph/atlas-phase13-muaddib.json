@@ -3501,19 +3501,16 @@
         {
           "path": "web/src/desk/components/Pullout.tsx",
           "symbol": "id={`pullout:${pulloutId}`}",
-          "line": 63,
           "claim": "the card's frame wears the id the store keeps"
         },
         {
           "path": "web/src/desk/components/Pullout.tsx",
-          "symbol": "onClose={() => closePullout(pulloutId)}",
-          "line": 73,
+          "symbol": "open onClose={() => closePullout(pulloutId)}",
           "claim": "Close removes exactly the store's entry"
         },
         {
           "path": "web/src/desk/store/compositorSlice.ts",
           "symbol": "closePullout(id) {",
-          "line": 247,
           "claim": "closePullout filters the open cards by equality"
         }
       ],
@@ -3533,19 +3530,16 @@
         {
           "path": "holdspeak/web/routes/meetings/live.py",
           "symbol": "status_code=501",
-          "line": 101,
           "claim": "a hub with no recorder refuses the start with 501"
         },
         {
           "path": "web/src/desk/store/recordingSlice.ts",
           "symbol": "if (!res.ok) {",
-          "line": 86,
           "claim": "a refused start resolves, so the slice reads res.ok"
         },
         {
           "path": "web/src/desk/store/recordingSlice.ts",
           "symbol": "if (status === 501) return",
-          "line": 19,
           "claim": "501 is named in plain words: no recorder on this hub"
         }
       ],
@@ -3565,19 +3559,16 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"desk.new-thought\",",
-          "line": 189,
           "claim": "one registered verb with the key ⌃T, in the Desk menu"
         },
         {
           "path": "web/src/desk/thoughtTitle.ts",
           "symbol": "export function thoughtTitle(",
-          "line": 32,
           "claim": "an untitled thought takes the first words of its note"
         },
         {
           "path": "web/src/desk/pullouts/editors/useThoughtNoteWriter.ts",
           "symbol": "const title = thoughtTitle(",
-          "line": 165,
           "claim": "the one writer sends that title on save"
         }
       ],
@@ -3597,13 +3588,11 @@
         {
           "path": "web/src/desk/components/window/ScreenSwitcher.tsx",
           "symbol": "export function ScreenSwitcher(",
-          "line": 15,
           "claim": "at 393 the screen title is a library menu Button listing the ring"
         },
         {
           "path": "web/src/desk/components/window/phoneRing.ts",
           "symbol": "export function phoneRing(",
-          "line": 32,
           "claim": "one ring order for the switcher and the swipe"
         }
       ],
@@ -3622,7 +3611,6 @@
         {
           "path": "web/src/desk/components/DeskMenuBar.tsx",
           "symbol": "export function groupGoForPhone(",
-          "line": 41,
           "claim": "at 393 Go leads with the four menus as submenus"
         }
       ],
@@ -3642,19 +3630,16 @@
         {
           "path": "web/src/desk/components/DeskWindow.tsx",
           "symbol": "entries={withSendTo(sendToEntry(id), headMenuEntries({",
-          "line": 1020,
           "claim": "the window menu leads with Send to ▸ from the window's own document"
         },
         {
           "path": "web/src/desk/windowSend.tsx",
           "symbol": "export function sendToEntry(",
-          "line": 197,
           "claim": "the rows are the active saved destinations; withheld where the document cannot send"
         },
         {
           "path": "web/src/desk/surface/send/SendWell.tsx",
           "symbol": "export function pickDestination(",
-          "line": 83,
           "claim": "the push seam: one setter per well; an open well reacts in place"
         }
       ],
@@ -3674,13 +3659,11 @@
         {
           "path": "web/src/desk/components/DeskToolShelf.tsx",
           "symbol": "section: \"PEOPLE\",",
-          "line": 435,
           "claim": "one PEOPLE row per relationship from GET /api/people/relationships"
         },
         {
           "path": "web/src/desk/openObject.ts",
           "symbol": "export function openPerson(",
-          "line": 32,
           "claim": "the one open grammar for a person"
         }
       ],
@@ -3700,13 +3683,11 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"week.prep\",",
-          "line": 920,
           "claim": "one Prep 1:1 row per relationship"
         },
         {
           "path": "web/src/desk/components/DeskToolShelf.tsx",
           "symbol": "for (const verb of weekVerbs({",
-          "line": 449,
           "claim": "the palette renders the registry's week verbs"
         }
       ],
@@ -3726,13 +3707,11 @@
         {
           "path": "web/src/desk/components/DeskToolShelf.tsx",
           "symbol": "export function wordScore(",
-          "line": 150,
           "claim": "a body matches by whole-word prefix only"
         },
         {
           "path": "web/src/desk/components/DeskToolShelf.tsx",
           "symbol": "body: objectBody(item.ref),",
-          "line": 569,
           "claim": "a note's body is the row's body term"
         }
       ],
@@ -3752,19 +3731,16 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"week.send\",",
-          "line": 930,
           "claim": "one Send row per destination of the front document"
         },
         {
           "path": "web/src/desk/windowSend.tsx",
           "symbol": "export function sendChoices(",
-          "line": 223,
           "claim": "the same composition as Send to ▸; the pick is pickFor"
         },
         {
           "path": "web/src/desk/windowSend.tsx",
           "symbol": "export function pickFor(",
-          "line": 255,
           "claim": "the push seam: the well opens on the pick; nothing is sent"
         }
       ],
@@ -3784,19 +3760,16 @@
         {
           "path": "web/src/desk/verbRegistry.ts",
           "symbol": "id: \"week.draft-update\",",
-          "line": 938,
           "claim": "one Draft update row per project"
         },
         {
           "path": "web/src/desk/openObject.ts",
           "symbol": "export function openProjectUpdates(",
-          "line": 48,
           "claim": "the Room opens and takes the Update request once"
         },
         {
           "path": "web/src/features/project-room/ProjectRoomCore.tsx",
           "symbol": "takeRoomUpdatesRequest(projectId)",
-          "line": 2162,
           "claim": "the Room enters its Update posture, as its Draft update Button does"
         }
       ],
@@ -3816,25 +3789,21 @@
         {
           "path": "web/src/pages/cores/PeopleCore.tsx",
           "symbol": "function LinkSuggestions(",
-          "line": 595,
           "claim": "A calendar event whose title holds the alias shows with a library Link this 1:1 Button; the press calls the existing calendar-links route."
         },
         {
           "path": "web/src/pages/cores/PeopleCore.tsx",
           "symbol": "function NextOneOnOneSide(",
-          "line": 632,
           "claim": "The Now side reads the linked 1:1 with the header's formatter; a failed brief read is a named failure with Try again."
         },
         {
           "path": "web/src/pages/cores/PeopleCore.tsx",
           "symbol": "function shortDay(",
-          "line": 581,
           "claim": "A date-only deadline stays its calendar day in the desk's zone."
         },
         {
           "path": "web/src/pages/cores/PeopleCore.tsx",
           "symbol": "data-testid=\"people-next-1on1\"",
-          "line": 373,
           "claim": "NEXT 1:1 reads the hub's linked event through one formatter."
         }
       ],
@@ -3854,19 +3823,16 @@
         {
           "path": "web/src/desk/components/DeliveryBoard.tsx",
           "symbol": "keptWindow<boolean>(\"delivery-board\")",
-          "line": 355,
           "claim": "the board opens from its kept record"
         },
         {
           "path": "web/src/desk/returningWindows.tsx",
-          "symbol": "rememberWindow(\"delivery-dossier\", {",
-          "line": 33,
+          "symbol": "if (s.dossier?.kind === \"story\") { rememberWindow(\"delivery-dossier\", {",
           "claim": "the dossier's story is kept while it is open"
         },
         {
           "path": "web/src/desk/returningWindows.tsx",
           "symbol": "void useDeliveryDossier.getState().openStory(",
-          "line": 101,
           "claim": "a reload reopens the same story through openStory"
         }
       ],
@@ -3887,13 +3853,11 @@
         {
           "path": "web/src/desk/returningWindows.tsx",
           "symbol": "rememberWindow(\"trust\", s.open ? true : null)",
-          "line": 58,
           "claim": "the Trust window's open state is kept"
         },
         {
           "path": "web/src/desk/returningWindows.tsx",
           "symbol": "useTrustWindow.getState().setOpen(true)",
-          "line": 107,
           "claim": "a reload reopens it"
         }
       ],
@@ -3914,13 +3878,11 @@
         {
           "path": "web/src/desk/components/ScheduleCreateWindow.tsx",
           "symbol": "useDeskDraft(\"schedule/new/title\")",
-          "line": 74,
           "claim": "the title is a kept draft"
         },
         {
           "path": "web/src/desk/returningWindows.tsx",
           "symbol": "desk.openScheduleCreate()",
-          "line": 110,
           "claim": "a reload reopens the window"
         }
       ],
@@ -3942,13 +3904,11 @@
         {
           "path": "web/src/meetings/MeetingDecideWell.tsx",
           "symbol": "const draftKey = `meeting/decide/${meetingId}`;",
-          "line": 49,
           "claim": "the title is kept per meeting"
         },
         {
           "path": "web/src/desk/store/compositorSlice.ts",
           "symbol": "pullouts: reopened(\"id\", initialWindowLists.pullouts)",
-          "line": 170,
           "claim": "the meeting window returns after a reload"
         }
       ],
@@ -3970,13 +3930,11 @@
         {
           "path": "web/src/desk/store/compositorSlice.ts",
           "symbol": "// null forgets the draft; \"\" keeps an emptied field as its own state.",
-          "line": 187,
           "claim": "an emptied draft is kept as \"\""
         },
         {
           "path": "web/src/features/project-room/update/useUpdateController.ts",
           "symbol": "setEditBody(kept ?? update.bodyMd);",
-          "line": 150,
           "claim": "the editor takes the kept body, empty included"
         }
       ],
@@ -3998,19 +3956,16 @@
         {
           "path": "web/src/desk/pullouts/editors/useDebouncedSave.ts",
           "symbol": "if (inFlight.current[key] === value) delete inFlight.current[key];",
-          "line": 31,
           "claim": "a landed write forgets only the fields it carried"
         },
         {
           "path": "web/src/desk/components/ScheduleCreateWindow.tsx",
           "symbol": "const dateTime = hasKeptTime ? keptTime : defaultTime;",
-          "line": 85,
           "claim": "an emptied time stays empty"
         },
         {
           "path": "web/src/desk/DeskApp.tsx",
           "symbol": "url.searchParams.delete(\"open\");",
-          "line": 120,
           "claim": "the ?open= link is consumed once, so a reload does not replay it"
         }
       ],

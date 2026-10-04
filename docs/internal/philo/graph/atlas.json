@@ -10539,20 +10539,17 @@
       "sources": [
         {
           "path": "holdspeak/services/projection_service.py",
-          "symbol": "attention_state",
-          "line": 24,
+          "symbol": "if attention_state not in {None, \"unseen\", \"needs_attention\", \"acknowledged\", \"resolved\"}:",
           "claim": "the four attention_state values the service accepts; quiet is not one of them"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "attention_state",
-          "line": 598,
+          "symbol": "attention_state=\"needs_attention\" if failed else \"unseen\",",
           "claim": "an intel job that is queued or running projects attention/unseen"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "attention_state",
-          "line": 500,
+          "symbol": "reason_code=f\"capture_{status}\", decision_kind=\"recovery\", attention_state=\"needs_attention\" if needs else \"unseen\" if active else \"resolved\",",
           "claim": "a provisional or recording meeting projects attention/unseen"
         }
       ],
@@ -10578,20 +10575,17 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "needs_attention",
-          "line": 598,
+          "symbol": "attention_state=\"needs_attention\" if failed else \"unseen\",",
           "claim": "a failed intel job projects attention/needs_attention with severity error"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "needs_attention",
-          "line": 500,
+          "symbol": "reason_code=f\"capture_{status}\", decision_kind=\"recovery\", attention_state=\"needs_attention\" if needs else \"unseen\" if active else \"resolved\",",
           "claim": "capture_failed/recoverable/recovered project attention/needs_attention"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "needs_attention",
-          "line": 135,
+          "symbol": "\"needs_attention\": sum(row.attention_state == \"needs_attention\" for row in projected),",
           "claim": "the list counts needs_attention over the whole projected set"
         }
       ],
@@ -10616,14 +10610,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "acknowledged",
-          "line": 166,
+          "symbol": "attention_state=CASE WHEN ?='acknowledge' THEN 'acknowledged'",
           "claim": "the acknowledge action writes attention_state=acknowledged on the presentation overlay"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "acknowledged",
-          "line": 92,
+          "symbol": "if overlay[\"attention_state\"] == \"acknowledged\"",
           "claim": "the overlay, not the producer, decides the acknowledged read"
         }
       ],
@@ -10647,14 +10639,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "dismissed_at",
-          "line": 169,
+          "symbol": "dismissed_at=CASE WHEN ?='dismiss' THEN datetime('now')",
           "claim": "the dismiss action stamps dismissed_at on the overlay"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "dismissed",
-          "line": 101,
+          "symbol": "projected = [row for row in projected if not row.dismissed]",
           "claim": "a dismissed row leaves the default list unless include_dismissed is set"
         }
       ],
@@ -10679,14 +10669,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "restore",
-          "line": 154,
+          "symbol": "if clean not in {\"acknowledge\", \"dismiss\", \"restore\"}:",
           "claim": "restore is one of the three accepted presentation actions"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "restore",
-          "line": 167,
+          "symbol": "WHEN ?='restore' THEN 'unseen'",
           "claim": "restore returns attention_state to unseen and clears dismissed_at"
         }
       ],
@@ -10710,14 +10698,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "resolved",
-          "line": 714,
+          "symbol": "attention_state=\"resolved\",",
           "claim": "a pipeline event projects receipt/resolved"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "receipt",
-          "line": 707,
+          "symbol": "projection_kind=\"receipt\",",
           "claim": "pipeline events are receipt-kind only"
         }
       ],
@@ -10742,20 +10728,17 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "detail_url",
-          "line": 700,
+          "symbol": "detail_url = \"/cadence\" if service == \"HeartbeatService\" else \"\"",
           "claim": "a HeartbeatService event carries /cadence as its door"
         },
         {
           "path": "web/src/desk/components/SystemShade.tsx",
-          "symbol": "hasDoor",
-          "line": 192,
+          "symbol": "const hasDoor = (row: (typeof store.projections)[number]) =>",
           "claim": "the shade draws Open only for a non-empty detail_url that is not /"
         },
         {
           "path": "web/src/desk/components/SystemShade.tsx",
           "symbol": "configure-cadence",
-          "line": 199,
           "claim": "the /cadence door opens the configure-cadence surface"
         }
       ],
@@ -10779,20 +10762,17 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "detail_url",
-          "line": 700,
+          "symbol": "detail_url = \"/cadence\" if service == \"HeartbeatService\" else \"\"",
           "claim": "a non-HeartbeatService pipeline event carries no door"
         },
         {
           "path": "web/src/desk/components/SystemShade.tsx",
-          "symbol": "hasDoor",
-          "line": 192,
+          "symbol": "const hasDoor = (row: (typeof store.projections)[number]) =>",
           "claim": "an empty detail_url draws no Open verb"
         },
         {
           "path": "web/src/desk/components/SystemShade.tsx",
-          "symbol": "hasDoor",
-          "line": 388,
+          "symbol": "</small> {hasDoor(row) ? (",
           "claim": "the Finished section withholds Open when there is no door"
         }
       ],
@@ -10816,20 +10796,17 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "meetings.get",
-          "line": 594,
+          "symbol": "id=f\"{source_kind}:{source_id}:{state}\", projection_kind=\"attention\", subject_ref=f\"meeting:{mid}\", subject_label=meetings.get(mid, \"Meeting\"),",
           "claim": "the jobs producer defaults the label when the meeting row is gone, so a job outlives its meeting"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "detail_url",
-          "line": 603,
+          "symbol": "detail_url=f\"/history?meeting={mid}\", severity=\"error\" if failed else \"normal\",",
           "claim": "the job projection's door still points at the deleted meeting"
         },
         {
           "path": "web/src/desk/components/SystemShade.tsx",
           "symbol": "review-meetings",
-          "line": 197,
           "claim": "the shade opens review-meetings on that subject_ref regardless of whether it resolves"
         }
       ],
@@ -10852,8 +10829,7 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "_meetings",
-          "line": 487,
+          "symbol": "def _meetings(self, conn: Any, meetings: dict[str, str]) -> list[DeskProjection]:",
           "claim": "the meeting capture producer"
         }
       ],
@@ -10876,14 +10852,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "_jobs",
-          "line": 558,
+          "symbol": "def _jobs(self, conn: Any, meetings: dict[str, str]) -> list[DeskProjection]:",
           "claim": "the intel/plugin job producer"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "intel_jobs",
-          "line": 560,
+          "symbol": "for table, source_kind in ((\"intel_jobs\", \"intel_job\"), (\"plugin_run_jobs\", \"plugin_job\")):",
           "claim": "intel_jobs and plugin_run_jobs are the two job tables it reads"
         }
       ],
@@ -10907,14 +10881,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "_pipeline_events",
-          "line": 648,
+          "symbol": "def _pipeline_events(self, conn: Any) -> list[DeskProjection]:",
           "claim": "the pipeline-event producer"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "HeartbeatService",
-          "line": 660,
+          "symbol": "OR service = 'HeartbeatService'",
           "claim": "only remote-origin events or HeartbeatService events are surfaced"
         }
       ],
@@ -10937,14 +10909,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "_cadence",
-          "line": 607,
+          "symbol": "def _cadence(self, conn: Any) -> list[DeskProjection]:",
           "claim": "the cadence-loop producer"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "actionable",
-          "line": 611,
+          "symbol": "actionable = status in {\"open\", \"snoozed\", \"delegated\"}",
           "claim": "open/snoozed/delegated loops are the actionable set"
         }
       ],
@@ -10967,14 +10937,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "_dictation",
-          "line": 415,
+          "symbol": "def _dictation(self, conn: Any) -> list[DeskProjection]:",
           "claim": "the dictation-journal producer"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "dictation_journal",
-          "line": 436,
+          "symbol": "source_kind=\"dictation_journal\", source_id=str(row[\"id\"]),",
           "claim": "its rows carry source_kind dictation_journal"
         }
       ],
@@ -10997,14 +10965,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "_actuators",
-          "line": 267,
+          "symbol": "def _actuators(self, conn: Any, meetings: dict[str, str]) -> list[DeskProjection]:",
           "claim": "the actuator-proposal producer"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "actuator_proposals",
-          "line": 268,
+          "symbol": "rows = conn.execute(\"SELECT * FROM actuator_proposals\").fetchall()",
           "claim": "it reads the actuator_proposals table"
         }
       ],
@@ -11022,14 +10988,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "_steering",
-          "line": 442,
+          "symbol": "def _steering(self, conn: Any) -> list[DeskProjection]:",
           "claim": "the steering-audit producer"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "steering_audit",
-          "line": 478,
+          "symbol": "source_kind=\"steering_audit\", source_id=str(row[\"id\"]),",
           "claim": "its rows carry source_kind steering_audit"
         }
       ],
@@ -11052,14 +11016,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "_artifacts",
-          "line": 534,
+          "symbol": "def _artifacts(self, conn: Any, meetings: dict[str, str]) -> list[DeskProjection]:",
           "claim": "the artifact producer"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "needs_review",
-          "line": 540,
           "claim": "draft and needs_review artifacts ask for attention"
         }
       ],
@@ -11077,14 +11039,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "_sync_conflicts",
-          "line": 509,
+          "symbol": "def _sync_conflicts(self, conn: Any, meetings: dict[str, str]) -> list[DeskProjection]:",
           "claim": "the sync-conflict producer"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "paired_device",
-          "line": 525,
           "claim": "its destination is a paired device"
         }
       ],
@@ -11108,7 +11068,6 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "plugin_run_jobs",
-          "line": 560,
           "claim": "plugin_run_jobs is the second job table the producer reads"
         }
       ],
@@ -11127,14 +11086,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "failed",
-          "line": 595,
+          "symbol": "title=f\"{label} {'failed' if failed else state}\",",
           "claim": "a failed job projects severity error"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "outcome",
-          "line": 693,
+          "symbol": "outcome = \"completed\" if not error else \"failed\"",
           "claim": "a pipeline event with an error projects outcome failed"
         }
       ],
@@ -11152,14 +11109,12 @@
       "sources": [
         {
           "path": "holdspeak/web/routes/monday_brief.py",
-          "symbol": "return None",
-          "line": 117,
+          "symbol": "if brief is None: return None",
           "claim": "GET /api/brief/latest answers null when no brief exists"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
           "symbol": "!briefLoading && !brief",
-          "line": 1204,
           "claim": "the Chair draws 'No brief yet' and Generate only when the read ANSWERED null (a failed read takes the branch above it, PHILO-3-03)"
         }
       ],
@@ -11177,14 +11132,12 @@
       "sources": [
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "setBriefLoading",
-          "line": 481,
+          "symbol": "const [briefLoading, setBriefLoading] = useState(true);",
           "claim": "the Chair starts with briefLoading true"
         },
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
-          "symbol": "SurfaceState",
-          "line": 300,
+          "symbol": "<SurfaceState loading />",
           "claim": "the Brief pull-out draws the loading state first"
         }
       ],
@@ -11202,14 +11155,12 @@
       "sources": [
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
-          "symbol": "generating",
-          "line": 308,
+          "symbol": "actionLabel={generating ? \"Generating...\" : \"Generate\"}",
           "claim": "the pull-out's verb reads Generating... while the POST is in flight"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "generating",
-          "line": 631,
+          "symbol": "const [generating, setGenerating] = useState(false);",
           "claim": "the Chair's head Generate is disabled and GENERATING… holds the status slot in flight (PHILO-4-01)"
         }
       ],
@@ -11227,8 +11178,7 @@
       "sources": [
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
-          "symbol": "SurfaceState",
-          "line": 302,
+          "symbol": "<SurfaceState error={error} onRetry={() => void load()} />",
           "claim": "a failed read draws the error state with a Retry"
         }
       ],
@@ -11246,8 +11196,7 @@
       "sources": [
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "setGenerateFailed",
-          "line": 488,
+          "symbol": "const [generateFailed, setGenerateFailed] = useState<string | null>(null);",
           "claim": "the Chair names a failed generation BRIEF DID NOT GENERATE · <cause> in the status slot, no Retry (PHILO-4-01)"
         }
       ],
@@ -11265,20 +11214,17 @@
       "sources": [
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "is_empty",
-          "line": 1532,
+          "symbol": "is_empty=not any(sections.values()),",
           "claim": "is_empty is true when no section holds an item"
         },
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
-          "symbol": "is_empty",
-          "line": 310,
+          "symbol": ") : brief.is_empty ? (",
           "claim": "the pull-out draws No changes for an empty brief"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
           "symbol": "No changes",
-          "line": 540,
           "claim": "the producer's headline for an empty brief is No changes"
         }
       ],
@@ -11296,14 +11242,12 @@
       "sources": [
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "is_empty",
-          "line": 311,
+          "symbol": "is_empty: bool = False",
           "claim": "is_empty is a field of the brief record"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "briefItems",
-          "line": 777,
+          "symbol": "const briefItems: BriefItem[] = brief && !brief.is_empty",
           "claim": "the Chair reads items only from a brief that is not empty"
         }
       ],
@@ -11322,8 +11266,7 @@
       "sources": [
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "arrival-brief",
-          "line": 171,
+          "symbol": "<span className=\"arrival-brief-headline\" data-testid=\"arrival-brief-headline\">",
           "claim": "a brief with nothing untriaged keeps its own section, headline and Generate after a reload (the quiet branch)"
         }
       ],
@@ -11343,14 +11286,12 @@
       "sources": [
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "untouched",
-          "line": 312,
+          "symbol": "# item_id -> \"acknowledged\" | \"deferred\". An absent key is untouched work.",
           "claim": "an absent shelf key is untouched work"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "briefShelf",
-          "line": 785,
+          "symbol": "const briefShelf = brief?.shelf ?? {};",
           "claim": "the Chair's untriaged list is the items with no shelf key"
         }
       ],
@@ -11368,14 +11309,12 @@
       "sources": [
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "SHELF_STATES",
-          "line": 280,
+          "symbol": "SHELF_STATES = (\"acknowledged\", \"deferred\")",
           "claim": "acknowledged and deferred are the two shelf states"
         },
         {
           "path": "holdspeak/web/routes/monday_brief.py",
           "symbol": "write_shelf",
-          "line": 137,
           "claim": "POST /api/brief/items/{item_id}/shelf writes it"
         }
       ],
@@ -11393,14 +11332,12 @@
       "sources": [
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "SHELF_STATES",
-          "line": 280,
+          "symbol": "SHELF_STATES = (\"acknowledged\", \"deferred\")",
           "claim": "deferred is the second accepted shelf state"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "SHELF_STATES",
-          "line": 1456,
+          "symbol": "if state is not None and state not in SHELF_STATES:",
           "claim": "any other shelf state is refused by name"
         }
       ],
@@ -11418,8 +11355,7 @@
       "sources": [
         {
           "path": "holdspeak/web/routes/monday_brief.py",
-          "symbol": "person_sections",
-          "line": 86,
+          "symbol": "brief_dict[\"person_sections\"] = overlay.get(\"sections\", [])",
           "claim": "a ready overlay merges person_sections into the response"
         }
       ],
@@ -11438,13 +11374,11 @@
         {
           "path": "holdspeak/web/routes/monday_brief.py",
           "symbol": "person_sections_state",
-          "line": 89,
           "claim": "an unavailable people store is stated, not hidden"
         },
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
           "symbol": "person-sections-unavailable",
-          "line": 455,
           "claim": "the face draws that unavailability"
         }
       ],
@@ -11462,14 +11396,12 @@
       "sources": [
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "date_key",
-          "line": 395,
+          "symbol": "date_key = period_end.date().isoformat()",
           "claim": "the brief is keyed by the period_end date"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "_load_brief",
-          "line": 410,
+          "symbol": "if row is not None: return self._load_brief(conn, row)",
           "claim": "a second generate on the same date returns the existing brief"
         }
       ],
@@ -11488,20 +11420,17 @@
       "sources": [
         {
           "path": "holdspeak/runtime/composition.py",
-          "symbol": "brief_clock",
-          "line": 510,
+          "symbol": "clock=getattr(ctx, \"brief_clock\", None),",
           "claim": "the hub's one brief service (HTTP and MCP, PHILO-5-02) takes the clock the composition wires (None = the wall clock)"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "self._clock()",
-          "line": 394,
+          "symbol": "period_start, period_end = self.compute_window(now or self._clock())",
           "claim": "generate reads the producer's one clock when no now is passed"
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "date_key",
-          "line": 395,
+          "symbol": "date_key = period_end.date().isoformat()",
           "claim": "the brief's identity is its period_end date, so a new producer-day mints a new brief"
         }
       ],
@@ -11525,14 +11454,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "active",
-          "line": 492,
+          "symbol": "active = status in {\"provisional\", \"recording\"}",
           "claim": "provisional and recording are the two active capture states"
         },
         {
           "path": "holdspeak/meeting_session/models.py",
-          "symbol": "capture_status",
-          "line": 141,
+          "symbol": "capture_status: str = \"finalized\"",
           "claim": "capture_status is a field of the meeting session state"
         }
       ],
@@ -11556,14 +11483,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "recording",
-          "line": 492,
+          "symbol": "active = status in {\"provisional\", \"recording\"}",
           "claim": "recording is an active capture state"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "Meeting is recording",
-          "line": 497,
           "claim": "the projection says so on the face"
         }
       ],
@@ -11587,14 +11512,12 @@
       "sources": [
         {
           "path": "holdspeak/meeting_session/models.py",
-          "symbol": "finalized",
-          "line": 141,
+          "symbol": "capture_status: str = \"finalized\"",
           "claim": "finalized is the default capture status"
         },
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "Meeting saved",
-          "line": 497,
           "claim": "a finalized meeting projects the saved receipt"
         }
       ],
@@ -11619,7 +11542,6 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "capture_failed",
-          "line": 491,
           "claim": "capture_failed is one of the three recovery capture states"
         }
       ],
@@ -11644,13 +11566,11 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "recoverable",
-          "line": 491,
           "claim": "recoverable projects needs_attention with a recovery decision kind"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "recovery",
-          "line": 497,
+          "symbol": "title=\"Meeting capture needs recovery\" if needs else \"Meeting is recording\" if active else \"Meeting saved\",",
           "claim": "its decision_kind is recovery"
         }
       ],
@@ -11675,13 +11595,11 @@
         {
           "path": "holdspeak/db/projections.py",
           "symbol": "recovered",
-          "line": 491,
           "claim": "recovered still asks for attention"
         },
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "recovered",
-          "line": 1217,
+          "symbol": "AND j.status = 'queued' AND m.capture_status IN ('finalized', 'recovered')",
           "claim": "finalized and recovered are the two capture states a queued job may claim"
         }
       ],
@@ -11705,14 +11623,12 @@
       "sources": [
         {
           "path": "holdspeak/meeting_import.py",
-          "symbol": "TRANSCRIPTION_COMPLETE",
-          "line": 68,
+          "symbol": "TRANSCRIPTION_COMPLETE = \"complete\"",
           "claim": "the import path defines its own terminal transcription status"
         },
         {
           "path": "holdspeak/meeting_import.py",
-          "symbol": "transcription_status",
-          "line": 421,
+          "symbol": "state.transcription_status = TRANSCRIPTION_COMPLETE",
           "claim": "an imported meeting is marked transcription complete"
         }
       ],
@@ -11736,14 +11652,12 @@
       "sources": [
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "segments",
-          "line": 469,
+          "symbol": "\"SELECT 1 FROM segments WHERE meeting_id=? LIMIT 1\",",
           "claim": "the gesture state reads the segments table"
         },
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "empty",
-          "line": 472,
+          "symbol": ").fetchone() is None: return \"empty\"",
           "claim": "a meeting with no segment answers empty"
         }
       ],
@@ -11767,14 +11681,12 @@
       "sources": [
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "segments",
-          "line": 469,
+          "symbol": "\"SELECT 1 FROM segments WHERE meeting_id=? LIMIT 1\",",
           "claim": "a meeting with at least one segment passes the empty gate"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "hasTranscript",
-          "line": 2287,
+          "symbol": "const hasTranscript =",
           "claim": "the Chair draws Run summary only over a meeting with transcript words"
         }
       ],
@@ -11798,8 +11710,7 @@
       "sources": [
         {
           "path": "holdspeak/meeting_import.py",
-          "symbol": "TRANSCRIPTION_COMPLETE",
-          "line": 68,
+          "symbol": "TRANSCRIPTION_COMPLETE = \"complete\"",
           "claim": "complete is the import path's terminal transcription status"
         }
       ],
@@ -11823,14 +11734,12 @@
       "sources": [
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "reserved",
-          "line": 481,
+          "symbol": "if cls._is_unsettled_stop_reservation_in_transaction(conn, current_job): return \"reserved\"",
           "claim": "an unsettled stop reservation answers reserved"
         },
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "reserved",
-          "line": 483,
+          "symbol": "if cls._is_compatibility_cutover_in_transaction(conn, current_job): return \"reserved\"",
           "claim": "a compatibility cutover answers reserved too"
         }
       ],
@@ -11854,14 +11763,12 @@
       "sources": [
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "queued",
-          "line": 489,
+          "symbol": "if status == \"queued\": return \"queued\"",
           "claim": "a queued current job answers queued"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "unseen",
-          "line": 598,
+          "symbol": "attention_state=\"needs_attention\" if failed else \"unseen\",",
           "claim": "a queued job projects attention/unseen on the desk"
         }
       ],
@@ -11885,8 +11792,7 @@
       "sources": [
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "running",
-          "line": 487,
+          "symbol": "if status in {\"running\", \"claimed\"}: return \"running\"",
           "claim": "a claimed or running job answers running"
         }
       ],
@@ -11910,8 +11816,7 @@
       "sources": [
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "ready",
-          "line": 500,
+          "symbol": "): return \"ready\"",
           "claim": "ready is answered only when the current job succeeded or was skipped"
         }
       ],
@@ -11935,8 +11840,7 @@
       "sources": [
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "available",
-          "line": 501,
+          "symbol": "return \"available\"",
           "claim": "available is the fall-through: a transcript with nothing running"
         }
       ],
@@ -11960,8 +11864,7 @@
       "sources": [
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "empty",
-          "line": 472,
+          "symbol": ").fetchone() is None: return \"empty\"",
           "claim": "a meeting with no segments answers empty before any job is considered"
         }
       ],
@@ -11986,13 +11889,11 @@
         {
           "path": "holdspeak/db/intel.py",
           "symbol": "_ACTIVE_JOB_STATUSES",
-          "line": 205,
           "claim": "failed is an active job status, not a terminal one"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "failed",
-          "line": 598,
+          "symbol": "attention_state=\"needs_attention\" if failed else \"unseen\",",
           "claim": "a failed job projects needs_attention"
         }
       ],
@@ -12016,14 +11917,12 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "lineage_leaves",
-          "line": 566,
+          "symbol": "query = \"\"\"WITH lineage_leaves AS (",
           "claim": "the producer selects the newest lineage leaf so a retry suppresses its failed ancestor"
         },
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "retry",
-          "line": 222,
+          "symbol": "# success, which lies to the Desk and makes an already-ready Meeting retryable.",
           "claim": "filtering terminal successors first would resurrect a failed ancestor"
         }
       ],
@@ -12048,8 +11947,7 @@
       "sources": [
         {
           "path": "holdspeak/db/intel.py",
-          "symbol": "ready",
-          "line": 495,
+          "symbol": "if meeting_status == \"ready\" and (",
           "claim": "ready is read from the durable meetings row and its job lineage, not from memory"
         }
       ],
@@ -12073,8 +11971,7 @@
       "sources": [
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
-          "symbol": "pending",
-          "line": 75,
+          "symbol": "if (read === \"pending\") return [];",
           "claim": "a read still in flight draws no SETUP row at all"
         }
       ],
@@ -12098,14 +11995,12 @@
       "sources": [
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
-          "symbol": "failed",
-          "line": 76,
+          "symbol": "if (read === \"failed\" || !summary) {",
           "claim": "a failed roster read is UNKNOWN, never a clear desk"
         },
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
           "symbol": "Could not read setup",
-          "line": 77,
           "claim": "it draws one row with one re-read verb"
         }
       ],
@@ -12131,7 +12026,6 @@
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
           "symbol": "No engine yet",
-          "line": 91,
           "claim": "both halves missing is ONE row with one verb"
         }
       ],
@@ -12155,14 +12049,12 @@
       "sources": [
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
-          "symbol": "summaryMissing",
-          "line": 86,
+          "symbol": "const summaryMissing =",
           "claim": "only an exact capability head clears the summary row"
         },
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
           "symbol": "No engine for summaries",
-          "line": 95,
           "claim": "that is the row it draws"
         }
       ],
@@ -12187,14 +12079,12 @@
       "sources": [
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
-          "symbol": "speechMissing",
-          "line": 84,
+          "symbol": "const speechMissing = Boolean(speech) && speech!.effective?.status !== \"assigned\";",
           "claim": "any effective assignment clears the speech row"
         },
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
           "symbol": "No engine for speech",
-          "line": 94,
           "claim": "that is the row it draws"
         }
       ],
@@ -12218,20 +12108,17 @@
       "sources": [
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
-          "symbol": "SPEECH_CAPABILITY",
-          "line": 27,
+          "symbol": "export const SPEECH_CAPABILITY = \"speech.transcribe\";",
           "claim": "speech.transcribe is the capability that turns admitted audio into text"
         },
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
-          "symbol": "speechMissing",
-          "line": 84,
+          "symbol": "const speechMissing = Boolean(speech) && speech!.effective?.status !== \"assigned\";",
           "claim": "any effective assignment clears the speech row; anything else is missing"
         },
         {
           "path": "holdspeak/services/inference_adoption_service.py",
           "symbol": "speech-migrated-",
-          "line": 2289,
           "claim": "a fresh desk carries one migrated speech profile whose id is speech-migrated-<sha prefix>"
         }
       ],
@@ -12256,14 +12143,12 @@
       "sources": [
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
-          "symbol": "assigned",
-          "line": 88,
+          "symbol": "!(analysis!.has_override && analysis!.effective?.status === \"assigned\");",
           "claim": "an exact head whose effective status is assigned clears the summary row"
         },
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
           "symbol": "meetingPathBlockers",
-          "line": 71,
           "claim": "the blocker list is the whole contract: an empty list means nothing blocks the meeting path"
         }
       ],
@@ -12288,13 +12173,11 @@
         {
           "path": "holdspeak/intel/providers.py",
           "symbol": "assigned profile missing",
-          "line": 564,
           "claim": "a deleted or absent assigned profile falls back with a named reason"
         },
         {
           "path": "holdspeak/intel/providers.py",
-          "symbol": "reason",
-          "line": 530,
+          "symbol": "profile_name: Optional[str] = None reason: Optional[str] = None node: Optional[str] = None # meshNode adoption (HS-85-02): the executing mesh node",
           "claim": "reason is set only when a profile was assigned but NOT used"
         }
       ],
@@ -12318,7 +12201,6 @@
         {
           "path": "holdspeak/intel/providers.py",
           "symbol": "running on the hub engine",
-          "line": 582,
           "claim": "a non-openAICompatible profile falls back to the hub engine with a named reason"
         }
       ],
@@ -12342,7 +12224,6 @@
         {
           "path": "holdspeak/intel/providers.py",
           "symbol": "profile lookup unavailable",
-          "line": 562,
           "claim": "an unopenable profile store degrades with a named reason, never a crash"
         }
       ],
@@ -12366,7 +12247,6 @@
         {
           "path": "holdspeak/intel/providers.py",
           "symbol": "names no node",
-          "line": 570,
           "claim": "a meshNode profile with no node falls back with a named reason"
         }
       ],
@@ -12390,13 +12270,11 @@
         {
           "path": "holdspeak/web/routes/primitives/model_profiles.py",
           "symbol": "api_unbind_model_profile",
-          "line": 144,
           "claim": "DELETE /api/model-profiles/{profile_id}/binding removes a profile's binding"
         },
         {
           "path": "holdspeak/web/routes/primitives/model_profiles.py",
           "symbol": "unbind_profile",
-          "line": 156,
           "claim": "the service call behind it"
         }
       ],
@@ -12419,14 +12297,12 @@
       "sources": [
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
-          "symbol": "isUnreachable",
-          "line": 84,
+          "symbol": "const isUnreachable = engine.state === \"UNREACHABLE\";",
           "claim": "the concierge row knows an UNREACHABLE engine"
         },
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
-          "symbol": "UNREACHABLE",
-          "line": 127,
+          "symbol": ": isUnreachable ? <StateChip state=\"failure\" label=\"UNREACHABLE\" />",
           "claim": "it draws a failure chip for it"
         }
       ],
@@ -12449,14 +12325,12 @@
       "sources": [
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
-          "symbol": "addEngineState",
-          "line": 568,
+          "symbol": "disabled={ctrl.addEngineChecking || ctrl.addEngineState !== \"READY\"}",
           "claim": "Use this for summaries is enabled only when the added engine checked READY"
         },
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
           "symbol": "concierge-add-model",
-          "line": 551,
           "claim": "the checked model name is shown beside it"
         }
       ],
@@ -12480,7 +12354,6 @@
         {
           "path": "web/src/features/concierge/ConciergeCore.tsx",
           "symbol": "concierge-add-reason",
-          "line": 559,
           "claim": "a refused check states its reason in an alert beside the field"
         }
       ],
@@ -12503,14 +12376,12 @@
       "sources": [
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "CaptureState",
-          "line": 33,
+          "symbol": "type CaptureState =",
           "claim": "idle is the first of the five capture states"
         },
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "useState",
-          "line": 50,
+          "symbol": "const [state, setState] = useState<CaptureState>(\"idle\");",
           "claim": "the gate starts idle"
         }
       ],
@@ -12533,14 +12404,12 @@
       "sources": [
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "listening",
-          "line": 34,
+          "symbol": "\"idle\" | \"listening\" | \"transcribing\" | \"success\" | \"failed\";",
           "claim": "listening is a capture state"
         },
         {
           "path": "web/src/desk/components/FirstWords.tsx",
           "symbol": "Stop listening",
-          "line": 382,
           "claim": "the verb becomes Stop listening while it holds"
         }
       ],
@@ -12563,14 +12432,12 @@
       "sources": [
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "transcribing",
-          "line": 34,
+          "symbol": "\"idle\" | \"listening\" | \"transcribing\" | \"success\" | \"failed\";",
           "claim": "transcribing is a capture state"
         },
         {
           "path": "web/src/desk/components/FirstWords.tsx",
           "symbol": "Transcribing",
-          "line": 399,
           "claim": "the verb reads it and is disabled"
         }
       ],
@@ -12593,8 +12460,7 @@
       "sources": [
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "success",
-          "line": 34,
+          "symbol": "\"idle\" | \"listening\" | \"transcribing\" | \"success\" | \"failed\";",
           "claim": "success is the terminal capture state"
         }
       ],
@@ -12618,20 +12484,17 @@
       "sources": [
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "setKeptNoteId",
-          "line": 308,
+          "symbol": "setKeptNoteId(createdId);",
           "claim": "Keep as Note stores the created note id"
         },
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "Kept as a note",
-          "line": 310,
+          "symbol": "setMessage(\"Kept as a note. Continue later when you are ready for your Desk.\");",
           "claim": "the receipt line says so"
         },
         {
           "path": "holdspeak/db/onboarding.py",
-          "symbol": "ONBOARDING_DISPOSITIONS",
-          "line": 15,
+          "symbol": "ONBOARDING_DISPOSITIONS = {\"completed\", \"dismissed\", \"needs_help\"}",
           "claim": "completed is one of the three accepted dispositions"
         }
       ],
@@ -12654,14 +12517,12 @@
       "sources": [
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "Continue later",
-          "line": 493,
+          "symbol": "{needsDraftCustody ? \"Save draft & continue\" : \"Continue later\"}",
           "claim": "Continue later is the gate's dismissal verb"
         },
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "dismissed",
-          "line": 15,
           "claim": "dismissed is an accepted disposition"
         }
       ],
@@ -12685,13 +12546,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "needs_help",
-          "line": 15,
           "claim": "needs_help is the third accepted disposition"
         },
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "needs_help",
-          "line": 500,
+          "symbol": "onClick={() => void dismiss(\"needs_help\")}",
           "claim": "the gate offers it only after a failure"
         }
       ],
@@ -12715,8 +12574,7 @@
       "sources": [
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "needsDraftCustody",
-          "line": 493,
+          "symbol": "{needsDraftCustody ? \"Save draft & continue\" : \"Continue later\"}",
           "claim": "the dismissal verb renames itself when a draft must be carried"
         }
       ],
@@ -12739,14 +12597,12 @@
       "sources": [
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "useDurableDraft",
-          "line": 49,
+          "symbol": "} = useDurableDraft(\"first-words\");",
           "claim": "the gate's text is a durable draft"
         },
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "recovered",
-          "line": 47,
+          "symbol": "recovered,",
           "claim": "it reports whether the words were recovered"
         }
       ],
@@ -12769,14 +12625,12 @@
       "sources": [
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "setRecoveredAudioAvailable",
-          "line": 53,
+          "symbol": "const [recoveredAudioAvailable, setRecoveredAudioAvailable] = useState(false);",
           "claim": "retained audio is its own state"
         },
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "canRetryRetainedAudio",
-          "line": 372,
+          "symbol": "(!supported && !canRetryRetainedAudio) ||",
           "claim": "it keeps the verb alive when capture itself is unsupported"
         }
       ],
@@ -12799,14 +12653,12 @@
       "sources": [
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "micUnsupportedMessage",
-          "line": 35,
+          "symbol": "const micUnsupportedMessage =",
           "claim": "an unsupported browser gets its own sentence"
         },
         {
           "path": "web/src/desk/components/FirstWords.tsx",
-          "symbol": "supported",
-          "line": 409,
+          "symbol": "<SurfaceState error={micUnsupportedMessage} />",
           "claim": "and its own state on the face"
         }
       ],
@@ -12831,13 +12683,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "permission_denied",
-          "line": 22,
           "claim": "the hub accepts permission_denied as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "permission_denied",
-          "line": 38,
+          "symbol": "permission_denied: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -12861,14 +12711,12 @@
       "sources": [
         {
           "path": "holdspeak/db/onboarding.py",
-          "symbol": "no_microphone",
-          "line": 26,
+          "symbol": "\"no_microphone\",",
           "claim": "the hub accepts no_microphone as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "no_microphone",
-          "line": 53,
+          "symbol": "no_microphone: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -12893,13 +12741,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "microphone_unavailable",
-          "line": 27,
           "claim": "the hub accepts microphone_unavailable as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "microphone_unavailable",
-          "line": 63,
+          "symbol": "microphone_unavailable: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -12924,13 +12770,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "mic_interval_closed",
-          "line": 34,
           "claim": "the hub accepts mic_interval_closed as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "mic_interval_closed",
-          "line": 121,
+          "symbol": "mic_interval_closed: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -12955,13 +12799,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "provider_failure",
-          "line": 35,
           "claim": "the hub accepts provider_failure as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "provider_failure",
-          "line": 128,
+          "symbol": "provider_failure: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -12986,13 +12828,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "audio_floor_held",
-          "line": 36,
           "claim": "the hub accepts audio_floor_held as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "audio_floor_held",
-          "line": 135,
+          "symbol": "audio_floor_held: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -13017,13 +12857,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "missing_model",
-          "line": 37,
           "claim": "the hub accepts missing_model as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "missing_model",
-          "line": 70,
+          "symbol": "missing_model: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -13048,13 +12886,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "rejected_token",
-          "line": 38,
           "claim": "the hub accepts rejected_token as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "rejected_token",
-          "line": 77,
+          "symbol": "rejected_token: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -13079,13 +12915,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "unreachable_hub",
-          "line": 39,
           "claim": "the hub accepts unreachable_hub as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "unreachable_hub",
-          "line": 84,
+          "symbol": "unreachable_hub: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -13110,13 +12944,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "delivery_conflict",
-          "line": 40,
           "claim": "the hub accepts delivery_conflict as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "delivery_conflict",
-          "line": 91,
+          "symbol": "delivery_conflict: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -13141,13 +12973,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "transcription_failed",
-          "line": 41,
           "claim": "the hub accepts transcription_failed as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "transcription_failed",
-          "line": 98,
+          "symbol": "transcription_failed: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -13172,13 +13002,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "timeout",
-          "line": 42,
           "claim": "the hub accepts timeout as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "timeout",
-          "line": 105,
+          "symbol": "timeout: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -13203,13 +13031,11 @@
         {
           "path": "holdspeak/db/onboarding.py",
           "symbol": "no_speech",
-          "line": 43,
           "claim": "the hub accepts no_speech as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "no_speech",
-          "line": 112,
+          "symbol": "no_speech: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -13233,14 +13059,12 @@
       "sources": [
         {
           "path": "holdspeak/db/onboarding.py",
-          "symbol": "unknown",
-          "line": 44,
+          "symbol": "\"unknown\",",
           "claim": "the hub accepts unknown as a first-value failure category"
         },
         {
           "path": "web/src/lib/dictationRecovery.ts",
-          "symbol": "unknown",
-          "line": 142,
+          "symbol": "unknown: {",
           "claim": "the face carries its contract: message, retry, setup, alternateRunsOn"
         }
       ],
@@ -13264,7 +13088,6 @@
         {
           "path": "web/src/desk/components/SystemShade.tsx",
           "symbol": "if (!open) return null",
-          "line": 180,
           "claim": "the shade renders nothing when closed"
         }
       ],
@@ -13289,14 +13112,12 @@
       "sources": [
         {
           "path": "web/src/desk/components/SystemShade.tsx",
-          "symbol": "needs",
-          "line": 183,
+          "symbol": "const needs = store.projections",
           "claim": "the open shade splits needs_attention from finished"
         },
         {
           "path": "web/src/desk/components/SystemShade.tsx",
-          "symbol": "finished",
-          "line": 186,
+          "symbol": "const finished = store.projections",
           "claim": "and shows at most four of each"
         }
       ],
@@ -13321,20 +13142,17 @@
       "sources": [
         {
           "path": "web/src/desk/components/SystemShade.tsx",
-          "symbol": "hasDoor",
-          "line": 192,
+          "symbol": "const hasDoor = (row: (typeof store.projections)[number]) =>",
           "claim": "a verb is drawn only where a door exists"
         },
         {
           "path": "web/src/desk/components/SystemShade.tsx",
-          "symbol": "hasDoor",
-          "line": 337,
+          "symbol": "<span className=\"desk-shade-do\"> {hasDoor(row) ? (",
           "claim": "the needs section withholds Open"
         },
         {
           "path": "web/src/desk/components/SystemShade.tsx",
-          "symbol": "hasDoor",
-          "line": 388,
+          "symbol": "</small> {hasDoor(row) ? (",
           "claim": "the finished section withholds Open"
         }
       ],
@@ -13358,8 +13176,7 @@
       "sources": [
         {
           "path": "web/src/desk/components/SystemShade.tsx",
-          "symbol": "openPrimitive",
-          "line": 201,
+          "symbol": "openPrimitive(row.source_id);",
           "claim": "a door that is neither /history nor /cadence falls through to a pull-out opener keyed by source_id"
         }
       ],
@@ -13382,14 +13199,12 @@
       "sources": [
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
-          "symbol": "setSelectedId",
-          "line": 160,
+          "symbol": "const [selectedId, setSelectedId] = useState<string | null>(null);",
           "claim": "the Brief pull-out holds one selected item"
         },
         {
           "path": "web/src/desk/pullouts/views/BriefView.tsx",
-          "symbol": "selectedPerson",
-          "line": 488,
+          "symbol": "<Button dense disabled={addingAgenda} onClick={() => void addToAgenda(selectedPerson.relationship_id)} data-testid=\"verb-add-agenda\">",
           "claim": "the selection decides which verbs the foot carries"
         }
       ],
@@ -13412,14 +13227,12 @@
       "sources": [
         {
           "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-          "symbol": "documentThought",
-          "line": 114,
+          "symbol": "const [documentThought, setDocumentThought] = useState(projection.thought || initialThought);",
           "claim": "the Thought window holds the note it opened"
         },
         {
           "path": "web/src/desk/thought-workspace/thoughtReceipt.ts",
           "symbol": "filing_status",
-          "line": 42,
           "claim": "the foot's second line states IN <DRAWER> / IN A DRAWER / NOT IN A DRAWER from filing_status; the first line is KEPT · time from the last successful write (PHILO-3-04)"
         }
       ],
@@ -13443,8 +13256,7 @@
       "sources": [
         {
           "path": "web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-          "symbol": "setRevealRange",
-          "line": 125,
+          "symbol": "const [revealRange, setRevealRange] = useState<{ start: number; end: number; focus?: boolean } | null>(null);",
           "claim": "the Thought window carries an explicit focus/selection range"
         }
       ],
@@ -13467,14 +13279,12 @@
       "sources": [
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "re-reads",
-          "line": 577,
+          "symbol": "// re-reads on the hub's `desk_changed` frame (the burst is debounced,",
           "claim": "the Chair is a face that re-reads on arrival"
         },
         {
           "path": "web/src/desk/chair/ChairHome.tsx",
-          "symbol": "apiFetch",
-          "line": 18,
+          "symbol": "import { ApiError, apiFetch, readableError } from \"../../lib/api\";",
           "claim": "the brief read is one of those re-reads"
         }
       ],
@@ -13499,7 +13309,6 @@
         {
           "path": "docs/internal/philo/briefs/graph-audit-brief.md",
           "symbol": "1440",
-          "line": 124,
           "claim": "the brief rules both widths for every applicable face case"
         }
       ],
@@ -13523,7 +13332,6 @@
         {
           "path": "docs/internal/philo/briefs/graph-audit-brief.md",
           "symbol": "393",
-          "line": 124,
           "claim": "the brief rules both widths for every applicable face case"
         }
       ],
@@ -13547,14 +13355,12 @@
       "sources": [
         {
           "path": "holdspeak/runtime/heartbeat.py",
-          "symbol": "last_sweep",
-          "line": 102,
+          "symbol": "if last_sweep is None:",
           "claim": "no recorded sweep makes the next tick due"
         },
         {
           "path": "holdspeak/services/heartbeat_service.py",
-          "symbol": "last_sweep_at",
-          "line": 213,
+          "symbol": "\"last_sweep_at\": None,",
           "claim": "the default settings carry no last sweep"
         }
       ],
@@ -13577,20 +13383,17 @@
       "sources": [
         {
           "path": "holdspeak/runtime/heartbeat.py",
-          "symbol": "should_sweep",
-          "line": 111,
+          "symbol": "should_sweep = elapsed >= sweep_interval",
           "claim": "a sweep is due once the elapsed seconds reach the interval"
         },
         {
           "path": "holdspeak/runtime/heartbeat.py",
-          "symbol": "TICK_SECONDS",
-          "line": 86,
+          "symbol": "TICK_SECONDS = 60  # check every minute whether a sweep is due",
           "claim": "the conductor asks that question once a minute"
         },
         {
           "path": "holdspeak/services/heartbeat_service.py",
-          "symbol": "sweep_every_minutes",
-          "line": 176,
+          "symbol": "val = int(patch[\"sweep_every_minutes\"])",
           "claim": "the settings patch carries the sweep interval; it is floored at one minute at :178"
         }
       ],
@@ -13615,13 +13418,11 @@
         {
           "path": "holdspeak/runtime/heartbeat.py",
           "symbol": "record_held_remote",
-          "line": 119,
           "claim": "a non-local runs_on holds the whole local sweep and records a receipt"
         },
         {
           "path": "holdspeak/services/heartbeat_service.py",
-          "symbol": "runs_on",
-          "line": 201,
+          "symbol": "if \"runs_on\" in patch:",
           "claim": "runs_on is set through the settings patch"
         }
       ],
@@ -13639,14 +13440,12 @@
       "sources": [
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "date_key",
-          "line": 395,
+          "symbol": "date_key = period_end.date().isoformat()",
           "claim": "the brief's identity is its period_end date"
         },
         {
           "path": "holdspeak/runtime/composition.py",
-          "symbol": "brief_clock",
-          "line": 510,
+          "symbol": "clock=getattr(ctx, \"brief_clock\", None),",
           "claim": "the hub's brief service's producer clock is injectable; the rig's own hub moves it for HTTP and MCP alike (clock.python_wall, producer-clock)"
         }
       ],
@@ -13664,14 +13463,12 @@
       "sources": [
         {
           "path": "holdspeak/web/routes/monday_brief.py",
-          "symbol": "_period_label",
-          "line": 28,
+          "symbol": "def _period_label(brief_dict: dict[str, Any]) -> str | None:",
           "claim": "the period label is derived from generated_at's weekday"
         },
         {
           "path": "holdspeak/web/routes/monday_brief.py",
-          "symbol": "days_since_monday",
-          "line": 36,
+          "symbol": "days_since_monday = gen_dt.weekday()",
           "claim": "Monday is the boundary it measures from"
         }
       ],
@@ -13689,8 +13486,7 @@
       "sources": [
         {
           "path": "holdspeak/services/needs_you_aggregate.py",
-          "symbol": "REPLAY_HORIZON_DAYS",
-          "line": 163,
+          "symbol": "REPLAY_HORIZON_DAYS = 14",
           "claim": "the continuity horizon IS a producer: an observation older than fourteen days is stated as unobserved, never replayed as still true"
         }
       ],
@@ -13714,20 +13510,17 @@
       "sources": [
         {
           "path": "holdspeak/meeting_session/intel_admission.py",
-          "symbol": "_record_only",
-          "line": 220,
+          "symbol": "self._record_only({",
           "claim": "an absent speech head puts the session into record-only while raw capture continues"
         },
         {
           "path": "holdspeak/meeting_session/intel_admission.py",
-          "symbol": "record_only",
-          "line": 286,
+          "symbol": "self._transcription_refusal = str(issue.get(\"reason_code\") or SESSION_NOT_ADMITTED) self._state.transcription_status = \"record_only\"",
           "claim": "the state carries transcription_status record_only with its reason_code"
         },
         {
           "path": "holdspeak/meeting_session/intel_admission.py",
           "symbol": "transcription_no_speech_assignment",
-          "line": 222,
           "claim": "the reason_code the owner is owed for it"
         }
       ],
@@ -13865,20 +13658,17 @@
       "sources": [
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "subject_counts",
-          "line": 104,
+          "symbol": "subject_counts: dict[str, dict[str, int]] = {}",
           "claim": "the contextual badges are built over the whole projected set"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "subject_counts",
-          "line": 143,
+          "symbol": "\"subject_counts\": subject_counts,",
           "claim": "and returned beside the filtered page"
         },
         {
           "path": "holdspeak/db/projections.py",
-          "symbol": "projection_kind",
-          "line": 113,
+          "symbol": "if projection_kind:",
           "claim": "the kind/state/search filters are applied AFTER those counts are captured"
         }
       ],

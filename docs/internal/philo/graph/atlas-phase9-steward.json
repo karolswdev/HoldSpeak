@@ -458,25 +458,21 @@
         {
           "path": "holdspeak/services/steward_contract.py",
           "symbol": "def start_run",
-          "line": 209,
           "claim": "a start is admitted and answers its run and its non-terminal operation at once"
         },
         {
           "path": "holdspeak/services/steward_contract.py",
           "symbol": "def _close_run",
-          "line": 463,
           "claim": "the run row and the run operation's one receipt commit in one transaction"
         },
         {
           "path": "holdspeak/services/project_update_service.py",
           "symbol": "def mark_update_delivered",
-          "line": 1929,
           "claim": "each mark is its own admitted record, written with its receipt"
         },
         {
           "path": "holdspeak/services/connections_service.py",
           "symbol": "def list_tools",
-          "line": 163,
           "claim": "the list is a cached read: no provider call"
         }
       ],

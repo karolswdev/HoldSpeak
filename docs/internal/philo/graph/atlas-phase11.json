@@ -6754,26 +6754,22 @@
       "sources": [
         {
           "path": "holdspeak/services/document_sources.py",
-          "symbol": "DOCUMENT_SOURCES",
-          "line": 542,
+          "symbol": "DOCUMENT_SOURCES: dict[str, DocumentSource] = {",
           "claim": "the registry contains the seven new document source kinds"
         },
         {
           "path": "holdspeak/services/channel_service.py",
           "symbol": "def prepare(self, principal",
-          "line": 400,
           "claim": "prepare freezes a source document and records the prepared send"
         },
         {
           "path": "holdspeak/services/channel_service.py",
           "symbol": "def send(self, principal",
-          "line": 452,
           "claim": "send crosses the file boundary and settles a durable history row"
         },
         {
           "path": "scripts/graph_walk.py",
           "symbol": "def _op_step",
-          "line": 4699,
           "claim": "the atlas rig executes canonical operations through the hub"
         }
       ],

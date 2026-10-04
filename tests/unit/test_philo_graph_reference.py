@@ -1,6 +1,6 @@
 """PHILO-2-07: the graph join generator (brief section 8).
 
-The committed join must be current and must validate; a contradiction without
+The join of the committed inputs must validate (the join itself is not in git); a contradiction without
 a council resolution must stop the generator and name both sides; saved
 observations keep their original revision; the census names new, removed and
 changed entry points.
@@ -102,10 +102,13 @@ def joined() -> tuple[dict, list[str]]:
     return gen.join(gen.load_inputs(ROOT))
 
 
-def test_committed_join_is_current(joined):
-    """--check's own comparison: the file on disk is the join of the inputs."""
+def test_the_join_is_not_in_git_and_renders_the_same_twice(joined):
+    """Owner ruling 2026-10-03: the join is generated on demand, never
+    committed. It must render the same bytes from the same inputs."""
     graph, _ = joined
-    assert (ROOT / gen.OUTPUT).read_text(encoding="utf-8") == gen.render(graph)
+    assert gen.render(graph) == gen.render(gen.join(gen.load_inputs(ROOT))[0])
+    assert json.loads(gen.render(graph))["nodes"]
+    assert gen.main(["--check"]) == 0
 
 
 def test_committed_join_validates(joined):
@@ -328,7 +331,7 @@ def test_census_sees_source_route_changes_while_openapi_is_unchanged(route_surfa
         return {}
 
     monkeypatch.setattr(route_surface, "build_reference_app", lambda: app)
-    graph = json.loads((ROOT / gen.OUTPUT).read_text(encoding="utf-8"))
+    graph, _ = gen.join(gen.load_inputs(ROOT))
     lines = gen.census(graph, ROOT)
 
     assert _openapi_digest() == before

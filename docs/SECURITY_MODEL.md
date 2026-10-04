@@ -164,6 +164,7 @@ reconstruction and were not run. No claim of a passing security suite is made.
 ## Open limits
 
 The generated [boundary candidate census](generated/boundary-candidates.json)
+(not in git; run `scripts/gen_docs.sh` to write it)
 is an audit lead assembled from lexical call-site candidates. It can contain
 false positives and miss dynamic paths, so it is not proof of complete
 coverage.

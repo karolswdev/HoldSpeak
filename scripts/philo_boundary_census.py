@@ -42,7 +42,9 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
     out=ROOT/'docs/generated/boundary-candidates.json';text=json.dumps(collect(),indent=2,ensure_ascii=False)+'\n'
     if args.check:
-        if not out.exists() or out.read_text()!=text:raise SystemExit('boundary census drift')
+        # The output is not in git (owner ruling 2026-10-03): every row holds a
+        # line number. --check proves the census ran and its output is valid.
+        if not isinstance(json.loads(text).get('candidates'),list):raise SystemExit('boundary census invalid')
     else:out.write_text(text)
     print('Boundary candidate census '+('checked' if args.check else 'generated'))
 if __name__=='__main__':main()

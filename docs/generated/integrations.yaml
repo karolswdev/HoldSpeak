@@ -420,7 +420,7 @@
         {
           "assertion": "See matching capability row and inspected test assertion.",
           "execution": "not_run",
-          "node": "round-trips rects + order + max through one slot; min stays out (HS-97-03)",
+          "node": "round-trips rects + order + max + min through one slot (PHILO-13-07 B2)",
           "path": "web/src/desk/__tests__/windows.test.tsx"
         }
       ]
