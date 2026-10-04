@@ -164,8 +164,9 @@ class TestCloseMeansGone:
                 if width <= 720:
                     open_chair_window(page, "Capture")
                 self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
-                page.locator(".desk-gadget-close[aria-label='Close Thought']").wait_for()
-                self._close_and_prove(page, width, "Thought", "write-a-thought")
+                # A thought with no words is named `New thought` (windowName.ts).
+                page.locator(".desk-gadget-close[aria-label='Close New thought']").wait_for()
+                self._close_and_prove(page, width, "New thought", "write-a-thought")
 
                 self._press(page, page.get_by_test_id("chair-floor-toggle"), width)
                 page.wait_for_timeout(2500)  # the Floor (1440) or the list (393) mounts

@@ -32,7 +32,7 @@ TOKEN = "palette-enter"
 SHOTS = evidence_dir("tests/e2e/shots/palette-enter-opens-the-note")
 SIZES = {1440: 900, 393: 852}
 TITLE = "Ledger cutover risks"
-THOUGHT = ".desk-window[aria-label='Thought']"
+THOUGHT = ".desk-window.thought-workspace-window"
 
 
 class TestEnterOpensTheFirstRow:
@@ -127,7 +127,7 @@ class TestEnterOpensTheFirstRow:
                 # 2. The owner develops it (the product's verb). It is a thought now.
                 self._press(page, page.get_by_role("button", name="Develop this thought").first, width)
                 page.locator(THOUGHT).wait_for()
-                self._press(page, page.locator(f"{THOUGHT} [aria-label='Close Thought']").first, width)
+                self._press(page, page.locator(f"{THOUGHT} .desk-gadget-close").first, width)
                 page.locator(THOUGHT).wait_for(state="detached")
                 _settle(page)
                 del writes[:]
@@ -137,7 +137,9 @@ class TestEnterOpensTheFirstRow:
                 self._find(page, width, note["id"])
                 thought = page.locator(f"[id='pullout:note:{note['id']}']")
                 thought.wait_for()
-                assert thought.get_attribute("aria-label") == "Thought", thought.get_attribute("aria-label")
+                # The window's name is the name of the thing in it: the note's title.
+                assert thought.get_attribute("aria-label") == TITLE, thought.get_attribute("aria-label")
+                assert "thought-workspace-window" in (thought.get_attribute("class") or "")
                 thought.locator(".thought-note-title", has_text=TITLE).wait_for()
                 assert page.locator(THOUGHT).count() == 1
                 page.wait_for_timeout(800)

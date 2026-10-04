@@ -34,7 +34,7 @@ SHOTS = evidence_dir("tests/e2e/shots/thought-opens-at-once")
 SIZES = {1440: 900, 393: 852}
 READ_DELAY_MS = 4000
 OPENS_WITHIN_MS = 1500
-THOUGHT = ".desk-window[aria-label='Thought']"
+THOUGHT = ".desk-window.thought-workspace-window"
 WORDS = "Ask Priya about the ledger ADR"
 SECOND = "Hire a second SRE before Q1"
 
@@ -141,7 +141,7 @@ class TestTheThoughtOpensAtOnce:
                 assert len(kept) == 1, kept
                 proof["six_presses"] = {"notes_posted": len(notes), "notes_on_hub": len(kept)}
                 page.screenshot(path=str(SHOTS / f"six-presses-{width}.png"))
-                self._press(page, page.locator(f"{THOUGHT} [aria-label='Close Thought']").first, width)
+                self._press(page, page.locator(f"{THOUGHT} .desk-gadget-close").first, width)
                 page.locator(THOUGHT).wait_for(state="detached")
                 page.wait_for_timeout(READ_DELAY_MS + 1500)  # the desk reads land
 
@@ -178,7 +178,7 @@ class TestTheThoughtOpensAtOnce:
                 page.screenshot(path=str(SHOTS / f"every-key-{width}.png"))
 
                 # With words in it, the next press makes a new thought.
-                self._press(page, page.locator(f"{THOUGHT} [aria-label='Close Thought']").first, width)
+                self._press(page, page.locator(f"{THOUGHT} .desk-gadget-close").first, width)
                 page.locator(THOUGHT).wait_for(state="detached")
                 self._menu_thought(page, width)
                 self._opens(page, f"the second thought at {width}")

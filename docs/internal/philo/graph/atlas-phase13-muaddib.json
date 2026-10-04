@@ -375,7 +375,7 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-pointer",
-          "selector": ".desk-window[aria-label='Thought'] [aria-label=\"Note body\"]",
+          "selector": ".desk-window.thought-workspace-window [aria-label=\"Note body\"]",
           "why": "the Thought window is open on a new note"
         }
       ],
@@ -383,7 +383,7 @@
         "kind": "ui",
         "action": "fill",
         "adapter": "ui-keyboard",
-        "selector": ".desk-window[aria-label='Thought'] [aria-label=\"Note body\"]",
+        "selector": ".desk-window.thought-workspace-window [aria-label=\"Note body\"]",
         "value": "Ask Priya about the ledger ADR",
         "why": "he types the thought; the writer saves 450 ms after the edit (useThoughtNoteWriter.ts)"
       },
@@ -411,7 +411,7 @@
             }
           ]
         },
-        "observe_at": ".desk-window[aria-label='Thought'] .thought-note-title",
+        "observe_at": ".desk-window.thought-workspace-window .thought-note-title",
         "reads": [
           {
             "method": "GET",
@@ -647,7 +647,7 @@
         "predicate": {
           "kind": "attr_equals",
           "attr": "aria-label",
-          "value": "Thought"
+          "value": "New thought"
         },
         "observe_at": ".desk-window-shell.is-front",
         "words": "at 393 the Desk menu is reachable as a menu: Go ▸ Desk ▸ Write a thought opens a Thought window in front (1440: the Desk menu on the bar). Red on main 2d1d791a: Go is one flat list with no Desk ▸ row (the selector Go ▸ Desk does not exist)."
@@ -1198,7 +1198,7 @@
           "kind": "text_contains",
           "value": "Kafka offsets"
         },
-        "observe_at": ".desk-window[aria-label='Thought']",
+        "observe_at": ".desk-window.thought-workspace-window",
         "words": "the owner types `kafka`, a word inside one thought titled `Thought`, and presses the top row: that thought opens in its window. Red on main: a word from a thought found 0 results (grounding/faces-jobs.md J5)."
       },
       "completion_bound_s": 45,
