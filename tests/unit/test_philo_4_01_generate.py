@@ -55,7 +55,9 @@ def _waiting(*_args, **_kwargs) -> list[BriefItem]:
 
 def test_next_day_generate_keeps_the_old_brief_triage(tmp_path, monkeypatch):
     service = MondayBriefService(Database(tmp_path / "brief.db"))
-    monkeypatch.setattr(service, "_collect_waiting", _waiting)
+    # The WAITING rows come from the one needs-you rule; this case is about
+    # triage across days, so the rows are its own.
+    monkeypatch.setattr(service, "_collect_needs_you", _waiting)
 
     day_one = service.generate(None, now=datetime.datetime(2026, 9, 23, 17, 40))
     deferred_id, untriaged_id = (item.id for item in day_one.sections["waiting"])

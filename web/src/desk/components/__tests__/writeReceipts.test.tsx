@@ -337,6 +337,10 @@ describe("HS-132-06 populated-floor write receipts", () => {
       updatedAt: Date.now(),
       setup: null,
       error: "",
+      // No editor of an earlier case is open: a New press while the window
+      // it just opened is still new puts that window in front, by design.
+      editingId: null,
+      newIds: [],
     });
   });
   afterEach(() => {

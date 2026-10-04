@@ -29,10 +29,13 @@ export function ContextualAssignment({
   label,
   capabilityId,
   scope,
+  onChanged,
 }: {
   label: string;
   capabilityId: string;
   scope: AssignmentScope;
+  /** Called after a saved change, so the owner face can read its state again. */
+  onChanged?: () => void;
 }) {
   const scopeKey = JSON.stringify(scope);
   const stableScope = useMemo(() => scope, [scopeKey]);
@@ -70,6 +73,7 @@ export function ContextualAssignment({
     setReceipt(nextReceipt);
     close();
     await refresh();
+    onChanged?.();
   };
 
   const projection = isProjection(editor) ? editor : null;

@@ -26,7 +26,7 @@ import {
   useScrollHint,
   type PlanStep,
 } from "../../../desk/surface";
-import { openSourceRef } from "../../../desk/surface/citations";
+import { openRef } from "../../../desk/openObject";
 import { refusalWord } from "../../../desk/surface/egress";
 import type { StewardController } from "./useStewardController";
 import type { StewardRun, StewardStep } from "./model";
@@ -700,7 +700,7 @@ export function StewardPosture({
   onOpenReview?: (reviewId: string) => void;
 }) {
   const onOpenRef = useCallback((ref: string) => {
-    openSourceRef(ref);
+    openRef(ref);
   }, []);
   const postureRef = useRef<HTMLDivElement>(null);
   useScrollHint(postureRef, null, "y");

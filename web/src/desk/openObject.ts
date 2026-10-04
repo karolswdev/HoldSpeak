@@ -62,7 +62,8 @@ export function takeRoomUpdatesRequest(projectId: string | null | undefined): bo
 
 /** Refs the citation species opens in a window of their own. */
 const WINDOW_REF = /^(meeting|decision|note|artifact|thread):\S/;
-const FOLLOW_THROUGH_REF = /^(?:follow-through|action_item):(.+)$/;
+// `action:` is memory's name for the same action item (a recall hit, a chat citation).
+const FOLLOW_THROUGH_REF = /^(?:follow-through|action_item|action):(.+)$/;
 
 /** The opener for a qualified ref, or null when the ref names nothing that
  * opens (a count, a coverage line, a pipeline event). */
@@ -83,9 +84,25 @@ export function refOpener(ref: string | null | undefined): Opener | null {
     const id = followThrough[1];
     return () => openIntelligence({ view: "follow-through", followThroughId: id });
   }
+  // A desk decision has one ref name (`desk_decision:<id>`); its window is
+  // the decision window.
+  if (clean.startsWith("desk_decision:")) {
+    const id = clean.slice("desk_decision:".length);
+    return id ? () => openSourceRef(`decision:${id}`) : null;
+  }
   if (clean.startsWith("decision:")) return () => openDecision(clean);
   if (WINDOW_REF.test(clean)) return () => openSourceRef(clean);
   return null;
+}
+
+/** Open a cited ref (a claim's source, a memory citation): the one open
+ * grammar first; a ref it does not name goes to the citation species. Memory
+ * ranks the child message that matched; the Desk opens the parent thread. */
+export function openRef(ref: string): void {
+  const clean = ref.startsWith("thread:") ? ref.split("#", 1)[0] : ref.trim();
+  const open = refOpener(clean);
+  if (open) open();
+  else openSourceRef(clean);
 }
 
 /** A decision ref names a Desk decision (its own window) or a decision a

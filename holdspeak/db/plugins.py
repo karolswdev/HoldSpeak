@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Any
 
 from ..logging_config import get_logger
@@ -736,7 +736,11 @@ class PluginArtifactRepository(BaseRepository):
             if (source_type, source_ref) not in normalized_sources:
                 normalized_sources.append((source_type, source_ref))
 
-        now_iso = datetime.now().isoformat()
+        # The stamp carries its offset (UTC). A bare local stamp is ambiguous
+        # in the repeated DST hour: the second 01:30 read as the first, so a
+        # new artifact was already one hour old (review of #778). Older rows
+        # are bare local stamps and are still read as local time.
+        now_iso = datetime.now(timezone.utc).isoformat()
         updated_iso = str(updated_at).strip() if isinstance(updated_at, str) and updated_at.strip() else now_iso
         with self._connection() as conn:
             conn.execute(

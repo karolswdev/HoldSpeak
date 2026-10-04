@@ -3,7 +3,7 @@
 // honestly, and legible to a screen reader.
 // HS-111-07 — re-locked to the SurfaceLedger face: 26px mono rows under
 // kind bands, Space = Ask-context, ContextMenu = the object WorkMenu.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Meeting, Note, Persona, KB } from "../../lib/primitives";
@@ -13,6 +13,8 @@ import { usePalette } from "../chromeState";
 import { useProjections } from "../projections";
 import { allObjects, objectByRef } from "../world";
 import { DeskListView, LIST_PAGE } from "./DeskListView";
+import { keyContext } from "../keymap";
+import { verbById } from "../verbRegistry";
 import { DeskChrome } from "./DeskChrome";
 import { DeskToolShelf } from "./DeskToolShelf";
 
@@ -52,6 +54,7 @@ function resetStore(seed: Items) {
     selectedIds: [],
     divedZone: null,
     pullouts: [],
+    infoWindows: [],
     editingId: null,
     askOpen: false,
     panelRects: {},
@@ -133,14 +136,109 @@ describe("HS-111-07 the ledger face: same records", () => {
       qualifiedRef("note", "n1"),
     ]);
     expect(screen.getByText("1 selected")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Release checklist, in Ask context" }),
-    ).toHaveTextContent("[x]");
+    expect(screen.getByRole("button", { name: "Release checklist, in Ask context" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Select Release checklist" })).toHaveTextContent("[x]");
     fireEvent.keyDown(
       screen.getByRole("button", { name: "Release checklist, in Ask context" }),
       { key: " " },
     );
     expect(useDesk.getState().selectedIds).toEqual([]);
+  });
+
+  // Inventory 2026-10-03: a pointer could not select a list row (a press
+  // opens it), so the Object menu stayed all ghost; and Get Info opened
+  // nothing, because only the spatial Floor mounted the Info windows.
+  it("a press on the mark selects the row and does not open it", () => {
+    const { container } = renderList();
+    fireEvent.click(screen.getByRole("button", { name: "Select Release checklist" }));
+    expect(useDesk.getState().selectedIds).toEqual([qualifiedRef("note", "n1")]);
+    expect(useDesk.getState().pullouts).toEqual([]);
+    expect(container.querySelector(".desk-pullout")).toBeNull();
+    // The Object menu reads this selection: its verbs are live.
+    const ctx = keyContext();
+    expect(ctx.selectedRef).toBe(qualifiedRef("note", "n1"));
+    expect(verbById("object.info")!.ghost(ctx)).toBeNull();
+    expect(verbById("object.open")!.ghost(ctx)).toBeNull();
+    expect(screen.getByRole("button", { name: "Select Release checklist" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Select Release checklist" }));
+    expect(useDesk.getState().selectedIds).toEqual([]);
+    expect(verbById("object.info")!.ghost(keyContext())).toBe("Select an object");
+  });
+
+  it("Get Info on a selected row opens its Info window in list mode", () => {
+    const { container } = renderList();
+    fireEvent.click(screen.getByRole("button", { name: "Select Release checklist" }));
+    act(() => verbById("object.info")!.run(keyContext()));
+    const info = container.querySelector(".desk-info-window");
+    expect(info).not.toBeNull();
+    expect(info!.getAttribute("aria-label") ?? info!.textContent).toContain("Release checklist");
+  });
+
+  // Found on the glass: Get Info on a decision threw "Unknown HoldSpeak
+  // product term: decision" and the whole desk fell to the reset screen.
+  it("Get Info opens for a kind the product-language registry does not hold", () => {
+    resetStore({
+      ...items,
+      decision: [{ kind: "decision", id: "d1", title: "Freeze the old ledger" } as never],
+      workbench: [{ kind: "workbench", id: "w1", name: "Cutover bench" } as never],
+    });
+    const { container } = renderList();
+    for (const [name, word] of [["Freeze the old ledger", "Decision"], ["Cutover bench", "Workbench"]]) {
+      fireEvent.contextMenu(screen.getByRole("button", { name }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "Get Info" }));
+      const info = [...container.querySelectorAll(".desk-info-window")].at(-1)!;
+      expect(info.querySelector(".info-kind")?.textContent).toBe(word);
+    }
+    expect(container.querySelectorAll(".desk-info-window")).toHaveLength(2);
+  });
+
+  // Astra on #794: a Filed zone link opened a zone window the list does not
+  // mount. In list mode it dives into that zone.
+  it("a Filed zone in Get Info dives into that zone in list mode", () => {
+    renderList();
+    act(() => useDesk.getState().openInfoWindow(qualifiedRef("note", "filed1")));
+    const info = document.querySelector(".desk-info-window") as HTMLElement;
+    fireEvent.click(within(info).getByRole("button", { name: /Launch/ }));
+    expect(useDesk.getState().divedZone).toBe("z1");
+    expect(useDesk.getState().zoneWindows ?? []).toEqual([]);
+  });
+
+  // Astra on #794: Rename sent `{name}` to a decision (200, title kept) and
+  // PUT to a thread (405). Each kind sends its own field by its own method.
+  it("Rename sends title to a decision by PUT and to a thread by PATCH", async () => {
+    resetStore({
+      ...items,
+      decision: [{ kind: "decision", id: "d1", title: "Freeze the old ledger" } as never],
+      thread: [{ kind: "thread", id: "t1", title: "Cutover thread" } as never],
+    });
+    const fetchMock = vi.fn((_input: RequestInfo | URL, _init?: RequestInit) =>
+      Promise.resolve(new Response("{}", { status: 200, headers: { "content-type": "application/json" } })));
+    vi.stubGlobal("fetch", fetchMock);
+    const { container } = renderList();
+    for (const [ref, title, next] of [["decision:d1", "Freeze the old ledger", "Freeze on Nov 6"], ["thread:t1", "Cutover thread", "Cutover talk"]]) {
+      act(() => useDesk.getState().openInfoWindow(ref));
+      const info = [...container.querySelectorAll(".desk-info-window")].at(-1)!;
+      fireEvent.click(within(info as HTMLElement).getByTitle("Rename"));
+      const field = within(info as HTMLElement).getByRole("textbox", { name: "Name" });
+      fireEvent.change(field, { target: { value: next } });
+      fireEvent.keyDown(field, { key: "Enter" });
+      expect(title).not.toBe(next);
+    }
+    await vi.waitFor(() => expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT" || init?.method === "PATCH")).toHaveLength(2));
+    const writes = fetchMock.mock.calls
+      .filter(([, init]) => init?.method === "PUT" || init?.method === "PATCH")
+      .map(([input, init]) => [String(input), init!.method, JSON.parse(String(init!.body))]);
+    expect(writes).toEqual([
+      ["/api/decisions/d1", "PUT", { title: "Freeze on Nov 6" }],
+      ["/api/threads/t1", "PATCH", { title: "Cutover talk" }],
+    ]);
+  });
+
+  it("Get Info from the row's own menu opens the Info window", () => {
+    const { container } = renderList();
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Q3 kickoff" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Get Info" }));
+    expect(container.querySelector(".desk-info-window")).not.toBeNull();
   });
 
   it("the ContextMenu key opens the object WorkMenu on the row", () => {

@@ -29,15 +29,25 @@ class MemoryIndexRepository(BaseRepository):
     def __init__(self, connection, container=None):
         super().__init__(connection, container)
         self._matrix_lock = threading.Lock()
-        # Every write through this repository moves the generation, so a
-        # cached matrix is never served after the rows under it changed.
-        self._generation = 0
-        # model_id -> (stamp, matrix, chunk ids, source refs)
-        self._matrices: dict[str, tuple[tuple[int, ...], np.ndarray, list[str], list[str]]] = {}
+        # model_id -> (generation, matrix, chunk ids, source refs, chunk shas)
+        self._matrices: dict[str, tuple[int, np.ndarray, list[str], list[str], list[str]]] = {}
 
-    def _touch(self) -> None:
-        with self._matrix_lock:
-            self._generation += 1
+    @staticmethod
+    def _bump(conn: sqlite3.Connection) -> None:
+        """Move the index generation.  Called INSIDE each write transaction,
+        so the generation and the rows change together or not at all, and a
+        reader on any handle or in any process sees the change."""
+        conn.execute(
+            "INSERT INTO memory_index_state(key,value) VALUES ('generation',1)"
+            " ON CONFLICT(key) DO UPDATE SET value=value+1"
+        )
+
+    def generation(self) -> int:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT value FROM memory_index_state WHERE key='generation'"
+            ).fetchone()
+        return int(row[0]) if row else 0
 
     # ── ledger ───────────────────────────────────────────────────────
 
@@ -112,7 +122,7 @@ class MemoryIndexRepository(BaseRepository):
                 " updated_at=excluded.updated_at",
                 (source_ref, kind, title, occurred_at, content_sha, int(chunker_version), _now()),
             )
-        self._touch()
+            self._bump(conn)
 
     def mark_gone(self, source_ref: str) -> None:
         """The source was deleted, parked or made sensitive: remove what was
@@ -130,7 +140,7 @@ class MemoryIndexRepository(BaseRepository):
                 "UPDATE memory_sources SET state='gone',updated_at=? WHERE source_ref=?",
                 (_now(), source_ref),
             )
-        self._touch()
+            self._bump(conn)
 
     @staticmethod
     def _delete_vectors(conn: sqlite3.Connection, chunk_ids: Sequence[str]) -> None:
@@ -184,34 +194,29 @@ class MemoryIndexRepository(BaseRepository):
                     (CHUNK_ITEM_KIND, chunk_id, model_id, int(dim), data.tobytes(), content_sha),
                 )
                 written += 1
-        self._touch()
+            if written:
+                self._bump(conn)
         return written
 
-    def matrix(self, model_id: str) -> tuple[np.ndarray, list[str], list[str]]:
-        """``(vectors, chunk ids, source refs)`` for the current chunk vectors
-        of one model.  Cached; rebuilt when the vector rows change."""
+    def matrix(self, model_id: str) -> tuple[np.ndarray, list[str], list[str], list[str]]:
+        """``(vectors, chunk ids, source refs, chunk shas)`` for the current
+        chunk vectors of one model.
+
+        Cached per generation.  The generation is read BEFORE the rows, so a
+        cached matrix is never labelled newer than the rows it holds; a write
+        that lands between the two reads only causes one more rebuild.
+        """
         with self._connection() as conn:
-            stamp_row = conn.execute(
-                "SELECT count(*),COALESCE(max(rowid),0) FROM memory_embeddings"
-                " WHERE model_id=?",
-                (model_id,),
+            row = conn.execute(
+                "SELECT value FROM memory_index_state WHERE key='generation'"
             ).fetchone()
-            chunk_row = conn.execute(
-                "SELECT count(*),COALESCE(max(rowid),0) FROM memory_chunks"
-            ).fetchone()
-            with self._matrix_lock:
-                generation = self._generation
-            stamp = (
-                generation,
-                int(stamp_row[0]), int(stamp_row[1]),
-                int(chunk_row[0]), int(chunk_row[1]),
-            )
+            generation = int(row[0]) if row else 0
             with self._matrix_lock:
                 cached = self._matrices.get(model_id)
-                if cached is not None and cached[0] == stamp:
-                    return cached[1], cached[2], cached[3]
+                if cached is not None and cached[0] == generation:
+                    return cached[1], cached[2], cached[3], cached[4]
             rows = conn.execute(
-                """SELECT c.id,c.source_ref,e.vector,e.dim
+                """SELECT c.id,c.source_ref,c.content_sha,e.vector,e.dim
                    FROM memory_embeddings e
                    JOIN memory_chunks c ON c.id=e.item_id
                     AND c.content_sha=e.content_sha
@@ -222,19 +227,19 @@ class MemoryIndexRepository(BaseRepository):
             ).fetchall()
         if rows:
             dim = int(rows[0]["dim"])
-            vectors = np.frombuffer(
-                b"".join(bytes(row["vector"]) for row in rows if int(row["dim"]) == dim),
-                dtype=np.float32,
-            ).reshape(-1, dim)
             kept = [row for row in rows if int(row["dim"]) == dim]
+            vectors = np.frombuffer(
+                b"".join(bytes(row["vector"]) for row in kept), dtype=np.float32
+            ).reshape(-1, dim)
         else:
             vectors = np.zeros((0, 0), dtype=np.float32)
             kept = []
         chunk_ids = [str(row["id"]) for row in kept]
         source_refs = [str(row["source_ref"]) for row in kept]
+        shas = [str(row["content_sha"]) for row in kept]
         with self._matrix_lock:
-            self._matrices[model_id] = (stamp, vectors, chunk_ids, source_refs)
-        return vectors, chunk_ids, source_refs
+            self._matrices[model_id] = (generation, vectors, chunk_ids, source_refs, shas)
+        return vectors, chunk_ids, source_refs, shas
 
     def chunk(self, chunk_id: str) -> Optional[dict[str, Any]]:
         with self._connection() as conn:
@@ -252,7 +257,8 @@ class MemoryIndexRepository(BaseRepository):
             removed = conn.execute(
                 "DELETE FROM memory_embeddings WHERE model_id<>?", (model_id,)
             ).rowcount
-        self._touch()
+            if removed:
+                self._bump(conn)
         return removed
 
     # ── maintenance ──────────────────────────────────────────────────
@@ -263,8 +269,8 @@ class MemoryIndexRepository(BaseRepository):
             conn.execute("DELETE FROM memory_embeddings")
             conn.execute("DELETE FROM memory_chunks")
             conn.execute("DELETE FROM memory_sources")
+            self._bump(conn)
         with self._matrix_lock:
-            self._generation += 1
             self._matrices.clear()
 
     def stats(self) -> dict[str, int]:

@@ -1,0 +1,19 @@
+{
+  "body_md": "## Progress\n\n- Meeting summary: Ledger sync -- Ledger launch reviewed.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Action: Draft the ledger vendor checklist -- pending, owner Dana\n\n## Source Coverage\n\nAll sources consulted successfully.\n",
+  "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"meeting:m-fixture\"],\"section\":\"progress\",\"span_id\":\"s_progress_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"meeting_id\",\"title\",\"summary\"],\"method\":\"field_mapping\",\"source_refs\":[\"meeting:m-fixture\"],\"source_version\":\"project:proj-fixture@r2\"},\"text\":\"Meeting summary: Ledger sync -- Ledger launch reviewed.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"action_item:act-fixture-01\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"task\",\"owner\",\"status\",\"due\"],\"method\":\"field_mapping\",\"source_refs\":[\"action_item:act-fixture-01\"],\"source_version\":\"project:proj-fixture@r2\"},\"text\":\"Action: Draft the ledger vendor checklist -- pending, owner Dana\"}]",
+  "created_at": "<volatile>",
+  "draft_revision": 1,
+  "fallback_reason": null,
+  "fallback_receipt": null,
+  "generator": "deterministic",
+  "generator_host": null,
+  "generator_model": null,
+  "id": "<volatile>",
+  "lifecycle": "draft",
+  "project_id": "proj-fixture",
+  "project_revision": 2,
+  "published_at": null,
+  "review_id": null,
+  "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":2,\"week_source_refs\":[\"action_item:act-fixture-01\",\"meeting:m-fixture\"]}",
+  "updated_at": "<volatile>"
+}

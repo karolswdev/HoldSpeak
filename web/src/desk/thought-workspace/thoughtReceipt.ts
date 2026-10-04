@@ -4,6 +4,7 @@
  * Line 1 is the write: KEPT · <time> from the hub's stamp on the last kept
  * write, SAVING… from an edit until the write lands, DID NOT SAVE · <cause>,
  * or CHANGED ELSEWHERE. Line 2 is the filing state. */
+import { wireDate } from "../surface/format";
 import { keptReceipt } from "../keptReceipt";
 import type { Thought } from "../thoughts";
 import type { ThoughtSaveFailure } from "../pullouts/editors/useThoughtNoteWriter";
@@ -15,10 +16,7 @@ export const SAVE_FAILURE_CAUSE: Record<ThoughtSaveFailure, string> = {
 
 /** The hub stamps ISO UTC (`...Z`); an older SQLite stamp has no zone and is UTC too. */
 export function hubStampMs(stamp: string | null | undefined): number | null {
-  if (!stamp) return null;
-  const iso = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(stamp) ? `${stamp.replace(" ", "T")}Z` : stamp;
-  const at = Date.parse(iso);
-  return Number.isNaN(at) ? null : at;
+  return wireDate(stamp)?.getTime() ?? null;
 }
 
 export type ThoughtWriteState = {

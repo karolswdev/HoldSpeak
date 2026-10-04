@@ -75,9 +75,14 @@ export {
   groundedMatchCount,
   sourceLabel,
   openSourceRef,
+  NO_WINDOW_REF_KINDS,
+  refOpensWindow,
 } from "./citations";
 
 export {
+  wireDate,
+  wireClock,
+  wireDayClock,
   humanTime,
   deSnake,
   presentValue,

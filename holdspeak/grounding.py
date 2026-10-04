@@ -146,6 +146,32 @@ def meeting_digest(state: Any) -> str:
     return "\n\n".join(p for p in parts if p)
 
 
+def _unkept_draft_refs(db: Any) -> set[str]:
+    """Drafter output the owner has not kept: never selected as memory.
+
+    A Prep brief is a model's suggestion until he keeps it.  Read back on the
+    next preparation it would ground the model on its own unreviewed words
+    (Astra on #777).  Only a KEPT brief is memory; a draft stays reachable by
+    an explicit ref the owner attaches, never by relevance or by a Project's
+    listing.  An update draft needs no row here: memory indexes an update
+    only once it is published (``db/memory.py``, ``lifecycle='published'``).
+    """
+    connection = getattr(db, "_connection", None)
+    if connection is None:
+        return set()
+    try:
+        with connection() as conn:
+            return {
+                f"prep_brief:{row[0]}"
+                for row in conn.execute(
+                    "SELECT id FROM project_briefs WHERE lifecycle!='kept'"
+                )
+            }
+    except Exception as exc:  # a database without the table holds no drafts
+        log.debug(f"unkept draft read skipped: {exc}")
+        return set()
+
+
 def hydrate_refs_detailed(
     db: Any,
     meeting_ids: list[str],
@@ -166,6 +192,13 @@ def hydrate_refs_detailed(
         "overflow_count": 0,
     }
     visited: set[str] = set()
+    excluded = {
+        str(ref).split("#", 1)[0]
+        for ref in (exclude_refs or [])
+        if str(ref).strip()
+    }
+    # A drafter's own unkept output is not memory (see _unkept_draft_refs).
+    excluded |= _unkept_draft_refs(db)
     for mid in meeting_ids:
         try:
             state = db.meetings.get_meeting(mid)
@@ -228,7 +261,8 @@ def hydrate_refs_detailed(
             unknown.append(str(raw_ref))
             continue
         more, missing = _hydrate_qualified(
-            db, ref, expand, visited, query=query, stats=stats
+            db, ref, expand, visited, query=query, stats=stats,
+            exclude_refs=excluded,
         )
         blocks.extend(more)
         unknown.extend(missing)
@@ -251,11 +285,6 @@ def hydrate_refs_detailed(
         and not has_project_ref
         and not has_explicit_sources
     ):
-        excluded = {
-            str(ref).split("#", 1)[0]
-            for ref in (exclude_refs or [])
-            if str(ref).strip()
-        }
         search = memory.search(
             str(query),
             limit=GROUNDING_MAX_REFS + len(excluded),
@@ -324,6 +353,7 @@ def _hydrate_qualified(
     *,
     query: Optional[str] = None,
     stats: Optional[dict[str, Any]] = None,
+    exclude_refs: Optional[set[str]] = None,
 ) -> tuple[list[GroundingBlock], list[str]]:
     if ref in visited:
         return [], []
@@ -380,7 +410,13 @@ def _hydrate_qualified(
     if kind == "decision":
         decision = db.decisions.get(resource_id)
         if decision is None:
-            return [], [ref]
+            # A desk decision filed under the old ref name (`decision:<id>`,
+            # the Decide button before 2026-10-03) reads as what it is.
+            blocks, missing = _hydrate_qualified(
+                db, f"desk_decision:{resource_id}", expand, visited,
+                query=query, stats=stats,
+            )
+            return blocks, ([ref] if missing else [])
         rationale = f"\n\nRationale: {decision.rationale}" if decision.rationale else ""
         return [
             GroundingBlock(
@@ -398,8 +434,47 @@ def _hydrate_qualified(
         "project_item",
         "workbench_item",
         "cadence",
+        "send",
+        "project_update",
+        "prep_brief",
+        "calendar_event",
     }:
         queries = {
+            # What was sent, to whom, when, the outcome. Never the payload:
+            # the document is read under its own ref, and a sent Brief
+            # carries People data.
+            "send": (
+                "SELECT COALESCE(NULLIF(json_extract(s.document_json,'$.title'),''),s.document_ref) title,"
+                "'Sent: '||s.document_ref"
+                "||'\nTo: '||COALESCE((SELECT cd.name FROM channel_destinations cd WHERE cd.id=s.destination_id),'')"
+                "||COALESCE(' '||json_extract(s.target_json,'$.to'),'')"
+                "||COALESCE('\nCc: '||json_extract(s.target_json,'$.cc'),'')"
+                "||COALESCE(' '||json_extract(s.target_json,'$.repo'),'')"
+                "||COALESCE(' '||json_extract(s.target_json,'$.key'),'')"
+                "||COALESCE(' '||json_extract(s.account_json,'$.channel_label'),'')"
+                "||'\nChannel: '||s.channel"
+                "||'\nWhen: '||COALESCE(s.settled_at,s.dispatch_started_at,s.created_at)"
+                "||'\nOutcome: '||s.state||COALESCE(' ('||NULLIF(s.reason,'')||')','') text,"
+                "s.channel||' · '||s.state subtitle "
+                "FROM channel_sends s WHERE s.id=? AND s.state IN ('sent','failed','unknown')"
+            ),
+            "project_update": (
+                "SELECT COALESCE((SELECT p.name FROM projects p WHERE p.id=u.project_id),u.project_id)||' update r'||u.draft_revision title,"
+                "u.body_md text,COALESCE(u.published_at,u.updated_at) subtitle "
+                "FROM project_updates u WHERE u.id=? AND u.lifecycle='published'"
+            ),
+            "prep_brief": (
+                "SELECT COALESCE((SELECT p.name FROM projects p WHERE p.id=b.project_id),b.project_id)||' prep · '||b.purpose title,"
+                "b.body_md text,COALESCE(b.kept_at,b.updated_at) subtitle "
+                "FROM project_briefs b WHERE b.id=? AND b.lifecycle!='discarded'"
+            ),
+            "calendar_event": (
+                "SELECT COALESCE(NULLIF(e.title,''),e.id) title,"
+                "'When: '||e.starts_at||' to '||e.ends_at"
+                "||CASE WHEN e.location IS NULL OR e.location='' THEN '' ELSE '\nWhere: '||e.location END"
+                "||CASE WHEN e.attendees_json IN ('','[]') THEN '' ELSE '\nAttendees: '||e.attendees_json END text,"
+                "e.starts_at subtitle FROM calendar_events e WHERE e.id=?"
+            ),
             "decision_record": (
                 "SELECT decision_text title,COALESCE(rationale,'')||CASE WHEN alternatives IS NULL OR alternatives='' THEN '' ELSE '\n\nAlternatives: '||alternatives END text,updated_at subtitle FROM decision_records WHERE id=? AND deleted=0"
             ),
@@ -514,10 +589,13 @@ def _hydrate_qualified(
         # No index on this handle: fall through to the relationship listing
         # below, which is the honest recency answer rather than an error.
         if memory is not None and query and str(query).strip():
+            # Exclusions (what the caller already holds) apply BEFORE the
+            # selection limit, so they never use up the bounded slots.
             search = memory.search(
                 str(query),
                 project_id=resource_id,
                 limit=GROUNDING_MAX_REFS,
+                exclude_refs=exclude_refs or (),
             )
             # HS-200-10 (F0/L3): the second relevance call site.  Applied to
             # the RELEVANCE branch only.  The `recency_fallback` branch below
@@ -533,10 +611,11 @@ def _hydrate_qualified(
                     0, search.total - len(members)
                 )
         else:
-            all_members = [
+            all_members = _drop_parked(db, [
                 row.resource_ref
                 for row in db.project_relationships.list_for_project(resource_id)
-            ]
+                if str(row.resource_ref).split("#", 1)[0] not in (exclude_refs or ())
+            ])
             members = all_members[:GROUNDING_MAX_REFS]
             if stats is not None:
                 stats["selection"] = "recency_fallback"
@@ -548,6 +627,48 @@ def _hydrate_qualified(
         # one anonymous container, so every model-visible block keeps a citable ref.
         return _hydrate_members(db, members, expand, visited, query=query, stats=stats)
     return [], [ref]
+
+
+# A parked meeting and what it made stay out of memory.  The relevance pass
+# wears ``_not_parked`` inside ``memory.search``; the recency listing is a
+# plain member list, so it wears the same predicate here, BEFORE the limit.
+_PARKED_PARENT = {
+    "action": ("action_items", "action_items.meeting_id"),
+    "decision": ("decisions", "decisions.source_meeting_id"),
+    "artifact": ("artifacts", "artifacts.meeting_id"),
+}
+
+
+def _drop_parked(db: Any, members: list[str]) -> list[str]:
+    from .db.memory import _not_parked
+
+    connection = getattr(db, "_connection", None)
+    if connection is None:  # a narrow double: nothing to read parked from
+        return members
+    kept: list[str] = []
+    try:
+        with connection() as conn:
+            for member in members:
+                kind, _, resource_id = str(member).partition(":")
+                resource_id = resource_id.split("#", 1)[0]
+                if kind in {"meeting", "transcript"}:
+                    parked = conn.execute(
+                        "SELECT 1 FROM meetings WHERE id=? AND parked=1", (resource_id,)
+                    ).fetchone()
+                elif kind in _PARKED_PARENT:
+                    table, column = _PARKED_PARENT[kind]
+                    parked = conn.execute(
+                        f"SELECT 1 FROM {table} WHERE id=? AND NOT ({_not_parked(column)})",
+                        (resource_id,),
+                    ).fetchone()
+                else:
+                    parked = None
+                if parked is None:
+                    kept.append(member)
+    except Exception as exc:
+        log.warning(f"parked filter not applied ({exc})")
+        return members
+    return kept
 
 
 def _hydrate_members(

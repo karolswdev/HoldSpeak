@@ -9,6 +9,7 @@ import { EMPTY_ITEMS, fromWireMeeting } from "../api";
 import { useDesk } from "../store";
 import { DeskChangedRefresh } from "../useDeskChangedRefresh";
 import { ChairHome } from "./ChairHome";
+import { asHub } from "../../test/hubNeedsYou";
 
 const runtime = vi.hoisted(() => ({
   handlers: {} as Record<string, Array<() => void>>,
@@ -72,7 +73,7 @@ function detailsFor(...candidates: SummaryCase[]) {
 
 function commonWire(candidates: SummaryCase[]) {
   const details = detailsFor(...candidates);
-  mockedApiFetch.mockImplementation(async (path: string) => {
+  mockedApiFetch.mockImplementation(asHub(async (path: string) => {
     const value = String(path);
     const detailId = value.match(/^\/api\/meetings\/([^/?]+)$/)?.[1];
     if (detailId) return details[decodeURIComponent(detailId)] as never;
@@ -87,7 +88,7 @@ function commonWire(candidates: SummaryCase[]) {
     }
     if (value === "/api/door") return { board: {}, upcoming: [] } as never;
     return null as never;
-  });
+  }));
 }
 
 function seat(...candidates: SummaryCase[]) {
@@ -236,7 +237,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     let resolveFirst!: (value: unknown) => void;
     const first = new Promise((resolve) => { resolveFirst = resolve; });
     commonWire([ready, running]);
-    mockedApiFetch.mockImplementation(async (path: string) => {
+    mockedApiFetch.mockImplementation(asHub(async (path: string) => {
       const value = String(path);
       if (value === `/api/meetings/${ready.detail.id}`) return first as never;
       if (value === `/api/meetings/${running.detail.id}`) return running.detail as never;
@@ -245,7 +246,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       if (value.startsWith("/api/desk/needs-you")) return { count: 0, items: [], projects: [], next: null, coverage: [], complete: true } as never;
       if (value === "/api/door") return { board: {}, upcoming: [] } as never;
       return null as never;
-    });
+    }));
     seat(ready);
     render(<ChairHome />);
     seat(running);
@@ -268,7 +269,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     let detailReads = 0;
     let resolveRefresh!: (value: unknown) => void;
     const pendingRefresh = new Promise((resolve) => { resolveRefresh = resolve; });
-    mockedApiFetch.mockImplementation(async (path: string) => {
+    mockedApiFetch.mockImplementation(asHub(async (path: string) => {
       const value = String(path);
       if (value === `/api/meetings/${ready.detail.id}`) {
         detailReads += 1;
@@ -280,7 +281,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       }
       if (value === "/api/door") return { board: {}, upcoming: [] } as never;
       return null as never;
-    });
+    }));
     seat(ready);
     render(<ChairHome />);
 
@@ -316,7 +317,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     const ready = withTestIdentity(caseFor("success"), "m-summary-expected");
     const running = withTestIdentity(caseFor("running"), "m-summary-reply");
     commonWire([ready, running]);
-    mockedApiFetch.mockImplementation(async (path: string) => {
+    mockedApiFetch.mockImplementation(asHub(async (path: string) => {
       const value = String(path);
       if (value === `/api/meetings/${ready.detail.id}`) return running.detail as never;
       if (value.startsWith("/api/meetings?")) return { meetings: [] } as never;
@@ -324,7 +325,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       if (value.startsWith("/api/desk/needs-you")) return { count: 0, items: [], projects: [], next: null, coverage: [], complete: true } as never;
       if (value === "/api/door") return { board: {}, upcoming: [] } as never;
       return null as never;
-    });
+    }));
     seat(ready);
     render(<ChairHome />);
 
@@ -349,7 +350,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     let currentSnapshot = 0;
     commonWire(snapshots);
     const defaultFetch = mockedApiFetch.getMockImplementation()!;
-    mockedApiFetch.mockImplementation(async (path: string, init?: unknown) => {
+    mockedApiFetch.mockImplementation(asHub(async (path: string, init?: unknown) => {
       const value = String(path);
       if (value === "/api/meetings/m-run-success") {
         return snapshots[currentSnapshot].detail as never;
@@ -363,7 +364,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
         } as never;
       }
       return defaultFetch(path, init as never) as never;
-    });
+    }));
     const refresh = vi.fn(async () => {
       currentSnapshot = Math.min(currentSnapshot + 1, snapshots.length - 1);
       const snapshot = snapshots[currentSnapshot];
@@ -418,7 +419,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     let currentSnapshot = 0;
     commonWire(snapshots);
     const defaultFetch = mockedApiFetch.getMockImplementation()!;
-    mockedApiFetch.mockImplementation(async (path: string, init?: unknown) => {
+    mockedApiFetch.mockImplementation(asHub(async (path: string, init?: unknown) => {
       const value = String(path);
       if (value === "/api/meetings/m-run-failure") {
         return snapshots[currentSnapshot].detail as never;
@@ -429,6 +430,11 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       if (value.startsWith("/api/meetings?summary_attention=true")) {
         return { meetings: [snapshots[currentSnapshot].list], total: 1 } as never;
       }
+      // The Room rows of this hub (none); `asHub` composes the answer from
+      // the sources of THIS mock, not from the default wire's.
+      if (value.startsWith("/api/desk/needs-you")) {
+        return { count: 0, items: [], projects: [], next: null, coverage: [], complete: true } as never;
+      }
       if (value.endsWith("/intelligence/run")) {
         return {
           job_id: "ij-run-failure",
@@ -438,7 +444,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
         } as never;
       }
       return defaultFetch(path, init as never) as never;
-    });
+    }));
     const refresh = vi.fn(async () => {
       currentSnapshot = Math.min(currentSnapshot + 1, snapshots.length - 1);
       const snapshot = snapshots[currentSnapshot];
@@ -491,7 +497,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     })) as SummaryCase[];
     let current = 0;
     const detailPaths: string[] = [];
-    mockedApiFetch.mockImplementation(async (path: string) => {
+    mockedApiFetch.mockImplementation(asHub(async (path: string) => {
       const value = String(path);
       if (value === "/api/meetings/m-transition") {
         detailPaths.push(value);
@@ -502,7 +508,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       if (value.startsWith("/api/desk/needs-you")) return { count: 0, items: [], projects: [], next: null, coverage: [], complete: true } as never;
       if (value === "/api/door") return { board: {}, upcoming: [] } as never;
       return null as never;
-    });
+    }));
     const refresh = vi.fn(async () => {
       useDesk.setState({
         items: { ...EMPTY_ITEMS, meeting: [meetingFor(snapshots[current])] },

@@ -23,7 +23,11 @@ type TrustDestination = {
   id: string;
   name: string;
   operation: string;
+  /** Data can leave this device through this destination. */
   enabled: boolean;
+  /** A saved Send destination (Settings, Connections). One on this device
+   *  is saved and not `enabled`. */
+  saved?: boolean;
   destination: string;
   boundary: string;
   data_class: string;
@@ -64,10 +68,18 @@ export function TrustWindow() {
       .catch(() => null);
   }, [open]);
 
+  // `enabled` = data can leave this device. A saved Send destination on
+  // this device is in use and sends nothing out (inventory 2026-10-03: the
+  // count said None with a saved destination).
   const enabledDestinations =
     trust?.destinations?.filter((item) => item.enabled) ?? [];
+  const inUseDestinations =
+    trust?.destinations?.filter((item) => item.enabled || item.saved) ?? [];
+  // The scope is external when transcripts can leave OR any destination
+  // sends out (a synced folder, a repository, an address). It read "this
+  // device" under "External destinations configured" (review of #789).
   const egress =
-    trust?.transcript_egress === "none"
+    trust?.transcript_egress === "none" && enabledDestinations.length === 0
       ? "this device"
       : "this device + external";
 
@@ -107,7 +119,7 @@ export function TrustWindow() {
             label="Enabled destinations"
             control={
               <span className="surface-setting-value">
-                {enabledDestinations.length || "None"}
+                {inUseDestinations.length || "None"}
               </span>
             }
           />
@@ -124,7 +136,13 @@ export function TrustWindow() {
               <LampGadget
                 on={destination.enabled}
                 tone="warn"
-                label={destination.enabled ? "SENDS OUT" : "SENDS NOTHING"}
+                label={
+                  destination.enabled
+                    ? "SENDS OUT"
+                    : destination.saved
+                      ? "THIS DEVICE"
+                      : "SENDS NOTHING"
+                }
               />
             }
           >

@@ -324,7 +324,7 @@ def test_a_second_run_writes_nothing_and_calls_no_engine(tmp_path: Path) -> None
     calls = engine.calls
 
     second = sweep(db)
-    assert second == {"seen": 6, "written": 0, "unchanged": 6, "gone": 0, "complete": 1}
+    assert second == {"seen": 6, "written": 0, "unchanged": 6, "gone": 0, "scrubbed": 0, "complete": 1}
     assert embed_pending(db, engine) == 0
     assert engine.calls == calls
     assert _dump(db) == before
