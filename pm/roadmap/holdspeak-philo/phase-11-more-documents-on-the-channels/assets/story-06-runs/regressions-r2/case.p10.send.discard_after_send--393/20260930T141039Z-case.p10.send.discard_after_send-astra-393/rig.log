@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
-RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:50180 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-07i9n54j/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p10
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.discard_after_send--393/20260930T141039Z-case.p10.send.discard_after_send-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.discard_after_send--393/20260930T141039Z-case.p10.send.discard_after_send-astra-393/after.png']
-NOTE: predicate: all_of: protocol_status: POST /api/channels/sends/chs_168f495d592e209176e872c3/discard answered 409, wanted 409 (body sha256 5db4a69fed16); response body contains the declared admission facts | readable_text: 'SAVED' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 47, 'y': 315, 'w': 325, 'h': 74} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_36652d19303247c7bbe446158c8fea19 answered 200 with 1 row(s) {'id': 'chs_168f495d592e209176e872c3', 'state': 'sent'}

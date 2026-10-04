@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:51958 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-ncj8kaoi/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p10
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b4/case.p10.send.sending--393/20261001T043226Z-case.p10.send.sending-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b4/case.p10.send.sending--393/20261001T043226Z-case.p10.send.sending-astra-393/after.png']
-NOTE: predicate: all_of: readable_text: 'SENDING' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 51, 'y': 418, 'w': 88, 'h': 18} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_43ff2c9d4370496b8fddf60b10dfde37 answered 200 with 1 row(s) {'state': 'dispatching', 'destination_id': 'chd_c2bb88c659b44824d49d65a4'} | cli_calls: 1 call(s) starting ['gh', 'issue', 'comment'] at the recording runner (pids [20704]; 3 call(s) in all), wanted 1

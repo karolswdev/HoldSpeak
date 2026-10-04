@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 8a6b807d6682d9446d9b75216bbd3844d203cdcc dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
-RUNTIME: build=['index-DOMEgTb7.js'] hub=http://127.0.0.1:50278 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-go2xb225/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p10
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.receipt_after_return--1440/20260930T141057Z-case.p10.send.receipt_after_return-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r2/case.p10.send.receipt_after_return--1440/20260930T141057Z-case.p10.send.receipt_after_return-astra-1440/after.png']
-NOTE: predicate: all_of: readable_text: 'SAVED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 71, 'y': 291, 'w': 120, 'h': 18} | protocol_reads: GET /api/channels/sends?document_ref=project_update:pupd_2f33eb0009304afe943029a21a3cb40c answered 200 with 1 row(s) {'state': 'sent', 'destination_id': 'chd_9e2e0a3e34114df49f128ce1'}; GET /api/projects/proj-2cd3fb2f6cbd/updates answered 200 with 1 row(s) {'id': 'pupd_2f33eb0009304afe943029a21a3cb40c', 'deliveries.0.outcome': 'sent'}

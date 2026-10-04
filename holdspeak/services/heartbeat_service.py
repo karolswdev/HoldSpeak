@@ -689,7 +689,9 @@ class HeartbeatService:
         # ONE aggregate build serves the count, the ids and the body.
         agg = self._build_aggregate_via_canonical(principal)
         all_items = list(agg.get("items", []))
-        unmuted = [it for it in all_items if not it.get("muted")]
+        # A row the owner waits on someone else for is listed and is not
+        # counted (``waiting``): it fires no notification.
+        unmuted = [it for it in all_items if not it.get("muted") and not it.get("waiting")]
         count = int(agg.get("count", len(unmuted)))
         project_count = len(agg.get("projects", []))
         content_items = unmuted

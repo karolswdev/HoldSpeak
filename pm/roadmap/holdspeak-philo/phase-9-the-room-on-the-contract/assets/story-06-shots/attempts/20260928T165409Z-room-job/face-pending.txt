@@ -1,1 +1,0 @@
-FACE LEG PENDING: the Room's face at 1440 and 393 is shot after PHILO-9-03 (the Room's face) merges; rerun with --face.

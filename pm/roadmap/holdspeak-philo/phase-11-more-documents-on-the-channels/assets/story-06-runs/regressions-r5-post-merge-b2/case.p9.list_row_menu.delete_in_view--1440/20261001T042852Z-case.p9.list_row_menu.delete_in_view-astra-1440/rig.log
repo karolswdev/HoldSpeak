@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase9.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:49915 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-bi0ywmtg/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p9
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b2/case.p9.list_row_menu.delete_in_view--1440/20261001T042852Z-case.p9.list_row_menu.delete_in_view-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b2/case.p9.list_row_menu.delete_in_view--1440/20261001T042852Z-case.p9.list_row_menu.delete_in_view-astra-1440/after.png']
-NOTE: predicate: control owns all 9 hit points in viewport {'width': 1440, 'height': 900} with rect {'x': 206, 'y': 847, 'w': 272, 'h': 28}

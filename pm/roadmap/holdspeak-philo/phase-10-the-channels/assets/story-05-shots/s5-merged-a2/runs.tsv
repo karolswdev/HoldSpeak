@@ -1,3 +1,0 @@
-file	case	width	verdict	seconds	load1	reading	run_dir
-atlas-phase3.json	case.closure.chain.s5_next_day_brief_more_opened	1440	pass	35	2.94	predicate: 'Keep summary retrieval on the local desk' in observe_at text	case.closure.chain.s5_next_day_brief_more_opened--1440/20260929T153349Z-case.closure.chain.s5_next_day_brief_more_opened-muaddib-1440
-atlas-phase3.json	case.closure.chain.s5_next_day_brief_more_opened	393	blocked	45	2.69	BLOCKED: ui step wait_for on '[data-testid=arrival-brief-more]' failed: TimeoutError: Locator.wait_for: Timeout 10000ms exceeded.	case.closure.chain.s5_next_day_brief_more_opened--393/20260929T153425Z-case.closure.chain.s5_next_day_brief_more_opened-muaddib-393

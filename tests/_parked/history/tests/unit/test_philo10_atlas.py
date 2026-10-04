@@ -11,9 +11,6 @@ evidence copier (every claimed run kept, keyed by case x width x run, reuse
 refused). The verdicts are the rig's (``scripts/graph_walk.py run``), recorded
 in the story's evidence.
 """
-# History reads are parked: tests/_parked/history/tests/unit/test_philo10_atlas.py holds this file as it was, with the
-# 1 test function(s) that read evidence archived on branch
-# archive/evidence-2026-10-04 (pm/ARCHIVE.md).
 from __future__ import annotations
 
 import hashlib
@@ -389,3 +386,21 @@ RETAINED = sorted(p.name for p in SHOTS.iterdir()) if SHOTS.exists() else []
 RETAINED += sorted(f"../story-07-shots/{p.name}" for p in SHOTS07.iterdir()) if SHOTS07.exists() else []
 
 
+@pytest.mark.parametrize("label", RETAINED)
+def test_every_claimed_run_keeps_its_own_observation(label) -> None:
+    """One runs.tsv row = one directory = one observation of THAT case at THAT width with THAT verdict."""
+    rows = [line.split("\t") for line in (SHOTS / label / "runs.tsv").read_text().splitlines()[1:]]
+    assert rows
+    dirs = [row[7] for row in rows]
+    assert len(set(dirs)) == len(dirs)
+    obs_only = not any((SHOTS / label).glob("*/*/*.png"))
+    for _f, cid, width, verdict, *_rest, run_dir in rows:
+        assert run_dir.startswith(f"{cid}--{width}/"), run_dir
+        obs = json.loads((SHOTS / label / run_dir / "observation.json").read_text())
+        assert obs["case_id"] == cid and (obs["verdict"] == verdict or (verdict, obs["verdict"]) == ("error", "not_run")), run_dir
+        if width != "op":
+            assert obs["viewport"] == int(width), run_dir
+            if not obs_only and obs["verdict"] != "not_run":  # a hub that died at boot opened no page
+                assert any(p.suffix == ".png" for p in (SHOTS / label / run_dir).iterdir()), run_dir
+    on_disk = {f"{p.parent.name}/{p.name}" for p in (SHOTS / label).glob("*/*") if p.is_dir()}
+    assert on_disk == set(dirs)

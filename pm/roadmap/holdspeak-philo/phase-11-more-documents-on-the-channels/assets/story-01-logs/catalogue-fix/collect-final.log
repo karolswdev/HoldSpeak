@@ -1,6 +1,0 @@
-tests/unit/test_people_mcp.py::test_people_mcp_catalogue_is_closed_and_does_not_offer_forbidden_operations
-tests/unit/test_people_calendar_link.py::TestMCPTools::test_catalogue_includes_calendar_tools
-tests/unit/test_engine_off_the_loop.py::test_recipe_run_and_chat_run_the_engine_off_the_loop
-tests/unit/test_web_routes_recipe_chat.py::test_chat_alias_engine_runs_off_the_loop
-
-4 tests collected in 0.59s

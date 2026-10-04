@@ -76,6 +76,7 @@ export async function hubAnswer(impl: Fetch, path = "/api/desk/needs-you"): Prom
   return {
     ...value,
     count: result.count,
+    waitingCount: result.waitingCount,
     members: result.members.map(({ ref, kind }) => ({ ref, kind })),
     items: [
       ...result.unmutedItems.map((item) => ({ ...item, muted: false })),

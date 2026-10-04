@@ -1,7 +1,9 @@
 """One rule, one number, every face.
 
 Proved on a real hub before this fence: the Brief said "1 thing waiting, 1
-decision waiting" while ``GET /api/desk/needs-you`` said ``count: 0``. The
+decision waiting" while ``GET /api/desk/needs-you`` said ``count: 0``.
+Owner ruling 2026-10-04: the decision that waits for review is a member now
+(``tests/unit/test_needs_you_means_you.py`` holds that rule). The
 bell counted the Door cards; notifications, the palette, the system shade
 and MCP counted Room rows only.
 
@@ -63,7 +65,10 @@ def _mint(hub: Hub) -> dict[str, str]:
         f"/api/people/relationships/{relationship['id']}/requests",
         json={"body": "Review the promotion case"}), 201)["request"]
     commitment = _ok(hub.client.post(f"/api/people/requests/{request['id']}/accept", json={}))["commitment"]
-    return {"action": str(action["id"]), "commitment": f"people:{commitment['id']}"}
+    return {
+        "action": str(action["id"]), "commitment": f"people:{commitment['id']}",
+        "decision": f"decision:{decision['id']}",
+    }
 
 
 def minted_brief_headline(hub: Hub) -> str:
@@ -104,13 +109,15 @@ def test_every_reader_reports_the_same_number(hub: Hub) -> None:
     assert len(set(readers.values())) == 1, readers
     answer = _ok(hub.client.get("/api/desk/needs-you"))
     refs = sorted(member["ref"] for member in answer["members"])
-    # The overdue action and the People commitment are members; a hub with no
-    # summary engine has the one meeting-path blocker. A decision that waits for
-    # review is not a member of the R1-R3 rule: the Brief counts it under its
-    # own noun ("1 decision waiting").
-    assert refs == sorted([minted["action"], "blocker:summary", minted["commitment"]]), refs
-    assert readers["route"] == 3, readers
-    assert "1 decision waiting" in minted_brief_headline(hub)
+    # The overdue action, the People commitment and the decision that waits
+    # for review are members (owner ruling 2026-10-04); a hub with no summary
+    # engine has the one meeting-path blocker. The Brief counts the decision
+    # in the one number and does not say it again under "decision waiting".
+    assert refs == sorted([
+        minted["action"], "blocker:summary", minted["commitment"], minted["decision"],
+    ]), refs
+    assert readers["route"] == 4, readers
+    assert "decision waiting" not in minted_brief_headline(hub)
     # Custody stays as it is: the owner's own route carries the commitment;
     # an MCP agent and the stored Brief get the count, never the text.
     assert "Review the promotion case" in [row["title"] for row in answer["items"]]

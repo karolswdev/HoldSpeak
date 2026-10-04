@@ -44,6 +44,9 @@ def test_the_hub_answer_is_the_oracle_week(tmp_path: Path, monkeypatch: pytest.M
     # The route's answer: the six members, and a count that is their number.
     assert sorted(_refs(answer["members"])) == sorted(expected)
     assert answer["count"] == len(expected) == 6
+    # What the owner waits on someone else for: listed, marked, not counted.
+    assert answer["waitingCount"] == len(seeded["expectedWaitingRefs"]) == 1
+    assert [row["ref"] for row in answer["items"] if row.get("waiting")] == seeded["expectedWaitingRefs"]
     assert answer["mutedCount"] == 1
     assert answer["sourceErrors"] == {}
 
@@ -55,10 +58,14 @@ def test_the_hub_answer_is_the_oracle_week(tmp_path: Path, monkeypatch: pytest.M
         assignments=inputs["assignments"],
         assignment_read=inputs["assignmentRead"],
         meetings=inputs["meetings"],
+        decisions=inputs["decisions"],
+        self_names=inputs["ownerNames"],
         now=datetime.fromisoformat(seeded["now"]),
     )
     assert _refs(pure["members"]) == _refs(answer["members"])
     assert pure["count"] == answer["count"]
+    assert pure["waitingCount"] == answer["waitingCount"]
+    assert [row["ref"] for row in pure["waitingItems"]] == seeded["expectedWaitingRefs"]
 
 
 def test_the_hub_rule_deduplicates_as_the_browser_twin_does(
@@ -71,7 +78,8 @@ def test_the_hub_rule_deduplicates_as_the_browser_twin_does(
     kwargs = dict(
         door=before["door"], room_items=before["roomItems"],
         muted_project_ids=before["mutedProjects"], assignments=before["assignments"],
-        assignment_read=before["assignmentRead"], meetings=before["meetings"], now=now,
+        assignment_read=before["assignmentRead"], meetings=before["meetings"],
+        decisions=before["decisions"], self_names=before["ownerNames"], now=now,
     )
     result = compute_needs_you(**kwargs)
     assert sorted(_refs(result["members"])) == sorted(probe["expectedRefs"])

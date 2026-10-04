@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase10.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:51751 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-v71j0g9x/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p10
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b4/case.p10.send.no_destination--393/20261001T043203Z-case.p10.send.no_destination-astra-393/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/regressions-r5-head-final-b4/case.p10.send.no_destination--393/20261001T043203Z-case.p10.send.no_destination-astra-393/after.png']
-NOTE: predicate: all_of: readable_text: 'NO DESTINATION' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 273, 'w': 363, 'h': 52} | readable_text: 'Add destination' is readable in viewport {'width': 393, 'height': 852} with rect {'x': 15, 'y': 273, 'w': 363, 'h': 52} | protocol_reads: GET /api/channels/destinations answered 200 with 0 row(s) {}

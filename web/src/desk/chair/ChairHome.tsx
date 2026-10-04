@@ -90,6 +90,10 @@ interface NeedsYouItem {
   severity: string;
   /** HS-171: true when the item's Room is muted. */
   muted?: boolean;
+  /** True when the owner waits on someone else for the row (not counted). */
+  waiting?: boolean;
+  /** The Desk route token the row opens (a decision: `decision:<id>`). */
+  openRef?: string | null;
   /** HS-172-03: proposal fields from the aggregate. */
   proposalId?: string;
   proposalKind?: string;
@@ -701,8 +705,10 @@ function Arrival() {
   // ── the ranking filter (RANKED = the full key) ──
   const [rankFilter, setRankFilter] = useState<"" | RankClass>("");
 
-  // ── headline: the TRUE total of what the arrival lists (unmuted) ──
-  const count = unmutedItems.length;
+  // ── headline: what needs the owner (unmuted) ──
+  // Owner ruling 2026-10-04: a row he waits on someone else for is listed
+  // (the WAITING filter shows it) and the headline does not count it.
+  const count = unmutedItems.length - needs.waitingCount;
   const projectCount = needsYou?.projects?.length ?? 0;
   // The way back is drawn on every row, withheld when the desk holds ONE
   // Project (repeating one word on every row says nothing).
@@ -1006,9 +1012,11 @@ function Arrival() {
                 face (a real filter strip, one tap per class), the coverage
                 chip when coverage is complete, the calendar state. One
                 wrapping line: nothing here ever scrolls sideways. */}
-            {count > 0 || coverageChip || (!next && !calendarConfigured) ? (
+            {unmutedItems.length > 0 || coverageChip || (!next && !calendarConfigured) ? (
               <div className="arrival-head-tokens" data-testid="arrival-head-tokens">
-                {count > 0 ? (
+                {/* The strip stays while a row is listed: a desk that only
+                    waits on others still reaches its WAITING rows. */}
+                {unmutedItems.length > 0 ? (
                   <FilterTokens
                     className="arrival-ranking"
                     label="Ranking"
@@ -1406,9 +1414,11 @@ function NeedsYouSection({
   const remainderRef = useRef<HTMLButtonElement>(null);
   useEffect(() => { setShowAll(false); }, [filter]);
 
+  // Owner ruling 2026-10-04: a row he waits on someone else for shows only
+  // under the WAITING filter. RANKED lists what the headline counts.
   const filtered = filter
     ? items.filter((item) => rankClassOf(item, now) === filter)
-    : items;
+    : items.filter((item) => !item.waiting);
   const visible = showAll ? filtered : filtered.slice(0, ATTENTION_CAP);
   // What the cap hides (the remainder row stays while expanded, as the
   // way back).
@@ -1423,6 +1433,9 @@ function NeedsYouSection({
       window.setTimeout(() => remainderRef.current?.focus(), 0);
     }
   };
+
+  // Every row waits on someone else: RANKED has no row and draws no section.
+  if (filtered.length === 0 && !filter) return null;
 
   return (
     <SurfaceSection label={attentionCaption(visible.length, filtered.length, label)}>
@@ -1747,6 +1760,8 @@ function useNeedsYouOpener(item: NeedsYouItem, card?: DoorCard): Opener | null {
     return refOpener(person) ?? refOpener(card.open_ref) ?? refOpener(card.target_ref);
   }
   if (isCommitment) return ownerPerson ? refOpener(`people:${ownerPerson}`) : null;
+  // A decision that waits for review opens its own window.
+  if (item.source === "decision") return refOpener(item.openRef);
   return item.projectId ? () => openProjectRoom(item.projectId) : null;
 }
 
@@ -1880,6 +1895,22 @@ function NeedsYouRowVerbs({
         }}
       >
         {busy ? "..." : label}
+      </Button>
+    );
+  }
+
+  // A decision that waits for the owner's review: the same Review verb, on
+  // the decision's own window (`openRef` is its Desk route token).
+  if (item.source === "decision" && item.openRef) {
+    return (
+      <Button
+        variant={lead}
+        dense
+        onClick={() => refOpener(item.openRef)?.()}
+        aria-label={`Review: ${item.title}`}
+        data-testid="arrival-to-review"
+      >
+        Review
       </Button>
     );
   }

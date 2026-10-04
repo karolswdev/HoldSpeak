@@ -247,8 +247,19 @@ def test_retired_calendar_singular_vocab_guard_patterns_are_nonvacuous() -> None
 _MD_LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 
 
+def _archived_paths() -> tuple[set[str], set[str]]:
+    """Files that left the tree for the evidence archive branch, and their
+    directories (``pm/ARCHIVE.md``). A link to one of them is not dangling:
+    the file is on ``archive/evidence-2026-10-04``."""
+    manifest = _REPO / "pm" / "archive-manifest.txt"
+    files = {line for line in manifest.read_text(encoding="utf-8").splitlines() if line}
+    dirs = {parent.as_posix() for name in files for parent in Path(name).parents}
+    return files, dirs
+
+
 def test_no_live_doc_has_a_dangling_relative_link() -> None:
     offenders: list[str] = []
+    archived_files, archived_dirs = _archived_paths()
     for path in _maintained_docs():
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             for target in _MD_LINK.findall(line):
@@ -262,6 +273,10 @@ def test_no_live_doc_has_a_dangling_relative_link() -> None:
                     continue
                 resolved = (path.parent / rel).resolve()
                 if not resolved.exists():
+                    if resolved.is_relative_to(_REPO):
+                        archived = resolved.relative_to(_REPO).as_posix()
+                        if archived in archived_files or archived in archived_dirs:
+                            continue
                     offenders.append(
                         f"{path.relative_to(_REPO)}:{lineno}: -> {target}"
                     )

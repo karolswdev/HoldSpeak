@@ -1,3 +1,0 @@
-amended zone 1440 VERDICT: fail terminal=incomplete | NOTE: predicate: the result arrived at 42.704s, AFTER the bound of 40.0s (all_of: attr_equals: aria-label='Atlas Phase 13 Zone', wanted 'Atlas Phase 13 Zone' | 
-amended zone 393 VERDICT: pass terminal=settled | NOTE: predicate: all_of: attr_equals: aria-label='Atlas Phase 13 Zone', wanted 'Atlas Phase 13 Zone' | readable_text: 'Drop items here' is readable in viewport 
-amended zone 1440 r2 (alone) VERDICT: pass terminal=settled | NOTE: predicate: all_of: attr_equals: aria-label='Atlas Phase 13 Zone', wanted 'Atlas Phase 13 Zone' | readable_text: 'Drop items here' is readable in viewport 

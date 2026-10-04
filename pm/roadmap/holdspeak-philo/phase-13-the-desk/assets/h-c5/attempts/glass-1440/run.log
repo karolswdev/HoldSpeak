@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: fc12a18d56868fc95a3310eb9cf99c0421a25730 dirty=True
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-h-c5.json
-RUNTIME: build=['index-mWEQn6_e.js'] hub=http://127.0.0.1:62125 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-jrfh36k9/.local/share/holdspeak/holdspeak.db engine=none
-JOB: p9
-VERDICT: blocked terminal=None
-EVIDENCE: ['.tmp/h-c5/glass-1440/20261003T164925Z-case.h_c5.update.latest_first-astra-1440/blocked.png']
-NOTE: BLOCKED: ui-by-viewport is only implemented for click, click_role, file-chooser and world_context_menu steps; nothing was fired

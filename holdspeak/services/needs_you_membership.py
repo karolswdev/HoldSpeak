@@ -15,8 +15,15 @@ reads that answer.
         Project is muted is kept apart and is not counted.
     R2  the meeting-path blockers (no engine for speech or for summaries).
     R3  the meetings whose summary FAILED or is RETRYING.
+    R4  the decisions that wait for the owner's review (a Desk decision
+        that is ``proposed``, a meeting's decision that is ``recorded``).
+        Each is an attention row with a Review verb that opens it.
 
-``count`` is ``len(members)``. Nothing else is a count of ``needs you``.
+Owner ruling 2026-10-04: a row the owner is WAITING ON someone else for (it
+names an owner, and its reason is ``WAITING ON <owner>``) is listed and is
+marked ``waiting``; it is not a member and is not counted. ``count`` is
+``len(members)``: what needs the owner. ``waitingCount`` is the number of
+unmuted rows that wait on others. Nothing else is a count of ``needs you``.
 
 The pure function is :func:`compute_needs_you`; :func:`compose` reads the
 three hub sources (the Door, the assignment roster, the summary-attention
@@ -123,6 +130,82 @@ def door_items(
     return rows
 
 
+# ── R4: the decisions that wait for the owner's review ───────────────
+
+
+DECISION_SOURCE = "decision"
+
+
+def decision_items(decisions: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Decisions awaiting review, as attention rows.
+
+    ``decisions`` holds ``{id, title, projectId, since}``. The ref is the
+    Desk route token ``decision:<id>``; Review opens it.
+    """
+    rows: list[dict[str, Any]] = []
+    for decision in decisions:
+        decision_id = str(decision.get("id") or "")
+        if not decision_id:
+            continue
+        ref = f"{DECISION_SOURCE}:{decision_id}"
+        since = str(decision.get("since") or "")
+        rows.append({
+            "id": ref,
+            "ref": ref,
+            "projectId": str(decision.get("projectId") or ""),
+            "projectName": "",
+            "title": str(decision.get("title") or "Untitled"),
+            "why": "TO REVIEW",
+            "ageToken": since,
+            "since": since,
+            "dueAt": None,
+            "kind": DECISION_SOURCE,
+            "source": DECISION_SOURCE,
+            "verbHref": None,
+            "openRef": ref,
+            "severity": "warning",
+        })
+    return rows
+
+
+#: The names that mean the owner himself. The People store reserves ``me``
+#: and ``you`` (no person can take them, ``people_service._RESERVED_OWNER_ALIASES``)
+#: and its follow-through projection names the owner ``you`` / ``manager``.
+#: :func:`owner_names` adds the configured meeting speaker label (``Me``).
+SELF_OWNER_NAMES: frozenset[str] = frozenset({"me", "you", "manager"})
+
+#: The reason token of a row the owner himself holds with no nearer due date.
+YOURS = "YOURS"
+
+
+def _is_self(owner: Any, self_names: Iterable[str]) -> bool:
+    name = str(owner or "").strip().casefold()
+    return bool(name) and name in {str(n).strip().casefold() for n in self_names}
+
+
+def _waiting_on(row: dict[str, Any]) -> bool:
+    owner = str(row.get("owner") or "").strip()
+    return bool(owner) and str(row.get("why") or "").strip().upper() == f"WAITING ON {owner.upper()}"
+
+
+def waits_on_other(row: dict[str, Any], self_names: Iterable[str] = SELF_OWNER_NAMES) -> bool:
+    """True when the owner waits on SOMEONE ELSE for this row.
+
+    The row names an owner who is not the owner himself, and its reason is
+    ``WAITING ON <that owner>``: a Door card in the ``waiting`` column, or a
+    Room commitment with an owner and a later due date. ``WAITING ON YOUR
+    REVIEW`` names no owner and is the owner's own work.
+    """
+    return _waiting_on(row) and not _is_self(row.get("owner"), self_names)
+
+
+def owner_names(extra: Iterable[Any] = ()) -> list[str]:
+    """The names that mean the owner: the reserved ones and the given ones."""
+    names = set(SELF_OWNER_NAMES)
+    names.update(str(name).strip().casefold() for name in extra if str(name or "").strip())
+    return sorted(names)
+
+
 # ── R2: the meeting-path blockers ─────────────────────────────────────
 
 
@@ -221,14 +304,17 @@ def compute_needs_you(
     assignments: dict[str, Any] | None = None,
     assignment_read: str = "pending",
     meetings: Iterable[dict[str, Any]] = (),
+    decisions: Iterable[dict[str, Any]] = (),
+    self_names: Iterable[str] = SELF_OWNER_NAMES,
     now: datetime | None = None,
     dedup: Callable[[list[dict[str, Any]], datetime], list[dict[str, Any]]] = dedup_items,
 ) -> dict[str, Any]:
-    """The pure R1-R3 rule. Mirrors ``computeNeedsYou`` line for line.
+    """The pure R1-R4 rule. Mirrors ``computeNeedsYou`` line for line.
 
     ``door`` is the Door response or its board. Returns ``members`` (stable
-    refs, in face order), ``count``, the ranked rows split by mute, the
-    blockers and the failed meetings.
+    refs, in face order), ``count``, ``waitingCount``, the ranked rows split
+    by mute (each unmuted row marked ``waiting``), the blockers and the
+    failed meetings.
     """
     clock = now or datetime.now()
     room = [dict(item) for item in room_items]
@@ -239,12 +325,40 @@ def compute_needs_you(
     }
     board = (door or {}).get("board") if isinstance((door or {}).get("board"), dict) else (door or {})
     combined = door_items(board, covered, clock) + room
+    # An item the owner himself holds is his: it reads ``YOURS``, never
+    # ``WAITING ON ME``, and it is counted.
+    names = list(self_names)
+    for row in combined:
+        if _waiting_on(row) and _is_self(row.get("owner"), names):
+            row["why"] = YOURS
     # A People commitment never merges with another row. A merge would put
     # its text and its record ref inside another row's ``sources``, past the
     # custody boundary; it stays one row of its own.
     people = [row for row in combined if is_people_row(row)]
     others = [row for row in combined if not is_people_row(row)]
-    ranked = rank_items(dedup(others, clock) + people, clock)
+    # A decision keeps its own row and its own ref (``decision:<id>``): the
+    # Brief names the same ref, so the two count it once.
+    # A merged row waits on someone else only when EVERY merged projection
+    # does. When one projection is the owner's own (YOURS, due, overdue), the
+    # row is his: it leads with his reason and it is counted.
+    # Each projection keeps its own reason and owner through every merge
+    # (the Room aggregate's and this one), so the test reads the projections.
+    merged = dedup(others, clock)
+    for row in merged:
+        sources = [source for source in row.get("sources") or [] if isinstance(source, dict)]
+        if len(sources) < 2:
+            row["waiting"] = waits_on_other(row, names)
+            continue
+        marks = [waits_on_other(source, names) for source in sources]
+        row["waiting"] = all(marks)
+        if not row["waiting"] and waits_on_other(row, names):
+            his = next(source for source, mark in zip(sources, marks) if not mark)
+            row["why"] = YOURS if _waiting_on(his) else (his.get("why") or row.get("why"))
+            row["severity"] = his.get("severity") or row.get("severity")
+    singles = people + decision_items(decisions)
+    for row in singles:
+        row["waiting"] = waits_on_other(row, names)
+    ranked = rank_items(merged + singles, clock)
     muted_projects = {str(pid) for pid in muted_project_ids}
     unmuted_items: list[dict[str, Any]] = []
     muted_items: list[dict[str, Any]] = []
@@ -256,20 +370,25 @@ def compute_needs_you(
         else:
             item["muted"] = False
             unmuted_items.append(item)
+    # What the owner waits on someone else for is listed and is not counted.
+    waiting_items = [item for item in unmuted_items if item["waiting"]]
+    counted_items = [item for item in unmuted_items if not item["waiting"]]
 
     blockers = meeting_path_blockers(
         None if assignment_read == "failed" else assignments, assignment_read,
     )
     failed_meetings = [meeting for meeting in meetings if meeting_needs_you(meeting)]
     members = (
-        [{"ref": _item_ref(item), "kind": "attention"} for item in unmuted_items]
+        [{"ref": _item_ref(item), "kind": "attention"} for item in counted_items]
         + [{"ref": f"blocker:{blocker['key']}", "kind": "blocker"} for blocker in blockers]
         + [{"ref": str(meeting.get("id") or ""), "kind": "meeting"} for meeting in failed_meetings]
     )
     return {
         "members": members,
         "count": len(members),
+        "waitingCount": len(waiting_items),
         "unmutedItems": unmuted_items,
+        "waitingItems": waiting_items,
         "mutedItems": muted_items,
         "blockers": blockers,
         "failedMeetings": failed_meetings,
@@ -331,6 +450,92 @@ def _read_summary_attention(db: Any, principal: Any) -> list[dict[str, Any]]:
         if len(rows) < 500 or (isinstance(total, int) and offset >= total):
             break
     return out
+
+
+def _read_decisions(db: Any, principal: Any) -> list[dict[str, Any]]:
+    """The decisions that wait for the owner's review, through their service.
+
+    A Desk decision that is ``proposed``; a meeting's decision that is
+    ``recorded`` (the owner has not accepted or rejected it).
+    """
+    # The hub composes no shared instance of this service (its route builds
+    # one for each request), so a fresh one over the same database is equal.
+    from .decision_lifecycle_service import DecisionLifecycleService
+
+    service = DecisionLifecycleService(db)
+    out: list[dict[str, Any]] = []
+    for desk in service.list_decisions(principal, limit=500).get("decisions") or []:
+        if str(desk.get("status") or "") != "proposed":
+            continue
+        out.append({
+            "id": desk.get("id"),
+            "title": desk.get("title") or desk.get("decision_markdown") or desk.get("id"),
+            "projectId": "",
+            "since": desk.get("created_at") or "",
+        })
+    proposals: dict[str, list[Any]] = {}
+
+    def has_proposal(record: dict[str, Any]) -> bool:
+        return meeting_decision_asks_elsewhere(
+            db, meeting_id=record.get("source_meeting_id"),
+            artifact_id=record.get("source_artifact_id"), text=record.get("text"), cache=proposals,
+        )
+
+    offset = 0
+    while True:
+        rows = list(service.list_decisions(
+            principal, lifecycle="recorded", limit=500, offset=offset,
+        ).get("decisions") or [])
+        for record in rows:
+            if has_proposal(record):
+                continue
+            out.append({
+                "id": record.get("id"),
+                "title": record.get("text") or record.get("id"),
+                "projectId": record.get("project_key") or "",
+                "since": record.get("created_at") or "",
+            })
+        offset += len(rows)
+        if len(rows) < 500:
+            break
+    return out
+
+
+def _decision_text(text: Any) -> str:
+    return " ".join(str(text or "").split()).lower()
+
+
+def meeting_decision_asks_elsewhere(
+    db: Any, *, meeting_id: Any, artifact_id: Any, text: Any,
+    cache: dict[str, list[Any]] | None = None,
+) -> bool:
+    """True when a recorded meeting decision does not ask for review itself.
+
+    One meeting decision is ONE member. The proposal bridge makes a proposal
+    from the same artifact and text. When that proposal is in a Room (its row
+    is the one that asks), or the owner has confirmed or dismissed it (he has
+    decided), the recorded decision does not ask a second time. The one
+    ``needs you`` rule and the Brief's DECISIONS section both use this.
+    """
+    meeting = str(meeting_id or "")
+    if not meeting:
+        return False
+    cache = cache if cache is not None else {}
+    if meeting not in cache:
+        cache[meeting] = [
+            proposal for proposal in db.proposals.list_proposals(meeting_id=meeting)
+            if proposal.kind == "decision"
+        ]
+    wanted = _decision_text(text)
+    artifact = str(artifact_id or "")
+    for proposal in cache[meeting]:
+        if str(proposal.source_artifact_id or "") != artifact:
+            continue
+        if wanted not in (_decision_text(proposal.text), _decision_text(proposal.original_text)):
+            continue
+        if proposal.state != "proposed" or proposal.project_id:
+            return True
+    return False
 
 
 def _is_owner(principal: Any) -> bool:
@@ -410,6 +615,23 @@ def compose(
         log.warning("needs-you: the meeting read failed: %s", exc)
         errors["meetings"] = _reason(exc)
 
+    decisions: list[dict[str, Any]] = []
+    try:
+        decisions = _read_decisions(db, principal)
+    except Exception as exc:
+        log.warning("needs-you: the decision read failed: %s", exc)
+        errors["decisions"] = _reason(exc)
+
+    # The names that mean the owner: the reserved ones and his speaker label.
+    speaker_label: list[Any] = []
+    try:
+        from holdspeak.config import Config
+
+        speaker_label = [Config.load().meeting.mic_label]
+    except Exception as exc:
+        log.warning("needs-you: the speaker label read failed: %s", exc)
+    names = owner_names(speaker_label)
+
     result = compute_needs_you(
         door=door,
         room_items=room_items,
@@ -417,19 +639,27 @@ def compose(
         assignments=assignments,
         assignment_read=assignment_read,
         meetings=meetings,
+        decisions=decisions,
+        self_names=names,
         now=now,
     )
     answer = dict(aggregate)
     answer.update({
         "count": result["count"],
+        # What the owner waits on someone else for: listed, marked
+        # ``waiting`` on its row, not counted.
+        "waitingCount": result["waitingCount"],
+        # The names that mean the owner (the browser twin's input).
+        "ownerNames": names,
         "members": result["members"],
-        # Every attention row, ranked: the counted rows, then the muted ones.
+        # Every attention row, ranked: the unmuted rows, then the muted ones.
         "items": result["unmutedItems"] + result["mutedItems"],
         "mutedCount": len(result["mutedItems"]),
         "blockers": result["blockers"],
         "failedMeetings": result["failedMeetings"],
         "projects": sorted({
-            str(item["projectId"]) for item in result["unmutedItems"] if item.get("projectId")
+            str(item["projectId"]) for item in result["unmutedItems"]
+            if item.get("projectId") and not item.get("waiting")
         }),
         # The Room rows alone (the input of R1), with the mute marks the
         # Room wire always carried.
@@ -452,6 +682,7 @@ def compose(
 
 _MEMBERSHIP_KEYS = (
     "members", "blockers", "failedMeetings", "sourceErrors", "peopleStoreState", "peopleWithheld",
+    "waitingCount", "ownerNames",
 )
 
 
@@ -522,6 +753,7 @@ def withhold_people_content(answer: dict[str, Any]) -> dict[str, Any]:
             "title": PEOPLE_ROW_TITLE, "why": row.get("why"), "severity": row.get("severity"),
             "rankClass": row.get("rankClass"), "rank": row.get("rank"),
             "projectId": "", "muted": bool(row.get("muted")),
+            "waiting": bool(row.get("waiting")),
         })
     out["items"] = items
     out["members"] = [
@@ -541,6 +773,11 @@ __all__ = [
     "DOOR_COLUMNS",
     "compose",
     "compute_needs_you",
+    "decision_items",
+    "meeting_decision_asks_elsewhere",
+    "owner_names",
+    "SELF_OWNER_NAMES",
+    "waits_on_other",
     "door_items",
     "meeting_needs_you",
     "meeting_path_blockers",

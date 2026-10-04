@@ -82,7 +82,7 @@ function meeting(wire: Record<string, unknown>) {
 }
 
 describe("the one needs-you membership", () => {
-  it("counts a settled R1-R3 example once and preserves each ref", () => {
+  it("counts a settled R1-R4 example once and preserves each ref", () => {
     const door: NeedsYouDoorProjection = {
       board: {
         overdue: [doorCard("A1", { due: "2026-09-30" })],
@@ -110,20 +110,102 @@ describe("the one needs-you membership", () => {
         meeting({ id: "F1", title: "Failed", intel_status: "saved", intel_job: { status: "failed", attempts: 1, last_error: "worker failed" } }),
         meeting({ id: "S1", title: "Saved", intel_status: "ready", intel_job: { status: "complete", attempts: 1, last_error: null } }),
       ],
+      decisions: [{ id: "R1", title: "Adopt the queue", since: "2026-09-30T10:00:00Z" }],
       now: NOW,
     });
 
+    // Owner rulings 2026-10-04: A3 waits on Priya, so it is listed and is not
+    // counted; the decision that waits for review is a member.
     expect(result.count).toBe(6);
     expect(result.members.map(({ ref }) => ref).sort()).toEqual([
       "A1",
       "A2",
-      "A3",
       "A4",
       "F1",
       "blocker:engines",
+      "decision:R1",
     ]);
-    expect(result.unmutedItems.map((item) => item.ref)).toEqual(["A1", "A2", "A4", "A3"]);
+    expect(result.waitingCount).toBe(1);
+    expect(result.waitingItems.map((item) => item.ref)).toEqual(["A3"]);
+    expect(result.unmutedItems.map((item) => item.ref)).toEqual(["A1", "A2", "decision:R1", "A4", "A3"]);
+    expect(result.unmutedItems.map((item) => item.waiting)).toEqual([false, false, false, false, true]);
+    const decision = result.unmutedItems.find((item) => item.ref === "decision:R1");
+    // Review opens the decision: the ref is its Desk route token.
+    expect(decision).toMatchObject({ source: "decision", why: "TO REVIEW", openRef: "decision:R1" });
     expect(result.mutedItems.map((item) => item.ref)).toEqual(["M1"]);
+  });
+
+  it("counts an item the owner himself holds; only another owner is waited on", () => {
+    const result = computeNeedsYou({
+      door: { board: { waiting: [
+        doorCard("mine", { owner: "Me" }),
+        doorCard("label", { owner: "Karol" }),
+        doorCard("priya", { owner: "Priya" }),
+      ] } },
+      roomItems: [room("room-mine", { owner: "you", why: "WAITING ON YOU" })],
+      selfNames: ["me", "you", "manager", "karol"],
+      now: NOW,
+    });
+    expect(result.members.map(({ ref }) => ref).sort()).toEqual(["label", "mine", "room-mine"]);
+    expect(result.waitingItems.map((item) => item.ref)).toEqual(["priya"]);
+    const why = Object.fromEntries(result.unmutedItems.map((item) => [item.ref, item.why]));
+    expect(why).toEqual({ mine: "YOURS", label: "YOURS", "room-mine": "YOURS", priya: "WAITING ON PRIYA" });
+  });
+
+  it("counts a merged row when one of its projections is the owner's own", () => {
+    // Astra's repro on #818: his later-due action and Dana's Room commitment
+    // name the same thing.
+    const input: NeedsYouInputs = {
+      door: { board: { waiting: [
+        doorCard("mine", { title: "Send the plan", owner: "Me", due: "2026-10-10" }),
+      ] } },
+      roomItems: [room("dana", {
+        title: "Send the plan", owner: "Dana", why: "WAITING ON DANA", dueAt: "2026-10-10",
+      })],
+      now: NOW,
+    };
+    const result = computeNeedsYou(input);
+    expect(result.unmutedItems).toHaveLength(1);
+    expect(result.unmutedItems[0]).toMatchObject({ waiting: false, why: "YOURS", dedupCount: 2 });
+    expect(result.count).toBe(1);
+    expect(result.waitingCount).toBe(0);
+    // Every projection waits on someone else: the merged row waits.
+    const both = computeNeedsYou({
+      ...input,
+      door: { board: { waiting: [
+        doorCard("priya", { title: "Send the plan", owner: "Priya", due: "2026-10-10" }),
+      ] } },
+    });
+    expect(both.count).toBe(0);
+    expect(both.waitingCount).toBe(1);
+  });
+
+  it("reads each projection of a row the Room already merged", () => {
+    // Astra's second repro on #818: the Room aggregate merged Dana's
+    // commitment with a PR that awaits HIS review, and the head is Dana's.
+    const premerged = room("dana", {
+      title: "Send the plan", owner: "Dana", why: "WAITING ON DANA", dueAt: "2026-10-10",
+      dedupCount: 2,
+      sources: [
+        { id: "p1:commitment:1", source: "commitment", why: "WAITING ON DANA", owner: "Dana" },
+        { id: "p1:github:612", source: "github", why: "WAITING ON YOUR REVIEW · 3 DAYS", severity: "warning" },
+      ],
+    });
+    const result = computeNeedsYou({ roomItems: [premerged], now: NOW });
+    expect(result.count).toBe(1);
+    expect(result.unmutedItems[0]).toMatchObject({
+      waiting: false, why: "WAITING ON YOUR REVIEW · 3 DAYS", severity: "warning",
+    });
+    // Both projections wait on someone else: the row waits.
+    const waits = computeNeedsYou({
+      roomItems: [{ ...premerged, sources: [
+        premerged.sources![0],
+        { id: "p1:meeting:2", source: "meeting", why: "WAITING ON PRIYA", owner: "Priya" },
+      ] }],
+      now: NOW,
+    });
+    expect(waits.count).toBe(0);
+    expect(waits.waitingCount).toBe(1);
   });
 
   it("keeps a retried job as RETRYING after its due time", () => {
@@ -299,6 +381,14 @@ describe("the shared needs-you read", () => {
       // producer inputs, names the same members in the same order.
       const twin = computeNeedsYou(oracleInputs(seeded, "before"));
       expect(twin.members.map((member) => member.ref)).toEqual(hubRefs);
+      // What the owner waits on someone else for: the hub and the twin list
+      // the same rows, and neither counts them.
+      expect(seeded.expectedWaitingRefs).toEqual(["philo13-a2-A3"]);
+      expect(wire.needsYou.waitingCount).toBe(1);
+      expect(hook.result.current.waitingCount).toBe(1);
+      expect(hook.result.current.waitingItems.map((item) => item.ref)).toEqual(seeded.expectedWaitingRefs);
+      expect(twin.waitingItems.map((item) => item.ref)).toEqual(seeded.expectedWaitingRefs);
+      expect(hubRefs).not.toContain("philo13-a2-A3");
       expect(wire.needsYou.members.map((member: { ref: string }) => member.ref)).toEqual(hubRefs);
       hook.unmount();
     } finally {
@@ -423,8 +513,8 @@ const FIXTURE_SCRIPT = resolve(REPO_ROOT, "scripts/philo13_needs_you_fixture.py"
 const ORACLE_REFS = [
   "philo13-a2-A1",
   "A2 confirm the room commitment",
-  "philo13-a2-A3",
   "philo13-a2-A4",
+  "decision:philo13-a2-decision",
   "blocker:engines",
   "philo13-a2-failed-meeting",
 ];
@@ -456,6 +546,8 @@ function oracleInputs(payload: Record<string, any>, phase: "before" | "after"): 
     assignments: wire.assignments,
     assignmentRead: wire.assignmentRead,
     meetings,
+    decisions: wire.decisions,
+    selfNames: wire.ownerNames,
     now: new Date(wire.now),
   };
 }

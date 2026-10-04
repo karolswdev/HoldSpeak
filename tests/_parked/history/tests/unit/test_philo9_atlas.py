@@ -13,9 +13,6 @@ widths, the face / operation pairs, the exclusions and the counts. The cases'
 verdicts are the rig's (``scripts/graph_walk.py run``), recorded in the
 story's evidence.
 """
-# History reads are parked: tests/_parked/history/tests/unit/test_philo9_atlas.py holds this file as it was, with the
-# 1 test function(s) that read evidence archived on branch
-# archive/evidence-2026-10-04 (pm/ARCHIVE.md).
 from __future__ import annotations
 
 import json
@@ -211,3 +208,22 @@ RETAINED = ("p9-merged", "p78-merged")
 OBSERVATION_ONLY = ("base-294632c0", "base-merged")
 
 
+@pytest.mark.parametrize("label", RETAINED + OBSERVATION_ONLY)
+def test_every_claimed_run_keeps_its_own_observation(label) -> None:
+    """One runs.tsv row = one directory = one observation of THAT case at THAT
+    width with THAT verdict. A copier that lets one run overwrite another
+    (round one: 1 of 28 kept) fails here."""
+    rows = [line.split("\t") for line in (SHOTS / label / "runs.tsv").read_text().splitlines()[1:]]
+    assert rows
+    dirs = [row[7] for row in rows]
+    assert len(set(dirs)) == len(dirs), "two rows share one run directory"
+    for f, cid, width, verdict, *_rest, run_dir in rows:
+        obs = json.loads((SHOTS / label / run_dir / "observation.json").read_text())
+        assert obs["case_id"] == cid, (run_dir, obs["case_id"])
+        assert obs["verdict"] == verdict, (run_dir, obs["verdict"], verdict)
+        if width != "op" and label not in OBSERVATION_ONLY:
+            assert obs["viewport"] == int(width), (run_dir, obs["viewport"])
+            shots = [p for p in (SHOTS / label / run_dir).iterdir() if p.suffix in (".png", ".jpg")]
+            assert shots, f"{run_dir}: a face run kept no shot"
+    on_disk = {f"{p.parent.name}/{p.name}" for p in (SHOTS / label).glob("*/*") if p.is_dir()}
+    assert on_disk == set(dirs), sorted(on_disk ^ set(dirs))

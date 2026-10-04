@@ -288,7 +288,8 @@ function useDockLiveReads(): {
     offline: Boolean(lastSuccessfulAt !== null && runtimeState !== "connected"),
     lastSuccessfulAt,
     needsYouCount: needs.count,
-    needsYouItems: needs.unmutedItems,
+    // A row the owner waits on someone else for is not counted on a badge.
+    needsYouItems: needs.unmutedItems.filter((item) => !item.waiting),
   };
 }
 

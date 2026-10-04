@@ -1,9 +1,0 @@
-PASS: live
-BRAIN: astra
-SOURCE: 5ae061c2a8c33b24c257569dd663460f6b8f2830 dirty=False
-CONTRACT: rig=1.5.2 brief=ba5477fd07db atlas=docs/internal/philo/graph/atlas-phase11-slack.json
-RUNTIME: build=['index-yedq4BGL.js'] hub=http://127.0.0.1:62231 db=/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/graph-walk-home-brndn60s/.local/share/holdspeak/holdspeak.db engine=replayed
-JOB: p11
-VERDICT: pass terminal=settled
-EVIDENCE: ['/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b4/case.p11.meeting_summary.chair.prepared--1440/20261001T042059Z-case.p11.meeting_summary.chair.prepared-astra-1440/before.png', '/Users/karol/dev/tools/wt-philo-11-06/.tmp/philo11-06/p11-r10-head-final-b4/case.p11.meeting_summary.chair.prepared--1440/20261001T042059Z-case.p11.meeting_summary.chair.prepared-astra-1440/after.png']
-NOTE: predicate: all_of: readable_text: 'PREPARED' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 296, 'y': 600, 'w': 888, 'h': 55} | readable_text: 'BY YOU' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 296, 'y': 600, 'w': 888, 'h': 55} | protocol_reads: GET /api/channels/sends?document_ref=meeting_summary:db2d4b8f answered 200 with 1 row(s) {'state': 'prepared', 'destination_id': 'chd_392a2b907bb8bd9f7270f9c3', 'channel': 'file'} | input_value: value is 'meeting_summary', wanted 'meeting_summary' | readable_text: 'SUMMARY' is readable in viewport {'width': 1440, 'height': 900} with rect {'x': 296, 'y': 600, 'w': 888, 'h': 55}
