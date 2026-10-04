@@ -279,6 +279,23 @@ describe("clampIntoBand (HS-97-02, clamp-on-open)", () => {
   });
 });
 
+describe("the working band clears the measured Dock", () => {
+  it("places and clamps a window above the Dock's published height, not only the 52 px band", () => {
+    // Dock.tsx publishes `--desk-dock-h` (the 76 px shelf). A window placed at
+    // the band's foot had its footer verbs under the Dock.
+    document.documentElement.style.setProperty("--desk-dock-h", "76px");
+    try {
+      const clamped = clampIntoBand({ x: 1000, y: 800, w: 400, h: 538 }, 1440, 900);
+      expect(clamped.y + clamped.h).toBeLessThanOrEqual(900 - 76);
+      const thread = { x: 1022, y: 64, w: 400, h: 361 };
+      const placed = placeWindow({ x: 1022, y: 64, w: 400, h: 538 }, [thread], 1440, 900);
+      expect(placed.y + placed.h).toBeLessThanOrEqual(900 - 76);
+    } finally {
+      document.documentElement.style.removeProperty("--desk-dock-h");
+    }
+  });
+});
+
 describe("the surface dispatcher", () => {
   it("routes a registered surface and reports unregistered ones", () => {
     const opened: string[] = [];

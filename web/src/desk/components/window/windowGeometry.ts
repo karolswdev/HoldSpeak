@@ -22,10 +22,15 @@ export function workBand() {
     return fallback;
   const style = getComputedStyle(document.documentElement);
   const top = parseFloat(style.getPropertyValue("--desk-work-top"));
-  const bottom = parseFloat(style.getPropertyValue("--desk-work-bottom"));
+  const band = parseFloat(style.getPropertyValue("--desk-work-bottom"));
+  // The Dock publishes its measured height (`--desk-dock-h`, Dock.tsx). The
+  // shelf (76 px) is higher than the shell band (52 px); a window placed or
+  // clamped to the band alone had its foot and its verbs under the Dock.
+  const dock = parseFloat(style.getPropertyValue("--desk-dock-h"));
+  const bottom = Number.isFinite(band) ? band : fallback.bottom;
   return {
     top: Number.isFinite(top) ? top : fallback.top,
-    bottom: Number.isFinite(bottom) ? bottom : fallback.bottom,
+    bottom: Number.isFinite(dock) ? Math.max(bottom, dock) : bottom,
   };
 }
 
