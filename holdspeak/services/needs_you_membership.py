@@ -341,25 +341,19 @@ def compute_needs_you(
     # A merged row waits on someone else only when EVERY merged projection
     # does. When one projection is the owner's own (YOURS, due, overdue), the
     # row is his: it leads with his reason and it is counted.
-    waits: dict[str, bool] = {}
-    for row in others:
-        mark = waits_on_other(row, names)
-        for key in [row.get("id")] + [
-            source.get("id") for source in row.get("sources") or [] if isinstance(source, dict)
-        ]:
-            if key is not None:
-                waits.setdefault(str(key), mark)
+    # Each projection keeps its own reason and owner through every merge
+    # (the Room aggregate's and this one), so the test reads the projections.
     merged = dedup(others, clock)
     for row in merged:
         sources = [source for source in row.get("sources") or [] if isinstance(source, dict)]
         if len(sources) < 2:
             row["waiting"] = waits_on_other(row, names)
             continue
-        marks = [waits.get(str(source.get("id")), False) for source in sources]
+        marks = [waits_on_other(source, names) for source in sources]
         row["waiting"] = all(marks)
         if not row["waiting"] and waits_on_other(row, names):
             his = next(source for source, mark in zip(sources, marks) if not mark)
-            row["why"] = his.get("why") or row.get("why")
+            row["why"] = YOURS if _waiting_on(his) else (his.get("why") or row.get("why"))
             row["severity"] = his.get("severity") or row.get("severity")
     singles = people + decision_items(decisions)
     for row in singles:
@@ -479,31 +473,13 @@ def _read_decisions(db: Any, principal: Any) -> list[dict[str, Any]]:
             "projectId": "",
             "since": desk.get("created_at") or "",
         })
-    # One meeting decision is ONE member. The proposal bridge makes a
-    # proposal from the same artifact; when that proposal is in a Room (it
-    # is the row that asks) or the owner has confirmed or dismissed it (he
-    # has decided), the recorded decision does not ask a second time.
     proposals: dict[str, list[Any]] = {}
 
     def has_proposal(record: dict[str, Any]) -> bool:
-        meeting_id = str(record.get("source_meeting_id") or "")
-        if not meeting_id:
-            return False
-        if meeting_id not in proposals:
-            proposals[meeting_id] = [
-                proposal for proposal in db.proposals.list_proposals(meeting_id=meeting_id)
-                if proposal.kind == "decision"
-            ]
-        text = _decision_text(record.get("text"))
-        artifact = str(record.get("source_artifact_id") or "")
-        for proposal in proposals[meeting_id]:
-            if str(proposal.source_artifact_id or "") != artifact:
-                continue
-            if text not in (_decision_text(proposal.text), _decision_text(proposal.original_text)):
-                continue
-            if proposal.state != "proposed" or proposal.project_id:
-                return True
-        return False
+        return meeting_decision_asks_elsewhere(
+            db, meeting_id=record.get("source_meeting_id"),
+            artifact_id=record.get("source_artifact_id"), text=record.get("text"), cache=proposals,
+        )
 
     offset = 0
     while True:
@@ -527,6 +503,39 @@ def _read_decisions(db: Any, principal: Any) -> list[dict[str, Any]]:
 
 def _decision_text(text: Any) -> str:
     return " ".join(str(text or "").split()).lower()
+
+
+def meeting_decision_asks_elsewhere(
+    db: Any, *, meeting_id: Any, artifact_id: Any, text: Any,
+    cache: dict[str, list[Any]] | None = None,
+) -> bool:
+    """True when a recorded meeting decision does not ask for review itself.
+
+    One meeting decision is ONE member. The proposal bridge makes a proposal
+    from the same artifact and text. When that proposal is in a Room (its row
+    is the one that asks), or the owner has confirmed or dismissed it (he has
+    decided), the recorded decision does not ask a second time. The one
+    ``needs you`` rule and the Brief's DECISIONS section both use this.
+    """
+    meeting = str(meeting_id or "")
+    if not meeting:
+        return False
+    cache = cache if cache is not None else {}
+    if meeting not in cache:
+        cache[meeting] = [
+            proposal for proposal in db.proposals.list_proposals(meeting_id=meeting)
+            if proposal.kind == "decision"
+        ]
+    wanted = _decision_text(text)
+    artifact = str(artifact_id or "")
+    for proposal in cache[meeting]:
+        if str(proposal.source_artifact_id or "") != artifact:
+            continue
+        if wanted not in (_decision_text(proposal.text), _decision_text(proposal.original_text)):
+            continue
+        if proposal.state != "proposed" or proposal.project_id:
+            return True
+    return False
 
 
 def _is_owner(principal: Any) -> bool:
@@ -765,6 +774,7 @@ __all__ = [
     "compose",
     "compute_needs_you",
     "decision_items",
+    "meeting_decision_asks_elsewhere",
     "owner_names",
     "SELF_OWNER_NAMES",
     "waits_on_other",

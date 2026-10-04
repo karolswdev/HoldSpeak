@@ -180,6 +180,34 @@ describe("the one needs-you membership", () => {
     expect(both.waitingCount).toBe(1);
   });
 
+  it("reads each projection of a row the Room already merged", () => {
+    // Astra's second repro on #818: the Room aggregate merged Dana's
+    // commitment with a PR that awaits HIS review, and the head is Dana's.
+    const premerged = room("dana", {
+      title: "Send the plan", owner: "Dana", why: "WAITING ON DANA", dueAt: "2026-10-10",
+      dedupCount: 2,
+      sources: [
+        { id: "p1:commitment:1", source: "commitment", why: "WAITING ON DANA", owner: "Dana" },
+        { id: "p1:github:612", source: "github", why: "WAITING ON YOUR REVIEW · 3 DAYS", severity: "warning" },
+      ],
+    });
+    const result = computeNeedsYou({ roomItems: [premerged], now: NOW });
+    expect(result.count).toBe(1);
+    expect(result.unmutedItems[0]).toMatchObject({
+      waiting: false, why: "WAITING ON YOUR REVIEW · 3 DAYS", severity: "warning",
+    });
+    // Both projections wait on someone else: the row waits.
+    const waits = computeNeedsYou({
+      roomItems: [{ ...premerged, sources: [
+        premerged.sources![0],
+        { id: "p1:meeting:2", source: "meeting", why: "WAITING ON PRIYA", owner: "Priya" },
+      ] }],
+      now: NOW,
+    });
+    expect(waits.count).toBe(0);
+    expect(waits.waitingCount).toBe(1);
+  });
+
   it("keeps a retried job as RETRYING after its due time", () => {
     const retrying = meeting({
       id: "R1",

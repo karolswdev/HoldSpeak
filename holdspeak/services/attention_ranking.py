@@ -209,8 +209,16 @@ def _clusters(group: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
 
 
 def _projection(item: dict[str, Any]) -> dict[str, Any]:
-    """One constituent projection of a merged row, for the disclosure."""
+    """One constituent projection of a merged row, for the disclosure.
+
+    ``owner`` rides with the projection when the row names one: the one
+    ``needs you`` rule reads each projection's own reason and owner to tell a
+    row the owner waits on someone else for from his own work, also after a
+    merge (``needs_you_membership.waits_on_other``).
+    """
+    owner = str(item.get("owner") or "").strip()
     return {
+        **({"owner": owner} if owner else {}),
         "id": item.get("id"),
         "source": item.get("source", ""),
         "title": item.get("title", ""),

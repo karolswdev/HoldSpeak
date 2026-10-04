@@ -267,7 +267,7 @@ function isSelf(owner: unknown, selfNames: readonly string[]): boolean {
   return name !== "" && selfNames.some((n) => String(n).trim().toLowerCase() === name);
 }
 
-function waitingOn(row: NeedsYouRoomItem): boolean {
+function waitingOn(row: { owner?: unknown; why?: unknown }): boolean {
   const owner = String(row.owner ?? "").trim();
   return owner !== "" && String(row.why ?? "").trim().toUpperCase() === `WAITING ON ${owner.toUpperCase()}`;
 }
@@ -278,7 +278,7 @@ function waitingOn(row: NeedsYouRoomItem): boolean {
  * and a later due date). `WAITING ON YOUR REVIEW` names no owner and is the
  * owner's own work. */
 export function waitsOnOther(
-  row: NeedsYouRoomItem,
+  row: { owner?: unknown; why?: unknown },
   selfNames: readonly string[] = SELF_OWNER_NAMES,
 ): boolean {
   return waitingOn(row) && !isSelf(row.owner, selfNames);
@@ -358,21 +358,21 @@ export function computeNeedsYou(
   // A merged row waits on someone else only when EVERY merged projection
   // does. When one projection is the owner's own (YOURS, due, overdue), the
   // row is his: it leads with his reason and it is counted.
-  const waits = new Map<string, boolean>();
-  for (const row of others) {
-    const mark = waitsOnOther(row, selfNames);
-    for (const key of [row.id, ...(row.sources ?? []).map((source) => source.id)]) {
-      if (key != null && !waits.has(String(key))) waits.set(String(key), mark);
-    }
-  }
+  // Each projection keeps its own reason and owner through every merge (the
+  // Room aggregate's and this one), so the test reads the projections.
   const merged = dependencies.dedupAttention(others, now).map((row) => {
     const sources = row.sources ?? [];
     if (sources.length < 2) return { ...row, waiting: waitsOnOther(row, selfNames) };
-    const marks = sources.map((source) => waits.get(String(source.id)) ?? false);
+    const marks = sources.map((source) => waitsOnOther(source, selfNames));
     const waiting = marks.every(Boolean);
     if (waiting || !waitsOnOther(row, selfNames)) return { ...row, waiting };
     const his = sources[marks.indexOf(false)];
-    return { ...row, waiting, why: his.why || row.why, severity: his.severity || row.severity };
+    return {
+      ...row,
+      waiting,
+      why: waitingOn(his) ? YOURS : (his.why || row.why),
+      severity: his.severity || row.severity,
+    };
   });
   const singles = [...people, ...decisionItems(input.decisions ?? [])].map((row) => (
     { ...row, waiting: waitsOnOther(row, selfNames) }

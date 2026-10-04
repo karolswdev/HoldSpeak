@@ -343,3 +343,99 @@ def test_one_meeting_decision_with_its_proposal_is_one_member(hub: Hub) -> None:
     assert not any(str(member["ref"]).startswith("decision:") for member in settled["members"])
     assert settled["count"] == base["count"], [(r["title"], r["why"]) for r in settled["items"]]
     assert _one_number(hub, brief=True) == settled["count"]
+
+
+def test_a_row_the_room_already_merged_is_his_when_one_projection_is(hub: Hub) -> None:
+    """Astra's second repro on #818: Dana's later-due commitment and a PR that
+    awaits HIS review name the same thing; the Room aggregate merges them
+    before the rule reads them. The merged row is his and is counted."""
+    import json
+    from datetime import date, datetime, timedelta
+
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    later = (date.today() + timedelta(days=9)).isoformat()
+    title = "Send the capacity plan"
+    project_id = _linked_meeting(hub, "m-premerged", "Capacity")
+    hub.db.plugins.record_artifact(
+        artifact_id="artifact-premerged", meeting_id="m-premerged", artifact_type="action_items",
+        title="Actions", structured_json={"action_items": [{"task": title, "owner": "Dana", "due": ""}]},
+        status="accepted", plugin_id="action_owner_enforcer", plugin_version="fence",
+    )
+    proposal = next(
+        row for row in ProposalBridgeService(hub.db).bridge_meeting_artifacts("m-premerged")
+        if row.text == title)
+    _ok(hub.client.post(f"/api/proposals/{proposal.id}/confirm", json={"owner": "Dana", "due": later}))
+
+    before = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+    dana = [row for row in before["items"] if title in row["title"]]
+    assert len(dana) == 1 and dana[0]["waiting"] is True, dana
+
+    # A Watch's stored observation: a PR that asks the owner for changes. The
+    # Room's own read (``ProjectService.room``) makes the attention row.
+    with hub.db._connection() as conn:
+        conn.execute(
+            "INSERT INTO connector_watches (id, connector_id, query_kind, name, query_json, snapshot_json,"
+            " enabled, last_success_at, last_error, project_id, created_at, updated_at)"
+            " VALUES ('w-pr', 'gh', 'pull_requests', 'gh pull_requests', ?, ?, 1, ?, NULL, ?,"
+            " datetime('now'), datetime('now'))",
+            (json.dumps({"repository": "acme/app"}), json.dumps([{
+                "number": 612, "title": title, "url": "https://github.com/acme/app/pull/612",
+                "state": "OPEN", "isDraft": False, "reviewRequests": [],
+                "reviewDecision": "CHANGES_REQUESTED", "checks": "passing",
+                # Updated after the commitment: the Room's merge then leads
+                # with Dana's row (longest waiting first), which is the case
+                # that hid his work.
+                "updatedAt": datetime.now().isoformat(),
+            }]), datetime.now().isoformat(), project_id),
+        )
+
+    after = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+    # The Room aggregate merged the two projections before the rule read them.
+    room_rows = [row for row in after["roomItems"] if title in row["title"]]
+    assert len(room_rows) == 1 and room_rows[0]["dedupCount"] == 2, room_rows
+    assert {source["source"] for source in room_rows[0]["sources"]} == {"commitment", "github"}
+    assert room_rows[0]["why"] == "WAITING ON DANA" and room_rows[0]["owner"] == "Dana", room_rows[0]
+    rows = [row for row in after["items"] if title in row["title"]]
+    assert len(rows) == 1, rows
+    row = rows[0]
+    assert row["waiting"] is False, row
+    assert row["why"].startswith("WAITING ON YOUR REVIEW"), row["why"]
+    assert row["ref"] in [member["ref"] for member in after["members"]]
+    assert after["count"] == before["count"] + 1
+    assert after["waitingCount"] == before["waitingCount"] - 1
+    assert _one_number(hub, brief=True) == after["count"]
+
+
+@pytest.mark.parametrize("verb", ["confirm", "dismiss"])
+def test_the_brief_does_not_ask_again_for_a_decision_he_settled(hub: Hub, verb: str) -> None:
+    """Astra's second review of #818: after he confirms or dismisses the
+    proposal, a new Brief has no decision-waiting line and no Review row."""
+    from datetime import date, timedelta
+
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    _linked_meeting(hub, "m-settled", "Release")
+    hub.db.plugins.record_artifact(
+        artifact_id="artifact-settled", meeting_id="m-settled", artifact_type="decisions",
+        title="Decisions", structured_json={"decisions": [{"decision": "Ship on Friday"}]},
+        plugin_id="decision_capture",
+    )
+    hub.db.decisions.reconcile_artifact("artifact-settled")
+    assert [d.text for d in hub.db.decisions.list(lifecycle="recorded")] == ["Ship on Friday"]
+    proposal = ProposalBridgeService(hub.db).bridge_meeting_artifacts("m-settled")[0]
+    later = (date.today() + timedelta(days=9)).isoformat()
+    body = {"owner": "Dana", "due": later} if verb == "confirm" else {}
+    _ok(hub.client.post(f"/api/proposals/{proposal.id}/{verb}", json=body))
+    # The recorded decision is still ``recorded``: the settlement is the proposal's.
+    assert [d.text for d in hub.db.decisions.list(lifecycle="recorded")] == ["Ship on Friday"]
+
+    brief = _ok(hub.client.post("/api/brief/generate"))
+    brief = brief.get("brief") or brief
+    assert "decision waiting" not in brief["headline"] and "decisions waiting" not in brief["headline"], brief["headline"]
+    texts = [item["text"] for section in brief["sections"].values() for item in section]
+    assert not any(text.startswith("Review decision") for text in texts), texts
+    assert not any("Ship on Friday" in text and text.startswith("Review") for text in texts), texts
+    answer = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+    assert not any(str(member["ref"]).startswith("decision:") for member in answer["members"])
+    assert _phrase(brief["headline"], "thing") == answer["count"]

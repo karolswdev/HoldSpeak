@@ -1231,7 +1231,18 @@ class MondayBriefService:
                     created_at=decision.created_at,
                 )
             )
+        # The same rule the one ``needs you`` rule uses: a recorded decision
+        # whose proposal is in a Room, or is confirmed or dismissed, does not
+        # ask for review a second time.
+        from .needs_you_membership import meeting_decision_asks_elsewhere
+
+        proposal_cache: dict[str, list[Any]] = {}
         for decision in self._db.decisions.list(lifecycle="recorded"):
+            if meeting_decision_asks_elsewhere(
+                self._db, meeting_id=decision.source_meeting_id,
+                artifact_id=decision.source_artifact_id, text=decision.text, cache=proposal_cache,
+            ):
+                continue
             items.append(
                 BriefItem(
                     id=f"brief-item-{uuid.uuid4().hex}",
