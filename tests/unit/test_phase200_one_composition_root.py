@@ -151,6 +151,8 @@ class TestMcpWriteReachesTheDesk:
             # plural selector — it is about one object.
             "kind": "note", "id": note_id, "op": "update",
             "origin": changed[0][1]["origin"],
+            # One frame for the write; `changes` names each object it touched.
+            "changes": [{"kind": "note", "id": note_id, "op": "update"}],
         }
 
     def test_mcp_and_http_write_through_the_same_instance(self, tmp_path: Path) -> None:

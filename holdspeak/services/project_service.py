@@ -491,12 +491,43 @@ class ProjectService:
         self._require_project(project_id)
         return [row.to_dict() for row in self._db.project_relationships.list_for_project(project_id)]
 
+    def _project_resource_ref(self, resource_ref: str) -> str:
+        """The one ref name a Project keeps for a resource.
+
+        A desk decision is `desk_decision:<id>` (the name memory, Send and
+        grounding read). The Desk window names it `decision:<id>`; that name
+        is taken here and written as the one name, so a decision filed from
+        any face is found in its Project. A meeting decision keeps
+        `decision:<id>`.
+        """
+        ref = qualified_ref(resource_ref)
+        kind, _, resource_id = ref.partition(":")
+        if (
+            kind == "decision"
+            and self._db.desk_decisions.get(resource_id) is not None
+            and self._db.decisions.get(resource_id) is None
+        ):
+            return f"desk_decision:{resource_id}"
+        return ref
+
+    @staticmethod
+    def _project_resource_ref_names(ref: str) -> tuple[str, ...]:
+        """The names a stored row can carry for ``ref`` (old rows: `decision:`)."""
+        kind, _, resource_id = ref.partition(":")
+        if kind == "desk_decision":
+            return (ref, f"decision:{resource_id}")
+        return (ref,)
+
     def list_resource_relationships(self, principal: Principal, resource_ref: str) -> dict[str, Any]:
         ref = qualified_ref(resource_ref)
         placement = self._db.directory_memberships.get(ref)
+        projects: dict[str, Any] = {}
+        for name in self._project_resource_ref_names(self._project_resource_ref(ref)):
+            for row in self._db.project_relationships.list_for_resource(name):
+                projects.setdefault(row.project_id, row)
         return {"resource_ref": ref, "zone": placement.to_dict() if placement else None,
                 "knowledge": [row.to_dict() for row in self._db.knowledge_memberships.list_for_resource(ref)],
-                "projects": [row.to_dict() for row in self._db.project_relationships.list_for_resource(ref)],
+                "projects": [row.to_dict() for row in projects.values()],
                 "explanations": {"zone": "Where this object lives; exactly one Zone or the Desk root.",
                                  "knowledge": "Reusable collections this object informs; membership does not move it.",
                                  "projects": "Work this object supports; a relationship does not file or copy it."}}
@@ -3605,7 +3636,7 @@ class ProjectService:
         body = dict(payload or {})
         if relationship is not None:
             body["relationship"] = relationship
-        ref_str = qualified_ref(resource_ref)
+        ref_str = self._project_resource_ref(resource_ref)
 
         # Idempotency
         req_hash = _request_hash({"project_id": project_id,
@@ -3732,7 +3763,7 @@ class ProjectService:
         command_id: Optional[str] = None,
     ) -> bool:
         self._require_project(project_id)
-        ref_str = qualified_ref(resource_ref)
+        ref_str = self._project_resource_ref(resource_ref)
 
         # Idempotency
         req_hash = _request_hash({"project_id": project_id,
@@ -3769,10 +3800,12 @@ class ProjectService:
             )
 
             # Inline the resource soft-delete (was repo layer's own transaction).
+            names = self._project_resource_ref_names(ref_str)
             cur = conn.execute(
                 "UPDATE project_resources SET deleted=1, last_modified=? "
-                "WHERE project_id=? AND resource_ref=? AND deleted=0",
-                (now_iso, project_id, ref_str),
+                f"WHERE project_id=? AND resource_ref IN ({','.join('?' * len(names))}) "
+                "AND deleted=0",
+                (now_iso, project_id, *names),
             )
             deleted = bool(cur.rowcount)
 

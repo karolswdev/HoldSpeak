@@ -380,7 +380,13 @@ def _hydrate_qualified(
     if kind == "decision":
         decision = db.decisions.get(resource_id)
         if decision is None:
-            return [], [ref]
+            # A desk decision filed under the old ref name (`decision:<id>`,
+            # the Decide button before 2026-10-03) reads as what it is.
+            blocks, missing = _hydrate_qualified(
+                db, f"desk_decision:{resource_id}", expand, visited,
+                query=query, stats=stats,
+            )
+            return blocks, ([ref] if missing else [])
         rationale = f"\n\nRationale: {decision.rationale}" if decision.rationale else ""
         return [
             GroundingBlock(
