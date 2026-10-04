@@ -711,6 +711,12 @@
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* The line is 1em high and the mono glyph box is higher (about 1.33em), so
+     the hidden overflow cut the top and the descenders ("No engine"). The
+     clip box takes the glyph box; the negative margin keeps the lamp's
+     1em footprint in every row. In em, so a zero-size lamp stays zero. */
+  padding-block: 0.2em;
+  margin-block: -0.2em;
 }
 /* HS-135-02 L6: block system messages wrap instead of truncating. */
 .gadget-lamp.is-block {
