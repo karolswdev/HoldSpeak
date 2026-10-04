@@ -40,7 +40,7 @@ import { apiFetch } from "../../lib/api";
 import { useResource, asRows, rowId } from "../pageSupport";
 import { useAction } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
-import { deSnake, humanTime } from "../../desk/surface/format";
+import { deSnake, humanTime, wireClock } from "../../desk/surface/format";
 import "./rhythm.css";
 
 /* ── Wire shapes ────────────────────────────────────────────────── */
@@ -114,9 +114,8 @@ function fmtHour(h: number): string {
 
 /** Extract HH:MM from an ISO timestamp. */
 function fmtTime(iso: string | null | undefined): string | null {
-  if (!iso) return null;
-  const m = /(\d{2}:\d{2})/.exec(iso);
-  return m ? m[1] : null;
+  // The hub stamps the sweep clock in UTC; the face shows local time.
+  return wireClock(iso) || null;
 }
 
 /** Format a date as MON DD (e.g. SEP 04). */

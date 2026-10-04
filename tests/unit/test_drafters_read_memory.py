@@ -209,6 +209,69 @@ def test_exclusions_apply_before_the_selection_limit(rig):
     assert "meeting:m-old" in json.loads(draft["source_manifest_json"])["memory_refs"]
 
 
+def test_a_no_window_kind_is_plain_context_never_a_ref(rig):
+    """A published update has no window (`NO_WINDOW_REF_KINDS`, shared with
+    the web).  The helper gives its words as context and no ref to cite."""
+    from holdspeak.services.memory_grounding import DESK_REF_KINDS, NO_WINDOW_REF_KINDS
+
+    assert not set(DESK_REF_KINDS) & set(NO_WINDOW_REF_KINDS)
+    project_id, inside = _project_with_decision(rig)
+    svc = _make_service(rig)
+    earlier = svc.draft_update(OWNER, project_id)
+    svc.publish_update(OWNER, earlier["id"])
+
+    memory = memory_context(rig, project_id=project_id, query="vendor lock-in launch update")
+
+    plain = [e for e in memory.excerpts if e.kind == "project_update"]
+    assert plain and not plain[0].citable, [e.ref for e in memory.excerpts]
+    assert memory.context_refs == [f"project_update:{earlier['id']}"]
+    assert all(ref.split(":", 1)[0] in DESK_REF_KINDS for ref in memory.refs)
+    block = memory.prompt_block("PROJECT MEMORY")
+    assert "(project update, context only)" in block
+    assert "project_update:" not in block
+    assert not any(ref.startswith("project_update:") for ref in memory.texts)
+
+    # Through the drafter: the earlier update's words reach the prompt, and a
+    # sentence that cites it by ref is NOT linked (the ref was never offered).
+    output = json.dumps({"sections": [{"key": "progress", "sentences": [
+        {"text": "As the last update said.", "cited_refs": [f"project_update:{earlier['id']}"]},
+    ]}]})
+    model_svc, runner = _make_model_service(rig, runner_output=output)
+    draft = model_svc.draft_update(OWNER, project_id, generator="model")
+    prompt = runner.invoke_calls[0].payload["user_prompt"]
+    assert "(project update, context only)" in prompt and "project_update:" not in prompt
+    assert json.loads(draft["source_manifest_json"])["memory_refs"] == [f"desk_decision:{inside}"]
+    assert all(not c["refs"] for c in json.loads(draft["claims_json"]) if "last update" in c["text"])
+
+
+def test_a_parked_meeting_and_its_actions_stay_out(rig):
+    """The recency listing wears memory's `_not_parked` predicate before its limit."""
+    from datetime import datetime
+
+    from holdspeak.intel.models import ActionItem
+    from holdspeak.meeting_session.models import IntelSnapshot, MeetingState, TranscriptSegment
+
+    svc = _make_service(rig)
+    projects = svc._project_service
+    project_id = projects.create_project(OWNER, {"name": "Atlas"})["id"]
+    for meeting_id, word in (("m-kept", "kestrel"), ("m-parked", "zephyrine")):
+        rig.meetings.save_meeting(MeetingState(
+            id=meeting_id, started_at=datetime(2026, 9, 1, 9, 0), ended_at=datetime(2026, 9, 1, 9, 30),
+            title=f"Sync {word}",
+            segments=[TranscriptSegment(text=f"the {word} plan", speaker="Me", start_time=0.0, end_time=4.0)],
+            intel=IntelSnapshot(timestamp=1.0, topics=[word], summary=f"The {word} plan.",
+                                action_items=[ActionItem(id=f"act-{word}", task=f"Ship {word}", owner="Dana")]),
+        ))
+        projects.add_resource(OWNER, project_id, f"meeting:{meeting_id}")
+        projects.add_resource(OWNER, project_id, f"action:act-{word}")
+    rig.meetings.delete_meeting("m-parked")  # the product's park
+
+    for query in (None, "kestrel zephyrine plan"):
+        memory = memory_context(rig, project_id=project_id, query=query)
+        assert "meeting:m-kept" in memory.refs and "action_item:act-kestrel" in memory.refs, memory.refs
+        assert "zephyrine" not in memory.prompt_block(), (query, memory.refs)
+
+
 # ── The project update drafter ───────────────────────────────────────
 
 def _model_draft(db: Database, project_id: str):

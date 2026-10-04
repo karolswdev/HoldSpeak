@@ -1515,7 +1515,8 @@ describe("Scroll hint: data-scroll-hint is set on the posture root", () => {
     await waitFor(() => screen.getByTestId("steward-posture"));
 
     const posture = screen.getByTestId("steward-posture");
-    expect(posture.hasAttribute("data-scroll-hint")).toBe(true);
+    // The hint is set by a passive effect: wait for it, do not race it.
+    await waitFor(() => expect(posture.hasAttribute("data-scroll-hint")).toBe(true));
   });
 });
 

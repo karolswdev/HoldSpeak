@@ -46,6 +46,13 @@ _CUT = " [cut]"
 # kind through the real opener; keep it one flat tuple of string literals.
 DESK_REF_KINDS = ("meeting", "note", "artifact", "thread", "decision", "desk_decision", "action_item")
 
+# Memory kinds with no window of their own: a send, a published update, a
+# Prep brief, a calendar event.  The SAME list as ``NO_WINDOW_REF_KINDS`` in
+# web/src/desk/surface/citations.tsx (memoryRefsOpen.test.ts holds the two
+# equal).  They reach a prompt as plain context with no ref, so no face ever
+# draws a citation that opens nothing.  Keep it one flat tuple of literals.
+NO_WINDOW_REF_KINDS = ("send", "project_update", "prep_brief", "calendar_event")
+
 # Memory's name for a source -> the name the Desk opens.  A kind that is in
 # neither this map nor ``DESK_REF_KINDS`` has no Desk window and is left out.
 _DESK_KIND = {"action": "action_item", "transcript": "meeting"}
@@ -93,15 +100,21 @@ def _clip(text: str, cap: int) -> str:
 class MemoryExcerpt:
     """One remembered source, cut to a bounded size."""
 
-    ref: str  # kind:id, as memory names it
+    ref: str  # kind:id under the name the Desk opens
     kind: str
     title: str
     text: str
+    citable: bool = True  # False: a no-window kind, plain context only
+
+    @property
+    def label(self) -> str:
+        """What the prompt line leads with: the ref, or a no-ref marker."""
+        return self.ref if self.citable else f"({self.kind.replace('_', ' ')}, context only)"
 
     def line(self) -> str:
         if self.title and self.text:
-            return f"- {self.ref}: {self.title} -- {self.text}"
-        return f"- {self.ref}: {self.text or self.title}"
+            return f"- {self.label}: {self.title} -- {self.text}"
+        return f"- {self.label}: {self.text or self.title}"
 
 
 @dataclass(frozen=True)
@@ -115,12 +128,18 @@ class MemoryContext:
 
     @property
     def refs(self) -> list[str]:
-        return [excerpt.ref for excerpt in self.excerpts]
+        """The citable refs: every one opens a window on the Desk."""
+        return [excerpt.ref for excerpt in self.excerpts if excerpt.citable]
+
+    @property
+    def context_refs(self) -> list[str]:
+        """What was read as plain context (no window, never shown as a citation)."""
+        return [excerpt.ref for excerpt in self.excerpts if not excerpt.citable]
 
     @property
     def texts(self) -> dict[str, str]:
-        """ref -> the words behind it (title and excerpt)."""
-        return {e.ref: f"{e.title} {e.text}".strip() for e in self.excerpts}
+        """citable ref -> the words behind it (title and excerpt)."""
+        return {e.ref: f"{e.title} {e.text}".strip() for e in self.excerpts if e.citable}
 
     def prompt_block(self, heading: str = MEMORY_BLOCK_HEADING) -> str:
         """The marked context block for a prompt; ``""`` when memory is empty."""
@@ -138,10 +157,12 @@ EMPTY_MEMORY = MemoryContext()
 def _excerpt(block: GroundingBlock, cap: int) -> MemoryExcerpt | None:
     """One block as a Desk-openable excerpt whose RENDERED line fits ``cap``."""
     kind = _DESK_KIND.get(block.kind, block.kind)
-    if kind not in DESK_REF_KINDS:
-        return None  # no Desk window opens it: not a citable source
+    citable = kind in DESK_REF_KINDS
+    if not citable and kind not in NO_WINDOW_REF_KINDS:
+        return None  # neither a window nor a named plain-context kind
     ref = f"{kind}:{str(block.ref).split('#', 1)[0]}"
-    prefix = len(f"- {ref}: ")
+    probe = MemoryExcerpt(ref=ref, kind=kind, title="", text="", citable=citable)
+    prefix = len(f"- {probe.label}: ")
     if cap - prefix <= len(_CUT):
         return None  # the bound has no room for any words
     title = _clip(block.title, min(MEMORY_TITLE_CHARS, cap - prefix))
@@ -155,7 +176,7 @@ def _excerpt(block: GroundingBlock, cap: int) -> MemoryExcerpt | None:
     text = _clip(text, room) if text and room > len(_CUT) else ""
     if not text and not title:
         return None
-    return MemoryExcerpt(ref=ref, kind=kind, title=title, text=text)
+    return MemoryExcerpt(ref=ref, kind=kind, title=title, text=text, citable=citable)
 
 
 def memory_context(

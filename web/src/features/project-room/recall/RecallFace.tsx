@@ -42,6 +42,7 @@ import {
   SurfaceRows,
   SurfaceSection,
   StringGadget,
+  NO_WINDOW_REF_KINDS,
   useRovingRows,
 } from "../../../desk/surface";
 import { openRef } from "../../../desk/openObject";
@@ -270,6 +271,17 @@ function OwedRowView({ row, ctrl }: { row: OwedRow; ctrl: RecallController }) {
 
 /* ── memory hits (meetings, briefs, the rest) ── */
 
+/** Kinds memory finds that have no window of their own: the row draws no
+ * open (a verb that does nothing is a lie). */
+const NO_WINDOW_KINDS = new Set(["brief", ...NO_WINDOW_REF_KINDS]);
+
+function hitOpener(hit: MemoryHitRow): (() => void) | undefined {
+  if (NO_WINDOW_KINDS.has(hit.kind)) return undefined;
+  // The one open grammar: a settled action item (`action:<id>`) opens where
+  // action items live, Follow-through.
+  return () => openRef(hit.source_ref);
+}
+
 function HitRows({ rows, testid }: { rows: MemoryHitRow[]; testid: string }) {
   return (
     <SurfaceRows>
@@ -280,7 +292,7 @@ function HitRows({ rows, testid }: { rows: MemoryHitRow[]; testid: string }) {
           detail={hit.snippet ? <MemorySnippet value={hit.snippet} /> : undefined}
           meta={
             <span className="project-memory-meta" data-testid={testid}>
-              <span className="surface-token">{hit.section ? hit.section.replaceAll("_", " ") : hit.kind}</span>
+              <span className="surface-token">{(hit.section || hit.kind).replaceAll("_", " ")}</span>
               {hit.retrieval_origin === "relationship" ? (
                 <span className="surface-token">
                   Related · {String(hit.relationship || "linked source").replaceAll("_", " ")}
@@ -288,7 +300,7 @@ function HitRows({ rows, testid }: { rows: MemoryHitRow[]; testid: string }) {
               ) : null}
             </span>
           }
-          onOpen={hit.kind === "brief" ? undefined : () => openRef(hit.source_ref)}
+          onOpen={hitOpener(hit)}
         />
       ))}
     </SurfaceRows>
