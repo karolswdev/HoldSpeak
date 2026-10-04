@@ -6,7 +6,10 @@ deleted. Every file is on the archive branch and the tag.
 - Branch: `archive/evidence-2026-10-04` (on `origin`)
 - Tag: `evidence-2026-10-04`
 - Both point at commit `91dca1ed9`, the last `main` that held the evidence.
-- The list of every file that moved: `pm/archive-manifest.txt` (16,391 paths).
+- The list of every file that moved: `pm/archive-manifest.txt` (16,389 paths).
+- Manifest SHA-256: `90f9a67642392e41305539842843672274affb39eabce8175e22405de79ef753`
+  (`tests/unit/test_evidence_archive.py` checks the hash, that no entry is in
+  the tree, and that every entry is on the tag).
 
 ## Get a file back
 
@@ -26,8 +29,8 @@ Find a path: `grep <word> pm/archive-manifest.txt`.
 | | Files | MB |
 |---|---|---|
 | Tracked tree before | 26,990 | 2,517.3 |
-| Tracked tree after | 10,609 | 171.5 |
-| Moved to the archive | 16,391 | 2,348.1 |
+| Tracked tree after | 10,612 | 171.5 |
+| Moved to the archive | 16,389 | 2,348.1 |
 
 ## What moved
 
@@ -56,6 +59,10 @@ Find a path: `grep <word> pm/archive-manifest.txt`.
 - Source code under `pm/**/assets/` (`harness/` directories, proof programs
   in `.py` and `.sh`). Live tests import some of it.
 - `pm/roadmap/holdspeak-mobile/contracts/` (a CI workflow validates it).
+- The two real-send ledgers (`phase-10-the-channels/assets/story-06-real-sends.json`,
+  `phase-11-more-documents-on-the-channels/assets/story-07-real-sends.json`).
+  They are operational inputs: `scripts/philo10_send_job.py` and
+  `scripts/philo11_send_job.py` read them and refuse a second real send.
 - `docs/internal/philo`: all Markdown and text, the graph and atlas JSON
   (the doc generators and the test rig read them), `visuals/`, two fixtures
   that live tests read (`phase-5/residual-set.json`,
@@ -67,8 +74,11 @@ Find a path: `grep <word> pm/archive-manifest.txt`.
 - A Markdown file that stays can link a shot that moved. The link check
   (`tests/unit/test_doc_drift_guard.py`) accepts a link whose target is in
   the manifest. All other dangling links still fail.
-- `dw check` reports 123 more errors ("broken asset reference", "broken
-  evidence link") for old evidence files that name shots that moved.
+- `dw check` on the command line reports about 120 more errors ("broken asset
+  reference", "broken evidence link") for old evidence files that name shots
+  that moved. The Roadmap window does not show them: the route
+  (`holdspeak/web/routes/roadmaps.py`) drops a broken link whose target is in
+  the manifest. A link to a file that is in no list is still an issue.
 - Tests that read archived evidence are parked in `tests/_parked/history/`
   (see its README). They do not run.
 - Old scripts under `scripts/` that read archived run directories need the

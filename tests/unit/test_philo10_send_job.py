@@ -8,7 +8,7 @@ mutations of copies of them. Nothing here sends, boots a hub or reads the
 network.
 """
 # History reads are parked: tests/_parked/history/tests/unit/test_philo10_send_job.py holds this file as it was, with the
-# 16 test function(s) that read evidence archived on branch
+# 15 test function(s) that read evidence archived on branch
 # archive/evidence-2026-10-04 (pm/ARCHIVE.md).
 from __future__ import annotations
 
@@ -103,3 +103,25 @@ def _digest() -> str:
     return hashlib.sha256(driver.body_bytes(_fixture())).hexdigest()
 
 
+
+
+# ── the tracked ledger is an operational input, not evidence ─────────────
+# It stays in the tree (pm/ARCHIVE.md): without it a real run would send again.
+
+
+def test_the_tracked_ledger_names_both_real_sends() -> None:
+    ledger = _json(LEDGER)["sends"]
+    assert [e["target"] for e in ledger] == ["file", "github"]
+    assert {e["state"] for e in ledger} == {"sent"}
+    assert all(e["proof"] for e in ledger)
+
+
+def test_a_second_real_run_refuses_before_anything_boots(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """The tracked ledger alone refuses: no hub, no gh, no session, no run directory."""
+    code = driver.main(["run", "--real", "--out", str(tmp_path)])
+    printed = capsys.readouterr().out
+    assert code == 4, printed
+    assert "REFUSED file: the ledger records a real send" in printed
+    assert "REFUSED github: the ledger records a real send" in printed
+    assert list(tmp_path.iterdir()) == []
+    assert driver.main(["guard"]) == 4

@@ -151,3 +151,16 @@ def test_the_ledger_is_written_before_the_press(tmp_path: Path) -> None:
                     on_press=lambda: (order.append("ledger"), job.ledger_append(ledger, {"kind": "k", "target": "t"})))
     assert order == ["/api/channels/preview", "ledger", "/api/channels/send"]
     assert json.loads(ledger.read_text())["sends"] == [{"kind": "k", "target": "t"}]
+
+
+def test_the_tracked_ledger_refuses_a_second_real_run(tmp_path: Path, monkeypatch) -> None:
+    """The tracked ledger is an operational input, not evidence: it stays in
+    the tree (pm/ARCHIVE.md). With it, a real run refuses before anything boots."""
+    sends = json.loads(job.LEDGER_PATH.read_text())["sends"]
+    assert len(sends) == 11 and {e["state"] for e in sends} == {"sent"}
+    booted: list[bool] = []
+    monkeypatch.setattr(job, "boot", lambda *a, **k: booted.append(True))
+    out = tmp_path / "out"
+    assert job.main(["real", "--out", str(out)]) == 4
+    assert not booted and not out.exists()
+    assert job.main(["guard"]) == 4

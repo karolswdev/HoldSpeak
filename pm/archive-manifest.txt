@@ -3030,7 +3030,6 @@ pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-shots/words-red
 pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-shots/words-red-dce3afa9/case.p10.send.failed--393/20260929T155118Z-case.p10.send.failed-muaddib-393/before.png
 pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-shots/words-red-dce3afa9/case.p10.send.failed--393/20260929T155118Z-case.p10.send.failed-muaddib-393/observation.json
 pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-05-shots/words-red-dce3afa9/runs.tsv
-pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-06-real-sends.json
 pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-06-shots/final/20260929T184651Z-send-job-real/agent_check/effective-codex-config.json
 pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-06-shots/final/20260929T184651Z-send-job-real/agent_check/launch-setup.json
 pm/roadmap/holdspeak-philo/phase-10-the-channels/assets/story-06-shots/final/20260929T184651Z-send-job-real/agent_prepare/effective-codex-config.json
@@ -6430,7 +6429,6 @@ pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-
 pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-runs/regressions-r7-p9-steward-head/case.p9.update.mark_delivered_receipted--op/20261001T072920Z-case.p9.update.mark_delivered_receipted-astra-1440/observation.json
 pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-runs/regressions-r7-p9-steward-head/case.p9.update.mark_delivered_receipted--op/20261001T072920Z-case.p9.update.mark_delivered_receipted-astra-1440/rig.log
 pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-06-runs/regressions-r7-p9-steward-head/runs.tsv
-pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-07-real-sends.json
 pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-07-shots/final/20261001T115709Z-rehearse/agent_prepare/effective-codex-config.json
 pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-07-shots/final/20261001T115709Z-rehearse/agent_prepare/launch-setup.json
 pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-07-shots/final/20261001T115709Z-rehearse/agent_prepare/readbacks.json

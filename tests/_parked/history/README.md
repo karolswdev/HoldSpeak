@@ -11,14 +11,13 @@ To run one again: put its evidence back
 (`git checkout archive/evidence-2026-10-04 -- <path>`), then move the test
 functions back to the live file.
 
-## Parked test functions (81, in 6 files)
+## Parked test functions (80, in 6 files)
 
 - `tests/unit/test_philo10_atlas.py` :: `test_every_claimed_run_keeps_its_own_observation`
 - `tests/unit/test_philo10_send_job.py` :: `test_a_file_that_does_not_read_back_is_red`
 - `tests/unit/test_philo10_send_job.py` :: `test_a_fixture_written_after_the_first_session_is_red`
 - `tests/unit/test_philo10_send_job.py` :: `test_a_planted_gh_token_is_red`
 - `tests/unit/test_philo10_send_job.py` :: `test_a_resumed_or_shared_session_is_red`
-- `tests/unit/test_philo10_send_job.py` :: `test_a_second_real_run_refuses_before_anything_boots`
 - `tests/unit/test_philo10_send_job.py` :: `test_a_send_prepared_by_the_owner_is_red`
 - `tests/unit/test_philo10_send_job.py` :: `test_an_agent_send_that_succeeded_is_red`
 - `tests/unit/test_philo10_send_job.py` :: `test_an_extra_newline_on_the_far_side_is_red`
