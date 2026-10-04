@@ -289,45 +289,20 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
     }
   };
 
-  return {
-  items: { ...EMPTY_ITEMS },
-  profiles: [],
-  projects: [],
-  inferenceTargets: [],
-  models: [],
-  status: {},
-  error: "",
-  loading: false,
-  updatedAt: null,
-  setup: null,
-  positions: loadPositions(),
-  zoneWidths: loadZoneWidths(),
-  zoneRenameError: null,
+  /** One press, one record: the creates in flight, and the object each New
+   * verb made last (see createPrimitive). */
+  const createsInFlight = new Map<string, Promise<void>>();
+  const freshCreates = new Map<string, string>();
+  const createKey = (kind: string, overrides: Record<string, unknown>) =>
+    `${kind}:${JSON.stringify(overrides)}`;
 
-  refresh() {
-    return runRefresh();
-  },
-
-  adoptCreated(kind, wire) {
-    const made = fromWireCreated(kind, wire);
-    if (!made) return null;
-    const bucket = (get().items[kind] ?? []) as unknown as IdentifiedItem[];
-    const next = bucket.some((item) => item.id === made.id)
-      ? bucket.map((item) => (item.id === made.id ? made : item))
-      : [...bucket, made];
-    // A desk read that started before this create does not hold the new
-    // record: the write version keeps the object through that read
-    // (mergeRefreshItems), so its window does not close under the owner.
-    const key = writeKey(kind, made.id);
-    primitiveWrites.set(key, {
-      version: (primitiveWrites.get(key)?.version || 0) + 1,
-      pending: false,
-    });
-    set({ items: { ...get().items, [kind]: next } as Items });
-    return made.id;
-  },
-
-  async createPrimitive(kind, overrides = {}) {
+  const createNow = async (
+    kind: Parameters<DeskState["createPrimitive"]>[0],
+    overrides: Record<string, unknown> = {},
+    /** The hub has answered the create (its window is open, or its refusal
+     * is about to be named): the press is no longer in flight. */
+    answered: () => void = () => undefined,
+  ): Promise<void> => {
     // HS-130-09 — a Workbench is chosen BEFORE it is persisted. The create
     // gesture opens the pre-persistence chooser; exactly one of its exits
     // persists exactly one Workbench (no orphaned blank record).
@@ -411,6 +386,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       });
       if (!res.ok) {
         release();
+        answered();
         await reportCreateFailure(kind, res, retry, get);
         return;
       }
@@ -420,6 +396,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       clearWriteFailure();
     } catch (cause) {
       release();
+      answered();
       await reportCreateFailure(kind, cause, retry, get);
       return;
     }
@@ -432,6 +409,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       savePositions(positions);
     }
     const open = (id: string) => {
+      freshCreates.set(createKey(kind, overrides), id);
       get().markNew(id);
       // "workbench" never reaches here — it returns early to the
       // pre-persistence chooser (HS-130-09).
@@ -453,13 +431,87 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       createdId !== null &&
       kind !== "zone" &&
       get().adoptCreated(kind, created) !== null;
-    if (opened && createdId) open(createdId);
+    if (opened && createdId) {
+      open(createdId);
+      answered();
+    }
     try {
       await get().refresh();
     } finally {
       release();
     }
     if (createdId && !opened) open(createdId);
+  };
+
+  return {
+  items: { ...EMPTY_ITEMS },
+  profiles: [],
+  projects: [],
+  inferenceTargets: [],
+  models: [],
+  status: {},
+  error: "",
+  loading: false,
+  updatedAt: null,
+  setup: null,
+  positions: loadPositions(),
+  zoneWidths: loadZoneWidths(),
+  zoneRenameError: null,
+
+  refresh() {
+    return runRefresh();
+  },
+
+  adoptCreated(kind, wire) {
+    const made = fromWireCreated(kind, wire);
+    if (!made) return null;
+    const bucket = (get().items[kind] ?? []) as unknown as IdentifiedItem[];
+    const next = bucket.some((item) => item.id === made.id)
+      ? bucket.map((item) => (item.id === made.id ? made : item))
+      : [...bucket, made];
+    // A desk read that started before this create does not hold the new
+    // record: the write version keeps the object through that read
+    // (mergeRefreshItems), so its window does not close under the owner.
+    const key = writeKey(kind, made.id);
+    primitiveWrites.set(key, {
+      version: (primitiveWrites.get(key)?.version || 0) + 1,
+      pending: false,
+    });
+    set({ items: { ...get().items, [kind]: next } as Items });
+    return made.id;
+  },
+
+  async createPrimitive(kind, overrides = {}) {
+    // One press, one record. A second press of the same New verb while its
+    // create is in flight, or while the window it just opened is still new
+    // (the NEW beat) and open, makes nothing: it puts that window in front.
+    // Before, two quick presses made two records and showed one editor.
+    // A zone is not a window and keeps its own rule (PHILO-8-01); a
+    // workbench and an unnamed decision write nothing here.
+    const writes =
+      kind !== "zone" &&
+      kind !== "workbench" &&
+      !(kind === "decision" && !String(overrides.title ?? "").trim());
+    if (!writes) return createNow(kind, overrides);
+    const key = createKey(kind, overrides);
+    const fresh = freshCreates.get(key);
+    if (fresh && get().newIds.includes(fresh)) {
+      if (kind === "decision") {
+        if (get().pullouts.some((p) => p.id === fresh)) {
+          get().openPullout(fresh);
+          return;
+        }
+      } else if (get().editingId === fresh) {
+        get().restorePanel(`editor:${kind}:${fresh}`);
+        return;
+      }
+    }
+    const flying = createsInFlight.get(key);
+    if (flying) return flying;
+    const landed = () => createsInFlight.delete(key);
+    const run = createNow(kind, overrides, landed).finally(landed);
+    createsInFlight.set(key, run);
+    return run;
   },
 
   async registerRepository(input) {
