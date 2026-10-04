@@ -435,6 +435,7 @@ function WorkspaceReady({
     askRow?.act();
   }}>
     <ThoughtDocumentPane
+      noteId={documentThought.working_note.id}
       draft={writer.draft}
       onEdit={(patch) => { setRevealRange(null); writer.edit(patch); }}
       disabled={busy || documentThought.state !== "working"}
