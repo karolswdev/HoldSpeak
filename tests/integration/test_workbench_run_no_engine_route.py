@@ -50,3 +50,45 @@ def test_run_with_no_engine_is_a_named_409(client) -> None:
     items = client.get(f"/api/workbenches/{bench_id}").json()
     statuses = [row["status"] for row in items["workbench"]["items"]]
     assert statuses == ["pending"]
+
+
+def _bench(client) -> str:
+    recipe_id = client.post("/api/recipes", json={"name": "Chase", "system_prompt": "Do the work."}).json()["recipe"]["id"]
+    return client.post("/api/workbenches", json={"name": "Cutover bench", "recipe_id": recipe_id}).json()["workbench"]["id"]
+
+
+def test_the_window_fact_is_the_assignment_resolved_for_this_workbench(client) -> None:
+    """The face ghosts Run on `assignment_summary`; it must see a workbench-level
+    assignment (Astra, PR #779 P1: the editor's `effective` omits the subject)."""
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+    bench_id = _bench(client)
+    before = client.get(f"/api/workbenches/{bench_id}").json()["workbench"]["assignment_summary"]
+    assert before["status"] == "no_assignment"
+
+    # A real model profile with a deployment, and a real subject-scope
+    # assignment, through the producers the assignment suite uses.
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim, _set
+
+    db = get_database()
+    _profile(db, "bench-engine", claims=("language", _result_claim("workbench.item")))
+    scope = {
+        "kind": "subject", "subject_kind": "workbench", "subject_id": bench_id,
+        "capability_id": "workbench.item",
+    }
+    _set(InferenceAssignmentService(db), "bench-engine-set", scope, "bench-engine")
+
+    after = client.get(f"/api/workbenches/{bench_id}").json()["workbench"]["assignment_summary"]
+    assert after["status"] == "assigned"
+    assert after["source"] == "subject"
+    # No capability, group or global assignment exists: the editor's
+    # subject-blind `effective` still says no_assignment. The face must not read it.
+    editor = client.post(
+        "/api/inference/assignments/editor",
+        json={"scope": scope, "capability_id": "workbench.item"},
+    ).json()
+    assert editor["effective"]["status"] == "no_assignment"
+    # And the runner agrees with the summary: Run is no longer refused for no engine.
+    client.post(f"/api/workbenches/{bench_id}/items", json={"title": "Draft the runbook"})
+    run = client.post(f"/api/workbenches/{bench_id}/run", json={})
+    assert not (run.status_code == 409 and run.json().get("code") == "no_assignment"), run.text

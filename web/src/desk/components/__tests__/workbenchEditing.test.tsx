@@ -245,10 +245,7 @@ describe("HS-132-07 drop-target honesty", () => {
     const body = wbBody();
     const posts = () =>
       fetchMock.mock.calls.filter(
-        ([input, init]) =>
-          (init as RequestInit | undefined)?.method === "POST" &&
-          // The window's engine read is a POST that writes nothing.
-          !String(input).endsWith("/api/inference/assignments/editor"),
+        ([, init]) => (init as RequestInit | undefined)?.method === "POST",
       ).length;
 
     fireEvent.drop(body, {

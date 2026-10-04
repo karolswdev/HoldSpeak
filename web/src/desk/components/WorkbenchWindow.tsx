@@ -95,7 +95,6 @@ import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
 import type { MicState } from "./MicButton";
 import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
-import { getAssignmentEditor } from "../../pages/cores/assignmentExperience";
 import { openSurfaceOr } from "../shell";
 import { onReturnToTask, rememberTaskFocus } from "../returnToTask";
 import {
@@ -1206,26 +1205,24 @@ export function WorkbenchWindow({
   const bus = useRuntimeBus();
 
   /* ── the engine this workbench runs on ─────────────────────────── */
-  /* Run is not offered when no engine is assigned (A.11). The read is the
-     same projection the RUNS ON editor shows. A read that has not landed is
-     UNKNOWN: Run stays live and the hub's own named refusal decides. */
-  const [engine, setEngine] = useState<"unknown" | "set" | "none">("unknown");
-  const readEngine = useCallback(async () => {
-    try {
-      const editor = await getAssignmentEditor(
-        { kind: "subject", subject_kind: "workbench", subject_id: workbenchId, capability_id: "workbench.item" },
-        "workbench.item",
-      );
-      const status = editor?.effective?.status;
-      setEngine(status === "assigned" ? "set" : status ? "none" : "unknown");
-    } catch {
-      setEngine("unknown");
-    }
-  }, [workbenchId]);
-  useEffect(() => { void readEngine(); }, [readEngine]);
+  /* Run is not offered when no engine is assigned (A.11). The fact is the
+     hub's own: the detail's `assignment_summary` is resolved for THIS
+     workbench with the runner's precedence (subject, capability, group,
+     global; `WorkbenchService._wb_payload` -> `resolve_effective`). A detail
+     without the summary is UNKNOWN: Run stays live and the hub's named
+     refusal decides. A named refusal stands until the assignment changes. */
+  const [hubRefusedNoEngine, setHubRefusedNoEngine] = useState(false);
+  const summary = detail?.assignment_summary;
+  const summaryKey = summary ? JSON.stringify(summary) : "";
+  useEffect(() => { setHubRefusedNoEngine(false); }, [summaryKey]);
+  const engine: "unknown" | "set" | "none" =
+    hubRefusedNoEngine || (summary?.status && summary.status !== "assigned")
+      ? "none"
+      : summary?.status === "assigned" ? "set" : "unknown";
+  const readEngine = useCallback(() => { setHubRefusedNoEngine(false); load(); }, [load]);
   // He comes back from Models, or the desk changed: read again.
-  useEffect(() => onReturnToTask(() => { void readEngine(); }), [readEngine]);
-  useEffect(() => bus.subscribe("desk_changed", () => { void readEngine(); }), [bus, readEngine]);
+  useEffect(() => onReturnToTask(readEngine), [readEngine]);
+  useEffect(() => bus.subscribe("desk_changed", () => { load(); }), [bus, load]);
   const chooseEngine = () => {
     rememberTaskFocus();
     openSurfaceOr("configure-runs-on", "/settings", "models");
@@ -1392,24 +1389,23 @@ export function WorkbenchWindow({
       dispatchRun({ type: "request_timed_out" });
     }, 60_000);
     runTimeoutRef.current = timeout;
-    let refusedNoEngine = false;
+    // The named refusal is handled INSIDE the write, so the receipt's Retry
+    // (which replays only this callback) handles it on every attempt. The
+    // hub named the state: the face shows NO ENGINE and its door, never
+    // "RUN FAILED · HTTP 409".
     const result = await write("RUN", async () => {
       try {
         await triggerWorkbenchRun(workbenchId);
+        return "started" as const;
       } catch (cause) {
-        refusedNoEngine = isNoEngineRefusal(cause);
-        throw cause;
+        if (!isNoEngineRefusal(cause)) throw cause;
+        clearRunTimeout();
+        setHubRefusedNoEngine(true);
+        dispatchRun({ type: "request_refused", reason: "NO ENGINE" });
+        return "no_engine" as const;
       }
     });
-    if (refusedNoEngine) {
-      // The hub named the state: no engine. The face shows that state and
-      // its door (NO ENGINE · Choose an engine), not "RUN FAILED · HTTP 409".
-      clearRunTimeout();
-      clearWrite();
-      setEngine("none");
-      dispatchRun({ type: "request_refused", reason: "NO ENGINE" });
-      return;
-    }
+    if (result.ok && result.value === "no_engine") return;
     if (result.ok) {
       clearRunTimeout();
       dispatchRun({ type: "request_succeeded" });
@@ -1692,7 +1688,7 @@ export function WorkbenchWindow({
 
         {detail && showConfig ? (
           <ConfigPanel
-            onEngineChanged={() => void readEngine()}
+            onEngineChanged={readEngine}
             detail={detail}
             recipes={recipes}
             skills={skills}
@@ -2060,6 +2056,15 @@ export function WorkbenchWindow({
       </div>
 
       <SurfaceFooter
+        // The repair door sits in the footer's verb slot, so no receipt
+        // (a failed write, a Park outcome, a copy) can cover it.
+        verbs={engine === "none" ? (
+          <span data-testid="wb-no-engine">
+            <Button dense variant="ghost" onClick={chooseEngine}>
+              Choose an engine
+            </Button>
+          </span>
+        ) : undefined}
         receipt={
           // HS-132-06: a refused write outranks the quieter receipts; then
           // PHILO-13-02's park outcome (PARKED + Restore, RESTORED, refusals).
@@ -2072,11 +2077,8 @@ export function WorkbenchWindow({
             />
           ) : null) ||
           copyReceipt || (engine === "none" ? (
-            <span className="wb-footer-status" data-testid="wb-no-engine">
+            <span className="wb-footer-status">
               <LampGadget label="No engine" on tone="warn" />
-              <Button dense variant="ghost" onClick={chooseEngine}>
-                Choose an engine
-              </Button>
             </span>
           ) : null) || (
             <span className="wb-footer-status">

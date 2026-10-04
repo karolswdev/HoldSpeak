@@ -8,6 +8,14 @@
 /* ── Workbench detail types ───────────────────────────────────────────── */
 
 export interface WorkbenchDetail {
+  /** The assignment resolved for THIS workbench with the runner's precedence
+   *  (`WorkbenchService._wb_payload`). Owner principal only. */
+  assignment_summary?: {
+    status: string;
+    source: string | null;
+    chain: string[];
+    repair: string | null;
+  };
   id: string;
   name: string;
   recipe_id: string | null;
