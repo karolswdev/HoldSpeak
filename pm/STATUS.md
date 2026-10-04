@@ -27,7 +27,7 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Last merged (newest first)
 
-- PRNUM — Fast tests: 5 min 40 s default run, scoped browser tests, nightly full
+- #763 — Fast tests: 5 min 40 s default run, scoped browser tests, nightly full
 - #762 — Generated docs out of git; test maps cite text, not lines; no count checks
 - #761 — The commit gate is removed (branch, PR, one review, merge)
 - #755 — Phase 13 close, Astra's record (B0 done; 18/18)
