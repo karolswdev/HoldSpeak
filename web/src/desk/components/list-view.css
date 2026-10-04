@@ -39,14 +39,33 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.desk-next .desk-list-mark {
-  display: inline-block;
-  min-width: 26px;
+/* The mark is the row's one selection control: its own 44 px target, the
+ * full height of the row. Everything else on the row opens it. */
+.desk-next .desk-list-name {
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 100%;
+}
+.desk-next .desk-list-name .desk-list-mark {
+  flex: none;
+  min-width: 44px;
+  width: 44px;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  justify-content: flex-start;
   color: var(--text-faint);
   font: 600 var(--desk-surface-label-size) var(--font-mono);
 }
-.desk-next .desk-list-mark[data-selected] {
+.desk-next .desk-list-name .desk-list-mark[data-selected] {
   color: var(--accent);
+}
+@media (pointer: coarse) {
+  .desk-next .desk-list-name .desk-list-mark {
+    min-height: 44px;
+  }
 }
 .desk-next .desk-list-state {
   color: var(--accent);
@@ -375,8 +394,7 @@
     row-gap: 2px;
   }
   .desk-next .desk-list-sortable .desk-list-name-cell {
-    grid-template-columns: auto 1fr;
-    column-gap: 5px;
+    grid-template-columns: 1fr;
   }
   .desk-list-fold {
     display: flex;

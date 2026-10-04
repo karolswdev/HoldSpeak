@@ -21,6 +21,7 @@ import { objectMenuEntries } from "../floorMenu";
 import { WorkMenu } from "./DeskMenu";
 import { InlineEditor } from "./InlineEditor";
 import { Pullout } from "./Pullout";
+import { InfoWindow } from "./InfoWindow";
 import { AskBar, AskPanel } from "./AskPanel";
 import { DeliveryListSection } from "./DeliveryListSection";
 import { PrReceiptsSection } from "./PrReceiptsSection";
@@ -123,6 +124,7 @@ export function DeskListView() {
   const items = useDesk((s) => s.items);
   const divedZone = useDesk((s) => s.divedZone);
   const selectedIds = useDesk((s) => s.selectedIds);
+  const infoWindows = useDesk((s) => s.infoWindows);
   const pullouts = useDesk((s) => s.pullouts);
   const editingId = useDesk((s) => s.editingId);
   const askOpen = useDesk((s) => s.askOpen);
@@ -283,18 +285,35 @@ export function DeskListView() {
         const ref = qualifiedRef(row.object.kind, row.object.id);
         const selected = selectedIds.includes(ref) || selectedIds.includes(row.object.id);
         return (
-          <Button variant="ghost" dense className="desk-sortable-table-open desk-list-name-cell" aria-label={selected ? `${row.object.title}, in Ask context` : row.object.title}>
-            <span className="desk-list-mark" data-selected={selected || undefined} aria-hidden="true">
+          // The mark is the row's ONE selection control (the pointer's Space):
+          // its own target, 44 px wide. Everything else on the row opens it.
+          <span className="desk-list-name">
+            <Button
+              variant="ghost"
+              dense
+              className="desk-list-mark"
+              data-selected={selected || undefined}
+              data-testid="desk-list-mark"
+              aria-pressed={selected}
+              aria-label={`Select ${row.object.title}`}
+              tabIndex={-1}
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleSelected(ref);
+              }}
+            >
               {selected ? "[x]" : "[ ]"}
-            </span>
-            {row.object.title}
-            {row.zoneName ? <span className="sr-only"> {row.zoneName.toUpperCase()}</span> : null}
-            {row.attention ? <span className="sr-only"> ATTN {row.attention}</span> : null}
-            <FoldLine
-              tokens={[(KIND_LABEL[row.object.kind] ?? row.object.kind).toUpperCase(), row.zoneName.toUpperCase()]}
-              attention={row.attention}
-            />
-          </Button>
+            </Button>
+            <Button variant="ghost" dense className="desk-sortable-table-open desk-list-name-cell" aria-label={selected ? `${row.object.title}, in Ask context` : row.object.title}>
+              {row.object.title}
+              {row.zoneName ? <span className="sr-only"> {row.zoneName.toUpperCase()}</span> : null}
+              {row.attention ? <span className="sr-only"> ATTN {row.attention}</span> : null}
+              <FoldLine
+                tokens={[(KIND_LABEL[row.object.kind] ?? row.object.kind).toUpperCase(), row.zoneName.toUpperCase()]}
+                attention={row.attention}
+              />
+            </Button>
+          </span>
         );
       },
     },
@@ -410,6 +429,14 @@ export function DeskListView() {
       <PrReceiptsSection />
       {editing && <InlineEditor key={editing.id} o={editing} u={{ x: 0.5, y: 0.4 }} />}
       {openCards.map((p) => <Pullout key={p.id} o={p.obj!} pulloutId={p.id} origin={p.origin} />)}
+      {/* Get Info opened nothing in list mode: only the spatial Floor
+          (WorldStage) mounted the Info windows the store holds. */}
+      {infoWindows.map((w) => <InfoWindow key={w.ref} refId={w.ref} origin={w.origin} onOpenZone={(zoneId) => {
+        // The list has no zone windows: it dives, and the Info window (full
+        // screen at phone width) gets out of the way of the zone it opened.
+        diveInto(zoneId);
+        useDesk.getState().closeInfoWindow(w.ref);
+      }} />)}
       {/* PHILO-8-02 — the Floor's foot (#665): the delete receipt sits in
           flow directly above the selection bar it acted on. */}
       <div className="desk-world-foot" ref={footRef}>
