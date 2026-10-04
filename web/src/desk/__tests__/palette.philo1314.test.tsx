@@ -126,7 +126,9 @@ describe("PHILO-13-14 the palette knows his week", () => {
   it("a word inside a thought finds that thought, and Enter opens it", async () => {
     const input = await deck();
     await type(input, "kafka");
-    expect(top()).toContain("Thought");
+    // The row shows the thought's name: its first words, not the stored word `Thought`.
+    expect(top()).toContain("Ask about the rollback runbook");
+    expect(top()).not.toMatch(/^.?Thought/);
     fireEvent.keyDown(input, { key: "Enter" });
     expect(useDesk.getState().openPullout).toHaveBeenCalledWith("note:n-th1");
   });

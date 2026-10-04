@@ -12,7 +12,8 @@ import { qualifiedRef } from "../api";
 import { objGlow, type WorldObject } from "../world";
 import { inferenceEgressLamp } from "../inferenceEgress";
 import { DeskWindowFrame } from "./DeskWindow";
-import { kindWord } from "../windowName";
+import { kindWord, primitiveName } from "../windowName";
+import { useThreadStore } from "../threads";
 import { PULLOUT_CONTENT } from "../pullouts";
 import { useEffect, useState, type ReactNode } from "react";
 import { thoughtForNote, type NoteThoughtStatus, type Thought } from "../thoughts";
@@ -58,19 +59,26 @@ function PulloutFrame({
     : null;
 
   const Content = PULLOUT_CONTENT[o.kind];
+  // A thread with no title is named by the first words of its first message
+  // (the open thread holds its messages; the Desk list does not).
+  const firstMessage = useThreadStore((s) =>
+    o.kind === "thread"
+      ? (s.threads[o.id]?.messages.find((m) => m.role === "user")?.parts.find((p) => p.text?.trim())?.text ?? "")
+      : "");
+  const name = o.kind === "thread" ? primitiveName("thread", o.ref, o.id, firstMessage) : o.title;
 
   return (
     <DeskWindowFrame
       id={`pullout:${pulloutId}`}
       glyph="▤"
-      label={o.title}
+      label={name}
       kindWord={kindWord(o.kind)}
       className="desk-pullout is-card"
       fitContent
       origin={origin}
       rootStyle={{ "--k": objGlow(o.kind) } as React.CSSProperties}
       icon={<img src={spriteUrl(o.kind, o.id)} alt="" width={30} height={30} className={spriteStateCssClass((o as { spriteState?: string }).spriteState ?? null) || undefined} data-sprite-variant={spriteVariantKey(o.kind, (o as { spriteState?: string }).spriteState ?? null)} />}
-      title={o.title}
+      title={name}
       open
       onClose={() => closePullout(pulloutId)}
       actions={

@@ -6,6 +6,7 @@ import { GLOW_POOL } from "../lib/tokens.gen";
 import type { Primitive, PrimitiveKind } from "../lib/primitives";
 import type { Items } from "./api";
 import { qualifiedRef } from "./api";
+import { primitiveName } from "./windowName";
 import type { UnitPos } from "./store";
 
 export interface WorldObject {
@@ -71,7 +72,8 @@ function _allPrimitives(items: Items): WorldObject[] {
       out.push({
         kind,
         id,
-        title: String(("title" in prim ? prim.title : "") || ("name" in prim ? prim.name : "") || id || kind),
+        // The name of the thing, never its id (windowName.ts).
+        title: primitiveName(kind, prim, id),
         ref: prim,
       });
     }

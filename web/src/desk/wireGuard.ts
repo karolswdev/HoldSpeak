@@ -12,7 +12,9 @@ function isRecord(wire: unknown): wire is Record<string, unknown> {
 export function wireString(wire: unknown, key: string, fallback = ""): string {
   if (!isRecord(wire) || !(key in wire)) return fallback;
   const v = wire[key];
-  return typeof v === "string" ? v : fallback;
+  // An empty string is a missing value: the fallback names the thing. With
+  // no fallback the empty string stays (a field that is truly empty).
+  return typeof v === "string" && (v.trim() || !fallback) ? v : fallback;
 }
 
 export function wireNumber(wire: unknown, key: string, fallback = 0): number {

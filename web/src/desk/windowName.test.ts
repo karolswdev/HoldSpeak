@@ -57,7 +57,9 @@ describe("windowName: the name of the thing in the window", () => {
 
   it("an id is not a name; words are", () => {
     expect(looksLikeId("th_9f8a7b6c5d4e")).toBe(true);
-    expect(looksLikeId("note-3f9a12bc")).toBe(true);
+    expect(looksLikeId("note_3f9a12bc77aa")).toBe(true);
+    expect(looksLikeId("bdfcc9d3-317b-4355-bc02-306915a4571d")).toBe(true);
+    expect(looksLikeId("HS-201-12")).toBe(false);
     expect(looksLikeId("anything", "anything")).toBe(true);
     expect(looksLikeId("Ledger cutover")).toBe(false);
     expect(looksLikeId("follow-up")).toBe(false);

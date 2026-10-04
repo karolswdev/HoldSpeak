@@ -43,6 +43,8 @@ import {
   SurfaceWell,
 } from "../../desk/surface";
 import { SurfaceSection } from "../../desk/surface/Surface";
+import { useWindowTitle } from "../../desk/surface/title";
+import { windowName } from "../../desk/windowName";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressFor } from "../../desk/surface/egress";
 import { openSurface } from "../../desk/shell";
@@ -2373,6 +2375,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const module = moduleId
     ? PREF_MODULES.find((entry) => entry.id === moduleId)
     : null;
+  // The window is named by the open section: `Settings · Connections`.
+  useWindowTitle(module ? windowName({ kind: "settings", section: module.label }) : null, [module?.label]);
   const receipt = { saving, writtenAt, refusal };
   return (
     <>

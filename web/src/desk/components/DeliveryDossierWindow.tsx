@@ -8,6 +8,8 @@
 // assets are ledger rows (an empty command is a NAMED token, never a bare
 // mark), and the record's markdown bodies fold behind the RAW well species
 // (Disclosure → SurfaceWell) — 07's law, consumed early.
+import { windowName } from "../windowName";
+import { firstWords } from "../thoughtTitle";
 import { useEffect } from "react";
 import { Button } from "../../components/signal/Signal";
 import { EgressChip, FoldGadget } from "../surface/gadgets";
@@ -73,11 +75,13 @@ export function DeliveryDossierWindow() {
 
   if (!open) return null;
 
+  // A story dossier is named by the story's title (the first heading of its
+  // story file); the story id stays as a token inside the window.
   const title =
     dossier?.kind === "story"
-      ? dossier.storyId
+      ? windowName({ kind: "dossier", title: firstWords(dossier.storyMarkdown ?? "") || dossier.storyId })
       : dossier?.kind === "phase"
-        ? `Phase ${dossier.phase}`
+        ? dossier.title || `Phase ${dossier.phase}`
         : loading
           ? "Loading dossier"
           : "Evidence";
@@ -87,7 +91,7 @@ export function DeliveryDossierWindow() {
       id="delivery-dossier"
       glyph="▧"
       minW={420}
-      label={`Dossier ${title}`}
+      label={title}
       className="desk-pullout desk-dlv-dossier"
       eyebrow="Evidence"
       title={title}
