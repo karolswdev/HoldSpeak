@@ -369,6 +369,56 @@ def test_prep_prompt_carries_the_earlier_decision_and_keeps_its_ref(rig):
     assert cited and cited[0]["support"] == "source_linked"
 
 
+def test_a_second_preparation_does_not_read_the_first_unkept_draft(rig):
+    """Astra on #777: two real preparations for one purpose.  The first
+    draft's unreviewed suggestion must not come back as [PROJECT MEMORY];
+    once the owner KEEPS the brief it is memory (plain context, no ref)."""
+    from tests.unit.test_update_drafter import _MockRunner
+
+    svc = _make_service(rig)
+    project_id = svc._project_service.create_project(OWNER, {"name": "Atlas"})["id"]
+    suggestion = "Ask whether the zephyrine rollback owner is named"
+    runner = _MockRunner(output=json.dumps({
+        "priorities": [], "obligations": [],
+        "questions": [{"text": suggestion, "cited_refs": []}],
+    }))
+    prep = _prep_service(rig, runner)
+    purpose = "zephyrine rollback review"
+
+    first = prep.prepare(OWNER, project_id, purpose, generator="model")
+    stored = json.loads(first["claims_json"])
+    assert [(c["support"], c["acceptance"]) for c in stored] == [("unknown", "unreviewed")]
+    assert suggestion in first["body_md"]
+
+    second = prep.prepare(OWNER, project_id, purpose, generator="model")
+    prompt = runner.invoke_calls[1].payload["user_prompt"]
+    assert "zephyrine rollback owner" not in prompt
+    assert "MEMORY" not in prompt and "memory_refs" not in second["manifest"]
+    assert not memory_context(rig, project_id=project_id, query=purpose)
+
+    # Kept by the owner: now it is memory.
+    prep.keep(OWNER, first["id"])
+    kept = memory_context(rig, project_id=project_id, query=purpose)
+    assert kept.context_refs == [f"prep_brief:{first['id']}"] and kept.refs == []
+    prep.prepare(OWNER, project_id, purpose, generator="model")
+    assert "zephyrine rollback owner" in runner.invoke_calls[2].payload["user_prompt"]
+
+
+def test_an_unpublished_update_draft_is_not_memory(rig):
+    """The same rule for the update drafter: a draft is not memory; a
+    published update is."""
+    project_id, _inside = _project_with_decision(rig)
+    svc = _make_service(rig)
+    draft = svc.draft_update(OWNER, project_id)
+
+    before = memory_context(rig, project_id=project_id, query="vendor lock-in launch update")
+    assert not [e for e in before.excerpts if e.kind == "project_update"]
+
+    svc.publish_update(OWNER, draft["id"])
+    after = memory_context(rig, project_id=project_id, query="vendor lock-in launch update")
+    assert after.context_refs == [f"project_update:{draft['id']}"]
+
+
 def test_prep_without_memory_is_as_before(rig):
     from tests.unit.test_update_drafter import _MockRunner
 

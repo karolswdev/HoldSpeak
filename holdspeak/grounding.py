@@ -146,6 +146,32 @@ def meeting_digest(state: Any) -> str:
     return "\n\n".join(p for p in parts if p)
 
 
+def _unkept_draft_refs(db: Any) -> set[str]:
+    """Drafter output the owner has not kept: never selected as memory.
+
+    A Prep brief is a model's suggestion until he keeps it.  Read back on the
+    next preparation it would ground the model on its own unreviewed words
+    (Astra on #777).  Only a KEPT brief is memory; a draft stays reachable by
+    an explicit ref the owner attaches, never by relevance or by a Project's
+    listing.  An update draft needs no row here: memory indexes an update
+    only once it is published (``db/memory.py``, ``lifecycle='published'``).
+    """
+    connection = getattr(db, "_connection", None)
+    if connection is None:
+        return set()
+    try:
+        with connection() as conn:
+            return {
+                f"prep_brief:{row[0]}"
+                for row in conn.execute(
+                    "SELECT id FROM project_briefs WHERE lifecycle!='kept'"
+                )
+            }
+    except Exception as exc:  # a database without the table holds no drafts
+        log.debug(f"unkept draft read skipped: {exc}")
+        return set()
+
+
 def hydrate_refs_detailed(
     db: Any,
     meeting_ids: list[str],
@@ -171,6 +197,8 @@ def hydrate_refs_detailed(
         for ref in (exclude_refs or [])
         if str(ref).strip()
     }
+    # A drafter's own unkept output is not memory (see _unkept_draft_refs).
+    excluded |= _unkept_draft_refs(db)
     for mid in meeting_ids:
         try:
             state = db.meetings.get_meeting(mid)
