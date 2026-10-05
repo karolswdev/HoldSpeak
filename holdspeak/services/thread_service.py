@@ -70,6 +70,32 @@ _LIVE_ONLY_STUBS = {
 }
 _LIVE_ONLY_TOOLS = frozenset(_LIVE_ONLY_STUBS)
 _LIVE_ONLY_STUB = _LIVE_ONLY_STUBS["memory.page"]
+#: Every other READ tool (class ``evidence_read`` or ``candidate_builder`` in
+#: ``thread_tools``: a note read, a meeting, a decision record, a People
+#: read ...) returns source text that can be withdrawn too.  On replay it is
+#: a stub that says to read again; the stored result stays as the receipt.
+#: An ``effect_proposal`` result (what a write did) replays as stored.
+_READ_CLASSES = frozenset({"evidence_read", "candidate_builder"})
+
+
+def _replay_stub(tool_name: Optional[str]) -> Optional[str]:
+    """The stub a later turn gets for a tool result, or None to replay the
+    stored text.  Memory reads keep their own stubs; any other read tool
+    gets the generic one; an unknown name fails closed (a stub)."""
+    if not tool_name:
+        return None
+    if tool_name in _LIVE_ONLY_STUBS:
+        return _LIVE_ONLY_STUBS[tool_name]
+    from .thread_tools import _ALL_TOOL_CLASSES
+
+    entry = _ALL_TOOL_CLASSES.get(tool_name)
+    if entry is not None and entry[0] not in _READ_CLASSES:
+        return None
+    return json.dumps({
+        "result": None,
+        "note": f"This {tool_name} result was read in an earlier turn and is not kept. "
+                f"Call {tool_name} again to read it now.",
+    })
 _PEOPLE_REF_KINDS = frozenset({"person"})
 
 _UNSET = object()  # sentinel for "caller did not provide parent_id"
@@ -2415,12 +2441,13 @@ class ThreadService:
             for part in parts:
                 if part.kind in ("text", "annotation") and part.text:
                     tool_name = call_names.get(part.tool_call_id) if msg.role == "tool" else None
-                    if tool_name in _LIVE_ONLY_STUBS:
-                        # A memory read is true only at the time it is read:
-                        # its sources can be withdrawn later.  The stored
-                        # result (the receipt) stays; a later turn gets a
-                        # stub, never the stored text.
-                        text_parts.append(_LIVE_ONLY_STUBS[tool_name])
+                    stub = _replay_stub(tool_name)
+                    if stub is not None:
+                        # A read is true only at the time it is read: its
+                        # sources can be withdrawn later.  The stored result
+                        # (the receipt) stays; a later turn gets a stub,
+                        # never the stored text.
+                        text_parts.append(stub)
                         continue
                     text_parts.append(part.text)
                     if part.sensitive and part.text:

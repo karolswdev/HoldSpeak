@@ -97,6 +97,27 @@ def set_live_check(check: Optional[Callable[[], str]]) -> None:
 
 #: A call open longer than this is a call a crashed process left behind.
 OPEN_CALL_SECONDS = 600.0
+#: A call this process is NOT running counts as live only this long after
+#: its last change.  A crashed process (or the hub before a restart) leaves
+#: its call open in ``kernel_operations``; extraction no longer waits the
+#: whole ``OPEN_CALL_SECONDS`` behind it.  A call this process's runner is
+#: running counts however old it is (up to ``OPEN_CALL_SECONDS``), and a call
+#: that is still being admitted (not yet in the runner) is fresh.
+FOREIGN_CALL_SECONDS = 60.0
+
+
+def _running_here(extractor: Any) -> Optional[set[str]]:
+    """The operation ids this process's runner is running now, or None when
+    the extractor has no runner to ask (then every open call counts)."""
+    runner = getattr(getattr(extractor, "_broker", None), "inference_runner", None)
+    active = getattr(runner, "_active", None)
+    if not isinstance(active, dict):
+        return None
+    lock = getattr(runner, "_active_lock", None)
+    if lock is None:
+        return {str(getattr(item, "operation_id", "")) for item in list(active.values())}
+    with lock:
+        return {str(getattr(item, "operation_id", "")) for item in active.values()}
 
 
 def live_work(db: Any, extractor: Any) -> str:
@@ -108,7 +129,9 @@ def live_work(db: Any, extractor: Any) -> str:
     * A model call that is open now on the SAME engine (the same deployment,
       or the same endpoint and model, or the same model file), whatever its
       boundary: a chat turn, an Ask or a meeting call on the owner's LAN
-      model is never queued behind a background chunk.
+      model is never queued behind a background chunk.  A call no runner in
+      this process holds and that has not changed for
+      ``FOREIGN_CALL_SECONDS`` has a dead owner and does not count.
     * For a LOCAL engine also any live local model call (an active local
       runtime lease) or one that ended less than ``LOCAL_IDLE_SECONDS`` ago:
       a local extract call holds the one local runtime for its whole length.
@@ -125,6 +148,8 @@ def live_work(db: Any, extractor: Any) -> str:
             return reason
     own = set(OWN_OPERATIONS) | set(getattr(extractor, "operation_ids", ()) or ())
     revision = str(getattr(extractor, "revision_id", "") or "")
+    here = _running_here(extractor)
+    now = time.time()
     with db._connection() as conn:
         if revision:
             mine = conn.execute(
@@ -133,7 +158,7 @@ def live_work(db: Any, extractor: Any) -> str:
                 (revision,),
             ).fetchone()
             rows = conn.execute(
-                """SELECT o.operation_id FROM kernel_operations o
+                """SELECT o.operation_id,o.updated_at FROM kernel_operations o
                     JOIN deployment_revisions d ON o.target_ref='deployment-revision:'||d.id
                     WHERE o.name='inference.invoke'
                       AND o.state IN ('admitting','awaiting_decision','awaiting_execution','claimed')
@@ -142,12 +167,20 @@ def live_work(db: Any, extractor: Any) -> str:
                            OR (d.endpoint<>'' AND d.endpoint=? AND d.model=?)
                            OR (COALESCE(d.model_path,'')<>'' AND d.model_path=?))""",
                 (
-                    time.time() - OPEN_CALL_SECONDS, revision,
+                    now - OPEN_CALL_SECONDS, revision,
                     str(mine["endpoint"]) if mine else "", str(mine["model"]) if mine else "",
                     str(mine["model_path"]) if mine else "",
                 ),
             ).fetchall()
-            if any(str(row[0]) not in own for row in rows):
+            for row in rows:
+                operation = str(row[0])
+                if operation in own:
+                    continue
+                if (
+                    here is not None and operation not in here
+                    and float(row[1] or 0) < now - FOREIGN_CALL_SECONDS
+                ):
+                    continue  # no runner here holds it, and it went quiet: a dead owner
                 return "a model call on the same engine is live"
         if str(getattr(extractor, "boundary", "") or "") != "local":
             return ""

@@ -239,3 +239,33 @@ def test_mcp_memory_search_thread_kind(tmp_path: Path, monkeypatch) -> None:
         "sonarqube" in result["hits"][0]["snippet"].lower()
         or "<mark>" in result["hits"][0]["snippet"]
     )
+
+
+# -------------------------------------------------------------------
+# A bare local time range finds the thread (the inherited gap: SQLite's
+# strftime read a bare time as UTC).  Equal ranges give equal answers.
+# -------------------------------------------------------------------
+def test_a_bare_local_time_range_finds_the_thread(tmp_path: Path, monkeypatch) -> None:
+    from datetime import datetime, timezone
+
+    monkeypatch.setenv("TZ", "America/Denver")
+    time.tzset()
+    try:
+        db = Database(tmp_path / "tz.db")
+        # 09:00 in Denver (MDT, -06:00) is 15:00Z.
+        stamp = datetime(2026, 10, 4, 15, 0, 0, tzinfo=timezone.utc).timestamp()
+        _seed_thread(db, "th-tz", "Cutover", [("m1", "user", "The quorvane cutover is done")], updated_at=stamp)
+
+        def within(start: str, end: str) -> list[str]:
+            hits = db.memory.search("quorvane", kinds=["thread"], time_from=start, time_to=end).hits
+            return [hit.source_ref.split("#", 1)[0] for hit in hits]
+
+        assert within("2026-10-04T14:30:00+00:00", "2026-10-04T15:30:00+00:00") == ["thread:th-tz"]
+        assert within("2026-10-04T08:30:00-06:00", "2026-10-04T09:30:00-06:00") == ["thread:th-tz"]
+        assert within("2026-10-04T08:30:00", "2026-10-04T09:30:00") == ["thread:th-tz"]  # local wall time
+        assert within("2026-10-04T09:30:00", "2026-10-04T10:30:00") == []
+        assert within("2026-10-04T14:30:00", "2026-10-04T15:30:00") == []  # 14:30 local is 20:30Z
+        assert within("not a time", "2026-10-04T09:30:00") == []
+    finally:
+        monkeypatch.delenv("TZ", raising=False)
+        time.tzset()

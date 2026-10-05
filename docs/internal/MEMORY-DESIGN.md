@@ -315,9 +315,16 @@ and id of each change.
 
 - Meeting summary and topics: the `meeting` reader holds them (since
   #786), packed with the transcript turns. One chunk per summary and per
-  topic is not built: a new cut drops every old meeting vector until the
-  new ones are embedded, and nothing yet keeps the old vectors serving
-  (see Versions below).
+  topic is not built. Checked 2026-10-05: a new cut needs more than old
+  vectors serving. (1) A fact serves only through its own live chunk, and
+  extraction is keyed on the source text (`extracted_sha`), not the cut:
+  a re-cut meeting whose text did not change keeps facts that never serve
+  again and is never read again. (2) Its observations then lose their
+  backing and `refresh_observations` retires them. (3) A page sentence
+  cites its chunk; the scope digest keys a source by its text, so the page
+  is not stale and the sentence stays withheld. The cut waits for a
+  transition that covers vectors, facts (extraction keyed on the cut),
+  observations and pages together.
 - Commitments: no kind of their own. Each commitment writes its
   `action_items` row (task, owner, due) in the same transaction, and the
   `action` kind holds that row.
@@ -334,7 +341,10 @@ and id of each change.
 - Keyword search for the four kinds reads `memory_chunks_fts`. The sweep
   writes it, so it works with no engine. A hit must be a chunk of the live
   text (same id and hash), so an edited source is not found by its old
-  words. Their time filter compares instants (`timeparse.instant`).
+  words. Their time filter compares instants (`timeparse.instant`). So
+  does the thread keyword pass since 2026-10-05: a bare local bound
+  ("2026-10-04T08:30:00") is the hub's wall time, not UTC (SQLite's
+  `strftime` read it as UTC).
 - `CHUNKER_VERSION` 2 fills the keyword table. It cuts each source as 1
   did, so every vector stays. The wake reaches `ask_answer`
   (change kind `ask_task`) and `steward_run` (change kind `steward`, on
@@ -390,7 +400,11 @@ dark: nothing runs until `memory.extract` has its own assignment.
   a live meeting, for any open call on the same engine (same deployment,
   same endpoint and model, or same model file; any boundary), and, for a
   local engine, for any live local call or one that ended less than 20 s
-  ago. The checked answer of each chunk is kept
+  ago. **A dead owner holds nothing** (2026-10-05): an open call that no
+  runner in this process holds and that has not changed for 60 s
+  (`FOREIGN_CALL_SECONDS`) is one a crashed process left; it no longer
+  holds extraction for up to 600 s. A call this process runs counts
+  however old it is (to 600 s). The checked answer of each chunk is kept
   (`memory_extract_parts`), so a stopped source goes on from its next
   chunk.
 - **Measured.** The five relation questions
@@ -814,7 +828,11 @@ is a face and waits for its canvas).
   container row by the hand-attach rule, any other row is not sent (that
   producer stamped project hits `reference`, like a named ref). The
   `memory.search` and `memory.observations` tool results replay as a stub,
-  as `memory.page` does.
+  as `memory.page` does; since 2026-10-05 so does every read tool
+  (`evidence_read` or `candidate_builder` in `thread_tools`: a note read, a
+  meeting, a decision record, a People read), with a stub that names the
+  tool to call again (`thread_service._replay_stub`). A write's result
+  replays as stored; an unknown tool name gets the stub.
 - **One budget.** The job's `block_chars` (5,200 for `ask.answer` and
   `chat.turn`); the pages take at most half; whole sentences only. Then
   `fit_reflect` drops excerpts from the end (observations first) until the
@@ -826,9 +844,15 @@ is a face and waits for its canvas).
   cut: it is what main sends.
 - **Nothing served: nothing added.** The prompt is byte-identical to main
   (fenced for Ask and for the chat payload).
-- **Not on the frozen Thought path** (`thought.interview` through the
-  refinement coordinator): its coordinator reserves the bytes before
-  dispatch.
+- **The routed Thought too** (2026-10-05). The refinement coordinator
+  reserves the payload's bytes before dispatch, and Ask checks the bytes it
+  dispatches against them. Both read the desk's pages and observations the
+  same way (`AskService.thought_reflect`: the desk scope, the Thought's own
+  note held out, fitted with one fixed operation id that is longer than any
+  real one), so the same memory gives the same bytes. A page rewrite or a
+  withdrawal between the two is the material check's, as for the recall
+  (the turn fails, as it does for the recall). The legacy (un-migrated) Thought
+  path is unchanged.
 - **`memory.page` joins the default chat, Desk and Chase palettes. No
   palette grows versus main** (fenced: `MAIN_PALETTE_BYTES`). The room:
   the page's schema words are short (516 bytes rendered, was 611), and
@@ -1115,14 +1139,22 @@ group passes.
   a key block (no header for a pattern to see) or end inside a secret. So the
   source's complete admitted text is redacted as one text (a secret across
   transcript turns is one secret), and every chunk, snippet, recent row,
-  relation row and memory-selected grounding block is cut from that.
+  relation row and grounding block is cut from that. Since 2026-10-05 that
+  includes a source the owner attached by hand (`grounding._defended`, the
+  hydration of a named ref and its replay on a later turn): a key in a note
+  he attaches never reaches a model.
 - **Secrets.** Every title and snippet memory returns is redacted. The
   keyword tables `*_memory_fts` are filled by triggers in the writer's own
   transaction, so the sweep (and the rebuild) replaces the copy of a source
-  that holds a secret and merges the index. Not done: `segments_fts` and
-  `thread_messages_fts` hold no copy of the text, only tokens; a secret said
-  in a meeting or a thread is still a search key there (the result is
-  redacted).
+  that holds a secret and merges the index. `segments_fts` and
+  `thread_messages_fts` hold no copy of the text, only tokens, and keep the
+  raw words. **A secret is not a search key** (2026-10-05,
+  `MemoryRepository._drop_secret_keyed`): a keyword hit is dropped when a
+  query token is in its source only inside a secret (in the raw text, not
+  in the redacted text; tokens cut as FTS5 cuts them, so the body of
+  "ghp_..." without its prefix is caught too). The words that name a
+  secret ("token", "password") stay keys. A source memory cannot read
+  keeps its hit.
 
 On a corpus this small the vector top 50 holds almost every source, so a
 keyword hit on a common word is in both lists and can rank above the one

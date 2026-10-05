@@ -590,3 +590,93 @@ def test_a_part_fitted_to_empty_stays_empty_on_every_later_pass(hub) -> None:
     lines = [memory_lines(call) for call in turn["calls"]]
     assert lines[0] > 0 and lines[-1] == 0, lines
     assert all(later <= earlier for earlier, later in zip(lines, lines[1:])), lines
+
+
+# ── the routed Thought (the open limit of #850) ─────────────────────────
+
+
+class _ThoughtEngine(_AskEngine):
+    def run_prompt(self, **kwargs: Any) -> str:
+        self.prompts.append(str(kwargs.get("user_prompt") or ""))
+        return json.dumps({"kind": "question", "question": "What is next?", "reason": "Keep it concrete."})
+
+
+def _routed_thought(db: Database, raw_text: str) -> tuple[_ThoughtEngine, dict, Any]:
+    """One routed Thought turn through the real coordinator: reservation,
+    then Ask's dispatch with its byte check."""
+    from holdspeak.services.ask_service import AskService
+    from holdspeak.services.refinement_coordinator import RefinementCoordinator
+    from holdspeak.services.refinement_thought_service import INBOX_DIRECTORY_ID, RefinementThoughtService
+
+    db.directories.upsert(directory_id=INBOX_DIRECTORY_ID, name="Inbox")
+    _profile(db, "thought-v2", claims=("language", _result_claim("thought.interview"), _result_claim("ask.answer")))
+    _profile(db, "writing-v2", claims=("language", _result_claim("speech.intent_classify"), _result_claim("speech.rewrite")))
+    broker = _configure(db)
+    broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+        thoughts=SimpleNamespace(inference_target_id="thought-v2"),
+        dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="writing-v2")),
+    ))
+    engine = _ThoughtEngine()
+    broker.inference_runner._engine_factory = lambda _revision, **_kw: engine
+    thoughts = RefinementThoughtService(db)
+    thought = thoughts.create(OWNER, request_id="reflect-thought", raw_text=raw_text, source={"kind": "typed"})
+    ask = AskService(db, broker=broker)
+    coordinator = RefinementCoordinator(db, ask_factory=lambda: ask)
+    coordinator._uses_default_ask = True
+
+    async def run() -> dict:
+        await coordinator.start()
+        await coordinator.begin(
+            OWNER, thought_id=thought["id"], request_id="reflect-refine",
+            expected_aggregate_revision=1, expected_working_revision=1, expected_attachment_revision=0,
+        )
+        for _ in range(300):
+            if not coordinator.active_ids:
+                break
+            await asyncio.sleep(0.01)
+        await coordinator.shutdown()
+        return thoughts.get(OWNER, thought["id"])
+
+    return engine, asyncio.run(run()), coordinator
+
+
+def test_a_routed_thought_grounds_on_the_desks_pages_and_observations(tmp_path: Path) -> None:
+    """The coordinator reserves the bytes with the desk's pages and
+    observations in them, and Ask dispatches the same bytes (the material
+    check passes: the turn reaches review)."""
+    db = _desk(tmp_path)
+    _filed_note(db, "nd", "Desk lunch is noon.", None)
+    _filed_note(db, "na", "Atlas codename is ZEPHYRATLAS.", "atlas")
+    _built(db)
+    engine, current, _coordinator = _routed_thought(db, "Plan the desk lunch")
+    assert current["continuity"]["state"] == "review_ready", current["continuity"]
+    assert len(engine.prompts) == 1
+    part = _memory_part(engine.prompts[0])
+    assert PAGE in part and OBSERVATIONS in part and "Desk lunch is noon." in part, engine.prompts[0]
+    assert "ZEPHYRATLAS" not in part  # a project's pages and beliefs are not the desk's
+
+
+def test_a_routed_thought_never_reflects_its_own_note(tmp_path: Path) -> None:
+    """The Thought's own note is held out of its pages and observations, as
+    of its recall."""
+    db = _desk(tmp_path)
+    _filed_note(db, "nd", "Desk lunch is noon.", None)
+    _built(db)
+    engine, current, _ = _routed_thought(db, "Desk lunch is noon.")
+    assert current["continuity"]["state"] == "review_ready", current["continuity"]
+    own = str(current["working_note"]["id"])
+    assert f"note:{own}" not in _memory_part(engine.prompts[0])
+
+
+def test_with_no_page_or_observation_the_thought_bytes_are_unchanged(tmp_path: Path) -> None:
+    """Nothing served: the coordinator's payload is exactly the recall-only
+    payload (no part, no note)."""
+    from holdspeak.services.ask_service import AskService
+    from holdspeak.services.refinement_coordinator import RefinementCoordinator
+
+    db = _desk(tmp_path)
+    service, _engine = _ask_rig(db)
+    coordinator = RefinementCoordinator(db, ask_factory=lambda: service)
+    sealed = coordinator._sealed_prompt("Plan the quorumdb ledger")
+    payload = coordinator._routed_payload(sealed, None, [])
+    assert REFLECT_NOTE not in payload["user_prompt"] and PAGE not in payload["user_prompt"]

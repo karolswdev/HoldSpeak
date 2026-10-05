@@ -468,6 +468,21 @@ _ENTITY_NAME_WORDS = 6
 _TIME_QUESTION_MAX_CHARS = 400
 _MARK = re.compile(r"</?mark>")
 _WORD = re.compile(r"\w+", re.UNICODE)
+#: A token as the FTS5 unicode61 tokenizer cuts it (``_`` separates).
+_FTS_TOKEN = re.compile(r"[^\W_]+", re.UNICODE)
+
+
+def _fts_tokens(text: str) -> set[str]:
+    return {token.casefold() for token in _FTS_TOKEN.findall(str(text or ""))}
+
+
+#: The words that NAME a secret ("token=...", "ghp_..."): the redaction
+#: takes them with the value, but they are not the secret.  A search for
+#: "token" still finds the note that says "token=..."; its value does not.
+_SECRET_LABELS = frozenset(
+    "bearer token password passwd secret api key apikey authorization "
+    "ghp gho ghu ghs ghr github pat xoxa xoxb xoxp xoxr xoxs sg sk".split()
+)
 _QUERY_STOPWORDS = frozenset(
     "a an and are about did do does for from how i in is it of on or the to was what when where which who why with we you".split()
 )
@@ -1021,6 +1036,13 @@ class MemoryRepository(BaseRepository):
                     by_kind[kind] = self._chunk_rows(
                         conn, kind, expression, project, start, end
                     )
+
+            # A secret is never a search key: the keyword tables hold the
+            # raw text, so a hit that a query token reaches only inside a
+            # secret of its source is dropped (the returned text was already
+            # redacted; now the key is too).
+            for kind in list(by_kind):
+                by_kind[kind] = self._drop_secret_keyed(conn, by_kind[kind], terms)
 
         normalized: dict[str, list[dict[str, Any]]] = {}
         for kind, rows in by_kind.items():
@@ -1794,6 +1816,43 @@ class MemoryRepository(BaseRepository):
                 )
         return rows
 
+    def _drop_secret_keyed(
+        self, conn: sqlite3.Connection, rows: list[dict[str, Any]], terms: list[str]
+    ) -> list[dict[str, Any]]:
+        """``rows`` less each hit whose source holds a query token ONLY inside
+        a secret (``defense.redact``): its raw text has the token, its
+        redacted text does not.  Tokens are cut as FTS5 cuts them, so the
+        body of "ghp_..." is caught without its prefix.  The words that name
+        a secret (``_SECRET_LABELS``: "token", "password") stay keys.  A
+        source memory cannot read (``current_source`` is None) keeps its
+        hit."""
+        wanted = set().union(*(_fts_tokens(term) for term in terms)) if terms else set()
+        if not rows or not wanted:
+            return rows
+        from ..memory.retain import current_source, redact_source
+
+        hidden: dict[str, set[str]] = {}
+        kept: list[dict[str, Any]] = []
+        for row in rows:
+            base = self._base_ref(str(row["source_ref"]))
+            if base not in hidden:
+                found: set[str] = set()
+                try:
+                    source = current_source(conn, base)
+                    if source is not None:
+                        title, units, held = redact_source(source)
+                        if held:
+                            raw = " ".join([str(source.title or "")] + [str(text) for _anchor, text in source.units])
+                            clean = " ".join([title] + [text for _anchor, text in units])
+                            found = _fts_tokens(raw) - _fts_tokens(clean) - _SECRET_LABELS
+                except Exception:  # pragma: no cover - a check never fails a search
+                    found = set()
+                hidden[base] = found
+            if wanted & hidden[base]:
+                continue
+            kept.append(row)
+        return kept
+
     @classmethod
     def _ref_in_project(
         cls, conn: sqlite3.Connection, kind: str, resource_id: str, project: str
@@ -2103,12 +2162,20 @@ class MemoryRepository(BaseRepository):
                                 )))"""
             )
             params.extend((project, project, project, project))
-        if start:
-            clauses.append("t.updated_at>=CAST(strftime('%s',?) AS REAL)")
-            params.append(start)
-        if end:
-            clauses.append("t.updated_at<=CAST(strftime('%s',?) AS REAL)")
-            params.append(end)
+        # The bounds as instants (``timeparse.instant``), compared with the
+        # thread's epoch stamp: a bare local time ("2026-10-04T08:30:00") is
+        # the hub's wall time, never UTC (SQLite's strftime read it as UTC).
+        # A bound that is not a time finds nothing, as ``_in_time`` does.
+        from ..memory.timeparse import instant
+
+        for bound, op in ((start, ">="), (end, "<=")):
+            if not bound:
+                continue
+            at = instant(bound)
+            if at is None:
+                return []
+            clauses.append(f"t.updated_at{op}?")
+            params.append(at.timestamp())
         # FTS auxiliary functions (bm25, snippet) must be computed in the
         # same query level as the MATCH, so pre-compute them in the first
         # CTE and then window-rank over the materialized column.
