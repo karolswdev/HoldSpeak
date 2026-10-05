@@ -365,15 +365,13 @@ def test_hard_relation_questions_need_the_entity_walk(tmp_path: Path, capsys) ->
     # expects, so keyword search finds none of them.
     assert keyword["groups"][group]["recall@5"] == 0.0
     assert walk["groups"][group]["recall@5"] >= HARD_WALK_GATE
-    # Measured 2026-10-04 (EXTRACTOR_VERSION 2): 7 of 9 complete. Each
-    # question that is complete stays fenced ONE BY ONE; the two known gaps
-    # are strict xfails of their own (Astra, #845 iteration 2):
-    # - r11 misses n-supplier: "T. Wierzbicki" does not join "Tomasz
-    #   Wierzbicki" (test_hard_relation_alias_joins_the_full_name).
+    # Measured 2026-10-05: 8 of 9 complete (r11 joined by the initial rule).
+    # Each question that is complete stays fenced ONE BY ONE; the known gap
+    # is a strict xfail of its own (Astra, #845 iteration 2):
     # - r09 finds no Kestrel source without vectors: with no title rule the
     #   model leaves "Kestrel" out of the facts (the title rule invented
     #   projects; test_hard_relation_kestrel_is_complete_by_the_walk).
-    known_gaps = {"r09", "r11"}
+    known_gaps = {"r09"}
     for question in hard:
         if question["id"] in known_gaps:
             continue
@@ -449,14 +447,11 @@ def test_the_hard_sources_give_the_next_such_day(tmp_path: Path, label: str, fut
     assert future in dates and past not in dates, (label, dates)
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "Gap, measured 2026-10-04 on qwen3.8-27b: 'T. Wierzbicki confirmed the sensor batch ships on the "
-    "twentieth' (note of 2026-09-23) still gives 2026-09-20. The prompt line gives both dates; the model "
-    "takes the tense of 'confirmed'. The first-person line ('I confirm ... ships on the twentieth', date "
-    "case 'ships') gives 2026-10-20. Two more wordings (a reported-speech example; a shorter rule) did not "
-    "fix it and gave empty answers on other date cases."
-))
 def test_the_supplier_note_gives_the_next_such_day(tmp_path: Path) -> None:
+    """"T. Wierzbicki confirmed the sensor batch ships on the twentieth"
+    (note of 2026-09-23): the shipping is still to come, so October.  Gap
+    until EXTRACTOR_VERSION 3 (the model took the tense of "confirmed"); the
+    prompt now says the tense is the thing's, not the reporting verb's."""
     dates = _hard_dates(tmp_path, "n-supplier")
     assert "2026-10-20" in dates and "2026-09-20" not in dates, dates
 
@@ -516,7 +511,7 @@ def test_hard_relation_names_stay_apart(tmp_path: Path) -> None:
 
 
 @pytest.mark.xfail(strict=True, reason=(
-    "Gap, measured 2026-10-04 (EXTRACTOR_VERSION 2, qwen3.8-27b): with no title rule "
+    "Gap, measured 2026-10-04 (EXTRACTOR_VERSION 2) and again 2026-10-05 (versions 3 and 4), qwen3.8-27b: with no title rule "
     "the model leaves 'Kestrel' out of the facts of m-kestrel and th-kestrel, so the "
     "walk alone finds neither for r09. A title rule fixed it but invented projects "
     "from meeting titles (Astra, #845). With vectors on, r09 is complete."
@@ -533,16 +528,12 @@ def test_hard_relation_kestrel_is_complete_by_the_walk(tmp_path: Path) -> None:
     assert {refs[label] for label in r09["expect"]} <= set(got), got
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "Gap, measured 2026-10-04: 'T. Wierzbicki' (n-supplier) stays its own entity. "
-    "Resolver score 0.585 < 0.6: name 0.5 x 0.83, no shared neighbour (the model "
-    "lists 'sensor batch' on the note's fact but not on Tomasz's fact), time 0.2 x 6/7 "
-    "(seen 2026-09-23 against 2026-09-24). On the same day it would join (0.614)."
-))
 def test_hard_relation_alias_joins_the_full_name(tmp_path: Path) -> None:
     """r11: the question says "Tomasz"; n-supplier says only "T. Wierzbicki";
     the full name is only in m-corvid's title.  The walk reaches n-supplier
-    only when the two mentions are one entity."""
+    only when the two mentions are one entity.  Measured 2026-10-04: the
+    score was 0.585 < 0.6 (no shared neighbour, a day apart); the initial
+    rule (``entities.initial_form``) joins them."""
     from holdspeak.memory.entities import fold
     from holdspeak.memory.extract import extract_pending
 

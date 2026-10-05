@@ -72,7 +72,7 @@ export function RoadmapWindow({ slug, origin }: { slug: string; origin?: { x: nu
     <DeskWindowFrame
       id={`roadmap:${slug}`}
       glyph="▤"
-      label={`Roadmap ${detail?.name || slug}`}
+      label={detail?.name || slug}
       title={detail?.name || slug}
       minW={520}
       minH={360}

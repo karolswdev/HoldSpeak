@@ -10,6 +10,8 @@ import type {
   ProcessSection,
 } from "../../../desk/processWindowReducer";
 import { ProcessCore } from "../ProcessCore";
+import { useDesk } from "../../../desk/store";
+import { EMPTY_ITEMS, type Items } from "../../../desk/api";
 
 const row: ProcessRow = {
   operationId: "op_waiting",
@@ -65,7 +67,7 @@ describe("ProcessCore", () => {
     // HS-111-06: section heads are count tokens; kinds are the wire
     // tokens themselves; state is a surface-token, never a pill.
     expect(screen.getByText("NEEDS YOU 1")).toBeTruthy();
-    expect(screen.getByText(/PROCESS\.SPAWN · agent:build/)).toBeTruthy();
+    expect(container.textContent).toMatch(/PROCESS\.SPAWN · agent:build/);
     expect(
       screen.getByText(/Owner · Node:studio/),
     ).toBeTruthy();
@@ -99,5 +101,43 @@ describe("ProcessCore", () => {
       expect(screen.getByText(head)).toBeTruthy();
     }
     expect(screen.getByText(/KERNEL · CURSOR/)).toBeTruthy();
+  });
+});
+
+describe("ProcessCore names the target, never a raw id and never a blank (Astra, #869)", () => {
+  it("names a record the desk holds, tokens one it does not, drops an echo", async () => {
+    const { shownTarget } = await import("../ProcessCore");
+    const items = { ...EMPTY_ITEMS, decision: [
+      { kind: "decision", id: "decision_c9edf19564f8", title: "Freeze the old ledger on Nov 5" },
+    ] } as unknown as Items;
+    expect(shownTarget({ kind: "channel.save_destination", target: "desk:channel.save_destination" }, items)).toBe("");
+    expect(shownTarget({ kind: "decision.create", target: "decision:decision_c9edf19564f8" }, items)).toBe("Freeze the old ledger on Nov 5");
+    expect(shownTarget({ kind: "meeting.summarize", target: "meeting:9f8a7b6c5d4e" }, items)).toBe("Meeting 9f8a7b");
+    expect(shownTarget({ kind: "note.update", target: "note:note_624495deb1f5" }, items)).toBe("Note 624495");
+    expect(shownTarget({ kind: "process.spawn", target: "agent:build" }, items)).toBe("agent:build");
+  });
+
+  it("two decisions made in the same second read as two different rows", () => {
+    useDesk.setState({ items: { ...EMPTY_ITEMS, decision: [
+      { kind: "decision", id: "decision_c9edf19564f8", title: "Freeze the old ledger on Nov 5" },
+      { kind: "decision", id: "decision_e8da87a9f184", title: "Adopt OpenTelemetry" },
+    ] } as unknown as Items });
+    const ended = (id: string, target: string): ProcessRow => ({ ...row, operationId: id, correlationId: id,
+      latestEventType: "", state: "succeeded", kind: "decision.create", target, timestamp: "2026-10-05T16:12:34Z" });
+    useProcessWindow.setState({
+      sections: [{ id: "recently-ended", label: "Recently ended", rows: [
+        ended("op_a", "decision:decision_c9edf19564f8"), ended("op_b", "decision:decision_e8da87a9f184")] }],
+      loading: false, inflight: false, error: "", started: true,
+    });
+    const { container } = render(<ProcessCore />);
+    const lines = [...container.querySelectorAll(".surface-ledger-rows > li")].map((li) => li.textContent);
+    expect(lines).toHaveLength(2);
+    expect(new Set(lines).size).toBe(2);
+    expect(lines.some((l) => /DECISION\.CREATE · Freeze the old ledger on Nov 5/.test(l ?? ""))).toBe(true);
+    expect(lines.some((l) => /DECISION\.CREATE · Adopt OpenTelemetry/.test(l ?? ""))).toBe(true);
+    // The name is its own element, so the face can give it room (glass fences its width).
+    expect([...container.querySelectorAll("[data-testid=process-target]")].map((e) => e.textContent)).toEqual(
+      [" · Freeze the old ledger on Nov 5", " · Adopt OpenTelemetry"]);
+    expect(container.textContent).not.toMatch(/decision_[0-9a-f]/);
   });
 });

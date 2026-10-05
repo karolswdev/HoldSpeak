@@ -138,11 +138,22 @@ export function fuzzyScore(query: string, target: string): number {
     if (ts.startsWith(qs)) return 75;
     if (qs.length > 2 && stemmed.some((word) => word.startsWith(qs))) return 65;
   }
-  let qi = 0;
-  for (let ti = 0; ti < t.length && qi < q.length; ti++) {
-    if (t[ti] === q[qi]) qi++;
-  }
-  if (qi === q.length) return 30;
+  // The scattered-letter match stays inside ONE word (`mgs` finds
+  // Meetings). Across words it found the letters of almost any long label:
+  // `send` matched "Close window" (s-e in close, n-d in window) and a dozen
+  // other rows that have nothing to do with sending (STATUS: noise rows).
+  // A query of several words matches word by word ("payments cutover"
+  // finds "Payments ledger cutover").
+  const within = (part: string) => (word: string) => {
+    let qi = 0;
+    for (let ti = 0; ti < word.length && qi < part.length; ti++) {
+      if (word[ti] === part[qi]) qi++;
+    }
+    return qi === part.length;
+  };
+  const parts = q.split(/\s+/).filter(Boolean);
+  if (parts.length > 1 && parts.every((part) => words.some((word) => word.startsWith(part)))) return 55;
+  if (parts.length > 0 && parts.every((part) => words.some(within(part)))) return 30;
   if (t.includes(q)) return 20;
   return 0;
 }
@@ -639,7 +650,10 @@ export function DeskToolShelf() {
         section: "SETTINGS",
         glyph: "↗",
         label: integration.name,
-        kind: integration.enabled ? "INTEGRATION" : "NOT CONFIGURED",
+        // A saved Send destination is set up; `enabled` false only says
+        // nothing leaves this device (the built-in HoldSpeak folder read
+        // NOT CONFIGURED for "send").
+        kind: integration.enabled ? "INTEGRATION" : integration.saved ? "DESTINATION" : "NOT CONFIGURED",
         terms:
           `integration ${integration.destination} ${integration.operation}`.toLocaleLowerCase(),
         run: () => openToolInspector("integration", integration.id),

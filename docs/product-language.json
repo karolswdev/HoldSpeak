@@ -139,6 +139,24 @@
       "plural": "Receipts",
       "category": "attention",
       "meaning": "A durable account of what ran, where, why, and with what outcome."
+    },
+    "decision": {
+      "singular": "Decision",
+      "plural": "Decisions",
+      "category": "content",
+      "meaning": "A choice a person made, with its context, the options and what follows from it."
+    },
+    "thread": {
+      "singular": "Thread",
+      "plural": "Threads",
+      "category": "content",
+      "meaning": "A conversation with an engine, kept as one object with its messages."
+    },
+    "workbench": {
+      "singular": "Workbench",
+      "plural": "Workbenches",
+      "category": "capability",
+      "meaning": "A list of work items that an Agent runs, one at a time or in bulk."
     }
   },
   "legacy_aliases": {

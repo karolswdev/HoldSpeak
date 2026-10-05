@@ -34,6 +34,11 @@ _ASK_SYSTEM_PROMPT = "You are the desk's AI core. Follow the instruction using t
 ASK_SERVICE_CONTRACT = "holdspeak.ask"
 ASK_SERVICE_SCHEMA_VERSION = "1"
 ASK_PAYLOAD_SCHEMA_VERSION = 1
+#: The operation id the Thought's pages and observations are fitted with,
+#: at reservation (the refinement coordinator) and at dispatch (Ask): one
+#: fixed value, longer than any real Ask id, so both sides fit the same bytes
+#: and the real request is never larger than the one that was fitted.
+THOUGHT_FIT_OPERATION_ID = "ask_" + "0" * 60
 
 
 class _QuestionOrSynthesisAdapter:
@@ -212,8 +217,9 @@ class AskService:
         if frozen_grounding is not None:
             frozen_grounding.validate()
         # Memory slice 6 (MEMORY-DESIGN.md §3.5): the scope's pages, then its
-        # observations, BEFORE the fused recall in the grounding block.  Not
-        # on the frozen Thought path: its coordinator reserved those bytes.
+        # observations, BEFORE the fused recall in the grounding block.  The
+        # routed Thought reads them below, as its coordinator did when it
+        # reserved the bytes (``thought_reflect``).
         reflect = EMPTY_MEMORY
         if frozen_grounding is None and not routed_execution_id:
             reflect = reflect_for(
@@ -255,7 +261,14 @@ class AskService:
                     "max_tokens": int(max_tokens) if max_tokens is not None else None,
                 }
 
-            if reflect:
+            if routed_execution_id and capability_id == "thought.interview":
+                # The routed Thought: the same read and fit the coordinator
+                # made at reservation, so the dispatched bytes are the
+                # reserved bytes (checked below).
+                reflect = await asyncio.to_thread(
+                    self.thought_reflect, prompt, exclude_refs=memory_exclude_refs, build=_payload,
+                )
+            elif reflect:
                 # One budget: the pages and observations never push the Ask
                 # over the route admission will freeze.
                 reflect = await asyncio.to_thread(
@@ -592,6 +605,36 @@ class AskService:
             else ""
         )
         return envelope, echo, ids, titles, instruction
+
+    def thought_reflect(
+        self,
+        prompt: str,
+        *,
+        exclude_refs: Sequence[str] = (),
+        build: Callable[[MemoryContext], dict[str, Any]],
+    ) -> MemoryContext:
+        """The desk's pages and observations for a routed Thought turn,
+        fitted to the route with ``build`` (the whole payload for a part).
+
+        The refinement coordinator calls this before it reserves the bytes,
+        and Ask calls it again at dispatch with the same arguments: the same
+        memory gives the same bytes.  A change between the two (a page
+        rewrite, a withdrawn source) is the dispatch-material check's, as for
+        the recall.  No broker, or any failure: the empty context."""
+        try:
+            reflect = reflect_for(
+                "thought.interview", self._db, scopes=reflect_scopes((), explicit=False),
+                query=prompt, exclude_refs=exclude_refs,
+            )
+            if not reflect or self._broker is None:
+                return EMPTY_MEMORY
+            return fit_reflect(
+                self._broker.inference_adoption_service, reflect,
+                capability_id="thought.interview", operation_id=THOUGHT_FIT_OPERATION_ID,
+                reserved_output_tokens=512, build=build,
+            )
+        except Exception:  # memory never fails a Thought
+            return EMPTY_MEMORY
 
     @staticmethod
     def _reflect_scopes(grounding: Any) -> list[tuple[str, str]]:

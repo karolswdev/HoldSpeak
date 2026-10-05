@@ -151,11 +151,11 @@ export function filedZones(o: WorldObject, items: Items) {
   });
 }
 
-/** The kind's word for the Info face. `productLabel` throws on a kind the
- * product-language registry does not hold (decision, workbench, thread), and
- * that throw took the whole desk down ("This surface needs a reset") when Get
- * Info opened on such an object. Those kinds fall back to the desk's own
- * label (the word the Floor list already shows for the same row). */
+/** The kind's word for the Info face. The registry holds decision, thread
+ * and workbench now (they were missing, and the throw took the whole desk
+ * down when Get Info opened on one). `productLabel` still throws on a kind
+ * the registry does not hold: such a kind falls back to the desk's own label
+ * (the word the Floor list already shows for the same row). */
 export function kindLabel(kind: string): string {
   try {
     return productLabel(kind);

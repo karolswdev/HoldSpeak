@@ -122,11 +122,20 @@ describe("CalendarSnapshotReviewCore", () => {
       events: [],
     });
     render(<CalendarSnapshotReviewCore scope={errorScope} />);
-    expect(
-      screen.getByText(
-        "Could not read the screenshot as a calendar. Try a clearer image.",
-      ),
-    ).toBeTruthy();
+    // UX-CANON A10: a token pair, never a sentence.
+    expect(screen.getByTestId("calendar-snapshot-refusal").textContent).toBe("✗CAN'T READ Not a calendar image");
+  });
+
+  it("names the no-model refusal in plain words, never the hub's code (B0-L1)", () => {
+    render(<CalendarSnapshotReviewCore scope={JSON.stringify({ error: "no_vision_model_assigned", events: [] })} />);
+    const refusal = screen.getByTestId("calendar-snapshot-refusal");
+    expect(refusal.textContent).toBe("✗CAN'T READ No vision model");
+    expect(refusal.textContent).not.toMatch(/_/);
+  });
+
+  it("never prints an unknown code with underscores", () => {
+    render(<CalendarSnapshotReviewCore scope={JSON.stringify({ error: "vision_engine_timed_out", events: [] })} />);
+    expect(screen.getByTestId("calendar-snapshot-refusal").textContent).toBe("✗CAN'T READ Vision engine timed out");
   });
 
   it("cancel (closing window) writes nothing", () => {
