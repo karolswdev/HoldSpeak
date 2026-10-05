@@ -474,7 +474,13 @@ function resolveKindFromId(
   const colonIdx = id.indexOf(":");
   if (colonIdx > 0) {
     const prefix = id.slice(0, colonIdx);
-    const bareId = id.slice(colonIdx + 1);
+    let bareId = id.slice(colonIdx + 1);
+    // ROADMAP ONLY: a Roadmap item's id is already `roadmap:<slug>`
+    // (api.ts fromWireRoadmap), so its qualified ref reads
+    // `roadmap:roadmap:<slug>`; the window opened on `roadmap:<slug>` and
+    // showed "Roadmap not found" (B0-F4). Every other kind keeps its id
+    // whole: a Workbench may be named `workbench:weekly` (Astra, #869).
+    if (prefix === "roadmap" && bareId.startsWith("roadmap:")) bareId = bareId.slice("roadmap:".length);
     const kind = (REF_PREFIX_TO_KIND[prefix] ?? prefix) as PrimitiveKind;
     if (kind in PRIMITIVES) return { kind, resolvedId: bareId };
   }

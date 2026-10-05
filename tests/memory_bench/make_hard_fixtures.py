@@ -59,13 +59,20 @@ class _ReplayThenRecord:
 
 def main(base_url: str, model: str) -> None:
     model_path = os.environ.get("HOLDSPEAK_MEMORY_EMBED_MODEL", "")
-    if not model_path or not Path(model_path).is_file():
-        raise SystemExit("Set HOLDSPEAK_MEMORY_EMBED_MODEL to the GGUF file.")
     db = Database(Path(tempfile.mkdtemp()) / "hard.db")
     build_corpus(db)
     build_hard_corpus(db)
     sweep(db)
+    if model_path and Path(model_path).is_file():
+        _record_vectors(db, model_path)
+    else:
+        # The vectors depend on the chunk texts only: a prompt change records
+        # the facts again and keeps the vectors file as it is.
+        print("HOLDSPEAK_MEMORY_EMBED_MODEL not set: vectors kept, facts recorded", file=sys.stderr)
+    _record_facts(db, base_url, model)
 
+
+def _record_vectors(db: Database, model_path: str) -> None:
     # Vectors: what the base fixture does not hold.
     with np.load(str(bench.FIXTURE), allow_pickle=False) as data:
         held = {str(key) for key in data["keys"]}
@@ -84,6 +91,8 @@ def main(base_url: str, model: str) -> None:
     )
     print(f"wrote {bench.HARD_VECTORS} ({len(prefixed)} vectors)", file=sys.stderr)
 
+
+def _record_facts(db: Database, base_url: str, model: str) -> None:
     # Facts: the endpoint for the hard sources only.
     # A hard prompt already recorded keeps its answer; only a new or changed
     # prompt goes to the endpoint.

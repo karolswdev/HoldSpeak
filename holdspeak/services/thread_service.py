@@ -71,6 +71,38 @@ _LIVE_ONLY_STUBS = {
 }
 _LIVE_ONLY_TOOLS = frozenset(_LIVE_ONLY_STUBS)
 _LIVE_ONLY_STUB = _LIVE_ONLY_STUBS["memory.page"]
+#: Every other READ tool (class ``evidence_read`` or ``candidate_builder`` in
+#: ``thread_tools``: a note read, a meeting, a decision record, a People
+#: read ...) returns source text that can be withdrawn too.  On replay it is
+#: a stub that says to read again; the stored result stays as the receipt.
+#: An ``effect_proposal`` result (what a write did) replays as stored.
+_READ_CLASSES = frozenset({"evidence_read", "candidate_builder"})
+#: A tool result whose originating call is not found (Astra, #871): fail
+#: closed, never the stored text.
+_UNKNOWN_CALL_STUB = json.dumps({
+    "result": None,
+    "note": "This tool result was read in an earlier turn and is not kept. Call the tool again to read it now.",
+})
+
+
+def _replay_stub(tool_name: Optional[str]) -> Optional[str]:
+    """The stub a later turn gets for a tool result, or None to replay the
+    stored text.  Memory reads keep their own stubs; any other read tool
+    gets the generic one; an unknown name fails closed (a stub)."""
+    if not tool_name:
+        return None
+    if tool_name in _LIVE_ONLY_STUBS:
+        return _LIVE_ONLY_STUBS[tool_name]
+    from .thread_tools import _ALL_TOOL_CLASSES
+
+    entry = _ALL_TOOL_CLASSES.get(tool_name)
+    if entry is not None and entry[0] not in _READ_CLASSES:
+        return None
+    return json.dumps({
+        "result": None,
+        "note": f"This {tool_name} result was read in an earlier turn and is not kept. "
+                f"Call {tool_name} again to read it now.",
+    })
 _PEOPLE_REF_KINDS = frozenset({"person"})
 
 _UNSET = object()  # sentinel for "caller did not provide parent_id"
@@ -2434,18 +2466,24 @@ class ThreadService:
             messages.append({"role": "system", "content": person_line})
 
         sensitive_texts: list[str] = []
-        # Memory slice 6 (review round 1, Astra): the name of each tool call
-        # on the path, by its call id (the assistant's ``tool_call`` parts).
-        call_names: dict[str, str] = {}
+        # Memory slice 6 (review round 1, Astra): a tool result is classed by
+        # the call that MADE it: the ``tool_call`` parts of the latest
+        # assistant message before it on the path (Astra, #871: a provider
+        # may reuse a call id in a later turn, and one id map for the whole
+        # thread let a later write's name replay an earlier read).
         path_parts = {msg.id: self._threads.get_parts(msg.id) for msg in path}
-        for parts in path_parts.values():
-            for part in parts:
-                if part.kind == "tool_call" and part.tool_call_id:
-                    try:
-                        call_names[part.tool_call_id] = str(json.loads(part.meta_json or "{}").get("name") or "")
-                    except (json.JSONDecodeError, TypeError, AttributeError):
-                        pass
+        open_calls: dict[str, str] = {}
         for msg in path:
+            if msg.role == "assistant":
+                open_calls = {}
+                for part in path_parts[msg.id]:
+                    if part.kind == "tool_call" and part.tool_call_id:
+                        try:
+                            open_calls[part.tool_call_id] = str(
+                                json.loads(part.meta_json or "{}").get("name") or ""
+                            )
+                        except (json.JSONDecodeError, TypeError, AttributeError):
+                            open_calls[part.tool_call_id] = ""
             # HS-153-04: skip the draft message from the payload.
             if self._threads.is_draft_message(msg.id):
                 continue
@@ -2458,13 +2496,17 @@ class ThreadService:
             text_parts = []
             for part in parts:
                 if part.kind in ("text", "annotation") and part.text:
-                    tool_name = call_names.get(part.tool_call_id) if msg.role == "tool" else None
-                    if tool_name in _LIVE_ONLY_STUBS:
-                        # A memory read is true only at the time it is read:
-                        # its sources can be withdrawn later.  The stored
-                        # result (the receipt) stays; a later turn gets a
-                        # stub, never the stored text.
-                        text_parts.append(_LIVE_ONLY_STUBS[tool_name])
+                    stub = None
+                    if msg.role == "tool":
+                        # No originating call found: fail closed (a stub).
+                        name = open_calls.get(str(part.tool_call_id or ""))
+                        stub = _replay_stub(name) if name else _UNKNOWN_CALL_STUB
+                    if stub is not None:
+                        # A read is true only at the time it is read: its
+                        # sources can be withdrawn later.  The stored result
+                        # (the receipt) stays; a later turn gets a stub,
+                        # never the stored text.
+                        text_parts.append(stub)
                         continue
                     text_parts.append(part.text)
                     if part.sensitive and part.text:

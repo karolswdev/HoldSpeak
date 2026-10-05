@@ -6,6 +6,10 @@ import { useLaunchers } from "../../desk/components/DeskWindow";
 import { useProcessWindow } from "../../desk/processWindow";
 import type { ProcessRow } from "../../desk/processWindowReducer";
 import { humanizeWireValue } from "../../lib/productLanguage";
+import { kindWord, looksLikeId } from "../../desk/windowName";
+import { objectByRef } from "../../desk/world";
+import { useDesk } from "../../desk/store";
+import type { Items } from "../../desk/api";
 import {
   SurfaceLedger,
   SurfaceLedgerRow,
@@ -33,6 +37,31 @@ function stateTone(row: ProcessRow): "warn" | "danger" | "ok" | undefined {
   return undefined;
 }
 
+/** What a row's target says on the face (STATUS: no raw ids on faces;
+ * Astra, #869: never a blank where the identity is):
+ *   - "" only for a target that repeats the operation's own name
+ *     (`desk:channel.save_destination`): it names nothing new;
+ *   - a record the desk holds reads by its NAME (`Freeze the old ledger`);
+ *   - a record the desk does not hold keeps an inspectable identity: its
+ *     kind and a short id token (`Decision c9edf1`), so two rows never look
+ *     the same;
+ *   - any other target (`agent:build`) reads as the hub sent it. */
+export function shownTarget(row: Pick<ProcessRow, "kind" | "target">, items?: Items): string {
+  const target = row.target.trim();
+  if (!target) return "";
+  const colon = target.indexOf(":");
+  const kind = colon > 0 ? target.slice(0, colon) : "";
+  const rest = colon > 0 ? target.slice(colon + 1) : target;
+  if (rest === row.kind || target === row.kind) return "";
+  const named = items ? objectByRef(items, target) : null;
+  if (named?.title) return named.title;
+  if (looksLikeId(rest) || /^[0-9a-f]{10,}$/i.test(rest)) {
+    const hex = rest.replace(/^[a-z]{1,12}_/i, "").replace(/-/g, "");
+    return `${kindWord(kind) || "Record"} ${hex.slice(0, 6)}`;
+  }
+  return target;
+}
+
 function stateToken(row: ProcessRow): string {
   if (row.latestEventType === "operation.awaiting_decision") return "NEEDS YOU";
   return row.state ? row.state.toUpperCase() : "UNKNOWN";
@@ -47,6 +76,7 @@ function LedgerRows({
   openDecisions: () => void;
   depth?: number;
 }) {
+  const items = useDesk((state) => state.items);
   return (
     <>
       {rows.map((row) => {
@@ -60,11 +90,18 @@ function LedgerRows({
           <Fragment key={row.operationId}>
             <SurfaceLedgerRow
               time={clockToken(row.timestamp)}
+              /* The row wraps (the species' `wrap`): at 393 the facts fall
+                 under the name, so the target is never squeezed to nothing
+                 (Astra, #869: it measured 3 px and two decisions looked the
+                 same). */
+              wrap
               primary={
                 <>
                   {depth > 0 ? "└ " : ""}
                   {row.kind.toUpperCase()}
-                  {row.target ? ` · ${row.target}` : ""}
+                  {shownTarget(row, items) ? (
+                    <span className="process-target" data-testid="process-target">{` · ${shownTarget(row, items)}`}</span>
+                  ) : null}
                 </>
               }
               cells={
@@ -152,6 +189,7 @@ export function ProcessCore(_props: CoreProps) {
         store.sections.map((section) => (
           <SurfaceLedger
             key={section.id}
+            cols="process"
             count={countLabel(section.label.toUpperCase(), section.rows.length)}
           >
             {section.rows.length ? (
