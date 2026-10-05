@@ -273,3 +273,10 @@ composes the one starter-model profile for the signed local preset
 (`preset_local_qwen35_4b_gguf_q4km`). It does not choose a route leg, does not
 retry, and writes no assignment. Classified in `BACKEND_PRIVATE_DECISIONS`
 under the existing 143-12 owner-surface migration family.
+
+**2026-10-05, first run FOUND (#859).** `web/src/desk/firstrun/Found.tsx` is an
+`inference-route` web surface under the 143-13 assignment family: it lists the
+#855 default proposals and its "Use it" press posts
+`/api/inference/defaults/use-proposal`; the server
+(`InferenceDefaultService`) writes the global assignment as the owner's choice.
+The browser selects nothing itself.
