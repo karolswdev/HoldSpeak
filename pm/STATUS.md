@@ -30,7 +30,8 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 | Memory: turn meaning search on from the product (the embedding model is not in the signed catalogue): waits for the owner's word | — | — |
 | Memory dates (Astra, #845 iteration 2): "the ninth of September … was missed" in a meeting of 22 Sep is stored as 9 Aug; a third-person "confirmed … ships on the twentieth" gets a past date (xfail); reported-speech and mixed explicit/bare-date lines give no facts; Kestrel (r09) is found only with vectors (xfail) | Muad'Dib | — |
 | Memory entities: an initial alias ("T. Wierzbicki") does not join the full name (score 0.585 < 0.6 without a shared neighbour); strict xfail in the bench | — | — |
-| Memory slices 5 (faces: need a canvas) and 6 (palette and Ask; `memory.page` is out of chat palettes until the palette fits the 32k context) | Muad'Dib | — |
+| Memory faces (need a canvas): the Desk memory card with observations, the standing pages, the ⌘K palette's use of fused recall | Muad'Dib | — |
+| Memory: a chat thread replays its saved recall on every later turn, so a deleted note's text can come back (on main before #850); Chase has about 440 bytes of palette room at 32k; the Thought interview path gets no pages or observations | — | — |
 | Memory pages: never run with the real LAN model; attribution is by words (shared words can carry another input's meaning); a refile does not stale the destination project's pages; a clock rollback can miss staleness; no person pages (observations have no person scope) | — | — |
 | Memory observations: never run with the real LAN model; no benchmark group; join default search only by naming kind `observation` | — | — |
 | Memory facts: off until `memory.extract` is assigned; never run through the product path with the real LAN model; entity kind as a list raises TypeError with no back-off job; the conductor reports calls 0 after a provider exception; a crashed open call holds extraction up to 600 s | — | — |
@@ -61,6 +62,7 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 
 ## Last merged (newest first)
 
+- #850 — Memory slice 6, backend: Ask and chat ground pages, then observations, then recall; refitted before every pass; `memory.page` in the chat palettes except Plan, no palette larger than before
 - #848 — Memory slice 5, backend: standing pages per project and desk (dark until `memory.page` is assigned); every sentence checked against its cited inputs; withdrawn inputs withheld at read; drafters read pages as context
 - #846 — The Door week test seeds inside the local week with one pinned clock (it failed on Sunday evenings)
 - #845 — Memory dates by tense (next such day for things to come, last for things done), spans keep their length, no title-named projects; observation tables refuse rowid rewrites (EXTRACTOR_VERSION 2)
