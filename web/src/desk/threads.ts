@@ -101,6 +101,11 @@ export interface ThreadMessage {
   receiptId: string | null;
   egressScope: string | null;
   egressHost: string | null;
+  /** The execution receipt the egress fields were read from: a lamp needs
+   * one (Article III). Null on a turn with no receipt route. */
+  egressReceiptId?: string | null;
+  /** True when the route shown is not the attempt that answered. */
+  egressFallback?: boolean;
   modelId: string | null;
   statsJson: Record<string, unknown> | null;
   errorJson: Record<string, unknown> | null;
@@ -251,6 +256,8 @@ function toMessage(w: Record<string, unknown>): ThreadMessage {
     receiptId: w.receipt_id != null ? String(w.receipt_id) : null,
     egressScope: w.egress_scope != null ? String(w.egress_scope) : null,
     egressHost: w.egress_host != null ? String(w.egress_host) : null,
+    egressReceiptId: w.egress_receipt_id ? String(w.egress_receipt_id) : null,
+    egressFallback: Boolean(w.egress_fallback),
     modelId: w.model_id != null ? String(w.model_id) : null,
     statsJson: (w.stats_json as Record<string, unknown>) ?? null,
     errorJson: (w.error_json as Record<string, unknown>) ?? null,
@@ -570,8 +577,15 @@ export interface ThreadTurnDonePayload {
   receipt_id: string;
   outcome: string;
   /** The server sends egress as a plain scope string (e.g. "same_device"),
-   * not as an object. */
+   * not as an object: the lamp word of where the turn's bytes went, read
+   * from its receipt; "" when no model call went out (no lamp). */
   egress: string | null;
+  /** The host and the model of that route ("" when not known), the receipt
+   * id the route was read from, and whether it was a fallback. */
+  host?: string;
+  model?: string;
+  route_receipt_id?: string;
+  fallback?: boolean;
   stats: { prompt_tokens?: number; completion_tokens?: number; error?: string } | null;
 }
 
@@ -768,7 +782,7 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
       streaming: true,
       operationId: null,
       receiptId: null,
-      egressScope: (typeof egress === "string" && egress) ? egress : null,
+      egressScope: null, // the plan is not a receipt: no lamp until the turn lands
       egressHost: null,
       modelId: model_id,
       statsJson: null,
@@ -818,7 +832,7 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
   },
 
   applyTurnDone(payload) {
-    const { thread_id, message_id, receipt_id, outcome, egress, stats } = payload;
+    const { thread_id, message_id, receipt_id, outcome, egress, host, model, route_receipt_id, fallback, stats } = payload;
     const detail = get().threads[thread_id];
     if (!detail) return;
     const buffer = get().buffers[message_id];
@@ -846,7 +860,12 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
         streaming: false,
         receiptId: receipt_id || m.receiptId,
         // egress is a plain scope string from the server, not {scope, host}.
-        egressScope: (typeof egress === "string" && egress) ? egress : m.egressScope,
+        // The done frame is the receipt: "" means no model call (no lamp).
+        egressScope: typeof egress === "string" ? (egress || null) : m.egressScope,
+        egressHost: typeof host === "string" ? (host || null) : m.egressHost,
+        egressReceiptId: typeof route_receipt_id === "string" ? (route_receipt_id || null) : m.egressReceiptId,
+        egressFallback: typeof fallback === "boolean" ? fallback : m.egressFallback,
+        modelId: model ? model : m.modelId,
         completedAt: (outcome === "succeeded" || outcome === "failed")
           ? new Date().toISOString() : m.completedAt,
         abortedAt: outcome === "aborted" ? new Date().toISOString() : m.abortedAt,

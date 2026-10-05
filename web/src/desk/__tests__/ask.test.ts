@@ -88,6 +88,9 @@ describe("the run/keep wire", () => {
       // carries none — there is nothing to record as a stop.
       refusalCode: "",
       egress: { scope: "cloud", host: "192.168.1.43" },
+      // The route execution receipt id; empty when the response omits it.
+      receiptId: "",
+      route: null,
       model: "Qwen3.5-9B-Q6_K",
       profileId: "p1",
       inferenceTarget: null,

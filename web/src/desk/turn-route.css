@@ -1,0 +1,9 @@
+/* Route in footer (owner pick 2026-10-05): the last turn's route line names
+   the model and the receipt; it wraps instead of clipping the model. */
+.desk-next .turn-route-footer .surface-footer-receipt > .surface-footer-receipt-line {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  text-align: center;
+}

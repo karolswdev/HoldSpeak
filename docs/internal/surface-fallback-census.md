@@ -98,6 +98,7 @@ story that owns their migration.
 | 143-05 | `holdspeak/services/inference_route_plan_service.py` (canonical immutable resolver, persistence, and reconstruction) |
 | 143-06 | `holdspeak/services/inference_fallback_controller.py` (durable route-attempt settlement and exact receipt reconstruction) |
 | 143-06 | `holdspeak/intel/engine.py`, `holdspeak/kernel/inference_runner.py`, `holdspeak/kernel/projection_stager.py` |
+| 143-06 | `holdspeak/inference_locality.py` (`_attempt_route`: reads where a sent attempt went from its receipt; selects nothing) |
 | 143-07 | `holdspeak/dictation_telemetry.py`, `holdspeak/plugins/dictation/assembly.py`, `holdspeak/plugins/dictation/builtin/project_rewriter.py`, `holdspeak/plugins/dictation/runtime_mlx.py`, `holdspeak/services/inference_setup_service.py`, `holdspeak/target_profile.py` |
 | 143-08 | `holdspeak/intel_queue.py`, `holdspeak/meeting_session/intel_plan.py`, `holdspeak/services/{inference_adoption_service,meeting_intel_service}.py` |
 | 143-10 | `holdspeak/delivery/factory_launch.py`, `holdspeak/services/recipe_service.py`, `holdspeak/services/sequence_workflow_service.py`, `holdspeak/services/support.py`, `holdspeak/services/workbench_runner.py` |
