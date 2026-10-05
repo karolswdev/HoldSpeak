@@ -87,7 +87,7 @@ class TestSettingsMeetingsAutoRun:
             # Display headline
             display = page.locator("[data-testid='meetings-auto-display']")
             display_text = display.text_content() or ""
-            assert "After room meetings" in display_text, (
+            assert "After every meeting" in display_text, (  # default "every" (owner ruling 2026-10-05)
                 f"Display at {width}: {display_text}"
             )
 
@@ -221,7 +221,7 @@ class TestSettingsMeetingsAutoRun:
             # Display headline
             display = page.locator("[data-testid='meetings-auto-display']")
             display_text = display.text_content() or ""
-            assert "After room meetings" in display_text, (
+            assert "After every meeting" in display_text, (  # default "every" (owner ruling 2026-10-05)
                 f"Display at {width}: {display_text}"
             )
 

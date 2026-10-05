@@ -59,7 +59,7 @@ _ERRORS = {
     "integrity": "The file was not correct. Press Try again to download it again.",
     "refused": "The hub did not permit the download. Press Try again.",
     "unsafe": "The model folder holds a link. Remove the link. Then press Try again.",
-    "runtime": "llama-cpp-python is not installed on this hub. Install it. Then press Try again.",
+    "runtime": "llama-cpp-python 0.3.34 or newer is not installed on this hub. Install it. Then press Try again.",
     "setup": "Meaning search did not start. Press Try again.",
     "index": "The index stopped. It continues automatically.",
 }
@@ -219,6 +219,11 @@ class MeaningSearchService:
             if assigned or self._downloading():
                 return self.status(principal)
             self._error = ""
+            # The runtime FIRST: a press with no llama-cpp-python downloads
+            # nothing (the download used to finish and then fail here).
+            if not self._runtime_installed():
+                self._error = "runtime"
+                return self.status(principal)
             path = find_on_device(self._model, self._home())
             if path is not None:
                 self._activate_safely(principal, path)
@@ -231,6 +236,14 @@ class MeaningSearchService:
             )
             self._thread.start()
         return self.status(principal)
+
+    @staticmethod
+    def _runtime_installed() -> bool:
+        # The ONE runtime rule (shared with Set up local AI): the minimum
+        # revision AND a real ``import llama_cpp``.
+        from .inference_setup_service import local_llama_runtime
+
+        return bool(local_llama_runtime()["ready"])
 
     def turn_off(self, principal: Principal) -> dict[str, Any]:
         self._require_owner(principal)

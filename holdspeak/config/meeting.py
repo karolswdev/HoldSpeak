@@ -31,17 +31,19 @@ class MeetingConfig:
     # endpoint -- self-hosted LAN, Ollama, vLLM, llama.cpp-server, or a real cloud
     # API; set intel_cloud_base_url) | "auto" (local-first, then the endpoint).
     intel_provider: str = "local"
-    # Suggested default -- bring your own GGUF (see docs/MODELS.md). Names are a
-    # moving target; this points at a current small/mid instruct model.
-    intel_realtime_model: str = "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf"
+    # The local starter model "Set up local AI" downloads (owner ruling
+    # 2026-10-05). Bring your own GGUF by setting a path (see docs/MODELS.md).
+    intel_realtime_model: str = "~/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
     intel_temperature: float = 0.2
     intel_summary_model: Optional[str] = None  # Falls back to realtime if None
     intel_deferred_enabled: bool = True  # Queue intel when no suitable local model is available
     # HS-172-02: auto-intel trigger after capture stops.
     # "off" = manual only (existing behaviour);
-    # "room_linked" = auto-enqueue for meetings linked to a Room (default);
-    # "every" = auto-enqueue for every meeting with a transcript.
-    intelligence_auto: str = "room_linked"
+    # "room_linked" = auto-enqueue for meetings linked to a Room;
+    # "every" = auto-enqueue for every meeting with a transcript (default:
+    # owner ruling 2026-10-05; a fresh desk has no Room, so "room_linked"
+    # summarised no meeting on day one).
+    intelligence_auto: str = "every"
     # HS-175-03: auto-record calendar events with a meeting URL.
     # "off" = no auto-creation (default; Article IV: armed is his act);
     # "all_calendar" = arm every calendar event with a meeting_url;

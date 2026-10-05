@@ -10,6 +10,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+pytestmark = pytest.mark.usefixtures("whisper_on_device")
+
 import holdspeak.transcribe as transcribe_mod
 from holdspeak.languages import (
     WHISPER_LANGUAGES,

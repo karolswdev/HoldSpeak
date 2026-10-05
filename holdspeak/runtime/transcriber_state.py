@@ -166,8 +166,32 @@ class TranscriberStateMixin:
             language=str(language or "auto"),
         )
 
+    def _whisper_model_on_disk(self) -> bool:
+        """Is the configured Whisper model already on this device? Disk only."""
+        from ..transcribe import resolve_backend_or_raw
+        from ..whisper_models import whisper_on_disk
+
+        backend = resolve_backend_or_raw(str(getattr(self.config.model, "backend", "auto") or "auto"))
+        return whisper_on_disk(str(self.config.model.name or ""), backend)
+
     def _warm_transcriber_in_background(self) -> None:
         if not self._transcription_warm_on_start_enabled():
+            return
+        # Owner ruling 2026-10-05: the boot never downloads a model. A warm
+        # loads only a Whisper model that is already on this device; "Set up
+        # local AI" downloads it, with one egress receipt.
+        try:
+            present = self._whisper_model_on_disk()
+        except Exception as exc:  # a disk question never stops the boot
+            log.warning("Whisper model check failed: %s", exc)
+            present = False
+        if not present:
+            self._set_transcription_status("not_loaded")
+            log.info(
+                "Whisper model %r is not on this device; the boot does not download it. "
+                "Set up local AI downloads it.",
+                self.config.model.name,
+            )
             return
 
         def _warm() -> None:

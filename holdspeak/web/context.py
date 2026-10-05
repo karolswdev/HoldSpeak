@@ -103,6 +103,9 @@ class WebContext:
     setup_service: Optional[Any] = None
     # HS-142-01: pure, owner-only Capability Truth projection.
     inference_setup_service: Optional[Any] = None
+    # Owner ruling 2026-10-05: "Set up local AI" (one call downloads every
+    # local model, sha-pinned, with one egress receipt).
+    local_ai_setup_service: Optional[Any] = None
     # HS-142-02: durable model acquisition/activation saga.
     inference_acquisition_service: Optional[Any] = None
     # HS-143-12: owner-only aggregate availability/projection boundary. It has

@@ -65,6 +65,18 @@ def _seed_project(db: Database, project_id: str) -> None:
         )
 
 
+def assign_meeting_engine(db: Database) -> None:
+    """A real assignment for meeting.deferred_analysis: auto-intel enqueues
+    only when an engine is assigned (owner ruling 2026-10-05)."""
+    from holdspeak.inference_capabilities import process_inference_capability_registry
+    from tests.unit.test_phase143_inference_assignments import _profile
+    from tests.unit.test_phase200_readiness import _assign
+
+    schema = process_inference_capability_registry().require("meeting.deferred_analysis")
+    _profile(db, "meeting-engine", claims=("language", f"result_schema:{schema.output_schema_sha256}"))
+    _assign(db, "meeting.deferred_analysis", ["meeting-engine"])
+
+
 def _link_meeting_project(db: Database, meeting_id: str, project_id: str) -> None:
     """Link a meeting to a project (room)."""
     with db._connection() as conn:
@@ -129,11 +141,11 @@ class TestAutoIntelTrigger:
         with pytest.raises(ValueError, match="intelligence_auto"):
             MeetingConfig(intelligence_auto="bogus")
 
-    def test_default_is_room_linked(self) -> None:
-        """Default intelligence_auto is room_linked."""
+    def test_default_is_every(self) -> None:
+        """Default intelligence_auto is every (owner ruling 2026-10-05)."""
         from holdspeak.config.meeting import MeetingConfig
         cfg = MeetingConfig()
-        assert cfg.intelligence_auto == "room_linked"
+        assert cfg.intelligence_auto == "every"
 
     def test_room_linked_enqueues_with_transcript(self, db: Database) -> None:
         """_maybe_auto_enqueue_intel enqueues for a Room-linked meeting."""
@@ -144,6 +156,7 @@ class TestAutoIntelTrigger:
         _seed_meeting(db, meeting_id)
         _seed_project(db, project_id)
         _link_meeting_project(db, meeting_id, project_id)
+        assign_meeting_engine(db)
 
         glue = mock.MagicMock()
         cfg_mock = mock.MagicMock()

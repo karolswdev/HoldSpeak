@@ -90,6 +90,21 @@ def endpoint_speaks_max_completion_tokens(endpoint_key: str) -> bool:
     return str(endpoint_key) in _COMPAT_MAX_COMPLETION_TOKENS
 
 
+def _llama_cpp_response_format(response_format: dict[str, Any]) -> dict[str, Any]:
+    """The OpenAI ``json_schema`` shape, in the shape llama-cpp-python enforces.
+
+    llama-cpp-python builds a grammar only from ``{"type": "json_object",
+    "schema": ...}``; it ignores ``{"type": "json_schema", ...}``, so the
+    schema was never applied on this device.  The same schema, translated,
+    constrains the local output (the claim the starter profile makes).
+    """
+    if response_format.get("type") == "json_schema":
+        schema = (response_format.get("json_schema") or {}).get("schema")
+        if isinstance(schema, dict):
+            return {"type": "json_object", "schema": schema}
+    return response_format
+
+
 def endpoint_rejects_response_format(endpoint_key: str) -> bool:
     """Whether this endpoint has already rejected ``response_format`` in this process."""
     return str(endpoint_key) in _COMPAT_NO_RESPONSE_FORMAT
@@ -389,7 +404,7 @@ class MeetingIntel:
             }
             # HS-153-06: pass response_format for structured_output capabilities.
             if response_format is not None:
-                local_kwargs["response_format"] = response_format
+                local_kwargs["response_format"] = _llama_cpp_response_format(response_format)
             response = self._llm.create_chat_completion(**local_kwargs)
             raw = (
                 response.get("choices", [{}])[0]

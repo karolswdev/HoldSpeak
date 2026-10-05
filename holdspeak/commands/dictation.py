@@ -400,11 +400,12 @@ def _cmd_runtime_status(args, out: TextIO) -> int:
         return _EXIT_OK
 
     # Check model availability without actually loading.
-    target = (
-        Path(cfg.runtime.mlx_model).expanduser()
-        if resolved == "mlx"
-        else Path(cfg.runtime.llama_cpp_model_path).expanduser()
-    )
+    raw = str(cfg.runtime.mlx_model if resolved == "mlx" else cfg.runtime.llama_cpp_model_path).strip()
+    if not raw:
+        # A blank path is "not set", never Path("") == "." (which exists).
+        print("model: not set", file=out)
+        return _EXIT_OK
+    target = Path(raw).expanduser()
     if target.exists():
         print(f"model: available at {target}", file=out)
     else:

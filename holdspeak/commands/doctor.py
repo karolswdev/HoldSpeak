@@ -758,12 +758,10 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
             fix=profile_fix or None,
         )
 
-    target = (
-        Path(cfg.runtime.mlx_model).expanduser()
-        if resolved == "mlx"
-        else Path(cfg.runtime.llama_cpp_model_path).expanduser()
-    )
-    if not target.exists():
+    raw = str(cfg.runtime.mlx_model if resolved == "mlx" else cfg.runtime.llama_cpp_model_path).strip()
+    # A blank path is "not set", never Path("") == "." (which exists).
+    target = Path(raw).expanduser() if raw else Path("<not set>")
+    if not raw or not target.exists():
         return DoctorCheck(
             name="LLM runtime",
             status="WARN",

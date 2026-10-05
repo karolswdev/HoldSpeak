@@ -8,7 +8,7 @@ out of WebRuntime.
 from __future__ import annotations
 
 import hashlib
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -35,6 +35,21 @@ _MEETING_AUDIO_OWNER = "meeting"
 
 
 log = get_logger("web_runtime")
+
+
+def deferred_analysis_has_engine(db: Any, principal: Any) -> bool:
+    """True when ``meeting.deferred_analysis`` resolves to an assignment.
+
+    The same resolution order the route plan freezes with (capability ->
+    group -> global).  ``no_assignment`` is exactly the case that freezes to
+    a permanent failure.
+    """
+    from ..services.inference_assignment_service import InferenceAssignmentService
+
+    resolved = InferenceAssignmentService(db).resolve_effective(
+        principal, capability_id="meeting.deferred_analysis"
+    )
+    return str(resolved.get("status")) != "no_assignment"
 
 
 class RoutingGlueMixin:
@@ -338,7 +353,7 @@ class RoutingGlueMixin:
             _auto_intel_principal = Principal(PrincipalKind.OWNER, "auto-intel")
 
             cfg = Config.load().meeting
-            auto = str(cfg.intelligence_auto or "room_linked").strip().lower()
+            auto = str(cfg.intelligence_auto or "every").strip().lower()
             if auto == "off":
                 return {"enqueued": False, "reason": "auto_intel_off"}
 
@@ -354,6 +369,15 @@ class RoutingGlueMixin:
                 projects = db.projects.get_meeting_projects(meeting_id)
                 if not projects:
                     return {"enqueued": False, "reason": "not_room_linked"}
+
+            # No engine, no job (owner ruling 2026-10-05 made "every" the
+            # default). The queue has no "wait for an engine" state: a job
+            # enqueued with no assignment fails when its route plan freezes
+            # ("No model assignment can be frozen."), with no retry, and the
+            # failed row then blocks every later auto-enqueue (job_exists).
+            # Not enqueuing leaves the meeting free for a later run.
+            if not deferred_analysis_has_engine(db, _auto_intel_principal):
+                return {"enqueued": False, "reason": "no_engine"}
 
             # Check for existing intel job (dedup by transcript hash).
             existing_job = db.intel.get_intel_job(meeting_id)

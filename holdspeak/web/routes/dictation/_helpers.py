@@ -1041,12 +1041,14 @@ def _runtime_readiness(cfg: Any) -> dict[str, Any]:
         )
         return payload
 
-    model_path = Path(
+    raw_model_path = str(
         cfg.runtime.mlx_model
         if resolved_backend == "mlx"
         else cfg.runtime.llama_cpp_model_path
-    ).expanduser()
-    model_exists = model_path.exists()
+    ).strip()
+    model_path = Path(raw_model_path).expanduser()
+    # A blank path is "not set", never Path("") == "." (which exists).
+    model_exists = bool(raw_model_path) and model_path.exists()
     guidance = None
     if not model_exists:
         from ....plugins.dictation.guidance import runtime_guidance

@@ -5689,6 +5689,34 @@
       ]
     },
     {
+      "path": "/api/setup/local-ai",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/setup/local-ai",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/setup/local-ai/cancel",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.setup",
+      "consumers": []
+    },
+    {
       "path": "/api/setup/onboarding",
       "methods": [
         "PUT"

@@ -131,6 +131,41 @@ def _package_revision(distribution: str, fallback: str) -> str:
         return fallback
 
 
+LLAMA_RUNTIME_MIN_REVISION = "0.3.34"
+
+
+def _import_llama_cpp() -> None:
+    """Import the native module for real (a seam for tests)."""
+    importlib.import_module("llama_cpp")
+
+
+def local_llama_runtime() -> dict[str, Any]:
+    """THE one check for the local llama.cpp runtime, run before any download.
+
+    Ready only when the package metadata names ``llama-cpp-python`` at the
+    minimum revision (the same minimum ``inspect_runtimes`` applies), and
+    ``import llama_cpp`` succeeds (metadata alone is not a usable runtime).
+    """
+    revision = _package_revision("llama-cpp-python", "")
+    result: dict[str, Any] = {
+        "package": "llama-cpp-python", "revision": revision or None,
+        "minimum": LLAMA_RUNTIME_MIN_REVISION, "ready": False, "reason": "",
+    }
+    if not revision:
+        result["reason"] = "not_installed"
+        return result
+    if not _version_at_least(revision, LLAMA_RUNTIME_MIN_REVISION):
+        result["reason"] = "too_old"
+        return result
+    try:
+        _import_llama_cpp()
+    except Exception:
+        result["reason"] = "import_failed"
+        return result
+    result["ready"] = True
+    return result
+
+
 def _version_at_least(observed: str, minimum: str) -> bool:
     try:
         return tuple(int(part) for part in observed.split(".")[:3]) >= tuple(
@@ -142,7 +177,7 @@ def _version_at_least(observed: str, minimum: str) -> bool:
 
 def inspect_runtimes(*, apple_silicon: bool) -> list[dict[str, Any]]:
     llama_revision = _package_revision("llama-cpp-python", "unavailable")
-    llama = _package_available("llama_cpp") and _version_at_least(llama_revision, "0.3.34")
+    llama = _package_available("llama_cpp") and _version_at_least(llama_revision, LLAMA_RUNTIME_MIN_REVISION)
     mlx = apple_silicon and _package_available("mlx_lm")
     return [
         {

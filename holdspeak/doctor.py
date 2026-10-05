@@ -297,10 +297,35 @@ def check_observer() -> DoctorResult:
         return DoctorResult("FAIL", "observer", f"degraded: {_failure(exc)}; 24h events: unavailable")
 
 
+def discovered_hub_url() -> str | None:
+    """The running hub's real URL, from its owner lock beside the database.
+
+    The hub binds a free port on each boot (``web_server._find_free_port``)
+    and writes that port into its owner lock.  ``holdspeak-mcp`` finds the hub
+    the same way (``holdspeak.mcp.server.discover_hub``).  Reading the lock
+    opens no database and makes no network request.
+    """
+    try:
+        from .mcp.server import discover_hub
+
+        hub = discover_hub()
+    except Exception:
+        return None
+    if not hub:
+        return None
+    return f"http://{hub['host']}:{int(hub['port'])}"
+
+
+def resolve_hub_url(url: str | None = None) -> str:
+    """The hub to check: the argument, then HOLDSPEAK_URL, then the running
+    hub's real port, then the fixed fallback."""
+    return url or os.environ.get("HOLDSPEAK_URL", "") or discovered_hub_url() or DEFAULT_URL
+
+
 def run_checks(url: str | None = None, token: str | None = None) -> list[DoctorResult]:
     """Run every desk diagnostic, collecting failures instead of raising them."""
     try:
-        hub_url = _base_url(url or os.environ.get("HOLDSPEAK_URL", DEFAULT_URL))
+        hub_url = _base_url(resolve_hub_url(url))
     except ValueError as exc:
         return [DoctorResult("FAIL", name, str(exc)) for name in (
             "hub-health", "runtime-status", "websocket", "desk-bootstrap", "auth", "inference"

@@ -8,7 +8,15 @@ from datetime import datetime
 from typing import Optional
 
 
-DEFAULT_INTEL_MODEL_PATH = "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf"
+#: The local starter model's place on this device: the file "Set up local AI"
+#: (and a Models-library download of the same signed preset) writes. Owner
+#: ruling 2026-10-05: a default names a file the product itself provides,
+#: never one nobody has (fence: tests/unit/test_local_ai_setup.py).
+DEFAULT_INTEL_MODEL_PATH = (
+    "~/.local/share/holdspeak/models/artifacts/"
+    "artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/"
+    "Qwen3.5-4B-Q4_K_M.gguf"
+)
 
 
 DEFAULT_INTEL_PROVIDER = "local"

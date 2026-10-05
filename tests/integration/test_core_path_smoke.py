@@ -57,6 +57,23 @@ def _require_backend() -> None:
         pytest.skip(f"no Whisper backend installed: {exc}")
 
 
+def _fetch_smoke_model() -> None:
+    """The TEST gets the tiny model into this HOME's Hugging Face cache.
+
+    Owner ruling 2026-10-05: the product load never downloads (only "Set up
+    local AI" does, with its receipt), so the harness fetches the fixture
+    model itself, the way a test brings any other fixture.
+    """
+    backend = _resolve_backend("auto")
+    repo = "mlx-community/whisper-tiny-mlx" if backend == "mlx" else "Systran/faster-whisper-tiny"
+    try:
+        from huggingface_hub import snapshot_download
+
+        snapshot_download(repo_id=repo)
+    except Exception as exc:  # no network on this runner
+        pytest.skip(f"could not fetch the smoke model {repo}: {exc}")
+
+
 def _load_wav_16k_mono(path: Path) -> np.ndarray:
     """Read a 16 kHz mono 16-bit PCM WAV into float32 [-1, 1] (stdlib only)."""
     with wave.open(str(path), "rb") as w:
@@ -85,6 +102,7 @@ class _CapturingTyper:
 def test_core_path_audio_to_injected_text(tmp_path, monkeypatch) -> None:
     """Real audio -> real transcript -> injection seam, asserting on the text."""
     _require_backend()
+    _fetch_smoke_model()
     assert _FIXTURE.exists(), f"missing fixture: {_FIXTURE}"
 
     audio = _load_wav_16k_mono(_FIXTURE)

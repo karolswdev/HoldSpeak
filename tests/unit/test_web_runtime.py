@@ -334,6 +334,11 @@ def test_run_web_runtime_warms_transcriber_on_start(
     monkeypatch.setattr("holdspeak.transcribe._resolve_backend", lambda _backend: "mlx")
     monkeypatch.setattr("holdspeak.transcribe.importlib.import_module", imported)
     monkeypatch.setattr(_MlxTranscriber, "_model_holder_get", model_holder)
+    # Owner ruling 2026-10-05: the boot warms only a Whisper model already on
+    # this device; this test fakes the MLX library, so it declares the model
+    # present (the real disk check: tests/unit/test_local_ai_setup.py).
+    monkeypatch.setattr("holdspeak.whisper_models.whisper_on_disk", lambda *a, **k: True)
+    monkeypatch.setattr("holdspeak.transcribe._local_source", lambda repo: repo)
 
     stop_event = threading.Event()
     stop_event.set()

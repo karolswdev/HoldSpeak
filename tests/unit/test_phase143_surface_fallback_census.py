@@ -45,6 +45,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/inference_acquisition_service.py", "_route_revision"): ("setup preview revision; not assignment authority", "143-12"),
     ("holdspeak/services/model_library_service.py", "_ensure_private_target"): ("library-owned private provider adapter; never assignment selection", "143-12"),
     ("holdspeak/services/model_library_service.py", "_ensure_profile"): ("canonical profile composition for library availability", "143-12"),
+    ("holdspeak/services/local_ai_setup_service.py", "_ensure_profile"): ("composes the one starter-model profile for the signed local preset; Set up local AI writes no assignment", "143-12"),
     ("holdspeak/services/meaning_search_service.py", "_ensure_profile"): ("composes the one embedding profile for the pinned local model; the memory.embed assignment itself is written by InferenceAssignmentService on the owner's press", "143-12"),
     ("holdspeak/services/model_library_service.py", "_profile_body"): ("library profile material builder; no assignment authority", "143-12"),
     ("holdspeak/services/model_library_service.py", "_profile_id"): ("library profile identity parser", "143-12"),
