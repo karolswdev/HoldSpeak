@@ -16,20 +16,18 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
-Now: strong defaults, batteries included (owner direction 2026-10-05): #855, #856 and #859 merged: a fresh install now gets local AI from one first-run press. His desk: assign his LAN server as the default (and memory) when his hub next runs.
+Now: finish it all as one onboarding experience (owner 2026-10-05: "I want you to finish it all up"): five fix lanes + one canvas for every face that needs design.
+
+Done: strong defaults, batteries included (owner direction 2026-10-05): #855, #856 and #859 merged: a fresh install now gets local AI from one first-run press. His desk: assign his LAN server as the default (and memory) when his hub next runs.
 
 Now: prepare for the owner's week of real use (assignment 2026-10-03): inventory
 (`docs/internal/INVENTORY-2026-10-03.md`), clean up, polish, wire memory into every
 process; and the native memory system (`docs/internal/MEMORY-DESIGN.md`, slice 1 merged).
 
-Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 passed,
-0 failed (6 min 18 s); web 3,352 passed, 1 flaky; browser tests 747 passed, 1 failed
-(the Decide button, #813). After a batch of merges, run all three before calling it done.
+Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fix in; web 3,431 passed, 0 failed. After a batch of merges, run FAST, the web baseline and the scoped browser tests before calling it done.
 
 | Item | Owner | PR |
 |---|---|---|
-| Decide is outlined while "Run summary" shows; one flaky web test | Muad'Dib | #813 + one |
-| Memory: turn meaning search on from the product (the embedding model is not in the signed catalogue): waits for the owner's word | — | — |
 | Memory dates (Astra, #845 iteration 2): "the ninth of September … was missed" in a meeting of 22 Sep is stored as 9 Aug; a third-person "confirmed … ships on the twentieth" gets a past date (xfail); reported-speech and mixed explicit/bare-date lines give no facts; Kestrel (r09) is found only with vectors (xfail) | Muad'Dib | — |
 | Memory entities: an initial alias ("T. Wierzbicki") does not join the full name (score 0.585 < 0.6 without a shared neighbour); strict xfail in the bench | — | — |
 | First run: the browser copy of the needs-you rule (web/src/desk/needsYou.ts) lacks the person-identity guard (no production caller today); physical mic and real model inference not verified | — | — |
@@ -49,7 +47,6 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 | Memory: a secret said in a meeting or typed in a thread is still a search key (returned text is redacted); sources attached by hand are not redacted | — | — |
 | Memory: not measured on the owner's real desk; new items take up to 120 s to become searchable by meaning | — | — |
 | Bus: background writers (calendar ingest, heartbeat sweep, cadence tick) and MCP tools outside the registry send no frame; announcements carry an empty id and op "create" on some routes | — | — |
-| Needs you: a decision waiting for review is not a member; "waiting on someone" rows count in the number: waits for the owner's word | — | — |
 | Needs you: the shade and palette show a per-Room count; the Chair caption "BRIEF · N THINGS WAITING" is a different count | — | — |
 | Times: about 150 writers still store timestamps with no zone; a schedule edited under the old code keeps a wrong time until saved again | — | — |
 | MCP: three tools answer a bad id with a raw error; a long tool makes the others wait | — | — |
@@ -59,7 +56,6 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 | The Thought window title always says "Thought"; 1:1 memory has no face; route chip for Ask and chat: each needs a canvas | — | — |
 | The Dock overflows 1440 with five projects; a 5 px strip of the next page shows at 393 | — | — |
 | Raw paths and ids on some faces (SEND well, Connections, Setup, Processes) | — | — |
-| Four June PLAN docs in the Source canon list name dead modules: waits for the owner's word | — | — |
 | Backend: 219 routes with no web caller; two watch systems; three decision surfaces; 2,800 lines with no importer | — | — |
 | Test rig: the Delivery board may show the machine's real tmux sessions | — | — |
 | Fast tests, second pass: new-database cost; nightly full run not yet seen on CI | — | — |
