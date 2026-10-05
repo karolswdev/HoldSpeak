@@ -387,7 +387,9 @@ export function FirstRun() {
   // The C1 part is done: models here, his name, his words kept. Its three
   // cards fold to their receipts (canvas A: "the three C1 cards, finished").
   const c1Done = aiReady && owner.isSet && take.kept;
-  const ready = c1Done && calendar.inUse && connections.done;
+  // While the ingest still reads a source just added, the Door's next
+  // meeting may change: Ready waits for the read (calendarStep `follow`).
+  const ready = c1Done && calendar.inUse && !calendar.following && connections.done;
   // His words are back and not kept yet: they are the face's display fact.
   const heard = take.state === "heard" && !take.kept;
   // One lit card: the next press. First words lights itself while it waits

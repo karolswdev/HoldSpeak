@@ -181,7 +181,7 @@ describe("FirstRun", () => {
     expect(screen.queryByRole("button", { name: "Keep as note" })).toBeNull();
     expect(calls.some((c) => c.path === "/api/setup/onboarding")).toBe(false);
     expect(mocks.refresh).not.toHaveBeenCalled();
-  });
+  }, 15_000); // a long walk on real-timer polls: 2.5 s alone, more under the full suite
 
   it("withholds Play when the browser kept no audio of the take", async () => {
     local = status({ all: true, state: "ready" });

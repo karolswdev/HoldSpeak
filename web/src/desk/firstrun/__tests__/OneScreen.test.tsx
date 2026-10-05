@@ -8,7 +8,7 @@
  * none / a row with no verb.
  * Ready: "Ready, <name>", the strip, the three verbs; Record withheld with
  * no meeting. */
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LocalAiStatus } from "../localAi";
 
@@ -54,6 +54,7 @@ import { calendarReceipt } from "../CalendarCard";
 import { cantReadReason, hostOf, meetingClock, nextMeeting } from "../calendarStep";
 import { readyItems } from "../Ready";
 import { readDurableDraft, clearDurableDraft } from "../../../lib/durableDraft";
+import { clearFirstValueKeepNoteId } from "../../firstValue";
 
 const MB = 1_000_000;
 const WORDS = "Send the cutover plan to Priya before Friday.";
@@ -111,6 +112,15 @@ interface Hub {
   connections: { candidates: Record<string, unknown>[]; tools: Record<string, { installed: boolean }> };
   useConnection: (id: string) => unknown;
   door: { upcoming: unknown[]; week?: { total: number } };
+  /** calendar.sources in config, as GET /api/settings carries them. */
+  sources: { id: string; url: string; enabled: boolean }[];
+  /** Per-source read state (GET /api/calendar/sources); default success. */
+  status: Record<string, string>;
+}
+
+/** One configured source (enabled unless said). */
+function source(url: string, enabled = true, id = `src_${url}`) {
+  return { id, url, enabled };
 }
 
 let hub: Hub;
@@ -120,6 +130,7 @@ const soon = () => new Date(Date.now() + 2 * 3600_000).toISOString();
 beforeEach(() => {
   calls.length = 0;
   clearDurableDraft("desk-ask");
+  clearFirstValueKeepNoteId();
   hub = {
     ai: aiStatus(false),
     owner: { name: "", aliases: [] },
@@ -127,12 +138,9 @@ beforeEach(() => {
     access: () => hub.calendar,
     check: () => ({ ok: false, error_class: "calendar_source_http_error" }),
     useCalendar: (id) => {
-      hub.calendar = {
-        ...hub.calendar,
-        sources: 1,
-        candidates: hub.calendar.candidates.map((c) => (c.id === id ? { ...c, in_use: true } : c)),
-      };
-      return { added: true, source: { id: "src_1", url: id } };
+      const added = source(id);
+      hub.sources = [...hub.sources, added];
+      return { added: true, source: { id: added.id, url: id } };
     },
     connections: { candidates: [], tools: { gh: { installed: false }, acli: { installed: false } } },
     useConnection: (id) => {
@@ -143,6 +151,8 @@ beforeEach(() => {
       return { candidate: id, provider: "github", entry: { state: "connected" } };
     },
     door: { upcoming: [] },
+    sources: [],
+    status: {},
   };
   mocks.refresh.mockReset().mockResolvedValue(undefined);
   mocks.arm.mockReset().mockResolvedValue(true);
@@ -163,7 +173,7 @@ beforeEach(() => {
       case "/api/setup/local-ai":
         return hub.ai;
       case "/api/settings":
-        return method === "GET" ? { owner: hub.owner } : { settings: {} };
+        return method === "GET" ? { owner: hub.owner, calendar: { sources: hub.sources } } : { settings: {} };
       case "/api/notes":
         return { note: { id: "note_1" } };
       case "/api/onboarding/calendar":
@@ -179,7 +189,12 @@ beforeEach(() => {
       case "/api/onboarding/connections/use":
         return hub.useConnection(body.id);
       case "/api/door":
-        return hub.door;
+        // The Door's own fact: an ENABLED source (door_service `_calendar_configured`).
+        return { ...hub.door, calendar_configured: hub.sources.some((s) => s.enabled) };
+      case "/api/calendar/sources":
+        return {
+          sources: hub.sources.filter((s) => s.enabled).map((s) => ({ id: s.id, status: hub.status[s.id] ?? "success" })),
+        };
       default:
         return {};
     }
@@ -274,10 +289,6 @@ describe("Calendar card", () => {
         egress_host: "outlook.office365.com", in_use: false, verb: "Use it" },
       events_next_days: 9, horizon_days: 14,
     });
-    hub.useCalendar = () => {
-      hub.calendar = { ...hub.calendar, sources: 1 };
-      return { added: true, source: { id: "src_1", url } };
-    };
     render(<FirstRun />);
     const cal = await screen.findByTestId("firstrun-calendar");
     fireEvent.change(await within(cal).findByRole("textbox", { name: "Calendar URL" }), { target: { value: url } });
@@ -360,7 +371,7 @@ describe("Calendar card", () => {
 describe("Connections card", () => {
   it("found: each row names its host; Use it -> CONNECTED only when the hub says so", async () => {
     hub.connections = { candidates: [gh(), jira()], tools: { gh: { installed: true }, acli: { installed: true } } };
-    hub.calendar = { ...hub.calendar, sources: 1 };
+    hub.sources = [source("eventkit:CAL-1")];
     render(<FirstRun />);
     const conn = await screen.findByTestId("firstrun-connections");
     await within(conn).findByRole("status", { name: "SIGNED IN · 2" });
@@ -431,6 +442,7 @@ async function finishC1() {
 describe("Ready", () => {
   it("every step done: Ready, Karol; the strip; Record the next meeting; every card selected", async () => {
     hub.calendar = { macos: { state: "full_access", can_request: false }, candidates: [{ ...MAC_CAL, in_use: true }], sources: 1 };
+    hub.sources = [source("eventkit:CAL-1")];
     hub.connections = { candidates: [gh({ connected: true }), jira({ connected: true })], tools: {} };
     hub.door = { upcoming: [{ id: "e1", source: "calendar_event", title: "Atlas weekly", starts_at: soon() }], week: { total: 14 } };
     await finishC1();
@@ -470,7 +482,7 @@ describe("Ready", () => {
   });
 
   it("no meeting: Record is withheld and Dictate leads; Dictate and Ask hand off and open", async () => {
-    hub.calendar = { ...hub.calendar, sources: 1 };
+    hub.sources = [source("https://cal.example.com/a.ics")];
     await finishC1();
     await screen.findByRole("heading", { name: "Ready, Karol" });
     const group = screen.getByRole("group", { name: "Start" });
@@ -498,5 +510,114 @@ describe("Ready", () => {
     expect(
       readyItems({ heardText: "", calendar: { week: 0 }, connections: { providers: [] } }).map((i) => i.label),
     ).toEqual(["LOCAL AI · ON DEVICE", "HEARD", "CALENDAR · IN USE"]);
+  });
+});
+
+describe("Astra #876 review fences", () => {
+  it("P1: a kept sentence's note id is spent — after a reload, the next sentence is a NEW note", async () => {
+    await finishC1();
+    await screen.findByRole("heading", { name: "Get ready" });
+    const first = calls.filter((c) => c.path === "/api/notes").map((c) => (c.json as { id: string }).id);
+    expect(first).toHaveLength(1);
+    cleanup(); // the reload: the page and its memory are gone; storage stays
+
+    calls.length = 0;
+    render(<FirstRun />);
+    const dictate = await screen.findByRole("button", { name: "◖ Dictate one sentence" });
+    await screen.findByRole("status", { name: "SET" });
+    await act(async () => {
+      fireEvent.click(dictate);
+    });
+    await act(async () => {
+      fireEvent.click(await screen.findByRole("button", { name: "Stop listening" }));
+    });
+    await act(async () => {
+      fireEvent.click(await screen.findByRole("button", { name: "Keep as note" }));
+    });
+    const second = calls.filter((c) => c.path === "/api/notes").map((c) => (c.json as { id: string }).id);
+    expect(second).toHaveLength(1);
+    expect(second[0]).not.toBe(first[0]);
+  });
+
+  it("P2: Ready waits for the ingest and offers the meeting that is next; Record arms the one next at the press", async () => {
+    const tomorrow = new Date(Date.now() + 26 * 3600_000).toISOString();
+    const today = new Date(Date.now() + 90 * 60_000).toISOString();
+    const earlier = new Date(Date.now() + 30 * 60_000).toISOString();
+    hub.calendar = { macos: { state: "full_access", can_request: false }, candidates: [MAC_CAL], sources: 1 };
+    hub.sources = [source("https://cal.example.com/team.ics")];
+    hub.door = { upcoming: [{ id: "e-tomorrow", source: "calendar_event", title: "Design review", starts_at: tomorrow }], week: { total: 1 } };
+    // Today's calendar: its read lands 2 s after Use it.
+    hub.useCalendar = (id) => {
+      const added = source(id);
+      hub.sources = [...hub.sources, added];
+      hub.status[added.id] = "idle";
+      setTimeout(() => {
+        hub.status[added.id] = "success";
+        hub.door = {
+          upcoming: [
+            { id: "e-today", source: "calendar_event", title: "Atlas weekly", starts_at: today },
+            ...hub.door.upcoming,
+          ],
+          week: { total: 2 },
+        };
+      }, 2000);
+      return { added: true, source: { id: added.id, url: id } };
+    };
+    await finishC1();
+    await screen.findByRole("button", { name: /Record Design review/ });
+    await act(async () => {
+      fireEvent.click(within(card("firstrun-calendar")).getByRole("button", { name: "Use Work" }));
+    });
+    // While today's calendar is read, Ready offers no meeting at all.
+    await waitFor(() => expect(screen.queryByTestId("firstrun-ready")).toBeNull());
+    await new Promise((r) => setTimeout(r, 1200));
+    expect(screen.queryByRole("button", { name: /Record Design review/ })).toBeNull();
+    const record = await screen.findByRole("button", { name: /Record Atlas weekly/ }, { timeout: 6000 });
+    // A still earlier meeting lands between the render and the press.
+    hub.door = {
+      upcoming: [{ id: "e-earlier", source: "calendar_event", title: "Standup", starts_at: earlier }, ...hub.door.upcoming],
+      week: { total: 3 },
+    };
+    await act(async () => {
+      fireEvent.click(record);
+    });
+    expect(mocks.arm).toHaveBeenCalledWith("e-earlier");
+    expect(mocks.arm).not.toHaveBeenCalledWith("e-tomorrow");
+  }, 15_000);
+
+  it("P2: two signed-in GitHub hosts — one connection makes GitHub done; each host shows its true state", async () => {
+    const ghe = gh({ id: "github:ghe.acme.com:karol", label: "karol", account: "karol", site: "ghe.acme.com", egress_host: "ghe.acme.com" });
+    hub.sources = [source("eventkit:CAL-1")];
+    hub.connections = { candidates: [gh(), ghe], tools: { gh: { installed: true } } };
+    // The connector stores ONE GitHub connection: the pressed host only.
+    hub.useConnection = (id) => {
+      hub.connections = {
+        ...hub.connections,
+        candidates: hub.connections.candidates.map((c) => ({ ...c, connected: c.id === id })),
+      };
+      return { candidate: id, provider: "github", egress_host: "ghe.acme.com", entry: { state: "connected" } };
+    };
+    await finishC1();
+    const conn = card("firstrun-connections");
+    await act(async () => {
+      fireEvent.click(within(conn).getByRole("button", { name: "Use GitHub karol" }));
+    });
+    expect(await screen.findByRole("heading", { name: "Ready, Karol" })).toBeTruthy();
+    // The true state per host: ghe connected; github.com still offers Use it.
+    expect(within(conn).getAllByRole("status", { name: "CONNECTED" })).toHaveLength(1);
+    expect(within(conn).getByRole("button", { name: "Use GitHub karolswdev" })).toBeTruthy();
+  });
+
+  it("P2: a disabled calendar is not IN USE and claims no Ready", async () => {
+    hub.calendar = { macos: { state: "full_access", can_request: false }, candidates: [{ ...MAC_CAL, in_use: true }], sources: 1 };
+    hub.sources = [source("eventkit:CAL-1", false)];
+    await finishC1();
+    const cal = card("firstrun-calendar");
+    await within(cal).findByText("OFF IN SETTINGS");
+    expect(within(cal).queryByRole("status", { name: "IN USE" })).toBeNull();
+    expect(within(cal).queryByRole("button", { name: "Use Work" })).toBeNull();
+    expect(cal.getAttribute("data-selected")).toBeNull();
+    expect(screen.queryByTestId("firstrun-ready")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Get ready" })).toBeTruthy();
   });
 });

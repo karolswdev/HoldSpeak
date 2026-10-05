@@ -136,8 +136,39 @@ export type CalendarFailure =
   | { kind: "not_allowed" }
   | { kind: "refused"; reason: string };
 
-/** Re-read the Door after a new source: the ingest reads it in the background. */
-const DOOR_RETRY_MS = [600, 1500, 3000, 6000];
+export const SETTINGS_PATH = "/api/settings";
+export const CALENDAR_SOURCES_PATH = "/api/calendar/sources";
+
+/** A configured calendar source, as GET /api/settings carries it. */
+export interface ConfiguredSource {
+  id: string;
+  url: string;
+  enabled: boolean;
+}
+
+/** One enabled source's read state, as GET /api/calendar/sources reports it. */
+interface SourceRead {
+  id: string;
+  status: string;
+}
+
+/** A row as the face draws it: IN USE only for an ENABLED source. */
+export type CalendarRow = CalendarCandidate & { off: boolean };
+
+/** How often and how long the face follows the ingest after "Use it". */
+const FOLLOW_MS = 1000;
+const FOLLOW_READS = 20;
+
+/** IN USE per row: the row's source is configured AND enabled. A disabled
+ * source is OFF (Settings turns it on); the candidate's own `in_use` (any
+ * configured source, enabled or not) is not used. */
+export function calendarRows(rows: CalendarCandidate[], sources: ConfiguredSource[]): CalendarRow[] {
+  const byUrl = new Map(sources.map((source) => [source.url, source]));
+  return rows.map((row) => {
+    const source = byUrl.get(row.id);
+    return { ...row, in_use: Boolean(source?.enabled), off: Boolean(source && !source.enabled) };
+  });
+}
 
 export function useCalendarStep() {
   const [detect, setDetect] = useState<CalendarDetect | null>(null);
@@ -145,8 +176,17 @@ export function useCalendarStep() {
   const [busy, setBusy] = useState<Busy>(null);
   const [failure, setFailure] = useState<CalendarFailure | null>(null);
   const [added, setAdded] = useState<CalendarCandidate[]>([]);
+  const [sources, setSources] = useState<ConfiguredSource[]>([]);
   const [door, setDoor] = useState<DoorRead | null>(null);
-  const timers = useRef<number[]>([]);
+  const [following, setFollowing] = useState(false);
+  const pending = useRef<Set<string>>(new Set());
+  const timer = useRef<number | null>(null);
+
+  const readSources = useCallback(async () => {
+    const answer = await apiFetch<{ calendar?: { sources?: ConfiguredSource[] } }>(SETTINGS_PATH).catch(() => null);
+    const list = answer?.calendar?.sources;
+    if (Array.isArray(list)) setSources(list.map((s) => ({ id: String(s.id), url: String(s.url), enabled: s.enabled !== false })));
+  }, []);
 
   const read = useCallback(async () => {
     try {
@@ -155,8 +195,10 @@ export function useCalendarStep() {
     } catch (error) {
       setUnread(readableError(error));
     }
-  }, []);
+    await readSources();
+  }, [readSources]);
 
+  /** The Door as it is now: the week, the next meeting, `calendar_configured`. */
   const readDoor = useCallback(async () => {
     const answer = await apiFetch<DoorRead>(DOOR_PATH).catch(() => null);
     if (answer) setDoor(answer);
@@ -166,25 +208,39 @@ export function useCalendarStep() {
   useEffect(() => {
     void read();
     void readDoor();
-    return () => timers.current.forEach((id) => window.clearTimeout(id));
+    return () => {
+      if (timer.current !== null) window.clearTimeout(timer.current);
+    };
   }, [read, readDoor]);
 
-  /** After a source lands, read the Door until it shows the calendar's events. */
-  const followIngest = useCallback(() => {
-    timers.current.forEach((id) => window.clearTimeout(id));
-    timers.current = [];
-    let done = false;
-    for (const ms of DOOR_RETRY_MS) {
-      timers.current.push(
-        window.setTimeout(() => {
-          if (done) return;
-          void readDoor().then((answer) => {
-            if (nextMeeting(answer) || (answer?.week?.total ?? 0) > 0) done = true;
-          });
-        }, ms),
-      );
-    }
-  }, [readDoor]);
+  /** Follow the ingest: read the Door on each tick until every source added
+   * here reports a finished read (`status: success`), or the reads run out.
+   * An earlier event already on the Door never stops the follow. */
+  const follow = useCallback(
+    (sourceId: string) => {
+      if (sourceId) pending.current.add(sourceId);
+      if (timer.current !== null) window.clearTimeout(timer.current);
+      setFollowing(true);
+      let reads = 0;
+      const tick = async () => {
+        reads += 1;
+        const answer = await apiFetch<{ sources?: SourceRead[] }>(CALENDAR_SOURCES_PATH).catch(() => null);
+        for (const row of answer?.sources ?? []) {
+          if (row.status === "success") pending.current.delete(String(row.id));
+        }
+        await readDoor();
+        if (pending.current.size === 0 || reads >= FOLLOW_READS) {
+          pending.current.clear();
+          timer.current = null;
+          setFollowing(false);
+          return;
+        }
+        timer.current = window.setTimeout(() => void tick(), FOLLOW_MS);
+      };
+      timer.current = window.setTimeout(() => void tick(), FOLLOW_MS);
+    },
+    [readDoor],
+  );
 
   /** The owner's press: the macOS Calendars prompt. Never on load. */
   const requestAccess = useCallback(async () => {
@@ -204,10 +260,14 @@ export function useCalendarStep() {
       setBusy(candidate.id);
       setFailure(null);
       try {
-        await apiFetch(CALENDAR_USE_PATH, { method: "POST", json: { id: candidate.id, label: candidate.label } });
-        if (candidate.kind === "ics") setAdded((prev) => [...prev.filter((c) => c.id !== candidate.id), { ...candidate, in_use: true }]);
+        const answer = await apiFetch<{ source?: { id?: string } }>(CALENDAR_USE_PATH, {
+          method: "POST",
+          json: { id: candidate.id, label: candidate.label },
+        });
+        if (candidate.kind === "ics") setAdded((prev) => [...prev.filter((c) => c.id !== candidate.id), candidate]);
         await read();
-        followIngest();
+        await readDoor();
+        follow(String(answer?.source?.id ?? ""));
       } catch (error) {
         if (error instanceof ApiError && error.status === 409) {
           setFailure({ kind: "not_allowed" });
@@ -219,7 +279,7 @@ export function useCalendarStep() {
         setBusy(null);
       }
     },
-    [read, followIngest],
+    [read, readDoor, follow],
   );
 
   /** Add: read the typed link once (egress to its host), then use it. */
@@ -254,8 +314,13 @@ export function useCalendarStep() {
 
   const candidates = detect?.candidates ?? [];
   const macos = detect?.macos ?? null;
-  const rows = [...candidates, ...added.filter((a) => !candidates.some((c) => c.id === a.id))];
-  const inUse = (detect?.sources ?? 0) > 0 || rows.some((row) => row.in_use);
+  const rows = calendarRows(
+    [...candidates, ...added.filter((a) => !candidates.some((c) => c.id === a.id))],
+    sources,
+  );
+  // IN USE: the Door's own fact — at least one ENABLED source that passes
+  // validation (door_service `_calendar_configured`). Never a raw count.
+  const inUse = door?.calendar_configured === true;
   const deniedState = macos && ["denied", "restricted", "write_only"].includes(macos.state);
   return {
     loaded: detect !== null || unread !== "",
@@ -263,6 +328,7 @@ export function useCalendarStep() {
     macos,
     rows,
     inUse,
+    following,
     notAllowed: Boolean(deniedState) || failure?.kind === "not_allowed",
     busy,
     failure,
@@ -270,6 +336,7 @@ export function useCalendarStep() {
     week: door?.week?.total ?? 0,
     next: nextMeeting(door),
     read,
+    readDoor,
     requestAccess,
     use,
     addUrl,

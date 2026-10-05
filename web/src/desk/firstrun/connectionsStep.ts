@@ -89,10 +89,12 @@ export function useConnectionsStep() {
 
   const rows = detect?.candidates ?? [];
   const connected = rows.filter((row) => row.connected);
-  // Done: no row is left that his press can connect (a row with no verb —
-  // not the active gh login, or the tool not installed — cannot be used).
-  const open = rows.filter((row) => row.verb && !row.connected);
   const providers = [...new Set(connected.map((row) => row.provider))];
+  // Done: every provider he CAN use (a row with a verb) has one connection.
+  // Never "every detected account": the GitHub connector holds one
+  // connection, so two signed-in hosts can never both read CONNECTED.
+  const usable = [...new Set(rows.filter((row) => row.verb).map((row) => row.provider))];
+  const missing = usable.filter((provider) => !providers.includes(provider));
   return {
     loaded: detect !== null || unread !== "",
     unread,
@@ -101,7 +103,7 @@ export function useConnectionsStep() {
     states,
     connected,
     providers,
-    done: detect !== null && open.length === 0,
+    done: detect !== null && missing.length === 0,
     read,
     use,
   };

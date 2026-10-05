@@ -33,6 +33,7 @@ import re
 import ssl
 import subprocess
 import threading
+import time
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -68,6 +69,7 @@ class FakeEventKit:
         self.state = "not_determined"
         self.prompts = 0
         self.ics = ics
+        self.delay = 2.0
 
     def install(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import holdspeak.macos_calendar as macos
@@ -75,7 +77,13 @@ class FakeEventKit:
         monkeypatch.setattr(macos, "access_state", lambda: self.state)
         monkeypatch.setattr(macos, "request_access", self.request_access)
         monkeypatch.setattr(macos, "list_calendars", self.list_calendars)
-        monkeypatch.setattr(macos, "read_calendar_ics", lambda source, **_: self.ics)
+        monkeypatch.setattr(macos, "read_calendar_ics", self.read_calendar_ics)
+
+    def read_calendar_ics(self, source: str, **_: Any) -> bytes:
+        # Astra #876 P2: today's calendar reads slowly; tomorrow's link is
+        # already on the Door. Ready must wait for this read.
+        time.sleep(self.delay)
+        return self.ics
 
     def request_access(self, timeout: float = 120.0) -> str:
         self.prompts += 1
@@ -284,7 +292,9 @@ def test_first_run_one_screen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, w
             expect(team.locator(".gadget-chip-egress")).to_have_text("127.0.0.1")
             expect(cal.get_by_role("textbox", name="Calendar URL")).to_have_count(0)
 
-            # the macOS calendar too: Use it -> IN USE; the receipt names the next meeting
+            # today's macOS calendar (read 2 s later): Use it -> IN USE; the
+            # receipt names TODAY's meeting, not tomorrow's, once the read lands
+            expect(cal.locator(".surface-receipt")).to_contain_text("NEXT DESIGN REVIEW", timeout=15_000)
             cal.get_by_role("button", name="Use Work", exact=True).click()
             expect(work.get_by_role("status", name="IN USE")).to_be_visible()
             expect(cal.locator(".surface-receipt")).to_contain_text("NEXT ATLAS WEEKLY", timeout=15_000)
@@ -306,6 +316,7 @@ def test_first_run_one_screen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, w
 
             # ── Ready ──
             ready = page.get_by_test_id("firstrun-ready")
+            expect(ready.get_by_role("button", name=re.compile("Record Design review"))).to_have_count(0)
             expect(ready.get_by_role("heading", name="Ready, Karol")).to_be_visible()
             strip = [c for c in ready.get_by_test_id("ready-strip").get_by_role("status").all()]
             labels = [c.get_attribute("aria-label") for c in strip]
@@ -345,3 +356,61 @@ def test_first_run_one_screen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, w
         server.stop()
         source.close()
         ics.close()
+
+
+def test_a_reload_after_keep_never_replaces_the_kept_note(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Astra #876 P1, her sequence through the real note producer: dictate A,
+    Keep as note, reload, dictate B, Keep as note -> two notes, A and B."""
+    _ensure_build()
+    import holdspeak.web_server as web_server
+
+    sentences = iter([WORDS, "Book the room for the Atlas review."])
+    original = web_server.WebRuntimeCallbacks
+    monkeypatch.setattr(web_server, "WebRuntimeCallbacks",
+                        lambda **kwargs: original(**kwargs, on_transcribe=lambda audio, **_: next(sentences)))
+    source = Source()
+    source.hold.set()
+    _real_local_ai(monkeypatch, source)
+    monkeypatch.delenv("GH_CONFIG_DIR", raising=False)
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    engine_profile()
+    assign_engine(SPEECH_CAPABILITY, 1)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(args=[
+                "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream",
+                "--use-file-for-fake-audio-capture=" + str(WAV),
+            ])
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.set_default_timeout(15_000)
+            page.goto(f"{base}/?token={TOKEN}")
+            page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+            page.get_by_test_id("firstrun-local-ai").get_by_role(
+                "button", name="Set up local AI · 149 MB", exact=True).click()
+
+            def keep_one(text: str) -> None:
+                words = page.get_by_test_id("firstrun-first-words")
+                dictate = words.get_by_role("button", name="◖ Dictate one sentence")
+                expect(dictate).to_be_enabled(timeout=30_000)
+                dictate.click()
+                page.wait_for_timeout(1000)
+                words.get_by_role("button", name="Stop listening", exact=True).click()
+                expect(words.get_by_test_id("heard-quote").locator("blockquote")).to_have_text(f"“{text}”")
+                with page.expect_response(lambda r: r.url.endswith("/api/notes") and r.request.method == "POST") as made:
+                    words.get_by_role("button", name="Keep as note", exact=True).click()
+                assert made.value.ok, made.value.text()
+
+            keep_one(WORDS)
+            page.reload()
+            page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+            keep_one("Book the room for the Atlas review.")
+            notes = _api(page, "GET", "/api/notes", token=TOKEN)["notes"]
+            bodies = sorted(n["body_markdown"] for n in notes if n.get("title") == "First dictation")
+            assert bodies == sorted([WORDS, "Book the room for the Atlas review."]), notes
+            browser.close()
+    finally:
+        server.stop()
+        source.close()

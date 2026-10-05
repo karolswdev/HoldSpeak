@@ -60,7 +60,9 @@ export function useFirstTake({
   const [failure, setFailure] = useState<DictationFailure | null>(null);
   const [level, setLevel] = useState(0);
   const [keeping, setKeeping] = useState(false);
-  const [kept, setKept] = useState(false);
+  // The kept note's ref ("note:<id>"); empty until his sentence is kept.
+  const [keptRef, setKeptRef] = useState("");
+  const kept = keptRef !== "";
   const [message, setMessage] = useState("");
   const [playing, setPlaying] = useState(false);
   const session = useRef<StreamSession | null>(null);
@@ -222,22 +224,36 @@ export function useFirstTake({
 
   /** Option A "One screen" (owner ratified 2026-10-05): the heard sentence
    * becomes a real note and the face stays, so the Calendar and the
-   * Connections cards are next on the same screen. */
+   * Connections cards are next on the same screen.
+   *
+   * Astra #876 P1: the note id is spent once the note is saved. The stored
+   * id only guards a retry of the SAME save; kept, it is cleared at once, so
+   * a later sentence (after a reload) is a new note and never replaces this
+   * one. The face holds the kept note by its ref. */
+  const keepNote = useCallback(
+    async (text: string) => {
+      const ref = await saveNote(text);
+      clearFirstValueKeepNoteId();
+      setKeptRef(ref);
+      return ref;
+    },
+    [saveNote],
+  );
+
   const keep = useCallback(async () => {
     if (!take || keeping || kept) return;
     setKeeping(true);
     setMessage("");
     void tracker.current?.event("keep_selected");
     try {
-      await saveNote(take.text);
-      setKept(true);
+      await keepNote(take.text);
       await tracker.current?.finish("success").catch(() => undefined);
     } catch (error) {
       setMessage(readableError(error));
     } finally {
       setKeeping(false);
     }
-  }, [take, keeping, kept, saveNote]);
+  }, [take, keeping, kept, keepNote]);
 
   /** A start verb on the ready face: keep an unkept sentence (custody),
    * hand off to the Desk as completed, then open where the verb goes. */
@@ -248,12 +264,8 @@ export function useFirstTake({
       setMessage("");
       abandon();
       try {
-        if (take && !kept) {
-          await saveNote(take.text);
-          setKept(true);
-        }
+        if (take && !kept) await keepNote(take.text);
         await onHandoff("completed");
-        if (take) clearFirstValueKeepNoteId();
         await then?.();
         return true;
       } catch (error) {
@@ -263,7 +275,7 @@ export function useFirstTake({
         setKeeping(false);
       }
     },
-    [take, kept, keeping, onHandoff, abandon, saveNote],
+    [take, kept, keeping, onHandoff, abandon, keepNote],
   );
 
   /** Continue later keeps a heard, unkept sentence first (custody). */
@@ -274,18 +286,14 @@ export function useFirstTake({
     void tracker.current?.event("continue_later_selected");
     abandon();
     try {
-      if (take) {
-        const ref = kept ? `note:${firstValueKeepNoteId()}` : await saveNote(take.text);
-        stageFirstValueNoteOpen(ref);
-      }
+      if (take) stageFirstValueNoteOpen(kept ? keptRef : await keepNote(take.text));
       await onHandoff("dismissed");
-      if (take) clearFirstValueKeepNoteId();
     } catch (error) {
       setMessage(readableError(error));
     } finally {
       setKeeping(false);
     }
-  }, [take, kept, keeping, onHandoff, abandon, saveNote]);
+  }, [take, kept, keptRef, keeping, onHandoff, abandon, keepNote]);
 
   return {
     leave,

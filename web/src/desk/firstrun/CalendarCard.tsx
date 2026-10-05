@@ -96,6 +96,10 @@ export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }
                     <span className="concierge-cloud-actions">
                       {row.in_use ? (
                         <StateChip state="success" label="IN USE" icon="●" />
+                      ) : row.off ? (
+                        /* Configured but turned off: "Use it" would add
+                           nothing (the source is there), so no verb here. */
+                        <span className="surface-token">OFF IN SETTINGS</span>
                       ) : row.verb ? (
                         <Button
                           dense

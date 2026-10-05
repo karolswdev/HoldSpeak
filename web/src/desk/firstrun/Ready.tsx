@@ -4,13 +4,13 @@
  * verbs from his own data. "Record <next meeting> · <time>" arms the
  * recording of the next meeting on his calendar; with no meeting there is
  * no such verb (no dead verbs). Each verb hands off to the Desk. */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ReadyStrip, StartVerb, StartVerbs, StateChip, heardWordCount, countToken, type ReadyStripItem } from "../surface";
 import { readDurableDraft, writeDurableDraft } from "../../lib/durableDraft";
 import { openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import { DESK_APPLICATIONS } from "../applications";
-import { meetingClock, type CalendarStep } from "./calendarStep";
+import { meetingClock, nextMeeting, type CalendarStep } from "./calendarStep";
 import { PROVIDER_NAME, type ConnectionsStep } from "./connectionsStep";
 
 /** The Ask composer's draft scope (AskPanel `useDurableDraft("desk-ask")`). */
@@ -62,13 +62,27 @@ export function Ready({
   const [notArmed, setNotArmed] = useState(false);
   const next = calendar.next;
   const short = firstName(name);
+  const { readDoor } = calendar;
+
+  // The next meeting is the Door's answer NOW: read it when Ready shows.
+  useEffect(() => {
+    void readDoor();
+  }, [readDoor]);
 
   const record = async () => {
     if (!next) return;
     setPressed("record");
     setNotArmed(false);
+    // ...and again at the press: arm the meeting that is next at this moment.
+    const answer = await readDoor();
+    const fresh = answer ? nextMeeting(answer) : next;
+    if (!fresh) {
+      // The meeting started or left the calendar: the verb goes with it.
+      setPressed("");
+      return;
+    }
     // Arm first: a refusal stays on this face, named.
-    const armed = next.armed_schedule_id ? true : await useDesk.getState().armEventRecording(next.id);
+    const armed = fresh.armed_schedule_id ? true : await useDesk.getState().armEventRecording(fresh.id);
     if (!armed) {
       setNotArmed(true);
       setPressed("");
