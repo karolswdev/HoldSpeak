@@ -30,7 +30,8 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 | Memory: turn meaning search on from the product (the embedding model is not in the signed catalogue): waits for the owner's word | — | — |
 | Memory facts: the model writes PAST dates for a day with no month ("the ninth" on 22 Sep became 9 Sep; also "September 20" from a 23 Sep source) — the extraction prompt needs the next-such-day rule | Muad'Dib | after slice 4 |
 | Memory entities: an initial alias ("T. Wierzbicki") does not join the full name (score 0.585 < 0.6 without a shared neighbour); strict xfail in the bench | — | — |
-| Memory slices 4–6: observations; standing pages (needs a canvas); palette and Ask | Muad'Dib | — |
+| Memory slices 5–6: standing pages (needs a canvas); palette and Ask | Muad'Dib | — |
+| Memory observations: `memory_observation_versions` can be rewritten by `INSERT OR REPLACE` through `rowid` (Astra, #843); MEMORY-DESIGN.md:539 still says one live fact permits history text; never run with the real LAN model; no benchmark group; join default search only by naming kind `observation` | Muad'Dib | follow-up |
 | Memory facts: off until `memory.extract` is assigned; never run through the product path with the real LAN model; entity kind as a list raises TypeError with no back-off job; the conductor reports calls 0 after a provider exception; a crashed open call holds extraction up to 600 s | — | — |
 | Memory: summary and topic as their own chunks not built (needs old vectors to serve during a re-cut); thread keyword search misses bare local time ranges (inherited); the Desk memory face does not show the four new kinds | — | — |
 | Memory: the agent tool turn (RecipeService.chat → run_recipe) is retired code with no caller; Recipe chat runs as a thread turn whose default tools include memory.search (proved by tests/unit/test_thread_memory_search_live.py). The update draft and Prep are not fitted to a token budget (their path has none) | — | — |
@@ -59,6 +60,7 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 
 ## Last merged (newest first)
 
+- #843 — Memory slice 4: observations with evidence and history (dark until `memory.consolidate` is assigned); each text version is served only while its own evidence is live in scope
 - #841 — Nine harder relation questions: keyword search answers none, the entity walk answers all; a strict expected-fail for the initial alias
 - #839 — Memory slice 3: fact extraction, entities and the entity walk (dark until `memory.extract` is assigned); facts serve only while their source text is live; extraction yields to foreground calls on the same engine
 - #837 — The calendar test seeds its event in the local week (it failed every Sunday evening west of UTC)
