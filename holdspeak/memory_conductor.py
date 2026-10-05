@@ -8,6 +8,9 @@ runs the extract jobs that wait (slice 3): facts and entities from the chunks.
 It copies the intel drainer's shape: one thread, started and stopped by the
 hub, only in the process that owns the database.
 
+* Consolidation (slice 4) runs after extraction on the same call budget and
+  the same yield rule; it first retires observations with no live evidence
+  (no engine needed).
 * Extraction yields: before each source it stops for a live meeting, and
   for a local engine also for a live local model call (or one that ended
   less than ``LOCAL_IDLE_SECONDS`` ago).  A pass makes at most
@@ -67,8 +70,9 @@ def _principal() -> Any:
 
 
 def _assigned(db: Any) -> bool:
-    """True when ``memory.embed`` or ``memory.extract`` has its own
-    assignment now (two row reads)."""
+    """True when ``memory.embed``, ``memory.extract`` or
+    ``memory.consolidate`` has its own assignment now (three row reads)."""
+    from .memory.consolidate import CONSOLIDATE_CAPABILITY
     from .memory.engine import _assignment_head
     from .memory.extract import EXTRACT_CAPABILITY
 
@@ -76,6 +80,7 @@ def _assigned(db: Any) -> bool:
         return (
             _assignment_head(conn) is not None
             or _assignment_head(conn, EXTRACT_CAPABILITY) is not None
+            or _assignment_head(conn, CONSOLIDATE_CAPABILITY) is not None
         )
 
 
@@ -153,13 +158,17 @@ def live_work(db: Any, extractor: Any) -> str:
     return ""
 
 
-def _extract_step(db: Any, broker: Any, should_stop: Any) -> dict[str, Any]:
+def _extract_step(db: Any, broker: Any, should_stop: Any, budget: Any = None) -> dict[str, Any]:
     """The extract jobs that wait, when ``memory.extract`` has an engine.
 
     No engine: nothing is called and nothing is written (one row read).
+    ``budget`` is the pass's call budget, shared with consolidation; the
+    report's ``calls`` is what this step attempted, also when the engine
+    raised.
     """
-    from .memory.extract import extract_pending, resolve_extractor
+    from .memory.extract import CallBudget, extract_pending, resolve_extractor
 
+    budget = budget if budget is not None else CallBudget(EXTRACT_CALLS_PER_PASS)
     report: dict[str, Any] = {"engine": "", "sources": 0, "facts": 0, "calls": 0, "more": 0, "yielded": "", "error": ""}
     try:
         extractor = resolve_extractor(broker, _principal())
@@ -169,11 +178,12 @@ def _extract_step(db: Any, broker: Any, should_stop: Any) -> dict[str, Any]:
     if extractor is None:
         return report
     report["engine"] = extractor.model_id
+    start = budget.calls
     try:
         stats = extract_pending(
             db,
             extractor,
-            max_calls=EXTRACT_CALLS_PER_PASS,
+            budget=budget,
             should_stop=should_stop,
             yield_check=lambda: live_work(db, extractor),
         )
@@ -182,7 +192,71 @@ def _extract_step(db: Any, broker: Any, should_stop: Any) -> dict[str, Any]:
     except Exception as exc:
         report["error"] = str(exc)
         log.info("memory extract pass stopped; the next tick goes on: %s", exc)
+    # The true count: a call that raised was still made.
+    report["calls"] = budget.calls - start
     return report
+
+
+#: Engine calls one pass may make for consolidation (inside the pass's
+#: shared budget): a backlog of scopes goes on in the next pass.
+CONSOLIDATE_CALLS_PER_PASS = 6
+
+
+def _consolidate_step(db: Any, broker: Any, should_stop: Any, budget: Any) -> dict[str, Any]:
+    """After extraction: retire what lost its evidence (no engine needed),
+    then the consolidate jobs that wait, when ``memory.consolidate`` has an
+    engine.  Same budget, same yield rule before EVERY call as extraction.
+
+    No engine: one row read for the retire check, and nothing is called.
+    """
+    from .memory.consolidate import consolidate_pending, refresh_observations, resolve_consolidator
+
+    report: dict[str, Any] = {
+        "engine": "", "jobs": 0, "created": 0, "updated": 0, "calls": 0, "more": 0,
+        "yielded": "", "error": "", "retired": 0,
+    }
+    try:
+        report["retired"] = int(refresh_observations(db)["retired"])
+    except Exception as exc:  # readers check liveness themselves
+        log.warning("memory observation refresh failed: %s", exc)
+    try:
+        consolidator = resolve_consolidator(broker, _principal())
+    except Exception as exc:  # a route that cannot resolve is "no engine"
+        log.warning("memory.consolidate engine could not be resolved: %s", exc)
+        consolidator = None
+    if consolidator is None:
+        return report
+    report["engine"] = consolidator.model_id
+    start = budget.calls
+    try:
+        stats = consolidate_pending(
+            db,
+            consolidator,
+            budget=budget,
+            max_calls=CONSOLIDATE_CALLS_PER_PASS,
+            should_stop=should_stop,
+            yield_check=lambda: live_work(db, consolidator),
+        )
+        report.update({key: stats[key] for key in ("jobs", "created", "updated", "more", "yielded")})
+        report["failed"] = stats["failed"]
+    except Exception as exc:
+        report["error"] = str(exc)
+        log.info("memory consolidate pass stopped; the next tick goes on: %s", exc)
+    report["calls"] = budget.calls - start
+    return report
+
+
+def _model_steps(db: Any, broker: Any, should_stop: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Extraction, then consolidation, on ONE call budget.  Consolidation
+    runs only when extraction did not stop for a live call, a stop or an
+    error."""
+    from .memory.extract import CallBudget
+
+    budget = CallBudget(EXTRACT_CALLS_PER_PASS)
+    extract = _extract_step(db, broker, should_stop, budget)
+    if extract.get("yielded") or extract.get("error") or (should_stop is not None and should_stop()):
+        return extract, {"engine": "", "calls": 0, "more": 1, "yielded": extract.get("yielded", ""), "error": ""}
+    return extract, _consolidate_step(db, broker, should_stop, budget)
 
 
 def tick(
@@ -206,8 +280,9 @@ def tick(
     from .memory.retain import sweep, sweep_refs
 
     if extract_only:
+        extract, consolidate = _model_steps(db, broker, should_stop)
         return {"swept": {}, "engine": "", "embedded": 0, "error": "",
-                "extract": _extract_step(db, broker, should_stop)}
+                "extract": extract, "consolidate": consolidate}
     if refs is not None:
         if not _assigned(db):
             return {"swept": {}, "engine": "", "embedded": 0, "error": "", "skipped": 1}
@@ -216,7 +291,7 @@ def tick(
         swept = sweep(db)
     report: dict[str, Any] = {"swept": swept, "engine": "", "embedded": 0, "error": ""}
     _embed_step(db, broker, report, should_stop=should_stop, full=refs is None)
-    report["extract"] = _extract_step(db, broker, should_stop)
+    report["extract"], report["consolidate"] = _model_steps(db, broker, should_stop)
     return report
 
 
@@ -330,12 +405,15 @@ class MemoryWorker:
                 if ran is not None:
                     self.last_report = ran
                     extract = ran.get("extract") or {}
-                    retry = bool(ran.get("error") or extract.get("error"))
+                    consolidate = ran.get("consolidate") or {}
+                    retry = bool(ran.get("error") or extract.get("error") or consolidate.get("error"))
+                    more = bool(extract.get("more") or (consolidate.get("engine") and consolidate.get("more")))
+                    yielded = extract.get("yielded") or consolidate.get("yielded")
                     # A backlog goes on soon; a yield or an error waits longer.
                     next_extract = (
                         time.monotonic() + EXTRACT_GAP_SECONDS
-                        if extract.get("more") and not extract.get("yielded") and not retry
-                        else (time.monotonic() + RETRY_SECONDS if extract.get("more") else None)
+                        if more and not yielded and not retry
+                        else (time.monotonic() + RETRY_SECONDS if more else None)
                     )
             except Exception as exc:  # the thread must not die on one bad tick
                 log.warning("memory conductor tick failed: %s", exc)

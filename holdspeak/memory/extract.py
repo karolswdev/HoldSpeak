@@ -243,7 +243,13 @@ def _schema_error(item: Any) -> str:
     for entity in item["entities"]:
         if not isinstance(entity, dict) or set(entity) != _ENTITY_KEYS:
             return "an entity is not {name, kind}"
-        if not isinstance(entity["name"], str) or entity["kind"] not in _ENTITY_KINDS:
+        # A kind that is not a string (a list, an object) is a bad entry, not
+        # a crash: an unhashable value would raise TypeError on the set test.
+        if (
+            not isinstance(entity["name"], str)
+            or not isinstance(entity["kind"], str)
+            or entity["kind"] not in _ENTITY_KINDS
+        ):
             return "an entity has a bad name or kind"
     return ""
 
@@ -517,9 +523,14 @@ def extract_pending(
     max_calls: Optional[int] = None,
     should_stop: Optional[Callable[[], bool]] = None,
     yield_check: Optional[Callable[[], str]] = None,
+    budget: Optional[CallBudget] = None,
 ) -> dict[str, Any]:
     """Run the extract jobs that wait, newest source first (the backlog runs
     oldest-last).
+
+    ``budget`` is the pass's shared call budget (the conductor gives one
+    budget to extraction and consolidation, and reads its count even when
+    this raises); with none, a budget of ``max_calls`` is made here.
 
     ``max_calls`` bounds the engine calls of one pass, counted before EVERY
     call (a bad answer counts too).  ``yield_check`` gives a reason to stop
@@ -529,7 +540,8 @@ def extract_pending(
     written stay, and no source is charged.
     """
     index = db.memory_index
-    budget = CallBudget(max_calls)
+    budget = budget if budget is not None else CallBudget(max_calls)
+    start = budget.calls
     stats: dict[str, Any] = {
         "sources": 0, "facts": 0, "calls": 0, "failed": 0, "skipped": 0,
         "more": 0, "yielded": "", "stopped": 0,
@@ -564,7 +576,7 @@ def extract_pending(
             else:
                 stats["skipped"] += 1
     finally:
-        stats["calls"] = budget.calls
+        stats["calls"] = budget.calls - start
     return stats
 
 

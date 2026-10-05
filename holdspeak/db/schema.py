@@ -4702,6 +4702,65 @@ CREATE TABLE IF NOT EXISTS memory_extract_parts (
 );
 CREATE INDEX IF NOT EXISTS idx_memory_extract_parts_source
     ON memory_extract_parts(source_ref);
+-- Memory slice 4 (MEMORY-DESIGN.md §2, §3.3): observations, beliefs with
+-- evidence and history.  The `memory.consolidate` job writes a scope's changes
+-- in ONE transaction.  An observation is never deleted and never overwritten
+-- without a history row; `retired` (no live evidence) leaves every reader.
+CREATE TABLE IF NOT EXISTS memory_observations (
+    id TEXT PRIMARY KEY,
+    scope_kind TEXT NOT NULL,
+    scope_id TEXT NOT NULL DEFAULT '',
+    text TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'current',
+    superseded_by TEXT,
+    proof_count INTEGER NOT NULL DEFAULT 0,
+    first_seen TEXT,
+    last_seen TEXT,
+    boundary TEXT NOT NULL DEFAULT '',
+    consolidator_version INTEGER NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_memory_observations_scope
+    ON memory_observations(scope_kind, scope_id, state);
+-- One fact behind an observation.  The row keeps the chunk the fact was read
+-- from (source, id, hash, anchor): it is live evidence only while the fact is
+-- live with that same chunk and the chunk is in the source's live text.
+CREATE TABLE IF NOT EXISTS memory_observation_evidence (
+    observation_id TEXT NOT NULL,
+    fact_id TEXT NOT NULL,
+    stance TEXT NOT NULL,
+    added_at TEXT NOT NULL,
+    source_ref TEXT NOT NULL DEFAULT '',
+    chunk_id TEXT NOT NULL DEFAULT '',
+    chunk_sha TEXT NOT NULL DEFAULT '',
+    anchor TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (observation_id, fact_id)
+);
+CREATE INDEX IF NOT EXISTS idx_memory_observation_evidence_fact
+    ON memory_observation_evidence(fact_id);
+-- Append only: the two triggers below refuse an UPDATE or a DELETE.
+-- `prior_evidence_json` names the facts behind `prior_text`: a reader shows
+-- that text only while one of them is still live evidence.
+CREATE TABLE IF NOT EXISTS memory_observation_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    observation_id TEXT NOT NULL,
+    at TEXT NOT NULL,
+    prior_text TEXT NOT NULL,
+    prior_state TEXT NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',
+    fact_ids_json TEXT NOT NULL DEFAULT '[]',
+    prior_evidence_json TEXT NOT NULL DEFAULT '[]'
+);
+CREATE INDEX IF NOT EXISTS idx_memory_observation_history_observation
+    ON memory_observation_history(observation_id, id);
+CREATE TRIGGER IF NOT EXISTS memory_observation_history_no_update
+    BEFORE UPDATE ON memory_observation_history BEGIN
+    SELECT RAISE(ABORT, 'memory_observation_history is append only');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_observation_history_no_delete
+    BEFORE DELETE ON memory_observation_history BEGIN
+    SELECT RAISE(ABORT, 'memory_observation_history is append only');
+END;
 -- One row per model job that failed on its input (a bad output), so a source
 -- the engine cannot read waits with a back-off and stops after six tries.  A
 -- job that succeeds needs no row: the ledger stamp says it is done.

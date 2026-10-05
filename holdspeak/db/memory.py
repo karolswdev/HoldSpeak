@@ -526,9 +526,21 @@ class MemoryHit:
     related_to: Optional[str] = None
     relationship: Optional[str] = None
     graph_score: float = 0.0
+    # An observation hit only (MEMORY-DESIGN.md §3.3, slice 4): its state and
+    # the refs of its LIVE evidence, each a ref the Desk opens or a declared
+    # no-window kind.  None on every other hit, and then not in ``to_dict``,
+    # so a search with no observation is the same payload as before.
+    observation_state: Optional[str] = None
+    evidence: Optional[tuple[str, ...]] = None
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        payload = asdict(self)
+        for key in ("observation_state", "evidence"):
+            if payload[key] is None:
+                payload.pop(key)
+        if "evidence" in payload:
+            payload["evidence"] = list(payload["evidence"])
+        return payload
 
 
 @dataclass(frozen=True)
@@ -751,7 +763,7 @@ class MemoryRepository(BaseRepository):
         cut again from the redacted text.  A row whose source cannot be read
         gets no snippet.
         """
-        if str(row.get("retrieval_origin") or "") in ("vector", "time", "entity"):
+        if str(row.get("retrieval_origin") or "") in ("vector", "time", "entity", "observation"):
             return  # already cut from the redacted text (an entity hit: the redacted fact)
         from ..memory.retain import current_source, redact_source
 
@@ -926,7 +938,10 @@ class MemoryRepository(BaseRepository):
             )
         expression = _match_expression(query) if keyword_on else ""
         terms = _query_terms(query) if keyword_on else []
-        selected = self._normalize_kinds(kinds)
+        # Observations (slice 4) join a search only when the caller names the
+        # kind `observation`: a default search is the same as before.
+        kinds, observations_on = self._observation_kind(kinds)
+        selected = self._normalize_kinds(kinds) if kinds != () else ()
         keyword_kinds = selected if keyword_on else ()
         bounded_limit = max(1, min(int(limit), 500))
         bounded_offset = max(0, int(offset))
@@ -1092,7 +1107,7 @@ class MemoryRepository(BaseRepository):
         entity_rows = self._entity_rows(
             query, selected=selected, project=project, start=start, end=end, excluded=excluded
         )
-        if embedder is not None and keyword_on:
+        if embedder is not None and keyword_on and selected:
             fused, engine = self._fuse_with_vectors(
                 query,
                 embedder,
@@ -1114,6 +1129,14 @@ class MemoryRepository(BaseRepository):
             )
         elif fusion is None and entity_rows:
             interleaved, fusion = self._fuse_entities(lexical_rows, interleaved, entity_rows)
+        if observations_on and terms:
+            observation_rows = self._observation_rows(
+                terms, project=project, start=start, end=end, excluded=excluded
+            )
+            if observation_rows:
+                interleaved, fusion = self._fuse_observations(
+                    interleaved, observation_rows, fusion, lexical_total
+                )
 
         total = len(interleaved)
         page = [dict(row) for row in interleaved[bounded_offset : bounded_offset + bounded_limit]]
@@ -1140,6 +1163,8 @@ class MemoryRepository(BaseRepository):
                     str(row["relationship"]) if row.get("relationship") else None
                 ),
                 graph_score=float(row.get("graph_score") or 0.0),
+                observation_state=row.get("observation_state"),
+                evidence=tuple(row["evidence"]) if row.get("evidence") is not None else None,
             )
             for index, row in enumerate(page, start=1)
         ]
@@ -1157,6 +1182,128 @@ class MemoryRepository(BaseRepository):
             fusion=fusion,
             engine=engine,
         )
+
+    # ── observations (MEMORY-DESIGN.md §3.2, §3.3, slice 4) ──
+
+    @staticmethod
+    def _observation_kind(kinds: Optional[Iterable[str]]) -> tuple[Any, bool]:
+        """``(kinds without "observation", observations on)``.  ``()`` means
+        the caller named observations only."""
+        if kinds is None:
+            return None, False
+        values = kinds.split(",") if isinstance(kinds, str) else list(kinds)
+        cleaned = [str(value).strip().lower() for value in values if str(value).strip()]
+        if "observation" not in cleaned:
+            return kinds, False
+        rest = [value for value in cleaned if value != "observation"]
+        return (tuple(rest) if rest else ()), True
+
+    def _observation_rows(
+        self,
+        terms: list[str],
+        *,
+        project: Optional[str],
+        start: Optional[str],
+        end: Optional[str],
+        excluded: set[str],
+    ) -> list[dict[str, Any]]:
+        """The observations a question names, best first (top 50).
+
+        Only an observation that still stands (current, disputed) and has
+        LIVE supporting evidence (``consolidate.live_evidence``: its fact is
+        live with the same chunk, the chunk is in the source's live text, the
+        source is in the scope and not excluded) is a candidate.  A project
+        scope reads that project's observations only.  A time range keeps an
+        observation when one live evidence source is inside it.  Ranked by
+        the question's words the text holds, then proof count.
+        """
+        from ..memory.consolidate import LiveText, ScopeReader, live_evidence, supporting
+
+        index = self._db.memory_index
+        if not index.has_observations():
+            return []
+        rows = index.observation_rows(
+            scope=("project", project) if project else None, states=("current", "disputed")
+        )
+        wanted = [term.casefold() for term in terms]
+        scored: list[tuple[int, int, str, dict[str, Any]]] = []
+        for row in rows:
+            words = set(_WORD.findall(str(row["text"]).casefold()))
+            named = sum(1 for term in wanted if term in words)
+            if named:
+                scored.append((-named, -int(row["proof_count"] or 0), str(row["id"]), row))
+        scored.sort(key=lambda item: item[:3])
+        out: list[dict[str, Any]] = []
+        with self._connection() as conn:
+            live, scopes = LiveText(conn), ScopeReader(conn)
+            for _named, _proof, _id, row in scored:
+                if len(out) >= _VECTOR_RESULT_LIMIT:
+                    break
+                held = supporting(
+                    live_evidence(conn, [row], live=live, scopes=scopes, excluded=excluded)[str(row["id"])]
+                )
+                if start or end:
+                    held = [
+                        item for item in held
+                        if self._in_time(
+                            str(item["source_ref"]).partition(":")[0],
+                            str(getattr(live.source(item["source_ref"]), "occurred_at", "") or ""),
+                            start, end,
+                        )
+                    ]
+                if not held:
+                    continue  # nothing live stands behind it: never served
+                text = _redacted(row["text"])
+                out.append({
+                    "kind": "observation",
+                    "source_ref": f"observation:{row['id']}",
+                    "title": text[:_SNIPPET_LEAD],
+                    "snippet": text[:_SNIPPET_CHARS],
+                    "occurred_at": str(row["last_seen"] or ""),
+                    "project_id": str(row["scope_id"]) if row["scope_kind"] == "project" else None,
+                    "bm25": 0.0,
+                    "normalized_score": 1.0,
+                    "kind_rank": len(out) + 1,
+                    "retrieval_origin": "observation",
+                    "observation_state": str(row["state"]),
+                    "evidence": list(dict.fromkeys(str(item["ref"]) for item in held)),
+                })
+        return out
+
+    @staticmethod
+    def _fuse_observations(
+        rows: list[dict[str, Any]],
+        observation_rows: list[dict[str, Any]],
+        fusion: Optional[dict[str, Any]],
+        lexical_total: int,
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        """Reciprocal rank fusion of the source result (as ranked) and the
+        observation list.  The two never share a key, so the sources keep
+        their order exactly and each observation takes the place its rank
+        gives it (a tie goes to the source)."""
+        from ..memory.fusion import RRF_K, reciprocal_rank_fusion
+
+        lists = {
+            "sources": [("s", position) for position in range(len(rows))],
+            "observation": [("o", position) for position in range(len(observation_rows))],
+        }
+        fused = [
+            (rows if key[0] == "s" else observation_rows)[key[1]]
+            for key, _score, _found in reciprocal_rank_fusion(lists)
+        ]
+        if fusion is None:
+            fusion = {
+                "method": "reciprocal_rank_fusion",
+                "k": RRF_K,
+                "retrievers": (["keyword"] if lexical_total else [])
+                + (["relation"] if len(rows) > lexical_total else []),
+                "keyword_count": lexical_total,
+                "relation_count": max(0, len(rows) - lexical_total),
+            }
+        fusion = dict(fusion)
+        fusion["retrievers"] = list(fusion.get("retrievers") or []) + ["observation"]
+        fusion["observation_count"] = len(observation_rows)
+        return fused, fusion
 
     # ── the vector retriever and the fusion (MEMORY-DESIGN.md §3.2) ──
 

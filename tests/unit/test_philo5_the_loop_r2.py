@@ -327,6 +327,11 @@ def _p_kernel_receipt_read(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return hub.root.operations.invoke(OWNER, "kernel.receipt.read", {"operation_id": str(made.get("operation_id") or "op_none")})
 
 
+def _p_memory_observations_read(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    # Memory slice 4: the observations read declares {observations, count}.
+    return hub.root.operations.invoke(OWNER, "memory.observations.read", {})
+
+
 def _p_project_item_list(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     # PHILO-9-01: project.item.list declares {items, limit, offset} (no total).
     made = hub.client.post("/api/projects", json={"name": "Shape"}).json()["project"]
@@ -567,6 +572,7 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "thought.list": _p_thought_list,
     "zone.read": _p_zone_read,
     "kernel.receipt.read": _p_kernel_receipt_read,
+    "memory.observations.read": _p_memory_observations_read,
     "project.item.list": _p_project_item_list,
     "project.configure_steward": _p_configure_steward,
     "project.run_steward": _p_run_steward,

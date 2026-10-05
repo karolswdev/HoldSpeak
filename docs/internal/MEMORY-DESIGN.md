@@ -6,9 +6,9 @@ Hindsight's ideas, built native in HoldSpeak.
   robust with this solution." B = the same ideas inside HoldSpeak's own database,
   engine router, egress badges and People custody. No second database. No
   Hindsight server.
-- **Status:** build design. Slices 1 and 2 are merged. Slice 3 (facts,
-  entities, the entity walk; `memory.extract`) is built dark: see "Built
-  (slice 3)" in section 3.1. Each slice in section 8 is one PR or two.
+- **Status:** build design. Slices 1, 2 and 3 are merged. Slice 4
+  (observations; `memory.consolidate`) is built dark: see "Built (slice 4)"
+  in section 3.3. Each slice in section 8 is one PR or two.
 - **Source of ideas:** <https://github.com/vectorize-io/hindsight> (MIT), read at
   a shallow clone on 2026-10-03. Paper: arXiv 2512.12818 (linked from their
   `README.md:5`; not read for this design).
@@ -500,6 +500,64 @@ Job `consolidate`, one per scope with new facts, after extraction.
   SUPERSEDED, DISPUTED (`services/recall_service.py:15-16`, `:60`, `:227`).
 - A retired fact drops out of evidence. An observation with no live evidence
   becomes `retired` and leaves recall. Its history stays.
+
+**Built (2026-10-04, slice 4):** observations ship dark: nothing runs until
+`memory.consolidate` has its own assignment.
+
+- **Where.** The job, the prompt, the check and the read API:
+  `memory/consolidate.py` (`consolidate_pending`, `consolidate_batch`,
+  `validate_output`, `read_observations`, `RouterConsolidator`). The one
+  write transaction: `MemoryIndexRepository.write_observations`; the retire
+  pass: `refresh_observations` (`db/memory_index.py`). The conductor step:
+  `memory_conductor._consolidate_step`, after `_extract_step`, on the same
+  call budget (`_model_steps`). The tool: MCP `memory.observations` IS the
+  declared operation `memory.observations.read` (`operations.py`), bound to
+  `MemoryService.observations`: a read, no model call, the READ right.
+- **Tables.** `memory_observations`, `memory_observation_evidence`,
+  `memory_observation_history` as in section 2, with three additions. An
+  evidence row keeps the chunk its fact was read from (`source_ref`,
+  `chunk_id`, `chunk_sha`, `anchor`). A history row keeps the facts behind
+  its prior text (`prior_evidence_json`). Two triggers refuse an UPDATE or a
+  DELETE on the history table.
+- **Scope.** Computed at read time by the rule search uses. A source in a
+  project is that project's (the first by id when it is in more than one); a
+  source in no project is the desk's. A batch is up to 8 facts of ONE scope,
+  oldest first, so a later fact can supersede an earlier one.
+- **The check.** The prompt names facts `f1..f8` and observations `o1..o12`.
+  Code maps the labels back. One entry outside the closed schema, a label
+  that is not in the input, an observation updated twice, or a fact outside
+  the scope fails the whole answer: back-off in `memory_jobs` (30 s doubling
+  to 900 s, `failed` after 6; a failed batch is passed over and the scope
+  goes on). Nothing is written. The write takes the write lock, then checks
+  every input again (each fact still live and in scope, each observation as
+  read); if one moved while the engine ran, it writes nothing.
+- **Evidence follows fact liveness.** An evidence row is live only while its
+  fact is `live`, the chunk the row recorded is in the source's live text
+  (cut again now), and the source is in the observation's scope. Recall,
+  the read API and the next prompt each check this themselves, so an
+  observation with no live evidence is never served, even before
+  `refresh_observations` stamps it `retired`. A history text is shown only
+  while one fact behind it is live evidence. A retired observation is never
+  an input again and never comes back: the same belief read again from live
+  text is a new observation.
+- **Recall.** An observation is a hit only when the caller names the kind
+  `observation` (`memory.search` kind, `kinds=`). The hit carries its state
+  and its live evidence refs, each a `DESK_REF_KINDS` or a
+  `NO_WINDOW_REF_KINDS` kind (`action` is `action_item`, `decision_record`
+  is `decision`). The observation list is fused by reciprocal rank with the
+  source result as it is ranked, so the sources keep their order.
+- **The tree won over this design in two places.** (1) Observations do not
+  join a default search. A default search feeds the ⌘K palette and the
+  Room's memory search (faces with no canvas for an observation card) and
+  Ask grounding (slice 6). A default search is the same with observations in
+  memory (fenced). (2) The observation retriever ranks by the question's
+  words, not by vectors: no observation is embedded yet.
+- **Rebuild.** `memory rebuild` keeps the observation tables. The facts
+  come back with the same ids; an observation whose facts do not come back
+  is retired by the next pass.
+- **Not done.** A source filed into a project after its facts were
+  consolidated keeps those facts in the old scope (their evidence there
+  drops). The real LAN model is not run for this job; no recorded answers.
 
 ### 3.4 PAGES
 

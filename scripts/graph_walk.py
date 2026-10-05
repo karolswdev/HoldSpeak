@@ -891,6 +891,8 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
         "channel.check_destination", "channel.preview", "channel.prepare", "channel.discard",
         "channel.send", "channel.sends",
     )},
+    # Memory slice 4: the observations read.
+    "memory.observations.read": {"kind": "tool", "name": "memory.observations"},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
@@ -925,6 +927,8 @@ OP_READ_OBSERVATIONS = frozenset({
     "connection.list",
     # PHILO-10-01: the Send's reads.
     "channel.destinations", "channel.check_destination", "channel.preview", "channel.sends",
+    # Memory slice 4.
+    "memory.observations.read",
 })
 
 

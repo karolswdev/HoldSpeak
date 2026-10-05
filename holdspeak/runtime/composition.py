@@ -522,6 +522,7 @@ def install_from_web_context(
     from holdspeak.services.monday_brief_service import MondayBriefService
     from holdspeak.services.refinement_application_service import RefinementApplicationService
     from holdspeak.services.kernel_read_service import KernelReadService
+    from holdspeak.services.memory_service import MemoryService
 
     def _intel_notify(topic: str, value: Any) -> None:
         if services.broadcast is not None:
@@ -540,6 +541,8 @@ def install_from_web_context(
             resolved_db, coordinator=getattr(ctx, "refinement_coordinator", None)
         ),
         "kernel_read_service": lambda: KernelReadService(resolved_db),
+        # Memory slice 4: memory.observations.read binds to it.
+        "memory_service": lambda: MemoryService(resolved_db, observer=resolved_observer),
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)
