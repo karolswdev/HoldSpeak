@@ -79,6 +79,17 @@ def validate_calendar_subscription(value: object) -> str:
         and source[1] == ":"
         and source[2] in {"/", "\\"}
     )
+    if parsed.scheme.lower() == "eventkit":
+        # One calendar in the macOS Calendar app (holdspeak/macos_calendar.py),
+        # read through EventKit with the Calendars permission.
+        identifier = source[len("eventkit:"):].strip()
+        if not identifier or any(ch.isspace() or ch in "/?#" for ch in identifier):
+            raise ValueError("calendar.subscription eventkit: source needs one calendar id")
+        return f"eventkit:{identifier}"
+    if parsed.scheme.lower() == "webcal":
+        # Calendar apps hand out webcal:// links; the feed itself is HTTPS.
+        source = "https://" + source.split("://", 1)[1] if "://" in source else source
+        parsed = urlsplit(source)
     if parsed.scheme and not is_windows_path:
         if parsed.scheme.lower() != "https":
             raise ValueError("calendar.subscription must be a file path or HTTPS URL")
@@ -161,6 +172,13 @@ def calendar_subscription_summary(subscription: object) -> dict[str, object]:
             "egress": False,
         }
     parsed = urlsplit(source)
+    if parsed.scheme.lower() == "eventkit":
+        return {
+            "kind": "macos",
+            "host": "",
+            "refresh_seconds": CALENDAR_REFRESH_SECONDS,
+            "egress": False,
+        }
     if parsed.scheme.lower() == "https":
         return {
             "kind": "https",

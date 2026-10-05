@@ -55,11 +55,12 @@ class LLMRuntimeConfig:
 
     backend: str = "auto"  # "auto" | "mlx" | "llama_cpp" | "openai_compatible"
     # Owner ruling 2026-10-05: llama.cpp (in the base install) uses the local
-    # starter model "Set up local AI" downloads. The MLX path is used only
-    # with the optional `dictation-mlx` extra; it stays a suggested model to
-    # bring yourself (see docs/MODELS.md), because the speech plan needs a
-    # named artifact to plan the MLX stages.
-    mlx_model: str = "~/Models/mlx/Qwen3.5-8B-MLX-4bit"
+    # starter model "Set up local AI" downloads. The MLX model is used only
+    # with the optional `dictation-mlx` extra and only when the owner names
+    # one (see docs/MODELS.md). Blank = MLX is "not set up": `auto` plans and
+    # builds llama.cpp instead (plan._local_dictation_engine,
+    # runtime.resolve_backend(mlx_model_set=False)).
+    mlx_model: str = ""
     llama_cpp_model_path: str = "~/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
     # DEAD legacy fallbacks (HS-112-01): read only by the one-time migration
     # in `migrate_legacy_endpoints`, never by feature code.

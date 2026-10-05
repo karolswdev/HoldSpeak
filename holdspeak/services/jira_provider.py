@@ -858,51 +858,7 @@ class JiraProviderAdapter:
         Tolerant: missing file, empty profiles, unparsable YAML all
         return ``[]`` with no exception.
         """
-        import yaml
-
-        path = self._registry_path
-        result: list[dict[str, Any]] = []
-
-        try:
-            if not path.exists():
-                return result
-            raw = path.read_text(encoding="utf-8")
-            data = yaml.safe_load(raw)
-            if not isinstance(data, dict):
-                return result
-        except Exception as exc:
-            _log.debug("Could not read acli registry at %s: %s", path, exc)
-            return result
-
-        current_profile = data.get("current_profile", "")
-        profiles = data.get("profiles") or []
-        if not isinstance(profiles, list):
-            return result
-
-        for p in profiles:
-            if not isinstance(p, dict):
-                continue
-            site = str(p.get("site", "")).strip()
-            email = str(p.get("email", "")).strip().lower()
-            if not site or not email:
-                continue
-
-            # Build the opaque identity for "is this the current profile?"
-            cloud_id = str(p.get("cloud_id", ""))
-            account_id = str(p.get("account_id", ""))
-            profile_key = f"{cloud_id}:{account_id}" if cloud_id and account_id else ""
-
-            ref = connection_ref(site, email)
-            result.append({
-                "site": site,
-                "email": email,
-                "display_name": str(p.get("display_name", "")),
-                "auth_type": str(p.get("auth_type", "")),
-                "ref": ref,
-                "current": profile_key == current_profile and bool(current_profile),
-            })
-
-        return result
+        return read_acli_profiles(self._registry_path)
 
     # ── Switch-and-verify helper ────────────────────────────────────
 
@@ -1727,3 +1683,69 @@ class JiraProviderAdapter:
             }
 
         return self._with_account(principal, connection_ref_str, _run)
+
+
+def config_read_failure(exc: BaseException) -> str:
+    """A loggable description of a config-file read failure: class and position only.
+
+    A YAML error's message and ``str()`` quote the offending source line, and a
+    CLI config file (gh ``hosts.yml``, acli registries) can hold a token, so the
+    text never reaches a log.
+    """
+    mark = getattr(exc, "problem_mark", None) or getattr(exc, "context_mark", None)
+    if mark is not None:
+        return f"{type(exc).__name__} at line {int(mark.line) + 1}, column {int(mark.column) + 1}"
+    return type(exc).__name__
+
+
+def read_acli_profiles(path: Path) -> list[dict[str, Any]]:
+    """The accounts one acli registry file names (``~/.config/acli/<product>_config.yaml``).
+
+    A local file read: no ``acli`` process, no network.  Returns
+    ``{site, email, display_name, auth_type, ref, current}`` per profile;
+    ``cloud_id`` and ``account_id`` are opaque and never surfaced.  Tolerant:
+    a missing, empty or unparsable file returns ``[]``.
+    """
+    import yaml
+
+    result: list[dict[str, Any]] = []
+    try:
+        if not path.exists():
+            return result
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return result
+    except Exception as exc:
+        # Never the exception text: a YAML error quotes the file, and these
+        # files can hold credentials.  The class and position are enough.
+        _log.debug("Could not read acli registry at %s: %s", path, config_read_failure(exc))
+        return result
+
+    current_profile = data.get("current_profile", "")
+    profiles = data.get("profiles") or []
+    if not isinstance(profiles, list):
+        return result
+
+    for p in profiles:
+        if not isinstance(p, dict):
+            continue
+        site = str(p.get("site", "")).strip()
+        email = str(p.get("email", "")).strip().lower()
+        if not site or not email:
+            continue
+
+        # Build the opaque identity for "is this the current profile?"
+        cloud_id = str(p.get("cloud_id", ""))
+        account_id = str(p.get("account_id", ""))
+        profile_key = f"{cloud_id}:{account_id}" if cloud_id and account_id else ""
+
+        result.append({
+            "site": site,
+            "email": email,
+            "display_name": str(p.get("display_name", "")),
+            "auth_type": str(p.get("auth_type", "")),
+            "ref": connection_ref(site, email),
+            "current": profile_key == current_profile and bool(current_profile),
+        })
+
+    return result

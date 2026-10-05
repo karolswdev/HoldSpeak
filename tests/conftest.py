@@ -678,7 +678,10 @@ def missing_local_dictation_route_reason() -> str:
         )
 
         terms = _pipeline_terms(Config())
-        engine = _local_dictation_engine(str(terms.get("runtime_backend", "") or ""))
+        engine = _local_dictation_engine(
+            str(terms.get("runtime_backend", "") or ""),
+            mlx_model=str(terms.get("runtime_mlx_model", "") or ""),
+        )
     except Exception as exc:  # pragma: no cover - import-time environment fault
         return f"dictation route could not be probed: {exc}"
     if not engine:
