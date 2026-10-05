@@ -421,9 +421,21 @@ class AskService:
                 "SELECT engine,model FROM deployment_revisions WHERE id=?",
                 (str(leg["deployment_revision_id"]),),
             ).fetchone()
+            # Where the bytes went (the winning attempt's deployment, the
+            # #855 loopback rule): the lamp and the host the Ask face names.
+            from ..inference_locality import served_route
+
+            served = served_route(conn, receipt) or served_route(conn, {
+                "attempts": [],
+                "winning_deployment_revision_id": str(leg["deployment_revision_id"]),
+                "winning_boundary": boundary,
+            })
         if deployment is None:
             raise ServiceError("inference_route_deployment_missing", "Frozen deployment is missing")
         engine, model = str(deployment["engine"]), str(deployment["model"])
+        egress: dict[str, Any] = {"scope": (served or {}).get("lamp") or boundary}
+        if (served or {}).get("host"):
+            egress["host"] = served["host"]
         semantic_output = (
             json.dumps(output, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
             if "kind" in output else str(output["output"])
@@ -442,7 +454,7 @@ class AskService:
                 "engine": engine,
                 "model": model, "fallback_reason": None,
             },
-            "egress": {"scope": boundary},
+            "egress": egress,
             "context_ids": list(payload["context_ids"]),
             "context_titles": list(payload["context_titles"]),
         }

@@ -109,7 +109,10 @@ export interface AskRunResult {
    * engine verbatim, so no sentence the browser wrote can land on a row
    * (ruling B5). Empty on a success and on a transport failure. */
   refusalCode: string;
+  /** Where the bytes went: the receipt's lamp word and the host. */
   egress: { scope: "local" | "private_network" | "mesh" | "cloud"; host?: string } | null;
+  /** The route execution receipt id (the footer prints its last four). */
+  receiptId?: string;
   model: string;
   profileId: string | null;
   inferenceTarget: Record<string, unknown> | null;
@@ -240,6 +243,7 @@ export function parseAskResult(data: Record<string, any>): AskRunResult {
     invocationId: String(data.invocation_id || ""),
     refusalCode: "",
     egress: data.egress && data.egress.scope ? data.egress : null,
+    receiptId: String(data.route_execution_receipt?.execution_id || ""),
     model: String(data.model || ""),
     profileId: data.profile_id ? String(data.profile_id) : null,
     inferenceTarget:

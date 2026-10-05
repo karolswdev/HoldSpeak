@@ -570,8 +570,12 @@ export interface ThreadTurnDonePayload {
   receipt_id: string;
   outcome: string;
   /** The server sends egress as a plain scope string (e.g. "same_device"),
-   * not as an object. */
+   * not as an object: the lamp word of where the turn's bytes went, read
+   * from its receipt; "" when no model call went out (no lamp). */
   egress: string | null;
+  /** The host and the model of that route ("" when not known). */
+  host?: string;
+  model?: string;
   stats: { prompt_tokens?: number; completion_tokens?: number; error?: string } | null;
 }
 
@@ -818,7 +822,7 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
   },
 
   applyTurnDone(payload) {
-    const { thread_id, message_id, receipt_id, outcome, egress, stats } = payload;
+    const { thread_id, message_id, receipt_id, outcome, egress, host, model, stats } = payload;
     const detail = get().threads[thread_id];
     if (!detail) return;
     const buffer = get().buffers[message_id];
@@ -846,7 +850,10 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
         streaming: false,
         receiptId: receipt_id || m.receiptId,
         // egress is a plain scope string from the server, not {scope, host}.
-        egressScope: (typeof egress === "string" && egress) ? egress : m.egressScope,
+        // The done frame is the receipt: "" means no model call (no lamp).
+        egressScope: typeof egress === "string" ? (egress || null) : m.egressScope,
+        egressHost: typeof host === "string" ? (host || null) : m.egressHost,
+        modelId: model ? model : m.modelId,
         completedAt: (outcome === "succeeded" || outcome === "failed")
           ? new Date().toISOString() : m.completedAt,
         abortedAt: outcome === "aborted" ? new Date().toISOString() : m.abortedAt,

@@ -37,6 +37,7 @@ from ..kernel.inference_stream import (
     emit_thread_turn_started,
 )
 from ..kernel.prompt_adapter import StreamingPromptAdapter
+from ..inference_locality import LAMP_RANK, served_route
 from ..principals import Principal, PrincipalKind
 from .errors import ServiceError, ValidationError
 
@@ -1010,6 +1011,8 @@ class ThreadService:
         outcome = "succeeded"
         receipt_id = ""
         error_code = ""
+        # The route each pass's receipt names (inference_locality.served_route).
+        served_passes: list[dict[str, str]] = []
 
         # D3 hook: sensitive text accumulator across passes (counsel M1).
         sensitive_texts: list[str] = list(payload.get("_sensitive_texts", []))
@@ -1200,6 +1203,11 @@ class ThreadService:
                     payload_redactor=self._m1_redactor,
                     **({"parent_context": outer_run.context, "planned_node": "interview-model"} if outer_run else {}),
                 )
+                # Where this pass's bytes went, from its execution receipt.
+                with self._db._connection() as conn:
+                    pass_route = served_route(conn, routed.get("receipt"))
+                if pass_route is not None:
+                    served_passes.append(pass_route)
 
                 # -- No tool calls: text answer, done --
                 if not tool_calls_this_pass:
@@ -1676,6 +1684,22 @@ class ThreadService:
                 outcome = "indeterminate"
                 stats["error"] = f"Interview settlement requires reconciliation: {exc}"
 
+        # -- The turn's route: the least private pass that sent bytes, read
+        #    from the receipts (Article III).  The admitted plan stays only
+        #    where no pass returned a route execution receipt.
+        done_egress, done_host, done_model = egress_scope, "", ""
+        if served_passes:
+            sent = [r for r in served_passes if r["lamp"]]
+            if sent:
+                final = max(reversed(sent), key=lambda r: LAMP_RANK.get(r["lamp"], 0))
+                done_egress, done_host, done_model = final["lamp"], final["host"], final["model"]
+            else:
+                done_egress = ""
+            self._threads.set_message_route(
+                assistant_msg_id, egress_scope=done_egress,
+                egress_host=done_host, model_id=done_model,
+            )
+
         # -- Flush any remaining buffered text --
         if part_id is not None and cadence.finish():
             pending = cadence.pending
@@ -1738,8 +1762,10 @@ class ThreadService:
             message_id=assistant_msg_id,
             receipt_id=receipt_id,
             outcome=outcome,
-            egress=egress_scope,
+            egress=done_egress,
             stats=done_stats,
+            host=done_host,
+            model=done_model,
         )
 
         # HS-154-03: if the thread is still in call mode, transition back to LISTENING.
@@ -2577,6 +2603,7 @@ class ThreadService:
             "streaming": msg.streaming,
             "receipt_id": msg.receipt_id,
             "egress_scope": msg.egress_scope,
+            "egress_host": msg.egress_host,
             "model_id": msg.model_id,
             "error_json": error_json,
             "stats_json": stats_json,

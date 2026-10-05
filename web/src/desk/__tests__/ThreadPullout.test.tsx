@@ -168,11 +168,13 @@ describe("ThreadPullout rows", () => {
     expect(screen.getByText("1/3")).toBeTruthy();
   });
 
-  it("renders receipt short-id for assistant row with receiptId", () => {
-    seedStore([makeMsg({ receiptId: "rcpt-12345678abcdef0123456789abcdef" })]);
-    renderPullout();
-    // Receipt renders as "receipt ····" + last 4 chars.
-    expect(screen.getByText(/cdef/)).toBeTruthy();
+  it("renders the last turn's receipt short-id in the footer", () => {
+    // Owner pick 2026-10-05 (route in footer): the receipt rides the
+    // footer's last-turn route, not the row.
+    seedStore([makeMsg({ receiptId: "rcpt-12345678abcdef0123456789abcdef", egressScope: "local" })]);
+    const { container } = renderPullout();
+    expect(container.querySelector(".thread-route-footer")!.textContent).toContain("RECEIPT ··cdef");
+    expect(container.querySelector(".thread-row-receipt")).toBeNull();
   });
 
   it("renders token counts in the head", () => {
@@ -181,7 +183,7 @@ describe("ThreadPullout rows", () => {
     expect(screen.getByText(/IN 100/)).toBeTruthy();
   });
 
-  it("done row shows receipt, egress lamp, and model id", () => {
+  it("done row shows its egress lamp; the footer shows receipt and model", () => {
     seedStore([
       makeMsg({
         receiptId: "rcpt-aabbccdd11223344",
@@ -192,16 +194,15 @@ describe("ThreadPullout rows", () => {
       }),
     ]);
     const { container } = renderPullout();
-    // Receipt short-id (last 4 chars) rendered inside receipt span.
-    const receiptEl = container.querySelector(".thread-row-receipt");
-    expect(receiptEl).toBeTruthy();
-    expect(receiptEl!.textContent).toContain("3344");
-    // Egress lamp: boundaryEgressLamp("same_device") => "LOCAL".
-    const lampEl = container.querySelector(".gadget-lamp");
+    // Egress lamp on the row: boundaryEgressLamp("same_device") => "LOCAL".
+    const lampEl = container.querySelector(".thread-row-head .gadget-lamp");
     expect(lampEl).toBeTruthy();
     expect(lampEl!.textContent).toContain("LOCAL");
-    // Model id as the row label.
-    expect(screen.getByText("hs151-fake-model")).toBeTruthy();
+    // The row is ASSISTANT; the model and the receipt ride the footer once.
+    expect(container.querySelector(".thread-row-label")!.textContent).toBe("ASSISTANT");
+    expect(container.querySelector(".thread-route-footer")!.textContent).toContain(
+      "LAST TURN · hs151-fake-model · RECEIPT ··3344",
+    );
   });
 
   it("CRASHED row renders even with zero parts", () => {

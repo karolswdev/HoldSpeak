@@ -454,6 +454,17 @@ class ThreadRepository(BaseRepository):
             ).fetchone()
         return _row_to_message(row) if row else None
 
+    def set_message_route(
+        self, message_id: str, *, egress_scope: str, egress_host: str, model_id: str,
+    ) -> None:
+        """Write where a turn's bytes went, read from its execution receipt."""
+        with self._connection() as conn:
+            conn.execute(
+                "UPDATE thread_messages SET egress_scope=?, egress_host=?, "
+                "model_id=CASE WHEN ?='' THEN model_id ELSE ? END WHERE id=?",
+                (egress_scope, egress_host, model_id, model_id, str(message_id)),
+            )
+
     def abort_message(self, message_id: str) -> Optional[ThreadMessage]:
         now = time.time()
         with self._connection() as conn:

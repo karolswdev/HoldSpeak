@@ -57,15 +57,17 @@ import { SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
 import { countToken } from "../surface/count";
 import {
   GadgetGroup,
-  LampGadget,
   LedMeter,
   MxRadio,
   TransportKey,
 } from "../surface/gadgets";
 import {
-  boundaryEgressLamp,
-  egressScopeLamp,
-} from "../inferenceEgress";
+  RouteEgressChip,
+  TurnLamp,
+  lastTurnLine,
+  routeLamp,
+  type TurnRoute,
+} from "../turnRoute";
 import { CitationChips, groundedMatchCount } from "../surface/citations";
 import { Button } from "../../components/signal/Signal";
 import { humanizeWireValue } from "../../lib/productLanguage";
@@ -239,16 +241,21 @@ export function AskPanel() {
     (c) => c.flagged,
   );
   const placement = result?.actualPlacement || null;
-  const printedBoundary = placement?.boundary;
+  // Owner pick 2026-10-05 (route in footer): the turn wears only its lamp;
+  // the footer names the full route once. The lamp is the receipt's egress
+  // (where the bytes went), then the placement boundary.
   const printedLamp =
-    typeof printedBoundary === "string"
-      ? boundaryEgressLamp(printedBoundary)
-      : egressScopeLamp(result?.egress?.scope);
-  const placementTokens = placement
-    ? [
-        placement.model ? String(placement.model) : "",
-      ].filter(Boolean)
-    : [];
+    routeLamp(result?.egress?.scope) ??
+    routeLamp(typeof placement?.boundary === "string" ? placement.boundary : "");
+  const printedRoute: TurnRoute | null =
+    result && printedLamp
+      ? {
+          lamp: printedLamp,
+          host: String(result.egress?.host || ""),
+          model: String(placement?.model || result.model || ""),
+          receipt: String(result.receiptId || ""),
+        }
+      : null;
 
   const turnCount = (sent ? 1 : 0) + (result || (error && sent) ? 1 : 0);
 
@@ -260,19 +267,11 @@ export function AskPanel() {
     ? error
     : phase === "routing"
       ? "ROUTING"
-      : phase === "printed" && result
-        ? [
-            `RAN ON ${String(
-              placement?.target_name ||
-                placement?.target_id ||
-                result.model ||
-                "this device",
-            )}`,
-            placement?.model ? String(placement.model) : "",
-          ]
-            .filter(Boolean)
-            .join(" · ")
-        : [
+      : phase === "printed" && printedRoute
+        ? lastTurnLine(printedRoute)
+        : phase === "printed" && result
+          ? String(placement?.model || result.model || "")
+          : [
             promptRecovered ? "DRAFT · RECOVERED" : "",
             `CTX ${fmtK(groundTokens)}/${fmtK(limitTokens)}`,
             overBudget ? "PAST THE WINDOW" : "USES ASSIGNMENT",
@@ -349,24 +348,7 @@ export function AskPanel() {
           {phase === "printed" && result ? (
             <SurfaceTrafficTurn
               prefix="HUB>"
-              meta={
-                <>
-                  {result.egress ? (
-                    <span className="surface-detail">
-                      ran on{" "}
-                      <LampGadget on {...printedLamp} />
-                      {[result.egress.host, result.model]
-                        .filter(Boolean)
-                        .map((detail) => ` · ${detail}`)}
-                    </span>
-                  ) : null}
-                  {placementTokens.map((token) => (
-                    <span key={token} className="surface-token">
-                      {token}
-                    </span>
-                  ))}
-                </>
-              }
+              meta={<TurnLamp lamp={printedLamp} />}
               verbs={
                 <>
                   <Button
@@ -565,7 +547,7 @@ export function AskPanel() {
         )}
       </div>
 
-      <SurfaceFooter receipt={copyReceipt || <span className="surface-footer-receipt-line" data-tone={statusTone} role="status">{statusLine}</span>} verbs={<><Button dense variant="ghost" disabled={phase === "routing"} onClick={bin}>{phase === "printed" ? "Bin" : "Cancel"}</Button>{phase === "printed" && result ? <Button dense disabled={kept} onClick={() => void keep()}>{kept ? "Kept" : "Keep"}</Button> : null}</>} />
+      <SurfaceFooter className={phase === "printed" && printedRoute ? "turn-route-footer" : undefined} egress={phase === "printed" && printedRoute ? <RouteEgressChip route={printedRoute} /> : null} receipt={copyReceipt || <span className="surface-footer-receipt-line" data-tone={statusTone} role="status">{statusLine}</span>} verbs={<><Button dense variant="ghost" disabled={phase === "routing"} onClick={bin}>{phase === "printed" ? "Bin" : "Cancel"}</Button>{phase === "printed" && result ? <Button dense disabled={kept} onClick={() => void keep()}>{kept ? "Kept" : "Keep"}</Button> : null}</>} />
     </DeskWindowFrame>
   );
 }
