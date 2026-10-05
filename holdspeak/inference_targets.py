@@ -240,6 +240,26 @@ def local_model_file_present(model_path: str | Path | None) -> bool:
     return bool(path) and Path(path).expanduser().exists()
 
 
+#: The reason when the default local model is not on this device yet. It is
+#: not a broken file: the product provides it with "Set up local AI".
+NOT_SET_UP_REASON = "not set up: Set up local AI downloads this model"
+
+
+def _missing_model_reason(model_path: str | Path | None) -> str:
+    """Honest words for a missing local model file.
+
+    The default path names the starter model the product downloads, so its
+    absence means "not set up yet". A path the owner set and that is gone is
+    a real fault: "model file not found".
+    """
+    from .intel.models import DEFAULT_INTEL_MODEL_PATH
+
+    clean = str(model_path or "").strip()
+    if not clean or Path(clean).expanduser() == Path(DEFAULT_INTEL_MODEL_PATH).expanduser():
+        return NOT_SET_UP_REASON
+    return f"model file not found: {model_path}"
+
+
 def _this_machine_readiness() -> tuple[str, str]:
     """Readiness for the LOCAL meeting-intel model this device will actually load.
 
@@ -253,7 +273,7 @@ def _this_machine_readiness() -> tuple[str, str]:
     model_path = configured_local_meeting_model_path()
     if local_model_file_present(model_path):
         return "ready", ""
-    return "unavailable", f"model file not found: {model_path}"
+    return "unavailable", _missing_model_reason(model_path)
 
 
 def this_machine_target_from_model_path(
@@ -262,7 +282,7 @@ def this_machine_target_from_model_path(
     """Resolve the canonical this-device target from an already captured path."""
     model_path = str(configured_path or "").strip()
     state = "ready" if local_model_file_present(model_path) else "unavailable"
-    reason = "" if state == "ready" else f"model file not found: {configured_path}"
+    reason = "" if state == "ready" else _missing_model_reason(configured_path)
     deployment_model = model or (Path(model_path).expanduser().stem if model_path else "")
     deployment = DeploymentIdentity(
         destination_id=THIS_MACHINE_ID,

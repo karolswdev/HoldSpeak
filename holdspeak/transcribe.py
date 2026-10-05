@@ -175,6 +175,18 @@ def _model_repo_candidates(model_name: str) -> list[str]:
     return [name]
 
 
+def _local_or_repo(path_or_hf_repo: str) -> str:
+    """The folder on this device for a repository id, else the id itself.
+
+    A local folder loads with no network request.  The frozen preload
+    evidence keeps the repository id; only the physical load reads the folder.
+    """
+    from .whisper_models import local_whisper_dir
+
+    local = local_whisper_dir(path_or_hf_repo)
+    return str(local) if local is not None else path_or_hf_repo
+
+
 class _MlxTranscriber:
     """Transcribe audio locally using mlx-whisper (macOS arm64 only)."""
 
@@ -365,22 +377,28 @@ class _MlxTranscriber:
 
     def _model_holder_get(self, path_or_hf_repo: str) -> str:
         """The explicit no-decode load hook, on the pinned MLX thread."""
+        source = _local_or_repo(path_or_hf_repo)
+        self._loaded_sources = {**getattr(self, "_loaded_sources", {}), path_or_hf_repo: source}
+
         def _run() -> str:
             from mlx_whisper.transcribe import ModelHolder  # type: ignore
 
-            ModelHolder.get_model(path_or_hf_repo, self._mx.float16)
+            ModelHolder.get_model(source, self._mx.float16)
             return "model-holder"
 
         return str(self._mlx_thread.submit(_run).result())
 
     def _silent_audio_load(self, path_or_hf_repo: str) -> str:
         """The fallback: one tiny silent transcription forces the weight load."""
+        source = _local_or_repo(path_or_hf_repo)
+        self._loaded_sources = {**getattr(self, "_loaded_sources", {}), path_or_hf_repo: source}
+
         def _run() -> str:
             silent = np.zeros(1600, dtype=np.float32)  # ~0.1s at 16 kHz
             warm_kwargs = {"language": self.language} if self.language else {"language": "en"}
             self._mlx_whisper.transcribe(  # type: ignore[union-attr]
                 silent,
-                path_or_hf_repo=path_or_hf_repo,
+                path_or_hf_repo=source,
                 verbose=None,
                 **warm_kwargs,
             )
@@ -425,7 +443,11 @@ class _MlxTranscriber:
             extra = {"language": self.language} if self.language else {}
             result = self._mlx_whisper.transcribe(  # type: ignore[union-attr]
                 audio,
-                path_or_hf_repo=self._path_or_hf_repo,
+                # The same source the preload loaded, so ModelHolder's cache
+                # (keyed by this string) is hit and nothing is fetched.
+                path_or_hf_repo=getattr(self, "_loaded_sources", {}).get(
+                    self._path_or_hf_repo, self._path_or_hf_repo
+                ),
                 verbose=None,
                 **extra,
             )
@@ -470,8 +492,16 @@ class _FasterWhisperTranscriber:
         self.compute_type = compute_type or "int8"
 
         try:
+            from .whisper_models import local_whisper_dir, repositories_for
+
+            # A copy on this device loads without a network request.
+            local = next(
+                (found for repo in repositories_for(model_name, "faster-whisper")
+                 if (found := local_whisper_dir(repo)) is not None),
+                None,
+            )
             self._model = faster_whisper.WhisperModel(
-                model_name,
+                str(local) if local is not None else model_name,
                 device=self.device,
                 compute_type=self.compute_type,
             )

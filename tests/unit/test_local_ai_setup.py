@@ -1,0 +1,522 @@
+"""Strong defaults, batteries included (owner ruling 2026-10-05).
+
+Fences for "Set up local AI" and the honest defaults:
+
+* the runtime is checked before any request leaves (Set up local AI and the
+  Meaning search press),
+* ONE egress receipt names every downloaded file,
+* a hash mismatch fails and keeps nothing,
+* a second call downloads nothing; a stopped download continues,
+* the boot does not download Whisper; a Whisper model on disk still warms,
+* ``holdspeak doctor`` finds the running hub's real port,
+* meetings are summarised by default; defaults name files the product provides.
+
+The kernel, the database, the assignment and profile services are the real
+ones.  The network is a real HTTP server on this device.  Two physical
+leaves are replaced: the installed llama-cpp-python revision and the
+runtime-readiness probe (the test extra does not carry a model to load).
+"""
+from __future__ import annotations
+
+import hashlib
+import importlib.metadata
+import json
+import os
+import socket
+import threading
+import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+from holdspeak.db import Database
+from holdspeak.kernel.runtime import _configure
+from holdspeak.memory.local_model import PinnedModel, model_dir
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services import local_ai_setup_service as local_ai_module
+from holdspeak.services.errors import ServiceError
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+from holdspeak.services.local_ai_setup_service import (
+    STARTER_PRESET_ID,
+    STARTER_PROFILE_ID,
+    LocalAISetupService,
+    file_ref,
+    starter_model_path,
+)
+from holdspeak.services.meaning_search_service import MeaningSearchService
+from holdspeak.services.model_profile_service import ModelProfileService
+
+OWNER = Principal(PrincipalKind.OWNER, "test-owner")
+
+
+def _blob(tag: bytes, size: int, magic: bytes = b"") -> bytes:
+    body = magic + (tag * (size // len(tag) + 1))
+    return body[:size]
+
+
+def _pin(repository: str, filename: str, content: bytes, *, magic: bytes) -> PinnedModel:
+    return PinnedModel(
+        name=filename, label=filename, repository=repository, revision="r1", filename=filename,
+        sha256=hashlib.sha256(content).hexdigest(), size=len(content), license="MIT",
+        architecture="test", context_ceiling=2048, magic=magic,
+    )
+
+
+WHISPER_CONFIG = b'{"model_type": "whisper"}'
+WHISPER_WEIGHTS = _blob(b"whisper-weights-", 40_000)
+EMBED = _blob(b"embed-", 30_000, b"GGUF")
+STARTER = _blob(b"starter-", 50_000, b"GGUF")
+
+WHISPER_FILES = (
+    _pin("mlx-community/whisper-base-mlx", "config.json", WHISPER_CONFIG, magic=b""),
+    _pin("mlx-community/whisper-base-mlx", "weights.npz", WHISPER_WEIGHTS, magic=b""),
+)
+EMBED_PIN = _pin("nomic-ai/nomic-embed-text-v1.5-GGUF", "nomic-embed-text-v1.5.Q8_0.gguf", EMBED, magic=b"GGUF")
+STARTER_SHA = "sha256:" + hashlib.sha256(STARTER).hexdigest()
+
+
+def _catalog() -> dict:
+    manifest = {"files": [{"path": "Qwen3.5-4B-Q4_K_M.gguf", "sha256": STARTER_SHA, "size": len(STARTER)}]}
+    manifest_sha = "sha256:" + hashlib.sha256(
+        json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return {
+        "catalog_revision": 9,
+        "entries": [{
+            "id": STARTER_PRESET_ID,
+            "label": "Quick local Qwen",
+            "context": {"recommended_tokens": 8192, "ceiling_tokens": 8192},
+            "source": {
+                "repository": "unsloth/Qwen3.5-4B-GGUF",
+                "revision": "r1",
+                "filename": "Qwen3.5-4B-Q4_K_M.gguf",
+                "file_sha256": STARTER_SHA,
+                "manifest_sha256": manifest_sha,
+                "download_bytes": len(STARTER),
+                "installed_bytes": len(STARTER),
+                "peak_free_bytes": len(STARTER) * 2,
+                "license": "Apache-2.0",
+            },
+        }],
+    }
+
+
+class _Source:
+    """A file server on this device.  It records every request it gets."""
+
+    def __init__(self, files: dict[str, bytes]) -> None:
+        self.files = dict(files)
+        self.requests: list[tuple[str, str]] = []  # (path, Range header)
+        self.cut: tuple[str, int] | None = None  # (path, N): cut that answer after N bytes once
+        source = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args) -> None:
+                pass
+
+            def do_GET(self) -> None:
+                header = self.headers.get("Range", "")
+                source.requests.append((self.path, header))
+                body = source.files.get(self.path)
+                if body is None:
+                    self.send_response(404)
+                    self.end_headers()
+                    return
+                start = 0
+                if header.startswith("bytes="):
+                    start = int(header[6:].split("-")[0])
+                    self.send_response(206)
+                    self.send_header("Content-Range", f"bytes {start}-{len(body) - 1}/{len(body)}")
+                else:
+                    self.send_response(200)
+                rest = body[start:]
+                if source.cut is not None and source.cut[0] == self.path:
+                    rest, source.cut = rest[: source.cut[1]], None
+                self.send_header("Content-Length", str(len(rest)))
+                self.end_headers()
+                self.wfile.write(rest)
+
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.base = f"http://127.0.0.1:{self.server.server_address[1]}"
+
+    def url_for(self, model: PinnedModel) -> str:
+        return f"{self.base}/{model.repository}/{model.filename}"
+
+    def close(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+
+
+@pytest.fixture()
+def desk(tmp_path: Path, monkeypatch):
+    for name in ("HF_HUB_CACHE", "HF_HOME", "HOLDSPEAK_MEMORY_EMBED_MODEL"):
+        monkeypatch.delenv(name, raising=False)
+    db = Database(tmp_path / "local-ai.db")
+    broker = _configure(db)
+    home = tmp_path / "home"
+    home.mkdir()
+    # Leaf 1: the installed runtime (meaning search reads the package version).
+    monkeypatch.setattr(importlib.metadata, "version", lambda name: "0.3.35")
+    # Leaf 2: the runtime-readiness probe.
+    monkeypatch.setattr(
+        ModelProfileService, "_local_runtime_readiness", staticmethod(lambda runtime_id: ("ready", "ready"))
+    )
+    monkeypatch.setattr("holdspeak.whisper_models._PINNED", {("mlx", "base"): WHISPER_FILES})
+    files = {f"/{m.repository}/{m.filename}": c for m, c in zip(WHISPER_FILES, (WHISPER_CONFIG, WHISPER_WEIGHTS))}
+    files[f"/{EMBED_PIN.repository}/{EMBED_PIN.filename}"] = EMBED
+    files["/unsloth/Qwen3.5-4B-GGUF/Qwen3.5-4B-Q4_K_M.gguf"] = STARTER
+    source = _Source(files)
+    allowed = lambda host: host == "127.0.0.1"  # noqa: E731
+    meaning = MeaningSearchService(
+        db, assignment_service=InferenceAssignmentService(db), broker_provider=lambda: broker,
+        model=EMBED_PIN, home_provider=lambda: home, source_url=source.url_for(EMBED_PIN),
+        allowed_host=allowed, wake=lambda: None,
+    )
+    runtime = {"revision": "0.3.35"}
+
+    def build() -> LocalAISetupService:
+        return LocalAISetupService(
+            db, meaning_search=meaning, broker_provider=lambda: broker, home_provider=lambda: home,
+            config_provider=lambda: SimpleNamespace(model=SimpleNamespace(name="base", backend="mlx")),
+            catalog_provider=_catalog, runtime_revision=lambda: runtime["revision"],
+            url_for=source.url_for, allowed_host=allowed,
+        )
+
+    service = build()
+    yield SimpleNamespace(db=db, broker=broker, home=home, source=source, meaning=meaning,
+                          service=service, runtime=runtime, build=build)
+    service.wait(10)
+    meaning.wait(10)
+    source.close()
+
+
+def _egress(db: Database) -> list[dict]:
+    with db._connection() as conn:
+        rows = conn.execute(
+            "SELECT o.operation_id,j.refs_json,r.outcome FROM kernel_journal j "
+            "JOIN kernel_operations o ON o.operation_id=j.operation_id "
+            "JOIN kernel_receipts r ON r.operation_id=j.operation_id "
+            "WHERE j.event_type='operation.admitted' AND o.name='external.egress' "
+            "ORDER BY j.hub_sequence"
+        ).fetchall()
+    return [{**dict(row), "refs": json.loads(row["refs_json"])} for row in rows]
+
+
+def _assigned(db: Database, key: str) -> bool:
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT cleared FROM inference_assignment_heads WHERE assignment_key=?", (key,)
+        ).fetchone()
+    return row is not None and not row["cleared"]
+
+
+def _starter_path(desk) -> Path:
+    return starter_model_path(desk.home, _catalog()["entries"][0])
+
+
+# ── B: Set up local AI ────────────────────────────────────────────────
+
+
+def test_runtime_is_checked_before_any_download(desk) -> None:
+    desk.runtime["revision"] = None
+    with pytest.raises(ServiceError) as caught:
+        desk.service.start(OWNER)
+    assert caught.value.code == "local_ai_runtime_unavailable"
+    assert desk.source.requests == []
+    assert _egress(desk.db) == []
+    assert not _starter_path(desk).parent.exists()
+    assert desk.service.status(OWNER)["state"] == "needs_runtime"
+
+
+def test_runtime_too_old_downloads_nothing(desk) -> None:
+    desk.runtime["revision"] = "0.3.16"
+    with pytest.raises(ServiceError):
+        desk.service.start(OWNER)
+    assert desk.source.requests == []
+
+
+def test_meaning_search_press_checks_the_runtime_before_the_download(desk, monkeypatch) -> None:
+    def missing(name: str) -> str:
+        raise importlib.metadata.PackageNotFoundError(name)
+
+    monkeypatch.setattr(importlib.metadata, "version", missing)
+    status = desk.meaning.turn_on(OWNER)
+    desk.meaning.wait(10)
+    assert status["error_code"] == "runtime"
+    assert desk.source.requests == []
+    assert _egress(desk.db) == []
+    assert not (model_dir(desk.home) / EMBED_PIN.filename).exists()
+
+
+def test_one_call_downloads_every_file_with_one_receipt(desk) -> None:
+    before = desk.service.status(OWNER)
+    assert before["state"] == "not_started"
+    assert before["egress"] == {
+        "destination": "huggingface.co", "what": "model file request", "files": 4,
+        "bytes": len(WHISPER_CONFIG) + len(WHISPER_WEIGHTS) + len(EMBED) + len(STARTER),
+    }
+    desk.service.start(OWNER)
+    desk.service.wait(30)
+
+    receipts = _egress(desk.db)
+    assert len(receipts) == 1, receipts
+    assert receipts[0]["outcome"] == "succeeded"
+    for model in (*WHISPER_FILES, EMBED_PIN, local_ai_module.starter_model(_catalog()["entries"][0])):
+        assert file_ref(model) in receipts[0]["refs"]
+    assert len(desk.source.requests) == 4
+
+    status = desk.service.status(OWNER)
+    assert status["state"] == "ready", status
+    assert all(row["on_device"] for row in status["files"])
+    assert status["egress"] is None
+    engine = status["local_engine"]
+    assert engine["ready"] is True and engine["profile_id"] == STARTER_PROFILE_ID
+    assert status["meaning_search"] in {"on", "indexing"}
+    assert _starter_path(desk).read_bytes() == STARTER
+    # Meaning search is on; "Default for AI work" is NOT assigned here.
+    assert _assigned(desk.db, "capability:memory.embed")
+    assert not _assigned(desk.db, "global")
+
+
+def test_hash_mismatch_fails_and_keeps_nothing(desk) -> None:
+    desk.source.files["/unsloth/Qwen3.5-4B-GGUF/Qwen3.5-4B-Q4_K_M.gguf"] = _blob(b"wrong-", len(STARTER), b"GGUF")
+    desk.service.start(OWNER)
+    desk.service.wait(30)
+
+    status = desk.service.status(OWNER)
+    assert status["state"] == "failed"
+    assert status["error_code"] == "integrity"
+    folder = _starter_path(desk).parent
+    assert sorted(path.name for path in folder.iterdir()) == []
+    assert status["local_engine"]["ready"] is False
+    with desk.db._connection() as conn:
+        starter_artifact = local_ai_module.starter_artifact_id(_catalog()["entries"][0])
+        assert conn.execute(
+            "SELECT count(*) FROM inference_model_artifacts WHERE artifact_id=?", (starter_artifact,)
+        ).fetchone()[0] == 0
+        assert conn.execute(
+            "SELECT count(*) FROM model_profile_revisions WHERE profile_id=?", (STARTER_PROFILE_ID,)
+        ).fetchone()[0] == 0
+    assert not _assigned(desk.db, "capability:memory.embed")
+
+
+def test_second_call_downloads_nothing(desk) -> None:
+    desk.service.start(OWNER)
+    desk.service.wait(30)
+    assert desk.service.status(OWNER)["state"] == "ready"
+    desk.source.requests.clear()
+
+    again = desk.build()  # a new process: no memory of the first call
+    status = again.start(OWNER)
+    again.wait(10)
+    assert desk.source.requests == []
+    assert len(_egress(desk.db)) == 1
+    assert status["state"] == "ready"
+
+
+def test_a_stopped_download_continues_its_part_file(desk) -> None:
+    desk.source.cut = ("/mlx-community/whisper-base-mlx/weights.npz", 10_000)  # stops early
+    desk.service.start(OWNER)
+    desk.service.wait(30)
+    assert desk.service.status(OWNER)["error_code"] == "network"
+
+    desk.service.start(OWNER)
+    desk.service.wait(30)
+    assert desk.service.status(OWNER)["state"] == "ready"
+    ranges = [header for _path, header in desk.source.requests if header]
+    assert ranges == ["bytes=10000-"]
+
+
+# ── C: the boot does not download Whisper ─────────────────────────────
+
+
+class _Host:
+    def __init__(self, name: str = "base", backend: str = "mlx") -> None:
+        self.config = SimpleNamespace(model=SimpleNamespace(name=name, backend=backend, warm_on_start=True))
+        self.state_lock = threading.Lock()
+        self.transcription_lock = threading.Lock()
+        self._transcriber_init_lock = threading.Lock()
+        self.runtime_status: dict = {}
+        self.transcriber = None
+
+    def _set_runtime_activity(self, *args, **kwargs) -> None:
+        pass
+
+
+def _warm(host) -> None:
+    from holdspeak.runtime.transcriber_state import TranscriberStateMixin
+
+    for name in ("_whisper_model_on_disk", "_warm_transcriber_in_background", "_set_transcription_status",
+                 "_transcription_warm_on_start_enabled", "_ensure_transcriber_loaded",
+                 "_loaded_transcriber_reusable"):
+        setattr(host, name, getattr(TranscriberStateMixin, name).__get__(host))
+    host._warm_transcriber_in_background()
+    until = time.monotonic() + 5
+    while host.runtime_status.get("transcription_status") == "warming" and time.monotonic() < until:
+        time.sleep(0.01)
+
+
+@pytest.fixture()
+def boot(tmp_path: Path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    for name in ("HF_HUB_CACHE", "HF_HOME"):
+        monkeypatch.delenv(name, raising=False)
+    connects: list = []
+    real_connect = socket.socket.connect
+
+    def record(self, address):  # the fetch layer: every outbound socket
+        connects.append(address)
+        return real_connect(self, address)
+
+    monkeypatch.setattr(socket.socket, "connect", record)
+    admissions: list[int] = []
+
+    def admission():
+        admissions.append(1)
+        raise RuntimeError("test stops the warm at admission")
+
+    monkeypatch.setattr("holdspeak.speech_session.preload_service_admission", admission)
+    return SimpleNamespace(home=home, connects=connects, admissions=admissions)
+
+
+def test_boot_without_whisper_on_disk_makes_no_network_call(boot) -> None:
+    host = _Host()
+    _warm(host)
+    assert host.runtime_status["transcription_status"] == "not_loaded"
+    assert boot.admissions == []  # the model-loading path was never entered
+    assert boot.connects == []
+
+
+def _hub_cache_copy(home: Path) -> Path:
+    root = home / ".cache" / "huggingface" / "hub" / "models--mlx-community--whisper-base-mlx"
+    snapshot = root / "snapshots" / "abc123"
+    snapshot.mkdir(parents=True)
+    (snapshot / "config.json").write_bytes(WHISPER_CONFIG)
+    (snapshot / "weights.npz").write_bytes(WHISPER_WEIGHTS)
+    (root / "refs").mkdir()
+    (root / "refs" / "main").write_text("abc123")
+    return snapshot
+
+
+def test_boot_with_whisper_on_disk_warms_it(boot) -> None:
+    snapshot = _hub_cache_copy(boot.home)
+    host = _Host()
+    _warm(host)
+    assert boot.admissions == [1]  # the warm went on to load the model
+    assert boot.connects == []
+    # The physical load reads the folder on this device, not the hub.
+    from holdspeak.transcribe import _local_or_repo
+
+    assert _local_or_repo("mlx-community/whisper-base-mlx") == str(snapshot)
+
+
+def test_the_pinned_whisper_folder_is_found_first(boot, monkeypatch) -> None:
+    from holdspeak.whisper_models import local_whisper_dir, pinned_whisper_dir
+
+    monkeypatch.setattr("holdspeak.whisper_models._PINNED", {("mlx", "base"): WHISPER_FILES})
+    _hub_cache_copy(boot.home)
+    folder = pinned_whisper_dir("mlx-community/whisper-base-mlx", boot.home)
+    folder.mkdir(parents=True)
+    (folder / "config.json").write_bytes(WHISPER_CONFIG)
+    (folder / "weights.npz").write_bytes(WHISPER_WEIGHTS)
+    assert local_whisper_dir("mlx-community/whisper-base-mlx") == folder
+    (folder / "weights.npz").write_bytes(b"x" * len(WHISPER_WEIGHTS))  # not the pinned bytes
+    assert local_whisper_dir("mlx-community/whisper-base-mlx") != folder
+
+
+# ── D: doctor and the defaults ────────────────────────────────────────
+
+
+def test_doctor_finds_the_running_hub(tmp_path: Path, monkeypatch) -> None:
+    from holdspeak import doctor
+    from holdspeak.runtime_lock import owner_lock_path
+
+    class Health(BaseHTTPRequestHandler):
+        def log_message(self, *args) -> None:
+            pass
+
+        def do_GET(self) -> None:
+            body = b'{"status": "ok"}'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Health)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        db_path = tmp_path / "holdspeak.db"
+        port = server.server_address[1]
+        owner_lock_path(db_path).write_text(json.dumps({"pid": os.getpid(), "host": "127.0.0.1", "port": port}))
+        monkeypatch.setattr("holdspeak.mcp.server._default_db_path", lambda: db_path)
+        monkeypatch.delenv("HOLDSPEAK_URL", raising=False)
+        assert doctor.resolve_hub_url() == f"http://127.0.0.1:{port}"
+        result = doctor._check_hub_health(doctor.resolve_hub_url(), "")
+        assert result.status == "PASS", result
+        assert doctor.resolve_hub_url("http://127.0.0.1:1") == "http://127.0.0.1:1"
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_meetings_are_summarised_by_default(tmp_path: Path) -> None:
+    import unittest.mock as mock
+
+    from holdspeak.config import Config
+    from holdspeak.runtime.routing_glue import RoutingGlueMixin
+    from tests.unit.test_hs172_loop_wire import _seed_meeting
+
+    db = Database(tmp_path / "auto-intel.db")
+    _seed_meeting(db, "mtg-default-every")  # no Room link: a fresh desk
+    assert Config().meeting.intelligence_auto == "every"
+    with mock.patch("holdspeak.config.Config.load", return_value=Config()):
+        with mock.patch("holdspeak.db.get_database", return_value=db):
+            result = RoutingGlueMixin._maybe_auto_enqueue_intel(mock.MagicMock(), "mtg-default-every", None)
+    assert result["enqueued"] is True, result
+
+
+def test_defaults_name_files_the_product_provides() -> None:
+    from holdspeak.config import Config
+    from holdspeak.intel.models import DEFAULT_INTEL_MODEL_PATH
+    from holdspeak.services.local_ai_setup_service import starter_preset
+
+    provided = str(starter_model_path(Path("~"), starter_preset()))
+    config = Config()
+    assert DEFAULT_INTEL_MODEL_PATH == provided
+    assert config.meeting.intel_realtime_model == provided
+    assert config.dictation.runtime.llama_cpp_model_path == provided
+
+
+def test_missing_default_model_reads_not_set_up(monkeypatch) -> None:
+    from holdspeak import inference_targets
+    from holdspeak.intel.models import DEFAULT_INTEL_MODEL_PATH
+
+    monkeypatch.setattr(inference_targets, "local_model_file_present", lambda path: False)
+    target = inference_targets.this_machine_target_from_model_path(DEFAULT_INTEL_MODEL_PATH)
+    assert target.readiness_reason == inference_targets.NOT_SET_UP_REASON
+    own = inference_targets.this_machine_target_from_model_path("~/Models/mine.gguf")
+    assert own.readiness_reason == "model file not found: ~/Models/mine.gguf"
+
+
+def test_never_loaded_whisper_profile_is_not_broken(monkeypatch) -> None:
+    from holdspeak.services.model_library_service import ModelLibraryApplicationService as Library
+
+    item = {
+        "profile_id": "speech-migrated-x", "label": "Whisper mlx base", "provider_family": "local",
+        "runtime_family": "mlx", "revision": 1, "current_binding": {"binding_id": "b"},
+        "latest_readiness": {"state": "unavailable", "reason_code": "artifact_unobserved"},
+    }
+    library = Library.__new__(Library)
+    monkeypatch.setattr(Library, "_local_speech_on_disk", staticmethod(lambda item: False))
+    row = library._profile_row(item)
+    assert (row["status"], row["selected_action"]) == ("needs_setup", "Add model")
+    assert row["repair"]["code"] == "not_set_up"
+    monkeypatch.setattr(Library, "_local_speech_on_disk", staticmethod(lambda item: True))
+    row = library._profile_row(item)
+    assert (row["status"], row["selected_action"], row["repair"]) == ("configured", "Checking", None)

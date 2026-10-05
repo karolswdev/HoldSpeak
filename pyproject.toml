@@ -66,6 +66,14 @@ dependencies = [
     # operation's arguments against its JSON Schema (holdspeak/operations.py),
     # so a base install needs it to import the MCP catalogue at all.
     "jsonschema>=4.21",
+    # Owner ruling 2026-10-05 ("strong defaults, batteries included"): the
+    # local model runtime is in the base install, so "Set up local AI" works
+    # on a plain `uv pip install -e .`. There is no wheel on PyPI: pip builds
+    # it from source (CMake + a C++ compiler). On Apple Silicon the build turns
+    # on Metal by default; set CMAKE_ARGS (for example "-DGGML_METAL=on" or
+    # "-DGGML_CUDA=on") to choose another backend. The `meeting` and
+    # `dictation-llama` extras still name it, so old install commands work.
+    "llama-cpp-python>=0.3.34",
 ]
 
 [project.optional-dependencies]

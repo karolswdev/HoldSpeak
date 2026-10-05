@@ -338,7 +338,7 @@ class RoutingGlueMixin:
             _auto_intel_principal = Principal(PrincipalKind.OWNER, "auto-intel")
 
             cfg = Config.load().meeting
-            auto = str(cfg.intelligence_auto or "room_linked").strip().lower()
+            auto = str(cfg.intelligence_auto or "every").strip().lower()
             if auto == "off":
                 return {"enqueued": False, "reason": "auto_intel_off"}
 

@@ -957,6 +957,14 @@ class MeetingWebServer:
             model_library_service=model_library_service,
             meaning_search=memory_service.meaning,
         )
+        # "Set up local AI": only an explicit owner call starts its download.
+        from .services.local_ai_setup_service import LocalAISetupService
+
+        local_ai_setup_service = LocalAISetupService(
+            get_database(),
+            meaning_search=memory_service.meaning,
+            broker_provider=lambda: broker,
+        )
         # HS-160-05: extract the delta service so the project_service can
         # use it for the room() review section (mutual composition).
         _project_delta_service = ProjectDeltaService(
@@ -1006,6 +1014,7 @@ class MeetingWebServer:
             gate_service=GateService(get_database(), observer=obs),
             setup_service=SetupService(get_database(), observer=obs),
             inference_setup_service=inference_setup_service,
+            local_ai_setup_service=local_ai_setup_service,
             inference_acquisition_service=inference_acquisition_service,
             model_library_service=model_library_service,
             inference_assignment_service=inference_assignment_service,

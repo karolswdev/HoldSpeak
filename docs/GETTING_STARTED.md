@@ -225,7 +225,7 @@ From an active source environment, install only the extras you need:
 | Capability | Command |
 | --- | --- |
 | Meeting analysis and optional meeting dependencies | `uv pip install -e '.[meeting]'` |
-| Local GGUF text runtime | `uv pip install -e '.[dictation-llama]'` |
+| Local GGUF text runtime | Included in the base install (`uv pip install -e .`) |
 | MLX text runtime on Apple Silicon | `uv pip install -e '.[dictation-mlx]'` |
 | OpenAI-compatible dictation runtime | Included in the base install (`uv pip install -e .`) |
 

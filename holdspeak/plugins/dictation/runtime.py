@@ -135,7 +135,7 @@ def build_runtime(
     *,
     backend: str = "auto",
     mlx_model: str = "~/Models/mlx/Qwen3.5-8B-MLX-4bit",
-    llama_cpp_model_path: str = "~/Models/gguf/Qwen3.5-4B-Instruct-Q4_K_M.gguf",
+    llama_cpp_model_path: str = "~/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
     endpoint_model: str = "qwen3.5-8b-instruct",
     endpoint_base_url: str = "http://127.0.0.1:8000/v1",
     endpoint_api_key_env: str = "OPENAI_API_KEY",

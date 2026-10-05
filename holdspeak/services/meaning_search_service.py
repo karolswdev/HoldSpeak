@@ -219,6 +219,11 @@ class MeaningSearchService:
             if assigned or self._downloading():
                 return self.status(principal)
             self._error = ""
+            # The runtime FIRST: a press with no llama-cpp-python downloads
+            # nothing (the download used to finish and then fail here).
+            if not self._runtime_installed():
+                self._error = "runtime"
+                return self.status(principal)
             path = find_on_device(self._model, self._home())
             if path is not None:
                 self._activate_safely(principal, path)
@@ -231,6 +236,14 @@ class MeaningSearchService:
             )
             self._thread.start()
         return self.status(principal)
+
+    @staticmethod
+    def _runtime_installed() -> bool:
+        try:
+            importlib.metadata.version("llama-cpp-python")
+        except importlib.metadata.PackageNotFoundError:
+            return False
+        return True
 
     def turn_off(self, principal: Principal) -> dict[str, Any]:
         self._require_owner(principal)

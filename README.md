@@ -88,6 +88,7 @@ One service layer declares each operation. HTTP, MCP, and the test rig reach the
 Read [Getting Started](docs/GETTING_STARTED.md) for platform requirements and installation options.
 For a source installation, install Python 3.10 or later, `uv`, and Node.js 22.12 or later first.
 The Python build hook also builds the Web app.
+The base install also builds the local model runtime (llama.cpp). This step needs a C++ compiler.
 
 ```sh
 git clone https://github.com/karolswdev/HoldSpeak.git

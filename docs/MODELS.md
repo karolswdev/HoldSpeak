@@ -127,7 +127,7 @@ From an active source environment:
 
 | Runtime | Command |
 | --- | --- |
-| GGUF through llama.cpp | `uv pip install -e '.[dictation-llama]'` |
+| GGUF through llama.cpp | Included in the base install (`uv pip install -e .`) |
 | MLX text models on Apple Silicon | `uv pip install -e '.[dictation-mlx]'` |
 | OpenAI-compatible dictation endpoint | Included in the base install (`uv pip install -e .`) |
 | Optional meeting analysis dependencies | `uv pip install -e '.[meeting]'` |

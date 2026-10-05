@@ -153,7 +153,8 @@ class TestMeetingConfig:
         assert config.export_format == "markdown"
         assert config.intel_enabled is True
         assert config.intel_provider == "local"
-        assert config.intel_realtime_model == "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf"
+        from holdspeak.intel.models import DEFAULT_INTEL_MODEL_PATH
+        assert config.intel_realtime_model == DEFAULT_INTEL_MODEL_PATH
         assert config.intel_summary_model is None
         assert config.intel_retry_base_seconds == 30
         assert config.intel_retry_max_seconds == 900

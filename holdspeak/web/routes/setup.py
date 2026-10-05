@@ -6,6 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ...logging_config import get_logger
 from ...services.errors import NotFound, ServiceError, ValidationError
@@ -120,6 +121,35 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to record first-value event")
+
+    def _local_ai() -> Any:
+        local_ai = ctx.local_ai_setup_service
+        if local_ai is None:
+            raise ServiceError("local_ai_unavailable", "Set up local AI is not available on this hub.", context={"status": 503})
+        return local_ai
+
+    @router.get("/api/setup/local-ai")
+    async def api_local_ai_status(request: Request) -> Any:
+        """What "Set up local AI" downloads, what is on this device, progress."""
+        try:
+            return await run_in_threadpool(_local_ai().status, request.state.principal)
+        except ServiceError as exc:
+            return _inference_error(exc)
+
+    @router.post("/api/setup/local-ai")
+    async def api_local_ai_start(request: Request) -> Any:
+        """The owner's call: check the runtime, download (one egress receipt), set up."""
+        try:
+            return JSONResponse(await run_in_threadpool(_local_ai().start, request.state.principal), status_code=202)
+        except ServiceError as exc:
+            return _inference_error(exc)
+
+    @router.post("/api/setup/local-ai/cancel")
+    async def api_local_ai_cancel(request: Request) -> Any:
+        try:
+            return await run_in_threadpool(_local_ai().cancel, request.state.principal)
+        except ServiceError as exc:
+            return _inference_error(exc)
 
     @router.get("/api/setup/runtime-options")
     async def api_runtime_options() -> Any:

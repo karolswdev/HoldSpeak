@@ -38,6 +38,10 @@ class PinnedModel:
     license: str
     architecture: str
     context_ceiling: int
+    #: The first bytes the verified file must start with (a GGUF file starts
+    #: with ``GGUF``).  Empty: the sha256 alone is the check (a Whisper
+    #: ``config.json`` or ``weights.npz``).
+    magic: bytes = b"GGUF"
 
     @property
     def url(self) -> str:
@@ -234,11 +238,12 @@ def fetch(
     if os.lstat(part).st_size != model.size or hash_file(part) != model.sha256:
         os.replace(part, invalid)
         raise ModelFetchError("integrity", "the downloaded file does not have the pinned sha256")
-    with os.fdopen(_open_regular(part), "rb") as handle:
-        magic = handle.read(4)
-    if magic != b"GGUF":
-        os.replace(part, invalid)
-        raise ModelFetchError("integrity", "the downloaded file is not a GGUF file")
+    if model.magic:
+        with os.fdopen(_open_regular(part), "rb") as handle:
+            magic = handle.read(len(model.magic))
+        if magic != model.magic:
+            os.replace(part, invalid)
+            raise ModelFetchError("integrity", "the downloaded file does not start with the expected bytes")
     os.replace(part, destination)
     return destination
 

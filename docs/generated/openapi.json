@@ -25110,6 +25110,60 @@
         "summary": "Api Hub Default Summary"
       }
     },
+    "/api/setup/local-ai": {
+      "get": {
+        "description": "What \"Set up local AI\" downloads, what is on this device, progress.",
+        "operationId": "api_local_ai_status_api_setup_local_ai_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Local Ai Status Api Setup Local Ai Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Local Ai Status"
+      },
+      "post": {
+        "description": "The owner's call: check the runtime, download (one egress receipt), set up.",
+        "operationId": "api_local_ai_start_api_setup_local_ai_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Local Ai Start Api Setup Local Ai Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Local Ai Start"
+      }
+    },
+    "/api/setup/local-ai/cancel": {
+      "post": {
+        "operationId": "api_local_ai_cancel_api_setup_local_ai_cancel_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Local Ai Cancel Api Setup Local Ai Cancel Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Local Ai Cancel"
+      }
+    },
     "/api/setup/onboarding": {
       "put": {
         "operationId": "api_onboarding_disposition_api_setup_onboarding_put",

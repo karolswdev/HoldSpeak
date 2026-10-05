@@ -879,6 +879,15 @@ class ModelLibraryApplicationService:
             action = repair["label"]
         elif readiness and readiness.get("state") == "ready":
             status, action, repair = "ready", "Ready", None
+        elif (readiness or {}).get("reason_code") == "artifact_unobserved":
+            # Never loaded yet is not broken (owner ruling 2026-10-05). A
+            # local model that is on this device is checked at its first
+            # load; one that is not on this device needs setup.
+            if self._local_speech_on_disk(item):
+                status, action, repair = "configured", "Checking", None
+            else:
+                status, action = "needs_setup", "Add model"
+                repair = self._repair("not_set_up", "Not on this device. Set up local AI gets it.")
         else:
             code = _text((readiness or {}).get("reason_code"), "readiness_unknown")
             repair = self._provider_repair(code, family)
@@ -888,6 +897,20 @@ class ModelLibraryApplicationService:
             label=_text(item.get("label")), status=status, action=action, repair=repair,
             detail={"provider_family": family, "runtime_family": _text(item.get("runtime_family"), "unknown"), "profile_revision": int(item.get("revision") or 0)},
         )
+
+    @staticmethod
+    def _local_speech_on_disk(item: dict[str, Any]) -> bool:
+        """Is this local Whisper profile's model on this device? Disk only."""
+        backend = str(item.get("runtime_family") or "")
+        if backend not in {"mlx", "faster-whisper"}:
+            return False
+        try:
+            from ..config import Config
+            from ..whisper_models import whisper_on_disk
+
+            return whisper_on_disk(str(Config.load().model.name or ""), backend)
+        except Exception:
+            return False
 
     @staticmethod
     def _provider_repair(code: str, family: str) -> dict[str, str]:
