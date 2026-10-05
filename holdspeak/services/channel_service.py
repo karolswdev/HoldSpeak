@@ -72,12 +72,13 @@ class ChannelService:
     # ── views ──────────────────────────────────────────────────────────
 
     def _destination_view(self, row: Mapping[str, Any]) -> dict[str, Any]:
-        target = json.loads(row["target_json"] or "{}")
+        target = contract.shown_target(json.loads(row["target_json"] or "{}"))
         account = json.loads(row["account_json"] or "{}")
-        synced = bool(row["synced"])
+        # The built-in folder's sync is read now (iCloud Drive can be switched on or off).
+        synced = bool(target.get("cloud")) if is_builtin(row) else bool(row["synced"])
         return {
             "id": row["id"], "name": row["name"], "channel": row["channel"],
-            "account": account, "target": contract.shown_target(target), "builtin": is_builtin(row),
+            "account": account, "target": target, "builtin": is_builtin(row),
             "target_digest": row["target_digest"], "synced": synced, "state": row["state"],
             "badge": contract.channel(row["channel"]).badge(synced), "created_at": row["created_at"],
             "parked_at": row["parked_at"], "connection": self._connection(str(row["channel"]), account),
@@ -113,7 +114,7 @@ class ChannelService:
         return {
             "id": row["id"], "document_ref": row["document_ref"], "destination_id": row["destination_id"],
             "destination_name": destination.get("name"), "channel": row["channel"],
-            "badge": contract.channel(row["channel"]).badge(bool(destination.get("synced"))),
+            "badge": contract.channel(row["channel"]).badge(self._synced(destination, row)),
             "account": json.loads(row["account_json"] or "{}"),
             "target": contract.shown_target(json.loads(row["target_json"] or "{}")),
             "target_digest": row["target_digest"], "payload_digest": row["payload_digest"],
@@ -127,6 +128,19 @@ class ChannelService:
             "dispatch_started_at": row["dispatch_started_at"], "settled_at": row["settled_at"],
             "dispatch_seq": row["dispatch_seq"],
         }
+
+    @staticmethod
+    def _synced(destination: Mapping[str, Any], send: Optional[Mapping[str, Any]] = None) -> bool:
+        """A destination's cloud sync: its saved flag; for the built-in folder, iCloud Drive.
+
+        A settled send of the built-in answers from its own proof (what was true
+        at send time); anything else reads the folder now.
+        """
+        if not destination or not is_builtin(destination):
+            return bool((destination or {}).get("synced"))
+        if send is not None and send.get("proof_json"):
+            return json.loads(send["proof_json"]).get("egress") == "icloud"
+        return contract.builtin_egress() is not None
 
     def _answer(self, row: Mapping[str, Any]) -> dict[str, Any]:
         view = self._send_view(row)
@@ -169,7 +183,7 @@ class ChannelService:
         size = (contract.payload_size("slack", payload)[0]
                 if destination["channel"] == "slack" else len(payload))
         return {"document_ref": document.ref, "title": document.title, "destination_id": destination["id"],
-                "channel": destination["channel"], "badge": chan.badge(bool(destination["synced"])),
+                "channel": destination["channel"], "badge": chan.badge(self._synced(destination)),
                 "payload_digest": contract.sha256(payload), "size": size,
                 "preview": contract.preview_for(destination["channel"], payload, destination["account_json"])}
 

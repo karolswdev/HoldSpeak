@@ -217,3 +217,101 @@ def _umask() -> int:
     mask = os.umask(0)
     os.umask(mask)
     return mask
+
+
+# ── iCloud Drive (owner ruling 2026-10-05): detect it, label it honestly ──
+
+CLOUD_ID = b"com.apple.CloudDocs.iCloudDriveFileProvider/0A1B2C"
+
+
+def _icloud(monkeypatch: pytest.MonkeyPatch, home: Path, *, synced: bool) -> list[str]:
+    """macOS, and the OS-call boundary answers for the fake Documents folder only (never the real one)."""
+    from holdspeak.services import channel_contract
+
+    monkeypatch.setattr(channel_contract, "PLATFORM", "darwin")
+    documents = os.path.realpath(home / "Documents")
+    (home / "Documents").mkdir(exist_ok=True)
+    asked: list[str] = []
+
+    def read(path: str, name: str):
+        asked.append(path)
+        assert path.startswith(os.path.realpath(home)), path  # never outside the isolated HOME
+        if synced and name == "com.apple.file-provider-domain-id" and path == documents:
+            return CLOUD_ID
+        return None
+
+    monkeypatch.setattr(channel_contract, "_read_xattr", read)
+    return asked
+
+
+def test_icloud_documents_label_the_row_icloud_and_the_receipt_names_the_egress(
+        hub: Hub, home: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    asked = _icloud(monkeypatch, home, synced=True)
+    [d] = hub.client.get("/api/channels/destinations").json()["destinations"]
+    assert (d["target"]["cloud"], d["synced"], d["badge"]) == ("icloud", True, "cloud")
+    assert asked, "the detector never read the folder"
+    check = hub.client.post(f"/api/channels/destinations/{BUILTIN}/check").json()["check"]
+    assert check["state"] == "ready"
+    _pid, update = room(hub)
+    sent = press(hub, update, "icloud-1")
+    assert sent["outcome"] == "sent", sent
+    assert sent["send"]["proof"]["egress"] == "icloud"
+    assert sent["send"]["badge"] == "cloud"
+    [row] = sends(hub)
+    assert '"egress":"icloud"' in row["proof_json"]
+    # The write itself is local: the file is in the Sent folder.
+    assert [str(p) for p in files(sent_folder(home))] == [sent["send"]["proof"]["path"]]
+
+
+def test_plain_documents_stay_this_device(hub: Hub, home: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _icloud(monkeypatch, home, synced=False)
+    [d] = hub.client.get("/api/channels/destinations").json()["destinations"]
+    assert "cloud" not in d["target"] and (d["synced"], d["badge"]) == (False, "local")
+    _pid, update = room(hub)
+    sent = press(hub, update, "plain-1")
+    assert sent["outcome"] == "sent" and "egress" not in sent["send"]["proof"], sent
+    assert sent["send"]["badge"] == "local"
+
+
+def test_the_sync_is_read_at_send_time(hub: Hub, home: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _pid, update = room(hub)
+    _icloud(monkeypatch, home, synced=False)
+    body = send_body(hub, "send_id", update, BUILTIN, "switch-1")  # prepared while plain
+    _icloud(monkeypatch, home, synced=True)                        # he turns iCloud Drive on
+    resp = send(hub, body)
+    assert resp.status_code == 200 and resp.json()["send"]["proof"]["egress"] == "icloud", resp.text
+
+
+def test_the_finder_switch_is_the_fallback(home: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import plistlib
+
+    from holdspeak.services import channel_contract
+
+    monkeypatch.setattr(channel_contract, "_read_xattr", lambda path, name: None)
+    sent = str(home / "Documents" / "HoldSpeak" / "Sent")
+    assert channel_contract.icloud_synced(sent, "darwin") is False
+    prefs = home / "Library" / "Preferences"
+    prefs.mkdir(parents=True)
+    (prefs / "com.apple.finder.plist").write_bytes(plistlib.dumps({"FXICloudDriveDocuments": True}))
+    assert channel_contract.icloud_synced(sent, "darwin") is True
+    assert channel_contract.icloud_synced(str(home / "Desktop" / "x"), "darwin") is False
+    (prefs / "com.apple.finder.plist").write_bytes(plistlib.dumps({"FXICloudDriveDesktop": True}))
+    assert channel_contract.icloud_synced(str(home / "Desktop" / "x"), "darwin") is True
+    assert channel_contract.icloud_synced(sent, "darwin") is False
+    # Linux: no detection.
+    (prefs / "com.apple.finder.plist").write_bytes(plistlib.dumps({"FXICloudDriveDocuments": True}))
+    assert channel_contract.icloud_synced(sent, "linux") is False
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="a real extended attribute needs macOS")
+def test_the_real_xattr_on_a_scratch_folder_is_read(home: Path) -> None:
+    import subprocess
+
+    from holdspeak.services import channel_contract
+
+    documents = home / "Documents"
+    documents.mkdir()
+    sent = str(documents / "HoldSpeak" / "Sent")
+    assert channel_contract.icloud_synced(sent, "darwin") is False
+    subprocess.run(["xattr", "-w", "com.apple.file-provider-domain-id", CLOUD_ID.decode(), str(documents)], check=True)
+    assert channel_contract.icloud_synced(sent, "darwin") is True

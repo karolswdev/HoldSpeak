@@ -2,6 +2,10 @@
 hub on an isolated HOME at 1440x900 and 393x852 (owner ruling 2026-10-05,
 "strong defaults, batteries included").
 
+Two desks: Documents plain (THIS DEVICE), and Documents synced by iCloud
+Drive (the detector's OS-call boundary answers the iCloud xattr for the
+isolated HOME's Documents only): the chip and the receipt say ICLOUD.
+
 A fresh desk has no saved destination. The brief on the Chair (a real
 ``POST /api/brief/generate``) shows ONE destination row, the built-in
 HoldSpeak folder, picked: the preview and Send are open with no click; the
@@ -57,6 +61,15 @@ class TestBuiltinSendFolderGlass:
         finally:
             server.stop()
 
+    def _icloud(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from holdspeak.services import channel_contract
+
+        documents = os.path.realpath(self.tmp / "home" / "Documents")
+        os.makedirs(documents, exist_ok=True)
+        monkeypatch.setattr(channel_contract, "PLATFORM", "darwin")
+        monkeypatch.setattr(channel_contract, "_read_xattr", lambda path, name: (
+            b"com.apple.CloudDocs.iCloudDriveFileProvider/glass" if path == documents else None))
+
     def _shoot(self, page: Any, name: str, width: int) -> None:
         box = page.locator(CH).first.bounding_box()
         assert box is not None
@@ -67,8 +80,14 @@ class TestBuiltinSendFolderGlass:
     @pytest.mark.e2e
     @pytest.mark.timeout(600)
     @pytest.mark.parametrize("width", list(SIZES))
-    def test_the_builtin_folder_is_one_picked_row_and_send_writes_into_documents(self, width: int) -> None:
+    @pytest.mark.parametrize("docs", ["plain", "icloud"])
+    def test_the_builtin_folder_is_one_picked_row_and_send_writes_into_documents(
+            self, width: int, docs: str, monkeypatch: pytest.MonkeyPatch) -> None:
         from playwright.sync_api import sync_playwright
+
+        if docs == "icloud":
+            self._icloud(monkeypatch)
+        chip = "ICLOUD" if docs == "icloud" else "THIS DEVICE"
 
         sent = Path(os.path.realpath(self.tmp / "home" / "Documents")) / "HoldSpeak" / "Sent"
         with sync_playwright() as pw:
@@ -101,12 +120,13 @@ class TestBuiltinSendFolderGlass:
                 assert page.locator(f"{CH} [data-testid=send-none]").count() == 0
                 page.locator(f"{OPEN} [data-testid=send-preview]").wait_for(timeout=T)
                 line = " ".join(page.locator(ROW).first.inner_text().split())
-                assert NAME in line and "FILE" in line and "THIS DEVICE" in line, line
+                assert NAME in line and "FILE" in line and chip in line, line
+                assert ("THIS DEVICE" in line) == (docs == "plain") and ("ICLOUD" in line) == (docs == "icloud"), line
                 assert "~/Documents/HoldSpeak/Sent" in line, line
                 assert not sent.exists(), "the folder is made by the first send, never before"
                 page.locator(ROW).first.scroll_into_view_if_needed()
                 page.wait_for_timeout(400)
-                self._shoot(page, "01-builtin-row-picked", width)
+                self._shoot(page, f"01-{docs}-builtin-row-picked", width)
 
                 verb = f"{OPEN} [data-testid=send-verb]"
                 page.wait_for_function("(s) => { const b = document.querySelector(s); return b && !b.disabled; }",
@@ -118,8 +138,11 @@ class TestBuiltinSendFolderGlass:
                 assert row["state"] == "sent" and row["destination_id"] == "holdspeak-folder", row
                 written = sorted(p for p in sent.iterdir() if p.is_file())
                 assert [str(p) for p in written] == [row["proof"]["path"]], (written, row["proof"])
-                assert "SAVED" in " ".join(page.locator(OPEN).first.inner_text().split())
-                self._shoot(page, "02-builtin-row-saved", width)
+                receipt = " ".join(page.locator(f"{OPEN} [data-receipt=latest]").first.inner_text().split())
+                assert "SAVED" in receipt, receipt
+                assert ("ICLOUD" in receipt) == (docs == "icloud"), receipt
+                assert row["proof"].get("egress") == ("icloud" if docs == "icloud" else None), row["proof"]
+                self._shoot(page, f"02-{docs}-builtin-row-saved", width)
                 assert not errors, errors
             finally:
                 browser.close()

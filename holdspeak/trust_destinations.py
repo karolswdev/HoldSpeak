@@ -197,11 +197,13 @@ def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for row in saved:
         channel = str(row.get("channel") or "")
-        local = channel == "file" and not bool(row.get("synced"))
         try:
             target = json.loads(row.get("target_json") or "{}")
         except (TypeError, ValueError):
             target = {}
+        # The built-in HoldSpeak folder: iCloud Drive's sync is read now.
+        synced = bool(row.get("synced")) or bool(_shown(target).get("cloud"))
+        local = channel == "file" and not synced
         rows.append({
             "id": f"channel:{row['id']}",
             "name": str(row.get("name") or "Saved destination"),

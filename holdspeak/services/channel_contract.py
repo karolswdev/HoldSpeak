@@ -28,7 +28,7 @@ import re
 import shutil
 import tempfile
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from typing import Any, Iterator, Mapping, Optional, Protocol
 
@@ -364,6 +364,85 @@ def builtin_folder(platform: Optional[str] = None) -> str:
     return os.path.realpath(os.path.join(documents_dir(platform), "HoldSpeak", "Sent"))
 
 
+#: The platform the iCloud detector reads (a seam: a fence on Linux sets "darwin").
+PLATFORM = __import__("sys").platform
+
+#: The xattr macOS puts on a folder that a File Provider (iCloud Drive) manages.
+_FILE_PROVIDER_XATTR = "com.apple.file-provider-domain-id"
+
+
+def _read_xattr(path: str, name: str) -> Optional[bytes]:
+    """One extended attribute of *path* (macOS ``getxattr(2)`` through libc), or None.
+
+    The OS-call boundary of the iCloud detector: the fences replace this
+    function, never the real ~/Documents.
+    """
+    import ctypes
+    import ctypes.util
+
+    try:
+        libc = ctypes.CDLL(ctypes.util.find_library("c"), use_errno=True)
+        getxattr = libc.getxattr
+        getxattr.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_size_t,
+                             ctypes.c_uint32, ctypes.c_int]
+        getxattr.restype = ctypes.c_ssize_t
+        raw_path, raw_name = os.fsencode(path), name.encode()
+        size = getxattr(raw_path, raw_name, None, 0, 0, 0)
+        if size <= 0:
+            return None
+        buf = ctypes.create_string_buffer(size)
+        got = getxattr(raw_path, raw_name, buf, size, 0, 0)
+        return buf.raw[:got] if got > 0 else None
+    except (OSError, AttributeError, TypeError):
+        return None
+
+
+def _finder_pref(key: str) -> bool:
+    """A Finder preference (``FXICloudDriveDocuments`` / ``FXICloudDriveDesktop``) read from its plist; False when unknown."""
+    import plistlib
+    from pathlib import Path
+
+    try:
+        with open(Path.home() / "Library" / "Preferences" / "com.apple.finder.plist", "rb") as handle:
+            prefs = plistlib.load(handle)
+    except (OSError, ValueError, plistlib.InvalidFileException):
+        return False
+    return bool(prefs.get(key)) if isinstance(prefs, dict) else False
+
+
+def icloud_synced(folder: str, platform: Optional[str] = None) -> bool:
+    """Whether iCloud Drive syncs *folder* (macOS only; read now, it can change).
+
+    Primary: the folder's nearest existing ancestor (up to the home folder)
+    carries the File Provider xattr naming ``com.apple.CloudDocs``. Fallback:
+    Finder's "Desktop & Documents Folders" switch for a path under
+    ~/Documents (``FXICloudDriveDocuments``) or ~/Desktop (``FXICloudDriveDesktop``).
+    Linux and every other platform: never (THIS DEVICE).
+    """
+    if not str(platform or PLATFORM).startswith("darwin"):
+        return False
+    home = os.path.realpath(os.path.expanduser("~"))
+    path = os.path.realpath(folder)
+    probe = path
+    while not os.path.exists(probe) and os.path.dirname(probe) != probe:
+        probe = os.path.dirname(probe)
+    while probe.startswith(home + os.sep):
+        value = _read_xattr(probe, _FILE_PROVIDER_XATTR)
+        if value is not None:
+            return b"com.apple.CloudDocs" in value
+        probe = os.path.dirname(probe)
+    for top, key in (("Documents", "FXICloudDriveDocuments"), ("Desktop", "FXICloudDriveDesktop")):
+        base = os.path.join(home, top)
+        if path == base or path.startswith(base + os.sep):
+            return _finder_pref(key)
+    return False
+
+
+def builtin_egress() -> Optional[str]:
+    """The built-in folder's egress, read now: ``"icloud"`` when iCloud Drive syncs it, else None."""
+    return "icloud" if icloud_synced(builtin_folder()) else None
+
+
 def is_builtin_target(target: Mapping[str, Any]) -> bool:
     return bool(target.get("builtin"))
 
@@ -377,6 +456,9 @@ def shown_target(target: Mapping[str, Any]) -> dict[str, Any]:
         # The row's short token: the home folder reads as ~ (any HOME, macOS or Linux).
         home = os.path.realpath(os.path.expanduser("~"))
         shown["display"] = "~" + folder[len(home):] if folder.startswith(home + os.sep) else folder
+        cloud = builtin_egress()
+        if cloud:
+            shown["cloud"] = cloud
     return shown
 
 
@@ -463,6 +545,7 @@ class FileChannel:
 
     def dispatch(self, row: Mapping[str, Any], seam: Any = None) -> Outcome:
         path, payload, digest = str(row["file_path"]), bytes(row["payload"]), str(row["payload_digest"])
+        egress = None
         if is_builtin_target(_target_of(row)):
             # The built-in folder only: made on the first send, made again when it
             # was deleted. A SAVED folder is never made (it may be an unmounted drive).
@@ -470,6 +553,15 @@ class FileChannel:
                 os.makedirs(os.path.dirname(path), mode=BUILTIN_FOLDER_MODE, exist_ok=True)
             except OSError:
                 return Outcome("failed", "folder_not_created")
+            # Read at send time: the write is local, but iCloud Drive takes the file off this device.
+            egress = "icloud" if icloud_synced(os.path.dirname(path)) else None
+        outcome = self._write(path, payload, digest)
+        if egress and outcome.state == "sent":
+            # The receipt names the egress: the file left this device through iCloud Drive.
+            outcome = replace(outcome, proof={**dict(outcome.proof), "egress": egress})
+        return outcome
+
+    def _write(self, path: str, payload: bytes, digest: str) -> Outcome:
         flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
         try:
             fd = os.open(path, flags, 0o644)

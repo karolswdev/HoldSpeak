@@ -90,6 +90,54 @@ describe("the built-in HoldSpeak folder in the SEND well", () => {
   });
 });
 
+describe("the built-in HoldSpeak folder in an iCloud Drive Documents folder", () => {
+  it("the row's egress chip is ICLOUD (cloud), never THIS DEVICE", async () => {
+    rows = [{ ...builtin(), synced: true, badge: "cloud", target: { ...builtin().target, cloud: "icloud" } }];
+    render(<Well />);
+    const row = await screen.findByTestId("destination-row");
+    expect(row.textContent).toContain("ICLOUD");
+    expect(row.textContent).not.toContain("THIS DEVICE");
+    const chip = within(row).getAllByText("ICLOUD")[0];
+    expect(chip.closest(".gadget-chip-egress")?.getAttribute("data-scope")).toBe("cloud");
+  });
+
+  it("plain Documents: THIS DEVICE", async () => {
+    render(<Well />);
+    const row = await screen.findByTestId("destination-row");
+    expect(row.textContent).toContain("THIS DEVICE");
+    expect(row.textContent).not.toContain("ICLOUD");
+  });
+
+  it("a SAVED receipt whose proof names iCloud shows the ICLOUD egress beside the path", async () => {
+    const at = "2026-10-05T10:00:00Z";
+    const sent = (egress?: string) => ({
+      id: "chs_1", document_ref: DOC.ref, destination_id: "holdspeak-folder", destination_name: "HoldSpeak folder",
+      channel: "file", account: {}, target: builtin().target, payload_digest: "d", preview: { text: "# Brief" },
+      prepared_by: { kind: "owner", identity: "" }, prepare_operation_id: null, state: "sent", reason: null,
+      proof: { path: `${SENT}/2026-10-05-brief.md`, ...(egress ? { egress } : {}) }, file_path: `${SENT}/2026-10-05-brief.md`,
+      created_at: at, dispatch_started_at: at, settled_at: at,
+    });
+    let stored = [sent("icloud")];
+    apiFetch.mockImplementation((path: string, init: RequestInit & { json?: Record<string, unknown> } = {}) => {
+      const method = init.method ?? "GET";
+      if (method === "GET" && path.startsWith("/api/channels/destinations")) return Promise.resolve({ destinations: rows });
+      if (method === "GET" && path.startsWith("/api/channels/sends")) return Promise.resolve({ sends: stored });
+      if (method === "POST" && path === "/api/channels/preview") return Promise.resolve({ payload_digest: "dig1", preview: { text: "# Brief" } });
+      return Promise.reject(new Error(`unrouted ${method} ${path}`));
+    });
+    const { unmount } = render(<Well />);
+    const receipt = await screen.findByTestId("send-sent");
+    expect(receipt.textContent).toContain("SAVED");
+    expect(receipt.textContent).toContain("ICLOUD");
+    unmount();
+    resetSendStore();
+    stored = [sent()];
+    render(<Well />);
+    const plain = await screen.findByTestId("send-sent");
+    expect(plain.textContent).not.toContain("ICLOUD");
+  });
+});
+
 describe("the built-in HoldSpeak folder in Settings -> Connections", () => {
   it("has Check, and no Edit and no Remove; a saved folder keeps both", async () => {
     rows = [builtin(), saved()];

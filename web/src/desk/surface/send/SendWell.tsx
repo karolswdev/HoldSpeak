@@ -40,7 +40,7 @@ import { useDesk } from "../../store";
 import { fetchConnections, type ConnectionsResponse, type ConnectionState } from "../../../pages/cores/connections/api";
 import { chipLabel } from "../../../pages/cores/connections/ConnectionsPane";
 import {
-  CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, commandId, egressOf, failedWord, farSide, previewOf,
+  CHANNEL_WORD, DEST_CHANGED, ICLOUD_EGRESS, SEND_WORDS, commandId, egressOf, failedWord, farSide, previewOf,
   refusalSize, refusedWord, requestDestinationsFocus, sentWord, stamp, targetToken, unknownWord, wire, Refusal,
   type Channel, type Destination, type Preview, type Send, type WirePreview,
 } from "../../../features/channels/channels";
@@ -314,6 +314,8 @@ function LatestReceipt({ s }: { s: Send | undefined }) {
     <span className="send-line" data-testid="send-sent" data-receipt="latest" data-state="sent">
       <StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} />
       <ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} />
+      {/* The receipt names the egress: the file was written here and iCloud Drive took it off this device. */}
+      {s.proof?.egress === "icloud" ? <EgressChip label={ICLOUD_EGRESS.label} scope={ICLOUD_EGRESS.scope} title={ICLOUD_EGRESS.title} /> : null}
     </span>
   );
   if (s.state === "failed") return (
@@ -632,7 +634,7 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
   const k = `${docRef}|${s.id}`;
   const o = store.outcomes.get(k) ?? { kind: "none" as const };
   const busy = store.busy.has(k);
-  const eg = egressOf({ channel: s.channel, account: s.account, synced: dest?.synced });
+  const eg = egressOf({ channel: s.channel, account: s.account, synced: dest?.synced, target: s.target });
   const acc = accountChip({ channel: s.channel, connection: dest?.connection,
     account: { ...s.account, ...(typeof dest?.account.key_present === "boolean" ? { key_present: dest.account.key_present } : {}) } }, conns);
   // A named destination refusal is final for this row: Send would only

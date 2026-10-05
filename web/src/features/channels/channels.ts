@@ -363,12 +363,19 @@ export function targetToken(channel: Channel, t: Record<string, string | number>
   }
 }
 
+/** iCloud Drive syncs the folder: the file leaves this device. */
+export const ICLOUD_EGRESS = { label: "ICLOUD", scope: "cloud" as const, title: "iCloud Drive syncs this folder: the file leaves this device." };
+
 /** The egress chip of a destination (UX-CANON: where egress happens). */
-export function egressOf(d: { channel: Channel; account: Record<string, string | boolean>; synced?: boolean }): {
+export function egressOf(d: {
+  channel: Channel; account: Record<string, string | boolean>; synced?: boolean; target?: Record<string, string | number>;
+}): {
   label: string; scope: "local" | "cloud"; title: string;
 } {
   switch (d.channel) {
     case "file":
+      // The built-in HoldSpeak folder in an iCloud Drive Documents folder (the hub reads it now).
+      if (d.target?.cloud === "icloud") return ICLOUD_EGRESS;
       return d.synced
         ? { label: "SYNCED FOLDER", scope: "cloud", title: "Synced folder: it leaves this device." }
         : { label: "THIS DEVICE", scope: "local", title: "A folder on this device." };
