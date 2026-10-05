@@ -67,7 +67,7 @@ describe("ProcessCore", () => {
     // HS-111-06: section heads are count tokens; kinds are the wire
     // tokens themselves; state is a surface-token, never a pill.
     expect(screen.getByText("NEEDS YOU 1")).toBeTruthy();
-    expect(screen.getByText(/PROCESS\.SPAWN · agent:build/)).toBeTruthy();
+    expect(container.textContent).toMatch(/PROCESS\.SPAWN · agent:build/);
     expect(
       screen.getByText(/Owner · Node:studio/),
     ).toBeTruthy();
@@ -133,8 +133,11 @@ describe("ProcessCore names the target, never a raw id and never a blank (Astra,
     const lines = [...container.querySelectorAll(".surface-ledger-rows > li")].map((li) => li.textContent);
     expect(lines).toHaveLength(2);
     expect(new Set(lines).size).toBe(2);
-    expect(screen.getByText(/DECISION\.CREATE · Freeze the old ledger on Nov 5/)).toBeTruthy();
-    expect(screen.getByText(/DECISION\.CREATE · Adopt OpenTelemetry/)).toBeTruthy();
+    expect(lines.some((l) => /DECISION\.CREATE · Freeze the old ledger on Nov 5/.test(l ?? ""))).toBe(true);
+    expect(lines.some((l) => /DECISION\.CREATE · Adopt OpenTelemetry/.test(l ?? ""))).toBe(true);
+    // The name is its own element, so the face can give it room (glass fences its width).
+    expect([...container.querySelectorAll("[data-testid=process-target]")].map((e) => e.textContent)).toEqual(
+      [" · Freeze the old ledger on Nov 5", " · Adopt OpenTelemetry"]);
     expect(container.textContent).not.toMatch(/decision_[0-9a-f]/);
   });
 });

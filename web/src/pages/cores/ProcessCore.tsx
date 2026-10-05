@@ -90,11 +90,18 @@ function LedgerRows({
           <Fragment key={row.operationId}>
             <SurfaceLedgerRow
               time={clockToken(row.timestamp)}
+              /* The row wraps (the species' `wrap`): at 393 the facts fall
+                 under the name, so the target is never squeezed to nothing
+                 (Astra, #869: it measured 3 px and two decisions looked the
+                 same). */
+              wrap
               primary={
                 <>
                   {depth > 0 ? "└ " : ""}
                   {row.kind.toUpperCase()}
-                  {shownTarget(row, items) ? ` · ${shownTarget(row, items)}` : ""}
+                  {shownTarget(row, items) ? (
+                    <span className="process-target" data-testid="process-target">{` · ${shownTarget(row, items)}`}</span>
+                  ) : null}
                 </>
               }
               cells={
@@ -182,6 +189,7 @@ export function ProcessCore(_props: CoreProps) {
         store.sections.map((section) => (
           <SurfaceLedger
             key={section.id}
+            cols="process"
             count={countLabel(section.label.toUpperCase(), section.rows.length)}
           >
             {section.rows.length ? (

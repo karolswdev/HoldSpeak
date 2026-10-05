@@ -3739,6 +3739,13 @@ button.surface-edit-in-place:hover {
     .surface-ledger-trailing {
     margin-left: auto;
   }
+  /* Processes (`cols="process"`): the operation and the name of its target
+     keep room for a word; the facts fall under them. Without it the primary
+     shrank to 3 px beside a long facts cell and two decisions made in the
+     same second looked the same (Astra, #869). */
+  .surface-ledger[data-cols="process"] .surface-ledger-row[data-wrap] .surface-ledger-primary {
+    min-width: min(100%, 24ch);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════════
