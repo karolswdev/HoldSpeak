@@ -404,7 +404,22 @@ def egress_boundary(
     """
     if node and str(node).strip():
         return EGRESS_MESH
-    host = endpoint_host(base_url).lower().rstrip(".")
+    raw_host = endpoint_host(base_url).lower()
+    boundary = _egress_boundary_for_host(raw_host.rstrip("."), cloud=cloud)
+    # LOCAL only where the transport treats the host as loopback
+    # (loopback_http.is_loopback_engine_host, the rule every loopback connect
+    # uses).  "localhost." or "127.0.0.1." normalise to a loopback name here
+    # but the transport does not pin them: they are at best the LAN, so the
+    # lamp can never say LOCAL where bytes may go through a proxy (Astra, #855).
+    if boundary == EGRESS_LOCAL and raw_host:
+        from holdspeak.loopback_http import is_loopback_engine_host
+
+        if not is_loopback_engine_host(raw_host):
+            return EGRESS_PRIVATE_NETWORK
+    return boundary
+
+
+def _egress_boundary_for_host(host: str, *, cloud: bool) -> str:
     if not host:
         # No concrete endpoint host. ``cloud=True`` is the default public cloud
         # endpoint (contacted later, named nowhere here); otherwise the run

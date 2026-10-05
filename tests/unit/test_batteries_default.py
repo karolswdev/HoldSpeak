@@ -893,3 +893,25 @@ def test_the_census_fence_reads_the_maintained_copy() -> None:
     from tests.unit import test_phase143_surface_fallback_census as census
 
     assert census.ARTIFACT.relative_to(census.REPO).as_posix() == "docs/internal/surface-fallback-census.md"
+
+
+@pytest.mark.parametrize("url", [
+    "http://localhost:41234/v1",
+    "http://localhost.:41234/v1",
+    "http://LOCALHOST.:41234/v1",
+    "http://127.0.0.1:41234/v1",
+    "http://127.0.0.1.:41234/v1",
+    "http://127.0.0.2:41234/v1",
+    "http://[::1]:41234/v1",
+    "http://localhost.localdomain:41234/v1",
+    "http://dev.localhost:41234/v1",
+    "http://192.168.1.43:8080/v1",
+])
+def test_the_lamp_says_local_only_where_the_transport_is_loopback(url: str) -> None:
+    """Astra, #855 iteration 2: the egress lamp and the loopback transport
+    read ONE rule.  "localhost." normalised to a LOCAL lamp while the
+    transport (which pins only the exact word) sent it through the proxy."""
+    from holdspeak.intel.providers import EGRESS_LOCAL, egress_boundary
+    from holdspeak.loopback_http import is_loopback_url
+
+    assert (egress_boundary(base_url=url) == EGRESS_LOCAL) == is_loopback_url(url), url
