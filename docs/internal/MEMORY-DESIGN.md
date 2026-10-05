@@ -764,7 +764,13 @@ is a face and waits for its canvas).
   (`ThreadService._live_replay`): gone, no longer admitted by memory, held
   out, or out of its project: not sent; changed: the live text is sent;
   unchanged: the saved bytes (fenced against main's recorded prompt). A
-  source he named follows the hand-attach rule: sent while it exists.
+  source he named follows the hand-attach rule: sent while it exists; a
+  named Knowledge or Zone is rebuilt from its live members. A row saved
+  before `via` (main f5b65b7be): a relevance row is checked as memory's, a
+  container row by the hand-attach rule, any other row is not sent (that
+  producer stamped project hits `reference`, like a named ref). The
+  `memory.search` and `memory.observations` tool results replay as a stub,
+  as `memory.page` does.
 - **One budget.** The job's `block_chars` (5,200 for `ask.answer` and
   `chat.turn`); the pages take at most half; whole sentences only. Then
   `fit_reflect` drops excerpts from the end (observations first) until the

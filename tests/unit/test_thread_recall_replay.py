@@ -16,7 +16,19 @@ the model is checked against the source on each turn
 
 A source the owner attached by hand follows the hand-attach rule: it is
 sent while it exists (a promotion or a refile does not take it away), and
-it is never sent after it is deleted.
+it is never sent after it is deleted.  A named Knowledge or Zone container
+is rebuilt from its live members: a gone member is left out, the others
+stay.
+
+Rows main wrote (f5b65b7be, no ``via``): the desk relevance row is checked
+as memory's, a container row by the hand-attach rule, and any other row is
+not sent (main stamped a project's hits 'reference' like a named ref, so
+neither rule can be checked).  Fenced with the rows main's producer wrote
+(``tests/fixtures/thread_recall_replay_main_rows.json``).
+
+A memory read tool result (``memory.search``, ``memory.observations``,
+``memory.page``) is replayed on a later turn as a stub that says to read
+again; the stored result stays as the receipt.
 
 Every source is written by its real producer where one exists (the note
 repository, the thread repository, project relationships).  The promotion
@@ -173,11 +185,18 @@ def _scenario(hub: Any, name: str) -> dict:
 
 @pytest.mark.parametrize("name", ["desk", "project"])
 def test_with_nothing_withdrawn_the_later_turn_is_byte_identical_to_main(hub, name: str) -> None:
-    got = _scenario(hub, name)
     if os.environ.get("HOLDSPEAK_RECORD_REPLAY_FIXTURE"):
-        recorded = json.loads(FIXTURE.read_text()) if FIXTURE.exists() else {}
-        recorded[name] = got
-        FIXTURE.write_text(json.dumps(recorded, indent=1, sort_keys=True) + "\n")
+        # Recorded with main's producer (f5b65b7be), never with this code.
+        fixed = hub.svc.__class__
+        hub.svc.__class__ = _main_thread_service()
+        try:
+            recorded = json.loads(FIXTURE.read_text()) if FIXTURE.exists() else {}
+            recorded[name] = _scenario(hub, name)
+            FIXTURE.write_text(json.dumps(recorded, indent=1, sort_keys=True) + "\n")
+        finally:
+            hub.svc.__class__ = fixed
+        pytest.skip("recorded; run again without the variable to compare")
+    got = _scenario(hub, name)
     main = json.loads(FIXTURE.read_text())[name]
     # The scenario recalls on turn 1 and replays on turn 2 (else the fence is empty).
     assert "Atlas codename is" in json.dumps(main["second"])
@@ -187,36 +206,231 @@ def test_with_nothing_withdrawn_the_later_turn_is_byte_identical_to_main(hub, na
     assert json.dumps(got, sort_keys=True) == json.dumps(main, sort_keys=True)
 
 
-# ── Rows saved before the replay check (no "via" key) ───────────────────
+# ── Rows saved before the replay check: the f5b65b7be producer's rows ───
+#
+# ``tests/fixtures/thread_recall_replay_main_rows.json`` holds the
+# ``thread_refs`` rows that main's own ``start_turn`` (f5b65b7be) wrote for
+# three turns: the desk relevance pass, ``project:atlas`` + a named note, and
+# a named Knowledge container.  ``test_record_the_main_rows`` re-records them
+# (with HOLDSPEAK_RECORD_REPLAY_FIXTURE=1, on a checkout that has f5b65b7be).
 
-def _strip_via(db: Any, thread_id: str) -> None:
-    """Make this thread's saved rows look like rows main wrote."""
-    with db._connection() as conn:
-        for row_id, frozen in conn.execute(
-            "SELECT id, frozen_json FROM thread_refs WHERE thread_id=? AND frozen_json!=''", (thread_id,)
-        ).fetchall():
-            value = json.loads(frozen)
-            value.pop("via", None)
-            conn.execute("UPDATE thread_refs SET frozen_json=? WHERE id=?",
-                         (json.dumps(value, separators=(",", ":"), sort_keys=True), row_id))
+MAIN_ROWS = Path(__file__).parents[1] / "fixtures" / "thread_recall_replay_main_rows.json"
+CODE_BODY = f"Atlas codename is {SECRET}. It uses token=hunter2SECRETVALUE."
 
 
-@pytest.mark.parametrize("name", ["desk", "project"])
-def test_a_row_saved_before_the_check_replays_as_main_and_never_unredacted(hub, name: str) -> None:
-    db = hub.db
-    _note(db, "n-code", "Codename", "Atlas codename is ATLASWORD. It uses token=hunter2SECRETVALUE.")
+def _main_sources(db: Any, name: str) -> Optional[list[str]]:
+    """The sources of the recorded turn, as the recorder made them."""
+    _note(db, "n-code", "Codename", CODE_BODY)
+    _note(db, "n-named", "Named", "Harbor launch is 2026-11-01.")
     if name == "project":
         db.project_relationships.upsert(project_id="atlas", resource_ref="note:n-code")
-    sweep(db)
-    first = _turn(hub, QUESTION, refs=["project:atlas"] if name == "project" else None)
-    _strip_via(db, first["thread_id"])
+        return ["project:atlas", "note:n-named"]
+    if name == "knowledge":
+        _note(db, "n-two", "Second", "SURVIVORWORD still current.")
+        db.kbs.upsert(kb_id="bundle", name="Bundle", member_ids=["note:n-code", "note:n-two"])
+        return ["knowledge:bundle"]
+    return None
+
+
+def _thread_with_main_rows(hub: Any, name: str, origin: Optional[str] = None) -> str:
+    """A thread whose turn 1 is the recorded one: the question, the answer,
+    and the rows main's producer saved for it."""
+    db = hub.db
+    _main_sources(db, name)
+    thread_id = hub.svc.create(title="Reflect")["id"]
+    user = db.threads.append_message(thread_id, role="user")
+    db.threads.append_part(user.id, kind="text", text=QUESTION)
+    answer = db.threads.append_message(thread_id, role="assistant", parent_id=user.id)
+    db.threads.append_part(answer.id, kind="text", text="OK")
+    rows = json.loads(MAIN_ROWS.read_text())[name]["rows"]
+    if origin is not None:  # a row written before the origin column: ''
+        rows = [{**row, "origin": origin} for row in rows]
+    db.threads.freeze_refs(thread_id, user.id, rows)
+    return thread_id
+
+
+def _main_thread_service() -> Any:
+    """``ThreadService`` as main had it (f5b65b7be), with main's grounding.
+    Used only to (re-)record the fixtures."""
+    import subprocess
+    import sys
+    import types
+
+    def module(path: str, name: str, package: str) -> Any:
+        source = subprocess.check_output(["git", "show", "f5b65b7be:" + path], text=True)
+        mod = types.ModuleType(name)
+        mod.__package__ = package
+        sys.modules[name] = mod
+        exec(compile(source, "f5b65b7be:" + path, "exec"), mod.__dict__)
+        return mod
+
+    ground = module("holdspeak/grounding.py", "holdspeak._main_grounding", "holdspeak")
+    thread = module("holdspeak/services/thread_service.py", "holdspeak.services._main_thread", "holdspeak.services")
+    thread.hydrate_refs_detailed = ground.hydrate_refs_detailed
+    return thread.ThreadService
+
+
+@pytest.mark.parametrize("name", ["desk", "project", "knowledge"])
+def test_record_the_main_rows(hub, name: str) -> None:
+    """Re-record the fixture from the real f5b65b7be producer (opt-in)."""
+    if not os.environ.get("HOLDSPEAK_RECORD_REPLAY_FIXTURE"):
+        pytest.skip("set HOLDSPEAK_RECORD_REPLAY_FIXTURE=1 to re-record from f5b65b7be")
+    refs = _main_sources(hub.db, name)
+    sweep(hub.db)
+    hub.svc.__class__ = _main_thread_service()
+    first = _turn(hub, QUESTION, refs=refs)
+    rows = [{"ref_kind": r.ref_kind, "ref_id": r.ref_id, "origin": r.origin, "frozen_json": r.frozen_json}
+            for r in hub.db.threads.get_refs(first["thread_id"])]
+    recorded = json.loads(MAIN_ROWS.read_text()) if MAIN_ROWS.exists() else {}
+    recorded[name] = {"source": "f5b65b7be ThreadService.start_turn", "refs": refs, "rows": rows}
+    MAIN_ROWS.write_text(json.dumps(recorded, indent=1, sort_keys=True) + "\n")
+
+
+def test_the_recorded_rows_are_mains_shape() -> None:
+    rows = json.loads(MAIN_ROWS.read_text())
+    assert [r["origin"] for r in rows["desk"]["rows"]] == ["relevance"]
+    # Main stamps a project's search hit 'reference', like a named note.
+    assert [(r["ref_id"], r["origin"]) for r in rows["project"]["rows"]] == [
+        ("n-code", "reference"), ("n-named", "reference")]
+    assert [r["ref_kind"] for r in rows["knowledge"]["rows"]] == ["knowledge"]
+    assert all("via" not in r["frozen_json"] for v in rows.values() for r in v["rows"])
+
+
+@pytest.mark.parametrize("origin", ["relevance", ""])
+@pytest.mark.parametrize("mode", ["none", "delete", "edit", "exclude"])
+def test_a_main_desk_row_is_checked_as_memorys(hub, mode: str, origin: str) -> None:
+    """Main's relevance row, and the same row with the UNKNOWN origin of a
+    row written before the origin column (HS-200-10 keeps that replaying
+    while it is unpromoted)."""
+    thread_id = _thread_with_main_rows(hub, "desk", origin=origin or "")
+    if mode == "delete":
+        hub.db.notes.delete("n-code")
+    elif mode == "edit":
+        _note(hub.db, "n-code", "Codename", f"Atlas codename is {LIVE}. It uses token=hunter2SECRETVALUE.")
+    elif mode == "exclude":
+        _promote(hub.db, "note:n-code")
+    sent = _sent(_turn(hub, "Continue.", thread_id=thread_id))
+    assert "hunter2SECRETVALUE" not in sent
+    if mode == "none":
+        assert f"Atlas codename is {SECRET}. It uses [redacted]" in sent  # the saved bytes
+    else:
+        assert SECRET not in sent
+    if mode == "edit":
+        assert f"Atlas codename is {LIVE}. It uses [redacted]" in sent
+
+
+@pytest.mark.parametrize("mode", ["none", "refile", "exclude", "delete"])
+def test_a_main_project_row_is_never_replayed(hub, mode: str) -> None:
+    """Main wrote the project hit and the named note alike ('reference', no
+    record of the project), so neither the project scope nor the hand-attach
+    rule can be checked: neither row is sent again."""
+    thread_id = _thread_with_main_rows(hub, "project")
+    if mode == "refile":
+        hub.db.project_relationships.upsert(project_id="atlas", resource_ref="note:n-code", deleted=True)
+        hub.db.project_relationships.upsert(project_id="harbor", resource_ref="note:n-code")
+    elif mode == "exclude":
+        _promote(hub.db, "note:n-code")
+    elif mode == "delete":
+        hub.db.notes.delete("n-code")
+    sent = _sent(_turn(hub, "Continue.", thread_id=thread_id))
+    assert SECRET not in sent
+    assert "Harbor launch" not in sent
+
+
+@pytest.mark.parametrize("mode", ["none", "delete", "edit"])
+def test_a_main_container_row_follows_the_hand_attach_rule(hub, mode: str) -> None:
+    thread_id = _thread_with_main_rows(hub, "knowledge")
+    if mode == "delete":
+        hub.db.notes.delete("n-code")
+    elif mode == "edit":
+        _note(hub.db, "n-code", "Codename", f"Atlas codename is {LIVE}.")
+    sent = _sent(_turn(hub, "Continue.", thread_id=thread_id))
+    assert "SURVIVORWORD still current." in sent  # the live member stays
+    if mode == "none":
+        assert CODE_BODY in sent  # he attached it: sent as he wrote it, as main does
+    else:
+        assert SECRET not in sent
+    if mode == "edit":
+        assert LIVE in sent
+
+
+# ── A named container keeps its live members ────────────────────────────
+
+def _container(db: Any, kind: str, members: list[str]) -> str:
+    if kind == "knowledge":
+        db.kbs.upsert(kb_id="bundle", name="Bundle", member_ids=members)
+    else:
+        db.directories.upsert(directory_id="bundle", name="Bundle")
+        for ref in members:
+            db.directory_memberships.upsert(primitive_id=ref, directory_id="bundle")
+    return f"{kind}:bundle"
+
+
+@pytest.mark.parametrize("kind", ["knowledge", "zone"])
+@pytest.mark.parametrize("mode", ["delete", "sensitive", "edit"])
+def test_a_container_drops_only_its_withdrawn_member(hub, kind: str, mode: str) -> None:
+    ref, withdraw = _source(hub.db, mode, None)
+    _note(hub.db, "n-two", "Second", "SURVIVORWORD still current.")
+    container = _container(hub.db, kind, [ref, "note:n-two"])
+    first = _turn(hub, QUESTION, refs=[container])
+    assert first["outcome"] == "succeeded" and SECRET in _sent(first)
+    withdraw()
     second = _turn(hub, "Continue.", thread_id=first["thread_id"])
     sent = _sent(second)
-    assert "ATLASWORD. It uses [redacted]" in sent  # unchanged: the saved bytes
-    assert "hunter2SECRETVALUE" not in sent
-    db.notes.delete("n-code")
-    third = _turn(hub, "Continue.", thread_id=first["thread_id"])
-    assert "ATLASWORD" not in _sent(third)  # gone: not sent
+    assert SECRET not in sent
+    assert "SURVIVORWORD still current." in sent
+    if mode == "edit":
+        assert LIVE in sent
+
+
+# ── Memory read tool results ────────────────────────────────────────────
+
+def _cloud(hub: Any, thread_id: str) -> None:
+    from tests.unit.test_thread_people_fence import _seed_profile
+
+    _seed_profile(hub.db, "replay-cloud", boundary="external_service")
+    hub.svc.patch(thread_id, profile_override="replay-cloud")
+
+
+@pytest.mark.parametrize("route", ["local", "cloud"])
+@pytest.mark.parametrize("mode", ["delete", "sensitive", "refile", "exclude"])
+def test_a_memory_search_result_is_never_replayed_on_a_later_turn(hub, mode: str, route: str) -> None:
+    """Astra's #852 repro: memory.search finds the source on turn 1, the
+    source is withdrawn, "Continue." in the same thread.  Turn 2 gets a stub
+    that says to search again; the tool record (the receipt) stays."""
+    db = hub.db
+    _ref, withdraw = _source(db, mode, "atlas")
+    sweep(db)
+    hub.engine.tool = ("memory.search", {"query": QUESTION, "project_id": "atlas"})
+    first = _turn(hub, "Proceed.")
+    assert first["outcome"] == "succeeded" and SECRET in json.dumps(first["calls"][-1])
+    assert SECRET not in "\n".join(r.frozen_json for r in db.threads.get_refs(first["thread_id"]))
+    withdraw()
+    sweep(db)
+    hub.engine.tool = None
+    if route == "cloud":
+        _cloud(hub, first["thread_id"])
+    second = _turn(hub, "Continue.", thread_id=first["thread_id"])
+    assert second["outcome"] == "succeeded"
+    if route == "cloud":
+        assert db.threads.get_message(second["assistant_message_id"]).egress_scope == "cloud"
+    sent = second["calls"][0]
+    assert not [m for m in sent if SECRET in str(m.get("content", ""))]
+    assert any(m["role"] == "tool" and "Call memory.search again" in m["content"] for m in sent)
+    kept = [part.text for message in db.threads.list_path(first["thread_id"]) if message.role == "tool"
+            for part in db.threads.get_parts(message.id)]
+    assert any(SECRET in str(text) for text in kept)  # the receipt is kept
+
+
+def test_a_memory_observations_result_is_a_stub_on_a_later_turn(hub) -> None:
+    hub.engine.tool = ("memory.observations", {"scope": "desk"})
+    first = _turn(hub, "Proceed.")
+    assert first["outcome"] == "succeeded"
+    assert any(m.get("role") == "tool" for m in first["calls"][-1])
+    hub.engine.tool = None
+    second = _turn(hub, "Continue.", thread_id=first["thread_id"])
+    assert any(m["role"] == "tool" and "Call memory.observations again" in m["content"]
+               for m in second["calls"][0])
 
 
 def test_a_source_the_caller_holds_out_is_not_live_for_memory() -> None:

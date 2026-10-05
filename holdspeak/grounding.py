@@ -357,6 +357,11 @@ def hydrate_refs_detailed(
     )
 
 
+# Kinds that hydrate to ONE block built from their members (a named
+# container; a project expands to member blocks instead).
+_CONTAINER_KINDS = frozenset({"knowledge", "zone"})
+
+
 def live_block(
     db: Any,
     ref: str,
@@ -390,6 +395,11 @@ def live_block(
         blocks, missing = _hydrate_qualified(
             db, base, "summary", set(), query=query, exclude_refs=exclude_refs,
         )
+        if kind in _CONTAINER_KINDS:
+            # A container is rebuilt from its live members: a member that is
+            # gone is left out, the others stay (live text if changed).  Only
+            # the container itself being gone drops the block.
+            return blocks[0] if blocks else None
         return None if missing or not blocks else blocks[0]
     if base in (exclude_refs or set()):
         return None
