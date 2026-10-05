@@ -129,12 +129,9 @@ class TestCalendarSourcesRoute:
 
         # Seed an event within this week.
         from datetime import datetime, timezone, timedelta
-        now = datetime.now(timezone.utc)
-        # Find a time this week.
-        monday = now - timedelta(days=now.weekday())
-        event_time = monday.replace(hour=10, minute=0, second=0, microsecond=0)
-        if event_time < now:
-            event_time = now + timedelta(hours=1)
+        # A time inside the route's window: the hub's LOCAL week, not the UTC
+        # week (on a Sunday evening west of UTC the UTC week is already the next one).
+        event_time = datetime.fromisoformat(week_start.replace("Z", "+00:00")) + timedelta(hours=1)
         event_iso = event_time.isoformat(timespec="seconds").replace("+00:00", "Z")
         end_iso = (event_time + timedelta(hours=1)).isoformat(timespec="seconds").replace("+00:00", "Z")
 

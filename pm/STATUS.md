@@ -30,7 +30,7 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 | Memory: turn meaning search on from the product (the embedding model is not in the signed catalogue): waits for the owner's word | — | — |
 | Memory slices 3–6: fact extraction; observations; standing pages (needs a canvas); palette and Ask | Muad'Dib | — |
 | Memory: summary and topic as their own chunks not built (needs old vectors to serve during a re-cut); thread keyword search misses bare local time ranges (inherited); the Desk memory face does not show the four new kinds | — | — |
-| Memory: the agent tool turn cannot call memory search (the turn runs no tools); the update draft and Prep are not fitted to a token budget (their path has none) | — | — |
+| Memory: the agent tool turn (RecipeService.chat → run_recipe) is retired code with no caller; Recipe chat runs as a thread turn whose default tools include memory.search (proved by tests/unit/test_thread_memory_search_live.py). The update draft and Prep are not fitted to a token budget (their path has none) | — | — |
 | Memory: live meeting analysis and voice resolve read no memory (a lookup is 100–400 ms against a 50 ms bar) | — | — |
 | Memory: the decision-promotion self-recall test passes before the fix; mint through DecisionLifecycleService.promote (Astra, #830) | — | — |
 | A PR review after its linked story is edited (same commit and diff) returns HTTP 500, as on main | — | — |
@@ -56,6 +56,8 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 
 ## Last merged (newest first)
 
+- #837 — The calendar test seeds its event in the local week (it failed every Sunday evening west of UTC)
+- #836 — Recipe chat searches memory through the thread turn, proven by a live test; the agent tool turn is recorded as retired code
 - #834 — An edited dictation is remembered by its new words (memory and the Journal search); Replay's before-text is the edited text
 - #832 — Memory slice 2: Brief items, dictation, steward runs and Room answers are remembered; keyword search over the memory index works with no engine; time ranges compare as instants
 - #830 — Memory for every AI job: one policy row per capability; cadence, decision, PR review and rails drafts read memory; memory fits the job's token budget; no self-recall
