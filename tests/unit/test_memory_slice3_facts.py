@@ -313,7 +313,8 @@ def test_a_version_bump_replaces_facts_with_no_gap_in_recall(tmp_path: Path, mon
     assert _refs(db, question) == ["note:n-owner"]  # found only by the entity walk
     assert db.memory.search(question).hits[0].retrieval_origin == "entity"
 
-    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", 2)
+    bumped = extract_module.EXTRACTOR_VERSION + 1
+    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", bumped)
     seen_during: list[list[str]] = []
     v2 = Scripted([("runbook", [F("Dana Whitfield is the owner of the cutover runbook.", "Dana Whitfield",
                                   [("Dana Whitfield", "person")])])])
@@ -326,8 +327,8 @@ def test_a_version_bump_replaces_facts_with_no_gap_in_recall(tmp_path: Path, mon
         stamp = conn.execute(
             "SELECT extractor_version FROM memory_sources WHERE source_ref='note:n-owner'"
         ).fetchone()[0]
-    assert [tuple(r) for r in rows] == [("Dana Whitfield is the owner of the cutover runbook.", 2, "live")]
-    assert stamp == 2
+    assert [tuple(r) for r in rows] == [("Dana Whitfield is the owner of the cutover runbook.", bumped, "live")]
+    assert stamp == bumped
     assert _refs(db, question) == ["note:n-owner"]
 
 
@@ -604,13 +605,14 @@ def test_a_bad_answer_backs_off_and_stops_after_six_tries(tmp_path: Path, monkey
     assert extract_pending(db, engine)["failed"] == 0
     far = "2999-01-01T00:00:00+00:00"
     index = db.memory_index
+    version = extract_module.EXTRACTOR_VERSION
     for _ in range(5):
-        for ref, sha in index.pending_extraction(EXTRACT_KINDS, 1, now=far):
-            index.record_job_failure(kind="extract", target=ref, input_sha=sha, version=1, error="bad",
+        for ref, sha in index.pending_extraction(EXTRACT_KINDS, version, now=far):
+            index.record_job_failure(kind="extract", target=ref, input_sha=sha, version=version, error="bad",
                                      boundary="local", max_attempts=6, delay=lambda n: 0)
     with db._connection() as conn:
         assert dict(conn.execute("SELECT status,attempts FROM memory_jobs").fetchone()) == {"status": "failed", "attempts": 6}
-    assert index.pending_extraction(EXTRACT_KINDS, 1, now=far) == []
+    assert index.pending_extraction(EXTRACT_KINDS, version, now=far) == []
     # The text changes: the job is new, and a good answer clears the row.
     _note(db, "n-bad", "Bad", "A text the engine can read now.")
     sweep(db)
@@ -723,7 +725,7 @@ def test_a_withdrawn_message_never_serves_and_its_anchor_never_moves(tmp_path: P
 def test_unchanged_text_keeps_its_facts_through_a_version_bump(tmp_path: Path, monkeypatch) -> None:
     db = Database(tmp_path / "keep.db")
     engine = _brennick_note(db)
-    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", 2)
+    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", extract_module.EXTRACTOR_VERSION + 1)
     during: list[list] = []
     engine.during = lambda _payload: during.append(_refs(db, "what does Brennick own"))
     assert extract_pending(db, engine)["sources"] == 1
@@ -869,7 +871,7 @@ def test_one_malformed_entry_fails_the_answer_and_the_old_facts_stay(tmp_path: P
     db = Database(tmp_path / "malformed.db")
     _brennick_note(db)
     before = _rows(db, "memory_facts", "memory_entities", "memory_fact_entities")
-    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", 2)
+    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", extract_module.EXTRACTOR_VERSION + 1)
     engine = Scripted()
     good = F("Odalys Brennick owns the Atlas launch.", "Odalys Brennick", [("Odalys Brennick", "person")])
     for bad in (
@@ -908,3 +910,77 @@ def test_a_short_name_two_full_names_could_take_is_its_own_entity(tmp_path: Path
         people = {str(r["name"]): json.loads(r["aliases_json"])
                   for r in conn.execute("SELECT name,aliases_json FROM memory_entities WHERE kind='person'")}
     assert people == {"Dana Lee": [], "Dana Kim": [], "Dana": []}
+
+
+# ── a day with no month is the next such day (EXTRACTOR_VERSION 2) ─────
+
+
+def _dated(text: str, start: Optional[str], end: Optional[str] = None) -> dict:
+    return {"text": text, "occurred_start": start, "occurred_end": end}
+
+
+def test_the_prompt_says_a_day_with_no_month_is_the_next_such_day() -> None:
+    prompt = extract_module.SYSTEM_PROMPT
+    assert "next such day on or after the date of the source" in prompt
+    assert "never before the date of the source" in prompt
+    assert extract_module.EXTRACTOR_VERSION >= 2
+
+
+def test_a_past_day_with_no_month_is_stored_as_the_next_such_day(tmp_path: Path) -> None:
+    """The model gives 2026-09-09 for "the ninth" in a meeting of 2026-09-14.
+    The stored fact (text and dates) says 2026-10-09."""
+    db = Database(tmp_path / "day.db")
+    _meeting(db, "m-leave", [("Remote", "My leave starts on the ninth.")], title="1:1 with Rafael Okonkwo")
+    sweep(db)
+    wrong = {**F("Rafael Okonkwo's leave starts on 2026-09-09.", "Rafael Okonkwo",
+                 [("Rafael Okonkwo", "person")], kind="event", start="2026-09-09")}
+    extract_pending(db, Scripted([("ninth", [wrong])]))
+    with db._connection() as conn:
+        rows = [tuple(r) for r in conn.execute("SELECT text,occurred_start FROM memory_facts")]
+    assert rows == [("Rafael Okonkwo's leave starts on 2026-10-09.", "2026-10-09")]
+
+
+@pytest.mark.parametrize("fact,chunk,expected", [
+    # Moved: a thing still to come, a bare day, a past date in the source month.
+    (_dated("Rafael's leave starts on 2026-09-09.", "2026-09-09"), "My leave starts on the ninth.",
+     _dated("Rafael's leave starts on 2026-10-09.", "2026-10-09")),
+    (_dated("Beatriz requires the numbers by 2026-09-15.", None), "I need the numbers by the 15th.",
+     _dated("Beatriz requires the numbers by 2026-10-15.", None)),
+    (_dated("Tomasz will ship the batch on 2026-09-20.", "2026-09-22T09:00:00", "2026-09-20"),
+     "It ships on the twentieth.",
+     _dated("Tomasz will ship the batch on 2026-10-20.", "2026-09-22T09:00:00", "2026-10-20")),
+    # The end moves with a moved start ("from the ninth for three weeks").
+    (_dated("Rafael will be away from 2026-09-09.", "2026-09-09", "2026-09-30"), "Away from the ninth for three weeks.",
+     _dated("Rafael will be away from 2026-10-09.", "2026-10-09", "2026-10-30")),
+    # "the first" alone is a day.
+    (_dated("The report is due 2026-09-01.", "2026-09-01"), "It is due on the first.",
+     _dated("The report is due 2026-10-01.", "2026-10-01")),
+])
+def test_the_guard_moves_a_past_day_that_is_still_to_come(fact: dict, chunk: str, expected: dict) -> None:
+    assert extract_module.roll_past_days([fact], chunk, "2026-09-22T16:00:00") == [expected]
+
+
+@pytest.mark.parametrize("fact,chunk", [
+    # A past event: the fact's words do not say "still to come".
+    (_dated("Rafael finished the migration on 2026-09-09.", "2026-09-09"), "I finished it on the ninth."),
+    # The chunk names the month: the model read it as said.
+    (_dated("The freeze will start on 2026-09-09.", "2026-09-09"), "The freeze starts on the ninth of September."),
+    (_dated("The freeze will start on 2026-09-09.", "2026-09-09"), "The freeze starts September the ninth."),
+    # No bare day in the chunk, or another day than the one the chunk says.
+    (_dated("The freeze will start on 2026-09-09.", "2026-09-09"), "The freeze starts soon."),
+    (_dated("The freeze will start on 2026-09-08.", "2026-09-08"), "The freeze starts on the ninth."),
+    # "the first week" is not a day.
+    (_dated("Ana will pair with Lee on 2026-09-01.", "2026-09-01"), "Ana pairs with Lee in the first week."),
+    # A date in another month than the source's, or not before the source.
+    (_dated("The freeze will start on 2026-08-09.", "2026-08-09"), "The freeze starts on the ninth."),
+    (_dated("The freeze will start on 2026-09-29.", "2026-09-29"), "The freeze starts on the twenty-ninth."),
+])
+def test_the_guard_never_moves_a_date_it_cannot_prove_wrong(fact: dict, chunk: str) -> None:
+    assert extract_module.roll_past_days([fact], chunk, "2026-09-22T16:00:00") == [fact]
+
+
+def test_a_day_the_next_month_does_not_have_goes_to_the_month_after() -> None:
+    fact = _dated("The audit will start on 2027-01-30.", "2027-01-30")
+    assert extract_module.roll_past_days([fact], "It starts on the thirtieth.", "2027-01-31") == [
+        _dated("The audit will start on 2027-03-30.", "2027-03-30")
+    ]

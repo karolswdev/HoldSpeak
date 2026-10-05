@@ -372,6 +372,51 @@ def test_hard_relation_questions_need_the_entity_walk(tmp_path: Path, capsys) ->
     assert walk_vectors["groups"][group]["mrr"] > vectors["groups"][group]["mrr"]
 
 
+#: A day with no month is the next such day (EXTRACTOR_VERSION 2).  Each row:
+#: source label, the date it must give, the wrong past date of version 1.
+NEXT_SUCH_DAY = [
+    ("m-okonkwo", "2026-10-09", "2026-09-09"),  # "my leave starts on the ninth", 22 Sep
+    ("m-santos", "2026-10-15", "2026-09-15"),   # "by the fifteenth", 24 Sep
+    ("n-supplier", "2026-10-20", "2026-09-20"),  # "ships on the twentieth", 23 Sep
+]
+
+
+def _dates_of(fact: dict) -> set[str]:
+    import re
+
+    found = set(re.findall(r"\d{4}-\d{2}-\d{2}", str(fact.get("text") or "")))
+    return found | {str(fact[key])[:10] for key in ("occurred_start", "occurred_end") if fact.get(key)}
+
+
+def test_a_day_with_no_month_is_the_next_such_day(tmp_path: Path) -> None:
+    """The real model's own answers (``relation_hard_facts.json``, before the
+    code guard) and the stored facts (after it) both give the next such day:
+    October 9, October 15 and October 20, never the past day of September."""
+    from holdspeak.memory.extract import extract_pending
+
+    from .engines import FixtureExtractor, fixture_key
+
+    db, refs = _hard_desk(tmp_path)
+    recorded = FixtureExtractor(bench.FACTS, bench.HARD_FACTS)
+    extract_pending(db, recorded)
+    by_ref: dict[str, list[dict]] = {}
+    for payload in recorded.payloads:
+        by_ref.setdefault(payload["user_prompt"], []).extend(recorded._answers[fixture_key(payload)]["facts"])
+    with db._connection() as conn:
+        stored = [dict(row) for row in conn.execute(
+            "SELECT source_ref,text,occurred_start,occurred_end FROM memory_facts WHERE state='live'"
+        )]
+    for label, future, past in NEXT_SUCH_DAY:
+        title = {"m-okonkwo": "1:1 with Rafael Okonkwo", "m-santos": "Budget check-in with Beatriz Santos",
+                 "n-supplier": "Supplier follow-up"}[label]
+        raw = [fact for prompt, facts in by_ref.items() if f'"{title}"' in prompt for fact in facts]
+        raw_dates = set().union(*(_dates_of(fact) for fact in raw)) if raw else set()
+        assert future in raw_dates and past not in raw_dates, (label, raw_dates)
+        mine = [fact for fact in stored if fact["source_ref"] == refs[label]]
+        dates = set().union(*(_dates_of(fact) for fact in mine)) if mine else set()
+        assert future in dates and past not in dates, (label, dates)
+
+
 def test_hard_relation_names_stay_apart(tmp_path: Path) -> None:
     """The negative: "John Whitfield" and "Jane Whitfield" are two entities
     (the per-token guard), and each question ranks its own person first in

@@ -4765,7 +4765,8 @@ CREATE TRIGGER IF NOT EXISTS memory_observation_history_no_delete
     SELECT RAISE(ABORT, 'memory_observation_history is append only');
 END;
 -- INSERT OR REPLACE deletes the old row with no DELETE trigger when
--- recursive_triggers is off: refuse an insert over an existing id.
+-- recursive_triggers is off: refuse an insert over an existing id.  `id` is
+-- the rowid, so this trigger also refuses an insert over a rowid.
 CREATE TRIGGER IF NOT EXISTS memory_observation_history_no_replace
     BEFORE INSERT ON memory_observation_history
     WHEN EXISTS (SELECT 1 FROM memory_observation_history WHERE id=NEW.id) BEGIN
@@ -4774,7 +4775,7 @@ END;
 -- Each text an observation has had, bound to the evidence that made it.
 -- A reader serves the NEWEST version that still has a backing group whose
 -- facts are ALL live evidence in the observation's scope now; none: the
--- observation is not served.  Append only (three triggers).
+-- observation is not served.  Append only (four triggers).
 CREATE TABLE IF NOT EXISTS memory_observation_versions (
     observation_id TEXT NOT NULL,
     version INTEGER NOT NULL,
@@ -4796,6 +4797,12 @@ CREATE TRIGGER IF NOT EXISTS memory_observation_versions_no_replace
                  WHERE observation_id=NEW.observation_id AND version=NEW.version) BEGIN
     SELECT RAISE(ABORT, 'memory_observation_versions is append only');
 END;
+-- INSERT OR REPLACE can also name an existing rowid with a new key: refuse it.
+CREATE TRIGGER IF NOT EXISTS memory_observation_versions_no_rowid_replace
+    BEFORE INSERT ON memory_observation_versions
+    WHEN EXISTS (SELECT 1 FROM memory_observation_versions WHERE rowid=NEW.rowid) BEGIN
+    SELECT RAISE(ABORT, 'memory_observation_versions is append only');
+END;
 -- The fact groups that back one version: the entry that introduced it, and
 -- each later `supports` entry while it was the text served.  A group backs
 -- the version only while EVERY fact of it is live evidence.
@@ -4806,6 +4813,28 @@ CREATE TABLE IF NOT EXISTS memory_observation_backing (
     fact_id TEXT NOT NULL,
     PRIMARY KEY (observation_id, version, grp, fact_id)
 );
+-- Append only, as the versions it backs (four triggers: no update, no
+-- delete, no insert over a key or over a rowid).
+CREATE TRIGGER IF NOT EXISTS memory_observation_backing_no_update
+    BEFORE UPDATE ON memory_observation_backing BEGIN
+    SELECT RAISE(ABORT, 'memory_observation_backing is append only');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_observation_backing_no_delete
+    BEFORE DELETE ON memory_observation_backing BEGIN
+    SELECT RAISE(ABORT, 'memory_observation_backing is append only');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_observation_backing_no_replace
+    BEFORE INSERT ON memory_observation_backing
+    WHEN EXISTS (SELECT 1 FROM memory_observation_backing
+                 WHERE observation_id=NEW.observation_id AND version=NEW.version
+                   AND grp=NEW.grp AND fact_id=NEW.fact_id) BEGIN
+    SELECT RAISE(ABORT, 'memory_observation_backing is append only');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_observation_backing_no_rowid_replace
+    BEFORE INSERT ON memory_observation_backing
+    WHEN EXISTS (SELECT 1 FROM memory_observation_backing WHERE rowid=NEW.rowid) BEGIN
+    SELECT RAISE(ABORT, 'memory_observation_backing is append only');
+END;
 -- One row per model job that failed on its input (a bad output), so a source
 -- the engine cannot read waits with a back-off and stops after six tries.  A
 -- job that succeeds needs no row: the ledger stamp says it is done.

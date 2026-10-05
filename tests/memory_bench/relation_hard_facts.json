@@ -1,110 +1,178 @@
 {
  "answers": {
-  "179c6cc5b69381d7645d2a34c7107225bcaeb6b22390150aaee20e0f212cb1ee": {
+  "06a2298726ef7cc45674d0c760cbf4e6204e244f89c753e91a6663c715630f2c": {
    "facts": [
     {
      "confidence": 1.0,
      "entities": [
       {
-       "kind": "org",
-       "name": "Halcyon Bank"
-      },
-      {
-       "kind": "topic",
-       "name": "audit export"
+       "kind": "person",
+       "name": "Lukas Brenner"
       }
      ],
-     "kind": "state",
-     "object": "audit export in CSV format by 2026-09-30",
+     "kind": "event",
+     "object": "the job offer",
      "occurred_end": null,
      "occurred_start": null,
-     "predicate": "requires",
-     "subject": "Halcyon Bank",
-     "text": "Halcyon Bank's compliance team requires the audit export in CSV format by the end of the month."
+     "predicate": "accepted",
+     "subject": "Lukas Brenner",
+     "text": "Lukas Brenner accepted the job offer."
     },
     {
      "confidence": 1.0,
      "entities": [
       {
-       "kind": "org",
-       "name": "Halcyon Bank"
-      },
-      {
-       "kind": "topic",
-       "name": "audit export"
+       "kind": "person",
+       "name": "Lukas Brenner"
       }
      ],
      "kind": "event",
-     "object": "audit export to Halcyon Bank",
-     "occurred_end": "2026-09-28",
-     "occurred_start": "2026-09-28",
-     "predicate": "will send",
-     "subject": "the owner",
-     "text": "The owner will send the audit export to Halcyon Bank on 2026-09-28."
-    }
-   ]
-  },
-  "36864cf751408b3de5a3dbae695f62f8e7e452277eca8fb3fbb3fb63c7a7db46": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "project",
-       "name": "Kestrel"
-      }
-     ],
-     "kind": "event",
-     "object": "2026-10-12",
-     "occurred_end": "2026-10-12",
-     "occurred_start": "2026-10-12",
-     "predicate": "is scheduled for",
-     "subject": "partner API freeze",
-     "text": "The partner API freeze for the Kestrel project is scheduled for 2026-10-12."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "project",
-       "name": "Kestrel"
-      }
-     ],
-     "kind": "event",
-     "object": "2026-10-19",
-     "occurred_end": "2026-10-19",
-     "occurred_start": "2026-10-19",
+     "object": "on 2026-11-03",
+     "occurred_end": "2026-11-03",
+     "occurred_start": "2026-11-03",
      "predicate": "will start",
-     "subject": "load tests",
-     "text": "The load tests for the Kestrel project will start on 2026-10-19."
+     "subject": "Lukas Brenner",
+     "text": "Lukas Brenner will start on 2026-11-03."
     }
    ]
   },
-  "4bf710a9980ee71a1e8132dc43ae12885f815d55671ff7118d8a2a74c94d0fa3": {
+  "080679069d5095ebfc2ef4bb7360fd830c2605178b6dffd9fc8237d638a8b9d4": {
    "facts": [
     {
-     "confidence": 0.9,
+     "confidence": 1.0,
      "entities": [
       {
-       "kind": "project",
-       "name": "Kestrel"
+       "kind": "person",
+       "name": "Mirela Kowalczyk"
       },
       {
        "kind": "system",
-       "name": "staging cluster"
+       "name": "shared vault"
       }
      ],
      "kind": "event",
-     "object": "the staging cluster at night for Kestrel load tests",
+     "object": "the deploy keys in the shared vault",
      "occurred_end": null,
      "occurred_start": null,
-     "predicate": "will reuse",
-     "subject": "the owner",
-     "text": "The owner will reuse the staging cluster at night for Kestrel load tests."
+     "predicate": "left",
+     "subject": "Mirela Kowalczyk",
+     "text": "Mirela Kowalczyk left the deploy keys in the shared vault."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "rate limiter rewrite"
+      },
+      {
+       "kind": "person",
+       "name": "Mirela Kowalczyk"
+      }
+     ],
+     "kind": "state",
+     "object": "Mirela Kowalczyk's last open task",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "is",
+     "subject": "rate limiter rewrite",
+     "text": "The rate limiter rewrite is Mirela Kowalczyk's last open task."
     }
    ]
   },
-  "4c7a3f7d0bfca42718c9afe33d68baa3951dabe73f9aff778f54622dc18278e3": {
+  "1603794edb74fb3d6836b760e8bc5fdf9fe401664f558dab62fe62e4b1d4c440": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Tomasz Wierzbicki"
+      },
+      {
+       "kind": "org",
+       "name": "Corvid Labs"
+      }
+     ],
+     "kind": "event",
+     "object": "the firmware release of Corvid Labs by one week",
+     "occurred_end": "2026-09-24",
+     "occurred_start": "2026-09-24",
+     "predicate": "moved",
+     "subject": "Tomasz Wierzbicki",
+     "text": "Tomasz Wierzbicki moved the firmware release of Corvid Labs by one week."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Tomasz Wierzbicki"
+      }
+     ],
+     "kind": "event",
+     "object": "the sensor batch as planned",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "will ship",
+     "subject": "Tomasz Wierzbicki",
+     "text": "Tomasz Wierzbicki will ship the sensor batch as planned."
+    }
+   ]
+  },
+  "28eaa7f36d5450f823142a58bd5a7797de0ee4de18e2b3361b385741881502f2": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Beatriz Santos"
+      }
+     ],
+     "kind": "event",
+     "object": "the hiring numbers by 2026-10-15",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "requires",
+     "subject": "Beatriz Santos",
+     "text": "Beatriz Santos requires the hiring numbers by 2026-10-15."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Beatriz Santos"
+      }
+     ],
+     "kind": "state",
+     "object": "no new contractors this quarter",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "decided",
+     "subject": "Beatriz Santos",
+     "text": "Beatriz Santos decided that there will be no new contractors this quarter."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Beatriz Santos"
+      }
+     ],
+     "kind": "event",
+     "object": "the hiring numbers to Beatriz Santos on 2026-09-28",
+     "occurred_end": "2026-09-28",
+     "occurred_start": "2026-09-28",
+     "predicate": "will provide",
+     "subject": "the owner",
+     "text": "The owner will provide the hiring numbers to Beatriz Santos on 2026-09-28."
+    }
+   ]
+  },
+  "4d242066fa4d246a11d95d1869085bac895e29a92e3326796dc8baa88f08fc2e": {
    "facts": [
     {
      "confidence": 1.0,
@@ -164,51 +232,323 @@
     }
    ]
   },
-  "5add31b30457ad2ea3daf8280222d4168fa0f5b334f30d0bde9053455c42cf45": {
+  "5f83b7d97d60e87935ef81dea1054ad4c08603660327cc2a99c4b9a4da7ebb4e": {
    "facts": [
     {
      "confidence": 1.0,
      "entities": [
       {
        "kind": "person",
-       "name": "Mirela Kowalczyk"
+       "name": "Ana"
       },
       {
-       "kind": "system",
-       "name": "shared vault"
+       "kind": "person",
+       "name": "Rafael"
+      }
+     ],
+     "kind": "state",
+     "object": "the migration in Rafael's place",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "can approve",
+     "subject": "Ana",
+     "text": "Ana can approve the migration in Rafael's place."
+    }
+   ]
+  },
+  "6012df7b04d2e91346b876aaa31600d95dbab1fab17e96f6921408dd106da814": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "project",
+       "name": "Kestrel"
       }
      ],
      "kind": "event",
-     "object": "the deploy keys in the shared vault",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "left",
-     "subject": "Mirela Kowalczyk",
-     "text": "Mirela Kowalczyk left the deploy keys in the shared vault."
+     "object": "2026-10-12",
+     "occurred_end": "2026-10-12",
+     "occurred_start": "2026-10-12",
+     "predicate": "is scheduled for",
+     "subject": "partner API freeze",
+     "text": "The partner API freeze for the Kestrel project is scheduled for 2026-10-12."
     },
     {
      "confidence": 1.0,
      "entities": [
       {
-       "kind": "topic",
-       "name": "rate limiter rewrite"
-      },
-      {
-       "kind": "person",
-       "name": "Mirela Kowalczyk"
+       "kind": "project",
+       "name": "Kestrel"
       }
      ],
-     "kind": "state",
-     "object": "Mirela Kowalczyk's last open task",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "is",
-     "subject": "rate limiter rewrite",
-     "text": "The rate limiter rewrite is Mirela Kowalczyk's last open task."
+     "kind": "event",
+     "object": "2026-10-19",
+     "occurred_end": "2026-10-19",
+     "occurred_start": "2026-10-19",
+     "predicate": "will start on",
+     "subject": "load tests",
+     "text": "The load tests for the Kestrel project will start on 2026-10-19."
     }
    ]
   },
-  "82546e673670514b9cf73ad0f095245040568efd3168de8a14261de4892221b9": {
+  "66af88b0149335638f1d01975e9002b3b29d385517109a56fee49a985bc1bf9b": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "T. Wierzbicki"
+      }
+     ],
+     "kind": "event",
+     "object": "the sensor batch ships on 2026-10-20",
+     "occurred_end": "2026-09-23",
+     "occurred_start": "2026-09-23",
+     "predicate": "confirmed",
+     "subject": "T. Wierzbicki",
+     "text": "T. Wierzbicki confirmed that the sensor batch ships on 2026-10-20."
+    }
+   ]
+  },
+  "768f13235307cec7ed2c59f505799847ec4a2be6a839ab2e063b7244feb33baf": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Lukas Brenner"
+      }
+     ],
+     "kind": "event",
+     "object": "a laptop for Lukas Brenner",
+     "occurred_end": "2026-10-05",
+     "occurred_start": "2026-10-05",
+     "predicate": "will order",
+     "subject": "the owner",
+     "text": "The owner will order a laptop for Lukas Brenner immediately."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Lukas Brenner"
+      },
+      {
+       "kind": "topic",
+       "name": "platform on-call rota"
+      }
+     ],
+     "kind": "event",
+     "object": "Lukas Brenner to the platform on-call rota",
+     "occurred_end": "2026-11-05",
+     "occurred_start": "2026-11-05",
+     "predicate": "will add",
+     "subject": "the owner",
+     "text": "The owner will add Lukas Brenner to the platform on-call rota after one month."
+    }
+   ]
+  },
+  "8a0bb9168aacad6b07c6201f934dfff87bdb9cdc00c758e78dff73ba4d6bc2f4": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael"
+      }
+     ],
+     "kind": "event",
+     "object": "for three weeks starting 2026-10-09",
+     "occurred_end": "2026-10-30",
+     "occurred_start": "2026-10-09",
+     "predicate": "is away",
+     "subject": "Rafael",
+     "text": "Rafael is away from 2026-10-09 for three weeks."
+    }
+   ]
+  },
+  "8f7ac6321cfcdb70dbe006b26e0a696d07dbfda1725c5f6cc2b266a4c6a2adb3": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "org",
+       "name": "Halcyon Bank"
+      }
+     ],
+     "kind": "state",
+     "object": "audit export in CSV format by 2026-09-30",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "requires",
+     "subject": "Halcyon Bank",
+     "text": "Halcyon Bank's compliance team requires the audit export in CSV format by the end of the month."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "org",
+       "name": "Halcyon Bank"
+      }
+     ],
+     "kind": "event",
+     "object": "audit export to Halcyon Bank",
+     "occurred_end": "2026-09-28",
+     "occurred_start": "2026-09-28",
+     "predicate": "will send",
+     "subject": "the owner",
+     "text": "The owner will send the audit export to Halcyon Bank on 2026-09-28."
+    }
+   ]
+  },
+  "a532f232ff828837ef382c4d8d89eecec7b7934bbf5c344d2f179af559649215": {
+   "facts": [
+    {
+     "confidence": 0.9,
+     "entities": [
+      {
+       "kind": "project",
+       "name": "Kestrel"
+      },
+      {
+       "kind": "system",
+       "name": "staging cluster"
+      }
+     ],
+     "kind": "event",
+     "object": "the staging cluster at night for Kestrel load tests",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "will reuse",
+     "subject": "the owner",
+     "text": "The owner will reuse the staging cluster at night for Kestrel load tests."
+    }
+   ]
+  },
+  "b53e99aa1e92d2508e63a7798a0723584ed3cec7b2d3eedf1be3923e77f2c41d": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      },
+      {
+       "kind": "topic",
+       "name": "schema migration"
+      }
+     ],
+     "kind": "event",
+     "object": "the schema migration",
+     "occurred_end": null,
+     "occurred_start": "2026-10-09",
+     "predicate": "will finish",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo will finish the schema migration before 2026-10-09."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      }
+     ],
+     "kind": "event",
+     "object": "2026-10-09",
+     "occurred_end": null,
+     "occurred_start": "2026-10-09",
+     "predicate": "starts leave on",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo's leave starts on 2026-10-09."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Ana"
+      },
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      }
+     ],
+     "kind": "event",
+     "object": "reviews while Rafael Okonkwo is away",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "will cover",
+     "subject": "Ana",
+     "text": "Ana will cover reviews while Rafael Okonkwo is away."
+    }
+   ]
+  },
+  "cd81b325b4577d0ccd4e6ccebed6f2b1130c059a21f2f94c37838fbcc9f9918e": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "Kestrel load tests"
+      }
+     ],
+     "kind": "state",
+     "object": "a second environment",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "require",
+     "subject": "Kestrel load tests",
+     "text": "The Kestrel load tests require a second environment."
+    }
+   ]
+  },
+  "d600e72eec5f3f2d0a9804e0a88d7e6d8e295eedfcc08d265ef3fc86c0f78485": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "project",
+       "name": "rate limiter rewrite"
+      }
+     ],
+     "kind": "event",
+     "object": "the rate limiter rewrite",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "will pick up",
+     "subject": "the owner",
+     "text": "The owner will pick up the rate limiter rewrite first."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "system",
+       "name": "deploy keys"
+      }
+     ],
+     "kind": "event",
+     "object": "the deploy keys",
+     "occurred_end": "2026-10-11",
+     "occurred_start": null,
+     "predicate": "will rotate",
+     "subject": "the owner",
+     "text": "The owner will rotate the deploy keys by 2026-10-11."
+    }
+   ]
+  },
+  "ed425296951ac43b56b41acf9db06c30b6215420e52d98639f14f242e3ca89ab": {
    "facts": [
     {
      "confidence": 1.0,
@@ -247,361 +587,9 @@
      "text": "The owner decided to add a version stamp to every cached price."
     }
    ]
-  },
-  "9ba7189f97ac844653c0efad8798e7be229674fa946f20c428c72c67baf55875": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "T. Wierzbicki"
-      },
-      {
-       "kind": "topic",
-       "name": "sensor batch"
-      }
-     ],
-     "kind": "event",
-     "object": "the sensor batch ships on 2026-09-20",
-     "occurred_end": "2026-09-23",
-     "occurred_start": "2026-09-23",
-     "predicate": "confirmed",
-     "subject": "T. Wierzbicki",
-     "text": "T. Wierzbicki confirmed that the sensor batch will ship on 2026-09-20."
-    }
-   ]
-  },
-  "a25a6d908c7d86c2c219572f5fe41f5cb7dff11a241968a64bf1c870b09cad8e": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Lukas Brenner"
-      }
-     ],
-     "kind": "event",
-     "object": "a laptop for Lukas Brenner",
-     "occurred_end": "2026-10-05",
-     "occurred_start": "2026-10-05",
-     "predicate": "will order",
-     "subject": "the owner",
-     "text": "The owner will order a laptop for Lukas Brenner immediately."
-    },
-    {
-     "confidence": 0.9,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Lukas Brenner"
-      },
-      {
-       "kind": "topic",
-       "name": "platform on-call rota"
-      }
-     ],
-     "kind": "event",
-     "object": "Lukas Brenner to the platform on-call rota",
-     "occurred_end": "2026-11-05",
-     "occurred_start": "2026-11-05",
-     "predicate": "will add",
-     "subject": "the owner",
-     "text": "The owner will add Lukas Brenner to the platform on-call rota one month after the start date."
-    }
-   ]
-  },
-  "b6658377f1e8ebd0025e925b49b46822e01c3ff5a3a82d84d97930a50ff6a83c": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Tomasz Wierzbicki"
-      },
-      {
-       "kind": "org",
-       "name": "Corvid Labs"
-      }
-     ],
-     "kind": "event",
-     "object": "the firmware release of Corvid Labs by one week",
-     "occurred_end": "2026-09-24",
-     "occurred_start": "2026-09-24",
-     "predicate": "moved",
-     "subject": "Tomasz Wierzbicki",
-     "text": "Tomasz Wierzbicki moved the firmware release of Corvid Labs by one week."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Tomasz Wierzbicki"
-      }
-     ],
-     "kind": "event",
-     "object": "the sensor batch as planned",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "will ship",
-     "subject": "Tomasz Wierzbicki",
-     "text": "Tomasz Wierzbicki will ship the sensor batch as planned."
-    }
-   ]
-  },
-  "b72c815752eeb3c4ff1e326d0bc4ed36469f7681872530dca1549b48645b9ee0": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Ana"
-      },
-      {
-       "kind": "person",
-       "name": "Rafael"
-      }
-     ],
-     "kind": "state",
-     "object": "the migration in Rafael's place",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "can approve",
-     "subject": "Ana",
-     "text": "Ana can approve the migration in Rafael's place."
-    }
-   ]
-  },
-  "c339b7c5575376a755b56481c8302ee9450ee9e62b62c1186e19140dd08446c8": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "project",
-       "name": "rate limiter rewrite"
-      }
-     ],
-     "kind": "event",
-     "object": "the rate limiter rewrite",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "will pick up",
-     "subject": "the owner",
-     "text": "The owner will pick up the rate limiter rewrite first."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "system",
-       "name": "deploy keys"
-      }
-     ],
-     "kind": "event",
-     "object": "the deploy keys",
-     "occurred_end": "2026-10-11",
-     "occurred_start": null,
-     "predicate": "will rotate",
-     "subject": "the owner",
-     "text": "The owner will rotate the deploy keys by 2026-10-11."
-    }
-   ]
-  },
-  "cf96431e84fcbfc15231936faff788211c243e6651a6c787b6c93a7d5af3d5b0": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Lukas Brenner"
-      }
-     ],
-     "kind": "event",
-     "object": "the job offer",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "accepted",
-     "subject": "Lukas Brenner",
-     "text": "Lukas Brenner accepted the job offer."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Lukas Brenner"
-      }
-     ],
-     "kind": "event",
-     "object": "2026-11-03",
-     "occurred_end": "2026-11-03",
-     "occurred_start": "2026-11-03",
-     "predicate": "will start work on",
-     "subject": "Lukas Brenner",
-     "text": "Lukas Brenner will start work on 2026-11-03."
-    }
-   ]
-  },
-  "d1e231e50632f3a138932f125f031e5618d15e26e00cf36f9b36c8c62a483fd1": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Rafael"
-      }
-     ],
-     "kind": "event",
-     "object": "from 2026-10-09 for three weeks",
-     "occurred_end": "2026-10-29",
-     "occurred_start": "2026-10-09",
-     "predicate": "is on leave",
-     "subject": "Rafael",
-     "text": "Rafael is on leave from 2026-10-09 for three weeks."
-    }
-   ]
-  },
-  "daea155c72d4705e865038ba6a48b6763f9f014b044e11ca5bff6e98e61cd71e": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "topic",
-       "name": "Kestrel load tests"
-      }
-     ],
-     "kind": "state",
-     "object": "a second environment",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "require",
-     "subject": "Kestrel load tests",
-     "text": "The Kestrel load tests require a second environment."
-    }
-   ]
-  },
-  "e133d9bef9500342da3eea952c1f9e89a46af52b843169992d371848a4f9c504": {
-   "facts": [
-    {
-     "confidence": 0.95,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Rafael Okonkwo"
-      },
-      {
-       "kind": "topic",
-       "name": "schema migration"
-      }
-     ],
-     "kind": "event",
-     "object": "the schema migration",
-     "occurred_end": null,
-     "occurred_start": "2026-09-09",
-     "predicate": "will finish",
-     "subject": "Rafael Okonkwo",
-     "text": "Rafael Okonkwo will finish the schema migration before 2026-09-09."
-    },
-    {
-     "confidence": 0.95,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Rafael Okonkwo"
-      }
-     ],
-     "kind": "event",
-     "object": "2026-09-09",
-     "occurred_end": null,
-     "occurred_start": "2026-09-09",
-     "predicate": "starts leave on",
-     "subject": "Rafael Okonkwo",
-     "text": "Rafael Okonkwo's leave starts on 2026-09-09."
-    },
-    {
-     "confidence": 0.9,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Ana"
-      },
-      {
-       "kind": "person",
-       "name": "Rafael Okonkwo"
-      }
-     ],
-     "kind": "event",
-     "object": "reviews",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "will cover",
-     "subject": "Ana",
-     "text": "Ana will cover reviews while Rafael Okonkwo is away."
-    }
-   ]
-  },
-  "efd58dfc388a9fe618bf76ec173c8d3f609215f2f827a743c446c53bbdb8b3a1": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Beatriz Santos"
-      }
-     ],
-     "kind": "event",
-     "object": "the hiring numbers by 2026-09-15",
-     "occurred_end": "2026-09-15",
-     "occurred_start": "2026-09-15",
-     "predicate": "requires",
-     "subject": "Beatriz Santos",
-     "text": "Beatriz Santos requires the hiring numbers by 2026-09-15."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Beatriz Santos"
-      }
-     ],
-     "kind": "state",
-     "object": "no new contractors this quarter",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "decided",
-     "subject": "Beatriz Santos",
-     "text": "Beatriz Santos decided that there will be no new contractors this quarter."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Beatriz Santos"
-      }
-     ],
-     "kind": "event",
-     "object": "the hiring numbers to Beatriz Santos on 2026-09-28",
-     "occurred_end": "2026-09-28",
-     "occurred_start": "2026-09-28",
-     "predicate": "will provide",
-     "subject": "the owner",
-     "text": "The owner will provide the hiring numbers to Beatriz Santos on 2026-09-28."
-    }
-   ]
   }
  },
  "endpoint": "http://192.168.1.43:8080/v1",
- "extractor_version": 1,
+ "extractor_version": 2,
  "model": "qwen3.8-27b"
 }
