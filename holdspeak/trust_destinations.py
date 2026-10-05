@@ -185,13 +185,24 @@ def _shown(target: Any) -> dict[str, Any]:
 #: sends nothing out.
 BUILTIN_ICLOUD_STOP = "Turn off Desktop & Documents Folders in iCloud Drive"
 BUILTIN_LOCAL_STOP = "Nothing leaves this device"
+#: Another sync service: its own app stops the sync of the folder.
+BUILTIN_PROVIDER_STOP = {
+    "dropbox": "Turn off sync for Documents in Dropbox",
+    "googledrive": "Turn off sync for Documents in Google Drive",
+    "onedrive": "Turn off sync for Documents in OneDrive",
+}
+BUILTIN_SYNCED_STOP = "Turn off sync for Documents in its sync app"
 
 
-def _revoke_action(destination_id: str, synced: bool) -> str:
+def _revoke_action(destination_id: str, provider: str | None) -> str:
     from .db.channels import BUILTIN_FOLDER_ID
 
     if destination_id == BUILTIN_FOLDER_ID:
-        return BUILTIN_ICLOUD_STOP if synced else BUILTIN_LOCAL_STOP
+        if not provider:
+            return BUILTIN_LOCAL_STOP
+        if provider == "icloud":
+            return BUILTIN_ICLOUD_STOP
+        return BUILTIN_PROVIDER_STOP.get(provider, BUILTIN_SYNCED_STOP)
     return "Park the destination in Settings, Connections"
 
 
@@ -217,8 +228,9 @@ def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
             target = json.loads(row.get("target_json") or "{}")
         except (TypeError, ValueError):
             target = {}
-        # The built-in HoldSpeak folder: iCloud Drive's sync is read now.
-        synced = bool(row.get("synced")) or bool(_shown(target).get("cloud"))
+        # The built-in HoldSpeak folder: its sync provider is read now.
+        provider = _shown(target).get("cloud")
+        synced = bool(row.get("synced")) or bool(provider)
         local = channel == "file" and not synced
         rows.append({
             "id": f"channel:{row['id']}",
@@ -228,7 +240,7 @@ def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
             "data_class": "The document you send",
             "authority_basis": "You press Send",
             "background_ability": "No. Each send needs your press",
-            "revoke_action": _revoke_action(str(row.get("id") or ""), synced),
+            "revoke_action": _revoke_action(str(row.get("id") or ""), provider),
             "enabled": not local,
             "saved": True,
             "destination": _short_target(_shown(target)),

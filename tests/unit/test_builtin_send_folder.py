@@ -477,3 +477,77 @@ def test_trust_names_a_stop_that_exists_for_the_builtin(hub: Hub, home: Path, mo
     assert row["boundary"] == ("Outside this device" if synced else "This device")
     removed = hub.client.request("DELETE", f"/api/channels/destinations/{BUILTIN}", json={})
     assert removed.json()["code"] == "destination_builtin"
+
+
+# ── Astra iteration 2 (2026-10-05): "not iCloud" never means "this device" ──
+
+
+def _provider(monkeypatch: pytest.MonkeyPatch, home: Path, marker: bytes) -> None:
+    from holdspeak.services import channel_contract
+
+    documents = os.path.realpath(home / "Documents")
+    os.makedirs(documents, exist_ok=True)
+    monkeypatch.setattr(channel_contract, "PLATFORM", "darwin")
+    monkeypatch.setattr(channel_contract, "_read_xattr",
+                        lambda path, name: marker if path == documents else None)
+
+
+def _trust_row(hub: Hub) -> dict:
+    status = hub.client.get("/api/setup/status").json()
+    [row] = [d for d in status["trust"]["destinations"] if d["id"] == f"channel:{BUILTIN}"]
+    return row
+
+
+@pytest.mark.parametrize(("marker", "provider", "stop"), [
+    (b"com.getdropbox.dropbox.fileprovider/astra-r2", "dropbox", "Turn off sync for Documents in Dropbox"),
+    (b"com.example.mysync.fileprovider/0F", "synced", "Turn off sync for Documents in its sync app"),
+])
+def test_any_file_provider_on_documents_is_named_never_this_device(
+        hub: Hub, home: Path, monkeypatch: pytest.MonkeyPatch, marker: bytes, provider: str, stop: str) -> None:
+    """Astra's repro (a Dropbox marker) and a provider HoldSpeak does not know: both leave this device."""
+    _provider(monkeypatch, home, marker)
+    [d] = hub.client.get("/api/channels/destinations").json()["destinations"]
+    assert (d["target"].get("cloud"), d["synced"], d["badge"]) == (provider, True, "cloud"), d
+    trust = _trust_row(hub)
+    assert (trust["revoke_action"], trust["boundary"]) == (stop, "Outside this device"), trust
+    _pid, update = room(hub)
+    sent = press(hub, update, f"provider-{provider}")
+    assert sent["outcome"] == "sent", sent
+    assert (sent["send"]["proof"]["egress"], sent["send"]["egress"], sent["send"]["badge"]) == (provider, provider, "cloud")
+
+
+@pytest.mark.parametrize(("folder", "provider"), [
+    ("GoogleDrive-karol@example.com/My Drive/Documents", "googledrive"),
+    ("OneDrive-Personal/Documents", "onedrive"),
+    ("Dropbox/Documents", "dropbox"),
+    ("SomeSync-Box/Documents", "synced"),
+])
+def test_a_documents_inside_library_cloudstorage_is_synced_with_no_xattr(
+        hub: Hub, home: Path, monkeypatch: pytest.MonkeyPatch, folder: str, provider: str) -> None:
+    from holdspeak.services import channel_contract
+
+    store = home / "Library" / "CloudStorage" / folder
+    store.mkdir(parents=True)
+    (home / "Documents").symlink_to(store)
+    monkeypatch.setattr(channel_contract, "PLATFORM", "darwin")
+    monkeypatch.setattr(channel_contract, "_read_xattr", lambda path, name: None)
+    [d] = hub.client.get("/api/channels/destinations").json()["destinations"]
+    assert (d["target"].get("cloud"), d["badge"]) == (provider, "cloud"), d
+    assert _trust_row(hub)["revoke_action"] != "Nothing leaves this device"
+    _pid, update = room(hub)
+    sent = press(hub, update, f"cloudstorage-{provider}")
+    assert (sent["send"]["proof"]["egress"], sent["send"]["badge"]) == (provider, "cloud"), sent["send"]
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="a real extended attribute needs macOS")
+def test_astras_repro_a_real_dropbox_marker_on_documents(hub: Hub, home: Path) -> None:
+    """Astra's repro verbatim: a real xattr written on the scratch Documents (never the real one)."""
+    import subprocess
+
+    docs = home / "Documents"
+    docs.mkdir()
+    subprocess.run(["xattr", "-w", "com.apple.file-provider-domain-id",
+                    "com.getdropbox.dropbox.fileprovider/astra-r2", str(docs)], check=True)
+    [d] = hub.client.get("/api/channels/destinations").json()["destinations"]
+    assert d["badge"] != "local" and d["target"]["cloud"] == "dropbox", d
+    assert _trust_row(hub)["revoke_action"] == "Turn off sync for Documents in Dropbox"

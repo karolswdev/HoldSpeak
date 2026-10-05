@@ -138,6 +138,23 @@ describe("the built-in HoldSpeak folder in an iCloud Drive Documents folder", ()
   });
 });
 
+describe("another sync service: never THIS DEVICE", () => {
+  it.each([
+    ["dropbox", "DROPBOX"],
+    ["googledrive", "GOOGLE DRIVE"],
+    ["onedrive", "ONEDRIVE"],
+    ["synced", "SYNCED"],
+    ["com.example.unknown", "SYNCED"],
+  ])("a %s folder: the row's chip is %s (cloud scope)", async (provider, label) => {
+    rows = [{ ...builtin(), synced: true, badge: "cloud", target: { ...builtin().target, cloud: provider } }];
+    render(<Well />);
+    const row = await screen.findByTestId("destination-row");
+    expect(row.textContent).not.toContain("THIS DEVICE");
+    const chip = within(row).getAllByText(label)[0];
+    expect(chip.closest(".gadget-chip-egress")?.getAttribute("data-scope")).toBe("cloud");
+  });
+});
+
 describe("the built-in HoldSpeak folder in Settings -> Connections", () => {
   it("has Check, and no Edit and no Remove; a saved folder keeps both", async () => {
     rows = [builtin(), saved()];

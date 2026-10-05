@@ -4276,8 +4276,9 @@ CREATE TABLE IF NOT EXISTS channel_sends (
     settled_at TEXT,
     dispatch_seq INTEGER,
     -- The built-in HoldSpeak folder (2026-10-05, additive): where the file goes
-    -- past this device, judged ONCE at the dispatch boundary ('icloud' when
-    -- iCloud Drive syncs the folder; NULL: it stays here). The settle copies
+    -- past this device, judged ONCE at the dispatch boundary (the sync
+    -- provider: 'icloud', 'dropbox', 'googledrive', 'onedrive' or 'synced';
+    -- NULL: it stays here). The settle copies
     -- it into the proof, whichever path settles (dispatch, take-over, reaper).
     egress TEXT
 );

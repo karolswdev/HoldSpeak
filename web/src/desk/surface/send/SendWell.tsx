@@ -40,7 +40,7 @@ import { useDesk } from "../../store";
 import { fetchConnections, type ConnectionsResponse, type ConnectionState } from "../../../pages/cores/connections/api";
 import { chipLabel } from "../../../pages/cores/connections/ConnectionsPane";
 import {
-  CHANNEL_WORD, DEST_CHANGED, ICLOUD_EGRESS, SEND_WORDS, commandId, egressOf, failedWord, farSide, previewOf,
+  CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide, previewOf,
   refusalSize, refusedWord, requestDestinationsFocus, sentWord, stamp, targetToken, unknownWord, wire, Refusal,
   type Channel, type Destination, type Preview, type Send, type WirePreview,
 } from "../../../features/channels/channels";
@@ -309,13 +309,11 @@ function ClosedReceipt({ o, last }: { o: Outcome; last: Send | undefined }) {
 
 /** The destination's latest send: the one receipt the open row shows. */
 /** The egress a send's receipt names (judged at its boundary, kept on its row
- *  and in its proof): iCloud Drive took the file off this device. Every
+ *  and in its proof): the sync service that took the file off this device. Every
  *  receipt branch (latest, prepared result, history) shows it. */
 export function ReceiptEgress({ s }: { s: Pick<Send, "proof"> & { egress?: string | null } }) {
-  const egress = s.egress ?? (s.proof?.egress as string | undefined);
-  return egress === "icloud"
-    ? <EgressChip label={ICLOUD_EGRESS.label} scope={ICLOUD_EGRESS.scope} title={ICLOUD_EGRESS.title} />
-    : null;
+  const sync = syncEgress(s.egress ?? s.proof?.egress);
+  return sync ? <EgressChip label={sync.label} scope={sync.scope} title={sync.title} /> : null;
 }
 
 function LatestReceipt({ s }: { s: Send | undefined }) {

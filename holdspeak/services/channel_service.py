@@ -139,7 +139,7 @@ class ChannelService:
         if not destination or not is_builtin(destination):
             return bool((destination or {}).get("synced"))
         if send is not None and send.get("dispatch_seq") is not None:
-            return send.get("egress") == "icloud"  # judged at its boundary
+            return bool(send.get("egress"))  # judged at its boundary: any sync provider
         return contract.builtin_egress() is not None
 
     def _answer(self, row: Mapping[str, Any]) -> dict[str, Any]:

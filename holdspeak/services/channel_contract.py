@@ -438,25 +438,51 @@ def _finder_pref(key: str) -> bool:
     return bool(prefs.get(key)) if isinstance(prefs, dict) else False
 
 
-def icloud_synced(folder: str, platform: Optional[str] = None) -> bool:
-    """Whether iCloud Drive syncs *folder* (macOS only; read now, it can change).
+#: A File Provider domain id (the xattr's value, or a ~/Library/CloudStorage
+#: folder name) -> the provider the face names. Any other provider: "synced".
+_PROVIDERS: tuple[tuple[str, str], ...] = (
+    ("com.apple.clouddocs", "icloud"),
+    ("com.getdropbox", "dropbox"),
+    ("dropbox", "dropbox"),
+    ("com.google.drivefs", "googledrive"),
+    ("googledrive", "googledrive"),
+    ("com.microsoft.onedrive", "onedrive"),
+    ("onedrive", "onedrive"),
+)
 
-    Every path is resolved first (a symlinked Documents is judged where it
-    really is). In order:
 
-    1. The resolved folder is inside the resolved ``~/Library/Mobile Documents``
-       (iCloud Drive's own store).
-    2. The nearest existing folder of the resolved path, then each folder above
-       it up to the filesystem root, carries the File Provider xattr: synced
-       when it names ``com.apple.CloudDocs`` (another provider: not iCloud).
-    3. Finder's "Desktop & Documents Folders" switch for a resolved path under
+def _provider_of(marker: str) -> str:
+    text = marker.lower()
+    for prefix, provider in _PROVIDERS:
+        if text.startswith(prefix):
+            return provider
+    return "synced"
+
+
+def sync_provider(folder: str, platform: Optional[str] = None) -> Optional[str]:
+    """Which sync service takes *folder* off this device, or None (macOS only; read now, it can change).
+
+    "Not iCloud" never means "this device": any File Provider counts. Every
+    path is resolved first (a symlinked Documents is judged where it really
+    is). In order:
+
+    1. Inside the resolved ``~/Library/Mobile Documents``: ``icloud``.
+    2. Inside the resolved ``~/Library/CloudStorage/<name>`` (where Dropbox,
+       Google Drive and OneDrive keep File Provider folders): the provider
+       named by ``<name>``.
+    3. The nearest existing folder of the resolved path, or any folder above it
+       up to the filesystem root, carries ``com.apple.file-provider-domain-id``:
+       the provider its value names.
+    4. Finder's "Desktop & Documents Folders" switch for a resolved path under
        the resolved ~/Documents (``FXICloudDriveDocuments``) or ~/Desktop
-       (``FXICloudDriveDesktop``).
+       (``FXICloudDriveDesktop``): ``icloud``.
 
-    Linux and every other platform: never (THIS DEVICE).
+    Recognised providers: ``icloud``, ``dropbox``, ``googledrive``,
+    ``onedrive``; any other: ``synced``. Linux and every other platform:
+    None (THIS DEVICE).
     """
     if not str(platform or PLATFORM).startswith("darwin"):
-        return False
+        return None
     home = os.path.expanduser("~")
     path = os.path.realpath(folder)
 
@@ -464,39 +490,48 @@ def icloud_synced(folder: str, platform: Optional[str] = None) -> bool:
         return path == base or path.startswith(base.rstrip(os.sep) + os.sep)
 
     if under(os.path.realpath(os.path.join(home, "Library", "Mobile Documents"))):
-        return True
+        return "icloud"
+    storage = os.path.realpath(os.path.join(home, "Library", "CloudStorage"))
+    if under(storage):
+        rest = path[len(storage):].lstrip(os.sep)
+        return _provider_of(rest.split(os.sep, 1)[0]) if rest else "synced"
     probe = path
     while not os.path.exists(probe) and os.path.dirname(probe) != probe:
         probe = os.path.dirname(probe)
     while True:
         value = _read_xattr(probe, _FILE_PROVIDER_XATTR)
         if value is not None:
-            return b"com.apple.CloudDocs" in value
+            return _provider_of(value.decode("utf-8", errors="replace"))
         parent = os.path.dirname(probe)
         if parent == probe:
             break
         probe = parent
     for top, key in (("Documents", "FXICloudDriveDocuments"), ("Desktop", "FXICloudDriveDesktop")):
         if under(os.path.realpath(os.path.join(home, top))):
-            return _finder_pref(key)
-    return False
+            return "icloud" if _finder_pref(key) else None
+    return None
+
+
+def icloud_synced(folder: str, platform: Optional[str] = None) -> bool:
+    """Whether iCloud Drive (and not another provider) syncs *folder*."""
+    return sync_provider(folder, platform) == "icloud"
 
 
 def egress_at_boundary(target: Mapping[str, Any], folder: Optional[str]) -> Optional[str]:
     """The send's egress, judged ONCE at the dispatch boundary and stored on its row.
 
-    The built-in folder: ``"icloud"`` when iCloud Drive syncs the folder the
-    file goes to. Every other destination: None (a saved folder carries its
-    own ``synced`` flag).
+    The built-in folder: the sync service that takes the file off this device
+    (``sync_provider``), or None. Every other destination: None (a saved
+    folder carries its own ``synced`` flag).
     """
     if folder and is_builtin_target(target):
-        return "icloud" if icloud_synced(folder) else None
+        return sync_provider(folder)
     return None
 
 
 def builtin_egress() -> Optional[str]:
-    """The built-in folder's egress, read now: ``"icloud"`` when iCloud Drive syncs it, else None."""
-    return "icloud" if icloud_synced(builtin_folder()) else None
+    """The built-in folder's egress, read now: its sync provider, or None (this device)."""
+    return sync_provider(builtin_folder())
 
 
 def is_builtin_target(target: Mapping[str, Any]) -> bool:

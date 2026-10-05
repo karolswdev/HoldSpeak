@@ -68,6 +68,22 @@ describe("a prepared send to the iCloud HoldSpeak folder", () => {
     expect(t.history).toContain("ICLOUD");
   });
 
+  it("a Dropbox-synced folder: DROPBOX on every receipt (any provider leaves this device)", async () => {
+    const f = JSON.parse(JSON.stringify(fixture)) as Fx;
+    f.ref = `${f.ref}-dropbox`;
+    for (const d of f.destinations.destinations) (d.target as Record<string, unknown>).cloud = "dropbox";
+    for (const s of [...f.before.sends, f.after.send]) {
+      s.document_ref = f.ref; s.id = `${s.id}-dropbox`; (s.target as Record<string, unknown>).cloud = "dropbox";
+      (s as { egress: unknown }).egress = s.state === "sent" ? "dropbox" : null;
+      if (s.proof) (s.proof as Record<string, unknown>).egress = "dropbox";
+    }
+    const t = await pressPrepared(f);
+    expect(t.before).toContain("DROPBOX");
+    expect(t.after).toContain("DROPBOX");
+    expect(t.history).toContain("DROPBOX");
+    expect(t.after).not.toContain("THIS DEVICE");
+  });
+
   it("a plain Documents folder: THIS DEVICE while waiting, no ICLOUD after", async () => {
     const t = await pressPrepared(plain());
     expect(t.before).toContain("THIS DEVICE");

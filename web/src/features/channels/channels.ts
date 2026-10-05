@@ -70,7 +70,7 @@ export type Send = {
   settled_at: string | null;
   /** The order sends LEFT in, allocated inside the boundary transaction. */
   dispatch_seq?: number | null;
-  /** The built-in folder: "icloud" when iCloud Drive synced it at the send's boundary. */
+  /** The built-in folder: the sync provider ("icloud", "dropbox", ... or "synced") at the send's boundary. */
   egress?: string | null;
 };
 
@@ -368,6 +368,21 @@ export function targetToken(channel: Channel, t: Record<string, string | number>
 /** iCloud Drive syncs the folder: the file leaves this device. */
 export const ICLOUD_EGRESS = { label: "ICLOUD", scope: "cloud" as const, title: "iCloud Drive syncs this folder: the file leaves this device." };
 
+/** The sync service that takes the built-in folder's files off this device
+ *  (the hub's `target.cloud` and a send's `egress`). Any provider the hub
+ *  does not name reads SYNCED: "not iCloud" is never "this device". */
+const SYNC_EGRESS: Record<string, { label: string; scope: "cloud"; title: string }> = {
+  icloud: ICLOUD_EGRESS,
+  dropbox: { label: "DROPBOX", scope: "cloud", title: "Dropbox syncs this folder: the file leaves this device." },
+  googledrive: { label: "GOOGLE DRIVE", scope: "cloud", title: "Google Drive syncs this folder: the file leaves this device." },
+  onedrive: { label: "ONEDRIVE", scope: "cloud", title: "OneDrive syncs this folder: the file leaves this device." },
+};
+const SYNCED_EGRESS = { label: "SYNCED", scope: "cloud" as const, title: "A sync app syncs this folder: the file leaves this device." };
+export function syncEgress(provider: unknown): { label: string; scope: "cloud"; title: string } | null {
+  if (!provider) return null;
+  return SYNC_EGRESS[String(provider)] ?? SYNCED_EGRESS;
+}
+
 /** The egress chip of a destination (UX-CANON: where egress happens). */
 export function egressOf(d: {
   channel: Channel; account: Record<string, string | boolean>; synced?: boolean; target?: Record<string, string | number>;
@@ -377,7 +392,7 @@ export function egressOf(d: {
   switch (d.channel) {
     case "file":
       // The built-in HoldSpeak folder in an iCloud Drive Documents folder (the hub reads it now).
-      if (d.target?.cloud === "icloud") return ICLOUD_EGRESS;
+      { const sync = syncEgress(d.target?.cloud); if (sync) return sync; }
       return d.synced
         ? { label: "SYNCED FOLDER", scope: "cloud", title: "Synced folder: it leaves this device." }
         : { label: "THIS DEVICE", scope: "local", title: "A folder on this device." };
