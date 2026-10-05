@@ -152,12 +152,16 @@ class EmbeddingAdapter:
             return _MODELS[key]
 
 
-def _assignment_head(conn: Any) -> Optional[str]:
-    """The live assignment head of ``memory.embed`` as one value, or None."""
+def _assignment_head(conn: Any, capability: str = MEMORY_EMBED_CAPABILITY) -> Optional[str]:
+    """The live assignment head of a memory capability as one value, or None.
+
+    ``memory.embed`` and ``memory.extract`` are used only with their OWN
+    assignment (see the module text), so this one row read says if the
+    engine exists."""
     row = conn.execute(
         "SELECT assignment_id,revision FROM inference_assignment_heads"
         " WHERE assignment_key=? AND cleared=0",
-        (f"capability:{MEMORY_EMBED_CAPABILITY}",),
+        (f"capability:{capability}",),
     ).fetchone()
     return f"{row[0]}@{row[1]}" if row is not None else None
 
@@ -193,22 +197,24 @@ class MemoryEngineUnassigned(MemoryEngineError):
     """``memory.embed`` has no assignment now, or a different one."""
 
 
-def assigned_revision(broker: Any) -> Optional[dict[str, str]]:
-    """The deployment revision ``memory.embed`` is assigned to, or None.
+def assigned_revision(
+    broker: Any, capability: str = MEMORY_EMBED_CAPABILITY
+) -> Optional[dict[str, str]]:
+    """The deployment revision a memory capability is assigned to, or None.
 
     Only the capability's OWN assignment counts (see the module text).
     """
     db = broker.database
     with db._connection() as conn:
-        head = _assignment_head(conn)
+        head = _assignment_head(conn, capability)
     if head is None:
         return None
     from ..services.project_update_service import _resolve_for_capability
 
     try:
-        revision_id, assignment_id, _profile = _resolve_for_capability(broker, MEMORY_EMBED_CAPABILITY)
+        revision_id, assignment_id, _profile = _resolve_for_capability(broker, capability)
     except RuntimeError as exc:
-        log.warning("memory.embed is assigned but its route does not resolve: %s", exc)
+        log.warning("%s is assigned but its route does not resolve: %s", capability, exc)
         return None
     with db._connection() as conn:
         row = conn.execute(

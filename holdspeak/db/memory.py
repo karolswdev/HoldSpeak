@@ -458,12 +458,56 @@ _VECTOR_RESULT_LIMIT = 50
 # The time retriever: the top 50 sources inside the range, and the longest
 # text read as a question (a drafter's whole-transcript prompt is not one).
 _TIME_RESULT_LIMIT = 50
+_ENTITY_RESULT_LIMIT = 50
+#: An entity is named in a question by its whole name or an alias (1.0), or,
+#: for a person, a project, a system or an org, by one word of its name of
+#: three letters or more (the share of its words the question names).  A
+#: topic needs its whole name: one common word is not a topic.
+_ENTITY_MIN_WORD = 3
+_ENTITY_NAME_WORDS = 6
 _TIME_QUESTION_MAX_CHARS = 400
 _MARK = re.compile(r"</?mark>")
 _WORD = re.compile(r"\w+", re.UNICODE)
 _QUERY_STOPWORDS = frozenset(
     "a an and are about did do does for from how i in is it of on or the to was what when where which who why with we you".split()
 )
+
+
+def _named_entities(question_key: str, entities: list[dict[str, Any]]) -> dict[str, float]:
+    """``entity id -> strength`` for the entities a folded question names."""
+    words = [word for word in question_key.split(" ") if word]
+    if not words:
+        return {}
+    present = set(words)
+    phrases = {
+        " ".join(words[start : start + size])
+        for size in range(1, _ENTITY_NAME_WORDS + 1)
+        for start in range(0, max(0, len(words) - size + 1))
+    }
+    found: dict[str, float] = {}
+    for entity in entities:
+        keys = [str(entity["name_key"])]
+        try:
+            aliases = json.loads(entity.get("aliases_json") or "[]")
+        except ValueError:
+            aliases = []
+        if isinstance(aliases, list):
+            from ..memory.entities import fold
+
+            keys.extend(fold(str(alias)) for alias in aliases)
+        if any(key and key in phrases for key in keys):
+            found[str(entity["id"])] = 1.0
+            continue
+        if str(entity["kind"]) == "topic":
+            continue
+        name = [word for word in str(entity["name_key"]).split(" ") if word]
+        named = [
+            word for word in name
+            if len(word) >= _ENTITY_MIN_WORD and word not in _QUERY_STOPWORDS and word in present
+        ]
+        if named:
+            found[str(entity["id"])] = len(named) / len(name)
+    return found
 
 
 @dataclass(frozen=True)
@@ -707,8 +751,8 @@ class MemoryRepository(BaseRepository):
         cut again from the redacted text.  A row whose source cannot be read
         gets no snippet.
         """
-        if str(row.get("retrieval_origin") or "") in ("vector", "time"):
-            return  # already cut from the redacted text
+        if str(row.get("retrieval_origin") or "") in ("vector", "time", "entity"):
+            return  # already cut from the redacted text (an entity hit: the redacted fact)
         from ..memory.retain import current_source, redact_source
 
         ref = str(row.get("source_ref") or "")
@@ -1041,6 +1085,13 @@ class MemoryRepository(BaseRepository):
             time_rows = self._time_rows(
                 window, selected=selected, project=project, excluded=excluded, terms=terms
             )
+        # The relation retriever's entity walk (MEMORY-DESIGN.md §3.2):
+        # entities named in the question -> their facts -> the facts'
+        # sources.  None when memory holds no fact or the question names no
+        # entity; then nothing below changes.
+        entity_rows = self._entity_rows(
+            query, selected=selected, project=project, start=start, end=end, excluded=excluded
+        )
         if embedder is not None and keyword_on:
             fused, engine = self._fuse_with_vectors(
                 query,
@@ -1053,13 +1104,16 @@ class MemoryRepository(BaseRepository):
                 end=end,
                 excluded=excluded,
                 time_rows=time_rows,
+                entity_rows=entity_rows,
             )
             if fused is not None:
                 interleaved, fusion = fused
         if window is not None:
             interleaved, fusion = self._place_in_time(
-                window, time_rows or [], lexical_rows, interleaved, fusion
+                window, time_rows or [], lexical_rows, interleaved, fusion, entity_rows
             )
+        elif fusion is None and entity_rows:
+            interleaved, fusion = self._fuse_entities(lexical_rows, interleaved, entity_rows)
 
         total = len(interleaved)
         page = [dict(row) for row in interleaved[bounded_offset : bounded_offset + bounded_limit]]
@@ -1124,6 +1178,7 @@ class MemoryRepository(BaseRepository):
         end: Optional[str],
         excluded: set[str],
         time_rows: Optional[list[dict[str, Any]]] = None,
+        entity_rows: Optional[list[dict[str, Any]]] = None,
     ) -> tuple[Optional[tuple[list[dict[str, Any]], dict[str, Any]]], Optional[dict[str, Any]]]:
         """Fuse keyword, relation and vector lists by reciprocal rank.
 
@@ -1166,8 +1221,10 @@ class MemoryRepository(BaseRepository):
         }
         if time_rows is not None:
             lists["time"] = [self._base_ref(str(row["source_ref"])) for row in time_rows]
+        if entity_rows:
+            lists["entity"] = [self._base_ref(str(row["source_ref"])) for row in entity_rows]
         first: dict[str, dict[str, Any]] = {}
-        for rows in (lexical_rows, relation_rows, vector_rows, time_rows or []):
+        for rows in (lexical_rows, relation_rows, vector_rows, time_rows or [], entity_rows or []):
             for row in rows:
                 first.setdefault(self._base_ref(str(row["source_ref"])), row)
         fused_rows = [
@@ -1185,6 +1242,8 @@ class MemoryRepository(BaseRepository):
         }
         if time_rows is not None:
             meta["time_count"] = len(time_rows)
+        if entity_rows:
+            meta["entity_count"] = len(entity_rows)
         return (fused_rows, meta), engine
 
     # ── the time retriever (MEMORY-DESIGN.md §3.2) ──
@@ -1296,6 +1355,7 @@ class MemoryRepository(BaseRepository):
         lexical_rows: list[dict[str, Any]],
         woven: list[dict[str, Any]],
         fusion: Optional[dict[str, Any]],
+        entity_rows: Optional[list[dict[str, Any]]] = None,
     ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         """Fuse the time list in (when the vector fusion did not), then put
         every hit inside the range ahead of every hit outside it: the
@@ -1312,8 +1372,10 @@ class MemoryRepository(BaseRepository):
                 "relation": [self._base_ref(str(row["source_ref"])) for row in relation_rows],
                 "time": [self._base_ref(str(row["source_ref"])) for row in time_rows],
             }
+            if entity_rows:
+                lists["entity"] = [self._base_ref(str(row["source_ref"])) for row in entity_rows]
             first: dict[str, dict[str, Any]] = {}
-            for group in (lexical_rows, relation_rows, time_rows):
+            for group in (lexical_rows, relation_rows, time_rows, entity_rows or []):
                 for row in group:
                     first.setdefault(self._base_ref(str(row["source_ref"])), row)
             rows = [first[str(key)] for key, _score, _found in reciprocal_rank_fusion(lists)]
@@ -1325,6 +1387,8 @@ class MemoryRepository(BaseRepository):
                 "relation_count": len(relation_rows),
                 "time_count": len(time_rows),
             }
+            if entity_rows:
+                fusion["entity_count"] = len(entity_rows)
         start = instant(window.time_from)
         end = instant(window.time_to)
 
@@ -1342,6 +1406,143 @@ class MemoryRepository(BaseRepository):
             "in_range": len(within),
         }
         return within + outside, fusion
+
+    def _fuse_entities(
+        self,
+        lexical_rows: list[dict[str, Any]],
+        woven: list[dict[str, Any]],
+        entity_rows: list[dict[str, Any]],
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        """Keyword, one-hop relation and entity walk, fused by reciprocal rank
+        (no vector and no time list ran)."""
+        from ..memory.fusion import RRF_K, reciprocal_rank_fusion
+
+        relation_rows = [row for row in woven if row.get("related_to")]
+        lists = {
+            "keyword": [self._base_ref(str(row["source_ref"])) for row in lexical_rows],
+            "relation": [self._base_ref(str(row["source_ref"])) for row in relation_rows],
+            "entity": [self._base_ref(str(row["source_ref"])) for row in entity_rows],
+        }
+        first: dict[str, dict[str, Any]] = {}
+        for group in (lexical_rows, relation_rows, entity_rows):
+            for row in group:
+                first.setdefault(self._base_ref(str(row["source_ref"])), row)
+        rows = [first[str(key)] for key, _score, _found in reciprocal_rank_fusion(lists)]
+        return rows, {
+            "method": "reciprocal_rank_fusion",
+            "k": RRF_K,
+            "retrievers": [name for name, keys in lists.items() if keys],
+            "keyword_count": len(lexical_rows),
+            "relation_count": len(relation_rows),
+            "entity_count": len(entity_rows),
+        }
+
+    def _entity_rows(
+        self,
+        query: str,
+        *,
+        selected: tuple[str, ...],
+        project: Optional[str],
+        start: Optional[str],
+        end: Optional[str],
+        excluded: set[str],
+    ) -> Optional[list[dict[str, Any]]]:
+        """The entity walk: entities named in the question -> their live
+        facts -> the facts' sources, best first (top 50).
+
+        None when memory holds no live fact, or the question names no
+        entity: then recall is what it was before facts existed.  Every
+        source is scoped (kinds, excluded refs, project, time) and admitted
+        NOW (``current_source``) before it takes a place.
+
+        A fact serves only while the chunk it was read from is in the LIVE
+        text: the source is cut again (``prepare_current``) and the fact's
+        chunk must be there with the same id, hash and anchor.  A fact whose
+        chunk changed, moved or left is never returned, and never takes the
+        anchor of another chunk.  The snippet is that fact, redacted.
+        """
+        from ..memory.entities import fold_question
+        from ..memory.retain import current_source, prepare_current
+
+        index = self._db.memory_index
+        if not index.has_live_facts():
+            return None
+        _generation, entities = index.entities()
+        strengths = _named_entities(fold_question(query), entities)
+        if not strengths:
+            return None
+        weights: dict[str, float] = {}
+        facts: dict[str, dict[str, Any]] = {}
+        for row in index.facts_for_entities(list(strengths)):
+            fact = str(row["id"])
+            weights[fact] = weights.get(fact, 0.0) + strengths[str(row["entity_id"])]
+            facts[fact] = row
+        by_source: dict[str, list[tuple[float, dict[str, Any]]]] = {}
+        for fact, value in weights.items():
+            row = facts[fact]
+            weight = value * (0.5 + 0.5 * float(row["confidence"] or 0.0))
+            by_source.setdefault(str(row["source_ref"]), []).append((weight, row))
+        for held in by_source.values():
+            held.sort(key=lambda item: (-item[0], str(item[1]["id"])))
+        ordered = sorted(
+            by_source.items(),
+            key=lambda item: (
+                -item[1][0][0], -len(item[1]),
+                self._recency_key(str(item[1][0][1]["mentioned_at"] or "")), item[0],
+            ),
+        )
+        found: list[tuple[float, int, dict[str, Any]]] = []
+        with self._connection() as conn:
+            for position, (ref, held) in enumerate(ordered):
+                if len(found) >= _ENTITY_RESULT_LIMIT:
+                    break
+                kind, _, resource_id = ref.partition(":")
+                if kind not in selected or ref in excluded:
+                    continue
+                if project and not self._ref_in_project(conn, kind, resource_id, project):
+                    continue
+                source = current_source(conn, ref)
+                if source is None:
+                    continue
+                occurred_at = str(source.occurred_at or "")
+                if not self._in_time(kind, occurred_at, start, end):
+                    continue
+                _sha, fresh = prepare_current(source)
+                live = {
+                    (str(chunk["id"]), str(chunk["content_sha"]), str(chunk.get("anchor") or ""))
+                    for chunk in fresh
+                }
+                served = next(
+                    (
+                        (weight, fact) for weight, fact in held
+                        if (str(fact["chunk_id"]), str(fact["chunk_sha"]), str(fact["anchor"] or "")) in live
+                    ),
+                    None,
+                )
+                if served is None:
+                    continue  # every fact of it was read from text that is gone
+                weight, fact = served
+                source_ref = ref
+                if kind == "thread" and str(fact["anchor"] or ""):
+                    source_ref = f"{ref}#{fact['anchor']}"
+                found.append((weight, position, {
+                    "kind": kind,
+                    "source_ref": source_ref,
+                    "title": _redacted(source.title),
+                    "snippet": _redacted(fact["text"])[:_SNIPPET_CHARS],
+                    "occurred_at": occurred_at,
+                    "project_id": project or self._project_of(conn, kind, resource_id),
+                    "bm25": 0.0,
+                    "retrieval_origin": "entity",
+                }))
+        found.sort(key=lambda item: (-item[0], item[1]))
+        top = found[0][0] if found else 1.0
+        rows: list[dict[str, Any]] = []
+        for weight, _position, row in found:
+            row["normalized_score"] = max(0.0, min(1.0, weight / top if top else 0.0))
+            row["kind_rank"] = len(rows) + 1
+            rows.append(row)
+        return rows
 
     def _vector_rows(
         self,

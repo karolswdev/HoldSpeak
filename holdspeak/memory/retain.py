@@ -704,22 +704,31 @@ def embed_pending(
     return written
 
 
-def rebuild(db: Any, embedder: Optional[MemoryEmbedder] = None) -> dict[str, int]:
+def rebuild(db: Any, embedder: Optional[MemoryEmbedder] = None, extractor: Any = None) -> dict[str, int]:
     """Drop every derived memory row and build the index again from the
     source tables: the keyword tables, the chunks and, with an engine, the
-    vectors."""
+    vectors and the facts.  With no extract engine the facts are made by
+    the hub's ``memory.extract`` engine on its next pass."""
     keyword = db.memory.rebuild()
     db.memory_index.clear()
     swept = sweep(db)
     vectors = embed_pending(db, embedder) if embedder is not None else 0
+    extracted = 0
+    if extractor is not None:
+        from .extract import extract_pending
+
+        extracted = int(extract_pending(db, extractor)["sources"])
     stats = db.memory_index.stats()
     return {
         "keyword_rows": int(keyword.get("total", 0)),
         "sources": stats["sources"],
         "chunks": stats["chunks"],
         "vectors": stats["vectors"],
+        "facts": stats["facts"],
+        "entities": stats["entities"],
         "written": swept["written"],
         "embedded": vectors,
+        "extracted": extracted,
     }
 
 

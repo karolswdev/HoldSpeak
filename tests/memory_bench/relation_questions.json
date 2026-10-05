@@ -1,0 +1,10 @@
+{
+ "note": "The five relation questions (MEMORY-DESIGN.md §7): who owes, owns or said what. Written before the facts fixture was recorded. 'expect' lists every source that answers; the bench measures the first hit (recall@5, as the other groups) and all of them in the top 5 (complete@5).",
+ "questions": [
+  {"id": "r01", "group": "relation", "q": "what does Dana owe on Atlas", "expect": ["m-atlas-sync", "n-cutover"], "project": "atlas"},
+  {"id": "r02", "group": "relation", "q": "what is Priya responsible for", "expect": ["m-planning", "n-offsite"]},
+  {"id": "r03", "group": "relation", "q": "what problems did Lee report", "expect": ["m-harbor-standup", "m-support"], "project": "harbor"},
+  {"id": "r04", "group": "relation", "q": "what did Sam advise", "expect": ["m-arch", "m-atlas-sync"]},
+  {"id": "r05", "group": "relation", "q": "what is Northwind offering us", "expect": ["m-vendor-call", "n-vendor"]}
+ ]
+}

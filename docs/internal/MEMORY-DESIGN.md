@@ -6,8 +6,9 @@ Hindsight's ideas, built native in HoldSpeak.
   robust with this solution." B = the same ideas inside HoldSpeak's own database,
   engine router, egress badges and People custody. No second database. No
   Hindsight server.
-- **Status:** build design. Slice 1 is in build (schema, sweep, chunk index,
-  vector retriever, fusion, benchmark, the conductor, the `memory.embed` engine). Each slice in section 8 is one PR or two.
+- **Status:** build design. Slices 1 and 2 are merged. Slice 3 (facts,
+  entities, the entity walk; `memory.extract`) is built dark: see "Built
+  (slice 3)" in section 3.1. Each slice in section 8 is one PR or two.
 - **Source of ideas:** <https://github.com/vectorize-io/hindsight> (MIT), read at
   a shallow clone on 2026-10-03. Paper: arXiv 2512.12818 (linked from their
   `README.md:5`; not read for this design).
@@ -339,6 +340,69 @@ and id of each change.
   (change kind `ask_task`) and `steward_run` (change kind `steward`, on
   stop). The other writers send no change that names the row; the slow
   sweep (120 s) finds those rows.
+
+**Built (2026-10-04, slice 3):** facts, entities and the entity walk ship
+dark: nothing runs until `memory.extract` has its own assignment.
+
+- **Where.** The job and the prompt: `memory/extract.py`
+  (`extract_source`, `extract_pending`, `RouterExtractor`). Resolution:
+  `memory/entities.py`. The one write transaction:
+  `MemoryIndexRepository.write_facts` (`db/memory_index.py`). The conductor
+  step: `memory_conductor._extract_step`. The walk:
+  `MemoryRepository._entity_rows` (`db/memory.py`), fused as its own RRF
+  list `entity` next to `keyword`, `relation`, `vector` and `time`.
+- **Tables.** `memory_entities`, `memory_facts`, `memory_fact_entities` as in
+  section 2. `memory_jobs` holds only a job that failed on its input (a bad
+  answer): back-off 30 s doubling to 900 s, `failed` after 6. A job that
+  succeeds needs no row; the ledger stamp says it is done. The queue is the
+  ledger: a source waits while `extracted_sha` or `extractor_version` is not
+  current.
+- **The tree won over this design in three places.** (1) No job row per
+  queued job: slice 1 drives embedding from the ledger, so extraction does
+  too. (2) `memory.extract` is not `structured_output=True` in the
+  registry: that flag admits only a profile that claims the result-schema
+  hash, and a model-library endpoint profile claims only the meeting
+  schema, so the owner's LAN model could not be assigned. The closed schema
+  is the call's `response_format`, and code checks every field. (3) The
+  Queue frame (`intel_queue.py`) is not changed: no face changes in this
+  slice.
+- **Old facts.** A new commit removes the source's old facts that no later
+  step used, and keeps a used one (`consolidated_at`) as `retired` for slice
+  4. A source that leaves memory (deleted, parked, sensitive) loses every
+  fact and every entity that only it named, in the sweep's transaction.
+- **A fact serves only from live text.** Each fact keeps the id, hash and
+  anchor of the chunk it was read from. Recall cuts the source again and
+  returns a fact only while that chunk is there unchanged, so an edited,
+  deleted or sensitive passage is never answered from its old facts. A fact
+  never takes another chunk's anchor. `write_facts` takes the write lock,
+  then reads the live text again, and commits nothing if the text moved
+  while the engine ran.
+- **Entities: one match, and every name is checked.** A mention joins an
+  entity only if it conflicts with NONE of that entity's names (a chain
+  "John Smith", "J. Smith", "Jane Smith" stays two people). When two
+  entities could take a mention ("Dana" next to "Dana Lee" and "Dana Kim"),
+  it is its own entity.
+- **Strict answers.** One entry outside the closed schema fails the whole
+  answer (back-off); the old facts stay.
+- **Load.** One engine call per chunk; at most 24 calls a pass, counted
+  before every call, a bad answer included; the backlog runs newest first
+  (oldest last) and goes on 5 s later. Before EVERY call the job stops for
+  a live meeting, for any open call on the same engine (same deployment,
+  same endpoint and model, or same model file; any boundary), and, for a
+  local engine, for any live local call or one that ended less than 20 s
+  ago. The checked answer of each chunk is kept
+  (`memory_extract_parts`), so a stopped source goes on from its next
+  chunk.
+- **Measured.** The five relation questions
+  (`tests/memory_bench/relation_questions.json`) over facts recorded from
+  the LAN model `qwen3.8-27b` (`facts.json`, about 7 s a chunk): keyword
+  search already finds every answer (recall@5 1.000, all answers in the top
+  5); the entity walk moves MRR from 0.867 to 1.000. The walk alone holds 9
+  of the 10 answers: for "what did Sam advise" the model credits one line to
+  "the auditors", not to Sam. With the facts fused and no vectors,
+  same-word MRR is 0.846 (keyword baseline 0.827). The first recording had
+  no Sam entity at all (the model named Sam as the subject and left him out
+  of `entities`); the prompt now says to list the subject and every person.
 
 **Steps, each idempotent and resumable:**
 

@@ -7,6 +7,7 @@ model, built lazily and rebuilt when the vector rows change.
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 import threading
 from datetime import datetime, timezone
@@ -158,8 +159,13 @@ class MemoryIndexRepository(BaseRepository):
             self._delete_vectors(conn, ids)
             self._delete_keyword_rows(conn, source_ref)
             conn.execute("DELETE FROM memory_chunks WHERE source_ref=?", (source_ref,))
+            # Its facts go too, kept ones included, and an entity that only
+            # this source named (custody: a source made sensitive or parked
+            # leaves no name behind).
+            self._delete_facts(conn, source_ref)
             conn.execute(
-                "UPDATE memory_sources SET state='gone',updated_at=? WHERE source_ref=?",
+                "UPDATE memory_sources SET state='gone',extracted_sha=NULL,"
+                "extractor_version=NULL,updated_at=? WHERE source_ref=?",
                 (_now(), source_ref),
             )
             self._bump(conn)
@@ -173,6 +179,32 @@ class MemoryIndexRepository(BaseRepository):
             " (SELECT rowid FROM memory_chunks WHERE source_ref=?)",
             (source_ref,),
         )
+
+    @staticmethod
+    def _delete_facts(conn: sqlite3.Connection, source_ref: str) -> None:
+        from ..memory.entities import recount
+
+        ids = [
+            str(row[0])
+            for row in conn.execute("SELECT id FROM memory_facts WHERE source_ref=?", (source_ref,))
+        ]
+        touched = MemoryIndexRepository._entities_of(conn, ids)
+        conn.executemany("DELETE FROM memory_fact_entities WHERE fact_id=?", [(i,) for i in ids])
+        conn.execute("DELETE FROM memory_facts WHERE source_ref=?", (source_ref,))
+        conn.execute("DELETE FROM memory_extract_parts WHERE source_ref=?", (source_ref,))
+        recount(conn, touched)
+
+    @staticmethod
+    def _entities_of(conn: sqlite3.Connection, fact_ids: Sequence[str]) -> set[str]:
+        found: set[str] = set()
+        for fact in fact_ids:
+            found.update(
+                str(row[0])
+                for row in conn.execute(
+                    "SELECT entity_id FROM memory_fact_entities WHERE fact_id=?", (fact,)
+                )
+            )
+        return found
 
     @staticmethod
     def _delete_vectors(conn: sqlite3.Connection, chunk_ids: Sequence[str]) -> None:
@@ -305,6 +337,254 @@ class MemoryIndexRepository(BaseRepository):
                 self._bump(conn)
         return removed
 
+    # ── facts and entities (MEMORY-DESIGN.md §3.1 steps 5-6) ────────
+
+    def pending_extraction(
+        self, kinds: Iterable[str], version: int, *, now: Optional[str] = None
+    ) -> list[tuple[str, str]]:
+        """``(source ref, content sha)`` of the live sources of ``kinds``
+        whose facts are not from their text of now and this extractor
+        version, newest source first (a backlog runs oldest-last).  A source
+        whose job failed six times on this text, or waits for its retry
+        time, is left out."""
+        wanted = sorted(set(kinds))
+        if not wanted:
+            return []
+        stamp = now or _now()
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT s.source_ref,s.content_sha FROM memory_sources s
+                    WHERE s.state='live' AND s.kind IN (SELECT value FROM json_each(?))
+                      AND (s.extracted_sha IS NULL OR s.extracted_sha<>s.content_sha
+                           OR COALESCE(s.extractor_version,0)<>?)
+                      AND NOT EXISTS (
+                        SELECT 1 FROM memory_jobs j
+                         WHERE j.kind='extract' AND j.target=s.source_ref
+                           AND j.input_sha=s.content_sha AND j.version=?
+                           AND (j.status='failed' OR COALESCE(j.next_attempt_at,'')>?))
+                    ORDER BY COALESCE(s.occurred_at,'') DESC,s.source_ref""",
+                (json.dumps(wanted), int(version), int(version), stamp),
+            ).fetchall()
+        return [(str(row[0]), str(row[1])) for row in rows]
+
+    def extraction_backlog(self, kinds: Iterable[str], version: int) -> int:
+        return len(self.pending_extraction(kinds, version))
+
+    def write_facts(
+        self,
+        *,
+        source_ref: str,
+        content_sha: str,
+        extractor_version: int,
+        mentioned_at: Optional[str],
+        facts: Sequence[dict[str, Any]],
+        still_current: Optional[Any] = None,
+    ) -> bool:
+        """ONE transaction: write the source's new facts, resolve their
+        entities, retire its old facts and stamp the ledger.
+
+        The old facts serve recall until this commits.  An old fact that no
+        later step has used (no ``consolidated_at``) is removed; a used one
+        is kept as ``retired``.  Returns False, and writes nothing, when the
+        source left or changed since the engine read it: the ledger says so,
+        or ``still_current(conn)`` (the source's LIVE text, read inside this
+        transaction after the write lock is taken) does.  An edit made while
+        the engine ran is never stamped with the old text's facts.
+        """
+        from ..memory.entities import fold, is_name, recount, resolve
+
+        with self._connection() as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
+            known = conn.execute(
+                "SELECT state,content_sha FROM memory_sources WHERE source_ref=?", (source_ref,)
+            ).fetchone()
+            if known is None or known["state"] != "live" or str(known["content_sha"]) != content_sha:
+                return False
+            if still_current is not None and not still_current(conn):
+                return False
+            old = [
+                str(row[0])
+                for row in conn.execute(
+                    "SELECT id FROM memory_facts WHERE source_ref=? AND state='live'", (source_ref,)
+                )
+            ]
+            touched = self._entities_of(conn, old)
+            new_ids = {str(fact["id"]) for fact in facts}
+            for fact in facts:
+                names = [entity["name"] for entity in fact["entities"]]
+                links: dict[str, str] = {}
+                for entity in fact["entities"]:
+                    found = resolve(
+                        conn,
+                        name=entity["name"],
+                        kind=entity["kind"],
+                        neighbours=[name for name in names if name != entity["name"]],
+                        seen=fact.get("occurred_start") or mentioned_at,
+                    )
+                    links[fold(entity["name"])] = found
+                subject = links.get(fold(fact["subject"])) if is_name(fact["subject"]) else None
+                obj = links.get(fold(fact["object"])) if is_name(fact["object"]) else None
+                conn.execute(
+                    """INSERT INTO memory_facts(id,source_ref,chunk_id,kind,text,subject_entity_id,
+                         predicate,object_entity_id,object_text,occurred_start,occurred_end,
+                         mentioned_at,confidence,extractor_version,state,chunk_sha,anchor)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'live',?,?)
+                       ON CONFLICT(id) DO UPDATE SET chunk_id=excluded.chunk_id,
+                         chunk_sha=excluded.chunk_sha,anchor=excluded.anchor,
+                         kind=excluded.kind,text=excluded.text,
+                         subject_entity_id=excluded.subject_entity_id,
+                         predicate=excluded.predicate,object_entity_id=excluded.object_entity_id,
+                         object_text=excluded.object_text,occurred_start=excluded.occurred_start,
+                         occurred_end=excluded.occurred_end,mentioned_at=excluded.mentioned_at,
+                         confidence=excluded.confidence,
+                         extractor_version=excluded.extractor_version,state='live'""",
+                    (
+                        str(fact["id"]), source_ref, str(fact["chunk_id"]), fact["kind"],
+                        fact["text"], subject, fact["predicate"], obj, fact["object"],
+                        fact.get("occurred_start"), fact.get("occurred_end"), mentioned_at,
+                        float(fact["confidence"]), int(extractor_version),
+                        str(fact.get("chunk_sha") or ""), str(fact.get("anchor") or ""),
+                    ),
+                )
+                touched |= self._entities_of(conn, [str(fact["id"])])
+                conn.execute("DELETE FROM memory_fact_entities WHERE fact_id=?", (str(fact["id"]),))
+                rows: set[tuple[str, str, str]] = set()
+                for key, entity in links.items():
+                    role = "subject" if entity == subject else "object" if entity == obj else "mention"
+                    rows.add((str(fact["id"]), entity, role))
+                conn.executemany(
+                    "INSERT OR IGNORE INTO memory_fact_entities(fact_id,entity_id,role) VALUES (?,?,?)",
+                    sorted(rows),
+                )
+                touched |= set(links.values())
+            gone = [fact for fact in old if fact not in new_ids]
+            for fact in gone:
+                used = conn.execute(
+                    "SELECT consolidated_at FROM memory_facts WHERE id=?", (fact,)
+                ).fetchone()
+                if used is not None and used[0]:
+                    conn.execute("UPDATE memory_facts SET state='retired' WHERE id=?", (fact,))
+                else:
+                    conn.execute("DELETE FROM memory_fact_entities WHERE fact_id=?", (fact,))
+                    conn.execute("DELETE FROM memory_facts WHERE id=?", (fact,))
+            recount(conn, touched)
+            conn.execute(
+                "UPDATE memory_sources SET extracted_sha=?,extractor_version=? WHERE source_ref=?",
+                (content_sha, int(extractor_version), source_ref),
+            )
+            conn.execute(
+                "DELETE FROM memory_jobs WHERE kind='extract' AND target=?", (source_ref,)
+            )
+            conn.execute("DELETE FROM memory_extract_parts WHERE source_ref=?", (source_ref,))
+            self._bump(conn)
+        return True
+
+    def extract_parts(self, source_ref: str, version: int) -> dict[tuple[str, str], list[dict[str, Any]]]:
+        """The checked answers already read for a source's chunks, keyed by
+        ``(chunk id, chunk sha)``: a job that stopped goes on from here."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT chunk_id,chunk_sha,facts_json FROM memory_extract_parts"
+                " WHERE source_ref=? AND version=?",
+                (source_ref, int(version)),
+            ).fetchall()
+        return {(str(r[0]), str(r[1])): json.loads(r[2]) for r in rows}
+
+    def store_extract_part(
+        self, source_ref: str, chunk_id: str, chunk_sha: str, version: int, facts: Sequence[dict[str, Any]]
+    ) -> None:
+        with self._connection() as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO memory_extract_parts"
+                "(source_ref,chunk_id,chunk_sha,version,facts_json) VALUES (?,?,?,?,?)",
+                (source_ref, chunk_id, chunk_sha, int(version), json.dumps(list(facts), ensure_ascii=False)),
+            )
+
+    def record_job_failure(
+        self,
+        *,
+        kind: str,
+        target: str,
+        input_sha: str,
+        version: int,
+        error: str,
+        boundary: str,
+        max_attempts: int,
+        delay: Any,
+    ) -> dict[str, Any]:
+        """One failed attempt of a job on its input: back off, and stop after
+        ``max_attempts`` (status ``failed``) until the input or the version
+        changes."""
+        from datetime import timedelta
+
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT attempts FROM memory_jobs WHERE kind=? AND target=? AND input_sha=? AND version=?",
+                (kind, target, input_sha, int(version)),
+            ).fetchone()
+            attempts = (int(row[0]) if row is not None else 0) + 1
+            status = "failed" if attempts >= int(max_attempts) else "queued"
+            next_at = (
+                datetime.now(timezone.utc) + timedelta(seconds=int(delay(attempts)))
+            ).isoformat(timespec="seconds")
+            conn.execute(
+                """INSERT INTO memory_jobs(kind,target,input_sha,version,status,attempts,
+                     next_attempt_at,last_error,boundary)
+                   VALUES (?,?,?,?,?,?,?,?,?)
+                   ON CONFLICT(kind,target,input_sha,version) DO UPDATE SET
+                     status=excluded.status,attempts=excluded.attempts,
+                     next_attempt_at=excluded.next_attempt_at,last_error=excluded.last_error,
+                     boundary=excluded.boundary""",
+                (kind, target, input_sha, int(version), status, attempts, next_at, error, boundary),
+            )
+        return {"attempts": attempts, "status": status, "next_attempt_at": next_at}
+
+    def entities(self) -> tuple[int, list[dict[str, Any]]]:
+        """``(generation, every entity)`` for the entity walk, cached per
+        index generation (each fact write moves it)."""
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT value FROM memory_index_state WHERE key='generation'"
+            ).fetchone()
+            generation = int(row[0]) if row else 0
+            with self._matrix_lock:
+                cached = getattr(self, "_entity_cache", None)
+                if cached is not None and cached[0] == generation:
+                    return cached
+            rows = [
+                dict(item)
+                for item in conn.execute(
+                    "SELECT id,kind,name,name_key,aliases_json FROM memory_entities ORDER BY id"
+                )
+            ]
+        with self._matrix_lock:
+            self._entity_cache = (generation, rows)
+        return generation, rows
+
+    def has_live_facts(self) -> bool:
+        with self._connection() as conn:
+            return conn.execute(
+                "SELECT 1 FROM memory_facts WHERE state='live' LIMIT 1"
+            ).fetchone() is not None
+
+    def facts_for_entities(self, entity_ids: Sequence[str]) -> list[dict[str, Any]]:
+        """The live facts that name any of ``entity_ids``, with the entity."""
+        wanted = list(dict.fromkeys(entity_ids))
+        if not wanted:
+            return []
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT f.id,f.source_ref,f.chunk_id,f.chunk_sha,f.anchor,f.text,f.confidence,
+                          f.mentioned_at,f.occurred_start,fe.entity_id
+                   FROM memory_fact_entities fe
+                   JOIN memory_facts f ON f.id=fe.fact_id AND f.state='live'
+                   WHERE fe.entity_id IN (SELECT value FROM json_each(?))
+                   ORDER BY f.id""",
+                (json.dumps(wanted),),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
     # ── maintenance ──────────────────────────────────────────────────
 
     def clear(self) -> None:
@@ -313,6 +593,11 @@ class MemoryIndexRepository(BaseRepository):
             conn.execute("DELETE FROM memory_embeddings")
             conn.execute("DELETE FROM memory_chunks_fts")
             conn.execute("DELETE FROM memory_chunks")
+            conn.execute("DELETE FROM memory_fact_entities")
+            conn.execute("DELETE FROM memory_facts")
+            conn.execute("DELETE FROM memory_entities")
+            conn.execute("DELETE FROM memory_jobs")
+            conn.execute("DELETE FROM memory_extract_parts")
             conn.execute("DELETE FROM memory_sources")
             self._bump(conn)
         with self._matrix_lock:
@@ -326,6 +611,8 @@ class MemoryIndexRepository(BaseRepository):
                 "chunks": int(conn.execute("SELECT count(*) FROM memory_chunks").fetchone()[0]),
                 "keyword_rows": int(conn.execute("SELECT count(*) FROM memory_chunks_fts").fetchone()[0]),
                 "vectors": int(conn.execute("SELECT count(*) FROM memory_embeddings").fetchone()[0]),
+                "facts": int(conn.execute("SELECT count(*) FROM memory_facts WHERE state='live'").fetchone()[0]),
+                "entities": int(conn.execute("SELECT count(*) FROM memory_entities").fetchone()[0]),
             }
 
 

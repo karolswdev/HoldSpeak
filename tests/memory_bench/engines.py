@@ -117,3 +117,99 @@ class FixtureEmbedder:
     def embed_query(self, text: str) -> np.ndarray:
         self.calls += 1
         return self._one(query_text(text))
+
+
+# ── extraction (memory slice 3) ─────────────────────────────────────────
+
+
+class MissingFixtureFacts(KeyError):
+    """A prompt has no recorded answer in the facts fixture."""
+
+
+def fixture_key(payload: dict) -> str:
+    """The key of one recorded answer: the hash of the two prompt texts, with
+    the "Date of the source" line left out.  The corpus producers stamp a
+    thread with the wall clock, so that one line changes every day; every
+    other word of the prompt is in the key, so a changed prompt or corpus
+    must be recorded again."""
+    import re
+
+    from holdspeak.memory.extract import payload_key
+
+    user = re.sub(r"(?m)^Date of the source: .*$", "Date of the source: <date>", str(payload.get("user_prompt") or ""))
+    return payload_key({"system_prompt": payload.get("system_prompt"), "user_prompt": user})
+
+
+class FixtureExtractor:
+    """Recorded real-model answers for ``memory.extract``, keyed by the hash
+    of the two prompt texts (``fixture_key``).  A prompt with no
+    answer is an error, so a changed prompt or corpus must be recorded again
+    (``make_facts.py``).  It keeps every payload it received."""
+
+    boundary = "local"
+
+    def __init__(self, path: str | Path) -> None:
+        import json
+
+        data = json.loads(Path(path).read_text())
+        self.model_id = str(data["model"])
+        self.extractor_version = int(data["extractor_version"])
+        self._answers = dict(data["answers"])
+        self.payloads: list[dict] = []
+        self.calls = 0
+
+    def extract(self, payload: dict) -> dict:
+        self.calls += 1
+        self.payloads.append(payload)
+        try:
+            return self._answers[fixture_key(payload)]
+        except KeyError:
+            raise MissingFixtureFacts(str(payload.get("user_prompt", ""))[:160]) from None
+
+
+class EndpointExtractor:
+    """The real model at an OpenAI-compatible endpoint (test tooling: the
+    fixture script and the optional real-engine probe).  In the product the
+    call is one admitted ``memory.extract`` child of the runner."""
+
+    boundary = "private_network"
+
+    def __init__(self, base_url: str, model: str, *, key: str = "local", timeout: float = 300.0) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.model_id = model
+        self.key = key
+        self.timeout = timeout
+        self.answers: dict[str, dict] = {}
+        self.calls = 0
+
+    def extract(self, payload: dict) -> dict:
+        import json
+        import urllib.request
+
+        from holdspeak.services.thread_practice import _extract_structured_json
+
+        body = {
+            "model": self.model_id,
+            "messages": [
+                {"role": "system", "content": payload["system_prompt"]},
+                {"role": "user", "content": payload["user_prompt"]},
+            ],
+            "temperature": payload.get("temperature", 0.0),
+            "max_tokens": payload.get("max_tokens"),
+            "response_format": payload.get("response_format"),
+            "chat_template_kwargs": {"enable_thinking": False},
+        }
+        request = urllib.request.Request(
+            f"{self.base_url}/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.key}"},
+        )
+        with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            answer = json.load(response)
+        self.calls += 1
+        parsed = _extract_structured_json(str(answer["choices"][0]["message"]["content"] or ""))
+        if parsed is None:
+            parsed = {"facts": []}
+        self.answers[fixture_key(payload)] = parsed
+        print(f"call {self.calls}: {len(parsed.get('facts') or [])} facts", flush=True)
+        return parsed

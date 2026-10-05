@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 82  # informational; 81→82: memory_chunks_fts (keyword search over memory chunks)
+SCHEMA_VERSION = 83  # informational; 82→83: memory facts, entities, fact links, jobs (memory slice 3)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -4638,5 +4638,85 @@ CREATE TABLE IF NOT EXISTS memory_embeddings (
 CREATE TABLE IF NOT EXISTS memory_index_state (
     key TEXT PRIMARY KEY,
     value INTEGER NOT NULL
+);
+-- Memory slice 3 (MEMORY-DESIGN.md §2, §3.1 steps 5-6): facts that the
+-- `memory.extract` engine reads from the chunks of a source, the entities they
+-- name, and the links between the two.  Derived rows: the extract job writes a
+-- source's facts, resolves their entities, retires the old facts and stamps
+-- `memory_sources.extracted_sha` in ONE transaction.  No People-store id is
+-- ever written here (§5).
+CREATE TABLE IF NOT EXISTS memory_entities (
+    id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    name TEXT NOT NULL,
+    name_key TEXT NOT NULL,
+    aliases_json TEXT NOT NULL DEFAULT '[]',
+    first_seen TEXT,
+    last_seen TEXT,
+    mention_count INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_memory_entities_key
+    ON memory_entities(kind, name_key);
+CREATE TABLE IF NOT EXISTS memory_facts (
+    id TEXT PRIMARY KEY,
+    source_ref TEXT NOT NULL,
+    chunk_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    text TEXT NOT NULL,
+    subject_entity_id TEXT,
+    predicate TEXT NOT NULL,
+    object_entity_id TEXT,
+    object_text TEXT NOT NULL DEFAULT '',
+    occurred_start TEXT,
+    occurred_end TEXT,
+    mentioned_at TEXT,
+    confidence REAL NOT NULL DEFAULT 0.5,
+    extractor_version INTEGER NOT NULL,
+    state TEXT NOT NULL DEFAULT 'live',
+    consolidated_at TEXT,
+    -- The chunk the fact was read from, as it was: a fact serves only while
+    -- that chunk is live with this hash and this anchor.
+    chunk_sha TEXT NOT NULL DEFAULT '',
+    anchor TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_memory_facts_source
+    ON memory_facts(source_ref, state);
+CREATE TABLE IF NOT EXISTS memory_fact_entities (
+    fact_id TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    PRIMARY KEY (fact_id, entity_id, role)
+);
+CREATE INDEX IF NOT EXISTS idx_memory_fact_entities_entity
+    ON memory_fact_entities(entity_id);
+-- The checked answer for each chunk of a source the extract job has read, so
+-- a job that stops between two calls (a live call, the call budget) goes on
+-- later from the next chunk.  Deleted when the source's facts commit.
+CREATE TABLE IF NOT EXISTS memory_extract_parts (
+    source_ref TEXT NOT NULL,
+    chunk_id TEXT NOT NULL,
+    chunk_sha TEXT NOT NULL,
+    version INTEGER NOT NULL,
+    facts_json TEXT NOT NULL,
+    PRIMARY KEY (chunk_id, chunk_sha, version)
+);
+CREATE INDEX IF NOT EXISTS idx_memory_extract_parts_source
+    ON memory_extract_parts(source_ref);
+-- One row per model job that failed on its input (a bad output), so a source
+-- the engine cannot read waits with a back-off and stops after six tries.  A
+-- job that succeeds needs no row: the ledger stamp says it is done.
+CREATE TABLE IF NOT EXISTS memory_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL,
+    target TEXT NOT NULL,
+    input_sha TEXT NOT NULL,
+    version INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'queued',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    next_attempt_at TEXT,
+    lease_expires_at REAL,
+    last_error TEXT,
+    boundary TEXT NOT NULL DEFAULT '',
+    UNIQUE (kind, target, input_sha, version)
 );
 """

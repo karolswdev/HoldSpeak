@@ -219,3 +219,65 @@ def test_bench_with_the_real_model(desk, capsys) -> None:
     fresh = engine.embed_documents(texts)
     held = fixture.embed_documents(texts)
     assert float(np.min(np.sum(fresh * held, axis=1))) >= 0.98
+
+
+# ── slice 3: the five relation questions (MEMORY-DESIGN.md §7, §8 row 3) ──
+
+
+def test_the_five_relation_questions_pass_with_recorded_real_facts(desk, capsys) -> None:
+    """The relation group, keyword + relation before; the entity walk after,
+    over facts the real model gave for this corpus (``facts.json``, replayed
+    by ``FixtureExtractor``).  The other groups do not drop below the
+    keyword baseline when the facts are fused in."""
+    from holdspeak.memory.extract import extract_pending
+
+    from .engines import FixtureExtractor
+
+    db, refs = desk
+    sweep(db)
+    relation = bench.load_relation_questions()
+    assert len(relation) == 5
+    before = bench.run(db, refs, questions=relation)
+    before_other = bench.run(db, refs)
+
+    engine = FixtureExtractor(bench.FACTS)
+    stats = extract_pending(db, engine)
+    assert stats["sources"] == len(refs) and stats["facts"] > 0
+    after = bench.run(db, refs, questions=relation)
+    after_other = bench.run(db, refs)
+
+    with capsys.disabled():
+        print()
+        print(bench.table("relation, before: keyword + relation (no facts)", before))
+        print(bench.table(f"relation, after: + entity walk ({engine.model_id} facts)", after))
+        print(bench.table("other groups, after", after_other))
+        for question in relation:
+            print(f"  {question['id']} {question['q']!r}: {after['ranked'][question['id']][:5]}")
+
+    assert after["groups"]["relation"]["recall@5"] == 1.0
+    assert after["groups"]["relation"]["complete@5"] >= before["groups"]["relation"]["complete@5"]
+    # Keyword search finds these sources too (a speaker name is indexed), so
+    # the group alone proves little.  Two things the entity walk must add:
+    # the right source ranks higher, and the walk ALONE (no keyword list)
+    # answers each question.  Measured 2026-10-04: the walk alone holds 9 of
+    # the 10 expected sources; r04 misses m-atlas-sync, where the model
+    # credits the auditors' request to "the auditors", not to Sam.
+    assert after["groups"]["relation"]["mrr"] > before["groups"]["relation"]["mrr"]
+    from holdspeak.db.memory import _VALID_KINDS
+
+    held = total = 0
+    for question in relation:
+        walked = db.memory._entity_rows(
+            question["q"], selected=tuple(_VALID_KINDS), project=question.get("project"),
+            start=None, end=None, excluded=set(),
+        )
+        got = {row["source_ref"].split("#", 1)[0] for row in walked or []}
+        expected = {refs[label] for label in question["expect"]}
+        assert expected & got, (question["id"], got)
+        held += len(expected & got)
+        total += len(expected)
+    with capsys.disabled():
+        print(f"  the entity walk alone holds {held} of {total} expected sources")
+    assert held >= total - 1
+    for name in ("same_word", "paraphrase"):
+        assert after_other["groups"][name]["recall@5"] >= before_other["groups"][name]["recall@5"]
