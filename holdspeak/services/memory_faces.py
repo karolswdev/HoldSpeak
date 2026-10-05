@@ -177,7 +177,11 @@ def belief_cards(db: Any, observations: list[dict[str, Any]], *, every: Optional
             "kind": "belief",
             "text": str(row["text"]),
             "state": str(row["state"]),
+            # The facts that back it (``proof_count``) and the DISTINCT
+            # sources they come from: the card says SOURCES, so it counts
+            # sources (Astra, PR #877 P2: one note, two facts = 1 SOURCE).
             "proof_count": int(row.get("proof_count") or 0),
+            "source_count": len({e["ref"].split("#", 1)[0] for e in evidence if not e["against"]}),
             "seen": day(row.get("last_seen")),
             "since": since,
             "project": project,

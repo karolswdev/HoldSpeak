@@ -238,3 +238,18 @@ def test_the_memory_faces_module_reads_nothing_from_the_people_store() -> None:
     ]
     assert not [name for name in imported if "people" in name.lower()], imported
     assert "relationship" not in Path(module.__file__).read_text().lower()
+
+
+def test_sources_counts_distinct_sources_not_facts(tmp_path: Path, monkeypatch) -> None:
+    """Astra's repro (PR #877 P2): one note with two supporting facts is ONE
+    source.  ``proof_count`` stays the fact count; the card reads
+    ``source_count``."""
+    reset_database()
+    db = _desk(tmp_path)
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    _filed_note(db, "n1", "Atlas freeze is 10-12. Atlas freeze is 10-12.", "atlas")
+    _learn(db)
+    belief = _app(db, OWNER).get("/api/memory/recall", params={"query": "freeze"}).json()["beliefs"][0]
+    assert belief["proof_count"] == 2
+    assert belief["source_count"] == 1
+    reset_database()

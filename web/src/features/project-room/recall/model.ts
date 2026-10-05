@@ -123,7 +123,10 @@ export interface BeliefCardData {
   kind: "belief";
   text: string;
   state: DecisionState;
+  /** The facts that back the belief. */
   proof_count: number;
+  /** The distinct sources those facts come from: what `N SOURCES` counts. */
+  source_count: number;
   /** `10-01`: the newest source day. */
   seen: string;
   /** `10-01`: the day a superseded belief was replaced. */

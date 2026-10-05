@@ -4,7 +4,7 @@
  *
  *   line     : the belief's text at the primary step.
  *   chips    : BELIEF · CURRENT | DISPUTED | SUPERSEDED (+ `SINCE 10-01`)
- *              · `3 SOURCES` · `SEEN 10-01` · the Project button.
+ *              · `3 SOURCES` (distinct sources) · `SEEN 10-01` · the Project button.
  *   EVIDENCE : the refs as tokens that open their windows; a ref that
  *              contradicts reads `AGAINST · MTG 09-29 · 10:05`.
  *   HISTORY  : unfolds; each old text struck through with its reason
@@ -32,7 +32,9 @@ export function BeliefCard({
   belief: BeliefCardData;
   onOpenRef?: (ref: string) => void;
 }) {
-  const sources = countToken(belief.proof_count, "SOURCE");
+  // SOURCES counts distinct sources, never facts (one note with two facts
+  // is 1 SOURCE).
+  const sources = countToken(belief.source_count, "SOURCE");
   return (
     <article
       className="recall-card recall-belief"

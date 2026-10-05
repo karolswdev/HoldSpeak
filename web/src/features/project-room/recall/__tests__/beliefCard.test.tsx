@@ -31,7 +31,7 @@ vi.mock("../../../../desk/surface/SurfaceFooter", () => ({
 const ATLAS = { id: "atlas", name: "Atlas cutover" };
 const CURRENT: BeliefCardData = {
   id: "obs-1", kind: "belief", text: "The Atlas cutover is on 17 October, after the freeze.", state: "current",
-  proof_count: 3, seen: "10-01", since: "", project: ATLAS,
+  proof_count: 3, source_count: 3, seen: "10-01", since: "", project: ATLAS,
   evidence: [
     { ref: "meeting:m-1001", token: "MTG 10-01 · 14:20", opens: true, against: false },
     { ref: "decision:d-1", token: "DEC 10-01", opens: true, against: false },
@@ -41,7 +41,7 @@ const CURRENT: BeliefCardData = {
 };
 const DISPUTED: BeliefCardData = {
   id: "obs-2", kind: "belief", text: "Priya owns the rollback plan.", state: "disputed",
-  proof_count: 1, seen: "10-01", since: "", project: ATLAS,
+  proof_count: 1, source_count: 1, seen: "10-01", since: "", project: ATLAS,
   evidence: [
     { ref: "meeting:m-1001", token: "MTG 10-01 · 14:31", opens: true, against: false },
     { ref: "meeting:m-0929", token: "MTG 09-29 · 10:05", opens: true, against: true },
@@ -50,7 +50,7 @@ const DISPUTED: BeliefCardData = {
 };
 const SUPERSEDED: BeliefCardData = {
   id: "obs-3", kind: "belief", text: "The Atlas cutover is on 10 October.", state: "superseded",
-  proof_count: 2, seen: "09-24", since: "10-01", project: ATLAS,
+  proof_count: 2, source_count: 2, seen: "09-24", since: "10-01", project: ATLAS,
   evidence: [{ ref: "meeting:m-0924", token: "MTG 09-24 · 15:00", opens: true, against: false }],
   history: [],
 };
@@ -103,8 +103,15 @@ describe("BeliefCard", () => {
     expect(screen.getAllByTestId("memory-ref")).toHaveLength(1);
   });
 
+  it("SOURCES counts distinct sources, never facts: one note with two facts is 1 SOURCE", () => {
+    render(<BeliefCard belief={{ ...CURRENT, proof_count: 2, source_count: 1,
+      evidence: [{ ref: "note:n1", token: "NOTE 10-05", opens: true, against: false }] }} />);
+    expect(screen.getByText("1 SOURCE")).toBeTruthy();
+    expect(screen.queryByText("2 SOURCES")).toBeNull();
+  });
+
   it("no counter of zero: a belief with no live source draws no SOURCES chip", () => {
-    render(<BeliefCard belief={{ ...SUPERSEDED, proof_count: 0, evidence: [] }} />);
+    render(<BeliefCard belief={{ ...SUPERSEDED, proof_count: 0, source_count: 0, evidence: [] }} />);
     expect(screen.queryByText(/0 SOURCES?/)).toBeNull();
     expect(screen.queryByTestId("recall-belief-evidence")).toBeNull();
   });

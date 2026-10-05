@@ -13,7 +13,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../lib/api";
 import { openRef } from "./openObject";
 import { StandingPage, SurfaceSection, countLabel, wireDate, type MemoryRefToken } from "./surface";
-import { useOnDeskChanged } from "./useDeskChangedRefresh";
+import { useMemoryChanges } from "./memoryChanges";
 
 export interface StandingPageWire {
   slug: string;
@@ -72,29 +72,53 @@ export function modelToken(pages: StandingPageWire[]): string | null {
   return seen.length ? `PAGES BY ${seen.join(" / ")}` : null;
 }
 
+/** The scope key the cached pages belong to: `project:atlas` / `desk`. */
+export function scopeKey(scope: "desk" | "project", projectId?: string | null): string {
+  return scope === "project" ? `project:${projectId ?? ""}` : "desk";
+}
+
+/**
+ * The served pages of one scope.  The cache is BOUND to its scope key: on a
+ * scope change nothing of the old scope is drawn (the pages read empty until
+ * the new scope's answer lands), and a late answer for another scope is
+ * dropped (Astra, PR #877 P2: Atlas pages in Harbor's Room).  On a
+ * `desk_changed` frame a sentence whose ref names a changed source is not
+ * drawn until the re-read lands (`useMemoryChanges`).
+ */
 export function useStandingPages(scope: "desk" | "project", projectId?: string | null) {
-  const [pages, setPages] = useState<StandingPageWire[]>([]);
-  const order = useRef(0);
+  const key = scopeKey(scope, projectId);
+  const [cache, setCache] = useState<{ key: string; pages: StandingPageWire[] }>({ key: "", pages: [] });
+  const wanted = useRef(key);
+  wanted.current = key;
   const load = useCallback(async () => {
+    const asked = key;
     if (scope === "project" && !projectId) {
-      setPages([]);
+      setCache({ key: asked, pages: [] });
       return;
     }
-    const mine = ++order.current;
     const params = scope === "project"
       ? new URLSearchParams({ project_id: String(projectId) })
       : new URLSearchParams({ scope: "desk" });
-    try {
-      const body = await apiFetch<{ pages?: StandingPageWire[] }>(`/api/memory/pages?${params}`);
-      if (mine !== order.current) return;
-      setPages(Array.isArray(body?.pages) ? body.pages.filter((p) => p.sentences?.length) : []);
-    } catch {
-      if (mine === order.current) setPages([]);
-    }
-  }, [scope, projectId]);
-  useEffect(() => { void load(); }, [load]);
-  useOnDeskChanged(() => { void load(); });
-  return pages;
+    const body = await apiFetch<{ pages?: StandingPageWire[] }>(`/api/memory/pages?${params}`);
+    // An answer for a scope this face no longer shows is dropped.
+    if (wanted.current !== asked) return;
+    setCache({ key: asked, pages: Array.isArray(body?.pages) ? body.pages : [] });
+  }, [key, scope, projectId]);
+  useEffect(() => {
+    // A failed first read draws nothing (never an error); the hold logic
+    // needs the rejection, so only this call site swallows it.
+    load().catch(() => {
+      if (wanted.current === key) setCache({ key, pages: [] });
+    });
+  }, [load, key]);
+  const held = useMemoryChanges(load);
+  const pages = cache.key === key ? cache.pages : [];
+  return pages
+    .map((page) => ({
+      ...page,
+      sentences: (page.sentences ?? []).filter((s) => !held(s.refs.map((r) => r.ref))),
+    }))
+    .filter((page) => page.sentences.length);
 }
 
 export function StandingPagesSection({

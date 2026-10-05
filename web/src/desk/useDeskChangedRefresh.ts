@@ -96,7 +96,7 @@ export function useOnDeskChanged(
 /** The bus's `subscribe`, or nothing when the window is drawn with no bus
  * (a component test with no provider). The context read always runs, so the
  * hook order is the same on every render. */
-function useBusSubscribe(): ReturnType<typeof useRuntimeBus>["subscribe"] | undefined {
+export function useBusSubscribe(): ReturnType<typeof useRuntimeBus>["subscribe"] | undefined {
   try {
     return useRuntimeBus().subscribe;
   } catch {

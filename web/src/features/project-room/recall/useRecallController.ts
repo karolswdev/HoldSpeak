@@ -62,6 +62,8 @@ export function useRecallController(initialQuery = "") {
   const previous = useRef<RecallResult>(EMPTY_RESULT);
   const searchedOnce = useRef(false);
   const generation = useRef(0);
+  /** What the face shows now: the read a bus change repeats. */
+  const shown = useRef({ query: "", filter: "all" as RecallFilter, recent: false, live: false });
 
   /* HS-202-02 — `recent` is the zero-query read. A window named "Desk
      memory" showed a blank body on a desk that held a meeting, two
@@ -90,6 +92,7 @@ export function useRecallController(initialQuery = "") {
         previous.current = decoded;
         setResult(decoded);
         setStatus("ready");
+        shown.current = { query: trimmed, filter: f, recent: !trimmed, live: true };
         searchedOnce.current = Boolean(trimmed);
         if (trimmed) writeResume(trimmed, f);
       } catch (reason) {
@@ -102,6 +105,24 @@ export function useRecallController(initialQuery = "") {
   );
 
   const search = useCallback(() => run(query, filter), [run, query, filter]);
+
+  /* Astra, PR #877 P1: a write elsewhere (a note deleted, a meeting edited)
+     re-reads what the face shows, QUIETLY: the face stays as it is (no
+     SEARCHING, no dim) and a failed re-read keeps the last result and
+     rejects, so the caller keeps holding what the change named. */
+  const reread = useCallback(async () => {
+    const now = shown.current;
+    if (!now.live) return;
+    const mine = ++generation.current;
+    const params = now.recent
+      ? new URLSearchParams({ recent: "1", filter: now.filter })
+      : new URLSearchParams({ query: now.query, filter: now.filter });
+    const raw = await apiFetch<Record<string, unknown>>(`/api/memory/recall?${params}`);
+    if (mine !== generation.current) return;
+    const decoded = decodeRecall(raw);
+    previous.current = decoded;
+    setResult(decoded);
+  }, []);
 
   const setFilter = useCallback(
     (next: RecallFilter) => {
@@ -220,6 +241,7 @@ export function useRecallController(initialQuery = "") {
     error,
     busy,
     search,
+    reread,
     clear,
     refresh,
     carry,

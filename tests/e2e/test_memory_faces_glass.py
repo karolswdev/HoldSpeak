@@ -126,6 +126,45 @@ def _stage(page: Any, key: str, scope: str | None = None) -> None:
     page.locator(".desk-surface-window").first.wait_for(timeout=T)
 
 
+def _search_cutover(page: Any) -> None:
+    """Open Desk memory and search `cutover`, waiting for THAT search: the
+    RECENT read the face makes on open also draws beliefs, so waiting for
+    any belief raced the search (Astra, PR #877 P2)."""
+    _stage(page, "open-project-memory")
+    page.get_by_role("searchbox", name="Search the Desk").fill("cutover")
+    with page.expect_response(
+        lambda r: "/api/memory/recall" in r.url and "query=cutover" in r.url and r.status == 200,
+        timeout=T,
+    ):
+        page.locator(".desk-surface-window").get_by_role("button", name="Search desk memory", exact=True).click()
+    page.get_by_test_id("recall-ref-token").filter(has_text="REF · CUTOVER").wait_for(timeout=T)
+    page.locator("[data-testid=recall-results]:not([data-dimmed])").wait_for(timeout=T)
+    page.wait_for_function(
+        "() => document.querySelectorAll('[data-testid=recall-belief]').length === 4", timeout=T)
+
+
+def _gone(page: Any, scope: str, text: str) -> None:
+    """``text`` leaves ``scope`` with no reload (the face follows the bus)."""
+    page.wait_for_function(
+        "([sel, text]) => ![...document.querySelectorAll(sel)].some(e => (e.textContent || '').includes(text))",
+        arg=[scope, text], timeout=8000,
+    )
+
+
+def _search_cutover_after_delete(page: Any) -> None:
+    """Desk memory on `cutover` once n-1001 is gone: the 10-17 belief and its
+    superseded twin no longer stand; Marek and Priya do."""
+    _stage(page, "open-project-memory")
+    page.get_by_role("searchbox", name="Search the Desk").fill("cutover")
+    with page.expect_response(
+        lambda r: "/api/memory/recall" in r.url and "query=cutover" in r.url and r.status == 200,
+        timeout=T,
+    ):
+        page.locator(".desk-surface-window").get_by_role("button", name="Search desk memory", exact=True).click()
+    page.locator("[data-testid=recall-belief]").filter(has_text="Cutover rollback owner is Marek.").wait_for(timeout=T)
+    assert page.locator("[data-testid=recall-results]").filter(has_text="Cutover date is 10-17.").count() == 0
+
+
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.timeout(600)
@@ -151,10 +190,7 @@ def test_memory_on_the_desk(tmp_path, monkeypatch, width, height):
             _api(page, "POST", "/api/brief/generate", None, token=TOKEN)
 
             # ── beliefs: Desk memory, `cutover` ──
-            _stage(page, "open-project-memory")
-            page.get_by_role("searchbox", name="Search the Desk").fill("cutover")
-            page.locator(".desk-surface-window").get_by_role("button", name="Search desk memory", exact=True).click()
-            page.get_by_test_id("recall-belief").first.wait_for(timeout=T)
+            _search_cutover(page)
             states = page.get_by_test_id("recall-belief").evaluate_all("els => els.map(e => e.dataset.state)")
             assert states == ["current", "disputed", "disputed", "superseded"], states
             heads = page.locator(".recall-results .surface-section-head h3").all_text_contents()
@@ -206,6 +242,20 @@ def test_memory_on_the_desk(tmp_path, monkeypatch, width, height):
             _zoom(page, brief, width)
             _top(page, brief, ".intelligence-brief")
             _shots(page, "mem-B-desk", width, brief)
+
+            # ── a write elsewhere: the faces follow the bus (Astra P1) ──
+            # The Room is open; the note its pages cite is deleted.
+            _stage(page, "open-project-memory", "project:atlas")
+            pages = "[data-testid=standing-pages]"
+            page.locator(pages).filter(has_text="Cutover date is 10-17.").wait_for(timeout=T)
+            _api(page, "DELETE", "/api/notes/n-1001", None, token=TOKEN)
+            _gone(page, pages, "Cutover date is 10-17.")
+            # Desk memory is open on `cutover`; the meeting two beliefs rest on
+            # is deleted: both leave, with no reload and no new search.
+            _search_cutover_after_delete(page)
+            _api(page, "DELETE", "/api/meetings/m-0924", None, token=TOKEN)
+            _gone(page, "[data-testid=recall-results]", "Cutover rollback owner is Marek.")
+            _gone(page, "[data-testid=recall-results]", "Cutover date is 10-10.")
 
             _assert_clean(page, errors)
             browser.close()
