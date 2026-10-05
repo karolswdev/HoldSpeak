@@ -15,8 +15,9 @@ the model is checked against the source on each turn
   against main's recorded output, ``tests/fixtures/thread_recall_replay_main.json``).
 
 A source the owner attached by hand follows the hand-attach rule: it is
-sent while it exists (a promotion or a refile does not take it away), and
-it is never sent after it is deleted.  A named Knowledge or Zone container
+sent while it exists (a promotion or a refile does not take it away),
+redacted like every hydrated block, and it is never sent after it is
+deleted.  A named Knowledge or Zone container
 is rebuilt from its live members: a gone member is left out, the others
 stay.
 
@@ -26,9 +27,11 @@ not sent (main stamped a project's hits 'reference' like a named ref, so
 neither rule can be checked).  Fenced with the rows main's producer wrote
 (``tests/fixtures/thread_recall_replay_main_rows.json``).
 
-A memory read tool result (``memory.search``, ``memory.observations``,
-``memory.page``) is replayed on a later turn as a stub that says to read
-again; the stored result stays as the receipt.
+A read tool result (``memory.search``, ``memory.observations``,
+``memory.page``, and since 2026-10-05 every ``evidence_read`` or
+``candidate_builder`` tool: a note read, a meeting, a People read) is
+replayed on a later turn as a stub that says to read again; the stored
+result stays as the receipt.
 
 Every source is written by its real producer where one exists (the note
 repository, the thread repository, project relationships).  The promotion
@@ -347,7 +350,9 @@ def test_a_main_container_row_follows_the_hand_attach_rule(hub, mode: str) -> No
     sent = _sent(_turn(hub, "Continue.", thread_id=thread_id))
     assert "SURVIVORWORD still current." in sent  # the live member stays
     if mode == "none":
-        assert CODE_BODY in sent  # he attached it: sent as he wrote it, as main does
+        # He attached it: sent while it exists, redacted (2026-10-05: a
+        # source attached by hand is redacted too; main sent the key).
+        assert f"Atlas codename is {SECRET}." in sent and "hunter2SECRETVALUE" not in sent
     else:
         assert SECRET not in sent
     if mode == "edit":
@@ -431,6 +436,93 @@ def test_a_memory_observations_result_is_a_stub_on_a_later_turn(hub) -> None:
     second = _turn(hub, "Continue.", thread_id=first["thread_id"])
     assert any(m["role"] == "tool" and "Call memory.observations again" in m["content"]
                for m in second["calls"][0])
+
+
+@pytest.mark.parametrize("mode", ["delete", "edit"])
+def test_a_note_read_result_is_never_replayed_on_a_later_turn(hub, mode: str) -> None:
+    """The open limit of #852: a tool that returns source text other than
+    the memory reads (here ``desk.get`` on a note) replayed its saved result.
+    Turn 2 gets a stub that says to read again; the receipt stays."""
+    db = hub.db
+    _ref, withdraw = _source(db, mode, None)
+    hub.engine.tool = ("desk.get", {"kind": "notes", "id": "n-code"})
+    first = _turn(hub, "Proceed.")
+    assert first["outcome"] == "succeeded" and SECRET in json.dumps(first["calls"][-1])
+    withdraw()
+    hub.engine.tool = None
+    second = _turn(hub, "Continue.", thread_id=first["thread_id"])
+    assert second["outcome"] == "succeeded"
+    sent = second["calls"][0]
+    assert not [m for m in sent if SECRET in str(m.get("content", ""))]
+    assert any(m["role"] == "tool" and "Call desk.get again" in m["content"] for m in sent)
+    kept = [part.text for message in db.threads.list_path(first["thread_id"]) if message.role == "tool"
+            for part in db.threads.get_parts(message.id)]
+    assert any(SECRET in str(text) for text in kept)  # the receipt is kept
+
+
+def test_a_reused_call_id_never_replays_an_earlier_read(hub, monkeypatch) -> None:
+    """Astra's #871 repro: turn 1 reads a note as ``call_1``; the note is
+    deleted; turn 2 makes a write (refused) that REUSES ``call_1``; turn 3
+    "Continue." must not get the note's stored body.  A result is classed
+    by the call that made it, never by a thread-wide id map."""
+    from holdspeak.kernel.inference_stream import Delta
+
+    db = hub.db
+    _note(db, "n1", "Codename", f"Atlas codename is {SECRET}.")
+    engine = hub.engine
+    script: list[Optional[tuple[str, dict]]] = [
+        ("desk.get", {"kind": "notes", "id": "n1"}),
+        ("settings.update", {"settings": {"theme": "dark"}}),
+        None,
+    ]
+
+    def stream(*, messages=None, temperature=None, max_tokens=None, tools=None, **kw):
+        msgs = [dict(m) for m in (messages or [])]
+        engine.calls.append(msgs)
+        call = script[0] if msgs and msgs[-1].get("role") == "user" else None
+        if call is not None:
+            name, args = call
+            yield Delta(kind="tool_calls", meta={"tool_calls": [{
+                "id": "call_1", "name": name, "arguments": json.dumps(args),
+            }]})
+        else:
+            yield Delta(kind="text", text="OK")
+        yield Delta(kind="usage", meta={"prompt_tokens": 5, "completion_tokens": 2})
+        yield Delta(kind="done")
+
+    monkeypatch.setattr(engine, "run_prompt_stream", stream)
+    first = _turn(hub, "Proceed.")
+    assert first["outcome"] == "succeeded" and SECRET in json.dumps(engine.calls[-1])
+    db.notes.delete("n1")
+    script.pop(0)
+    second = _turn(hub, "Change the theme.", thread_id=first["thread_id"])
+    assert second["outcome"] == "succeeded"
+    script.pop(0)
+    third = _turn(hub, "Continue.", thread_id=first["thread_id"])
+    assert third["outcome"] == "succeeded"
+    sent = json.dumps(engine.calls[-1])
+    assert SECRET not in sent
+    assert "Call desk.get again" in sent
+    kept = [part.text for message in db.threads.list_path(first["thread_id"]) if message.role == "tool"
+            for part in db.threads.get_parts(message.id)]
+    assert any(SECRET in str(text) for text in kept)  # the receipt is kept
+
+
+def test_every_read_tool_replays_as_a_stub_and_every_write_as_stored() -> None:
+    """Census over the classification table: a read (evidence_read,
+    candidate_builder) is a stub on replay; an effect_proposal result is
+    replayed as stored; an unknown name fails closed."""
+    from holdspeak.services.thread_service import _replay_stub
+    from holdspeak.services.thread_tools import _ALL_TOOL_CLASSES
+
+    for name, (kind, _sensitive) in _ALL_TOOL_CLASSES.items():
+        stub = _replay_stub(name)
+        if kind == "effect_proposal":
+            assert stub is None, name
+        else:
+            assert stub is not None and f"Call {name} again" in stub, name
+    assert _replay_stub("no.such.tool") is not None
+    assert _replay_stub(None) is None and _replay_stub("") is None
 
 
 def test_a_source_the_caller_holds_out_is_not_live_for_memory() -> None:

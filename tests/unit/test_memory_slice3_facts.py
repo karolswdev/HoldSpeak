@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -861,6 +862,74 @@ def test_extraction_yields_to_a_live_chat_turn_on_the_same_lan_model(tmp_path: P
     assert report["sources"] == 1 and extract_calls == [False]
 
 
+def test_an_open_call_whose_owner_is_gone_holds_extraction_no_longer(tmp_path: Path) -> None:
+    """#839 note: an open call a crashed process left in ``kernel_operations``
+    made extraction wait up to 600 s.  A call no runner here holds and that
+    went quiet for ``FOREIGN_CALL_SECONDS`` has a dead owner; a call the
+    runner holds counts however old it is."""
+    import asyncio
+
+    from holdspeak.kernel.inference_stream import Delta
+    from holdspeak.services.thread_service import ThreadService
+    from tests.unit.test_phase143_inference_assignments import _result_claim
+
+    db = Database(tmp_path / "dead.db")
+    broker = _configure(db)
+    _profile(db, "shared-lan", model="same-endpoint-model", boundary="private_network",
+             claims=("language", _result_claim("chat.turn")))
+    _assign(db, EXTRACT_CAPABILITY, ["shared-lan"])
+    _assign(db, "chat.turn", ["shared-lan"])
+    started, release = threading.Event(), threading.Event()
+
+    class Engine:
+        active_provider = "fixture"
+        active_model = "same-endpoint-model"
+
+        def run_prompt_stream(self, **_kwargs):
+            started.set()
+            assert release.wait(15)
+            yield Delta(kind="text", text="Hello.")
+            yield Delta(kind="done")
+
+        def run_prompt(self, **_kwargs):
+            return '{"facts": []}'
+
+    broker.inference_runner._engine_factory = lambda revision, **_kwargs: Engine()
+    done = threading.Event()
+    service = ThreadService(db, broadcast=lambda kind, _data: done.set() if kind == "thread_turn_done" else None,
+                            broker=broker)
+    thread = db.threads.create_thread(title="Live chat")
+    runner = broker.inference_runner
+    try:
+        asyncio.run(service.start_turn(OWNER, thread.id, "Write a short greeting."))
+        assert started.wait(10)
+        extractor = resolve_extractor(broker, OWNER)
+        quiet = time.time() - memory_conductor.FOREIGN_CALL_SECONDS - 60
+        with db._connection() as conn:
+            conn.execute("UPDATE kernel_operations SET updated_at=? WHERE name='inference.invoke'"
+                         " AND state IN ('admitting','awaiting_decision','awaiting_execution','claimed')", (quiet,))
+        # The runner here holds the call: it is live, however quiet.
+        assert memory_conductor.live_work(db, extractor) == "a model call on the same engine is live"
+        # The owner is gone (no runner holds it): it no longer holds extraction.
+        with runner._active_lock:
+            held = dict(runner._active)
+            runner._active.clear()
+        try:
+            assert memory_conductor.live_work(db, extractor) == ""
+            # A fresh foreign call (one being admitted elsewhere) still counts.
+            with db._connection() as conn:
+                conn.execute("UPDATE kernel_operations SET updated_at=? WHERE name='inference.invoke'"
+                             " AND state IN ('admitting','awaiting_decision','awaiting_execution','claimed')",
+                             (time.time(),))
+            assert memory_conductor.live_work(db, extractor) == "a model call on the same engine is live"
+        finally:
+            with runner._active_lock:
+                runner._active.update(held)
+    finally:
+        release.set()
+        done.wait(10)
+
+
 def test_every_attempted_call_counts_against_the_budget(tmp_path: Path) -> None:
     db = Database(tmp_path / "bad-budget.db")
     for index in range(30):
@@ -885,6 +954,10 @@ def test_one_malformed_entry_fails_the_answer_and_the_old_facts_stay(tmp_path: P
         {"facts": [good, {**good, "entities": [{"name": "Atlas"}]}]},
         {"facts": [good, {**good, "confidence": "high"}]},
         {"facts": [good], "notes": "extra"},
+        # An entity kind that is not a string: a bad entry, never a TypeError
+        # (#839 note; the set test on an unhashable value raised).
+        {"facts": [good, {**good, "entities": [{"name": "Atlas", "kind": ["project"]}]}]},
+        {"facts": [good, {**good, "entities": [{"name": "Atlas", "kind": {"is": "project"}}]}]},
     ):
         engine.answer = bad
         with pytest.raises(ExtractionOutputError):

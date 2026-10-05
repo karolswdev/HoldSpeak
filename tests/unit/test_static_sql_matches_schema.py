@@ -51,6 +51,8 @@ _OTHER_DATABASE_SCOPES: dict[tuple[str, str], str] = {
     ("holdspeak/activity_history.py", "_read_safari_rows"): "Safari's History.db",
     ("holdspeak/activity_history.py", "_read_firefox_rows"): "Firefox's places.sqlite",
     ("holdspeak/people/store.py", "EncryptedPeopleStore"): "the encrypted People sidecar store",
+    ("holdspeak/db/memory.py", "_public_match"):
+        "an in-memory FTS5 table (:memory:) that runs the search's own matcher on redacted text",
     ("holdspeak/db/reconcile.py", "_rebuild_legacy_intel_queue_tables"):
         "reads the renamed tables of the older schema during the rebuild",
 }
