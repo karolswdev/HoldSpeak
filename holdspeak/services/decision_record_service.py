@@ -15,6 +15,7 @@ from holdspeak.services.observer import (
     current_correlation_id,
     observe_service,
 )
+from holdspeak.services.errors import NotFound
 from holdspeak.services.service_event_ledger import ServiceEventLedger
 
 
@@ -92,7 +93,7 @@ class DecisionRecordService:
         """Mint a record from a meeting-derived decision."""
         decision = self._db.decisions.get(decision_id)
         if decision is None:
-            raise KeyError(str(decision_id or "").strip())
+            raise NotFound("decision", str(decision_id or "").strip())
         existing = self._record_for_source("meeting", decision.id)
         if existing is not None:
             return existing
@@ -124,7 +125,7 @@ class DecisionRecordService:
         """Mint a record from an authored desk decision."""
         decision = self._db.desk_decisions.get(desk_decision_id)
         if decision is None:
-            raise KeyError(str(desk_decision_id or "").strip())
+            raise NotFound("decision", str(desk_decision_id or "").strip())
         existing = self._record_for_source("desk", decision.id)
         if existing is not None:
             return existing

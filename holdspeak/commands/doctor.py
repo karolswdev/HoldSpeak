@@ -737,7 +737,9 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
 
     requested = cfg.runtime.backend
     try:
-        resolved, reason = resolve_backend(requested)
+        resolved, reason = resolve_backend(
+            requested, mlx_model_set=bool(str(cfg.runtime.mlx_model or "").strip())
+        )
     except RuntimeUnavailableError as exc:
         return DoctorCheck(
             name="LLM runtime",
@@ -819,7 +821,9 @@ def _check_dictation_constraint_compile(config: Config) -> DoctorCheck:
         )
 
     try:
-        resolved, _reason = resolve_backend(cfg.runtime.backend)
+        resolved, _reason = resolve_backend(
+            cfg.runtime.backend, mlx_model_set=bool(str(cfg.runtime.mlx_model or "").strip())
+        )
     except RuntimeUnavailableError:
         # The runtime check already reported this; reporting again
         # would be noise. Compile against both shapes so block

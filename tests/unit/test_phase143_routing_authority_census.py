@@ -169,7 +169,6 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/config/meeting.py|MeetingConfig.__post_init__|intel_profile_id#2",
     "holdspeak/config/meeting.py|MeetingConfig.__post_init__|intel_profile_id",
     "holdspeak/db/models/__init__.py|WorkbenchRecord.to_dict|resolver_profile_id",
-    "holdspeak/db/models/workbench.py|WorkbenchRecord.to_dict|resolver_profile_id",
     "holdspeak/services/inference_setup_service.py|InferenceSetupApplicationService.get_inference_setup|intel_profile_id",
     "holdspeak/services/inference_setup_service.py|InferenceSetupApplicationService.get_inference_setup|inference_target_id",
     "holdspeak/services/inference_setup_service.py|InferenceSetupApplicationService.get_inference_setup|inference_target_id#2",
@@ -224,7 +223,6 @@ PROFILE_ID_CLASSIFICATIONS = {
     }},
     **{site: "migration source" for site in {
         "holdspeak/db/models/__init__.py|WorkbenchRecord.to_dict|profile_id",
-        "holdspeak/db/models/workbench.py|WorkbenchRecord.to_dict|profile_id",
         "holdspeak/services/recipe_service.py|RecipeService._recipe_fields|profile_id",
         "holdspeak/services/workbench_service.py|WorkbenchService._wb_fields|profile_id",
     }},
@@ -394,9 +392,10 @@ def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() 
     assert set(PROFILE_ID_CLASSIFICATIONS.values()) <= CLASSES
     # 39 sites: the line-pinned form counted 37, because two ``__post_init__``
     # lines read ``profile_id`` twice and one ``path:line`` key hid the second read.
-    assert len(PROFILE_ID_CLASSIFICATIONS) == 39
+    # 38 since 2026-10-05: the stale copy holdspeak/db/models/workbench.py was parked.
+    assert len(PROFILE_ID_CLASSIFICATIONS) == 38
     assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 11
-    assert sum(value == "migration source" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 4
+    assert sum(value == "migration source" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 3
     assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 17
     assert sum(value == "credential/provider identity" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 5
     assert sum(value == "immutable evidence" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 2

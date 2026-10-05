@@ -117,6 +117,10 @@ class WebContext:
     # Owner ruling 2026-10-05: the batteries-included default (a LOCAL engine
     # is assigned by itself; network and cloud engines are proposals).
     inference_default_service: Optional[Any] = None
+    # Owner ruling 2026-10-05: the onboarding backends (calendar and
+    # connections: detect what he has, one "Use it"), composed by the server
+    # over the settings and connections services.
+    onboarding_service: Optional[Any] = None
     # Phase 143: process-composed, owner-only registry projection.  It owns no
     # profile/binding/assignment persistence and never resolves a model route.
     inference_capability_service: Optional[Any] = None

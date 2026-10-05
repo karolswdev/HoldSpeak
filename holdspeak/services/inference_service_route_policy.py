@@ -3,8 +3,9 @@
 Kernel routing authorities are implementation identities.  This policy instead
 describes the principal whose feature work will execute.  OWNER work may use
 the normal assignment inheritance chain.  SERVICE work is default-deny and may
-consume only an exact owner-configured capability assignment named by a sealed
-composition policy; group/global rows never become ambient service authority.
+consume only the assignment sources its sealed composition policy names: an
+exact capability assignment, except the meeting queue, which also inherits the
+owner's group and global assignments (meeting-intel-queue@2).
 """
 
 from __future__ import annotations
@@ -28,6 +29,10 @@ def _canonical(value: Any) -> str:
 
 def _sha256(value: Any) -> str:
     return "sha256:" + hashlib.sha256(_canonical(value).encode()).hexdigest()
+
+
+#: Services whose policy may inherit the owner's group and global assignments.
+_INHERITING_SERVICES = frozenset({"meeting-intel-queue"})
 
 
 @dataclass(frozen=True)
@@ -90,7 +95,15 @@ class ServiceRoutePolicyRegistry:
             material = definition.material(self._capabilities)
             if definition.revision < 1 or not definition.capability_ids:
                 raise ValueError("invalid inference service route policy")
-            if set(definition.assignment_sources) - {"capability"}:
+            # Only the meeting queue inherits the owner's group / global
+            # assignments (meeting-intel-queue@2); every other service policy
+            # consumes an exact capability assignment.
+            ambient = set(definition.assignment_sources) - {"capability"}
+            if ambient and (
+                definition.service_identity not in _INHERITING_SERVICES
+                or ambient - {"group", "global"}
+                or definition.assignment_sources[:1] != ("capability",)
+            ):
                 raise ValueError("service route policy cannot inherit ambient assignments")
             self._definitions[key] = definition
             _sha256(material)
@@ -186,14 +199,22 @@ def builtin_service_route_policy_registry(
     return ServiceRoutePolicyRegistry(
         (
             ServiceRoutePolicyDefinition(
-                id="meeting-intel-queue@1",
-                revision=1,
+                # Revision 2 (owner ruling 2026-10-05, "strong defaults"): the
+                # meeting queue also inherits the owner's group and global
+                # assignments ("Default for AI work").  Revision 1 consumed an
+                # exact capability assignment only, so a Default for AI work
+                # summarised no meeting: neither the owner's Run press nor the
+                # backlog of meetings saved before an engine existed.  Other
+                # service policies stay capability-only.
+                id="meeting-intel-queue@2",
+                revision=2,
                 service_identity="meeting-intel-queue",
                 authority_basis="meeting-intel-queue:deferred",
                 parent_kind="meeting.deferred-intel-job",
                 allowed_operations=queue_operations,
                 capability_ids=tuple(meeting_capabilities),
                 allowed_boundaries=("local", "mesh", "private_network", "cloud"),
+                assignment_sources=("capability", "group", "global"),
             ),
             ServiceRoutePolicyDefinition(
                 id="wake-capture@1",

@@ -301,4 +301,8 @@ class MeetingIntelService:
         if outcome in errors:
             if outcome == "missing": raise NotFound("meeting", meeting_id)
             raise ConflictError(errors[outcome], code=outcome)
+        # An explicit Skip is final for the summary backlog too.
+        from .meeting_backlog_service import clear_mark
+
+        clear_mark(self._db, meeting_id)
         self._broadcast_queue(); return {"success":True,"recovery":self.get_recovery(principal, meeting_id)}

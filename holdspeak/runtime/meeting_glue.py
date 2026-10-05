@@ -454,6 +454,19 @@ class MeetingGlueMixin:
                 # automatic-intelligence helper parked outside this Stop path.
                 save_payload["auto_intel_enqueued"] = False
                 save_payload["auto_intel_error"] = None
+                # Owner ruling 2026-10-05: no summary is queued here (above).
+                # A meeting saved while NO engine could summarise it is marked
+                # durably, so the summary backlog can run it once one can
+                # (services/meeting_backlog_service.py).  A record, not a job.
+                try:
+                    from ..db import get_database as _backlog_db
+                    from ..services.meeting_backlog_service import mark_if_no_engine
+
+                    save_payload["summary_deferred_no_engine"] = mark_if_no_engine(
+                        _backlog_db(), meeting_id
+                    )
+                except Exception as mark_exc:
+                    log.warning("summary backlog mark failed for %s: %s", meeting_id, mark_exc)
         except Exception as exc:
             save_error = str(exc)
             log.error(f"Failed to save meeting from web runtime: {exc}")

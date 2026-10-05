@@ -374,6 +374,52 @@ class InferenceDefaultService:
             result["status"] = "proposed" if result["proposals"] else "needs_setup"
             return result
 
+    def has_global_head(self) -> bool:
+        """True once any ``global`` head exists (set, re-picked or cleared)."""
+        return self._global_head() is not None
+
+    def rescan(self) -> dict[str, Any]:
+        """The light periodic re-scan: an engine started AFTER boot is found.
+
+        Loopback only, the same rules as boot (``scan_loopback_engines``: no
+        proxy, no redirect, a non-loopback host refused before any socket).
+        It runs only while no ``global`` head ever existed, so it never
+        touches a default the owner made or cleared, and it records no
+        proposals (proposals read LAN and cloud endpoints; boot and Detect do
+        that).  A Model Library profile is probed only when its endpoint is
+        one the scan just found answering, so an idle tick opens four
+        loopback connections and probes nothing.
+        """
+        if not self._lock.acquire(blocking=False):
+            return {"reason": "rescan", "status": "busy"}
+        try:
+            if self._global_head() is not None:
+                return {"reason": "rescan", "status": "has_default"}
+            try:
+                scanned = [c for c in self._scan() if c.get("lamp") == "local"]
+            except Exception as exc:
+                log.info("loopback rescan failed: %s", exc)
+                scanned = []
+            if not scanned:
+                return {"reason": "rescan", "status": "none"}
+            answering = {(str(c["base_url"]).rstrip("/"), str(c["model"])) for c in scanned}
+            profiles = [
+                c for c in self._local_profile_candidates()
+                if (str(c.get("endpoint", "")).rstrip("/"), str(c.get("model", ""))) in answering
+            ]
+            known = {(str(c.get("endpoint", "")).rstrip("/"), str(c.get("model", ""))) for c in profiles}
+            fresh = [
+                c for c in scanned
+                if (str(c["base_url"]).rstrip("/"), str(c["model"])) not in known
+            ]
+            for candidate in sorted(profiles + fresh, key=rank_key):
+                assigned = self._try_assign(candidate, expected_revision=0)
+                if assigned is not None:
+                    return {"reason": "rescan", "status": "assigned", "assigned": assigned}
+            return {"reason": "rescan", "status": "not_ready"}
+        finally:
+            self._lock.release()
+
     # ── candidates ───────────────────────────────────────────────────
 
     def _local_candidates(self) -> list[dict[str, Any]]:

@@ -153,6 +153,10 @@ class CalendarSourceReader:
             raise CalendarSourceError("calendar_source_disabled")
         if source.lower().startswith("https://"):
             return self._read_https(source)
+        if source.lower().startswith("eventkit:"):
+            from .macos_calendar import read_calendar_ics
+
+            return read_calendar_ics(source)
         return self._read_file(source)
 
     def _read_file(self, source: str) -> bytes:

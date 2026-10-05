@@ -43,7 +43,7 @@
       },
       {
         "created_at": null,
-        "detail": "KeyError('philo602-deliberately-absent')",
+        "detail": "not_found: NotFound('Unknown decision: philo602-deliberately-absent')",
         "id": "brief-break-pipeline-brief-philo6-00-philo6-04",
         "priority": 2,
         "section": "broke",

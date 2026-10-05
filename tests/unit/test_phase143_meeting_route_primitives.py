@@ -410,7 +410,19 @@ def test_current_route_projection_uses_its_identical_frozen_definition(
         )
 
 
-def test_service_route_policy_never_inherits_owner_global_or_group(tmp_path: Path) -> None:
+def test_service_route_policy_inherits_global_only_for_the_meeting_queue(tmp_path: Path) -> None:
+    """meeting-intel-queue@2 (owner ruling 2026-10-05): the meeting queue inherits
+    the owner's global "Default for AI work"; every other service policy stays
+    capability-only (group/global are not ambient authority for them)."""
+    from holdspeak.services.inference_service_route_policy import builtin_service_route_policy_registry
+
+    sources = {
+        definition.id: definition.assignment_sources
+        for definition in builtin_service_route_policy_registry()._definitions.values()
+    }
+    assert sources.pop("meeting-intel-queue@2") == ("capability", "group", "global")
+    assert sources and set(sources.values()) == {("capability",)}
+
     db = Database(tmp_path / "service-route-policy.db")
     capability = "meeting.deferred_analysis"
     _meeting_profile(db, "meeting-model", capability)
@@ -425,18 +437,17 @@ def test_service_route_policy_never_inherits_owner_global_or_group(tmp_path: Pat
     queue = queue_service_principal()
     with db._connection() as conn:
         conn.execute("BEGIN IMMEDIATE")
-        with pytest.raises(ValidationError) as denied:
-            plans.freeze_route_plan_for_feature_in_transaction(
-                ROUTE_PLANNING_AUTHORITY,
-                conn,
-                command_id="service-global-denied",
-                feature_principal=queue,
-                parent_kind="meeting.deferred-intel-job",
-                capability_id=capability,
-                invocation_id="job-one",
-            )
-        assert denied.value.code == "no_assignment"
-        conn.rollback()
+        inherited = plans.freeze_route_plan_for_feature_in_transaction(
+            ROUTE_PLANNING_AUTHORITY,
+            conn,
+            command_id="service-global-inherited",
+            feature_principal=queue,
+            parent_kind="meeting.deferred-intel-job",
+            capability_id=capability,
+            invocation_id="job-zero",
+        )
+        conn.commit()
+    assert inherited["source"]["inherited_from"] == "global"
 
     _assign(db, capability, "meeting-model", command="service-exact-capability")
     with db._connection() as conn:
@@ -463,7 +474,7 @@ def test_service_route_policy_never_inherits_owner_global_or_group(tmp_path: Pat
         )
     assert evidence["principal_kind"] == "service"
     assert evidence["principal_identity"] == "meeting-intel-queue"
-    assert evidence["assignment_sources"] == ["capability"]
+    assert evidence["assignment_sources"] == ["capability", "group", "global"]
 
     forged = (
         Principal(PrincipalKind.SERVICE, queue.identity, queue.allowed_operations, "wrong"),

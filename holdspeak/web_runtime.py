@@ -52,7 +52,7 @@ from .text_processor import TextProcessor
 from .transcribe import Transcriber
 from .typer import TextTyper
 from .web.runtime_support import _UnknownDeviceError
-from .web_server import MeetingWebServer, WebRuntimeCallbacks
+from .web_server import DEFAULT_WEB_PORT, MeetingWebServer, WebRuntimeCallbacks
 
 log = get_logger("web_runtime")
 
@@ -474,6 +474,10 @@ class WebRuntime(
                 ),
                 host=_configured_web_host_from_env(),
                 port=_configured_web_port_from_env(),
+                # Owner ruling 2026-10-05: a fixed default port (8765), a free
+                # port only when another process holds it.  The served port is
+                # recorded on the owner lock (_note_serving_port).
+                preferred_port=DEFAULT_WEB_PORT,
                 # HS-25-02: token exists/persists now so it is ready the moment a
                 # non-loopback bind is introduced (Phase 15); dormant on loopback.
                 auth_token=ensure_web_token(self.config),

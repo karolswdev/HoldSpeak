@@ -55,6 +55,33 @@ def _find_free_port(host: str) -> int:
         return int(sock.getsockname()[1])
 
 
+#: The hub's fixed default port (owner ruling 2026-10-05, "strong defaults").
+#: ``holdspeak doctor`` falls back to it (doctor.DEFAULT_URL), and bookmarks
+#: and MCP clients keep working across boots.  When another process holds it,
+#: the hub takes a free port and records it on the owner lock, where doctor
+#: and ``holdspeak-mcp`` read it (mcp.server.discover_hub).
+DEFAULT_WEB_PORT = 8765
+
+
+def _bind_listen_socket(host: str, preferred: int) -> socket.socket:
+    """Bind ``preferred`` on ``host``; when it is busy, bind a free port.
+
+    The hub serves on the socket bound here, so no other process can take
+    the port between this check and the listener (no check-then-bind race).
+    SO_REUSEADDR matches uvicorn's own bind: a port left in TIME_WAIT by the
+    last hub is free; a port another listener holds is busy.
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        sock.bind((host, int(preferred)))
+    except OSError:
+        log.info("Port %s is busy; the hub takes a free port.", preferred)
+        sock.bind((host, 0))
+    sock.set_inheritable(True)
+    return sock
+
+
 def _format_duration(total_seconds: float) -> str:
     """Format duration as MM:SS or HH:MM:SS."""
     total_secs = max(0, int(total_seconds))
@@ -197,6 +224,7 @@ class MeetingWebServer:
         *,
         host: str = "127.0.0.1",
         port: Optional[int] = None,
+        preferred_port: Optional[int] = None,
         auth_token: str = "",
         dictation_corrections_repository: Optional[Any] = None,
         dictation_journal_repository: Optional[Any] = None,
@@ -327,6 +355,11 @@ class MeetingWebServer:
             web_auth.generate_web_token() if web_auth.is_loopback_host(host) else ""
         )
         self._configured_port = port
+        # A port to try first when none is configured (the live hub passes
+        # DEFAULT_WEB_PORT); taken when free, else a free port.  Bare servers
+        # (tests) pass none and keep binding a free port.
+        self._preferred_port = preferred_port
+        self._listen_sockets: Optional[list[socket.socket]] = None
 
         self.port: Optional[int] = None
         self._server: Optional[Any] = None
@@ -405,7 +438,15 @@ class MeetingWebServer:
                 self.host,
             )
 
-        self.port = self._configured_port or _find_free_port(self.host)
+        self._listen_sockets = None
+        if self._configured_port:
+            self.port = self._configured_port
+        elif self._preferred_port:
+            listen = _bind_listen_socket(self.host, self._preferred_port)
+            self._listen_sockets = [listen]
+            self.port = int(listen.getsockname()[1])
+        else:
+            self.port = _find_free_port(self.host)
         from .principals import agent_credentials
 
         agent_credentials.set_hub_url(f"http://{self.host}:{self.port}")
@@ -478,6 +519,12 @@ class MeetingWebServer:
             self._thread = None
             self._loop = None
             self.port = None
+            for sock in self._listen_sockets or ():
+                try:
+                    sock.close()
+                except OSError:
+                    pass
+            self._listen_sockets = None
         self._started.clear()
         if cause is not None:
             raise RuntimeError(message) from cause
@@ -608,7 +655,10 @@ class MeetingWebServer:
     def _run_server(self) -> None:
         assert self._server is not None
         try:
-            self._server.run()
+            if self._listen_sockets:
+                self._server.run(sockets=self._listen_sockets)
+            else:
+                self._server.run()
         except BaseException as e:
             self._startup_error = e
             log.error(f"Web server failed: {e}")
@@ -1182,6 +1232,16 @@ class MeetingWebServer:
         # (mutual composition: delta needs project for create_item in
         # decide_proposal, project needs delta for room review section).
         _project_delta_service.attach_project_service(_project_service)
+        # Owner ruling 2026-10-05: the onboarding backends compose the
+        # settings and connections services above (detect + "Use it").
+        from .services.onboarding_service import OnboardingService
+
+        web_ctx.onboarding_service = OnboardingService(
+            settings_service=web_ctx.settings_service,
+            connections_service=web_ctx.connections_service,
+            jira_provider=web_ctx.jira_provider,
+            confluence_provider=web_ctx.confluence_provider,
+        )
 
         # HS-200-45 R1/R4: ONE composition root. The desk-primitive services are
         # composed HERE, once, with the ``on_changed`` hook bound to the bus --
@@ -1297,6 +1357,9 @@ class MeetingWebServer:
         mount_router(app, build_constitutional_router())
         mount_router(app, build_scheduled_recordings_router(web_ctx))
         mount_router(app, build_setup_router(web_ctx))
+        from .web.routes.onboarding import build_onboarding_router
+
+        mount_router(app, build_onboarding_router(web_ctx))
         mount_router(app, build_sync_router(web_ctx))
         mount_router(app, build_threads_router(web_ctx))
         mount_router(app, build_tts_router(web_ctx))
@@ -1469,6 +1532,17 @@ class MeetingWebServer:
                     web_ctx.inference_default_service.kick("boot")
             except Exception as e:
                 log.error(f"batteries default startup failed: {e}")
+            # The defaults watcher: an engine started after boot is found by a
+            # light loopback re-scan, and the meetings saved before any
+            # engine existed are summarised once one does.  Owner-only.
+            try:
+                from .defaults_conductor import start_defaults_conductor
+
+                start_defaults_conductor(
+                    defaults_service=web_ctx.inference_default_service,
+                )
+            except Exception as e:
+                log.error(f"defaults watcher startup failed: {e}")
             self._started.set()
             log.debug("Meeting web server startup complete")
 
@@ -1488,6 +1562,7 @@ class MeetingWebServer:
                 ("scheduled recording", "scheduled_recording_conductor.stop_scheduled_recording_conductor"),
                 ("intel queue", "intel_queue_conductor.stop_intel_queue_conductor"),
                 ("memory", "memory_conductor.stop_memory_conductor"),
+                ("defaults", "defaults_conductor.stop_defaults_conductor"),
             ):
                 module_name, _, attribute = stop.partition(".")
                 try:

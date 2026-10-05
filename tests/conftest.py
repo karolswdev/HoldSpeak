@@ -539,6 +539,20 @@ def pytest_report_header(config):
     return f"holdspeak: HOME={home}"
 
 
+def pytest_unconfigure(config):
+    """Stop the run's own tmux server and remove its socket dir (see pytest_configure)."""
+    import os
+    import shutil
+    import subprocess
+
+    tmux_dir = os.environ.get("TMUX_TMPDIR", "")
+    if not os.path.basename(tmux_dir).startswith("hs-tmux-"):
+        return
+    if shutil.which("tmux"):
+        subprocess.run(["tmux", "kill-server"], capture_output=True, timeout=10, check=False)
+    shutil.rmtree(tmux_dir, ignore_errors=True)
+
+
 def pytest_configure(config):
     """Register custom markers; isolate HOME per xdist worker."""
     # HS-132-12: under pytest-xdist every worker inherited ONE $HOME, so any
@@ -561,6 +575,18 @@ def pytest_configure(config):
         per_worker = Path(os.environ["HOME"]) / f"xdist-{worker}"
         per_worker.mkdir(parents=True, exist_ok=True)
         os.environ["HOME"] = str(per_worker)
+    # tmux finds its server by TMUX_TMPDIR (default /tmp) and $TMUX, never by
+    # HOME: an isolated HOME still listed the machine's real tmux sessions on
+    # the Delivery board, and a test's session landed on the real server. Each
+    # run (each xdist worker) gets its own socket dir. It is not under HOME: a
+    # unix socket path has a 104-byte limit on macOS, and a mktemp HOME plus
+    # xdist-gwN/tmux-UID/default is longer. Child hubs inherit it;
+    # pytest_unconfigure stops that server and removes the dir.
+    import tempfile
+
+    os.environ["TMUX_TMPDIR"] = tempfile.mkdtemp(prefix="hs-tmux-", dir="/tmp")
+    os.environ.pop("TMUX", None)
+    os.environ.pop("TMUX_PANE", None)
     config.addinivalue_line("markers", "slow: marks tests as slow-running")
     config.addinivalue_line(
         "markers", "requires_model: requires ML model to be loaded"
@@ -652,7 +678,10 @@ def missing_local_dictation_route_reason() -> str:
         )
 
         terms = _pipeline_terms(Config())
-        engine = _local_dictation_engine(str(terms.get("runtime_backend", "") or ""))
+        engine = _local_dictation_engine(
+            str(terms.get("runtime_backend", "") or ""),
+            mlx_model=str(terms.get("runtime_mlx_model", "") or ""),
+        )
     except Exception as exc:  # pragma: no cover - import-time environment fault
         return f"dictation route could not be probed: {exc}"
     if not engine:
