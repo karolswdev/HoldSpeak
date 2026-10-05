@@ -54,3 +54,50 @@ class MemoryService:
                 ).to_dict()
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
+
+    def observations(
+        self,
+        principal: Principal,
+        *,
+        project_id: str | None = None,
+        scope: str | None = None,
+        state: str | None = None,
+        limit: int | None = 50,
+    ) -> dict[str, Any]:
+        """Observations (MEMORY-DESIGN.md §3.3): beliefs with their live
+        evidence and history.  A read: no model call, no write.  ``scope``
+        ``desk`` reads the desk's own; ``project_id`` one project's; neither,
+        every scope.  ``state`` is ``current``, ``disputed`` or
+        ``superseded`` (default: all three).  Nothing here comes from the
+        People store: memory admits no People kind."""
+        if not principal.permits(PrincipalRight.READ):
+            status = 401 if principal.kind is PrincipalKind.NONE else 403
+            raise ServiceError(
+                "read_forbidden",
+                "principal does not permit memory reads",
+                context={"status": status, "response": refusal(principal, PrincipalRight.READ)},
+            )
+        from ..memory.consolidate import SERVED_STATES, read_observations
+
+        chosen = str(scope or "").strip().lower()
+        if chosen not in ("", "desk", "project"):
+            raise ValidationError("scope must be desk or project")
+        if chosen == "project" and not str(project_id or "").strip():
+            raise ValidationError("scope project needs a project_id")
+        states = SERVED_STATES
+        if state:
+            states = tuple(part.strip().lower() for part in str(state).split(",") if part.strip())
+            if not states or set(states) - set(SERVED_STATES):
+                raise ValidationError("state must be current, disputed or superseded")
+        try:
+            bounded = 50 if limit is None else int(limit)
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("limit must be a number") from exc
+        rows = read_observations(
+            self._db,
+            project_id=str(project_id or "").strip() or None,
+            desk=chosen == "desk",
+            states=states,
+            limit=max(1, min(bounded, 200)),
+        )
+        return {"observations": rows, "count": len(rows)}

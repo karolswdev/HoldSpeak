@@ -1309,6 +1309,43 @@ KERNEL_RECEIPT_READ = OperationDescriptor(
     admission=_EXEMPT_READ,
 )
 
+# ── Memory slice 4: observations, read (MEMORY-DESIGN.md §3.3, §5) ────────
+
+MEMORY_OBSERVATIONS_READ = OperationDescriptor(
+    name="memory.observations.read",
+    version=1,
+    description=(
+        "Read memory's observations: beliefs made from facts, each with its state (current, disputed, "
+        "superseded), proof count, the live evidence refs and the history. Read only."
+    ),
+    args_schema={
+        "type": "object",
+        "properties": {
+            "project_id": {"type": ["string", "null"], "description": "Project ID: that project's observations."},
+            "scope": {"type": ["string", "null"], "enum": ["desk", "project", None],
+                      "description": "desk: the observations of no project."},
+            "state": {"type": ["string", "null"],
+                      "description": "current, disputed or superseded; comma list. Default: all three."},
+            "limit": {"type": ["integer", "null"], "minimum": 1, "maximum": 200,
+                      "description": "Maximum; default 50."},
+        },
+        "additionalProperties": False,
+    },
+    principal="derived by the transport; the memory service needs the READ right",
+    effect="read",
+    result=(
+        "{observations: [{id, scope: {kind, id}, text, state, superseded_by, proof_count, first_seen, last_seen, "
+        "boundary, evidence: [{ref, opens, stance, fact}], history: [{at, prior_state, reason, prior_text or null, "
+        "withheld}]}], count}"
+    ),
+    refusals=_CONTRACT_REFUSALS + ("ServiceError read_forbidden", "ValidationError: a bad scope, state or limit"),
+    completion="synchronous; no kernel operation is made; no model call",
+    exposure=("mcp:memory.observations",),
+    service="memory_service",
+    method="observations",
+    admission=_EXEMPT_READ,
+)
+
 # ── PHILO-9-01: the Room on the contract ──────────────────────────────────
 #
 # One explicit row per Room operation (the Phase 7 settled method): the
@@ -2096,7 +2133,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     KB_CREATE, KB_READ, KB_UPDATE, KB_DELETE, KB_LIST,
     ZONE_FILE, ZONE_UNFILE, ZONE_MEMBERS, KB_MEMBER_ADD, KB_MEMBER_REMOVE, KB_MEMBERS,
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
-    KERNEL_RECEIPT_READ,
+    KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ,
 ) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.

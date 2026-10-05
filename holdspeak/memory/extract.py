@@ -32,7 +32,7 @@ from datetime import datetime
 from typing import Any, Callable, Optional, Protocol
 
 from ..logging_config import get_logger
-from .defense import redact
+from .defense import redact, redact_clip
 from .entities import entity_kind, fold, is_name
 
 log = get_logger("memory.extract")
@@ -243,7 +243,13 @@ def _schema_error(item: Any) -> str:
     for entity in item["entities"]:
         if not isinstance(entity, dict) or set(entity) != _ENTITY_KEYS:
             return "an entity is not {name, kind}"
-        if not isinstance(entity["name"], str) or entity["kind"] not in _ENTITY_KINDS:
+        # A kind that is not a string (a list, an object) is a bad entry, not
+        # a crash: an unhashable value would raise TypeError on the set test.
+        if (
+            not isinstance(entity["name"], str)
+            or not isinstance(entity["kind"], str)
+            or entity["kind"] not in _ENTITY_KINDS
+        ):
             return "an entity has a bad name or kind"
     return ""
 
@@ -267,12 +273,14 @@ def validate_output(raw: Any) -> list[dict[str, Any]]:
             raise ExtractionOutputError(reason)
     facts: list[dict[str, Any]] = []
     for item in raw["facts"][:MAX_FACTS_PER_CHUNK]:
-        text = redact(_clip(item["text"], FACT_TEXT_CHARS))
+        # Redact the raw text, fold, redact, then cut on a word: a cut never
+        # breaks a secret's shape (defense.redact_clip).
+        text = redact_clip(item["text"], FACT_TEXT_CHARS)
         entities: list[dict[str, str]] = []
         seen: set[tuple[str, str]] = set()
         for entity in item["entities"]:
             name = _clip(entity["name"], 120)
-            if not is_name(name) or redact(name) != name:
+            if not is_name(name) or redact(name) != name or redact(entity["name"]) != entity["name"]:
                 continue
             kind = entity_kind(entity["kind"])
             key = (kind, fold(name))
@@ -285,9 +293,9 @@ def validate_output(raw: Any) -> list[dict[str, Any]]:
         facts.append({
             "text": text,
             "kind": item["kind"],
-            "subject": redact(_clip(item["subject"])),
-            "predicate": redact(_clip(item["predicate"], 120)) or "states",
-            "object": redact(_clip(item["object"])),
+            "subject": redact_clip(item["subject"], FACT_FIELD_CHARS),
+            "predicate": redact_clip(item["predicate"], 120) or "states",
+            "object": redact_clip(item["object"], FACT_FIELD_CHARS),
             "occurred_start": _when(item["occurred_start"]),
             "occurred_end": _when(item["occurred_end"]),
             "confidence": _confidence(item["confidence"]),
@@ -517,9 +525,14 @@ def extract_pending(
     max_calls: Optional[int] = None,
     should_stop: Optional[Callable[[], bool]] = None,
     yield_check: Optional[Callable[[], str]] = None,
+    budget: Optional[CallBudget] = None,
 ) -> dict[str, Any]:
     """Run the extract jobs that wait, newest source first (the backlog runs
     oldest-last).
+
+    ``budget`` is the pass's shared call budget (the conductor gives one
+    budget to extraction and consolidation, and reads its count even when
+    this raises); with none, a budget of ``max_calls`` is made here.
 
     ``max_calls`` bounds the engine calls of one pass, counted before EVERY
     call (a bad answer counts too).  ``yield_check`` gives a reason to stop
@@ -529,7 +542,8 @@ def extract_pending(
     written stay, and no source is charged.
     """
     index = db.memory_index
-    budget = CallBudget(max_calls)
+    budget = budget if budget is not None else CallBudget(max_calls)
+    start = budget.calls
     stats: dict[str, Any] = {
         "sources": 0, "facts": 0, "calls": 0, "failed": 0, "skipped": 0,
         "more": 0, "yielded": "", "stopped": 0,
@@ -564,7 +578,7 @@ def extract_pending(
             else:
                 stats["skipped"] += 1
     finally:
-        stats["calls"] = budget.calls
+        stats["calls"] = budget.calls - start
     return stats
 
 

@@ -32,10 +32,36 @@ TOOLS: list[dict[str, Any]] = [
 ]
 
 
+def _observations_tool() -> dict[str, Any]:
+    """``memory.observations`` IS its declared operation
+    (``memory.observations.read``): one schema, one set of words."""
+    import copy
+
+    from holdspeak.operations import MEMORY_OBSERVATIONS_READ as descriptor
+
+    schema = copy.deepcopy(dict(descriptor.args_schema))
+    schema["$id"] = f"holdspeak://mcp/memory.observations@{descriptor.version}"
+    return {"name": "memory.observations", "description": descriptor.description, "inputSchema": schema}
+
+
+TOOLS.append(_observations_tool())
+
+
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Route a tool call.  Raises LookupError for unowned names."""
-    if name != "memory.search":
+    if name not in ("memory.search", "memory.observations"):
         raise LookupError(name)
+
+    if name == "memory.observations":
+        from holdspeak import operations
+
+        ops = operations.for_runtime(
+            memory_service=lambda: runtime_service(
+                "memory_service",
+                lambda: MemoryService(db=db_or(get_database), observer=observer_or(get_observer)),
+            ),
+        )
+        return ops.invoke(principal, "memory.observations.read", dict(arguments or {}))
 
     svc = MemoryService(db=db_or(get_database), observer=observer_or(get_observer))
 

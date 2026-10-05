@@ -383,6 +383,9 @@ class MemoryIndexRepository(BaseRepository):
         """ONE transaction: write the source's new facts, resolve their
         entities, retire its old facts and stamp the ledger.
 
+        A fact read again from changed text, or a retired fact that comes
+        back, waits for consolidation again (``consolidated_at`` cleared).
+
         The old facts serve recall until this commits.  An old fact that no
         later step has used (no ``consolidated_at``) is removed; a used one
         is kept as ``retired``.  Returns False, and writes nothing, when the
@@ -438,7 +441,11 @@ class MemoryIndexRepository(BaseRepository):
                          object_text=excluded.object_text,occurred_start=excluded.occurred_start,
                          occurred_end=excluded.occurred_end,mentioned_at=excluded.mentioned_at,
                          confidence=excluded.confidence,
-                         extractor_version=excluded.extractor_version,state='live'""",
+                         extractor_version=excluded.extractor_version,state='live',
+                         consolidated_at=CASE WHEN memory_facts.state='live'
+                           AND memory_facts.chunk_sha=excluded.chunk_sha
+                           AND memory_facts.anchor=excluded.anchor
+                           THEN memory_facts.consolidated_at ELSE NULL END""",
                     (
                         str(fact["id"]), source_ref, str(fact["chunk_id"]), fact["kind"],
                         fact["text"], subject, fact["predicate"], obj, fact["object"],
@@ -585,6 +592,330 @@ class MemoryIndexRepository(BaseRepository):
             ).fetchall()
         return [dict(row) for row in rows]
 
+    # ── observations (MEMORY-DESIGN.md §3.3, slice 4) ───────────────
+
+    def has_observations(self) -> bool:
+        with self._connection() as conn:
+            return conn.execute(
+                "SELECT 1 FROM memory_observations WHERE state<>'retired' LIMIT 1"
+            ).fetchone() is not None
+
+    @staticmethod
+    def _history(
+        conn: sqlite3.Connection,
+        observation_id: str,
+        at: str,
+        reason: str,
+        fact_ids: Sequence[str],
+        *,
+        prior_text: str,
+        prior_state: str,
+        prior_version: Optional[int],
+    ) -> None:
+        """Append one history row: the text and state before a change, the
+        version that text is, and the facts of the change.  Append only."""
+        conn.execute(
+            "INSERT INTO memory_observation_history"
+            "(observation_id,at,prior_text,prior_state,reason,fact_ids_json,prior_version)"
+            " VALUES (?,?,?,?,?,?,?)",
+            (observation_id, at, prior_text, prior_state, reason, json.dumps(sorted(fact_ids)), prior_version),
+        )
+
+    @staticmethod
+    def _back(
+        conn: sqlite3.Connection, observation_id: str, version: int, facts: Sequence[dict[str, Any]], kind: str
+    ) -> None:
+        """One backing group for one version: these facts, all of them."""
+        count = conn.execute(
+            "SELECT count(DISTINCT grp) FROM memory_observation_backing WHERE observation_id=? AND version=?",
+            (observation_id, int(version)),
+        ).fetchone()[0]
+        group = f"{kind}{int(count) + 1}"
+        conn.executemany(
+            "INSERT OR IGNORE INTO memory_observation_backing(observation_id,version,grp,fact_id)"
+            " VALUES (?,?,?,?)",
+            [(observation_id, int(version), group, str(f["id"])) for f in facts],
+        )
+
+    @staticmethod
+    def _version(conn: sqlite3.Connection, observation_id: str, text: str, at: str) -> int:
+        """Append the next text version; returns its number."""
+        last = conn.execute(
+            "SELECT COALESCE(MAX(version),0) FROM memory_observation_versions WHERE observation_id=?",
+            (observation_id,),
+        ).fetchone()[0]
+        number = int(last) + 1
+        conn.execute(
+            "INSERT INTO memory_observation_versions(observation_id,version,text,at) VALUES (?,?,?,?)",
+            (observation_id, number, text, at),
+        )
+        return number
+
+    @staticmethod
+    def _add_evidence(
+        conn: sqlite3.Connection, observation_id: str, facts: Sequence[dict[str, Any]], stance: str, at: str
+    ) -> None:
+        """Link each fact to the observation, with the chunk it was read
+        from.  The same fact again (read from new text by a later job) takes
+        the new chunk: only a job that read that text adds it."""
+        conn.executemany(
+            """INSERT INTO memory_observation_evidence
+                 (observation_id,fact_id,stance,added_at,source_ref,chunk_id,chunk_sha,anchor)
+               VALUES (?,?,?,?,?,?,?,?)
+               ON CONFLICT(observation_id,fact_id) DO UPDATE SET stance=excluded.stance,
+                 added_at=excluded.added_at,source_ref=excluded.source_ref,
+                 chunk_id=excluded.chunk_id,chunk_sha=excluded.chunk_sha,anchor=excluded.anchor""",
+            [
+                (
+                    observation_id, str(f["id"]), stance, at, str(f["source_ref"]),
+                    str(f["chunk_id"]), str(f["chunk_sha"]), str(f.get("anchor") or ""),
+                )
+                for f in facts
+            ],
+        )
+
+    @staticmethod
+    def _recount_proof(conn: sqlite3.Connection, observation_ids: Iterable[str]) -> None:
+        for observation in set(observation_ids):
+            conn.execute(
+                "UPDATE memory_observations SET proof_count=(SELECT count(*) FROM"
+                " memory_observation_evidence WHERE observation_id=? AND stance='supports')"
+                " WHERE id=?",
+                (observation, observation),
+            )
+
+    def write_observations(
+        self,
+        *,
+        scope: tuple[str, str],
+        facts: Sequence[dict[str, Any]],
+        observations: Sequence[dict[str, Any]],
+        answer: dict[str, list[dict[str, Any]]],
+        boundary: str,
+        version: int,
+        still_live: Optional[Any] = None,
+        input_sha: Optional[str] = None,
+    ) -> bool:
+        """ONE transaction: apply a checked consolidate answer and mark every
+        input fact read.
+
+        ``answer`` is ``consolidate.validate_output``'s result (positions
+        into ``facts`` and ``observations``).  Effects (§3.3):
+
+        * create: a new ``current`` observation with its facts as evidence.
+        * supports: add evidence.
+        * refines: the prior text to history; the new text; add evidence.
+        * supersedes: a new ``current`` observation; the old one to history,
+          ``superseded``, ``superseded_by`` the new one.  It stays readable.
+        * contradicts: a new observation with the facts; both ``disputed``;
+          the facts are ``contradicts`` evidence on the old one.
+
+        Takes the write lock first, then ``still_live(conn)`` checks every
+        input again.  Returns False, and writes nothing, when an input moved
+        while the engine ran.
+        """
+        from ..memory.consolidate import observation_id
+
+        scope_kind, scope_id = scope
+        with self._connection() as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
+            if still_live is not None and not still_live(conn):
+                return False
+            at = _now()
+            touched: set[str] = set()
+
+            def seen(chosen: Sequence[dict[str, Any]]) -> tuple[Optional[str], Optional[str]]:
+                days = sorted(
+                    str(f.get("occurred_start") or f.get("mentioned_at") or "")
+                    for f in chosen if f.get("occurred_start") or f.get("mentioned_at")
+                )
+                return (days[0], days[-1]) if days else (None, None)
+
+            def create(text: str, chosen: list[dict[str, Any]], state: str) -> str:
+                keys = [f"{f['id']}@{f['chunk_sha']}" for f in chosen]
+                new_id = observation_id(scope, text, keys)
+                exists = conn.execute(
+                    "SELECT state FROM memory_observations WHERE id=?", (new_id,)
+                ).fetchone()
+                # A retired observation never comes back: the same belief read
+                # again from live text is a new observation.
+                generation = 0
+                while exists is not None and exists["state"] == "retired":
+                    generation += 1
+                    new_id = observation_id(scope, text, [*keys, f"#{generation}"])
+                    exists = conn.execute(
+                        "SELECT state FROM memory_observations WHERE id=?", (new_id,)
+                    ).fetchone()
+                first, last = seen(chosen)
+                if exists is None:
+                    conn.execute(
+                        """INSERT INTO memory_observations(id,scope_kind,scope_id,text,state,
+                             proof_count,first_seen,last_seen,boundary,consolidator_version,updated_at)
+                           VALUES (?,?,?,?,?,0,?,?,?,?,?)""",
+                        (new_id, scope_kind, scope_id, text, state, first, last, boundary,
+                         int(version), at),
+                    )
+                    number = self._version(conn, new_id, text, at)
+                else:
+                    number = int(conn.execute(
+                        "SELECT MAX(version) FROM memory_observation_versions WHERE observation_id=?",
+                        (new_id,),
+                    ).fetchone()[0] or self._version(conn, new_id, text, at))
+                self._back(conn, new_id, number, chosen, "i")
+                self._add_evidence(conn, new_id, chosen, "supports", at)
+                touched.add(new_id)
+                return new_id
+
+            def widen(observation: str, chosen: list[dict[str, Any]]) -> None:
+                first, last = seen(chosen)
+                if first is None:
+                    return
+                conn.execute(
+                    "UPDATE memory_observations SET"
+                    " first_seen=CASE WHEN first_seen IS NULL OR first_seen>? THEN ? ELSE first_seen END,"
+                    " last_seen=CASE WHEN last_seen IS NULL OR last_seen<? THEN ? ELSE last_seen END"
+                    " WHERE id=?",
+                    (first, first, last, last, observation),
+                )
+
+            for item in answer["creates"]:
+                create(item["text"], [facts[i] for i in item["facts"]], "current")
+            for item in answer["updates"]:
+                shown = observations[item["observation"]]
+                old = str(shown["id"])
+                # The version the engine was shown (``scope_observations``):
+                # a supports backs it; a change records it as the prior text.
+                prior = {"prior_text": str(shown["text"]), "prior_state": str(shown["state"]),
+                         "prior_version": int(shown["version"])}
+                chosen = [facts[i] for i in item["facts"]]
+                ids = [str(f["id"]) for f in chosen]
+                relation = item["relation"]
+                if relation == "supports":
+                    self._back(conn, old, int(shown["version"]), chosen, "s")
+                    self._add_evidence(conn, old, chosen, "supports", at)
+                    widen(old, chosen)
+                    conn.execute(
+                        "UPDATE memory_observations SET updated_at=?,boundary=? WHERE id=?",
+                        (at, boundary, old),
+                    )
+                elif relation == "refines":
+                    self._history(conn, old, at, f"refines: {item['reason']}", ids, **prior)
+                    number = self._version(conn, old, item["text"], at)
+                    self._back(conn, old, number, chosen, "i")
+                    conn.execute(
+                        "UPDATE memory_observations SET text=?,updated_at=?,boundary=?,"
+                        "consolidator_version=? WHERE id=?",
+                        (item["text"], at, boundary, int(version), old),
+                    )
+                    self._add_evidence(conn, old, chosen, "supports", at)
+                    widen(old, chosen)
+                elif relation == "supersedes":
+                    new_id = create(item["text"], chosen, "current")
+                    self._history(conn, old, at, f"superseded by {new_id}: {item['reason']}", ids, **prior)
+                    conn.execute(
+                        "UPDATE memory_observations SET state='superseded',superseded_by=?,"
+                        "updated_at=? WHERE id=?",
+                        (new_id, at, old),
+                    )
+                else:  # contradicts, with no clear winner: both disputed
+                    new_id = create(item["text"], chosen, "disputed")
+                    self._history(conn, old, at, f"disputed by {new_id}: {item['reason']}", ids, **prior)
+                    conn.execute(
+                        "UPDATE memory_observations SET state='disputed',updated_at=? WHERE id=?",
+                        (at, old),
+                    )
+                    self._add_evidence(conn, old, chosen, "contradicts", at)
+                touched.add(old)
+            self._recount_proof(conn, touched)
+            conn.executemany(
+                "UPDATE memory_facts SET consolidated_at=? WHERE id=?",
+                [(at, str(f["id"])) for f in facts],
+            )
+            # Only this batch's back-off row: a batch of the scope that failed
+            # for good stays failed (passed over), never tried again here.
+            conn.execute(
+                "DELETE FROM memory_jobs WHERE kind='consolidate' AND target=? AND input_sha=?",
+                (f"project:{scope_id}" if scope_kind == "project" else "desk", str(input_sha or "")),
+            )
+            self._bump(conn)
+        return True
+
+    def refresh_observations(self) -> dict[str, int]:
+        """Retire each observation no version of which is backed by live
+        evidence now (``consolidate.served``; a history row first) and set
+        every other one's ``proof_count`` to the live facts that back its
+        served version.  ONE transaction.  One row read when
+        memory holds no observation that is not retired."""
+        from ..memory.consolidate import LiveText, ScopeReader, served
+
+        out = {"retired": 0, "checked": 0}
+        with self._connection() as conn:
+            if conn.execute(
+                "SELECT 1 FROM memory_observations WHERE state<>'retired' LIMIT 1"
+            ).fetchone() is None:
+                return out
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
+            rows = [
+                dict(r) for r in conn.execute(
+                    "SELECT id,scope_kind,scope_id,state,proof_count FROM memory_observations"
+                    " WHERE state<>'retired' ORDER BY id"
+                )
+            ]
+            views = served(conn, rows, live=LiveText(conn), scopes=ScopeReader(conn))
+            at = _now()
+            changed = False
+            for row in rows:
+                out["checked"] += 1
+                view = views[str(row["id"])]
+                held = view["facts"] if view else set()
+                if not held:
+                    # No text: a retire row carries none (the versions hold it).
+                    self._history(conn, str(row["id"]), at, "retired: no live evidence", [],
+                                  prior_text="", prior_state=str(row["state"]), prior_version=None)
+                    conn.execute(
+                        "UPDATE memory_observations SET state='retired',proof_count=0,updated_at=?"
+                        " WHERE id=?",
+                        (at, str(row["id"])),
+                    )
+                    out["retired"] += 1
+                    changed = True
+                elif len(held) != int(row["proof_count"]):
+                    conn.execute(
+                        "UPDATE memory_observations SET proof_count=? WHERE id=?",
+                        (len(held), str(row["id"])),
+                    )
+                    changed = True
+            if changed:
+                self._bump(conn)
+        return out
+
+    def observation_rows(
+        self,
+        *,
+        scope: Optional[tuple[str, str]] = None,
+        states: Sequence[str] = ("current", "disputed", "superseded"),
+    ) -> list[dict[str, Any]]:
+        """The stored observations of ``states`` (one scope, or every scope),
+        newest first.  The CALLER checks liveness before it serves one."""
+        with self._connection() as conn:
+            return [
+                dict(r) for r in conn.execute(
+                    "SELECT id,scope_kind,scope_id,text,state,superseded_by,proof_count,first_seen,"
+                    "last_seen,boundary,consolidator_version,updated_at FROM memory_observations"
+                    " WHERE state IN (SELECT value FROM json_each(?))"
+                    " AND (? IS NULL OR (scope_kind=? AND scope_id=?))"
+                    " ORDER BY COALESCE(last_seen,'') DESC,id",
+                    (
+                        json.dumps(list(states)),
+                        None if scope is None else 1,
+                        scope[0] if scope else "",
+                        scope[1] if scope else "",
+                    ),
+                )
+            ]
+
     # ── maintenance ──────────────────────────────────────────────────
 
     def clear(self) -> None:
@@ -613,6 +944,8 @@ class MemoryIndexRepository(BaseRepository):
                 "vectors": int(conn.execute("SELECT count(*) FROM memory_embeddings").fetchone()[0]),
                 "facts": int(conn.execute("SELECT count(*) FROM memory_facts WHERE state='live'").fetchone()[0]),
                 "entities": int(conn.execute("SELECT count(*) FROM memory_entities").fetchone()[0]),
+                "observations": int(conn.execute(
+                    "SELECT count(*) FROM memory_observations WHERE state<>'retired'").fetchone()[0]),
             }
 
 

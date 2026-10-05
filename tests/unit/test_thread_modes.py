@@ -121,7 +121,9 @@ class TestAllowLists:
         # #694 (the owner's ruling): connection.recheck is WORK (a read of his
         # connection), so Desk keeps it (mcp/tool_authority.py).
         assert "connection.recheck" in _DESK_TOOLS
-        assert len(_DESK_TOOLS) == 68
+        # Memory slice 4: + memory.observations (evidence_read).
+        assert "memory.observations" in _DESK_TOOLS
+        assert len(_DESK_TOOLS) == 69
 
     def test_chase_size(self) -> None:
         # Chase includes door.add_item which is a forward reference
@@ -132,7 +134,8 @@ class TestAllowLists:
         # PHILO-5-02 + PHILO-7-02: + monday_brief.shelf_read, kernel.receipt (via Desk).
         # #694: unchanged; people.note.create is WORK and stays (the ruling).
         assert "people.note.create" in _CHASE_TOOLS
-        assert len(_CHASE_TOOLS) == 74
+        # Memory slice 4: + memory.observations (via Desk).
+        assert len(_CHASE_TOOLS) == 75
 
     def test_draft_empty(self) -> None:
         assert len(_DRAFT_TOOLS) == 0

@@ -680,6 +680,11 @@
       "story": "PHILO-10-01",
       "tool": "channel.sends",
       "operation": "channel.sends"
+    },
+    {
+      "story": "MEMORY-4",
+      "tool": "memory.observations",
+      "operation": "memory.observations.read"
     }
   ],
   "moved": [
