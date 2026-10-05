@@ -281,3 +281,151 @@ def test_the_five_relation_questions_pass_with_recorded_real_facts(desk, capsys)
     assert held >= total - 1
     for name in ("same_word", "paraphrase"):
         assert after_other["groups"][name]["recall@5"] >= before_other["groups"][name]["recall@5"]
+
+
+# ── the hard relation questions: only the entity walk answers them ──────
+
+#: The walk must find the first expected source in the top 5 for at least
+#: this share of the hard questions (keyword alone: 0.0 by construction).
+HARD_WALK_GATE = 0.85
+
+
+def _hard_desk(tmp_path: Path):
+    from .corpus import build_hard_corpus
+
+    db = Database(tmp_path / "hard.db")
+    refs = build_corpus(db)
+    refs.update(build_hard_corpus(db))
+    sweep(db)
+    return db, refs
+
+
+def _walk_alone(db, question) -> list[str]:
+    from holdspeak.db.memory import _VALID_KINDS
+
+    walked = db.memory._entity_rows(
+        question["q"], selected=tuple(_VALID_KINDS), project=question.get("project"),
+        start=None, end=None, excluded=set(),
+    )
+    return list(dict.fromkeys(row["source_ref"].split("#", 1)[0] for row in walked or []))
+
+
+def test_hard_relation_questions_need_the_entity_walk(tmp_path: Path, capsys) -> None:
+    """Questions that share no searchable word with the sources that answer
+    them: the name is only in a meeting or thread title (the keyword index
+    does not read titles of those kinds) or in another source (an alias,
+    "T. Wierzbicki" against "Tomasz Wierzbicki").  Keyword search finds none
+    of them; the entity walk over the facts the real model gave
+    (``relation_hard_facts.json``) finds them.  If the walk is gone from
+    fusion, this test fails.
+
+    Vectors find them too (measured 2026-10-04: recall@5 1.000, MRR 0.889):
+    the chunker puts the title in front of every chunk, so the vector reads
+    the name the extractor reads.  With vectors on, the walk lifts the rank
+    (MRR 1.000): r14 "Jane Whitfield want" has a-research first by vector."""
+    from holdspeak.memory.extract import extract_pending
+
+    from .engines import FixtureExtractor
+
+    db, refs = _hard_desk(tmp_path)
+    hard = bench.load_hard_relation_questions()
+    assert len(hard) == 9
+
+    keyword = bench.run(db, refs, questions=hard)
+    embedder = FixtureEmbedder(bench.FIXTURE, bench.HARD_VECTORS)
+    embed_pending(db, embedder)
+    db.memory.set_embedder(embedder)
+    vectors = bench.run(db, refs, questions=hard)
+    db.memory.set_embedder(None)
+
+    engine = FixtureExtractor(bench.FACTS, bench.HARD_FACTS)
+    stats = extract_pending(db, engine)
+    assert stats["sources"] == len(refs) and stats["facts"] > 0
+    walk = bench.run(db, refs, questions=hard)
+    db.memory.set_embedder(embedder)
+    walk_vectors = bench.run(db, refs, questions=hard)
+
+    with capsys.disabled():
+        print()
+        print(bench.table("hard relation: keyword only (no facts, no vectors)", keyword))
+        print(bench.table(f"hard relation: keyword + vectors ({embedder.model_id}), no facts", vectors))
+        print(bench.table(f"hard relation: keyword + entity walk ({engine.model_id} facts)", walk))
+        print(bench.table("hard relation: keyword + vectors + entity walk", walk_vectors))
+        names = {ref: label for label, ref in refs.items()}
+        for question in hard:
+            print(
+                f"  {question['id']} {question['q']!r}\n"
+                f"      vectors, no facts: {[names[ref] for ref in vectors['ranked'][question['id']][:5]]}\n"
+                f"      keyword + walk:    {[names[ref] for ref in walk['ranked'][question['id']][:5]]}\n"
+                f"      walk alone:        {[names[ref] for ref in _walk_alone(db, question)[:5]]}"
+            )
+
+    group = "relation_hard"
+    # By construction no question shares a searchable word with a source it
+    # expects, so keyword search finds none of them.
+    assert keyword["groups"][group]["recall@5"] == 0.0
+    assert walk["groups"][group]["recall@5"] >= HARD_WALK_GATE
+    # Measured 2026-10-04: 8 of 9 complete; r11 misses n-supplier, because
+    # "T. Wierzbicki" does not join "Tomasz Wierzbicki" (see the xfail below).
+    assert walk["groups"][group]["complete@5"] >= 8 / 9 - 0.001
+    assert walk_vectors["groups"][group]["recall@5"] >= HARD_WALK_GATE
+    assert walk_vectors["groups"][group]["mrr"] > vectors["groups"][group]["mrr"]
+
+
+def test_hard_relation_names_stay_apart(tmp_path: Path) -> None:
+    """The negative: "John Whitfield" and "Jane Whitfield" are two entities
+    (the per-token guard), and each question ranks its own person first in
+    the walk."""
+    from holdspeak.memory.entities import fold
+    from holdspeak.memory.extract import extract_pending
+
+    from .engines import FixtureExtractor
+
+    db, refs = _hard_desk(tmp_path)
+    extract_pending(db, FixtureExtractor(bench.FACTS, bench.HARD_FACTS))
+    _generation, entities = db.memory_index.entities()
+    people = {
+        str(entity["id"]): {str(entity["name_key"])} | {fold(alias) for alias in json.loads(entity["aliases_json"] or "[]")}
+        for entity in entities if entity["kind"] == "person"
+    }
+    john = [entity for entity, names in people.items() if "john whitfield" in names]
+    jane = [entity for entity, names in people.items() if "jane whitfield" in names]
+    assert len(john) == 1 and len(jane) == 1 and john != jane, people
+
+    by_id = {question["id"]: question for question in bench.load_hard_relation_questions()}
+    jane_walk = _walk_alone(db, by_id["r14"])
+    assert jane_walk[0] == refs["m-jane-w"], jane_walk
+    for label in by_id["r14"]["reject"]:
+        assert refs[label] not in jane_walk[:1]
+        if refs[label] in jane_walk:
+            assert jane_walk.index(refs[label]) > jane_walk.index(refs["m-jane-w"])
+    john_walk = _walk_alone(db, by_id["r13"])
+    assert john_walk[0] == refs["m-john-w"], john_walk
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "Gap, measured 2026-10-04: 'T. Wierzbicki' (n-supplier) stays its own entity. "
+    "Resolver score 0.585 < 0.6: name 0.5 x 0.83, no shared neighbour (the model "
+    "lists 'sensor batch' on the note's fact but not on Tomasz's fact), time 0.2 x 6/7 "
+    "(seen 2026-09-23 against 2026-09-24). On the same day it would join (0.614)."
+))
+def test_hard_relation_alias_joins_the_full_name(tmp_path: Path) -> None:
+    """r11: the question says "Tomasz"; n-supplier says only "T. Wierzbicki";
+    the full name is only in m-corvid's title.  The walk reaches n-supplier
+    only when the two mentions are one entity."""
+    from holdspeak.memory.entities import fold
+    from holdspeak.memory.extract import extract_pending
+
+    from .engines import FixtureExtractor
+
+    db, refs = _hard_desk(tmp_path)
+    extract_pending(db, FixtureExtractor(bench.FACTS, bench.HARD_FACTS))
+    _generation, entities = db.memory_index.entities()
+    tomasz = [
+        {str(entity["name_key"])} | {fold(alias) for alias in json.loads(entity["aliases_json"] or "[]")}
+        for entity in entities
+        if entity["kind"] == "person" and "wierzbicki" in str(entity["name_key"])
+    ]
+    assert tomasz == [{"tomasz wierzbicki", "t wierzbicki"}], tomasz
+    r11 = next(question for question in bench.load_hard_relation_questions() if question["id"] == "r11")
+    assert refs["n-supplier"] in _walk_alone(db, r11)
