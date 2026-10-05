@@ -619,3 +619,34 @@ def test_promotion_memory_never_carries_the_decision_under_another_name(rig):
     assert str(record["id"]) not in block
     assert str(adr["id"]) not in block
     assert "use record-backed decisions" not in block.casefold()
+
+
+def test_a_review_made_before_the_story_joined_the_identity_still_replays(rig, tmp_path, monkeypatch):
+    """Astra on #867 (P2): a review made by the base branch (its identity had no
+    story) replays when the story is unchanged; an edited story is a new run."""
+    from holdspeak.web.routes import delivery_prs
+
+    _decide(rig, "Adopt quorumdb for the ledger", "We adopt quorumdb for the ledger.")
+    review = _ReviewRig(rig, tmp_path, monkeypatch)
+    review.linked = [{"ref": "file:story-02-ledger.md", "revision": "r1",
+                      "text": "Story 02: move the ledger."}]
+    # The base branch's route: the identity leaves the story out.
+    with monkeypatch.context() as base:
+        base.setattr(delivery_prs, "_legacy_review_matches", lambda *_args: True)
+        legacy = review.post()
+    assert legacy.status_code == 200, legacy.text
+    assert len(review.engine.prompts) == 1
+
+    # This branch, identical material: the legacy review replays.
+    again = review.post()
+    assert again.status_code == 200, again.text
+    assert again.json()["artifact_id"] == legacy.json()["artifact_id"]
+    assert len(review.engine.prompts) == 1
+
+    # An edited story: a new run with its own artifact.
+    review.linked = [{"ref": "file:story-02-ledger.md", "revision": "r2",
+                      "text": "Story 02: move the ledger. EDITED."}]
+    edited = review.post()
+    assert edited.status_code == 200, edited.text
+    assert edited.json()["artifact_id"] != legacy.json()["artifact_id"]
+    assert len(review.engine.prompts) == 2

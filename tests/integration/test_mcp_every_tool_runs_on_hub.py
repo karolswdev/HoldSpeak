@@ -57,6 +57,9 @@ if sys.argv[2] == "slow":  # ask.run (a long tool) takes 8 s; every other tool i
             if name == "ask.run":
                 time.sleep(8)
                 return {"slept": 8}
+            if name == "workbench.run":  # a long tool with a key
+                time.sleep(3)
+                return {"slept": 3}
             return real(name, *args, **kwargs)
         return wrapped
 
@@ -298,3 +301,42 @@ def test_a_long_tool_does_not_hold_the_others(tmp_path: Path) -> None:
     assert status == 200 and "result" in answer, answer
     assert waited < 4, f"desk.list waited {waited:.1f} s behind ask.run"
     assert long_answer and long_answer[0][0] == 200, long_answer
+
+
+@pytest.mark.timeout(300)
+def test_long_tools_on_one_key_run_one_at_a_time_and_on_two_keys_in_parallel(tmp_path: Path) -> None:
+    """Per-key locks (Astra on #867): ``workbench.run`` sleeps 3 s on the hub.
+
+    Two calls on one workbench take about 6 s; on two workbenches, about 3 s.
+    """
+    import time
+
+    home = tmp_path / "home"
+    home.mkdir()
+    hub = _Hub(home, "slow")
+
+    def pair(first: str, second: str) -> float:
+        gate = threading.Barrier(2)
+        answers: list[Any] = []
+
+        def call(workbench_id: str) -> None:
+            gate.wait(10)
+            answers.append(hub.mcp("tools/call", {"name": "workbench.run",
+                                                  "arguments": {"workbench_id": workbench_id}}))
+
+        began = time.monotonic()
+        threads = [threading.Thread(target=call, args=(w,)) for w in (first, second)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(60)
+        assert len(answers) == 2 and all(status == 200 for status, _ in answers), answers
+        return time.monotonic() - began
+
+    try:
+        same = pair("wb-one", "wb-one")
+        different = pair("wb-one", "wb-two")
+    finally:
+        hub.kill()
+    assert same >= 5.5, f"two calls on one key overlapped ({same:.1f} s)"
+    assert different < 5.5, f"two calls on two keys did not overlap ({different:.1f} s)"

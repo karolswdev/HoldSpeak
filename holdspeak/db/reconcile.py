@@ -673,6 +673,15 @@ def reconcile_schema(
     # measured 2026-10-05). The script's own PRAGMA is a no-op inside it;
     # every connection sets foreign_keys itself (connection._apply_pragmas).
     conn.executescript("BEGIN;\n" + SCHEMA_SQL + "\nCOMMIT;")
+    if not pre_tables:
+        # A new file: fold the schema into the main file now. One transaction
+        # writes fewer WAL frames than the auto-checkpoint threshold, so the
+        # file stayed a bare header until close (a copy of the file alone, or
+        # a byte compare of two new databases, saw no schema).
+        try:
+            conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
+        except sqlite3.DatabaseError:  # pragma: no cover - not a WAL database
+            pass
     revised_triggers_refreshed = _refresh_revised_triggers(conn)
 
     # HS-200-10: seed `context_dependents` for Thoughts that were already

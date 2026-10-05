@@ -729,7 +729,7 @@ class ProjectDeltaService:
             "source_count": len(source_manifest),
         }
 
-        self._store_window(
+        winner = self._store_window(
             review_id=review_id,
             project_id=project_id,
             from_sequence=from_sequence,
@@ -740,6 +740,10 @@ class ProjectDeltaService:
             summary=summary,
             now=now,
         )
+        if winner is not None:
+            # Another call opened this project's review while this one
+            # collected: one open review per project, so this call reads it.
+            return self._load_frozen_window(winner)
 
         return self._load_frozen_window(
             self._db.project_observations.get_review(review_id),
@@ -1757,12 +1761,17 @@ class ProjectDeltaService:
         proposals: list[dict[str, Any]],
         summary: dict[str, Any],
         now: str,
-    ) -> None:
+    ) -> Optional[dict[str, Any]]:
         """Persist the review row and all proposals atomically.
 
         S-3: one transaction wrapping the review + all proposals via the
         _in_transaction variants.  A failure on proposal k>1 rolls back
         the review AND proposals 1..k-1 -- all-or-nothing.
+
+        One open review per project (Astra on #867): the transaction takes
+        the write lock first (``BEGIN IMMEDIATE``) and checks for an open
+        review again. If another call opened one meanwhile, nothing is
+        written and that review's row is returned; else None.
         """
         manifest_json = _deterministic_json(source_manifest)
         summary_json = _deterministic_json(summary)
@@ -1770,6 +1779,14 @@ class ProjectDeltaService:
         delta = self._db.project_observations
 
         with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            existing = conn.execute(
+                "SELECT * FROM project_reviews WHERE project_id = ? AND status = 'open' "
+                "ORDER BY opened_at DESC LIMIT 1",
+                (project_id,),
+            ).fetchone()
+            if existing is not None:
+                return dict(existing)
             # Insert the review row
             delta.insert_review_in_transaction(
                 conn,
@@ -1801,6 +1818,7 @@ class ProjectDeltaService:
                     producer_kind=p.get("provenance_class"),
                     lifecycle="open",
                 )
+        return None
 
     def get_delta(self, principal: Any, project_id: str) -> dict[str, Any]:
         """The open review window, or the honest empty state (WEB-STA-004).
