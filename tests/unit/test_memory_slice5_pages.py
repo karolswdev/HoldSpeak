@@ -544,13 +544,13 @@ def test_a_number_matches_only_as_a_whole_token(tmp_path: Path) -> None:
         budget = next(label for label, text in lines.items() if "budget is 26" in text)
         return {"sentences": [
             {"text": "Atlas budget is 26.", "refs": [build]},          # wrong input: cut
-            {"text": "Atlas budget is 26 for 2026.", "refs": [build, budget]},
+            {"text": "Atlas budget is 26.", "refs": [build, budget]},  # one cited input holds it
             {"text": "Atlas launch is in October 2026.", "refs": [build]},  # "launch", "october": cut
         ]}
 
     writer.answer = answer
     assert write_page(db, writer, ATLAS, spec_for("project", CHANGED))["cut"] == 2
-    assert [s["text"] for s in _page(db, ATLAS, CHANGED)["sentences"]] == ["Atlas budget is 26 for 2026."]
+    assert [s["text"] for s in _page(db, ATLAS, CHANGED)["sentences"]] == ["Atlas budget is 26."]
     assert pages_module.content_tokens("Atlas budget is 26.") == {"atlas", "budget", "26"}
     # Only the number differs: "26" is not in "2026".
     kept, cut = pages_module.validate_output(
@@ -586,15 +586,44 @@ def test_a_name_and_its_claim_must_come_from_one_cited_input(tmp_path: Path) -> 
     assert served == ["Atlas owner is Dana.", "Harbor owner is Lee."]
 
 
+def test_numbers_from_two_inputs_never_swap(tmp_path: Path) -> None:
+    """Astra, #870: "Atlas budget is 40." + "Atlas headcount is 80." gave a
+    page that said "Atlas budget is 80." and "Atlas headcount is 40." (both
+    cited both inputs).  Each is cut at write; the right sentences serve."""
+    db = _desk(tmp_path)
+    _filed_note(db, "n1", "Atlas budget is 40.", "atlas")
+    _filed_note(db, "n2", "Atlas headcount is 80.", "atlas")
+    _learn(db)
+    writer = Pages()
+
+    def answer(payload: dict) -> dict:
+        lines = Pages.lines(payload)
+        budget = next(label for label, text in lines.items() if "budget is 40" in text)
+        heads = next(label for label, text in lines.items() if "headcount is 80" in text)
+        return {"sentences": [
+            {"text": "Atlas budget is 80.", "refs": [budget, heads]},
+            {"text": "Atlas headcount is 40.", "refs": [budget, heads]},
+            {"text": "The Atlas budget is 40.", "refs": [budget, heads]},   # a paraphrase one input holds
+            {"text": "Atlas headcount is 80.", "refs": [heads]},
+        ]}
+
+    writer.answer = answer
+    assert write_page(db, writer, ATLAS, spec_for("project", CHANGED))["cut"] == 2
+    served = [s["text"] for s in _page(db, ATLAS, CHANGED)["sentences"]]
+    assert served == ["The Atlas budget is 40.", "Atlas headcount is 80."]
+
+
 @pytest.mark.parametrize("text,cited,ok", [
     ("Atlas owner is Lee.", ["Atlas owner is Dana.", "Harbor owner is Lee."], False),
     ("Atlas owner is Dana.", ["Atlas owner is Dana.", "Harbor owner is Lee."], True),
-    # One subject, two claims from two inputs: each claim sits with the name.
-    ("Atlas launch is 2026-10-01 and budget is 40k.", ["Atlas launch is 2026-10-01.", "Atlas budget is 40k."], True),
-    # A lower-case name in the sentence is still a name when an input capitalises it.
-    ("atlas owner is lee.", ["Atlas owner is Dana.", "Harbor owner is Lee."], False),
-    # Two names joined from two inputs: cut (a cut serves less, never a wrong claim).
-    ("Atlas and Harbor launch in October.", ["Atlas launch in October.", "Harbor launch in October."], False),
+    # Astra's #870 repro: numbers swapped between two inputs of one subject.
+    ("Atlas budget is 80.", ["Atlas budget is 40.", "Atlas headcount is 80."], False),
+    ("Atlas headcount is 40.", ["Atlas budget is 40.", "Atlas headcount is 80."], False),
+    # A paraphrase that one input holds still serves (order, case, stopwords).
+    ("The Atlas launch date is 2026-10-01.", ["Atlas launch date: 2026-10-01", "Atlas budget is 40."], True),
+    ("atlas budget is 40", ["Atlas budget is 40.", "Atlas headcount is 80."], True),
+    # A sentence that joins two inputs is cut (a cut serves less, never a wrong claim).
+    ("Atlas launch is 2026-10-01 and budget is 40k.", ["Atlas launch is 2026-10-01.", "Atlas budget is 40k."], False),
     ("Atlas launch is 2026.", ["Atlas build is 2026."], False),   # a word no input holds
 ])
 def test_attribution_is_entity_aware(text: str, cited: list[str], ok: bool) -> None:

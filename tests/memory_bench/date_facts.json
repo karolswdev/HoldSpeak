@@ -1,5 +1,29 @@
 {
  "answers": {
+  "0ade9f37b114ab43a06bd1013790fff5a08a45a098b1c3302f4282b43c349264": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      },
+      {
+       "kind": "topic",
+       "name": "sensor batch"
+      }
+     ],
+     "kind": "event",
+     "object": "the sensor batch",
+     "occurred_end": "2026-01-09",
+     "occurred_start": "2026-01-09",
+     "predicate": "shipped",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo shipped the sensor batch on 2026-01-09."
+    }
+   ]
+  },
   "34081e0fe8bf6e91af006e08a6622f01cf48777c6f68813d1e0afabcd447ffc4": {
    "facts": [
     {
@@ -313,6 +337,26 @@
     }
    ]
   },
+  "d67014e6f7f8d0964910391f596ebacb8e19f1718f80ed118c37ba284ed973ce": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "The next sensor batch"
+      }
+     ],
+     "kind": "event",
+     "object": "on 2026-12-09",
+     "occurred_end": "2026-12-09",
+     "occurred_start": "2026-12-09",
+     "predicate": "will ship",
+     "subject": "The next sensor batch",
+     "text": "The next sensor batch will ship on 2026-12-09."
+    }
+   ]
+  },
   "e1d4e5c6ff1420eedb6ecad1c127695c2b2178d87d78f179dbb4d0dde023038b": {
    "facts": [
     {
@@ -340,12 +384,12 @@
       }
      ],
      "kind": "event",
-     "object": "2026-09-09",
+     "object": "on 2026-09-09",
      "occurred_end": "2026-09-09",
      "occurred_start": "2026-09-09",
-     "predicate": "missed the deadline of",
+     "predicate": "missed its deadline",
      "subject": "the project",
-     "text": "The deadline of 2026-09-09 was missed."
+     "text": "The deadline for the project was missed."
     }
    ]
   },
@@ -396,12 +440,12 @@
       }
      ],
      "kind": "event",
-     "object": "the product",
+     "object": "the project",
      "occurred_end": "2026-09-03",
      "occurred_start": "2026-09-03",
      "predicate": "shipped",
      "subject": "Rafael Okonkwo's team",
-     "text": "Rafael Okonkwo's team shipped the product on 2026-09-03."
+     "text": "Rafael Okonkwo's team shipped the project on 2026-09-03."
     },
     {
      "confidence": 1.0,
@@ -459,6 +503,6 @@
   }
  },
  "endpoint": "http://192.168.1.43:8080/v1",
- "extractor_version": 3,
+ "extractor_version": 4,
  "model": "qwen3.8-27b"
 }

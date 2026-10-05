@@ -359,6 +359,13 @@ DATE_CASES = [
     {"id": "supplier", "at": "2026-09-23T09:00:00", "kind": "note", "title": "Supplier follow-up",
      "line": "T. Wierzbicki confirmed the sensor batch ships on the twentieth.",
      "want": ["2026-10-20"], "never": ["2026-09-20"]},
+    # Astra, #870: a named month with no year takes its YEAR by tense.
+    {"id": "month_past_year", "at": "2026-09-22T16:00:00",
+     "line": "We shipped the sensor batch on January 9.",
+     "want": ["2026-01-09"], "never": ["2027-01-09", "2025-01-09"]},
+    {"id": "month_future_year", "at": "2026-03-22T16:00:00",
+     "line": "The next sensor batch will ship on December 9.",
+     "want": ["2026-12-09"], "never": ["2025-12-09", "2027-12-09"]},
     {"id": "reported_third", "at": "2026-09-22T16:00:00",
      "line": "Dana said the vendor will deliver the racks on the second.",
      "want": ["2026-10-02"], "never": ["2026-09-02"]},

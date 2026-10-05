@@ -511,7 +511,7 @@ def test_hard_relation_names_stay_apart(tmp_path: Path) -> None:
 
 
 @pytest.mark.xfail(strict=True, reason=(
-    "Gap, measured 2026-10-04 (EXTRACTOR_VERSION 2) and again 2026-10-05 (version 3), qwen3.8-27b: with no title rule "
+    "Gap, measured 2026-10-04 (EXTRACTOR_VERSION 2) and again 2026-10-05 (versions 3 and 4), qwen3.8-27b: with no title rule "
     "the model leaves 'Kestrel' out of the facts of m-kestrel and th-kestrel, so the "
     "walk alone finds neither for r09. A title rule fixed it but invented projects "
     "from meeting titles (Astra, #845). With vectors on, r09 is complete."

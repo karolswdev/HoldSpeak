@@ -1018,15 +1018,23 @@ def test_the_prompt_dates_a_day_with_no_month_by_tense() -> None:
     # A day 31 skips the months without one.
     ("It starts on the thirty-first.", "2026-09-22",
      'Days with no month: "the thirty-first" = 2026-08-31 if it already happened, 2026-10-31 if it is still to come\n'),
-    # A named month is not a day with no month: it has its own line, one
-    # date, the nearest such day (Astra, #845: never re-dated by tense).
+    # A named month is not a day with no month: it has its own line.  The
+    # month never changes (Astra, #845); the YEAR goes by tense (Astra, #870).
     ("The deadline was the ninth of September.", "2026-09-22",
-     'Days with a month: "the ninth of September" = 2026-09-09\n'),
+     'Days with a month: "the ninth of September" = 2026-09-09 if it already happened, 2027-09-09 if it is still to come\n'),
+    ("We shipped the sensor batch on January 9.", "2026-09-22",
+     'Days with a month: "January 9" = 2026-01-09 if it already happened, 2027-01-09 if it is still to come\n'),
+    ("The next sensor batch will ship on December 9.", "2026-03-22",
+     'Days with a month: "December 9" = 2025-12-09 if it already happened, 2026-12-09 if it is still to come\n'),
+    ("Due on September 22.", "2026-09-22", 'Days with a month: "September 22" = 2026-09-22\n'),
+    ("Due on 29 February.", "2026-03-22",
+     'Days with a month: "29 February" = 2024-02-29 if it already happened, 2028-02-29 if it is still to come\n'),
     ("The review was on the ninth of September. The next review is on the twentieth.", "2026-09-22",
      'Days with no month: "the twentieth" = 2026-09-20 if it already happened, 2026-10-20 if it is still to come\n'
-     'Days with a month: "the ninth of September" = 2026-09-09\n'),
+     'Days with a month: "the ninth of September" = 2026-09-09 if it already happened, 2027-09-09 if it is still to come\n'),
     ("We shipped on September 3rd and Jan 4 is next.", "2026-12-20",
-     'Days with a month: "September 3rd" = 2026-09-03; "Jan 4" = 2027-01-04\n'),
+     'Days with a month: "September 3rd" = 2026-09-03 if it already happened, 2027-09-03 if it is still to come; '
+     '"Jan 4" = 2026-01-04 if it already happened, 2027-01-04 if it is still to come\n'),
     # A full date (a year written) needs no line, and its day is not bare.
     ("Due September the ninth, 2026.", "2026-09-22", ""),
     ("No day here.", "2026-09-22", ""),
