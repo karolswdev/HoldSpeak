@@ -49,6 +49,20 @@ if sys.argv[2] == "broken":  # the mutation: no tool can run at all
     mcp_server.dispatch = unavailable
     mcp_server.dispatch_for_palette = unavailable
 
+if sys.argv[2] == "slow":  # ask.run (a long tool) takes 8 s; every other tool is real
+    from holdspeak.mcp import server as mcp_server
+
+    def slow(real):
+        def wrapped(name, *args, **kwargs):
+            if name == "ask.run":
+                time.sleep(8)
+                return {"slept": 8}
+            return real(name, *args, **kwargs)
+        return wrapped
+
+    mcp_server.dispatch = slow(mcp_server.dispatch)
+    mcp_server.dispatch_for_palette = slow(mcp_server.dispatch_for_palette)
+
 server = MeetingWebServer(
     WebRuntimeCallbacks(on_bookmark=MagicMock(), on_stop=MagicMock(), get_state=MagicMock(return_value={})),
     auth_token=sys.argv[1],
@@ -71,13 +85,11 @@ KNOWN_MESSAGE = re.compile(
     r"|must be qualified as kind:id|^parent_operation_unknown$|not allowlisted for MCP"
     r"|is retired|live capture controller|not found: x$|^Unknown shelf state: x$"
 )
-# Code-less refusals of the placeholder id that leak a raw exception text. They
-# are argument errors; each is named so that no other tool can hide behind them.
-KNOWN_BY_TOOL = {
-    "decision_record.create_from_meeting": "'x'",
-    "decision_record.create_from_desk": "'x'",
-    "project.open_review": "FOREIGN KEY constraint failed",
-}
+# Tools allowed a code-less raw exception text. Empty since 2026-10-05: the
+# three that were here (decision_record.create_from_meeting / create_from_desk
+# answered "'x'", project.open_review answered "FOREIGN KEY constraint failed")
+# now refuse an unknown id with the typed ``not_found``.
+KNOWN_BY_TOOL: dict[str, str] = {}
 
 
 def _refusal_is_known(name: str, payload: Any) -> bool:
@@ -251,3 +263,38 @@ def test_concurrent_edits_of_one_note_lose_no_change(tmp_path: Path) -> None:
     finally:
         hub.kill()
     assert not lost, f"{len(lost)} of 40 pairs lost a change:\n" + "\n".join(lost)
+
+
+@pytest.mark.timeout(300)
+def test_a_long_tool_does_not_hold_the_others(tmp_path: Path) -> None:
+    """``ask.run`` sleeps 8 s (a model call); a ``desk.list`` sent during it answers at once.
+
+    With every tool on the one ordered worker (main before 2026-10-05) the
+    ``desk.list`` waited the full 8 s behind ``ask.run``.
+    """
+    import time
+
+    home = tmp_path / "home"
+    home.mkdir()
+    hub = _Hub(home, "slow")
+    try:
+        long_answer: list[Any] = []
+        started = threading.Event()
+
+        def long_call() -> None:
+            started.set()
+            long_answer.append(hub.mcp("tools/call", {"name": "ask.run", "arguments": {}}))
+
+        caller = threading.Thread(target=long_call)
+        caller.start()
+        started.wait(5)
+        time.sleep(0.5)  # ask.run is now inside its sleep
+        began = time.monotonic()
+        status, answer = hub.mcp("tools/call", {"name": "desk.list", "arguments": {"kind": "notes"}})
+        waited = time.monotonic() - began
+        caller.join(30)
+    finally:
+        hub.kill()
+    assert status == 200 and "result" in answer, answer
+    assert waited < 4, f"desk.list waited {waited:.1f} s behind ask.run"
+    assert long_answer and long_answer[0][0] == 200, long_answer

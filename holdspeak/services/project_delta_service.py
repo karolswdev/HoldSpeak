@@ -627,6 +627,9 @@ class ProjectDeltaService:
         is byte-identical (SYS-024).
         """
         project_id = str(project_id).strip()
+        # An unknown project is a typed refusal, not a FOREIGN KEY crash.
+        if self._db.projects.get_project(project_id) is None:
+            raise NotFound("project", project_id)
 
         # ── One-open-review check ────────────────────────────────────
         existing = self._find_open_review(project_id)

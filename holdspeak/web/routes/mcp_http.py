@@ -96,10 +96,11 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
 
     # ── POST /api/mcp ──────────────────────────────────────────────
     def _blocking_io_tools() -> frozenset[str]:
-        """The operations that declare blocking I/O (derived from the one declared contract)."""
+        """The tools that run beside the ordered queue: declared blocking I/O, and the long tools."""
         from ... import operations as _operations
+        from ...mcp.long_tools import LONG_TOOLS
 
-        return frozenset(d.name for d in _operations.DESCRIPTORS if d.blocking_io)
+        return frozenset(d.name for d in _operations.DESCRIPTORS if d.blocking_io) | frozenset(LONG_TOOLS)
 
     _worker: list[Any] = []
 
@@ -225,9 +226,11 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         # Order (PHILO-10-02 GATE 2, kept): tool calls run ONE AT A TIME, in
         # arrival order, on the one MCP worker thread. The services are not
         # safe for two writers (two ``desk.update`` calls on one Note lose a
-        # change). The one exception is unchanged: an operation that DECLARES
-        # blocking I/O (``OperationDescriptor.blocking_io``: a subprocess or the
-        # network) runs on the thread pool, so a slow send holds no other tool.
+        # change). Two exceptions run on the thread pool beside that queue, with
+        # no order: an operation that DECLARES blocking I/O
+        # (``OperationDescriptor.blocking_io``) and a tool named in
+        # ``holdspeak/mcp/long_tools.py`` (a model call, the network, a
+        # subprocess, a download). So a slow tool holds no other tool.
         # The flag decides ordering only; no tool needs it to work.
         params = body.get("params") if isinstance(body.get("params"), dict) else {}
         if body.get("method") != "tools/call":

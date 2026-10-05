@@ -561,10 +561,16 @@ def test_a_replay_rebuilds_the_reviews_own_material(rig, tmp_path, monkeypatch):
     second = review.post()
     stale = second.status_code == 200 and second.json().get("artifact_id") == first.json()["artifact_id"]
     assert not stale, "a changed story returned the first review as a success"
-    # What main does with a changed story under the same commit and diff (the
-    # request identity leaves the story out): the second review fails, and
-    # nothing reaches the model.  Memory does not change that.
-    assert second.status_code == 500 and len(review.engine.prompts) == 1
+    # The story is part of the request identity (2026-10-05; it was an HTTP
+    # 500 before): a changed story is a new review run with its own artifact,
+    # and the model reads the edited story.
+    assert second.status_code == 200, second.text
+    assert len(review.engine.prompts) == 2
+    assert "EDITED" in review.engine.prompts[1]
+    # And that edited request replays exactly too.
+    third = review.post()
+    assert third.status_code == 200 and third.json()["artifact_id"] == second.json()["artifact_id"]
+    assert len(review.engine.prompts) == 2
 
 
 def test_cadence_memory_never_carries_its_source_under_the_meeting(rig, tmp_path, monkeypatch):

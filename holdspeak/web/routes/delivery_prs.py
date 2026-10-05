@@ -242,6 +242,19 @@ def build_delivery_prs_router(
                 str(material.get("diff") or "").encode()
             ).hexdigest()
             identity = f"{source_id}:{number}:{material_revision}:{diff_sha256}"
+            # The linked story is part of the request: an edited story under the
+            # same commit and diff is a new review run (it was an HTTP 500: the
+            # kernel refused the same command id with a different payload).
+            # No linked story keeps the old identity, so old replays still match.
+            linked = material.get("linked") or []
+            linked_sha256 = __import__("hashlib").sha256(
+                __import__("json").dumps(
+                    [[str(item.get("ref") or ""), str(item.get("revision") or ""), str(item.get("text") or "")]
+                     for item in linked],
+                ).encode()
+            ).hexdigest() if linked else ""
+            if linked_sha256:
+                identity += f":{linked_sha256}"
             command_id = "delivery-pr-review:" + __import__("hashlib").sha256(identity.encode()).hexdigest()
             input_snapshot = {
                 "source_id": source_id,
@@ -249,6 +262,8 @@ def build_delivery_prs_router(
                 "material_revision": material_revision,
                 "diff_sha256": diff_sha256,
             }
+            if linked_sha256:
+                input_snapshot["linked_sha256"] = linked_sha256
             # E3: a request target can no longer compete with the exact OWNER
             # assignment.  The named refusal is durable, content-free, and sends
             # no PR material to a provider.

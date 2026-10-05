@@ -215,24 +215,37 @@ def _parent_kind_set(sql: str) -> set[str]:
     return set(re.findall(r"'([^']+)'", match.group(1)))
 
 
-def _canonical_parent_runs_ddl() -> tuple[str, set[str], list[str]]:
-    """Return canonical parent DDL and its ordered columns from SCHEMA_SQL."""
+@functools.lru_cache(maxsize=16)
+def _canonical_table(schema_sql: str, table: str) -> tuple[Optional[str], tuple[str, ...]]:
+    """One table's canonical DDL and ordered columns from *schema_sql*.
+
+    A pure function of the schema text. Every new Database asked for three of
+    these, and each built a full in-memory copy of SCHEMA_SQL (about 40 ms
+    each, the largest part of a test's new-database cost); now one build per
+    table per schema text.
+    """
     reference = sqlite3.connect(":memory:")
     try:
-        reference.executescript(SCHEMA_SQL)
+        reference.executescript(schema_sql)
         row = reference.execute(
-            "SELECT sql FROM sqlite_master WHERE type='table' AND name='kernel_parent_runs'"
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table,)
         ).fetchone()
         if row is None or not isinstance(row[0], str):
-            raise RuntimeError("canonical kernel_parent_runs table is missing")
-        ddl = str(row[0])
-        columns = [
-            str(item[1])
-            for item in reference.execute("PRAGMA table_info('kernel_parent_runs')")
-        ]
-        return ddl, _parent_kind_set(ddl), columns
+            return None, ()
+        columns = tuple(
+            str(item[1]) for item in reference.execute(f"PRAGMA table_info({_quoted(table)})")
+        )
+        return str(row[0]), columns
     finally:
         reference.close()
+
+
+def _canonical_parent_runs_ddl() -> tuple[str, set[str], list[str]]:
+    """Return canonical parent DDL and its ordered columns from SCHEMA_SQL."""
+    ddl, columns = _canonical_table(SCHEMA_SQL, "kernel_parent_runs")
+    if ddl is None:
+        raise RuntimeError("canonical kernel_parent_runs table is missing")
+    return ddl, _parent_kind_set(ddl), list(columns)
 
 
 def _quoted(identifier: str) -> str:
@@ -354,20 +367,11 @@ def _rebuild_action_items_for_nullable_meeting_id(conn: sqlite3.Connection) -> b
         return False
 
     # Build canonical DDL from SCHEMA_SQL.
-    reference = sqlite3.connect(":memory:")
-    try:
-        reference.executescript(SCHEMA_SQL)
-        canonical_row = reference.execute(
-            "SELECT sql FROM sqlite_master WHERE type='table' AND name='action_items'"
-        ).fetchone()
-        if canonical_row is None:
-            return False
-        canonical_ddl = str(canonical_row[0])
-        canonical_columns = [
-            str(row[1]) for row in reference.execute("PRAGMA table_info('action_items')")
-        ]
-    finally:
-        reference.close()
+    canonical, canonical_cols = _canonical_table(SCHEMA_SQL, "action_items")
+    if canonical is None:
+        return False
+    canonical_ddl = canonical
+    canonical_columns = list(canonical_cols)
 
     # Collect dependents (indexes, triggers that reference this table).
     dependents = conn.execute(
@@ -460,21 +464,12 @@ def _rebuild_thread_message_parts_for_kind_drift(conn: sqlite3.Connection) -> bo
         return False
 
     # Build canonical DDL from SCHEMA_SQL
-    reference = sqlite3.connect(":memory:")
-    try:
-        reference.executescript(SCHEMA_SQL)
-        canonical_row = reference.execute(
-            "SELECT sql FROM sqlite_master WHERE type='table' AND name='thread_message_parts'"
-        ).fetchone()
-        if canonical_row is None:
-            return False
-        canonical_ddl = str(canonical_row[0])
-        canonical_kinds = _thread_parts_kind_set(canonical_ddl)
-        canonical_columns = [
-            str(row[1]) for row in reference.execute("PRAGMA table_info('thread_message_parts')")
-        ]
-    finally:
-        reference.close()
+    canonical, canonical_cols = _canonical_table(SCHEMA_SQL, "thread_message_parts")
+    if canonical is None:
+        return False
+    canonical_ddl = canonical
+    canonical_kinds = _thread_parts_kind_set(canonical_ddl)
+    canonical_columns = list(canonical_cols)
 
     live_kinds = _thread_parts_kind_set(str(live[0]))
     if not live_kinds:
@@ -673,7 +668,11 @@ def reconcile_schema(
         log.info("Reconcile: pre-pass added %d column(s) before SCHEMA_SQL", len(pre_columns_added))
 
     # ── 2. Create any missing tables / indexes / triggers ──────────────
-    conn.executescript(SCHEMA_SQL)
+    # One transaction: on a new file the ~500 statements otherwise commit one
+    # by one, and that took half of a new database's open time (65 -> 31 ms
+    # measured 2026-10-05). The script's own PRAGMA is a no-op inside it;
+    # every connection sets foreign_keys itself (connection._apply_pragmas).
+    conn.executescript("BEGIN;\n" + SCHEMA_SQL + "\nCOMMIT;")
     revised_triggers_refreshed = _refresh_revised_triggers(conn)
 
     # HS-200-10: seed `context_dependents` for Thoughts that were already

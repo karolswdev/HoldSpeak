@@ -165,6 +165,11 @@ asyncio_default_fixture_loop_scope = "function"
 # tests that legitimately run longer declare @pytest.mark.timeout(...).
 timeout = 300
 timeout_method = "thread"
+# A passing test's tmp_path is removed when the test ends; a failing test's
+# stays for reading. Every new test database is ~3.6 MB (its WAL), so the run
+# kept ~30 GB of scratch to the end, and both nightly runs on CI (2026-10-04,
+# 2026-10-05) died "No space left on device". 172 tests: 390 MB -> 448 KB.
+tmp_path_retention_policy = "failed"
 markers = [
     "slow: marks tests as slow-running",
     "requires_model: requires ML model to be loaded",
