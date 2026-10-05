@@ -33,6 +33,7 @@ from holdspeak.db import Database
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
 from holdspeak.services.decision_record_service import DecisionRecordService
+from holdspeak.services.errors import NotFound
 from holdspeak.services.meeting_intel_service import MeetingIntelService
 from holdspeak.services.meeting_route_projection import project_route
 from holdspeak.services.primitive_service import PrimitiveService
@@ -74,7 +75,7 @@ def _seed_failures(db: Database, client, monkeypatch) -> None:
     now = _clock(monkeypatch)
     observer = SQLiteObserver(db._connection)
     # finding 1: the real create_from_desk on a missing decision.
-    with pytest.raises(KeyError):
+    with pytest.raises(NotFound):
         DecisionRecordService(db, observer=observer).create_from_desk(OWNER, MISSING)
     # the summary request, refused (no engine is assigned).
     now["t"] += 60

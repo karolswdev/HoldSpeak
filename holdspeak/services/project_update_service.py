@@ -1800,20 +1800,19 @@ class ProjectUpdateService:
             "generator": generator,
         })
         if command_id is not None:
-            existing = self._db.projects.get_project_command(command_id)
+            existing = self._claim_draft_command(command_id, project_id, req_hash)
             if existing is not None:
-                if (existing["status"] == "completed"
-                        and existing["request_hash"] == req_hash):
-                    if existing["result_json"]:
-                        return json.loads(existing["result_json"])
-                    return {"result_kind": "no_change", "project_id": project_id}
-                if existing["request_hash"] != req_hash:
-                    raise ConflictError(
-                        "idempotency conflict: same command_id with different request hash",
-                        code="idempotency_conflict",
-                    )
+                return existing
 
-        result = self.draft_update(principal, project_id, generator=generator)
+        try:
+            result = self.draft_update(principal, project_id, generator=generator)
+        except BaseException:
+            if command_id is not None:
+                # The claim is released: the same command_id may try again.
+                self._db.projects.complete_project_command(
+                    command_id, status="failed", error_code="draft_failed",
+                )
+            raise
 
         # Surface fallback reason when the model path was requested
         actual_gen = result.get("generator", "deterministic")
@@ -1837,6 +1836,53 @@ class ProjectUpdateService:
         )
 
         return result
+
+    def _claim_draft_command(
+        self, command_id: str, project_id: str, req_hash: str,
+    ) -> dict[str, Any] | None:
+        """Claim *command_id* for one draft, atomically (Astra on #867).
+
+        The check and the claim are one ``BEGIN IMMEDIATE`` transaction, so two
+        concurrent calls with one command_id make one draft: the first claims
+        (a ``pending`` row), the second replays a completed result or is
+        refused ``command_in_progress``. A ``failed`` claim may be taken again.
+        Returns the stored result to replay, or None when this call holds the
+        claim.
+        """
+        if self._db.projects.get_project(project_id) is None:
+            raise NotFound("project", project_id)
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT status, request_hash, result_json FROM project_commands WHERE id = ?",
+                (command_id,),
+            ).fetchone()
+            if row is None:
+                conn.execute(
+                    "INSERT INTO project_commands (id, project_id, command_kind, request_hash, "
+                    "status, created_at) VALUES (?, ?, 'draft_update', ?, 'pending', ?)",
+                    (command_id, project_id, req_hash, datetime.now().isoformat()),
+                )
+                return None
+            if row["request_hash"] != req_hash:
+                raise ConflictError(
+                    "idempotency conflict: same command_id with different request hash",
+                    code="idempotency_conflict",
+                )
+            if row["status"] == "completed":
+                if row["result_json"]:
+                    return json.loads(row["result_json"])
+                return {"result_kind": "no_change", "project_id": project_id}
+            if row["status"] == "pending":
+                raise ConflictError(
+                    "this command_id is already drafting; ask again when it ends",
+                    code="command_in_progress",
+                )
+            conn.execute(
+                "UPDATE project_commands SET status = 'pending', error_code = NULL WHERE id = ?",
+                (command_id,),
+            )
+            return None
 
     def save_update(
         self,

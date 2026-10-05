@@ -339,8 +339,13 @@ class AutomationRepository(BaseRepository):
         next_evaluation_at: str | None = None,
         last_evaluated_at: str | None = None,
         evaluation_cadence_minutes: int | None = None,
+        expected_revision: int | None = None,
     ) -> bool:
-        """Update graduation columns on a connector_watches row (named-column)."""
+        """Update graduation columns on a connector_watches row (named-column).
+
+        ``expected_revision``: write only if the row is still at that revision
+        (compare-and-set); False when it moved on.
+        """
         sets: list[str] = []
         params: list[Any] = []
         for col, val in (
@@ -369,9 +374,13 @@ class AutomationRepository(BaseRepository):
             return False
         sets.append("updated_at=datetime('now')")
         params.append(watch_id)
+        where = "id=?"
+        if expected_revision is not None:
+            where += " AND COALESCE(revision, 0)=?"
+            params.append(int(expected_revision))
         with self._connection() as conn:
             cur = conn.execute(
-                f"UPDATE connector_watches SET {','.join(sets)} WHERE id=?",
+                f"UPDATE connector_watches SET {','.join(sets)} WHERE {where}",
                 params,
             )
         return bool(cur.rowcount)

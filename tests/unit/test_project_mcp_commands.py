@@ -484,6 +484,8 @@ def test_open_review_idempotent(db: Database) -> None:
 def test_open_review_not_found(db: Database) -> None:
     is_error, data = _call("project.open_review", {"project_id": "nonexistent"})
     assert is_error is True
+    # A typed refusal, not the raw "FOREIGN KEY constraint failed" (2026-10-05).
+    assert data.get("code") == "not_found", data
 
 
 def test_get_delta_honest_empty(db: Database) -> None:

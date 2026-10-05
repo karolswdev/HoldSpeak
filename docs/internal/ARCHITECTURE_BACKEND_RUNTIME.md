@@ -290,3 +290,42 @@ reappears (pending work is never hidden).
   it declaratively on every open (additive-only, no version gate).
 - The old item, `web/routes/meetings.py`, was resolved by Phase 72's
   split into the meetings package.
+
+## Watches and decisions: which surface is canonical (2026-10-05)
+
+The 2026-10-03 inventory found two watch systems and three decision surfaces
+(`docs/internal/inventory-2026-10-03/B-backend.md`, findings 5 and 6). This
+section names the canonical one and the callers of each. No surface was folded:
+each fold changes what a caller sees, so each is a product decision.
+
+**Watches.** Both systems store rows in one table, `connector_watches`.
+
+| | `WatchService` (canonical) | `ReactionService` watches (older) |
+|---|---|---|
+| Code | `holdspeak/services/watch_service.py` ("the universal Watch facade") | `holdspeak/services/reaction_service.py` |
+| HTTP | `/api/watches/*`, `/api/projects/{id}/watches` | `/api/automations/watches/*`, `/api/automations/reactions/*` |
+| Web callers | The Room: pause, resume, retire, adjust rules; the steward panel | None for `/api/automations/watches`. The Workbench automations (`/api/workbenches/{id}/automations`) make a watch and a reaction through `ReactionService.create_preset_automation` |
+| MCP | `project.watch.*`, `heartbeat.run_now` | `watch.*`, `reaction.*` |
+| Ticked by | The heartbeat sweep (`HeartbeatService` → `WatchService.evaluate_due`) | The Workbench conductor (`workbench_conductor.py`: `refresh_due_watches`, `process_pending`) |
+| Made by | The Door, the Interview, project setup, `ensure_meeting_watch` | Workbench automations, `watch.create` |
+
+To fold: move the Workbench automations onto `WatchService` rules, then the
+conductor tick, then the `watch.*` tools. Decision for the owner: the
+Workbench automation is the only face of the older system.
+
+**Decisions.** Three route files answer under two prefixes.
+
+| Route file | Prefix | What it owns | Web callers |
+|---|---|---|---|
+| `web/routes/primitives/decisions.py` | `/api/decisions` | The desk decision you write (create, edit, status, delete) | The Desk: `desk/api.ts`, `desk/store/dataSlice.ts`, `DecisionPullout.tsx`, `desk/decide.ts` |
+| `web/routes/decisions.py` | `/api/decisions` | Meeting decisions (accept, reject, moment, promote); it also answers list, read and supersede for both kinds, by a probe of both tables | The Room (`features/project-room/api.ts`), and the Desk reads |
+| `web/routes/decision_records.py` | `/api/decision-records` | The durable record (receipt): search, review, carry, dispute | `DecisionsView.tsx`, `WhyControl.tsx`, `FollowThroughView.tsx`, `intelligenceAttention.ts`, Recall |
+
+Canonical: a decision is the desk decision (`PrimitiveService`) or the meeting
+decision (`DecisionLifecycleService`); the record (`DecisionRecordService`) is
+the durable receipt minted from either. `decisions.py` is included before
+`primitives/decisions.py`, so three handlers in `primitives/decisions.py` are
+never reached in the hub: `GET /api/decisions`, `GET /api/decisions/{id}`,
+`POST /api/decisions/{id}/supersede` (checked on the live route table,
+2026-10-05). They still serve tests that mount that router alone. Parking them
+needs those tests moved to the hub's router order first.
