@@ -993,8 +993,11 @@ class TestSweepNotificationWire:
         svc = HeartbeatService(
             db, watch_service=mock_ws, notifier=fake_notifier,
         )
-        # Seed the notify mode to edge (default) and make it NOT quiet hours.
-        svc.update_settings({"notify": "edge", "quiet_hours": {"start": 2, "end": 3}})
+        # Seed the notify mode to edge (default) and make it NOT quiet hours:
+        # a window that starts three hours from now (a fixed 02:00-03:00
+        # window failed these tests every night between 2 and 3).
+        hour = datetime.now().hour
+        svc.update_settings({"notify": "edge", "quiet_hours": {"start": (hour + 3) % 24, "end": (hour + 5) % 24}})
         return svc, calls
 
     def _seed_aggregate(self, db: Database, count: int, project_count: int = 1):
@@ -1123,7 +1126,7 @@ class TestSweepNotificationWire:
         )
         svc.update_settings({
             "notify": "off",
-            "quiet_hours": {"start": 2, "end": 3},
+            "quiet_hours": {"start": (datetime.now().hour + 3) % 24, "end": (datetime.now().hour + 5) % 24},
         })
 
         agg = self._seed_aggregate(db, 3, 2)
@@ -1157,7 +1160,7 @@ class TestSweepNotificationWire:
         )
         svc.update_settings({
             "notify": "edge",
-            "quiet_hours": {"start": 2, "end": 3},
+            "quiet_hours": {"start": (datetime.now().hour + 3) % 24, "end": (datetime.now().hour + 5) % 24},
         })
 
         agg = self._seed_aggregate(db, 5)
@@ -1190,7 +1193,7 @@ class TestSweepNotificationWire:
         )
         svc1.update_settings({
             "notify": "edge",
-            "quiet_hours": {"start": 2, "end": 3},
+            "quiet_hours": {"start": (datetime.now().hour + 3) % 24, "end": (datetime.now().hour + 5) % 24},
         })
 
         agg = self._seed_aggregate(db, 3, 2)
