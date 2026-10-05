@@ -135,7 +135,7 @@ def test_profile_key_present_is_true_only_for_own_slot(monkeypatch) -> None:
 
 def test_sync_serializer_emits_no_secret_material() -> None:
     """The profiles sync record carries shape only — never key material."""
-    from holdspeak.db.models.knowledge import ProfileRecord
+    from holdspeak.db.models import ProfileRecord
     from holdspeak.services.sync_service import _primitive_record
 
     rec = ProfileRecord(

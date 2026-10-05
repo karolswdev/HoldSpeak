@@ -291,8 +291,13 @@ class LocalWhisperDeployment:
         self.revision = revision
 
 
-def _local_dictation_engine(backend: str) -> str:
+def _local_dictation_engine(backend: str, mlx_model: Optional[str] = None) -> str:
     """The on-device engine one configured dictation backend selects, at PLAN time.
+
+    ``mlx_model`` is the configured MLX model.  When it is given and blank, MLX
+    is "not set up": ``auto`` does not choose it (the same rule as
+    ``runtime.resolve_backend(mlx_model_set=False)``), so a machine with
+    ``mlx_lm`` installed but no MLX model plans the llama.cpp starter model.
 
     ``auto`` uses the runtime resolver's real importability semantics at plan
     time. A discoverable ``mlx_lm`` package can still fail import because of a
@@ -322,7 +327,8 @@ def _local_dictation_engine(backend: str) -> str:
             return False
         return True
 
-    if platform.system() == "Darwin" and platform.machine() == "arm64":
+    mlx_set = mlx_model is None or bool(str(mlx_model).strip())
+    if mlx_set and platform.system() == "Darwin" and platform.machine() == "arm64":
         if importable("mlx_lm"):
             return "mlx"
     # Preserve the historical no-runtime plan shape when neither optional package
@@ -341,7 +347,10 @@ def dictation_local_deployment_identity(terms: Mapping[str, Any]) -> Any:
     """
     from ..inference_targets import DeploymentIdentity
 
-    engine = _local_dictation_engine(str(terms.get("runtime_backend", "") or ""))
+    engine = _local_dictation_engine(
+        str(terms.get("runtime_backend", "") or ""),
+        mlx_model=str(terms.get("runtime_mlx_model", "") or ""),
+    )
     if engine == "mlx":
         artifact = str(terms.get("runtime_mlx_model", "") or "").strip()
     elif engine == "llama_cpp":

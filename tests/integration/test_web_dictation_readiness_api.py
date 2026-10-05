@@ -100,7 +100,7 @@ def test_readiness_ready_with_project_blocks_kb_and_model(
     monkeypatch.setattr(
         runtime_module,
         "resolve_backend",
-        lambda requested: ("llama_cpp", "test backend"),
+        lambda requested, **_: ("llama_cpp", "test backend"),
     )
 
     response = test_client.get(f"/api/dictation/readiness?project_root={root}")
@@ -151,7 +151,7 @@ def test_readiness_reflects_target_profile_override(
     monkeypatch.setattr(
         runtime_module,
         "resolve_backend",
-        lambda requested: ("llama_cpp", "test backend"),
+        lambda requested, **_: ("llama_cpp", "test backend"),
     )
 
     response = test_client.get(f"/api/dictation/readiness?project_root={root}")
@@ -222,7 +222,7 @@ def test_readiness_missing_model_is_actionable(
     monkeypatch.setattr(
         runtime_module,
         "resolve_backend",
-        lambda requested: ("llama_cpp", "test backend"),
+        lambda requested, **_: ("llama_cpp", "test backend"),
     )
 
     response = test_client.get(f"/api/dictation/readiness?project_root={root}")
@@ -251,7 +251,7 @@ def test_readiness_runtime_unavailable_includes_install_guidance(
     root = tmp_path / "project"
     _write_project(root)
 
-    def _raise_unavailable(requested: str) -> tuple[str, str]:
+    def _raise_unavailable(requested: str, **_: object) -> tuple[str, str]:
         raise runtime_module.RuntimeUnavailableError("llama_cpp missing")
 
     monkeypatch.setattr(runtime_module, "resolve_backend", _raise_unavailable)

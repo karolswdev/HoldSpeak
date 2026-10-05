@@ -235,7 +235,9 @@ def probe_runtime(
         resolved = "openai_compatible"
     else:
         try:
-            resolved, _reason = runtime_module.resolve_backend(requested)
+            resolved, _reason = runtime_module.resolve_backend(
+                requested, mlx_model_set=bool(str(getattr(runtime, "mlx_model", "") or "").strip())
+            )
         except runtime_module.RuntimeUnavailableError as exc:
             return {"ok": False, "status": "unavailable", "backend": requested, "detail": str(exc)}
 

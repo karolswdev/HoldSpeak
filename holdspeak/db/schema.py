@@ -2834,6 +2834,15 @@ CREATE TABLE IF NOT EXISTS inference_assignment_heads (
 -- A network or cloud engine HoldSpeak found while no "Default for AI work"
 -- exists.  It is never assigned by itself: the owner's "Use it" press assigns
 -- it (services/inference_default_service.py; owner ruling 2026-10-05).
+-- A meeting saved while NO engine could summarise it (meeting.deferred_analysis
+-- had no ready route at Stop).  The summary backlog queues exactly these once
+-- an engine can; an explicit Skip or a queued job removes the row
+-- (services/meeting_backlog_service.py; owner ruling 2026-10-05).
+CREATE TABLE IF NOT EXISTS meeting_summary_backlog (
+    meeting_id TEXT PRIMARY KEY REFERENCES meetings(id) ON DELETE CASCADE,
+    reason TEXT NOT NULL CHECK (reason IN ('summary_deferred_no_engine')),
+    marked_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS inference_default_proposals (
     engine_id TEXT PRIMARY KEY,
     lamp TEXT NOT NULL CHECK (lamp IN ('private_network','mesh','cloud')),

@@ -561,10 +561,16 @@ def test_a_replay_rebuilds_the_reviews_own_material(rig, tmp_path, monkeypatch):
     second = review.post()
     stale = second.status_code == 200 and second.json().get("artifact_id") == first.json()["artifact_id"]
     assert not stale, "a changed story returned the first review as a success"
-    # What main does with a changed story under the same commit and diff (the
-    # request identity leaves the story out): the second review fails, and
-    # nothing reaches the model.  Memory does not change that.
-    assert second.status_code == 500 and len(review.engine.prompts) == 1
+    # The story is part of the request identity (2026-10-05; it was an HTTP
+    # 500 before): a changed story is a new review run with its own artifact,
+    # and the model reads the edited story.
+    assert second.status_code == 200, second.text
+    assert len(review.engine.prompts) == 2
+    assert "EDITED" in review.engine.prompts[1]
+    # And that edited request replays exactly too.
+    third = review.post()
+    assert third.status_code == 200 and third.json()["artifact_id"] == second.json()["artifact_id"]
+    assert len(review.engine.prompts) == 2
 
 
 def test_cadence_memory_never_carries_its_source_under_the_meeting(rig, tmp_path, monkeypatch):
@@ -613,3 +619,34 @@ def test_promotion_memory_never_carries_the_decision_under_another_name(rig):
     assert str(record["id"]) not in block
     assert str(adr["id"]) not in block
     assert "use record-backed decisions" not in block.casefold()
+
+
+def test_a_review_made_before_the_story_joined_the_identity_still_replays(rig, tmp_path, monkeypatch):
+    """Astra on #867 (P2): a review made by the base branch (its identity had no
+    story) replays when the story is unchanged; an edited story is a new run."""
+    from holdspeak.web.routes import delivery_prs
+
+    _decide(rig, "Adopt quorumdb for the ledger", "We adopt quorumdb for the ledger.")
+    review = _ReviewRig(rig, tmp_path, monkeypatch)
+    review.linked = [{"ref": "file:story-02-ledger.md", "revision": "r1",
+                      "text": "Story 02: move the ledger."}]
+    # The base branch's route: the identity leaves the story out.
+    with monkeypatch.context() as base:
+        base.setattr(delivery_prs, "_legacy_review_matches", lambda *_args: True)
+        legacy = review.post()
+    assert legacy.status_code == 200, legacy.text
+    assert len(review.engine.prompts) == 1
+
+    # This branch, identical material: the legacy review replays.
+    again = review.post()
+    assert again.status_code == 200, again.text
+    assert again.json()["artifact_id"] == legacy.json()["artifact_id"]
+    assert len(review.engine.prompts) == 1
+
+    # An edited story: a new run with its own artifact.
+    review.linked = [{"ref": "file:story-02-ledger.md", "revision": "r2",
+                      "text": "Story 02: move the ledger. EDITED."}]
+    edited = review.post()
+    assert edited.status_code == 200, edited.text
+    assert edited.json()["artifact_id"] != legacy.json()["artifact_id"]
+    assert len(review.engine.prompts) == 2

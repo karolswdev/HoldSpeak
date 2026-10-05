@@ -353,10 +353,9 @@ class TestFailurePaths:
     def test_open_review_unknown_project_404(self, rig) -> None:
         _db, client, _delta = rig
         resp = client.post("/api/projects/proj-nonexistent/reviews")
-        # The service tries to open on a non-existent project.
-        # The result depends on how observations/project tables handle this.
-        # It should be 400 or 404.
-        assert resp.status_code in (400, 404, 500), resp.text
+        # A typed 404, never a 500 (it was a FOREIGN KEY crash until 2026-10-05).
+        assert resp.status_code == 404, resp.text
+        assert resp.json()["code"] == "not_found"
 
     def test_get_review_unknown_404(self, rig) -> None:
         _db, client, _delta = rig

@@ -187,7 +187,7 @@ class ConnectionsService:
     ) -> dict[str, Any]:
         """Probe a provider (egress), store the result, return its cached entry."""
         if provider_id == "github":
-            return self._recheck_github(principal)
+            return self._recheck_github(principal, hostname=ref)
         if provider_id == "jira":
             return self._recheck_jira(principal, ref=ref)
         if provider_id == "confluence":
@@ -252,10 +252,13 @@ class ConnectionsService:
             "egress_host": "github.com",
         }
 
-    def _recheck_github(self, principal: Principal) -> dict[str, Any]:
-        """Probe GitHub (``gh auth status``, stored), return the cached entry."""
+    def _recheck_github(self, principal: Principal, *, hostname: str | None = None) -> dict[str, Any]:
+        """Probe GitHub (``gh auth status``, one host when named; stored), return the cached entry."""
         if self._github is not None:
-            self._github.connection_status(principal)
+            if hostname:
+                self._github.connection_status(principal, hostname=hostname)
+            else:
+                self._github.connection_status(principal)
         return self._github_entry(principal)
 
     # ── Jira ──────────────────────────────────────────────────────────

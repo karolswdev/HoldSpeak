@@ -303,19 +303,13 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
     ): "setup/diagnostic network probe",
     (
         "holdspeak/doctor.py",
-        "_get_json",
+        "_open",
         "urlopen",
         1,
-    ): "operator-requested diagnostic network probe",
+    ): "operator-requested diagnostic network probe (a token-bearing request goes through a no-redirect opener)",
     (
         "holdspeak/doctor.py",
         "_get_html",
-        "urlopen",
-        1,
-    ): "operator-requested diagnostic network probe",
-    (
-        "holdspeak/doctor.py",
-        "_post_json",
         "urlopen",
         1,
     ): "operator-requested diagnostic network probe",
