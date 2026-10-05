@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import datetime, timedelta
+from holdspeak.timestamps import aware, parse_stamp, utc_iso, utc_now
 from typing import Any, Optional, Sequence
 
 from holdspeak.plugins.dictation.corrections import (
@@ -39,11 +40,11 @@ MIN_SIMILARITY = 0.5
 def _cutoff_iso(window: str, now: datetime) -> Optional[str]:
     """The ISO lower bound for `window`, or None for 'all' (no bound).
 
-    `created_at` is stored as a naive local ISO string, so a lexicographic
-    compare against another same-format ISO string orders chronologically.
+    Stored ``created_at`` values mix the old naive local stamps and the new
+    UTC ones, so ``_in_window`` compares parsed instants, never text.
     """
     if window == "week":
-        return (now - timedelta(days=_WEEK_DAYS)).isoformat()
+        return utc_iso(now - timedelta(days=_WEEK_DAYS))
     return None
 
 
@@ -57,7 +58,11 @@ def _in_window(created_at: Any, cutoff: Optional[str]) -> bool:
         return True
     if not created_at:
         return True
-    return str(created_at) >= cutoff
+    stamp = parse_stamp(created_at)
+    bound = parse_stamp(cutoff)
+    if stamp is None or bound is None:
+        return True
+    return stamp >= bound
 
 
 def _normalize_corrections(corrections: Optional[Sequence[Any]]) -> list[dict[str, Any]]:
@@ -201,7 +206,7 @@ def build_learning_digest(
     understate what the pipeline actually does.
     """
     window = window if window in WINDOWS else "week"
-    now = now or datetime.now()
+    now = aware(now) if now else utc_now()
     cutoff = _cutoff_iso(window, now)
 
     corr = _normalize_corrections(corrections)

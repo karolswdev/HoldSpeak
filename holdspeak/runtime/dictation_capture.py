@@ -9,6 +9,7 @@ from __future__ import annotations
 import threading
 import time
 from datetime import datetime
+from holdspeak.timestamps import utc_now
 from typing import Any, Callable, Optional
 
 import numpy as np
@@ -186,7 +187,7 @@ class DictationCaptureMixin(
                 text = self._maybe_run_dictation_pipeline(
                     text,
                     audio_duration_s=len(audio) / 16000.0,
-                    transcribed_at=datetime.now(),
+                    transcribed_at=utc_now(),
                     agent_reply_session=agent_reply_session,
                     admission=provider,
                 )

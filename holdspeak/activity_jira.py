@@ -8,6 +8,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime
+from holdspeak.timestamps import local_wall
 from typing import Any, Callable, Iterable, Optional
 
 from .db import ActivityAnnotation, ActivityRecord, Database
@@ -118,7 +119,7 @@ def run_jira_cli_enrichment(
     from .connector_runtime import PermissionDenied, PermissionGate, ReadSubprocessDenied
 
     gate = PermissionGate(jira_cli_pack.MANIFEST)
-    started_at = datetime.now()
+    started_at = local_wall()
     output_bytes = 0
     results: list[JiraCliRunResult] = []
     for plan in plans:
@@ -133,7 +134,7 @@ def run_jira_cli_enrichment(
                 check=False,
             )
         except (PermissionDenied, ReadSubprocessDenied) as exc:
-            now = datetime.now()
+            now = local_wall()
             db.activity.record_activity_enrichment_run(
                 connector_id=CONNECTOR_ID,
                 last_run_at=now,
@@ -191,7 +192,7 @@ def run_jira_cli_enrichment(
         results.append(JiraCliRunResult(plan=plan, annotation=annotation))
 
     failures = [result.error for result in results if result.error]
-    finished_at = datetime.now()
+    finished_at = local_wall()
     error_summary = (
         f"{len(failures)} jira command(s) failed" if failures else ""
     )

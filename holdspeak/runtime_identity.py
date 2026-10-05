@@ -36,6 +36,7 @@ import os
 import subprocess
 from dataclasses import asdict, dataclass
 from datetime import datetime
+from holdspeak.timestamps import utc_iso
 from pathlib import Path
 from typing import Any, Optional
 
@@ -250,7 +251,7 @@ def capture_runtime_identity(
         backend_version=str(__version__),
         backend_revision=revision,
         backend_revision_source=source,
-        process_start=(started_at or datetime.now()).isoformat(),
+        process_start=utc_iso(started_at),
         pid=os.getpid(),
         frontend_build=read_bundle_build_id(),
         database_id=database_identity(path),

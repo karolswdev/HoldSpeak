@@ -34,6 +34,7 @@ three additions the Room needs:
 Nothing here decides what is admitted: the descriptor does.
 """
 from __future__ import annotations
+from holdspeak.timestamps import utc_now_iso
 
 import json
 import threading
@@ -477,7 +478,7 @@ def _record_answer(conn: Any, command_id: str, project_id: str, command_kind: st
 
         raise ConflictError("idempotency conflict: this command_id answered another command",
                             code="idempotency_conflict", context={"command_id": command_id})
-    now_iso = datetime.now().isoformat()
+    now_iso = utc_now_iso()
     conn.execute(
         """INSERT INTO project_commands (
                id, project_id, command_kind, request_hash, status, result_json, completed_at, created_at

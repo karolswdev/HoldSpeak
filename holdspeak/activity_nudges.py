@@ -25,6 +25,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from holdspeak.timestamps import local_wall
 from typing import Any, Optional
 
 from .db import ActivityRecord, Database, get_database
@@ -122,7 +123,7 @@ def compute_nudges(
         return []
 
     cap = max(1, min(int(limit or _DEFAULT_LIMIT), 10))
-    current_time = now or datetime.now()
+    current_time = now or local_wall()
     since_ts, since_source = _resolve_since(database, current_time)
 
     records = database.activity.list_activity_records(

@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import sys
 from datetime import datetime
+from holdspeak.timestamps import local_now
 from typing import Optional, TextIO
 
 from ..config import Config
@@ -142,7 +143,7 @@ def _cmd_loops(out: TextIO, db, *, as_json: bool, include_all: bool) -> int:
 def _cmd_run_now(out: TextIO, db, config, *, as_json: bool) -> int:
     from ..cadence.service import CadenceService
 
-    result = CadenceService(db, config.cadence).tick(datetime.now())
+    result = CadenceService(db, config.cadence).tick(local_now())
     if as_json:
         print(json.dumps({
             "at": result.at,

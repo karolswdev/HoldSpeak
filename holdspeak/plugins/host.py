@@ -7,6 +7,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 import hashlib
 import json
 import time
@@ -541,7 +542,7 @@ class PluginHost:
                     transcript_hash=str(transcript_hash),
                     idempotency_key=key,
                     context=dict(context),
-                    queued_at=datetime.now().isoformat(),
+                    queued_at=utc_now_iso(),
                 )
                 self._deferred_runs.append(queued_run)
                 self._deferred_keys.add(key)

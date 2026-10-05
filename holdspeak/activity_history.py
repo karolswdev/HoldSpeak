@@ -8,6 +8,7 @@ import sqlite3
 import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from holdspeak.timestamps import local_wall
 from pathlib import Path
 from typing import Iterable, Optional
 from urllib.parse import urlsplit
@@ -235,7 +236,7 @@ def _import_history_source(
 
         retention_days = int(privacy.get("retention_days") or 30)
         db.activity.delete_activity_records(
-            older_than=datetime.now() - timedelta(days=retention_days)
+            older_than=local_wall() - timedelta(days=retention_days)
         )
 
         db.activity.set_activity_import_checkpoint(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Callable, Optional
 
 
@@ -47,7 +48,7 @@ _LINGER_WINDOW_STATES = frozenset({"complete", "meeting_live", "error"})
 
 
 def _utc_now_iso() -> str:
-    return datetime.now().isoformat()
+    return utc_now_iso()
 
 
 def normalize_activity_state(value: object) -> RuntimeActivityState:

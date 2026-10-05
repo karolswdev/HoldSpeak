@@ -154,7 +154,9 @@ def test_project_merge_preserves_the_incoming_sync_clock(tmp_path, monkeypatch) 
     assert client.post("/api/sync/push", json={"projects": [record]}).status_code == 200
     stored = destination.projects.get_project("p-clock")
     # The incoming clock, not arrival time (repos parse to datetime).
-    assert stored.updated_at.strftime("%Y-%m-%dT%H:%M:%S") == "2020-01-01T00:00:00"
+    # The model holds hub-local wall time (holdspeak/timestamps.py): compare the instant.
+    from datetime import timezone as _tz
+    assert stored.updated_at.astimezone(_tz.utc).strftime("%Y-%m-%dT%H:%M:%S") == "2020-01-01T00:00:00"
 
     import copy
     conflicting = copy.deepcopy(record)

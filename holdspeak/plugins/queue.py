@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from holdspeak.timestamps import utc_now
 from typing import Optional
 
 from ..db import Database, PluginRunJob
@@ -75,7 +76,7 @@ def process_next_plugin_run_job(
             base_seconds=retry_base_seconds,
             max_seconds=retry_max_seconds,
         )
-        retry_at = datetime.now() + timedelta(seconds=delay_seconds)
+        retry_at = utc_now() + timedelta(seconds=delay_seconds)
         db.plugins.retry_plugin_run_job(
             job.id,
             error="Meeting not yet persisted; deferred plugin run will retry.",
@@ -131,7 +132,7 @@ def process_next_plugin_run_job(
             base_seconds=retry_base_seconds,
             max_seconds=retry_max_seconds,
         )
-        retry_at = datetime.now() + timedelta(seconds=delay_seconds)
+        retry_at = utc_now() + timedelta(seconds=delay_seconds)
         db.plugins.retry_plugin_run_job(
             job.id,
             error=result.error or f"Deferred plugin run {result.status}",

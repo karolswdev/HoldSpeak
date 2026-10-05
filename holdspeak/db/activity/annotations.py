@@ -7,6 +7,7 @@ from __future__ import annotations
 import sqlite3
 import uuid
 from datetime import datetime
+from holdspeak.timestamps import parse_wall, utc_now_iso
 from typing import Optional, Any
 
 from ..models import ActivityAnnotation
@@ -33,7 +34,7 @@ class ActivityAnnotationsMixin:
             raise ValueError("annotation_type is required")
         clean_id = str(annotation_id or f"ann-{uuid.uuid4().hex[:12]}").strip()
         record_id = int(activity_record_id) if activity_record_id is not None else None
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             if record_id is not None:
                 exists = conn.execute(
@@ -132,7 +133,7 @@ class ActivityAnnotationsMixin:
             title=str(row["title"] or ""),
             value=self._json_loads_dict(row["value_json"]),
             confidence=float(row["confidence"] or 0),
-            created_at=datetime.fromisoformat(row["created_at"]),
-            updated_at=datetime.fromisoformat(row["updated_at"]),
+            created_at=parse_wall(row["created_at"]),
+            updated_at=parse_wall(row["updated_at"]),
         )
 

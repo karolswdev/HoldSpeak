@@ -55,6 +55,7 @@ import re as _re
 import time as _time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from holdspeak.timestamps import utc_now_iso
 from typing import Any, Optional
 
 from ..db.updates import PublishedUpdateError
@@ -2246,7 +2247,7 @@ class ProjectUpdateService:
                 raise NotFound("project", project_id)
             current_rev = int(proj_row["revision"])
             new_revision = current_rev + 1
-            now_iso = datetime.now().isoformat()
+            now_iso = utc_now_iso()
 
             conn.execute(
                 "UPDATE projects SET revision = ?, updated_at = ? WHERE id = ?",
@@ -2433,7 +2434,7 @@ class ProjectUpdateService:
         envelope: CommandResultEnvelope,
     ) -> None:
         """Record a completed command in the idempotency ledger."""
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         result_json = json.dumps(
             _envelope_to_dict(envelope), ensure_ascii=False,
         )

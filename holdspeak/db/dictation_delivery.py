@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime
+from holdspeak.timestamps import utc_iso
 from typing import Any, Optional
 
 from .base import BaseRepository
@@ -39,7 +40,7 @@ class DictationDeliveryRepository(BaseRepository):
             raise ValueError("delivery_id must be 1..128 identifier characters")
         if len(clean_hash) != 64 or any(c not in "0123456789abcdef" for c in clean_hash):
             raise ValueError("request_hash must be a SHA-256 hex digest")
-        timestamp = (now or datetime.now()).isoformat()
+        timestamp = utc_iso(now)
         with self._connection() as conn:
             cursor = conn.execute(
                 """
@@ -117,7 +118,7 @@ class DictationDeliveryRepository(BaseRepository):
         now: Optional[datetime],
     ) -> dict[str, Any]:
         clean_id = str(delivery_id or "").strip()
-        timestamp = (now or datetime.now()).isoformat()
+        timestamp = utc_iso(now)
         response_json = json.dumps(response, separators=(",", ":"), sort_keys=True)
         with self._connection() as conn:
             cursor = conn.execute(

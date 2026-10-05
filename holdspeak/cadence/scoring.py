@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from holdspeak.timestamps import aware, parse_stamp
 from typing import Optional
 
 from .models import OpenLoop, ScoreBreakdown
@@ -50,10 +51,12 @@ def _age_days(loop: OpenLoop, now: datetime) -> float:
     if not loop.created_at:
         return 0.0
     try:
-        created = datetime.fromisoformat(loop.created_at)
+        created = parse_stamp(loop.created_at)
+        if created is None:
+            return 0.0
     except ValueError:
         return 0.0
-    return max(0.0, (now - created).total_seconds() / 86400.0)
+    return max(0.0, (aware(now) - created).total_seconds() / 86400.0)
 
 
 def score_loop(

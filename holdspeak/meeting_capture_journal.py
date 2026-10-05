@@ -6,6 +6,7 @@ import json
 import os
 import threading
 from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from pathlib import Path
 from typing import Any, Optional
 
@@ -119,7 +120,7 @@ class MeetingCaptureJournal:
             "status": self._status,
             "durable_bytes": dict(self._durable),
             "error": self._error,
-            "updated_at": datetime.now().isoformat(),
+            "updated_at": utc_now_iso(),
             "actions": ["retry", "discard"] if self._status == "recoverable" else [],
         }
         temp = self.manifest_path.with_suffix(".json.tmp")

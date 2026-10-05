@@ -16,6 +16,7 @@ the same `value` payload.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from holdspeak.timestamps import local_wall
 from typing import Any, Iterable, Optional
 
 from ..connector_sdk import ConnectorManifest, validate_manifest
@@ -187,7 +188,7 @@ def run(
     re-running is mutation-safe.
     """
     del principal
-    started_at = datetime.now()
+    started_at = local_wall()
 
     capped = max(1, min(int(limit if limit is not None else DEFAULT_LIMIT), 1000))
 
@@ -283,7 +284,7 @@ def run(
         )
         created += 1
 
-    finished_at = datetime.now()
+    finished_at = local_wall()
     db.activity.record_connector_run(
         connector_id=CONNECTOR_ID,
         started_at=started_at,

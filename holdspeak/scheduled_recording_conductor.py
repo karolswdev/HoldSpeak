@@ -235,6 +235,7 @@ class ScheduledRecordingConductor:
         # Before anything can be marked missed: repair the fire times the old
         # code stored in UTC (review of #778).
         self._repair_utc_fire_times_once(db)
+        self._repair_edited_utc_fire_times_once(db)
         all_schedules = db.scheduled_recordings.list_all()
 
         for sched in all_schedules:
@@ -393,6 +394,74 @@ class ScheduledRecordingConductor:
                 milestones.mark(self._ZONE_REPAIR_MILESTONE)
         except Exception as exc:
             log.error(f"Schedule fire-time repair failed: {exc}")
+
+    _ZONE_REPAIR_EDITED_MILESTONE = "scheduled_recordings.zone_fire_repair.v2"
+
+    def _repair_edited_utc_fire_times_once(self, db: Any) -> None:
+        """Repair fire times the old code computed in UTC at an EDIT.
+
+        The v1 repair above finds a row by its creation time. A schedule
+        edited under the old code got its fire computed in UTC at the edit,
+        and the edit time is not stored, so v1 does not find it (STATUS,
+        2026-10-04: "a schedule edited under the old code keeps a wrong time
+        until saved again").
+
+        The old value has a mark of its own: the cron matches the stored
+        fire on the UTC wall clock and not on the zone's wall clock. New
+        code never writes that. The old occurrence ("09:00 on the 6th") is
+        read on the zone's wall clock. If that is past, it is kept, so it
+        still reads as missed. If it is to come, the fire is the first zone
+        fire after now: the edit was before now, so the true fire is not
+        later than that one. Runs once (a milestone).
+        """
+        milestones = getattr(db, "milestones", None)
+        try:
+            if milestones is not None and milestones.is_set(
+                self._ZONE_REPAIR_EDITED_MILESTONE
+            ):
+                return
+            for sched in db.scheduled_recordings.list_all():
+                if not sched.enabled or sched.calendar_event_id:
+                    continue
+                if sched.state not in ("idle", "stopped", "cancelled", "refused", "missed"):
+                    continue
+                if sched.next_fire_at is None or not sched.cron_expr:
+                    continue
+                if not sched.tz or sched.tz.upper() == "UTC":
+                    continue
+                zone = _resolve_tz(sched.tz)
+                if zone is timezone.utc:
+                    continue
+                stored = datetime.fromtimestamp(sched.next_fire_at, tz=timezone.utc)
+                utc_wall = stored.replace(tzinfo=None)
+                zone_wall = stored.astimezone(zone).replace(tzinfo=None)
+                if not cron_is_due(sched.cron_expr, now=utc_wall):
+                    continue
+                if cron_is_due(sched.cron_expr, now=zone_wall):
+                    continue
+                # The same wall-clock occurrence in the zone. Start one minute
+                # before it so a wall time inside a DST gap still resolves.
+                start = (utc_wall - timedelta(minutes=1)).replace(tzinfo=zone)
+                repaired = next_cron_fire(sched.cron_expr, after=start)
+                now = self._clock()
+                if repaired is not None and repaired > now:
+                    # The edit was before now, so the true fire (the first
+                    # zone fire after the edit) is not later than the first
+                    # zone fire after now.
+                    repaired = next_cron_fire_in_zone(
+                        sched.cron_expr, sched.tz, now_epoch=now,
+                    )
+                if repaired is None or repaired == sched.next_fire_at:
+                    continue
+                db.scheduled_recordings.update(sched.id, next_fire_at=repaired)
+                log.info(
+                    f"Repaired edited fire time for schedule '{sched.title}' "
+                    f"(id={sched.id}): {sched.next_fire_at} -> {repaired} ({sched.tz})"
+                )
+            if milestones is not None:
+                milestones.mark(self._ZONE_REPAIR_EDITED_MILESTONE)
+        except Exception as exc:
+            log.error(f"Schedule edited fire-time repair failed: {exc}")
 
     # -- tick --
 

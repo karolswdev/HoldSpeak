@@ -311,12 +311,11 @@ class MeshRelayAuthority:
         settled, so it must not be authorized in the first place.
         """
         remaining = [float(COMPLETE_WITHIN_SECONDS)]
-        try:
-            deadline = datetime.fromisoformat(str(job.deadline_at or ""))
-        except (TypeError, ValueError):
-            deadline = None
+        from holdspeak.timestamps import parse_stamp, utc_now
+
+        deadline = parse_stamp(job.deadline_at)
         if deadline is not None:
-            remaining.append((deadline - datetime.now()).total_seconds())
+            remaining.append((deadline - utc_now()).total_seconds())
         expires = warrant.get("execution_expires_at")
         if isinstance(expires, (int, float)) and not isinstance(expires, bool):
             remaining.append(float(expires) - float(now))

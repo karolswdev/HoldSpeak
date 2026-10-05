@@ -795,9 +795,12 @@ def reconcile_schema(
     # The built-in "HoldSpeak folder" Send destination (owner ruling
     # 2026-10-05): present on every desk with no setup. Ungated, like the
     # privacy seed above: an up-to-date desk gains it on its next open.
-    from .channels import seed_builtin_destination
+    from .channels import scrub_brief_people_text, seed_builtin_destination
 
     seed_builtin_destination(conn)
+    # People text the old Brief renderer froze into prepared and discarded
+    # sends (before #767). Ungated and idempotent: a scrubbed row is skipped.
+    scrub_brief_people_text(conn)
 
     # ── 5. Informational version stamp (never read to gate) ────────────
     conn.execute(

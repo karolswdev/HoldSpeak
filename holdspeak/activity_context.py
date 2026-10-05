@@ -6,6 +6,7 @@ from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from threading import Lock
 from typing import Any, Optional
 
@@ -139,7 +140,7 @@ def build_activity_context(
         entity_counts=dict(Counter(item["entity_type"] for item in serialized if item["entity_type"])),
         domain_counts=dict(Counter(item["domain"] for item in serialized if item["domain"])),
         source_counts=dict(Counter(item["source_browser"] for item in serialized if item["source_browser"])),
-        generated_at=datetime.now().isoformat(),
+        generated_at=utc_now_iso(),
         project_id=project_id,
         refreshed=did_refresh,
         refresh_errors=refresh_errors,

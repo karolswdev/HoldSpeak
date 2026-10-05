@@ -5,6 +5,7 @@ Performs lightweight environment checks and prints actionable remediation.
 
 from __future__ import annotations
 
+from holdspeak.timestamps import local_wall
 from dataclasses import dataclass
 import os
 import platform
@@ -680,7 +681,7 @@ def _check_mesh_edges(config: Config) -> DoctorCheck:
             status="PASS",
             detail="no node has ever served this mesh (start one: holdspeak mesh serve)",
         )
-    now = datetime.now()
+    now = local_wall()
     parts: list[str] = []
     for node, last_seen in sorted(workers.items()):
         age = int((now - last_seen).total_seconds())

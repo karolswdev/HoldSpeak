@@ -10,6 +10,7 @@ import threading
 import time
 import webbrowser
 from datetime import datetime
+from holdspeak.timestamps import utc_now
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -174,7 +175,7 @@ class WebRuntime(
         self.register_signal_handlers = register_signal_handlers
 
         self.config = Config.load()
-        self.runtime_started_at = datetime.now()
+        self.runtime_started_at = utc_now()
         self.runtime_stop_event = stop_event or threading.Event()
         self.state_lock = threading.Lock()
         self.meeting_lock = threading.Lock()

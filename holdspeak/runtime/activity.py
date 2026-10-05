@@ -8,6 +8,7 @@ WebRuntime.
 from __future__ import annotations
 
 from datetime import datetime
+from holdspeak.timestamps import utc_now
 from typing import Optional
 
 import numpy as np
@@ -96,7 +97,7 @@ class RuntimeActivityMixin:
         )
 
     def _runtime_idle_state(self) -> dict[str, object]:
-        runtime_uptime = max(0.0, (datetime.now() - self.runtime_started_at).total_seconds())
+        runtime_uptime = max(0.0, (utc_now() - self.runtime_started_at).total_seconds())
         with self.state_lock:
             idle_title = self.pending_title or ""
             idle_tags = list(self.pending_tags) if self.pending_tags is not None else []
@@ -155,7 +156,7 @@ class RuntimeActivityMixin:
         payload["meeting_active"] = session.is_active
         payload["meeting_id"] = payload.get("id")
         payload["runtime_started_at"] = self.runtime_started_at.isoformat()
-        payload["runtime_uptime"] = max(0.0, (datetime.now() - self.runtime_started_at).total_seconds())
+        payload["runtime_uptime"] = max(0.0, (utc_now() - self.runtime_started_at).total_seconds())
         if self.runtime_url and not payload.get("web_url"):
             payload["web_url"] = self.runtime_url
         with self.state_lock:

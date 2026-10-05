@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any
 
 from .model import KernelRefused
@@ -54,7 +55,7 @@ def materialize_result(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
     _permit(conn, permit)
     p = dict(stage.projection)
     aid = str(p["artifact_id"])
-    now = str(p.get("created_at") or datetime.now().isoformat())
+    now = str(p.get("created_at") or utc_now_iso())
     conn.execute(
         "INSERT INTO artifacts(id,meeting_id,origin,artifact_type,title,body_markdown,structured_json,confidence,status,plugin_id,plugin_version,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (aid, None, "run", "plugin_output", str(p["name"]), str(p["output"]),

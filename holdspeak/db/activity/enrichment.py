@@ -7,6 +7,7 @@ from __future__ import annotations
 import sqlite3
 import uuid
 from datetime import datetime
+from holdspeak.timestamps import local_wall, parse_wall, utc_iso, utc_now_iso
 from typing import Optional, Any
 
 from ..models import ActivityEnrichmentConnectorState, ConnectorRun
@@ -29,11 +30,11 @@ class ActivityEnrichmentMixin:
         current = self.get_activity_enrichment_connector(clean_id)
         next_enabled = bool(enabled) if enabled is not None else (current.enabled if current else False)
         next_settings = settings if settings is not None else (current.settings if current else {})
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         last_run_iso = (
-            last_run_at.isoformat()
+            utc_iso(last_run_at)
             if isinstance(last_run_at, datetime)
-            else (current.last_run_at.isoformat() if current and current.last_run_at else None)
+            else (utc_iso(current.last_run_at) if current and current.last_run_at else None)
         )
         clean_error = (
             str(last_error)
@@ -116,7 +117,7 @@ class ActivityEnrichmentMixin:
             connector_id=connector_id,
             enabled=state.enabled if state else False,
             settings=state.settings if state else {},
-            last_run_at=last_run_at or datetime.now(),
+            last_run_at=last_run_at or local_wall(),
             last_error=last_error if last_error is not None else "",
         )
 
@@ -157,8 +158,8 @@ class ActivityEnrichmentMixin:
                 """,
                 (
                     clean_id,
-                    started_at.isoformat(),
-                    finished_at.isoformat(),
+                    utc_iso(started_at),
+                    utc_iso(finished_at),
                     1 if succeeded else 0,
                     (error or None),
                     int(output_bytes),
@@ -222,8 +223,8 @@ class ActivityEnrichmentMixin:
         return ConnectorRun(
             id=int(row[0]),
             connector_id=str(row[1]),
-            started_at=datetime.fromisoformat(str(row[2])),
-            finished_at=datetime.fromisoformat(str(row[3])),
+            started_at=parse_wall(str(row[2])),
+            finished_at=parse_wall(str(row[3])),
             succeeded=bool(row[4]),
             error=(str(row[5]) if row[5] is not None else None),
             output_bytes=int(row[6] or 0),
@@ -240,9 +241,9 @@ class ActivityEnrichmentMixin:
             id=str(row["id"]),
             enabled=bool(row["enabled"]),
             settings=self._json_loads_dict(row["settings_json"]),
-            last_run_at=datetime.fromisoformat(row["last_run_at"]) if row["last_run_at"] else None,
+            last_run_at=parse_wall(row["last_run_at"]) if row["last_run_at"] else None,
             last_error=row["last_error"],
-            created_at=datetime.fromisoformat(row["created_at"]),
-            updated_at=datetime.fromisoformat(row["updated_at"]),
+            created_at=parse_wall(row["created_at"]),
+            updated_at=parse_wall(row["updated_at"]),
         )
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any, Optional
 
 from .base import BaseRepository
@@ -38,7 +39,7 @@ def qualified_ref(value: object) -> str:
 
 
 def _now() -> str:
-    return datetime.now().isoformat()
+    return utc_now_iso()
 
 
 @dataclass(frozen=True)

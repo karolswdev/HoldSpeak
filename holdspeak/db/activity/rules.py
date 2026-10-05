@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from holdspeak.timestamps import local_wall, parse_wall, utc_now_iso
 from typing import Optional, Any
 
 from ..models import ActivityProjectRule
@@ -45,7 +46,7 @@ class ActivityRulesMixin:
         clean_action = str(action or "exclude").strip().lower()
         if clean_action not in {"exclude", "allow"}:
             raise ValueError("activity domain action must be 'exclude' or 'allow'")
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -117,7 +118,7 @@ class ActivityRulesMixin:
             entity_type=entity_type,
         )
         clean_id = str(rule_id or f"apr-{uuid.uuid4().hex[:12]}").strip()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -229,7 +230,7 @@ class ActivityRulesMixin:
         if not updates:
             return current
         updates.append("updated_at = ?")
-        params.append(datetime.now().isoformat())
+        params.append(utc_now_iso())
         params.append(clean_id)
         with self._connection() as conn:
             conn.execute(
@@ -291,7 +292,7 @@ class ActivityRulesMixin:
             pattern=pattern,
             entity_type=entity_type,
         )
-        now = datetime.now()
+        now = local_wall()
         rule = ActivityProjectRule(
             id="preview",
             project_id=clean_project_id,
@@ -347,7 +348,7 @@ class ActivityRulesMixin:
                 SET project_id = ?, updated_at = ?
                 WHERE id = ?
                 """,
-                (clean_project_id, datetime.now().isoformat(), int(record_id)),
+                (clean_project_id, utc_now_iso(), int(record_id)),
             )
             return bool(cursor.rowcount)
 
@@ -400,7 +401,7 @@ class ActivityRulesMixin:
             match_type=str(row["match_type"]),
             pattern=str(row["pattern"]),
             entity_type=row["entity_type"],
-            created_at=datetime.fromisoformat(row["created_at"]),
-            updated_at=datetime.fromisoformat(row["updated_at"]),
+            created_at=parse_wall(row["created_at"]),
+            updated_at=parse_wall(row["updated_at"]),
         )
 

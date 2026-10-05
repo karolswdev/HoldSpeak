@@ -409,8 +409,8 @@ def _persist_and_link_mint_artifact(
     Issue 2 fix: uses the db's raw connection so both the artifact INSERT
     and the item UPDATE happen atomically. On failure, both roll back.
     """
-    from datetime import datetime as _dt
-    now_iso = _dt.now().isoformat()
+    from holdspeak.timestamps import utc_now_iso
+    now_iso = utc_now_iso()
     body = str(output or "")
     sj_str = json.dumps(structured_json or {})
 
@@ -459,8 +459,8 @@ def _recover_existing_artifact(db: Any, run_id: str, item: Any) -> Optional[str]
     if row:
         existing_id = row["id"]
         # Link the item to the existing artifact
-        from datetime import datetime as _dt
-        now_iso = _dt.now().isoformat()
+        from holdspeak.timestamps import utc_now_iso
+        now_iso = utc_now_iso()
         with db._connection() as conn:
             conn.execute(
                 """
@@ -476,8 +476,8 @@ def _recover_existing_artifact(db: Any, run_id: str, item: Any) -> Optional[str]
 
 def _mark_mint_attempted(db: Any, item_id: str) -> None:
     """Mark an item as mint_attempted even when minting failed (Issue 4)."""
-    from datetime import datetime as _dt
-    now_iso = _dt.now().isoformat()
+    from holdspeak.timestamps import utc_now_iso
+    now_iso = utc_now_iso()
     try:
         with db._connection() as conn:
             conn.execute(

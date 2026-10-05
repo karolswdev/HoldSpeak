@@ -13,6 +13,7 @@ import ipaddress
 from dataclasses import dataclass
 from pathlib import Path
 from datetime import datetime
+from holdspeak.timestamps import local_wall
 from typing import Any, Optional
 from urllib.parse import urlparse
 
@@ -451,7 +452,7 @@ def target_from_profile(profile: Any, db: Any = None) -> InferenceTarget:
             from .intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
 
             last = db.mesh_relay.worker_last_seen(node)
-            age = None if last is None else (datetime.now() - last).total_seconds()
+            age = None if last is None else (local_wall() - last).total_seconds()
             if age is None or age > DEFAULT_LIVENESS_WINDOW_SECONDS:
                 state = "offline"
                 reason = (

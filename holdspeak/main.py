@@ -1,6 +1,7 @@
 """Main entry point for HoldSpeak voice typing on macOS and Linux."""
 
 from __future__ import annotations
+from holdspeak.timestamps import local_now
 
 import os
 import threading
@@ -823,7 +824,7 @@ def _export_transcript(results: list[tuple[str, str]], format: str) -> Optional[
     from pathlib import Path
     from datetime import datetime
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = local_now().strftime("%Y%m%d_%H%M%S")
     ext = {"markdown": "md", "txt": "txt", "json": "json"}.get(format, "txt")
     filename = f"meeting_{timestamp}.{ext}"
     filepath = Path.home() / "Documents" / filename
@@ -834,7 +835,7 @@ def _export_transcript(results: list[tuple[str, str]], format: str) -> Optional[
             data = [{"speaker": s, "text": t} for s, t in results]
             filepath.write_text(json.dumps(data, indent=2))
         elif format == "markdown":
-            lines = ["# Meeting Transcript", "", f"*{datetime.now().strftime('%Y-%m-%d %H:%M')}*", ""]
+            lines = ["# Meeting Transcript", "", f"*{local_now().strftime('%Y-%m-%d %H:%M')}*", ""]
             for speaker, text in results:
                 lines.append(f"## {speaker}")
                 lines.append("")

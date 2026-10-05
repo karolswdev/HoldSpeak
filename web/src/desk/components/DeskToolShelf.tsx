@@ -38,6 +38,7 @@ import { useAllOpenWindows, useFrontWindowId } from "./window/windowRegistry";
 import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
 import { useLaunchers } from "./DeskWindow";
 import type { CoverageRecord } from "../coverage";
+import { readProjectCounts } from "../needsYou";
 import { Button } from "../../components/signal/Signal";
 
 // Re-exported so existing imports keep one source (the data moved to
@@ -319,19 +320,16 @@ export function DeskToolShelf() {
   const [projectCoverage, setProjectCoverage] = useState<Record<string, string>>({});
   useEffect(() => {
     void apiFetch<{
-      items?: Array<{ projectId?: string; muted?: boolean }>;
-      /** The Room rows alone: a project badge is per Room ("N OPEN"). */
-      roomItems?: Array<{ projectId?: string; muted?: boolean }>;
+      items?: Array<{ projectId?: string; muted?: boolean; waiting?: boolean }>;
+      /** The hub's members by Project: a project badge ("N OPEN"). */
+      projectCounts?: Record<string, number>;
       coverage?: CoverageRecord[];
     }>("/api/desk/needs-you")
       .then((payload) => {
-        const counts: Record<string, number> = {};
-        // One count everywhere: muted Rooms' items never inflate a badge (counsel C1).
-        for (const item of (payload?.roomItems ?? payload?.items ?? []).filter((i) => !i.muted)) {
-          const pid = item.projectId;
-          if (pid) counts[pid] = (counts[pid] ?? 0) + 1;
-        }
-        setProjectNeedsYou(counts);
+        // One count everywhere: the badge is the hub's one rule split by
+        // Project, so a muted Room or a row the owner waits on someone else
+        // for never inflates it.
+        setProjectNeedsYou(readProjectCounts(payload));
         const gaps: Record<string, string> = {};
         for (const row of payload?.coverage ?? []) {
           if (row.state === "available" || !row.project_id) continue;

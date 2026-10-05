@@ -435,7 +435,10 @@ import textwrap
 from holdspeak.services.monday_brief_service import BriefItem
 
 UTC = datetime.timezone.utc
-COMPUTE_WINDOW_BODY_SHA256 = "2a4925ac6b2f80ae2d3061b52a148af34af7a2cc03c0171d55f7a792c02b4a9f"
+# Re-pinned 2026-10-05 (aware-time census): the default clock is
+# ``local_wall()`` (the same naive local wall time as ``datetime.now()``);
+# the window arithmetic is unchanged.
+COMPUTE_WINDOW_BODY_SHA256 = "c135fe2dff41bdb57567f4a8e6200f78952f8281ca972d9ac88d3547292af462"
 
 
 def _seed_utc_event(db, eid: str, title: str, starts_at: str, *, uid: str | None = None) -> None:

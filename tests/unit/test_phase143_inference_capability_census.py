@@ -463,7 +463,7 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     # down; the recipe.run branch itself is unchanged. PHILO-7-01/02: moved
     # down again (852 -> 1008) with the desk operations; re-anchored, same
     # branch, same call.
-    "holdspeak/mcp/tools.py|dispatch|run": ProposedRoute(
+    "holdspeak/mcp/tools.py|_dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
     # HS-151-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115

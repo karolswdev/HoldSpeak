@@ -18,6 +18,7 @@ from __future__ import annotations
 import os
 from copy import deepcopy
 from datetime import datetime
+from holdspeak.timestamps import utc_now
 from pathlib import Path
 from typing import Any, Optional
 
@@ -836,7 +837,7 @@ def _run_dictation_dry_run_text(
         Utterance(
             raw_text=text,
             audio_duration_s=0.0,
-            transcribed_at=datetime.now(),
+            transcribed_at=utc_now(),
             project=project,
             activity=activity,
         )

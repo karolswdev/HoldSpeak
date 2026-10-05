@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from datetime import datetime, timezone
+from holdspeak.timestamps import parse_wall, utc_iso, utc_now_iso
 from typing import Optional, Any
 
 from ..logging_config import get_logger
@@ -109,7 +110,7 @@ class PluginArtifactRepository(BaseRepository):
                     continue
                 clean_scores[label] = score_value
 
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -240,8 +241,8 @@ class PluginArtifactRepository(BaseRepository):
                         if str(tag).strip()
                     ],
                     metadata=self._json_loads_dict(row["metadata_json"]),
-                    created_at=datetime.fromisoformat(row["created_at"]),
-                    updated_at=datetime.fromisoformat(row["updated_at"]),
+                    created_at=parse_wall(row["created_at"]),
+                    updated_at=parse_wall(row["updated_at"]),
                 )
             )
         return windows
@@ -278,7 +279,7 @@ class PluginArtifactRepository(BaseRepository):
         if not clean_status:
             raise ValueError("status is required")
 
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         output_json = self._json_dumps(output, fallback="null") if output is not None else None
         with self._connection() as conn:
             if clean_idempotency_key:
@@ -392,8 +393,8 @@ class PluginArtifactRepository(BaseRepository):
                     output=parsed_output,
                     error=row["error"],
                     deduped=bool(row["deduped"]),
-                    created_at=datetime.fromisoformat(row["created_at"]),
-                    updated_at=datetime.fromisoformat(row["updated_at"]),
+                    created_at=parse_wall(row["created_at"]),
+                    updated_at=parse_wall(row["updated_at"]),
                 )
             )
         return output
@@ -410,8 +411,8 @@ class PluginArtifactRepository(BaseRepository):
             idempotency_key=str(row["idempotency_key"]),
             context=context,
             status=str(row["status"] or "queued"),
-            requested_at=datetime.fromisoformat(str(row["requested_at"])),
-            updated_at=datetime.fromisoformat(str(row["updated_at"])),
+            requested_at=parse_wall(str(row["requested_at"])),
+            updated_at=parse_wall(str(row["updated_at"])),
             attempts=int(row["attempts"] or 0),
             last_error=row["last_error"],
         )
@@ -447,7 +448,7 @@ class PluginArtifactRepository(BaseRepository):
         if not clean_key:
             raise ValueError("idempotency_key is required")
 
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         context_json = self._json_dumps(context or {}, fallback="{}")
         with self._connection() as conn:
             existing = conn.execute(
@@ -515,7 +516,7 @@ class PluginArtifactRepository(BaseRepository):
         include_scheduled: bool = False,
     ) -> Optional[PluginRunJob]:
         """Claim the next deferred MIR plugin run for processing."""
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             row = conn.execute(
                 """
@@ -579,8 +580,8 @@ class PluginArtifactRepository(BaseRepository):
                 WHERE id = ?
                 """,
                 (
-                    retry_at.isoformat(),
-                    datetime.now().isoformat(),
+                    utc_iso(retry_at),
+                    utc_now_iso(),
                     str(error),
                     int(job_id),
                 ),
@@ -597,7 +598,7 @@ class PluginArtifactRepository(BaseRepository):
                     last_error = ?
                 WHERE id = ?
                 """,
-                (datetime.now().isoformat(), str(error), int(job_id)),
+                (utc_now_iso(), str(error), int(job_id)),
             )
 
     def complete_plugin_run_job(self, job_id: int) -> None:
@@ -637,7 +638,7 @@ class PluginArtifactRepository(BaseRepository):
 
     def get_plugin_run_job_summary(self) -> PluginRunJobQueueSummary:
         """Return aggregate telemetry for deferred plugin-run queue state."""
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             row = conn.execute(
                 """
@@ -666,7 +667,7 @@ class PluginArtifactRepository(BaseRepository):
 
         next_retry_at = None
         if next_row is not None and next_row["next_retry_at"]:
-            next_retry_at = datetime.fromisoformat(next_row["next_retry_at"])
+            next_retry_at = parse_wall(next_row["next_retry_at"])
 
         return PluginRunJobQueueSummary(
             total_jobs=int(row["total_jobs"] or 0),
@@ -870,8 +871,8 @@ class PluginArtifactRepository(BaseRepository):
             plugin_id=str(row["plugin_id"] or "unknown"),
             plugin_version=str(row["plugin_version"] or "unknown"),
             sources=sources,
-            created_at=datetime.fromisoformat(row["created_at"]),
-            updated_at=datetime.fromisoformat(row["updated_at"]),
+            created_at=parse_wall(row["created_at"]),
+            updated_at=parse_wall(row["updated_at"]),
             origin=str(row["origin"] or "meeting"),
         )
 
@@ -927,8 +928,8 @@ class PluginArtifactRepository(BaseRepository):
             plugin_id=str(row["plugin_id"] or "unknown"),
             plugin_version=str(row["plugin_version"] or "unknown"),
             sources=sources,
-            created_at=datetime.fromisoformat(row["created_at"]),
-            updated_at=datetime.fromisoformat(row["updated_at"]),
+            created_at=parse_wall(row["created_at"]),
+            updated_at=parse_wall(row["updated_at"]),
             origin=str(row["origin"] or "meeting"),
         )
 
@@ -1020,8 +1021,8 @@ class PluginArtifactRepository(BaseRepository):
                     plugin_id=str(row["plugin_id"] or "unknown"),
                     plugin_version=str(row["plugin_version"] or "unknown"),
                     sources=sources_by_artifact.get(str(row["id"]), []),
-                    created_at=datetime.fromisoformat(row["created_at"]),
-                    updated_at=datetime.fromisoformat(row["updated_at"]),
+                    created_at=parse_wall(row["created_at"]),
+                    updated_at=parse_wall(row["updated_at"]),
                     origin=str(row["origin"] or "meeting"),
                 )
             )

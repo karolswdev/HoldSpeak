@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import datetime
+from holdspeak.timestamps import parse_wall, utc_now_iso
 from typing import Optional, Any
 
 from ..logging_config import get_logger
@@ -49,7 +50,7 @@ class ProjectRepository(BaseRepository):
         if not clean_name:
             raise ValueError("project name is required")
         threshold = max(0.0, min(1.0, float(detection_threshold)))
-        now_iso = str(updated_at).strip() if updated_at else datetime.now().isoformat()
+        now_iso = str(updated_at).strip() if updated_at else utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -115,7 +116,7 @@ class ProjectRepository(BaseRepository):
         if not updates:
             return
         updates.append("updated_at = ?")
-        params.append(str(sync_clock).strip() if sync_clock else datetime.now().isoformat())
+        params.append(str(sync_clock).strip() if sync_clock else utc_now_iso())
         params.append(clean_id)
         with self._connection() as conn:
             conn.execute(
@@ -199,7 +200,7 @@ class ProjectRepository(BaseRepository):
         confidence: float = 0.0,
     ) -> None:
         """Create or update a meeting-project association."""
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -244,7 +245,7 @@ class ProjectRepository(BaseRepository):
             conn.execute(
                 "UPDATE project_resources SET deleted=1,last_modified=? "
                 "WHERE project_id=? AND resource_ref=?",
-                (datetime.now().isoformat(), str(project_id).strip(),
+                (utc_now_iso(), str(project_id).strip(),
                  f"meeting:{str(meeting_id).strip()}"),
             )
 
@@ -330,11 +331,11 @@ class ProjectRepository(BaseRepository):
                     review_state=row["review_state"],
                     meeting_id=row["meeting_id"],
                     meeting_title=row["meeting_title"],
-                    meeting_date=datetime.fromisoformat(row["meeting_date"]),
+                    meeting_date=parse_wall(row["meeting_date"]),
                     source_timestamp=row["source_timestamp"],
-                    created_at=datetime.fromisoformat(row["created_at"]),
-                    completed_at=datetime.fromisoformat(row["completed_at"]) if row["completed_at"] else None,
-                    reviewed_at=datetime.fromisoformat(row["reviewed_at"]) if row["reviewed_at"] else None,
+                    created_at=parse_wall(row["created_at"]),
+                    completed_at=parse_wall(row["completed_at"]) if row["completed_at"] else None,
+                    reviewed_at=parse_wall(row["reviewed_at"]) if row["reviewed_at"] else None,
                 )
                 for row in rows
             ]
@@ -375,8 +376,8 @@ class ProjectRepository(BaseRepository):
                         plugin_id=row["plugin_id"],
                         plugin_version=row["plugin_version"],
                         sources=sources,
-                        created_at=datetime.fromisoformat(row["created_at"]),
-                        updated_at=datetime.fromisoformat(row["updated_at"]),
+                        created_at=parse_wall(row["created_at"]),
+                        updated_at=parse_wall(row["updated_at"]),
                     )
                 )
             return results
@@ -578,7 +579,7 @@ class ProjectRepository(BaseRepository):
                     )
             updates.append("revision = revision + 1")
             updates.append("updated_at = ?")
-            params.append(datetime.now().isoformat())
+            params.append(utc_now_iso())
             params.append(clean_id)
             conn.execute(
                 f"UPDATE projects SET {', '.join(updates)} WHERE id = ?",
@@ -621,7 +622,7 @@ class ProjectRepository(BaseRepository):
         created_by_ref: Optional[str] = None,
     ) -> None:
         """Insert a Project item (workstream, milestone, risk, etc.)."""
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -700,7 +701,7 @@ class ProjectRepository(BaseRepository):
             return
         updates.append("revision = revision + 1")
         updates.append("updated_at = ?")
-        params.append(datetime.now().isoformat())
+        params.append(utc_now_iso())
         params.append(str(item_id).strip())
         with self._connection() as conn:
             conn.execute(
@@ -725,7 +726,7 @@ class ProjectRepository(BaseRepository):
         summary_json: Optional[str] = None,
     ) -> None:
         """Append a change-log entry (append-only by convention)."""
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -786,7 +787,7 @@ class ProjectRepository(BaseRepository):
         status: str = "pending",
     ) -> None:
         """Insert a new command (idempotency ledger entry)."""
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -825,7 +826,7 @@ class ProjectRepository(BaseRepository):
         error_code: Optional[str] = None,
     ) -> None:
         """Mark a command completed (succeeded/failed)."""
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -886,7 +887,7 @@ class ProjectRepository(BaseRepository):
             return
         updates.append("revision = revision + 1")
         updates.append("last_modified = ?")
-        params.append(datetime.now().isoformat())
+        params.append(utc_now_iso())
         params.extend([str(project_id).strip(), str(resource_ref).strip()])
         with self._connection() as conn:
             conn.execute(
@@ -916,6 +917,6 @@ class ProjectRepository(BaseRepository):
             detection_threshold=float(row["detection_threshold"]),
             is_archived=bool(row["is_archived"]),
             meeting_count=int(row["meeting_count"]),
-            created_at=datetime.fromisoformat(row["created_at"]),
-            updated_at=datetime.fromisoformat(row["updated_at"]),
+            created_at=parse_wall(row["created_at"]),
+            updated_at=parse_wall(row["updated_at"]),
         )

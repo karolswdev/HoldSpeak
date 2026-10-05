@@ -9,6 +9,7 @@ from __future__ import annotations
 import threading
 import uuid
 from datetime import datetime
+from holdspeak.timestamps import local_wall
 from typing import Any, Callable, Optional, TYPE_CHECKING
 
 import numpy as np
@@ -435,7 +436,7 @@ class MeetingSession(
             # Create new state
             self._state = MeetingState(
                 id=str(uuid.uuid4())[:8],
-                started_at=datetime.now(),
+                started_at=local_wall(),
                 mic_label=self.mic_label,
                 remote_label=self.remote_label,
                 capture_status="provisional",
@@ -451,7 +452,7 @@ class MeetingSession(
             if self._intel_refusal:
                 pass  # _admit_intel_session already set the honest named status
             elif self.intel_enabled:
-                self._state.intel_requested_at = datetime.now()
+                self._state.intel_requested_at = local_wall()
                 # HS-131-17: readiness is a PLAN question, not a provider one. The
                 # frozen placement already recorded whether the planned leg is
                 # reachable, so start never loads a model merely to announce that a
@@ -517,7 +518,7 @@ class MeetingSession(
             except Exception as exc:
                 self._state.capture_status = "capture_failed"
                 self._state.capture_failure = str(exc)
-                self._state.capture_checkpoint_at = datetime.now()
+                self._state.capture_checkpoint_at = local_wall()
                 get_database().meetings.save_meeting(self._state)
                 self._unwind_started_bundle("recorder-start")
                 raise
@@ -595,7 +596,7 @@ class MeetingSession(
                     log.error("meeting transcriber preload refused: %s", type(exc).__name__)
             self._state.capture_status = "recording"
             self._state.capture_failure = None
-            self._state.capture_checkpoint_at = datetime.now()
+            self._state.capture_checkpoint_at = local_wall()
             get_database().meetings.save_meeting(self._state)
             self._stop_event.clear()
             self._last_transcribe_time = 0.0
@@ -719,10 +720,10 @@ class MeetingSession(
             self._current_analysis_id = None
 
             # Mark as ended
-            self._state.ended_at = datetime.now()
+            self._state.ended_at = local_wall()
             self._state.capture_status = "finalized"
             self._state.capture_failure = None
-            self._state.capture_checkpoint_at = datetime.now()
+            self._state.capture_checkpoint_at = local_wall()
             self._state.capture_checkpoint_seconds = self._state.duration
             final_state = self._state
 

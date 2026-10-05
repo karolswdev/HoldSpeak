@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import sys
 from datetime import datetime
+from holdspeak.timestamps import utc_now
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional, TextIO
 
@@ -199,7 +200,7 @@ def _cmd_dry_run(
         utt = Utterance(
             raw_text=text,
             audio_duration_s=0.0,
-            transcribed_at=datetime.now(),
+            transcribed_at=utc_now(),
             project=project,
         )
         run = result.pipeline.run(utt)

@@ -90,6 +90,9 @@ def table(label: str, measures: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+from holdspeak.timestamps import parse_wall  # noqa: E402
+
+
 def keyword_snapshot(db: Any, refs: dict[str, str]) -> dict[str, Any]:
     """The full ``memory.search`` answer for every question, made stable.
 
@@ -115,6 +118,12 @@ def keyword_snapshot(db: Any, refs: dict[str, str]) -> dict[str, Any]:
                 text = text.replace(thread_id, label)
             stable = json.loads(text)
             for hit in stable.get("hits", []):
+                # A meeting's start is stored as aware UTC now (``utc_iso``,
+                # the aware-time census); the golden holds it as local wall
+                # time, so the same instant is compared on the wall clock.
+                stamp = str(hit.get("occurred_at") or "")
+                if hit["kind"] == "meeting" and stamp.endswith("+00:00"):
+                    hit["occurred_at"] = parse_wall(stamp).isoformat()
                 if hit["kind"] == "thread":
                     hit["occurred_at"] = "<thread time>"
                     hit["source_ref"] = hit["source_ref"].split("#", 1)[0]

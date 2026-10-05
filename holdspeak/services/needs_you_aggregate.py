@@ -53,6 +53,7 @@ import logging
 import threading
 import time
 from datetime import datetime, timedelta
+from holdspeak.timestamps import local_wall, utc_iso, utc_now_iso
 from typing import Any, Callable
 
 from .attention_ranking import rank_and_dedup
@@ -242,7 +243,7 @@ class LastKnownStore:
                        VALUES (?, ?, ?, ?, ?, ?)""",
                     (source_id, project_id or "", label or "", observed_at,
                      json.dumps(items, sort_keys=True, default=str),
-                     datetime.now().isoformat()),
+                     utc_now_iso()),
                 )
         except Exception as exc:  # the durable copy is belt, never the loop
             log.warning("needs-you: last-known write failed for %s: %s", source_id, exc)
@@ -293,7 +294,7 @@ class LastKnownStore:
                 entry = durable
         if entry is None:
             return None
-        horizon = (now or datetime.now()) - timedelta(days=REPLAY_HORIZON_DAYS)
+        horizon = (now or local_wall()) - timedelta(days=REPLAY_HORIZON_DAYS)
         if _older_than(str(entry["observed_at"]), horizon):
             return None
         return {
@@ -389,7 +390,7 @@ def build_aggregate(
     and (HS-200-07) ``coverage`` + ``complete``.  ``now`` is injectable so
     source staleness is deterministic under test.
     """
-    clock_now = now or datetime.now()
+    clock_now = now or local_wall()
     memory = last_known if last_known is not None else _LAST_KNOWN
     items: list[dict[str, Any]] = []
     project_ids: set[str] = set()
@@ -449,7 +450,7 @@ def build_aggregate(
             ))
             continue
 
-        observed_at = str(rm.get("observed_at") or clock_now.isoformat())
+        observed_at = str(rm.get("observed_at") or utc_iso(clock_now))
         fresh: list[dict[str, Any]] = []
         for item in needs.get("items") or []:
             if item.get("kind") == "action_item":
@@ -550,7 +551,7 @@ def build_aggregate(
     next_item = None
     if door_upcoming is not None:
         try:
-            upcoming = door_upcoming(datetime.now())
+            upcoming = door_upcoming(local_wall())
             if upcoming:
                 first = upcoming[0]
                 next_item = {
@@ -631,7 +632,7 @@ def room_coverage(
     to the horizon derived from this argument. Pass a UTC clock and every
     source west of Greenwich reads stale by the offset; pass an aware
     datetime and the comparison silently drifts the same way.
-    ``build_aggregate`` passes ``datetime.now()``, and so should you.
+    ``build_aggregate`` passes ``local_wall()``, and so should you.
     ``None`` means exactly that.
 
     The PUBLIC seam over :func:`_section_coverage` and
@@ -646,7 +647,7 @@ def room_coverage(
     must not average or pick arbitrarily; reduce to the WORST row, so a
     summary can never read better than the sources behind it.
     """
-    clock = now or datetime.now()
+    clock = now or local_wall()
     return [
         *_section_coverage(rm, project_id, project_name),
         *_watch_coverage(rm, project_id, project_name, clock, stale_after_s),
@@ -751,7 +752,7 @@ def mark_needs_you_dirty(db: Any) -> None:
     Uses ``desk_projection_state`` with a well-known projection_id.
     Thread-safe (INSERT OR REPLACE is atomic in SQLite WAL mode).
     """
-    now = datetime.now().isoformat()
+    now = utc_now_iso()
     with db._connection() as conn:
         conn.execute(
             """INSERT OR REPLACE INTO desk_projection_state
@@ -866,7 +867,7 @@ class NeedsYouCache:
                 log.warning("needs-you: rebuild failed, serving stale: %s", exc)
                 # Honest: the payload is the LAST observation, said so.
                 return {**last, "stale": True}
-            wall = datetime.now().isoformat()
+            wall = utc_now_iso()
             with self._lock:
                 data["stale"] = False
                 data["sweepId"] = self._sweep_id

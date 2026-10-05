@@ -45,6 +45,7 @@ from __future__ import annotations
 import json
 import os
 from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from pathlib import Path
 from typing import Any, Optional
 
@@ -192,7 +193,7 @@ class DatabaseOwnerLock:
     ) -> None:
         self._owner = {
             "pid": os.getpid(),
-            "process_start": process_start or datetime.now().isoformat(),
+            "process_start": process_start or utc_now_iso(),
             "port": port,
             "host": host,
             # HS-200-45 R2: which COMMAND holds the database, so a refusal can

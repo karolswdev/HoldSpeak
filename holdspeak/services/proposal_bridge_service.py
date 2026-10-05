@@ -40,6 +40,7 @@ import json
 import re
 import uuid
 from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any, Optional
 
 from ..db.core import Database
@@ -501,7 +502,7 @@ class ProposalBridgeService:
         new_text = str(text).strip() if text is not None else None
         if new_text == "":
             return {"error": "The sentence cannot be empty"}
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         support: Optional[str] = None
         record: Optional[dict[str, Any]] = None
         if new_text is not None and new_text != proposal.text:
@@ -627,7 +628,7 @@ class ProposalBridgeService:
         final_text = edited_text or proposal.text
         final_owner = owner or proposal.owner
         final_due = due or proposal.due
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         support: Optional[str] = None
         record: Optional[dict[str, Any]] = None
         if text_changed:

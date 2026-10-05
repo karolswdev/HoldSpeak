@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import time
 from datetime import datetime
+from holdspeak.timestamps import utc_now
 from typing import Optional
 
 from ..device_status import (
@@ -505,7 +506,7 @@ class MeetingGlueMixin:
             raise RuntimeError("No active meeting")
 
         entry = {
-            "timestamp": max(0.0, (datetime.now() - self.runtime_started_at).total_seconds()),
+            "timestamp": max(0.0, (utc_now() - self.runtime_started_at).total_seconds()),
             "label": label or "",
         }
         with self.state_lock:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any
 from .model import KernelRefused
 from .projection_stager import _PublicationPermit
@@ -30,7 +31,7 @@ def _child(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
         child_invocation_id=stage.invocation_id, execution_epoch=int(p["execution_epoch"]),
         planned_node=str(p["planned_node"]), checkpoint=p)
     if not p["advanced"]: return p
-    now = datetime.now().isoformat()
+    now = utc_now_iso()
     if stage.kind == "workbench-item-output":
         artifact_id = str(p["artifact_id"])
         conn.execute("UPDATE workbench_items SET status='done',result=?,result_egress_json=?,completed_at=?,last_modified=?,result_artifact_id=?,mint_attempted=1 WHERE id=?", (p["output"], json.dumps(p["egress"],sort_keys=True),now,now,artifact_id,str(p["item_id"])))
@@ -52,7 +53,7 @@ def _run(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
     receipt = conn.execute("SELECT receipt_id,outcome FROM kernel_receipts WHERE operation_id=?", (p["parent_operation_id"],)).fetchone()
     if row is None or receipt is None or str(receipt["outcome"]) != "succeeded":
         p["advanced"] = False; return p
-    now = datetime.now().isoformat()
+    now = utc_now_iso()
     conn.execute("UPDATE workbench_runs SET completed_at=?,items_attempted=?,items_completed=?,items_failed=?,mint_failures=?,egress_boundary=?,model=?,constitutional_context_revision=?,constitutional_context_hash=?,skills_injected_json=?,status='completed' WHERE id=?", (now,p["attempted"],p["completed"],p["failed"],p["mint_failures"],p["egress_boundary"],p["model"],p["context_revision"],p["context_hash"],json.dumps(p["skills"]),p["run_id"]))
     p.update({"receipt_id":str(receipt["receipt_id"]),"advanced":True})
     return p

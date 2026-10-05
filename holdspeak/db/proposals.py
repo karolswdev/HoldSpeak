@@ -10,6 +10,7 @@ import json
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any, Optional
 
 from .base import BaseRepository
@@ -114,7 +115,7 @@ class ProposalRepository(BaseRepository):
         """
         fp = _fingerprint(meeting_id, source_plugin, text)
         proposal_id = f"prop-{uuid.uuid4().hex[:16]}"
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             if retry_key:
                 existing = conn.execute(
@@ -205,7 +206,7 @@ class ProposalRepository(BaseRepository):
         edit does to the C2 support axis.  Returns None when the row is not
         proposed (a decided proposal is immutable).
         """
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             row = conn.execute(
                 "SELECT * FROM follow_through_proposals WHERE id = ? AND state = 'proposed'",
@@ -322,7 +323,7 @@ class ProposalRepository(BaseRepository):
         support: Optional[str],
         support_record: Optional[dict[str, Any]],
     ) -> Optional[Proposal]:
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         if True:
             updates = ["state = 'confirmed'", "decided_at = ?"]
             params: list[Any] = [now]
@@ -372,7 +373,7 @@ class ProposalRepository(BaseRepository):
             return self._dismiss_in(conn, proposal_id)
 
     def _dismiss_in(self, conn: Any, proposal_id: str) -> Optional[Proposal]:
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         if True:
             flipped = conn.execute(
                 "UPDATE follow_through_proposals SET state = 'dismissed', decided_at = ? "
