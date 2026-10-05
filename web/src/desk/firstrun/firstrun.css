@@ -1,0 +1,208 @@
+/* First run — "C1 · Heard first". Layout only; the material is the
+   library's (ChoiceCardShell, ProgressPlan, HeardQuote, gadgets). */
+
+.firstrun {
+  container: surface / inline-size;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1120px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: clamp(20px, 4vw, 36px);
+  border: 1px solid var(--surface-3);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--surface-1) 92%, transparent);
+  box-shadow: 0 24px 80px var(--shadow-ink-1);
+}
+
+.firstrun-heading {
+  margin: 0;
+}
+
+/* Once his words are the display fact, the heading steps down. */
+.firstrun-heading.is-quiet {
+  font-family: var(--font-sans);
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
+  color: var(--text-muted);
+}
+
+.firstrun-cards {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 0.8fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.firstrun[data-heard] .firstrun-cards {
+  grid-template-columns: 1.15fr 0.85fr 1.3fr;
+}
+
+.firstrun-card {
+  min-width: 0;
+  cursor: default;
+}
+
+.firstrun-cardhead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  width: 100%;
+}
+
+.firstrun-card-title {
+  font: 600 15px/1.3 Inter, system-ui, sans-serif;
+  letter-spacing: normal;
+}
+
+.firstrun-cardstate {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.firstrun-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.firstrun-card-body > ul,
+.firstrun-card-body > [role="group"],
+.firstrun-card-body > .firstrun-name,
+.firstrun-card-body > figure {
+  align-self: stretch;
+}
+
+.firstrun-ledger {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.firstrun-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  align-self: stretch;
+}
+
+.firstrun-name {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.firstrun-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.firstrun-caption {
+  font: 600 12px/1 "JetBrains Mono", monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.firstrun-alias-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.firstrun-alias-row .gadget-string {
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
+.firstrun-reason {
+  font: 400 13px/1.4 Inter, system-ui, sans-serif;
+  color: var(--text);
+}
+
+.firstrun-fail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.firstrun-big {
+  min-height: 44px;
+  padding-inline: 20px;
+}
+
+.firstrun-listen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.firstrun-foot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* The lit card: speech landed, First words is open. */
+.firstrun .firstrun-card[data-lit] {
+  border-color: color-mix(in srgb, var(--ok) 70%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ok) 40%, transparent),
+    0 0 24px color-mix(in srgb, var(--ok) 22%, transparent);
+  animation: firstrun-light var(--duration-medium, 320ms) var(--ease-out, ease-out) both;
+}
+
+@keyframes firstrun-light {
+  from {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .firstrun .firstrun-card[data-lit] {
+    animation: none;
+  }
+}
+
+.firstrun .concierge-found-list .surface-ledger-row[data-wrap] .surface-ledger-primary {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.firstrun .surface-receipt {
+  white-space: normal;
+  flex-wrap: wrap;
+  line-height: 1.4;
+}
+
+@container surface (max-width: 720px) {
+  .firstrun-cards,
+  .firstrun[data-heard] .firstrun-cards {
+    grid-template-columns: 1fr;
+  }
+
+  /* 393: once his words come back, they come first (no scroll to see them). */
+  .firstrun[data-heard] .firstrun-words {
+    order: -1;
+  }
+}
+
+@container surface (max-width: 559.9px) {
+  .firstrun .concierge-found-line2 {
+    margin-left: 0;
+  }
+}

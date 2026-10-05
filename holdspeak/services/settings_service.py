@@ -343,6 +343,7 @@ class SettingsService:
             MacrosConfig,
             MeetingConfig,
             ModelConfig,
+            OwnerConfig,
             PresenceConfig,
             RailsObserverConfig,
             ThoughtsConfig,
@@ -988,8 +989,21 @@ class SettingsService:
         except ValueError as exc:
             return {"success": False, "error": str(exc)}
 
+        # First run (C1): the owner's name and aliases. OwnerConfig trims,
+        # drops empties and repeats; a wrong type is a clean 4xx.
+        owner_data = merged.get("owner", {}) or {}
+        if not isinstance(owner_data, dict):
+            return {"success": False, "error": "owner must be an object"}
+        raw_aliases = owner_data.get("aliases", [])
+        if not isinstance(raw_aliases, (list, str)):
+            return {"success": False, "error": "owner.aliases must be a list"}
+        owner_cfg = OwnerConfig(
+            name=str(owner_data.get("name", "") or ""), aliases=raw_aliases,
+        )
+
         updated = replace(
             current,
+            owner=owner_cfg,
             hotkey=HotkeyConfig(**hotkey_data),
             model=ModelConfig(**model_data),
             ui=UIConfig(**ui_data),

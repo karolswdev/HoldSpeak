@@ -1,0 +1,43 @@
+/* ── HeardQuote: his own words at the display step (first run, C1) ── */
+
+.surface-heard {
+  margin: 0;
+  display: grid;
+  gap: var(--space-3, 12px);
+  align-self: stretch;
+  min-width: 0;
+}
+
+.surface-heard-quote {
+  margin: 0;
+  font-family: var(--font-display, var(--font-sans));
+  font-size: var(--desk-type-display-size);
+  font-weight: var(--desk-type-display-weight);
+  line-height: 1.25;
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--text);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.surface-heard[data-size="primary"] .surface-heard-quote {
+  font-family: var(--font-sans);
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
+  letter-spacing: normal;
+}
+
+.surface-heard-facts,
+.surface-heard-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 8px) 10px;
+}
+
+.surface-heard-token {
+  font-weight: 500;
+  letter-spacing: var(--letter-spacing-label-compact);
+  font-variant-numeric: tabular-nums;
+}

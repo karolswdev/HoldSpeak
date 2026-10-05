@@ -500,3 +500,34 @@ A `SurfaceSection` head whose `actions` hold an element with
 the chips do not fit on one line, the chips and verbs wrap UNDER the label
 (`surface.css`). The label is never squeezed into a column. The rule is
 intrinsic (no width query), so it holds in any host.
+
+## HeardQuote (first run C1, 2026-10-05)
+
+The owner's own words played back as the face's one big fact. Born on the
+first-run face "C1 · Heard first" (canvas FzBum28aTJQbsqwBvLuP16 v2, owner
+ratified 2026-10-05: people must feel excited, heard and validated).
+
+- `text: string` — his words, exactly as the transcript gave them; rendered
+  in curly quotes. Content, not prose (UX-CANON A3 does not apply to it).
+- `seconds?: number | null` — the take's length; renders `0:04`.
+- `at?: string | null` — the clock time of the take (`14:03`).
+- `local?: boolean` — an `ON DEVICE` lamp (LampGadget; the copy law wants the axis named, so never a bare `LOCAL`): the take ran on this device.
+- `verbs?: ReactNode` — the take's library Buttons (Play · Again · Keep as note).
+- `size?: "display" | "primary"` — `display` (default) is the display step
+  (26/650): the ONE display element of the face. A face that shows a
+  HeardQuote at `display` gives no other element the display step.
+  `primary` (15/600) is a small echo.
+
+Under the quote: `HEARD` (StateChip success) and ONE facts token,
+`8 WORDS · 0:04 · 14:03`, built by `heardFacts()` — each part only when
+known, the word count through `countToken` (never `0 WORDS`). Helpers
+`heardWordCount`, `heardDuration`, `heardFacts` are exported with it.
+
+## ProgressPlan: the label stays whole (first run C1, 2026-10-05)
+
+A species fix, not a face fix. At 393 the running step's rate
+(`1.1 / 2.7 GB · 46 MB/s`) took the row and cut the label to `Ch…`. The
+step row now wraps: the label keeps its own width (`flex: 1 0 auto`), and
+the bar and the rate go to the next line when they do not fit beside it
+(the rate keeps to the right). Only a label wider than the whole row
+ellipsizes. No prop changed.

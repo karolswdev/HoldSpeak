@@ -48,6 +48,9 @@ from .ui import (  # noqa: F401
     get_available_keys,
 )
 
+# The owner's name and aliases (first run)
+from .owner import OwnerConfig  # noqa: F401
+
 # Device, presence, mesh, wake word
 from .device import (  # noqa: F401
     DeviceConfig,

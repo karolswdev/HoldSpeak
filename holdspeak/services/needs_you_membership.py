@@ -171,7 +171,8 @@ def decision_items(decisions: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
 #: The names that mean the owner himself. The People store reserves ``me``
 #: and ``you`` (no person can take them, ``people_service._RESERVED_OWNER_ALIASES``)
 #: and its follow-through projection names the owner ``you`` / ``manager``.
-#: :func:`owner_names` adds the configured meeting speaker label (``Me``).
+#: :func:`compose` adds the configured meeting speaker label (``Me``) and the
+#: owner's own name and aliases (``config.owner``, set on first run).
 SELF_OWNER_NAMES: frozenset[str] = frozenset({"me", "you", "manager"})
 
 #: The reason token of a row the owner himself holds with no nearer due date.
@@ -622,15 +623,17 @@ def compose(
         log.warning("needs-you: the decision read failed: %s", exc)
         errors["decisions"] = _reason(exc)
 
-    # The names that mean the owner: the reserved ones and his speaker label.
-    speaker_label: list[Any] = []
+    # The names that mean the owner: the reserved ones, his speaker label,
+    # and the name and aliases he gave on first run (``config.owner``).
+    own: list[Any] = []
     try:
         from holdspeak.config import Config
 
-        speaker_label = [Config.load().meeting.mic_label]
+        config = Config.load()
+        own = [config.meeting.mic_label, *config.owner.names()]
     except Exception as exc:
-        log.warning("needs-you: the speaker label read failed: %s", exc)
-    names = owner_names(speaker_label)
+        log.warning("needs-you: the owner names read failed: %s", exc)
+    names = owner_names(own)
 
     result = compute_needs_you(
         door=door,
