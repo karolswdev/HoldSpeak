@@ -1,0 +1,49 @@
+{
+ "desk": {
+  "refs": null,
+  "rows": [
+   {
+    "frozen_json": "{\"kind\":\"note\",\"subtitle\":\"\",\"text\":\"Atlas codename is ZEPHYRREPLAY. It uses [redacted]\",\"title\":\"Codename\"}",
+    "origin": "relevance",
+    "ref_id": "n-code",
+    "ref_kind": "note"
+   }
+  ],
+  "source": "f5b65b7be ThreadService.start_turn"
+ },
+ "knowledge": {
+  "refs": [
+   "knowledge:bundle"
+  ],
+  "rows": [
+   {
+    "frozen_json": "{\"kind\":\"knowledge\",\"subtitle\":\"2 member(s)\",\"text\":\"[NOTE: Codename]\\nAtlas codename is ZEPHYRREPLAY. It uses token=hunter2SECRETVALUE.\\n\\n[NOTE: Second]\\nSURVIVORWORD still current.\",\"title\":\"Bundle\"}",
+    "origin": "reference",
+    "ref_id": "bundle",
+    "ref_kind": "knowledge"
+   }
+  ],
+  "source": "f5b65b7be ThreadService.start_turn"
+ },
+ "project": {
+  "refs": [
+   "project:atlas",
+   "note:n-named"
+  ],
+  "rows": [
+   {
+    "frozen_json": "{\"kind\":\"note\",\"subtitle\":\"\",\"text\":\"Atlas codename is ZEPHYRREPLAY. It uses [redacted]\",\"title\":\"Codename\"}",
+    "origin": "reference",
+    "ref_id": "n-code",
+    "ref_kind": "note"
+   },
+   {
+    "frozen_json": "{\"kind\":\"note\",\"subtitle\":\"\",\"text\":\"Harbor launch is 2026-11-01.\",\"title\":\"Named\"}",
+    "origin": "reference",
+    "ref_id": "n-named",
+    "ref_kind": "note"
+   }
+  ],
+  "source": "f5b65b7be ThreadService.start_turn"
+ }
+}

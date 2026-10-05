@@ -20,7 +20,7 @@ from typing import Any, Callable, Optional
 
 from ..db.core import Database
 from ..db.threads import ThreadRepository
-from ..grounding import GROUNDING_MAX_REFS, hydrate_refs_detailed
+from ..grounding import GROUNDING_MAX_REFS, _unkept_draft_refs, hydrate_refs_detailed, live_block
 from ..inference_memory_policy import memory_enabled
 from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..kernel.inference_stream import (
@@ -51,11 +51,25 @@ _PEOPLE_REDACTION = "[people content withheld]"
 # Memory slice 6 (review round 1, Astra): tool results that are true only
 # when they are read.  On replay in a later turn the model gets this stub,
 # not the stored result: a withdrawn page sentence never comes back.
-_LIVE_ONLY_TOOLS = frozenset({"memory.page"})
-_LIVE_ONLY_STUB = json.dumps({
-    "page": None,
-    "note": "This memory page was read in an earlier turn and is not kept. Call memory.page again to read the page now.",
-})
+# The memory reads (#852 review, Astra): a search hit or an observation can
+# be withdrawn too (deleted, sensitive, promoted, refiled), so every memory
+# read tool replays as a stub.  The stored result stays as the receipt.
+_LIVE_ONLY_STUBS = {
+    "memory.page": json.dumps({
+        "page": None,
+        "note": "This memory page was read in an earlier turn and is not kept. Call memory.page again to read the page now.",
+    }),
+    "memory.search": json.dumps({
+        "hits": None,
+        "note": "This memory search ran in an earlier turn and is not kept. Call memory.search again to search memory now.",
+    }),
+    "memory.observations": json.dumps({
+        "observations": None,
+        "note": "These memory observations were read in an earlier turn and are not kept. Call memory.observations again to read them now.",
+    }),
+}
+_LIVE_ONLY_TOOLS = frozenset(_LIVE_ONLY_STUBS)
+_LIVE_ONLY_STUB = _LIVE_ONLY_STUBS["memory.page"]
 _PEOPLE_REF_KINDS = frozenset({"person"})
 
 _UNSET = object()  # sentinel for "caller did not provide parent_id"
@@ -457,6 +471,9 @@ class ThreadService:
                             "title": block.title,
                             "subtitle": block.subtitle,
                             "text": block.text,
+                            # How it was selected, for the replay check
+                            # (`_live_replay`); the model never sees it.
+                            "via": block.via,
                         }, separators=(",", ":"), sort_keys=True),
                         "sensitive": False,
                         "origin": block_origin,
@@ -2335,6 +2352,9 @@ class ThreadService:
                         and ref.origin != REF_ORIGIN_REFERENCE)]
         ref_context_parts: list[str] = []
         person_names: list[str] = []
+        # The replay check reads each source with the exclusions the turn's
+        # own recall pass uses: this thread, and drafts he has not kept.
+        replay_excluded = {f"thread:{thread_id}"} | _unkept_draft_refs(self._db)
         for ref in refs:
             if ref.ref_kind == "person" and ref.frozen_json:
                 # Person refs: title-only context line (HS-149 law).
@@ -2349,6 +2369,9 @@ class ThreadService:
                 try:
                     frozen = json.loads(ref.frozen_json)
                     ref_text = frozen.get("text", "")
+                    if ref_text:
+                        frozen = self._live_replay(ref, frozen, replay_excluded)
+                        ref_text = frozen.get("text", "") if frozen is not None else ""
                     if ref_text:
                         ref_context_parts.append(
                             f"[{frozen.get('kind', 'ref').upper()}: {frozen.get('title', ref.ref_id)}]\n{ref_text}"
@@ -2391,12 +2414,13 @@ class ThreadService:
             text_parts = []
             for part in parts:
                 if part.kind in ("text", "annotation") and part.text:
-                    if msg.role == "tool" and call_names.get(part.tool_call_id) in _LIVE_ONLY_TOOLS:
-                        # A memory page is true only at the time it is read:
-                        # its sentences can be withdrawn later.  The stored
+                    tool_name = call_names.get(part.tool_call_id) if msg.role == "tool" else None
+                    if tool_name in _LIVE_ONLY_STUBS:
+                        # A memory read is true only at the time it is read:
+                        # its sources can be withdrawn later.  The stored
                         # result (the receipt) stays; a later turn gets a
                         # stub, never the stored text.
-                        text_parts.append(_LIVE_ONLY_STUB)
+                        text_parts.append(_LIVE_ONLY_STUBS[tool_name])
                         continue
                     text_parts.append(part.text)
                     if part.sensitive and part.text:
@@ -2433,6 +2457,56 @@ class ThreadService:
         if sensitive_texts:
             result["_sensitive_texts"] = sensitive_texts
         return result
+
+    def _live_replay(self, ref: Any, frozen: dict[str, Any],
+                     excluded: set[str]) -> dict[str, Any] | None:
+        """The saved block a later turn may send, or None.
+
+        The saved row (``thread_refs``) is the receipt of what its turn saw
+        and is never rewritten.  The text sent again is checked against the
+        source now (``grounding.live_block``): a source that is gone, that
+        memory no longer admits, or that left the project it was selected
+        from is not sent; a source whose text changed is sent as it is now.
+        When nothing changed the saved dict comes back as it is, so the
+        prompt is byte-identical.
+
+        A row saved before the ``via`` key existed (#852 review, Astra):
+
+        * A Knowledge or Zone row can only have been named (a container is
+          one block, and only a named ref makes it): the hand-attach rule.
+        * A 'reference' row is not sent.  That producer (f5b65b7be) stamped
+          a project's search hits 'reference' too and kept no record of the
+          named refs or of the project, so neither the hand-attach rule nor
+          the project scope can be checked.  He can attach it again.
+        * A 'relevance' row came from the global pass, and an UNKNOWN ('')
+          row predates the origin column (HS-200-10 keeps it replaying while
+          unpromoted): both are checked as memory's picks, with no project
+          scope, because none was recorded.
+        """
+        kind = str(frozen.get("kind") or ref.ref_kind)
+        via = frozen.get("via")
+        if via is None:
+            if kind in ("knowledge", "zone"):
+                via = ""
+            elif ref.origin == REF_ORIGIN_REFERENCE:
+                return None
+            else:
+                via = "memory"
+        query = None
+        if kind in ("knowledge", "zone") and ref.message_id:
+            # A named container re-reads its members with the turn's question.
+            texts = [p.text for p in self._threads.get_parts(ref.message_id)
+                     if p.kind == "text" and p.text]
+            query = texts[-1] if texts else None
+        block = live_block(self._db, f"{kind}:{ref.ref_id}", via=str(via),
+                           exclude_refs=excluded, query=query)
+        if block is None:
+            return None
+        same = (block.title == frozen.get("title", "")
+                and block.text == frozen.get("text", ""))
+        if same:
+            return frozen
+        return {**frozen, "title": block.title, "text": block.text}
 
     def assemble_payload_for_egress(
         self,

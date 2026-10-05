@@ -1,0 +1,94 @@
+{
+ "desk": {
+  "first": {
+   "max_tokens": null,
+   "messages": [
+    {
+     "content": "You are the desk's AI core. Be concrete and brief.",
+     "role": "system"
+    },
+    {
+     "content": "[NOTE: Atlas codename]\nAtlas codename is ATLASWORD. It uses [redacted]\n\n[THREAD: Planning]\nuser: Atlas codename is THREADWORD.\n\n[NOTE: Desk codename]\nAtlas codename is DESKWORD. It uses [redacted]",
+     "role": "system"
+    },
+    {
+     "content": "What is the Atlas codename?",
+     "role": "user"
+    }
+   ],
+   "temperature": null
+  },
+  "second": {
+   "max_tokens": null,
+   "messages": [
+    {
+     "content": "You are the desk's AI core. Be concrete and brief.",
+     "role": "system"
+    },
+    {
+     "content": "[NOTE: Atlas codename]\nAtlas codename is ATLASWORD. It uses [redacted]\n\n[THREAD: Planning]\nuser: Atlas codename is THREADWORD.\n\n[NOTE: Desk codename]\nAtlas codename is DESKWORD. It uses [redacted]",
+     "role": "system"
+    },
+    {
+     "content": "What is the Atlas codename?",
+     "role": "user"
+    },
+    {
+     "content": "OK",
+     "role": "assistant"
+    },
+    {
+     "content": "Continue.",
+     "role": "user"
+    }
+   ],
+   "temperature": null
+  }
+ },
+ "project": {
+  "first": {
+   "max_tokens": null,
+   "messages": [
+    {
+     "content": "You are the desk's AI core. Be concrete and brief.",
+     "role": "system"
+    },
+    {
+     "content": "[NOTE: Atlas codename]\nAtlas codename is ATLASWORD. It uses [redacted]\n\n[NOTE: Named]\nHarbor launch is 2026-11-01.",
+     "role": "system"
+    },
+    {
+     "content": "What is the Atlas codename?",
+     "role": "user"
+    }
+   ],
+   "temperature": null
+  },
+  "second": {
+   "max_tokens": null,
+   "messages": [
+    {
+     "content": "You are the desk's AI core. Be concrete and brief.",
+     "role": "system"
+    },
+    {
+     "content": "[NOTE: Atlas codename]\nAtlas codename is ATLASWORD. It uses [redacted]\n\n[NOTE: Named]\nHarbor launch is 2026-11-01.",
+     "role": "system"
+    },
+    {
+     "content": "What is the Atlas codename?",
+     "role": "user"
+    },
+    {
+     "content": "OK",
+     "role": "assistant"
+    },
+    {
+     "content": "Continue.",
+     "role": "user"
+    }
+   ],
+   "temperature": null
+  }
+ }
+}
