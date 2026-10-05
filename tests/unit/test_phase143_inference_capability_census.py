@@ -247,6 +247,10 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/memory/engine.py|RouterEmbedder._invoke|call": ProposedRoute(
         "memory.embed", "memory.engine", "InferenceRunner admitted child",
     ),
+    # Memory slice 3: one admitted child per chunk the extract job reads.
+    "holdspeak/memory/extract.py|RouterExtractor.extract|call": ProposedRoute(
+        "memory.extract", "memory.extract", "InferenceRunner admitted child",
+    ),
     "holdspeak/services/thread_practice.py|run_guardrail|call": ProposedRoute(
         "chat.guardrail", "services.thread_practice", "InferenceRunner admitted child",
     ),

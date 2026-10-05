@@ -3,9 +3,16 @@
 
 Each tick it runs the sweep (chunks need no model), finds the ``memory.embed``
 engine through the router, gives that engine to recall, and embeds the chunks
-that have no current vector.  It copies the intel drainer's shape: one
-thread, started and stopped by the hub, only in the process that owns the
-database.
+that have no current vector.  Then, when ``memory.extract`` has an engine, it
+runs the extract jobs that wait (slice 3): facts and entities from the chunks.
+It copies the intel drainer's shape: one thread, started and stopped by the
+hub, only in the process that owns the database.
+
+* Extraction yields: before each source it stops for a live meeting, and
+  for a local engine also for a live local model call (or one that ended
+  less than ``LOCAL_IDLE_SECONDS`` ago).  A pass makes at most
+  ``EXTRACT_CALLS_PER_PASS`` engine calls; a backlog goes on in the next
+  pass, ``EXTRACT_GAP_SECONDS`` later.
 
 * No engine assigned: chunks are still built; recall is the keyword +
   relation search; nothing waits and nothing fails.
@@ -17,7 +24,7 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import Any, Iterable, Optional
+from typing import Any, Callable, Iterable, Optional
 
 from .logging_config import get_logger
 
@@ -36,6 +43,18 @@ STOP_JOIN_SECONDS = 60.0
 #: Seconds the conductor waits after a wake before it runs.  A write that
 #: touches many objects (or many writes close together) is then one tick.
 WAKE_GAP_SECONDS = 2.0
+#: Engine calls (one per chunk) one pass may make for extraction.  No new
+#: source starts after this; the rest waits for the next pass.
+EXTRACT_CALLS_PER_PASS = 24
+#: Seconds between two extract-only passes while a backlog waits.
+EXTRACT_GAP_SECONDS = 5.0
+#: A local extract engine shares the one local runtime with live calls: it
+#: waits until no local model call ran for this long.
+LOCAL_IDLE_SECONDS = 20.0
+
+#: The hub's check for a live meeting (``set_live_check``).  It returns a
+#: reason, or "" when nothing live runs.
+_live_check: Optional[Callable[[], str]] = None
 
 _conductor: Optional["MemoryWorker"] = None
 _lock = threading.Lock()
@@ -48,27 +67,114 @@ def _principal() -> Any:
 
 
 def _assigned(db: Any) -> bool:
-    """True when ``memory.embed`` has its own assignment now (one row read)."""
+    """True when ``memory.embed`` or ``memory.extract`` has its own
+    assignment now (two row reads)."""
     from .memory.engine import _assignment_head
+    from .memory.extract import EXTRACT_CAPABILITY
 
     with db._connection() as conn:
-        return _assignment_head(conn) is not None
+        return (
+            _assignment_head(conn) is not None
+            or _assignment_head(conn, EXTRACT_CAPABILITY) is not None
+        )
+
+
+def set_live_check(check: Optional[Callable[[], str]]) -> None:
+    """The hub gives the check for a live meeting (a reason, or "")."""
+    global _live_check
+    _live_check = check
+
+
+def live_work(db: Any, extractor: Any) -> str:
+    """Why extraction must wait now, or "" (MEMORY-DESIGN.md §9: the backlog
+    yields to any live meeting or model call).
+
+    A live meeting always.  For a LOCAL engine also a live local model call
+    (an active local runtime lease), or one that ended less than
+    ``LOCAL_IDLE_SECONDS`` ago: an extract call holds the one local runtime
+    for its whole length, so it starts only when the owner is not using it.
+    """
+    check = _live_check
+    if check is not None:
+        try:
+            reason = str(check() or "")
+        except Exception:  # a broken check never stops memory for good
+            reason = ""
+        if reason:
+            return reason
+    if str(getattr(extractor, "boundary", "") or "") != "local":
+        return ""
+    from .memory.extract import OWN_OPERATIONS
+
+    own = set(OWN_OPERATIONS) | set(getattr(extractor, "operation_ids", ()) or ())
+    with db._connection() as conn:
+        rows = conn.execute(
+            "SELECT operation_id,state,updated_at FROM inference_runtime_leases"
+            " WHERE state='active' OR updated_at>=?",
+            (time.time() - LOCAL_IDLE_SECONDS,),
+        ).fetchall()
+    for row in rows:
+        if str(row["operation_id"]) in own:
+            continue
+        return "a local model call is live" if row["state"] == "active" else "a local model call ended just now"
+    return ""
+
+
+def _extract_step(db: Any, broker: Any, should_stop: Any) -> dict[str, Any]:
+    """The extract jobs that wait, when ``memory.extract`` has an engine.
+
+    No engine: nothing is called and nothing is written (one row read).
+    """
+    from .memory.extract import extract_pending, resolve_extractor
+
+    report: dict[str, Any] = {"engine": "", "sources": 0, "facts": 0, "calls": 0, "more": 0, "yielded": "", "error": ""}
+    try:
+        extractor = resolve_extractor(broker, _principal())
+    except Exception as exc:  # a route that cannot resolve is "no engine"
+        log.warning("memory.extract engine could not be resolved: %s", exc)
+        extractor = None
+    if extractor is None:
+        return report
+    report["engine"] = extractor.model_id
+    try:
+        stats = extract_pending(
+            db,
+            extractor,
+            max_calls=EXTRACT_CALLS_PER_PASS,
+            should_stop=should_stop,
+            yield_check=lambda: live_work(db, extractor),
+        )
+        report.update({key: stats[key] for key in ("sources", "facts", "calls", "more", "yielded")})
+        report["failed"] = stats["failed"]
+    except Exception as exc:
+        report["error"] = str(exc)
+        log.info("memory extract pass stopped; the next tick goes on: %s", exc)
+    return report
 
 
 def tick(
-    db: Any, broker: Any, *, should_stop: Any = None, refs: Optional[Iterable[str]] = None
+    db: Any,
+    broker: Any,
+    *,
+    should_stop: Any = None,
+    refs: Optional[Iterable[str]] = None,
+    extract_only: bool = False,
 ) -> dict[str, Any]:
-    """One pass: sweep, find the engine, embed.  Returns what it did.
+    """One pass: sweep, find the engine, embed, extract.  Returns what it did.
 
     ``refs`` is None on the slow timer: the full sweep.  A wake gives the
     refs of the sources that changed, and the pass reads only those: its
     work is proportional to the number of changes, not to the desk.  A wake
-    while ``memory.embed`` is unassigned does no work at all; the slow full
-    sweep keeps the chunk index (and the keyword tables) current.
+    while neither ``memory.embed`` nor ``memory.extract`` is assigned does no
+    work at all; the slow full sweep keeps the chunk index (and the keyword
+    tables) current.  ``extract_only`` runs the extract step alone (a
+    backlog goes on between two sweeps).
     """
-    from .memory.engine import resolve_embedder
-    from .memory.retain import embed_pending, sweep, sweep_refs
+    from .memory.retain import sweep, sweep_refs
 
+    if extract_only:
+        return {"swept": {}, "engine": "", "embedded": 0, "error": "",
+                "extract": _extract_step(db, broker, should_stop)}
     if refs is not None:
         if not _assigned(db):
             return {"swept": {}, "engine": "", "embedded": 0, "error": "", "skipped": 1}
@@ -76,6 +182,15 @@ def tick(
     else:
         swept = sweep(db)
     report: dict[str, Any] = {"swept": swept, "engine": "", "embedded": 0, "error": ""}
+    _embed_step(db, broker, report, should_stop=should_stop, full=refs is None)
+    report["extract"] = _extract_step(db, broker, should_stop)
+    return report
+
+
+def _embed_step(db: Any, broker: Any, report: dict[str, Any], *, should_stop: Any, full: bool) -> None:
+    from .memory.engine import resolve_embedder
+    from .memory.retain import embed_pending
+
     try:
         embedder = resolve_embedder(broker, _principal())
     except Exception as exc:  # a route that cannot resolve is "no engine"
@@ -84,7 +199,7 @@ def tick(
     current = db.memory.embedder
     if embedder is None:
         db.memory.set_embedder(None)
-        return report
+        return
     same = (
         current is not None
         and getattr(current, "revision_id", None) == embedder.revision_id
@@ -104,13 +219,12 @@ def tick(
             pause_seconds=LOCAL_PAUSE_SECONDS if local else 0.0,
             should_stop=should_stop,
         )
-        if refs is None:
+        if full:
             # The new model's set is complete: the old model's vectors can go.
             db.memory_index.drop_other_models(embedder.model_id)
     except Exception as exc:
         report["error"] = str(exc)
         log.info("memory embed pass stopped; the next tick goes on: %s", exc)
-    return report
 
 
 class MemoryWorker:
@@ -159,28 +273,45 @@ class MemoryWorker:
         from .kernel.runtime import _service
 
         next_full = 0.0  # the first pass is a full one
+        #: When the extract backlog goes on (an extract-only pass), or None.
+        next_extract: Optional[float] = None
         while not self._stop.is_set():
             retry = False
+            ran: Optional[dict[str, Any]] = None
             try:
                 full, refs = self._take()
                 if full or time.monotonic() >= next_full:
                     # The slow timer (or a changed assignment): the full sweep.
-                    self.last_report = tick(get_database(), _service(), should_stop=self._stop.is_set)
+                    ran = tick(get_database(), _service(), should_stop=self._stop.is_set)
                     next_full = time.monotonic() + self.poll_seconds
                 elif refs:
-                    report = tick(
+                    ran = tick(
                         get_database(), _service(), should_stop=self._stop.is_set, refs=refs
                     )
-                    if not report.get("skipped"):
-                        self.last_report = report
-                retry = bool(self.last_report.get("error"))
+                    if ran.get("skipped"):
+                        ran = None
+                elif next_extract is not None and time.monotonic() >= next_extract:
+                    ran = tick(
+                        get_database(), _service(), should_stop=self._stop.is_set, extract_only=True
+                    )
+                if ran is not None:
+                    self.last_report = ran
+                    extract = ran.get("extract") or {}
+                    retry = bool(ran.get("error") or extract.get("error"))
+                    # A backlog goes on soon; a yield or an error waits longer.
+                    next_extract = (
+                        time.monotonic() + EXTRACT_GAP_SECONDS
+                        if extract.get("more") and not extract.get("yielded") and not retry
+                        else (time.monotonic() + RETRY_SECONDS if extract.get("more") else None)
+                    )
             except Exception as exc:  # the thread must not die on one bad tick
                 log.warning("memory conductor tick failed: %s", exc)
                 retry = True
             if retry:
                 next_full = min(next_full, time.monotonic() + RETRY_SECONDS)
             # A wake never moves the slow timer: the full sweep stays on it.
-            if self._wake.wait(max(0.0, next_full - time.monotonic())):
+            due = next_full if next_extract is None else min(next_full, next_extract)
+            if self._wake.wait(max(0.0, due - time.monotonic())):
                 self._stop.wait(WAKE_GAP_SECONDS)
             self._wake.clear()
 
@@ -207,6 +338,7 @@ def start_memory_conductor(*, poll_seconds: float = POLL_SECONDS) -> Optional[Me
 
 def stop_memory_conductor(*, timeout: float = STOP_JOIN_SECONDS) -> None:
     global _conductor
+    set_live_check(None)
     with _lock:
         worker = _conductor
         if worker is None:
@@ -247,4 +379,7 @@ def wake(changes: Optional[Iterable[tuple[str, str]]] = None) -> None:
         worker.wake(refs)
 
 
-__all__ = ["MemoryWorker", "last_report", "start_memory_conductor", "stop_memory_conductor", "tick", "wake"]
+__all__ = [
+    "MemoryWorker", "last_report", "live_work", "set_live_check", "start_memory_conductor",
+    "stop_memory_conductor", "tick", "wake",
+]

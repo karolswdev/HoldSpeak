@@ -527,6 +527,16 @@ class MeetingWebServer:
             # declares Callable[[], Any]); mirror the routes' fallback.
             return on_start()
 
+    def _memory_live_check(self) -> str:
+        """For the memory conductor: a reason to wait while a meeting
+        records, else "".  The meeting session lives on the runtime, the
+        owner of the bound ``on_start`` (as in ``_conductor_start_meeting``)."""
+        owner = getattr(getattr(self._callbacks, "on_start", None), "__self__", None)
+        active = getattr(owner, "_active_meeting_session", None)
+        if callable(active) and active() is not None:
+            return "a meeting is recording"
+        return ""
+
     def _conductor_stop_meeting(self):
         """Deadline auto-stop → ``on_meeting_stop`` (the fallback-free stop,
         meeting_glue.py:509-510). Missing on a harness bundle → no-op."""
@@ -1420,8 +1430,10 @@ class MeetingWebServer:
             # The memory conductor (MEMORY-DESIGN.md §3): sweeps the source
             # tables into the chunk index and embeds through memory.embed.
             try:
-                from .memory_conductor import start_memory_conductor
+                from .memory_conductor import set_live_check, start_memory_conductor
 
+                # Extraction yields to a live meeting (MEMORY-DESIGN.md §9).
+                set_live_check(self._memory_live_check)
                 start_memory_conductor()
             except Exception as e:
                 log.error(f"memory conductor startup failed: {e}")

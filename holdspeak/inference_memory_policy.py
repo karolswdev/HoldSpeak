@@ -128,6 +128,7 @@ MEMORY_POLICIES: Mapping[str, MemoryPolicy] = MappingProxyType({
     ),
     "calendar.snapshot_extract": _off("Extracts events from a snapshot; memory does not change it."),
     "memory.embed": _off("Memory's own embedder."),
+    "memory.extract": _off("Memory's own fact reader: it reads one chunk, never recall."),
     # Internal
     "internal.inference.dispatch": _off(_INFRA),
     "internal.speech.runtime_assembly": _off(_INFRA),

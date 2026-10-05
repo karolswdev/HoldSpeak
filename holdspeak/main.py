@@ -530,8 +530,9 @@ Logs are written to: {LOG_FILE}
         if action == "rebuild":
             # MEMORY-DESIGN.md §3.1: memory is an index.  Drop every derived
             # row and build it again from the source tables.
-            # The vectors are made by the hub's memory.embed engine on its
-            # next sweep; this command needs no model.
+            # The vectors and the facts are made by the hub's memory.embed
+            # and memory.extract engines on their next pass; this command
+            # needs no model.
             from .db import get_database
             from .memory.retain import rebuild
 

@@ -11,22 +11,35 @@ BASELINE = HERE / "baseline.json"
 GOLDEN = HERE / "keyword_golden.json"
 
 
+FACTS = HERE / "facts.json"
+
+
 def load_questions() -> list[dict[str, Any]]:
     return json.loads((HERE / "questions.json").read_text())["questions"]
+
+
+def load_relation_questions() -> list[dict[str, Any]]:
+    """The five relation questions (slice 3).  A file of their own, so the
+    keyword golden (made before the memory index) keeps its questions."""
+    return json.loads((HERE / "relation_questions.json").read_text())["questions"]
 
 
 def _base(ref: str) -> str:
     return ref.split("#", 1)[0]
 
 
-def run(db: Any, refs: dict[str, str], *, limit: int = 10) -> dict[str, Any]:
+def run(
+    db: Any, refs: dict[str, str], *, limit: int = 10, questions: list[dict[str, Any]] | None = None
+) -> dict[str, Any]:
     """Ask every question through ``db.memory.search``.
 
     Returns the measures per group and the ranked refs per question.
+    For the relation group, ``complete@5`` is 1 for a question when EVERY
+    expected source is in the top 5.
     """
     groups: dict[str, dict[str, float]] = {}
     ranked: dict[str, list[str]] = {}
-    for question in load_questions():
+    for question in (load_questions() if questions is None else questions):
         try:
             hits = db.memory.search(
                 question["q"], project_id=question.get("project"), limit=limit
@@ -41,12 +54,18 @@ def run(db: Any, refs: dict[str, str], *, limit: int = 10) -> dict[str, Any]:
             question["group"], {"n": 0, "recall@5": 0.0, "recall@10": 0.0, "mrr": 0.0}
         )
         group["n"] += 1
+        if question["group"] == "relation":
+            group["complete@5"] = group.get("complete@5", 0.0) + (
+                1.0 if expected <= set(got[:5]) else 0.0
+            )
         group["recall@5"] += 1.0 if 0 < position <= 5 else 0.0
         group["recall@10"] += 1.0 if 0 < position <= 10 else 0.0
         group["mrr"] += (1.0 / position) if position else 0.0
     for group in groups.values():
         count = group["n"] or 1
-        for key in ("recall@5", "recall@10", "mrr"):
+        for key in ("recall@5", "recall@10", "mrr", "complete@5"):
+            if key not in group:
+                continue
             group[key] = round(group[key] / count, 4)
     return {"groups": groups, "ranked": ranked}
 
@@ -57,6 +76,7 @@ def table(label: str, measures: dict[str, Any]) -> str:
         lines.append(
             f"  {name:<11} n={int(group['n']):<3} recall@5={group['recall@5']:.3f}"
             f"  recall@10={group['recall@10']:.3f}  mrr={group['mrr']:.3f}"
+            + (f"  complete@5={group['complete@5']:.3f}" if "complete@5" in group else "")
         )
     return "\n".join(lines)
 
