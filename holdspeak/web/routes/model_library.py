@@ -70,6 +70,19 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
             raise ServiceError("model_library_secret_invalid", "Provider credential is invalid.", context={"status": 400})
         return body["draft"], secret
 
+    def _engine_changed(reason: str) -> None:
+        """An engine was added: the batteries-included default rule looks again."""
+        defaults = getattr(ctx, "inference_default_service", None)
+        if defaults is None:
+            return
+        try:
+            from ...intel_queue_conductor import owns_database
+
+            if owns_database():
+                defaults.kick(reason)
+        except Exception as exc:  # pragma: no cover - a kick never fails the write
+            log.warning(f"default rule kick failed: {exc}")
+
     @router.get("/api/inference/model-library")
     async def get_model_library(request: Request) -> Any:
         try:
@@ -92,7 +105,9 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/inference/model-library/add-to-library")
     async def add_detected_model(request: Request) -> Any:
         try:
-            return JSONResponse(service.add_to_library(request.state.principal, await _json(request)), status_code=202)
+            result = service.add_to_library(request.state.principal, await _json(request))
+            _engine_changed("add_to_library")
+            return JSONResponse(result, status_code=202)
         except ServiceError as exc:
             return _safe_error(exc)
         except Exception as exc:
@@ -102,9 +117,9 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
     async def connect_hosted_model(request: Request) -> Any:
         try:
             draft, secret = await _provider_body(request)
-            return JSONResponse(
-                service.connect_hosted_model(request.state.principal, draft, secret), status_code=200,
-            )
+            result = service.connect_hosted_model(request.state.principal, draft, secret)
+            _engine_changed("connect_hosted_model")
+            return JSONResponse(result, status_code=200)
         except ServiceError as exc:
             return _safe_error(exc)
         except Exception:
@@ -114,9 +129,9 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
     async def define_endpoint(request: Request) -> Any:
         try:
             draft, secret = await _provider_body(request)
-            return JSONResponse(
-                service.define_endpoint(request.state.principal, draft, secret), status_code=200,
-            )
+            result = service.define_endpoint(request.state.principal, draft, secret)
+            _engine_changed("define_endpoint")
+            return JSONResponse(result, status_code=200)
         except ServiceError as exc:
             return _safe_error(exc)
         except Exception:
@@ -128,7 +143,9 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
             draft, secret = await _provider_body(request)
             if secret is not None:
                 raise ServiceError("model_library_secret_invalid", "Paired device has no credential body.", context={"status": 400})
-            return JSONResponse(service.connect_paired_device(request.state.principal, draft), status_code=200)
+            result = service.connect_paired_device(request.state.principal, draft)
+            _engine_changed("connect_paired_device")
+            return JSONResponse(result, status_code=200)
         except ServiceError as exc:
             return _safe_error(exc)
         except Exception:
@@ -160,6 +177,7 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
             result = service.use_model_file(
                 request.state.principal, request_id=request_id, filename=upload.filename or "", staging_path=staging_path,
             )
+            _engine_changed("use_model_file")
             return JSONResponse(result, status_code=202)
         except ServiceError as exc:
             return _safe_error(exc)

@@ -152,18 +152,60 @@ class EmbeddingAdapter:
             return _MODELS[key]
 
 
-def _assignment_head(conn: Any, capability: str = MEMORY_EMBED_CAPABILITY) -> Optional[str]:
-    """The live assignment head of a memory capability as one value, or None.
+#: The memory jobs that write text (facts, observations, pages).  With no
+#: assignment of their own they use the wider assignment (Background, then
+#: "Default for AI work") when it runs on this machine, OR when the owner made
+#: it with his own press (owner rulings 2026-10-05: "strong defaults,
+#: batteries included"; his LAN server is his default INCLUDING memory).  A
+#: network or cloud default HoldSpeak made by itself never sends meeting
+#: chunks off the machine (and the auto-assign writes only local defaults).
+#: ``memory.embed`` is not here: an embedding call never falls through to a
+#: chat model.
+LOCAL_INHERITING_CAPABILITIES = frozenset(
+    {"memory.extract", "memory.consolidate", "memory.page"}
+)
+#: The group of the three capabilities above (inference_capabilities.py).
+_MEMORY_GROUP = "background"
 
-    ``memory.embed`` and ``memory.extract`` are used only with their OWN
-    assignment (see the module text), so this one row read says if the
-    engine exists."""
-    row = conn.execute(
+
+def _head_row(conn: Any, key: str) -> Any:
+    return conn.execute(
         "SELECT assignment_id,revision FROM inference_assignment_heads"
         " WHERE assignment_key=? AND cleared=0",
-        (f"capability:{capability}",),
+        (key,),
     ).fetchone()
-    return f"{row[0]}@{row[1]}" if row is not None else None
+
+
+def _assignment_head(conn: Any, capability: str = MEMORY_EMBED_CAPABILITY) -> Optional[str]:
+    """The live assignment head a memory capability runs on, or None.
+
+    * ``memory.embed``: its OWN assignment only (see the module text).
+    * ``memory.extract`` / ``consolidate`` / ``page``: its own assignment;
+      with none, the first wider head in the planner's order (``group:
+      background``, then ``global``), when every model in it runs on this
+      machine (lamp ``local``) OR the owner made it (no
+      ``inference.default_assigned`` receipt names that revision).  A
+      non-local wider head HoldSpeak made keeps the job dark: the planner
+      would route there, so nothing is called.
+
+    The value changes when the head changes, so an engine bound to it stops
+    at once (``live()``)."""
+    row = _head_row(conn, f"capability:{capability}")
+    if row is not None:
+        return f"{row[0]}@{row[1]}"
+    if capability not in LOCAL_INHERITING_CAPABILITIES:
+        return None
+    from ..inference_locality import assignment_lamp, made_by_holdspeak
+
+    for key in (f"group:{_MEMORY_GROUP}", "global"):
+        wider = _head_row(conn, key)
+        if wider is None:
+            continue
+        local = assignment_lamp(conn, str(wider[0]), int(wider[1])) == "local"
+        if not local and made_by_holdspeak(conn, str(wider[0]), int(wider[1])):
+            return None
+        return f"{wider[0]}@{wider[1]}"
+    return None
 
 
 #: The principal a search runs for.  ``MemoryService.search`` sets it, so the

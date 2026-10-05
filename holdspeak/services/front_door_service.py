@@ -94,6 +94,15 @@ def _default_probe(base_url: str, *, timeout: float = 3.0) -> bool:
     import urllib.error
 
     url = base_url.rstrip("/") + "/v1/models"
+    from ..loopback_http import is_loopback_url, loopback_get
+
+    if is_loopback_url(url):
+        # An engine on this machine: pinned literal, no proxy, no redirect.
+        try:
+            loopback_get(url, headers={}, timeout=timeout)
+            return True
+        except Exception:
+            return False
     try:
         req = urllib.request.Request(url, method="GET")
         with urllib.request.urlopen(req, timeout=timeout):

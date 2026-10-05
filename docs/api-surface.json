@@ -3069,6 +3069,24 @@
       "consumers": []
     },
     {
+      "path": "/api/inference/defaults",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.inference_assignments",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/defaults/use-proposal",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.inference_assignments",
+      "consumers": []
+    },
+    {
       "path": "/api/inference/model-library",
       "methods": [
         "GET"

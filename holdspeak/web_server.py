@@ -947,6 +947,16 @@ class MeetingWebServer:
             assignment_service=inference_assignment_service,
             broker_provider=lambda: broker,
         )
+        # Owner ruling 2026-10-05: a LOCAL engine becomes "Default for AI
+        # work" by itself; a network or cloud engine waits for the owner.
+        from .services.inference_default_service import InferenceDefaultService
+
+        inference_default_service = InferenceDefaultService(
+            get_database(),
+            assignment_service=inference_assignment_service,
+            model_library_service=model_library_service,
+            meaning_search=memory_service.meaning,
+        )
         # HS-160-05: extract the delta service so the project_service can
         # use it for the room() review section (mutual composition).
         _project_delta_service = ProjectDeltaService(
@@ -999,6 +1009,7 @@ class MeetingWebServer:
             inference_acquisition_service=inference_acquisition_service,
             model_library_service=model_library_service,
             inference_assignment_service=inference_assignment_service,
+            inference_default_service=inference_default_service,
             inference_capability_service=inference_capability_service,
             delivery_service=DeliveryService(get_database(), observer=obs),
             # HS-131-16: the relay legs sign and revalidate dispatch offers, so
@@ -1437,6 +1448,18 @@ class MeetingWebServer:
                 start_memory_conductor()
             except Exception as e:
                 log.error(f"memory conductor startup failed: {e}")
+            # Owner ruling 2026-10-05 ("strong defaults, batteries included"):
+            # a LOCAL engine becomes "Default for AI work" by itself; network
+            # and cloud engines become proposals.  Background thread: the
+            # loopback scan never delays the listener.  Only the hub that owns
+            # the database writes a default.
+            try:
+                from .intel_queue_conductor import owns_database
+
+                if web_ctx.inference_default_service is not None and owns_database():
+                    web_ctx.inference_default_service.kick("boot")
+            except Exception as e:
+                log.error(f"batteries default startup failed: {e}")
             self._started.set()
             log.debug("Meeting web server startup complete")
 

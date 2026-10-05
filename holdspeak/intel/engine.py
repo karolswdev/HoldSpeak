@@ -245,6 +245,13 @@ class MeetingIntel:
         if self.cloud_base_url:
             kwargs["base_url"] = self.cloud_base_url
         kwargs["timeout"] = self.cloud_timeout_seconds
+        from ..loopback_http import is_loopback_url, loopback_httpx_client, pin_loopback_url
+
+        if self.cloud_base_url and is_loopback_url(self.cloud_base_url):
+            # Article III: an engine on this machine is reached at the pinned
+            # 127.0.0.1 literal, never through a proxy or a redirect.
+            kwargs["base_url"] = pin_loopback_url(self.cloud_base_url)
+            kwargs["http_client"] = loopback_httpx_client(self.cloud_timeout_seconds)
 
         try:
             self._openai_client = _intel_pkg.OpenAI(**kwargs)

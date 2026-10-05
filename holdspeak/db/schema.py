@@ -2801,6 +2801,10 @@ CREATE TABLE IF NOT EXISTS inference_assignment_revisions (
     payload_json TEXT NOT NULL,
     sha256 TEXT NOT NULL,
     created_at TEXT NOT NULL,
+    -- Who made this revision, durable with it (owner ruling 2026-10-05):
+    -- 'owner' = an owner press; 'holdspeak_default' = the batteries-included
+    -- default HoldSpeak wrote by itself (services/inference_default_service.py).
+    made_by TEXT NOT NULL DEFAULT 'owner',
     CHECK (
       (scope_kind='global' AND scope_id='' AND subject_kind='') OR
       (scope_kind='invocation' AND scope_id<>'' AND subject_kind='') OR
@@ -2826,6 +2830,20 @@ CREATE TABLE IF NOT EXISTS inference_assignment_heads (
     updated_at TEXT NOT NULL,
     FOREIGN KEY (assignment_id, revision)
       REFERENCES inference_assignment_revisions(assignment_id, revision)
+);
+-- A network or cloud engine HoldSpeak found while no "Default for AI work"
+-- exists.  It is never assigned by itself: the owner's "Use it" press assigns
+-- it (services/inference_default_service.py; owner ruling 2026-10-05).
+CREATE TABLE IF NOT EXISTS inference_default_proposals (
+    engine_id TEXT PRIMARY KEY,
+    lamp TEXT NOT NULL CHECK (lamp IN ('private_network','mesh','cloud')),
+    label TEXT NOT NULL,
+    host TEXT NOT NULL DEFAULT '',
+    profile_id TEXT NOT NULL DEFAULT '',
+    profile_revision INTEGER NOT NULL DEFAULT 0,
+    state TEXT NOT NULL CHECK (state IN ('open','used')),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS inference_assignments (
     id TEXT PRIMARY KEY,

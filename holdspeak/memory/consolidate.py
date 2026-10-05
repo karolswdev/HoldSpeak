@@ -28,8 +28,8 @@ that scope that match them, and answers in a closed schema: ``creates`` and
   a later consolidation prompt) and is stamped ``retired``
   (``refresh_observations``); its history stays.  A retired observation is
   never an input again, so it never takes new evidence.
-* **Assigned explicitly, or not at all**, like ``memory.extract``: the engine
-  exists only when ``memory.consolidate`` has its OWN assignment.
+* **Its own assignment, or a LOCAL or owner-made default**, like ``memory.extract``
+  (``engine._assignment_head``).
 """
 from __future__ import annotations
 
