@@ -1,122 +1,169 @@
 {
  "answers": {
-  "0765b76960e325166a1113e467176f156d1bf7af92bbfd6ddef3c08a5c388b80": {
+  "0639bfb0ee321d50531a8134d211c96f1fb33163ae55aafa87e723ef6d8284e1": {
    "facts": [
     {
      "confidence": 1.0,
      "entities": [
-      {
-       "kind": "topic",
-       "name": "The budget"
-      }
-     ],
-     "kind": "state",
-     "object": "flat",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "will stay",
-     "subject": "The budget",
-     "text": "The budget for the next year will stay flat."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "topic",
-       "name": "The travel budget line"
-      }
-     ],
-     "kind": "state",
-     "object": "by a third",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "will be cut",
-     "subject": "The travel budget line",
-     "text": "The travel budget line will be cut by a third."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "topic",
-       "name": "The tooling budget line"
-      }
-     ],
-     "kind": "state",
-     "object": "",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "will grow",
-     "subject": "The tooling budget line",
-     "text": "The tooling budget line will grow."
-    }
-   ]
-  },
-  "08a2f44e87ad0731cea2ea14be035cba2a31211eb9be936714cb6a1218607d84": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "project",
-       "name": "mobile release"
-      },
       {
        "kind": "system",
-       "name": "older Android phones"
+       "name": "billing page"
       }
      ],
      "kind": "event",
-     "object": "two weeks due to a crash on the login screen for older Android phones",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "was delayed",
-     "subject": "mobile release",
-     "text": "The mobile release was delayed by two weeks due to a crash on the login screen for older Android phones."
+     "object": "a CSV export feature with date range filters to the billing page",
+     "occurred_end": "2026-10-05",
+     "occurred_start": "2026-10-05",
+     "predicate": "decided to add",
+     "subject": "the owner",
+     "text": "The owner decided to add a CSV export feature with date range filters to the billing page."
     }
    ]
   },
-  "0d2892f9c156f22f92b987ef731e429cdac8bbcea5e512375bbbdde9275772f0": {
+  "0c481c239b264fec8883c482ed78a2356f9bcf51f450a01b4698c2df9225238e": {
    "facts": [
     {
-     "confidence": 0.9,
+     "confidence": 1.0,
      "entities": [
       {
-       "kind": "org",
-       "name": "Northwind"
+       "kind": "topic",
+       "name": "Spanish"
+      },
+      {
+       "kind": "topic",
+       "name": "German"
       }
      ],
      "kind": "event",
-     "object": "in January 2027 at the same price",
-     "occurred_end": "2027-01-31",
-     "occurred_start": "2027-01-01",
-     "predicate": "will renew",
-     "subject": "Northwind vendor contract",
-     "text": "The vendor contract with Northwind will renew in January 2027 at the same price."
+     "object": "to ship Spanish and German translations first",
+     "occurred_end": "2026-09-14",
+     "occurred_start": "2026-09-14",
+     "predicate": "decided",
+     "subject": "the owner",
+     "text": "The owner decided to ship the Spanish and German translations first."
     },
     {
      "confidence": 1.0,
      "entities": [
       {
        "kind": "org",
-       "name": "Legal"
+       "name": "Spain"
       },
       {
        "kind": "org",
-       "name": "Northwind"
+       "name": "Germany"
       }
      ],
      "kind": "state",
-     "object": "a ninety-day exit clause in the Northwind contract",
+     "object": "Spain and Germany",
      "occurred_end": null,
      "occurred_start": null,
-     "predicate": "wants",
-     "subject": "Legal",
-     "text": "Legal wants a ninety-day exit clause in the Northwind contract."
+     "predicate": "are located in",
+     "subject": "non-English users",
+     "text": "Most non-English users are located in Spain and Germany."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "Spanish"
+      },
+      {
+       "kind": "topic",
+       "name": "German"
+      }
+     ],
+     "kind": "state",
+     "object": "Spanish and German",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "are",
+     "subject": "first translations",
+     "text": "The first translations to be released are Spanish and German."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "French"
+      }
+     ],
+     "kind": "state",
+     "object": "the next release",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "will wait for",
+     "subject": "French translation",
+     "text": "The French translation will wait for the next release."
     }
    ]
   },
-  "0e8851966f6d858262dd70245fa8b7a112098f8f2644912bbacc62f8a292f0e1": {
+  "0f2638ef76901c9ac2223dd1e6393a99cfe9a6c104f8af0cb0d11032d929f039": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "retry bug"
+      },
+      {
+       "kind": "topic",
+       "name": "supplier payments"
+      }
+     ],
+     "kind": "event",
+     "object": "duplicate supplier payments",
+     "occurred_end": "2026-09-01",
+     "occurred_start": "2026-09-01",
+     "predicate": "caused",
+     "subject": "retry bug",
+     "text": "A retry bug caused some supplier payments to be sent twice on 2026-09-01."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "org",
+       "name": "Finance"
+      },
+      {
+       "kind": "topic",
+       "name": "supplier payments"
+      }
+     ],
+     "kind": "event",
+     "object": "duplicate supplier payments",
+     "occurred_end": "2026-09-02",
+     "occurred_start": "2026-09-02",
+     "predicate": "reversed",
+     "subject": "Finance",
+     "text": "Finance reversed the duplicate supplier payments on 2026-09-02."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "idempotency key"
+      }
+     ],
+     "kind": "event",
+     "object": "an idempotency key",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "added",
+     "subject": "the owner",
+     "text": "The owner added an idempotency key to prevent duplicate payments."
+    }
+   ]
+  },
+  "1a5b1125be588e38bedc97d1838df366b1673fe8fb297968f4322864c626ecdf": {
+   "facts": []
+  },
+  "1c6725e1f4e72d7dc4d3920abb2cb56546e8e9ae1c89f67740094c072b041319": {
    "facts": [
     {
      "confidence": 1.0,
@@ -152,7 +199,7 @@
     }
    ]
   },
-  "199cfdbb4d5bfdd13bb4110bb9eb80d84c4d2ff1ae3b0b22ecc304aecf24e20f": {
+  "3f2d882c6ead989dec44f4d8f3583a4a8c0182094fc804207982ab75c15841d5": {
    "facts": [
     {
      "confidence": 1.0,
@@ -188,202 +235,229 @@
     }
    ]
   },
-  "2504e66b8390bc6ea4c1f269d27304b6bc2245f9fd524f7e99d4462167c85acb": {
+  "42b60d4dfdf1dd8ffc685a3171ba2770ec3746fc3915045aa60299ee4f28bde5": {
    "facts": [
     {
-     "confidence": 0.9,
+     "confidence": 1.0,
      "entities": [
       {
-       "kind": "org",
-       "name": "The platform team"
+       "kind": "person",
+       "name": "Sam"
+      },
+      {
+       "kind": "topic",
+       "name": "billing service"
       }
      ],
      "kind": "event",
-     "object": "weekend on-call",
-     "occurred_end": null,
-     "occurred_start": "2026-10-01",
-     "predicate": "will take",
-     "subject": "The platform team",
-     "text": "The platform team will take weekend on-call starting in October 2026."
+     "object": "not to split the billing service yet",
+     "occurred_end": "2026-09-18",
+     "occurred_start": "2026-09-18",
+     "predicate": "decided",
+     "subject": "Sam",
+     "text": "Sam decided not to split the billing service yet because the team is small and module boundaries are fine."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Sam"
+      },
+      {
+       "kind": "topic",
+       "name": "billing service"
+      }
+     ],
+     "kind": "event",
+     "object": "to keep one deployable and revisit after the summer",
+     "occurred_end": "2026-09-18",
+     "occurred_start": "2026-09-18",
+     "predicate": "agreed",
+     "subject": "the owner",
+     "text": "The owner and Sam agreed to keep the billing service as one deployable and revisit the decision after the summer."
+    }
+   ]
+  },
+  "44cfc02cc192f1eb712184bba2ee0cb05d4155ce3990f3f9f077e43b5df5e966": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "org",
+       "name": "Northwind"
+      }
+     ],
+     "kind": "event",
+     "object": "a ten percent discount for a three-year term",
+     "occurred_end": "2026-09-16",
+     "occurred_start": "2026-09-16",
+     "predicate": "offered",
+     "subject": "Northwind",
+     "text": "Northwind offered a ten percent discount for a three-year term."
     },
     {
      "confidence": 1.0,
      "entities": [],
      "kind": "state",
-     "object": "on Fridays at 16:00",
+     "object": "a one-year term with an option to extend",
      "occurred_end": null,
      "occurred_start": null,
-     "predicate": "happens",
-     "subject": "The on-call handover",
-     "text": "The on-call handover happens on Fridays at 16:00."
+     "predicate": "prefers",
+     "subject": "the owner",
+     "text": "The owner prefers a one-year term with an option to extend."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "org",
+       "name": "Northwind"
+      }
+     ],
+     "kind": "event",
+     "object": "the price stays as it is today for a one-year term",
+     "occurred_end": "2026-09-16",
+     "occurred_start": "2026-09-16",
+     "predicate": "stated",
+     "subject": "Northwind",
+     "text": "Northwind stated that the price stays as it is today if the owner chooses a one-year term."
     }
    ]
   },
-  "29907ab59b2bd1a32c87443678afdb45b891dbc9cad2f8664c3c052c8c4bea7c": {
+  "48612f7d1bd5cb839b9207d5ea8a50dceb66e91fcb83fadd08dec6a8dd3d452a": {
+   "facts": []
+  },
+  "507a716b79878c0d03cb62a263a8d93670830b725c4995b50dd30b912afb8269": {
    "facts": [
     {
      "confidence": 1.0,
      "entities": [
       {
-       "kind": "project",
-       "name": "Harbor"
-      }
-     ],
-     "kind": "event",
-     "object": "offline mode in quarter one",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "will ship",
-     "subject": "Harbor",
-     "text": "Harbor will ship offline mode in quarter one."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "project",
-       "name": "Harbor"
-      }
-     ],
-     "kind": "event",
-     "object": "tablet layout in quarter two",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "will ship",
-     "subject": "Harbor",
-     "text": "Harbor will ship tablet layout in quarter two."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "topic",
-       "name": "Push notifications"
+       "kind": "person",
+       "name": "Ana"
       },
       {
-       "kind": "system",
-       "name": "backend"
+       "kind": "topic",
+       "name": "failed photo uploads"
+      }
+     ],
+     "kind": "event",
+     "object": "count of tickets about failed photo uploads",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "doubled",
+     "subject": "support tickets",
+     "text": "The number of support tickets about failed photo uploads doubled."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Lee"
+      },
+      {
+       "kind": "topic",
+       "name": "photo uploads"
       }
      ],
      "kind": "state",
-     "object": "the backend supports topics",
+     "object": "on slow networks due to a ten-second timeout",
      "occurred_end": null,
      "occurred_start": null,
-     "predicate": "are delayed until",
-     "subject": "Push notifications",
-     "text": "Push notifications are delayed until the backend supports topics."
-    }
-   ]
-  },
-  "2afbd7cafde23edc770360d52b5cc96698bb63e5f2fccc0a67448bb3c19c1f6b": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "topic",
-       "name": "retry bug"
-      }
-     ],
-     "kind": "event",
-     "object": "duplicate supplier payments",
-     "occurred_end": "2026-09-01",
-     "occurred_start": "2026-09-01",
-     "predicate": "caused",
-     "subject": "retry bug",
-     "text": "A retry bug caused some supplier payments to be sent twice on 2026-09-01."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "org",
-       "name": "Finance"
-      }
-     ],
-     "kind": "event",
-     "object": "duplicate supplier payments",
-     "occurred_end": "2026-09-02",
-     "occurred_start": "2026-09-02",
-     "predicate": "reversed",
-     "subject": "Finance",
-     "text": "Finance reversed the duplicate supplier payments on 2026-09-02."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "org",
-       "name": "the team"
-      }
-     ],
-     "kind": "event",
-     "object": "an idempotency key",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "added",
-     "subject": "the team",
-     "text": "The team added an idempotency key to prevent duplicate payments."
-    }
-   ]
-  },
-  "3b28cd344d9f45f3f39720542363e3df4ef9bde262e6575defe2ed56bd7272fd": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "topic",
-       "name": "annual plan discount test"
-      }
-     ],
-     "kind": "event",
-     "object": "conversions by eight percent",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "raised",
-     "subject": "annual plan discount test",
-     "text": "The annual plan discount test raised conversions by eight percent."
+     "predicate": "fail",
+     "subject": "photo uploads",
+     "text": "Photo uploads fail on slow networks because the timeout is ten seconds."
     },
     {
      "confidence": 1.0,
      "entities": [
       {
        "kind": "topic",
-       "name": "twenty percent discount"
+       "name": "photo uploads"
       }
      ],
      "kind": "event",
-     "object": "the twenty percent discount",
-     "occurred_end": "2026-09-13",
-     "occurred_start": "2026-09-13",
-     "predicate": "decided to keep",
+     "object": "to raise the timeout to sixty seconds and add resume",
+     "occurred_end": "2026-09-17",
+     "occurred_start": "2026-09-17",
+     "predicate": "decided",
      "subject": "the owner",
-     "text": "The owner decided to keep the twenty percent discount."
+     "text": "The owner decided to raise the upload timeout to sixty seconds and add resume functionality."
     }
    ]
   },
-  "535775de9fdbdccbc9b66878e4c01aa3a40ac1d362cfbcd8bb33c4749502f480": {
+  "54096f31b2b79e255dad8c59252aa219358c44031ea96e2eb06726e9fdc5e4e1": {
    "facts": [
     {
      "confidence": 1.0,
      "entities": [
+      {
+       "kind": "project",
+       "name": "mobile release"
+      },
       {
        "kind": "system",
-       "name": "billing page"
+       "name": "older Android phones"
       }
      ],
      "kind": "event",
-     "object": "a CSV export feature with date range filters to the billing page",
-     "occurred_end": "2026-10-05",
-     "occurred_start": "2026-10-05",
-     "predicate": "decided to add",
-     "subject": "the owner",
-     "text": "The owner decided to add a CSV export feature with date range filters to the billing page."
+     "object": "two weeks due to a crash on the login screen for older Android phones",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "was delayed",
+     "subject": "mobile release",
+     "text": "The mobile release was delayed by two weeks due to a crash on the login screen for older Android phones."
     }
    ]
   },
-  "53f1784aeda62ab86de4cbc9cc4c5dc313558377c4b3de75e35aad6728c7549b": {
+  "55353a12324ca2521bc8cc6e7b17e4458037e71c7a1603c9e7fd8a280bc9206c": {
+   "facts": [
+    {
+     "confidence": 0.9,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "team offsite"
+      },
+      {
+       "kind": "org",
+       "name": "Lisbon"
+      }
+     ],
+     "kind": "event",
+     "object": "in Lisbon in March 2027",
+     "occurred_end": "2027-03-31",
+     "occurred_start": "2027-03-01",
+     "predicate": "is scheduled",
+     "subject": "team offsite",
+     "text": "The team offsite is scheduled to take place in Lisbon in March 2027."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Priya"
+      },
+      {
+       "kind": "topic",
+       "name": "team offsite"
+      }
+     ],
+     "kind": "event",
+     "object": "the venue for the team offsite",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "will book",
+     "subject": "Priya",
+     "text": "Priya will book the venue for the team offsite."
+    }
+   ]
+  },
+  "59aa7f9b2966101e94cc3e2e86dceb82f1e2f7efbbb1976859fd2cc0fb518339": {
    "facts": [
     {
      "confidence": 1.0,
@@ -410,12 +484,12 @@
       }
      ],
      "kind": "event",
-     "object": "to keep one service until the team doubles in size",
+     "object": "to keep one service until the team doubles",
      "occurred_end": "2026-09-10",
      "occurred_start": "2026-09-10",
      "predicate": "decided",
      "subject": "the owner",
-     "text": "The owner decided to keep one service until the team doubles in size."
+     "text": "The owner decided to keep one service until the team doubles."
     },
     {
      "confidence": 1.0,
@@ -435,91 +509,238 @@
     }
    ]
   },
-  "72c4f825d0a47a2a789759212d4da4e99d7cfc756a0ce2faa827984b96d49f81": {
+  "629c748487ee0a35a988aa6ba42175bc529b20ef2942d8b1a716f8cc7e6ea279": {
    "facts": [
     {
      "confidence": 1.0,
      "entities": [
       {
        "kind": "topic",
-       "name": "Spanish translations"
-      },
-      {
-       "kind": "topic",
-       "name": "German translations"
-      }
-     ],
-     "kind": "event",
-     "object": "to ship the Spanish and German translations first",
-     "occurred_end": "2026-09-14",
-     "occurred_start": "2026-09-14",
-     "predicate": "decided",
-     "subject": "the owner",
-     "text": "The owner decided to ship the Spanish and German translations first."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "org",
-       "name": "Spain"
-      },
-      {
-       "kind": "org",
-       "name": "Germany"
+       "name": "Database backups"
       }
      ],
      "kind": "state",
-     "object": "Spain and Germany",
+     "object": "every six hours",
      "occurred_end": null,
      "occurred_start": null,
-     "predicate": "are located in",
-     "subject": "non-English users",
-     "text": "Most non-English users are located in Spain and Germany."
+     "predicate": "run",
+     "subject": "Database backups",
+     "text": "Database backups run every six hours."
     },
     {
      "confidence": 1.0,
      "entities": [
       {
        "kind": "topic",
-       "name": "French translation"
+       "name": "Restore drills"
       }
      ],
      "kind": "state",
-     "object": "the next release",
+     "object": "on the first Monday of each month",
      "occurred_end": null,
      "occurred_start": null,
-     "predicate": "will wait for",
-     "subject": "French translation",
-     "text": "The French translation will wait for the next release."
+     "predicate": "happen",
+     "subject": "Restore drills",
+     "text": "Restore drills happen on the first Monday of each month."
     }
    ]
   },
-  "72d2d9c9294634279481e0fc3aafb95bdc696fbd9f15435c3fd2766cbaae0311": {
+  "70d94336a1a08670521f3a75f7c0b946cbe07d5aff5bf81f2c4965aee4db8f6e": {
+   "facts": []
+  },
+  "7655721ccdee4935b9f6ffdc24b14e066814d8a35873db7849c860952789b248": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "project",
+       "name": "ledger import"
+      }
+     ],
+     "kind": "event",
+     "object": "trial run",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "finished",
+     "subject": "ledger import",
+     "text": "The trial run of the ledger import finished."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "currency accounts"
+      }
+     ],
+     "kind": "state",
+     "object": "two accounts",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "did not match",
+     "subject": "currency accounts",
+     "text": "Two currency accounts did not match during the ledger import trial run."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "project",
+       "name": "ledger import"
+      }
+     ],
+     "kind": "state",
+     "object": "about 400 euros from rounding",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "is",
+     "subject": "ledger import discrepancy",
+     "text": "The discrepancy in the ledger import is about four hundred euros due to rounding."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Dana"
+      },
+      {
+       "kind": "topic",
+       "name": "conversion table"
+      }
+     ],
+     "kind": "event",
+     "object": "conversion table",
+     "occurred_end": "2026-09-17",
+     "occurred_start": "2026-09-17",
+     "predicate": "will fix",
+     "subject": "Dana",
+     "text": "Dana will fix the conversion table by 2026-09-17."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "org",
+       "name": "auditors"
+      },
+      {
+       "kind": "topic",
+       "name": "new books"
+      }
+     ],
+     "kind": "event",
+     "object": "read access to the new books",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "asked for",
+     "subject": "auditors",
+     "text": "The auditors asked for read access to the new books."
+    }
+   ]
+  },
+  "78ce2683b47a0cda5c280bca90d1acbf259936d543d97a40c54551b7e0b96866": {
    "facts": [
     {
      "confidence": 1.0,
      "entities": [
       {
        "kind": "topic",
-       "name": "security review"
-      },
+       "name": "the last trial run"
+      }
+     ],
+     "kind": "event",
+     "object": "a late change",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "was broken by",
+     "subject": "the last trial run",
+     "text": "A late change broke the last trial run."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
       {
        "kind": "system",
-       "name": "sign-in flow"
+       "name": "finance services"
+      },
+      {
+       "kind": "topic",
+       "name": "the cutover"
       }
      ],
-     "kind": "event",
-     "object": "a missing rate limit on password reset in the sign-in flow",
-     "occurred_end": "2026-09-14",
-     "occurred_start": "2026-09-14",
-     "predicate": "found",
-     "subject": "security review",
-     "text": "The security review of the sign-in flow found a missing rate limit on password reset."
+     "kind": "state",
+     "object": "five days before the cutover",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "are prohibited for",
+     "subject": "deploys to the finance services",
+     "text": "No deploys to the finance services are allowed for five days before the cutover."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "urgent fixes"
+      }
+     ],
+     "kind": "state",
+     "object": "two approvals",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "require",
+     "subject": "urgent fixes",
+     "text": "Urgent fixes require two approvals."
     }
    ]
   },
-  "76408a11447aebf4f43cdfbc0f182fa9e4ae60b90a5ac42b94a07402a065fb16": {
+  "7c2e4d1174647d97b548c2a98a5a0ae2338b42620ed54e1d30054880fa8d6c9c": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "Customer churn"
+      },
+      {
+       "kind": "topic",
+       "name": "small accounts"
+      }
+     ],
+     "kind": "event",
+     "object": "in the third quarter of 2026 among small accounts",
+     "occurred_end": "2026-09-30",
+     "occurred_start": "2026-07-01",
+     "predicate": "rose",
+     "subject": "Customer churn",
+     "text": "Customer churn rose in the third quarter of 2026 among small accounts."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "Most cancellations"
+      },
+      {
+       "kind": "topic",
+       "name": "invoices export"
+      }
+     ],
+     "kind": "state",
+     "object": "missing invoices export",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "cite",
+     "subject": "Most cancellations",
+     "text": "Most cancellations among small accounts cite missing invoices export."
+    }
+   ]
+  },
+  "88ed424709ba466002fc8313cab66a91d265f8c5b6aa0d2e8184ba6f11baa5d9": {
    "facts": [
     {
      "confidence": 1.0,
@@ -559,16 +780,26 @@
     }
    ]
   },
-  "7655bbef4e03f573eb983a52c2338c62bf6f62a52b52c1bf15afaf84b3371682": {
-   "facts": []
-  },
-  "7d28f542e5e80938f57fc9a448d43c40ad85acfb80411de7b7f692caf159e22d": {
-   "facts": []
-  },
-  "89702046284c4eaed854d64a13f13230d29e88fe2d286280bdda2746cf726731": {
+  "9455d44e0fd5d266ce2573a46f67f22cd68a627b5b3e4ebb4069939ad76e525d": {
    "facts": [
     {
-     "confidence": 0.9,
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "project",
+       "name": "data warehouse project"
+      }
+     ],
+     "kind": "state",
+     "object": "a product owner",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "needs",
+     "subject": "data warehouse project",
+     "text": "The data warehouse project needs a product owner."
+    },
+    {
+     "confidence": 1.0,
      "entities": [
       {
        "kind": "person",
@@ -580,19 +811,19 @@
       }
      ],
      "kind": "event",
-     "object": "the role of product owner for the data warehouse project",
+     "object": "the product owner role for the data warehouse project",
      "occurred_end": null,
-     "occurred_start": "2027-05-01",
+     "occurred_start": "2026-05-01",
      "predicate": "will take",
      "subject": "Priya",
-     "text": "Priya will take the role of product owner for the data warehouse project starting 2027-05-01."
+     "text": "Priya will take the product owner role for the data warehouse project from 2026-05-01."
     }
    ]
   },
-  "8e8b7e64ffb4f7f4726e9bb076e53eb6b1d053b33fc3a6fa5066c82800828ddf": {
+  "9b909c41b600134711c5f0989740da8f6263cea2c7b967b545f76ba4595f6738": {
    "facts": [
     {
-     "confidence": 1.0,
+     "confidence": 0.9,
      "entities": [
       {
        "kind": "org",
@@ -600,232 +831,60 @@
       }
      ],
      "kind": "event",
-     "object": "a ten percent discount for a three-year term",
-     "occurred_end": "2026-09-16",
-     "occurred_start": "2026-09-16",
-     "predicate": "offered",
-     "subject": "Northwind",
-     "text": "Northwind offered a ten percent discount for a three-year term."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [],
-     "kind": "state",
-     "object": "a one-year term with an option to extend",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "prefers",
-     "subject": "the owner",
-     "text": "The owner prefers a one-year term with an option to extend."
+     "object": "in January 2027 at the same price",
+     "occurred_end": "2027-01-31",
+     "occurred_start": "2027-01-01",
+     "predicate": "renews",
+     "subject": "The vendor contract with Northwind",
+     "text": "The vendor contract with Northwind renews in January 2027 at the same price."
     },
     {
      "confidence": 1.0,
      "entities": [
+      {
+       "kind": "org",
+       "name": "Legal"
+      },
       {
        "kind": "org",
        "name": "Northwind"
       }
      ],
-     "kind": "event",
-     "object": "the price stays as it is today",
-     "occurred_end": "2026-09-16",
-     "occurred_start": "2026-09-16",
-     "predicate": "stated",
-     "subject": "Northwind",
-     "text": "Northwind stated that the price stays as it is today if the owner chooses the one-year term."
-    }
-   ]
-  },
-  "9647a54d05c7b57a206b643f396dfbec5020875267699e0ea5b3c3f40d9f306e": {
-   "facts": []
-  },
-  "a55da134ccbf7f156ddf244b1b14f77d1a5c9f6cd809848a051545fa5ebc2249": {
-   "facts": [
-    {
-     "confidence": 0.9,
-     "entities": [
-      {
-       "kind": "org",
-       "name": "office garage"
-      }
-     ],
-     "kind": "event",
-     "object": "in February 2027",
-     "occurred_end": "2027-02-28",
-     "occurred_start": "2027-02-01",
-     "predicate": "will close for repairs",
-     "subject": "office garage",
-     "text": "The office garage will close for repairs in February 2027."
-    },
-    {
-     "confidence": 0.9,
-     "entities": [
-      {
-       "kind": "org",
-       "name": "street lot behind the building"
-      }
-     ],
      "kind": "state",
-     "object": "the street lot behind the building",
+     "object": "a ninety day exit clause in the Northwind contract",
      "occurred_end": null,
      "occurred_start": null,
-     "predicate": "should use",
-     "subject": "the owner",
-     "text": "The owner should use the street lot behind the building for parking during the garage closure."
+     "predicate": "wants",
+     "subject": "Legal",
+     "text": "Legal wants a ninety day exit clause in the Northwind contract."
     }
    ]
   },
-  "a58934f2afcf750d376b6db19f76d34c5bf197c8aec48dc014bb5b82076cad29": {
-   "facts": []
-  },
-  "a6701fe1aee4bd1272f38cd4fc5faa39288403fda7cb6e3a2adfc6a5723de9b0": {
+  "9c816f76a797e9c5443c8774a68ac417efd721856b033a1ec4bdbc0ce3779792": {
    "facts": [
     {
      "confidence": 1.0,
      "entities": [
       {
        "kind": "topic",
-       "name": "the last trial run"
-      }
-     ],
-     "kind": "event",
-     "object": "a late change",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "was broken by",
-     "subject": "the last trial run",
-     "text": "A late change broke the last trial run."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
+       "name": "security review"
+      },
       {
        "kind": "system",
-       "name": "finance services"
-      },
-      {
-       "kind": "topic",
-       "name": "the cutover"
-      }
-     ],
-     "kind": "state",
-     "object": "five days before the cutover",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "are prohibited for",
-     "subject": "deploys to the finance services",
-     "text": "No deploys to the finance services for five days before the cutover."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "topic",
-       "name": "urgent fixes"
-      }
-     ],
-     "kind": "state",
-     "object": "two approvals",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "require",
-     "subject": "urgent fixes",
-     "text": "Urgent fixes need two approvals."
-    }
-   ]
-  },
-  "a70144cf46cc04891150432b6294ee52965ce0ad29a1519df574fb86fa1e76bc": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "topic",
-       "name": "Report generation"
+       "name": "sign-in flow"
       }
      ],
      "kind": "event",
-     "object": "after the index change",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "got slower",
-     "subject": "Report generation",
-     "text": "Report generation latency increased after an index change."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "topic",
-       "name": "P95 latency"
-      }
-     ],
-     "kind": "state",
-     "object": "from 2 seconds to 9 seconds",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "increased",
-     "subject": "P95 latency",
-     "text": "The P95 latency for report generation increased from 2 seconds to 9 seconds."
+     "object": "a missing rate limit on password reset in the sign-in flow",
+     "occurred_end": "2026-09-14",
+     "occurred_start": "2026-09-14",
+     "predicate": "found",
+     "subject": "security review",
+     "text": "The security review of the sign-in flow found a missing rate limit on password reset."
     }
    ]
   },
-  "a7f067fe534dda37c5cc2f48333de06075e594dca30cd0f9b449f7edcaa1948e": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Ana"
-      }
-     ],
-     "kind": "state",
-     "object": "regarding failed photo uploads",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "doubled",
-     "subject": "support tickets",
-     "text": "The number of support tickets regarding failed photo uploads doubled."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Lee"
-      }
-     ],
-     "kind": "state",
-     "object": "on slow networks due to a ten-second timeout",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "fail",
-     "subject": "photo uploads",
-     "text": "Photo uploads fail on slow networks because the timeout is set to ten seconds."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "the owner"
-      }
-     ],
-     "kind": "event",
-     "object": "to raise the upload timeout to sixty seconds and add resume functionality",
-     "occurred_end": "2026-09-17",
-     "occurred_start": "2026-09-17",
-     "predicate": "decided",
-     "subject": "the owner",
-     "text": "The owner decided to raise the upload timeout to sixty seconds and add resume functionality."
-    }
-   ]
-  },
-  "ab91eecae3a9898034c8541aa9301b780725acd88d738bf856b94e5604518587": {
-   "facts": []
-  },
-  "b4ffc1dbc83ec76255445e8ab399ccda7d5674a738327635e79bafea23c3f1d4": {
+  "a1002e586b75b5852f0c0ff24496ef01feebaf0ae6a88304d9112ac1825a7256": {
    "facts": [
     {
      "confidence": 1.0,
@@ -835,15 +894,15 @@
        "name": "the owner"
       },
       {
-       "kind": "person",
-       "name": "Technicians"
+       "kind": "topic",
+       "name": "forms"
       },
       {
-       "kind": "topic",
-       "name": "Offline first for forms"
+       "kind": "person",
+       "name": "technicians"
       }
      ],
-     "kind": "state",
+     "kind": "event",
      "object": "forms will be offline-first",
      "occurred_end": "2026-09-13",
      "occurred_start": "2026-09-13",
@@ -855,16 +914,16 @@
      "confidence": 1.0,
      "entities": [
       {
-       "kind": "system",
-       "name": "Forms"
+       "kind": "topic",
+       "name": "forms"
       }
      ],
      "kind": "state",
-     "object": "on the device and when a connection returns",
+     "object": "on the device when a connection returns",
      "occurred_end": null,
      "occurred_start": null,
      "predicate": "will save and sync",
-     "subject": "Forms",
+     "subject": "forms",
      "text": "Forms will save on the device and sync when a connection returns."
     },
     {
@@ -872,88 +931,20 @@
      "entities": [
       {
        "kind": "topic",
-       "name": "Conflict handling"
-      },
-      {
-       "kind": "system",
-       "name": "Forms"
+       "name": "forms"
       }
      ],
      "kind": "state",
-     "object": "last write wins per field",
+     "object": "last write wins per field for conflict handling",
      "occurred_end": null,
      "occurred_start": null,
      "predicate": "will use",
-     "subject": "Conflict handling",
+     "subject": "forms",
      "text": "Conflict handling for forms will use last write wins per field."
     }
    ]
   },
-  "b80f2af3816675fad9b0f1f58b20b15de39f191baf87af8e778b1497374e7bea": {
-   "facts": [
-    {
-     "confidence": 0.9,
-     "entities": [
-      {
-       "kind": "topic",
-       "name": "team offsite"
-      },
-      {
-       "kind": "org",
-       "name": "Lisbon"
-      }
-     ],
-     "kind": "event",
-     "object": "in Lisbon",
-     "occurred_end": "2027-03-31",
-     "occurred_start": "2027-03-01",
-     "predicate": "will take place",
-     "subject": "team offsite",
-     "text": "The team offsite will take place in Lisbon in March 2027."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Priya"
-      },
-      {
-       "kind": "topic",
-       "name": "team offsite"
-      }
-     ],
-     "kind": "event",
-     "object": "the venue for the team offsite",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "will book",
-     "subject": "Priya",
-     "text": "Priya will book the venue for the team offsite."
-    }
-   ]
-  },
-  "c37c728cd4ccee8a987de46012d879426d342c8afc6a79a13b935f40002ec6b0": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "org",
-       "name": "platform team"
-      }
-     ],
-     "kind": "event",
-     "object": "two backend engineers and one designer for the platform team",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "agreed to hire",
-     "subject": "the owner",
-     "text": "The owner agreed to hire two backend engineers and one designer for the platform team before spring 2027."
-    }
-   ]
-  },
-  "ca8fbf785d344e3a0f0a4588f6d6c1675871363ab9183bc45779beaeb9452495": {
+  "aa5e8fe2e5762a021edd667427e1c44d1947e820d373a1ba85f1498c8a20a54e": {
    "facts": [
     {
      "confidence": 1.0,
@@ -976,7 +967,7 @@
      "text": "The Android build has been failing since the SDK upgrade."
     },
     {
-     "confidence": 0.9,
+     "confidence": 1.0,
      "entities": [
       {
        "kind": "person",
@@ -992,7 +983,7 @@
       }
      ],
      "kind": "event",
-     "object": "the Android build issue with Lee",
+     "object": "the Android build issue",
      "occurred_end": "2026-09-15",
      "occurred_start": "2026-09-15",
      "predicate": "will pair on",
@@ -1037,182 +1028,281 @@
     }
    ]
   },
-  "ce4d61331f49c190338cc78318aa80308b89317659b9da0f00b7ba52d7991b08": {
+  "aabea1e7dd52c50dd71e785f1ece54314a9e28559cc9298f783138859d511489": {
    "facts": [
     {
      "confidence": 1.0,
      "entities": [
       {
-       "kind": "topic",
-       "name": "Database backups"
-      }
-     ],
-     "kind": "state",
-     "object": "every six hours",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "run",
-     "subject": "Database backups",
-     "text": "Database backups run every six hours."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "topic",
-       "name": "Restore drills"
-      }
-     ],
-     "kind": "state",
-     "object": "on the first Monday of each month",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "happen",
-     "subject": "Restore drills",
-     "text": "Restore drills happen on the first Monday of each month."
-    }
-   ]
-  },
-  "d40bd14b2c2d1e958ab4633b46ba7ad96728288f86f4e52e2a99fc77ef403196": {
-   "facts": [
-    {
-     "confidence": 1.0,
-     "entities": [
+       "kind": "system",
+       "name": "Postgres"
+      },
       {
        "kind": "project",
-       "name": "ledger import"
+       "name": "the new ledger"
       }
      ],
      "kind": "event",
-     "object": "trial run",
-     "occurred_end": "2026-09-14",
-     "occurred_start": "2026-09-14",
-     "predicate": "finished",
-     "subject": "ledger import trial run",
-     "text": "The trial run of the ledger import finished."
+     "object": "to use Postgres for the new ledger",
+     "occurred_end": "2026-09-11",
+     "occurred_start": "2026-09-11",
+     "predicate": "decided",
+     "subject": "the owner",
+     "text": "The owner decided to use Postgres for the new ledger."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "system",
+       "name": "the old system"
+      }
+     ],
+     "kind": "state",
+     "object": "a mainframe file store",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "runs on",
+     "subject": "the old system",
+     "text": "The old system runs on a mainframe file store."
     },
     {
      "confidence": 1.0,
      "entities": [
       {
        "kind": "project",
-       "name": "ledger import"
-      }
-     ],
-     "kind": "state",
-     "object": "in the ledger import trial run",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "did not match",
-     "subject": "two currency accounts",
-     "text": "Two currency accounts did not match in the ledger import trial run."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "project",
-       "name": "ledger import"
-      }
-     ],
-     "kind": "state",
-     "object": "about four hundred euros from rounding",
-     "occurred_end": null,
-     "occurred_start": null,
-     "predicate": "is",
-     "subject": "ledger import trial run discrepancy",
-     "text": "The discrepancy in the ledger import trial run is about four hundred euros due to rounding."
-    },
-    {
-     "confidence": 1.0,
-     "entities": [
-      {
-       "kind": "person",
-       "name": "Dana"
+       "name": "the new ledger"
       },
       {
        "kind": "system",
-       "name": "conversion table"
+       "name": "Postgres"
+      }
+     ],
+     "kind": "state",
+     "object": "Postgres with monthly partitions",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "stores entries in",
+     "subject": "the new ledger",
+     "text": "The new ledger stores entries in Postgres with monthly partitions."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "project",
+       "name": "the new ledger"
+      }
+     ],
+     "kind": "state",
+     "object": "a read replica",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "will move to",
+     "subject": "reporting queries",
+     "text": "Reporting queries for the new ledger will move to a read replica."
+    }
+   ]
+  },
+  "b37871d2d9eb178b320cd0c195094c2aee859ae299524e5c2e19defbda03fb11": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "The budget for next year"
+      }
+     ],
+     "kind": "state",
+     "object": "flat",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "stays",
+     "subject": "The budget for next year",
+     "text": "The budget for next year stays flat."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "The travel budget"
+      }
+     ],
+     "kind": "state",
+     "object": "by a third",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "is cut",
+     "subject": "The travel budget",
+     "text": "The travel budget is cut by a third."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "The tooling line"
+      }
+     ],
+     "kind": "state",
+     "object": "",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "grows",
+     "subject": "The tooling line",
+     "text": "The tooling line grows."
+    }
+   ]
+  },
+  "b8033717b2132efe3a663fb958a93d6bbae2868c67ca817f47f9e31932ee3383": {
+   "facts": [
+    {
+     "confidence": 0.9,
+     "entities": [
+      {
+       "kind": "org",
+       "name": "office garage"
       }
      ],
      "kind": "event",
-     "object": "the conversion table",
-     "occurred_end": "2026-09-17",
-     "occurred_start": "2026-09-17",
-     "predicate": "will fix",
-     "subject": "Dana",
-     "text": "Dana will fix the conversion table by 2026-09-17."
+     "object": "in February 2027",
+     "occurred_end": "2027-02-28",
+     "occurred_start": "2027-02-01",
+     "predicate": "will close for repairs",
+     "subject": "office garage",
+     "text": "The office garage will close for repairs in February 2027."
     },
+    {
+     "confidence": 0.9,
+     "entities": [
+      {
+       "kind": "org",
+       "name": "street lot behind the building"
+      }
+     ],
+     "kind": "state",
+     "object": "the street lot behind the building",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "should use",
+     "subject": "the owner",
+     "text": "The owner should use the street lot behind the building for parking during the garage repairs."
+    }
+   ]
+  },
+  "d68765a899538bc6cb247fe3467cfb66b35df0aa5ad90345bb7fdfdaa8723c6f": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "Report generation"
+      }
+     ],
+     "kind": "event",
+     "object": "after the index change",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "got slower",
+     "subject": "Report generation",
+     "text": "Report generation latency increased after an index change."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "P95 latency"
+      }
+     ],
+     "kind": "state",
+     "object": "two seconds to nine seconds",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "went from",
+     "subject": "P95 latency",
+     "text": "The P95 latency for report generation increased from two seconds to nine seconds."
+    }
+   ]
+  },
+  "dbfad25534f945f496f39f3647ffb0996ff1fab4fcd63dde9d108708811b48da": {
+   "facts": []
+  },
+  "dfb3093fc4229fe8d0f6b7152d9da4ab9f2671f16d8ee4cfedacc1714f2eefda": {
+   "facts": [
     {
      "confidence": 1.0,
      "entities": [
       {
        "kind": "org",
-       "name": "the auditors"
-      },
-      {
-       "kind": "system",
-       "name": "new books"
+       "name": "The platform team"
       }
      ],
      "kind": "event",
-     "object": "read access to the new books",
+     "object": "weekend on-call",
+     "occurred_end": null,
+     "occurred_start": "2026-10-01",
+     "predicate": "will take",
+     "subject": "The platform team",
+     "text": "The platform team will take weekend on-call starting in October 2026."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [],
+     "kind": "state",
+     "object": "on Fridays at 16:00",
      "occurred_end": null,
      "occurred_start": null,
-     "predicate": "asked for",
-     "subject": "the auditors",
-     "text": "The auditors asked for read access to the new books."
+     "predicate": "happens",
+     "subject": "The on-call handover",
+     "text": "The on-call handover happens on Fridays at 16:00."
     }
    ]
   },
-  "e1c96f2b7333f3b5f8510c611119cba78a3470b62b40b0ab59c73cc2fabb9f03": {
+  "e28dec9f442e45ba416371e3d66fdd9404129ed1a7b296dc768864834b64fb66": {
    "facts": [
     {
      "confidence": 1.0,
      "entities": [
       {
-       "kind": "topic",
-       "name": "Customer churn"
-      },
-      {
-       "kind": "topic",
-       "name": "small accounts"
+       "kind": "person",
+       "name": "the owner"
       }
      ],
      "kind": "event",
-     "object": "among small accounts in Q3 2026",
-     "occurred_end": "2026-09-30",
-     "occurred_start": "2026-07-01",
-     "predicate": "rose",
-     "subject": "Customer churn",
-     "text": "Customer churn rose in the third quarter of 2026 among small accounts."
-    },
+     "object": "to store an append-only change log next to each ledger entry",
+     "occurred_end": "2026-10-05",
+     "occurred_start": "2026-10-05",
+     "predicate": "decided",
+     "subject": "the owner",
+     "text": "The owner decided to store an append-only change log next to each ledger entry."
+    }
+   ]
+  },
+  "e895e1a08ca4a68befcd7c95ec7deebfbfa33c8dc1d4ff28ef20856947f9a13c": {
+   "facts": [
     {
      "confidence": 1.0,
      "entities": [
       {
-       "kind": "topic",
-       "name": "Cancellations"
-      },
-      {
-       "kind": "topic",
-       "name": "invoices export"
+       "kind": "org",
+       "name": "Customers"
       }
      ],
      "kind": "state",
-     "object": "missing invoices export",
+     "object": "a CSV export of invoices",
      "occurred_end": null,
      "occurred_start": null,
-     "predicate": "cite",
-     "subject": "Cancellations",
-     "text": "Most cancellations among small accounts cite missing invoices export."
+     "predicate": "are requesting",
+     "subject": "Customers",
+     "text": "Customers are requesting a CSV export of invoices."
     }
    ]
   },
-  "e4d23e75e6bcc68c70ada0093b30c59e3e1192f52365b7929924815fff9185fd": {
-   "facts": []
-  },
-  "f494882fd42e4e6f14af868daea42c306fa997566d78380e10ab53e112c202fe": {
+  "f13617e14a624125ecd0043426ec7a236c2f91d5a5f9cfd64b15277e74c90775": {
    "facts": [
     {
      "confidence": 1.0,
@@ -1223,12 +1313,12 @@
       }
      ],
      "kind": "event",
-     "object": "too many meetings",
+     "object": "2026-09-02",
      "occurred_end": "2026-09-02",
      "occurred_start": "2026-09-02",
-     "predicate": "experienced",
+     "predicate": "had too many meetings on",
      "subject": "The team",
-     "text": "The team experienced too many meetings on 2026-09-02."
+     "text": "The team had too many meetings on 2026-09-02."
     },
     {
      "confidence": 1.0,
@@ -1264,48 +1354,64 @@
     }
    ]
   },
-  "f683c3a0a626c5c86eda8a84cbc4ce536941f6e5fb7ad23d53f16479c0c07a84": {
+  "f3fef926f652cf75defe2bc58fc9d11907bc6f721e3c3e956f478600f80cb6d0": {
    "facts": [
     {
      "confidence": 1.0,
      "entities": [
       {
-       "kind": "person",
-       "name": "Sam"
-      },
-      {
-       "kind": "system",
-       "name": "billing service"
+       "kind": "topic",
+       "name": "annual plan discount test"
       }
      ],
      "kind": "event",
-     "object": "not to split the billing service yet",
-     "occurred_end": "2026-09-18",
-     "occurred_start": "2026-09-18",
-     "predicate": "decided",
-     "subject": "Sam",
-     "text": "Sam decided not to split the billing service yet because the team is small and module boundaries are fine."
+     "object": "conversions by eight percent",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "raised",
+     "subject": "annual plan discount test",
+     "text": "The annual plan discount test raised conversions by eight percent."
     },
     {
      "confidence": 1.0,
      "entities": [
       {
-       "kind": "system",
-       "name": "billing service"
+       "kind": "topic",
+       "name": "twenty percent discount"
       }
      ],
      "kind": "event",
-     "object": "to keep one deployable and revisit the billing service split after the summer",
-     "occurred_end": "2026-09-18",
-     "occurred_start": "2026-09-18",
-     "predicate": "decided",
+     "object": "the twenty percent discount",
+     "occurred_end": "2026-09-13",
+     "occurred_start": "2026-09-13",
+     "predicate": "decided to keep",
      "subject": "the owner",
-     "text": "The owner decided to keep one deployable and revisit the billing service split after the summer."
+     "text": "The owner decided to keep the twenty percent discount."
+    }
+   ]
+  },
+  "f6a2a077e1ff15f8d6695cfc375a0fbd9f93137e99f573124485e8e563908e7a": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "org",
+       "name": "platform team"
+      }
+     ],
+     "kind": "event",
+     "object": "two backend engineers and one designer for the platform team",
+     "occurred_end": "2026-09-06",
+     "occurred_start": "2026-09-06",
+     "predicate": "agreed to hire",
+     "subject": "the owner",
+     "text": "The owner and the team agreed to hire two backend engineers and one designer for the platform team before spring 2027."
     }
    ]
   }
  },
  "endpoint": "http://192.168.1.43:8080/v1",
- "extractor_version": 2,
+ "extractor_version": 4,
  "model": "qwen3.8-27b"
 }

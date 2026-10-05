@@ -14,7 +14,8 @@ disputed observations and the top recall for the question in that scope.
   (``o1``.. for an observation, ``r1``.. for a recall chunk).  A sentence
   with no ref, or with a ref that is not in the input, is CUT by code; so
   is a sentence with a content token (a word, or a number as a whole
-  token) that the inputs IT cites do not hold.  An answer outside the
+  token) that no ONE input it cites holds whole (``attributed``: "Atlas
+  owner is Dana" + "Harbor owner is Lee" never make "Atlas owner is Lee").  An answer outside the
   closed schema fails whole: back-off, nothing written.
 * **A sentence is served only while every input it cites is live in the
   page's scope NOW.**  An observation: still current or disputed, and the
@@ -27,8 +28,10 @@ disputed observations and the top recall for the question in that scope.
   next rewrite.  A served sentence needs one ref the Desk opens.  The
   belt: a sentence holding a token that only withdrawn inputs of the page
   held (``inputs_json``, hashed tokens) is withheld, whatever it cites.
-* **Stale** when a source or an observation in the scope changed after
-  ``last_memory_seen_at``.  The job rewrites a stale page at most once an
+* **Stale** when what memory holds in the scope is not what the job saw:
+  the content digest of every source and observation in the scope now
+  (``scope_digest``) differs.  A refile stales both projects' pages; time
+  order is never used, so a clock rollback cannot hide a change.  The job rewrites a stale page at most once an
   hour; a missing page is written at once.  The old page goes to the
   append-only history (no reader serves a history row).
 * **No engine:** nothing is called; the last page is served with its age.
@@ -202,33 +205,39 @@ def _bases(refs: Iterable[str]) -> set[str]:
 # ── the inputs ──────────────────────────────────────────────────────────
 
 
-def _changes(conn: Any, scope: tuple[str, str], since: str, scopes: ScopeReader) -> list[tuple[str, str]]:
-    """``(key, updated_at)`` of each observation and each source in the scope
-    stamped at or after ``since``.  The key names the CONTENT, not only the
-    row: a source's content hash and state; an observation's state, newest
-    text version and evidence count.  So a second change in the same second
-    (the stamps are to the second) is a new key."""
-    found = [
-        (f"o:{row[0]}@{row[2]}@{row[3]}@{row[4]}", str(row[1])) for row in conn.execute(
-            "SELECT o.id,o.updated_at,o.state,"
+def scope_keys(conn: Any, scope: tuple[str, str], scopes: ScopeReader) -> list[str]:
+    """The content key of every observation and every source in the scope
+    NOW: a source's ref, content hash and state; an observation's id, state,
+    newest text version and evidence count.  No time order: a refile moves a
+    source's key from one scope's set to the other's, and a clock that runs
+    backwards changes no key."""
+    keys = [
+        f"o:{row[0]}@{row[1]}@{row[2]}@{row[3]}" for row in conn.execute(
+            "SELECT o.id,o.state,"
             " (SELECT COALESCE(MAX(v.version),0) FROM memory_observation_versions v WHERE v.observation_id=o.id),"
             " (SELECT count(*) FROM memory_observation_evidence e WHERE e.observation_id=o.id)"
-            " FROM memory_observations o WHERE o.scope_kind=? AND o.scope_id=? AND o.updated_at>=?",
-            (scope[0], scope[1], since),
+            " FROM memory_observations o WHERE o.scope_kind=? AND o.scope_id=?",
+            (scope[0], scope[1]),
         )
     ]
-    found += [
-        (f"s:{row[0]}@{row[2]}@{row[3]}", str(row[1])) for row in conn.execute(
-            "SELECT source_ref,updated_at,content_sha,state FROM memory_sources WHERE updated_at>=?", (since,)
+    keys += [
+        f"s:{row[0]}@{row[1]}@{row[2]}" for row in conn.execute(
+            "SELECT source_ref,content_sha,state FROM memory_sources"
         ) if scopes.in_scope(str(row[0]), scope)
     ]
-    return found
+    return sorted(keys)
+
+
+def scope_digest(conn: Any, scope: tuple[str, str], scopes: ScopeReader) -> str:
+    """One key for everything memory holds in the scope now (``scope_keys``)."""
+    text = "\n".join(scope_keys(conn, scope, scopes))
+    return "scope:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def memory_marker(conn: Any, scope: tuple[str, str], scopes: ScopeReader) -> tuple[str, list[str]]:
-    """The newest change in the scope memory holds now (an observation's
-    ``updated_at`` or an in-scope source's ledger ``updated_at``), and the
-    content keys of everything stamped exactly then."""
+    """What the job saw: the newest stamp in the scope (shown as the page's
+    ``last_memory_seen_at``; staleness does not use it) and the scope's
+    content digest (``scope_digest``)."""
     row = conn.execute(
         "SELECT MAX(updated_at) FROM memory_observations WHERE scope_kind=? AND scope_id=?", scope
     ).fetchone()
@@ -240,18 +249,19 @@ def memory_marker(conn: Any, scope: tuple[str, str], scopes: ScopeReader) -> tup
         if scopes.in_scope(str(ref), scope):
             best = str(at)
             break
-    return best, sorted(key for key, at in _changes(conn, scope, best, scopes) if at == best)
+    return best, [scope_digest(conn, scope, scopes)]
 
 
 def is_stale(conn: Any, scope: tuple[str, str], seen: str, seen_keys: Iterable[str], scopes: ScopeReader) -> bool:
-    """True when an observation or a source in the scope changed after the
-    job saw the scope (``H/engine/memory_engine.py:20043-20050``): stamped
-    after ``seen``, or stamped in that same second with content (a hash, a
-    state, a version, an evidence count) the job did not see.  Every change
-    restamps its row, so a row stamped before ``seen`` is as the job saw
-    it."""
-    known = set(seen_keys)
-    return any(at > seen or key not in known for key, at in _changes(conn, scope, seen, scopes))
+    """True when what memory holds in the scope now is not what the job saw
+    (``H/engine/memory_engine.py:20043-20050``), by CONTENT only: the scope
+    digest differs.  A second edit in the same second, a refile into or out
+    of the scope, and a change stamped by a clock that ran backwards all
+    change the digest.  ``seen`` is not read (kept for the caller's
+    signature).  A page written before the digest has no digest key, so it
+    is stale once and is written again."""
+    del seen
+    return scope_digest(conn, scope, scopes) not in set(seen_keys)
 
 
 def page_observations(
@@ -461,6 +471,19 @@ def content_tokens(text: str) -> set[str]:
     return {t for t in (w.casefold() for w in _TOKEN.findall(str(text or ""))) if t not in _STOPWORDS}
 
 
+def attributed(text: str, cited: list[str]) -> bool:
+    """True when ONE input the sentence cites holds every content token of
+    the sentence (Astra, #870).  Tokens spread over two inputs are not
+    enough: "Atlas budget is 40." + "Atlas headcount is 80." never make
+    "Atlas budget is 80.", and "Atlas owner is Dana" + "Harbor owner is Lee"
+    never make "Atlas owner is Lee".  Word order, stopwords and case may
+    change ("The Atlas launch date is 2026-10-01." from "Atlas launch date:
+    2026-10-01").  A sentence that joins two inputs is cut: a cut serves
+    less, never a wrong claim."""
+    tokens = content_tokens(text)
+    return any(tokens <= content_tokens(item) for item in cited)
+
+
 def _token_key(token: str) -> str:
     """A token as the page row keeps it: a hash, never the word."""
     return hashlib.sha256(f"memory-page-token:{token}".encode("utf-8")).hexdigest()[:16]
@@ -475,10 +498,9 @@ def validate_output(raw: Any, labels: Any) -> tuple[list[dict[str, Any]], int]:
     label, no text left after the memory defense, or a repeat is CUT.  When
     ``labels`` maps each label to its input text, attribution is checked by
     code: every content token of the sentence (``content_tokens``: each
-    word less the stopwords, each number as a whole token) must be in the
-    text of the inputs THAT sentence cites, or it is CUT.  A sentence that
-    says something its refs do not could not be withdrawn with the input it
-    really came from.
+    word less the stopwords, each number as a whole token) must be in ONE
+    input THAT sentence cites (``attributed``), or it is CUT.  A sentence that says something its refs do not could not be
+    withdrawn with the input it really came from.
     Returns ``(kept sentences, number cut)``; each kept text is redacted
     before it is folded and cut (``defense.redact_clip``).
     """
@@ -507,11 +529,9 @@ def validate_output(raw: Any, labels: Any) -> tuple[list[dict[str, Any]], int]:
         if not text or not refs or any(ref not in known for ref in refs) or _fold(text) in seen:
             cut += 1
             continue
-        if texts is not None:
-            cited = set().union(*(content_tokens(texts[ref]) for ref in refs))
-            if not content_tokens(text) <= cited:
-                cut += 1
-                continue
+        if texts is not None and not attributed(text, [str(texts[ref]) for ref in refs]):
+            cut += 1
+            continue
         seen.add(_fold(text))
         kept.append({"text": text, "refs": refs})
     return kept, cut
