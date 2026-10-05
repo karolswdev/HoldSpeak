@@ -368,27 +368,15 @@ def _assign_global(db: Database, profile_id: str) -> dict[str, Any]:
 
 
 def mark_made_by_holdspeak(db: Database, assignment: dict[str, Any]) -> None:
-    """Leave the receipt the product's own default write leaves (the only
-    record that tells it from an owner press), for a revision it did not make.
-    The auto-assign itself refuses a non-local default
-    (``test_the_auto_assign_never_writes_a_network_default``); this forges the
-    impossible state so the memory guard is fenced on its own."""
-    import time
-
+    """Mark a revision as the product's own write (its durable ``made_by``)
+    for a NON-local default the product never makes: the auto-assign refuses
+    one (``test_the_auto_assign_never_writes_a_network_default``).  This forges
+    the impossible state so the memory guard is fenced on its own."""
     with db._connection() as conn:
         conn.execute(
-            """INSERT INTO kernel_operations
-               (operation_id, request_id, idempotency_key, name, version, principal_kind,
-                principal_identity, target_ref, placement, envelope_sha256, policy_version,
-                authority_basis, state, revision, native_id, created_at, updated_at)
-               VALUES ('forged-op','forged','forged',?,1,'owner','batteries-default','t',
-                       'private_network','','','test','succeeded',1,'forged-op',?,?)""",
-            (ASSIGNED_OPERATION, time.time(), time.time()),
-        )
-        conn.execute(
-            """INSERT INTO kernel_receipts (receipt_id, operation_id, state, outcome, result_ref, created_at)
-               VALUES ('forged-receipt','forged-op','succeeded','forged',?,?)""",
-            (f"inference_assignment:{assignment['id']}@{assignment['revision']}", time.time()),
+            "UPDATE inference_assignment_revisions SET made_by='holdspeak_default'"
+            " WHERE assignment_id=? AND revision=?",
+            (assignment["id"], assignment["revision"]),
         )
 
 
@@ -584,3 +572,324 @@ def test_state_route_and_use_it_press(tmp_path: Path, engines) -> None:
     assert missing.status_code == 404
     bad = client.post("/api/inference/defaults/use-proposal", json={"proposal_id": "x", "more": 1})
     assert bad.status_code == 400
+
+
+# ── review round (Astra, 2026-10-05): Article III at every connect ───────
+
+
+class _Recorder:
+    """A plain HTTP server that records every request line it gets (a proxy
+    or a redirect target).  It answers 502 so nothing proceeds through it."""
+
+    def __init__(self) -> None:
+        self.lines: list[str] = []
+        recorder = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def _any(self) -> None:
+                recorder.lines.append(f"{self.command} {self.path}")
+                self.send_response(502)
+                self.end_headers()
+
+            do_GET = do_POST = do_CONNECT = _any  # noqa: N815
+
+            def log_message(self, *_args: Any) -> None:
+                pass
+
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.port = int(self.server.server_address[1])
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def close(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+
+
+@pytest.fixture()
+def recorder():
+    started: list[_Recorder] = []
+
+    def start() -> _Recorder:
+        r = _Recorder()
+        started.append(r)
+        return r
+
+    yield start
+    for r in started:
+        r.close()
+
+
+def _proxy_env(monkeypatch, proxy: _Recorder) -> None:
+    for name in ("NO_PROXY", "no_proxy"):
+        monkeypatch.delenv(name, raising=False)
+    url = f"http://127.0.0.1:{proxy.port}"
+    for name in ("HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy", "ALL_PROXY", "all_proxy"):
+        monkeypatch.setenv(name, url)
+
+
+def _define(desk: SimpleNamespace, profile_id: str, endpoint: str, model: str = "qwen3:8b") -> None:
+    desk.library.define_endpoint(OWNER, {
+        "request_id": f"def-{profile_id}", "profile_id": profile_id, "expected_profile_revision": 0,
+        "label": f"{profile_id} model", "provider_family": "openai_compatible", "model": model,
+        "endpoint": endpoint, "requires_key": False,
+    }, None)
+
+
+@pytest.fixture()
+def resolver(monkeypatch):
+    """Override name resolution: ``names`` maps a host name to an address
+    (or None = the lookup fails).  Every looked-up name is recorded."""
+    real = socket.getaddrinfo
+    looked: list[str] = []
+    names: dict[str, Any] = {}
+
+    def getaddrinfo(host, *args, **kwargs):  # noqa: ANN001
+        if isinstance(host, str) and host in names:
+            looked.append(host)
+            if names[host] is None:
+                raise socket.gaierror(8, "lookup refused by the test")
+            return real(names[host], *args, **kwargs)
+        if isinstance(host, str):
+            looked.append(host)
+        return real(host, *args, **kwargs)
+
+    monkeypatch.setattr(socket, "getaddrinfo", getaddrinfo)
+    return SimpleNamespace(looked=looked, names=names)
+
+
+# 1 [P1] a name is never LOCAL; the word "localhost" is never resolved
+
+
+def test_a_name_that_resolves_to_a_listener_is_never_local(tmp_path: Path, engines, resolver) -> None:
+    # localhost.localdomain resolves (here: to the test listener; on a real
+    # desk it could be a LAN box).  The lamp must not trust the name.
+    lan = engines(["qwen3:8b"])
+    resolver.names["localhost.localdomain"] = "127.0.0.1"
+    desk = _desk(tmp_path)
+    _define(desk, "named", f"http://localhost.localdomain:{lan.port}/v1")
+    assert lan.requests, "the owner's endpoint answered its readiness probe"
+
+    result = desk.defaults.ensure(reason="boot")
+
+    assert result["status"] != "assigned" and _global(desk.db) is None
+    # The owner can still choose it; its lamp is LAN, and memory follows his press.
+    owner = _assign_global(desk.db, "named")
+    assert [e["boundary"] for e in owner["entries"]] == ["private_network"]
+    state = desk.defaults.state(OWNER)
+    assert state["default"]["lamp"] == "private_network" and state["default"]["made_by"] == "owner"
+
+
+def test_the_word_localhost_is_pinned_and_never_resolved(tmp_path: Path, engines, resolver) -> None:
+    from holdspeak.intel.engine import MeetingIntel
+
+    engine = engines(["qwen3:8b"])
+    resolver.names["localhost"] = None  # a lookup of the word would fail
+    desk = _desk(tmp_path)
+    _define(desk, "word", f"http://localhost:{engine.port}/v1")
+    observation = desk.defaults._live_ready("word", 1)
+    assert observation is True
+    intel = MeetingIntel(provider="cloud", cloud_model="qwen3:8b", cloud_base_url=f"http://localhost:{engine.port}/v1")
+    intel._ensure_openai_client_loaded()
+    assert [m.id for m in intel._openai_client.models.list().data] == ["qwen3:8b"]
+    assert "localhost" not in resolver.looked
+    with desk.db._connection() as conn:
+        from holdspeak.inference_locality import head_lamp  # noqa: F401
+    assert desk.assignments.get_assignment  # the lamp of this endpoint is local:
+    owner = _assign_global(desk.db, "word")
+    assert [e["boundary"] for e in owner["entries"]] == ["local"]
+
+
+# 2 [P1] the scan and the readiness probe follow no redirect
+
+
+def test_a_redirect_is_not_an_engine(tmp_path: Path, recorder) -> None:
+    from holdspeak.setup_runtime import discover_endpoint_models
+
+    target = recorder()
+
+    class Redirect(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            self.send_response(302)
+            self.send_header("Location", f"http://127.0.0.1:{target.port}/v1/models")
+            self.end_headers()
+
+        def log_message(self, *_args: Any) -> None:
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Redirect)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        port = int(server.server_address[1])
+        assert scan_loopback_engines(ports=[(port, "Ollama")]) == []
+        assert discover_endpoint_models(f"http://127.0.0.1:{port}/v1")["ok"] is False
+    finally:
+        server.shutdown()
+        server.server_close()
+    assert target.lines == []
+
+
+# 3 [P1] no proxy for the scan, the readiness probe or the engine's calls
+
+
+def test_the_scan_bypasses_a_real_proxy(engines, recorder, monkeypatch) -> None:
+    engine = engines(["qwen3:8b"])
+    proxy = recorder()
+    _proxy_env(monkeypatch, proxy)
+    found = scan_loopback_engines(ports=[(engine.port, "llama.cpp")])
+    assert [f["model"] for f in found] == ["qwen3:8b"]
+    assert proxy.lines == [] and engine.requests == ["/v1/models"]
+
+
+def test_the_readiness_probe_bypasses_a_real_proxy(tmp_path: Path, engines, recorder, monkeypatch) -> None:
+    engine = engines(["qwen3:8b"])
+    proxy = recorder()
+    _proxy_env(monkeypatch, proxy)
+    desk = _desk(tmp_path)
+    _define(desk, "probe", f"http://127.0.0.1:{engine.port}/v1")
+    assert desk.defaults._live_ready("probe", 1) is True
+    assert proxy.lines == [] and engine.requests
+
+
+def test_the_engine_calls_bypass_a_real_proxy(engines, recorder, monkeypatch) -> None:
+    from holdspeak.intel.engine import MeetingIntel
+
+    engine = engines(["qwen3:8b"])
+    proxy = recorder()
+    _proxy_env(monkeypatch, proxy)
+    intel = MeetingIntel(provider="cloud", cloud_model="qwen3:8b", cloud_base_url=f"http://127.0.0.1:{engine.port}/v1")
+    intel._ensure_openai_client_loaded()
+    assert [m.id for m in intel._openai_client.models.list().data] == ["qwen3:8b"]
+    assert proxy.lines == [] and engine.requests == ["/v1/models"]
+
+
+# 4 [P2] who made the default is durable with the revision
+
+
+def test_a_lost_receipt_never_turns_the_default_into_an_owner_press(tmp_path: Path, engines, monkeypatch) -> None:
+    llama = engines(["Qwen3.5-27B-Instruct"])
+    desk = _desk(tmp_path, scan=_scan_of((llama, "llama.cpp")))
+
+    def broken(*_args: Any, **_kwargs: Any) -> str:
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(desk.defaults, "_write_receipt", broken)
+    assert desk.defaults.ensure(reason="boot")["status"] == "assigned"
+    assert _receipts(desk.db) == []
+    head = _global(desk.db)
+    with desk.db._connection() as conn:
+        made_by = conn.execute(
+            "SELECT made_by FROM inference_assignment_revisions WHERE assignment_id=? AND revision=?",
+            (head["assignment_id"], head["revision"]),
+        ).fetchone()[0]
+    assert made_by == "holdspeak_default"
+    assert desk.defaults.state(OWNER)["default"]["made_by"] == "holdspeak"
+
+
+def test_an_owner_press_is_recorded_as_the_owner(tmp_path: Path) -> None:
+    desk = _desk(tmp_path)
+    _profile(desk.db, "mine")
+    head = _assign_global(desk.db, "mine")
+    with desk.db._connection() as conn:
+        assert conn.execute(
+            "SELECT made_by FROM inference_assignment_revisions WHERE assignment_id=?", (head["id"],),
+        ).fetchone()[0] == "owner"
+    with pytest.raises(ValueError):
+        desk.assignments.set_assignment(OWNER, {
+            "command_id": "bad", "expected_revision": 1, "scope": {"kind": "global"},
+            "entries": [{"profile_id": "mine", "profile_revision": 1}],
+        }, made_by="someone")
+
+
+# 5 [P2] the owner's Turn off is final for automatic embedding adoption
+
+
+def _meaning_desk(tmp_path: Path) -> SimpleNamespace:
+    from holdspeak.services.meaning_search_service import MeaningSearchService
+
+    desk = _desk(tmp_path)
+    meaning = MeaningSearchService(
+        desk.db, assignment_service=desk.assignments, broker_provider=lambda: None,
+        home_provider=lambda: tmp_path / "home", wake=lambda: None,
+    )
+    model_file = tmp_path / "embed.gguf"
+    model_file.write_bytes(b"gguf")
+    desk.defaults = InferenceDefaultService(
+        desk.db, assignment_service=desk.assignments, model_library_service=desk.library,
+        meaning_search=meaning, home_provider=lambda: tmp_path / "home", scan=lambda: [],
+        detect_http_get=lambda *_a, **_k: (200, b'{"data": []}'),
+        find_embed_model=lambda *_a: model_file,
+    )
+    return SimpleNamespace(**vars(desk), meaning=meaning, model_file=model_file)
+
+
+def _embed_head(db: Database) -> Any:
+    with db._connection() as conn:
+        return conn.execute(
+            """SELECT h.revision,h.cleared,r.made_by FROM inference_assignment_heads h
+                 JOIN inference_assignment_revisions r
+                   ON r.assignment_id=h.assignment_id AND r.revision=h.revision
+                WHERE h.assignment_key='capability:memory.embed'"""
+        ).fetchone()
+
+
+def test_embedding_is_adopted_when_the_model_is_here_and_never_assigned(tmp_path: Path) -> None:
+    desk = _meaning_desk(tmp_path)
+    assert desk.defaults._ensure_meaning_search() == "adopted"
+    head = _embed_head(desk.db)
+    assert (head["revision"], head["cleared"], head["made_by"]) == (1, 0, "holdspeak_default")
+
+
+def test_a_turn_off_is_final_even_inside_the_race(tmp_path: Path, monkeypatch) -> None:
+    desk = _meaning_desk(tmp_path)
+    desk.meaning._activate(OWNER, desk.model_file)  # the owner's Turn on (r1)
+    desk.meaning.turn_off(OWNER)  # the owner's Turn off (r2, cleared)
+    assert tuple(_embed_head(desk.db)) == (2, 1, "owner")
+    # The race: the quick read ran before the owner's clear landed.
+    monkeypatch.setattr(desk.defaults, "_embed_head_ever_existed", lambda: False)
+    assert desk.defaults._ensure_meaning_search() == "kept"
+    assert tuple(_embed_head(desk.db)) == (2, 1, "owner")
+
+
+# 6 [P2] readiness is probed live; HoldSpeak's own dead default is re-picked
+
+
+def test_a_dead_default_of_holdspeaks_is_repicked_to_a_live_engine(tmp_path: Path, engines) -> None:
+    big = engines(["llama-70b-instruct"])
+    small = engines(["qwen3:8b"])
+    desk = _desk(tmp_path, scan=_scan_of((big, "llama.cpp"), (small, "Ollama")))
+    first = desk.defaults.ensure(reason="boot")
+    assert first["assigned"]["label"] == "llama-70b-instruct on llama.cpp"
+
+    big.close()  # its readiness observation still says "ready"
+    desk.defaults._scan = _scan_of((small, "Ollama"))
+    second = desk.defaults.ensure(reason="boot")
+
+    assert second["status"] == "repicked"
+    assert second["assigned"]["label"] == "qwen3:8b on Ollama"
+    head = _global(desk.db)
+    assert int(head["revision"]) == 2
+    assert len(_receipts(desk.db)) == 2
+    assert desk.defaults.state(OWNER)["default"]["made_by"] == "holdspeak"
+
+
+def test_a_dead_owner_default_is_never_touched(tmp_path: Path, engines) -> None:
+    big = engines(["llama-70b-instruct"])
+    small = engines(["qwen3:8b"])
+    desk = _desk(tmp_path)
+    _define(desk, "owner-big", f"http://127.0.0.1:{big.port}/v1", model="llama-70b-instruct")
+    _assign_global(desk.db, "owner-big")
+    big.close()
+    desk.defaults._scan = _scan_of((small, "Ollama"))
+    assert desk.defaults.ensure(reason="boot")["status"] == "kept"
+    current = desk.assignments.get_assignment(OWNER, {"kind": "global"})
+    assert current["revision"] == 1 and current["entries"][0]["profile_id"] == "owner-big"
+    assert _receipts(desk.db) == []
+
+
+# 7 [P3] the census lives outside pm/roadmap
+
+
+def test_the_census_fence_reads_the_maintained_copy() -> None:
+    from tests.unit import test_phase143_surface_fallback_census as census
+
+    assert census.ARTIFACT.relative_to(census.REPO).as_posix() == "docs/internal/surface-fallback-census.md"

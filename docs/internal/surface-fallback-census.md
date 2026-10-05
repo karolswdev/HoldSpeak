@@ -1,4 +1,10 @@
-# Phase 143 generated surface and fallback census
+# Surface and fallback census (maintained)
+
+**Moved 2026-10-05** from `pm/roadmap/holdspeak/phase-143-intelligence-router/assets/generated-surface-fallback-census.md`
+(history; that copy stays as it was). `tests/unit/test_phase143_surface_fallback_census.py`
+reads THIS file. A new classified surface adds its paragraph here.
+
+## Phase 143 generated surface and fallback census
 
 **Regenerated:** 2026-08-26 on `feat/hs143-11-transport-parity`. This is the executable companion to
 `repository-census.md`: `tests/unit/test_phase143_surface_fallback_census.py`
@@ -243,3 +249,19 @@ model. It does not choose a route leg and does not retry. The `memory.embed`
 assignment is written by `InferenceAssignmentService.set_assignment` on the
 owner's press. Classified in `BACKEND_PRIVATE_DECISIONS` under the existing
 143-12 owner-surface migration family.
+
+
+## Batteries-included default (2026-10-05)
+
+`holdspeak/services/inference_default_service.py` adds three private reads.
+`_local_profile_candidates` lists Model Library profiles that run on this
+machine (lamp `local`) as candidates for "Default for AI work".
+`_profile_lamp` reads one candidate's deployment lamp, so a non-local engine
+is refused before any write. `_profiles` returns the Model Library's profile
+service for the live readiness probe of each candidate. None of them chooses a
+route leg or retries. The `global` assignment is written by
+`InferenceAssignmentService.set_assignment` with `made_by='holdspeak_default'`,
+at expected revision 0, or at the revision of HoldSpeak's own dead default
+when it is re-picked; an owner-made default is never changed (owner ruling
+2026-10-05). Classified in `BACKEND_PRIVATE_DECISIONS` under the existing
+143-04 assignment family.

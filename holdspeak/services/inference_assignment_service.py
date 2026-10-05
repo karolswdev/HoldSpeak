@@ -59,6 +59,8 @@ _CANONICAL_GROUPS = (
     ("background", "Background"),
 )
 _CANONICAL_GROUP_IDS = frozenset(group_id for group_id, _label in _CANONICAL_GROUPS)
+#: Who made an assignment revision (the ``made_by`` column).
+MADE_BY = frozenset({"owner", "holdspeak_default"})
 
 
 def _now() -> str:
@@ -381,9 +383,18 @@ class InferenceAssignmentService:
             return self._row_projection(conn, row)
 
     def set_assignment(
-        self, principal: Principal, body: Mapping[str, Any]
+        self, principal: Principal, body: Mapping[str, Any], *, made_by: str = "owner"
     ) -> dict[str, Any]:
+        """Write one assignment revision.
+
+        ``made_by`` is never request data (no transport passes it): ``owner``
+        for every owner press, ``holdspeak_default`` only for the
+        batteries-included default the product writes by itself.  It is
+        stored on the revision in the same transaction.
+        """
         self._require_owner(principal)
+        if made_by not in MADE_BY:
+            raise ValueError(f"made_by is invalid: {made_by!r}")
         request = self._set_request(body)
         request_hash = _sha256({"command": "set", **request})
         receipt_context = {
@@ -446,8 +457,8 @@ class InferenceAssignmentService:
                 conn.execute(
                     """INSERT INTO inference_assignment_revisions
                        (assignment_id,revision,assignment_key,scope_kind,scope_id,subject_kind,
-                        selector_kind,capability_id,group_id,retry_policy_id,payload_json,sha256,created_at)
-                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                        selector_kind,capability_id,group_id,retry_policy_id,payload_json,sha256,created_at,made_by)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                     (
                         assignment_id,
                         revision,
@@ -462,6 +473,7 @@ class InferenceAssignmentService:
                         _canonical(material),
                         digest,
                         created_at,
+                        made_by,
                     ),
                 )
                 conn.execute(

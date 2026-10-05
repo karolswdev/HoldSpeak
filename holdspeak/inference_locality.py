@@ -6,9 +6,10 @@ egress_boundary``): ``local``, ``private_network``, ``mesh``, ``cloud``.
 A deployment revision stores a boundary word.  An OpenAI-compatible endpoint
 on this machine (Ollama, LM Studio, a llama.cpp server on 127.0.0.1) is
 stored as ``private_network``, because the endpoint classifier groups
-loopback with private ranges.  The lamp reads the endpoint itself through the
-one egress classifier, so a loopback endpoint is ``local``: nothing leaves
-the machine (Article III).
+loopback with private ranges.  The lamp reads the endpoint itself through
+``loopback_http.endpoint_lamp``: ``local`` only for a loopback IP literal or
+the word ``localhost`` (pinned to 127.0.0.1 at every connect); any other name
+is at best ``private_network`` (Article III).
 
 This module reads SQLite rows only.  Any layer can import it.
 """
@@ -42,9 +43,12 @@ def deployment_lamp(boundary: Any, endpoint: Any = "") -> str:
     word = _BOUNDARY_LAMP.get(str(boundary or "").strip(), "")
     endpoint = str(endpoint or "").strip()
     if endpoint and word in {"private_network", "cloud", ""}:
-        from .intel.providers import egress_boundary
+        # LOCAL only for a loopback IP literal or the word "localhost", which
+        # every connect pins to 127.0.0.1 (loopback_http): the lamp names the
+        # address the bytes go to.
+        from .loopback_http import endpoint_lamp
 
-        return egress_boundary(cloud=True, base_url=endpoint)
+        return endpoint_lamp(endpoint)
     return word or "unknown"
 
 
@@ -103,25 +107,23 @@ def assignment_lamp(conn: Any, assignment_id: str, revision: int) -> str:
     return max(lamps, key=lambda lamp: LAMP_RANK[lamp])
 
 
-#: The kernel operation the batteries-included default writes
-#: (services/inference_default_service.py).  It is the one record of an
-#: assignment HoldSpeak made by itself; every other assignment revision was
-#: written by an owner-only command (the owner's own press).
+#: The kernel operation the batteries-included default writes as evidence
+#: (services/inference_default_service.py).
 AUTO_ASSIGNED_OPERATION = "inference.default_assigned"
 
 
 def made_by_holdspeak(conn: Any, assignment_id: str, revision: int) -> bool:
     """True when this exact assignment revision was the product's own write.
 
-    Read from the receipt that write leaves (``result_ref`` names the
-    revision); no other assignment revision carries one.
+    The source of truth is the revision's ``made_by`` column, written in the
+    same transaction as the revision.  The receipt is evidence only: a lost
+    receipt never turns the product's default into an owner press.
     """
-    return conn.execute(
-        """SELECT 1 FROM kernel_operations o
-             JOIN kernel_receipts r ON r.operation_id=o.operation_id
-            WHERE o.name=? AND r.result_ref=?""",
-        (AUTO_ASSIGNED_OPERATION, f"inference_assignment:{assignment_id}@{int(revision)}"),
-    ).fetchone() is not None
+    row = conn.execute(
+        "SELECT made_by FROM inference_assignment_revisions WHERE assignment_id=? AND revision=?",
+        (str(assignment_id), int(revision)),
+    ).fetchone()
+    return row is not None and str(row["made_by"]) == "holdspeak_default"
 
 
 def head_lamp(conn: Any, assignment_key: str) -> str | None:

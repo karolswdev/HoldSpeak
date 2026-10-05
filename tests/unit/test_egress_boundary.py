@@ -33,7 +33,11 @@ FROZEN_EGRESS_MAP: list[tuple[dict, str]] = [
     (dict(base_url="http://localhost:8080/v1"), "local"),
     (dict(base_url="http://127.0.0.1:8080/v1"), "local"),
     (dict(base_url="http://[::1]:8080/v1"), "local"),
-    (dict(base_url="http://dev.localhost/v1"), "local"),
+    # A name other than the exact word "localhost" can resolve off the
+    # machine: at best the LAN (owner ruling 2026-10-05, Article III; the
+    # word "localhost" is pinned to 127.0.0.1 at connect, loopback_http).
+    (dict(base_url="http://dev.localhost/v1"), "private_network"),
+    (dict(base_url="http://localhost.localdomain:8080/v1"), "private_network"),
     # private LAN ranges + private-suffix names → private_network
     (dict(cloud=True, base_url="http://192.168.1.43:8080/v1"), "private_network"),
     (dict(cloud=True, base_url="http://10.0.0.5:8080/v1"), "private_network"),

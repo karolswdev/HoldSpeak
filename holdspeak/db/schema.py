@@ -2801,6 +2801,10 @@ CREATE TABLE IF NOT EXISTS inference_assignment_revisions (
     payload_json TEXT NOT NULL,
     sha256 TEXT NOT NULL,
     created_at TEXT NOT NULL,
+    -- Who made this revision, durable with it (owner ruling 2026-10-05):
+    -- 'owner' = an owner press; 'holdspeak_default' = the batteries-included
+    -- default HoldSpeak wrote by itself (services/inference_default_service.py).
+    made_by TEXT NOT NULL DEFAULT 'owner',
     CHECK (
       (scope_kind='global' AND scope_id='' AND subject_kind='') OR
       (scope_kind='invocation' AND scope_id<>'' AND subject_kind='') OR

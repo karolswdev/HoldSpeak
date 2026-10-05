@@ -7,15 +7,16 @@
   receipt (``inference.default_assigned``) and the LOCAL lamp.
 * A network (LAN, mesh) or cloud engine is never assigned by itself.  It is
   stored as a proposal; the owner's "Use it" press assigns it.
-* An assignment the owner made is never changed.  The rule acts only when
-  the ``global`` head has never existed: a default the owner cleared stays
-  cleared.
+* An assignment the owner made is never changed, and a default he cleared
+  stays cleared.  The rule writes when the ``global`` head never existed, or
+  re-picks HoldSpeak's OWN default (``made_by='holdspeak_default'`` on the
+  revision) when it no longer answers and another local engine does.
 
 Detection here reads loopback ports only (``scan_loopback_engines``):
 Ollama 11434, LM Studio 1234, llama.cpp 8080 and 8000 on 127.0.0.1.  A
 non-loopback host is refused before any socket is opened, and the scan
-opener ignores HTTP proxy settings, so a scan request never leaves the
-machine.
+request ignores HTTP proxy settings and follows no redirect
+(``loopback_http``), so a scan request never leaves the machine.
 
 Ranking (``rank_key``), among candidates that answered their health probe:
 
@@ -28,8 +29,9 @@ Ranking (``rank_key``), among candidates that answered their health probe:
    llama.cpp 8080, llama.cpp 8000.
 5. The model name.
 
-The winner is assigned only after its readiness probe says ``ready``; the
-next candidate is tried when it does not.
+Every candidate is probed live at assign time (bounded, loopback rules); an
+old readiness observation never decides.  The next candidate is tried when
+the probe does not say ``ready``.
 """
 from __future__ import annotations
 
@@ -42,14 +44,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterable, Optional, Sequence
 from urllib.parse import urlparse
-from urllib.request import ProxyHandler, Request, build_opener
 
 from ..inference_locality import (
     AUTO_ASSIGNED_OPERATION as ASSIGNED_OPERATION,
     assignment_lamp,
     deployment_lamp,
+    made_by_holdspeak,
 )
 from ..logging_config import get_logger
+from ..loopback_http import loopback_get
 from ..principals import Principal, PrincipalKind
 from .errors import NotFound, ServiceError, ValidationError
 
@@ -107,15 +110,10 @@ def require_loopback(host: str) -> str:
     return text
 
 
-_NO_PROXY_OPENER = build_opener(ProxyHandler({}))
-
-
 def _loopback_get(url: str, *, headers: dict[str, str], timeout: float) -> tuple[int, bytes]:
-    """GET one loopback URL.  Proxies are ignored; a non-loopback URL is refused."""
+    """GET one loopback URL: pinned literal, no proxy, no redirect (loopback_http)."""
     require_loopback(urlparse(url).hostname or "")
-    request = Request(url, headers=headers, method="GET")
-    with _NO_PROXY_OPENER.open(request, timeout=timeout) as response:  # noqa: S310 - loopback only
-        return int(getattr(response, "status", 200) or 200), response.read()
+    return loopback_get(url, headers=headers, timeout=timeout)
 
 
 def parameter_billions(*texts: Any) -> Optional[float]:
@@ -228,6 +226,38 @@ def loopback_profile_id(candidate: dict[str, Any]) -> str:
     return ("local-" + slug)[:96].rstrip("-_") or "local-engine"
 
 
+class _FirstAssignmentOnly:
+    """The assignment writer automatic adoption gets: first assignment only.
+
+    Every write is forced to ``expected_revision`` 0, checked inside the
+    write transaction, so a head that exists or ever existed (an owner's
+    Turn off leaves a cleared head) is a conflict and never a write.
+    """
+
+    def __init__(self, inner: Any) -> None:
+        self._inner = inner
+        self.refused = False
+        self.written = False
+
+    def set_assignment(self, principal: Any, body: Any) -> dict[str, Any]:
+        from .errors import ConflictError
+
+        try:
+            result = self._inner.set_assignment(
+                principal, {**dict(body), "expected_revision": 0}, made_by="holdspeak_default",
+            )
+        except ConflictError:
+            self.refused = True
+            raise
+        self.written = True
+        return result
+
+    def __getattr__(self, name: str) -> Any:
+        if name in {"clear_assignment"}:
+            raise AttributeError(name)  # automatic code never clears
+        return getattr(self._inner, name)
+
+
 class InferenceDefaultService:
     """Assigns the batteries-included default; stores and reads proposals."""
 
@@ -241,6 +271,8 @@ class InferenceDefaultService:
         home_provider: Callable[[], Path] = Path.home,
         scan: Optional[Callable[[], list[dict[str, Any]]]] = None,
         detect_http_get: Optional[Callable[..., tuple[int, bytes]]] = None,
+        meaning_factory: Optional[Callable[[Any], Any]] = None,
+        find_embed_model: Optional[Callable[..., Optional[Path]]] = None,
     ) -> None:
         self._db = db
         self._assignments = assignment_service
@@ -249,6 +281,10 @@ class InferenceDefaultService:
         self._home = home_provider
         self._scan = scan or scan_loopback_engines
         self._detect_http_get = detect_http_get
+        self._meaning_factory = meaning_factory
+        if find_embed_model is None:
+            from ..memory.local_model import find_on_device as find_embed_model
+        self._find_embed_model = find_embed_model
         self._lock = threading.Lock()
         self._thread: Optional[threading.Thread] = None
 
@@ -276,11 +312,25 @@ class InferenceDefaultService:
 
     # ── the rule ─────────────────────────────────────────────────────
 
-    def _global_ever_existed(self) -> bool:
+    def _global_head(self) -> Any:
+        """The global head (cleared or not) with who made its revision; None if never."""
         with self._db._connection() as conn:
             return conn.execute(
-                "SELECT 1 FROM inference_assignment_heads WHERE assignment_key='global'"
-            ).fetchone() is not None
+                """SELECT h.assignment_id,h.revision,h.cleared,r.made_by
+                     FROM inference_assignment_heads h
+                     JOIN inference_assignment_revisions r
+                       ON r.assignment_id=h.assignment_id AND r.revision=h.revision
+                    WHERE h.assignment_key='global'"""
+            ).fetchone()
+
+    def _head_entry(self, head: Any) -> Optional[tuple[str, int]]:
+        with self._db._connection() as conn:
+            row = conn.execute(
+                """SELECT profile_id,profile_revision FROM inference_assignments
+                    WHERE assignment_id=? AND assignment_revision=? ORDER BY ordinal LIMIT 1""",
+                (str(head["assignment_id"]), int(head["revision"])),
+            ).fetchone()
+        return None if row is None else (str(row["profile_id"]), int(row["profile_revision"]))
 
     def ensure(self, *, reason: str = "boot") -> dict[str, Any]:
         """Assign the local default once, or record proposals.  Never overwrites."""
@@ -291,17 +341,35 @@ class InferenceDefaultService:
             except Exception as exc:
                 log.warning("meaning search adopt failed: %s", exc)
                 result["memory_embed"] = "failed"
-            if self._global_ever_existed():
-                # The owner's default (or one already made, then maybe cleared
-                # by him) is never changed here.
-                result["status"] = "kept"
-                return result
+            head = self._global_head()
+            expected = 0
+            current_profile = None
+            if head is not None:
+                if int(head["cleared"]) or str(head["made_by"]) != "holdspeak_default":
+                    # The owner's default, or any default he cleared, is
+                    # never changed here.
+                    result["status"] = "kept"
+                    return result
+                # HoldSpeak's own default: keep it while it answers; re-pick
+                # only when it is no longer ready and another local engine is.
+                current_profile = self._head_entry(head)
+                if current_profile is not None and self._live_ready(*current_profile):
+                    result["status"] = "kept"
+                    return result
+                expected = int(head["revision"])
             candidates = self._local_candidates()
             for candidate in sorted(candidates, key=rank_key):
-                assigned = self._try_assign(candidate)
+                if current_profile is not None and candidate.get("profile_id") == current_profile[0]:
+                    continue
+                assigned = self._try_assign(candidate, expected_revision=expected)
                 if assigned is not None:
-                    result.update(status="assigned", assigned=assigned)
+                    result.update(
+                        status="repicked" if expected else "assigned", assigned=assigned,
+                    )
                     return result
+            if head is not None:
+                result["status"] = "kept"  # nothing better: the default stays as it is
+                return result
             result["proposals"] = self._record_proposals()
             result["status"] = "proposed" if result["proposals"] else "needs_setup"
             return result
@@ -324,7 +392,7 @@ class InferenceDefaultService:
         return profiles + fresh
 
     def _local_profile_candidates(self) -> list[dict[str, Any]]:
-        """Model Library profiles that run on this machine and are ready now."""
+        """Model Library profiles that run on this machine (readiness is probed later)."""
         out: list[dict[str, Any]] = []
         with self._db._connection() as conn:
             rows = conn.execute(
@@ -352,12 +420,8 @@ class InferenceDefaultService:
                     continue
                 if deployment_lamp(deployment["boundary"], deployment["endpoint"]) != "local":
                     continue
-                observation = conn.execute(
-                    "SELECT state FROM model_profile_readiness_observations WHERE observation_id=?",
-                    (binding["readiness_observation_id"],),
-                ).fetchone()
-                if observation is None or str(observation["state"]) != "ready":
-                    continue
+                # Readiness is probed live at assign time (_live_ready), never
+                # read from an old observation.
                 try:
                     claims = set(json.loads(str(row["capability_manifest_json"])).get("claims") or [])
                     modalities = set(json.loads(str(row["supported_modalities_json"])))
@@ -429,20 +493,45 @@ class InferenceDefaultService:
             ).fetchone()
         return "unknown" if row is None else deployment_lamp(row["boundary"], row["endpoint"])
 
-    def _ready(self, profile_id: str, revision: int) -> bool:
+    def _live_ready(self, profile_id: str, revision: int) -> bool:
+        """Probe the bound deployment NOW (bounded; loopback rules) and read the result.
+
+        An old readiness observation never decides: a dead engine that was
+        ready last week is not ready now.
+        """
         with self._db._connection() as conn:
-            row = conn.execute(
-                """SELECT o.state FROM model_profile_binding_heads h
+            binding = conn.execute(
+                """SELECT b.* FROM model_profile_binding_heads h
                      JOIN model_profile_binding_revisions b
                        ON b.binding_id=h.binding_id AND b.revision=h.revision
-                     JOIN model_profile_readiness_observations o
-                       ON o.observation_id=b.readiness_observation_id
                     WHERE h.profile_id=? AND b.profile_revision=? AND b.enabled=1""",
                 (profile_id, revision),
             ).fetchone()
-        return row is not None and str(row["state"]) == "ready"
+        if binding is None:
+            return False
+        try:
+            observation = self._profiles().probe_profile(DEFAULT_PRINCIPAL, {
+                "profile_id": profile_id,
+                "profile_revision": revision,
+                "deployment_head_id": str(binding["deployment_head_id"]),
+                "expected_deployment_configuration_revision": int(binding["deployment_configuration_revision"]),
+                "expected_deployment_revision_id": str(binding["deployment_revision_id"]),
+            })
+        except (ServiceError, ValidationError) as exc:
+            log.info("default candidate %s probe refused: %s", profile_id, getattr(exc, "code", exc))
+            return False
+        return str(observation.get("state")) == "ready"
 
-    def _try_assign(self, candidate: dict[str, Any]) -> Optional[dict[str, Any]]:
+    def _profiles(self) -> Any:
+        if self._library is not None:
+            return self._library._profiles
+        from .model_profile_service import ModelProfileService
+
+        return ModelProfileService(self._db)
+
+    def _try_assign(
+        self, candidate: dict[str, Any], *, expected_revision: int = 0,
+    ) -> Optional[dict[str, Any]]:
         try:
             if candidate["source"] == "loopback":
                 reference = self._register_loopback(candidate)
@@ -456,17 +545,18 @@ class InferenceDefaultService:
                 # itself: memory follows a default it made only when local.
                 log.error("default candidate %s is not local; refused", candidate["id"])
                 return None
-            if not self._ready(profile_id, revision):
+            if not self._live_ready(profile_id, revision):
                 log.info("default candidate %s is not ready; trying the next", candidate["id"])
                 return None
             result = self._assignments.set_assignment(DEFAULT_PRINCIPAL, {
                 "command_id": f"batteries-default-{uuid.uuid4().hex}",
-                # 0: only when no default ever existed.  A head the owner made
-                # in the meantime makes this a revision conflict, never a write.
-                "expected_revision": 0,
+                # 0 when no default ever existed; else the revision of
+                # HoldSpeak's own default being re-picked.  A head the owner
+                # wrote in the meantime makes this a revision conflict.
+                "expected_revision": expected_revision,
                 "scope": {"kind": "global"},
                 "entries": [{"profile_id": profile_id, "profile_revision": revision}],
-            })
+            }, made_by="holdspeak_default")
         except (ServiceError, ValidationError) as exc:
             log.info("default candidate %s refused: %s", candidate.get("id"), getattr(exc, "code", exc))
             return None
@@ -475,13 +565,18 @@ class InferenceDefaultService:
         with self._db._connection() as conn:
             lamp = assignment_lamp(conn, assignment_id, assignment_revision)
         label = str(candidate.get("label") or f"{candidate['model']} on {candidate['engine']}")
-        receipt_id = self._write_receipt(
-            assignment_id=assignment_id,
-            assignment_revision=assignment_revision,
-            label=label,
-            profile_id=profile_id,
-            lamp=lamp,
-        )
+        try:
+            # Evidence only: who made the revision is already durable on it.
+            receipt_id = self._write_receipt(
+                assignment_id=assignment_id,
+                assignment_revision=assignment_revision,
+                label=label,
+                profile_id=profile_id,
+                lamp=lamp,
+            )
+        except Exception as exc:
+            log.warning("default receipt not written (the revision says who made it): %s", exc)
+            receipt_id = ""
         log.info("Default for AI work: %s (lamp %s, receipt %s)", label, lamp, receipt_id)
         return {
             "profile_id": profile_id,
@@ -637,35 +732,57 @@ class InferenceDefaultService:
 
     # ── memory.embed: the local embedding model when it is here ──────
 
+    def _embed_head_ever_existed(self) -> bool:
+        with self._db._connection() as conn:
+            return conn.execute(
+                "SELECT 1 FROM inference_assignment_heads WHERE assignment_key='capability:memory.embed'"
+            ).fetchone() is not None
+
     def _ensure_meaning_search(self) -> str:
         """Use the on-device embedding model for ``memory.embed`` when present.
 
         Only a file already on this device (hash checked) is used: nothing is
-        downloaded here.  Only when ``memory.embed`` never had a head: a
-        Turn off by the owner stays off.
+        downloaded here.  Only when ``memory.embed`` never had a head: the
+        owner's Turn off (a cleared head) is final for automatic code.  The
+        quick read below skips work; the rule itself is enforced inside the
+        assignment write (``_FirstAssignmentOnly``: expected revision 0, so
+        any head, cleared or not, is a conflict, never a write).
         """
-        meaning = self._meaning
-        if meaning is None:
+        if self._meaning is None and self._meaning_factory is None:
             return "no_service"
-        with self._db._connection() as conn:
-            if conn.execute(
-                "SELECT 1 FROM inference_assignment_heads WHERE assignment_key='capability:memory.embed'"
-            ).fetchone() is not None:
-                return "kept"
+        if self._embed_head_ever_existed():
+            return "kept"
         import importlib.util
 
-        if importlib.util.find_spec("llama_cpp") is None:
+        if importlib.util.find_spec("llama_cpp") is None and self._meaning_factory is None:
             return "runtime_missing"
-        from ..memory.local_model import EMBED_MODEL, find_on_device
+        from ..memory.local_model import EMBED_MODEL
 
-        path = find_on_device(EMBED_MODEL, self._home())
+        path = self._find_embed_model(EMBED_MODEL, self._home())
         if path is None:
             return "model_missing"
-        # The adopt step of Turn on, without its download branch: this call
-        # can never send a request off the machine.
-        with meaning._lock:
-            meaning._activate_safely(DEFAULT_PRINCIPAL, path)
-        return "adopted"
+        guarded = _FirstAssignmentOnly(self._assignments)
+        adopter = (
+            self._meaning_factory(guarded) if self._meaning_factory is not None
+            else self._auto_meaning(guarded)
+        )
+        adopter._activate_safely(DEFAULT_PRINCIPAL, path)
+        return "kept" if guarded.refused else ("adopted" if guarded.written else "failed")
+
+    def _auto_meaning(self, guarded: Any) -> Any:
+        """A Meaning search adopter whose only assignment writer is ``guarded``."""
+        from .meaning_search_service import MeaningSearchService
+
+        meaning = self._meaning
+        return MeaningSearchService(
+            self._db,
+            assignment_service=guarded,
+            profile_service=meaning._profiles,
+            broker_provider=meaning._broker_provider,
+            model=meaning._model,
+            home_provider=meaning._home,
+            wake=meaning._wake,
+        )
 
     # ── the honest state read ────────────────────────────────────────
 
@@ -684,9 +801,12 @@ class InferenceDefaultService:
             default: dict[str, Any]
             if global_row is not None and not int(global_row["cleared"]):
                 lamp = assignment_lamp(conn, str(global_row["assignment_id"]), int(global_row["revision"]))
-                # "made by": the product's own write leaves a receipt naming
-                # this exact revision; every other revision is an owner press.
-                made = conn.execute(
+                # "made by" is durable on the revision (made_by column); the
+                # receipt is evidence and may be absent.
+                by_holdspeak = made_by_holdspeak(
+                    conn, str(global_row["assignment_id"]), int(global_row["revision"]),
+                )
+                receipt = conn.execute(
                     """SELECT r.receipt_id FROM kernel_operations o
                          JOIN kernel_receipts r ON r.operation_id=o.operation_id
                         WHERE o.name=? AND r.result_ref=?""",
@@ -696,8 +816,8 @@ class InferenceDefaultService:
                 default = {
                     "status": "assigned",
                     "lamp": lamp,
-                    "made_by": "holdspeak" if made is not None else "owner",
-                    "receipt_id": str(made["receipt_id"]) if made is not None else None,
+                    "made_by": "holdspeak" if by_holdspeak else "owner",
+                    "receipt_id": str(receipt["receipt_id"]) if receipt is not None else None,
                 }
             else:
                 default = {

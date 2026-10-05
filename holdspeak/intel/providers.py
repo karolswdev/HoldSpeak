@@ -410,8 +410,13 @@ def egress_boundary(
         # endpoint (contacted later, named nowhere here); otherwise the run
         # stays on THIS machine.
         return EGRESS_CLOUD if cloud else EGRESS_LOCAL
-    if host in {"localhost", "localhost.localdomain"} or host.endswith(".localhost"):
+    # Only the exact word "localhost" (every loopback connect pins it to
+    # 127.0.0.1, loopback_http.pin_loopback_url).  Any other name can resolve
+    # off the machine, so it is at best the LAN.
+    if host == "localhost":
         return EGRESS_LOCAL
+    if host == "localhost.localdomain" or host.endswith(".localhost"):
+        return EGRESS_PRIVATE_NETWORK
     try:
         address = ipaddress.ip_address(host)
     except ValueError:

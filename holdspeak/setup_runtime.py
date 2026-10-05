@@ -22,6 +22,11 @@ log = get_logger("setup_runtime")
 
 
 def _default_http_get(url: str, *, headers: dict[str, str], timeout: float) -> int:
+    from .loopback_http import is_loopback_url, loopback_get
+
+    if is_loopback_url(url):
+        # An engine on this machine: pinned literal, no proxy, no redirect.
+        return loopback_get(url, headers=headers, timeout=timeout)[0]
     req = Request(url, headers=headers, method="GET")
     with urlopen(req, timeout=timeout) as resp:  # noqa: S310 - explicit http(s) preflight
         return int(getattr(resp, "status", 200) or 200)
@@ -30,6 +35,11 @@ def _default_http_get(url: str, *, headers: dict[str, str], timeout: float) -> i
 def _default_http_json(
     url: str, *, headers: dict[str, str], timeout: float
 ) -> tuple[int, bytes]:
+    from .loopback_http import is_loopback_url, loopback_get
+
+    if is_loopback_url(url):
+        # An engine on this machine: pinned literal, no proxy, no redirect.
+        return loopback_get(url, headers=headers, timeout=timeout)
     req = Request(url, headers=headers, method="GET")
     with urlopen(req, timeout=timeout) as resp:  # noqa: S310 - user-requested model discovery
         return int(getattr(resp, "status", 200) or 200), resp.read()
