@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   refresh: vi.fn(),
   start: vi.fn(),
   retry: vi.fn(),
+  closeMic: vi.fn(),
 }));
 
 vi.mock("../../../lib/api", () => ({
@@ -25,6 +26,10 @@ vi.mock("../../shell", () => ({ openSurfaceOr: vi.fn() }));
 vi.mock("../../../lib/speakToFill", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/speakToFill")>()),
   retryPendingTranscription: mocks.retry,
+}));
+vi.mock("../../../lib/micSession", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../lib/micSession")>()),
+  closeMicSession: mocks.closeMic,
 }));
 vi.mock("../../../lib/micStreamSession", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/micStreamSession")>()),
@@ -67,6 +72,7 @@ beforeEach(() => {
   mocks.refresh.mockReset().mockResolvedValue(undefined);
   mocks.retry.mockReset().mockResolvedValue(null);
   mocks.start.mockReset();
+  mocks.closeMic.mockReset();
   mocks.apiFetch.mockReset().mockImplementation(async (path: string, init: { method?: string; json?: unknown } = {}) => {
     const method = init.method ?? "GET";
     calls.push({ path, method, json: init.json });
@@ -213,5 +219,44 @@ describe("FirstRun", () => {
     expect(screen.getByText(/cannot get the selected Whisper model/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
     expect(screen.getByRole("status", { name: "WAITS FOR SPEECH" })).toBeTruthy();
+  });
+
+  it("stops a microphone grant that lands after Continue later (Astra #859 P1)", async () => {
+    local = status({ all: true, state: "ready" });
+    let grant: (session: unknown) => void = () => undefined;
+    mocks.start.mockReturnValue(new Promise((resolve) => { grant = resolve; }));
+    const cancel = vi.fn();
+    render(<FirstRun />);
+    fireEvent.click(await screen.findByRole("button", { name: "◖ Dictate one sentence" }));
+    // Permission is pending (the acquisition has started): the owner leaves.
+    await waitFor(() => expect(mocks.start).toHaveBeenCalled());
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Continue later" }));
+    });
+    await waitFor(() =>
+      expect(calls.some((c) => c.path === "/api/setup/onboarding")).toBe(true),
+    );
+    // Then the grant lands.
+    await act(async () => {
+      grant({ stop: vi.fn(), cancel, retained: vi.fn().mockResolvedValue(false), audio: () => null });
+    });
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(mocks.closeMic).toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Stop listening" })).toBeNull();
+    expect(screen.queryByRole("status", { name: "LISTENING" })).toBeNull();
+  });
+
+  it("says a blocked mic as tokens with the verbs that work, no paragraph (Astra #859 P2)", async () => {
+    local = status({ all: true, state: "ready" });
+    mocks.start.mockRejectedValue(new DOMException("Permission denied", "NotAllowedError"));
+    render(<FirstRun />);
+    fireEvent.click(await screen.findByRole("button", { name: "◖ Dictate one sentence" }));
+    const failure = await screen.findByTestId("firstrun-take-failure");
+    expect(screen.getByRole("status", { name: "MIC BLOCKED" })).toBeTruthy();
+    expect(failure.textContent).toContain("ALLOW IN BROWSER");
+    expect(document.body.textContent).not.toMatch(/draft remains editable/i);
+    expect(failure.querySelector(".firstrun-reason")).toBeNull();
+    expect(screen.getByRole("button", { name: "Again" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Continue later" })).toBeTruthy();
   });
 });

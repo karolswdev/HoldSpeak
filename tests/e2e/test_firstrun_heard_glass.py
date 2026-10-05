@@ -393,3 +393,114 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
         gate.set()
         server.stop()
         source.close()
+
+
+# ── Astra #859 review fences ─────────────────────────────────────────────
+
+_GATED_MIC = """(() => {
+  const media = navigator.mediaDevices;
+  const original = media.getUserMedia.bind(media);
+  let release;
+  window.__gate = new Promise((resolve) => { release = resolve; });
+  window.__grant = () => release();
+  window.__streams = [];
+  media.getUserMedia = async (constraints) => {
+    await window.__gate;               // the permission prompt, pending
+    const stream = await original(constraints);
+    window.__streams.push(stream);
+    return stream;
+  };
+})()"""
+
+_DENIED_MIC = """(() => {
+  navigator.mediaDevices.getUserMedia = async () => {
+    throw new DOMException("Permission denied", "NotAllowedError");
+  };
+})()"""
+
+_LIVE_TRACKS = """() => (window.__streams || []).flatMap((s) => s.getTracks())
+    .filter((t) => t.readyState === 'live').length"""
+
+
+def _ready_hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, str, Source]:
+    _ensure_build()
+    source = Source()
+    source.hold.set()  # no stop half-way: every model downloads whole
+    _real_local_ai(monkeypatch, source)
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    engine_profile()
+    assign_engine(SPEECH_CAPABILITY, 1)
+    return server, base, source
+
+
+def _speech_ready(page: Any, base: str) -> Any:
+    page.goto(f"{base}/?token={TOKEN}")
+    page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+    local_ai = page.get_by_test_id("firstrun-local-ai")
+    local_ai.get_by_role("button", name="Set up local AI · 149 MB", exact=True).click()
+    dictate = page.get_by_test_id("firstrun-first-words").get_by_role("button", name="◖ Dictate one sentence")
+    expect(dictate).to_be_enabled(timeout=30_000)
+    return dictate
+
+
+@pytest.mark.parametrize("width,height", [(1440, 900), (393, 852)])
+def test_a_grant_after_continue_later_leaves_no_live_mic(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int, height: int,
+) -> None:
+    """Pending permission -> Continue later -> grant -> zero live tracks."""
+    server, base, source = _ready_hub(tmp_path, monkeypatch)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(args=[
+                "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream",
+                "--use-file-for-fake-audio-capture=" + str(WAV),
+            ])
+            page = browser.new_page(viewport={"width": width, "height": height})
+            page.set_default_timeout(10_000)
+            page.add_init_script(_GATED_MIC)
+            dictate = _speech_ready(page, base)
+            dictate.click()
+            page.wait_for_timeout(300)  # the acquisition is pending
+            assert page.evaluate(_LIVE_TRACKS) == 0
+            page.get_by_role("button", name="Continue later", exact=True).click()
+            page.get_by_test_id("firstrun").wait_for(state="detached", timeout=15_000)
+            page.evaluate("window.__grant()")
+            page.wait_for_function("() => window.__streams.length > 0")
+            page.wait_for_timeout(500)
+            assert page.evaluate(_LIVE_TRACKS) == 0, "a live microphone outlived the card"
+            browser.close()
+    finally:
+        server.stop()
+        source.close()
+
+
+def test_a_blocked_mic_reads_as_tokens_at_393(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The mic denied: MIC BLOCKED · ALLOW IN BROWSER, Again, no paragraph."""
+    server, base, source = _ready_hub(tmp_path, monkeypatch)
+    out = Path(os.environ.get("FIRSTRUN_SHOTS") or tmp_path / "shots")
+    out.mkdir(parents=True, exist_ok=True)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 393, "height": 852}, device_scale_factor=2)
+            page.set_default_timeout(10_000)
+            page.add_init_script(_DENIED_MIC)
+            dictate = _speech_ready(page, base)
+            dictate.click()
+            words = page.get_by_test_id("firstrun-first-words")
+            failure = words.get_by_test_id("firstrun-take-failure")
+            expect(failure.get_by_role("status", name="MIC BLOCKED")).to_be_visible()
+            expect(failure).to_contain_text("ALLOW IN BROWSER")
+            assert "draft" not in words.inner_text().lower()
+            assert words.locator(".firstrun-reason").count() == 0
+            expect(words.get_by_role("button", name="Again", exact=True)).to_be_visible()
+            expect(page.get_by_role("button", name="Continue later", exact=True)).to_be_visible()
+            words.scroll_into_view_if_needed()
+            page.wait_for_timeout(300)
+            path = out / "C1-mic-blocked-393.png"
+            page.screenshot(path=str(path), full_page=True)
+            print("SHOT", path)
+            browser.close()
+    finally:
+        server.stop()
+        source.close()

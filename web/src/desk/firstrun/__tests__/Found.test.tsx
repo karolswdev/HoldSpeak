@@ -26,16 +26,28 @@ const CLOUD: DefaultProposal = {
 };
 
 let proposals: DefaultProposal[];
+let globalProfileId: string;
 const posts: unknown[] = [];
 
 beforeEach(() => {
   proposals = [LAN, CLOUD];
+  globalProfileId = "";
   posts.length = 0;
+  // The hub, as #855 behaves: a press assigns the global and closes the proposal.
   mocks.apiFetch.mockReset().mockImplementation(async (path: string, init: { method?: string; json?: unknown } = {}) => {
     if (path === "/api/inference/defaults") return { schema: "InferenceDefaultsState@1", proposals };
+    if (path === "/api/inference/assignments") {
+      return {
+        rows: [{ id: "global", assignment: globalProfileId ? { entries: [{ profile_id: globalProfileId }] } : null }],
+      };
+    }
     if (path === "/api/inference/defaults/use-proposal" && init.method === "POST") {
+      const id = (init.json as { proposal_id: string }).proposal_id;
       posts.push(init.json);
-      return { proposal: (init.json as { proposal_id: string }).proposal_id, assignment: { revision: 1 } };
+      const row = proposals.find((p) => p.id === id)!;
+      proposals = proposals.filter((p) => p.id !== id);
+      globalProfileId = String(row.profile_id);
+      return { proposal: id, assignment: { revision: 1 } };
     }
     throw new Error(`unexpected ${path}`);
   });
@@ -69,9 +81,32 @@ describe("FOUND", () => {
     expect(screen.getByRole("button", { name: "Use OpenAI" })).toBeTruthy();
   });
 
+  it("says IN USE only for the engine the global names, after successive presses", async () => {
+    const second: DefaultProposal = { ...LAN, id: "lan:lan-b", label: "engine-b", host: "192.168.1.44", profile_id: "lan-b" };
+    proposals = [LAN, second];
+    render(<Harness />);
+    const first = await screen.findByRole("button", { name: "Use qwen3.8-27b" });
+    await act(async () => {
+      fireEvent.click(first);
+    });
+    await waitFor(() => expect(screen.getAllByRole("status", { name: "IN USE · DEFAULT" }).length).toBe(1));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Use engine-b" }));
+    });
+    expect(posts).toEqual([{ proposal_id: "lan:lan-main" }, { proposal_id: "lan:lan-b" }]);
+    await waitFor(() => {
+      const inUse = screen.getAllByRole("status", { name: "IN USE · DEFAULT" });
+      expect(inUse.length).toBe(1);
+      expect(inUse[0].closest("li")?.textContent).toContain("engine-b");
+    });
+    // The first engine is closed on the hub and no longer the default: it leaves.
+    expect(screen.queryByText("qwen3.8-27b")).toBeNull();
+  });
+
   it("names a refused press on its row", async () => {
     mocks.apiFetch.mockImplementation(async (path: string, init: { method?: string } = {}) => {
       if (init.method === "POST") throw new Error("This engine has no model profile revision.");
+      if (path === "/api/inference/assignments") return { rows: [] };
       return { proposals };
     });
     render(<Harness />);

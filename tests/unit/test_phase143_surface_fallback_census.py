@@ -135,6 +135,10 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/meetings/summaryRoute.ts": ("display-transport", "201-04"),
     "web/src/features/concierge/endpointDraft.ts": ("display-transport", "201-09"),
     "web/src/features/concierge/useConciergeController.ts": ("inference-route", "201-09"),
+    # First run C1 FOUND (PR #859; no roadmap story, the PR number stands in):
+    # "Use it" assigns through #855's use-proposal route; IN USE reads the
+    # global assignment's profile_id from the server.
+    "web/src/desk/firstrun/Found.tsx": ("inference-route", "859-01"),
 }
 
 POINTER_TOKENS = ("inference_target_id", "intel_profile_id", "profile_id", "resolver_profile_id")

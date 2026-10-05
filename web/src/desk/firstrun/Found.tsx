@@ -24,7 +24,19 @@ export interface DefaultProposal {
 export const DEFAULTS_PATH = "/api/inference/defaults";
 export const USE_PROPOSAL_PATH = "/api/inference/defaults/use-proposal";
 
-type RowState = { kind: "open" } | { kind: "busy" } | { kind: "used" } | { kind: "refused"; reason: string };
+type RowState = { kind: "open" } | { kind: "busy" } | { kind: "refused"; reason: string };
+
+export const ASSIGNMENTS_PATH = "/api/inference/assignments";
+
+interface AssignmentSummary {
+  rows?: { id?: string; assignment?: { entries?: { profile_id?: string }[] } | null }[];
+}
+
+/** The profile the current "Default for AI work" names, or "". */
+export function globalProfile(summary: AssignmentSummary | null): string {
+  const row = (summary?.rows ?? []).find((r) => r.id === "global");
+  return String(row?.assignment?.entries?.[0]?.profile_id ?? "");
+}
 
 /** The egress chip of a proposal: the host the work goes to. */
 export function proposalEgress(proposal: DefaultProposal): { label: string; scope: "local" | "cloud" | "remote" | undefined } {
@@ -34,35 +46,53 @@ export function proposalEgress(proposal: DefaultProposal): { label: string; scop
 }
 
 export function useProposals() {
-  // The rows keep their place after "Use it": the hub closes a used
-  // proposal, and the face says IN USE where the press happened.
-  const [rows, setRows] = useState<DefaultProposal[]>([]);
+  /* Astra #859 P2 — IN USE is the server's fact, never a local mark: after
+     every press the face reads the open proposals AND the current global
+     assignment again, and only the engine the global names says IN USE.
+     A row the hub closed (used) that is not the default any more leaves. */
+  const [open, setOpen] = useState<DefaultProposal[]>([]);
+  const [kept, setKept] = useState<DefaultProposal[]>([]);
+  const [current, setCurrent] = useState("");
   const [states, setStates] = useState<Record<string, RowState>>({});
 
+  const read = useCallback(async () => {
+    const answer = await apiFetch<{ proposals?: DefaultProposal[] }>(DEFAULTS_PATH);
+    const proposals = Array.isArray(answer.proposals) ? answer.proposals : [];
+    setOpen(proposals);
+    setKept((prev) => {
+      const byId = new Map(prev.map((row) => [row.id, row]));
+      proposals.forEach((row) => byId.set(row.id, row));
+      return [...byId.values()];
+    });
+    const summary = await apiFetch<AssignmentSummary>(ASSIGNMENTS_PATH).catch(() => null);
+    setCurrent(globalProfile(summary));
+  }, []);
+
   useEffect(() => {
-    let live = true;
-    void apiFetch<{ proposals?: DefaultProposal[] }>(DEFAULTS_PATH)
-      .then((answer) => {
-        if (live) setRows(Array.isArray(answer.proposals) ? answer.proposals : []);
-      })
-      // A hub without the defaults service has no proposals to offer.
-      .catch(() => undefined);
-    return () => {
-      live = false;
-    };
-  }, []);
+    // A hub without the defaults service has no proposals to offer.
+    void read().catch(() => undefined);
+  }, [read]);
 
-  const use = useCallback(async (id: string) => {
-    setStates((prev) => ({ ...prev, [id]: { kind: "busy" } }));
-    try {
-      await apiFetch(USE_PROPOSAL_PATH, { method: "POST", json: { proposal_id: id } });
-      setStates((prev) => ({ ...prev, [id]: { kind: "used" } }));
-    } catch (error) {
-      setStates((prev) => ({ ...prev, [id]: { kind: "refused", reason: readableError(error) } }));
-    }
-  }, []);
+  const use = useCallback(
+    async (id: string) => {
+      setStates((prev) => ({ ...prev, [id]: { kind: "busy" } }));
+      try {
+        await apiFetch(USE_PROPOSAL_PATH, { method: "POST", json: { proposal_id: id } });
+        setStates((prev) => ({ ...prev, [id]: { kind: "open" } }));
+      } catch (error) {
+        setStates((prev) => ({ ...prev, [id]: { kind: "refused", reason: readableError(error) } }));
+      }
+      await read().catch(() => undefined);
+    },
+    [read],
+  );
 
-  return { rows, states, use };
+  const openIds = new Set(open.map((row) => row.id));
+  const rows = kept.filter(
+    (row) => openIds.has(row.id) || (current !== "" && row.profile_id === current),
+  );
+  const inUse = (row: DefaultProposal) => current !== "" && row.profile_id === current;
+  return { rows, states, use, inUse };
 }
 
 export function Found({ proposals }: { proposals: ReturnType<typeof useProposals> }) {
@@ -89,7 +119,7 @@ export function Found({ proposals }: { proposals: ReturnType<typeof useProposals
                   {cloud ? <span className="concierge-key-chip" data-set>KEY SET</span> : null}
                   {cloud ? <span className="concierge-cost-chip" title="Paid per use">$</span> : null}
                   <span className="concierge-cloud-actions">
-                    {state.kind === "used" ? (
+                    {proposals.inUse(proposal) ? (
                       <StateChip state="success" label="IN USE · DEFAULT" icon="●" />
                     ) : (
                       <Button

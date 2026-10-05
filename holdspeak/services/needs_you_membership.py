@@ -189,7 +189,45 @@ def _waiting_on(row: dict[str, Any]) -> bool:
     return bool(owner) and str(row.get("why") or "").strip().upper() == f"WAITING ON {owner.upper()}"
 
 
-def waits_on_other(row: dict[str, Any], self_names: Iterable[str] = SELF_OWNER_NAMES) -> bool:
+def _person_identity(row: dict[str, Any]) -> str:
+    """The People relationship a row names explicitly, or ``""``.
+
+    A Door card linked to a person carries ``person_relationship_id``
+    (door_service.py, HS-149-03/04); the attention row keeps the card.
+    """
+    card = row.get("_doorCard") if isinstance(row.get("_doorCard"), dict) else {}
+    return str(row.get("person_relationship_id") or card.get("person_relationship_id") or "")
+
+
+def _is_me(
+    row: dict[str, Any],
+    self_names: Iterable[str],
+    personal_names: Iterable[str] = (),
+    identified: Iterable[str] = (),
+) -> bool:
+    """The owner himself holds this row.
+
+    ``self_names`` (the reserved names and the speaker label) always match.
+    ``personal_names`` (his own name and aliases, ``config.owner``) match a
+    BARE owner string only: a row that names a person explicitly
+    (``person_relationship_id``) is that person's, even when the person has
+    the same first name as the owner. ``identified`` holds the ids of such
+    rows, so a merged row's sources (which carry no card) keep the rule.
+    """
+    owner = row.get("owner")
+    if _is_self(owner, self_names):
+        return True
+    if _person_identity(row) or str(row.get("id") or "") in set(identified):
+        return False
+    return _is_self(owner, personal_names)
+
+
+def waits_on_other(
+    row: dict[str, Any],
+    self_names: Iterable[str] = SELF_OWNER_NAMES,
+    personal_names: Iterable[str] = (),
+    identified: Iterable[str] = (),
+) -> bool:
     """True when the owner waits on SOMEONE ELSE for this row.
 
     The row names an owner who is not the owner himself, and its reason is
@@ -197,7 +235,7 @@ def waits_on_other(row: dict[str, Any], self_names: Iterable[str] = SELF_OWNER_N
     Room commitment with an owner and a later due date. ``WAITING ON YOUR
     REVIEW`` names no owner and is the owner's own work.
     """
-    return _waiting_on(row) and not _is_self(row.get("owner"), self_names)
+    return _waiting_on(row) and not _is_me(row, self_names, personal_names, identified)
 
 
 def owner_names(extra: Iterable[Any] = ()) -> list[str]:
@@ -307,6 +345,7 @@ def compute_needs_you(
     meetings: Iterable[dict[str, Any]] = (),
     decisions: Iterable[dict[str, Any]] = (),
     self_names: Iterable[str] = SELF_OWNER_NAMES,
+    personal_names: Iterable[str] = (),
     now: datetime | None = None,
     dedup: Callable[[list[dict[str, Any]], datetime], list[dict[str, Any]]] = dedup_items,
 ) -> dict[str, Any]:
@@ -329,8 +368,15 @@ def compute_needs_you(
     # An item the owner himself holds is his: it reads ``YOURS``, never
     # ``WAITING ON ME``, and it is counted.
     names = list(self_names)
+    personal = [str(n) for n in personal_names]
+    # Rows that name a person explicitly: the owner's own name never claims them.
+    identified = {str(row.get("id") or "") for row in combined if _person_identity(row)}
+
+    def other(row: dict[str, Any]) -> bool:
+        return waits_on_other(row, names, personal, identified)
+
     for row in combined:
-        if _waiting_on(row) and _is_self(row.get("owner"), names):
+        if _waiting_on(row) and _is_me(row, names, personal, identified):
             row["why"] = YOURS
     # A People commitment never merges with another row. A merge would put
     # its text and its record ref inside another row's ``sources``, past the
@@ -348,17 +394,17 @@ def compute_needs_you(
     for row in merged:
         sources = [source for source in row.get("sources") or [] if isinstance(source, dict)]
         if len(sources) < 2:
-            row["waiting"] = waits_on_other(row, names)
+            row["waiting"] = other(row)
             continue
-        marks = [waits_on_other(source, names) for source in sources]
+        marks = [other(source) for source in sources]
         row["waiting"] = all(marks)
-        if not row["waiting"] and waits_on_other(row, names):
+        if not row["waiting"] and other(row):
             his = next(source for source, mark in zip(sources, marks) if not mark)
             row["why"] = YOURS if _waiting_on(his) else (his.get("why") or row.get("why"))
             row["severity"] = his.get("severity") or row.get("severity")
     singles = people + decision_items(decisions)
     for row in singles:
-        row["waiting"] = waits_on_other(row, names)
+        row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)
     muted_projects = {str(pid) for pid in muted_project_ids}
     unmuted_items: list[dict[str, Any]] = []
@@ -625,15 +671,17 @@ def compose(
 
     # The names that mean the owner: the reserved ones, his speaker label,
     # and the name and aliases he gave on first run (``config.owner``).
-    own: list[Any] = []
+    speaker: list[Any] = []
+    personal: list[str] = []
     try:
         from holdspeak.config import Config
 
         config = Config.load()
-        own = [config.meeting.mic_label, *config.owner.names()]
+        speaker = [config.meeting.mic_label]
+        personal = [name.strip().casefold() for name in config.owner.names()]
     except Exception as exc:
         log.warning("needs-you: the owner names read failed: %s", exc)
-    names = owner_names(own)
+    names = owner_names(speaker)
 
     result = compute_needs_you(
         door=door,
@@ -644,6 +692,7 @@ def compose(
         meetings=meetings,
         decisions=decisions,
         self_names=names,
+        personal_names=personal,
         now=now,
     )
     answer = dict(aggregate)
@@ -653,7 +702,7 @@ def compose(
         # ``waiting`` on its row, not counted.
         "waitingCount": result["waitingCount"],
         # The names that mean the owner (the browser twin's input).
-        "ownerNames": names,
+        "ownerNames": sorted({*names, *personal}),
         "members": result["members"],
         # Every attention row, ranked: the unmuted rows, then the muted ones.
         "items": result["unmutedItems"] + result["mutedItems"],
