@@ -893,6 +893,8 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     )},
     # Memory slice 4: the observations read.
     "memory.observations.read": {"kind": "tool", "name": "memory.observations"},
+    # Memory slice 5: the page read.
+    "memory.page.read": {"kind": "tool", "name": "memory.page"},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
@@ -929,6 +931,8 @@ OP_READ_OBSERVATIONS = frozenset({
     "channel.destinations", "channel.check_destination", "channel.preview", "channel.sends",
     # Memory slice 4.
     "memory.observations.read",
+    # Memory slice 5.
+    "memory.page.read",
 })
 
 

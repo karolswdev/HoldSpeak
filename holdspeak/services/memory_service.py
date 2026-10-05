@@ -101,3 +101,41 @@ class MemoryService:
             limit=max(1, min(bounded, 200)),
         )
         return {"observations": rows, "count": len(rows)}
+
+    def page(
+        self,
+        principal: Principal,
+        *,
+        slug: str,
+        scope: str | None = None,
+        project_id: str | None = None,
+    ) -> dict[str, Any]:
+        """One memory page (MEMORY-DESIGN.md §3.4): a standing answer with its
+        sources, ``built_at``, ``stale`` and ``boundary``.  A read: NO model
+        call, no write.  ``scope`` is ``project`` (needs ``project_id``) or
+        ``desk``; with a ``project_id`` and no ``scope`` it is the project.
+        No page, or no sentence of it live now: ``{"page": null}``.  Each
+        sentence is served only while every input it cites is live in the
+        scope now.  Nothing here comes from the People store."""
+        if not principal.permits(PrincipalRight.READ):
+            status = 401 if principal.kind is PrincipalKind.NONE else 403
+            raise ServiceError(
+                "read_forbidden",
+                "principal does not permit memory reads",
+                context={"status": status, "response": refusal(principal, PrincipalRight.READ)},
+            )
+        from ..memory.pages import PAGE_SET, read, spec_for
+
+        project = str(project_id or "").strip()
+        chosen = str(scope or "").strip().lower() or ("project" if project else "")
+        if chosen not in PAGE_SET:
+            raise ValidationError("scope must be desk or project")
+        if chosen == "project" and not project:
+            raise ValidationError("scope project needs a project_id")
+        if chosen == "desk" and project:
+            raise ValidationError("scope desk takes no project_id")
+        try:
+            spec_for(chosen, str(slug or "").strip())
+        except ValueError as exc:
+            raise ValidationError(str(exc)) from exc
+        return {"page": read(self._db, chosen, project, str(slug).strip())}

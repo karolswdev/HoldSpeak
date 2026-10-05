@@ -230,8 +230,8 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "zone.file", "zone.unfile", "zone.members", "kb.member.add", "kb.member.remove", "kb.members",
         "decision.delete", "decision.status", "decision.supersede",
         "kernel.receipt.read",
-        # Memory slice 4: the observations read.
-        "memory.observations.read",
+        # Memory slice 4: the observations read; slice 5: the page read.
+        "memory.observations.read", "memory.page.read",
         # PHILO-9-01: the Room on the contract, one row per operation.
         "project.list", "project.get", "project.get_room", "project.create", "project.door.create",
         "project.update", "project.archive", "project.restore", "project.link", "project.unlink",

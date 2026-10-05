@@ -685,6 +685,11 @@
       "story": "MEMORY-4",
       "tool": "memory.observations",
       "operation": "memory.observations.read"
+    },
+    {
+      "story": "MEMORY-5",
+      "tool": "memory.page",
+      "operation": "memory.page.read"
     }
   ],
   "moved": [

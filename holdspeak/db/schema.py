@@ -4835,6 +4835,70 @@ CREATE TRIGGER IF NOT EXISTS memory_observation_backing_no_rowid_replace
     WHEN EXISTS (SELECT 1 FROM memory_observation_backing WHERE rowid=NEW.rowid) BEGIN
     SELECT RAISE(ABORT, 'memory_observation_backing is append only');
 END;
+-- Memory slice 5 (MEMORY-DESIGN.md §2, §3.4): pages, standing answers read
+-- with no model call.  One row per (scope, slug): the current page.  Each
+-- sentence keeps the inputs it cites (`sentences_json`): an observation and
+-- the text version it was shown, or a chunk (id, hash, anchor).  A reader
+-- serves a sentence only while every input it cites is live in the page's
+-- scope NOW (memory/pages.py `read`).  The old page goes to history.
+CREATE TABLE IF NOT EXISTS memory_pages (
+    id TEXT PRIMARY KEY,
+    scope_kind TEXT NOT NULL,
+    scope_id TEXT NOT NULL DEFAULT '',
+    slug TEXT NOT NULL,
+    question TEXT NOT NULL,
+    answer_md TEXT NOT NULL,
+    sources_json TEXT NOT NULL,
+    sentences_json TEXT NOT NULL DEFAULT '[]',
+    -- Every input the page was built from (cited or not), each with the
+    -- HASHED content tokens of its text: at read time a sentence holding a
+    -- token only withdrawn inputs held is withheld.
+    inputs_json TEXT NOT NULL DEFAULT '[]',
+    built_at TEXT NOT NULL,
+    last_memory_seen_at TEXT NOT NULL,
+    -- The changes stamped exactly `last_memory_seen_at` that the job saw
+    -- (timestamps are to the second): another change in that second is new.
+    seen_keys_json TEXT NOT NULL DEFAULT '[]',
+    boundary TEXT NOT NULL DEFAULT '',
+    model TEXT NOT NULL DEFAULT '',
+    writer_version INTEGER NOT NULL,
+    UNIQUE (scope_kind, scope_id, slug)
+);
+-- Append only: no update, no delete, no insert over an id (`id` is the
+-- rowid, so that trigger also refuses an INSERT OR REPLACE over a rowid; with
+-- recursive_triggers off a REPLACE deletes the old row with no DELETE
+-- trigger).  No reader serves a history row.
+CREATE TABLE IF NOT EXISTS memory_page_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    page_id TEXT NOT NULL,
+    built_at TEXT NOT NULL,
+    answer_md TEXT NOT NULL,
+    sources_json TEXT NOT NULL,
+    sentences_json TEXT NOT NULL DEFAULT '[]',
+    boundary TEXT NOT NULL DEFAULT '',
+    model TEXT NOT NULL DEFAULT '',
+    writer_version INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_memory_page_history_page
+    ON memory_page_history(page_id, id);
+CREATE TRIGGER IF NOT EXISTS memory_page_history_no_update
+    BEFORE UPDATE ON memory_page_history BEGIN
+    SELECT RAISE(ABORT, 'memory_page_history is append only');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_page_history_no_delete
+    BEFORE DELETE ON memory_page_history BEGIN
+    SELECT RAISE(ABORT, 'memory_page_history is append only');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_page_history_no_replace
+    BEFORE INSERT ON memory_page_history
+    WHEN EXISTS (SELECT 1 FROM memory_page_history WHERE id=NEW.id) BEGIN
+    SELECT RAISE(ABORT, 'memory_page_history is append only');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_page_history_no_rowid_replace
+    BEFORE INSERT ON memory_page_history
+    WHEN EXISTS (SELECT 1 FROM memory_page_history WHERE rowid=NEW.rowid) BEGIN
+    SELECT RAISE(ABORT, 'memory_page_history is append only');
+END;
 -- One row per model job that failed on its input (a bad output), so a source
 -- the engine cannot read waits with a back-off and stops after six tries.  A
 -- job that succeeds needs no row: the ledger stamp says it is done.

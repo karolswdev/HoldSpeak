@@ -332,6 +332,11 @@ def _p_memory_observations_read(hub: Hub, monkeypatch: Any, tmp_path: Path) -> A
     return hub.root.operations.invoke(OWNER, "memory.observations.read", {})
 
 
+def _p_memory_page_read(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    # Memory slice 5: the page read declares {page} (null with no page).
+    return hub.root.operations.invoke(OWNER, "memory.page.read", {"scope": "desk", "slug": "what-i-owe"})
+
+
 def _p_project_item_list(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     # PHILO-9-01: project.item.list declares {items, limit, offset} (no total).
     made = hub.client.post("/api/projects", json={"name": "Shape"}).json()["project"]
@@ -573,6 +578,7 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "zone.read": _p_zone_read,
     "kernel.receipt.read": _p_kernel_receipt_read,
     "memory.observations.read": _p_memory_observations_read,
+    "memory.page.read": _p_memory_page_read,
     "project.item.list": _p_project_item_list,
     "project.configure_steward": _p_configure_steward,
     "project.run_steward": _p_run_steward,

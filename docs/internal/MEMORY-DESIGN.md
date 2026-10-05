@@ -6,9 +6,9 @@ Hindsight's ideas, built native in HoldSpeak.
   robust with this solution." B = the same ideas inside HoldSpeak's own database,
   engine router, egress badges and People custody. No second database. No
   Hindsight server.
-- **Status:** build design. Slices 1, 2 and 3 are merged. Slice 4
-  (observations; `memory.consolidate`) is built dark: see "Built (slice 4)"
-  in section 3.3. Each slice in section 8 is one PR or two.
+- **Status:** build design. Slices 1 to 4 are merged. The backend half of
+  slice 5 (pages; `memory.page`) is built dark: see "Built (slice 5,
+  backend)" in section 3.4. Each slice in section 8 is one PR or two.
 - **Source of ideas:** <https://github.com/vectorize-io/hindsight> (MIT), read at
   a shallow clone on 2026-10-03. Paper: arXiv 2512.12818 (linked from their
   `README.md:5`; not read for this design).
@@ -623,6 +623,99 @@ A page is a standing answer. It is read with **no model call**.
 - **Read:** `memory_pages.read(scope_kind, scope_id, slug)` returns the answer,
   sources, `built_at`, `stale`, `boundary`. No engine: the last page stays, with
   its age. No page yet: the reader gets nothing and works as it does today.
+
+**Built (2026-10-04, slice 5, backend):** pages ship dark: nothing runs until
+`memory.page` has its own assignment. No face changes: the faces wait for
+the owner's canvas (UX-CANON).
+
+- **Where.** The job, the prompt, the check and the read API:
+  `memory/pages.py` (`write_pending`, `write_page`, `validate_output`,
+  `read`, `RouterPageWriter`). The one write transaction:
+  `MemoryIndexRepository.write_page`. The conductor step:
+  `memory_conductor._page_step`, after `_consolidate_step`, on the same
+  call budget (at most 4 page calls a pass). The tool: MCP `memory.page`
+  IS the declared operation `memory.page.read`, bound to
+  `MemoryService.page`: a read, no model call, the READ right.
+- **The tree won over this design in four places.** (1) The capability is
+  `memory.page`, not `memory.page_write` (the brief's name; the MCP tool
+  of the same name is a different namespace). (2) No person pages:
+  observations have no person scope (slice 4 writes project and desk
+  only), and a person scope would be chosen through the People service's
+  names, so People-store content would steer what a page reads. The page
+  set is per project: `what-we-decided`, `what-is-open`,
+  `risks-and-disputes`, `what-changed-this-week`; desk: `what-i-owe`,
+  `what-changed-this-week`. (3) "Top recall" is the chunk index read per
+  question, not the fused search: chunks of the kinds the question reads
+  (decisions; action items; an FTS match on risk words; this week by the
+  source's own date), newest first, at most 3 a source, only kinds the
+  Desk opens. The scope is applied before any bound: the sources the
+  question could read are listed, the scope rule keeps those in the scope
+  now, and the chunk query reads only those (no LIMIT; the reader stops at
+  8), so other projects never fill the list. The fused search would embed the question (a second model
+  call in the job) and returns search names, not chunks. (4) A desk page
+  reads the desk's scope (sources in no project), as observations do.
+- **Every sentence cites its inputs.** The closed schema is
+  `{"sentences": [{"text", "refs"}]}`; a ref is an input label (`o1`.. an
+  observation, `r1`.. a recall chunk). One entry outside the schema (keys,
+  types, more than 12 sentences) fails the whole answer: back-off in
+  `memory_jobs` (30 s doubling to 900 s, `failed` after 6), nothing
+  written. A sentence with no ref, a label not in the input, no text after
+  `defense.redact_clip`, or a repeat is CUT by code. **Attribution is
+  checked by code** (review round 1, Astra): every content token of a
+  sentence (each word less a small stopword list, case-folded; each number
+  as a WHOLE token, so "26" is not "2026") must be in the text of the
+  inputs THAT sentence cites, or it is cut. A sentence that says something
+  its refs do not could not be withdrawn with the input it came from.
+- **Read time decides, not the next rewrite.** Each stored sentence keeps
+  what it cites: an observation and the text version the engine was shown,
+  or a chunk (id, hash, anchor). A sentence is served only while EVERY
+  cited input is live in the page's scope NOW: an observation still
+  current or disputed with that version still backed (`consolidate.served`,
+  the #843 rule; a superseded belief leaves the page); a chunk still in its
+  source's live text, cut again now (edit, delete, sensitive part, park),
+  and the source in the page's scope now (a refile counts at once). A
+  caller's `exclude_refs` count as not live. A served sentence needs one
+  ref the Desk opens. A page with no sentence live is no page. **The belt:**
+  the page keeps every input it was built from (cited or not) with the
+  HASHED content tokens of its text (`inputs_json`; no word is stored).
+  When an input is not live now, a sentence holding a token that only
+  withdrawn inputs held is withheld, whatever it cites.
+- **Stale and rewrite.** `last_memory_seen_at` is the newest change in the
+  scope when the job read it (an observation's `updated_at` or an in-scope
+  source's ledger `updated_at`), with the content keys of everything
+  stamped in that same second (`seen_keys_json`; the stamps are to the
+  second). A key names the content: a source's content hash and state; an
+  observation's state, newest version and evidence count. Stale: a change
+  stamped after it, or a key in that second the job did not see (a second
+  edit in the same second is a new hash). Every change restamps its row, so
+  a row stamped earlier is as the job saw it (a clock that runs backwards
+  is not covered). A missing page is written
+  at once; a stale one at most once an hour. A scope is a candidate when it
+  has an observation that stands or a page already. The write takes the
+  write lock, checks every input again and that the page is the one it
+  replaces, moves the old page to `memory_page_history`, and writes the
+  new one, in one transaction.
+- **History is append only** (the #845 triggers: no update, no delete, no
+  insert over an id, no insert over a rowid; the last is redundant because
+  `id` is the rowid, and is kept as in #845). No reader serves a history
+  row: an old page's text can hold withdrawn words.
+- **Drafters.** `memory_for(..., pages=...)` reads the named pages first
+  (`page_excerpts`, plain context `(memory page, context only)`, never a
+  citation; at most half the block; whole sentences only), then today's
+  recall inside what is left of the same budget; `fit_memory` drops the
+  recall first. No page served: the call is exactly today's. Wired:
+  the meeting summary (`what-we-decided`, `what-is-open`), the project Prep
+  brief (those two and `risks-and-disputes`) and the project update draft
+  (`what-changed-this-week`, `what-is-open`), each excluding its own
+  sources. Not wired: the Brief and the Steward make no model call, so a
+  page could only reach them as a new item on a face.
+- **Not done.** No face reads a page. A source filed into a project does
+  not move its ledger stamp, so a refile makes the old project's sentences
+  drop at once but does not mark the new project's pages stale. The
+  attribution check is by words: a sentence made only of words its cited
+  inputs also hold is kept, even when its meaning came from elsewhere (a
+  paraphrase the inputs do not support word for word is cut). The real LAN
+  model is not run for this job; no recorded answers.
 
 ### 3.5 REFLECT
 

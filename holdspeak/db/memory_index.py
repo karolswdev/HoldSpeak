@@ -918,6 +918,71 @@ class MemoryIndexRepository(BaseRepository):
                 )
             ]
 
+    # ── pages (MEMORY-DESIGN.md §3.4, slice 5) ──────────────────────
+
+    def write_page(
+        self,
+        *,
+        page_id: str,
+        scope: tuple[str, str],
+        slug: str,
+        question: str,
+        answer_md: str,
+        sources: Sequence[str],
+        sentences: Sequence[dict[str, Any]],
+        seen: str,
+        inputs: Sequence[dict[str, Any]] = (),
+        seen_keys: Sequence[str] = (),
+        boundary: str = "",
+        model: str = "",
+        version: int = 1,
+        still_live: Optional[Any] = None,
+        job_target: str = "",
+        input_sha: str = "",
+    ) -> bool:
+        """ONE transaction: the old page to history (append only), then the
+        new page, and this job's back-off row cleared.
+
+        Takes the write lock first, then ``still_live(conn)`` checks every
+        input (and that the page is the one the job replaces).  Returns
+        False, and writes nothing, when one moved while the engine ran.
+        """
+        with self._connection() as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
+            if still_live is not None and not still_live(conn):
+                return False
+            old = conn.execute("SELECT * FROM memory_pages WHERE id=?", (page_id,)).fetchone()
+            if old is not None:
+                conn.execute(
+                    "INSERT INTO memory_page_history(page_id,built_at,answer_md,sources_json,"
+                    "sentences_json,boundary,model,writer_version) VALUES (?,?,?,?,?,?,?,?)",
+                    (page_id, old["built_at"], old["answer_md"], old["sources_json"], old["sentences_json"],
+                     old["boundary"], old["model"], old["writer_version"]),
+                )
+            conn.execute(
+                """INSERT INTO memory_pages(id,scope_kind,scope_id,slug,question,answer_md,sources_json,
+                     sentences_json,inputs_json,built_at,last_memory_seen_at,seen_keys_json,boundary,
+                     model,writer_version)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                   ON CONFLICT(id) DO UPDATE SET question=excluded.question,answer_md=excluded.answer_md,
+                     sources_json=excluded.sources_json,sentences_json=excluded.sentences_json,
+                     inputs_json=excluded.inputs_json,
+                     built_at=excluded.built_at,last_memory_seen_at=excluded.last_memory_seen_at,
+                     seen_keys_json=excluded.seen_keys_json,boundary=excluded.boundary,
+                     model=excluded.model,writer_version=excluded.writer_version""",
+                (page_id, scope[0], scope[1], slug, question, answer_md,
+                 json.dumps(list(sources), ensure_ascii=False),
+                 json.dumps(list(sentences), ensure_ascii=False, sort_keys=True),
+                 json.dumps(list(inputs), ensure_ascii=False, sort_keys=True),
+                 _now(), seen, json.dumps(sorted(seen_keys)), boundary, model, int(version)),
+            )
+            conn.execute(
+                "DELETE FROM memory_jobs WHERE kind='page' AND target=? AND input_sha=?",
+                (job_target, input_sha),
+            )
+        return True
+
     # ── maintenance ──────────────────────────────────────────────────
 
     def clear(self) -> None:

@@ -48,7 +48,7 @@ from urllib.parse import urlparse
 
 from ..principals import Principal
 from .errors import ConflictError, NotFound, ServiceError, ValidationError
-from .memory_grounding import memory_for
+from .memory_grounding import memory_for, project_pages
 from .project_update_service import (
     ACCEPTANCE_ACCEPTED,
     ACCEPTANCE_UNREVIEWED,
@@ -943,6 +943,9 @@ class PreparationBriefService:
                 "project.brief_prepare", self._db, project_id=project_id, query=purpose,
                 exclude_refs=[ref for claim in draft.claims for ref in claim.refs]
                 + [row["ref"] for row in manifest["decisions"]],
+                # The project's standing answers first, when memory has them
+                # (MEMORY-DESIGN.md §6); none: the read is today's.
+                pages=project_pages(project_id, "what-we-decided", "what-is-open", "risks-and-disputes"),
             )
             try:
                 draft, gen_label, gen_host, gen_model = self._draft_with_model(
