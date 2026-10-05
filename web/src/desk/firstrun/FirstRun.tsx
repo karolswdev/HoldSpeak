@@ -19,7 +19,7 @@ import {
   SurfaceLedgerRow,
 } from "../surface";
 import { apiFetch } from "../../lib/api";
-import { DICTATION_FAILURES, needsMicrophoneDoctor } from "../../lib/dictationRecovery";
+import { DICTATION_FAILURES, needsMicrophoneDoctor, type DictationFailure } from "../../lib/dictationRecovery";
 import { openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import {
@@ -37,6 +37,24 @@ import { useOwnerName } from "./ownerName";
 import { useFirstTake } from "./useFirstTake";
 import "../../features/concierge/concierge.css";
 import "./firstrun.css";
+
+/** A failed take, as two tokens: what happened, and the plain reason. */
+const FAILURE_TOKENS: Record<DictationFailure, { chip: string; reason: string }> = {
+  permission_denied: { chip: "MIC BLOCKED", reason: "ALLOW IN BROWSER" },
+  no_microphone: { chip: "NO MIC", reason: "NO DEVICE FOUND" },
+  microphone_unavailable: { chip: "MIC BUSY", reason: "IN USE ELSEWHERE" },
+  missing_model: { chip: "NO SPEECH MODEL", reason: "SET UP LOCAL AI" },
+  rejected_token: { chip: "NOT HEARD", reason: "TOKEN REFUSED" },
+  unreachable_hub: { chip: "NOT HEARD", reason: "HUB OFFLINE" },
+  delivery_conflict: { chip: "NOT HEARD", reason: "TAKE CONFLICT" },
+  transcription_failed: { chip: "NOT HEARD", reason: "SPEECH FAILED" },
+  timeout: { chip: "NOT HEARD", reason: "TIMED OUT" },
+  no_speech: { chip: "NOT HEARD", reason: "NO WORDS" },
+  mic_interval_closed: { chip: "MIC CLOSED", reason: "TAKE ENDED" },
+  provider_failure: { chip: "NOT HEARD", reason: "SPEECH FAILED" },
+  audio_floor_held: { chip: "MIC BUSY", reason: "ANOTHER CAPTURE" },
+  unknown: { chip: "NOT HEARD", reason: "NO REASON GIVEN" },
+};
 
 function Card({
   title,
@@ -316,11 +334,15 @@ function FirstWordsCard({
         </div>
       ) : (
         <>
-          {contract ? (
-            <div className="firstrun-fail" role="alert">
-              <StateChip state="failure" label="NOT HEARD" />
-              <span className="firstrun-reason">{contract.message}</span>
-              {contract.setup ? (
+          {take.failure ? (
+            /* Astra #859 P2: tokens, not the shared recovery paragraph (this
+               card has no draft editor; UX-CANON A3). The verbs are the ones
+               that work: Again, the setup door when there is one, and
+               Continue later at the foot of the face. */
+            <div className="firstrun-fail" role="alert" data-testid="firstrun-take-failure">
+              <StateChip state="failure" label={FAILURE_TOKENS[take.failure].chip} />
+              <span className="surface-token" data-tone="danger">{FAILURE_TOKENS[take.failure].reason}</span>
+              {contract?.setup ? (
                 <Button
                   dense
                   variant="secondary"
@@ -335,14 +357,16 @@ function FirstWordsCard({
               ) : null}
             </div>
           ) : null}
-          <Button
-            variant="primary"
-            className="firstrun-big"
-            disabled={!take.supported || (contract ? !contract.retry : false)}
-            onClick={() => void take.begin()}
-          >
-            {contract ? "Try again" : "◖ Dictate one sentence"}
-          </Button>
+          {contract && !contract.retry ? null : (
+            <Button
+              variant="primary"
+              className="firstrun-big"
+              disabled={!take.supported}
+              onClick={() => void take.begin()}
+            >
+              {contract ? "Again" : "◖ Dictate one sentence"}
+            </Button>
+          )}
         </>
       )}
       {take.message ? (

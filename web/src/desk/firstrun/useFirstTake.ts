@@ -14,6 +14,7 @@ import {
   type DictationFailure,
 } from "../../lib/dictationRecovery";
 import { retryPendingTranscription } from "../../lib/speakToFill";
+import { closeMicSession } from "../../lib/micSession";
 import {
   micStreamSupported,
   startStreamSession,
@@ -67,6 +68,11 @@ export function useFirstTake({
   const starting = useRef(false);
   const tracker = useRef<FirstValueTracker | null>(null);
   if (!tracker.current) tracker.current = new FirstValueTracker();
+  /* Astra #859 P1 — a capture started by this card ends with it. Leaving
+     (Continue later, Keep as note, unmount) bumps the epoch; a microphone
+     grant that lands after that is cancelled and every track stopped at
+     once, so no live mic is left without a Stop control (Article IV). */
+  const epoch = useRef(0);
   const player = useRef<HTMLAudioElement | null>(null);
   const playerUrl = useRef("");
 
@@ -75,13 +81,24 @@ export function useFirstTake({
     return subscribeCaptureLevel((next) => setLevel(next));
   }, [state]);
 
+  /** End this card's capture: a live one now, a pending one when it lands. */
+  const abandon = useCallback(() => {
+    epoch.current += 1;
+    const active = session.current;
+    session.current = null;
+    if (active) {
+      active.cancel();
+      closeMicSession();
+    }
+  }, []);
+
   useEffect(
     () => () => {
-      session.current?.cancel();
+      abandon();
       player.current?.pause();
       if (playerUrl.current) URL.revokeObjectURL(playerUrl.current);
     },
-    [],
+    [abandon],
   );
 
   const fail = useCallback((category: DictationFailure) => {
@@ -113,9 +130,12 @@ export function useFirstTake({
     setMessage("");
     setTake(null);
     streamFailed.current = null;
+    const mine = epoch.current;
+    const left = () => epoch.current !== mine;
     try {
       await tracker.current?.start("this_machine");
       const recovered = await retryPendingTranscription(SCOPE);
+      if (left()) return;
       if (recovered !== null) {
         heard(recovered, null);
         return;
@@ -134,13 +154,20 @@ export function useFirstTake({
         },
         { retainScope: SCOPE },
       );
+      if (left()) {
+        // The grant landed after the card was left: stop it at once.
+        next.cancel();
+        closeMicSession();
+        return;
+      }
       session.current = next;
       started.current = Date.now();
       setLevel(0);
       setState("listening");
       void tracker.current?.event("capture_started");
     } catch (error) {
-      fail(dictationFailure(error));
+      if (left()) closeMicSession();
+      else fail(dictationFailure(error));
     } finally {
       starting.current = false;
     }
@@ -211,8 +238,7 @@ export function useFirstTake({
     setKeeping(true);
     setMessage("");
     void tracker.current?.event("continue_later_selected");
-    session.current?.cancel();
-    session.current = null;
+    abandon();
     try {
       if (take) {
         const noteId = firstValueKeepNoteId();
@@ -229,7 +255,7 @@ export function useFirstTake({
     } finally {
       setKeeping(false);
     }
-  }, [take, keeping, onHandoff]);
+  }, [take, keeping, onHandoff, abandon]);
 
   return {
     leave,

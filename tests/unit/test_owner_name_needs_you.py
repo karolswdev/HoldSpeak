@@ -105,3 +105,24 @@ def test_an_alias_counts_as_me_case_insensitive(hub: Hub) -> None:
     answer = _ok(hub.client.get("/api/desk/needs-you"))
     assert _row(answer, ref)["why"] == "YOURS"
     assert ref in [member["ref"] for member in answer["members"]]
+
+
+def test_a_named_other_person_is_never_claimed_by_the_owner_alias(hub: Hub) -> None:
+    """Astra #859 P2: "Karol Other" has the alias "Karol"; the owner "Karol
+    Sane" has the alias "Karol" too. A Door item the hub resolved to Karol
+    Other (``person_relationship_id``) waits on HIM; the owner's own name
+    claims only a bare owner string."""
+    _ok(hub.client.post("/api/people/setup"))
+    other = _ok(hub.client.post("/api/people/relationships", json={
+        "display_name": "Karol Other"}), 201)["relationship"]
+    other = _ok(hub.client.post(
+        f"/api/people/relationships/{other['id']}/owner-aliases", json={"alias": "Karol"}))["relationship"]
+    assert other["owner_aliases"] == ["Karol"], other
+    ref = _karol_to_send(hub)
+    _ok(hub.client.put("/api/settings", json={"owner": {"name": "Karol Sane", "aliases": ["Karol", "me"]}}))
+
+    answer = _ok(hub.client.get("/api/desk/needs-you"))
+    row = _row(answer, ref)
+    assert row["_doorCard"].get("person_relationship_id") == other["id"], row
+    assert row["why"] == "WAITING ON KAROL" and row["waiting"] is True, row
+    assert ref not in [member["ref"] for member in answer["members"]]
