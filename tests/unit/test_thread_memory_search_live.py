@@ -19,9 +19,7 @@ no People content appears in it, and a secret in the note is redacted.
 from __future__ import annotations
 
 import json
-import os
-import tempfile
-import time
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -73,20 +71,25 @@ class _MemorySearchEngine:
 
 
 @pytest.fixture
-def rig(monkeypatch):
-    """Isolated HOME + the real hub + the real kernel broker."""
+def rig(monkeypatch, tmp_path):
+    """Isolated HOME + the real hub + the real kernel broker.
+
+    Every global the hub reads is patched through ``monkeypatch``, so the
+    teardown puts back HOME, the config path and the database path: a later
+    test on this worker never reopens this fixture's database.
+    """
     import holdspeak.config as config_module
     import holdspeak.db.core as db_core
     from holdspeak.db import get_database, reset_database
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
-    home = Path(tempfile.mkdtemp(prefix="hs-memory-live-"))
-    old_home = os.environ.get("HOME", "")
-    os.environ["HOME"] = str(home)
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
     # The People store on a file key (never the macOS Keychain).
     monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(home / "people.key"))
-    config_module.CONFIG_FILE = home / ".holdspeak" / "config.json"
-    db_core.DEFAULT_DB_PATH = home / "holdspeak.db"
+    monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
+    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", home / "holdspeak.db")
     reset_database()
     server = MeetingWebServer(
         WebRuntimeCallbacks(on_bookmark=lambda *_: None, on_stop=lambda: None, get_state=lambda: {}),
@@ -99,7 +102,6 @@ def rig(monkeypatch):
         yield db, _kernel_service()
     finally:
         server.stop()
-        os.environ["HOME"] = old_home
         reset_database()
 
 
@@ -140,25 +142,31 @@ def _seed_memory(db: Any) -> str:
 
 
 def _chat_via_recipe_route(db: Any, text: str, broadcasts: list) -> str:
-    """POST /api/recipes/{id}/chat, then wait for the turn to settle."""
+    """POST /api/recipes/{id}/chat, then wait for THIS turn's
+    ``thread_turn_done`` (emitted after the message is completed)."""
     from holdspeak.web.context import WebContext
     from holdspeak.web.routes import build_primitives_router
 
+    done: dict[str, threading.Event] = {}
+    lock = threading.Lock()
+
+    def _broadcast(kind: str, data: Any) -> None:
+        broadcasts.append((kind, data))
+        if kind == "thread_turn_done":
+            with lock:
+                done.setdefault(str(data.get("message_id")), threading.Event()).set()
+
     db.recipes.upsert(recipe_id="recipe_scout", name="Scout", system_prompt="You are exact.")
     app = FastAPI()
-    app.include_router(build_primitives_router(WebContext(
-        get_state=lambda: {}, broadcast=lambda t, d: broadcasts.append((t, d)),
-    )))
+    app.include_router(build_primitives_router(WebContext(get_state=lambda: {}, broadcast=_broadcast)))
     response = TestClient(app).post("/api/recipes/recipe_scout/chat", json={"text": text})
     assert response.status_code == 201, response.text
     aid = response.json()["assistant_message_id"]
-    deadline = time.monotonic() + 20.0
-    while time.monotonic() < deadline:
-        msg = db.threads.get_message(aid)
-        if msg and not msg.streaming:
-            return aid
-        time.sleep(0.1)
-    pytest.fail("turn did not complete")
+    with lock:
+        event = done.setdefault(aid, threading.Event())
+    if not event.wait(timeout=20.0):
+        pytest.fail("turn did not emit thread_turn_done")
+    return aid
 
 
 def _flat(messages: list[dict[str, Any]]) -> str:
