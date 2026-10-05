@@ -33,6 +33,7 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 | Memory dates (Astra, #845 iteration 2): "the ninth of September … was missed" in a meeting of 22 Sep is stored as 9 Aug; a third-person "confirmed … ships on the twentieth" gets a past date (xfail); reported-speech and mixed explicit/bare-date lines give no facts; Kestrel (r09) is found only with vectors (xfail) | Muad'Dib | — |
 | Memory entities: an initial alias ("T. Wierzbicki") does not join the full name (score 0.585 < 0.6 without a shared neighbour); strict xfail in the bench | — | — |
 | First run: the browser copy of the needs-you rule (web/src/desk/needsYou.ts) lacks the person-identity guard (no production caller today); physical mic and real model inference not verified | — | — |
+| Send folder: six older Send glass rigs park the built-in (direct DB write) to keep their ratified boards; Google Drive / OneDrive provider ids unverified on real installs (fall back to SYNCED); GitHub / Jira offered when signed in (inventory item 9b) not built; inventory item 8 (calendar row at first run) not built | — | — |
 | Defaults: a meeting saved before any engine exists is not summarised later by itself; the 4B starter's meeting analysis is untested on real hardware; the real faster-whisper fence skips in CI (needs a cached model) | — | — |
 | Defaults: an engine started after boot is found only at the next boot, Concierge detect or Model Library write; never run against a real Ollama/LM Studio/llama.cpp server | — | — |
 | Memory faces (need a canvas): the Desk memory card with observations, the standing pages, the ⌘K palette's use of fused recall | Muad'Dib | — |
@@ -67,6 +68,7 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 
 ## Last merged (newest first)
 
+- #864 — Built-in "HoldSpeak folder" Send destination (~/Documents/HoldSpeak/Sent; XDG Documents on Linux), re-created if deleted; saved folders still refuse when missing; a synced Documents (iCloud, Dropbox, Google Drive, OneDrive, any File Provider) is labelled and receipted as leaving the device
 - #862 — First run review fixes: a late mic grant is stopped; the owner's aliases never claim a named other person; FOUND shows one true default; a blocked mic shows tokens, not a paragraph
 - #861 — API manifest and census for the first-run FOUND control (main was red after #859)
 - #859 — First run "C1 · Heard first" (ratified): one Set up local AI press; First words lights when speech lands; his first sentence played back big; his name and aliases count in needs-you; FOUND engines with Use it. Merged on the owner's word before Astra's review finished
