@@ -11,6 +11,8 @@ hub, only in the process that owns the database.
 * Consolidation (slice 4) runs after extraction on the same call budget and
   the same yield rule; it first retires observations with no live evidence
   (no engine needed).
+* Pages (slice 5) run after consolidation on the same call budget and the
+  same yield rule, when ``memory.page`` has an engine.
 * Extraction yields: before each source it stops for a live meeting, and
   for a local engine also for a live local model call (or one that ended
   less than ``LOCAL_IDLE_SECONDS`` ago).  A pass makes at most
@@ -70,17 +72,19 @@ def _principal() -> Any:
 
 
 def _assigned(db: Any) -> bool:
-    """True when ``memory.embed``, ``memory.extract`` or
-    ``memory.consolidate`` has its own assignment now (three row reads)."""
+    """True when ``memory.embed``, ``memory.extract``, ``memory.consolidate``
+    or ``memory.page`` has its own assignment now (four row reads)."""
     from .memory.consolidate import CONSOLIDATE_CAPABILITY
     from .memory.engine import _assignment_head
     from .memory.extract import EXTRACT_CAPABILITY
+    from .memory.pages import PAGE_CAPABILITY
 
     with db._connection() as conn:
         return (
             _assignment_head(conn) is not None
             or _assignment_head(conn, EXTRACT_CAPABILITY) is not None
             or _assignment_head(conn, CONSOLIDATE_CAPABILITY) is not None
+            or _assignment_head(conn, PAGE_CAPABILITY) is not None
         )
 
 
@@ -246,17 +250,67 @@ def _consolidate_step(db: Any, broker: Any, should_stop: Any, budget: Any) -> di
     return report
 
 
+#: Engine calls one pass may make for pages (inside the pass's shared
+#: budget): the pages still due go on in the next pass.
+PAGE_CALLS_PER_PASS = 4
+
+
+def _page_step(db: Any, broker: Any, should_stop: Any, budget: Any) -> dict[str, Any]:
+    """After consolidation: the pages that are due, when ``memory.page`` has
+    an engine (MEMORY-DESIGN.md §3.4).  Same budget, same yield rule before
+    EVERY call.  No engine: one row read, nothing called, nothing written."""
+    from .memory.pages import resolve_page_writer, write_pending
+
+    report: dict[str, Any] = {"engine": "", "pages": 0, "calls": 0, "more": 0, "yielded": "", "error": ""}
+    try:
+        writer = resolve_page_writer(broker, _principal())
+    except Exception as exc:  # a route that cannot resolve is "no engine"
+        log.warning("memory.page engine could not be resolved: %s", exc)
+        writer = None
+    if writer is None:
+        return report
+    report["engine"] = writer.model_id
+    start = budget.calls
+    try:
+        stats = write_pending(
+            db,
+            writer,
+            budget=budget,
+            max_calls=PAGE_CALLS_PER_PASS,
+            should_stop=should_stop,
+            yield_check=lambda: live_work(db, writer),
+        )
+        report.update({key: stats[key] for key in ("pages", "more", "yielded")})
+        report["failed"] = stats["failed"]
+    except Exception as exc:
+        report["error"] = str(exc)
+        log.info("memory page pass stopped; the next tick goes on: %s", exc)
+    report["calls"] = budget.calls - start
+    return report
+
+
+def _stopped(step: dict[str, Any], should_stop: Any) -> bool:
+    return bool(step.get("yielded") or step.get("error") or (should_stop is not None and should_stop()))
+
+
 def _model_steps(db: Any, broker: Any, should_stop: Any) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Extraction, then consolidation, on ONE call budget.  Consolidation
-    runs only when extraction did not stop for a live call, a stop or an
-    error."""
+    """Extraction, then consolidation, then pages, on ONE call budget.  A
+    step runs only when the step before it did not stop for a live call, a
+    stop or an error.  The page report rides in the consolidate report
+    (``pages``)."""
     from .memory.extract import CallBudget
 
     budget = CallBudget(EXTRACT_CALLS_PER_PASS)
     extract = _extract_step(db, broker, should_stop, budget)
-    if extract.get("yielded") or extract.get("error") or (should_stop is not None and should_stop()):
+    if _stopped(extract, should_stop):
         return extract, {"engine": "", "calls": 0, "more": 1, "yielded": extract.get("yielded", ""), "error": ""}
-    return extract, _consolidate_step(db, broker, should_stop, budget)
+    consolidate = _consolidate_step(db, broker, should_stop, budget)
+    if _stopped(consolidate, should_stop):
+        consolidate["pages"] = {"engine": "", "calls": 0, "more": 1,
+                                "yielded": consolidate.get("yielded", ""), "error": ""}
+        return extract, consolidate
+    consolidate["pages"] = _page_step(db, broker, should_stop, budget)
+    return extract, consolidate
 
 
 def tick(
@@ -406,9 +460,12 @@ class MemoryWorker:
                     self.last_report = ran
                     extract = ran.get("extract") or {}
                     consolidate = ran.get("consolidate") or {}
-                    retry = bool(ran.get("error") or extract.get("error") or consolidate.get("error"))
-                    more = bool(extract.get("more") or (consolidate.get("engine") and consolidate.get("more")))
-                    yielded = extract.get("yielded") or consolidate.get("yielded")
+                    pages = consolidate.get("pages") or {}
+                    retry = bool(ran.get("error") or extract.get("error") or consolidate.get("error")
+                                 or pages.get("error"))
+                    more = bool(extract.get("more") or (consolidate.get("engine") and consolidate.get("more"))
+                                or (pages.get("engine") and pages.get("more")))
+                    yielded = extract.get("yielded") or consolidate.get("yielded") or pages.get("yielded")
                     # A backlog goes on soon; a yield or an error waits longer.
                     next_extract = (
                         time.monotonic() + EXTRACT_GAP_SECONDS

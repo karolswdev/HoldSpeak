@@ -68,7 +68,7 @@ from ..project_contracts import (
     generate_pupd_id,
 )
 from ..refs import format as format_ref, parse as parse_ref
-from .memory_grounding import memory_for
+from .memory_grounding import memory_for, project_pages
 
 #: The marked block the project's memory travels in, inside the draft prompt.
 MEMORY_BLOCK_HEADING = "PROJECT MEMORY"
@@ -1668,6 +1668,9 @@ class ProjectUpdateService:
                     + [claim.text for claim in det_claims]
                 ),
                 exclude_refs=[ref for claim in det_claims for ref in claim.refs],
+                # The project's standing answers first, when memory has them
+                # (MEMORY-DESIGN.md §6); none: the read is today's.
+                pages=project_pages(project_id, "what-changed-this-week", "what-is-open"),
             ) if self._broker is not None else None
             try:
                 body_md, claims_json, actual_generator, actual_host, actual_model = (

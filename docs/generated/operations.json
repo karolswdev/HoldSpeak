@@ -1987,6 +1987,74 @@
       }
     },
     {
+      "name": "memory.page.read",
+      "version": 1,
+      "description": "Read one memory page: a standing answer for a project or the desk, with its refs. Read only.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "enum": [
+              "what-we-decided",
+              "what-is-open",
+              "risks-and-disputes",
+              "what-changed-this-week",
+              "what-i-owe"
+            ],
+            "description": "The page."
+          },
+          "project_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Project ID."
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "desk",
+              "project",
+              null
+            ],
+            "description": "desk, or project (the default with a project_id)."
+          }
+        },
+        "required": [
+          "slug"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport; the memory service needs the READ right",
+      "effect": "read",
+      "result": "{page: null or {scope: {kind, id}, slug, question, answer, sentences: [{text, refs: [{ref, opens}]}], sources: [{ref, opens}], built_at, age_seconds, stale, boundary, model, withheld}}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ServiceError read_forbidden",
+        "ValidationError: a bad scope or slug"
+      ],
+      "completion": "synchronous; no kernel operation is made; no model call",
+      "exposure": [
+        "mcp:memory.page"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
       "name": "project.list",
       "version": 1,
       "description": "Find a project by its name: every project with its name and id, newest first. Archived projects only with include_archived. Each project's id is what the other project tools take as project_id.",

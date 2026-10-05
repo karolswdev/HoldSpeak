@@ -272,6 +272,70 @@ def memory_context(
     return MemoryContext(tuple(excerpts))
 
 
+#: A memory page (MEMORY-DESIGN.md §3.4) in a drafter's block: plain
+#: context, never a citation (a page has no Desk window).  The pages of one
+#: block take at most half of it; one page at most ``PAGE_EXCERPT_CHARS``.
+PAGE_EXCERPT_KIND = "memory_page"
+PAGE_EXCERPT_CHARS = 1600
+
+
+def project_pages(project_id: str | None, *slugs: str) -> tuple[tuple[str, str, str], ...]:
+    """The ``pages`` argument of ``memory_for`` for one project's pages."""
+    project = str(project_id or "").strip()
+    return tuple(("project", project, slug) for slug in slugs) if project else ()
+
+
+def page_excerpts(
+    db: Any,
+    pages: Iterable[tuple[str, str, str]],
+    *,
+    exclude_refs: Iterable[str] = (),
+    block_chars: int = MEMORY_BLOCK_CHARS,
+    max_excerpts: int = MEMORY_MAX_EXCERPTS,
+) -> list[MemoryExcerpt]:
+    """The served pages of ``pages`` as plain-context excerpts, whole
+    sentences only, bounded.  A page read makes no model call; a page that
+    does not exist (or has no sentence live now) gives nothing.  The
+    drafter's ``exclude_refs`` count as not live, so a page never hands a
+    drafter its own source back.  Any failure gives nothing."""
+    from ..memory.pages import read
+
+    room = max(0, int(block_chars) // 2)
+    out: list[MemoryExcerpt] = []
+    used = 0
+    excluded = list(exclude_refs)
+    for scope_kind, scope_id, slug in pages:
+        if len(out) >= max(0, int(max_excerpts) - 1):
+            break  # recall keeps one place at least
+        try:
+            page = read(db, scope_kind, scope_id, slug, exclude_refs=excluded)
+        except Exception as exc:  # memory never fails a drafter
+            log.warning("memory page %s/%s not read (%s)", scope_kind, slug, exc)
+            continue
+        if not page:
+            continue
+        title = f"{page['question']} (built {str(page['built_at'])[:10]}{', stale' if page['stale'] else ''})"
+        probe = MemoryExcerpt(ref="", kind=PAGE_EXCERPT_KIND, title=title, text="", citable=False)
+        cap = min(PAGE_EXCERPT_CHARS, room - used)
+        text = ""
+        for sentence in page["sentences"]:
+            words = " ".join(redact(str(sentence["text"])).split())
+            candidate = f"{text} {words}".strip()
+            if len(MemoryExcerpt(ref="", kind=PAGE_EXCERPT_KIND, title=title, text=candidate,
+                                 citable=False).line()) > cap:
+                break
+            text = candidate
+        if not text or len(probe.line()) > cap:
+            continue
+        excerpt = MemoryExcerpt(
+            ref=f"{PAGE_EXCERPT_KIND}:{scope_kind}:{scope_id}:{slug}", kind=PAGE_EXCERPT_KIND,
+            title=title, text=text, citable=False,
+        )
+        used += len(excerpt.line()) + 1
+        out.append(excerpt)
+    return out
+
+
 def memory_for(
     capability_id: str,
     db: Any,
@@ -280,6 +344,7 @@ def memory_for(
     query: str | None = None,
     exclude_refs: Iterable[str] = (),
     exclude_texts: Iterable[str] = (),
+    pages: Iterable[tuple[str, str, str]] = (),
 ) -> MemoryContext:
     """THE call an AI job makes to read memory: the job's policy, then the read.
 
@@ -288,6 +353,10 @@ def memory_for(
     policy is ``off`` reads nothing.  Otherwise this is ``memory_context`` with
     the row's budget.  Any failure gives the empty context: memory is an
     enrichment, never a precondition.
+
+    ``pages`` names memory pages ``(scope_kind, scope_id, slug)`` the job
+    reads first (MEMORY-DESIGN.md §6), as plain-context excerpts inside the
+    same budget.  No page served: the result is exactly ``memory_context``'s.
     """
     from ..inference_memory_policy import memory_policy
 
@@ -295,16 +364,36 @@ def memory_for(
         policy = memory_policy(capability_id)
         if not policy.enabled or db is None:
             return EMPTY_MEMORY
-        return memory_context(
+        exclude_refs = list(exclude_refs)
+        # Pages first (§3.5: pages, then recall), only when one is served.
+        read_pages = page_excerpts(
+            db, pages, exclude_refs=exclude_refs,
+            block_chars=policy.block_chars, max_excerpts=policy.max_excerpts,
+        ) if pages else []
+        if not read_pages:
+            # No page: exactly today's read.
+            return memory_context(
+                db,
+                project_id=project_id,
+                query=query,
+                exclude_refs=exclude_refs,
+                exclude_texts=exclude_texts,
+                max_excerpts=policy.max_excerpts,
+                excerpt_chars=min(MEMORY_EXCERPT_CHARS, policy.block_chars),
+                block_chars=policy.block_chars,
+            )
+        used = sum(len(excerpt.line()) + 1 for excerpt in read_pages)
+        rest = memory_context(
             db,
             project_id=project_id,
             query=query,
             exclude_refs=exclude_refs,
             exclude_texts=exclude_texts,
-            max_excerpts=policy.max_excerpts,
+            max_excerpts=policy.max_excerpts - len(read_pages),
             excerpt_chars=min(MEMORY_EXCERPT_CHARS, policy.block_chars),
-            block_chars=policy.block_chars,
+            block_chars=policy.block_chars - used,
         )
+        return MemoryContext(tuple(read_pages) + rest.excerpts)
     except Exception as exc:  # memory never fails a job
         log.warning("memory for %s not read (%s); the job runs without it", capability_id, exc)
         return EMPTY_MEMORY

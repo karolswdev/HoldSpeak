@@ -42,8 +42,15 @@ if TYPE_CHECKING:
 # PHILO-10-01 (#694): ``channel.*`` joins them -- the Send's family is the
 # Room's, reached over MCP or named by a custom mode; the seeded Desk and
 # Chase palettes do not widen by classifying it for the gate.
+# Memory slice 5: ``memory.page`` is classified for the gate and reached
+# over MCP only.  The chat tool is slice 6 (MEMORY-DESIGN.md §8): the
+# admission law reserves one token per schema byte, and the seeded Chase
+# palette sits at a 32k context's edge (one more schema overflowed it).
+_MCP_ONLY = frozenset({"memory.page"})
+
+
 def _thread_side(name: str) -> bool:
-    return not name.startswith(
+    return name not in _MCP_ONLY and not name.startswith(
         ("project.", "provider.", "interview.", "practice_recipe.", "channel.")
     )
 

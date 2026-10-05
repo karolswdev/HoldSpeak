@@ -127,6 +127,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "workflow.cancel": WORK,
     "memory.search": WORK,
     "memory.observations": WORK,
+    "memory.page": WORK,
     "people.readiness": WORK,
     "people.relationship.list": WORK,
     "people.relationship.get": WORK,

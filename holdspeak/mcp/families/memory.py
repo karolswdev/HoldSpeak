@@ -47,12 +47,29 @@ def _observations_tool() -> dict[str, Any]:
 TOOLS.append(_observations_tool())
 
 
+def _page_tool() -> dict[str, Any]:
+    """``memory.page`` IS its declared operation (``memory.page.read``)."""
+    import copy
+
+    from holdspeak.operations import MEMORY_PAGE_READ as descriptor
+
+    schema = copy.deepcopy(dict(descriptor.args_schema))
+    schema["$id"] = f"holdspeak://mcp/memory.page@{descriptor.version}"
+    return {"name": "memory.page", "description": descriptor.description, "inputSchema": schema}
+
+
+TOOLS.append(_page_tool())
+
+#: Each read tool and the declared operation it is.
+_OPERATION_TOOLS = {"memory.observations": "memory.observations.read", "memory.page": "memory.page.read"}
+
+
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Route a tool call.  Raises LookupError for unowned names."""
-    if name not in ("memory.search", "memory.observations"):
+    if name != "memory.search" and name not in _OPERATION_TOOLS:
         raise LookupError(name)
 
-    if name == "memory.observations":
+    if name in _OPERATION_TOOLS:
         from holdspeak import operations
 
         ops = operations.for_runtime(
@@ -61,6 +78,8 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                 lambda: MemoryService(db=db_or(get_database), observer=observer_or(get_observer)),
             ),
         )
+        if name == "memory.page":
+            return ops.invoke(principal, "memory.page.read", dict(arguments or {}))
         return ops.invoke(principal, "memory.observations.read", dict(arguments or {}))
 
     svc = MemoryService(db=db_or(get_database), observer=observer_or(get_observer))

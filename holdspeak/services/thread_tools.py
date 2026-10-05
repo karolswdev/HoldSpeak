@@ -143,6 +143,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     # --- memory ---
     "memory.search":    ("evidence_read",     False),
     "memory.observations": ("evidence_read",  False),
+    "memory.page":      ("evidence_read",     False),
     # --- people family (ALL sensitive) ---
     "people.readiness":            ("evidence_read",     True),
     "people.relationship.list":    ("evidence_read",     True),

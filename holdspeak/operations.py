@@ -1346,6 +1346,39 @@ MEMORY_OBSERVATIONS_READ = OperationDescriptor(
     admission=_EXEMPT_READ,
 )
 
+# ── Memory slice 5: pages, read (MEMORY-DESIGN.md §3.4, §5) ───────────────
+
+MEMORY_PAGE_READ = OperationDescriptor(
+    name="memory.page.read",
+    version=1,
+    description="Read one memory page: a standing answer for a project or the desk, with its refs. Read only.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "slug": {"type": "string", "enum": ["what-we-decided", "what-is-open", "risks-and-disputes",
+                                                 "what-changed-this-week", "what-i-owe"],
+                     "description": "The page."},
+            "project_id": {"type": ["string", "null"], "description": "Project ID."},
+            "scope": {"type": ["string", "null"], "enum": ["desk", "project", None],
+                      "description": "desk, or project (the default with a project_id)."},
+        },
+        "required": ["slug"],
+        "additionalProperties": False,
+    },
+    principal="derived by the transport; the memory service needs the READ right",
+    effect="read",
+    result=(
+        "{page: null or {scope: {kind, id}, slug, question, answer, sentences: [{text, refs: [{ref, opens}]}], "
+        "sources: [{ref, opens}], built_at, age_seconds, stale, boundary, model, withheld}}"
+    ),
+    refusals=_CONTRACT_REFUSALS + ("ServiceError read_forbidden", "ValidationError: a bad scope or slug"),
+    completion="synchronous; no kernel operation is made; no model call",
+    exposure=("mcp:memory.page",),
+    service="memory_service",
+    method="page",
+    admission=_EXEMPT_READ,
+)
+
 # ── PHILO-9-01: the Room on the contract ──────────────────────────────────
 #
 # One explicit row per Room operation (the Phase 7 settled method): the
@@ -2133,7 +2166,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     KB_CREATE, KB_READ, KB_UPDATE, KB_DELETE, KB_LIST,
     ZONE_FILE, ZONE_UNFILE, ZONE_MEMBERS, KB_MEMBER_ADD, KB_MEMBER_REMOVE, KB_MEMBERS,
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
-    KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ,
+    KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
 ) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.

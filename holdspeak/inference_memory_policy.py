@@ -130,6 +130,7 @@ MEMORY_POLICIES: Mapping[str, MemoryPolicy] = MappingProxyType({
     "memory.embed": _off("Memory's own embedder."),
     "memory.extract": _off("Memory's own fact reader: it reads one chunk, never recall."),
     "memory.consolidate": _off("Memory's own consolidator: it reads facts and observations, never recall."),
+    "memory.page": _off("Memory's own page writer: it reads its own scope's observations and recall, never a drafter's memory."),
     # Internal
     "internal.inference.dispatch": _off(_INFRA),
     "internal.speech.runtime_assembly": _off(_INFRA),

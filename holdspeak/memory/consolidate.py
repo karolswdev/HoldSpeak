@@ -340,8 +340,9 @@ def served(
     backed: None (never served; ``refresh_observations`` retires it).
 
     The value: ``{"version", "text", "facts" (the live facts of the backing
-    groups), "backed" (every version with a backing group), "evidence"
-    (the live evidence rows), "live_facts"}``.
+    groups), "backed" (every version with a backing group), "backed_facts"
+    (version -> the live facts of its backing groups), "evidence" (the live
+    evidence rows), "live_facts"}``.
     """
     live = live or LiveText(conn)
     scopes = scopes or ScopeReader(conn)
@@ -377,6 +378,7 @@ def served(
             "text": best[1],
             "facts": backed[best[0]],
             "backed": set(backed),
+            "backed_facts": backed,
             "evidence": evidence[key],
             "live_facts": live_facts,
         }

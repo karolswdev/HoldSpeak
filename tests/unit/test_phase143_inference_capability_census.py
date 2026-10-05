@@ -255,6 +255,10 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/memory/consolidate.py|RouterConsolidator.consolidate|call": ProposedRoute(
         "memory.consolidate", "memory.consolidate", "InferenceRunner admitted child",
     ),
+    # Memory slice 5: one admitted child per page.
+    "holdspeak/memory/pages.py|RouterPageWriter.write|call": ProposedRoute(
+        "memory.page", "memory.page", "InferenceRunner admitted child",
+    ),
     "holdspeak/services/thread_practice.py|run_guardrail|call": ProposedRoute(
         "chat.guardrail", "services.thread_practice", "InferenceRunner admitted child",
     ),

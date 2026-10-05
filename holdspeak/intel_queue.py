@@ -433,7 +433,7 @@ def _meeting_memory(db, meeting):
     summary is then made exactly as before.
     """
     try:
-        from .services.memory_grounding import EMPTY_MEMORY, memory_for
+        from .services.memory_grounding import EMPTY_MEMORY, memory_for, project_pages
 
         own_ref = f"meeting:{meeting.id}"
         # The meeting's projects: the meeting link first (strongest first),
@@ -455,6 +455,9 @@ def _meeting_memory(db, meeting):
             ),
             exclude_refs=[own_ref, f"transcript:{meeting.id}"]
             + _own_meeting_refs(db, str(meeting.id)),
+            # The project's standing answers first, when memory has them
+            # (MEMORY-DESIGN.md §6); none: the read is today's.
+            pages=project_pages(project_ids[0], "what-we-decided", "what-is-open"),
         )
     except Exception as exc:
         log.warning(f"Meeting memory not read ({exc}); the summary runs without it")
