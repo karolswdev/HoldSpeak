@@ -624,14 +624,21 @@ class WatchService:
 
             test_state = "failed"
 
-        self._repo.update_watch_spec(
+        # Compare-and-set (Astra on #867): the result is saved only if the
+        # rules are still the revision this test read. An edit during the test
+        # (set_rules: revision+1, test stale) wins; this answer says stale.
+        saved = self._repo.update_watch_spec(
             watch_id,
             test_state=test_state,
             test_result_json=json.dumps(
                 test_result, sort_keys=True, separators=(",", ":"),
             ),
             last_test_at=now,
+            expected_revision=int(watch.get("revision") or 0),
         )
+        if not saved:
+            test_state = "stale"
+            test_result = {**test_result, "message": "The watch changed during the test. Test it again."}
 
         return {
             "watch_id": watch_id,

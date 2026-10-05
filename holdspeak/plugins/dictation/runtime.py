@@ -70,11 +70,17 @@ def resolve_backend(
     mlx_importable: Callable[[], bool] | None = None,
     llama_cpp_importable: Callable[[], bool] | None = None,
     openai_importable: Callable[[], bool] | None = None,
+    mlx_model_set: bool | None = None,
 ) -> tuple[str, str]:
     """Resolve configured backend → concrete backend + reason.
 
     Explicit backends never fall back: if requested is unavailable,
     `RuntimeUnavailableError` is raised.
+
+    ``mlx_model_set=False`` says no MLX model is configured: MLX is "not set
+    up", so ``auto`` skips it and an explicit ``mlx`` is refused by name.
+    ``None`` (a caller that does not know the model) keeps the package-only
+    rule.
 
     The seam args (`on_arm64`, `*_importable`) make resolution
     deterministically testable without touching the host environment.
@@ -100,6 +106,11 @@ def resolve_backend(
                 "Backend 'mlx' requires the 'mlx-lm' package. "
                 "Install with: uv pip install holdspeak[dictation-mlx]"
             )
+        if mlx_model_set is False:
+            raise RuntimeUnavailableError(
+                "Backend 'mlx' has no model set up. "
+                "Set dictation.runtime.mlx_model to an MLX model folder or repo id."
+            )
         return "mlx", "explicit"
 
     if requested == "llama_cpp":
@@ -119,7 +130,7 @@ def resolve_backend(
         return "openai_compatible", "explicit"
 
     # auto
-    if arm64() and mlx_ok():
+    if mlx_model_set is not False and arm64() and mlx_ok():
         return "mlx", "auto: darwin/arm64 with mlx_lm importable"
     if llama_ok():
         return "llama_cpp", "auto: fallback to llama_cpp"
@@ -134,7 +145,7 @@ def resolve_backend(
 def build_runtime(
     *,
     backend: str = "auto",
-    mlx_model: str = "~/Models/mlx/Qwen3.5-8B-MLX-4bit",
+    mlx_model: str = "",
     llama_cpp_model_path: str = "~/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
     endpoint_model: str = "qwen3.5-8b-instruct",
     endpoint_base_url: str = "http://127.0.0.1:8000/v1",
@@ -165,6 +176,7 @@ def build_runtime(
         mlx_importable=mlx_importable,
         llama_cpp_importable=llama_cpp_importable,
         openai_importable=openai_importable,
+        mlx_model_set=bool(str(mlx_model or "").strip()),
     )
 
     factories = factories if factories is not None else _default_factories()

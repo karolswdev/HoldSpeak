@@ -75,7 +75,10 @@ def test_planned_route_discloses_all_ordered_legs_and_stable_revision_hash(meeti
     assert revised["selection_hash"] != first["selection_hash"]
 
 
-def test_group_assignment_cannot_be_disclosed_as_service_route(meeting_db):
+def test_group_assignment_is_disclosed_as_the_service_route(meeting_db):
+    """meeting-intel-queue@2 (owner ruling 2026-10-05): the meeting queue
+    inherits the owner's group and global assignments, so a Meetings group
+    assignment is the summary route the Run press discloses."""
     db, meeting = meeting_db
     summary_profile(db, "summary-group-only")
     InferenceAssignmentService(db).set_assignment(OWNER, {
@@ -84,4 +87,4 @@ def test_group_assignment_cannot_be_disclosed_as_service_route(meeting_db):
         "entries": [{"profile_id": "summary-group-only", "profile_revision": 1}],
     })
     route = MeetingIntelService(db).get_recovery(OWNER, meeting.id)["planned_route"]
-    assert route["status"] == "unavailable" and route["legs"] == []
+    assert route["status"] == "ready" and len(route["legs"]) == 1

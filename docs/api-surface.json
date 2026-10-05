@@ -4109,6 +4109,58 @@
       ]
     },
     {
+      "path": "/api/onboarding/calendar",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/onboarding/calendar/check",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": []
+    },
+    {
+      "path": "/api/onboarding/calendar/macos/access",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": []
+    },
+    {
+      "path": "/api/onboarding/calendar/use",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": []
+    },
+    {
+      "path": "/api/onboarding/connections",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/onboarding/connections/use",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": []
+    },
+    {
       "path": "/api/people/commitments/{commitment_id}/execution",
       "methods": [
         "GET"

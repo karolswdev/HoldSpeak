@@ -33,6 +33,7 @@ import holdspeak.services.observer as observer_module
 from holdspeak.db import Database
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.services.decision_record_service import DecisionRecordService
+from holdspeak.services.errors import NotFound
 from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.gate_service import GateService
 from holdspeak.services.monday_brief_service import MondayBriefService
@@ -135,7 +136,7 @@ def test_nested_success_keeps_the_parents_title_on_an_advancing_clock(
 def test_nested_failure_stores_only_the_broke_line(tmp_path, monkeypatch):
     db = Database(tmp_path / "hub.db")
     _advancing_clock(monkeypatch)
-    with pytest.raises(KeyError):
+    with pytest.raises(NotFound):
         DecisionRecordService(
             db, observer=SQLiteObserver(db._connection)
         ).create_from_desk(OWNER, "philo603-absent")

@@ -385,7 +385,9 @@ def _cmd_runtime_status(args, out: TextIO) -> int:
     print(f"llama_cpp_model_path: {cfg.runtime.llama_cpp_model_path}", file=out)
     print(f"destination: {effective.profile_name or 'hub default'}", file=out)
     try:
-        resolved, reason = resolve_backend(cfg.runtime.backend)
+        resolved, reason = resolve_backend(
+            cfg.runtime.backend, mlx_model_set=bool(str(cfg.runtime.mlx_model or "").strip())
+        )
     except RuntimeUnavailableError as exc:
         print(f"resolution: unavailable — {exc}", file=out)
         return _EXIT_OK

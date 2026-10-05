@@ -96,12 +96,23 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
 
     # ── POST /api/mcp ──────────────────────────────────────────────
     def _blocking_io_tools() -> frozenset[str]:
-        """The operations that declare blocking I/O (derived from the one declared contract)."""
+        """The tools that run beside the ordered queue: declared blocking I/O, and the long tools."""
         from ... import operations as _operations
+        from ...mcp.long_tools import LONG_TOOLS
 
-        return frozenset(d.name for d in _operations.DESCRIPTORS if d.blocking_io)
+        return frozenset(d.name for d in _operations.DESCRIPTORS if d.blocking_io) | frozenset(LONG_TOOLS)
 
     _worker: list[Any] = []
+
+    import threading as _threading
+
+    _key_guard = _threading.Lock()
+    _key_locks: dict[str, Any] = {}
+
+    def _locks_for(keys: list[str]) -> list[Any]:
+        """One lock per key (``holdspeak/mcp/long_tools.py:lock_keys``), made once."""
+        with _key_guard:
+            return [_key_locks.setdefault(key, _threading.Lock()) for key in keys]
 
     def _tool_worker() -> Any:
         """The one thread that runs MCP tool calls, first in, first out."""
@@ -207,6 +218,18 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         identity_label = cred.principal.identity if cred else principal.identity
 
         def handle() -> Any:
+            # Per-key locks (Astra on #867): calls on one object run one at a
+            # time, whichever path they take; calls on different objects run
+            # in parallel. Taken in sorted order, so no two calls deadlock.
+            held: list[Any] = []
+            if body.get("method") == "tools/call":
+                call = body.get("params") if isinstance(body.get("params"), dict) else {}
+                arguments = call.get("arguments") if isinstance(call.get("arguments"), dict) else {}
+                from ...mcp.long_tools import lock_keys
+
+                held = _locks_for(lock_keys(str(call.get("name") or ""), arguments))
+            for lock in held:
+                lock.acquire()
             origin_token = _origin.set(origin_value)
             caller_token = _caller.set(client_host)
             identity_token = _caller_identity.set(identity_label)
@@ -216,6 +239,8 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 _origin.reset(origin_token)
                 _caller.reset(caller_token)
                 _caller_identity.reset(identity_token)
+                for lock in reversed(held):
+                    lock.release()
 
         # A tool call never runs on the event loop. A tool body is synchronous;
         # one that calls an async service hands the coroutine back to this loop
@@ -225,9 +250,12 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         # Order (PHILO-10-02 GATE 2, kept): tool calls run ONE AT A TIME, in
         # arrival order, on the one MCP worker thread. The services are not
         # safe for two writers (two ``desk.update`` calls on one Note lose a
-        # change). The one exception is unchanged: an operation that DECLARES
-        # blocking I/O (``OperationDescriptor.blocking_io``: a subprocess or the
-        # network) runs on the thread pool, so a slow send holds no other tool.
+        # change). Two exceptions run on the thread pool beside that queue: an
+        # operation that DECLARES blocking I/O
+        # (``OperationDescriptor.blocking_io``) and a tool named in
+        # ``holdspeak/mcp/long_tools.py`` (a model call, gh, acli). Every call
+        # takes its per-key locks first (``handle`` above), so a slow tool
+        # holds only the calls on its own objects.
         # The flag decides ordering only; no tool needs it to work.
         params = body.get("params") if isinstance(body.get("params"), dict) else {}
         if body.get("method") != "tools/call":

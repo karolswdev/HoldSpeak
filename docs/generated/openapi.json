@@ -18045,6 +18045,132 @@
         ]
       }
     },
+    "/api/onboarding/calendar": {
+      "get": {
+        "operationId": "onboarding_calendar_api_onboarding_calendar_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Calendar Api Onboarding Calendar Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Calendar",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/onboarding/calendar/check": {
+      "post": {
+        "operationId": "onboarding_calendar_check_api_onboarding_calendar_check_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Calendar Check Api Onboarding Calendar Check Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Calendar Check",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/onboarding/calendar/macos/access": {
+      "post": {
+        "operationId": "onboarding_calendar_access_api_onboarding_calendar_macos_access_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Calendar Access Api Onboarding Calendar Macos Access Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Calendar Access",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/onboarding/calendar/use": {
+      "post": {
+        "operationId": "onboarding_calendar_use_api_onboarding_calendar_use_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Calendar Use Api Onboarding Calendar Use Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Calendar Use",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/onboarding/connections": {
+      "get": {
+        "operationId": "onboarding_connections_api_onboarding_connections_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Connections Api Onboarding Connections Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Connections",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/onboarding/connections/use": {
+      "post": {
+        "operationId": "onboarding_connections_use_api_onboarding_connections_use_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Connections Use Api Onboarding Connections Use Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Connections Use",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
     "/api/people/commitments/{commitment_id}/execution": {
       "get": {
         "operationId": "commitment_execution_api_people_commitments__commitment_id__execution_get",

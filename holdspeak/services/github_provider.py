@@ -220,8 +220,12 @@ class GitHubProviderAdapter:
     def _connection_id(self) -> str:
         return f"wpc_{PROVIDER_ID}"
 
-    def connection_status(self, principal: Principal) -> dict[str, Any]:
+    def connection_status(self, principal: Principal, *, hostname: str | None = None) -> dict[str, Any]:
         """Probe ``gh auth status`` and persist the typed result.
+
+        ``hostname`` scopes the probe to one host (``--hostname``); the stored
+        account then names that host unless it is github.com
+        (``<host>:<login>``), so a check of one host never reads as another.
 
         PROV-003: readiness comes from the authenticated probe, never
         ``which gh`` alone.  The binary-presence check is only the
@@ -241,7 +245,8 @@ class GitHubProviderAdapter:
         # Real probe
         try:
             completed = self._run_gh(
-                ["gh", "auth", "status"], principal, timeout=10.0,
+                ["gh", "auth", "status", *(["--hostname", hostname] if hostname else [])],
+                principal, timeout=10.0,
             )
         except Exception as exc:
             result = {
@@ -257,6 +262,8 @@ class GitHubProviderAdapter:
 
         if completed.returncode == 0:
             login = _parse_gh_auth_login(combined)
+            if login and hostname and hostname != "github.com":
+                login = f"{hostname}:{login}"
             result = {
                 "state": STATE_CONNECTED,
                 "error_code": None,
