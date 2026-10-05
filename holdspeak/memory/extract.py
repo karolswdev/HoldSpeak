@@ -24,7 +24,11 @@ facts, resolves their entities, retires the source's old facts and stamps
 The prompt takes Hindsight's rules (``H/engine/retain/fact_extraction.py``):
 be selective, resolve "he/she/they" to a name, write absolute dates.  A day
 with no month is the next such day for a thing to come, and the most recent
-such day for a thing that happened (``EXTRACTOR_VERSION`` 2).
+such day for a thing that happened (``EXTRACTOR_VERSION`` 2).  A day with a
+named month keeps its month; a reported thing takes the tense of the thing,
+not of "said" or "confirmed"; a dated plan or promise is never an empty
+answer (``EXTRACTOR_VERSION`` 3).  ``day_hints`` gives the model the dates;
+no code changes a date the model writes.
 """
 from __future__ import annotations
 
@@ -46,7 +50,10 @@ EXTRACT_CONTRACT = "memory.extract"
 EXTRACT_CONTRACT_REVISION = "1"
 #: Bump to read every source again.  The old facts serve until each source's
 #: new facts commit.  2: a day with no month takes its month by tense.
-EXTRACTOR_VERSION = 2
+#: 3: a named month keeps its month ("Days with a month"); a reported thing
+#: to come takes the tense of the thing, not of "said" or "confirmed"; a
+#: dated plan or promise is never an empty answer.
+EXTRACTOR_VERSION = 3
 #: Seconds one chunk may take before the runner's deadline stops it.
 EXTRACT_DEADLINE_SECONDS = 180.0
 EXTRACT_MAX_TOKENS = 2048
@@ -131,10 +138,12 @@ SYSTEM_PROMPT = """You extract facts for the work memory of one person, the desk
 Read the text and return one JSON object with the key "facts". Return JSON only.
 
 Rules:
-- Be selective. Extract only significant facts: decisions, commitments, who owns or owes what, plans, dates, problems, results, numbers. Skip greetings, small talk and filler. An empty list is a good answer for a text with nothing significant.
+- Be selective. Extract only significant facts: decisions, commitments, who owns or owes what, plans, dates, problems, results, numbers. Skip greetings, small talk and filler. Return an empty list only for a text with none of these.
 - Each fact is one full sentence that is clear alone. Use names. Never write "he", "she", "they", "I", "we" or "you": change each one to the name of the person or group. In a transcript the label before the colon is the speaker. The speaker "Me" is the desk owner: write "the owner".
 - Write every date as an absolute date (YYYY-MM-DD). Calculate it from the date of the source: "Thursday" in a source of Monday 2026-09-14 is 2026-09-17.
 - A day with no month ("the ninth", "by the 15th"): for a thing to come (a plan, a promise, a deadline: "will", "starts", "ships", "is due", "by"), the next such day on or after the date of the source; for a thing that already happened ("missed", "finished", "was", "said"), the most recent such day on or before it. The line "Days with no month" gives both dates: pick one by the tense of the verb of that day. Example, in a source of 2026-09-20: "the review is on the twelfth" is 2026-10-12; "I sent it on the twenty-fifth" is 2026-08-25.
+- The tense of a day is the tense of the thing that happens on that day, not of a verb that reports it ("said", "told", "confirmed"). Example, in a source of 2026-09-20: "Dana confirmed the batch ships on the twelfth" is 2026-10-12, because the shipping is still to come. "On the third I said I will send the plan on the twelfth" gives two facts: the owner said it on 2026-09-03, and the plan is due on 2026-10-12.
+- A day with a named month ("the ninth of September", "September 3rd") keeps that month, whatever the tense. The line "Days with a month" gives its date: use it.
 - A weekday name for a thing to come ("on Thursday") is the next such weekday.
 - A span ("for three weeks") ends at the start date plus its length.
 - kind: "event" for a thing that happened or will happen at a time; "state" for a thing that is true.
@@ -174,32 +183,98 @@ _ORDINALS = (
 _DAY_WORDS: dict[str, int] = {word: n for n, word in enumerate(_ORDINALS, 1)}
 _DAY_WORDS.update({f"twenty{sep}{word}": 20 + n for n, word in enumerate(_ORDINALS[:9], 1) for sep in (" ", "-")})
 _DAY_WORDS.update({"thirtieth": 30, "thirty first": 31, "thirty-first": 31})
-_MONTH_NAMES = (
-    "january|february|march|april|may|june|july|august|september|october|november|december"
+_MONTHS = (
+    "january", "february", "march", "april", "may", "june", "july", "august",
+    "september", "october", "november", "december",
+)
+_MONTH_NAMES = "|".join(_MONTHS)
+_MONTH_WORD = (
+    r"(" + _MONTH_NAMES
+    + r"|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec)\.?"
+)
+_DAY_WORD = (
+    r"(" + "|".join(sorted(map(re.escape, _DAY_WORDS), key=len, reverse=True))
+    + r"|[0-9]{1,2}(?:st|nd|rd|th)?)"
 )
 _NO_MONTH_DAY = re.compile(
     r"\bthe\s+(" + "|".join(sorted(map(re.escape, _DAY_WORDS), key=len, reverse=True))
     + r"|[0-9]{1,2}(?:st|nd|rd|th))\b(?!\s+(?:of\s+)?(?:" + _MONTH_NAMES + r")\b)",
     re.IGNORECASE,
 )
+#: A day with its month named: "the ninth of September", "9 September",
+#: "September 9th", "September the ninth".  A year written after it ("..., 2026")
+#: is a full date and needs no line.
+_NAMED_MONTH_DAY = re.compile(
+    r"\b(?:(?:the\s+)?" + _DAY_WORD + r"\s+(?:of\s+)?" + _MONTH_WORD
+    + r"|" + _MONTH_WORD + r"\s+(?:the\s+)?" + _DAY_WORD + r")\b",
+    re.IGNORECASE,
+)
+_YEAR_AFTER = re.compile(r"\.?,?\s*[0-9]{4}\b")
+
+
+def _day_number(word: str) -> int:
+    word = word.lower()
+    if word in _DAY_WORDS:
+        return _DAY_WORDS[word]
+    digits = word[:-2] if word[-2:] in ("st", "nd", "rd", "th") else word
+    return int(digits) if digits.isdigit() else 0
+
+
+def _month_number(word: str) -> int:
+    word = word.lower().rstrip(".")
+    for number, name in enumerate(_MONTHS, 1):
+        if name.startswith(word) and len(word) >= 3:
+            return number
+    return 0
 
 
 def day_hints(chunk_text: str, occurred_at: Optional[str]) -> str:
-    """One line for the prompt: each day with no month in the text, with the
-    two dates it can be.  The model picks by tense; code never changes a
-    date the model writes."""
+    """Lines for the prompt; the model reads them, code never changes a date
+    the model writes.
+
+    * ``Days with no month``: each day with no month and the two dates it
+      can be.  The model picks by tense.
+    * ``Days with a month``: each day whose month is named, with its one date
+      (the nearest such day to the source date).  A named month is never
+      re-dated by tense (Astra, #845: "the ninth of September" in a meeting
+      of 2026-09-22 was stored as 2026-08-09).
+    """
     from datetime import date, timedelta
 
     try:
         source = datetime.fromisoformat(str(occurred_at or "").strip().replace("Z", "+00:00")).date()
     except ValueError:
         return ""
+
+    named: dict[str, date] = {}
+    taken: list[tuple[int, int]] = []
+    for match in _NAMED_MONTH_DAY.finditer(chunk_text):
+        groups = match.groups()
+        day_word, month_word = (groups[0], groups[1]) if groups[0] else (groups[3], groups[2])
+        number, month = _day_number(day_word or ""), _month_number(month_word or "")
+        if not (1 <= number <= 31 and month):
+            continue
+        taken.append(match.span())
+        if _YEAR_AFTER.match(chunk_text, match.end()):
+            continue  # a full date: the model needs no line
+        options = []
+        for year in (source.year - 1, source.year, source.year + 1):
+            try:
+                options.append(date(year, month, number))
+            except ValueError:
+                continue
+        if not options:
+            continue
+        phrase = " ".join(match.group(0).split())
+        named.setdefault(phrase, min(options, key=lambda day: (abs((day - source).days), day)))
+
     found: dict[str, int] = {}
     for match in _NO_MONTH_DAY.finditer(chunk_text):
-        word = match.group(1).lower()
-        number = _DAY_WORDS.get(word) or (int(word[:-2]) if word[:-2].isdigit() else 0)
+        if any(low <= match.start() < high for low, high in taken):
+            continue
+        number = _day_number(match.group(1))
         if 1 <= number <= 31:
-            found.setdefault(f"the {word}", number)
+            found.setdefault(f"the {match.group(1).lower()}", number)
 
     def step(day: int, forward: bool) -> date:
         probe = source
@@ -216,7 +291,12 @@ def day_hints(chunk_text: str, occurred_at: Optional[str]) -> str:
             parts.append(
                 f'"{phrase}" = {before.isoformat()} if it already happened, {after.isoformat()} if it is still to come'
             )
-    return ("Days with no month: " + "; ".join(parts) + "\n") if parts else ""
+    lines = ("Days with no month: " + "; ".join(parts) + "\n") if parts else ""
+    if named:
+        lines += "Days with a month: " + "; ".join(
+            f'"{phrase}" = {day.isoformat()}' for phrase, day in named.items()
+        ) + "\n"
+    return lines
 
 
 def build_payload(

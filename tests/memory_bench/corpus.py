@@ -306,7 +306,7 @@ def build_hard_corpus(db: Any) -> dict[str, str]:
     return refs
 
 
-# ── the date cases (a day with no month; EXTRACTOR_VERSION 2) ───────────
+# ── the date cases (a day with no month, a named month; EXTRACTOR_VERSION 3) ──
 #
 # Each case is one meeting on its own desk: id, start, the Remote line, and
 # what the stored facts must say.  ``want``: dates that must be in the
@@ -330,18 +330,38 @@ DATE_CASES = [
     {"id": "finished", "at": "2026-09-22T16:00:00",
      "line": "I finished the migration on the ninth.",
      "want": ["2026-09-09"], "never": ["2026-10-09", "2026-08-09"]},
+    # Astra, #845: reported speech gave no fact.  It keeps its facts now.
     {"id": "reported", "at": "2026-09-22T16:00:00",
      "line": "On the ninth I said I will ship on the thirtieth.",
-     "want": [], "never": ["2026-10-09", "2026-10-30", "2026-08-30"]},
+     "want": ["2026-09-09", "2026-09-30"], "never": ["2026-10-09", "2026-10-30", "2026-08-30"]},
     {"id": "reported_batch", "at": "2026-09-22T16:00:00",
      "line": "On the ninth I told the supplier that I will ship the sensor batch on the thirtieth.",
      "want": ["2026-09-09", "2026-09-30"], "never": ["2026-10-09", "2026-10-30", "2026-08-30"]},
     {"id": "explicit", "at": "2026-09-22T16:00:00",
      "line": "The deadline was the ninth of September, and I missed it. The review is on the ninth.",
      "want": ["2026-09-09", "2026-10-09"], "never": ["2026-11-09", "2026-08-09"]},
+    # Astra, #845 iteration 2: two live calls stored 2026-08-09.  A named
+    # month is never re-dated.
     {"id": "explicit_only", "at": "2026-09-22T16:00:00",
      "line": "The deadline is the ninth of September. That deadline was missed.",
-     "want": ["2026-09-09"], "never": ["2026-10-09"]},
+     "want": ["2026-09-09"], "never": ["2026-10-09", "2026-08-09"]},
+    {"id": "explicit_note", "at": "2026-09-22T16:00:00", "kind": "note", "title": "Deadline",
+     "line": "The deadline is the ninth of September. That deadline was missed.",
+     "want": ["2026-09-09"], "never": ["2026-10-09", "2026-08-09"]},
+    # A named month and a bare day in one line, each with its own tense.
+    {"id": "mixed", "at": "2026-09-22T16:00:00",
+     "line": "The review was on the ninth of September. The next review is on the twentieth.",
+     "want": ["2026-09-09", "2026-10-20"], "never": ["2026-08-09", "2026-10-09", "2026-09-20"]},
+    {"id": "month_first", "at": "2026-09-22T16:00:00",
+     "line": "We shipped on September 3rd and the audit starts on the fifth.",
+     "want": ["2026-09-03", "2026-10-05"], "never": ["2026-08-03", "2026-10-03", "2026-09-05"]},
+    # The hard-corpus supplier note: a third person reports a thing to come.
+    {"id": "supplier", "at": "2026-09-23T09:00:00", "kind": "note", "title": "Supplier follow-up",
+     "line": "T. Wierzbicki confirmed the sensor batch ships on the twentieth.",
+     "want": ["2026-10-20"], "never": ["2026-09-20"]},
+    {"id": "reported_third", "at": "2026-09-22T16:00:00",
+     "line": "Dana said the vendor will deliver the racks on the second.",
+     "want": ["2026-10-02"], "never": ["2026-09-02"]},
     {"id": "duration", "at": "2027-01-22T10:00:00",
      "line": "I will be away from the ninth for three weeks.",
      "want": ["2027-02-09"], "never": ["2027-01-09"], "span": ("2027-02-09", "2027-03-02")},
@@ -349,7 +369,23 @@ DATE_CASES = [
 
 
 def build_date_case(db: Any, case: dict) -> str:
-    """One date case as a 1:1 meeting, written by the real producer."""
+    """One date case as a 1:1 meeting (or a note, ``kind: note``), written by
+    the real producer."""
+    if case.get("kind") == "note":
+        from holdspeak.db import primitives
+
+        stamp = case["at"] + "Z"
+        note_id = f"n-date-{case['id']}"
+        real_now = primitives._now_iso
+        try:
+            primitives._now_iso = lambda: stamp
+            db.notes.upsert(
+                note_id=note_id, title=case["title"], body_markdown=case["line"],
+                last_modified=stamp, created_at=stamp,
+            )
+        finally:
+            primitives._now_iso = real_now
+        return f"note:{note_id}"
     started = datetime.fromisoformat(case["at"])
     meeting_id = f"m-date-{case['id']}"
     db.meetings.save_meeting(

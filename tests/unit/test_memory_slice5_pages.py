@@ -558,6 +558,49 @@ def test_a_number_matches_only_as_a_whole_token(tmp_path: Path) -> None:
     assert (kept, cut) == ([], 1)
 
 
+def test_a_name_and_its_claim_must_come_from_one_cited_input(tmp_path: Path) -> None:
+    """The open limit of #848: attribution by words let shared words carry
+    another input's meaning.  "Atlas owner is Dana" + "Harbor owner is Lee"
+    hold every word of "Atlas owner is Lee"; no ONE input holds Atlas, Lee
+    and "owner", so it is cut."""
+    db = _desk(tmp_path)
+    _filed_note(db, "n1", "Atlas owner is Dana.", "atlas")
+    _filed_note(db, "n2", "Harbor owner is Lee.", "atlas")
+    _learn(db)
+    writer = Pages()
+
+    def answer(payload: dict) -> dict:
+        lines = Pages.lines(payload)
+        dana = next(label for label, text in lines.items() if "owner is Dana" in text)
+        lee = next(label for label, text in lines.items() if "owner is Lee" in text)
+        return {"sentences": [
+            {"text": "Atlas owner is Lee.", "refs": [dana, lee]},      # names from two inputs: cut
+            {"text": "Harbor owner is Dana.", "refs": [dana, lee]},    # the same, crossed: cut
+            {"text": "Atlas owner is Dana.", "refs": [dana, lee]},     # one input holds it: kept
+            {"text": "Harbor owner is Lee.", "refs": [lee]},
+        ]}
+
+    writer.answer = answer
+    assert write_page(db, writer, ATLAS, spec_for("project", CHANGED))["cut"] == 2
+    served = [s["text"] for s in _page(db, ATLAS, CHANGED)["sentences"]]
+    assert served == ["Atlas owner is Dana.", "Harbor owner is Lee."]
+
+
+@pytest.mark.parametrize("text,cited,ok", [
+    ("Atlas owner is Lee.", ["Atlas owner is Dana.", "Harbor owner is Lee."], False),
+    ("Atlas owner is Dana.", ["Atlas owner is Dana.", "Harbor owner is Lee."], True),
+    # One subject, two claims from two inputs: each claim sits with the name.
+    ("Atlas launch is 2026-10-01 and budget is 40k.", ["Atlas launch is 2026-10-01.", "Atlas budget is 40k."], True),
+    # A lower-case name in the sentence is still a name when an input capitalises it.
+    ("atlas owner is lee.", ["Atlas owner is Dana.", "Harbor owner is Lee."], False),
+    # Two names joined from two inputs: cut (a cut serves less, never a wrong claim).
+    ("Atlas and Harbor launch in October.", ["Atlas launch in October.", "Harbor launch in October."], False),
+    ("Atlas launch is 2026.", ["Atlas build is 2026."], False),   # a word no input holds
+])
+def test_attribution_is_entity_aware(text: str, cited: list[str], ok: bool) -> None:
+    assert pages_module.attributed(text, cited) is ok
+
+
 # ── stale: a second change in the same second (Astra, PR #848) ──────────
 
 
@@ -580,6 +623,57 @@ def test_a_second_change_in_the_same_second_makes_the_page_stale(tmp_path: Path,
     assert (ATLAS, CHANGED) in [(d["scope"], d["spec"].slug) for d in pending_pages(db, now=later)]
     write_pending(db, Pages(), now=later)
     assert "Friday" in json.dumps(_page(db, ATLAS, CHANGED))
+
+
+def test_a_refile_stales_both_projects_pages(tmp_path: Path, monkeypatch) -> None:
+    """Open limit of #848: a refile changes no memory row, so the
+    destination's page stayed fresh when the moved source was stamped before
+    the page's marker.  The scope digest moves the source's key out of
+    Atlas's set and into Harbor's."""
+    from holdspeak.db import memory_index
+
+    db = _desk(tmp_path)
+    clock = {"now": datetime(2026, 10, 5, 9, 0, tzinfo=timezone.utc)}
+    monkeypatch.setattr(memory_index, "_now", lambda: clock["now"].isoformat(timespec="seconds"))
+    ref = _filed_note(db, "n1", "Atlas launch is 2026-10-01.", "atlas")
+    _learn(db)                       # n1 stamped 09:00
+    clock["now"] += timedelta(hours=1)
+    _filed_note(db, "n2", "Harbor launch is 2026-11-01.", "harbor")
+    _built(db)                       # n2 and the pages stamped 10:00
+    assert _page(db, ATLAS, CHANGED)["stale"] is False
+    assert _page(db, HARBOR, CHANGED)["stale"] is False
+    db.project_relationships.upsert(project_id="atlas", resource_ref=ref, deleted=True)
+    db.project_relationships.upsert(project_id="harbor", resource_ref=ref)
+    assert _page(db, HARBOR, CHANGED)["stale"] is True   # n1's stamp is older than the marker
+    assert _page(db, ATLAS, CHANGED) is None or _page(db, ATLAS, CHANGED)["stale"] is True
+    later = clock["now"] + timedelta(hours=2)
+    due = [(d["scope"], d["spec"].slug) for d in pending_pages(db, now=later)]
+    assert (HARBOR, CHANGED) in due and (ATLAS, CHANGED) in due
+    write_pending(db, Pages(), now=later)
+    assert "2026-10-01" in json.dumps(_page(db, HARBOR, CHANGED))
+    assert _page(db, HARBOR, CHANGED)["stale"] is False
+
+
+def test_a_change_stamped_by_a_clock_that_ran_backwards_makes_the_page_stale(tmp_path: Path, monkeypatch) -> None:
+    """Open limit of #848: staleness compared stamps, so a change stamped
+    before the page's marker (the clock ran back) was missed.  Content keys
+    only: the edit is seen whatever its stamp."""
+    from holdspeak.db import memory_index
+
+    db = _desk(tmp_path)
+    _filed_note(db, "n1", "Atlas launch is 2026-10-01.", "atlas")
+    _filed_note(db, "n2", "Send the weekly report on Monday.", "atlas")
+    _built(db)
+    assert _page(db, ATLAS, CHANGED)["stale"] is False
+    back = (datetime.now(timezone.utc) - timedelta(days=3)).isoformat(timespec="seconds")
+    monkeypatch.setattr(memory_index, "_now", lambda: back)
+    _filed_note(db, "n2", "Send the weekly report on Friday.", "atlas")
+    _learn(db)
+    with db._connection() as conn:
+        stamp = conn.execute("SELECT updated_at FROM memory_sources WHERE source_ref='note:n2'").fetchone()[0]
+        marker = conn.execute("SELECT last_memory_seen_at FROM memory_pages WHERE slug=?", (CHANGED,)).fetchone()[0]
+    assert stamp < marker  # the change is stamped before the page saw the scope
+    assert _page(db, ATLAS, CHANGED)["stale"] is True
 
 
 # ── recall: other projects never fill the bound (Astra, PR #848) ────────
