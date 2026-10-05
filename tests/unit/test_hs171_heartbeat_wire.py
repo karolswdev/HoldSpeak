@@ -103,11 +103,12 @@ class TestQuietHours:
         from holdspeak.services.heartbeat_service import HeartbeatService
 
         mock_ws = MagicMock()
-        hb = HeartbeatService(db, watch_service=mock_ws)
-        # Set quiet hours to cover current time
-        now = datetime.now()
+        # One fixed instant and zone: a window built from the wall clock can
+        # be left by the time the sweep reads it (DST, the top of the hour).
+        noon = datetime(2026, 10, 5, 12, 0, tzinfo=timezone.utc)
+        hb = HeartbeatService(db, watch_service=mock_ws, clock=lambda: noon, local_zone=timezone.utc)
         hb.update_settings({
-            "quiet_hours": {"start": now.hour, "end": (now.hour + 2) % 24},
+            "quiet_hours": {"start": 12, "end": 14},
         })
 
         receipt = hb.run_sweep(OWNER)
@@ -838,12 +839,14 @@ class TestPipelineEventsReceipt:
 
         obs = SQLiteObserver(db._connection)
         mock_ws = MagicMock()
-        hb = HeartbeatService(db, observer=obs, watch_service=mock_ws)
+        noon = datetime(2026, 10, 5, 12, 0, tzinfo=timezone.utc)
+        hb = HeartbeatService(
+            db, observer=obs, watch_service=mock_ws, clock=lambda: noon, local_zone=timezone.utc,
+        )
 
-        # Set quiet hours to cover current time
-        now = datetime.now()
+        # One fixed instant and zone inside the quiet window.
         hb.update_settings({
-            "quiet_hours": {"start": now.hour, "end": (now.hour + 2) % 24},
+            "quiet_hours": {"start": 12, "end": 14},
         })
 
         receipt = hb.run_sweep(OWNER)
@@ -1144,13 +1147,47 @@ class TestSweepNotificationWire:
             ).fetchall()
         assert len(rows) >= 1
 
+    def test_every_sweep_holds_unchanged_items_in_quiet_hours(
+        self, db: Database, _notifier_calls,
+    ):
+        """every_sweep re-notifies unchanged items, but never inside quiet
+        hours (Astra, #853: the no_edge branch fired at 23:00)."""
+        from holdspeak.services.heartbeat_service import HeartbeatService
+
+        calls, fake_notifier = _notifier_calls
+        mock_ws = MagicMock()
+        mock_ws.evaluate_due.return_value = []
+        instant = {"now": datetime(2026, 10, 5, 12, 0, tzinfo=timezone.utc)}
+        svc = HeartbeatService(
+            db, watch_service=mock_ws, notifier=fake_notifier,
+            clock=lambda: instant["now"], local_zone=timezone.utc,
+        )
+        svc.update_settings({"notify": "every_sweep", "quiet_hours": {"start": 22, "end": 8}})
+        agg = self._seed_aggregate(db, 3)
+        with patch.object(svc, "_build_aggregate_via_canonical", return_value=agg):
+            with patch.object(svc, "notification_count", return_value=3):
+                noon = svc.run_sweep(OWNER)
+                instant["now"] = datetime(2026, 10, 5, 23, 0, tzinfo=timezone.utc)
+                night = svc.run_sweep(OWNER)
+                instant["now"] = datetime(2026, 10, 6, 9, 0, tzinfo=timezone.utc)
+                morning = svc.run_sweep(OWNER)
+        assert noon["notify"]["outcome"] == "sent"
+        assert night["notify"]["outcome"] == "held_quiet_hours", night["notify"]
+        assert night["notify"]["fired"] is False
+        # every_sweep still re-notifies the same items once quiet hours end.
+        assert morning["notify"]["outcome"] == "sent", morning["notify"]
+        assert len(calls) == 2
+
     def test_notifier_exception_sweep_completes_and_failure_receipted(
         self, db: Database,
     ):
         """A notifier exception -> the sweep still completes and the failure is receipted."""
         from holdspeak.services.heartbeat_service import HeartbeatService
 
+        exploded: list[str] = []
+
         def exploding_notifier(title, body, *, click_url=None):
+            exploded.append(body)
             raise RuntimeError("OS notification daemon crashed")
 
         mock_ws = MagicMock()
@@ -1176,6 +1213,10 @@ class TestSweepNotificationWire:
         # The notifier raised, so heartbeat_notify returns fired=False/dispatch_failed,
         # OR the outer boundary caught it and receipted as error.
         assert notify_info.get("outcome") in ("error",) or notify_info.get("fired") is False
+        # The notifier really ran (not held by quiet hours) and its failure
+        # is receipted as an error (Astra, #853).
+        assert exploded, "the exploding notifier was never called"
+        assert notify_info.get("outcome") == "error", notify_info
 
     def test_restart_persisted_edge_no_renotify(
         self, db: Database, _notifier_calls,
