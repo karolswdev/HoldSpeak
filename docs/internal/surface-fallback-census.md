@@ -122,7 +122,6 @@ first category may participate in a future assignment migration.
 | inference-route | `web/src/desk/ask.ts` | 143-07; Thought and Dictation owner glass migrated to contextual canonical assignments |
 | inference-route | `web/src/pages/cores/SettingsCore.tsx`, `web/src/pages/cores/AssignmentEditor.tsx`, `web/src/pages/cores/AssignmentModelChooser.tsx`, `web/src/pages/cores/assignmentExperience.ts` | 143-13 |
 | inference-route | `web/src/features/concierge/useConciergeController.ts` | 201-09 the Concierge controller sends the owner's explicit summary selection (profileId + profileRevision) to `/api/concierge/summary-selection` and per-group rows to `/api/concierge/apply`; the hub's assignment authority remains the only writer, and the face reads the applied truth back from `summaryAssignment` |
-| inference-route | `web/src/desk/firstrun/Found.tsx` | 859-01 first run C1 FOUND: "Use it" sends the owner's press to `/api/inference/defaults/use-proposal` (#855); the hub's assignment service is the only writer, and IN USE reads the global assignment's `profile_id` back from `/api/inference/assignments` |
 | display-transport | `web/src/desk/api.ts`, `web/src/desk/components/Pullout.tsx`, `web/src/desk/detail-types.ts`, `web/src/desk/infoContract.ts`, `web/src/desk/store/types.ts`, `web/src/lib/primitives.ts`, `web/src/pages/cores/core-types.ts` | 143-11 / 143-10 display contracts; no browser placement writer remains |
 | display-transport | `web/src/pages/cores/ModelLibraryCore.tsx`, `web/src/pages/cores/modelLibrary.ts` | 143-12 availability transport; selection never writes an assignment pointer |
 | display-transport | `web/src/pages/cores/TopologyMapView.tsx` | 156-04 topology graph reads profile_id for node display; never writes an assignment pointer |
@@ -274,3 +273,10 @@ composes the one starter-model profile for the signed local preset
 (`preset_local_qwen35_4b_gguf_q4km`). It does not choose a route leg, does not
 retry, and writes no assignment. Classified in `BACKEND_PRIVATE_DECISIONS`
 under the existing 143-12 owner-surface migration family.
+
+**2026-10-05, first run FOUND (#859).** `web/src/desk/firstrun/Found.tsx` is an
+`inference-route` web surface under the 143-13 assignment family: it lists the
+#855 default proposals and its "Use it" press posts
+`/api/inference/defaults/use-proposal`; the server
+(`InferenceDefaultService`) writes the global assignment as the owner's choice.
+The browser selects nothing itself.
