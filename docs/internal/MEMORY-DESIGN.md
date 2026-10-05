@@ -431,9 +431,8 @@ dark: nothing runs until `memory.extract` has its own assignment.
   2026-09-20. The fix is in the prompt and its lines; still no code changes
   a date the model writes. (1) `day_hints` adds a second line for each day
   whose month is named ("the ninth of September", "9 September",
-  "September 3rd", "Sept. 9"), with its one date, the nearest such day to
-  the source date: `Days with a month: "the ninth of September" =
-  2026-09-09`. A day with a year written ("September 9, 2026") gets no line,
+  "September 3rd", "Sept. 9"), with its date (version 4, below: both
+  dates, by tense): `Days with a month: "the ninth of September" = ...`. A day with a year written ("September 9, 2026") gets no line,
   and a named-month day is never also a bare day. (2) The prompt: a named
   month keeps its month whatever the tense; the tense of a day is the tense
   of the thing on that day, not of a verb that reports it ("Dana confirmed
@@ -453,6 +452,21 @@ dark: nothing runs until `memory.extract` has its own assignment.
   did not move: relation MRR 1.000, same-word MRR with facts 0.885, hard
   keyword + walk complete@5 0.889 (8 of 9: r11 by the initial rule, r09
   Kestrel still a strict xfail without vectors).
+- **A named month takes its year by tense** (`EXTRACTOR_VERSION` 4,
+  Astra #870 round 2). The nearest-date hint put "We shipped the sensor
+  batch on January 9." (source 2026-09-22) in 2027, and "The next sensor
+  batch will ship on December 9." (source 2026-03-22) in 2025. The "Days
+  with a month" line now gives both dates, as a bare day's line does:
+  `"January 9" = 2026-01-09 if it already happened, 2027-01-09 if it is
+  still to come`. The month never changes. A day equal to the source date
+  has one date; 29 February looks up to four years each way. The prompt
+  text stays version 3's: seven rewordings of the named-month rule each
+  lost a date case or a base-corpus fact on `qwen3.8-27b` (one made "Ana
+  will pair with Lee" into "Ana will pair with the owner", and the walk
+  lost r03). Two new date cases (`month_past_year`, `month_future_year`);
+  all three fixture files recorded again at version 4: the recording passes
+  17 of 17; live runs 66 of 68 (the two misses: empty answers on `leave`,
+  both in one run). Bench numbers unchanged.
 
 **Steps, each idempotent and resumable:**
 
@@ -702,14 +716,15 @@ the owner's canvas (UX-CANON).
   as a WHOLE token, so "26" is not "2026") must be in the text of the
   inputs THAT sentence cites, or it is cut. A sentence that says something
   its refs do not could not be withdrawn with the input it came from.
-  **Entity-aware** (2026-10-05, `pages.attributed`): each claim token (a
-  content token that is not a name; a name is a word written with a capital
-  in the sentence or a cited input) must be in ONE cited input together
-  with every name of the sentence. "Atlas owner is Dana" + "Harbor owner is
-  Lee" hold every word of "Atlas owner is Lee", but no one input holds
-  Atlas, Lee and "owner": cut. A sentence that joins two names from two
-  inputs ("Atlas and Harbor launch in October") is cut too: a cut serves
-  less, never a wrong claim.
+  **One input holds the whole sentence** (2026-10-05, Astra #870,
+  `pages.attributed`): every content token of the sentence must be in ONE
+  input it cites. Tokens spread over two inputs are not enough: "Atlas
+  budget is 40." + "Atlas headcount is 80." never make "Atlas budget is
+  80.", and "Atlas owner is Dana" + "Harbor owner is Lee" never make "Atlas
+  owner is Lee". Word order, case and stopwords may change ("The Atlas
+  launch date is 2026-10-01." serves from "Atlas launch date: 2026-10-01").
+  A sentence that joins two inputs is cut: a cut serves less, never a
+  wrong claim.
 - **Read time decides, not the next rewrite.** Each stored sentence keeps
   what it cites: an observation and the text version the engine was shown,
   or a chunk (id, hash, anchor). A sentence is served only while EVERY

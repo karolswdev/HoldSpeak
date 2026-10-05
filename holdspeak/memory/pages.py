@@ -14,8 +14,7 @@ disputed observations and the top recall for the question in that scope.
   (``o1``.. for an observation, ``r1``.. for a recall chunk).  A sentence
   with no ref, or with a ref that is not in the input, is CUT by code; so
   is a sentence with a content token (a word, or a number as a whole
-  token) that the inputs IT cites do not hold, and a sentence whose names
-  and claim are not in ONE cited input together (``attributed``: "Atlas
+  token) that no ONE input it cites holds whole (``attributed``: "Atlas
   owner is Dana" + "Harbor owner is Lee" never make "Atlas owner is Lee").  An answer outside the
   closed schema fails whole: back-off, nothing written.
 * **A sentence is served only while every input it cites is live in the
@@ -472,44 +471,17 @@ def content_tokens(text: str) -> set[str]:
     return {t for t in (w.casefold() for w in _TOKEN.findall(str(text or ""))) if t not in _STOPWORDS}
 
 
-_NAME = re.compile(r"\b[^\W\d_][\w]*", re.UNICODE)
-
-
-def name_tokens(*texts: str) -> set[str]:
-    """The tokens written with a capital letter in any of ``texts``
-    ("Atlas", "Dana"), folded, less the stopwords: the names a sentence is
-    about.  A capital that only starts a sentence counts too, so the rule can
-    only cut more, never less."""
-    return {
-        word.casefold() for text in texts for word in _NAME.findall(str(text or ""))
-        if word[:1].isupper() and word.casefold() not in _STOPWORDS
-    }
-
-
 def attributed(text: str, cited: list[str]) -> bool:
-    """True when the inputs a sentence cites hold what it says.
-
-    1. Every content token of the sentence is in the cited inputs (words).
-    2. Entity-aware (Astra, #848): each claim token (a content token that is
-       not a name) is in ONE cited input together with EVERY name of the
-       sentence.  "Atlas owner is Dana" and "Harbor owner is Lee" hold every
-       word of "Atlas owner is Lee", but no one input holds Atlas, Lee and
-       "owner", so it is cut.  A sentence with names only needs one input
-       with all of them.  A sentence that joins two names from two inputs is
-       cut: a cut serves less, never a wrong claim.
-    """
+    """True when ONE input the sentence cites holds every content token of
+    the sentence (Astra, #870).  Tokens spread over two inputs are not
+    enough: "Atlas budget is 40." + "Atlas headcount is 80." never make
+    "Atlas budget is 80.", and "Atlas owner is Dana" + "Harbor owner is Lee"
+    never make "Atlas owner is Lee".  Word order, stopwords and case may
+    change ("The Atlas launch date is 2026-10-01." from "Atlas launch date:
+    2026-10-01").  A sentence that joins two inputs is cut: a cut serves
+    less, never a wrong claim."""
     tokens = content_tokens(text)
-    per_input = [content_tokens(item) for item in cited]
-    if not per_input or not tokens <= set().union(*per_input):
-        return False
-    names = tokens & name_tokens(text, *cited)
-    if not names:
-        return True
-    claims = tokens - names
-    return all(
-        any(names <= held and (claim is None or claim in held) for held in per_input)
-        for claim in (sorted(claims) or [None])
-    )
+    return any(tokens <= content_tokens(item) for item in cited)
 
 
 def _token_key(token: str) -> str:
@@ -526,10 +498,8 @@ def validate_output(raw: Any, labels: Any) -> tuple[list[dict[str, Any]], int]:
     label, no text left after the memory defense, or a repeat is CUT.  When
     ``labels`` maps each label to its input text, attribution is checked by
     code: every content token of the sentence (``content_tokens``: each
-    word less the stopwords, each number as a whole token) must be in the
-    text of the inputs THAT sentence cites, and each claim token must be in
-    ONE cited input with every name of the sentence (``attributed``), or it
-    is CUT.  A sentence that says something its refs do not could not be
+    word less the stopwords, each number as a whole token) must be in ONE
+    input THAT sentence cites (``attributed``), or it is CUT.  A sentence that says something its refs do not could not be
     withdrawn with the input it really came from.
     Returns ``(kept sentences, number cut)``; each kept text is redacted
     before it is folded and cut (``defense.redact_clip``).

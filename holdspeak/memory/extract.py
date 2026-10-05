@@ -27,7 +27,8 @@ with no month is the next such day for a thing to come, and the most recent
 such day for a thing that happened (``EXTRACTOR_VERSION`` 2).  A day with a
 named month keeps its month; a reported thing takes the tense of the thing,
 not of "said" or "confirmed"; a dated plan or promise is never an empty
-answer (``EXTRACTOR_VERSION`` 3).  ``day_hints`` gives the model the dates;
+answer (``EXTRACTOR_VERSION`` 3).  A named month with no year takes its year
+by tense, as a bare day does (``EXTRACTOR_VERSION`` 4).  ``day_hints`` gives the model the dates;
 no code changes a date the model writes.
 """
 from __future__ import annotations
@@ -53,7 +54,11 @@ EXTRACT_CONTRACT_REVISION = "1"
 #: 3: a named month keeps its month ("Days with a month"); a reported thing
 #: to come takes the tense of the thing, not of "said" or "confirmed"; a
 #: dated plan or promise is never an empty answer.
-EXTRACTOR_VERSION = 3
+#: 4: a named month with no year takes its YEAR by tense: the "Days with a
+#: month" line gives both dates (Astra, #870).  The prompt text is version
+#: 3's: seven rewordings of the rule each lost a date case or a base-corpus
+#: fact on qwen3.8-27b (measured 2026-10-05).
+EXTRACTOR_VERSION = 4
 #: Seconds one chunk may take before the runner's deadline stops it.
 EXTRACT_DEADLINE_SECONDS = 180.0
 EXTRACT_MAX_TOKENS = 2048
@@ -234,10 +239,13 @@ def day_hints(chunk_text: str, occurred_at: Optional[str]) -> str:
 
     * ``Days with no month``: each day with no month and the two dates it
       can be.  The model picks by tense.
-    * ``Days with a month``: each day whose month is named, with its one date
-      (the nearest such day to the source date).  A named month is never
-      re-dated by tense (Astra, #845: "the ninth of September" in a meeting
-      of 2026-09-22 was stored as 2026-08-09).
+    * ``Days with a month``: each day whose month is named and whose year
+      is not written, with the two dates it can be, by tense, as for a day
+      with no month: the most recent such date on or before the source date
+      if it already happened, the next on or after it if it is still to come
+      (Astra, #870: the nearest date put "We shipped ... on January 9." of
+      2026-09-22 in 2027).  The month is never changed (Astra, #845: "the
+      ninth of September" of 2026-09-22 was stored as 2026-08-09).
     """
     from datetime import date, timedelta
 
@@ -246,7 +254,7 @@ def day_hints(chunk_text: str, occurred_at: Optional[str]) -> str:
     except ValueError:
         return ""
 
-    named: dict[str, date] = {}
+    named: dict[str, tuple[date, date]] = {}
     taken: list[tuple[int, int]] = []
     for match in _NAMED_MONTH_DAY.finditer(chunk_text):
         groups = match.groups()
@@ -258,15 +266,17 @@ def day_hints(chunk_text: str, occurred_at: Optional[str]) -> str:
         if _YEAR_AFTER.match(chunk_text, match.end()):
             continue  # a full date: the model needs no line
         options = []
-        for year in (source.year - 1, source.year, source.year + 1):
+        for year in range(source.year - 4, source.year + 5):  # 29 February too
             try:
                 options.append(date(year, month, number))
             except ValueError:
                 continue
-        if not options:
+        before = [day for day in options if day <= source]
+        after = [day for day in options if day >= source]
+        if not before or not after:
             continue
         phrase = " ".join(match.group(0).split())
-        named.setdefault(phrase, min(options, key=lambda day: (abs((day - source).days), day)))
+        named.setdefault(phrase, (max(before), min(after)))
 
     found: dict[str, int] = {}
     for match in _NO_MONTH_DAY.finditer(chunk_text):
@@ -292,10 +302,16 @@ def day_hints(chunk_text: str, occurred_at: Optional[str]) -> str:
                 f'"{phrase}" = {before.isoformat()} if it already happened, {after.isoformat()} if it is still to come'
             )
     lines = ("Days with no month: " + "; ".join(parts) + "\n") if parts else ""
-    if named:
-        lines += "Days with a month: " + "; ".join(
-            f'"{phrase}" = {day.isoformat()}' for phrase, day in named.items()
-        ) + "\n"
+    named_parts = []
+    for phrase, (before, after) in named.items():
+        if before == after:
+            named_parts.append(f'"{phrase}" = {before.isoformat()}')
+        else:
+            named_parts.append(
+                f'"{phrase}" = {before.isoformat()} if it already happened, {after.isoformat()} if it is still to come'
+            )
+    if named_parts:
+        lines += "Days with a month: " + "; ".join(named_parts) + "\n"
     return lines
 
 
