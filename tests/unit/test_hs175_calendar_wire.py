@@ -353,7 +353,9 @@ class TestDoorWeek:
         # fixture seeds now + 2 h, which on a Sunday after 22:00 local is next
         # week (failed 2026-10-04 22:22 MDT).
         # The ingest keeps only events still to come, so the event sits
-        # halfway between now and the end of this local week.
+        # halfway between now and the end of this local week. One pinned
+        # instant drives the seed, the ingest and the Door read, so no
+        # midnight can fall between them (Astra, #846).
         local_now = datetime.now().astimezone()
         next_monday = (local_now + timedelta(days=7 - local_now.weekday())).replace(
             hour=0, minute=0, second=0, microsecond=0)
@@ -369,7 +371,15 @@ class TestDoorWeek:
         from holdspeak.db.calendar_events import CalendarEventRepository
         from holdspeak.db.scheduled_recordings import ScheduledRecordingRepository
 
-        conductor = _make_conductor(db, str(ics_file))
+        from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
+
+        ingest_config = _make_config(str(ics_file))
+        conductor = CalendarIngestConductor(
+            clock=lambda: local_now.timestamp(),
+            db_factory=lambda: db,
+            config_loader=lambda: ingest_config,
+            tick_interval=9999,
+        )
         conductor.refresh()
 
         config = _make_config(str(ics_file))
@@ -385,6 +395,7 @@ class TestDoorWeek:
             db.calendar_events,
             db=db,
             config_loader=lambda: config,
+            clock=lambda: local_now,
         )
         result = service.get(OWNER)
         week = result["week"]
