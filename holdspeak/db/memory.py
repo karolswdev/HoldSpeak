@@ -2386,10 +2386,9 @@ class MemoryRepository(BaseRepository):
             row = cls._load_related_row(conn, source_ref, project=project)
             if row is None:
                 continue
-            occurred_at = str(row["occurred_at"] or "")
-            if start and occurred_at < start:
-                continue
-            if end and occurred_at > end:
+            # Instants, not strings (an offset stamp and a UTC one are one time).
+            # Instants, not strings (an offset stamp and a UTC one are one time).
+            if not cls._in_time(str(row["kind"]), str(row["occurred_at"] or ""), start, end):
                 continue
             kind = str(row["kind"])
             kind_ranks[kind] = kind_ranks.get(kind, 0) + 1

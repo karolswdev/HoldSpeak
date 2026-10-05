@@ -822,7 +822,6 @@ def _run_meeting_mode(args):
 def _export_transcript(results: list[tuple[str, str]], format: str) -> Optional[str]:
     """Export transcript to file."""
     from pathlib import Path
-    from datetime import datetime
 
     timestamp = local_now().strftime("%Y%m%d_%H%M%S")
     ext = {"markdown": "md", "txt": "txt", "json": "json"}.get(format, "txt")

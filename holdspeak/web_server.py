@@ -13,7 +13,6 @@ import threading
 import time
 from pathlib import Path
 from dataclasses import dataclass
-from datetime import datetime
 from holdspeak.timestamps import aware, local_now
 from typing import Any, Callable, Optional, TYPE_CHECKING
 

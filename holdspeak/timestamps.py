@@ -22,7 +22,7 @@ from typing import Any, Optional
 
 __all__ = [
     "utc_now", "utc_now_iso", "utc_iso", "local_now", "local_wall", "parse_stamp", "aware",
-    "sql_window", "in_window", "parse_wall",
+    "sql_window", "in_window", "parse_wall", "sql_instant",
 ]
 
 
@@ -134,3 +134,13 @@ def parse_wall(value: Any) -> Optional[datetime]:
     if stamp is None:
         return None
     return stamp.astimezone().replace(tzinfo=None)
+
+
+def sql_instant(value: Any) -> Optional[str]:
+    """Any stamp shape (a datetime, bare local ISO, SQLite UTC, offset) as the
+    UTC ISO string a ``julianday(?)`` bound reads as the same instant.
+    ``None`` when *value* is empty or not a time."""
+    if isinstance(value, datetime):
+        return utc_iso(value)
+    stamp = parse_stamp(value)
+    return stamp.astimezone(timezone.utc).isoformat() if stamp is not None else None

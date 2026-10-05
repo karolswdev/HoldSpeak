@@ -4,7 +4,7 @@ from holdspeak.services.observer import NullObserver, PipelineObserver, observe_
 
 import asyncio
 import hashlib
-from datetime import datetime, timedelta
+from datetime import timedelta
 from holdspeak.timestamps import local_now, utc_iso, utc_now
 from typing import Any
 

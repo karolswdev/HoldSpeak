@@ -57,7 +57,7 @@ class CadenceService:
         start = utc_iso(aware(now).replace(hour=0, minute=0, second=0, microsecond=0))
         with self._db._connection() as conn:
             row = conn.execute(
-                "SELECT COUNT(*) AS n FROM cadence_nudges WHERE created_at >= ?", (start,)
+                "SELECT COUNT(*) AS n FROM cadence_nudges WHERE julianday(created_at) >= julianday(?)", (start,)
             ).fetchone()
         return int(row["n"]) if row else 0
 

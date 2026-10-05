@@ -10,7 +10,6 @@ side effect (those go through the actuator path in later phases).
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 from holdspeak.timestamps import utc_now_iso
 from typing import Optional
 

@@ -1,7 +1,6 @@
 """Receipt-gated projections for admitted Workbench attempts."""
 from __future__ import annotations
 import json
-from datetime import datetime
 from holdspeak.timestamps import utc_now_iso
 from typing import Any
 from .model import KernelRefused

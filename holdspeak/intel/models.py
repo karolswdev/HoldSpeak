@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
 from holdspeak.timestamps import utc_now_iso
 from typing import Optional
 

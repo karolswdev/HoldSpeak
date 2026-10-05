@@ -512,7 +512,7 @@ class MeshRelayRepository(BaseRepository):
         floor = _iso(now - timedelta(seconds=max(1, int(window_seconds))))
         with self._connection() as conn:
             rows = conn.execute(
-                "SELECT node, last_seen FROM mesh_workers WHERE last_seen >= ?",
+                "SELECT node, last_seen FROM mesh_workers WHERE julianday(last_seen) >= julianday(?)",
                 (floor,),
             ).fetchall()
         out: dict[str, datetime] = {}
@@ -546,7 +546,7 @@ class MeshRelayRepository(BaseRepository):
             SET status = 'failed',
                 error = 'node ' || node || ' never claimed the run before its deadline',
                 completed_at = ?
-            WHERE status = 'queued' AND deadline_at <= ?
+            WHERE status = 'queued' AND julianday(deadline_at) <= julianday(?)
             """,
             (now_iso, now_iso),
         )
@@ -556,7 +556,7 @@ class MeshRelayRepository(BaseRepository):
             SET status = 'failed',
                 error = 'node ' || node || ' claimed the run but never completed it before its deadline',
                 completed_at = ?
-            WHERE status = 'running' AND deadline_at <= ?
+            WHERE status = 'running' AND julianday(deadline_at) <= julianday(?)
             """,
             (now_iso, now_iso),
         )

@@ -17,7 +17,7 @@ from __future__ import annotations
 import uuid
 import hashlib
 import json
-from datetime import datetime, timedelta
+from datetime import timedelta
 from holdspeak.timestamps import utc_iso, utc_now, utc_now_iso
 from typing import Any, Optional
 

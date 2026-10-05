@@ -11,7 +11,6 @@ every caller keeps the exact same methods on the runtime.
 
 from __future__ import annotations
 
-from datetime import datetime
 from holdspeak.timestamps import utc_now_iso
 from typing import Optional
 

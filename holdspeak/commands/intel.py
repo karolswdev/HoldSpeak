@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime
 from holdspeak.timestamps import local_wall, utc_now_iso
 import sys
 from typing import Any, Optional

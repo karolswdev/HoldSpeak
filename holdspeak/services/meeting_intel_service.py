@@ -1,7 +1,6 @@
 """Transport-neutral deferred meeting-intelligence operations."""
 from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
-from datetime import datetime
 from holdspeak.timestamps import local_wall
 from typing import Any, Callable
 from ..config import Config

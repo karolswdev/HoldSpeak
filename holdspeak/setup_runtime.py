@@ -224,7 +224,6 @@ def probe_runtime(
         if last_seen is None:
             return {"ok": False, "status": "unreachable", "backend": "mesh_relay",
                     "detail": f"Mesh node '{effective.node}' is offline (no worker has polled)."}
-        from datetime import datetime
 
         age = (local_wall() - last_seen).total_seconds()
         if age > 15:

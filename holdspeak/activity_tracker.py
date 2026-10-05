@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from holdspeak.timestamps import utc_now_iso
 from typing import Callable, Optional
 

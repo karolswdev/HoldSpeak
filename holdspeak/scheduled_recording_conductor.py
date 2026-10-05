@@ -229,7 +229,17 @@ class ScheduledRecordingConductor:
     # -- I7: boot reconciliation --
 
     def _reconcile_on_boot(self) -> None:
-        """On startup, reconcile any interrupted states (I7) and detect missed fires."""
+        """On startup, reconcile any interrupted states (I7) and detect missed fires.
+
+        A write with no request: it announces itself, ONE ``desk_changed``
+        frame when it changed a row (2026-10-05).
+        """
+        from .runtime.announce_scope import announce_writes
+
+        with announce_writes("scheduled_recording", "reconcile"):
+            self._reconcile_on_boot_body()
+
+    def _reconcile_on_boot_body(self) -> None:
         db = self._get_db()
         now = self._clock()
         # Before anything can be marked missed: repair the fire times the old
@@ -466,6 +476,13 @@ class ScheduledRecordingConductor:
     # -- tick --
 
     def _tick(self) -> None:
+        """One pass: arm each due schedule. Announces each one it armed."""
+        from .runtime.announce_scope import announce_writes
+
+        with announce_writes("scheduled_recording", "arm") as name:
+            self._tick_body(name)
+
+    def _tick_body(self, name: Callable[[str], None] = lambda _id: None) -> None:
         db = self._get_db()
         schedules = db.scheduled_recordings.list_enabled()
         now = self._clock()
@@ -493,6 +510,7 @@ class ScheduledRecordingConductor:
                     del self._fired_minutes[k]
 
             log.info(f"Schedule '{sched.title}' (id={sched.id}) is due, arming")
+            name(sched.id)
             self._arm(db, sched)
 
     def _arm(self, db: Any, sched: Any) -> None:
@@ -528,6 +546,19 @@ class ScheduledRecordingConductor:
         t.start()
 
     def _countdown_then_fire(
+        self,
+        db: Any,
+        schedule_id: str,
+        fire_at: float,
+        cancel_event: threading.Event,
+    ) -> None:
+        """The countdown thread: fire, cancel or refuse. Announces its schedule."""
+        from .runtime.announce_scope import announce_writes
+
+        with announce_writes("scheduled_recording", "fire", schedule_id):
+            self._countdown_then_fire_body(db, schedule_id, fire_at, cancel_event)
+
+    def _countdown_then_fire_body(
         self,
         db: Any,
         schedule_id: str,
@@ -698,7 +729,15 @@ class ScheduledRecordingConductor:
         timer.start()
 
     def _auto_stop(self, db: Any, schedule_id: str) -> None:
-        """Auto-stop a scheduled recording after its duration elapses (I6)."""
+        """Auto-stop a scheduled recording after its duration elapses (I6).
+
+        A timer thread with no request: it announces its schedule."""
+        from .runtime.announce_scope import announce_writes
+
+        with announce_writes("scheduled_recording", "stop", schedule_id):
+            self._auto_stop_body(db, schedule_id)
+
+    def _auto_stop_body(self, db: Any, schedule_id: str) -> None:
         self._auto_stop_timers.pop(schedule_id, None)
         sched = db.scheduled_recordings.get(schedule_id)
         if sched is None or sched.state != "recording":

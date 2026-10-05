@@ -532,6 +532,17 @@ class WorkbenchConductor:
             self._stop.wait(60)
 
     def _tick(self) -> None:
+        """One pass (scheduled runs, watches, reactions, the steward drain).
+
+        It writes with no request: ONE ``desk_changed`` frame when it changed
+        a row, naming each workbench it ran (2026-10-05).
+        """
+        from .runtime.announce_scope import announce_writes
+
+        with announce_writes("workbench", "tick") as name:
+            self._tick_body(name)
+
+    def _tick_body(self, name: Any = lambda _id: None) -> None:
         try:
             from .db import get_database
             db = get_database()
@@ -552,6 +563,7 @@ class WorkbenchConductor:
             self._last_check[wb.id] = now_minute
 
             log.info(f"Conductor: workbench '{wb.name}' is due, starting run")
+            name(wb.id)
             try:
                 from .kernel.runtime import _service
                 from .services.workbench_runner import WorkbenchRunner

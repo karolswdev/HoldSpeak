@@ -523,8 +523,8 @@ class PluginArtifactRepository(BaseRepository):
                 SELECT *
                 FROM plugin_run_jobs
                 WHERE status = 'queued'
-                  AND (requested_at <= ? OR ? = 1)
-                ORDER BY requested_at ASC, id ASC
+                  AND (julianday(requested_at) <= julianday(?) OR ? = 1)
+                ORDER BY julianday(requested_at) ASC, id ASC
                 LIMIT 1
                 """,
                 (now_iso, 1 if include_scheduled else 0),
@@ -630,7 +630,7 @@ class PluginArtifactRepository(BaseRepository):
             if clean_meeting_id:
                 query += " AND meeting_id = ?"
                 params.append(clean_meeting_id)
-            query += " ORDER BY requested_at ASC, id ASC LIMIT ?"
+            query += " ORDER BY julianday(requested_at) ASC, id ASC LIMIT ?"
             params.append(bounded_limit)
             rows = conn.execute(query, params).fetchall()
 
@@ -647,8 +647,8 @@ class PluginArtifactRepository(BaseRepository):
                     SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued_jobs,
                     SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) AS running_jobs,
                     SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed_jobs,
-                    SUM(CASE WHEN status = 'queued' AND requested_at <= ? THEN 1 ELSE 0 END) AS queued_due_jobs,
-                    SUM(CASE WHEN status = 'queued' AND requested_at > ? THEN 1 ELSE 0 END) AS scheduled_retry_jobs
+                    SUM(CASE WHEN status = 'queued' AND julianday(requested_at) <= julianday(?) THEN 1 ELSE 0 END) AS queued_due_jobs,
+                    SUM(CASE WHEN status = 'queued' AND julianday(requested_at) > julianday(?) THEN 1 ELSE 0 END) AS scheduled_retry_jobs
                 FROM plugin_run_jobs
                 """,
                 (now_iso, now_iso),
@@ -659,7 +659,7 @@ class PluginArtifactRepository(BaseRepository):
                 SELECT MIN(requested_at) AS next_retry_at
                 FROM plugin_run_jobs
                 WHERE status = 'queued'
-                  AND requested_at > ?
+                  AND julianday(requested_at) > julianday(?)
                   AND last_error IS NOT NULL
                 """,
                 (now_iso,),

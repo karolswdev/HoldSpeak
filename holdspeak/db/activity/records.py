@@ -248,13 +248,13 @@ class ActivityRecordsMixin:
             where.append("entity_type = ?")
             params.append(str(entity_type).strip().lower())
         if since is not None:
-            where.append("last_seen_at >= ?")
+            where.append("julianday(last_seen_at) >= julianday(?)")
             params.append(utc_iso(since))
 
         query = "SELECT * FROM activity_records"
         if where:
             query += " WHERE " + " AND ".join(where)
-        query += " ORDER BY last_seen_at DESC, updated_at DESC, id DESC LIMIT ?"
+        query += " ORDER BY julianday(last_seen_at) DESC, updated_at DESC, id DESC LIMIT ?"
         params.append(max(1, min(int(limit), 5000)))
         with self._connection() as conn:
             rows = conn.execute(query, params).fetchall()
@@ -285,7 +285,7 @@ class ActivityRecordsMixin:
             where.append("domain = ?")
             params.append(str(domain).strip().lower())
         if older_than is not None:
-            where.append("last_seen_at < ?")
+            where.append("julianday(last_seen_at) < julianday(?)")
             params.append(utc_iso(older_than))
         query = "DELETE FROM activity_records"
         if where:
@@ -321,7 +321,7 @@ class ActivityRecordsMixin:
                 """
                 SELECT *
                 FROM activity_records
-                ORDER BY last_seen_at DESC, updated_at DESC, id DESC
+                ORDER BY julianday(last_seen_at) DESC, updated_at DESC, id DESC
                 """
             ).fetchall()
             return iter([self._row_to_activity_record(row) for row in rows])

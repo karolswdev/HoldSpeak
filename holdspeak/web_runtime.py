@@ -9,7 +9,6 @@ import sys
 import threading
 import time
 import webbrowser
-from datetime import datetime
 from holdspeak.timestamps import utc_now
 from pathlib import Path
 from typing import Any, Callable, Optional

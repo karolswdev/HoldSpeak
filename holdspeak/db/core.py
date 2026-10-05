@@ -6,7 +6,6 @@ import shutil
 import os
 import sqlite3
 import threading
-from datetime import datetime
 from holdspeak.timestamps import local_now
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional

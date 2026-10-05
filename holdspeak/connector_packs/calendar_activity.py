@@ -16,7 +16,6 @@ calendar / video-call domains and propose meeting candidates.
 
 from __future__ import annotations
 
-from datetime import datetime
 from holdspeak.timestamps import local_wall
 from typing import Any, Optional
 

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import threading
 import uuid
-from datetime import datetime
 from holdspeak.timestamps import local_wall, utc_iso
 from typing import Any
 

@@ -210,3 +210,58 @@ def test_the_route_names_unit() -> None:
     assert changed("POST", "/api/cadence/run-now", {}, None) == ("cadence", "", "run_now")
     assert changed("PUT", "/api/meetings/m1", {"meeting_id": "m1"}, None) == ("meeting", "m1", "update")
     assert changed("DELETE", "/api/notes/n1", {"note_id": "n1"}, None) == ("note", "n1", "delete")
+
+
+def test_the_workbench_conductor_tick_announces_the_workbench_it_ran(
+    hub: Hub, seeded: dict[str, str],
+) -> None:
+    from holdspeak.workbench_conductor import WorkbenchConductor
+
+    from holdspeak.db import get_database
+
+    status, body = hub.call("POST", "/api/workbenches", {"name": "Conductor fence"})
+    assert status == 201, body
+    workbench = body["workbench"]["id"]
+    # Due every minute (the route asks for a recipe first; the conductor runs
+    # what is stored, and its run records the refusal).
+    with get_database()._connection() as conn:
+        conn.execute(
+            "UPDATE workbenches SET schedule='* * * * *', schedule_enabled=1 WHERE id=?",
+            (workbench,),
+        )
+    frames = hub.frames_from(lambda: _on_a_thread(WorkbenchConductor()._tick), wait_s=3.0)
+    assert len(frames) == 1, frames
+    assert ("workbench", workbench, "tick") in _named(frames), frames
+
+
+def test_the_scheduled_recording_conductor_announces_arm_and_fire(
+    hub: Hub, seeded: dict[str, str],
+) -> None:
+    import time as _time
+    from unittest.mock import MagicMock
+
+    from holdspeak.db import get_database
+    from holdspeak.scheduled_recording_conductor import ScheduledRecordingConductor
+
+    db = get_database()
+    sched = db.scheduled_recordings.create(
+        title="Conductor fence", cron_expr="0 9 * * *", tz="UTC", one_shot=True,
+        duration_minutes=15, enabled=True, next_fire_at=_time.time() - 5,
+    )
+    conductor = ScheduledRecordingConductor(
+        db_factory=lambda: db, start_meeting_fn=MagicMock(return_value={"id": "m-fence"}),
+        stop_meeting_fn=MagicMock(), voice_floor_fn=lambda: None,
+        countdown_seconds=0.05, tick_interval=60,
+    )
+    try:
+        frames = hub.frames_from(lambda: _on_a_thread(conductor._tick), wait_s=3.0)
+        named = _named(frames)
+        assert ("scheduled_recording", sched.id, "arm") in named, frames
+        deadline = _time.monotonic() + 5
+        while _time.monotonic() < deadline and ("scheduled_recording", sched.id, "fire") not in named:
+            _time.sleep(0.05)
+            with hub._lock:
+                named = _named(list(hub.frames))
+        assert ("scheduled_recording", sched.id, "fire") in named, hub.frames
+    finally:
+        conductor.stop()

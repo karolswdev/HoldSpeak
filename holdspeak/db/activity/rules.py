@@ -5,7 +5,6 @@ Bodies moved verbatim from db/activity.py (HS-79-01, the Phase-63 discipline).
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 from holdspeak.timestamps import local_wall, parse_wall, utc_now_iso
 from typing import Optional, Any
 

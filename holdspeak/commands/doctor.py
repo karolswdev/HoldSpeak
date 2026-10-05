@@ -661,7 +661,6 @@ def _check_mesh_edges(config: Config) -> DoctorCheck:
     (an offline edge only matters when a profile points at it, which the
     "Runtime profiles" check owns). Informational, always cheap.
     """
-    from datetime import datetime
 
     from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
 

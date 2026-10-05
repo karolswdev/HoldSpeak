@@ -230,7 +230,7 @@ WITH lineage_leaves AS (
 ), current_jobs AS (
     SELECT *, ROW_NUMBER() OVER (
         PARTITION BY meeting_id
-        ORDER BY requested_at DESC, updated_at DESC, job_id DESC
+        ORDER BY julianday(requested_at) DESC, updated_at DESC, job_id DESC
     ) AS current_rank
     FROM lineage_leaves
 )
@@ -1005,7 +1005,7 @@ class IntelRepository(BaseRepository):
                    AND parent_operation_id IS NOT NULL AND bundle_id IS NOT NULL
                    AND bundle_sha256 IS NOT NULL AND claim_id IS NOT NULL
                    AND (executor_lease_expires_at IS NULL OR executor_lease_expires_at<=?)
-                   ORDER BY requested_at ASC LIMIT 1""",
+                   ORDER BY julianday(requested_at) ASC LIMIT 1""",
                 (now,),
             ).fetchone()
         return self._job_from_row(row) if row is not None else None
@@ -1231,7 +1231,7 @@ class IntelRepository(BaseRepository):
                             AND predecessor.parent_operation_id IS NOT NULL
                             AND receipt.operation_id IS NULL
                       )
-                    ORDER BY j.requested_at ASC
+                    ORDER BY julianday(j.requested_at) ASC
                     LIMIT 1
                     """
                 ).fetchone()
@@ -1242,7 +1242,7 @@ class IntelRepository(BaseRepository):
                     JOIN meetings m ON m.id=j.meeting_id
                     WHERE m.parked = 0
                       AND j.status = 'queued'
-                      AND j.requested_at <= ?
+                      AND julianday(j.requested_at) <= julianday(?)
                       AND m.capture_status IN ('finalized', 'recovered')
                       AND m.route_fence_pending = 0
                       AND NOT EXISTS (
@@ -1259,7 +1259,7 @@ class IntelRepository(BaseRepository):
                             AND predecessor.parent_operation_id IS NOT NULL
                             AND receipt.operation_id IS NULL
                       )
-                    ORDER BY j.requested_at ASC
+                    ORDER BY julianday(j.requested_at) ASC
                     LIMIT 1
                     """,
                     (now_iso,),
@@ -1334,7 +1334,7 @@ class IntelRepository(BaseRepository):
         now = utc_now_iso()
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
-            due = "" if include_scheduled else " AND j.requested_at <= ?"
+            due = "" if include_scheduled else " AND julianday(j.requested_at) <= julianday(?)"
             params: tuple[Any, ...] = () if include_scheduled else (now,)
             row = conn.execute(
                 """SELECT j.* FROM intel_jobs j JOIN meetings m ON m.id=j.meeting_id
@@ -1351,7 +1351,7 @@ class IntelRepository(BaseRepository):
                          WHERE predecessor.job_id=j.origin_job_id
                            AND predecessor.parent_operation_id IS NOT NULL
                            AND receipt.operation_id IS NULL)
-                   ORDER BY j.requested_at ASC LIMIT 1""",
+                   ORDER BY julianday(j.requested_at) ASC LIMIT 1""",
                 params,
             ).fetchone()
             if row is None:
@@ -2151,7 +2151,7 @@ class IntelRepository(BaseRepository):
             old = conn.execute(
                 """SELECT * FROM intel_jobs WHERE meeting_id=?
                    AND status IN ('running','claimed')
-                   ORDER BY requested_at DESC LIMIT 1""",
+                   ORDER BY julianday(requested_at) DESC LIMIT 1""",
                 (meeting_id,),
             ).fetchone()
             if old is None:
@@ -2207,7 +2207,7 @@ class IntelRepository(BaseRepository):
             old = conn.execute(
                 """SELECT * FROM intel_jobs WHERE meeting_id=?
                    AND status IN ('running','claimed')
-                   ORDER BY requested_at DESC LIMIT 1""",
+                   ORDER BY julianday(requested_at) DESC LIMIT 1""",
                 (meeting_id,),
             ).fetchone()
             if old is None:
@@ -2268,7 +2268,7 @@ class IntelRepository(BaseRepository):
             row = conn.execute(
                 """SELECT model_host FROM intel_jobs
                    WHERE meeting_id = ? AND model_host IS NOT NULL
-                   ORDER BY requested_at DESC LIMIT 1""",
+                   ORDER BY julianday(requested_at) DESC LIMIT 1""",
                 (meeting_id,),
             ).fetchone()
         return str(row["model_host"]) if row and row["model_host"] else None
@@ -2325,7 +2325,7 @@ class IntelRepository(BaseRepository):
             rows = conn.execute(
                 """SELECT run_receipt_json FROM intel_jobs
                    WHERE meeting_id=? AND run_receipt_json IS NOT NULL
-                   ORDER BY requested_at DESC, updated_at DESC, job_id DESC""",
+                   ORDER BY julianday(requested_at) DESC, updated_at DESC, job_id DESC""",
                 (meeting_id,),
             ).fetchall()
         receipts: list[dict[str, Any]] = []
@@ -2701,8 +2701,8 @@ class IntelRepository(BaseRepository):
                     SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued_jobs,
                     SUM(CASE WHEN status IN ('claimed','running') THEN 1 ELSE 0 END) AS running_jobs,
                     SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed_jobs,
-                    SUM(CASE WHEN status = 'queued' AND requested_at <= ? THEN 1 ELSE 0 END) AS queued_due_jobs,
-                    SUM(CASE WHEN status = 'queued' AND requested_at > ? THEN 1 ELSE 0 END) AS scheduled_retry_jobs
+                    SUM(CASE WHEN status = 'queued' AND julianday(requested_at) <= julianday(?) THEN 1 ELSE 0 END) AS queued_due_jobs,
+                    SUM(CASE WHEN status = 'queued' AND julianday(requested_at) > julianday(?) THEN 1 ELSE 0 END) AS scheduled_retry_jobs
                 FROM current_jobs
                 WHERE current_rank=1
                   AND status IN ('reserved','queued','claimed','running','failed')
@@ -2715,7 +2715,7 @@ class IntelRepository(BaseRepository):
                 SELECT MIN(requested_at) AS next_retry_at
                 FROM current_jobs
                 WHERE current_rank=1 AND status = 'queued'
-                  AND requested_at > ?
+                  AND julianday(requested_at) > julianday(?)
                   AND last_error IS NOT NULL
                 """,
                 (now_iso,),

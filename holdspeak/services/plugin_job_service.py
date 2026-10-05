@@ -1,7 +1,6 @@
 """Transport-neutral deferred plugin-job operations (HS-123-07)."""
 from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
-from datetime import datetime
 from holdspeak.timestamps import local_wall
 from typing import Any
 from ..db.core import Database

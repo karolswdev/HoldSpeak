@@ -5,7 +5,6 @@ Extracted verbatim from core.py in Phase 31 (HS-31-03).
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime
 from holdspeak.timestamps import parse_wall, utc_now_iso
 from typing import Optional, Any
 

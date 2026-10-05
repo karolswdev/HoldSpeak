@@ -9,7 +9,6 @@ It stores + reads only — keys are short, opaque strings (no payload, no secret
 """
 from __future__ import annotations
 
-from datetime import datetime
 from holdspeak.timestamps import utc_now_iso
 from typing import Optional
 

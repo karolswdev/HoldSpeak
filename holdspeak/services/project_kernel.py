@@ -470,7 +470,6 @@ def request_hash(payload: Mapping[str, Any]) -> str:
 
 def _record_answer(conn: Any, command_id: str, project_id: str, command_kind: str, request_hash: str,
                    answer: Any) -> None:
-    from datetime import datetime
 
     existing = conn.execute("SELECT command_kind, status FROM project_commands WHERE id=?", (command_id,)).fetchone()
     if existing is not None and existing["status"] == "completed" and existing["command_kind"] != command_kind:

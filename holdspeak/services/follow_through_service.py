@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import dataclass, replace
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from holdspeak.timestamps import parse_stamp, utc_now_iso
 from typing import Any, Protocol
 

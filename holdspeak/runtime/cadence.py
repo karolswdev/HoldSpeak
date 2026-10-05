@@ -77,7 +77,6 @@ class CadenceMixin:
         if tg is None or not tg.is_active or not tg.allowed_chat_ids:
             return
         try:
-            from datetime import datetime
 
             from ..cadence.brief import should_send_daily_brief
             from ..cadence.models import CadencePolicy
@@ -108,7 +107,6 @@ class CadenceMixin:
         receipted via pipeline_events.
         """
         try:
-            from datetime import datetime
 
             from ..cadence.brief import should_send_daily_brief
             from ..cadence.models import CadencePolicy

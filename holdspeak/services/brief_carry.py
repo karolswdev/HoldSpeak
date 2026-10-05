@@ -43,7 +43,6 @@ Every carry writes a kernel receipt (``decision.carried``, Article XI).
 """
 from __future__ import annotations
 
-from datetime import datetime
 from holdspeak.timestamps import utc_now_iso
 from typing import Any
 from uuid import uuid4

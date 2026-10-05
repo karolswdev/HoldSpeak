@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import sqlite3
 import uuid
-from datetime import datetime
 from holdspeak.timestamps import parse_wall, utc_now_iso
 from typing import Optional, Any
 

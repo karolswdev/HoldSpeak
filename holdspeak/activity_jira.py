@@ -7,7 +7,6 @@ import re
 import shutil
 import subprocess
 from dataclasses import dataclass
-from datetime import datetime
 from holdspeak.timestamps import local_wall
 from typing import Any, Callable, Iterable, Optional
 

@@ -6,7 +6,6 @@ out of MeetingSession; `self` is the session.
 
 from __future__ import annotations
 
-from datetime import datetime
 from holdspeak.timestamps import local_wall
 from typing import Optional
 

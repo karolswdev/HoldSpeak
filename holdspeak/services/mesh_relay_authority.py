@@ -24,7 +24,6 @@ from __future__ import annotations
 import copy
 import time
 from contextlib import contextmanager, nullcontext
-from datetime import datetime
 from typing import Any, Iterator, Mapping, Optional
 
 from ..deployment_revisions import DeploymentRevision

@@ -12,7 +12,6 @@ from __future__ import annotations
 import ipaddress
 from dataclasses import dataclass
 from pathlib import Path
-from datetime import datetime
 from holdspeak.timestamps import local_wall
 from typing import Any, Optional
 from urllib.parse import urlparse

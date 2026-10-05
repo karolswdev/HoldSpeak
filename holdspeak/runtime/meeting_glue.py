@@ -8,7 +8,6 @@ WebRuntime.
 from __future__ import annotations
 
 import time
-from datetime import datetime
 from holdspeak.timestamps import utc_now
 from typing import Optional
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime
 
-from holdspeak.timestamps import in_window, local_now, local_wall, parse_stamp, sql_window
+from holdspeak.timestamps import in_window, local_now, local_wall, parse_stamp, sql_instant, sql_window
 import json
 import logging
 import re
@@ -1463,10 +1463,10 @@ class MondayBriefService:
                    FROM decision_records r
                    JOIN decision_record_sources s ON s.record_id = r.id
                    WHERE s.source_type = 'meeting'
-                     AND r.created_at >= ? AND r.created_at < ?
+                     AND julianday(r.created_at) >= julianday(?) AND julianday(r.created_at) < julianday(?)
                      AND r.deleted = 0
-                   ORDER BY r.created_at DESC""",
-                (since, week_end),
+                   ORDER BY julianday(r.created_at) DESC""",
+                (sql_instant(since), sql_instant(week_end)),
             ).fetchall()
 
             if decision_rows:

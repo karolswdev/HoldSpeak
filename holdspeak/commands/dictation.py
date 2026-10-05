@@ -22,7 +22,6 @@ on the host.
 from __future__ import annotations
 
 import sys
-from datetime import datetime
 from holdspeak.timestamps import utc_now
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional, TextIO
