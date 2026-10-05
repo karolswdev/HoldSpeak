@@ -4,7 +4,7 @@
  * there): GET/POST /api/setup/local-ai and POST /api/setup/local-ai/cancel.
  * The fields this face reads: `state`, `files[].key|label|size_bytes|
  * on_device|url`, `bytes_total`, `bytes_done`, `egress.destination`,
- * `error`, `error_code`. Every file `key: "whisper"` on the device is the
+ * `speech.state`, `error`. Every file `key: "whisper"` on the device is the
  * moment the First words card lights: #856 recomputes `on_device` from the
  * disk on every read and downloads in plan order (whisper, embed, starter),
  * so the speech model lands first. */
@@ -17,7 +17,11 @@ export type LocalAiState =
   | "downloading"
   | "failed"
   | "ready"
+  | "incomplete"
   | "needs_runtime";
+
+/** Is the CONFIGURED Whisper model covered (#856 `speech`)? */
+export type SpeechState = "on_device" | "on_device_unpinned" | "will_download" | "not_covered";
 
 export interface LocalAiFile {
   key: string;
@@ -35,6 +39,8 @@ export interface LocalAiStatus {
   bytes_done: number;
   percent?: number;
   egress?: { destination: string; files?: number; bytes?: number } | null;
+  speech?: { model: string; backend: string; state: SpeechState };
+  local_engine?: { ready: boolean };
   error?: string;
   error_code?: string;
 }
@@ -81,8 +87,16 @@ export function groupsOf(status: LocalAiStatus | null): LocalAiGroup[] {
   return known.filter((group): group is LocalAiGroup => group !== null);
 }
 
-/** Speech is on this device: the First words card lights. */
+/** Speech is on this device: the First words card lights.
+ *
+ * #856 recomputes each file's `on_device` from the disk on every read and
+ * fetches the Whisper files first, so this turns true the moment the speech
+ * model lands, while the chat model still downloads. `speech.state` covers
+ * the owner's own copy (`on_device_unpinned`: no Whisper rows to read). */
 export function speechReady(status: LocalAiStatus | null): boolean {
+  const state = status?.speech?.state;
+  if (state === "on_device" || state === "on_device_unpinned") return true;
+  if (state === "not_covered") return false;
   const speech = (status?.files ?? []).filter((file) => file.key === "whisper");
   return speech.length > 0 && speech.every((file) => file.on_device);
 }
@@ -166,11 +180,15 @@ export function useLocalAi() {
   const [finishedAt, setFinishedAt] = useState<string | null>(null);
   const last = useRef<{ at: number; done: number } | null>(null);
   const sawRun = useRef(false);
+  // The host the files come from, as the hub named it before the press
+  // (`egress.destination`; it is null once nothing is left to fetch).
+  const host = useRef("");
   const mounted = useRef(true);
 
   const accept = useCallback((status: LocalAiStatus) => {
     if (!mounted.current) return;
     const now = Date.now();
+    if (status.egress?.destination) host.current = status.egress.destination.toUpperCase();
     if (status.state === "downloading") {
       sawRun.current = true;
       const next = rateOf(last.current, now, status.bytes_done || 0);
@@ -233,6 +251,7 @@ export function useLocalAi() {
     rate,
     busy,
     finishedAt,
+    host: host.current,
     refresh,
     start: () => act(LOCAL_AI_PATH),
     cancel: () => act(`${LOCAL_AI_PATH}/cancel`),

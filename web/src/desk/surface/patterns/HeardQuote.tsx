@@ -57,7 +57,7 @@ export function HeardQuote({
   seconds?: number | null;
   /** The clock time of the take (`14:03`). */
   at?: string | null;
-  /** The take ran on this device: a LOCAL lamp. */
+  /** The take ran on this device: an ON DEVICE lamp. */
   local?: boolean;
   /** The take's verbs (library Buttons). */
   verbs?: ReactNode;
@@ -80,7 +80,7 @@ export function HeardQuote({
       <figcaption className="surface-heard-facts">
         <StateChip state="success" label="HEARD" icon="●" />
         {facts ? <span className="surface-token surface-heard-token">{facts}</span> : null}
-        {local ? <LampGadget label="LOCAL" on /> : null}
+        {local ? <LampGadget label="ON DEVICE" on /> : null}
       </figcaption>
       {verbs ? <div className="surface-heard-verbs">{verbs}</div> : null}
     </figure>

@@ -511,7 +511,7 @@ ratified 2026-10-05: people must feel excited, heard and validated).
   in curly quotes. Content, not prose (UX-CANON A3 does not apply to it).
 - `seconds?: number | null` — the take's length; renders `0:04`.
 - `at?: string | null` — the clock time of the take (`14:03`).
-- `local?: boolean` — a `LOCAL` lamp (LampGadget): the take ran on this device.
+- `local?: boolean` — an `ON DEVICE` lamp (LampGadget; the copy law wants the axis named, so never a bare `LOCAL`): the take ran on this device.
 - `verbs?: ReactNode` — the take's library Buttons (Play · Again · Keep as note).
 - `size?: "display" | "primary"` — `display` (default) is the display step
   (26/650): the ONE display element of the face. A face that shows a

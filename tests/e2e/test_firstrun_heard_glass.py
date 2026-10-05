@@ -1,27 +1,38 @@
 """First run "C1 · Heard first" (owner ratified 2026-10-05) on the real hub.
 
-A cold isolated HOME opens on the first-run face. The "Set up local AI"
-API is PR #856's (`/api/setup/local-ai`); this PR merges after it, so the
-rig answers that one route with a scripted fake of its contract. Every
-other read and write is the real hub: the owner's name through
-`PUT /api/settings`, the first sentence through the real dictation socket
-(Chromium's fake device plays a WAV; the hub's transcriber is a fixture),
-and Keep as note through `POST /api/notes`.
+A cold isolated HOME opens on the first-run face. Every read and write is
+the real hub, "Set up local AI" included: the merged #856 service
+(`LocalAISetupService`, GET/POST /api/setup/local-ai) runs whole. Only its
+leaves are replaced, the way #856's own fences replace them
+(tests/unit/test_local_ai_setup.py): the pinned files are small blobs
+served by a file server on this device (the real pins name 3 GB on
+huggingface.co), and the runtime-readiness probe says ready (the blob is
+not a loadable model). The download, the per-file `on_device` reads, the
+one egress receipt, the stop and the resume are the service's own.
+
+The owner's name goes through `PUT /api/settings`, the first sentence
+through the real dictation socket (Chromium's fake device plays a WAV; the
+hub's transcriber is a fixture), and Keep as note through `POST /api/notes`.
 
 The flow, at 1440 and 393: before -> running (First words lights when the
-speech model lands, while the chat model still downloads) -> stopped ->
-ready -> name typed -> listening -> writing -> heard (his words at the
-display step) -> Keep as note creates the note and the Desk opens.
+Whisper files land, while the chat model still downloads) -> stopped
+(the connection drops) -> Try again resumes -> ready -> listening ->
+writing -> heard (his words at the display step) -> Keep as note creates
+the note and the Desk opens.
 
 Shots go to $FIRSTRUN_SHOTS when it is set (the owner's comparison page),
 else to the test's tmp folder.
 """
 from __future__ import annotations
 
+import functools
+import hashlib
 import json
 import os
 import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -36,72 +47,135 @@ pytestmark = [pytest.mark.e2e, pytest.mark.timeout(240, method="thread")]
 TOKEN = "firstrun-c1"
 WAV = REPO / "tests/fixtures/core_path_smoke_16k.wav"
 WORDS = "Send the cutover plan to Priya before Friday."
-HF = "https://huggingface.co"
 MB = 1_000_000
+WHISPER_REPO = "mlx-community/whisper-base-mlx"
+STARTER_PATH = "/unsloth/Qwen3.5-4B-GGUF/Qwen3.5-4B-Q4_K_M.gguf"
 
 
-class FakeLocalAi:
-    """PR #856's GET/POST /api/setup/local-ai, scripted by the test."""
+def _blob(tag: bytes, size: int, magic: bytes = b"") -> bytes:
+    return (magic + tag * (size // len(tag) + 1))[:size]
 
-    FILES = [
-        ("whisper", "whisper-base-mlx", 142 * MB),
-        ("embed", "nomic-embed-text v1.5", 146 * MB),
-        ("starter", "Qwen3.5 4B", 2_741 * MB),
-    ]
+
+@functools.cache
+def _pins() -> SimpleNamespace:
+    """Small pinned blobs (#856's fence shape), sized so the face reads true."""
+    from holdspeak.memory.local_model import PinnedModel
+    from holdspeak.services.local_ai_setup_service import STARTER_PRESET_ID
+
+    def pin(repository: str, filename: str, content: bytes, magic: bytes, label: str) -> PinnedModel:
+        return PinnedModel(
+            name=filename, label=label, repository=repository, revision="r1", filename=filename,
+            sha256=hashlib.sha256(content).hexdigest(), size=len(content), license="MIT",
+            architecture="test", context_ceiling=2048, magic=magic,
+        )
+
+    config, weights = b'{"model_type": "whisper"}', _blob(b"whisper-weights-", 14 * MB)
+    embed, starter = _blob(b"embed-", 15 * MB, b"GGUF"), _blob(b"starter-", 120 * MB, b"GGUF")
+    whisper = (pin(WHISPER_REPO, "config.json", config, b"", "whisper-base-mlx"),
+               pin(WHISPER_REPO, "weights.npz", weights, b"", "whisper-base-mlx"))
+    embed_pin = pin("nomic-ai/nomic-embed-text-v1.5-GGUF", "nomic-embed-text-v1.5.Q8_0.gguf", embed, b"GGUF",
+                    "nomic-embed-text v1.5")
+    starter_sha = "sha256:" + hashlib.sha256(starter).hexdigest()
+    manifest = {"files": [{"path": "Qwen3.5-4B-Q4_K_M.gguf", "sha256": starter_sha, "size": len(starter)}]}
+    manifest_sha = "sha256:" + hashlib.sha256(
+        json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    catalog = {"catalog_revision": 9, "entries": [{
+        "id": STARTER_PRESET_ID, "label": "Qwen3.5 4B",
+        "context": {"recommended_tokens": 8192, "ceiling_tokens": 8192},
+        "source": {"repository": "unsloth/Qwen3.5-4B-GGUF", "revision": "r1",
+                   "filename": "Qwen3.5-4B-Q4_K_M.gguf", "file_sha256": starter_sha,
+                   "manifest_sha256": manifest_sha, "download_bytes": len(starter),
+                   "installed_bytes": len(starter), "peak_free_bytes": len(starter) * 2,
+                   "license": "Apache-2.0"},
+    }]}
+    files = {f"/{WHISPER_REPO}/config.json": config, f"/{WHISPER_REPO}/weights.npz": weights,
+             f"/{embed_pin.repository}/{embed_pin.filename}": embed, STARTER_PATH: starter}
+    return SimpleNamespace(whisper=whisper, embed=embed_pin, catalog=catalog, files=files)
+
+
+class Source:
+    """The model host, on this device. The chat model's first answer sends
+    half its bytes, then holds until the rig releases it; `drop` ends that
+    answer short (the connection drops). A resume (Range) answers whole."""
 
     def __init__(self) -> None:
-        self.state = "not_started"
-        self.on_device = {key: False for key, _, _ in self.FILES}
-        self.bytes_done = 0
-        self.error = ""
-        self.posts: list[str] = []
-        self.post_ready = False
+        self.files = _pins().files
+        self.hold = threading.Event()
+        self.drop = False
+        self.requests: list[tuple[str, str]] = []
+        source = self
 
-    def body(self) -> dict[str, Any]:
-        files = [
-            {"key": key, "label": label, "filename": f"{key}.bin", "url": f"{HF}/x/{key}.bin",
-             "size_bytes": size, "sha256": "0" * 64, "on_device": self.on_device[key]}
-            for key, label, size in self.FILES
-        ]
-        missing = [row for row in files if not row["on_device"]]
-        total = sum(size for _, _, size in self.FILES) if self.state in {"downloading", "failed"} else sum(
-            row["size_bytes"] for row in missing)
-        return {
-            "state": self.state,
-            "runtime": {"ready": True},
-            "files": files,
-            "bytes_total": total,
-            "bytes_done": self.bytes_done if self.state == "downloading" else 0,
-            "percent": 0,
-            "egress": ({"destination": "huggingface.co", "what": "model file request", "files": len(missing),
-                        "bytes": sum(row["size_bytes"] for row in missing)}
-                       if missing and self.state != "downloading" else None),
-            "local_engine": {"ready": self.state == "ready"},
-            "meaning_search": "on" if self.state == "ready" else "off",
-            "error": self.error,
-            "error_code": "network" if self.error else "",
-        }
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args: Any) -> None:
+                pass
 
-    def run(self, *, whisper: bool, bytes_done: int) -> None:
-        self.state = "downloading"
-        self.error = ""
-        self.on_device["whisper"] = whisper
-        self.on_device["embed"] = whisper
-        self.bytes_done = bytes_done
+            def do_GET(self) -> None:
+                header = self.headers.get("Range", "")
+                source.requests.append((self.path, header))
+                body = source.files.get(self.path)
+                if body is None:
+                    self.send_response(404)
+                    self.end_headers()
+                    return
+                start = int(header[6:].split("-")[0]) if header.startswith("bytes=") else 0
+                if start:
+                    self.send_response(206)
+                    self.send_header("Content-Range", f"bytes {start}-{len(body) - 1}/{len(body)}")
+                else:
+                    self.send_response(200)
+                rest = body[start:]
+                self.send_header("Content-Length", str(len(rest)))
+                self.end_headers()
+                if self.path == STARTER_PATH and not start:
+                    half = len(rest) // 2
+                    self.wfile.write(rest[:half])
+                    self.wfile.flush()
+                    source.hold.wait(60)
+                    if source.drop:
+                        return  # short answer: the client reads a broken download
+                    rest = rest[half:]
+                self.wfile.write(rest)
 
-    def handle(self, route: Any) -> None:
-        request = route.request
-        if request.method == "POST":
-            self.posts.append(request.url)
-            if request.url.endswith("/cancel"):
-                self.state = "not_started"
-            elif self.post_ready:
-                self.state, self.error = "ready", ""
-                self.on_device = {key: True for key in self.on_device}
-            else:
-                self.run(whisper=False, bytes_done=40 * MB)
-        route.fulfill(status=200 if request.method == "GET" else 202,
-                      content_type="application/json", body=json.dumps(self.body()))
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.base = f"http://127.0.0.1:{self.server.server_address[1]}"
+
+    def url_for(self, model: Any) -> str:
+        return f"{self.base}/{model.repository}/{model.filename}"
+
+    def close(self) -> None:
+        self.hold.set()
+        self.server.shutdown()
+        self.server.server_close()
+
+
+def _real_local_ai(monkeypatch: pytest.MonkeyPatch, source: Source) -> None:
+    """The hub builds the REAL #856 service; only its leaves point here."""
+    from holdspeak.services import local_ai_setup_service as module
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from holdspeak.services.meaning_search_service import MeaningSearchService
+    from holdspeak.services.model_profile_service import ModelProfileService
+
+    pins = _pins()
+    allowed = lambda host: host == "127.0.0.1"  # noqa: E731
+    monkeypatch.setattr(ModelProfileService, "_local_runtime_readiness",
+                        staticmethod(lambda runtime_id: ("ready", "ready")))
+    monkeypatch.setattr("holdspeak.whisper_models._PINNED", {("mlx", "base"): pins.whisper})
+    real = module.LocalAISetupService
+
+    def build(db: Any, *, meaning_search: Any, broker_provider: Any = None, **_: Any) -> Any:
+        meaning = MeaningSearchService(
+            db, assignment_service=InferenceAssignmentService(db), broker_provider=broker_provider,
+            model=pins.embed, source_url=source.url_for(pins.embed), allowed_host=allowed,
+            wake=lambda: None,
+        )
+        return real(
+            db, meaning_search=meaning, broker_provider=broker_provider,
+            config_provider=lambda: SimpleNamespace(model=SimpleNamespace(name="base", backend="mlx")),
+            catalog_provider=lambda: pins.catalog, url_for=source.url_for, allowed_host=allowed,
+        )
+
+    monkeypatch.setattr(module, "LocalAISetupService", build)
 
 
 def _no_cut(page: Any, selector: str) -> list[str]:
@@ -140,10 +214,11 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
 
     monkeypatch.setattr(web_server, "WebRuntimeCallbacks",
                         lambda **kwargs: original(**kwargs, on_transcribe=transcribe))
+    source = Source()
+    _real_local_ai(monkeypatch, source)
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     engine_profile()
     assign_engine(SPEECH_CAPABILITY, 1)
-    fake = FakeLocalAi()
     out = Path(os.environ.get("FIRSTRUN_SHOTS") or tmp_path / "shots")
     out.mkdir(parents=True, exist_ok=True)
     try:
@@ -154,7 +229,6 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
             ])
             page = browser.new_page(viewport={"width": width, "height": height}, device_scale_factor=2)
             page.set_default_timeout(10_000)
-            page.route("**/api/setup/local-ai**", fake.handle)
 
             def shot(name: str) -> None:
                 page.wait_for_timeout(350)
@@ -169,7 +243,7 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
             words = page.get_by_test_id("firstrun-first-words")
 
             # ── before: one press, its size, the host on the row that leaves ──
-            press = local_ai.get_by_role("button", name="Set up local AI · 3.0 GB", exact=True)
+            press = local_ai.get_by_role("button", name="Set up local AI · 149 MB", exact=True)
             expect(press).to_be_visible()
             expect(local_ai.locator(".gadget-chip-egress")).to_have_text("HUGGINGFACE.CO")
             expect(words.get_by_role("button", name="Dictate one sentence")).to_be_disabled()
@@ -193,39 +267,44 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
             owner = Config.load().owner
             assert owner.name == "Karol Sane" and owner.aliases == ["Karol", "KS", "me"], owner
 
-            # ── running: speech not here yet -> First words stays shut ──
+            # ── running: the Whisper files land first; the chat model holds half-way ──
+            words_shut = words.get_by_role("button", name="Dictate one sentence", exact=True)
+            expect(words_shut).to_be_disabled()
             press.click()
             expect(local_ai.get_by_role("group", name="Local AI download")).to_be_visible()
-            expect(words.get_by_role("button", name="Dictate one sentence")).to_be_disabled()
-            assert fake.posts and not fake.posts[0].endswith("/cancel")
-
-            # ── the speech model lands while the chat model downloads ──
-            fake.run(whisper=True, bytes_done=288 * MB + 1_080 * MB)
-            page.wait_for_timeout(1000)
-            fake.run(whisper=True, bytes_done=288 * MB + 1_126 * MB)
-            page.wait_for_timeout(1000)
             dictate = words.get_by_role("button", name="◖ Dictate one sentence")
-            expect(dictate).to_be_enabled()
+            expect(dictate).to_be_enabled(timeout=20_000)
             expect(words).to_have_attribute("data-lit", "true")
-            expect(words.get_by_text("SPEECH READY")).to_be_visible()
+            expect(words.get_by_role("status", name="SPEECH READY")).to_be_visible()
             chat = local_ai.locator("[role='listitem'][data-status='running']")
             expect(chat).to_contain_text("Chat")
-            expect(chat).to_contain_text("/ 2.7 GB")
+            expect(chat).to_contain_text("/ 120 MB")
+            done = local_ai.locator("[role='listitem'][data-status='done']")
+            expect(done).to_have_count(2)
+            # The Whisper files are on this device before the chat model is.
+            pins = _pins()
+            assert [p for p, _ in source.requests][:3] == [
+                f"/{WHISPER_REPO}/config.json", f"/{WHISPER_REPO}/weights.npz",
+                f"/{pins.embed.repository}/{pins.embed.filename}"], source.requests
             # The species fix: the running label is whole at every width.
             assert _no_cut(page, "[data-testid='firstrun-local-ai'] [role='listitem'] > span:nth-child(2)") == []
             expect(local_ai.get_by_role("button", name="Stop", exact=True)).to_be_visible()
             shot("running")
 
-            # ── stopped: the plain reason and one verb ──
-            fake.state, fake.error = "failed", "The download stopped. Try again to continue."
-            expect(local_ai.get_by_text("CAN'T DOWNLOAD")).to_be_visible()
-            expect(local_ai.get_by_text(fake.error)).to_be_visible()
+            # ── stopped: the connection drops; the plain reason and one verb ──
+            source.drop = True
+            source.hold.set()
+            expect(local_ai.get_by_role("status", name="CAN'T DOWNLOAD")).to_be_visible(timeout=20_000)
+            expect(local_ai.get_by_text("The download stopped. Try again to continue.")).to_be_visible()
+            # Speech stays: First words is still open.
+            expect(dictate).to_be_enabled()
             shot("failed")
 
-            # ── Try again -> ready ──
-            fake.post_ready = True
+            # ── Try again resumes the part file -> ready ──
+            source.drop = False
             local_ai.get_by_role("button", name="Try again", exact=True).click()
-            expect(local_ai.get_by_text("3 MODELS · 3.0 GB · FROM HUGGINGFACE.CO")).to_be_visible()
+            expect(local_ai.get_by_text("3 MODELS · 149 MB · FROM HUGGINGFACE.CO")).to_be_visible(timeout=30_000)
+            assert any(p == STARTER_PATH and r.startswith("bytes=") for p, r in source.requests), source.requests
             expect(local_ai.locator(".gadget-chip-egress")).to_have_count(0)
 
             # ── listening -> writing -> heard ──
@@ -272,3 +351,4 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
     finally:
         gate.set()
         server.stop()
+        source.close()

@@ -36,8 +36,10 @@ vi.mock("../../../lib/micStreamSession", async (importOriginal) => ({
 import { FirstRun } from "../FirstRun";
 
 const MB = 1_000_000;
-function status(over: Partial<LocalAiStatus> & { speech?: boolean; all?: boolean } = {}): LocalAiStatus {
-  const { speech = false, all = false, ...rest } = over;
+function status(over: Partial<LocalAiStatus> & { landed?: boolean; all?: boolean } = {}): LocalAiStatus {
+  // The shape of #856's GET /api/setup/local-ai (merged, main fd3272147).
+  const { landed = false, all = false, ...rest } = over;
+  const speech = landed || all;
   return {
     state: "not_started",
     files: [
@@ -48,6 +50,8 @@ function status(over: Partial<LocalAiStatus> & { speech?: boolean; all?: boolean
     bytes_total: 0,
     bytes_done: 0,
     egress: { destination: "huggingface.co" },
+    speech: { model: "base", backend: "mlx", state: speech ? "on_device" : "will_download" },
+    local_engine: { ready: all },
     error: "",
     ...rest,
   };
@@ -80,13 +84,16 @@ beforeEach(() => {
 describe("planSteps / speechReady", () => {
   it("lights speech only when every whisper file is on the device", () => {
     expect(speechReady(status())).toBe(false);
-    expect(speechReady(status({ speech: true }))).toBe(true);
+    expect(speechReady(status({ landed: true }))).toBe(true);
     expect(speechReady(null)).toBe(false);
+    // The owner's own Whisper copy: no Whisper rows, speech is here.
+    expect(speechReady({ ...status(), files: [], speech: { model: "small", backend: "mlx", state: "on_device_unpinned" } })).toBe(true);
+    expect(speechReady({ ...status(), files: [], speech: { model: "large", backend: "mlx", state: "not_covered" } })).toBe(false);
   });
 
   it("puts the bytes of this run on the file in progress", () => {
     const steps = planSteps(
-      status({ state: "downloading", speech: true, bytes_total: 3029 * MB, bytes_done: 288 * MB + 1100 * MB }),
+      status({ state: "downloading", landed: true, bytes_total: 3029 * MB, bytes_done: 288 * MB + 1100 * MB }),
       "46 MB/s",
     );
     expect(steps.map((s) => s.status)).toEqual(["done", "done", "running"]);
@@ -119,7 +126,7 @@ describe("FirstRun", () => {
     expect(screen.queryByRole("button", { name: "◖ Dictate one sentence" })).toBeNull();
 
     // the speech model lands (the next poll).
-    local = status({ state: "downloading", speech: true, bytes_total: 3029 * MB, bytes_done: 1400 * MB });
+    local = status({ state: "downloading", landed: true, bytes_total: 3029 * MB, bytes_done: 1400 * MB });
     const dictate = await screen.findByRole("button", { name: "◖ Dictate one sentence" }, { timeout: 3000 });
     expect(screen.getByTestId("firstrun-first-words").getAttribute("data-lit")).toBe("true");
 
@@ -192,5 +199,19 @@ describe("FirstRun", () => {
     expect(await screen.findByRole("status", { name: "CAN'T CHECK" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "◖ Dictate one sentence" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Continue later" })).toBeTruthy();
+  });
+
+  it("names a speech model setup cannot get, with no dead Try again", async () => {
+    local = {
+      ...status({ state: "incomplete" }),
+      files: status().files.filter((f) => f.key !== "whisper").map((f) => ({ ...f, on_device: true })),
+      speech: { model: "large-v3", backend: "mlx", state: "not_covered" },
+      error: "Set up local AI cannot get the selected Whisper model. Select the base model, or add the model yourself.",
+    };
+    render(<FirstRun />);
+    expect(await screen.findByRole("status", { name: "NO SPEECH MODEL" })).toBeTruthy();
+    expect(screen.getByText(/cannot get the selected Whisper model/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.getByRole("status", { name: "WAITS FOR SPEECH" })).toBeTruthy();
   });
 });

@@ -90,7 +90,7 @@ function ModelRows({ groups, ready }: { groups: LocalAiGroup[]; ready: boolean }
               <span className="concierge-token">{group.model}</span>
               <span className="concierge-token">{formatBytes(group.bytes)}</span>
               <span className="concierge-found-state">
-                {ready || group.onDevice ? <LampGadget label="LOCAL" on /> : null}
+                {ready || group.onDevice ? <LampGadget label="ON DEVICE" on /> : null}
               </span>
             </span>
           }
@@ -108,8 +108,8 @@ function LocalAiCard({ ai }: { ai: ReturnType<typeof useLocalAi> }) {
   const state = status?.state;
   const ready = state === "ready";
   const running = state === "downloading";
-  const stopped = state === "failed" || state === "needs_runtime";
-  const host = sourceHost(status);
+  const stopped = state === "failed" || state === "needs_runtime" || state === "incomplete";
+  const host = ai.host || sourceHost(status);
   const total = groups.reduce((sum, group) => sum + group.bytes, 0);
   const missing = missingBytes(status);
   return (
@@ -117,7 +117,7 @@ function LocalAiCard({ ai }: { ai: ReturnType<typeof useLocalAi> }) {
       title="Local AI"
       testId="firstrun-local-ai"
       selected={ready}
-      state={ready ? <LampGadget label="LOCAL" on /> : null}
+      state={ready ? <LampGadget label="ON DEVICE" on /> : null}
     >
       {ai.read.kind === "unread" ? (
         <div className="firstrun-fail" role="alert">
@@ -137,12 +137,16 @@ function LocalAiCard({ ai }: { ai: ReturnType<typeof useLocalAi> }) {
         <div className="firstrun-fail" role="alert">
           <StateChip
             state="failure"
-            label={state === "needs_runtime" ? "CAN'T SET UP" : "CAN'T DOWNLOAD"}
+            label={state === "failed" ? "CAN'T DOWNLOAD" : state === "incomplete" ? "NO SPEECH MODEL" : "NO RUNTIME"}
           />
           {status.error ? <span className="firstrun-reason">{status.error}</span> : null}
-          <Button dense variant="primary" loading={ai.busy} disabled={ai.busy} onClick={() => void ai.start()}>
-            Try again
-          </Button>
+          {/* `incomplete`: setup cannot get the selected Whisper model, so a
+              second press would do nothing (UX-CANON A11). */}
+          {state !== "incomplete" ? (
+            <Button dense variant="primary" loading={ai.busy} disabled={ai.busy} onClick={() => void ai.start()}>
+              Try again
+            </Button>
+          ) : null}
         </div>
       ) : null}
       {status ? (
