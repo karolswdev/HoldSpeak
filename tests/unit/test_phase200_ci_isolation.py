@@ -313,5 +313,7 @@ def test_the_shutdown_handler_stops_every_conductor_it_started() -> None:
         "stop_intel_queue_conductor",
         # Memory slice 1: the fifth conductor (sweep + memory.embed).
         "stop_memory_conductor",
+        # Owner ruling 2026-10-05: the defaults watcher (rescan + summary backlog).
+        "stop_defaults_conductor",
     ):
         assert stop in body, f"{stop} is not called on shutdown"

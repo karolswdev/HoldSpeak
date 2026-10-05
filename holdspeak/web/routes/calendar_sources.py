@@ -38,6 +38,9 @@ def _source_type(source: CalendarSource) -> str:
     label = (source.label or "").upper()
     if label.endswith("SNAPSHOT"):
         return "SNAPSHOT"
+    # A calendar in the macOS Calendar app (holdspeak/macos_calendar.py).
+    if (source.url or "").strip().lower().startswith("eventkit:"):
+        return "MACOS"
     return "ICS"
 
 

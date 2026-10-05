@@ -140,11 +140,21 @@ def _check_websocket(url: str, token: str) -> DoctorResult:
             close_timeout=_TIMEOUT_SECONDS,
         ) as websocket:
             websocket.send("ping")
-            frame = websocket.recv(timeout=_TIMEOUT_SECONDS)
+            # The hub also pushes its own frames (the first is "duration"), so
+            # read until the pong, bounded by the timeout and a frame count.
+            deadline = start + _TIMEOUT_SECONDS
+            frame: object = None
+            for _ in range(50):
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                frame = websocket.recv(timeout=remaining)
+                if frame == "pong":
+                    break
         elapsed_ms = int((time.monotonic() - start) * 1000)
         if frame == "pong":
-            return DoctorResult("PASS", "websocket", f"frame received in {elapsed_ms}ms")
-        return DoctorResult("FAIL", "websocket", f"unexpected frame: {frame!r}")
+            return DoctorResult("PASS", "websocket", f"pong received in {elapsed_ms}ms")
+        return DoctorResult("FAIL", "websocket", f"no pong; last frame: {frame!r}")
     except Exception as exc:
         return DoctorResult("FAIL", "websocket", _failure(exc))
 
@@ -300,8 +310,9 @@ def check_observer() -> DoctorResult:
 def discovered_hub_url() -> str | None:
     """The running hub's real URL, from its owner lock beside the database.
 
-    The hub binds a free port on each boot (``web_server._find_free_port``)
-    and writes that port into its owner lock.  ``holdspeak-mcp`` finds the hub
+    The hub binds port 8765 (``web_server.DEFAULT_WEB_PORT``), or a free
+    port when another process holds 8765, and writes the port it took into
+    its owner lock.  ``holdspeak-mcp`` finds the hub
     the same way (``holdspeak.mcp.server.discover_hub``).  Reading the lock
     opens no database and makes no network request.
     """
@@ -314,6 +325,15 @@ def discovered_hub_url() -> str | None:
     if not hub:
         return None
     return f"http://{hub['host']}:{int(hub['port'])}"
+
+
+def _local_owner_token() -> str:
+    try:
+        from .mcp.server import _owner_token
+
+        return _owner_token()
+    except Exception:
+        return ""
 
 
 def resolve_hub_url(url: str | None = None) -> str:
@@ -332,6 +352,11 @@ def run_checks(url: str | None = None, token: str | None = None) -> list[DoctorR
         )] + [_check_mcp_server(), _check_database(), check_observer()]
 
     credential = token if token is not None else os.environ.get("HOLDSPEAK_TOKEN", "")
+    if not credential and not url and not os.environ.get("HOLDSPEAK_URL", ""):
+        # The hub on THIS machine (its owner lock, or 127.0.0.1:8765): its
+        # owner token is in the config file, as holdspeak-mcp reads it.  Never
+        # sent to a URL the caller named.
+        credential = _local_owner_token()
     return [
         _check_hub_health(hub_url, credential),
         _check_runtime_status(hub_url, credential),
