@@ -365,15 +365,20 @@ def test_hard_relation_questions_need_the_entity_walk(tmp_path: Path, capsys) ->
     # expects, so keyword search finds none of them.
     assert keyword["groups"][group]["recall@5"] == 0.0
     assert walk["groups"][group]["recall@5"] >= HARD_WALK_GATE
-    # Measured 2026-10-04 (EXTRACTOR_VERSION 2): 7 of 9 complete.
+    # Measured 2026-10-04 (EXTRACTOR_VERSION 2): 7 of 9 complete. Each
+    # question that is complete stays fenced ONE BY ONE; the two known gaps
+    # are strict xfails of their own (Astra, #845 iteration 2):
     # - r11 misses n-supplier: "T. Wierzbicki" does not join "Tomasz
-    #   Wierzbicki" (see the xfail below).
-    # - r09 misses a Kestrel source: with no title rule the model leaves
-    #   "Kestrel" out of the facts (a title rule invented projects; PR #845).
-    # Orchestrator ruling 2026-10-04: completeness is a model-quality number,
-    # so its gate is 7/9; recall@5 (the proof that the walk works) keeps its
-    # gate. Raise this gate back when either source returns.
-    assert walk["groups"][group]["complete@5"] >= 7 / 9 - 0.001
+    #   Wierzbicki" (test_hard_relation_alias_joins_the_full_name).
+    # - r09 finds no Kestrel source without vectors: with no title rule the
+    #   model leaves "Kestrel" out of the facts (the title rule invented
+    #   projects; test_hard_relation_kestrel_is_complete_by_the_walk).
+    known_gaps = {"r09", "r11"}
+    for question in hard:
+        if question["id"] in known_gaps:
+            continue
+        expected = {refs[label] for label in question["expect"]}
+        assert expected <= set(walk["ranked"][question["id"]][:5]), question["id"]
     assert walk_vectors["groups"][group]["recall@5"] >= HARD_WALK_GATE
     assert walk_vectors["groups"][group]["mrr"] > vectors["groups"][group]["mrr"]
 
@@ -508,6 +513,24 @@ def test_hard_relation_names_stay_apart(tmp_path: Path) -> None:
             assert jane_walk.index(refs[label]) > jane_walk.index(refs["m-jane-w"])
     john_walk = _walk_alone(db, by_id["r13"])
     assert john_walk[0] == refs["m-john-w"], john_walk
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "Gap, measured 2026-10-04 (EXTRACTOR_VERSION 2, qwen3.8-27b): with no title rule "
+    "the model leaves 'Kestrel' out of the facts of m-kestrel and th-kestrel, so the "
+    "walk alone finds neither for r09. A title rule fixed it but invented projects "
+    "from meeting titles (Astra, #845). With vectors on, r09 is complete."
+))
+def test_hard_relation_kestrel_is_complete_by_the_walk(tmp_path: Path) -> None:
+    from holdspeak.memory.extract import extract_pending
+
+    from .engines import FixtureExtractor
+
+    db, refs = _hard_desk(tmp_path)
+    extract_pending(db, FixtureExtractor(bench.FACTS, bench.HARD_FACTS))
+    r09 = next(question for question in bench.load_hard_relation_questions() if question["id"] == "r09")
+    got = bench.run(db, refs, questions=[r09])["ranked"]["r09"][:5]
+    assert {refs[label] for label in r09["expect"]} <= set(got), got
 
 
 @pytest.mark.xfail(strict=True, reason=(
