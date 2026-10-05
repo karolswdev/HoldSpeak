@@ -205,14 +205,20 @@ class DictationJournalRepository(BaseRepository):
 
         The presented text is the record — corrections stay the separate,
         taught act (`mark_corrected`). Returns True if a row was updated.
+
+        The edit writes `final_text` too. The Journal shows, copies and edits
+        the transcript, but its search and memory also read `final_text`
+        (memory's body prefers it, db/memory.py "dictation"); an old
+        `final_text` kept the words he edited away findable.
         """
         text = str(transcript).strip()
         if not text:
             return False
         with self._connection() as conn:
             cursor = conn.execute(
-                "UPDATE dictation_journal SET transcript = ? WHERE id = ?",
-                (text, int(entry_id)),
+                "UPDATE dictation_journal SET transcript = ?, final_text = ? "
+                "WHERE id = ?",
+                (text, text, int(entry_id)),
             )
             return bool(cursor.rowcount and cursor.rowcount > 0)
 

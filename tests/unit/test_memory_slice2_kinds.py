@@ -396,13 +396,14 @@ def test_p1_the_version_bump_keeps_every_vector_and_recall_has_no_gap(tmp_path: 
 
 
 def test_p2_an_edited_dictation_is_not_found_by_its_old_words(hub: Hub) -> None:
-    from holdspeak.plugins.dictation.journal import DictationJournalRecorder
+    """The real producer fills final_text (what got typed).  The Journal edit
+    (HS-101) rewrites the record he sees, so memory must follow the edit."""
+    from holdspeak.plugins.dictation.journal import DictationJournalRecorder, passthrough_run
 
-    from types import SimpleNamespace
-
-    run = SimpleNamespace(final_text="", stage_results=[], total_elapsed_ms=0.0, warnings=[], intent=None)
+    said = "The vellichor launch is Friday"
     entry = DictationJournalRecorder(hub.db.dictation_journal).record(
-        run, source="dictation", transcript="The vellichor launch is Friday")
+        passthrough_run(said), source="dictation", transcript=said)
+    assert hub.db.dictation_journal.get(entry.id).final_text == said
     sweep(hub.db)
     assert _refs(hub.db, "vellichor") == [f"dictation:{entry.id}"]
 
@@ -412,6 +413,7 @@ def test_p2_an_edited_dictation_is_not_found_by_its_old_words(hub: Hub) -> None:
     hits = hub.db.memory.search("tamarack").hits
     assert [hit.source_ref for hit in hits] == [f"dictation:{entry.id}"]
     assert "tamarack" in hits[0].snippet and "vellichor" not in hits[0].snippet
+    assert _refs(hub.db, "vellichor") == []  # and after the sweep
 
 
 def test_p3_equal_time_ranges_give_equal_answers(hub: Hub, monkeypatch: pytest.MonkeyPatch) -> None:
