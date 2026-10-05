@@ -365,9 +365,15 @@ def test_hard_relation_questions_need_the_entity_walk(tmp_path: Path, capsys) ->
     # expects, so keyword search finds none of them.
     assert keyword["groups"][group]["recall@5"] == 0.0
     assert walk["groups"][group]["recall@5"] >= HARD_WALK_GATE
-    # Measured 2026-10-04: 8 of 9 complete; r11 misses n-supplier, because
-    # "T. Wierzbicki" does not join "Tomasz Wierzbicki" (see the xfail below).
-    assert walk["groups"][group]["complete@5"] >= 8 / 9 - 0.001
+    # Measured 2026-10-04 (EXTRACTOR_VERSION 2): 7 of 9 complete.
+    # - r11 misses n-supplier: "T. Wierzbicki" does not join "Tomasz
+    #   Wierzbicki" (see the xfail below).
+    # - r09 misses a Kestrel source: with no title rule the model leaves
+    #   "Kestrel" out of the facts (a title rule invented projects; PR #845).
+    # Orchestrator ruling 2026-10-04: completeness is a model-quality number,
+    # so its gate is 7/9; recall@5 (the proof that the walk works) keeps its
+    # gate. Raise this gate back when either source returns.
+    assert walk["groups"][group]["complete@5"] >= 7 / 9 - 0.001
     assert walk_vectors["groups"][group]["recall@5"] >= HARD_WALK_GATE
     assert walk_vectors["groups"][group]["mrr"] > vectors["groups"][group]["mrr"]
 
