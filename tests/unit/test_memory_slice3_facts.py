@@ -912,75 +912,35 @@ def test_a_short_name_two_full_names_could_take_is_its_own_entity(tmp_path: Path
     assert people == {"Dana Lee": [], "Dana Kim": [], "Dana": []}
 
 
-# ── a day with no month is the next such day (EXTRACTOR_VERSION 2) ─────
+# ── a day with no month takes its month by tense (EXTRACTOR_VERSION 2) ──
 
 
-def _dated(text: str, start: Optional[str], end: Optional[str] = None) -> dict:
-    return {"text": text, "occurred_start": start, "occurred_end": end}
-
-
-def test_the_prompt_says_a_day_with_no_month_is_the_next_such_day() -> None:
+def test_the_prompt_dates_a_day_with_no_month_by_tense() -> None:
     prompt = extract_module.SYSTEM_PROMPT
-    assert "next such day on or after the date of the source" in prompt
-    assert "never before the date of the source" in prompt
-    assert extract_module.EXTRACTOR_VERSION >= 2
+    assert "for a thing to come" in prompt and "the next such day on or after the date of the source" in prompt
+    assert "for a thing that already happened" in prompt and "the most recent such day on or before it" in prompt
+    assert "title of the source" not in prompt  # Astra, #845: a title rule invented a project
+    assert not hasattr(extract_module, "roll_past_days")  # no code moves a date
 
 
-def test_a_past_day_with_no_month_is_stored_as_the_next_such_day(tmp_path: Path) -> None:
-    """The model gives 2026-09-09 for "the ninth" in a meeting of 2026-09-14.
-    The stored fact (text and dates) says 2026-10-09."""
-    db = Database(tmp_path / "day.db")
-    _meeting(db, "m-leave", [("Remote", "My leave starts on the ninth.")], title="1:1 with Rafael Okonkwo")
-    sweep(db)
-    wrong = {**F("Rafael Okonkwo's leave starts on 2026-09-09.", "Rafael Okonkwo",
-                 [("Rafael Okonkwo", "person")], kind="event", start="2026-09-09")}
-    extract_pending(db, Scripted([("ninth", [wrong])]))
-    with db._connection() as conn:
-        rows = [tuple(r) for r in conn.execute("SELECT text,occurred_start FROM memory_facts")]
-    assert rows == [("Rafael Okonkwo's leave starts on 2026-10-09.", "2026-10-09")]
-
-
-@pytest.mark.parametrize("fact,chunk,expected", [
-    # Moved: a thing still to come, a bare day, a past date in the source month.
-    (_dated("Rafael's leave starts on 2026-09-09.", "2026-09-09"), "My leave starts on the ninth.",
-     _dated("Rafael's leave starts on 2026-10-09.", "2026-10-09")),
-    (_dated("Beatriz requires the numbers by 2026-09-15.", None), "I need the numbers by the 15th.",
-     _dated("Beatriz requires the numbers by 2026-10-15.", None)),
-    (_dated("Tomasz will ship the batch on 2026-09-20.", "2026-09-22T09:00:00", "2026-09-20"),
-     "It ships on the twentieth.",
-     _dated("Tomasz will ship the batch on 2026-10-20.", "2026-09-22T09:00:00", "2026-10-20")),
-    # The end moves with a moved start ("from the ninth for three weeks").
-    (_dated("Rafael will be away from 2026-09-09.", "2026-09-09", "2026-09-30"), "Away from the ninth for three weeks.",
-     _dated("Rafael will be away from 2026-10-09.", "2026-10-09", "2026-10-30")),
-    # "the first" alone is a day.
-    (_dated("The report is due 2026-09-01.", "2026-09-01"), "It is due on the first.",
-     _dated("The report is due 2026-10-01.", "2026-10-01")),
+@pytest.mark.parametrize("text,at,line", [
+    ("I missed the deadline on the ninth.", "2026-09-22T16:00:00",
+     'Days with no month: "the ninth" = 2026-09-09 if it already happened, 2026-10-09 if it is still to come\n'),
+    ("On the ninth I said I will ship on the thirtieth.", "2026-09-22",
+     'Days with no month: "the ninth" = 2026-09-09 if it already happened, 2026-10-09 if it is still to come; '
+     '"the thirtieth" = 2026-08-30 if it already happened, 2026-09-30 if it is still to come\n'),
+    ("Away from the 9th for three weeks.", "2027-01-22T10:00:00",
+     'Days with no month: "the 9th" = 2027-01-09 if it already happened, 2027-02-09 if it is still to come\n'),
+    ("Due on the twenty-second.", "2026-09-22", 'Days with no month: "the twenty-second" = 2026-09-22\n'),
+    # A day 31 skips the months without one.
+    ("It starts on the thirty-first.", "2026-09-22",
+     'Days with no month: "the thirty-first" = 2026-08-31 if it already happened, 2026-10-31 if it is still to come\n'),
+    # A named month is not a day with no month; no day, no line.
+    ("The deadline was the ninth of September.", "2026-09-22", ""),
+    ("No day here.", "2026-09-22", ""),
+    ("the ninth", None, ""),
 ])
-def test_the_guard_moves_a_past_day_that_is_still_to_come(fact: dict, chunk: str, expected: dict) -> None:
-    assert extract_module.roll_past_days([fact], chunk, "2026-09-22T16:00:00") == [expected]
-
-
-@pytest.mark.parametrize("fact,chunk", [
-    # A past event: the fact's words do not say "still to come".
-    (_dated("Rafael finished the migration on 2026-09-09.", "2026-09-09"), "I finished it on the ninth."),
-    # The chunk names the month: the model read it as said.
-    (_dated("The freeze will start on 2026-09-09.", "2026-09-09"), "The freeze starts on the ninth of September."),
-    (_dated("The freeze will start on 2026-09-09.", "2026-09-09"), "The freeze starts September the ninth."),
-    # No bare day in the chunk, or another day than the one the chunk says.
-    (_dated("The freeze will start on 2026-09-09.", "2026-09-09"), "The freeze starts soon."),
-    (_dated("The freeze will start on 2026-09-08.", "2026-09-08"), "The freeze starts on the ninth."),
-    # "the first week" is not a day.
-    (_dated("Ana will pair with Lee on 2026-09-01.", "2026-09-01"), "Ana pairs with Lee in the first week."),
-    # A date in another month than the source's, or not before the source.
-    (_dated("The freeze will start on 2026-08-09.", "2026-08-09"), "The freeze starts on the ninth."),
-    (_dated("The freeze will start on 2026-09-29.", "2026-09-29"), "The freeze starts on the twenty-ninth."),
-])
-def test_the_guard_never_moves_a_date_it_cannot_prove_wrong(fact: dict, chunk: str) -> None:
-    assert extract_module.roll_past_days([fact], chunk, "2026-09-22T16:00:00") == [fact]
-
-
-def test_a_day_the_next_month_does_not_have_goes_to_the_month_after() -> None:
-    fact = _dated("The audit will start on 2027-01-30.", "2027-01-30")
-    assert extract_module.roll_past_days([fact], "It starts on the thirtieth.", "2027-01-31") == [
-        _dated("The audit will start on 2027-03-30.", "2027-03-30")
-    ]
+def test_the_prompt_gives_both_dates_of_a_day_with_no_month(text: str, at, line: str) -> None:
+    assert extract_module.day_hints(text, at) == line
+    payload = extract_module.build_payload(text, kind="meeting", title="t", occurred_at=at)
+    assert (line in payload["user_prompt"]) if line else ("Days with no month" not in payload["user_prompt"])

@@ -403,24 +403,28 @@ dark: nothing runs until `memory.extract` has its own assignment.
   same-word MRR is 0.846 (keyword baseline 0.827). The first recording had
   no Sam entity at all (the model named Sam as the subject and left him out
   of `entities`); the prompt now says to list the subject and every person.
-- **A day with no month is the next such day** (`EXTRACTOR_VERSION` 2). The
-  model wrote past dates: "my leave starts on the ninth" in a meeting of
-  2026-09-22 gave 2026-09-09; "by the fifteenth" on 2026-09-24 gave
-  2026-09-15; "ships on the twentieth" on 2026-09-23 gave 2026-09-20. The
-  prompt now says: a day with no month is the next such day on or after the
-  date of the source (compare the day numbers; smaller means the next
-  month); a weekday name for a thing to come is the next such weekday; a
-  thing that will happen, starts, ships, is due or is planned is never
-  before the date of the source. Recorded again from `qwen3.8-27b`: October
-  9, October 15, October 20. A code guard (`roll_past_days`, after the
-  check) moves a date to the next such day only when the date is before the
-  source date in the source's month, the chunk says that day with no month,
-  and the fact's own words say the thing is still to come ("will",
-  "starts", "ships", "is due", "needs"). Over the 102 facts of the version
-  1 recording it moves exactly the 4 wrong ones; over the version 2
-  recording it moves none. The prompt also says to write the project,
-  person or organisation that the title names: without it the second
-  recording dropped "Kestrel" from the Kestrel planning facts.
+- **A day with no month takes its month by tense** (`EXTRACTOR_VERSION` 2).
+  The model wrote past dates for things to come: "my leave starts on the
+  ninth" in a meeting of 2026-09-22 gave 2026-09-09. The fix is in the
+  prompt only; no code changes a date the model writes. (1) Code finds each
+  day with no month in the chunk ("the ninth", "the 9th"; not "the ninth of
+  September") and gives the model both dates it can be, in one line of the
+  prompt: `Days with no month: "the ninth" = 2026-09-09 if it already
+  happened, 2026-10-09 if it is still to come` (`day_hints`). (2) The rule:
+  for a thing to come, the next such day on or after the source date; for a
+  thing that already happened, the most recent such day on or before it;
+  each date follows the tense of its own verb. A span ends at its start
+  plus its length. Measured on `qwen3.8-27b` over the ten date cases
+  (`tests/memory_bench/date_facts.json`, `corpus.DATE_CASES`): 10 of 10
+  (the version 1 prompt: 5; the rule without the line: 7). Astra's exact
+  line "On the ninth I said I will ship on the thirtieth." gives no fact at
+  all (no wrong date); with an object ("the sensor batch") it gives
+  2026-09-09 and 2026-09-30. Gap: the hard-corpus note "T. Wierzbicki
+  confirmed the sensor batch ships on the twentieth" (2026-09-23) still
+  gives 2026-09-20 (strict xfail). A first try that told the model to name
+  the title's project in the fact made source titles into project entities
+  ("Offline first for forms"); it is gone, and a fence checks that no
+  project entity is a source title.
 
 **Steps, each idempotent and resumable:**
 

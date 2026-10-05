@@ -14,6 +14,7 @@ GOLDEN = HERE / "keyword_golden.json"
 FACTS = HERE / "facts.json"
 HARD_FACTS = HERE / "relation_hard_facts.json"
 HARD_VECTORS = HERE / "relation_hard_vectors.npz"
+DATE_FACTS = HERE / "date_facts.json"
 
 
 def load_questions() -> list[dict[str, Any]]:

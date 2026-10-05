@@ -22,8 +22,8 @@ facts, resolves their entities, retires the source's old facts and stamps
 
 The prompt takes Hindsight's rules (``H/engine/retain/fact_extraction.py``):
 be selective, resolve "he/she/they" to a name, write absolute dates.  A day
-with no month is the next such day; ``roll_past_days`` corrects a past date
-the model still writes for one, when the fact says the thing is to come.
+with no month is the next such day for a thing to come, and the most recent
+such day for a thing that happened (``EXTRACTOR_VERSION`` 2).
 """
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ EXTRACT_CAPABILITY = "memory.extract"
 EXTRACT_CONTRACT = "memory.extract"
 EXTRACT_CONTRACT_REVISION = "1"
 #: Bump to read every source again.  The old facts serve until each source's
-#: new facts commit.  2: the next-such-day rule for a day with no month.
+#: new facts commit.  2: a day with no month takes its month by tense.
 EXTRACTOR_VERSION = 2
 #: Seconds one chunk may take before the runner's deadline stops it.
 EXTRACT_DEADLINE_SECONDS = 180.0
@@ -131,10 +131,11 @@ Read the text and return one JSON object with the key "facts". Return JSON only.
 
 Rules:
 - Be selective. Extract only significant facts: decisions, commitments, who owns or owes what, plans, dates, problems, results, numbers. Skip greetings, small talk and filler. An empty list is a good answer for a text with nothing significant.
-- Each fact is one full sentence that is clear alone. Use names. Never write "he", "she", "they", "I", "we" or "you": change each one to the name of the person or group. In a transcript the label before the colon is the speaker. The speaker "Me" is the desk owner: write "the owner". When the title of the source names the project, person or organisation that the text is about, write that name in the fact.
+- Each fact is one full sentence that is clear alone. Use names. Never write "he", "she", "they", "I", "we" or "you": change each one to the name of the person or group. In a transcript the label before the colon is the speaker. The speaker "Me" is the desk owner: write "the owner".
 - Write every date as an absolute date (YYYY-MM-DD). Calculate it from the date of the source: "Thursday" in a source of Monday 2026-09-14 is 2026-09-17.
-- A day with no month ("the ninth", "on the twentieth", "by the 15th") is the next such day on or after the date of the source. Compare the day number with the day of the source: when it is smaller, the month is the month AFTER the source month. Example: in a source of 2026-09-22, "the ninth" is 2026-10-09 (9 < 22, not 2026-09-09) and "the thirtieth" is 2026-09-30 (30 > 22). A weekday name for a thing to come ("on Thursday") is the next such weekday.
-- A thing that will happen, starts, ships, is due or is planned is never before the date of the source. Before you write its date, compare it with the date of the source; if it is before, find the next such date.
+- A day with no month ("the ninth", "by the 15th"): for a thing to come (a plan, a promise, a deadline: "will", "starts", "ships", "is due", "by"), the next such day on or after the date of the source; for a thing that already happened ("missed", "finished", "was", "said"), the most recent such day on or before it. The line "Days with no month" gives both dates: pick one by the tense of the verb of that day. Example, in a source of 2026-09-20: "the review is on the twelfth" is 2026-10-12; "I sent it on the twenty-fifth" is 2026-08-25.
+- A weekday name for a thing to come ("on Thursday") is the next such weekday.
+- A span ("for three weeks") ends at the start date plus its length.
 - kind: "event" for a thing that happened or will happen at a time; "state" for a thing that is true.
 - subject: the name of the person or thing the fact is about. predicate: a short verb phrase ("owns", "will fix", "decided"). object: the rest, short.
 - occurred_start and occurred_end: the absolute date (or date and time) of an event; null when the text gives no time.
@@ -165,6 +166,58 @@ def _day(occurred_at: Optional[str]) -> str:
     return f"{parsed.strftime('%A')} {parsed.date().isoformat()}"
 
 
+_ORDINALS = (
+    "first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth thirteenth "
+    "fourteenth fifteenth sixteenth seventeenth eighteenth nineteenth twentieth"
+).split()
+_DAY_WORDS: dict[str, int] = {word: n for n, word in enumerate(_ORDINALS, 1)}
+_DAY_WORDS.update({f"twenty{sep}{word}": 20 + n for n, word in enumerate(_ORDINALS[:9], 1) for sep in (" ", "-")})
+_DAY_WORDS.update({"thirtieth": 30, "thirty first": 31, "thirty-first": 31})
+_MONTH_NAMES = (
+    "january|february|march|april|may|june|july|august|september|october|november|december"
+)
+_NO_MONTH_DAY = re.compile(
+    r"\bthe\s+(" + "|".join(sorted(map(re.escape, _DAY_WORDS), key=len, reverse=True))
+    + r"|[0-9]{1,2}(?:st|nd|rd|th))\b(?!\s+(?:of\s+)?(?:" + _MONTH_NAMES + r")\b)",
+    re.IGNORECASE,
+)
+
+
+def day_hints(chunk_text: str, occurred_at: Optional[str]) -> str:
+    """One line for the prompt: each day with no month in the text, with the
+    two dates it can be.  The model picks by tense; code never changes a
+    date the model writes."""
+    from datetime import date, timedelta
+
+    try:
+        source = datetime.fromisoformat(str(occurred_at or "").strip().replace("Z", "+00:00")).date()
+    except ValueError:
+        return ""
+    found: dict[str, int] = {}
+    for match in _NO_MONTH_DAY.finditer(chunk_text):
+        word = match.group(1).lower()
+        number = _DAY_WORDS.get(word) or (int(word[:-2]) if word[:-2].isdigit() else 0)
+        if 1 <= number <= 31:
+            found.setdefault(f"the {word}", number)
+
+    def step(day: int, forward: bool) -> date:
+        probe = source
+        while probe.day != day:
+            probe += timedelta(days=1 if forward else -1)
+        return probe
+
+    parts = []
+    for phrase, number in found.items():
+        before, after = step(number, False), step(number, True)
+        if before == after:
+            parts.append(f'"{phrase}" = {before.isoformat()}')
+        else:
+            parts.append(
+                f'"{phrase}" = {before.isoformat()} if it already happened, {after.isoformat()} if it is still to come'
+            )
+    return ("Days with no month: " + "; ".join(parts) + "\n") if parts else ""
+
+
 def build_payload(
     chunk_text: str, *, kind: str, title: str, occurred_at: Optional[str]
 ) -> dict[str, Any]:
@@ -173,6 +226,7 @@ def build_payload(
     user = (
         f"Source: {_KIND_WORDS.get(kind, kind)} \"{' '.join(str(title or '').split())[:200]}\"\n"
         f"Date of the source: {_day(occurred_at)}\n"
+        f"{day_hints(chunk_text, occurred_at)}"
         "Text:\n<<<\n"
         f"{chunk_text}\n"
         ">>>"
@@ -307,152 +361,6 @@ def validate_output(raw: Any) -> list[dict[str, Any]]:
             "entities": entities,
         })
     return facts
-
-
-# ── the next-such-day guard ─────────────────────────────────────────────
-
-_ORDINAL_WORDS = [
-    "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth",
-    "ninth", "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth",
-    "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth",
-]
-_ORDINAL_DAYS: dict[str, int] = {word: number for number, word in enumerate(_ORDINAL_WORDS, 1)}
-for _number, _word in enumerate(_ORDINAL_WORDS[:9], 21):
-    _ORDINAL_DAYS[f"twenty {_word}"] = _number
-    _ORDINAL_DAYS[f"twenty-{_word}"] = _number
-_ORDINAL_DAYS.update({"thirtieth": 30, "thirty first": 31, "thirty-first": 31})
-_MONTHS = (
-    "january|february|march|april|may|june|july|august|september|october|november|december"
-    "|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec"
-)
-#: "the ninth", "the 9th": a day with no month.  Not when a month is next to
-#: it ("the ninth of October", "September the ninth") and not when a noun
-#: follows ("the first week").
-_BARE_DAY = re.compile(
-    r"\bthe\s+("
-    + "|".join(sorted((re.escape(word) for word in _ORDINAL_DAYS), key=len, reverse=True))
-    + r"|[0-9]{1,2}(?:st|nd|rd|th))\b(?!\s+(?:of\s+)?(?:" + _MONTHS + r")\b)"
-    r"(?!\s+(?:week|month|day|year|quarter|time|half|round|sprint|step|draft|release|version|one|two|place)s?\b)",
-    re.IGNORECASE,
-)
-#: The fact's own words say the thing is still to come.
-_TO_COME = re.compile(
-    r"\b(?:will|shall|going to|starts|begins|ships|is due|are due|is scheduled|are scheduled"
-    r"|needs?|requires?|expects?|plans? to)\b",
-    re.IGNORECASE,
-)
-_MONTH_BEFORE = re.compile(r"\b(?:" + _MONTHS + r")\s*$", re.IGNORECASE)
-_ISO_DAY = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
-
-
-def _bare_days(text: str) -> set[int]:
-    days: set[int] = set()
-    for match in _BARE_DAY.finditer(text):
-        if _MONTH_BEFORE.search(text[max(0, match.start() - 12):match.start()]):
-            continue  # "September the ninth" names its month
-        word = match.group(1).lower()
-        number = _ORDINAL_DAYS.get(word)
-        if number is None and word[:-2].isdigit():
-            number = int(word[:-2])
-        if number and 1 <= number <= 31:
-            days.add(number)
-    return days
-
-
-def _next_such_day(day: int, after: Any) -> Any:
-    """The first date on or after ``after`` whose day of the month is ``day``."""
-    from datetime import date
-
-    year, month = after.year, after.month
-    for _ in range(13):
-        try:
-            candidate = date(year, month, day)
-        except ValueError:
-            candidate = None
-        if candidate is not None and candidate >= after:
-            return candidate
-        year, month = (year + 1, 1) if month == 12 else (year, month + 1)
-    return after
-
-
-def roll_past_days(
-    facts: list[dict[str, Any]], chunk_text: str, occurred_at: Optional[str]
-) -> list[dict[str, Any]]:
-    """Correct the model's past date for a day with no month.
-
-    The model reads "my leave starts on the ninth" in a source of
-    2026-09-22 as 2026-09-09.  A date is moved to the next such day only
-    when ALL of these are true, so a past event is never moved:
-
-    * the date is before the date of the source, in the source's month;
-    * the chunk says that day with no month ("the ninth", "the 9th");
-    * the fact's own words say the thing is still to come ("will", "starts",
-      "ships", "is due", "needs").  A fact that says "will" with a past date
-      is wrong as written, so the date that matches its words is the next one.
-
-    The date moves in ``occurred_start``, ``occurred_end`` and the fact's
-    text together.  An end date before a moved start date moves with it.
-    The source's month only: the model writes the source's month for a
-    day it reads wrong, and a date in another month is left as written.
-    """
-    from datetime import date
-
-    text = str(occurred_at or "").strip()
-    try:
-        source_day = datetime.fromisoformat(text.replace("Z", "+00:00")).date()
-    except ValueError:
-        return facts
-    days = _bare_days(chunk_text)
-    if not days:
-        return facts
-
-    def parse(value: Optional[str]) -> Optional[date]:
-        try:
-            return datetime.fromisoformat(str(value)).date() if value else None
-        except ValueError:
-            return None
-
-    def eligible(day: Optional[date]) -> bool:
-        return (
-            day is not None and day < source_day
-            and (day.year, day.month) == (source_day.year, source_day.month)
-            and day.day in days
-        )
-
-    def apply(value: Optional[str], moves: dict[str, str]) -> Optional[str]:
-        return moves[value[:10]] + value[10:] if value and value[:10] in moves else value
-
-    out: list[dict[str, Any]] = []
-    for fact in facts:
-        words = str(fact.get("text") or "")
-        if not _TO_COME.search(words):
-            out.append(fact)
-            continue
-        named = {str(v)[:10] for v in (fact.get("occurred_start"), fact.get("occurred_end")) if v}
-        named |= set(_ISO_DAY.findall(words))
-        moves = {
-            value: _next_such_day(day.day, source_day).isoformat()
-            for value in named
-            if eligible(day := parse(value))
-        }
-        if not moves:
-            out.append(fact)
-            continue
-        start = apply(fact.get("occurred_start"), moves)
-        end_day, start_day = parse(fact.get("occurred_end")), parse(start)
-        end_key = str(fact.get("occurred_end") or "")[:10]
-        if end_day is not None and start_day is not None and end_key not in moves and end_day < start_day:
-            # "from the ninth for three weeks": the end moves with the start.
-            moves[end_key] = _next_such_day(end_day.day, start_day).isoformat()
-        fact = {
-            **fact,
-            "text": _ISO_DAY.sub(lambda m: moves.get(m.group(0), m.group(0)), words),
-            "occurred_start": start,
-            "occurred_end": apply(fact.get("occurred_end"), moves),
-        }
-        log.info("memory extract moved a past day with no month to the next such day")
-        out.append(fact)
-    return out
 
 
 def fact_id(source_ref: str, chunk_id: str, position: int, text: str) -> str:
@@ -642,9 +550,7 @@ def extract_source(
             )
             budget.calls += 1
             calls += 1
-            answer = roll_past_days(
-                validate_output(extractor.extract(payload)), str(chunk["text"]), source.occurred_at
-            )
+            answer = validate_output(extractor.extract(payload))
             index.store_extract_part(source_ref, chunk_id, chunk_sha, version, answer)
         for position, fact in enumerate(answer):
             fact = dict(fact)
@@ -751,6 +657,5 @@ __all__ = [
     "fact_id",
     "payload_key",
     "resolve_extractor",
-    "roll_past_days",
     "validate_output",
 ]
