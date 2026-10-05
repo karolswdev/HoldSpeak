@@ -16,11 +16,12 @@ import json
 import threading
 import time
 import uuid
+from dataclasses import replace
 from typing import Any, Callable, Optional
 
 from ..db.core import Database
 from ..db.threads import ThreadRepository
-from ..grounding import GROUNDING_MAX_REFS, hydrate_refs_detailed
+from ..grounding import GROUNDING_MAX_REFS, _unkept_draft_refs, hydrate_refs_detailed, live_block
 from ..inference_memory_policy import memory_enabled
 from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..kernel.inference_stream import (
@@ -457,6 +458,9 @@ class ThreadService:
                             "title": block.title,
                             "subtitle": block.subtitle,
                             "text": block.text,
+                            # How it was selected, for the replay check
+                            # (`_live_replay`); the model never sees it.
+                            "via": block.via,
                         }, separators=(",", ":"), sort_keys=True),
                         "sensitive": False,
                         "origin": block_origin,
@@ -2335,6 +2339,9 @@ class ThreadService:
                         and ref.origin != REF_ORIGIN_REFERENCE)]
         ref_context_parts: list[str] = []
         person_names: list[str] = []
+        # The replay check reads each source with the exclusions the turn's
+        # own recall pass uses: this thread, and drafts he has not kept.
+        replay_excluded = {f"thread:{thread_id}"} | _unkept_draft_refs(self._db)
         for ref in refs:
             if ref.ref_kind == "person" and ref.frozen_json:
                 # Person refs: title-only context line (HS-149 law).
@@ -2349,6 +2356,9 @@ class ThreadService:
                 try:
                     frozen = json.loads(ref.frozen_json)
                     ref_text = frozen.get("text", "")
+                    if ref_text:
+                        frozen = self._live_replay(ref, frozen, replay_excluded)
+                        ref_text = frozen.get("text", "") if frozen is not None else ""
                     if ref_text:
                         ref_context_parts.append(
                             f"[{frozen.get('kind', 'ref').upper()}: {frozen.get('title', ref.ref_id)}]\n{ref_text}"
@@ -2433,6 +2443,49 @@ class ThreadService:
         if sensitive_texts:
             result["_sensitive_texts"] = sensitive_texts
         return result
+
+    def _live_replay(self, ref: Any, frozen: dict[str, Any],
+                     excluded: set[str]) -> dict[str, Any] | None:
+        """The saved block a later turn may send, or None.
+
+        The saved row (``thread_refs``) is the receipt of what its turn saw
+        and is never rewritten.  The text sent again is checked against the
+        source now (``grounding.live_block``): a source that is gone, that
+        memory no longer admits, or that left the project it was selected
+        from is not sent; a source whose text changed is sent as it is now.
+        When nothing changed the saved dict comes back as it is, so the
+        prompt is byte-identical.
+
+        A row saved before the ``via`` key existed: a relevance row is
+        checked as memory's; any other row by the hand-attach rule, and a
+        changed text is sent redacted (memory defense), because the row may
+        have been a project's search hit, which was saved redacted.
+        """
+        via = frozen.get("via")
+        legacy = via is None
+        if legacy:
+            via = "memory" if ref.origin == REF_ORIGIN_RELEVANCE else ""
+        kind = str(frozen.get("kind") or ref.ref_kind)
+        query = None
+        if kind in ("knowledge", "zone") and ref.message_id:
+            # A named container re-reads its members with the turn's question.
+            texts = [p.text for p in self._threads.get_parts(ref.message_id)
+                     if p.kind == "text" and p.text]
+            query = texts[-1] if texts else None
+        block = live_block(self._db, f"{kind}:{ref.ref_id}", via=str(via),
+                           exclude_refs=excluded, query=query)
+        if block is None:
+            return None
+        same = (block.title == frozen.get("title", "")
+                and block.text == frozen.get("text", ""))
+        if not same and legacy and not via:
+            from ..memory.defense import redact
+            block = replace(block, title=redact(block.title), text=redact(block.text))
+            same = (block.title == frozen.get("title", "")
+                    and block.text == frozen.get("text", ""))
+        if same:
+            return frozen
+        return {**frozen, "title": block.title, "text": block.text}
 
     def assemble_payload_for_egress(
         self,

@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from contextlib import contextmanager
 from contextvars import ContextVar
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Any, Literal, Optional
 
 from .db.relationships import qualified_ref
@@ -111,6 +111,11 @@ class GroundingBlock:
     title: str
     subtitle: str  # meeting day, or an artifact's parent-meeting title ("" if none)
     text: str
+    # How the block was selected, for a later replay check (``live_block``):
+    # "" the caller named it (or a container it named holds it), "memory"
+    # the global relevance pass, "project:<id>" a project's search.  Not
+    # part of equality: two blocks with the same content are the same block.
+    via: str = field(default="", compare=False)
 
 
 @dataclass(frozen=True)
@@ -292,6 +297,9 @@ def hydrate_refs_detailed(
             db, ref, expand, visited, query=query, stats=stats,
             exclude_refs=excluded,
         )
+        if ref.startswith("project:"):
+            # The project chose these members (search, or its listing).
+            more = [replace(block, via=ref) for block in more]
         blocks.extend(more)
         unknown.extend(missing)
 
@@ -325,7 +333,7 @@ def hydrate_refs_detailed(
             more, missing = _hydrate_members(
                 db, members, expand, visited, query=query, stats=stats
             )
-        blocks.extend(more)
+        blocks.extend(replace(block, via="memory") for block in more)
         unknown.extend(missing)
         stats["selection"] = "ecosystem_relevance"
         stats["overflow_count"] = int(stats["overflow_count"]) + max(
@@ -347,6 +355,59 @@ def hydrate_refs_detailed(
         matched_count=matched,
         overflow_count=overflow,
     )
+
+
+def live_block(
+    db: Any,
+    ref: str,
+    *,
+    via: str,
+    exclude_refs: Optional[set[str]] = None,
+    query: Optional[str] = None,
+) -> Optional[GroundingBlock]:
+    """One saved block's source as hydration reads it NOW, or None.
+
+    A chat thread saves the blocks a turn was grounded on and sends them
+    again on every later turn.  This is the check for that replay: the text
+    a later turn may send is the live text, never the saved text.
+
+    * ``via == ""`` (the caller named the source, or a container it named
+      holds it): the hand-attach rule.  The source is read the way a named
+      ref is read; None when it is gone.
+    * ``via == "memory"`` or ``"project:<id>"`` (memory selected it): the
+      source must still be what memory admits (``current_source``: not
+      deleted, promoted, parked or sensitive), not held out by the caller
+      (``exclude_refs``), and for a project still in that project.  It is
+      read under memory defense, as it was selected.
+
+    ``expand`` is ``summary``, the value the chat turn hydrates with.
+    """
+    base = str(ref).split("#", 1)[0]
+    kind, _, resource_id = base.partition(":")
+    if not kind or not resource_id:
+        return None
+    if not via:
+        blocks, missing = _hydrate_qualified(
+            db, base, "summary", set(), query=query, exclude_refs=exclude_refs,
+        )
+        return None if missing or not blocks else blocks[0]
+    if base in (exclude_refs or set()):
+        return None
+    connection = getattr(db, "_connection", None)
+    if connection is not None:
+        from .memory.retain import SOURCE_READERS, current_source
+
+        with connection() as conn:
+            if kind in SOURCE_READERS and current_source(conn, base) is None:
+                return None
+            if via.startswith("project:"):
+                from .db.memory import MemoryRepository
+
+                if not MemoryRepository._ref_in_project(conn, kind, resource_id, via.split(":", 1)[1]):
+                    return None
+    with memory_defense():
+        blocks, missing = _hydrate_members(db, [base], "summary", set(), query=query)
+    return None if missing or not blocks else blocks[0]
 
 
 def hydrate_refs(

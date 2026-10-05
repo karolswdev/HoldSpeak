@@ -756,6 +756,15 @@ is a face and waits for its canvas).
   the stored result stays as the receipt, but a later turn replays a stub
   that says to read the page again, never the stored text
   (`thread_service._LIVE_ONLY_TOOLS`).
+- **Saved recall is checked on each replay** (2026-10-05, the open item
+  from #850). The thread still saves a turn's recall in `thread_refs` (the
+  receipt), and each saved row now records how it was selected (`via`:
+  named, `memory`, `project:<id>`). A later turn sends a saved block only
+  after `grounding.live_block` reads its source again
+  (`ThreadService._live_replay`): gone, no longer admitted by memory, held
+  out, or out of its project: not sent; changed: the live text is sent;
+  unchanged: the saved bytes (fenced against main's recorded prompt). A
+  source he named follows the hand-attach rule: sent while it exists.
 - **One budget.** The job's `block_chars` (5,200 for `ask.answer` and
   `chat.turn`); the pages take at most half; whole sentences only. Then
   `fit_reflect` drops excerpts from the end (observations first) until the
