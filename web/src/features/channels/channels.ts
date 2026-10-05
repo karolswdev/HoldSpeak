@@ -351,7 +351,9 @@ export function stamp(iso: string | null | undefined): string {
 /** The short target token for a destination row. Literal: keeps its case. */
 export function targetToken(channel: Channel, t: Record<string, string | number>): string {
   switch (channel) {
-    case "file": return t.display ? String(t.display) : String(t.folder ?? "").replace(/^\/Users\/[^/]+/, "~");
+    // The hub's short token (home_paths.py, the known HOME as ~); never a
+    // guess from a /Users/<name> pattern (Astra, #869).
+    case "file": return t.display ? String(t.display) : String(t.folder ?? "");
     case "github": return `${t.repo}${t.kind === "pr" ? " PR" : ""} #${t.number}`;
     case "jira": return String(t.key ?? "");
     case "confluence": return `SPACE ${t.space_id ?? ""}`;

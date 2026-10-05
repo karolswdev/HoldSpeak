@@ -32,6 +32,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Iterator, Mapping, Optional, Protocol
 
+from ..home_paths import home_display
 from .errors import NotFound, ServiceError, ValidationError
 
 #: Size limits, refused by name before dispatch (section 3): ``payload_too_large:<channel>``.
@@ -539,17 +540,19 @@ def is_builtin_target(target: Mapping[str, Any]) -> bool:
 
 
 def shown_target(target: Mapping[str, Any]) -> dict[str, Any]:
-    """A target as the face reads it: the built-in's folder is resolved now."""
+    """A target as the face reads it: the built-in's folder is resolved now;
+    every folder carries its short token (`display`), so no face prints the
+    full home path of a saved folder."""
     shown = dict(target)
     if is_builtin_target(target):
         folder = builtin_folder()
         shown["folder"] = folder
-        # The row's short token: the home folder reads as ~ (any HOME, macOS or Linux).
-        home = os.path.realpath(os.path.expanduser("~"))
-        shown["display"] = "~" + folder[len(home):] if folder.startswith(home + os.sep) else folder
+        shown["display"] = home_display(folder)
         cloud = builtin_egress()
         if cloud:
             shown["cloud"] = cloud
+    elif isinstance(target.get("folder"), str) and target.get("folder"):
+        shown["display"] = home_display(str(target["folder"]))
     return shown
 
 

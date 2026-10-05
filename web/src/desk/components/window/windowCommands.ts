@@ -1,7 +1,7 @@
 import { useDesk } from "../../store";
 import { flashSwitcher } from "./Switcher";
 import { snapForPointer } from "./windowGeometry";
-import { chairPhoneToBack } from "../../chair/chairWindows";
+import { chairPhoneToBack, chairWindowSpec } from "../../chair/chairWindows";
 import {
   cycleWindows as cycleWindowsRaw,
   cycleWindowsReverse as cycleWindowsReverseRaw,
@@ -40,7 +40,12 @@ export function snapFrontWindow(side: "left" | "right"): void {
  * read from the glass, so a content-sized window comes back exactly. */
 export function zoomWindow(id: string): void {
   const state = useDesk.getState();
-  if (!state.panelMax.includes(id) && !state.panelSaved.includes(id)) {
+  // A Chair window the owner never moved has no rect: its CSS tile place is
+  // its normal rect (C1-4e). Writing the measured tile here made it an
+  // arranged rect, and the next open clamped it into the shell band (54 px),
+  // 12 px under its tile place (42 px). Unzoomed, it goes back to its tile.
+  const tileAtHome = Boolean(chairWindowSpec(id)) && !state.panelRects[id];
+  if (!tileAtHome && !state.panelMax.includes(id) && !state.panelSaved.includes(id)) {
     const r = shellEls.get(id)?.getBoundingClientRect();
     const rect =
       r && r.width && r.height
