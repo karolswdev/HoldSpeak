@@ -191,3 +191,116 @@ def build_corpus(db: Any) -> dict[str, str]:
         link(project, refs[label])
 
     return refs
+
+
+# ── the hard relation sources (relation_hard_questions.json) ────────────
+#
+# Each source answers a question that shares NO searchable word with it.
+# The name the question uses is only in a place the keyword index does not
+# read (a meeting title, a thread title), or in another source (an alias:
+# "T. Wierzbicki" here, "Tomasz Wierzbicki" in a meeting title).  The
+# speaker of every meeting line is "Me" or "Remote": a label the keyword
+# index holds, but not a name.  Extraction reads the title with the text,
+# so the facts name the person; only the entity walk joins the two.
+# They are written on top of the base corpus, which stays the distractor.
+
+HARD_NOTES = [
+    ("n-supplier", None, "Supplier follow-up", "T. Wierzbicki confirmed the sensor batch ships on the twentieth.", "2026-09-23T09:00:00Z"),
+]
+
+HARD_MEETINGS = [
+    ("m-okonkwo", None, "1:1 with Rafael Okonkwo", "2026-09-22T16:00:00", [
+        ("Me", "How is the schema migration going?"),
+        ("Remote", "I will finish the schema migration before my leave starts on the ninth."),
+        ("Me", "Then Ana covers reviews while you are away."),
+    ]),
+    ("m-kestrel", None, "Kestrel planning", "2026-09-23T13:00:00", [
+        ("Me", "The partner API freeze moves to the twelfth of October."),
+        ("Remote", "Then the load tests start one week later."),
+    ]),
+    ("m-santos", None, "Budget check-in with Beatriz Santos", "2026-09-24T11:00:00", [
+        ("Remote", "I need the hiring numbers by the fifteenth."),
+        ("Remote", "No new contractors this quarter."),
+        ("Me", "Understood. You get the numbers on Monday."),
+    ]),
+    ("m-corvid", None, "Vendor call with Tomasz Wierzbicki", "2026-09-24T15:00:00", [
+        ("Remote", "I moved the firmware release of Corvid Labs by one week."),
+        ("Me", "Does that change the sensor batch?"),
+        ("Remote", "No. I ship the sensor batch as planned."),
+    ]),
+    ("m-halcyon", None, "Quarterly review with Halcyon Bank", "2026-09-25T10:00:00", [
+        ("Remote", "Our compliance team needs the audit export as CSV by month end."),
+        ("Me", "We can send it on the twenty eighth."),
+    ]),
+    ("m-john-w", None, "Design review with John Whitfield", "2026-09-25T14:00:00", [
+        ("Remote", "I am worried that the cache layer hides stale prices from buyers."),
+        ("Me", "We add a version stamp to every cached price."),
+    ]),
+    ("m-jane-w", None, "Onboarding chat with Jane Whitfield", "2026-09-25T16:00:00", [
+        ("Remote", "I would like read access to the analytics dashboards."),
+        ("Me", "You get it today, and a buddy for the first month."),
+    ]),
+]
+
+HARD_THREADS = [
+    ("th-handover", None, "Handover from Mirela Kowalczyk", [
+        ("user", "She left the deploy keys in the shared vault, and her last open task is the rate limiter rewrite."),
+        ("assistant", "Pick up the rate limiter rewrite first, and rotate the deploy keys this week."),
+    ]),
+    ("th-brenner", None, "Hiring Lukas Brenner", [
+        ("user", "He accepted the offer and starts on the third of November."),
+        ("assistant", "Order his laptop now, and put him on the platform on-call rota after one month."),
+    ]),
+    ("th-rafael", None, "Rafael's leave", [
+        ("user", "He is away from the ninth for three weeks. Who approves the migration while he is out?"),
+        ("assistant", "Ana can approve the migration in his place."),
+    ]),
+    ("th-kestrel", None, "Kestrel load tests", [
+        ("user", "The load tests need a second environment."),
+        ("assistant", "Reuse the staging cluster at night."),
+    ]),
+]
+
+
+def build_hard_corpus(db: Any) -> dict[str, str]:
+    """Write the hard relation sources through the real producers (on top of
+    ``build_corpus``).  Returns ``label -> source ref``."""
+    from holdspeak.db import primitives
+
+    refs: dict[str, str] = {}
+    real_now = primitives._now_iso
+    try:
+        for note_id, _project, title, body, stamp in HARD_NOTES:
+            primitives._now_iso = lambda stamp=stamp: stamp
+            db.notes.upsert(
+                note_id=note_id, title=title, body_markdown=body,
+                last_modified=stamp, created_at=stamp,
+            )
+            refs[note_id] = f"note:{note_id}"
+    finally:
+        primitives._now_iso = real_now
+    for meeting_id, _project, title, started_at, turns in HARD_MEETINGS:
+        started = datetime.fromisoformat(started_at)
+        db.meetings.save_meeting(
+            MeetingState(
+                id=meeting_id,
+                started_at=started,
+                ended_at=started.replace(minute=started.minute + 20),
+                title=title,
+                segments=[
+                    TranscriptSegment(
+                        text=text, speaker=speaker,
+                        start_time=float(position * 20), end_time=float(position * 20 + 15),
+                    )
+                    for position, (speaker, text) in enumerate(turns)
+                ],
+            )
+        )
+        refs[meeting_id] = f"meeting:{meeting_id}"
+    for label, _project, title, messages in HARD_THREADS:
+        thread = db.threads.create_thread(title=title)
+        for role, text in messages:
+            message = db.threads.append_message(thread.id, role=role)
+            db.threads.append_part(message.id, kind="text", text=text)
+        refs[label] = f"thread:{thread.id}"
+    return refs
