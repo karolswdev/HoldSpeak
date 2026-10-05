@@ -43,27 +43,25 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Memory: the agent tool turn (RecipeService.chat → run_recipe) is retired code with no caller; Recipe chat runs as a thread turn whose default tools include memory.search (proved by tests/unit/test_thread_memory_search_live.py). The update draft and Prep are not fitted to a token budget (their path has none) | — | — |
 | Memory: live meeting analysis and voice resolve read no memory (a lookup is 100–400 ms against a 50 ms bar) | — | — |
 | Memory: the decision-promotion self-recall test passes before the fix; mint through DecisionLifecycleService.promote (Astra, #830) | — | — |
-| A PR review after its linked story is edited (same commit and diff) returns HTTP 500, as on main | — | — |
 | Memory: a secret said in a meeting or typed in a thread is still a search key (returned text is redacted); sources attached by hand are not redacted | — | — |
 | Memory: not measured on the owner's real desk; new items take up to 120 s to become searchable by meaning | — | — |
 | Bus: background writers (calendar ingest, heartbeat sweep, cadence tick) and MCP tools outside the registry send no frame; announcements carry an empty id and op "create" on some routes | — | — |
 | Needs you: the shade and palette show a per-Room count; the Chair caption "BRIEF · N THINGS WAITING" is a different count | — | — |
 | Times: about 150 writers still store timestamps with no zone; a schedule edited under the old code keeps a wrong time until saved again | — | — |
-| MCP: three tools answer a bad id with a raw error; a long tool makes the others wait | — | — |
 | Sent Brief: People text stays in old prepared and discarded rows on disk; the re-render check covers the Brief only | — | — |
 | Product word list lacks decision, workbench and thread (Get Info falls back; other callers can still throw) | — | — |
 | The roadmaps read takes 2–3 s on each desk refresh | — | — |
 | The Thought window title always says "Thought"; 1:1 memory has no face; route chip for Ask and chat: each needs a canvas | — | — |
 | The Dock overflows 1440 with five projects; a 5 px strip of the next page shows at 393 | — | — |
 | Raw paths and ids on some faces (SEND well, Connections, Setup, Processes) | — | — |
-| Backend: 219 routes with no web caller; two watch systems; three decision surfaces; 2,800 lines with no importer | — | — |
-| Test rig: the Delivery board may show the machine's real tmux sessions | — | — |
+| Decisions (housekeeping #867): fold the older ReactionService watch system into WatchService (Workbench automations are its only face); three primitives/decisions routes are unreachable in the hub; six routes have no caller (incl. POST /api/setup/local-ai/cancel); connector_fixtures.py lives in the product package; heartbeat.run_now builds WatchService without the Jira adapter; a test left tmux session hs10605_kill_62847 on the owner's server | owner | — |
 | Fast tests, second pass: new-database cost; nightly full run not yet seen on CI | — | — |
 | C1-4e: the Chair reopens 12 px low | — | — |
 | The Roadmap window shows the wrong name; Calendar shows technical refusal text; the palette shows noise rows for "send" | — | — |
 
 ## Last merged (newest first)
 
+- #867 — Housekeeping: typed MCP errors; long MCP tools run in parallel under per-key locks (atomic open_review / draft_update / watch.test); a PR review after a story edit is a new run; tmux test rig isolated; 1,363 dead lines parked; DB open about twice as fast; nightly tmp space fixed
 - #864 — Built-in "HoldSpeak folder" Send destination (~/Documents/HoldSpeak/Sent; XDG Documents on Linux), re-created if deleted; saved folders still refuse when missing; a synced Documents (iCloud, Dropbox, Google Drive, OneDrive, any File Provider) is labelled and receipted as leaving the device
 - #862 — First run review fixes: a late mic grant is stopped; the owner's aliases never claim a named other person; FOUND shows one true default; a blocked mic shows tokens, not a paragraph
 - #861 — API manifest and census for the first-run FOUND control (main was red after #859)
