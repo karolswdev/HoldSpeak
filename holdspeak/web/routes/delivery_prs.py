@@ -28,6 +28,30 @@ def _classified_500(exc: Exception, detail: str) -> JSONResponse:
     return JSONResponse({"error": detail}, status_code=500)
 
 
+def _legacy_review_matches(
+    broker: Any, identity: str, linked_text: str, linked_revisions: list[str],
+) -> bool:
+    """A review admitted under the pre-story *identity* with this same story.
+
+    Before 2026-10-05 the identity left the linked story out, so such a run
+    stored the story only in its admitted prompt. It replays (one artifact, no
+    model call) only when that prompt holds this exact story text and the same
+    story revisions; an edited story is a new run.
+    """
+    operation_id = "delivery-pr-review:" + __import__("hashlib").sha256(identity.encode()).hexdigest()
+    try:
+        prior = broker.inference_adoption_service.admitted_payload(operation_id)
+    except Exception:  # no adoption store: nothing was admitted before
+        return False
+    if not prior:
+        return False
+    block = f"Linked story and evidence:\n{linked_text[:48000]}\n\nDiff:\n"
+    return (
+        block in str(prior.get("user_prompt") or "")
+        and list(prior.get("linked_revisions") or []) == linked_revisions
+    )
+
+
 def build_delivery_prs_router(
     ctx: WebContext,
     *,
@@ -242,6 +266,27 @@ def build_delivery_prs_router(
                 str(material.get("diff") or "").encode()
             ).hexdigest()
             identity = f"{source_id}:{number}:{material_revision}:{diff_sha256}"
+            # The linked story is part of the request: an edited story under the
+            # same commit and diff is a new review run (it was an HTTP 500: the
+            # kernel refused the same command id with a different payload).
+            # No linked story keeps the old identity. A review made before this
+            # rule (its identity had no story) still replays when its admitted
+            # prompt holds this exact story (Astra on #867).
+            linked = material.get("linked") or []
+            linked_text = "\n\n".join(str(item.get("text") or "") for item in linked)
+            linked_revisions = [str(item.get("revision") or "") for item in linked]
+            linked_sha256 = __import__("hashlib").sha256(
+                __import__("json").dumps(
+                    [[str(item.get("ref") or ""), str(item.get("revision") or ""), str(item.get("text") or "")]
+                     for item in linked],
+                ).encode()
+            ).hexdigest() if linked else ""
+            if linked_sha256 and not _legacy_review_matches(
+                broker, identity, linked_text, linked_revisions,
+            ):
+                identity += f":{linked_sha256}"
+            else:
+                linked_sha256 = ""
             command_id = "delivery-pr-review:" + __import__("hashlib").sha256(identity.encode()).hexdigest()
             input_snapshot = {
                 "source_id": source_id,
@@ -249,6 +294,8 @@ def build_delivery_prs_router(
                 "material_revision": material_revision,
                 "diff_sha256": diff_sha256,
             }
+            if linked_sha256:
+                input_snapshot["linked_sha256"] = linked_sha256
             # E3: a request target can no longer compete with the exact OWNER
             # assignment.  The named refusal is durable, content-free, and sends
             # no PR material to a provider.
@@ -272,9 +319,6 @@ def build_delivery_prs_router(
                 }, status_code=409)
 
             def prompt_payload() -> dict[str, Any]:
-                linked_text = "\n\n".join(
-                    str(item.get("text") or "") for item in material.get("linked") or []
-                )
                 prompt = (
                     f"Review PR #{number}. Return a concise GitHub review draft with concrete findings. "
                     "Do not claim to have posted, approved, merged, or run checks.\n\n"

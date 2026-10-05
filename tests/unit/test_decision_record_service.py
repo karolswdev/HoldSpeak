@@ -10,7 +10,7 @@ import pytest
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
-from holdspeak.services.errors import ConflictError
+from holdspeak.services.errors import ConflictError, NotFound
 from holdspeak.services.decision_record_service import DecisionRecordService
 
 
@@ -366,8 +366,9 @@ def test_records_from_each_origin_have_the_same_shape(tmp_path):
 def test_create_from_meeting_rejects_unknown_decision(tmp_path):
     service = DecisionRecordService(Database(tmp_path / "records.db"))
 
-    with pytest.raises(KeyError, match="missing-decision"):
+    with pytest.raises(NotFound, match="missing-decision") as raised:
         service.create_from_meeting(None, "missing-decision")
+    assert raised.value.code == "not_found"
 
 
 def test_record_requires_decision_text_and_source_type(tmp_path):

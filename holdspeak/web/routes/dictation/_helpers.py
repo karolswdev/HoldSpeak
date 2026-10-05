@@ -988,7 +988,9 @@ def _runtime_readiness(cfg: Any) -> dict[str, Any]:
         return payload
 
     try:
-        resolved_backend, reason = runtime_module.resolve_backend(cfg.runtime.backend)
+        resolved_backend, reason = runtime_module.resolve_backend(
+            cfg.runtime.backend, mlx_model_set=bool(str(cfg.runtime.mlx_model or "").strip())
+        )
     except runtime_module.RuntimeUnavailableError as exc:
         from ....plugins.dictation.guidance import runtime_guidance
 

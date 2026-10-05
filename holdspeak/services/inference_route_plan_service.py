@@ -2011,7 +2011,8 @@ class InferenceRoutePlanService:
             and material["allowed_boundaries"] == policy["allowed_boundaries"]
             and material["assignment_sources"] == policy["assignment_sources"]
             and route["capability"] in capabilities
-            and policy["assignment_sources"] == ["capability"]
+            and policy["assignment_sources"][:1] == ["capability"]
+            and set(policy["assignment_sources"]) <= {"capability", "group", "global"}
         )
 
     def _operation_from_row(self, conn: Any, row: Any) -> dict[str, Any]:
