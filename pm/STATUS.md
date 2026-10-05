@@ -16,7 +16,7 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
-Now: strong defaults, batteries included (owner direction 2026-10-05): #855, #856 and #859 merged: a fresh install now gets local AI from one first-run press. Astra's review of #859 lands as a follow-up. His desk: assign his LAN server as the default (and memory) when his hub next runs.
+Now: strong defaults, batteries included (owner direction 2026-10-05): #855, #856 and #859 merged: a fresh install now gets local AI from one first-run press. His desk: assign his LAN server as the default (and memory) when his hub next runs.
 
 Now: prepare for the owner's week of real use (assignment 2026-10-03): inventory
 (`docs/internal/INVENTORY-2026-10-03.md`), clean up, polish, wire memory into every
@@ -32,6 +32,7 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 | Memory: turn meaning search on from the product (the embedding model is not in the signed catalogue): waits for the owner's word | — | — |
 | Memory dates (Astra, #845 iteration 2): "the ninth of September … was missed" in a meeting of 22 Sep is stored as 9 Aug; a third-person "confirmed … ships on the twentieth" gets a past date (xfail); reported-speech and mixed explicit/bare-date lines give no facts; Kestrel (r09) is found only with vectors (xfail) | Muad'Dib | — |
 | Memory entities: an initial alias ("T. Wierzbicki") does not join the full name (score 0.585 < 0.6 without a shared neighbour); strict xfail in the bench | — | — |
+| First run: the browser copy of the needs-you rule (web/src/desk/needsYou.ts) lacks the person-identity guard (no production caller today); physical mic and real model inference not verified | — | — |
 | Defaults: a meeting saved before any engine exists is not summarised later by itself; the 4B starter's meeting analysis is untested on real hardware; the real faster-whisper fence skips in CI (needs a cached model) | — | — |
 | Defaults: an engine started after boot is found only at the next boot, Concierge detect or Model Library write; never run against a real Ollama/LM Studio/llama.cpp server | — | — |
 | Memory faces (need a canvas): the Desk memory card with observations, the standing pages, the ⌘K palette's use of fused recall | Muad'Dib | — |
@@ -66,6 +67,8 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 
 ## Last merged (newest first)
 
+- #862 — First run review fixes: a late mic grant is stopped; the owner's aliases never claim a named other person; FOUND shows one true default; a blocked mic shows tokens, not a paragraph
+- #861 — API manifest and census for the first-run FOUND control (main was red after #859)
 - #859 — First run "C1 · Heard first" (ratified): one Set up local AI press; First words lights when speech lands; his first sentence played back big; his name and aliases count in needs-you; FOUND engines with Use it. Merged on the owner's word before Astra's review finished
 - #856 — llama.cpp runtime in the base install; one-press Set up local AI (sha-pinned Whisper, embedding and starter models, one egress receipt); no download at boot or on load; the starter serves meeting analysis; meetings summarised by default when an engine exists
 - #855 — Batteries-included default: a local engine on this machine becomes "Default for AI work" by itself (loopback only, no proxy, no redirects; made_by stored with the assignment); LAN and cloud engines are proposals; memory follows a local or owner-made default
