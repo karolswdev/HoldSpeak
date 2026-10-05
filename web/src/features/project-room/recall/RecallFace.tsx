@@ -61,6 +61,7 @@ import {
   type RecallFilter,
 } from "./model";
 import { useRecallController, type RecallController } from "./useRecallController";
+import { BeliefCard } from "./BeliefCard";
 import "./recall.css";
 
 /** Render the trusted FTS marker grammar without injecting result HTML. */
@@ -329,10 +330,17 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
   const searched = status === "ready" || (status === "searching" && result.searched_at !== "");
   const dimmed = status === "searching" && result.searched_at !== "";
   const cards = [...result.current];
+  // Memory on the Desk (canvas section 2, option B): a belief is one more
+  // kind of card, drawn in its state's section after the decisions.
+  const beliefs = {
+    current: result.beliefs.filter((b) => b.state === "current"),
+    disputed: result.beliefs.filter((b) => b.state === "disputed"),
+    superseded: result.beliefs.filter((b) => b.state === "superseded"),
+  };
   const sections = {
-    current: result.current.length,
-    superseded: result.superseded.length,
-    disputed: result.disputed.length,
+    current: result.current.length + beliefs.current.length,
+    superseded: result.superseded.length + beliefs.superseded.length,
+    disputed: result.disputed.length + beliefs.disputed.length,
     owed: result.owed.length,
     meetings: result.meetings.length,
     briefs: result.briefs.length,
@@ -454,13 +462,7 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
                 {cards.map((card, index) => (
                   <DecisionCardView key={card.id} card={card} primary={index === 0} ctrl={ctrl} />
                 ))}
-              </SurfaceSection>
-            ) : null}
-            {sections.superseded ? (
-              <SurfaceSection label={countLabel("SUPERSEDED", sections.superseded)} className="recall-section">
-                {result.superseded.map((card) => (
-                  <DecisionCardView key={card.id} card={card} primary={false} ctrl={ctrl} />
-                ))}
+                {beliefs.current.map((belief) => <BeliefCard key={belief.id} belief={belief} />)}
               </SurfaceSection>
             ) : null}
             {sections.disputed ? (
@@ -468,6 +470,15 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string } = {}
                 {result.disputed.map((card) => (
                   <DecisionCardView key={card.id} card={card} primary={false} ctrl={ctrl} />
                 ))}
+                {beliefs.disputed.map((belief) => <BeliefCard key={belief.id} belief={belief} />)}
+              </SurfaceSection>
+            ) : null}
+            {sections.superseded ? (
+              <SurfaceSection label={countLabel("SUPERSEDED", sections.superseded)} className="recall-section">
+                {result.superseded.map((card) => (
+                  <DecisionCardView key={card.id} card={card} primary={false} ctrl={ctrl} />
+                ))}
+                {beliefs.superseded.map((belief) => <BeliefCard key={belief.id} belief={belief} />)}
               </SurfaceSection>
             ) : null}
             {sections.owed ? (

@@ -16716,6 +16716,72 @@
         ]
       }
     },
+    "/api/memory/pages": {
+      "get": {
+        "description": "The standing pages of one scope (the Room's project, the Brief's\ndesk): a read with no model call (MemoryService.standing_pages).",
+        "operationId": "memory_pages_api_memory_pages_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scope"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Memory Pages Api Memory Pages Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Memory Pages",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
     "/api/memory/recall": {
       "get": {
         "description": "HS-200-13: the Desk memory face's one read -- CURRENT / SUPERSEDED /\nDISPUTED / OWED over one query (holdspeak/services/recall_service.py).\n\nHS-202-02: `recent=1` with no query answers the desk's newest memory,\nso the face named \"Desk memory\" is not a blank field on a desk that\nholds a meeting, decisions and a brief.",
