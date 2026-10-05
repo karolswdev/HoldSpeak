@@ -159,6 +159,10 @@
 }
 
 .surface-choice-card-label {
+  /* First run C1: the label takes the head's width, so a card head can
+     carry a state chip at its right end (the first-run cards). */
+  flex: 1 1 auto;
+  min-width: 0;
   font-family: var(--font-mono);
   font-size: var(--desk-surface-body-size, 13px);
   font-weight: 700;

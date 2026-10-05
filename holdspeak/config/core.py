@@ -21,6 +21,7 @@ from .meeting import (
 )
 from .model import LLMRuntimeConfig, ModelConfig
 from .ui import HotkeyConfig, MacrosConfig, UIConfig
+from .owner import OwnerConfig
 from .device import DeviceConfig, MeshConfig, PresenceConfig, WakeWordConfig
 from .integrations import (
     CadenceConfig,
@@ -303,6 +304,8 @@ class Config:
     rails_observer: RailsObserverConfig = field(default_factory=RailsObserverConfig)
     thoughts: ThoughtsConfig = field(default_factory=ThoughtsConfig)
     calendar: CalendarConfig = field(default_factory=CalendarConfig)
+    # First run (C1): the owner's name and aliases; needs-you reads them as "me".
+    owner: OwnerConfig = field(default_factory=OwnerConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -367,6 +370,11 @@ class Config:
                     ThoughtsConfig, data.get("thoughts", {}) or {}, section="thoughts"
                 ),
                 calendar=_coerce_calendar(data.get("calendar", {}) or {}),
+                owner=_coerce(
+                    OwnerConfig,
+                    data["owner"] if isinstance(data.get("owner"), dict) else {},
+                    section="owner",
+                ),
             )
             # HS-112-01: the one-time legacy-endpoint migration runs only on
             # the real install's config (an explicit path is a test/tool

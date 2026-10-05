@@ -8,7 +8,7 @@ import { wireDate } from "../surface/format";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chair } from "./Chair";
 import { ChairDesk } from "./ChairDesk";
-import { FirstWords } from "../components/FirstWords";
+import { FirstRun } from "../firstrun/FirstRun";
 import { useDesk } from "../store";
 import { openNewThought } from "../newThought";
 import { BriefEgress, briefReceipt } from "./briefEgress";
@@ -436,10 +436,8 @@ export function ChairHome({ arrivalRequired = false }: { arrivalRequired?: boole
   if (arrivalRequired) {
     return (
       <main className="chair chair-first-value" data-testid="chair-first-value">
-        <FirstWords
-          embedded
-          onDismiss={() => useDesk.getState().refresh()}
-        />
+        {/* First run C1 "Heard first" (owner ratified 2026-10-05). */}
+        <FirstRun />
       </main>
     );
   }

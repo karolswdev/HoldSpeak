@@ -68,9 +68,11 @@ describe("the subtree-writer allowlist (HS-130-07)", () => {
     // MeetingsConfig owns the meeting capture/export subtree and DeliveryBoard
     // owns the companion-repo key — each is the ONE writer of its subtree and
     // those rows no longer render in SettingsCore. No other writer is
-    // permitted.
+    // permitted. First run C1: the You card writes ONLY the `owner`
+    // subtree (his name and aliases), from desk/firstrun/ownerName.ts.
     expect(writers).toEqual([
       "desk/components/DeliveryBoard.tsx",
+      "desk/firstrun/ownerName.ts",
       "pages/cores/CommandsCore.tsx",
       "pages/cores/SettingsCore.tsx",
       "pages/cores/history/MeetingsConfig.tsx",

@@ -23,8 +23,9 @@
 
 .surface-plan-step {
   display: flex;
+  flex-wrap: wrap; /* first run C1: a long rate wraps under; the label stays whole */
   align-items: center;
-  gap: 6px;
+  gap: 2px 6px;
   min-height: 24px;
   padding: 2px 6px;
 }
@@ -72,7 +73,12 @@
 /* ── Step label ── */
 
 .surface-plan-step-label {
-  flex: 1;
+  /* The label never shrinks under its own words: when the bar and the rate
+     do not fit beside it, they wrap to the next line (the 393 canvas cut
+     "Chat" to "Ch…" beside "1.1 / 2.7 GB · 46 MB/s"). Only a label wider
+     than the whole row ellipsizes. */
+  flex: 1 0 auto;
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -84,6 +90,7 @@
 
 .surface-plan-step-rate {
   flex: none;
+  margin-left: auto;
   font-size: var(--desk-surface-label-size); /* PHILO-9-03: the 12 px floor (was 10 px) */
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;

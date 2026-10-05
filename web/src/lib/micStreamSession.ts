@@ -66,6 +66,10 @@ export type StreamSession = {
    *  for Retry. Resolves after the retention write settles, so a surface
    *  never claims retention it cannot prove. */
   retained(): Promise<boolean>;
+  /** First run C1 — the take as a WAV, from this browser's own capture
+   *  (only with `retainScope`; null past the retain cap). It never leaves
+   *  this device: Play on the heard card plays it. */
+  audio?(): ArrayBuffer | null;
 };
 
 const CHUNK_INTERVAL_MS = 600;
@@ -130,18 +134,21 @@ export async function startStreamSession(
     retainedBytes += pcm.byteLength;
   };
 
-  const persist = async (): Promise<boolean> => {
-    if (!retainScope || overflowed || !retainedBytes) return false;
+  const takeWav = (): ArrayBuffer | null => {
+    if (!retainScope || overflowed || !retainedBytes) return null;
     const merged = new Uint8Array(retainedBytes);
     let at = 0;
     retainedParts.forEach((part) => {
       merged.set(part, at);
       at += part.byteLength;
     });
-    await savePendingVoice(
-      retainScope,
-      wavFromPcm16(new Int16Array(merged.buffer, 0, merged.byteLength >> 1)),
-    );
+    return wavFromPcm16(new Int16Array(merged.buffer, 0, merged.byteLength >> 1));
+  };
+
+  const persist = async (): Promise<boolean> => {
+    const wav = takeWav();
+    if (!wav) return false;
+    await savePendingVoice(retainScope, wav);
     return true;
   };
 
@@ -273,6 +280,9 @@ export async function startStreamSession(
     },
     retained(): Promise<boolean> {
       return retaining.catch(() => false);
+    },
+    audio(): ArrayBuffer | null {
+      return takeWav();
     },
   };
 }
