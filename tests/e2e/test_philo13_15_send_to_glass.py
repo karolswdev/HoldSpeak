@@ -42,7 +42,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle, park_builtin_folder
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the send-to glass needs Playwright")
@@ -255,6 +255,7 @@ class TestSendToGlass:
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         _ensure_build()
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        park_builtin_folder()  # the desk these boards were drawn on (glass_infra.park_builtin_folder)
         self.server, self.base, self.home = server, base, tmp_path / "home"
         self.monkeypatch = monkeypatch
         from holdspeak.db import get_database

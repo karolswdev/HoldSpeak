@@ -32,6 +32,8 @@ export type Destination = {
   /** Email's To and Cc arrive as arrays (read with `list`). */
   target: Record<string, string | number>;
   synced: boolean;
+  /** The built-in "HoldSpeak folder" (Documents/HoldSpeak/Sent): always there; no Edit, no Remove. */
+  builtin?: boolean;
   state: "active" | "parked";
   badge?: string;
   created_at: string;
@@ -161,6 +163,7 @@ const REFUSED: Record<string, string> = {
   destination_changed: "DESTINATION CHANGED",
   destination_parked: "DESTINATION PARKED",
   destination_not_saved: "DESTINATION NOT SAVED",
+  destination_builtin: "BUILT IN FOLDER",
   destination_name_invalid: "NAME MISSING",
   document_unknown: "NO DOCUMENT",
   document_kind_unknown: "DOCUMENT TYPE UNKNOWN",
@@ -218,6 +221,7 @@ const FAILED: Record<string, string> = {
   no_space: "NO SPACE",
   name_taken: "NAME TAKEN",
   not_written: "FILE NOT WRITTEN",
+  folder_not_created: "FOLDER NOT MADE",
   github_target_not_found: "ISSUE NOT FOUND",
   github_repository_not_found: "REPOSITORY NOT FOUND",
   github_permission_denied: "NO PERMISSION",
@@ -345,7 +349,7 @@ export function stamp(iso: string | null | undefined): string {
 /** The short target token for a destination row. Literal: keeps its case. */
 export function targetToken(channel: Channel, t: Record<string, string | number>): string {
   switch (channel) {
-    case "file": return String(t.folder ?? "").replace(/^\/Users\/[^/]+/, "~");
+    case "file": return t.display ? String(t.display) : String(t.folder ?? "").replace(/^\/Users\/[^/]+/, "~");
     case "github": return `${t.repo}${t.kind === "pr" ? " PR" : ""} #${t.number}`;
     case "jira": return String(t.key ?? "");
     case "confluence": return `SPACE ${t.space_id ?? ""}`;

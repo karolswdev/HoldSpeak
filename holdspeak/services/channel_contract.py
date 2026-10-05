@@ -313,6 +313,73 @@ def naming(db: Any, document_ref: str, document_json: Any = None) -> Document:
     raise ChannelRefused("document_not_found", f"Document {document_ref} was not found", status=404)
 
 
+# ── the built-in folder (owner ruling 2026-10-05) ───────────────────────────
+
+#: A folder the user browses: rwxr-xr-x, the same reach as the 0644 files in it.
+BUILTIN_FOLDER_MODE = 0o755
+
+
+def documents_dir(platform: Optional[str] = None) -> str:
+    """The user's Documents folder, read now (never frozen).
+
+    Linux: ``XDG_DOCUMENTS_DIR`` from ``$XDG_CONFIG_HOME/user-dirs.dirs`` (what
+    ``xdg-user-dir DOCUMENTS`` reads), then the environment variable, then
+    ``~/Documents``. A value of ``$HOME`` itself means "no Documents folder"
+    in the XDG convention, so it falls back too. Every other platform:
+    ``~/Documents``.
+    """
+    import sys
+    from pathlib import Path
+
+    home = str(Path.home())
+    fallback = os.path.join(home, "Documents")
+    if not str(platform or sys.platform).startswith("linux"):
+        return fallback
+
+    def expand(raw: str) -> str:
+        text = raw.strip().strip('"')
+        if text.startswith("$HOME"):
+            text = home + text[len("$HOME"):]
+        return os.path.normpath(text) if os.path.isabs(text) else ""
+
+    config = os.environ.get("XDG_CONFIG_HOME") or os.path.join(home, ".config")
+    found = ""
+    try:
+        with open(os.path.join(config, "user-dirs.dirs"), encoding="utf-8") as handle:
+            for line in handle:
+                key, _, value = line.strip().partition("=")
+                if key == "XDG_DOCUMENTS_DIR":
+                    found = expand(value)
+    except OSError:
+        pass
+    if not found:
+        found = expand(os.environ.get("XDG_DOCUMENTS_DIR", ""))
+    if not found or os.path.normpath(found) == os.path.normpath(home):
+        return fallback
+    return found
+
+
+def builtin_folder(platform: Optional[str] = None) -> str:
+    """The built-in destination's folder: Documents + HoldSpeak/Sent, resolved now."""
+    return os.path.realpath(os.path.join(documents_dir(platform), "HoldSpeak", "Sent"))
+
+
+def is_builtin_target(target: Mapping[str, Any]) -> bool:
+    return bool(target.get("builtin"))
+
+
+def shown_target(target: Mapping[str, Any]) -> dict[str, Any]:
+    """A target as the face reads it: the built-in's folder is resolved now."""
+    shown = dict(target)
+    if is_builtin_target(target):
+        folder = builtin_folder()
+        shown["folder"] = folder
+        # The row's short token: the home folder reads as ~ (any HOME, macOS or Linux).
+        home = os.path.realpath(os.path.expanduser("~"))
+        shown["display"] = "~" + folder[len(home):] if folder.startswith(home + os.sep) else folder
+    return shown
+
+
 # ── the file channel: the one direct writer ────────────────────────────────
 
 
@@ -360,7 +427,13 @@ class FileChannel:
     # -- before the boundary -------------------------------------------------
 
     def check_before_dispatch(self, target: Mapping[str, Any], **_: Any) -> str:
-        """The folder resolved again: a different resolved path is ``destination_changed``."""
+        """The folder resolved again: a different resolved path is ``destination_changed``.
+
+        The built-in folder is resolved HERE, at send time (it may not exist
+        yet: dispatch makes it).
+        """
+        if is_builtin_target(target):
+            return builtin_folder()
         frozen = str(target.get("folder") or "")
         real = os.path.realpath(frozen)
         if real != frozen or not os.path.isdir(real):
@@ -390,6 +463,13 @@ class FileChannel:
 
     def dispatch(self, row: Mapping[str, Any], seam: Any = None) -> Outcome:
         path, payload, digest = str(row["file_path"]), bytes(row["payload"]), str(row["payload_digest"])
+        if is_builtin_target(_target_of(row)):
+            # The built-in folder only: made on the first send, made again when it
+            # was deleted. A SAVED folder is never made (it may be an unmounted drive).
+            try:
+                os.makedirs(os.path.dirname(path), mode=BUILTIN_FOLDER_MODE, exist_ok=True)
+            except OSError:
+                return Outcome("failed", "folder_not_created")
         flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
         try:
             fd = os.open(path, flags, 0o644)
@@ -430,6 +510,16 @@ class FileChannel:
         if not path or not os.path.lexists(path):
             return Outcome("failed", "not_written")
         return self.read_back(path, str(row["payload_digest"]))
+
+
+def _target_of(row: Mapping[str, Any]) -> dict[str, Any]:
+    import json
+
+    try:
+        value = json.loads(row.get("target_json") or "{}")
+    except (TypeError, ValueError):
+        return {}
+    return value if isinstance(value, dict) else {}
 
 
 #: THE registry: channel name -> its implementation. Story 02 adds the CLI

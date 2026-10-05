@@ -456,9 +456,12 @@ export function Destinations() {
                                   .catch((e) => setChecks((m) => ({ ...m, [d.id]: { busy: false, state: e instanceof Refusal ? e.code : "no_answer" } })));
                               }}>Check</Button>
                             <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
-                            <Button dense variant="ghost" data-testid="dest-edit" onClick={() => setEditing(d.id)}>Edit</Button>
-                            <ConfirmVerb label="Remove" confirmLabel="Remove?" busy={removeBusy === d.id} data-testid="dest-remove"
-                              onConfirm={() => remove(d.id)} />
+                            {/* The built-in HoldSpeak folder is always there: no Edit, no Remove. */}
+                            {d.builtin ? null : <>
+                              <Button dense variant="ghost" data-testid="dest-edit" onClick={() => setEditing(d.id)}>Edit</Button>
+                              <ConfirmVerb label="Remove" confirmLabel="Remove?" busy={removeBusy === d.id} data-testid="dest-remove"
+                                onConfirm={() => remove(d.id)} />
+                            </>}
                             {removeFailed[d.id] ? (
                               <span className="send-line" data-testid="dest-remove-failed" data-code={removeFailed[d.id]}>
                                 <StateChip state="failure" label="NOT REMOVED" />

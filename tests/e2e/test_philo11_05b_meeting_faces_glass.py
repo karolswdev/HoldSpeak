@@ -42,7 +42,7 @@ from typing import Any
 import pytest
 
 from ._send_face_glass import VISIBLE, Boards
-from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair, _settle, park_builtin_folder
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the meeting faces glass needs Playwright")
@@ -127,6 +127,7 @@ class TestMeetingFacesGlass:
         monkeypatch.setattr(keyring, "get_keyring", lambda: (_ for _ in ()).throw(
             AssertionError("the meeting faces glass reached the real keychain")))
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        park_builtin_folder()  # the desk these boards were drawn on (glass_infra.park_builtin_folder)
         self.server, self.base = server, base
         try:
             yield

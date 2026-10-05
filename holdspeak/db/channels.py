@@ -87,6 +87,29 @@ def settle_in_transaction(conn: Any, *, send_operation_id: str, state: str, reas
     return dict(conn.execute("SELECT * FROM channel_sends WHERE id=?", (row["id"],)).fetchone())
 
 
+#: The built-in folder destination (owner ruling 2026-10-05, "strong defaults,
+#: batteries included"): every desk has it with no setup. Its target names no
+#: path: the file channel resolves the folder at SEND time
+#: (``channel_contract.builtin_folder``), so a moved Documents folder is honoured.
+BUILTIN_FOLDER_ID = "holdspeak-folder"
+BUILTIN_FOLDER_NAME = "HoldSpeak folder"
+BUILTIN_FOLDER_TARGET: dict[str, str] = {"builtin": "documents"}
+
+
+def is_builtin(row: Mapping[str, Any]) -> bool:
+    return str(row.get("id") or "") == BUILTIN_FOLDER_ID
+
+
+def seed_builtin_destination(conn: Any) -> int:
+    """Insert the built-in folder row when it is absent (idempotent; never changes a present row)."""
+    return conn.execute(
+        "INSERT OR IGNORE INTO channel_destinations (id, name, channel, account_json, target_json, target_digest,"
+        " synced, state, created_at) VALUES (?, ?, 'file', '{}', ?, ?, 0, 'active', ?)",
+        (BUILTIN_FOLDER_ID, BUILTIN_FOLDER_NAME, canonical_json(BUILTIN_FOLDER_TARGET),
+         target_digest("file", {}, BUILTIN_FOLDER_TARGET), now_iso()),
+    ).rowcount
+
+
 class ChannelDestinationsRepository(BaseRepository):
     """The saved destinations (no secret; park, never delete)."""
 

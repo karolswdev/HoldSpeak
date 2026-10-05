@@ -469,7 +469,11 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
   const dests = useDestinations();
   const conns = useConnections();
   const ref = doc.ref;
-  const picked = store.picked.has(ref) ? store.picked.get(ref) ?? null : ((k) => (k && dests.data?.some((d) => d.id === k) ? k : null))(keptPlace(`send/pick/${ref}`)); // B2: the kept pick returns, onto a listed destination only
+  // B2: the kept pick returns, onto a listed destination only. With no kept pick
+  // and no destination but the built-in HoldSpeak folder (a fresh desk), the folder is picked.
+  const onlyBuiltin = dests.data?.length === 1 && dests.data[0].builtin ? dests.data[0].id : null;
+  const picked = store.picked.has(ref) ? store.picked.get(ref) ?? null
+    : ((k) => (k && dests.data?.some((d) => d.id === k) ? k : onlyBuiltin))(keptPlace(`send/pick/${ref}`));
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [previewTry, setPreviewTry] = useState(0);
   useEffect(() => {

@@ -792,6 +792,13 @@ def reconcile_schema(
         """
     )
 
+    # The built-in "HoldSpeak folder" Send destination (owner ruling
+    # 2026-10-05): present on every desk with no setup. Ungated, like the
+    # privacy seed above: an up-to-date desk gains it on its next open.
+    from .channels import seed_builtin_destination
+
+    seed_builtin_destination(conn)
+
     # ── 5. Informational version stamp (never read to gate) ────────────
     conn.execute(
         "INSERT OR REPLACE INTO schema_version (version) VALUES (?)",

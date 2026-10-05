@@ -36,7 +36,7 @@ from typing import Any
 import pytest
 
 from ._send_face_glass import Boards
-from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import _api, _api_allow_error, _boot, _ensure_build, _normal_chair, _settle, park_builtin_folder
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the Send face glass needs Playwright")
@@ -119,6 +119,7 @@ class _Rig:
         _ensure_build()
         self.tmp = tmp_path
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        park_builtin_folder()  # the desk these boards were drawn on (glass_infra.park_builtin_folder)
         self.server, self.base = server, base
         self.locked: list[Path] = []
         self.monkeypatch = monkeypatch
@@ -792,7 +793,8 @@ class TestSendFaceGlass(_Rig):
                 page.locator("[data-testid=dest-save]").click()
                 page.wait_for_function("document.querySelectorAll('[data-testid=dest-row]').length === 2", timeout=T)
                 page.wait_for_timeout(400)
-                hub = _api(page, "GET", "/api/channels/destinations?include_parked=true", token=TOKEN)["destinations"]
+                hub = [d for d in _api(page, "GET", "/api/channels/destinations?include_parked=true", token=TOKEN)["destinations"]
+                       if not d.get("builtin")]  # the parked built-in (park_builtin_folder) is not this board's
                 lst = shots.shoot(page, "b09-list", ["[data-testid=dest-list]"])
                 assert lst["dest_head"] == "DESTINATIONS 2", lst["dest_head"]
                 assert sorted((d["name"], d["synced"]) for d in hub) == [("Folder Drive", True), ("Folder Reports", False)], hub
@@ -817,10 +819,12 @@ class TestSendFaceGlass(_Rig):
                 page.locator("[data-testid=dest-parked] .gadget-fold-summary, [data-testid=dest-parked] summary").first.click()
                 page.wait_for_timeout(300)
                 edited = shots.shoot(page, "b13-edited-old-parked", ["[data-testid=dest-parked-row]"])
-                hub = _api(page, "GET", "/api/channels/destinations?include_parked=true", token=TOKEN)["destinations"]
+                hub = [d for d in _api(page, "GET", "/api/channels/destinations?include_parked=true", token=TOKEN)["destinations"]
+                       if not d.get("builtin")]  # the parked built-in (park_builtin_folder) is not this board's
                 assert sorted((d["name"], d["state"]) for d in hub) == [
                     ("Folder Drive", "active"), ("Folder Reports", "parked"), ("Reports folder", "active")], hub
-                assert edited["dest_parked"][0].startswith("Folder Reports FILE"), edited["dest_parked"]
+                mine = [r for r in edited["dest_parked"] if not r.startswith("HoldSpeak folder")]  # park_builtin_folder
+                assert mine[0].startswith("Folder Reports FILE"), edited["dest_parked"]
 
                 # B14, B15: Remove armed, then parked with its history.
                 row = self._drow("Folder Drive")
@@ -837,7 +841,8 @@ class TestSendFaceGlass(_Rig):
                 page.wait_for_timeout(300)
                 not_removed = shots.shoot(page, "b14b-remove-failed", [f"{row} [data-testid=dest-remove-failed]",
                                                                       f"{row} [data-testid=dest-remove-retry]"])
-                hub_nr = _api(page, "GET", "/api/channels/destinations?include_parked=true", token=TOKEN)["destinations"]
+                hub_nr = [d for d in _api(page, "GET", "/api/channels/destinations?include_parked=true", token=TOKEN)["destinations"]
+                       if not d.get("builtin")]  # the parked built-in (park_builtin_folder) is not this board's
                 assert next(d for d in hub_nr if d["name"] == "Folder Drive")["state"] == "active", hub_nr
                 assert page.locator(f"{row} [data-testid=dest-open]").count() == 1
                 assert page.locator(f"{row} [data-testid=dest-remove-failed]").inner_text().split("\n")[:3] == [
@@ -850,9 +855,11 @@ class TestSendFaceGlass(_Rig):
                 if not page.locator("[data-testid=dest-parked-row]").count():
                     page.locator("[data-testid=dest-parked] .gadget-fold-summary, [data-testid=dest-parked] summary").first.click()
                 removed = shots.shoot(page, "b15-removed-parked", ["[data-testid=dest-parked]"])
-                hub = _api(page, "GET", "/api/channels/destinations?include_parked=true", token=TOKEN)["destinations"]
+                hub = [d for d in _api(page, "GET", "/api/channels/destinations?include_parked=true", token=TOKEN)["destinations"]
+                       if not d.get("builtin")]  # the parked built-in (park_builtin_folder) is not this board's
                 assert sorted(d["state"] for d in hub) == ["active", "parked", "parked"], hub
-                assert len(removed["dest_parked"]) == 2 and removed["dest_head"] == "DESTINATIONS 1"
+                mine = [r for r in removed["dest_parked"] if not r.startswith("HoldSpeak folder")]  # park_builtin_folder
+                assert len(mine) == 2 and removed["dest_head"] == "DESTINATIONS 1"
 
                 # B16: the read gets no answer: CANNOT READ DESTINATIONS, never the empty form.
                 _mode(page, "GET ^/api/channels/destinations$", "fail")
@@ -929,6 +936,7 @@ class TestSendChannelsGlass(_Rig):
         monkeypatch.setattr(channel_cli, "CLI_RUNNER", self.canned)
         runner = _ProviderRunner()
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=runner, acli_runner=runner)
+        park_builtin_folder()  # the desk these boards were drawn on (glass_infra.park_builtin_folder)
         self.server, self.base = server, base
         try:
             yield
@@ -1412,6 +1420,7 @@ class TestSendEmailGlass(_Rig):
         monkeypatch.setattr(channel_email, "HTTPS_HANDLER", self.wire.handler)
         EGRESS_EXECUTIONS._results.clear()
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        park_builtin_folder()  # the desk these boards were drawn on (glass_infra.park_builtin_folder)
         self.server, self.base = server, base
         try:
             yield

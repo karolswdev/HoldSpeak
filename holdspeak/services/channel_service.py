@@ -37,7 +37,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping, Optional
 
-from holdspeak.db.channels import now_iso, settle_in_transaction
+from holdspeak.db.channels import BUILTIN_FOLDER_ID, is_builtin, now_iso, settle_in_transaction
 from holdspeak.logging_config import get_logger
 
 from . import channel_contract as contract
@@ -77,7 +77,7 @@ class ChannelService:
         synced = bool(row["synced"])
         return {
             "id": row["id"], "name": row["name"], "channel": row["channel"],
-            "account": account, "target": target,
+            "account": account, "target": contract.shown_target(target), "builtin": is_builtin(row),
             "target_digest": row["target_digest"], "synced": synced, "state": row["state"],
             "badge": contract.channel(row["channel"]).badge(synced), "created_at": row["created_at"],
             "parked_at": row["parked_at"], "connection": self._connection(str(row["channel"]), account),
@@ -114,7 +114,8 @@ class ChannelService:
             "id": row["id"], "document_ref": row["document_ref"], "destination_id": row["destination_id"],
             "destination_name": destination.get("name"), "channel": row["channel"],
             "badge": contract.channel(row["channel"]).badge(bool(destination.get("synced"))),
-            "account": json.loads(row["account_json"] or "{}"), "target": json.loads(row["target_json"] or "{}"),
+            "account": json.loads(row["account_json"] or "{}"),
+            "target": contract.shown_target(json.loads(row["target_json"] or "{}")),
             "target_digest": row["target_digest"], "payload_digest": row["payload_digest"],
             "document_json": json.loads(row["document_json"]) if row.get("document_json") else None,
             "size": size, "preview": contract.preview_for(row["channel"], payload, row["account_json"]),
@@ -199,6 +200,16 @@ class ChannelService:
             state = "parked" if row["state"] != "active" else str((view["connection"] or {}).get("state") or "")
             return {"destination": view, "check": {"state": state, "resolved": None}}
         target = json.loads(row["target_json"] or "{}")
+        if contract.is_builtin_target(target):
+            # The built-in folder is never "missing": the next send makes it.
+            resolved = contract.builtin_folder()
+            parent = resolved
+            while not os.path.isdir(parent) and os.path.dirname(parent) != parent:
+                parent = os.path.dirname(parent)
+            state = ("parked" if row["state"] != "active"
+                     else "ready" if os.access(parent, os.W_OK)
+                     else "not_writable")
+            return {"destination": self._destination_view(row), "check": {"state": state, "resolved": resolved}}
         folder = str(target.get("folder") or "")
         resolved = os.path.realpath(folder) if folder else ""
         state = ("parked" if row["state"] != "active"
@@ -302,6 +313,8 @@ class ChannelService:
             synced = False
         else:
             raise ValidationError(f"{channel} destinations arrive with their channel", code="channel_unknown")
+        if replaces == BUILTIN_FOLDER_ID:
+            raise ChannelRefused("destination_builtin", "The HoldSpeak folder stays", status=400)
         if replaces:
             old = self._destination(replaces)
             if old["state"] != "active":
@@ -347,6 +360,8 @@ class ChannelService:
         row = self._destination(destination_id)
         if handle.replay:
             return {"destination": self._destination_view(row)}
+        if is_builtin(row):
+            raise ChannelRefused("destination_builtin", "The HoldSpeak folder stays", status=400)
         if row["state"] != "active":
             raise ChannelRefused("destination_parked", f"Destination {destination_id} is already parked")
 

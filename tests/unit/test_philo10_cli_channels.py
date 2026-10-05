@@ -317,8 +317,8 @@ def test_a_github_destination_saved_as_a_is_refused_when_gh_is_b(hub: Hub, monke
     canned = install(monkeypatch, Canned(login="login-a"))
     _pid, update = room(hub)
     dest = _dest(hub, "github")
-    assert hub.client.get("/api/channels/destinations").json()["destinations"][0]["account"] == {
-        "host": "github.com", "login": "login-a"}
+    assert [d["account"] for d in hub.client.get("/api/channels/destinations").json()["destinations"]
+            if d["id"] == dest] == [{"host": "github.com", "login": "login-a"}]
     prepared = prepare(hub, update, dest)["send"]["id"]
     canned.login = "login-b"  # gh auth switch by hand
     refused = send(hub, {"send_id": prepared})
@@ -336,7 +336,7 @@ def test_a_github_destination_saved_as_a_is_refused_when_gh_is_b(hub: Hub, monke
     again = send(hub, {"send_id": prepared})
     assert again.json()["code"] == "github_identity_changed", again.text
     # The destination names that connection and shows its Phase 9 state (never_checked before the row).
-    [listed] = hub.client.get("/api/channels/destinations").json()["destinations"]
+    [listed] = [d for d in hub.client.get("/api/channels/destinations").json()["destinations"] if d["id"] == dest]
     assert listed["connection"] == {"id": "wpc_github", "state": "connected",
                                     "last_checked_at": "2026-09-28T00:00:00+00:00"}
     canned.login = "login-a"  # back as A (the row still says B): the send goes

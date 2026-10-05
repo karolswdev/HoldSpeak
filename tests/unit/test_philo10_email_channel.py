@@ -689,8 +689,8 @@ def test_c5_the_key_is_held_never_an_argument_and_the_owner_alone_saves_it(hub: 
 def test_the_destination_freezes_the_sender_and_refuses_bad_addresses_by_name(hub: Hub, wire: Wire) -> None:
     assert save_key(hub).status_code == 200
     dest = email_destination(hub)
-    view = hub.client.get("/api/channels/destinations").json()["destinations"][0]
-    assert view["id"] == dest and view["badge"] == "cloud"
+    [view] = [d for d in hub.client.get("/api/channels/destinations").json()["destinations"] if d["id"] == dest]
+    assert view["badge"] == "cloud"
     assert view["account"] == {"provider": "sendgrid", "from_email": "karol@example.com", "from_name": "Karol",
                                "key_ref": "sendgrid"}
     assert view["target"] == {"to": ["Priya Raman <priya@example.com>"], "cc": ["lead@example.com"]}

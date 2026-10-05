@@ -170,6 +170,15 @@ def _short_target(target: Mapping[str, Any]) -> str:
     return "Saved destination"
 
 
+def _shown(target: Any) -> dict[str, Any]:
+    """The target as the face reads it (the built-in folder resolved now)."""
+    if not isinstance(target, dict):
+        return {}
+    from .services.channel_contract import shown_target
+
+    return shown_target(target)
+
+
 def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
     """The owner's saved Send destinations (Settings, Connections).
 
@@ -204,7 +213,7 @@ def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
             "revoke_action": "Park the destination in Settings, Connections",
             "enabled": not local,
             "saved": True,
-            "destination": _short_target(target if isinstance(target, dict) else {}),
+            "destination": _short_target(_shown(target)),
             "last_receipt": None,
         })
     return rows
