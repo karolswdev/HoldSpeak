@@ -168,6 +168,12 @@ def test_a_secret_is_redacted_on_the_way_out(seeded) -> None:
 
 def test_a_new_source_in_scope_makes_the_page_stale_and_counts_it(seeded) -> None:
     db, client = seeded
+    # The seed and the build share a second: put both an hour back, so the
+    # new notes are stamped after the page saw the scope (the clock rule
+    # the count uses; the digest staleness does not read stamps).
+    with db._connection() as conn:
+        conn.execute("UPDATE memory_sources SET updated_at='2026-01-01T00:00:00+00:00'")
+        conn.execute("UPDATE memory_pages SET last_memory_seen_at='2026-01-01T00:00:00+00:00'")
     _filed_note(db, "n-new", "Atlas freeze is 10-12.", "atlas")
     _filed_note(db, "n-harbor", "Harbor freeze is 11-01.", "harbor")
     sweep(db)
@@ -253,3 +259,18 @@ def test_sources_counts_distinct_sources_not_facts(tmp_path: Path, monkeypatch) 
     assert belief["proof_count"] == 2
     assert belief["source_count"] == 1
     reset_database()
+
+
+def test_the_memory_faces_module_imports_no_private_memory_name() -> None:
+    """The faces read memory through its public API only: a private helper
+    of ``pages`` / ``consolidate`` can change shape under a sibling lane
+    (it did: #870 replaced ``pages._changes`` with a content digest)."""
+    import holdspeak.services.memory_faces as module
+
+    tree = ast.parse(Path(module.__file__).read_text())
+    private = [
+        f"{node.module}.{alias.name}" for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom) and "memory" in (node.module or "")
+        for alias in node.names if alias.name.startswith("_")
+    ]
+    assert private == []

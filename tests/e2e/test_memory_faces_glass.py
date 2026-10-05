@@ -59,6 +59,11 @@ def _seed() -> None:
     write_pending(db, Pages())
     # One new Atlas source after the pages were built: every Atlas page is
     # stale; three are written again, so ONE stays stale (the board).
+    # The seed and the build share a second: put both an hour back so the
+    # new note is stamped after the pages saw the scope (the chip's count).
+    with db._connection() as conn:
+        conn.execute("UPDATE memory_sources SET updated_at='2026-01-01T00:00:00+00:00'")
+        conn.execute("UPDATE memory_pages SET last_memory_seen_at='2026-01-01T00:00:00+00:00'")
     _filed_note(db, "n-1003", "Cutover freeze is 10-12.", "atlas")
     sweep(db)
     for slug in ("what-we-decided", "what-is-open", "risks-and-disputes"):
@@ -250,12 +255,20 @@ def test_memory_on_the_desk(tmp_path, monkeypatch, width, height):
             page.locator(pages).filter(has_text="Cutover date is 10-17.").wait_for(timeout=T)
             _api(page, "DELETE", "/api/notes/n-1001", None, token=TOKEN)
             _gone(page, pages, "Cutover date is 10-17.")
+            room = page.locator(".desk-surface-window").first
+            _zoom(page, room, width)
+            _top(page, room, ".room-body")
+            _shots(page, "mem-B-pages-after-delete", width, room)
             # Desk memory is open on `cutover`; the meeting two beliefs rest on
             # is deleted: both leave, with no reload and no new search.
             _search_cutover_after_delete(page)
             _api(page, "DELETE", "/api/meetings/m-0924", None, token=TOKEN)
             _gone(page, "[data-testid=recall-results]", "Cutover rollback owner is Marek.")
             _gone(page, "[data-testid=recall-results]", "Cutover date is 10-10.")
+            memory = page.locator(".desk-surface-window").first
+            _zoom(page, memory, width)
+            _top(page, memory, ".recall-head")
+            _shots(page, "mem-B-beliefs-after-delete", width, memory)
 
             _assert_clean(page, errors)
             browser.close()

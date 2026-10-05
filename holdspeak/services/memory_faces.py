@@ -73,11 +73,21 @@ def day(stamp: Any) -> str:
     return parsed.strftime("%m-%d") if parsed else ""
 
 
-def _names(ref: str) -> list[str]:
-    from .memory_grounding import _exclusion_names
+#: The other names memory gives the record a Desk ref names (a Desk ref says
+#: ``action_item:`` / ``decision:``; memory's ledger says ``action:`` /
+#: ``decision_record:`` or ``desk_decision:``).
+_ALIASES = {
+    "action_item": ("action",),
+    "decision": ("decision_record", "desk_decision"),
+    "desk_decision": ("decision",),
+    "meeting": ("transcript",),
+}
 
+
+def _names(ref: str) -> list[str]:
     base = str(ref).split("#", 1)[0]
-    return [base, *sorted(_exclusion_names([base]) - {base})]
+    kind, _, rest = base.partition(":")
+    return [base, *(f"{alias}:{rest}" for alias in _ALIASES.get(kind, ()))]
 
 
 def ref_tokens(conn: Any, refs: Iterable[str]) -> dict[str, str]:
@@ -212,29 +222,26 @@ def recall_beliefs(db: Any, query: str, *, recent: bool = False, limit: int = 50
 
 
 def _new_sources(db: Any, scope: tuple[str, str], slug: str) -> int:
-    """The sources in ``scope`` that changed after the page saw the scope,
-    by the rule ``pages.is_stale`` uses (stamped after ``seen``, or in that
-    same second with content the job did not see)."""
-    from ..memory.pages import _changes
-
+    """The sources in ``scope`` stamped after the page saw the scope
+    (``last_memory_seen_at``).  Called only for a page ``pages.read`` calls
+    stale (the content digest, ``pages.is_stale``): this is the count the
+    chip names, not the staleness rule.  A change the clock cannot place
+    after the page (a refile, an edit in the same second) counts 0, and the
+    chip then reads ``STALE`` alone.  Public names only: no private import
+    of ``pages``."""
     with db._connection() as conn:
         row = conn.execute(
-            "SELECT last_memory_seen_at,seen_keys_json FROM memory_pages"
-            " WHERE scope_kind=? AND scope_id=? AND slug=?",
+            "SELECT last_memory_seen_at FROM memory_pages WHERE scope_kind=? AND scope_id=? AND slug=?",
             (*scope, slug),
         ).fetchone()
         if row is None:
             return 0
-        seen = str(row[0])
-        try:
-            known = set(json.loads(row[1] or "[]"))
-        except ValueError:
-            known = set()
-        changed = {
-            key.split("@", 1)[0] for key, at in _changes(conn, scope, seen, ScopeReader(conn))
-            if key.startswith("s:") and (at > seen or key not in known)
-        }
-        return len(changed)
+        scopes = ScopeReader(conn)
+        return sum(
+            1 for (ref,) in conn.execute(
+                "SELECT source_ref FROM memory_sources WHERE updated_at>?", (str(row[0]),)
+            ) if scopes.in_scope(str(ref), scope)
+        )
 
 
 def standing_pages(db: Any, scope_kind: str, project_id: str = "") -> list[dict[str, Any]]:
