@@ -59,7 +59,7 @@ _ERRORS = {
     "integrity": "The file was not correct. Press Try again to download it again.",
     "refused": "The hub did not permit the download. Press Try again.",
     "unsafe": "The model folder holds a link. Remove the link. Then press Try again.",
-    "runtime": "llama-cpp-python is not installed on this hub. Install it. Then press Try again.",
+    "runtime": "llama-cpp-python 0.3.34 or newer is not installed on this hub. Install it. Then press Try again.",
     "setup": "Meaning search did not start. Press Try again.",
     "index": "The index stopped. It continues automatically.",
 }
@@ -239,11 +239,11 @@ class MeaningSearchService:
 
     @staticmethod
     def _runtime_installed() -> bool:
-        try:
-            importlib.metadata.version("llama-cpp-python")
-        except importlib.metadata.PackageNotFoundError:
-            return False
-        return True
+        # The ONE runtime rule (shared with Set up local AI): the minimum
+        # revision AND a real ``import llama_cpp``.
+        from .inference_setup_service import local_llama_runtime
+
+        return bool(local_llama_runtime()["ready"])
 
     def turn_off(self, principal: Principal) -> dict[str, Any]:
         self._require_owner(principal)

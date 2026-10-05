@@ -65,6 +65,18 @@ def _seed_project(db: Database, project_id: str) -> None:
         )
 
 
+def assign_meeting_engine(db: Database) -> None:
+    """A real assignment for meeting.deferred_analysis: auto-intel enqueues
+    only when an engine is assigned (owner ruling 2026-10-05)."""
+    from holdspeak.inference_capabilities import process_inference_capability_registry
+    from tests.unit.test_phase143_inference_assignments import _profile
+    from tests.unit.test_phase200_readiness import _assign
+
+    schema = process_inference_capability_registry().require("meeting.deferred_analysis")
+    _profile(db, "meeting-engine", claims=("language", f"result_schema:{schema.output_schema_sha256}"))
+    _assign(db, "meeting.deferred_analysis", ["meeting-engine"])
+
+
 def _link_meeting_project(db: Database, meeting_id: str, project_id: str) -> None:
     """Link a meeting to a project (room)."""
     with db._connection() as conn:
@@ -144,6 +156,7 @@ class TestAutoIntelTrigger:
         _seed_meeting(db, meeting_id)
         _seed_project(db, project_id)
         _link_meeting_project(db, meeting_id, project_id)
+        assign_meeting_engine(db)
 
         glue = mock.MagicMock()
         cfg_mock = mock.MagicMock()

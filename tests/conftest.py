@@ -40,6 +40,19 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
+def whisper_on_device(monkeypatch):
+    """Declare "the Whisper model is on this device" for a test that fakes the
+    speech library itself (owner ruling 2026-10-05: a load reads only a local
+    folder and never downloads).  The repository id stands in for the folder,
+    so a fake mlx-whisper / faster-whisper sees the same string as before.
+    The real disk check is fenced in tests/unit/test_local_ai_setup.py.
+    """
+    monkeypatch.setattr("holdspeak.transcribe._local_source", lambda repo: repo)
+    monkeypatch.setattr("holdspeak.whisper_models.whisper_on_disk", lambda *a, **k: True)
+    monkeypatch.setattr("holdspeak.whisper_models.local_whisper_dir", lambda repo, **k: Path(repo))
+
+
+@pytest.fixture
 def fixtures_dir() -> Path:
     """Root fixtures directory."""
     return Path(__file__).parent / "fixtures"

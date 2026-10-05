@@ -109,12 +109,29 @@ def _complete(folder: Path, backend: str) -> bool:
 
 def _pinned_folder_ready(repository: str, home: Path) -> Optional[Path]:
     folder = pinned_whisper_dir(repository, home)
-    files = [item for group in _PINNED.values() for item in group if item.repository == repository]
+    files = _pins_for(repository)
     if not files or folder.is_symlink():
         return None
     if all(is_pinned_file(item, folder / item.filename) for item in files):
         return folder
     return None
+
+
+def _pins_for(repository: str) -> list[PinnedModel]:
+    return [item for group in _PINNED.values() for item in group if item.repository == repository]
+
+
+def _verified_in(folder: Path, model: PinnedModel) -> bool:
+    """The file in ``folder`` has the pinned size and sha256.
+
+    A Hugging Face snapshot holds links to its blobs, so the link is resolved
+    first and the blob itself (a regular file) is checked.
+    """
+    try:
+        target = (folder / model.filename).resolve(strict=True)
+    except OSError:
+        return False
+    return is_pinned_file(model, target)
 
 
 def _hub_snapshot(repository: str, home: Path) -> Optional[Path]:
@@ -134,10 +151,26 @@ def _hub_snapshot(repository: str, home: Path) -> Optional[Path]:
         ordered.extend(sorted(path for path in snapshots.iterdir() if path.is_dir()))
     except OSError:
         return None
+    pins = _pins_for(repository)
     for folder in ordered:
-        if folder.is_dir() and _complete(folder, backend):
+        if not folder.is_dir():
+            continue
+        if pins:
+            # A pinned model counts only when every file has the pinned bytes:
+            # a truncated or changed cache copy is not "on this device".
+            if all(_verified_in(folder, item) for item in pins):
+                return folder
+        elif _complete(folder, backend):
             return folder
     return None
+
+
+def pinned_file_on_device(model: PinnedModel, *, home: Optional[Path] = None) -> bool:
+    """One pinned Whisper file is on this device with its pinned bytes."""
+    where = home or Path.home()
+    if is_pinned_file(model, pinned_whisper_dir(model.repository, where) / model.filename):
+        return True
+    return _hub_snapshot(model.repository, where) is not None
 
 
 def local_whisper_dir(repository: str, *, home: Optional[Path] = None) -> Optional[Path]:
@@ -179,6 +212,7 @@ def whisper_on_disk(name: str, backend: str, *, home: Optional[Path] = None) -> 
 
 __all__ = [
     "local_whisper_dir",
+    "pinned_file_on_device",
     "pinned_whisper",
     "pinned_whisper_dir",
     "repositories_for",

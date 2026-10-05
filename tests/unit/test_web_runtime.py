@@ -335,16 +335,10 @@ def test_run_web_runtime_warms_transcriber_on_start(
     monkeypatch.setattr("holdspeak.transcribe.importlib.import_module", imported)
     monkeypatch.setattr(_MlxTranscriber, "_model_holder_get", model_holder)
     # Owner ruling 2026-10-05: the boot warms only a Whisper model already on
-    # this device. Put a copy in this HOME's Hugging Face cache (the real
-    # disk check finds it); the boot downloads nothing.
-    home = tmp_path / "home"
-    snapshot = home / ".cache/huggingface/hub/models--mlx-community--whisper-base-mlx/snapshots/r1"
-    snapshot.mkdir(parents=True)
-    (snapshot / "config.json").write_text("{}")
-    (snapshot / "weights.npz").write_bytes(b"weights")
-    monkeypatch.setenv("HOME", str(home))
-    monkeypatch.delenv("HF_HUB_CACHE", raising=False)
-    monkeypatch.delenv("HF_HOME", raising=False)
+    # this device; this test fakes the MLX library, so it declares the model
+    # present (the real disk check: tests/unit/test_local_ai_setup.py).
+    monkeypatch.setattr("holdspeak.whisper_models.whisper_on_disk", lambda *a, **k: True)
+    monkeypatch.setattr("holdspeak.transcribe._local_source", lambda repo: repo)
 
     stop_event = threading.Event()
     stop_event.set()

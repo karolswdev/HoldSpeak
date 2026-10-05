@@ -175,19 +175,20 @@ def desk(tmp_path: Path, monkeypatch):
         model=EMBED_PIN, home_provider=lambda: home, source_url=source.url_for(EMBED_PIN),
         allowed_host=allowed, wake=lambda: None,
     )
-    runtime = {"revision": "0.3.35"}
+    whisper = {"name": "base"}
 
     def build() -> LocalAISetupService:
+        # The runtime check is the real shared one: package metadata (Leaf 1)
+        # and a real ``import llama_cpp`` (installed in the base install).
         return LocalAISetupService(
             db, meaning_search=meaning, broker_provider=lambda: broker, home_provider=lambda: home,
-            config_provider=lambda: SimpleNamespace(model=SimpleNamespace(name="base", backend="mlx")),
-            catalog_provider=_catalog, runtime_revision=lambda: runtime["revision"],
-            url_for=source.url_for, allowed_host=allowed,
+            config_provider=lambda: SimpleNamespace(model=SimpleNamespace(name=whisper["name"], backend="mlx")),
+            catalog_provider=_catalog, url_for=source.url_for, allowed_host=allowed,
         )
 
     service = build()
     yield SimpleNamespace(db=db, broker=broker, home=home, source=source, meaning=meaning,
-                          service=service, runtime=runtime, build=build)
+                          service=service, whisper=whisper, build=build)
     service.wait(10)
     meaning.wait(10)
     source.close()
@@ -220,8 +221,18 @@ def _starter_path(desk) -> Path:
 # ── B: Set up local AI ────────────────────────────────────────────────
 
 
-def test_runtime_is_checked_before_any_download(desk) -> None:
-    desk.runtime["revision"] = None
+def _no_llama_import(monkeypatch) -> None:
+    def broken() -> None:
+        raise ImportError("libllama.dylib could not be loaded")
+
+    monkeypatch.setattr("holdspeak.services.inference_setup_service._import_llama_cpp", broken)
+
+
+def test_runtime_is_checked_before_any_download(desk, monkeypatch) -> None:
+    def missing(name: str) -> str:
+        raise importlib.metadata.PackageNotFoundError(name)
+
+    monkeypatch.setattr(importlib.metadata, "version", missing)
     with pytest.raises(ServiceError) as caught:
         desk.service.start(OWNER)
     assert caught.value.code == "local_ai_runtime_unavailable"
@@ -231,11 +242,33 @@ def test_runtime_is_checked_before_any_download(desk) -> None:
     assert desk.service.status(OWNER)["state"] == "needs_runtime"
 
 
-def test_runtime_too_old_downloads_nothing(desk) -> None:
-    desk.runtime["revision"] = "0.3.16"
+def test_runtime_too_old_downloads_nothing(desk, monkeypatch) -> None:
+    monkeypatch.setattr(importlib.metadata, "version", lambda name: "0.3.16")
     with pytest.raises(ServiceError):
         desk.service.start(OWNER)
     assert desk.source.requests == []
+
+
+def test_metadata_without_an_importable_runtime_downloads_nothing(desk, monkeypatch) -> None:
+    _no_llama_import(monkeypatch)
+    with pytest.raises(ServiceError) as caught:
+        desk.service.start(OWNER)
+    assert caught.value.code == "local_ai_runtime_unavailable"
+    assert desk.source.requests == []
+    assert _egress(desk.db) == []
+
+
+@pytest.mark.parametrize("breakage", ["too_old", "not_importable"])
+def test_meaning_search_uses_the_same_runtime_rule(desk, monkeypatch, breakage) -> None:
+    if breakage == "too_old":
+        monkeypatch.setattr(importlib.metadata, "version", lambda name: "0.3.16")
+    else:
+        _no_llama_import(monkeypatch)
+    status = desk.meaning.turn_on(OWNER)
+    desk.meaning.wait(10)
+    assert status["error_code"] == "runtime"
+    assert desk.source.requests == []
+    assert _egress(desk.db) == []
 
 
 def test_meaning_search_press_checks_the_runtime_before_the_download(desk, monkeypatch) -> None:
@@ -317,6 +350,84 @@ def test_second_call_downloads_nothing(desk) -> None:
     assert status["state"] == "ready"
 
 
+def _assign(db: Database, scope: dict, profile_id: str, revision: int) -> dict:
+    return InferenceAssignmentService(db).set_assignment(OWNER, {
+        "command_id": f"assign-{scope.get('capability_id', scope['kind'])}",
+        "expected_revision": 0,
+        "scope": scope,
+        "entries": [{"profile_id": profile_id, "profile_revision": revision}],
+    })
+
+
+def test_the_starter_passes_the_editor_for_meeting_analysis_and_the_default(desk) -> None:
+    desk.service.start(OWNER)
+    desk.service.wait(30)
+    engine = desk.service.status(OWNER)["local_engine"]
+    assert engine["ready"] is True
+    # The real assignment editor (compatibility: modality, structured output
+    # result schema, context, boundary).
+    _assign(desk.db, {"kind": "capability", "capability_id": "meeting.deferred_analysis"},
+            engine["profile_id"], engine["profile_revision"])
+    _assign(desk.db, {"kind": "capability", "capability_id": "meeting.live_analysis"},
+            engine["profile_id"], engine["profile_revision"])
+    _assign(desk.db, {"kind": "global"}, engine["profile_id"], engine["profile_revision"])
+    resolved = InferenceAssignmentService(desk.db).resolve_effective(OWNER, capability_id="meeting.deferred_analysis")
+    assert resolved["status"] == "assigned", resolved
+
+
+def test_the_local_engine_enforces_the_meeting_schema() -> None:
+    from holdspeak.intel.engine import MeetingIntel
+    from holdspeak.intel.parsing import INTEL_JSON_SCHEMA, intel_response_format
+
+    seen: list[dict] = []
+
+    class Llm:
+        def create_chat_completion(self, **kwargs):
+            seen.append(kwargs)
+            return {"choices": [{"message": {"content": "{}"}}]}
+
+    intel = MeetingIntel(provider="local", model_path="/nowhere.gguf")
+    intel._ensure_model_loaded = lambda: None
+    intel._active_provider = "local"
+    intel._llm = Llm()
+    intel._chat_completion_text([{"role": "user", "content": "x"}], temperature=0.0, max_tokens=8,
+                                response_format=intel_response_format())
+    # llama-cpp-python builds its grammar only from this shape.
+    assert seen[0]["response_format"] == {"type": "json_object", "schema": INTEL_JSON_SCHEMA}
+
+
+def test_a_corrupt_whisper_cache_is_not_ready_and_is_downloaded_again(desk) -> None:
+    from holdspeak.whisper_models import local_whisper_dir
+
+    root = desk.home / ".cache/huggingface/hub/models--mlx-community--whisper-base-mlx"
+    snapshot = root / "snapshots/r0"
+    snapshot.mkdir(parents=True)
+    (snapshot / "config.json").write_text("{}")
+    (snapshot / "weights.npz").write_bytes(b"truncated")
+    status = desk.service.status(OWNER)
+    assert [row["on_device"] for row in status["files"] if row["key"] == "whisper"] == [False, False]
+    assert local_whisper_dir("mlx-community/whisper-base-mlx", home=desk.home) is None
+
+    desk.service.start(OWNER)
+    desk.service.wait(30)
+    after = desk.service.status(OWNER)
+    assert after["state"] == "ready", after
+    receipt = _egress(desk.db)[0]
+    for model in WHISPER_FILES:
+        assert file_ref(model) in receipt["refs"]
+    assert local_whisper_dir("mlx-community/whisper-base-mlx", home=desk.home) != snapshot
+
+
+def test_an_unpinned_whisper_choice_is_never_ready(desk) -> None:
+    desk.whisper["name"] = "small"  # mlx, no pinned files, not on this device
+    desk.service.start(OWNER)
+    desk.service.wait(30)
+    status = desk.service.status(OWNER)
+    assert status["speech"] == {"model": "small", "backend": "mlx", "state": "not_covered"}
+    assert status["state"] == "incomplete"
+    assert status["error_code"] == "speech_not_covered"
+
+
 def test_a_stopped_download_continues_its_part_file(desk) -> None:
     desk.source.cut = ("/mlx-community/whisper-base-mlx/weights.npz", 10_000)  # stops early
     desk.service.start(OWNER)
@@ -366,6 +477,7 @@ def boot(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("HOME", str(home))
     for name in ("HF_HUB_CACHE", "HF_HOME"):
         monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr("holdspeak.whisper_models._PINNED", {("mlx", "base"): WHISPER_FILES})
     connects: list = []
     real_connect = socket.socket.connect
 
@@ -410,15 +522,99 @@ def test_boot_with_whisper_on_disk_warms_it(boot) -> None:
     assert boot.admissions == [1]  # the warm went on to load the model
     assert boot.connects == []
     # The physical load reads the folder on this device, not the hub.
-    from holdspeak.transcribe import _local_or_repo
+    from holdspeak.transcribe import _local_source
 
-    assert _local_or_repo("mlx-community/whisper-base-mlx") == str(snapshot)
+    assert _local_source("mlx-community/whisper-base-mlx") == str(snapshot)
+
+
+def _mlx_whisper_available() -> bool:
+    import importlib.util
+    import platform
+    import sys
+
+    return (sys.platform == "darwin" and platform.machine() == "arm64"
+            and importlib.util.find_spec("mlx_whisper") is not None)
+
+
+@pytest.mark.skipif(not _mlx_whisper_available(), reason="mlx-whisper runs on macOS arm64 only")
+def test_the_physical_mlx_load_never_reaches_the_hub(boot, monkeypatch) -> None:
+    """Astra's repro: the model is cached only under the SECOND candidate.
+
+    The real mlx-whisper loader runs.  The hub fetch (``snapshot_download``)
+    and every socket are intercepted; the loader gets only the local folder.
+    """
+    import importlib as _importlib
+
+    load_models = _importlib.import_module("mlx_whisper.load_models")
+    mlx_transcribe = _importlib.import_module("mlx_whisper.transcribe")  # the module, not the function
+
+    from holdspeak.transcribe import TranscriberError, _MlxTranscriber
+
+    root = boot.home / ".cache/huggingface/hub/models--mlx-community--whisper-base"
+    snapshot = root / "snapshots/c1"
+    snapshot.mkdir(parents=True)
+    (snapshot / "config.json").write_text('{"model_type": "whisper"}')
+    (snapshot / "weights.npz").write_bytes(b"not loadable weights")
+    fetched: list = []
+
+    def no_hub(*args, **kwargs):
+        fetched.append((args, kwargs))
+        raise RuntimeError("the test forbids the network")
+
+    monkeypatch.setattr(load_models, "snapshot_download", no_hub)
+    real_load = mlx_transcribe.load_model
+    loaded: list[str] = []
+
+    def spy(path, **kwargs):
+        loaded.append(str(path))
+        return real_load(path, **kwargs)
+
+    monkeypatch.setattr(mlx_transcribe, "load_model", spy)
+    monkeypatch.setattr(mlx_transcribe.ModelHolder, "model", None)
+    monkeypatch.setattr(mlx_transcribe.ModelHolder, "model_path", None)
+
+    transcriber = _MlxTranscriber(model_name="base")
+    with pytest.raises(TranscriberError):  # the stand-in weights do not load
+        transcriber._load_candidate_sequence(
+            candidates=("mlx-community/whisper-base-mlx", "mlx-community/whisper-base"),
+            strategies=("model-holder",),
+        )
+    assert fetched == []
+    assert boot.connects == []
+    assert loaded == [str(snapshot)]  # only the local folder reached the loader
+
+
+def test_faster_whisper_loads_only_a_local_folder(boot, monkeypatch) -> None:
+    import sys
+    from types import ModuleType
+
+    from holdspeak.transcribe import TranscriberError, _FasterWhisperTranscriber
+
+    constructed: list[str] = []
+    module = ModuleType("faster_whisper")
+
+    class WhisperModel:
+        def __init__(self, model, *, device, compute_type) -> None:
+            constructed.append(str(model))
+
+    module.WhisperModel = WhisperModel
+    monkeypatch.setitem(sys.modules, "faster_whisper", module)
+    with pytest.raises(TranscriberError):
+        _FasterWhisperTranscriber(model_name="base")
+    assert constructed == []  # nothing that could fetch was built
+
+    snapshot = boot.home / ".cache/huggingface/hub/models--Systran--faster-whisper-base/snapshots/c1"
+    snapshot.mkdir(parents=True)
+    (snapshot / "config.json").write_text("{}")
+    (snapshot / "model.bin").write_bytes(b"model")
+    _FasterWhisperTranscriber(model_name="base")
+    assert constructed == [str(snapshot)]
+    assert boot.connects == []
 
 
 def test_the_pinned_whisper_folder_is_found_first(boot, monkeypatch) -> None:
     from holdspeak.whisper_models import local_whisper_dir, pinned_whisper_dir
 
-    monkeypatch.setattr("holdspeak.whisper_models._PINNED", {("mlx", "base"): WHISPER_FILES})
     _hub_cache_copy(boot.home)
     folder = pinned_whisper_dir("mlx-community/whisper-base-mlx", boot.home)
     folder.mkdir(parents=True)
@@ -470,15 +666,39 @@ def test_meetings_are_summarised_by_default(tmp_path: Path) -> None:
 
     from holdspeak.config import Config
     from holdspeak.runtime.routing_glue import RoutingGlueMixin
-    from tests.unit.test_hs172_loop_wire import _seed_meeting
+    from tests.unit.test_hs172_loop_wire import _seed_meeting, assign_meeting_engine
 
     db = Database(tmp_path / "auto-intel.db")
     _seed_meeting(db, "mtg-default-every")  # no Room link: a fresh desk
+    assign_meeting_engine(db)
     assert Config().meeting.intelligence_auto == "every"
     with mock.patch("holdspeak.config.Config.load", return_value=Config()):
         with mock.patch("holdspeak.db.get_database", return_value=db):
             result = RoutingGlueMixin._maybe_auto_enqueue_intel(mock.MagicMock(), "mtg-default-every", None)
     assert result["enqueued"] is True, result
+
+
+def test_no_engine_means_no_job_never_a_permanent_failure(tmp_path: Path) -> None:
+    import unittest.mock as mock
+
+    from holdspeak.config import Config
+    from holdspeak.runtime.routing_glue import RoutingGlueMixin
+    from tests.unit.test_hs172_loop_wire import _seed_meeting, assign_meeting_engine
+
+    db = Database(tmp_path / "no-engine.db")
+    _seed_meeting(db, "mtg-no-engine")
+
+    def run() -> dict:
+        with mock.patch("holdspeak.config.Config.load", return_value=Config()):
+            with mock.patch("holdspeak.db.get_database", return_value=db):
+                return RoutingGlueMixin._maybe_auto_enqueue_intel(mock.MagicMock(), "mtg-no-engine", None)
+
+    first = run()
+    assert first == {"enqueued": False, "reason": "no_engine"}
+    assert db.intel.get_intel_job("mtg-no-engine") is None
+    # When an engine appears, the same meeting is still free to run.
+    assign_meeting_engine(db)
+    assert run()["enqueued"] is True
 
 
 def test_defaults_name_files_the_product_provides() -> None:
@@ -516,7 +736,7 @@ def test_never_loaded_whisper_profile_is_not_broken(monkeypatch) -> None:
     monkeypatch.setattr(Library, "_local_speech_on_disk", staticmethod(lambda item: False))
     row = library._profile_row(item)
     assert (row["status"], row["selected_action"]) == ("needs_setup", "Add model")
-    assert row["repair"]["code"] == "not_set_up"
+    assert row["repair"] == {"code": "not_set_up", "label": "NOT SET UP"}
     monkeypatch.setattr(Library, "_local_speech_on_disk", staticmethod(lambda item: True))
     row = library._profile_row(item)
     assert (row["status"], row["selected_action"], row["repair"]) == ("configured", "Checking", None)

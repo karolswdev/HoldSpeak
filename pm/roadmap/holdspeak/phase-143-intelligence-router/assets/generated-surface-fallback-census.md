@@ -243,12 +243,3 @@ model. It does not choose a route leg and does not retry. The `memory.embed`
 assignment is written by `InferenceAssignmentService.set_assignment` on the
 owner's press. Classified in `BACKEND_PRIVATE_DECISIONS` under the existing
 143-12 owner-surface migration family.
-
-
-## Set up local AI (2026-10-05)
-
-`holdspeak/services/local_ai_setup_service.py` adds `_ensure_profile`. It
-composes the one starter-model profile for the signed local preset
-(`preset_local_qwen35_4b_gguf_q4km`). It does not choose a route leg, does not
-retry, and writes no assignment. Classified in `BACKEND_PRIVATE_DECISIONS`
-under the existing 143-12 owner-surface migration family.

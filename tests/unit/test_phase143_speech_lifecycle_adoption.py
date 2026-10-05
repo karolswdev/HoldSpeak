@@ -32,7 +32,7 @@ from tests.unit.test_dictation_session_admission import (
     _operations,
 )
 
-pytestmark = pytest.mark.timeout(60, method="signal")
+pytestmark = [pytest.mark.timeout(60, method="signal"), pytest.mark.usefixtures("whisper_on_device")]
 
 
 def _production_mlx(monkeypatch, *, holder: Any, silent: Any = None) -> tuple[Transcriber, list[str]]:

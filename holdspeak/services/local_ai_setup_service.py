@@ -26,7 +26,6 @@ The laws:
 """
 from __future__ import annotations
 
-import importlib.metadata
 import json
 import shutil
 import threading
@@ -57,8 +56,6 @@ log = get_logger("local_ai_setup")
 
 STARTER_PRESET_ID = "preset_local_qwen35_4b_gguf_q4km"
 RUNTIME_ID = "llama_cpp_prompt_v1"
-RUNTIME_PACKAGE = "llama-cpp-python"
-RUNTIME_MIN_REVISION = "0.3.34"
 STARTER_PROFILE_ID = "local-ai-starter"
 STARTER_BINDING_ID = "binding-" + STARTER_PROFILE_ID
 SOURCE_HOST = "huggingface.co"
@@ -75,6 +72,7 @@ _ERRORS = {
     "refused": "The hub did not permit the download. Try again.",
     "unsafe": "The model folder holds a link. Remove the link. Then try again.",
     "setup": "The models are on this device, but setup did not finish. Try again.",
+    "speech_not_covered": "Set up local AI cannot get the selected Whisper model. Select the base model, or add the model yourself.",
 }
 
 
@@ -84,15 +82,6 @@ def _now() -> str:
 
 def _canonical(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
-
-
-def _version_at_least(observed: str, minimum: str) -> bool:
-    try:
-        return tuple(int(part) for part in observed.split(".")[:3]) >= tuple(
-            int(part) for part in minimum.split(".")[:3]
-        )
-    except (TypeError, ValueError):
-        return False
 
 
 def starter_preset(catalog: Optional[dict[str, Any]] = None) -> dict[str, Any]:
@@ -134,6 +123,29 @@ def starter_model_path(home: Path, preset: Optional[dict[str, Any]] = None) -> P
     )
 
 
+def starter_claims() -> list[str]:
+    """The honest capability claims of the starter on llama.cpp.
+
+    * ``language``: a chat model (the same base claim the Models library
+      gives a connected provider).
+    * ``result_schema:<meeting intel schema>``: meeting analysis
+      (``meeting.deferred_analysis`` and ``meeting.live_analysis`` share it).
+      The same-device engine (``inference_targets._local_pinned_engine`` ->
+      ``MeetingIntel(provider="local")``) sends that schema to llama.cpp as a
+      JSON-schema grammar, so the output is constrained to it.
+
+    Not claimed, because no executor on this path enforces their schema:
+    the meeting plugins (``meeting_plugin`` class + their own schemas),
+    ``thought.interview``, ``chat.compact``/``chat.guardrail``,
+    ``agent.plan``/``agent.tool_turn``, ``calendar.snapshot_extract`` (image)
+    and the speech classifiers.  No profile in the product claims those today.
+    """
+    from ..inference_capabilities import process_inference_capability_registry
+
+    schema = process_inference_capability_registry().require("meeting.deferred_analysis")
+    return ["language", f"result_schema:{schema.output_schema_sha256}"]
+
+
 def file_ref(model: PinnedModel) -> str:
     """The kernel ref that names one downloaded file on the egress receipt."""
     return f"model-file:{model.repository}/{model.filename}:sha256:{model.sha256}:{model.size}"
@@ -152,7 +164,7 @@ class LocalAISetupService:
         home_provider: Callable[[], Path] = Path.home,
         config_provider: Optional[Callable[[], Any]] = None,
         catalog_provider: Optional[Callable[[], dict[str, Any]]] = None,
-        runtime_revision: Optional[Callable[[], Optional[str]]] = None,
+        runtime_probe: Optional[Callable[[], dict[str, Any]]] = None,
         opener: Callable[..., Any] = urlopen,
         url_for: Optional[Callable[[PinnedModel], str]] = None,
         allowed_host: Optional[Callable[[str], bool]] = None,
@@ -166,7 +178,7 @@ class LocalAISetupService:
         self._home = home_provider
         self._config_provider = config_provider or self._default_config
         self._catalog_provider = catalog_provider or (lambda: packaged_catalog(now=datetime.now(timezone.utc)))
-        self._runtime_revision = runtime_revision or self._installed_runtime_revision
+        self._runtime_probe = runtime_probe or self._installed_runtime
         self._opener = opener
         self._url_for = url_for or (lambda model: model.url)
         self._allowed_host = allowed_host
@@ -192,11 +204,11 @@ class LocalAISetupService:
         return Config.load()
 
     @staticmethod
-    def _installed_runtime_revision() -> Optional[str]:
-        try:
-            return importlib.metadata.version(RUNTIME_PACKAGE)
-        except importlib.metadata.PackageNotFoundError:
-            return None
+    def _installed_runtime() -> dict[str, Any]:
+        # The ONE runtime rule (shared with the Meaning search press).
+        from .inference_setup_service import local_llama_runtime
+
+        return local_llama_runtime()
 
     @staticmethod
     def _require_owner(principal: Optional[Principal]) -> None:
@@ -206,9 +218,7 @@ class LocalAISetupService:
     # ── the plan ─────────────────────────────────────────────────────
 
     def _runtime(self) -> dict[str, Any]:
-        revision = self._runtime_revision()
-        ready = bool(revision) and _version_at_least(str(revision), RUNTIME_MIN_REVISION)
-        return {"package": RUNTIME_PACKAGE, "revision": revision, "minimum": RUNTIME_MIN_REVISION, "ready": ready}
+        return dict(self._runtime_probe())
 
     def _whisper(self) -> tuple[str, str]:
         from ..transcribe import resolve_backend_or_raw
@@ -220,17 +230,18 @@ class LocalAISetupService:
 
     def _plan(self) -> list[dict[str, Any]]:
         """Every file this call is responsible for, with its place on disk."""
-        from ..whisper_models import pinned_whisper, pinned_whisper_dir, whisper_on_disk
+        from ..whisper_models import pinned_file_on_device, pinned_whisper, pinned_whisper_dir
 
         home = self._home()
         items: list[dict[str, Any]] = []
         name, backend = self._whisper()
-        whisper_present = whisper_on_disk(name, backend, home=home)
         for model in pinned_whisper(name, backend):
-            destination = pinned_whisper_dir(model.repository, home) / model.filename
+            # Size + sha256 for every pinned file, the cache copy included: a
+            # truncated or changed file is downloaded again inside the call.
             items.append({
-                "key": "whisper", "model": model, "destination": destination,
-                "on_device": whisper_present or is_pinned_file(model, destination),
+                "key": "whisper", "model": model,
+                "destination": pinned_whisper_dir(model.repository, home) / model.filename,
+                "on_device": pinned_file_on_device(model, home=home),
             })
         embed = getattr(self._meaning, "_model", EMBED_MODEL)
         embed_path = find_on_device(embed, home)
@@ -247,6 +258,20 @@ class LocalAISetupService:
             "on_device": is_pinned_file(starter, starter_path), "preset": preset,
         })
         return items
+
+    def _speech(self, plan: list[dict[str, Any]]) -> dict[str, Any]:
+        """Is the CONFIGURED Whisper model covered?  Never silently dropped."""
+        from ..whisper_models import whisper_on_disk
+
+        name, backend = self._whisper()
+        pinned = [item for item in plan if item["key"] == "whisper"]
+        if pinned:
+            state = "on_device" if all(item["on_device"] for item in pinned) else "will_download"
+        elif whisper_on_disk(name, backend, home=self._home()):
+            state = "on_device_unpinned"  # the owner's own copy; no pin to check
+        else:
+            state = "not_covered"  # no pinned files for this model: setup cannot get it
+        return {"model": name, "backend": backend, "state": state}
 
     def _file_row(self, item: dict[str, Any]) -> dict[str, Any]:
         model: PinnedModel = item["model"]
@@ -299,15 +324,21 @@ class LocalAISetupService:
         files = [self._file_row(item) for item in plan]
         missing = [row for row in files if not row["on_device"]]
         engine = self.local_engine()
+        speech = self._speech(plan)
         meaning = str((self._meaning.status(principal) or {}).get("state") or "off")
+        error = self._error
         if self._downloading():
             state = "downloading"
         elif not runtime["ready"]:
             state = "needs_runtime"
-        elif self._error:
+        elif error:
             state = "failed"
         elif not missing and engine["ready"] and meaning in {"on", "indexing"}:
-            state = "ready"
+            # Ready means speech too: a model setup cannot get is not ready.
+            if speech["state"] == "not_covered":
+                state, error = "incomplete", "speech_not_covered"
+            else:
+                state = "ready"
         else:
             state = "not_started"
         total = self._bytes_total if state == "downloading" else sum(row["size_bytes"] for row in missing)
@@ -326,9 +357,10 @@ class LocalAISetupService:
                 if missing and state != "downloading" else None
             ),
             "local_engine": engine,
+            "speech": speech,
             "meaning_search": meaning,
-            "error": _ERRORS.get(self._error, ""),
-            "error_code": self._error,
+            "error": _ERRORS.get(error, ""),
+            "error_code": error,
         }
 
     # ── commands ─────────────────────────────────────────────────────
@@ -486,13 +518,14 @@ class LocalAISetupService:
         model: PinnedModel = item["model"]
         preset = item["preset"]
         path: Path = item["destination"]
-        runtime_revision = str(self._runtime_revision() or "")
-        if not _version_at_least(runtime_revision, RUNTIME_MIN_REVISION):
+        runtime = self._runtime()
+        runtime_revision = str(runtime.get("revision") or "")
+        if not runtime.get("ready"):
             raise ServiceError("local_ai_runtime_unavailable", _ERRORS["runtime"])
         source = preset["source"]
         artifact_id = starter_artifact_id(preset)
         artifact_manifest = {"files": [{"path": model.filename, "sha256": source["file_sha256"], "size": model.size}]}
-        claims = {"revision": "local-ai-starter-v1", "claims": []}
+        claims = {"revision": "local-ai-starter-v2", "claims": starter_claims()}
         capability_manifest = {**claims, "sha256": _sha(claims)}
         revision = DeploymentRevision.from_artifact(
             destination_id="this_machine", engine="configured_local_engine",

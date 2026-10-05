@@ -496,6 +496,7 @@ def _production_cold_mlx_transcriber(monkeypatch):
 # The cold-wake bundle also loads Whisper through mlx_whisper.
 @pytest.mark.requires_mlx_whisper
 @pytest.mark.requires_local_dictation_route
+@pytest.mark.usefixtures("whisper_on_device")
 def test_phase_d_default_cold_wake_runs_its_complete_routed_bundle(
     tmp_path, monkeypatch
 ):
@@ -575,6 +576,7 @@ def test_phase_d_default_cold_wake_runs_its_complete_routed_bundle(
     assert all((_receipt(db, row["operation_id"]) or {})["outcome"] == "succeeded" for row in children)
 
 
+@pytest.mark.usefixtures("whisper_on_device")
 def test_phase_d_faster_whisper_constructs_after_frozen_local_route_then_transcribes(
     tmp_path, monkeypatch
 ):
@@ -632,7 +634,9 @@ def test_phase_d_faster_whisper_constructs_after_frozen_local_route_then_transcr
 
     runtime = Runtime()
     transcriber = runtime._ensure_transcriber_loaded(**frozen)
-    assert constructed == [("base", "cpu", "int8")]
+    # The loader gets the local folder (whisper_on_device stands it in by the
+    # repository id), never a bare name it could fetch (owner ruling 2026-10-05).
+    assert constructed == [("Systran/faster-whisper-base", "cpu", "int8")]
     assert _operations(db, name="inference.invoke") == []
 
     assert transcriber.transcribe(
@@ -654,6 +658,7 @@ def test_phase_d_faster_whisper_constructs_after_frozen_local_route_then_transcr
     session.close("succeeded")
 
 
+@pytest.mark.usefixtures("whisper_on_device")
 def test_phase_d_faster_whisper_deferred_warm_settles_before_first_speak_to_fill(
     tmp_path, monkeypatch
 ):
@@ -722,7 +727,7 @@ def test_phase_d_faster_whisper_deferred_warm_settles_before_first_speak_to_fill
     assert runtime.transcribe_audio(np.full(8000, AUDIO_SENTINEL, dtype=np.float32)) == TEXT_SENTINEL
     assert constructed == [
         {
-            "model_name": "base",
+            "model_name": "Systran/faster-whisper-base",  # the local folder (whisper_on_device)
             "device": "cpu",
             "compute_type": "int8",
             "parents_before_construction": 1,

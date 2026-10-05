@@ -265,3 +265,11 @@ at expected revision 0, or at the revision of HoldSpeak's own dead default
 when it is re-picked; an owner-made default is never changed (owner ruling
 2026-10-05). Classified in `BACKEND_PRIVATE_DECISIONS` under the existing
 143-04 assignment family.
+
+## Set up local AI (2026-10-05)
+
+`holdspeak/services/local_ai_setup_service.py` adds `_ensure_profile`. It
+composes the one starter-model profile for the signed local preset
+(`preset_local_qwen35_4b_gguf_q4km`). It does not choose a route leg, does not
+retry, and writes no assignment. Classified in `BACKEND_PRIVATE_DECISIONS`
+under the existing 143-12 owner-surface migration family.

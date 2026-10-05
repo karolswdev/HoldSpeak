@@ -887,7 +887,7 @@ class ModelLibraryApplicationService:
                 status, action, repair = "configured", "Checking", None
             else:
                 status, action = "needs_setup", "Add model"
-                repair = self._repair("not_set_up", "Not on this device. Set up local AI gets it.")
+                repair = self._repair("not_set_up", "NOT SET UP")
         else:
             code = _text((readiness or {}).get("reason_code"), "readiness_unknown")
             repair = self._provider_repair(code, family)
