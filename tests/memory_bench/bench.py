@@ -12,6 +12,8 @@ GOLDEN = HERE / "keyword_golden.json"
 
 
 FACTS = HERE / "facts.json"
+HARD_FACTS = HERE / "relation_hard_facts.json"
+HARD_VECTORS = HERE / "relation_hard_vectors.npz"
 
 
 def load_questions() -> list[dict[str, Any]]:
@@ -22,6 +24,12 @@ def load_relation_questions() -> list[dict[str, Any]]:
     """The five relation questions (slice 3).  A file of their own, so the
     keyword golden (made before the memory index) keeps its questions."""
     return json.loads((HERE / "relation_questions.json").read_text())["questions"]
+
+
+def load_hard_relation_questions() -> list[dict[str, Any]]:
+    """The hard relation questions: keyword search cannot answer them, only
+    the entity walk can (``relation_hard_questions.json``)."""
+    return json.loads((HERE / "relation_hard_questions.json").read_text())["questions"]
 
 
 def _base(ref: str) -> str:
@@ -54,7 +62,7 @@ def run(
             question["group"], {"n": 0, "recall@5": 0.0, "recall@10": 0.0, "mrr": 0.0}
         )
         group["n"] += 1
-        if question["group"] == "relation":
+        if question["group"].startswith("relation"):
             group["complete@5"] = group.get("complete@5", 0.0) + (
                 1.0 if expected <= set(got[:5]) else 0.0
             )

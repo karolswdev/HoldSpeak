@@ -1,0 +1,14 @@
+{
+ "note": "The hard relation questions (MEMORY-DESIGN.md §3.2, §7). No question shares a searchable word with a source in 'expect': the name it uses is only in a meeting or thread title (the keyword index does not read them) or in another source (an alias). Keyword search cannot answer them; the entity walk over extracted facts must. The questions were written before relation_hard_facts.json was recorded. One source line changed after the first recording: in m-corvid the model credited 'Corvid Labs moves the firmware release' to the org, not to the speaker, so the line is now in the first person ('I moved the firmware release of Corvid Labs'). 'reject' (r14): a source of a different person with the same family name, which must rank below the expected source in the walk and never share its entity.",
+ "questions": [
+  {"id": "r06", "group": "relation_hard", "q": "what is arranged for the absence of Rafael Okonkwo", "expect": ["m-okonkwo", "th-rafael"]},
+  {"id": "r07", "group": "relation_hard", "q": "what did Mirela Kowalczyk leave unfinished", "expect": ["th-handover"]},
+  {"id": "r08", "group": "relation_hard", "q": "when does Lukas Brenner join", "expect": ["th-brenner"]},
+  {"id": "r09", "group": "relation_hard", "q": "what is scheduled for Kestrel", "expect": ["m-kestrel", "th-kestrel"]},
+  {"id": "r10", "group": "relation_hard", "q": "what is Beatriz Santos waiting on", "expect": ["m-santos"]},
+  {"id": "r11", "group": "relation_hard", "q": "what did Tomasz confirm about the delivery", "expect": ["n-supplier", "m-corvid"]},
+  {"id": "r12", "group": "relation_hard", "q": "what does Halcyon require", "expect": ["m-halcyon"]},
+  {"id": "r13", "group": "relation_hard", "q": "what worries John Whitfield", "expect": ["m-john-w"]},
+  {"id": "r14", "group": "relation_hard", "q": "what does Jane Whitfield want", "expect": ["m-jane-w"], "reject": ["m-john-w"]}
+ ]
+}

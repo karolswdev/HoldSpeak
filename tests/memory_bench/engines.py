@@ -93,13 +93,19 @@ class LlamaCppEmbedder:
 class FixtureEmbedder:
     """Real-model vectors from a file, keyed by the hash of the prefixed text."""
 
-    def __init__(self, path: str | Path) -> None:
-        with np.load(str(path), allow_pickle=False) as data:
-            self.model_id = str(data["model_id"])
-            keys = [str(key) for key in data["keys"]]
-            vectors = np.asarray(data["vectors"], dtype=np.float32)
+    def __init__(self, path: str | Path, *more: str | Path) -> None:
+        self._vectors: dict[str, np.ndarray] = {}
+        models: set[str] = set()
+        for one in (path, *more):
+            with np.load(str(one), allow_pickle=False) as data:
+                models.add(str(data["model_id"]))
+                keys = [str(key) for key in data["keys"]]
+                vectors = np.asarray(data["vectors"], dtype=np.float32)
+            self._vectors.update({key: vectors[index] for index, key in enumerate(keys)})
+        if len(models) != 1:
+            raise ValueError(f"fixture files of more than one model: {sorted(models)}")
+        self.model_id = models.pop()
         self.dim = int(vectors.shape[1])
-        self._vectors = {key: vectors[index] for index, key in enumerate(keys)}
         self.calls = 0
 
     def _one(self, prefixed: str) -> np.ndarray:
@@ -148,13 +154,20 @@ class FixtureExtractor:
 
     boundary = "local"
 
-    def __init__(self, path: str | Path) -> None:
+    def __init__(self, path: str | Path, *more: str | Path) -> None:
         import json
 
-        data = json.loads(Path(path).read_text())
-        self.model_id = str(data["model"])
-        self.extractor_version = int(data["extractor_version"])
-        self._answers = dict(data["answers"])
+        self._answers: dict[str, dict] = {}
+        models: set[tuple[str, int]] = set()
+        for one in (path, *more):
+            data = json.loads(Path(one).read_text())
+            models.add((str(data["model"]), int(data["extractor_version"])))
+            self._answers.update(data["answers"])
+        if len(models) != 1:
+            raise ValueError(f"fixture files of more than one model or version: {sorted(models)}")
+        model, version = models.pop()
+        self.model_id = model
+        self.extractor_version = version
         self.payloads: list[dict] = []
         self.calls = 0
 
