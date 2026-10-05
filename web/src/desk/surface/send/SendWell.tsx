@@ -359,13 +359,25 @@ export function proofLink(channel: string, proof: Record<string, unknown>, targe
   return url;
 }
 
+/** A SAVED file's path as the receipt shows it: under the destination's
+ * folder, the folder's short token (the hub's `display`, the home folder as
+ * ~) leads, so no receipt prints the full home path. The proof itself stays
+ * exact. */
+export function shownPath(path: string, target?: Record<string, string | number>): string {
+  const folder = String(target?.folder ?? "");
+  const display = String(target?.display ?? "");
+  if (folder && display && (path === folder || path.startsWith(`${folder}/`)))
+    return display + path.slice(folder.length);
+  return path.replace(/^\/Users\/[^/]+(?=\/|$)/, "~").replace(/^\/home\/[^/]+(?=\/|$)/, "~");
+}
+
 /** The proof of a SENT row, exact as the channel gave it (no uppercasing). */
 export function ProofCell({ channel, proof, target, account }: {
   channel: string; proof: Record<string, unknown> | null; target?: Record<string, string | number>;
   account?: Record<string, string | boolean>;
 }) {
   const p = proof ?? {};
-  if (channel === "file") return <span className="surface-token send-literal send-wrap" data-chip data-testid="proof">{String(p.path ?? "")}</span>;
+  if (channel === "file") return <span className="surface-token send-literal send-wrap" data-chip data-testid="proof">{shownPath(String(p.path ?? ""), target)}</span>;
   if (channel === "email") return <span className="surface-token send-literal" data-chip data-testid="proof">{`ID ${String(p.message_id ?? "")}`}</span>;
   // Slack by webhook answers only `ok`: the proof is the channel, never a link (design section 5).
   if (channel === "slack") return <span className="surface-token send-literal" data-chip data-testid="proof">{String(target?.channel_label ?? "")}</span>;

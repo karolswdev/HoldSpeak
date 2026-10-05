@@ -321,7 +321,9 @@ def test_doctor_names_destination_class_and_unavailable_reason(
 
     check = _check_inference_targets()
     assert check.status == "WARN"
-    assert "Vendor: external service · external_service · unavailable" in check.detail
+    # The boundary in words, said once when it matches the kind (no `external_service`).
+    assert "Vendor: external service · unavailable" in check.detail
+    assert "external_service" not in check.detail
     assert "needs a key" in check.detail
 
 

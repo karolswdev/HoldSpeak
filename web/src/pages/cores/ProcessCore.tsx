@@ -6,6 +6,7 @@ import { useLaunchers } from "../../desk/components/DeskWindow";
 import { useProcessWindow } from "../../desk/processWindow";
 import type { ProcessRow } from "../../desk/processWindowReducer";
 import { humanizeWireValue } from "../../lib/productLanguage";
+import { looksLikeId } from "../../desk/windowName";
 import {
   SurfaceLedger,
   SurfaceLedgerRow,
@@ -31,6 +32,19 @@ function stateTone(row: ProcessRow): "warn" | "danger" | "ok" | undefined {
   if (state === "running" || state === "starting" || state === "claimed")
     return "ok";
   return undefined;
+}
+
+/** The target a row names, or "" when it says nothing a person can read:
+ * the operation's own name again (`desk:channel.save_destination`) or a raw
+ * record id (`meeting:9f8a7b6c5d4e`). STATUS: no ids on faces. */
+export function shownTarget(row: Pick<ProcessRow, "kind" | "target">): string {
+  const target = row.target.trim();
+  if (!target) return "";
+  const colon = target.indexOf(":");
+  const rest = colon > 0 ? target.slice(colon + 1) : target;
+  if (rest === row.kind || target === row.kind) return "";
+  if (looksLikeId(rest) || /^[0-9a-f]{10,}$/i.test(rest)) return "";
+  return target;
 }
 
 function stateToken(row: ProcessRow): string {
@@ -64,7 +78,7 @@ function LedgerRows({
                 <>
                   {depth > 0 ? "└ " : ""}
                   {row.kind.toUpperCase()}
-                  {row.target ? ` · ${row.target}` : ""}
+                  {shownTarget(row) ? ` · ${shownTarget(row)}` : ""}
                 </>
               }
               cells={

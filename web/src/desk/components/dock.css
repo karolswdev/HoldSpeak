@@ -510,7 +510,10 @@
     overflow-x: auto;
     overflow-y: hidden;
     gap: 0;
-    padding: 0 0 env(safe-area-inset-bottom, 0px) 4px;
+    /* The 4 px left gutter is the sticky cover below, not padding: content
+       scrolls under padding, so a paged shelf showed the last 4 px of the
+       icon before it there (STATUS: "a 5 px strip of the next page"). */
+    padding: 0 0 env(safe-area-inset-bottom, 0px) 0;
     z-index: var(--desk-z-dock);
     /* C3-W: the shelf snaps to whole icons; More AppIcons pages it */
     scroll-snap-type: x mandatory;
@@ -634,6 +637,19 @@
     left: auto;
     right: 4px;
   }
+  /* The left gutter: a steel cover that stays at the shelf's left edge, so a
+     snapped page starts on a whole icon and nothing of the page before it
+     shows (the snap leaves each page's first icon 4 px in). */
+  .desk-next .desk-dock::before {
+    content: "";
+    order: -1;
+    position: sticky;
+    left: 0;
+    flex: 0 0 4px;
+    align-self: stretch;
+    background: var(--wb-steel);
+    z-index: 2;
+  }
   .desk-next .desk-dock > .desk-dock-more {
     order: 99;
     position: sticky;
@@ -643,8 +659,12 @@
        Hide the menus). */
     scroll-snap-align: none;
     right: 0;
-    flex: 0 0 48px;
-    width: 48px;
+    /* 48 px, plus the width left over after the last whole 85 px icon, so
+       the page ends on a whole icon at any phone width (393: 49 px). Without
+       it the remainder showed a strip of the next page's first icon. */
+    --desk-dock-more-w: calc(100% - 4px - round(down, 100% - 52px, 85px));
+    flex: 0 0 var(--desk-dock-more-w);
+    width: var(--desk-dock-more-w);
     min-height: 0;
     height: 56px;
     align-self: stretch;

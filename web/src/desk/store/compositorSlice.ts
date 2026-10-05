@@ -474,7 +474,12 @@ function resolveKindFromId(
   const colonIdx = id.indexOf(":");
   if (colonIdx > 0) {
     const prefix = id.slice(0, colonIdx);
-    const bareId = id.slice(colonIdx + 1);
+    let bareId = id.slice(colonIdx + 1);
+    // A Roadmap item's id is already `roadmap:<slug>`, so a qualified ref
+    // reads `roadmap:roadmap:<slug>`: the window opened on `roadmap:<slug>`,
+    // fetched that as the slug and showed "Roadmap not found" under a title
+    // of `roadmap:<slug>` (B0-F4). One prefix names the kind; drop a repeat.
+    while (bareId.startsWith(`${prefix}:`)) bareId = bareId.slice(prefix.length + 1);
     const kind = (REF_PREFIX_TO_KIND[prefix] ?? prefix) as PrimitiveKind;
     if (kind in PRIMITIVES) return { kind, resolvedId: bareId };
   }

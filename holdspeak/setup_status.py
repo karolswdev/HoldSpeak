@@ -20,6 +20,7 @@ import json
 import re
 from typing import Any, Optional
 
+from .home_paths import home_text
 from .logging_config import get_logger
 
 log = get_logger("setup_status")
@@ -42,8 +43,10 @@ def _section_from_check(check: Any) -> dict[str, Any]:
         "id": _slug(getattr(check, "name", "")),
         "label": str(getattr(check, "name", "")),
         "status": status,
-        "detail": str(getattr(check, "detail", "") or ""),
-        "fix": getattr(check, "fix", None),
+        # The Setup face shows home paths as ~ (STATUS: raw paths on faces);
+        # `holdspeak doctor` in a terminal keeps its whole paths.
+        "detail": home_text(str(getattr(check, "detail", "") or "")),
+        "fix": home_text(fix) if isinstance(fix := getattr(check, "fix", None), str) else fix,
     }
 
 

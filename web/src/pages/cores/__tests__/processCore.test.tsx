@@ -101,3 +101,24 @@ describe("ProcessCore", () => {
     expect(screen.getByText(/KERNEL · CURSOR/)).toBeTruthy();
   });
 });
+
+describe("ProcessCore names no raw id (STATUS: raw ids on faces)", () => {
+  it("drops a target that repeats the operation or is a record id, and keeps a named one", async () => {
+    const { shownTarget } = await import("../ProcessCore");
+    expect(shownTarget({ kind: "channel.save_destination", target: "desk:channel.save_destination" })).toBe("");
+    expect(shownTarget({ kind: "meeting.summarize", target: "meeting:9f8a7b6c5d4e" })).toBe("");
+    expect(shownTarget({ kind: "note.update", target: "note:note_624495deb1f5" })).toBe("");
+    expect(shownTarget({ kind: "process.spawn", target: "agent:build" })).toBe("agent:build");
+  });
+
+  it("renders the echo row without its target", () => {
+    useProcessWindow.setState({
+      sections: [{ id: "recently-ended", label: "Recently ended", rows: [{ ...row, latestEventType: "", state: "succeeded",
+        kind: "channel.save_destination", target: "desk:channel.save_destination" }] }],
+      loading: false, inflight: false, error: "", started: true,
+    });
+    render(<ProcessCore />);
+    expect(screen.getByText("CHANNEL.SAVE_DESTINATION")).toBeTruthy();
+    expect(screen.queryByText(/desk:channel/)).toBeNull();
+  });
+});
