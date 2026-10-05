@@ -10,6 +10,10 @@
 .desk-roadmap-phase-title, .desk-roadmap-story-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); cursor: default; }
 .desk-roadmap-stories { margin: 0 0 7px 25px; box-shadow: inset 1px 0 0 var(--desk-aerogel-edge, var(--border)); }
 .desk-roadmap-stories li { display: grid; grid-template-columns: 96px minmax(100px, 1fr) 16px auto; gap: 7px; align-items: center; min-height: 26px; padding: 0 7px; color: var(--text); }
+/* The status always takes the LAST column: a story with no evidence mark has
+   one child fewer, and its chip fell into the 16 px mark column and spilled
+   left over the title (IN PROGRESS over "HS-202-06 - The sitting…"). */
+.desk-roadmap-stories li > .desk-roadmap-status { grid-column: -2 / -1; }
 .desk-roadmap-status { justify-self: end; padding: 2px 5px; border: 1px solid currentColor; font-size: var(--font-size-xs); line-height: 1; text-transform: uppercase; white-space: nowrap; border-radius: 2px; }
 .desk-roadmap-status[data-status="done"], .desk-roadmap-status[data-status="closed"], .desk-roadmap-status[data-status="green"] { color: var(--ok); }
 .desk-roadmap-status[data-status="blocked"], .desk-roadmap-status[data-status="error"], .desk-roadmap-status[data-status="red"] { color: var(--danger-signal); }

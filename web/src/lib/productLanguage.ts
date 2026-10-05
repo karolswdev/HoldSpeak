@@ -39,6 +39,12 @@ export const PRODUCT_TERMS = {
   approval: ["Approval", "Approvals"],
   grant: ["Grant", "Grants"],
   receipt: ["Receipt", "Receipts"],
+  /* STATUS (2026-10-04): the Desk's own objects the registry lacked, so
+   * `productLabel` threw on them (Get Info fell back; other callers could
+   * take the desk down). */
+  decision: ["Decision", "Decisions"],
+  thread: ["Thread", "Threads"],
+  workbench: ["Workbench", "Workbenches"],
 } as const;
 
 export type CanonicalProductTerm = keyof typeof PRODUCT_TERMS;

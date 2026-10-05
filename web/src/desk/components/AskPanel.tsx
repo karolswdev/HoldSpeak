@@ -57,15 +57,17 @@ import { SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
 import { countToken } from "../surface/count";
 import {
   GadgetGroup,
-  LampGadget,
   LedMeter,
   MxRadio,
   TransportKey,
 } from "../surface/gadgets";
 import {
-  boundaryEgressLamp,
-  egressScopeLamp,
-} from "../inferenceEgress";
+  RouteEgressChip,
+  TurnLamp,
+  lastTurnLine,
+  routeFromWire,
+  type TurnRoute,
+} from "../turnRoute";
 import { CitationChips, groundedMatchCount } from "../surface/citations";
 import { Button } from "../../components/signal/Signal";
 import { humanizeWireValue } from "../../lib/productLanguage";
@@ -96,6 +98,8 @@ export function AskPanel() {
     ctx: number;
   } | null>(null);
   const [result, setResult] = useState<AskRunResult | null>(null);
+  // The run's receipt route (success or refusal): the lamp needs one.
+  const [route, setRoute] = useState<TurnRoute | null>(null);
   const [error, setError] = useState("");
   const [canAskAgain, setCanAskAgain] = useState(false);
   const [kept, setKept] = useState(false);
@@ -182,6 +186,7 @@ export function AskPanel() {
     setPhase("routing");
     setError("");
     setResult(null);
+    setRoute(null);
     setSent({ prompt: prompt.trim(), lens, ctx: context.length });
     // Receipts: the grounding rows ride the pinned context so keep names them.
     printedContext.current = [
@@ -196,6 +201,7 @@ export function AskPanel() {
       context,
       grounding: buildGrounding(grounding, rails),
     });
+    setRoute(routeFromWire(r.route));
     if (!r.ok) {
       const failed = askFailureLabel(r.output);
       setError(failed.label);
@@ -239,40 +245,32 @@ export function AskPanel() {
     (c) => c.flagged,
   );
   const placement = result?.actualPlacement || null;
-  const printedBoundary = placement?.boundary;
-  const printedLamp =
-    typeof printedBoundary === "string"
-      ? boundaryEgressLamp(printedBoundary)
-      : egressScopeLamp(result?.egress?.scope);
-  const placementTokens = placement
-    ? [
-        placement.model ? String(placement.model) : "",
-      ].filter(Boolean)
-    : [];
+  // Owner pick 2026-10-05 (route in footer): the turn wears only its lamp;
+  // the footer names the full route once. Both come from the hub's receipt
+  // route, on an answer and on a refusal that sent bytes (Astra, #875).
+  const printedRoute = sent && (result || error) ? route : null;
+  const printedLamp = printedRoute?.lamp ?? null;
+  // A refusal that sent bytes: the failure is on the HUB> turn; the
+  // footer names where they went.
+  const refusedRoute = Boolean(error && printedRoute && !result);
 
   const turnCount = (sent ? 1 : 0) + (result || (error && sent) ? 1 : 0);
 
   // The footer receipt bar's one status line (audit §3.5): fault > routing
   // > run receipt > the compose budget tokens.
   const statusTone =
-    error || overBudget ? ("danger" as const) : undefined;
-  const statusLine = error
+    (error && !refusedRoute) || overBudget ? ("danger" as const) : undefined;
+  const statusLine = refusedRoute && printedRoute
+    ? lastTurnLine(printedRoute)
+    : error
     ? error
     : phase === "routing"
       ? "ROUTING"
-      : phase === "printed" && result
-        ? [
-            `RAN ON ${String(
-              placement?.target_name ||
-                placement?.target_id ||
-                result.model ||
-                "this device",
-            )}`,
-            placement?.model ? String(placement.model) : "",
-          ]
-            .filter(Boolean)
-            .join(" · ")
-        : [
+      : phase === "printed" && printedRoute
+        ? lastTurnLine(printedRoute)
+        : phase === "printed" && result
+          ? String(placement?.model || result.model || "")
+          : [
             promptRecovered ? "DRAFT · RECOVERED" : "",
             `CTX ${fmtK(groundTokens)}/${fmtK(limitTokens)}`,
             overBudget ? "PAST THE WINDOW" : "USES ASSIGNMENT",
@@ -337,6 +335,7 @@ export function AskPanel() {
             <SurfaceTrafficTurn
               prefix="HUB>"
               error
+              meta={<TurnLamp lamp={printedLamp} />}
               verbs={canAskAgain ? (
                 <Button dense variant="ghost" onClick={() => void ask()}>
                   Ask again
@@ -349,24 +348,7 @@ export function AskPanel() {
           {phase === "printed" && result ? (
             <SurfaceTrafficTurn
               prefix="HUB>"
-              meta={
-                <>
-                  {result.egress ? (
-                    <span className="surface-detail">
-                      ran on{" "}
-                      <LampGadget on {...printedLamp} />
-                      {[result.egress.host, result.model]
-                        .filter(Boolean)
-                        .map((detail) => ` · ${detail}`)}
-                    </span>
-                  ) : null}
-                  {placementTokens.map((token) => (
-                    <span key={token} className="surface-token">
-                      {token}
-                    </span>
-                  ))}
-                </>
-              }
+              meta={<TurnLamp lamp={printedLamp} />}
               verbs={
                 <>
                   <Button
@@ -565,7 +547,7 @@ export function AskPanel() {
         )}
       </div>
 
-      <SurfaceFooter receipt={copyReceipt || <span className="surface-footer-receipt-line" data-tone={statusTone} role="status">{statusLine}</span>} verbs={<><Button dense variant="ghost" disabled={phase === "routing"} onClick={bin}>{phase === "printed" ? "Bin" : "Cancel"}</Button>{phase === "printed" && result ? <Button dense disabled={kept} onClick={() => void keep()}>{kept ? "Kept" : "Keep"}</Button> : null}</>} />
+      <SurfaceFooter className={printedRoute ? "turn-route-footer" : undefined} egress={printedRoute ? <RouteEgressChip route={printedRoute} /> : null} receipt={copyReceipt || <span className="surface-footer-receipt-line" data-tone={statusTone} role="status">{statusLine}</span>} verbs={<><Button dense variant="ghost" disabled={phase === "routing"} onClick={bin}>{phase === "printed" ? "Bin" : "Cancel"}</Button>{phase === "printed" && result ? <Button dense disabled={kept} onClick={() => void keep()}>{kept ? "Kept" : "Keep"}</Button> : null}</>} />
     </DeskWindowFrame>
   );
 }

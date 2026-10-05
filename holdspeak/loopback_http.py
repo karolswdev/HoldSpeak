@@ -11,7 +11,8 @@ no byte leaves the machine).
   no redirect (a redirect is not an engine): ``loopback_get`` for urllib
   callers, ``loopback_httpx_client`` for the OpenAI client.
 
-This module imports nothing from the rest of HoldSpeak.
+This module imports nothing from the rest of HoldSpeak at import time;
+``endpoint_lamp`` reads the one egress classifier (``intel.providers``).
 """
 from __future__ import annotations
 
@@ -24,8 +25,6 @@ from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_ope
 LOOPBACK_WORD = "localhost"
 PINNED_LOOPBACK = "127.0.0.1"
 
-#: Names that say "my network" but can resolve anywhere: at best a LAN lamp.
-_PRIVATE_SUFFIXES = (".local", ".internal", ".lan", ".home", ".localhost", ".localdomain")
 
 
 class NotLoopbackError(ValueError):
@@ -63,23 +62,13 @@ def pin_loopback_url(url: str) -> str:
 def endpoint_lamp(url: str) -> str:
     """The lamp for an endpoint URL: local, private_network or cloud.
 
-    ``local`` only under the loopback rule above.  A private, link-local or
-    "my network" name is ``private_network``; anything else is ``cloud``.
+    The ONE classifier decides: ``intel.providers.egress_boundary`` (HS-130-04,
+    hardened by #855: LOCAL only where the transport pins loopback).  A URL
+    with no host is ``cloud``.  Every surface gets one verdict (Astra, #875).
     """
-    host = _host(urlparse(str(url or "")).hostname or "")
-    if not host:
-        return "cloud"
-    if is_loopback_engine_host(host):
-        return "local"
-    try:
-        address = ipaddress.ip_address(host)
-    except ValueError:
-        if host == "localhost.localdomain" or host.endswith(_PRIVATE_SUFFIXES):
-            return "private_network"
-        return "cloud"
-    if address.is_private or address.is_link_local or address.is_loopback:
-        return "private_network"
-    return "cloud"
+    from .intel.providers import egress_boundary
+
+    return egress_boundary(cloud=True, base_url=str(url or ""))
 
 
 class _NoRedirect(HTTPRedirectHandler):

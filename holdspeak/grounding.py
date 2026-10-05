@@ -133,11 +133,12 @@ class GroundingHydrationResult:
         return [f"{block.kind}:{block.ref}" for block in self.blocks]
 
 
-# Memory defense for what MEMORY selected.  A source the owner attached by
-# hand goes to the model as he wrote it.  A source that memory picked by
-# relevance (and everything a drafter reads through ``memory_context``) is
-# redacted: the COMPLETE text first, then any cut to the grounding cap, so a
-# cut can never end inside a secret.
+# Memory defense: every hydrated block is redacted, the COMPLETE text first,
+# then any cut to the grounding cap, so a cut can never end inside a secret.
+# Since 2026-10-05 that includes a source the owner attached by hand (the
+# open item of #852): a key in a note he attaches never reaches a model
+# either.  ``memory_defense()`` still marks what memory picked; it no longer
+# changes what is redacted.
 _MEMORY_DEFENSE: ContextVar[bool] = ContextVar("grounding_memory_defense", default=False)
 
 
@@ -151,12 +152,15 @@ def memory_defense():
 
 
 def _defended(text: str) -> str:
-    """The whole text, redacted, when memory selected this source."""
-    if not _MEMORY_DEFENSE.get():
-        return text
+    """The whole text, redacted (every source, picked or attached)."""
     from .memory.defense import redact
 
     return redact(text)
+
+
+def _defended_block(block: "GroundingBlock") -> "GroundingBlock":
+    """A block with its title and its whole text redacted (idempotent)."""
+    return replace(block, title=_defended(block.title), text=_defended(block.text))
 
 
 def meeting_digest(state: Any) -> str:
@@ -348,6 +352,9 @@ def hydrate_refs_detailed(
     if len(blocks) > GROUNDING_MAX_REFS:
         overflow += len(blocks) - GROUNDING_MAX_REFS
         blocks = blocks[:GROUNDING_MAX_REFS]
+    # A source attached by hand is redacted too (a note, an artifact, a
+    # decision read whole above): never a secret to a model.
+    blocks = [_defended_block(block) for block in blocks]
     return GroundingHydrationResult(
         blocks=blocks,
         unknown=unknown,
@@ -399,8 +406,8 @@ def live_block(
             # A container is rebuilt from its live members: a member that is
             # gone is left out, the others stay (live text if changed).  Only
             # the container itself being gone drops the block.
-            return blocks[0] if blocks else None
-        return None if missing or not blocks else blocks[0]
+            return _defended_block(blocks[0]) if blocks else None
+        return None if missing or not blocks else _defended_block(blocks[0])
     if base in (exclude_refs or set()):
         return None
     connection = getattr(db, "_connection", None)
@@ -817,12 +824,8 @@ def _hydrate_members(
         )
         children.extend(blocks)
         unknown.extend(missing)
-    if _MEMORY_DEFENSE.get():
-        # Blocks that were not cut above hold their whole text: redact it.
-        children = [
-            replace(block, title=_defended(block.title), text=_defended(block.text))
-            for block in children
-        ]
+    # Blocks that were not cut above hold their whole text: redact it.
+    children = [_defended_block(block) for block in children]
     return children, unknown
 
 

@@ -635,9 +635,23 @@ def _check_inference_targets() -> DoctorCheck:
         "external_service": "external service",
         "unsupported": "unsupported destination",
     }
+    # The boundary in words, never its wire value (`same_device`); a boundary
+    # that says the same as the kind is said once.
+    boundaries = {
+        "same_device": "this device",
+        "paired_device": "paired device",
+        "private_network": "private network",
+        "external_service": "external service",
+    }
+
+    def where(target: Any) -> str:
+        kind = labels.get(target.kind, str(target.kind).replace("_", " "))
+        boundary = boundaries.get(str(target.boundary), str(target.boundary).replace("_", " "))
+        return kind if boundary == kind else f"{kind} · {boundary}"
+
     unavailable = [target for target in targets if not target.ready]
     lines = [
-        f"{target.name}: {labels.get(target.kind, target.kind)} · {target.boundary}"
+        f"{target.name}: {where(target)}"
         + (f" · unavailable ({target.readiness_reason})" if not target.ready else " · ready")
         for target in targets
     ]

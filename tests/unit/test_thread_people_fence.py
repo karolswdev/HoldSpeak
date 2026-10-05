@@ -188,7 +188,7 @@ def _flat(messages: list[dict[str, Any]]) -> str:
 
 def test_people_result_local_then_cloud_turn_withheld(rig) -> None:
     """AC1: local turn calls people.*; the next turn on a cloud profile
-    receives the withheld marker, never the People bytes; part row sensitive=1."""
+    receives a re-read stub, never the People bytes; part row sensitive=1."""
     db, broker = rig
     local_id = _seed_profile(db, "fence-local", boundary="same_device")
     _seed_profile(db, "fence-cloud", boundary="external_service")
@@ -230,7 +230,10 @@ def test_people_result_local_then_cloud_turn_withheld(rig) -> None:
     assert db.threads.get_message(aid2).egress_scope == "cloud"
 
     cloud_payload = _flat(engine.calls[-1])
-    assert _PEOPLE_REDACTION in cloud_payload, cloud_payload
+    # A read tool's result replays as a stub that says to read again (the
+    # #852 rule, every read tool since 2026-10-05): the People bytes are not
+    # in the later turn at all, on any route.  The in-turn withhold is AC2.
+    assert "Call people.readiness again" in cloud_payload, cloud_payload
     assert people_text not in cloud_payload, "People bytes leaked to cloud"
     assert "_sensitive_texts" not in json.dumps(engine.calls[-1])
 
