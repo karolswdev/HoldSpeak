@@ -38,5 +38,12 @@ def home_text(text: str) -> str:
     for home in _homes():
         if home in ("", os.sep):
             continue
-        text = re.sub(re.escape(home) + r"(?=" + re.escape(os.sep) + r"|[\s;:,)'\"`]|$)", "~", text)
+        # Only where a path STARTS with HOME: at the start of the text or
+        # after a space, a quote, `(`, `=`, `,` or `;`, and followed by `/`
+        # or the end of the path. A path that only CONTAINS HOME
+        # (`/backup` + HOME + `/desk.db`) stays whole (Astra, #869 P2).
+        text = re.sub(
+            r"(?:(?<=^)|(?<=[\s'\"`(=,;]))" + re.escape(home) + r"(?=" + re.escape(os.sep) + r"|[\s;:,)'\"`]|$)",
+            "~", text,
+        )
     return text

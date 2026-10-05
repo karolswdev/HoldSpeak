@@ -360,15 +360,17 @@ export function proofLink(channel: string, proof: Record<string, unknown>, targe
 }
 
 /** A SAVED file's path as the receipt shows it: under the destination's
- * folder, the folder's short token (the hub's `display`, the home folder as
- * ~) leads, so no receipt prints the full home path. The proof itself stays
- * exact. */
+ * folder, the folder's short token leads (the hub's `display`, made by
+ * holdspeak/home_paths.py from the known HOME), so no receipt prints the
+ * full home path. Any other path stays whole. The proof itself stays exact. */
 export function shownPath(path: string, target?: Record<string, string | number>): string {
   const folder = String(target?.folder ?? "");
   const display = String(target?.display ?? "");
   if (folder && display && (path === folder || path.startsWith(`${folder}/`)))
     return display + path.slice(folder.length);
-  return path.replace(/^\/Users\/[^/]+(?=\/|$)/, "~").replace(/^\/home\/[^/]+(?=\/|$)/, "~");
+  // No guess from a pattern: /Users/alice is not this HOME (Astra, #869).
+  // Only the hub knows HOME; with no short token the path stays whole.
+  return path;
 }
 
 /** The proof of a SENT row, exact as the channel gave it (no uppercasing). */

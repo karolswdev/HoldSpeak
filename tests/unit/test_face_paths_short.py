@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from holdspeak.runtime import composition
-from holdspeak.home_paths import home_display
+from holdspeak.home_paths import home_display, home_text
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo10_send import Hub, _boot, destination, room, send, send_body  # noqa: E402
@@ -80,3 +80,16 @@ def test_setup_checks_show_home_paths_with_a_tilde_and_no_wire_boundary(home: Pa
     for form in {str(home), os.path.realpath(home)}:
         assert form + os.sep not in text, text
     assert "same_device" not in text, text
+
+
+def test_home_text_shortens_only_a_path_that_starts_with_home(home: Path) -> None:
+    """Astra, #869: backup_root + HOME + "/desk.db" became backup_root + "~/desk.db"."""
+    h = str(home)
+    assert home_text(f"Loaded {h}/.holdspeak/config.json (config version 1)") == "Loaded ~/.holdspeak/config.json (config version 1)"
+    assert home_text(f"no project root detected from cwd={h}/src") == "no project root detected from cwd=~/src"
+    assert home_text(f"{h}/a.md") == "~/a.md"
+    contained = f"/backup{h}/desk.db"
+    assert home_text(f"Restored from {contained}") == f"Restored from {contained}"
+    assert home_text(contained) == contained
+    sibling = f"{h}x/notes"
+    assert home_text(f"at {sibling}") == f"at {sibling}"

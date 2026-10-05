@@ -16,9 +16,13 @@ describe("a SAVED receipt's path", () => {
     expect(shownPath("/Volumes/Team/Reports/a.md", target)).toBe("/Volumes/Team/Reports/a.md");
   });
 
-  it("shortens a home path with no target to read", () => {
-    expect(shownPath("/Users/karol/Documents/a.md")).toBe("~/Documents/a.md");
-    expect(shownPath("/home/karol/Documents/a.md")).toBe("~/Documents/a.md");
-    expect(shownPath("/Users/karolx")).toBe("~");
+  it("never guesses HOME from a pattern: other people's folders stay whole (Astra, #869)", () => {
+    expect(shownPath("/Users/alice/Reports/weekly.md")).toBe("/Users/alice/Reports/weekly.md");
+    expect(shownPath("/Users/bob/Reports/weekly.md")).toBe("/Users/bob/Reports/weekly.md");
+    expect(shownPath("/home/alice/Reports/weekly.md")).toBe("/home/alice/Reports/weekly.md");
+    // alice's folder is not bob's HOME: only the hub's token for THIS folder shortens.
+    const bobs = { folder: "/Users/bob/Reports", display: "~/Reports" };
+    expect(shownPath("/Users/alice/Reports/weekly.md", bobs)).toBe("/Users/alice/Reports/weekly.md");
+    expect(shownPath("/Users/bob/Reports/weekly.md", bobs)).toBe("~/Reports/weekly.md");
   });
 });

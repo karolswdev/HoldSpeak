@@ -94,9 +94,13 @@ class TestFinishFacePolish:
         page.set_default_timeout(30_000)
         errors: list[str] = []
         page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+        page.set_default_navigation_timeout(120_000)
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
         page.reload(wait_until="load")
+        # The first /api/setup/status runs every doctor check cold (imports);
+        # on a loaded machine that took 36 s. The desk waits for it.
+        page.locator(".chair").wait_for(timeout=120_000)
         _normal_chair(page)
         page.locator(".desk-dock").wait_for()
         page.wait_for_timeout(1200)
@@ -145,11 +149,12 @@ class TestFinishFacePolish:
                     if state["scrollLeft"] == 0:
                         break
                     pages.append(state)
+                assert pages[-1]["atEnd"], pages  # the walk reached the end of the shelf
                 assert len(pages) >= 3, pages  # five projects: the shelf has pages
                 for state in pages:
                     assert not state["right"], f"a strip of the next AppIcon beside More: {state}"
-                    if not state["atEnd"]:
-                        assert not state["left"], f"a strip of the icon before this page: {state}"
+                    # Every page, the last one included (Astra, #869: it showed 1 px of Delivery).
+                    assert not state["left"], f"a strip of the item before this page: {state}"
                 assert not errors, errors
             finally:
                 browser.close()
@@ -223,6 +228,13 @@ class TestFinishFacePolish:
                 page.screenshot(path=str(SHOTS / f"roadmap-{width}.png"))
                 text = window.inner_text()
                 assert "Roadmap not found" not in text and "roadmap:" not in text, text[:300]
+                # No story row draws one part over another (the IN PROGRESS chip
+                # sat over its title when the row had no evidence mark).
+                overlaps = page.evaluate("""() => [...document.querySelectorAll('.desk-roadmap-stories li')].filter((li) => {
+                    const parts = [...li.children].filter((k) => getComputedStyle(k).display !== 'none').map((k) => k.getBoundingClientRect());
+                    return parts.some((a, i) => parts.some((b, j) => j > i && a.left < b.right - 0.5 && b.left < a.right - 0.5));
+                  }).map((li) => li.textContent.slice(0, 48))""")
+                assert not overlaps, overlaps
                 assert page.locator(".desk-screen-name").inner_text().strip().startswith("HoldSpeak"), \
                     page.locator(".desk-screen-name").inner_text()
                 self._press(page, window.locator("button[aria-label^='Close ']").first, width)

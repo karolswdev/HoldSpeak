@@ -23,13 +23,16 @@ import { DeliveryHistory, ListChips, updateDoc } from "../SendWell";
 import { SendWell, latestFor, mergeKnown, resetSendStore, useSends } from "../../../desk/surface/send";
 
 const FOLDER = "/Users/karol/Reports/Payments";
+// What the hub sends with every folder target: its short token from the
+// known HOME (holdspeak/home_paths.py). The face never guesses HOME.
+const SHOWN = "~/Reports/Payments";
 const dest = (over: Partial<Destination> = {}): Destination => ({
-  id: "chd_1", name: "Folder Payments", channel: "file", account: {}, target: { folder: FOLDER },
+  id: "chd_1", name: "Folder Payments", channel: "file", account: {}, target: { folder: FOLDER, display: SHOWN },
   synced: false, state: "active", created_at: "2026-09-28T10:00:00Z", parked_at: null, ...over,
 });
 const send = (over: Partial<Send> = {}): Send => ({
   id: "chs_1", document_ref: "project_update:u1", destination_id: "chd_1", destination_name: "Folder Payments",
-  channel: "file", account: {}, target: { folder: FOLDER }, payload_digest: "d", preview: { text: "# Update" },
+  channel: "file", account: {}, target: { folder: FOLDER, display: SHOWN }, payload_digest: "d", preview: { text: "# Update" },
   prepared_by: { kind: "owner", identity: "" }, prepare_operation_id: null, state: "sent", reason: null,
   proof: { path: `${FOLDER}/2026-09-28-payments-r1-abcd1234.md` }, file_path: `${FOLDER}/2026-09-28-payments-r1-abcd1234.md`,
   created_at: "2026-09-28T10:00:00Z", dispatch_started_at: "2026-09-28T10:00:00Z", settled_at: "2026-09-28T10:00:01Z",
@@ -115,7 +118,8 @@ describe("the SEND well", () => {
     fireEvent.click(verb); fireEvent.click(verb);
     const sent = await screen.findByTestId("send-sent");
     expect(sent.textContent).toContain("SAVED");
-    expect(within(sent).getByTestId("proof").textContent).toBe(`${FOLDER}/2026-09-28-payments-r1-abcd1234.md`);
+    // The receipt leads with the folder's short token; the stored proof stays exact.
+    expect(within(sent).getByTestId("proof").textContent).toBe(`${SHOWN}/2026-09-28-payments-r1-abcd1234.md`);
     expect(calls).toBe(1);
     expect(screen.getByTestId("send-last-sent").textContent).toContain("SAVED");
     expect(screen.getByTestId("send-verb").textContent).toBe("Send again");

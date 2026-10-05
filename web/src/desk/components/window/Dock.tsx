@@ -377,6 +377,52 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     };
   }, []);
 
+  // 393 (C1-8, Astra on #869): the LAST page of the shelf starts on a whole
+  // item too. The shelf's end is wherever its tail (Hide the menus, Places,
+  // the orb, window chips) happens to end, so scrolled to its end the left
+  // gutter showed a strip of the item before it. A spacer before More
+  // (`--desk-dock-end-pad`, dock.css) moves the end so the gutter lands on
+  // an item's left edge. Desktop: no spacer.
+  useEffect(() => {
+    const el = dockRef.current;
+    if (!el) return;
+    const GUTTER = 4;
+    const align = () => {
+      const phone = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 720px)").matches;
+      const current = parseFloat(el.style.getPropertyValue("--desk-dock-end-pad")) || 0;
+      let pad = 0;
+      if (phone) {
+        const end = el.scrollWidth - current - el.clientWidth + GUTTER;
+        if (end > GUTTER) {
+          const origin = el.getBoundingClientRect().left - el.scrollLeft;
+          const edges = [...el.children]
+            .filter((k) => !k.classList.contains("desk-dock-more"))
+            .map((k) => k.getBoundingClientRect().left - origin)
+            .filter((x) => x >= end - 0.5)
+            .sort((a, b) => a - b);
+          if (edges.length) pad = Math.max(0, Math.round(edges[0] - end));
+        }
+      }
+      const next = `${pad}px`;
+      if (el.style.getPropertyValue("--desk-dock-end-pad") !== next) el.style.setProperty("--desk-dock-end-pad", next);
+    };
+    align();
+    if (typeof ResizeObserver !== "function" || typeof MutationObserver !== "function") return;
+    const sizes = new ResizeObserver(align);
+    const watch = () => {
+      sizes.disconnect();
+      sizes.observe(el);
+      for (const child of el.children) sizes.observe(child);
+    };
+    watch();
+    const children = new MutationObserver(() => { watch(); align(); });
+    children.observe(el, { childList: true });
+    return () => {
+      sizes.disconnect();
+      children.disconnect();
+    };
+  }, []);
+
   // The front chip mirrors the shell's is-front rule: the last id in
   // the order that is open here and not minimized (HS-97-04).
   let front: string | undefined;

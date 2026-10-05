@@ -6,7 +6,7 @@ import { qualifiedRef } from "../api";
 import { useDesk } from "../store";
 
 beforeEach(() => {
-  useDesk.setState({ roadmapWindows: [] });
+  useDesk.setState({ roadmapWindows: [], workbenchWindows: [] });
 });
 
 describe("a twice-qualified Roadmap ref", () => {
@@ -18,5 +18,16 @@ describe("a twice-qualified Roadmap ref", () => {
   it("opens the same window from a once-qualified ref", () => {
     useDesk.getState().openPullout("roadmap:holdspeak");
     expect(useDesk.getState().roadmapWindows.map((w) => w.slug)).toEqual(["holdspeak"]);
+  });
+});
+
+describe("only the Roadmap's ref is normalised (Astra, #869 P1)", () => {
+  it("opens the Workbench whose id is `workbench:weekly`, not the one named `weekly`", () => {
+    // Two workbenches: `weekly` and `workbench:weekly` ("Weekly delivery").
+    // The palette qualifies the second one's id: `workbench:workbench:weekly`.
+    useDesk.getState().openPullout(qualifiedRef("workbench", "workbench:weekly"));
+    expect(useDesk.getState().workbenchWindows.map((w) => w.id)).toEqual(["workbench:weekly"]);
+    useDesk.getState().openPullout(qualifiedRef("workbench", "weekly"));
+    expect(useDesk.getState().workbenchWindows.map((w) => w.id)).toEqual(["workbench:weekly", "weekly"]);
   });
 });

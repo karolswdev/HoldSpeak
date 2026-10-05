@@ -650,6 +650,14 @@
     background: var(--wb-steel);
     z-index: 2;
   }
+  /* The end spacer: Dock.tsx sets its width so the last page also starts on
+     a whole item (no strip in the gutter at the end of the shelf). */
+  .desk-next .desk-dock::after {
+    content: "";
+    order: 98;
+    flex: 0 0 var(--desk-dock-end-pad, 0px);
+    align-self: stretch;
+  }
   .desk-next .desk-dock > .desk-dock-more {
     order: 99;
     position: sticky;

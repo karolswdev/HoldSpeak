@@ -6,7 +6,10 @@ import { useLaunchers } from "../../desk/components/DeskWindow";
 import { useProcessWindow } from "../../desk/processWindow";
 import type { ProcessRow } from "../../desk/processWindowReducer";
 import { humanizeWireValue } from "../../lib/productLanguage";
-import { looksLikeId } from "../../desk/windowName";
+import { kindWord, looksLikeId } from "../../desk/windowName";
+import { objectByRef } from "../../desk/world";
+import { useDesk } from "../../desk/store";
+import type { Items } from "../../desk/api";
 import {
   SurfaceLedger,
   SurfaceLedgerRow,
@@ -34,16 +37,28 @@ function stateTone(row: ProcessRow): "warn" | "danger" | "ok" | undefined {
   return undefined;
 }
 
-/** The target a row names, or "" when it says nothing a person can read:
- * the operation's own name again (`desk:channel.save_destination`) or a raw
- * record id (`meeting:9f8a7b6c5d4e`). STATUS: no ids on faces. */
-export function shownTarget(row: Pick<ProcessRow, "kind" | "target">): string {
+/** What a row's target says on the face (STATUS: no raw ids on faces;
+ * Astra, #869: never a blank where the identity is):
+ *   - "" only for a target that repeats the operation's own name
+ *     (`desk:channel.save_destination`): it names nothing new;
+ *   - a record the desk holds reads by its NAME (`Freeze the old ledger`);
+ *   - a record the desk does not hold keeps an inspectable identity: its
+ *     kind and a short id token (`Decision c9edf1`), so two rows never look
+ *     the same;
+ *   - any other target (`agent:build`) reads as the hub sent it. */
+export function shownTarget(row: Pick<ProcessRow, "kind" | "target">, items?: Items): string {
   const target = row.target.trim();
   if (!target) return "";
   const colon = target.indexOf(":");
+  const kind = colon > 0 ? target.slice(0, colon) : "";
   const rest = colon > 0 ? target.slice(colon + 1) : target;
   if (rest === row.kind || target === row.kind) return "";
-  if (looksLikeId(rest) || /^[0-9a-f]{10,}$/i.test(rest)) return "";
+  const named = items ? objectByRef(items, target) : null;
+  if (named?.title) return named.title;
+  if (looksLikeId(rest) || /^[0-9a-f]{10,}$/i.test(rest)) {
+    const hex = rest.replace(/^[a-z]{1,12}_/i, "").replace(/-/g, "");
+    return `${kindWord(kind) || "Record"} ${hex.slice(0, 6)}`;
+  }
   return target;
 }
 
@@ -61,6 +76,7 @@ function LedgerRows({
   openDecisions: () => void;
   depth?: number;
 }) {
+  const items = useDesk((state) => state.items);
   return (
     <>
       {rows.map((row) => {
@@ -78,7 +94,7 @@ function LedgerRows({
                 <>
                   {depth > 0 ? "└ " : ""}
                   {row.kind.toUpperCase()}
-                  {shownTarget(row) ? ` · ${shownTarget(row)}` : ""}
+                  {shownTarget(row, items) ? ` · ${shownTarget(row, items)}` : ""}
                 </>
               }
               cells={
