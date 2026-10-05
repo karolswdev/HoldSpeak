@@ -219,7 +219,9 @@ def test_trust_counts_the_saved_destination(desk):
         _shot(page, "trust", width)
         window.get_by_text("Team updates").first.wait_for(timeout=15000)
         count_row = window.locator(".surface-setting-row", has_text="Enabled destinations").first
-        assert re.search(r"Enabled destinations\s*1$", count_row.inner_text().strip())
+        # Two saved destinations: the built-in HoldSpeak folder (owner ruling 2026-10-05) and Team updates.
+        window.get_by_text("HoldSpeak folder").first.wait_for(timeout=15000)
+        assert re.search(r"Enabled destinations\s*2$", count_row.inner_text().strip())
         text = window.inner_text()
         # A folder on this device is in use and sends nothing out.
         assert "All data stays on this device" in text

@@ -43,7 +43,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle
+from .glass_infra import _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle, park_builtin_folder
 from .test_philo13_11_chair_glass import _seed as _canvas_seed
 from tests._evidence import evidence_dir
 
@@ -78,6 +78,7 @@ class TestPaletteKnowsHisWeek:
         monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
         _ensure_build()
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        park_builtin_folder()  # the desk these boards were drawn on (glass_infra.park_builtin_folder)
         self.base, self.home = base, tmp_path / "home"
         _canvas_seed(self.home)
         _http(base, "PUT", "/api/setup/onboarding", {"disposition": "completed"})

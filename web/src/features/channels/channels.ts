@@ -32,6 +32,8 @@ export type Destination = {
   /** Email's To and Cc arrive as arrays (read with `list`). */
   target: Record<string, string | number>;
   synced: boolean;
+  /** The built-in "HoldSpeak folder" (Documents/HoldSpeak/Sent): always there; no Edit, no Remove. */
+  builtin?: boolean;
   state: "active" | "parked";
   badge?: string;
   created_at: string;
@@ -68,6 +70,8 @@ export type Send = {
   settled_at: string | null;
   /** The order sends LEFT in, allocated inside the boundary transaction. */
   dispatch_seq?: number | null;
+  /** The built-in folder: the sync provider ("icloud", "dropbox", ... or "synced") at the send's boundary. */
+  egress?: string | null;
 };
 
 export type PreviewField = { label: string; value: string };
@@ -161,6 +165,7 @@ const REFUSED: Record<string, string> = {
   destination_changed: "DESTINATION CHANGED",
   destination_parked: "DESTINATION PARKED",
   destination_not_saved: "DESTINATION NOT SAVED",
+  destination_builtin: "BUILT IN FOLDER",
   destination_name_invalid: "NAME MISSING",
   document_unknown: "NO DOCUMENT",
   document_kind_unknown: "DOCUMENT TYPE UNKNOWN",
@@ -218,6 +223,7 @@ const FAILED: Record<string, string> = {
   no_space: "NO SPACE",
   name_taken: "NAME TAKEN",
   not_written: "FILE NOT WRITTEN",
+  folder_not_created: "FOLDER NOT MADE",
   github_target_not_found: "ISSUE NOT FOUND",
   github_repository_not_found: "REPOSITORY NOT FOUND",
   github_permission_denied: "NO PERMISSION",
@@ -345,7 +351,7 @@ export function stamp(iso: string | null | undefined): string {
 /** The short target token for a destination row. Literal: keeps its case. */
 export function targetToken(channel: Channel, t: Record<string, string | number>): string {
   switch (channel) {
-    case "file": return String(t.folder ?? "").replace(/^\/Users\/[^/]+/, "~");
+    case "file": return t.display ? String(t.display) : String(t.folder ?? "").replace(/^\/Users\/[^/]+/, "~");
     case "github": return `${t.repo}${t.kind === "pr" ? " PR" : ""} #${t.number}`;
     case "jira": return String(t.key ?? "");
     case "confluence": return `SPACE ${t.space_id ?? ""}`;
@@ -359,12 +365,34 @@ export function targetToken(channel: Channel, t: Record<string, string | number>
   }
 }
 
+/** iCloud Drive syncs the folder: the file leaves this device. */
+export const ICLOUD_EGRESS = { label: "ICLOUD", scope: "cloud" as const, title: "iCloud Drive syncs this folder: the file leaves this device." };
+
+/** The sync service that takes the built-in folder's files off this device
+ *  (the hub's `target.cloud` and a send's `egress`). Any provider the hub
+ *  does not name reads SYNCED: "not iCloud" is never "this device". */
+const SYNC_EGRESS: Record<string, { label: string; scope: "cloud"; title: string }> = {
+  icloud: ICLOUD_EGRESS,
+  dropbox: { label: "DROPBOX", scope: "cloud", title: "Dropbox syncs this folder: the file leaves this device." },
+  googledrive: { label: "GOOGLE DRIVE", scope: "cloud", title: "Google Drive syncs this folder: the file leaves this device." },
+  onedrive: { label: "ONEDRIVE", scope: "cloud", title: "OneDrive syncs this folder: the file leaves this device." },
+};
+const SYNCED_EGRESS = { label: "SYNCED", scope: "cloud" as const, title: "A sync app syncs this folder: the file leaves this device." };
+export function syncEgress(provider: unknown): { label: string; scope: "cloud"; title: string } | null {
+  if (!provider) return null;
+  return SYNC_EGRESS[String(provider)] ?? SYNCED_EGRESS;
+}
+
 /** The egress chip of a destination (UX-CANON: where egress happens). */
-export function egressOf(d: { channel: Channel; account: Record<string, string | boolean>; synced?: boolean }): {
+export function egressOf(d: {
+  channel: Channel; account: Record<string, string | boolean>; synced?: boolean; target?: Record<string, string | number>;
+}): {
   label: string; scope: "local" | "cloud"; title: string;
 } {
   switch (d.channel) {
     case "file":
+      // The built-in HoldSpeak folder in an iCloud Drive Documents folder (the hub reads it now).
+      { const sync = syncEgress(d.target?.cloud); if (sync) return sync; }
       return d.synced
         ? { label: "SYNCED FOLDER", scope: "cloud", title: "Synced folder: it leaves this device." }
         : { label: "THIS DEVICE", scope: "local", title: "A folder on this device." };

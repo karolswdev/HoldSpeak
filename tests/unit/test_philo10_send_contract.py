@@ -518,7 +518,8 @@ def test_edit_parks_the_old_row_and_a_send_prepared_to_it_is_refused_with_the_hi
         "name": "Team folder", "channel": "file", "folder": str(second_folder), "replaces": dest}).json()
     assert edited["replaced"] == dest and edited["destination"]["id"] != dest
     listed = hub.client.get("/api/channels/destinations", params={"include_parked": True}).json()["destinations"]
-    assert {d["id"]: d["state"] for d in listed} == {dest: "parked", edited["destination"]["id"]: "active"}
+    assert {d["id"]: d["state"] for d in listed} == {dest: "parked", edited["destination"]["id"]: "active",
+                                                     "holdspeak-folder": "active"}  # the built-in folder stays
     spy = DispatchSpy(monkeypatch)
     _refused(hub, send(hub, {"send_id": prepared["id"]}), "destination_parked", "channel.send")
     row = sends(hub)[0]
@@ -558,7 +559,8 @@ def test_remove_parks_and_keeps_history(hub: Hub, tmp_path: Path) -> None:
     assert send(hub, send_body(hub, "send_id", update, dest, "k")).json()["outcome"] == "sent"
     removed = hub.client.delete(f"/api/channels/destinations/{dest}")
     assert removed.status_code == 200 and removed.json()["destination"]["state"] == "parked"
-    assert hub.client.get("/api/channels/destinations").json()["destinations"] == []
+    # Only the built-in HoldSpeak folder stays listed.
+    assert [d["id"] for d in hub.client.get("/api/channels/destinations").json()["destinations"]] == ["holdspeak-folder"]
     assert hub.db.channel_destinations.get(dest)["state"] == "parked"
     assert [s["destination_id"] for s in sends(hub)] == [dest] and len(history(hub, update)) == 1
     again = hub.client.delete(f"/api/channels/destinations/{dest}")
@@ -621,7 +623,7 @@ def test_a_folder_marked_synced_is_badged_cloud(hub: Hub, tmp_path: Path) -> Non
     local = destination(hub, tmp_path / "local")
     synced = destination(hub, tmp_path / "synced", name="Synced", synced=True)
     badges = {d["id"]: d["badge"] for d in hub.client.get("/api/channels/destinations").json()["destinations"]}
-    assert badges == {local: "local", synced: "cloud"}
+    assert badges == {local: "local", synced: "cloud", "holdspeak-folder": "local"}
 
 
 # ── Send and Discard at once: one wins ──────────────────────────────────

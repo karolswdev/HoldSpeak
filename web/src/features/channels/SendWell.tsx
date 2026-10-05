@@ -10,7 +10,7 @@ import { useCallback, useEffect } from "react";
 import { Button } from "../../components/signal/Signal";
 import { StateChip, StringGadget, SurfaceLedger, SurfaceLedgerRow, SurfaceSection } from "../../desk/surface";
 import {
-  ProofCell, SendWells, Unreadable, mergeKnown, openFar, useSends, type DocRef,
+  ProofCell, ReceiptEgress, SendWells, Unreadable, mergeKnown, openFar, useSends, type DocRef,
 } from "../../desk/surface/send";
 import type { UpdateController } from "../project-room/update/useUpdateController";
 import { isDelivered, type Delivery, type ProjectUpdate } from "../project-room/update/model";
@@ -72,6 +72,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                       cells={<>
                         {reason ? <span className="surface-token" data-chip data-code={reason}>{unknownWord(reason)}</span> : null}
                         {far ? <Button dense variant="ghost" data-testid="history-check" data-href={far} onClick={() => openFar(far)}>{SEND_WORDS.check}</Button> : null}
+                        <ReceiptEgress s={{ proof: r.proof ?? null, egress: send?.egress }} />
                         <span className="surface-token" data-chip>{stamp(r.deliveredAt)}</span>
                       </>} />
                   );
@@ -88,6 +89,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                       {manual
                         ? <span className="surface-token" data-chip>MANUAL</span>
                         : <ProofCell channel={r.channel} proof={r.proof ?? null} target={send?.target} account={send?.account} />}
+                      <ReceiptEgress s={{ proof: r.proof ?? null, egress: send?.egress }} />
                       <span className="surface-token" data-chip>{stamp(r.deliveredAt)}</span>
                     </>} />
                 );

@@ -5077,6 +5077,7 @@
         "slack_webhook_missing",
         "slack_key_store_not_native",
         "slack_key_store_locked",
+        "destination_builtin",
         "owner_principal_required"
       ],
       "completion": "synchronous; channel.destinations lists it",
@@ -5128,6 +5129,7 @@
         "authority_in_arguments",
         "destination_not_saved",
         "destination_parked",
+        "destination_builtin",
         "owner_principal_required"
       ],
       "completion": "synchronous; channel.destinations(include_parked) shows it parked",

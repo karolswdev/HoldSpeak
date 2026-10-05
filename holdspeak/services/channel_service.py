@@ -37,7 +37,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping, Optional
 
-from holdspeak.db.channels import now_iso, settle_in_transaction
+from holdspeak.db.channels import BUILTIN_FOLDER_ID, is_builtin, now_iso, settle_in_transaction
 from holdspeak.logging_config import get_logger
 
 from . import channel_contract as contract
@@ -72,12 +72,13 @@ class ChannelService:
     # ── views ──────────────────────────────────────────────────────────
 
     def _destination_view(self, row: Mapping[str, Any]) -> dict[str, Any]:
-        target = json.loads(row["target_json"] or "{}")
+        target = contract.shown_target(json.loads(row["target_json"] or "{}"))
         account = json.loads(row["account_json"] or "{}")
-        synced = bool(row["synced"])
+        # The built-in folder's sync is read now (iCloud Drive can be switched on or off).
+        synced = bool(target.get("cloud")) if is_builtin(row) else bool(row["synced"])
         return {
             "id": row["id"], "name": row["name"], "channel": row["channel"],
-            "account": account, "target": target,
+            "account": account, "target": target, "builtin": is_builtin(row),
             "target_digest": row["target_digest"], "synced": synced, "state": row["state"],
             "badge": contract.channel(row["channel"]).badge(synced), "created_at": row["created_at"],
             "parked_at": row["parked_at"], "connection": self._connection(str(row["channel"]), account),
@@ -113,8 +114,9 @@ class ChannelService:
         return {
             "id": row["id"], "document_ref": row["document_ref"], "destination_id": row["destination_id"],
             "destination_name": destination.get("name"), "channel": row["channel"],
-            "badge": contract.channel(row["channel"]).badge(bool(destination.get("synced"))),
-            "account": json.loads(row["account_json"] or "{}"), "target": json.loads(row["target_json"] or "{}"),
+            "badge": contract.channel(row["channel"]).badge(self._synced(destination, row)),
+            "account": json.loads(row["account_json"] or "{}"),
+            "target": contract.shown_target(json.loads(row["target_json"] or "{}")),
             "target_digest": row["target_digest"], "payload_digest": row["payload_digest"],
             "document_json": json.loads(row["document_json"]) if row.get("document_json") else None,
             "size": size, "preview": contract.preview_for(row["channel"], payload, row["account_json"]),
@@ -124,8 +126,21 @@ class ChannelService:
             "proof": json.loads(row["proof_json"]) if row["proof_json"] else None,
             "file_path": row["file_path"], "created_at": row["created_at"],
             "dispatch_started_at": row["dispatch_started_at"], "settled_at": row["settled_at"],
-            "dispatch_seq": row["dispatch_seq"],
+            "dispatch_seq": row["dispatch_seq"], "egress": row.get("egress"),
         }
+
+    @staticmethod
+    def _synced(destination: Mapping[str, Any], send: Optional[Mapping[str, Any]] = None) -> bool:
+        """A destination's cloud sync: its saved flag; for the built-in folder, iCloud Drive.
+
+        A settled send of the built-in answers from its own proof (what was true
+        at send time); anything else reads the folder now.
+        """
+        if not destination or not is_builtin(destination):
+            return bool((destination or {}).get("synced"))
+        if send is not None and send.get("dispatch_seq") is not None:
+            return bool(send.get("egress"))  # judged at its boundary: any sync provider
+        return contract.builtin_egress() is not None
 
     def _answer(self, row: Mapping[str, Any]) -> dict[str, Any]:
         view = self._send_view(row)
@@ -168,7 +183,7 @@ class ChannelService:
         size = (contract.payload_size("slack", payload)[0]
                 if destination["channel"] == "slack" else len(payload))
         return {"document_ref": document.ref, "title": document.title, "destination_id": destination["id"],
-                "channel": destination["channel"], "badge": chan.badge(bool(destination["synced"])),
+                "channel": destination["channel"], "badge": chan.badge(self._synced(destination)),
                 "payload_digest": contract.sha256(payload), "size": size,
                 "preview": contract.preview_for(destination["channel"], payload, destination["account_json"])}
 
@@ -199,6 +214,16 @@ class ChannelService:
             state = "parked" if row["state"] != "active" else str((view["connection"] or {}).get("state") or "")
             return {"destination": view, "check": {"state": state, "resolved": None}}
         target = json.loads(row["target_json"] or "{}")
+        if contract.is_builtin_target(target):
+            # The built-in folder is never "missing": the next send makes it.
+            resolved = contract.builtin_folder()
+            parent = resolved
+            while not os.path.isdir(parent) and os.path.dirname(parent) != parent:
+                parent = os.path.dirname(parent)
+            state = ("parked" if row["state"] != "active"
+                     else "ready" if os.access(parent, os.W_OK)
+                     else "not_writable")
+            return {"destination": self._destination_view(row), "check": {"state": state, "resolved": resolved}}
         folder = str(target.get("folder") or "")
         resolved = os.path.realpath(folder) if folder else ""
         state = ("parked" if row["state"] != "active"
@@ -302,6 +327,8 @@ class ChannelService:
             synced = False
         else:
             raise ValidationError(f"{channel} destinations arrive with their channel", code="channel_unknown")
+        if replaces == BUILTIN_FOLDER_ID:
+            raise ChannelRefused("destination_builtin", "The HoldSpeak folder stays", status=400)
         if replaces:
             old = self._destination(replaces)
             if old["state"] != "active":
@@ -347,6 +374,8 @@ class ChannelService:
         row = self._destination(destination_id)
         if handle.replay:
             return {"destination": self._destination_view(row)}
+        if is_builtin(row):
+            raise ChannelRefused("destination_builtin", "The HoldSpeak folder stays", status=400)
         if row["state"] != "active":
             raise ChannelRefused("destination_parked", f"Destination {destination_id} is already parked")
 
@@ -544,6 +573,8 @@ class ChannelService:
             path = chan.choose_path(folder, document, send_id)
         else:
             path = None
+        # The egress, judged once here; the settle copies it into the proof on every path.
+        egress = contract.egress_at_boundary(frozen_target, folder if channel_name == "file" else None)
         # PHILO-10-04: the boundary time (display only; the order is dispatch_seq).
         started = datetime.now(timezone.utc).isoformat(timespec="microseconds")
         operation_id = handle.operation_id
@@ -561,18 +592,18 @@ class ChannelService:
             if row is not None:
                 moved = conn.execute(
                     "UPDATE channel_sends SET state='dispatching', send_operation_id=?, dispatch_started_at=?,"
-                    f" file_path=?, dispatch_seq=({next_seq}) WHERE id=? AND state='prepared' AND {claimed}",
-                    (operation_id, started, path, send_id, operation_id)).rowcount
+                    f" file_path=?, egress=?, dispatch_seq=({next_seq}) WHERE id=? AND state='prepared' AND {claimed}",
+                    (operation_id, started, path, egress, send_id, operation_id)).rowcount
             else:
                 moved = conn.execute(
                     "INSERT INTO channel_sends (id, document_ref, destination_id, channel, account_json, target_json,"
                     " target_digest, payload, payload_digest, document_json, prepared_by_kind, prepared_by_identity,"
-                    " send_operation_id, state, file_path, created_at, dispatch_started_at, dispatch_seq)"
-                    f" SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'dispatching', ?, ?, ?, ({next_seq}) WHERE {claimed}",
+                    " send_operation_id, state, file_path, created_at, dispatch_started_at, egress, dispatch_seq)"
+                    f" SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'dispatching', ?, ?, ?, ?, ({next_seq}) WHERE {claimed}",
                     (send_id, document_ref, destination["id"], channel_name, destination["account_json"],
                      destination["target_json"], destination["target_digest"], payload, contract.sha256(payload), document_json,
                      "owner", str(getattr(handle.principal, "identity", "") or ""), operation_id, path, started,
-                     started, operation_id)).rowcount
+                     started, egress, operation_id)).rowcount
         if moved != 1:
             state = str((handle.operation() or {}).get("state") or "")
             if state != "claimed":

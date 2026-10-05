@@ -248,6 +248,26 @@ def _boot(
     return server, server.start()
 
 
+def park_builtin_folder() -> None:
+    """Park the built-in "HoldSpeak folder" destination in this rig's database.
+
+    The owner's ruling of 2026-10-05 gives every desk that destination. The
+    Phase 10, 11 and 13 Send boards were drawn and ratified on desks without
+    it (their first board is NO DESTINATION; their rows, counts and pointer
+    passes are measured on their own destinations). Those rigs call this
+    right after ``_boot`` to keep the desk they were drawn on. The product
+    has no verb that parks it (``channel.remove_destination`` refuses
+    ``destination_builtin``); this is a direct write to the rig's database.
+    """
+    from holdspeak.db import get_database
+    from holdspeak.db.channels import BUILTIN_FOLDER_ID
+
+    with get_database()._connection() as conn:
+        conn.execute("UPDATE channel_destinations SET state='parked', parked_at=datetime('now') WHERE id=?",
+                     (BUILTIN_FOLDER_ID,))
+        conn.commit()
+
+
 # ── _api: browser-side fetch (asserting, returns payload dict) ──
 
 _FETCH_JS = """async ([method, path, body, token]) => {

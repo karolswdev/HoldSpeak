@@ -503,7 +503,11 @@ class TestRhythmWeeklyBrief:
             )
 
         # ── (8) No raw ISO dates (YYYY-MM-DD) on the face ──
-        body_text = brief_el.text_content() or ""
+        # The SEND well's preview is the file's exact Markdown (a literal, like a
+        # path): it is not the face's words. With only the built-in HoldSpeak
+        # folder (owner ruling 2026-10-05) the well opens that preview by itself.
+        body_text = brief_el.evaluate("""(el) => { const c = el.cloneNode(true);
+            c.querySelectorAll('.send-preview-body').forEach((n) => n.remove()); return c.textContent || ''; }""")
         assert not re.search(r'\d{4}-\d{2}-\d{2}', body_text), (
             f"Raw ISO date on the brief face: {body_text[:300]}"
         )

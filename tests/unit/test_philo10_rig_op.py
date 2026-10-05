@@ -50,7 +50,7 @@ def test_the_rig_reaches_the_send_and_reads_each_receipt(tmp_path: Path) -> None
         saved = op("channel.save_destination", {"name": "Team folder", "channel": "file", "folder": str(folder)})
         assert receipt(saved["operation_id"])["state"] == "succeeded"
         dest = saved["destination"]["id"]
-        assert [d["id"] for d in op("channel.destinations", {})["destinations"]] == [dest]
+        assert [d["id"] for d in op("channel.destinations", {})["destinations"]] == ["holdspeak-folder", dest]
         document_ref = f"project_update:{update}"
         preview = op("channel.preview", {"document_ref": document_ref, "destination_id": dest})
         prepared = op("channel.prepare", {"document_ref": document_ref, "destination_id": dest})

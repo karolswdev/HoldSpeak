@@ -9,6 +9,7 @@ export {
   PreparedChip,
   PreviewWell,
   ProofCell,
+  ReceiptEgress,
   Unreadable,
   HISTORY_HEAD,
   accountChip,

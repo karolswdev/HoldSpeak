@@ -170,6 +170,42 @@ def _short_target(target: Mapping[str, Any]) -> str:
     return "Saved destination"
 
 
+def _shown(target: Any) -> dict[str, Any]:
+    """The target as the face reads it (the built-in folder resolved now)."""
+    if not isinstance(target, dict):
+        return {}
+    from .services.channel_contract import shown_target
+
+    return shown_target(target)
+
+
+#: The built-in HoldSpeak folder cannot be removed (``destination_builtin``):
+#: its stop instruction names a control that exists. iCloud Drive's switch is
+#: in System Settings (Apple Account, iCloud, iCloud Drive); a local folder
+#: sends nothing out.
+BUILTIN_ICLOUD_STOP = "Turn off Desktop & Documents Folders in iCloud Drive"
+BUILTIN_LOCAL_STOP = "Nothing leaves this device"
+#: Another sync service: its own app stops the sync of the folder.
+BUILTIN_PROVIDER_STOP = {
+    "dropbox": "Turn off sync for Documents in Dropbox",
+    "googledrive": "Turn off sync for Documents in Google Drive",
+    "onedrive": "Turn off sync for Documents in OneDrive",
+}
+BUILTIN_SYNCED_STOP = "Turn off sync for Documents in its sync app"
+
+
+def _revoke_action(destination_id: str, provider: str | None) -> str:
+    from .db.channels import BUILTIN_FOLDER_ID
+
+    if destination_id == BUILTIN_FOLDER_ID:
+        if not provider:
+            return BUILTIN_LOCAL_STOP
+        if provider == "icloud":
+            return BUILTIN_ICLOUD_STOP
+        return BUILTIN_PROVIDER_STOP.get(provider, BUILTIN_SYNCED_STOP)
+    return "Park the destination in Settings, Connections"
+
+
 def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
     """The owner's saved Send destinations (Settings, Connections).
 
@@ -188,11 +224,14 @@ def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for row in saved:
         channel = str(row.get("channel") or "")
-        local = channel == "file" and not bool(row.get("synced"))
         try:
             target = json.loads(row.get("target_json") or "{}")
         except (TypeError, ValueError):
             target = {}
+        # The built-in HoldSpeak folder: its sync provider is read now.
+        provider = _shown(target).get("cloud")
+        synced = bool(row.get("synced")) or bool(provider)
+        local = channel == "file" and not synced
         rows.append({
             "id": f"channel:{row['id']}",
             "name": str(row.get("name") or "Saved destination"),
@@ -201,10 +240,10 @@ def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
             "data_class": "The document you send",
             "authority_basis": "You press Send",
             "background_ability": "No. Each send needs your press",
-            "revoke_action": "Park the destination in Settings, Connections",
+            "revoke_action": _revoke_action(str(row.get("id") or ""), provider),
             "enabled": not local,
             "saved": True,
-            "destination": _short_target(target if isinstance(target, dict) else {}),
+            "destination": _short_target(_shown(target)),
             "last_receipt": None,
         })
     return rows

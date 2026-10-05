@@ -4274,7 +4274,13 @@ CREATE TABLE IF NOT EXISTS channel_sends (
     created_at TEXT NOT NULL,
     dispatch_started_at TEXT,
     settled_at TEXT,
-    dispatch_seq INTEGER
+    dispatch_seq INTEGER,
+    -- The built-in HoldSpeak folder (2026-10-05, additive): where the file goes
+    -- past this device, judged ONCE at the dispatch boundary (the sync
+    -- provider: 'icloud', 'dropbox', 'googledrive', 'onedrive' or 'synced';
+    -- NULL: it stays here). The settle copies
+    -- it into the proof, whichever path settles (dispatch, take-over, reaper).
+    egress TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_channel_sends_document
     ON channel_sends(document_ref, created_at);

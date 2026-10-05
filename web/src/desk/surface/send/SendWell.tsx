@@ -40,7 +40,7 @@ import { useDesk } from "../../store";
 import { fetchConnections, type ConnectionsResponse, type ConnectionState } from "../../../pages/cores/connections/api";
 import { chipLabel } from "../../../pages/cores/connections/ConnectionsPane";
 import {
-  CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, commandId, egressOf, failedWord, farSide, previewOf,
+  CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide, previewOf,
   refusalSize, refusedWord, requestDestinationsFocus, sentWord, stamp, targetToken, unknownWord, wire, Refusal,
   type Channel, type Destination, type Preview, type Send, type WirePreview,
 } from "../../../features/channels/channels";
@@ -308,12 +308,21 @@ function ClosedReceipt({ o, last }: { o: Outcome; last: Send | undefined }) {
 }
 
 /** The destination's latest send: the one receipt the open row shows. */
+/** The egress a send's receipt names (judged at its boundary, kept on its row
+ *  and in its proof): the sync service that took the file off this device. Every
+ *  receipt branch (latest, prepared result, history) shows it. */
+export function ReceiptEgress({ s }: { s: Pick<Send, "proof"> & { egress?: string | null } }) {
+  const sync = syncEgress(s.egress ?? s.proof?.egress);
+  return sync ? <EgressChip label={sync.label} scope={sync.scope} title={sync.title} /> : null;
+}
+
 function LatestReceipt({ s }: { s: Send | undefined }) {
   if (!s) return null;
   if (s.state === "sent") return (
     <span className="send-line" data-testid="send-sent" data-receipt="latest" data-state="sent">
       <StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} />
       <ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} />
+      <ReceiptEgress s={s} />
     </span>
   );
   if (s.state === "failed") return (
@@ -327,6 +336,7 @@ function LatestReceipt({ s }: { s: Send | undefined }) {
     <span className="send-line" data-testid="send-unknown" data-receipt="latest" data-state="unknown">
       <StateChip state="warning" label={SEND_WORDS.unknownChip} />
       <span className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</span>
+      <ReceiptEgress s={s} />
     </span>
   );
   if (s.state === "dispatching") return (
@@ -469,7 +479,11 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
   const dests = useDestinations();
   const conns = useConnections();
   const ref = doc.ref;
-  const picked = store.picked.has(ref) ? store.picked.get(ref) ?? null : ((k) => (k && dests.data?.some((d) => d.id === k) ? k : null))(keptPlace(`send/pick/${ref}`)); // B2: the kept pick returns, onto a listed destination only
+  // B2: the kept pick returns, onto a listed destination only. With no kept pick
+  // and no destination but the built-in HoldSpeak folder (a fresh desk), the folder is picked.
+  const onlyBuiltin = dests.data?.length === 1 && dests.data[0].builtin ? dests.data[0].id : null;
+  const picked = store.picked.has(ref) ? store.picked.get(ref) ?? null
+    : ((k) => (k && dests.data?.some((d) => d.id === k) ? k : onlyBuiltin))(keptPlace(`send/pick/${ref}`));
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [previewTry, setPreviewTry] = useState(0);
   useEffect(() => {
@@ -628,7 +642,7 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
   const k = `${docRef}|${s.id}`;
   const o = store.outcomes.get(k) ?? { kind: "none" as const };
   const busy = store.busy.has(k);
-  const eg = egressOf({ channel: s.channel, account: s.account, synced: dest?.synced });
+  const eg = egressOf({ channel: s.channel, account: s.account, synced: dest?.synced, target: s.target });
   const acc = accountChip({ channel: s.channel, connection: dest?.connection,
     account: { ...s.account, ...(typeof dest?.account.key_present === "boolean" ? { key_present: dest.account.key_present } : {}) } }, conns);
   // A named destination refusal is final for this row: Send would only
@@ -646,9 +660,9 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
 
   const result = waiting ? null
     : running ? <span data-testid="prepared-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>
-    : s.state === "sent" ? <><StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} /></>
+    : s.state === "sent" ? <><StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} /><ReceiptEgress s={s} /></>
     : s.state === "failed" ? <><StateChip state="failure" label="FAILED" /><span className="surface-token" data-chip>{failedWord(s.reason ?? "")}</span><span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span></>
-    : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><span className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</span></>
+    : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><span className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</span><ReceiptEgress s={s} /></>
     : <StateChip state="idle" label={SEND_WORDS.discarded} />;
 
   return (
@@ -743,6 +757,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
                     cells={<span className="send-cells">
                       {formChip}
                       {r.reason ? <span className="surface-token" data-chip>{unknownWord(r.reason)}</span> : null}
+                      <ReceiptEgress s={r} />
                       {far ? <Button dense variant="ghost" data-testid="history-check" data-href={far} onClick={() => openFar(far)}>{SEND_WORDS.check}</Button> : null}
                       <span className="surface-token" data-chip>{stamp(r.settled_at)}</span>
                     </span>} />
@@ -756,6 +771,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
                     {formChip}
                     <span className="surface-token" data-chip data-tone="ok" data-testid="history-word">{sentWord(r.channel, r.proof, r.account)}</span>
                     <ProofCell channel={r.channel} proof={r.proof} target={r.target} account={r.account} />
+                    <ReceiptEgress s={r} />
                     <span className="surface-token" data-chip>{stamp(r.settled_at)}</span>
                   </span>} />
               );
