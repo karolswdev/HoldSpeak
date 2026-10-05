@@ -847,7 +847,12 @@ is a face and waits for its canvas).
   (`evidence_read` or `candidate_builder` in `thread_tools`: a note read, a
   meeting, a decision record, a People read), with a stub that names the
   tool to call again (`thread_service._replay_stub`). A write's result
-  replays as stored; an unknown tool name gets the stub.
+  replays as stored; an unknown tool name gets the stub. A result is
+  classed by the call that MADE it: the `tool_call` parts of the latest
+  assistant message before it on the path (Astra, #871 round 2: a provider
+  may reuse a call id in a later turn, and one id map for the whole thread
+  let a later write replay an earlier read). A result whose call is not
+  found gets a stub.
 - **One budget.** The job's `block_chars` (5,200 for `ask.answer` and
   `chat.turn`); the pages take at most half; whole sentences only. Then
   `fit_reflect` drops excerpts from the end (observations first) until the
@@ -1163,13 +1168,28 @@ group passes.
   transaction, so the sweep (and the rebuild) replaces the copy of a source
   that holds a secret and merges the index. `segments_fts` and
   `thread_messages_fts` hold no copy of the text, only tokens, and keep the
-  raw words. **A secret is not a search key** (2026-10-05,
-  `MemoryRepository._drop_secret_keyed`): a keyword hit is dropped when a
-  query token is in its source only inside a secret (in the raw text, not
-  in the redacted text; tokens cut as FTS5 cuts them, so the body of
-  "ghp_..." without its prefix is caught too). The words that name a
-  secret ("token", "password") stay keys. A source memory cannot read
+  raw words. **A secret is not a search key** (2026-10-05, Astra #871
+  round 2, `MemoryRepository._drop_secret_keyed`): a keyword hit whose
+  source holds a secret survives only when the query matches the source's
+  REDACTED text under the search's own semantics: the same FTS5 MATCH
+  expression (unicode61: case and accent folding, whole tokens) for an FTS
+  kind, the same LIKE patterns (a substring) for a canonical-store kind,
+  and both for a meeting (transcript by MATCH, summary and topics by LIKE).
+  So the secret, a piece of it, or its accent-folded form finds nothing,
+  and a public word of the same source still finds it (the query is OR).
+  A word that sits only inside a redacted span ("token" in "token=...")
+  is not a key either. A source with no secret, or one memory cannot read,
   keeps its hit.
+- **What counts as a labelled secret** (2026-10-05, Astra #871 round 2,
+  `defense._type_like`): after "token", "password", "secret", "api_key" or
+  "authorization", the label and its value are redacted as one span only
+  when the value is not a type or an identifier name ("Identifier",
+  "Optional[str]", "str", "list[int]"). A value with a digit is always
+  redacted. "Atlas compiler schema: token: Identifier; api_key:
+  Optional[str]." is kept whole; "password: fluffy" and "token=hunter2" are
+  redacted. Known: a password that is one capitalised word with no digit
+  ("secret: Hunter") reads as an identifier and is kept. Prefixed tokens
+  (ghp_, sk-, xoxb-, AKIA, JWT, PEM, database URLs, cards) are unchanged.
 
 On a corpus this small the vector top 50 holds almost every source, so a
 keyword hit on a common word is in both lists and can rank above the one

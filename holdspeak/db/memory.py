@@ -468,21 +468,11 @@ _ENTITY_NAME_WORDS = 6
 _TIME_QUESTION_MAX_CHARS = 400
 _MARK = re.compile(r"</?mark>")
 _WORD = re.compile(r"\w+", re.UNICODE)
-#: A token as the FTS5 unicode61 tokenizer cuts it (``_`` separates).
-_FTS_TOKEN = re.compile(r"[^\W_]+", re.UNICODE)
-
-
-def _fts_tokens(text: str) -> set[str]:
-    return {token.casefold() for token in _FTS_TOKEN.findall(str(text or ""))}
-
-
-#: The words that NAME a secret ("token=...", "ghp_..."): the redaction
-#: takes them with the value, but they are not the secret.  A search for
-#: "token" still finds the note that says "token=..."; its value does not.
-_SECRET_LABELS = frozenset(
-    "bearer token password passwd secret api key apikey authorization "
-    "ghp gho ghu ghs ghr github pat xoxa xoxb xoxp xoxr xoxs sg sk".split()
-)
+#: The keyword kinds whose hit comes from an FTS5 MATCH; the others (the
+#: canonical-store kinds, a meeting's summary and topics) from LIKE.
+_FTS_MATCH_KINDS = frozenset({"decision", "artifact", "note", "thread", *_CHUNK_KEYWORD_KINDS})
+#: The FTS tables of these kinds index the title too.
+_FTS_TITLE_KINDS = frozenset({"artifact", "note"})
 _QUERY_STOPWORDS = frozenset(
     "a an and are about did do does for from how i in is it of on or the to was what when where which who why with we you".split()
 )
@@ -1042,7 +1032,7 @@ class MemoryRepository(BaseRepository):
             # secret of its source is dropped (the returned text was already
             # redacted; now the key is too).
             for kind in list(by_kind):
-                by_kind[kind] = self._drop_secret_keyed(conn, by_kind[kind], terms)
+                by_kind[kind] = self._drop_secret_keyed(conn, kind, by_kind[kind], expression, terms)
 
         normalized: dict[str, list[dict[str, Any]]] = {}
         for kind, rows in by_kind.items():
@@ -1817,41 +1807,84 @@ class MemoryRepository(BaseRepository):
         return rows
 
     def _drop_secret_keyed(
-        self, conn: sqlite3.Connection, rows: list[dict[str, Any]], terms: list[str]
+        self,
+        conn: sqlite3.Connection,
+        kind: str,
+        rows: list[dict[str, Any]],
+        expression: str,
+        terms: list[str],
     ) -> list[dict[str, Any]]:
-        """``rows`` less each hit whose source holds a query token ONLY inside
-        a secret (``defense.redact``): its raw text has the token, its
-        redacted text does not.  Tokens are cut as FTS5 cuts them, so the
-        body of "ghp_..." is caught without its prefix.  The words that name
-        a secret (``_SECRET_LABELS``: "token", "password") stay keys.  A
-        source memory cannot read (``current_source`` is None) keeps its
-        hit."""
-        wanted = set().union(*(_fts_tokens(term) for term in terms)) if terms else set()
-        if not rows or not wanted:
+        """``rows`` less each hit that only a secret made (Astra, #871).
+
+        A hit whose source holds a secret survives only when the query
+        matches the source's REDACTED text under the search's own semantics:
+        the same FTS5 MATCH expression (default unicode61: case and accent
+        folding, whole tokens) for an FTS kind, the same LIKE patterns for a
+        canonical-store kind (a substring), both for a meeting (its
+        transcript by MATCH, its summary and topics by LIKE).  So a secret, a
+        piece of it, or an accent-folded form of it finds nothing, and a
+        public word in the same source still finds it (the query is OR).  A
+        source with no secret, or one memory cannot read, keeps its hit."""
+        if not rows or not (expression or terms):
             return rows
         from ..memory.retain import current_source, redact_source
 
-        hidden: dict[str, set[str]] = {}
+        verdict: dict[str, bool] = {}
+        matcher: Optional[sqlite3.Connection] = None
         kept: list[dict[str, Any]] = []
         for row in rows:
             base = self._base_ref(str(row["source_ref"]))
-            if base not in hidden:
-                found: set[str] = set()
+            if base not in verdict:
+                keep = True
                 try:
                     source = current_source(conn, base)
                     if source is not None:
                         title, units, held = redact_source(source)
                         if held:
-                            raw = " ".join([str(source.title or "")] + [str(text) for _anchor, text in source.units])
-                            clean = " ".join([title] + [text for _anchor, text in units])
-                            found = _fts_tokens(raw) - _fts_tokens(clean) - _SECRET_LABELS
+                            if matcher is None:
+                                matcher = sqlite3.connect(":memory:")
+                                matcher.execute("CREATE VIRTUAL TABLE m USING fts5(body)")
+                            keep = self._public_match(matcher, kind, title, units, expression, terms)
                 except Exception:  # pragma: no cover - a check never fails a search
-                    found = set()
-                hidden[base] = found
-            if wanted & hidden[base]:
-                continue
-            kept.append(row)
+                    keep = True
+                verdict[base] = keep
+            if verdict[base]:
+                kept.append(row)
+        if matcher is not None:
+            matcher.close()
         return kept
+
+    @staticmethod
+    def _public_match(
+        matcher: sqlite3.Connection,
+        kind: str,
+        title: str,
+        units: list[tuple[str, str]],
+        expression: str,
+        terms: list[str],
+    ) -> bool:
+        """Does the query match this redacted text the way search matches?"""
+        # The reader writes "Summary: ..." and "Topics: ..."; the LIKE pass
+        # reads the bare summary and topic text.
+        summary = [
+            text.split(": ", 1)[1] if ": " in text else text
+            for anchor, text in units if kind == "meeting" and anchor in ("summary", "topics")
+        ]
+        body = [text for anchor, text in units if not (kind == "meeting" and anchor in ("summary", "topics"))]
+        if kind in _FTS_MATCH_KINDS or kind == "meeting":
+            text = "\n".join(([title] if kind in _FTS_TITLE_KINDS else []) + body)
+            matcher.execute("DELETE FROM m")
+            matcher.execute("INSERT INTO m(rowid,body) VALUES (1,?)", (text,))
+            if expression and matcher.execute("SELECT 1 FROM m WHERE m MATCH ?", (expression,)).fetchone():
+                return True
+            if kind != "meeting":
+                return False
+        haystack = "\n".join([title] + (summary if kind == "meeting" else body)) if kind != "meeting" \
+            else "\n".join(summary)
+        return any(
+            matcher.execute("SELECT lower(?) LIKE ?", (haystack, f"%{term.casefold()}%")).fetchone()[0]
+            for term in terms
+        )
 
     @classmethod
     def _ref_in_project(

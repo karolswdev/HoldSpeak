@@ -172,7 +172,11 @@ def test_a_secret_is_in_no_memory_table_and_no_search_result(tmp_path: Path) -> 
             db.memory.set_embedder(embedder)
             for query in ("deploy", "staging deploy password", "token", "TITLE_SENTINEL", "BODY_SENTINEL api key"):
                 answer = db.memory.search(query, limit=50)
-                if "SENTINEL" not in query or embedder is not None:
+                # "token" is in every source only inside a redacted span
+                # ("token=..."): the keyword search no longer finds a source
+                # by a word that only a secret holds (Astra, #871); the
+                # vector pass still answers it.
+                if ("SENTINEL" not in query and query != "token") or embedder is not None:
                     assert answer.hits, (stage, query)
                 text = _everything(answer)
                 assert not [secret for secret in SECRETS if secret in text], (stage, query, embedder)

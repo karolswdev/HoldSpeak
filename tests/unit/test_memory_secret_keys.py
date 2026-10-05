@@ -82,3 +82,54 @@ def test_a_meeting_attached_by_id_is_redacted(tmp_path: Path) -> None:
     for expand in ("summary", "full"):
         result = hydrate_refs_detailed(db, ["m-key"], [], expand)
         assert result.blocks and BODY not in result.blocks[0].text
+
+
+# ── Astra, #871 round 2: the check uses the search's own matcher ─────────
+
+
+def test_a_piece_of_a_secret_finds_nothing_in_a_substring_kind(tmp_path: Path) -> None:
+    """A canonical-store kind (an action item) is matched by LIKE, a
+    substring: a piece of the secret found it.  The redacted text does not
+    hold the piece, so the hit is dropped; its public words still find it."""
+    from tests.unit.test_memory_every_job import _meeting_with_action
+
+    db = Database(tmp_path / "piece.db")
+    action = _meeting_with_action(db, "m-rotate", f"Rotate {SECRET} on the Atlas deploy")
+    ref = f"action:{action}"
+    assert ref in _found(db, "Rotate Atlas deploy")
+    for piece in (BODY[:8], BODY, SECRET):
+        assert not [hit for hit in _found(db, piece) if "m-rotate" in hit], piece  # the action and its meeting
+
+
+def test_an_accent_folded_secret_finds_nothing(tmp_path: Path) -> None:
+    """FTS5 folds accents: "cafe" matched "password=café"."""
+    db = Database(tmp_path / "accent.db")
+    db.notes.upsert(note_id="n-cafe", title="Weather", body_markdown="Atlas weather report. password=café")
+    assert "note:n-cafe" not in _found(db, "cafe")
+    assert "note:n-cafe" in _found(db, "Atlas weather")
+
+
+def test_a_public_word_still_finds_a_source_that_holds_a_secret(tmp_path: Path) -> None:
+    """The query is OR: "Atlas quorumdb" finds the note by its public
+    "Atlas", though "quorumdb" is only inside the secret."""
+    db = Database(tmp_path / "public.db")
+    db.notes.upsert(note_id="n-q", title="Weather", body_markdown="Atlas weather report. password=quorumdb")
+    assert "note:n-q" in _found(db, "Atlas quorumdb")
+    assert "note:n-q" not in _found(db, "quorumdb")
+
+
+def test_a_schema_with_token_and_api_key_fields_is_not_redacted(tmp_path: Path) -> None:
+    """Astra, #871: a label followed by a type or an identifier is not a
+    secret.  A real value after the same label still is."""
+    from holdspeak.memory.defense import redact
+
+    schema = "Atlas compiler schema: token: Identifier; api_key: Optional[str]."
+    assert redact(schema) == schema
+    assert redact("token: str, password: bool") == "token: str, password: bool"
+    for real in ("api_key: sk-abcdefghijklmnopqrstuvwx", "token=hunter2", "password: fluffy",
+                 f"token: {SECRET}", "Authorization: Bearer abcdefghijklmnopqrstuvwxyz"):
+        assert "[redacted]" in redact(real) and "hunter2" not in redact(real) and BODY not in redact(real), real
+    db = Database(tmp_path / "schema.db")
+    db.notes.upsert(note_id="n-schema", title="Compiler", body_markdown=schema)
+    result = hydrate_refs_detailed(db, [], [], "full", qualified_refs=["note:n-schema"])
+    assert schema in result.blocks[0].text  # attached by hand: the schema reaches the model whole
