@@ -730,6 +730,62 @@ Ask is the reflect step. No new agent loop.
 - Not taken: Hindsight's 10-step tool loop, dispositions and directives
   (`H/config.py:1896`; `H/engine/reflect/prompts.py:170-190`).
 
+**Built (2026-10-05, slice 6, backend):** no face changes (the ⌘K palette
+is a face and waits for its canvas).
+
+- **Where.** `services/memory_grounding.py`: `reflect_scopes`,
+  `reflect_for`, `reflect_block`, `fit_reflect`. Ask:
+  `AskService.ask` puts the part before the recall envelope. Chat:
+  `ThreadService._with_reflect`, a system message just before the
+  frozen-ref message (`_assemble_payload(memory_block=...)`).
+- **The scope.** Each `project:` ref the turn names; with no explicit
+  source, the desk; with only other sources, none (grounding runs no
+  memory pass for them either). Pages are read per scope and observations
+  per scope (`observation_rows(scope=...)`), so a project's Ask never reads
+  another project's page or belief.
+- **What is read.** Every page of the scope's fixed set through
+  `pages.read` (the served sentences only: `_Checker` and the belt; the
+  caller's excluded refs count as not live; the chat turn excludes its own
+  thread). Then the current and disputed observations, the SERVED text
+  (`consolidate.served` with the excluded refs), best match to the
+  question first, then newest, at most 12. A ref is shown only where the
+  Desk opens it (`DESK_REF_KINDS`); no `[REF:]` line.
+- **Read live, never frozen.** The part is not written to `thread_refs`,
+  so a withdrawn sentence or a retired belief never comes back in a later
+  turn. A `memory.page` tool result is the same (review round 1, Astra):
+  the stored result stays as the receipt, but a later turn replays a stub
+  that says to read the page again, never the stored text
+  (`thread_service._LIVE_ONLY_TOOLS`).
+- **One budget.** The job's `block_chars` (5,200 for `ask.answer` and
+  `chat.turn`); the pages take at most half; whole sentences only. Then
+  `fit_reflect` drops excerpts from the end (observations first) until the
+  payload fits the route admission would freeze now
+  (`InferenceAdoptionService.payload_room_now`, a pure route resolve). The
+  chat turn fits it again before EVERY pass, the tool continuations too
+  (`ThreadService._refit_reflect`), down to no part at all: the optional
+  part never makes a pass fail that fits without it. The recall is not
+  cut: it is what main sends.
+- **Nothing served: nothing added.** The prompt is byte-identical to main
+  (fenced for Ask and for the chat payload).
+- **Not on the frozen Thought path** (`thought.interview` through the
+  refinement coordinator): its coordinator reserves the bytes before
+  dispatch.
+- **`memory.page` joins the default chat, Desk and Chase palettes. No
+  palette grows versus main** (fenced: `MAIN_PALETTE_BYTES`). The room:
+  the page's schema words are short (516 bytes rendered, was 611), and
+  the People tools' operator note ("set HOLDSPEAK_MCP_PEOPLE_ACCESS ...")
+  leaves the chat rendering only (`thread_tools.tool_schemas_for`); the
+  MCP catalogue keeps it, and the dispatcher validates against the full
+  MCP schema. Bytes, main then now: default 14,871 / 14,846; Desk 27,680 /
+  27,655; Chase 30,959 / 30,610; Plan 2,875 / 2,875. **Not in Plan:** it
+  has no People text to trim, so the page would grow it; Plan reads pages
+  through its grounding.
+- **`memory.search` stays the one search.** Observations join it only
+  when the caller names the kind (`db/memory.py`, `_observation_kind`).
+- **Not done.** The ⌘K content search (a face). The legacy (un-migrated)
+  Ask path has no route to fit against: the part keeps its character
+  budget only. The real LAN model is not run with the part.
+
 ---
 
 ## 4. Engines

@@ -347,7 +347,7 @@ CHAT_PALETTE: frozenset[str] = frozenset({
     # the desk
     "desk.list", "desk.get", "desk.create", "desk.update", "desk.snapshot",
     "zone.list_members", "zone.file", "zone.unfile",
-    "memory.search",
+    "memory.search", "memory.page",
     # the door + the week
     "door.get", "door.add_item",
     "monday_brief.get",
@@ -419,6 +419,7 @@ def tool_schemas_for(allowed_names: frozenset[str] | set[str]) -> list[dict[str,
 
     Imported late to avoid circular imports at module load.
     """
+    from ..mcp.families.people import MCP_ACCESS_NOTE
     from ..mcp.tools import TOOLS as MCP_TOOLS
 
     result: list[dict[str, Any]] = []
@@ -427,6 +428,11 @@ def tool_schemas_for(allowed_names: frozenset[str] | set[str]) -> list[dict[str,
         if name not in allowed_names:
             continue
         input_schema = tool.get("inputSchema", {})
+        # Memory slice 6: the People tools' operator note (an MCP server
+        # setting) is for whoever runs the server; a turn cannot act on it,
+        # and the admission law counts every byte.  The custody sentence
+        # stays, and the dispatcher validates against the full MCP schema.
+        description = str(tool.get("description", "")).replace(MCP_ACCESS_NOTE, "", 1)
         # OpenAI function calling format
         parameters = {
             "type": input_schema.get("type", "object"),
@@ -440,7 +446,7 @@ def tool_schemas_for(allowed_names: frozenset[str] | set[str]) -> list[dict[str,
             "type": "function",
             "function": {
                 "name": name,
-                "description": tool.get("description", ""),
+                "description": description,
                 "parameters": parameters,
             },
         })

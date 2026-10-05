@@ -22,6 +22,9 @@ from ..grounding import (
     GROUNDING_EXPANDS, GROUNDING_MAX_REFS, hydrate_grounding_blocks,
     hydrate_grounding_blocks_detailed, meeting_digest, score_claims,
 )
+from .memory_grounding import (
+    EMPTY_MEMORY, MemoryContext, fit_reflect, reflect_block, reflect_for, reflect_scopes,
+)
 from .errors import ServiceError, ValidationError
 from .inference_outcomes import map_inference_outcome
 from .refinement_context_service import FrozenGroundingSnapshot
@@ -208,6 +211,22 @@ class AskService:
                 context_ids += grounding_echo.pop("_ids"); context_titles += grounding_echo.pop("_titles")
         if frozen_grounding is not None:
             frozen_grounding.validate()
+        # Memory slice 6 (MEMORY-DESIGN.md §3.5): the scope's pages, then its
+        # observations, BEFORE the fused recall in the grounding block.  Not
+        # on the frozen Thought path: its coordinator reserved those bytes.
+        reflect = EMPTY_MEMORY
+        if frozen_grounding is None and not routed_execution_id:
+            reflect = reflect_for(
+                operation_capability, self._db, scopes=self._reflect_scopes(grounding),
+                query=prompt, exclude_refs=memory_exclude_refs,
+            )
+        recall_envelope = envelope
+
+        def _envelope(memory: MemoryContext) -> str:
+            block = reflect_block(memory)
+            return "\n\n".join(part for part in (block, recall_envelope) if part)
+
+        envelope = _envelope(reflect)
         user_prompt = prompt + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + envelope if envelope else "")
         invocation_id = str(invocation_id or ("ask_" + uuid.uuid4().hex)).strip()
         if not invocation_id or not invocation_id.replace("_", "").isalnum():
@@ -221,18 +240,31 @@ class AskService:
                     "Legacy model selectors are unavailable after assignment migration.",
                     code="inference_legacy_selector_retired",
                 )
-            payload = {
-                "schema_version": 2,
-                "system_prompt": _ASK_SYSTEM_PROMPT + frozen_system_instruction,
-                "user_prompt": user_prompt,
-                "lens": lens,
-                "context_ids": context_ids,
-                "context_titles": context_titles,
-                "grounding": grounding_echo,
-                "source_text": material + ("\n\n" + envelope if envelope else ""),
-                "temperature": float(temperature) if temperature is not None else None,
-                "max_tokens": int(max_tokens) if max_tokens is not None else None,
-            }
+            def _payload(memory: MemoryContext) -> dict[str, Any]:
+                env = _envelope(memory)
+                return {
+                    "schema_version": 2,
+                    "system_prompt": _ASK_SYSTEM_PROMPT + frozen_system_instruction,
+                    "user_prompt": prompt + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + env if env else ""),
+                    "lens": lens,
+                    "context_ids": context_ids,
+                    "context_titles": context_titles,
+                    "grounding": grounding_echo,
+                    "source_text": material + ("\n\n" + env if env else ""),
+                    "temperature": float(temperature) if temperature is not None else None,
+                    "max_tokens": int(max_tokens) if max_tokens is not None else None,
+                }
+
+            if reflect:
+                # One budget: the pages and observations never push the Ask
+                # over the route admission will freeze.
+                reflect = await asyncio.to_thread(
+                    fit_reflect, self._broker.inference_adoption_service, reflect,
+                    capability_id=capability_id, operation_id=invocation_id,
+                    reserved_output_tokens=int(max_tokens) if max_tokens is not None else 512,
+                    build=_payload,
+                )
+            payload = _payload(reflect)
             self._emit("running", kind="ask", ref="ask", name=lens)
             adapter: Any = CanonicalPromptAdapter()
             if capability_id == "thought.interview":
@@ -560,6 +592,16 @@ class AskService:
             else ""
         )
         return envelope, echo, ids, titles, instruction
+
+    @staticmethod
+    def _reflect_scopes(grounding: Any) -> list[tuple[str, str]]:
+        """The scopes an Ask reflects on (``reflect_scopes``): the projects
+        its grounding names; with no explicit source, the desk."""
+        if not isinstance(grounding, dict):
+            return reflect_scopes((), explicit=False)
+        listed = lambda key: [str(x).strip() for x in grounding.get(key) or [] if str(x).strip()] if isinstance(grounding.get(key), list) else []
+        explicit = any(listed(key) for key in ("meeting_ids", "artifact_ids", "refs")) or bool(grounding.get("rails"))
+        return reflect_scopes(listed("refs"), explicit=explicit)
 
     def _grounding(self, principal: Principal, grounding: Any, prompt: str, *, capability_id: str = "ask.answer", exclude_refs: Sequence[str] = ()) -> tuple[str, dict[str, Any] | None]:
         if grounding is None:

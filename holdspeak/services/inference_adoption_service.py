@@ -847,6 +847,36 @@ class RoutedInferenceCoordinator:
         fit its block: adding memory never makes a job that fit fail.
         """
         route = self.plans.get_route_plan(ROUTE_PLANNING_AUTHORITY, str(route_plan_id))
+        return self._room(route, capability_id, operation_id, payload, reserved_output_tokens)
+
+    def payload_room_now(
+        self,
+        *,
+        capability_id: str,
+        operation_id: str,
+        payload: Mapping[str, Any],
+        reserved_output_tokens: int,
+        invocation_id: str | None = None,
+    ) -> int:
+        """``payload_room`` against the route admission would freeze NOW.
+
+        The route is resolved with no durable effect (``resolve_route_plan``),
+        before anything is admitted.  Ask and the chat turn use this to fit
+        their memory before they admit.
+        """
+        route = self.plans.resolve_route_plan(
+            ROUTE_PLANNING_AUTHORITY, capability_id=capability_id, invocation_id=invocation_id,
+        )
+        return self._room(route, capability_id, operation_id, payload, reserved_output_tokens)
+
+    def _room(
+        self,
+        route: Mapping[str, Any],
+        capability_id: str,
+        operation_id: str,
+        payload: Mapping[str, Any],
+        reserved_output_tokens: int,
+    ) -> int:
         capability = self._registry.require(capability_id)
         budget = (route.get("retry_policy") or {}).get("token_budget")
         room: int | None = None

@@ -48,6 +48,14 @@ THREAD_SERVICE_SCHEMA_VERSION = "1"
 _PEOPLE_REDACTION = "[people content withheld]"
 
 # Kinds whose frozen leaves originate from the People store.
+# Memory slice 6 (review round 1, Astra): tool results that are true only
+# when they are read.  On replay in a later turn the model gets this stub,
+# not the stored result: a withdrawn page sentence never comes back.
+_LIVE_ONLY_TOOLS = frozenset({"memory.page"})
+_LIVE_ONLY_STUB = json.dumps({
+    "page": None,
+    "note": "This memory page was read in an earlier turn and is not kept. Call memory.page again to read the page now.",
+})
 _PEOPLE_REF_KINDS = frozenset({"person"})
 
 _UNSET = object()  # sentinel for "caller did not provide parent_id"
@@ -336,6 +344,9 @@ class ThreadService:
 
         # -- Validate refs BEFORE writing (unknown -> 4xx naming the id, no rows) --
         frozen_ref_rows: list[dict[str, Any]] = []
+        # Memory slice 6: the scopes this turn reflects on (its project refs;
+        # with no explicit source, the desk).  Read live below, never frozen.
+        reflect_on: list[tuple[str, str]] = []
         if refs or text.strip():
             # Separate person refs from grounding refs.
             person_refs: list[str] = []
@@ -387,6 +398,9 @@ class ThreadService:
                         code="grounding_not_found",
                         context={"unknown_ids": [person_id]},
                     )
+
+            from .memory_grounding import reflect_scopes
+            reflect_on = reflect_scopes(grounding_refs, explicit=bool(grounding_refs))
 
             # Resolve grounding refs through hydrate_refs_detailed.
             if grounding_refs or text.strip():
@@ -525,6 +539,14 @@ class ThreadService:
                 profile_override=profile_override,
             )
 
+        # Memory slice 6 (MEMORY-DESIGN.md §3.5): the scope's pages, then its
+        # observations, before the recall, fitted to the route this turn
+        # will be admitted on.  Nothing served: the payload is unchanged.
+        payload, reflect = await asyncio.to_thread(
+            self._with_reflect, payload, thread_id, user_msg.id, thread,
+            text=text, scopes=reflect_on, operation_id=invocation_id,
+        )
+
         # Admit through the adoption service.
         admitted = await asyncio.to_thread(
             self._broker.inference_adoption_service.admit,
@@ -599,6 +621,7 @@ class ThreadService:
                 turn_operation_id=invocation_id,
                 profile_override=profile_override,
                 interview=thread.recipe_id == INTERVIEW_MODE_ID,
+                reflect=reflect,
             ),
             daemon=True,
         )
@@ -920,6 +943,7 @@ class ThreadService:
         turn_operation_id: str = "",
         profile_override: str = "",
         interview: bool = False,
+        reflect: Any = None,
     ) -> None:
         """Sync function that runs in a background thread.
 
@@ -957,6 +981,10 @@ class ThreadService:
             ThreadService._tool_executor.register(assistant_msg_id, tool_executor)
 
         max_passes = _CHAT_PASS_CAP if tool_executor is not None else 1
+        # Memory slice 6: the part as the turn's payload carries it (each
+        # pass starts from that payload and fits the part again).
+        from .memory_grounding import reflect_block as _reflect_block
+        reflect_sent = _reflect_block(reflect) if reflect else ""
 
         cadence = StreamCadence()
         seq = 0
@@ -1107,6 +1135,18 @@ class ThreadService:
                                 principal,
                                 invocation_id=new_inv,
                                 profile_override=profile_override,
+                            )
+                        # Memory slice 6 (review round 1, Astra): the pages
+                        # and observations are optional.  Fit them again to
+                        # THIS pass (it carries the tool exchange), so they
+                        # never make a pass fail that fits without them.
+                        # Every pass starts from the turn's payload, which
+                        # holds the block as first sent: refit whenever it
+                        # was sent, so a part fitted to empty stays empty
+                        # (review round 2, Astra).
+                        if reflect_sent:
+                            pass_payload, reflect = self._refit_reflect(
+                                pass_payload, reflect_sent, reflect, operation_id=new_inv,
                             )
                         new_admitted = self._broker.inference_adoption_service.admit(
                             principal,
@@ -2126,17 +2166,96 @@ class ThreadService:
             return set()
         return {str(row[0]).split(":", 1)[1] for row in rows}
 
+    def _with_reflect(
+        self,
+        payload: dict[str, Any],
+        thread_id: str,
+        user_msg_id: str,
+        thread: Any,
+        *,
+        text: str,
+        scopes: list[tuple[str, str]],
+        operation_id: str,
+    ) -> tuple[dict[str, Any], Any]:
+        """``(payload, part)``: ``payload`` with this turn's pages and
+        observations (§3.5) and the part that fitted, or ``payload`` itself
+        and the empty part when none is served or none fits.  The thread
+        itself is excluded, as the recall pass excludes it."""
+        from .memory_grounding import EMPTY_MEMORY, fit_reflect, reflect_block, reflect_for
+
+        reflect = reflect_for(
+            "chat.turn", self._db, scopes=scopes, query=text,
+            exclude_refs=[f"thread:{thread_id}"],
+        )
+        if not reflect:
+            return payload, EMPTY_MEMORY
+
+        def build(memory: Any) -> dict[str, Any]:
+            built = self._assemble_payload(
+                thread_id, user_msg_id, thread, memory_block=reflect_block(memory),
+            )
+            if "tools" in payload:
+                built["tools"] = payload["tools"]
+            return built
+
+        fitted = fit_reflect(
+            self._broker.inference_adoption_service, reflect,
+            capability_id="chat.turn", operation_id=operation_id,
+            reserved_output_tokens=512, build=build,
+        )
+        return (build(fitted), fitted) if fitted else (payload, EMPTY_MEMORY)
+
+    def _refit_reflect(
+        self,
+        pass_payload: dict[str, Any],
+        sent_block: str,
+        reflect: Any,
+        *,
+        operation_id: str,
+    ) -> tuple[dict[str, Any], Any]:
+        """``pass_payload`` with the turn's part fitted again to this pass:
+        excerpts drop from the end (observations first, then pages), down to
+        no part at all (its system message goes).  Returns the new payload
+        and the part that is left, for the next pass."""
+        from .memory_grounding import EMPTY_MEMORY, fit_reflect, reflect_block
+
+        messages = list(pass_payload.get("messages") or [])
+        at = next((i for i, message in enumerate(messages)
+                   if message.get("role") == "system" and message.get("content") == sent_block), None)
+        if at is None:
+            return pass_payload, EMPTY_MEMORY
+
+        def build(memory: Any) -> dict[str, Any]:
+            rebuilt = list(messages)
+            text = reflect_block(memory)
+            if text:
+                rebuilt[at] = {"role": "system", "content": text}
+            else:
+                del rebuilt[at]
+            return {**pass_payload, "messages": rebuilt}
+
+        fitted = fit_reflect(
+            self._broker.inference_adoption_service, reflect,
+            capability_id="chat.turn", operation_id=operation_id,
+            reserved_output_tokens=512, build=build,
+        )
+        return build(fitted), fitted
+
     def _assemble_payload(
         self,
         thread_id: str,
         user_msg_id: str,
         thread: Any,
+        *,
+        memory_block: str = "",
     ) -> dict[str, Any]:
         """Build the inference payload from the thread's message path.
 
         Assembler law: context = recipe/system prompt + leaf-path messages
         after the last compaction cut + frozen ref leaves.  Any part with
         sensitive=1 is redacted when the egress scope is cloud.
+        ``memory_block`` (this turn's pages and observations, read live)
+        goes in a system message just before the frozen ref leaves.
         """
         # Get the system prompt from the recipe, if any.
         system_prompt = "You are the desk's AI core. Be concrete and brief."
@@ -2237,6 +2356,8 @@ class ThreadService:
                 except (json.JSONDecodeError, TypeError):
                     pass
 
+        if memory_block:
+            messages.append({"role": "system", "content": memory_block})
         if ref_context_parts:
             messages.append({"role": "system", "content": "\n\n".join(ref_context_parts)})
 
@@ -2246,6 +2367,17 @@ class ThreadService:
             messages.append({"role": "system", "content": person_line})
 
         sensitive_texts: list[str] = []
+        # Memory slice 6 (review round 1, Astra): the name of each tool call
+        # on the path, by its call id (the assistant's ``tool_call`` parts).
+        call_names: dict[str, str] = {}
+        path_parts = {msg.id: self._threads.get_parts(msg.id) for msg in path}
+        for parts in path_parts.values():
+            for part in parts:
+                if part.kind == "tool_call" and part.tool_call_id:
+                    try:
+                        call_names[part.tool_call_id] = str(json.loads(part.meta_json or "{}").get("name") or "")
+                    except (json.JSONDecodeError, TypeError, AttributeError):
+                        pass
         for msg in path:
             # HS-153-04: skip the draft message from the payload.
             if self._threads.is_draft_message(msg.id):
@@ -2255,10 +2387,17 @@ class ThreadService:
                 # old protocol frames are not active calls in a fresh turn;
                 # structured interview state survives, sources are re-read.
                 continue
-            parts = self._threads.get_parts(msg.id)
+            parts = path_parts[msg.id]
             text_parts = []
             for part in parts:
                 if part.kind in ("text", "annotation") and part.text:
+                    if msg.role == "tool" and call_names.get(part.tool_call_id) in _LIVE_ONLY_TOOLS:
+                        # A memory page is true only at the time it is read:
+                        # its sentences can be withdrawn later.  The stored
+                        # result (the receipt) stays; a later turn gets a
+                        # stub, never the stored text.
+                        text_parts.append(_LIVE_ONLY_STUB)
+                        continue
                     text_parts.append(part.text)
                     if part.sensitive and part.text:
                         sensitive_texts.append(part.text)
