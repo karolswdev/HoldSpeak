@@ -1453,11 +1453,16 @@ class MemoryRepository(BaseRepository):
         None when memory holds no live fact, or the question names no
         entity: then recall is what it was before facts existed.  Every
         source is scoped (kinds, excluded refs, project, time) and admitted
-        NOW (``current_source``) before it takes a place.  The snippet is the
-        fact that found it, redacted; a thread hit names its message.
+        NOW (``current_source``) before it takes a place.
+
+        A fact serves only while the chunk it was read from is in the LIVE
+        text: the source is cut again (``prepare_current``) and the fact's
+        chunk must be there with the same id, hash and anchor.  A fact whose
+        chunk changed, moved or left is never returned, and never takes the
+        anchor of another chunk.  The snippet is that fact, redacted.
         """
         from ..memory.entities import fold_question
-        from ..memory.retain import current_source
+        from ..memory.retain import current_source, prepare_current
 
         index = self._db.memory_index
         if not index.has_live_facts():
@@ -1466,32 +1471,30 @@ class MemoryRepository(BaseRepository):
         strengths = _named_entities(fold_question(query), entities)
         if not strengths:
             return None
-        best: dict[str, tuple[float, int, str, dict[str, Any]]] = {}
-        per_fact: dict[str, float] = {}
+        weights: dict[str, float] = {}
         facts: dict[str, dict[str, Any]] = {}
         for row in index.facts_for_entities(list(strengths)):
             fact = str(row["id"])
-            per_fact[fact] = per_fact.get(fact, 0.0) + strengths[str(row["entity_id"])]
+            weights[fact] = weights.get(fact, 0.0) + strengths[str(row["entity_id"])]
             facts[fact] = row
-        for fact, value in per_fact.items():
+        by_source: dict[str, list[tuple[float, dict[str, Any]]]] = {}
+        for fact, value in weights.items():
             row = facts[fact]
-            ref = str(row["source_ref"])
-            held = best.get(ref)
             weight = value * (0.5 + 0.5 * float(row["confidence"] or 0.0))
-            count = (held[1] if held else 0) + 1
-            if held is None or weight > held[0]:
-                best[ref] = (weight, count, str(row["mentioned_at"] or ""), row)
-            else:
-                best[ref] = (held[0], count, held[2], held[3])
+            by_source.setdefault(str(row["source_ref"]), []).append((weight, row))
+        for held in by_source.values():
+            held.sort(key=lambda item: (-item[0], str(item[1]["id"])))
         ordered = sorted(
-            best.items(),
-            key=lambda item: (-item[1][0], -item[1][1], self._recency_key(item[1][2]), item[0]),
+            by_source.items(),
+            key=lambda item: (
+                -item[1][0][0], -len(item[1]),
+                self._recency_key(str(item[1][0][1]["mentioned_at"] or "")), item[0],
+            ),
         )
-        top = ordered[0][1][0] if ordered else 1.0
-        rows: list[dict[str, Any]] = []
+        found: list[tuple[float, int, dict[str, Any]]] = []
         with self._connection() as conn:
-            for ref, (weight, _count, _seen, fact) in ordered:
-                if len(rows) >= _ENTITY_RESULT_LIMIT:
+            for position, (ref, held) in enumerate(ordered):
+                if len(found) >= _ENTITY_RESULT_LIMIT:
                     break
                 kind, _, resource_id = ref.partition(":")
                 if kind not in selected or ref in excluded:
@@ -1504,23 +1507,41 @@ class MemoryRepository(BaseRepository):
                 occurred_at = str(source.occurred_at or "")
                 if not self._in_time(kind, occurred_at, start, end):
                     continue
-                source_ref = ref
-                if kind == "thread" and str(fact.get("anchor") or ""):
-                    source_ref = f"{ref}#{fact['anchor']}"
-                rows.append(
-                    {
-                        "kind": kind,
-                        "source_ref": source_ref,
-                        "title": _redacted(source.title),
-                        "snippet": _redacted(fact["text"])[:_SNIPPET_CHARS],
-                        "occurred_at": occurred_at,
-                        "project_id": project or self._project_of(conn, kind, resource_id),
-                        "bm25": 0.0,
-                        "normalized_score": max(0.0, min(1.0, weight / top if top else 0.0)),
-                        "kind_rank": len(rows) + 1,
-                        "retrieval_origin": "entity",
-                    }
+                _sha, fresh = prepare_current(source)
+                live = {
+                    (str(chunk["id"]), str(chunk["content_sha"]), str(chunk.get("anchor") or ""))
+                    for chunk in fresh
+                }
+                served = next(
+                    (
+                        (weight, fact) for weight, fact in held
+                        if (str(fact["chunk_id"]), str(fact["chunk_sha"]), str(fact["anchor"] or "")) in live
+                    ),
+                    None,
                 )
+                if served is None:
+                    continue  # every fact of it was read from text that is gone
+                weight, fact = served
+                source_ref = ref
+                if kind == "thread" and str(fact["anchor"] or ""):
+                    source_ref = f"{ref}#{fact['anchor']}"
+                found.append((weight, position, {
+                    "kind": kind,
+                    "source_ref": source_ref,
+                    "title": _redacted(source.title),
+                    "snippet": _redacted(fact["text"])[:_SNIPPET_CHARS],
+                    "occurred_at": occurred_at,
+                    "project_id": project or self._project_of(conn, kind, resource_id),
+                    "bm25": 0.0,
+                    "retrieval_origin": "entity",
+                }))
+        found.sort(key=lambda item: (-item[0], item[1]))
+        top = found[0][0] if found else 1.0
+        rows: list[dict[str, Any]] = []
+        for weight, _position, row in found:
+            row["normalized_score"] = max(0.0, min(1.0, weight / top if top else 0.0))
+            row["kind_rank"] = len(rows) + 1
+            rows.append(row)
         return rows
 
     def _vector_rows(

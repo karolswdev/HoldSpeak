@@ -191,6 +191,7 @@ class MemoryIndexRepository(BaseRepository):
         touched = MemoryIndexRepository._entities_of(conn, ids)
         conn.executemany("DELETE FROM memory_fact_entities WHERE fact_id=?", [(i,) for i in ids])
         conn.execute("DELETE FROM memory_facts WHERE source_ref=?", (source_ref,))
+        conn.execute("DELETE FROM memory_extract_parts WHERE source_ref=?", (source_ref,))
         recount(conn, touched)
 
     @staticmethod
@@ -377,6 +378,7 @@ class MemoryIndexRepository(BaseRepository):
         extractor_version: int,
         mentioned_at: Optional[str],
         facts: Sequence[dict[str, Any]],
+        still_current: Optional[Any] = None,
     ) -> bool:
         """ONE transaction: write the source's new facts, resolve their
         entities, retire its old facts and stamp the ledger.
@@ -384,15 +386,22 @@ class MemoryIndexRepository(BaseRepository):
         The old facts serve recall until this commits.  An old fact that no
         later step has used (no ``consolidated_at``) is removed; a used one
         is kept as ``retired``.  Returns False, and writes nothing, when the
-        source left or changed since the engine read it.
+        source left or changed since the engine read it: the ledger says so,
+        or ``still_current(conn)`` (the source's LIVE text, read inside this
+        transaction after the write lock is taken) does.  An edit made while
+        the engine ran is never stamped with the old text's facts.
         """
         from ..memory.entities import fold, is_name, recount, resolve
 
         with self._connection() as conn:
+            if not conn.in_transaction:
+                conn.execute("BEGIN IMMEDIATE")
             known = conn.execute(
                 "SELECT state,content_sha FROM memory_sources WHERE source_ref=?", (source_ref,)
             ).fetchone()
             if known is None or known["state"] != "live" or str(known["content_sha"]) != content_sha:
+                return False
+            if still_current is not None and not still_current(conn):
                 return False
             old = [
                 str(row[0])
@@ -419,9 +428,10 @@ class MemoryIndexRepository(BaseRepository):
                 conn.execute(
                     """INSERT INTO memory_facts(id,source_ref,chunk_id,kind,text,subject_entity_id,
                          predicate,object_entity_id,object_text,occurred_start,occurred_end,
-                         mentioned_at,confidence,extractor_version,state)
-                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'live')
+                         mentioned_at,confidence,extractor_version,state,chunk_sha,anchor)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'live',?,?)
                        ON CONFLICT(id) DO UPDATE SET chunk_id=excluded.chunk_id,
+                         chunk_sha=excluded.chunk_sha,anchor=excluded.anchor,
                          kind=excluded.kind,text=excluded.text,
                          subject_entity_id=excluded.subject_entity_id,
                          predicate=excluded.predicate,object_entity_id=excluded.object_entity_id,
@@ -434,6 +444,7 @@ class MemoryIndexRepository(BaseRepository):
                         fact["text"], subject, fact["predicate"], obj, fact["object"],
                         fact.get("occurred_start"), fact.get("occurred_end"), mentioned_at,
                         float(fact["confidence"]), int(extractor_version),
+                        str(fact.get("chunk_sha") or ""), str(fact.get("anchor") or ""),
                     ),
                 )
                 touched |= self._entities_of(conn, [str(fact["id"])])
@@ -465,8 +476,30 @@ class MemoryIndexRepository(BaseRepository):
             conn.execute(
                 "DELETE FROM memory_jobs WHERE kind='extract' AND target=?", (source_ref,)
             )
+            conn.execute("DELETE FROM memory_extract_parts WHERE source_ref=?", (source_ref,))
             self._bump(conn)
         return True
+
+    def extract_parts(self, source_ref: str, version: int) -> dict[tuple[str, str], list[dict[str, Any]]]:
+        """The checked answers already read for a source's chunks, keyed by
+        ``(chunk id, chunk sha)``: a job that stopped goes on from here."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT chunk_id,chunk_sha,facts_json FROM memory_extract_parts"
+                " WHERE source_ref=? AND version=?",
+                (source_ref, int(version)),
+            ).fetchall()
+        return {(str(r[0]), str(r[1])): json.loads(r[2]) for r in rows}
+
+    def store_extract_part(
+        self, source_ref: str, chunk_id: str, chunk_sha: str, version: int, facts: Sequence[dict[str, Any]]
+    ) -> None:
+        with self._connection() as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO memory_extract_parts"
+                "(source_ref,chunk_id,chunk_sha,version,facts_json) VALUES (?,?,?,?,?)",
+                (source_ref, chunk_id, chunk_sha, int(version), json.dumps(list(facts), ensure_ascii=False)),
+            )
 
     def record_job_failure(
         self,
@@ -542,11 +575,10 @@ class MemoryIndexRepository(BaseRepository):
             return []
         with self._connection() as conn:
             rows = conn.execute(
-                """SELECT f.id,f.source_ref,f.chunk_id,f.text,f.confidence,f.mentioned_at,
-                          f.occurred_start,fe.entity_id,COALESCE(c.anchor,'') anchor
+                """SELECT f.id,f.source_ref,f.chunk_id,f.chunk_sha,f.anchor,f.text,f.confidence,
+                          f.mentioned_at,f.occurred_start,fe.entity_id
                    FROM memory_fact_entities fe
                    JOIN memory_facts f ON f.id=fe.fact_id AND f.state='live'
-                   LEFT JOIN memory_chunks c ON c.id=f.chunk_id
                    WHERE fe.entity_id IN (SELECT value FROM json_each(?))
                    ORDER BY f.id""",
                 (json.dumps(wanted),),
@@ -565,6 +597,7 @@ class MemoryIndexRepository(BaseRepository):
             conn.execute("DELETE FROM memory_facts")
             conn.execute("DELETE FROM memory_entities")
             conn.execute("DELETE FROM memory_jobs")
+            conn.execute("DELETE FROM memory_extract_parts")
             conn.execute("DELETE FROM memory_sources")
             self._bump(conn)
         with self._matrix_lock:

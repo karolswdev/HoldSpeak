@@ -85,15 +85,26 @@ def set_live_check(check: Optional[Callable[[], str]]) -> None:
     _live_check = check
 
 
+#: A call open longer than this is a call a crashed process left behind.
+OPEN_CALL_SECONDS = 600.0
+
+
 def live_work(db: Any, extractor: Any) -> str:
     """Why extraction must wait now, or "" (MEMORY-DESIGN.md §9: the backlog
-    yields to any live meeting or model call).
+    yields to any live meeting or model call).  The extract job asks before
+    EVERY engine call.
 
-    A live meeting always.  For a LOCAL engine also a live local model call
-    (an active local runtime lease), or one that ended less than
-    ``LOCAL_IDLE_SECONDS`` ago: an extract call holds the one local runtime
-    for its whole length, so it starts only when the owner is not using it.
+    * A live meeting, always.
+    * A model call that is open now on the SAME engine (the same deployment,
+      or the same endpoint and model, or the same model file), whatever its
+      boundary: a chat turn, an Ask or a meeting call on the owner's LAN
+      model is never queued behind a background chunk.
+    * For a LOCAL engine also any live local model call (an active local
+      runtime lease) or one that ended less than ``LOCAL_IDLE_SECONDS`` ago:
+      a local extract call holds the one local runtime for its whole length.
     """
+    from .memory.extract import OWN_OPERATIONS
+
     check = _live_check
     if check is not None:
         try:
@@ -102,12 +113,34 @@ def live_work(db: Any, extractor: Any) -> str:
             reason = ""
         if reason:
             return reason
-    if str(getattr(extractor, "boundary", "") or "") != "local":
-        return ""
-    from .memory.extract import OWN_OPERATIONS
-
     own = set(OWN_OPERATIONS) | set(getattr(extractor, "operation_ids", ()) or ())
+    revision = str(getattr(extractor, "revision_id", "") or "")
     with db._connection() as conn:
+        if revision:
+            mine = conn.execute(
+                "SELECT endpoint,model,COALESCE(model_path,'') model_path"
+                " FROM deployment_revisions WHERE id=?",
+                (revision,),
+            ).fetchone()
+            rows = conn.execute(
+                """SELECT o.operation_id FROM kernel_operations o
+                    JOIN deployment_revisions d ON o.target_ref='deployment-revision:'||d.id
+                    WHERE o.name='inference.invoke'
+                      AND o.state IN ('admitting','awaiting_decision','awaiting_execution','claimed')
+                      AND o.updated_at>=? AND o.principal_identity<>'memory-conductor'
+                      AND (d.id=?
+                           OR (d.endpoint<>'' AND d.endpoint=? AND d.model=?)
+                           OR (COALESCE(d.model_path,'')<>'' AND d.model_path=?))""",
+                (
+                    time.time() - OPEN_CALL_SECONDS, revision,
+                    str(mine["endpoint"]) if mine else "", str(mine["model"]) if mine else "",
+                    str(mine["model_path"]) if mine else "",
+                ),
+            ).fetchall()
+            if any(str(row[0]) not in own for row in rows):
+                return "a model call on the same engine is live"
+        if str(getattr(extractor, "boundary", "") or "") != "local":
+            return ""
         rows = conn.execute(
             "SELECT operation_id,state,updated_at FROM inference_runtime_leases"
             " WHERE state='active' OR updated_at>=?",

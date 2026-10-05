@@ -370,10 +370,29 @@ dark: nothing runs until `memory.extract` has its own assignment.
   step used, and keeps a used one (`consolidated_at`) as `retired` for slice
   4. A source that leaves memory (deleted, parked, sensitive) loses every
   fact and every entity that only it named, in the sweep's transaction.
-- **Load.** One engine call per chunk; at most 24 calls a pass; the backlog
-  runs newest first (oldest last) and goes on 5 s later. Before each source
-  the pass stops for a live meeting, and, for a local engine, for a live
-  local model call or one that ended less than 20 s ago.
+- **A fact serves only from live text.** Each fact keeps the id, hash and
+  anchor of the chunk it was read from. Recall cuts the source again and
+  returns a fact only while that chunk is there unchanged, so an edited,
+  deleted or sensitive passage is never answered from its old facts. A fact
+  never takes another chunk's anchor. `write_facts` takes the write lock,
+  then reads the live text again, and commits nothing if the text moved
+  while the engine ran.
+- **Entities: one match, and every name is checked.** A mention joins an
+  entity only if it conflicts with NONE of that entity's names (a chain
+  "John Smith", "J. Smith", "Jane Smith" stays two people). When two
+  entities could take a mention ("Dana" next to "Dana Lee" and "Dana Kim"),
+  it is its own entity.
+- **Strict answers.** One entry outside the closed schema fails the whole
+  answer (back-off); the old facts stay.
+- **Load.** One engine call per chunk; at most 24 calls a pass, counted
+  before every call, a bad answer included; the backlog runs newest first
+  (oldest last) and goes on 5 s later. Before EVERY call the job stops for
+  a live meeting, for any open call on the same engine (same deployment,
+  same endpoint and model, or same model file; any boundary), and, for a
+  local engine, for any live local call or one that ended less than 20 s
+  ago. The checked answer of each chunk is kept
+  (`memory_extract_parts`), so a stopped source goes on from its next
+  chunk.
 - **Measured.** The five relation questions
   (`tests/memory_bench/relation_questions.json`) over facts recorded from
   the LAN model `qwen3.8-27b` (`facts.json`, about 7 s a chunk): keyword

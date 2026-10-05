@@ -166,11 +166,13 @@ def score(
     last_seen: Optional[str],
 ) -> float:
     """Hindsight's score for one candidate.  0.0 when the token guard says
-    the names are two people (or two things)."""
-    guarded = [key for key in candidate_keys if token_guard(name_key, key)]
-    if not guarded:
+    the new name and ANY name the candidate is known by (its name or one of
+    its aliases) are two people (or two things).  A chain cannot walk round
+    the guard: "J. Smith" may join "John Smith", and "Jane Smith" then still
+    meets "John Smith"."""
+    if not all(token_guard(name_key, key) for key in candidate_keys):
         return 0.0
-    name = max(name_similarity(name_key, key) for key in guarded)
+    name = max(name_similarity(name_key, key) for key in candidate_keys)
     shared = (len(neighbours & candidate_neighbours) / len(neighbours)) if neighbours else 0.0
     closeness = time_closeness(seen, first_seen, last_seen)
     return NAME_WEIGHT * name + NEIGHBOUR_WEIGHT * shared + TIME_WEIGHT * closeness
@@ -227,24 +229,40 @@ def resolve(
     ``neighbours`` are the other names in the same fact.  Runs in the
     caller's transaction.  The matched entity takes the mention's name as an
     alias and widens its seen range.
+
+    One match only: when two entities could take the mention ("Dana" next
+    to "Dana Lee" and "Dana Kim"), it is its own entity, so a short name can
+    never join two people.
     """
     kind = entity_kind(kind)
     display = " ".join(str(name or "").split())[:NAME_MAX_CHARS]
     key = fold(display)
     near = {fold(item) for item in neighbours if is_name(item)} - {key}
-    best: Optional[sqlite3.Row] = None
-    best_score = 0.0
+    own: Optional[sqlite3.Row] = None
+    by_alias: list[sqlite3.Row] = []
+    scored: list[tuple[float, sqlite3.Row]] = []
     for row in _candidates(conn, kind, key):
         keys = [str(row["name_key"])] + [fold(alias) for alias in _aliases(row["aliases_json"])]
-        if key in keys:
-            best, best_score = row, 1.0
+        if key == str(row["name_key"]):
+            own = row
             break
+        if key in keys:
+            by_alias.append(row)
+            continue
         value = score(
             key, keys, near, _neighbours_of(conn, str(row["id"])), seen,
             row["first_seen"], row["last_seen"],
         )
-        if value > best_score:
-            best, best_score = row, value
+        if value >= MATCH_SCORE:
+            scored.append((value, row))
+    best: Optional[sqlite3.Row] = None
+    best_score = 0.0
+    if own is not None:
+        best, best_score = own, 1.0
+    elif len(by_alias) == 1:
+        best, best_score = by_alias[0], 1.0
+    elif not by_alias and len(scored) == 1:
+        best_score, best = scored[0]
     if best is None or best_score < MATCH_SCORE:
         new_id = entity_id(kind, key)
         conn.execute(

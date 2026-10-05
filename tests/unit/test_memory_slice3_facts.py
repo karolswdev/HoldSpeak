@@ -10,6 +10,7 @@ assignment service and runner; only the physical model leaf is replaced.
 from __future__ import annotations
 
 import json
+import threading
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -574,9 +575,8 @@ def test_extraction_yields_to_a_live_meeting_and_a_live_local_call(routed, monke
 def test_a_pass_is_bounded_and_the_backlog_runs_oldest_last(tmp_path: Path) -> None:
     db, refs, engine = _bench_desk(tmp_path)
     stats = extract_pending(db, engine, max_calls=3)
-    # No new source starts after the bound; a started source completes (it
-    # writes all its chunks in one transaction or nothing).
-    assert stats["more"] == 1 and 3 <= stats["calls"] < engine.calls + 1
+    # The bound is checked before EVERY call: exactly 3 calls.
+    assert stats["more"] == 1 and stats["calls"] == 3 == engine.calls
     assert 0 < stats["sources"] < len(refs)
     with db._connection() as conn:
         done = [str(r[0]) for r in conn.execute(
@@ -617,3 +617,294 @@ def test_a_bad_answer_backs_off_and_stops_after_six_tries(tmp_path: Path, monkey
     engine.answer = {"facts": [F("The text is readable.", "Text", [("Readable text", "topic")])]}
     assert extract_pending(db, engine)["sources"] == 1
     assert _counts(db)["memory_jobs"] == 0
+
+
+# ── review round 1 (Astra, PR #839): the five defects, each fenced ───────
+
+
+def _brennick_note(db: Database) -> Scripted:
+    _note(db, "n", "Plan", "Odalys Brennick owns the Atlas launch.")
+    sweep(db)
+    engine = Scripted([
+        ("Brennick", [F("Odalys Brennick owns the Atlas launch.", "Odalys Brennick",
+                        [("Odalys Brennick", "person"), ("Atlas", "project")])]),
+        ("Moreau", [F("Lee Moreau owns the Harbor budget.", "Lee Moreau",
+                      [("Lee Moreau", "person"), ("Harbor", "project")])]),
+    ])
+    assert extract_pending(db, engine)["sources"] == 1
+    assert _refs(db, "what does Brennick own") == ["note:n"]
+    return engine
+
+
+def _entity_hits(db: Database, query: str) -> list[tuple[str, str]]:
+    """What the entity walk returns, and a check that no search hit at all
+    shows the withdrawn sentence."""
+    from holdspeak.db.memory import _VALID_KINDS
+
+    rows = db.memory._entity_rows(
+        query, selected=tuple(_VALID_KINDS), project=None, start=None, end=None, excluded=set()
+    ) or []
+    walked = [(row["source_ref"], row["snippet"]) for row in rows]
+    if not walked:
+        assert all("Brennick" not in hit.snippet for hit in db.memory.search(query).hits)
+    return walked
+
+
+def test_withdrawn_text_never_serves_through_a_fact(tmp_path: Path, monkeypatch) -> None:
+    db = Database(tmp_path / "withdrawn.db")
+    _brennick_note(db)
+    _note(db, "n", "Plan", "Lee Moreau owns the Harbor budget.")
+    # Before the sweep, after it, and while the new text is read: the old
+    # sentence is never an answer.
+    assert _entity_hits(db, "what does Brennick own") == []
+    sweep(db)
+    assert _entity_hits(db, "what does Brennick own") == []
+    engine = Scripted([("Moreau", [F("Lee Moreau owns the Harbor budget.", "Lee Moreau",
+                                     [("Lee Moreau", "person")])])])
+    during: list[list] = []
+    engine.during = lambda _payload: during.append(_entity_hits(db, "what does Brennick own"))
+    assert extract_pending(db, engine)["sources"] == 1
+    assert during == [[]]
+    assert _entity_hits(db, "what does Brennick own") == []
+    assert _refs(db, "what does Moreau own") == ["note:n"]
+
+
+def test_an_edit_while_the_engine_reads_is_never_committed(tmp_path: Path) -> None:
+    db = Database(tmp_path / "edit-during.db")
+    _note(db, "n", "Plan", "Odalys Brennick owns the launch.")
+    sweep(db)
+    engine = Scripted([("Brennick", [F("Odalys Brennick owns the launch.", "Odalys Brennick",
+                                       [("Odalys Brennick", "person")])])])
+    engine.during = lambda _payload: _note(db, "n", "Plan", "Lee Moreau owns the budget.")
+    done = extract_source(db, engine, "note:n")
+    assert done["state"] == "skipped" and done["calls"] == 1
+    assert _counts(db)["memory_facts"] == 0
+    with db._connection() as conn:
+        assert conn.execute(
+            "SELECT extracted_sha FROM memory_sources WHERE source_ref='note:n'"
+        ).fetchone()[0] is None
+    assert _entity_hits(db, "what does Brennick own") == []
+
+
+@pytest.mark.parametrize("change", ["delete_part", "made_sensitive"])
+def test_a_withdrawn_message_never_serves_and_its_anchor_never_moves(tmp_path: Path, change: str) -> None:
+    db = Database(tmp_path / f"{change}.db")
+    thread = db.threads.create_thread(title="Planning")
+    lunch = db.threads.append_message(thread.id, role="user")
+    db.threads.append_part(lunch.id, kind="text", text="Lunch is at noon.")
+    secret = db.threads.append_message(thread.id, role="user")
+    part = db.threads.append_part(secret.id, kind="text", text="Odalys Brennick owns the confidential launch.")
+    sweep(db)
+    engine = Scripted([
+        ("Brennick", [F("Odalys Brennick owns the confidential launch.", "Odalys Brennick",
+                        [("Odalys Brennick", "person")])]),
+        ("Lunch", [F("Lunch is at noon.", "Lunch", [("Lunch", "topic")])]),
+    ])
+    extract_pending(db, engine)
+    assert _entity_hits(db, "what does Brennick own") == [
+        (f"thread:{thread.id}#{secret.id}", "Odalys Brennick owns the confidential launch.")
+    ]
+    if change == "made_sensitive":
+        db.threads.append_part(secret.id, kind="text", text=part.text, sensitive=True)
+    db.threads.delete_part(part.id)
+    assert _entity_hits(db, "what does Brennick own") == []          # before the sweep
+    sweep(db)
+    assert _entity_hits(db, "what does Brennick own") == []          # after it
+    with db._connection() as conn:
+        anchor = conn.execute(
+            "SELECT anchor FROM memory_facts WHERE text LIKE 'Odalys Brennick%'"
+        ).fetchone()[0]
+    assert anchor == secret.id  # the stored fact keeps its own message; it never takes the lunch one
+    extract_pending(db, engine)
+    assert _entity_hits(db, "what does Brennick own") == []          # after re-extraction
+    assert "Brennick" not in repr(_rows(db, "memory_facts", "memory_entities"))
+
+
+def test_unchanged_text_keeps_its_facts_through_a_version_bump(tmp_path: Path, monkeypatch) -> None:
+    db = Database(tmp_path / "keep.db")
+    engine = _brennick_note(db)
+    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", 2)
+    during: list[list] = []
+    engine.during = lambda _payload: during.append(_refs(db, "what does Brennick own"))
+    assert extract_pending(db, engine)["sources"] == 1
+    assert during == [["note:n"]]
+
+
+CHAINS = {
+    "smith": ["John Smith", "J. Smith", "Jane Smith"],
+    "dana": ["Dana Lee", "Dana", "Dana Kim"],
+}
+
+
+@pytest.mark.parametrize("chain", sorted(CHAINS))
+@pytest.mark.parametrize("order", list(__import__("itertools").permutations(range(3))))
+def test_an_alias_chain_never_joins_two_full_names(tmp_path: Path, chain: str, order) -> None:
+    db = Database(tmp_path / "chain.db")
+    names = [CHAINS[chain][index] for index in order]
+    rules = []
+    for position, name in enumerate(names):
+        _note(db, f"n{position}", f"Task {position}", f"{name} owns Atlas task {position}.")
+        rules.append((f"Atlas task {position}.", [F(f"{name} owns Atlas task {position}.", name,
+                                                    [(name, "person"), ("Atlas", "project")])]))
+    sweep(db)
+    engine = Scripted(rules)
+    for position in range(3):
+        extract_source(db, engine, f"note:n{position}")
+    with db._connection() as conn:
+        people = [
+            {fold_key(str(r["name"]))} | {fold_key(a) for a in json.loads(r["aliases_json"])}
+            for r in conn.execute("SELECT name,aliases_json FROM memory_entities WHERE kind='person'")
+        ]
+    full = [fold_key(name) for name in CHAINS[chain] if len(name.split()) > 1 and "." not in name]
+    for names_of_one in people:
+        assert not set(full) <= names_of_one, (names, people)
+
+
+def fold_key(name: str) -> str:
+    from holdspeak.memory.entities import fold
+
+    return fold(name)
+
+
+def test_the_call_budget_and_a_live_meeting_are_checked_before_every_call(tmp_path: Path, monkeypatch) -> None:
+    db = Database(tmp_path / "per-call.db")
+    thread = db.threads.create_thread(title="Long")
+    for index in range(30):
+        message = db.threads.append_message(thread.id, role="user")
+        db.threads.append_part(message.id, kind="text", text=f"Step {index} of the Atlas plan is ready.")
+    sweep(db)
+    engine = Scripted()
+    # The budget: 24 calls, then the source stops half way and goes on later.
+    first = extract_pending(db, engine, max_calls=24)
+    assert first["calls"] == 24 == engine.calls and first["more"] == 1 and first["sources"] == 0
+    second = extract_pending(db, engine, max_calls=24)
+    assert second["calls"] == 6 and second["sources"] == 1 and engine.calls == 30
+
+    # A meeting starts after the first call, inside one source: the job
+    # stops before the next call, not at the next source.
+    thread2 = db.threads.create_thread(title="Long 2")
+    for index in range(30):
+        message = db.threads.append_message(thread2.id, role="user")
+        db.threads.append_part(message.id, kind="text", text=f"Item {index} of the Harbor plan.")
+    sweep(db)
+    live = {"on": False}
+    engine2 = Scripted()
+    engine2.during = lambda _payload: live.update(on=True)
+    stats = extract_pending(db, engine2, yield_check=lambda: "a meeting is recording" if live["on"] else "")
+    assert engine2.calls == 1 and stats["calls"] == 1 and stats["yielded"] == "a meeting is recording"
+    live["on"] = False
+    engine2.during = None
+    extract_pending(db, engine2)
+    # It went on from the next chunk: no chunk was read twice.
+    prompts = [payload["user_prompt"] for payload in engine2.payloads]
+    assert len(prompts) == len(set(prompts)) == 30
+
+
+def test_extraction_yields_to_a_live_chat_turn_on_the_same_lan_model(tmp_path: Path) -> None:
+    import asyncio
+
+    from holdspeak.kernel.inference_stream import Delta
+    from holdspeak.services.thread_service import ThreadService
+    from tests.unit.test_phase143_inference_assignments import _result_claim
+
+    db = Database(tmp_path / "lan.db")
+    broker = _configure(db)
+    _profile(db, "shared-lan", model="same-endpoint-model", boundary="private_network",
+             claims=("language", _result_claim("chat.turn")))
+    _assign(db, EXTRACT_CAPABILITY, ["shared-lan"])
+    _assign(db, "chat.turn", ["shared-lan"])
+    _note(db, "n", "Plan", "Dana owns Atlas.")
+    sweep(db)
+    started, release = threading.Event(), threading.Event()
+    extract_calls: list[bool] = []
+
+    class Engine:
+        active_provider = "fixture"
+        active_model = "same-endpoint-model"
+
+        def run_prompt_stream(self, **_kwargs):
+            started.set()
+            assert release.wait(15)
+            yield Delta(kind="text", text="Hello.")
+            yield Delta(kind="done")
+
+        def run_prompt(self, **_kwargs):
+            extract_calls.append(started.is_set() and not release.is_set())
+            return '{"facts": []}'
+
+    broker.inference_runner._engine_factory = lambda revision, **_kwargs: Engine()
+    done = threading.Event()
+    service = ThreadService(db, broadcast=lambda kind, _data: done.set() if kind == "thread_turn_done" else None,
+                            broker=broker)
+    thread = db.threads.create_thread(title="Live chat")
+    try:
+        asyncio.run(service.start_turn(OWNER, thread.id, "Write a short greeting."))
+        assert started.wait(10)
+        extractor = resolve_extractor(broker, OWNER)
+        assert extractor is not None and extractor.boundary == "private_network"
+        assert memory_conductor.live_work(db, extractor) == "a model call on the same engine is live"
+        report = memory_conductor._extract_step(db, broker, None)
+        assert report["yielded"] == "a model call on the same engine is live"
+        assert report["calls"] == 0 and extract_calls == []
+    finally:
+        release.set()
+        done.wait(10)
+    # The chat ended: the extraction runs.
+    report = memory_conductor._extract_step(db, broker, None)
+    assert report["sources"] == 1 and extract_calls == [False]
+
+
+def test_every_attempted_call_counts_against_the_budget(tmp_path: Path) -> None:
+    db = Database(tmp_path / "bad-budget.db")
+    for index in range(30):
+        _note(db, f"n{index}", f"Note {index}", f"Fact number {index} about Atlas.")
+    sweep(db)
+    engine = Scripted()
+    engine.answer = {"items": []}  # not the schema
+    stats = extract_pending(db, engine, max_calls=24)
+    assert engine.calls == 24 and stats["calls"] == 24 and stats["failed"] == 24 and stats["more"] == 1
+
+
+def test_one_malformed_entry_fails_the_answer_and_the_old_facts_stay(tmp_path: Path, monkeypatch) -> None:
+    db = Database(tmp_path / "malformed.db")
+    _brennick_note(db)
+    before = _rows(db, "memory_facts", "memory_entities", "memory_fact_entities")
+    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", 2)
+    engine = Scripted()
+    good = F("Odalys Brennick owns the Atlas launch.", "Odalys Brennick", [("Odalys Brennick", "person")])
+    for bad in (
+        {"facts": [{"txet": "Odalys Brennick owns the Atlas launch."}]},
+        {"facts": [good, {**good, "kind": "rumour"}]},
+        {"facts": [good, {**good, "entities": [{"name": "Atlas"}]}]},
+        {"facts": [good, {**good, "confidence": "high"}]},
+        {"facts": [good], "notes": "extra"},
+    ):
+        engine.answer = bad
+        with pytest.raises(ExtractionOutputError):
+            extract_source(db, engine, "note:n")
+    stats = extract_pending(db, engine)
+    assert stats["failed"] == 1 and stats["sources"] == 0
+    assert _rows(db, "memory_facts", "memory_entities", "memory_fact_entities") == before
+    assert _refs(db, "what does Brennick own") == ["note:n"]
+    with db._connection() as conn:
+        assert dict(conn.execute("SELECT status,attempts FROM memory_jobs").fetchone()) == {
+            "status": "queued", "attempts": 1,
+        }
+
+
+def test_a_short_name_two_full_names_could_take_is_its_own_entity(tmp_path: Path) -> None:
+    db = Database(tmp_path / "ambiguous.db")
+    texts = ["Dana Lee owns Atlas task 0.", "Dana Kim owns Atlas task 1.", "Dana owns Atlas task 2."]
+    rules = []
+    for position, text in enumerate(texts):
+        _note(db, f"n{position}", f"Task {position}", text)
+        name = text.split(" owns")[0]
+        rules.append((f"Atlas task {position}.", [F(text, name, [(name, "person"), ("Atlas", "project")])]))
+    sweep(db)
+    engine = Scripted(rules)
+    for position in range(3):
+        extract_source(db, engine, f"note:n{position}")
+    with db._connection() as conn:
+        people = {str(r["name"]): json.loads(r["aliases_json"])
+                  for r in conn.execute("SELECT name,aliases_json FROM memory_entities WHERE kind='person'")}
+    assert people == {"Dana Lee": [], "Dana Kim": [], "Dana": []}

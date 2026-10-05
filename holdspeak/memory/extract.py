@@ -215,33 +215,66 @@ def _confidence(value: Any) -> float:
     return max(0.0, min(1.0, number))
 
 
+_FACT_KEYS = frozenset(OUTPUT_SCHEMA["properties"]["facts"]["items"]["properties"])
+_ENTITY_KEYS = frozenset(_ENTITY_SCHEMA["properties"])
+_ENTITY_KINDS = frozenset(_ENTITY_SCHEMA["properties"]["kind"]["enum"])
+
+
+def _schema_error(item: Any) -> str:
+    """Why one fact entry is not the closed schema, or "" when it is."""
+    if not isinstance(item, dict):
+        return "a fact is not an object"
+    if set(item) != _FACT_KEYS:
+        return "a fact has keys " + ",".join(sorted(set(item) ^ _FACT_KEYS)) + " out of the schema"
+    for key in ("text", "subject", "predicate", "object"):
+        if not isinstance(item[key], str):
+            return f"a fact's {key} is not a string"
+    if not item["text"].strip():
+        return "a fact has no text"
+    if item["kind"] not in ("state", "event"):
+        return "a fact's kind is not state or event"
+    for key in ("occurred_start", "occurred_end"):
+        if item[key] is not None and not isinstance(item[key], str):
+            return f"a fact's {key} is not a string or null"
+    if isinstance(item["confidence"], bool) or not isinstance(item["confidence"], (int, float)):
+        return "a fact's confidence is not a number"
+    if not isinstance(item["entities"], list):
+        return "a fact's entities is not a list"
+    for entity in item["entities"]:
+        if not isinstance(entity, dict) or set(entity) != _ENTITY_KEYS:
+            return "an entity is not {name, kind}"
+        if not isinstance(entity["name"], str) or entity["kind"] not in _ENTITY_KINDS:
+            return "an entity has a bad name or kind"
+    return ""
+
+
 def validate_output(raw: Any) -> list[dict[str, Any]]:
     """The engine's answer, checked against the closed schema by code.
 
-    Raises ``ExtractionOutputError`` when the answer is not an object with a
-    ``facts`` list.  A fact with no text is dropped; a field out of its set
-    is set to its default.  Every text passes the memory defense, so a
-    secret the model writes is stored as ``[redacted]``.
+    Raises ``ExtractionOutputError`` when the answer is not an object with
+    only a ``facts`` list, or when ANY entry is not the closed schema: the
+    whole answer is then a failed attempt (the job backs off) and the
+    source's old facts stay.  A schema-valid entry may still name no entity
+    (a pronoun, a name that holds a secret): that entity is left out.  Every
+    text passes the memory defense, so a secret the model writes is stored
+    as ``[redacted]``.
     """
-    if not isinstance(raw, dict) or not isinstance(raw.get("facts"), list):
-        raise ExtractionOutputError("the answer is not an object with a facts list")
+    if not isinstance(raw, dict) or set(raw) != {"facts"} or not isinstance(raw["facts"], list):
+        raise ExtractionOutputError("the answer is not an object with only a facts list")
+    for item in raw["facts"]:
+        reason = _schema_error(item)
+        if reason:
+            raise ExtractionOutputError(reason)
     facts: list[dict[str, Any]] = []
     for item in raw["facts"][:MAX_FACTS_PER_CHUNK]:
-        if not isinstance(item, dict):
-            continue
-        text = redact(_clip(item.get("text"), FACT_TEXT_CHARS))
-        if len(text) < 3:
-            continue
+        text = redact(_clip(item["text"], FACT_TEXT_CHARS))
         entities: list[dict[str, str]] = []
         seen: set[tuple[str, str]] = set()
-        raw_entities = item.get("entities") if isinstance(item.get("entities"), list) else []
-        for entity in raw_entities:
-            if not isinstance(entity, dict):
-                continue
-            name = _clip(entity.get("name"), 120)
+        for entity in item["entities"]:
+            name = _clip(entity["name"], 120)
             if not is_name(name) or redact(name) != name:
                 continue
-            kind = entity_kind(entity.get("kind"))
+            kind = entity_kind(entity["kind"])
             key = (kind, fold(name))
             if key in seen:
                 continue
@@ -249,16 +282,15 @@ def validate_output(raw: Any) -> list[dict[str, Any]]:
             entities.append({"name": name, "kind": kind})
             if len(entities) >= MAX_ENTITIES_PER_FACT:
                 break
-        predicate = redact(_clip(item.get("predicate"), 120)) or "states"
         facts.append({
             "text": text,
-            "kind": "event" if str(item.get("kind") or "") == "event" else "state",
-            "subject": redact(_clip(item.get("subject"))),
-            "predicate": predicate,
-            "object": redact(_clip(item.get("object"))),
-            "occurred_start": _when(item.get("occurred_start")),
-            "occurred_end": _when(item.get("occurred_end")),
-            "confidence": _confidence(item.get("confidence")),
+            "kind": item["kind"],
+            "subject": redact(_clip(item["subject"])),
+            "predicate": redact(_clip(item["predicate"], 120)) or "states",
+            "object": redact(_clip(item["object"])),
+            "occurred_start": _when(item["occurred_start"]),
+            "occurred_end": _when(item["occurred_end"]),
+            "confidence": _confidence(item["confidence"]),
             "entities": entities,
         })
     return facts
@@ -366,24 +398,57 @@ def resolve_extractor(broker: Any, principal: Any) -> Optional[RouterExtractor]:
 # ── the job ─────────────────────────────────────────────────────────────
 
 
+class CallBudget:
+    """The engine calls one pass may make.  Every ATTEMPTED call counts: a
+    call that gives a bad answer or fails still used the engine."""
+
+    def __init__(self, max_calls: Optional[int] = None) -> None:
+        self.max_calls = max_calls
+        self.calls = 0
+
+    def spent(self) -> bool:
+        return self.max_calls is not None and self.calls >= self.max_calls
+
+
+def _still_current(source_ref: str, content_sha: str) -> Callable[[Any], bool]:
+    """For ``write_facts``: inside its transaction, is the source's live text
+    still the text the job read?"""
+    from .retain import current_source, prepare
+
+    def check(conn: Any) -> bool:
+        source = current_source(conn, source_ref)
+        return source is not None and prepare(source)[0] == content_sha
+
+    return check
+
+
 def extract_source(
     db: Any,
     extractor: MemoryExtractor,
     source_ref: str,
     *,
     should_stop: Optional[Callable[[], bool]] = None,
+    yield_check: Optional[Callable[[], str]] = None,
+    budget: Optional[CallBudget] = None,
 ) -> dict[str, Any]:
     """One extract job: every chunk of one source, then ONE write.
 
+    Before EVERY engine call it checks, in order: a stop, a live call to
+    yield to (``yield_check``), and the call budget.  On any of them it
+    returns at once and writes no fact; the checked answers of the chunks
+    already read are kept (``memory_extract_parts``), so the job goes on
+    later from the next chunk.
+
     Returns ``{"state": ..., "facts": n, "calls": n}``.  ``state`` is
-    ``written``, ``skipped`` (not admitted now, not a "yes" kind, or changed
-    since the sweep: the next sweep comes first), or ``stopped`` (asked to
-    stop between two calls: nothing is written).  An engine error is raised
-    and nothing is written; ``ExtractionOutputError`` is raised for a bad
-    answer.
+    ``written``; ``skipped`` (not admitted now, not a "yes" kind, or the text
+    moved since the sweep or during the calls: the next sweep comes first);
+    ``stopped``, ``yielded`` (with ``reason``) or ``budget``.  An engine
+    error is raised; ``ExtractionOutputError`` is raised for a bad answer.
+    Both write no fact.
     """
     from .retain import current_source, prepare
 
+    budget = budget if budget is not None else CallBudget()
     index = db.memory_index
     known = index.ledger_for([source_ref]).get(source_ref)
     if known is None or known["state"] != "live" or str(known["kind"]) not in EXTRACT_KINDS:
@@ -398,26 +463,42 @@ def extract_source(
     if content_sha != str(known["content_sha"]):
         return {"state": "skipped", "facts": 0, "calls": 0}
     title = str(prepare_title(source))
+    version = EXTRACTOR_VERSION
+    held = index.extract_parts(source_ref, version)
     facts: list[dict[str, Any]] = []
     calls = 0
     for chunk in chunks:
-        if should_stop is not None and should_stop():
-            return {"state": "stopped", "facts": 0, "calls": calls}
-        payload = build_payload(
-            str(chunk["text"]), kind=source.kind, title=title, occurred_at=source.occurred_at
-        )
-        raw = extractor.extract(payload)
-        calls += 1
-        for position, fact in enumerate(validate_output(raw)):
-            fact["id"] = fact_id(source_ref, str(chunk["id"]), position, fact["text"])
-            fact["chunk_id"] = str(chunk["id"])
+        chunk_id, chunk_sha = str(chunk["id"]), str(chunk["content_sha"])
+        answer = held.get((chunk_id, chunk_sha))
+        if answer is None:
+            if should_stop is not None and should_stop():
+                return {"state": "stopped", "facts": 0, "calls": calls}
+            reason = yield_check() if yield_check is not None else ""
+            if reason:
+                return {"state": "yielded", "reason": reason, "facts": 0, "calls": calls}
+            if budget.spent():
+                return {"state": "budget", "facts": 0, "calls": calls}
+            payload = build_payload(
+                str(chunk["text"]), kind=source.kind, title=title, occurred_at=source.occurred_at
+            )
+            budget.calls += 1
+            calls += 1
+            answer = validate_output(extractor.extract(payload))
+            index.store_extract_part(source_ref, chunk_id, chunk_sha, version, answer)
+        for position, fact in enumerate(answer):
+            fact = dict(fact)
+            fact["id"] = fact_id(source_ref, chunk_id, position, fact["text"])
+            fact["chunk_id"] = chunk_id
+            fact["chunk_sha"] = chunk_sha
+            fact["anchor"] = str(chunk.get("anchor") or "")
             facts.append(fact)
     written = index.write_facts(
         source_ref=source_ref,
         content_sha=content_sha,
-        extractor_version=EXTRACTOR_VERSION,
+        extractor_version=version,
         mentioned_at=source.occurred_at,
         facts=facts,
+        still_current=_still_current(source_ref, content_sha),
     )
     return {"state": "written" if written else "skipped", "facts": len(facts) if written else 0, "calls": calls}
 
@@ -440,52 +521,50 @@ def extract_pending(
     """Run the extract jobs that wait, newest source first (the backlog runs
     oldest-last).
 
-    ``max_calls`` bounds the engine calls of one pass: no new source starts
-    after it.  ``yield_check`` gives a reason to stop before each source (a
-    live meeting, a live model call).  An engine error is raised: the pass
-    ends, the sources already written stay, and no source is charged.
+    ``max_calls`` bounds the engine calls of one pass, counted before EVERY
+    call (a bad answer counts too).  ``yield_check`` gives a reason to stop
+    (a live meeting, a live call on the same engine), also before every
+    call.  A source stopped half way goes on in a later pass from its next
+    chunk.  An engine error is raised: the pass ends, the sources already
+    written stay, and no source is charged.
     """
     index = db.memory_index
+    budget = CallBudget(max_calls)
     stats: dict[str, Any] = {
         "sources": 0, "facts": 0, "calls": 0, "failed": 0, "skipped": 0,
         "more": 0, "yielded": "", "stopped": 0,
     }
     pending = index.pending_extraction(EXTRACT_KINDS, EXTRACTOR_VERSION)
-    for position, (source_ref, input_sha) in enumerate(pending):
-        if max_calls is not None and stats["calls"] >= max_calls:
-            stats["more"] = 1
-            break
-        if should_stop is not None and should_stop():
-            stats["stopped"] = 1
-            stats["more"] = 1
-            break
-        reason = yield_check() if yield_check is not None else ""
-        if reason:
-            stats["yielded"] = reason
-            stats["more"] = 1
-            break
-        try:
-            done = extract_source(db, extractor, source_ref, should_stop=should_stop)
-        except ExtractionOutputError as exc:
-            stats["failed"] += 1
-            index.record_job_failure(
-                kind="extract", target=source_ref, input_sha=input_sha,
-                version=EXTRACTOR_VERSION, error=str(exc)[:500],
-                boundary=str(getattr(extractor, "boundary", "") or ""),
-                max_attempts=RETRY_MAX_ATTEMPTS, delay=retry_delay_seconds,
-            )
-            log.info("memory extract of %s gave a bad answer: %s", source_ref, exc)
-            continue
-        stats["calls"] += int(done["calls"])
-        if done["state"] == "stopped":
-            stats["stopped"] = 1
-            stats["more"] = 1
-            break
-        if done["state"] == "written":
-            stats["sources"] += 1
-            stats["facts"] += int(done["facts"])
-        else:
-            stats["skipped"] += 1
+    try:
+        for source_ref, input_sha in pending:
+            try:
+                done = extract_source(
+                    db, extractor, source_ref,
+                    should_stop=should_stop, yield_check=yield_check, budget=budget,
+                )
+            except ExtractionOutputError as exc:
+                stats["failed"] += 1
+                index.record_job_failure(
+                    kind="extract", target=source_ref, input_sha=input_sha,
+                    version=EXTRACTOR_VERSION, error=str(exc)[:500],
+                    boundary=str(getattr(extractor, "boundary", "") or ""),
+                    max_attempts=RETRY_MAX_ATTEMPTS, delay=retry_delay_seconds,
+                )
+                log.info("memory extract of %s gave a bad answer: %s", source_ref, exc)
+                continue
+            state = done["state"]
+            if state in ("stopped", "yielded", "budget"):
+                stats["more"] = 1
+                stats["stopped"] = int(state == "stopped")
+                stats["yielded"] = str(done.get("reason") or "")
+                break
+            if state == "written":
+                stats["sources"] += 1
+                stats["facts"] += int(done["facts"])
+            else:
+                stats["skipped"] += 1
+    finally:
+        stats["calls"] = budget.calls
     return stats
 
 
@@ -493,6 +572,7 @@ __all__ = [
     "EXTRACTOR_VERSION",
     "EXTRACT_CAPABILITY",
     "EXTRACT_KINDS",
+    "CallBudget",
     "ExtractionOutputError",
     "MemoryExtractor",
     "OUTPUT_SCHEMA",

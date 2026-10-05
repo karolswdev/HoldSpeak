@@ -4673,7 +4673,11 @@ CREATE TABLE IF NOT EXISTS memory_facts (
     confidence REAL NOT NULL DEFAULT 0.5,
     extractor_version INTEGER NOT NULL,
     state TEXT NOT NULL DEFAULT 'live',
-    consolidated_at TEXT
+    consolidated_at TEXT,
+    -- The chunk the fact was read from, as it was: a fact serves only while
+    -- that chunk is live with this hash and this anchor.
+    chunk_sha TEXT NOT NULL DEFAULT '',
+    anchor TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_memory_facts_source
     ON memory_facts(source_ref, state);
@@ -4685,6 +4689,19 @@ CREATE TABLE IF NOT EXISTS memory_fact_entities (
 );
 CREATE INDEX IF NOT EXISTS idx_memory_fact_entities_entity
     ON memory_fact_entities(entity_id);
+-- The checked answer for each chunk of a source the extract job has read, so
+-- a job that stops between two calls (a live call, the call budget) goes on
+-- later from the next chunk.  Deleted when the source's facts commit.
+CREATE TABLE IF NOT EXISTS memory_extract_parts (
+    source_ref TEXT NOT NULL,
+    chunk_id TEXT NOT NULL,
+    chunk_sha TEXT NOT NULL,
+    version INTEGER NOT NULL,
+    facts_json TEXT NOT NULL,
+    PRIMARY KEY (chunk_id, chunk_sha, version)
+);
+CREATE INDEX IF NOT EXISTS idx_memory_extract_parts_source
+    ON memory_extract_parts(source_ref);
 -- One row per model job that failed on its input (a bad output), so a source
 -- the engine cannot read waits with a back-off and stops after six tries.  A
 -- job that succeeds needs no row: the ledger stamp says it is done.
