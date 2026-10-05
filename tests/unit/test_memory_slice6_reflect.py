@@ -397,18 +397,26 @@ def test_the_chat_turn_never_reads_its_own_thread_back_through_a_page(hub) -> No
 def test_with_no_page_and_no_observation_the_chat_payload_is_byte_identical(hub, refs) -> None:
     _filed_note(hub.db, "n1", "Atlas launch is 2026-10-01.", "atlas" if refs else None)
     sweep(hub.db)
+    """Against MAIN's output, recorded (``tests/fixtures/memory_slice6_main_chat.json``,
+    from main 64d1e7126 on this same scenario): everything but the tools is
+    byte-identical.  The tools are main's renderer output with the two
+    changes this slice makes on purpose (memory.page added, the People
+    operator note out of the chat rendering) and no other."""
+    from holdspeak.mcp.families.people import MCP_ACCESS_NOTE
+
+    main = json.loads((Path(__file__).parents[1] / "fixtures" / "memory_slice6_main_chat.json").read_text())
+    _filed_note(hub.db, "n1", "Atlas launch is 2026-10-01.", "atlas" if refs else None)
+    sweep(hub.db)
     turn = _turn(hub, "What about the Atlas launch?", refs=refs)
     adoption = hub.broker.inference_adoption_service
     admitted = adoption.admitted_payload(str(hub.db.threads.get_message(turn["assistant_message_id"]).operation_id))
-    thread = hub.db.threads.get(turn["thread_id"])
-    # Main's assembler (no memory part), less the reply this turn appended.
-    expected = hub.svc._assemble_payload(turn["thread_id"], turn["user_message_id"], thread)
-    assert expected["messages"][-1] == {"role": "assistant", "content": "OK"}
-    expected["messages"] = expected["messages"][:-1]
-    from holdspeak.services.thread_tools import CHAT_PALETTE, tool_schemas_for
-    expected["tools"] = tool_schemas_for(CHAT_PALETTE)
-    assert json.dumps(admitted, sort_keys=True) == json.dumps(expected, sort_keys=True)
+    without_tools = {k: v for k, v in admitted.items() if k != "tools"}
+    assert json.dumps(without_tools, sort_keys=True) == json.dumps(main["project" if refs else "desk"], sort_keys=True)
     assert "[MEMORY" not in json.dumps(admitted)
+    tools = [t for t in admitted["tools"] if t["function"]["name"] != "memory.page"]
+    assert len(tools) == len(admitted["tools"]) - 1
+    expected_tools = json.loads(json.dumps(main["default_tools"]).replace(json.dumps(MCP_ACCESS_NOTE)[1:-1], ""))
+    assert json.dumps(tools, sort_keys=True) == json.dumps(expected_tools, sort_keys=True)
 
 
 def test_a_chase_turn_at_32k_with_memory_page_and_a_served_page_still_runs(hub) -> None:
@@ -429,8 +437,10 @@ def test_memory_page_is_in_the_thread_palettes() -> None:
     from holdspeak.services.thread_tools import CHAT_PALETTE, tool_class, tool_sensitive
 
     assert "memory.page" in CHAT_PALETTE
-    for tools in (thread_modes._DESK_TOOLS, thread_modes._CHASE_TOOLS, thread_modes._PLAN_TOOLS):
+    for tools in (thread_modes._DESK_TOOLS, thread_modes._CHASE_TOOLS):
         assert "memory.page" in tools
+    # Plan has no People text to trim: the page would grow its palette.
+    assert "memory.page" not in thread_modes._PLAN_TOOLS
     assert "memory.page" not in thread_modes._DRAFT_TOOLS
     assert (tool_class("memory.page"), tool_sensitive("memory.page")) == ("evidence_read", False)
 
@@ -465,3 +475,76 @@ def test_memory_page_runs_in_a_chat_turn_and_returns_only_served_sentences(hub) 
     assert page["sentences"] and page["withheld"] >= 1
     assert all("Atlas status is approved." in s["text"] for s in page["sentences"])
     assert "ZEPHYRSECRET" not in json.dumps(turn["calls"])
+
+
+# ── review round 1 (Astra, PR #850) ─────────────────────────────────────
+
+#: Each thread palette's tool-schema bytes on MAIN (64d1e7126, before this
+#: slice), measured with admission's own serializer (``_canonical``: sorted
+#: keys, compact, ASCII).  Admission counts one token per byte, so no
+#: palette may grow: a turn that fit on main must still fit.
+MAIN_PALETTE_BYTES = {"default": 14871, "desk": 27680, "chase": 30959, "plan": 2875}
+
+
+def test_no_thread_palette_grows_versus_main() -> None:
+    from holdspeak.services import thread_modes
+    from holdspeak.services.inference_adoption_service import _canonical
+    from holdspeak.services.thread_tools import CHAT_PALETTE, tool_schemas_for
+
+    palettes = {"default": CHAT_PALETTE, "desk": thread_modes._DESK_TOOLS,
+                "chase": thread_modes._CHASE_TOOLS, "plan": thread_modes._PLAN_TOOLS}
+    for name, tools in palettes.items():
+        size = len(_canonical(tool_schemas_for(tools)).encode())
+        assert size <= MAIN_PALETTE_BYTES[name], (name, size, MAIN_PALETTE_BYTES[name])
+
+
+@pytest.mark.parametrize("size", [28300, 28850])
+def test_a_plan_turn_main_admits_is_still_admitted(hub, size: int) -> None:
+    """Astra's repro (28,300), and 28,850: the largest of 50-byte steps
+    main admits in Plan (28,900 overflows on main).  Any growth of the
+    Plan palette fails the second."""
+    turn = _turn(hub, "Proceed. " + "a" * size, mode="hs-seed-mode-plan")
+    assert turn["outcome"] == "succeeded" and len(turn["calls"]) == 1, turn
+
+
+def test_every_pass_fits_the_part_again_so_a_continuation_never_overflows(hub) -> None:
+    """Astra's repro: 32k, Plan, 40 desk beliefs, a long question, then a
+    memory.search continuation.  Pass 1 carries the part; the continuation
+    (with the tool exchange) refits it and runs, as main runs both."""
+    for index in range(40):
+        _filed_note(hub.db, f"n{index:02d}", f"Desk topic{index:02d} is value{index:02d}-" + "x" * 60 + ".", None)
+    _built(hub.db)
+    hub.engine.tool = ("memory.search", {"query": "ZZZNOTFOUNDZZZ"})
+    turn = _turn(hub, "Proceed. " + "a" * 25500, mode="hs-seed-mode-plan")
+    assert turn["outcome"] == "succeeded" and len(turn["calls"]) == 2, turn
+    first, second = (json.dumps(call) for call in turn["calls"])
+    assert "[MEMORY PAGE:" in first or "[MEMORY OBSERVATIONS:" in first  # the part was sent on pass 1
+    assert second.count("\\n- ") < first.count("\\n- ")  # and it was cut to fit pass 2
+
+
+@pytest.mark.parametrize("mode", ["delete", "edit", "refile", "sensitive"])
+def test_a_memory_page_tool_result_is_never_replayed_on_a_later_turn(hub, mode: str) -> None:
+    """Astra's repro: the page read with the chat tool on turn 1, the source
+    withdrawn, then "Continue." in the same thread.  Turn 2 gets a stub that
+    says to read the page again, never the stored text; the tool record
+    (the receipt) stays as it was."""
+    db = hub.db
+    scope, _ref, withdraw, _kwargs = _status_and_codename(db, mode)
+    _learn(db)
+    pages_module.write_page(db, Pages(), scope, pages_module.spec_for(scope[0], CHANGED))
+    hub.engine.tool = ("memory.page", {"scope": scope[0], "project_id": scope[1], "slug": CHANGED}
+                       if scope[0] == "project" else {"scope": "desk", "slug": CHANGED})
+    first = _turn(hub, "Proceed.")
+    assert first["outcome"] == "succeeded" and "ZEPHYRSECRET" in json.dumps(first["calls"][-1])
+    frozen = "\n".join(r.frozen_json or "" for r in db.threads.get_refs(first["thread_id"]))
+    assert "ZEPHYRSECRET" not in frozen  # not the recall replay (out of scope, recorded)
+    withdraw()
+    hub.engine.tool = None
+    second = _turn(hub, "Continue.", thread_id=first["thread_id"])
+    assert second["outcome"] == "succeeded"
+    sent = second["calls"][0]
+    assert not [m for m in sent if "ZEPHYRSECRET" in str(m.get("content", ""))]
+    assert any(m["role"] == "tool" and "Call memory.page again" in m["content"] for m in sent)
+    kept = [part.text for message in db.threads.list_path(first["thread_id"]) if message.role == "tool"
+            for part in db.threads.get_parts(message.id)]
+    assert any("ZEPHYRSECRET" in str(text) for text in kept)  # the receipt is kept

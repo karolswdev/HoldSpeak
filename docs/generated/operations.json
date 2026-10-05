@@ -1989,7 +1989,7 @@
     {
       "name": "memory.page.read",
       "version": 1,
-      "description": "Read one memory page: a standing answer for a project or the desk, with its refs. Read only.",
+      "description": "Read a memory page: a standing answer, with refs. Read only.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -2001,15 +2001,13 @@
               "risks-and-disputes",
               "what-changed-this-week",
               "what-i-owe"
-            ],
-            "description": "The page."
+            ]
           },
           "project_id": {
             "type": [
               "string",
               "null"
-            ],
-            "description": "Project ID."
+            ]
           },
           "scope": {
             "type": [
@@ -2021,7 +2019,7 @@
               "project",
               null
             ],
-            "description": "desk, or project (the default with a project_id)."
+            "description": "Default: project when project_id is set."
           }
         },
         "required": [

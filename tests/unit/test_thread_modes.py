@@ -145,8 +145,8 @@ class TestAllowLists:
         assert len(_DRAFT_TOOLS) == 0
 
     def test_plan_size(self) -> None:
-        # Memory slice 6: + memory.page beside memory.search.
-        assert len(_PLAN_TOOLS) == 8
+        # Memory slice 6: memory.page is not in Plan (its palette may not grow).
+        assert len(_PLAN_TOOLS) == 7
 
     def test_desk_is_subset_of_chase(self) -> None:
         assert _DESK_TOOLS < _CHASE_TOOLS

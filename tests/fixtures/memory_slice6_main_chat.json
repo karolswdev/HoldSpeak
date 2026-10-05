@@ -1,0 +1,802 @@
+{
+ "_comment": "Recorded on main 64d1e7126 (before memory slice 6) by running a real hub chat turn: one note, swept, no facts, no pages. The admitted payload without tools, per scope, and main renderer output for the default chat palette.",
+ "default_tools": [
+  {
+   "function": {
+    "description": "List desk primitives by kind. Find a note with kind=notes. Read each result by its id with desk.get. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains.",
+    "name": "desk.list",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "kind": {
+       "enum": [
+        "notes",
+        "decisions",
+        "kbs",
+        "directories",
+        "workflows",
+        "chains"
+       ],
+       "type": "string"
+      }
+     },
+     "required": [
+      "kind"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Get one desk primitive by kind and ID. Read a note with kind=notes and the id from desk.list. Read a zone and its filed objects with kind=directories. The desk schema advertises 18 primitive kinds; this tool operates on the 6 authorable kinds: notes, decisions, kbs, directories, workflows, and chains.",
+    "name": "desk.get",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "id": {
+       "description": "Object ID from desk.list for the same kind.",
+       "type": "string"
+      },
+      "kind": {
+       "enum": [
+        "notes",
+        "decisions",
+        "kbs",
+        "directories",
+        "workflows",
+        "chains"
+       ],
+       "type": "string"
+      }
+     },
+     "required": [
+      "kind",
+      "id"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Create a desk primitive. Write a note with kind=notes and data containing a title, body_markdown and tags. Make a zone with kind=directories, a name and optional parent_id. Put a decision on my review list with kind=decisions and status=proposed. Write the reason for a decision with kind=decisions in data.context_markdown. Authorable kinds: notes, decisions, kbs, directories, workflows, chains.",
+    "name": "desk.create",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "data": {
+       "description": "Fields: notes note_id,title,body_markdown,tags; directories (zones) directory_id,name,parent_id from desk.list; kbs kb_id,name,member_ids kind:id; decisions title,status=proposed,context_markdown(reason/facts),decision_markdown(what),consequences_markdown(result),deciders,alternatives,tags. Kind IDs generate if absent; data.id refused.",
+       "type": "object"
+      },
+      "kind": {
+       "enum": [
+        "notes",
+        "decisions",
+        "kbs",
+        "directories",
+        "workflows",
+        "chains"
+       ],
+       "type": "string"
+      }
+     },
+     "required": [
+      "kind"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Update a desk primitive. Rename a zone with kind=directories and name. Move a zone with kind=directories and parent_id. Set parent_id to null to move it to the desk root. Edit a note with kind=notes and title, body_markdown or tags. Change a decision with kind=decisions. Supply context_markdown, decision_markdown or consequences_markdown to replace the old text. Authorable kinds: notes, decisions, kbs, directories, workflows, chains.",
+    "name": "desk.update",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "data": {
+       "description": "Fields to change, as for desk.create.",
+       "type": "object"
+      },
+      "id": {
+       "description": "Object ID from desk.list for the same kind.",
+       "type": "string"
+      },
+      "kind": {
+       "enum": [
+        "notes",
+        "decisions",
+        "kbs",
+        "directories",
+        "workflows",
+        "chains"
+       ],
+       "type": "string"
+      }
+     },
+     "required": [
+      "kind",
+      "id",
+      "data"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "List or search active meetings; set parked to list retained parked meetings.",
+    "name": "meeting.list",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "cursor": {
+       "type": [
+        "string",
+        "integer"
+       ]
+      },
+      "from_date": {
+       "type": "string"
+      },
+      "has_open_actions": {
+       "type": "boolean"
+      },
+      "limit": {
+       "maximum": 500,
+       "minimum": 1,
+       "type": "integer"
+      },
+      "parked": {
+       "description": "List parked meetings only.",
+       "type": "boolean"
+      },
+      "query": {
+       "type": "string"
+      },
+      "speaker": {
+       "type": "string"
+      },
+      "tag": {
+       "type": "string"
+      },
+      "to_date": {
+       "type": "string"
+      }
+     },
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Get one stored meeting.",
+    "name": "meeting.get",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "include": {
+       "type": "string"
+      },
+      "include_parked": {
+       "description": "Read a retained parked meeting.",
+       "type": "boolean"
+      },
+      "meeting_id": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "meeting_id"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "File a primitive in a Zone. File a note into a zone by setting directory_id from desk.list kind=directories and primitive_id to note:<id>. Filing a primitive again moves it.",
+    "name": "zone.file",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "directory_id": {
+       "description": "Zone ID from desk.list kind=directories.",
+       "type": "string"
+      },
+      "primitive_id": {
+       "description": "Object kind:id; for example note:<id> with its ID from desk.list kind=notes.",
+       "type": "string"
+      }
+     },
+     "required": [
+      "directory_id",
+      "primitive_id"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Remove a primitive from a Zone: directory_id and kind:id primitive_id.",
+    "name": "zone.unfile",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "directory_id": {
+       "description": "Zone ID from desk.list kind=directories.",
+       "type": "string"
+      },
+      "primitive_id": {
+       "description": "Filed object kind:id; ID from desk.list (for example note:<id> with its ID from desk.list kind=notes).",
+       "type": "string"
+      }
+     },
+     "required": [
+      "directory_id",
+      "primitive_id"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "List Zone members. List the notes in a zone. Each member has a primitive_id such as note:<id>.",
+    "name": "zone.list_members",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "directory_id": {
+       "description": "Zone ID from desk.list kind=directories.",
+       "type": "string"
+      }
+     },
+     "required": [
+      "directory_id"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Read one coherent snapshot of the durable HoldSpeak desk.",
+    "name": "desk.snapshot",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {},
+     "required": [],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "List decision records, newest first.",
+    "name": "decision_record.list",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "limit": {
+       "maximum": 500,
+       "minimum": 1,
+       "type": "integer"
+      },
+      "offset": {
+       "minimum": 0,
+       "type": "integer"
+      }
+     },
+     "required": [],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Get a decision record with sources, work, revisions.",
+    "name": "decision_record.get",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "record_id": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "record_id"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Search decision records and affected work.",
+    "name": "decision_record.search",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "limit": {
+       "maximum": 500,
+       "minimum": 1,
+       "type": "integer"
+      },
+      "query": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "query"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Read Follow-Through cards; filter project/owner/lane.",
+    "name": "follow_through.board",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "owner": {
+       "description": "Optional owner.",
+       "type": "string"
+      },
+      "project_id": {
+       "description": "Optional project.",
+       "type": "string"
+      },
+      "state": {
+       "description": "Optional lane.",
+       "enum": [
+        "now",
+        "waiting",
+        "unassigned",
+        "overdue"
+       ],
+       "type": "string"
+      }
+     },
+     "required": [],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Apply a completion verb to a Follow-Through card.",
+    "name": "follow_through.complete",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "card_id": {
+       "description": "Card ID.",
+       "type": "string"
+      },
+      "payload": {
+       "description": "Verb data; until/snooze, to/delegate.",
+       "type": "object"
+      },
+      "verb": {
+       "description": "Board verb; due sets payload.due_at.",
+       "enum": [
+        "done",
+        "dismiss",
+        "snooze",
+        "delegate",
+        "reopen",
+        "due"
+       ],
+       "type": "string"
+      }
+     },
+     "required": [
+      "card_id",
+      "verb"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Create an accountable commitment from an accepted decision.",
+    "name": "follow_through.commit_decision",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "decision_id": {
+       "description": "Accepted decision ID.",
+       "type": "string"
+      },
+      "due_at": {
+       "description": "Optional ISO-8601 date.",
+       "type": "string"
+      },
+      "owner": {
+       "description": "Optional owner.",
+       "type": "string"
+      }
+     },
+     "required": [
+      "decision_id"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Read the latest persisted Monday Brief; generate=true when none exists.",
+    "name": "monday_brief.get",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "generate": {
+       "default": false,
+       "description": "Generate if no persisted brief.",
+       "type": "boolean"
+      }
+     },
+     "required": [],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Search memory: decisions, meetings (transcript, summary), notes, threads, actions, project milestones/risks, sends, published updates, prep briefs, calendar events. Returns records; use project.list for projects; read permission applies.",
+    "name": "memory.search",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "kind": {
+       "description": "Kinds: decision, decision_record, desk_decision, artifact, meeting, note, thread, action, project_item, workbench_item, cadence, send, project_update, prep_brief, calendar_event.",
+       "type": "string"
+      },
+      "limit": {
+       "description": "Maximum; default 50.",
+       "maximum": 500,
+       "minimum": 1,
+       "type": "integer"
+      },
+      "offset": {
+       "description": "Pagination offset.",
+       "minimum": 0,
+       "type": "integer"
+      },
+      "project_id": {
+       "description": "Project ID.",
+       "type": "string"
+      },
+      "query": {
+       "description": "Search query.",
+       "type": "string"
+      },
+      "time_from": {
+       "description": "ISO-8601 start.",
+       "type": "string"
+      },
+      "time_to": {
+       "description": "ISO-8601 end.",
+       "type": "string"
+      }
+     },
+     "required": [
+      "query"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Read the content-free People MCP capability and encrypted-store readiness. This never initializes the store or returns relationship data.",
+    "name": "people.readiness",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {},
+     "required": [],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "PEOPLE DISCLOSURE: local-owner defaults to write; set HOLDSPEAK_MCP_PEOPLE_ACCESS=read or =off to restrict. Only shared-intent crosses MCP. Leader-private prep is never returned. List active relationship metadata from the encrypted People store.",
+    "name": "people.relationship.list",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {},
+     "required": [],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "PEOPLE DISCLOSURE: local-owner defaults to write; set HOLDSPEAK_MCP_PEOPLE_ACCESS=read or =off to restrict. Only shared-intent crosses MCP. Leader-private prep is never returned. Get one relationship with only shared-intent 1:1s, agenda items, requests, and commitments.",
+    "name": "people.relationship.get",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "relationship_id": {
+       "description": "Opaque relationship identifier.",
+       "type": "string"
+      }
+     },
+     "required": [
+      "relationship_id"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "PEOPLE DISCLOSURE: local-owner defaults to write; set HOLDSPEAK_MCP_PEOPLE_ACCESS=read or =off to restrict. Only shared-intent crosses MCP. Leader-private prep is never returned. Add one shared-intent agenda item to a notes-only 1:1.",
+    "name": "people.agenda.add",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "body": {
+       "type": "string"
+      },
+      "rolled_from_id": {
+       "description": "Optional open agenda item to roll forward atomically.",
+       "type": "string"
+      },
+      "session_id": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "session_id",
+      "body"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "PEOPLE DISCLOSURE: local-owner defaults to write; set HOLDSPEAK_MCP_PEOPLE_ACCESS=read or =off to restrict. Only shared-intent crosses MCP. Leader-private prep is never returned. Create a durable shared-intent grounding note. Encrypted at rest; not indexed or submitted to a model.",
+    "name": "people.note.create",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "body": {
+       "type": "string"
+      },
+      "relationship_id": {
+       "type": "string"
+      },
+      "topic": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "relationship_id",
+      "body"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "PEOPLE DISCLOSURE: local-owner defaults to write; set HOLDSPEAK_MCP_PEOPLE_ACCESS=read or =off to restrict. Only shared-intent crosses MCP. Leader-private prep is never returned. Compute a read-time 1:1 brief: open shared-intent commitments/agenda, grounding note count, last linked meetings with open action items, decision records, and unlinked meeting count in the window. Never persists any data.",
+    "name": "people.one_on_one.brief",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "relationship_id": {
+       "description": "Opaque relationship identifier.",
+       "type": "string"
+      }
+     },
+     "required": [
+      "relationship_id"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Read the Dashboard Door aggregate projection.",
+    "name": "door.get",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {},
+     "required": [],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Add a Door action item; creates a Follow-Through card with optional owner and due date.",
+    "name": "door.add_item",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "due": {
+       "description": "Optional ISO-8601 date.",
+       "type": "string"
+      },
+      "owner": {
+       "description": "Optional owner.",
+       "type": "string"
+      },
+      "source_ref": {
+       "description": "Source ref (e.g. thread:<id>).",
+       "type": "string"
+      },
+      "source_type": {
+       "description": "Source kind; chat defaults to thread.",
+       "enum": [
+        "meeting",
+        "thread"
+       ],
+       "type": "string"
+      },
+      "task": {
+       "description": "Task.",
+       "type": "string"
+      }
+     },
+     "required": [
+      "task"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Set the persistent thread status line; it persists across turns.",
+    "name": "thread.set_status",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "text": {
+       "description": "Status text; empty clears.",
+       "type": "string"
+      },
+      "thread_id": {
+       "description": "Thread ID.",
+       "type": "string"
+      }
+     },
+     "required": [
+      "thread_id",
+      "text"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Where can I send? This lists saved destinations: folders, GitHub issues or pull requests, Jira work items, Confluence spaces and email. Each result has a name, channel, account, target, badge (local or cloud), state and connection state.",
+    "name": "channel.destinations",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "include_parked": {
+       "description": "Also include parked destinations.",
+       "type": [
+        "boolean",
+        "null"
+       ]
+      }
+     },
+     "required": [],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  },
+  {
+   "function": {
+    "description": "Prepare a send of a stored document using \"send the update to <destination>\" or \"send this artifact to <destination>\". The prepared send freezes its destination and exact preview bytes. Nothing leaves the machine. Only the owner can send or discard it.",
+    "name": "channel.prepare",
+    "parameters": {
+     "additionalProperties": false,
+     "properties": {
+      "command_id": {
+       "description": "Optional idempotency key. The same key with the same arguments returns the first result again; the same key with different arguments is refused with idempotency_conflict.",
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "destination_id": {
+       "description": "Saved ID from channel.destinations.",
+       "type": "string"
+      },
+      "document_ref": {
+       "description": "The document ref from channel.preview.",
+       "type": "string"
+      }
+     },
+     "required": [
+      "document_ref",
+      "destination_id"
+     ],
+     "type": "object"
+    }
+   },
+   "type": "function"
+  }
+ ],
+ "desk": {
+  "max_tokens": null,
+  "messages": [
+   {
+    "content": "You are the desk's AI core. Be concrete and brief.",
+    "role": "system"
+   },
+   {
+    "content": "[NOTE: Note n1]\nAtlas launch is 2026-10-01.",
+    "role": "system"
+   },
+   {
+    "content": "What about the Atlas launch?",
+    "role": "user"
+   }
+  ],
+  "temperature": null
+ },
+ "project": {
+  "max_tokens": null,
+  "messages": [
+   {
+    "content": "You are the desk's AI core. Be concrete and brief.",
+    "role": "system"
+   },
+   {
+    "content": "[NOTE: Note n1]\nAtlas launch is 2026-10-01.",
+    "role": "system"
+   },
+   {
+    "content": "What about the Atlas launch?",
+    "role": "user"
+   }
+  ],
+  "temperature": null
+ }
+}

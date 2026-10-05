@@ -1351,16 +1351,17 @@ MEMORY_OBSERVATIONS_READ = OperationDescriptor(
 MEMORY_PAGE_READ = OperationDescriptor(
     name="memory.page.read",
     version=1,
-    description="Read one memory page: a standing answer for a project or the desk, with its refs. Read only.",
+    # Slice 6: the words are short on purpose.  The thread palettes carry
+    # this schema, and admission counts one token per byte of it.
+    description="Read a memory page: a standing answer, with refs. Read only.",
     args_schema={
         "type": "object",
         "properties": {
             "slug": {"type": "string", "enum": ["what-we-decided", "what-is-open", "risks-and-disputes",
-                                                 "what-changed-this-week", "what-i-owe"],
-                     "description": "The page."},
-            "project_id": {"type": ["string", "null"], "description": "Project ID."},
+                                                 "what-changed-this-week", "what-i-owe"]},
+            "project_id": {"type": ["string", "null"]},
             "scope": {"type": ["string", "null"], "enum": ["desk", "project", None],
-                      "description": "desk, or project (the default with a project_id)."},
+                      "description": "Default: project when project_id is set."},
         },
         "required": ["slug"],
         "additionalProperties": False,
