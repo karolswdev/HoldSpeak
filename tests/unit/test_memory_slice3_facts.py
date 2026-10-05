@@ -313,7 +313,8 @@ def test_a_version_bump_replaces_facts_with_no_gap_in_recall(tmp_path: Path, mon
     assert _refs(db, question) == ["note:n-owner"]  # found only by the entity walk
     assert db.memory.search(question).hits[0].retrieval_origin == "entity"
 
-    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", 2)
+    bumped = extract_module.EXTRACTOR_VERSION + 1
+    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", bumped)
     seen_during: list[list[str]] = []
     v2 = Scripted([("runbook", [F("Dana Whitfield is the owner of the cutover runbook.", "Dana Whitfield",
                                   [("Dana Whitfield", "person")])])])
@@ -326,8 +327,8 @@ def test_a_version_bump_replaces_facts_with_no_gap_in_recall(tmp_path: Path, mon
         stamp = conn.execute(
             "SELECT extractor_version FROM memory_sources WHERE source_ref='note:n-owner'"
         ).fetchone()[0]
-    assert [tuple(r) for r in rows] == [("Dana Whitfield is the owner of the cutover runbook.", 2, "live")]
-    assert stamp == 2
+    assert [tuple(r) for r in rows] == [("Dana Whitfield is the owner of the cutover runbook.", bumped, "live")]
+    assert stamp == bumped
     assert _refs(db, question) == ["note:n-owner"]
 
 
@@ -604,13 +605,14 @@ def test_a_bad_answer_backs_off_and_stops_after_six_tries(tmp_path: Path, monkey
     assert extract_pending(db, engine)["failed"] == 0
     far = "2999-01-01T00:00:00+00:00"
     index = db.memory_index
+    version = extract_module.EXTRACTOR_VERSION
     for _ in range(5):
-        for ref, sha in index.pending_extraction(EXTRACT_KINDS, 1, now=far):
-            index.record_job_failure(kind="extract", target=ref, input_sha=sha, version=1, error="bad",
+        for ref, sha in index.pending_extraction(EXTRACT_KINDS, version, now=far):
+            index.record_job_failure(kind="extract", target=ref, input_sha=sha, version=version, error="bad",
                                      boundary="local", max_attempts=6, delay=lambda n: 0)
     with db._connection() as conn:
         assert dict(conn.execute("SELECT status,attempts FROM memory_jobs").fetchone()) == {"status": "failed", "attempts": 6}
-    assert index.pending_extraction(EXTRACT_KINDS, 1, now=far) == []
+    assert index.pending_extraction(EXTRACT_KINDS, version, now=far) == []
     # The text changes: the job is new, and a good answer clears the row.
     _note(db, "n-bad", "Bad", "A text the engine can read now.")
     sweep(db)
@@ -723,7 +725,7 @@ def test_a_withdrawn_message_never_serves_and_its_anchor_never_moves(tmp_path: P
 def test_unchanged_text_keeps_its_facts_through_a_version_bump(tmp_path: Path, monkeypatch) -> None:
     db = Database(tmp_path / "keep.db")
     engine = _brennick_note(db)
-    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", 2)
+    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", extract_module.EXTRACTOR_VERSION + 1)
     during: list[list] = []
     engine.during = lambda _payload: during.append(_refs(db, "what does Brennick own"))
     assert extract_pending(db, engine)["sources"] == 1
@@ -869,7 +871,7 @@ def test_one_malformed_entry_fails_the_answer_and_the_old_facts_stay(tmp_path: P
     db = Database(tmp_path / "malformed.db")
     _brennick_note(db)
     before = _rows(db, "memory_facts", "memory_entities", "memory_fact_entities")
-    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", 2)
+    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", extract_module.EXTRACTOR_VERSION + 1)
     engine = Scripted()
     good = F("Odalys Brennick owns the Atlas launch.", "Odalys Brennick", [("Odalys Brennick", "person")])
     for bad in (
@@ -908,3 +910,37 @@ def test_a_short_name_two_full_names_could_take_is_its_own_entity(tmp_path: Path
         people = {str(r["name"]): json.loads(r["aliases_json"])
                   for r in conn.execute("SELECT name,aliases_json FROM memory_entities WHERE kind='person'")}
     assert people == {"Dana Lee": [], "Dana Kim": [], "Dana": []}
+
+
+# ── a day with no month takes its month by tense (EXTRACTOR_VERSION 2) ──
+
+
+def test_the_prompt_dates_a_day_with_no_month_by_tense() -> None:
+    prompt = extract_module.SYSTEM_PROMPT
+    assert "for a thing to come" in prompt and "the next such day on or after the date of the source" in prompt
+    assert "for a thing that already happened" in prompt and "the most recent such day on or before it" in prompt
+    assert "title of the source" not in prompt  # Astra, #845: a title rule invented a project
+    assert not hasattr(extract_module, "roll_past_days")  # no code moves a date
+
+
+@pytest.mark.parametrize("text,at,line", [
+    ("I missed the deadline on the ninth.", "2026-09-22T16:00:00",
+     'Days with no month: "the ninth" = 2026-09-09 if it already happened, 2026-10-09 if it is still to come\n'),
+    ("On the ninth I said I will ship on the thirtieth.", "2026-09-22",
+     'Days with no month: "the ninth" = 2026-09-09 if it already happened, 2026-10-09 if it is still to come; '
+     '"the thirtieth" = 2026-08-30 if it already happened, 2026-09-30 if it is still to come\n'),
+    ("Away from the 9th for three weeks.", "2027-01-22T10:00:00",
+     'Days with no month: "the 9th" = 2027-01-09 if it already happened, 2027-02-09 if it is still to come\n'),
+    ("Due on the twenty-second.", "2026-09-22", 'Days with no month: "the twenty-second" = 2026-09-22\n'),
+    # A day 31 skips the months without one.
+    ("It starts on the thirty-first.", "2026-09-22",
+     'Days with no month: "the thirty-first" = 2026-08-31 if it already happened, 2026-10-31 if it is still to come\n'),
+    # A named month is not a day with no month; no day, no line.
+    ("The deadline was the ninth of September.", "2026-09-22", ""),
+    ("No day here.", "2026-09-22", ""),
+    ("the ninth", None, ""),
+])
+def test_the_prompt_gives_both_dates_of_a_day_with_no_month(text: str, at, line: str) -> None:
+    assert extract_module.day_hints(text, at) == line
+    payload = extract_module.build_payload(text, kind="meeting", title="t", occurred_at=at)
+    assert (line in payload["user_prompt"]) if line else ("Days with no month" not in payload["user_prompt"])

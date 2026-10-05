@@ -304,3 +304,63 @@ def build_hard_corpus(db: Any) -> dict[str, str]:
             db.threads.append_part(message.id, kind="text", text=text)
         refs[label] = f"thread:{thread.id}"
     return refs
+
+
+# ── the date cases (a day with no month; EXTRACTOR_VERSION 2) ───────────
+#
+# Each case is one meeting on its own desk: id, start, the Remote line, and
+# what the stored facts must say.  ``want``: dates that must be in the
+# facts (text, occurred_start or occurred_end); ``never``: dates that must
+# not be.  ``span``: (start, end) of one fact that must keep its length.
+# Cases 1-3 are the #841 findings; 4-8 are Astra's #845 repros.
+
+DATE_CASES = [
+    {"id": "leave", "at": "2026-09-22T16:00:00",
+     "line": "I will finish the schema migration before my leave starts on the ninth.",
+     "want": ["2026-10-09"], "never": ["2026-09-09"]},
+    {"id": "deadline", "at": "2026-09-24T11:00:00",
+     "line": "I need the hiring numbers by the fifteenth.",
+     "want": ["2026-10-15"], "never": ["2026-09-15"]},
+    {"id": "ships", "at": "2026-09-23T09:00:00",
+     "line": "I confirm the sensor batch ships on the twentieth.",
+     "want": ["2026-10-20"], "never": ["2026-09-20"]},
+    {"id": "missed", "at": "2026-09-22T16:00:00",
+     "line": "I missed the deadline on the ninth and need a revised plan.",
+     "want": ["2026-09-09"], "never": ["2026-10-09", "2026-08-09"]},
+    {"id": "finished", "at": "2026-09-22T16:00:00",
+     "line": "I finished the migration on the ninth.",
+     "want": ["2026-09-09"], "never": ["2026-10-09", "2026-08-09"]},
+    {"id": "reported", "at": "2026-09-22T16:00:00",
+     "line": "On the ninth I said I will ship on the thirtieth.",
+     "want": [], "never": ["2026-10-09", "2026-10-30", "2026-08-30"]},
+    {"id": "reported_batch", "at": "2026-09-22T16:00:00",
+     "line": "On the ninth I told the supplier that I will ship the sensor batch on the thirtieth.",
+     "want": ["2026-09-09", "2026-09-30"], "never": ["2026-10-09", "2026-10-30", "2026-08-30"]},
+    {"id": "explicit", "at": "2026-09-22T16:00:00",
+     "line": "The deadline was the ninth of September, and I missed it. The review is on the ninth.",
+     "want": ["2026-09-09", "2026-10-09"], "never": ["2026-11-09", "2026-08-09"]},
+    {"id": "explicit_only", "at": "2026-09-22T16:00:00",
+     "line": "The deadline is the ninth of September. That deadline was missed.",
+     "want": ["2026-09-09"], "never": ["2026-10-09"]},
+    {"id": "duration", "at": "2027-01-22T10:00:00",
+     "line": "I will be away from the ninth for three weeks.",
+     "want": ["2027-02-09"], "never": ["2027-01-09"], "span": ("2027-02-09", "2027-03-02")},
+]
+
+
+def build_date_case(db: Any, case: dict) -> str:
+    """One date case as a 1:1 meeting, written by the real producer."""
+    started = datetime.fromisoformat(case["at"])
+    meeting_id = f"m-date-{case['id']}"
+    db.meetings.save_meeting(
+        MeetingState(
+            id=meeting_id, started_at=started, ended_at=started.replace(minute=started.minute + 20),
+            title="1:1 with Rafael Okonkwo",
+            segments=[
+                TranscriptSegment(text="What is your status, and what are the dates?", speaker="Me",
+                                  start_time=0.0, end_time=5.0),
+                TranscriptSegment(text=case["line"], speaker="Remote", start_time=6.0, end_time=20.0),
+            ],
+        )
+    )
+    return f"meeting:{meeting_id}"

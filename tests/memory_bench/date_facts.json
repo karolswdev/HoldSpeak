@@ -1,0 +1,258 @@
+{
+ "answers": {
+  "155458d4d59ed6151399af352c12d950849f0056e8d996d1f1b77358fa6fea15": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      }
+     ],
+     "kind": "event",
+     "object": "the deadline",
+     "occurred_end": "2026-09-09",
+     "occurred_start": "2026-09-09",
+     "predicate": "missed",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo missed the deadline on 2026-09-09."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "topic",
+       "name": "the review"
+      }
+     ],
+     "kind": "event",
+     "object": "2026-10-09",
+     "occurred_end": "2026-10-09",
+     "occurred_start": "2026-10-09",
+     "predicate": "is scheduled for",
+     "subject": "the review",
+     "text": "The review is scheduled for 2026-10-09."
+    }
+   ]
+  },
+  "95fbac2a2ed5ae5c07d62fda4291c7edd290eaab33315eb7d5f86358a113de4f": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      },
+      {
+       "kind": "org",
+       "name": "the supplier"
+      },
+      {
+       "kind": "topic",
+       "name": "sensor batch"
+      }
+     ],
+     "kind": "event",
+     "object": "that the sensor batch will ship on 2026-09-30",
+     "occurred_end": "2026-09-09",
+     "occurred_start": "2026-09-09",
+     "predicate": "told the supplier",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo told the supplier on 2026-09-09 that the sensor batch will ship on 2026-09-30."
+    }
+   ]
+  },
+  "a3f8e6c7df0cb0e3ae0f5295a3436a2b422baa53df4832cec24859612f7dba6b": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      }
+     ],
+     "kind": "event",
+     "object": "from 2027-02-09 for three weeks",
+     "occurred_end": "2027-03-02",
+     "occurred_start": "2027-02-09",
+     "predicate": "will be away",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo will be away from 2027-02-09 for three weeks."
+    }
+   ]
+  },
+  "a6c0c4a45b4eeba66049f3169484ea35d3d48b915725f5f2d094afa181b24a7d": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      },
+      {
+       "kind": "topic",
+       "name": "sensor batch"
+      }
+     ],
+     "kind": "event",
+     "object": "the sensor batch ships on 2026-10-20",
+     "occurred_end": "2026-09-23",
+     "occurred_start": "2026-09-23",
+     "predicate": "confirmed",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo confirmed that the sensor batch ships on 2026-10-20."
+    }
+   ]
+  },
+  "aed1167bf636dd9c07d720c9c4154ed485b13b751f5d0c8b40cdc9dc501dc93a": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      }
+     ],
+     "kind": "event",
+     "object": "the hiring numbers by 2026-10-15",
+     "occurred_end": "2026-10-15",
+     "occurred_start": null,
+     "predicate": "needs",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo needs the hiring numbers by 2026-10-15."
+    }
+   ]
+  },
+  "cfdc618607d301700f81ea830e8c22f00475186d79090120e5858bab4dcb58b3": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      },
+      {
+       "kind": "topic",
+       "name": "schema migration"
+      }
+     ],
+     "kind": "event",
+     "object": "the schema migration",
+     "occurred_end": "2026-10-09",
+     "occurred_start": null,
+     "predicate": "will finish",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo will finish the schema migration before 2026-10-09."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      }
+     ],
+     "kind": "event",
+     "object": "2026-10-09",
+     "occurred_end": null,
+     "occurred_start": "2026-10-09",
+     "predicate": "starts leave on",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo's leave starts on 2026-10-09."
+    }
+   ]
+  },
+  "d17c132c4cb0e8b8d51f1c77f7ea8f25e5a09684d606eb9230d935d966671d77": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      }
+     ],
+     "kind": "event",
+     "object": "the deadline of 2026-09-09",
+     "occurred_end": "2026-09-09",
+     "occurred_start": "2026-09-09",
+     "predicate": "missed",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo missed the deadline of 2026-09-09."
+    }
+   ]
+  },
+  "d8ddca108ef6a74d36f1724f97f5cf69cb3bcdb19eb79c7c3099a6f5b2097f87": {
+   "facts": []
+  },
+  "f323359aa7c8d5eda81e3515d87e83f08de49990cf6bb33fd268cf1d3f14eecd": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      }
+     ],
+     "kind": "event",
+     "object": "the deadline",
+     "occurred_end": "2026-09-09",
+     "occurred_start": "2026-09-09",
+     "predicate": "missed",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo missed the deadline on 2026-09-09."
+    },
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      }
+     ],
+     "kind": "state",
+     "object": "a revised plan",
+     "occurred_end": null,
+     "occurred_start": null,
+     "predicate": "needs",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo needs a revised plan."
+    }
+   ]
+  },
+  "feb9fd24486897bfd0ca9c4d7b82c2d85e8ba7cdd0331d7c4dd14662553565b4": {
+   "facts": [
+    {
+     "confidence": 1.0,
+     "entities": [
+      {
+       "kind": "person",
+       "name": "Rafael Okonkwo"
+      },
+      {
+       "kind": "topic",
+       "name": "the migration"
+      }
+     ],
+     "kind": "event",
+     "object": "the migration",
+     "occurred_end": "2026-09-09",
+     "occurred_start": "2026-09-09",
+     "predicate": "finished",
+     "subject": "Rafael Okonkwo",
+     "text": "Rafael Okonkwo finished the migration on 2026-09-09."
+    }
+   ]
+  }
+ },
+ "endpoint": "http://192.168.1.43:8080/v1",
+ "extractor_version": 2,
+ "model": "qwen3.8-27b"
+}

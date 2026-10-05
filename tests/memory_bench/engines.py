@@ -134,7 +134,7 @@ class MissingFixtureFacts(KeyError):
 
 def fixture_key(payload: dict) -> str:
     """The key of one recorded answer: the hash of the two prompt texts, with
-    the "Date of the source" line left out.  The corpus producers stamp a
+    the "Date of the source" and "Days with no month" lines left out.  The corpus producers stamp a
     thread with the wall clock, so that one line changes every day; every
     other word of the prompt is in the key, so a changed prompt or corpus
     must be recorded again."""
@@ -143,6 +143,8 @@ def fixture_key(payload: dict) -> str:
     from holdspeak.memory.extract import payload_key
 
     user = re.sub(r"(?m)^Date of the source: .*$", "Date of the source: <date>", str(payload.get("user_prompt") or ""))
+    # The two dates of a day with no month come from the source date too.
+    user = re.sub(r"(?m)^Days with no month: .*$", "Days with no month: <dates>", user)
     return payload_key({"system_prompt": payload.get("system_prompt"), "user_prompt": user})
 
 

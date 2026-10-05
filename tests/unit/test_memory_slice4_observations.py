@@ -458,7 +458,7 @@ def test_a_fact_the_next_extraction_drops_is_not_live_evidence(tmp_path: Path, m
     _filed_note(db, "n1", "Atlas launch is 2026-10-01.", "atlas")
     _learn(db)
     assert _served(db)
-    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", 2)
+    monkeypatch.setattr(extract_module, "EXTRACTOR_VERSION", extract_module.EXTRACTOR_VERSION + 1)
     empty = Facts()
     empty.answer = {"facts": []}
     extract_pending(db, empty)  # the same text; the new extractor reads no fact
@@ -1118,28 +1118,65 @@ def test_an_answer_whose_entries_conflict_fails_whole(tmp_path: Path, answer: di
     assert [o["state"] for o in _obs(db)] == ["current"]
 
 
-@pytest.mark.parametrize("table,statement", [
+APPEND_ONLY_WRITES = [
+    # The declared key: INSERT OR REPLACE over an existing key.
     ("memory_observation_history",
      "INSERT OR REPLACE INTO memory_observation_history(id,observation_id,at,prior_text,prior_state)"
      " SELECT id,observation_id,at,'rewritten',prior_state FROM memory_observation_history LIMIT 1"),
     ("memory_observation_versions",
      "INSERT OR REPLACE INTO memory_observation_versions(observation_id,version,text,at)"
      " SELECT observation_id,version,'rewritten',at FROM memory_observation_versions LIMIT 1"),
+    ("memory_observation_backing",
+     "INSERT OR REPLACE INTO memory_observation_backing(observation_id,version,grp,fact_id)"
+     " SELECT observation_id,version,grp,fact_id FROM memory_observation_backing LIMIT 1"),
+    # The rowid: INSERT OR REPLACE over an existing rowid with a new key
+    # (Astra, #843 iteration 2).
+    ("memory_observation_history",
+     "INSERT OR REPLACE INTO memory_observation_history(rowid,observation_id,at,prior_text,prior_state)"
+     " SELECT rowid,observation_id,at,'rewritten',prior_state FROM memory_observation_history LIMIT 1"),
+    ("memory_observation_versions",
+     "INSERT OR REPLACE INTO memory_observation_versions (rowid, observation_id, version, text, at)"
+     " SELECT rowid, observation_id, version + 100, 'rewritten', at FROM memory_observation_versions"
+     " ORDER BY version LIMIT 1"),
+    ("memory_observation_backing",
+     "INSERT OR REPLACE INTO memory_observation_backing(rowid,observation_id,version,grp,fact_id)"
+     " SELECT rowid,observation_id,version,grp,'rewritten' FROM memory_observation_backing LIMIT 1"),
+    # UPDATE and DELETE.
     ("memory_observation_versions", "UPDATE memory_observation_versions SET text='rewritten'"),
     ("memory_observation_versions", "DELETE FROM memory_observation_versions"),
-])
-def test_history_and_versions_refuse_a_replace_on_the_real_connection(tmp_path: Path, table: str, statement: str) -> None:
+    ("memory_observation_backing", "UPDATE memory_observation_backing SET fact_id='rewritten'"),
+    ("memory_observation_backing", "DELETE FROM memory_observation_backing"),
+]
+
+
+def _rows_with_rowid(path: Path, table: str) -> list[tuple]:
+    reopened = Database(path)
+    with reopened._connection() as conn:
+        return [tuple(str(v) for v in row) for row in conn.execute(f"SELECT rowid,* FROM {table} ORDER BY rowid")]
+
+
+@pytest.mark.parametrize("table,statement", APPEND_ONLY_WRITES)
+def test_history_versions_and_backing_refuse_every_rewrite_on_the_real_connection(
+    tmp_path: Path, table: str, statement: str
+) -> None:
+    """Each statement is refused on the product connection (recursive
+    triggers off); the commit after it and a reopened database show every
+    row as it was, with its rowid."""
     db = _desk(tmp_path)
     _meeting(db, "m1", "Atlas launch is 2026-10.", day=1)
     _learn(db)
     _meeting(db, "m2", "Atlas launch is 2026-10-01.", day=2)
     _learn(db, Rules(on_change="refines"))
-    before = _table_rows(db, table)
+    path = tmp_path / "obs.db"
+    before = _rows_with_rowid(path, table)
+    assert before, table
     with db._connection() as conn:
         assert conn.execute("PRAGMA recursive_triggers").fetchone()[0] == 0
         with pytest.raises(sqlite3.IntegrityError, match="append only"):
             conn.execute(statement)
-    assert _table_rows(db, table) == before and "rewritten" not in repr(before)
+        conn.commit()
+    after = _rows_with_rowid(path, table)
+    assert after == before and "rewritten" not in repr(after)
 
 
 def test_a_belief_two_facts_made_needs_both(tmp_path: Path) -> None:

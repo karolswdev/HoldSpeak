@@ -365,11 +365,123 @@ def test_hard_relation_questions_need_the_entity_walk(tmp_path: Path, capsys) ->
     # expects, so keyword search finds none of them.
     assert keyword["groups"][group]["recall@5"] == 0.0
     assert walk["groups"][group]["recall@5"] >= HARD_WALK_GATE
-    # Measured 2026-10-04: 8 of 9 complete; r11 misses n-supplier, because
-    # "T. Wierzbicki" does not join "Tomasz Wierzbicki" (see the xfail below).
-    assert walk["groups"][group]["complete@5"] >= 8 / 9 - 0.001
+    # Measured 2026-10-04 (EXTRACTOR_VERSION 2): 7 of 9 complete. Each
+    # question that is complete stays fenced ONE BY ONE; the two known gaps
+    # are strict xfails of their own (Astra, #845 iteration 2):
+    # - r11 misses n-supplier: "T. Wierzbicki" does not join "Tomasz
+    #   Wierzbicki" (test_hard_relation_alias_joins_the_full_name).
+    # - r09 finds no Kestrel source without vectors: with no title rule the
+    #   model leaves "Kestrel" out of the facts (the title rule invented
+    #   projects; test_hard_relation_kestrel_is_complete_by_the_walk).
+    known_gaps = {"r09", "r11"}
+    for question in hard:
+        if question["id"] in known_gaps:
+            continue
+        expected = {refs[label] for label in question["expect"]}
+        assert expected <= set(walk["ranked"][question["id"]][:5]), question["id"]
     assert walk_vectors["groups"][group]["recall@5"] >= HARD_WALK_GATE
     assert walk_vectors["groups"][group]["mrr"] > vectors["groups"][group]["mrr"]
+
+
+def _dates_of(fact: dict) -> set[str]:
+    import re
+
+    found = set(re.findall(r"\d{4}-\d{2}-\d{2}", str(fact.get("text") or "")))
+    return found | {str(fact[key])[:10] for key in ("occurred_start", "occurred_end") if fact.get(key)}
+
+
+def _case_facts(tmp_path: Path, case: dict) -> list[dict]:
+    from holdspeak.memory.extract import extract_pending
+
+    from .corpus import build_date_case
+    from .engines import FixtureExtractor
+
+    db = Database(tmp_path / f"date-{case['id']}.db")
+    ref = build_date_case(db, case)
+    sweep(db)
+    extract_pending(db, FixtureExtractor(bench.DATE_FACTS))
+    with db._connection() as conn:
+        return [dict(row) for row in conn.execute(
+            "SELECT text,occurred_start,occurred_end FROM memory_facts WHERE source_ref=? AND state='live'", (ref,)
+        )]
+
+
+@pytest.mark.parametrize("case", __import__("tests.memory_bench.corpus", fromlist=["DATE_CASES"]).DATE_CASES,
+                         ids=lambda case: case["id"])
+def test_a_day_with_no_month_takes_its_month_by_tense(tmp_path: Path, case: dict) -> None:
+    """Real-model answers (``date_facts.json``, recorded from the LAN model):
+    a day with no month is the next such day for a thing to come and the most
+    recent such day for a thing that happened; a named month stays; a span
+    keeps its length.  No code moves a date: this is the prompt alone."""
+    facts = _case_facts(tmp_path, case)
+    dates = set().union(*(_dates_of(fact) for fact in facts)) if facts else set()
+    for day in case["want"]:
+        assert day in dates, (case["id"], day, facts)
+    for day in case["never"]:
+        assert day not in dates, (case["id"], day, facts)
+    if "span" in case:
+        spans = {(str(f["occurred_start"])[:10], str(f["occurred_end"])[:10]) for f in facts}
+        assert tuple(case["span"]) in spans, (case["id"], facts)
+
+
+def _hard_dates(tmp_path: Path, label: str) -> set[str]:
+    from holdspeak.memory.extract import extract_pending
+
+    from .engines import FixtureExtractor
+
+    db, refs = _hard_desk(tmp_path)
+    extract_pending(db, FixtureExtractor(bench.FACTS, bench.HARD_FACTS))
+    with db._connection() as conn:
+        mine = [dict(row) for row in conn.execute(
+            "SELECT text,occurred_start,occurred_end FROM memory_facts WHERE state='live' AND source_ref=?",
+            (refs[label],),
+        )]
+    return set().union(*(_dates_of(fact) for fact in mine)) if mine else set()
+
+
+@pytest.mark.parametrize("label,future,past", [
+    ("m-okonkwo", "2026-10-09", "2026-09-09"),  # "my leave starts on the ninth", 22 Sep
+    ("m-santos", "2026-10-15", "2026-09-15"),   # "by the fifteenth", 24 Sep
+])
+def test_the_hard_sources_give_the_next_such_day(tmp_path: Path, label: str, future: str, past: str) -> None:
+    """The #841 findings in the hard corpus: October, never the past day."""
+    dates = _hard_dates(tmp_path, label)
+    assert future in dates and past not in dates, (label, dates)
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "Gap, measured 2026-10-04 on qwen3.8-27b: 'T. Wierzbicki confirmed the sensor batch ships on the "
+    "twentieth' (note of 2026-09-23) still gives 2026-09-20. The prompt line gives both dates; the model "
+    "takes the tense of 'confirmed'. The first-person line ('I confirm ... ships on the twentieth', date "
+    "case 'ships') gives 2026-10-20. Two more wordings (a reported-speech example; a shorter rule) did not "
+    "fix it and gave empty answers on other date cases."
+))
+def test_the_supplier_note_gives_the_next_such_day(tmp_path: Path) -> None:
+    dates = _hard_dates(tmp_path, "n-supplier")
+    assert "2026-10-20" in dates and "2026-09-20" not in dates, dates
+
+
+def test_no_entity_is_named_after_a_meeting_title(tmp_path: Path) -> None:
+    """Astra, #845: a prompt rule on titles made the decision title "Offline
+    first for forms" a project entity.  No project entity is a source title."""
+    from holdspeak.memory.entities import fold
+    from holdspeak.memory.extract import extract_pending
+
+    from .corpus import (
+        ARTIFACTS, DESK_DECISIONS, HARD_MEETINGS, HARD_NOTES, HARD_THREADS, MEETINGS, NOTES, THREADS,
+    )
+    from .engines import FixtureExtractor
+
+    db, _refs = _hard_desk(tmp_path)
+    extract_pending(db, FixtureExtractor(bench.FACTS, bench.HARD_FACTS))
+    _generation, entities = db.memory_index.entities()
+    projects = {str(entity["name_key"]) for entity in entities if entity["kind"] == "project"}
+    titles = {
+        fold(row[2])
+        for rows in (NOTES, ARTIFACTS, MEETINGS, DESK_DECISIONS, THREADS, HARD_NOTES, HARD_MEETINGS, HARD_THREADS)
+        for row in rows
+    }
+    assert not projects & titles, projects & titles
 
 
 def test_hard_relation_names_stay_apart(tmp_path: Path) -> None:
@@ -401,6 +513,24 @@ def test_hard_relation_names_stay_apart(tmp_path: Path) -> None:
             assert jane_walk.index(refs[label]) > jane_walk.index(refs["m-jane-w"])
     john_walk = _walk_alone(db, by_id["r13"])
     assert john_walk[0] == refs["m-john-w"], john_walk
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "Gap, measured 2026-10-04 (EXTRACTOR_VERSION 2, qwen3.8-27b): with no title rule "
+    "the model leaves 'Kestrel' out of the facts of m-kestrel and th-kestrel, so the "
+    "walk alone finds neither for r09. A title rule fixed it but invented projects "
+    "from meeting titles (Astra, #845). With vectors on, r09 is complete."
+))
+def test_hard_relation_kestrel_is_complete_by_the_walk(tmp_path: Path) -> None:
+    from holdspeak.memory.extract import extract_pending
+
+    from .engines import FixtureExtractor
+
+    db, refs = _hard_desk(tmp_path)
+    extract_pending(db, FixtureExtractor(bench.FACTS, bench.HARD_FACTS))
+    r09 = next(question for question in bench.load_hard_relation_questions() if question["id"] == "r09")
+    got = bench.run(db, refs, questions=[r09])["ranked"]["r09"][:5]
+    assert {refs[label] for label in r09["expect"]} <= set(got), got
 
 
 @pytest.mark.xfail(strict=True, reason=(

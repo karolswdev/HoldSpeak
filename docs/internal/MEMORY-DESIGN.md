@@ -403,6 +403,28 @@ dark: nothing runs until `memory.extract` has its own assignment.
   same-word MRR is 0.846 (keyword baseline 0.827). The first recording had
   no Sam entity at all (the model named Sam as the subject and left him out
   of `entities`); the prompt now says to list the subject and every person.
+- **A day with no month takes its month by tense** (`EXTRACTOR_VERSION` 2).
+  The model wrote past dates for things to come: "my leave starts on the
+  ninth" in a meeting of 2026-09-22 gave 2026-09-09. The fix is in the
+  prompt only; no code changes a date the model writes. (1) Code finds each
+  day with no month in the chunk ("the ninth", "the 9th"; not "the ninth of
+  September") and gives the model both dates it can be, in one line of the
+  prompt: `Days with no month: "the ninth" = 2026-09-09 if it already
+  happened, 2026-10-09 if it is still to come` (`day_hints`). (2) The rule:
+  for a thing to come, the next such day on or after the source date; for a
+  thing that already happened, the most recent such day on or before it;
+  each date follows the tense of its own verb. A span ends at its start
+  plus its length. Measured on `qwen3.8-27b` over the ten date cases
+  (`tests/memory_bench/date_facts.json`, `corpus.DATE_CASES`): 10 of 10
+  (the version 1 prompt: 5; the rule without the line: 7). Astra's exact
+  line "On the ninth I said I will ship on the thirtieth." gives no fact at
+  all (no wrong date); with an object ("the sensor batch") it gives
+  2026-09-09 and 2026-09-30. Gap: the hard-corpus note "T. Wierzbicki
+  confirmed the sensor batch ships on the twentieth" (2026-09-23) still
+  gives 2026-09-20 (strict xfail). A first try that told the model to name
+  the title's project in the fact made source titles into project entities
+  ("Offline first for forms"); it is gone, and a fence checks that no
+  project entity is a source title.
 
 **Steps, each idempotent and resumable:**
 
@@ -536,8 +558,9 @@ Job `consolidate`, one per scope with new facts, after extraction.
   (cut again now), and the source is in the observation's scope. Recall,
   the read API and the next prompt each check this themselves, so an
   observation with no live evidence is never served, even before
-  `refresh_observations` stamps it `retired`. A history text is shown only
-  while one fact behind it is live evidence. A retired observation is never
+  `refresh_observations` stamps it `retired`. A history entry is shown only
+  while every fact of its change is live evidence in scope and the text it
+  records (its prior version) is still backed. A retired observation is never
   an input again and never comes back: the same belief read again from live
   text is a new observation.
 - **Recall.** An observation is a hit only when the caller names the kind
@@ -563,8 +586,12 @@ Job `consolidate`, one per scope with new facts, after extraction.
   backed version, not served, then retired. A history row (text and reason)
   is shown only while every fact of its change is live in scope and its
   prior version is backed; else it is withheld whole. `superseded_by`
-  names a replacement only while that one is served. The versions table
-  and the history table refuse UPDATE, DELETE and INSERT OR REPLACE.
+  names a replacement only while that one is served. The versions, backing
+  and history tables refuse UPDATE, DELETE and INSERT OR REPLACE, over the
+  declared key and over the rowid (a BEFORE INSERT trigger for each: with
+  `recursive_triggers` off, a REPLACE deletes the old row with no DELETE
+  trigger). The evidence table is not append only: a fact read again from
+  new text takes the new chunk.
 - **Model text is made safe before it is cut** (`defense.redact_clip`):
   redact the raw text, fold the white space, redact again, cut on a space
   (the crossing word goes whole). Facts take the same path.

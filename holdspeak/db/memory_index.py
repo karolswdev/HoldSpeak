@@ -631,10 +631,12 @@ class MemoryIndexRepository(BaseRepository):
             (observation_id, int(version)),
         ).fetchone()[0]
         group = f"{kind}{int(count) + 1}"
+        # Append only: a trigger refuses a second row with the same key, so
+        # a fact named twice in one entry is written once.
         conn.executemany(
-            "INSERT OR IGNORE INTO memory_observation_backing(observation_id,version,grp,fact_id)"
+            "INSERT INTO memory_observation_backing(observation_id,version,grp,fact_id)"
             " VALUES (?,?,?,?)",
-            [(observation_id, int(version), group, str(f["id"])) for f in facts],
+            [(observation_id, int(version), group, fact) for fact in dict.fromkeys(str(f["id"]) for f in facts)],
         )
 
     @staticmethod

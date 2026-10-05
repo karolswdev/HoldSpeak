@@ -21,11 +21,14 @@ facts, resolves their entities, retires the source's old facts and stamps
   edited source keeps its facts in recall while the engine runs.
 
 The prompt takes Hindsight's rules (``H/engine/retain/fact_extraction.py``):
-be selective, resolve "he/she/they" to a name, write absolute dates.
+be selective, resolve "he/she/they" to a name, write absolute dates.  A day
+with no month is the next such day for a thing to come, and the most recent
+such day for a thing that happened (``EXTRACTOR_VERSION`` 2).
 """
 from __future__ import annotations
 
 import hashlib
+import re
 import time
 from collections import deque
 from datetime import datetime
@@ -41,8 +44,8 @@ EXTRACT_CAPABILITY = "memory.extract"
 EXTRACT_CONTRACT = "memory.extract"
 EXTRACT_CONTRACT_REVISION = "1"
 #: Bump to read every source again.  The old facts serve until each source's
-#: new facts commit.
-EXTRACTOR_VERSION = 1
+#: new facts commit.  2: a day with no month takes its month by tense.
+EXTRACTOR_VERSION = 2
 #: Seconds one chunk may take before the runner's deadline stops it.
 EXTRACT_DEADLINE_SECONDS = 180.0
 EXTRACT_MAX_TOKENS = 2048
@@ -130,6 +133,9 @@ Rules:
 - Be selective. Extract only significant facts: decisions, commitments, who owns or owes what, plans, dates, problems, results, numbers. Skip greetings, small talk and filler. An empty list is a good answer for a text with nothing significant.
 - Each fact is one full sentence that is clear alone. Use names. Never write "he", "she", "they", "I", "we" or "you": change each one to the name of the person or group. In a transcript the label before the colon is the speaker. The speaker "Me" is the desk owner: write "the owner".
 - Write every date as an absolute date (YYYY-MM-DD). Calculate it from the date of the source: "Thursday" in a source of Monday 2026-09-14 is 2026-09-17.
+- A day with no month ("the ninth", "by the 15th"): for a thing to come (a plan, a promise, a deadline: "will", "starts", "ships", "is due", "by"), the next such day on or after the date of the source; for a thing that already happened ("missed", "finished", "was", "said"), the most recent such day on or before it. The line "Days with no month" gives both dates: pick one by the tense of the verb of that day. Example, in a source of 2026-09-20: "the review is on the twelfth" is 2026-10-12; "I sent it on the twenty-fifth" is 2026-08-25.
+- A weekday name for a thing to come ("on Thursday") is the next such weekday.
+- A span ("for three weeks") ends at the start date plus its length.
 - kind: "event" for a thing that happened or will happen at a time; "state" for a thing that is true.
 - subject: the name of the person or thing the fact is about. predicate: a short verb phrase ("owns", "will fix", "decided"). object: the rest, short.
 - occurred_start and occurred_end: the absolute date (or date and time) of an event; null when the text gives no time.
@@ -160,6 +166,58 @@ def _day(occurred_at: Optional[str]) -> str:
     return f"{parsed.strftime('%A')} {parsed.date().isoformat()}"
 
 
+_ORDINALS = (
+    "first second third fourth fifth sixth seventh eighth ninth tenth eleventh twelfth thirteenth "
+    "fourteenth fifteenth sixteenth seventeenth eighteenth nineteenth twentieth"
+).split()
+_DAY_WORDS: dict[str, int] = {word: n for n, word in enumerate(_ORDINALS, 1)}
+_DAY_WORDS.update({f"twenty{sep}{word}": 20 + n for n, word in enumerate(_ORDINALS[:9], 1) for sep in (" ", "-")})
+_DAY_WORDS.update({"thirtieth": 30, "thirty first": 31, "thirty-first": 31})
+_MONTH_NAMES = (
+    "january|february|march|april|may|june|july|august|september|october|november|december"
+)
+_NO_MONTH_DAY = re.compile(
+    r"\bthe\s+(" + "|".join(sorted(map(re.escape, _DAY_WORDS), key=len, reverse=True))
+    + r"|[0-9]{1,2}(?:st|nd|rd|th))\b(?!\s+(?:of\s+)?(?:" + _MONTH_NAMES + r")\b)",
+    re.IGNORECASE,
+)
+
+
+def day_hints(chunk_text: str, occurred_at: Optional[str]) -> str:
+    """One line for the prompt: each day with no month in the text, with the
+    two dates it can be.  The model picks by tense; code never changes a
+    date the model writes."""
+    from datetime import date, timedelta
+
+    try:
+        source = datetime.fromisoformat(str(occurred_at or "").strip().replace("Z", "+00:00")).date()
+    except ValueError:
+        return ""
+    found: dict[str, int] = {}
+    for match in _NO_MONTH_DAY.finditer(chunk_text):
+        word = match.group(1).lower()
+        number = _DAY_WORDS.get(word) or (int(word[:-2]) if word[:-2].isdigit() else 0)
+        if 1 <= number <= 31:
+            found.setdefault(f"the {word}", number)
+
+    def step(day: int, forward: bool) -> date:
+        probe = source
+        while probe.day != day:
+            probe += timedelta(days=1 if forward else -1)
+        return probe
+
+    parts = []
+    for phrase, number in found.items():
+        before, after = step(number, False), step(number, True)
+        if before == after:
+            parts.append(f'"{phrase}" = {before.isoformat()}')
+        else:
+            parts.append(
+                f'"{phrase}" = {before.isoformat()} if it already happened, {after.isoformat()} if it is still to come'
+            )
+    return ("Days with no month: " + "; ".join(parts) + "\n") if parts else ""
+
+
 def build_payload(
     chunk_text: str, *, kind: str, title: str, occurred_at: Optional[str]
 ) -> dict[str, Any]:
@@ -168,6 +226,7 @@ def build_payload(
     user = (
         f"Source: {_KIND_WORDS.get(kind, kind)} \"{' '.join(str(title or '').split())[:200]}\"\n"
         f"Date of the source: {_day(occurred_at)}\n"
+        f"{day_hints(chunk_text, occurred_at)}"
         "Text:\n<<<\n"
         f"{chunk_text}\n"
         ">>>"
