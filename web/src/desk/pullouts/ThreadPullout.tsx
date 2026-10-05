@@ -17,18 +17,20 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { RouteEgressChip, TurnLamp, lastTurnLine, routeLamp, type TurnRoute } from "../turnRoute";
 
 /** Owner pick 2026-10-05 (route in footer): a turn's lamp is its receipt
- * boundary. The server writes it in egress_scope (the boundary or the egress
- * word) when the turn's receipt lands; a streaming turn has no receipt yet,
- * and a turn with no model call has no route: neither wears a lamp. */
+ * route. The server writes egress_scope, egress_host and egress_receipt_id
+ * from the turn's receipts when it lands; a streaming turn has no receipt
+ * yet, and a turn with no sent attempt has no route: neither wears a lamp. */
 function threadTurnRoute(msg: ThreadMessage): TurnRoute | null {
-  if (msg.role !== "assistant" || msg.streaming) return null;
+  // A lamp needs receipt provenance (Astra, #875): the scope alone is not it.
+  if (msg.role !== "assistant" || msg.streaming || !msg.egressReceiptId) return null;
   const lamp = routeLamp(msg.egressScope);
   if (!lamp) return null;
   return {
     lamp,
     host: msg.egressHost || "",
     model: msg.modelId || "",
-    receipt: msg.receiptId || "",
+    receipt: msg.egressReceiptId,
+    fallback: Boolean(msg.egressFallback),
   };
 }
 import { useWriteReceipt } from "../hooks/useWriteReceipt";

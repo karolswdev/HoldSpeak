@@ -42,10 +42,10 @@ def deployment_lamp(boundary: Any, endpoint: Any = "") -> str:
     """
     word = _BOUNDARY_LAMP.get(str(boundary or "").strip(), "")
     endpoint = str(endpoint or "").strip()
-    if endpoint and word in {"private_network", "cloud", ""}:
-        # LOCAL only for a loopback IP literal or the word "localhost", which
-        # every connect pins to 127.0.0.1 (loopback_http): the lamp names the
-        # address the bytes go to.
+    if endpoint and word != "mesh":
+        # The endpoint decides, through the ONE classifier
+        # (intel.providers.egress_boundary via loopback_http.endpoint_lamp):
+        # LOCAL only where every connect pins loopback (#855).
         from .loopback_http import endpoint_lamp
 
         return endpoint_lamp(endpoint)
@@ -59,39 +59,20 @@ _SENT_PHASES = frozenset({
 })
 
 
-def served_route(conn: Any, receipt: Any) -> dict[str, str] | None:
-    """Where one routed run's bytes went, read from its execution receipt.
-
-    The lamp, host and model of the winning attempt's deployment; with no
-    winner, of the last attempt that was sent.  ``lamp`` is "" when no attempt
-    was sent (no model call: no lamp).  ``None`` when ``receipt`` is not a
-    route execution receipt (it has no ``attempts``): the caller keeps what it
-    had.  The lamp is ``deployment_lamp`` (the #855 loopback rule), never the
-    admitted plan.
-    """
-    if not isinstance(receipt, dict) or not isinstance(receipt.get("attempts"), list):
-        return None
-    deployment_id = str(receipt.get("winning_deployment_revision_id") or "")
-    boundary = str(receipt.get("winning_boundary") or "")
-    if not deployment_id:
-        sent = [
-            a for a in receipt["attempts"]
-            if isinstance(a, dict) and str(a.get("send_phase") or "") in _SENT_PHASES
-        ]
-        if not sent:
-            return {"lamp": "", "host": "", "model": ""}
-        deployment_id = str(sent[-1].get("deployment_revision_id") or "")
-        boundary = str(sent[-1].get("boundary") or "")
+def _attempt_route(conn: Any, attempt: dict) -> dict[str, str]:
+    """The lamp, host and model of the deployment one attempt was sent to."""
     row = conn.execute(
         "SELECT model,endpoint,node FROM deployment_revisions WHERE id=?",
-        (deployment_id,),
+        (str(attempt.get("deployment_revision_id") or ""),),
     ).fetchone()
     endpoint = str(row["endpoint"] or "") if row else ""
     node = str(row["node"] or "") if row else ""
-    lamp = deployment_lamp(boundary, endpoint)
-    if lamp == "unknown":
-        lamp = ""
-    if lamp == "local" or not lamp:
+    lamp = deployment_lamp(attempt.get("boundary"), endpoint)
+    if lamp not in LAMP_RANK:
+        # Bytes went to a destination this hub cannot name: the least
+        # private lamp, never a quieter one.
+        lamp = "cloud"
+    if lamp == "local":
         host = ""
     elif lamp == "mesh":
         host = node
@@ -100,6 +81,42 @@ def served_route(conn: Any, receipt: Any) -> dict[str, str] | None:
 
         host = (urlparse(endpoint).hostname or "") if endpoint else node
     return {"lamp": lamp, "host": host, "model": str(row["model"] or "") if row else ""}
+
+
+def served_route(conn: Any, receipt: Any) -> dict[str, Any] | None:
+    """Where one routed run's bytes went, read from its execution receipt.
+
+    The route is the LEAST PRIVATE attempt that was sent (any send phase past
+    dispatch), so a cloud attempt is never hidden behind a local fallback; on
+    a tie, the winner.  ``fallback`` is True when the winner is another
+    attempt.  ``receipt`` is this receipt's execution id: the token belongs to
+    the route shown.  ``lamp`` is "" when no attempt was sent (no model call:
+    no lamp).  ``None`` when ``receipt`` is not a route execution receipt (no
+    ``attempts``).  Lamps come from ``deployment_lamp`` (the one classifier).
+    """
+    if not isinstance(receipt, dict) or not isinstance(receipt.get("attempts"), list):
+        return None
+    execution = str(receipt.get("execution_id") or receipt.get("id") or "")
+    winner = str(receipt.get("winning_attempt_id") or "")
+    best: tuple[tuple[int, int, int], dict[str, Any]] | None = None
+    for index, attempt in enumerate(receipt["attempts"]):
+        if not isinstance(attempt, dict) or str(attempt.get("send_phase") or "") not in _SENT_PHASES:
+            continue
+        route = _attempt_route(conn, attempt)
+        won = bool(winner) and str(attempt.get("attempt_id") or "") == winner
+        key = (LAMP_RANK[route["lamp"]], int(won), index)
+        if best is None or key > best[0]:
+            best = (key, {**route, "fallback": bool(winner) and not won})
+    if best is None:
+        return {"lamp": "", "host": "", "model": "", "receipt": execution, "fallback": False}
+    return {**best[1], "receipt": execution}
+
+
+def least_private(routes: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Of several passes' routes, the least private one that sent bytes (on a
+    tie, the later pass); None when no pass sent any."""
+    sent = [(LAMP_RANK[r["lamp"]], i, r) for i, r in enumerate(routes) if r and r.get("lamp")]
+    return max(sent, key=lambda item: item[:2])[2] if sent else None
 
 
 def _entry_lamp(conn: Any, row: Any) -> str:
@@ -189,6 +206,6 @@ def head_lamp(conn: Any, assignment_key: str) -> str | None:
 
 
 __all__ = [
-    "AUTO_ASSIGNED_OPERATION", "LAMP_RANK", "assignment_lamp", "deployment_lamp", "served_route",
+    "AUTO_ASSIGNED_OPERATION", "LAMP_RANK", "assignment_lamp", "deployment_lamp", "least_private", "served_route",
     "head_lamp", "made_by_holdspeak",
 ]

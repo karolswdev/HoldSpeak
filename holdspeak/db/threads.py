@@ -58,6 +58,10 @@ class ThreadMessage:
     completed_at: Optional[float]
     aborted_at: Optional[float]
     deleted_at: Optional[float]
+    #: The execution receipt the egress fields were read from ('' = none).
+    egress_receipt_id: str = ""
+    #: True when the route shown is not the attempt that answered.
+    egress_fallback: bool = False
 
 
 @dataclass(frozen=True)
@@ -137,6 +141,8 @@ def _row_to_message(row: Any) -> ThreadMessage:
         completed_at=float(row["completed_at"]) if row["completed_at"] is not None else None,
         aborted_at=float(row["aborted_at"]) if row["aborted_at"] is not None else None,
         deleted_at=float(row["deleted_at"]) if row["deleted_at"] is not None else None,
+        egress_receipt_id=str(row["egress_receipt_id"] or "") if "egress_receipt_id" in row.keys() else "",
+        egress_fallback=bool(row["egress_fallback"]) if "egress_fallback" in row.keys() else False,
     )
 
 
@@ -456,22 +462,26 @@ class ThreadRepository(BaseRepository):
 
     def set_message_route(
         self, message_id: str, *, egress_scope: str, egress_host: str, model_id: str,
+        egress_receipt_id: str, egress_fallback: bool,
     ) -> None:
-        """Write where a turn's bytes went, read from its execution receipt."""
+        """Write where a turn's bytes went and the receipt that says so."""
         with self._connection() as conn:
             conn.execute(
                 "UPDATE thread_messages SET egress_scope=?, egress_host=?, "
-                "model_id=CASE WHEN ?='' THEN model_id ELSE ? END WHERE id=?",
-                (egress_scope, egress_host, model_id, model_id, str(message_id)),
+                "model_id=CASE WHEN ?='' THEN model_id ELSE ? END, "
+                "egress_receipt_id=?, egress_fallback=? WHERE id=?",
+                (egress_scope, egress_host, model_id, model_id,
+                 egress_receipt_id, int(egress_fallback), str(message_id)),
             )
 
-    def abort_message(self, message_id: str) -> Optional[ThreadMessage]:
+    def abort_message(self, message_id: str, *, receipt_id: str = "") -> Optional[ThreadMessage]:
         now = time.time()
         with self._connection() as conn:
             conn.execute(
                 "UPDATE thread_messages "
-                "SET streaming=0, aborted_at=?, updated_at=? WHERE id=?",
-                (now, now, str(message_id)),
+                "SET streaming=0, aborted_at=?, updated_at=?, "
+                "receipt_id=CASE WHEN ?='' THEN receipt_id ELSE ? END WHERE id=?",
+                (now, now, receipt_id, receipt_id, str(message_id)),
             )
             row = conn.execute(
                 "SELECT * FROM thread_messages WHERE id=?", (str(message_id),)

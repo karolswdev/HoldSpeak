@@ -65,7 +65,7 @@ import {
   RouteEgressChip,
   TurnLamp,
   lastTurnLine,
-  routeLamp,
+  routeFromWire,
   type TurnRoute,
 } from "../turnRoute";
 import { CitationChips, groundedMatchCount } from "../surface/citations";
@@ -98,6 +98,8 @@ export function AskPanel() {
     ctx: number;
   } | null>(null);
   const [result, setResult] = useState<AskRunResult | null>(null);
+  // The run's receipt route (success or refusal): the lamp needs one.
+  const [route, setRoute] = useState<TurnRoute | null>(null);
   const [error, setError] = useState("");
   const [canAskAgain, setCanAskAgain] = useState(false);
   const [kept, setKept] = useState(false);
@@ -184,6 +186,7 @@ export function AskPanel() {
     setPhase("routing");
     setError("");
     setResult(null);
+    setRoute(null);
     setSent({ prompt: prompt.trim(), lens, ctx: context.length });
     // Receipts: the grounding rows ride the pinned context so keep names them.
     printedContext.current = [
@@ -198,6 +201,7 @@ export function AskPanel() {
       context,
       grounding: buildGrounding(grounding, rails),
     });
+    setRoute(routeFromWire(r.route));
     if (!r.ok) {
       const failed = askFailureLabel(r.output);
       setError(failed.label);
@@ -242,28 +246,23 @@ export function AskPanel() {
   );
   const placement = result?.actualPlacement || null;
   // Owner pick 2026-10-05 (route in footer): the turn wears only its lamp;
-  // the footer names the full route once. The lamp is the receipt's egress
-  // (where the bytes went), then the placement boundary.
-  const printedLamp =
-    routeLamp(result?.egress?.scope) ??
-    routeLamp(typeof placement?.boundary === "string" ? placement.boundary : "");
-  const printedRoute: TurnRoute | null =
-    result && printedLamp
-      ? {
-          lamp: printedLamp,
-          host: String(result.egress?.host || ""),
-          model: String(placement?.model || result.model || ""),
-          receipt: String(result.receiptId || ""),
-        }
-      : null;
+  // the footer names the full route once. Both come from the hub's receipt
+  // route, on an answer and on a refusal that sent bytes (Astra, #875).
+  const printedRoute = sent && (result || error) ? route : null;
+  const printedLamp = printedRoute?.lamp ?? null;
+  // A refusal that sent bytes: the failure is on the HUB> turn; the
+  // footer names where they went.
+  const refusedRoute = Boolean(error && printedRoute && !result);
 
   const turnCount = (sent ? 1 : 0) + (result || (error && sent) ? 1 : 0);
 
   // The footer receipt bar's one status line (audit §3.5): fault > routing
   // > run receipt > the compose budget tokens.
   const statusTone =
-    error || overBudget ? ("danger" as const) : undefined;
-  const statusLine = error
+    (error && !refusedRoute) || overBudget ? ("danger" as const) : undefined;
+  const statusLine = refusedRoute && printedRoute
+    ? lastTurnLine(printedRoute)
+    : error
     ? error
     : phase === "routing"
       ? "ROUTING"
@@ -336,6 +335,7 @@ export function AskPanel() {
             <SurfaceTrafficTurn
               prefix="HUB>"
               error
+              meta={<TurnLamp lamp={printedLamp} />}
               verbs={canAskAgain ? (
                 <Button dense variant="ghost" onClick={() => void ask()}>
                   Ask again
@@ -547,7 +547,7 @@ export function AskPanel() {
         )}
       </div>
 
-      <SurfaceFooter className={phase === "printed" && printedRoute ? "turn-route-footer" : undefined} egress={phase === "printed" && printedRoute ? <RouteEgressChip route={printedRoute} /> : null} receipt={copyReceipt || <span className="surface-footer-receipt-line" data-tone={statusTone} role="status">{statusLine}</span>} verbs={<><Button dense variant="ghost" disabled={phase === "routing"} onClick={bin}>{phase === "printed" ? "Bin" : "Cancel"}</Button>{phase === "printed" && result ? <Button dense disabled={kept} onClick={() => void keep()}>{kept ? "Kept" : "Keep"}</Button> : null}</>} />
+      <SurfaceFooter className={printedRoute ? "turn-route-footer" : undefined} egress={printedRoute ? <RouteEgressChip route={printedRoute} /> : null} receipt={copyReceipt || <span className="surface-footer-receipt-line" data-tone={statusTone} role="status">{statusLine}</span>} verbs={<><Button dense variant="ghost" disabled={phase === "routing"} onClick={bin}>{phase === "printed" ? "Bin" : "Cancel"}</Button>{phase === "printed" && result ? <Button dense disabled={kept} onClick={() => void keep()}>{kept ? "Kept" : "Keep"}</Button> : null}</>} />
     </DeskWindowFrame>
   );
 }

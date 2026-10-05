@@ -40,6 +40,16 @@ ANSWERS = {
     "gpt-5-mini": "On 17 October we move Atlas to a new cluster. Expect 10 minutes of read-only time from 06:00 UTC.",
 }
 ASK_ANSWER = "The cutover is on 17 October, after the freeze."
+#: Models whose engine refuses before generating (provider_no_generation):
+#: the request was sent, nothing came back (Astra, #875).
+REFUSING: set[str] = set()
+
+
+def _refuse_if_asked(model: str) -> None:
+    if model in REFUSING:
+        from holdspeak.kernel.provider_signals import ProviderPermanentNoGeneration
+
+        raise ProviderPermanentNoGeneration()
 
 
 class _Engine:
@@ -53,6 +63,7 @@ class _Engine:
     def run_prompt_stream(self, *, messages: Any = None, **_kw: Any) -> Any:
         from holdspeak.kernel.inference_stream import Delta
 
+        _refuse_if_asked(self.active_model)
         for word in self._text.split(" "):
             yield Delta(kind="text", text=word + " ")
         yield Delta(kind="usage", meta={"prompt_tokens": 20, "completion_tokens": 20})
@@ -62,6 +73,7 @@ class _Engine:
         return self._text
 
     def run_prompt(self, *, system_prompt: str = "", user_prompt: str = "", **_kw: Any) -> Any:
+        _refuse_if_asked(self.active_model)
         return ASK_ANSWER
 
 
@@ -101,7 +113,7 @@ def _seed_routes() -> None:
     )
 
 
-def _assign(capability: str, profile_id: str, n: int) -> None:
+def _assign(capability: str, profile_id: str | list[str], n: int) -> None:
     from holdspeak.db import get_database
     from holdspeak.principals import Principal, PrincipalKind
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
@@ -116,7 +128,8 @@ def _assign(capability: str, profile_id: str, n: int) -> None:
         "command_id": f"route-glass-{capability}-{n}",
         "expected_revision": int(row["revision"]) if row is not None else 0,
         "scope": {"kind": "capability", "capability_id": capability},
-        "entries": [{"profile_id": profile_id, "profile_revision": 1}],
+        "entries": [{"profile_id": p, "profile_revision": 1}
+                    for p in ([profile_id] if isinstance(profile_id, str) else profile_id)],
     })
 
 
@@ -141,9 +154,11 @@ class TestRouteInFooter:
 
         _service().inference_runner._engine_factory = lambda rev, **_kw: _Engine(str(rev.model))
         _seed_routes()
+        REFUSING.clear()
         try:
             yield
         finally:
+            REFUSING.clear()
             server.stop()
 
     def _page(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
@@ -247,6 +262,58 @@ class TestRouteInFooter:
                 assert "QWEN3.8-27B" not in text
                 window.locator(".thread-pullout-body").evaluate("b => { b.scrollTop = b.scrollHeight; }")
                 self._shot(page, window, "chat", width)
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_a_refused_ask_that_sent_to_the_cloud_keeps_its_lamp(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        _assign("ask.answer", "glass-cloud", 1)
+        REFUSING.add("gpt-5-mini")
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
+                page.locator("[aria-controls=desk-palette-listbox]").fill("Ask")
+                self._press(page, page.locator("[id='desk-palette-option-go.ask']"), width)
+                ask = page.locator(".desk-ask")
+                ask.locator("textarea").first.fill("What did we decide about the cutover date?")
+                self._press(page, ask.get_by_role("button", name="ASK", exact=True), width)
+                ask.get_by_test_id("ask-failure").wait_for()
+                hub = ask.locator(".surface-traffic-turn", has_text="HUB>")
+                assert hub.locator(".gadget-lamp").inner_text().strip() == "CLOUD"
+                chip = ask.locator(".surface-footer-egress .gadget-chip-egress")
+                assert chip.inner_text().strip().lower() == "api.openai.com"
+                line = ask.locator(".surface-footer-receipt").inner_text().strip().upper()
+                assert line.startswith("LAST TURN · GPT-5-MINI · RECEIPT ··"), line
+                self._shot(page, ask, "ask-refused-cloud", width)
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_a_local_fallback_after_a_cloud_send_shows_cloud(self, width: int) -> None:
+        from playwright.sync_api import sync_playwright
+
+        REFUSING.add("gpt-5-mini")
+        _assign("chat.turn", ["glass-cloud", "glass-local"], 1)
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                tid = _api(page, "POST", "/api/threads", {"title": "Cutover risks"}, token=TOKEN)["id"]
+                _api(page, "POST", f"/api/threads/{tid}/turns", {"text": "Make it shorter."}, token=TOKEN)
+                _wait_turns(page, tid, 1)
+                page.goto(f"{self.base}/?token={TOKEN}&open=thread:{tid}", wait_until="load")
+                window = page.locator(".desk-window", has=page.locator(".thread-pullout-body")).first
+                window.locator(".thread-route-footer").wait_for()
+                lamp = window.locator(".thread-row-assistant .thread-row-head .gadget-lamp")
+                assert lamp.inner_text().strip() == "CLOUD"
+                assert window.locator(".thread-route-footer .gadget-chip-egress").inner_text().strip().lower() == "api.openai.com"
+                line = window.locator(".thread-route-footer .surface-footer-receipt").inner_text().strip().upper()
+                assert line.startswith("LAST TURN · GPT-5-MINI · FALLBACK · RECEIPT ··"), line
+                self._shot(page, window, "chat-fallback", width)
                 assert not errors, errors
             finally:
                 browser.close()

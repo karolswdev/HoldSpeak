@@ -329,9 +329,10 @@ class AskService:
                 before_physical_dispatch=before_physical_dispatch,
             )
             if routed["outcome"] != "succeeded" or not isinstance(routed["result"], dict):
+                # A failed Ask keeps where its bytes went (Astra, #875).
                 raise ServiceError(
                     "inference_route_failed", "No assigned model completed this request",
-                    context={"receipt": routed["receipt"], "status": 409},
+                    context={"receipt": routed["receipt"], "route": self._receipt_route(routed["receipt"]), "status": 409},
                 )
             winner = str(routed["winning_reservation"]["child_invocation_id"])
             result = self._broker.projection_stager.finalize(winner)
@@ -343,6 +344,13 @@ class AskService:
                 )
             result = dict(result)
             result["route_execution_receipt"] = routed["receipt"]
+            # The route the face names: the least private SENT attempt of
+            # this receipt, with its token (inference_locality.served_route).
+            route = self._receipt_route(routed["receipt"])
+            if route is not None:
+                result["route"] = route
+                if route["lamp"]:
+                    result["egress"] = {"scope": route["lamp"], **({"host": route["host"]} if route["host"] else {})}
             self._emit("ready", kind="ask", ref="ask", name=lens)
             return result
         from ..inference_targets import resolve_placement, target_refusal
@@ -401,6 +409,12 @@ class AskService:
         self._emit("ready", kind="ask", ref="ask", name=lens)
         return dict(result)
 
+    def _receipt_route(self, receipt: Any) -> dict[str, Any] | None:
+        from ..inference_locality import served_route
+
+        with self._db._connection() as conn:
+            return served_route(conn, receipt)
+
     def _routed_assignments_active(self) -> bool:
         with self._db._connection() as conn:
             return conn.execute(
@@ -425,10 +439,12 @@ class AskService:
             # #855 loopback rule): the lamp and the host the Ask face names.
             from ..inference_locality import served_route
 
+            # At publish time the receipt is not written yet: the leg that
+            # answered.  ask() replaces it with the full receipt route.
             served = served_route(conn, receipt) or served_route(conn, {
-                "attempts": [],
-                "winning_deployment_revision_id": str(leg["deployment_revision_id"]),
-                "winning_boundary": boundary,
+                "attempts": [{"attempt_id": "leg", "deployment_revision_id": str(leg["deployment_revision_id"]),
+                              "boundary": boundary, "send_phase": "provider_returned"}],
+                "winning_attempt_id": "leg",
             })
         if deployment is None:
             raise ServiceError("inference_route_deployment_missing", "Frozen deployment is missing")
@@ -484,6 +500,15 @@ class AskService:
                                   "actual_placement": actual_placement,
                                   "egress": egress, "model": selected_model,
                                   "context_ids": list(payload["context_ids"]), "context_titles": list(payload["context_titles"])}
+        # The route the face names, from the attempt's placement receipt
+        # (the one classifier; no execution receipt id on this path).
+        from ..inference_locality import deployment_lamp
+        endpoint = str(getattr(target.deployment, "endpoint", "") or "") if target.deployment else ""
+        lamp = deployment_lamp(actual_boundary, endpoint)
+        lamp = "cloud" if lamp == "unknown" else lamp
+        host = "" if lamp == "local" else str(egress.get("host") or urlparse(endpoint).hostname or "")
+        result["route"] = {"lamp": lamp, "host": host,
+                           "model": selected_model, "receipt": "", "fallback": False}
         if placement_block is not None: result["placement"] = placement_block
         if payload["grounding"] is not None: result["grounding"] = payload["grounding"]
         source_text = str(payload["source_text"])

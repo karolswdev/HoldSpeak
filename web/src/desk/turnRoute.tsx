@@ -16,8 +16,28 @@ export interface TurnRoute {
   lamp: EgressLamp;
   host: string;
   model: string;
-  /** The receipt id; the face prints its last four characters. */
+  /** The receipt id the route was read from; the face prints its last
+   * four characters. */
   receipt: string;
+  /** True when another attempt answered: the route shown was a fallback's
+   * earlier, less private send. */
+  fallback?: boolean;
+}
+
+/** The hub's receipt route (`route` on an Ask result or refusal); null when
+ * the hub sent none or no attempt was sent (no lamp). */
+export function routeFromWire(raw: unknown): TurnRoute | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const lamp = routeLamp(typeof r.lamp === "string" ? r.lamp : "");
+  if (!lamp) return null;
+  return {
+    lamp,
+    host: String(r.host || ""),
+    model: String(r.model || ""),
+    receipt: String(r.receipt || ""),
+    fallback: Boolean(r.fallback),
+  };
 }
 
 /** The lamp for a route word from the wire (the boundary or the egress
@@ -55,10 +75,10 @@ export function routeEgress(route: TurnRoute): {
   }
 }
 
-/** The footer's receipt line: LAST TURN · model · RECEIPT ··a91f. */
+/** The footer's receipt line: LAST TURN · model · [FALLBACK ·] RECEIPT ··a91f. */
 export function lastTurnLine(route: TurnRoute): string {
   const short = route.receipt.length > 4 ? route.receipt.slice(-4) : route.receipt;
-  return ["LAST TURN", route.model, short ? `RECEIPT ··${short}` : ""]
+  return ["LAST TURN", route.model, route.fallback ? "FALLBACK" : "", short ? `RECEIPT ··${short}` : ""]
     .filter(Boolean)
     .join(" · ");
 }

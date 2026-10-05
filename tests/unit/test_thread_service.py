@@ -317,7 +317,8 @@ def test_abort_semantics(db, broadcast_fn, broadcasts) -> None:
     done_frames = [d for ft, d in broadcasts if ft == "thread_turn_done"]
     assert len(done_frames) == 1
     assert done_frames[0]["outcome"] == "aborted"
-    assert done_frames[0]["receipt_id"] == "indeterminate"
+    # Astra #875: the real receipt id the pass returned, never a placeholder.
+    assert done_frames[0]["receipt_id"] == "receipt_slow"
 
     # Check DB state.
     msg = db.threads.get_message(result["assistant_message_id"])

@@ -161,15 +161,15 @@ def emit_thread_turn_done(
     receipt_id: str,
     outcome: str,
     egress: str,
-    stats: dict[str, Any], host: str = "", model: str = "",
+    stats: dict[str, Any], **route: Any,
 ) -> None:
-    """Broadcast ``thread_turn_done``: egress/host/model name the receipt's route."""
+    """Broadcast ``thread_turn_done``; ``route`` = host, model, route_receipt_id, fallback."""
     broadcast("thread_turn_done", {
         "thread_id": thread_id,
         "message_id": message_id,
         "receipt_id": receipt_id,
         "outcome": outcome,
-        "egress": egress, "host": host, "model": model,
+        "egress": egress, **route,
         "stats": stats,
     })
 

@@ -171,7 +171,7 @@ describe("ThreadPullout rows", () => {
   it("renders the last turn's receipt short-id in the footer", () => {
     // Owner pick 2026-10-05 (route in footer): the receipt rides the
     // footer's last-turn route, not the row.
-    seedStore([makeMsg({ receiptId: "rcpt-12345678abcdef0123456789abcdef", egressScope: "local" })]);
+    seedStore([makeMsg({ receiptId: "rcpt-12345678abcdef0123456789abcdef", egressReceiptId: "rcpt-12345678abcdef0123456789abcdef", egressScope: "local" })]);
     const { container } = renderPullout();
     expect(container.querySelector(".thread-route-footer")!.textContent).toContain("RECEIPT ··cdef");
     expect(container.querySelector(".thread-row-receipt")).toBeNull();
@@ -187,6 +187,7 @@ describe("ThreadPullout rows", () => {
     seedStore([
       makeMsg({
         receiptId: "rcpt-aabbccdd11223344",
+        egressReceiptId: "rcpt-aabbccdd11223344",
         // Server stores boundary name (same_device), not abstract scope (local).
         egressScope: "same_device",
         modelId: "hs151-fake-model",

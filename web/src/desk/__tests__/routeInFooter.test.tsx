@@ -56,9 +56,9 @@ function renderThread() {
   );
 }
 
-const LAN = turn("a1", { egressScope: "private_network", egressHost: "192.168.1.43", modelId: "qwen3.8-27b", receiptId: "exec-0000a91f" });
-const LOCAL = turn("a2", { egressScope: "local", egressHost: "", modelId: "Qwen3.5 4B", receiptId: "exec-0000e4d1" });
-const CLOUD = turn("a3", { egressScope: "cloud", egressHost: "api.openai.com", modelId: "gpt-5-mini", receiptId: "exec-00007c02" });
+const LAN = turn("a1", { egressScope: "private_network", egressHost: "192.168.1.43", modelId: "qwen3.8-27b", receiptId: "exec-0000a91f", egressReceiptId: "exec-0000a91f" });
+const LOCAL = turn("a2", { egressScope: "local", egressHost: "", modelId: "Qwen3.5 4B", receiptId: "exec-0000e4d1", egressReceiptId: "exec-0000e4d1" });
+const CLOUD = turn("a3", { egressScope: "cloud", egressHost: "api.openai.com", modelId: "gpt-5-mini", receiptId: "exec-00007c02", egressReceiptId: "exec-00007c02" });
 const NONE = turn("a4", { egressScope: "", egressHost: "", modelId: "qwen3.8-27b", receiptId: "", errorJson: { error: "Turn failed" }, parts: [] });
 
 function rowLamp(container: HTMLElement, id: string): string | null {
@@ -122,8 +122,30 @@ describe("chat: a lamp per turn, the route of the last turn in the footer", () =
     expect(footer(local.container)!.querySelector(".gadget-chip-egress")!.textContent).toBe("THIS DEVICE");
   });
 
+  it("a scope with no receipt provenance wears no lamp (the plan is not a receipt)", () => {
+    seed([you("u1", "q"), turn("a5", { egressScope: "cloud", egressHost: "api.openai.com", modelId: "gpt-5-mini", receiptId: "exec-1234" })]);
+    const { container } = renderThread();
+    expect(rowLamp(container, "a5")).toBeNull();
+    expect(footer(container)).toBeNull();
+  });
+
+  it("a fallback after a cloud send names the cloud route and says FALLBACK", () => {
+    seed([you("u1", "q"), turn("a6", { egressScope: "cloud", egressHost: "api.openai.com", modelId: "gpt-5-mini", receiptId: "exec-00007c02", egressReceiptId: "exec-00007c02", egressFallback: true })]);
+    const { container } = renderThread();
+    expect(rowLamp(container, "a6")).toBe("CLOUD");
+    expect(footer(container)!.querySelector(".surface-footer-receipt")!.textContent).toBe("LAST TURN · gpt-5-mini · FALLBACK · RECEIPT ··7c02");
+  });
+
+  it("the footer token is the route's receipt, not the turn's last pass", () => {
+    seed([you("u1", "q"), turn("a7", { egressScope: "cloud", egressHost: "api.openai.com", modelId: "gpt-5-mini", receiptId: "exec-local-pass-e4d1", egressReceiptId: "exec-cloud-pass-7c02" })]);
+    const { container } = renderThread();
+    const line = footer(container)!.querySelector(".surface-footer-receipt")!.textContent!;
+    expect(line).toContain("RECEIPT ··7c02");
+    expect(line).not.toContain("e4d1");
+  });
+
   it("a streaming turn has no receipt yet: no lamp, the footer keeps the last finished turn", () => {
-    seed([you("u1", "q"), LAN, you("u2", "q2"), turn("a9", { streaming: true, completedAt: null, egressScope: "external_service", modelId: "gpt-5-mini" })]);
+    seed([you("u1", "q"), LAN, you("u2", "q2"), turn("a9", { streaming: true, completedAt: null, egressScope: "external_service", modelId: "gpt-5-mini", egressReceiptId: "exec-earlier-pass" })]);
     const { container } = renderThread();
     expect(rowLamp(container, "a9")).toBeNull();
     expect(footer(container)!.querySelector(".gadget-chip-egress")!.textContent).toBe("192.168.1.43 · LAN");
@@ -137,7 +159,7 @@ describe("chat: a lamp per turn, the route of the last turn in the footer", () =
       useThreadStore.getState().applyTurnDone({
         thread_id: "t-1", message_id: "a9", receipt_id: "exec-00007c02",
         outcome: "succeeded", egress: "cloud", host: "api.openai.com",
-        model: "gpt-5-mini", stats: null,
+        model: "gpt-5-mini", route_receipt_id: "exec-00007c02", fallback: false, stats: null,
       });
     });
     expect(rowLamp(container, "a9")).toBe("CLOUD");
@@ -153,7 +175,7 @@ describe("chat: a lamp per turn, the route of the last turn in the footer", () =
     act(() => {
       useThreadStore.getState().applyTurnDone({
         thread_id: "t-1", message_id: "a9", receipt_id: "", outcome: "failed",
-        egress: "", host: "", model: "", stats: { error: "no route" },
+        egress: "", host: "", model: "", route_receipt_id: "", fallback: false, stats: { error: "no route" },
       });
     });
     expect(rowLamp(container, "a9")).toBeNull();
@@ -170,6 +192,7 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
     actual_placement: { target_id: "lan-qwen", target_name: "lan-qwen", boundary: "private_network", model: "qwen3.8-27b" },
     egress: { scope: "private_network", host: "192.168.1.43" },
     route_execution_receipt: { execution_id: "exec-0000a91f" },
+    route: { lamp: "private_network", host: "192.168.1.43", model: "qwen3.8-27b", receipt: "exec-0000a91f", fallback: false },
     context_ids: [],
     context_titles: [],
   };
@@ -180,16 +203,17 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
     useDesk.setState({ items: EMPTY_ITEMS, selectedIds: [], askOpen: true, pullouts: [], panelRects: {}, panelSaved: [], panelOrder: [] });
   });
 
-  async function askWith(payload: Record<string, unknown>) {
+  async function askWith(payload: Record<string, unknown>, status = 200) {
     vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve({
-      ok: true,
-      status: 200,
+      ok: !(String(url).includes("/api/ask") && status >= 400),
+      status: String(url).includes("/api/ask") ? status : 200,
       json: () => Promise.resolve(String(url).includes("/api/ask") ? payload : {}),
     })));
     const view = render(<AskPanel />);
     fireEvent.change(view.container.querySelector("textarea")!, { target: { value: "What did we decide about the cutover date?" } });
     fireEvent.keyDown(view.container.querySelector("textarea")!, { key: "Enter" });
-    await waitFor(() => expect(screen.getByText("The cutover is on 17 October.")).toBeTruthy());
+    if (status >= 400) await waitFor(() => expect(view.container.querySelector("[data-testid=ask-failure]")).toBeTruthy());
+    else await waitFor(() => expect(screen.getByText("The cutover is on 17 October.")).toBeTruthy());
     return view;
   }
 
@@ -209,10 +233,34 @@ describe("Ask: the lamp on the turn, the route once in the footer", () => {
     expect(text.split("qwen3.8-27b").length - 1).toBe(1);
   });
 
-  it("the lamp is the receipt's egress word, not the placement boundary", async () => {
+  it("the lamp is the receipt route, not the placement boundary", async () => {
     // #855: a loopback engine stored as private_network runs LOCAL.
-    const { container } = await askWith({ ...LAN_ASK, egress: { scope: "local" } });
-    expect(container.querySelector(".surface-traffic .gadget-lamp, .gadget-lamp")!.textContent).toBe("LOCAL");
+    const { container } = await askWith({ ...LAN_ASK, route: { lamp: "local", host: "", model: "qwen3.8-27b", receipt: "exec-0000a91f" } });
+    expect(container.querySelector(".surface-traffic .gadget-lamp")!.textContent).toBe("LOCAL");
     expect(container.querySelector(".gadget-chip-egress")!.textContent).toBe("THIS DEVICE");
+  });
+
+  it("an answer with no receipt route wears no lamp", async () => {
+    const { container } = await askWith({ ...LAN_ASK, route: null });
+    expect(container.querySelector(".surface-traffic .gadget-lamp")).toBeNull();
+    expect(container.querySelector(".gadget-chip-egress")).toBeNull();
+  });
+
+  it("a refused Ask that sent to the cloud keeps its lamp and route (the real 409 body)", async () => {
+    const refusal = {
+      error: "No assigned model completed this request",
+      receipt: { execution_id: "exec-00007c02", outcome: "failed", attempts: [{ boundary: "cloud", send_phase: "provider_no_generation" }] },
+      route: { lamp: "cloud", host: "api.openai.com", model: "gpt-5-mini", receipt: "exec-00007c02", fallback: false },
+    };
+    const { container } = await askWith(refusal, 409);
+    expect(container.querySelector(".surface-traffic .gadget-lamp")!.textContent).toBe("CLOUD");
+    expect(container.querySelector(".surface-footer-egress .gadget-chip-egress")!.textContent).toBe("api.openai.com");
+    expect(container.querySelector(".surface-footer-receipt")!.textContent).toBe("LAST TURN · gpt-5-mini · RECEIPT ··7c02");
+  });
+
+  it("a refusal with no sent attempt has no lamp", async () => {
+    const { container } = await askWith({ error: "No assigned model completed this request", route: { lamp: "", host: "", model: "", receipt: "exec-1" } }, 409);
+    expect(container.querySelector(".surface-traffic .gadget-lamp")).toBeNull();
+    expect(container.querySelector(".gadget-chip-egress")).toBeNull();
   });
 });

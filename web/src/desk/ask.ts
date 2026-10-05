@@ -113,6 +113,9 @@ export interface AskRunResult {
   egress: { scope: "local" | "private_network" | "mesh" | "cloud"; host?: string } | null;
   /** The route execution receipt id (the footer prints its last four). */
   receiptId?: string;
+  /** The hub's receipt route (inference_locality.served_route): where the
+   * bytes went, on a success AND on a refusal that sent them. */
+  route?: unknown;
   model: string;
   profileId: string | null;
   inferenceTarget: Record<string, unknown> | null;
@@ -163,9 +166,10 @@ export async function runAsk(opts: {
    * answer can be found again after a restart. Absent, the hub mints one. */
   invocationId?: string;
 }): Promise<AskRunResult> {
-  const fail = (output: string, refusalCode = ""): AskRunResult => ({
+  const fail = (output: string, refusalCode = "", route: unknown = null): AskRunResult => ({
     ok: false,
     output,
+    route,
     invocationId: "",
     refusalCode,
     egress: null,
@@ -224,6 +228,7 @@ export async function runAsk(opts: {
             : error
           : humanizeError(res),
         code,
+        data && typeof data === "object" ? data.route ?? null : null,
       );
     }
     return parseAskResult(data);
@@ -244,6 +249,7 @@ export function parseAskResult(data: Record<string, any>): AskRunResult {
     refusalCode: "",
     egress: data.egress && data.egress.scope ? data.egress : null,
     receiptId: String(data.route_execution_receipt?.execution_id || ""),
+    route: data.route ?? null,
     model: String(data.model || ""),
     profileId: data.profile_id ? String(data.profile_id) : null,
     inferenceTarget:
