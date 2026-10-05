@@ -123,9 +123,9 @@ class TestAllowLists:
         assert "connection.recheck" in _DESK_TOOLS
         # Memory slice 4: + memory.observations (evidence_read).
         assert "memory.observations" in _DESK_TOOLS
-        # Memory slice 5: memory.page is MCP only (the chat tool is slice 6).
-        assert "memory.page" not in _DESK_TOOLS
-        assert len(_DESK_TOOLS) == 69
+        # Memory slice 6: + memory.page (evidence_read; MCP only in slice 5).
+        assert "memory.page" in _DESK_TOOLS
+        assert len(_DESK_TOOLS) == 70
 
     def test_chase_size(self) -> None:
         # Chase includes door.add_item which is a forward reference
@@ -137,15 +137,16 @@ class TestAllowLists:
         # #694: unchanged; people.note.create is WORK and stays (the ruling).
         assert "people.note.create" in _CHASE_TOOLS
         # Memory slice 4: + memory.observations (via Desk).
-        # Memory slice 5: memory.page is MCP only; Chase is unchanged.
-        assert "memory.page" not in _CHASE_TOOLS
-        assert len(_CHASE_TOOLS) == 75
+        # Memory slice 6: + memory.page (via Desk).
+        assert "memory.page" in _CHASE_TOOLS
+        assert len(_CHASE_TOOLS) == 76
 
     def test_draft_empty(self) -> None:
         assert len(_DRAFT_TOOLS) == 0
 
     def test_plan_size(self) -> None:
-        assert len(_PLAN_TOOLS) == 7
+        # Memory slice 6: + memory.page beside memory.search.
+        assert len(_PLAN_TOOLS) == 8
 
     def test_desk_is_subset_of_chase(self) -> None:
         assert _DESK_TOOLS < _CHASE_TOOLS

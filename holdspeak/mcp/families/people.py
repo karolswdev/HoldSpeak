@@ -46,11 +46,14 @@ def _tool(
     }
 
 
-_BOUNDARY = (
+#: The operator's half of the disclosure: how whoever runs the MCP server
+#: restricts it.  A chat turn cannot act on it, so the thread palette leaves
+#: it out (``services.thread_tools.tool_schemas_for``); the custody half stays.
+MCP_ACCESS_NOTE = (
     "PEOPLE DISCLOSURE: local-owner defaults to write; set "
     "HOLDSPEAK_MCP_PEOPLE_ACCESS=read or =off to restrict. "
-    "Only shared-intent crosses MCP. Leader-private prep is never returned. "
 )
+_BOUNDARY = MCP_ACCESS_NOTE + "Only shared-intent crosses MCP. Leader-private prep is never returned. "
 
 TOOLS: list[dict[str, Any]] = [
     _tool(

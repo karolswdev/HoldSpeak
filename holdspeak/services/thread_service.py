@@ -336,6 +336,9 @@ class ThreadService:
 
         # -- Validate refs BEFORE writing (unknown -> 4xx naming the id, no rows) --
         frozen_ref_rows: list[dict[str, Any]] = []
+        # Memory slice 6: the scopes this turn reflects on (its project refs;
+        # with no explicit source, the desk).  Read live below, never frozen.
+        reflect_on: list[tuple[str, str]] = []
         if refs or text.strip():
             # Separate person refs from grounding refs.
             person_refs: list[str] = []
@@ -387,6 +390,9 @@ class ThreadService:
                         code="grounding_not_found",
                         context={"unknown_ids": [person_id]},
                     )
+
+            from .memory_grounding import reflect_scopes
+            reflect_on = reflect_scopes(grounding_refs, explicit=bool(grounding_refs))
 
             # Resolve grounding refs through hydrate_refs_detailed.
             if grounding_refs or text.strip():
@@ -524,6 +530,14 @@ class ThreadService:
                 invocation_id=invocation_id,
                 profile_override=profile_override,
             )
+
+        # Memory slice 6 (MEMORY-DESIGN.md §3.5): the scope's pages, then its
+        # observations, before the recall, fitted to the route this turn
+        # will be admitted on.  Nothing served: the payload is unchanged.
+        payload = await asyncio.to_thread(
+            self._with_reflect, payload, thread_id, user_msg.id, thread,
+            text=text, scopes=reflect_on, operation_id=invocation_id,
+        )
 
         # Admit through the adoption service.
         admitted = await asyncio.to_thread(
@@ -2126,17 +2140,59 @@ class ThreadService:
             return set()
         return {str(row[0]).split(":", 1)[1] for row in rows}
 
+    def _with_reflect(
+        self,
+        payload: dict[str, Any],
+        thread_id: str,
+        user_msg_id: str,
+        thread: Any,
+        *,
+        text: str,
+        scopes: list[tuple[str, str]],
+        operation_id: str,
+    ) -> dict[str, Any]:
+        """``payload`` with this turn's pages and observations (§3.5), or
+        ``payload`` itself when none is served or none fits.  The thread
+        itself is excluded, as the recall pass excludes it."""
+        from .memory_grounding import fit_reflect, reflect_block, reflect_for
+
+        reflect = reflect_for(
+            "chat.turn", self._db, scopes=scopes, query=text,
+            exclude_refs=[f"thread:{thread_id}"],
+        )
+        if not reflect:
+            return payload
+
+        def build(memory: Any) -> dict[str, Any]:
+            built = self._assemble_payload(
+                thread_id, user_msg_id, thread, memory_block=reflect_block(memory),
+            )
+            if "tools" in payload:
+                built["tools"] = payload["tools"]
+            return built
+
+        fitted = fit_reflect(
+            self._broker.inference_adoption_service, reflect,
+            capability_id="chat.turn", operation_id=operation_id,
+            reserved_output_tokens=512, build=build,
+        )
+        return build(fitted) if fitted else payload
+
     def _assemble_payload(
         self,
         thread_id: str,
         user_msg_id: str,
         thread: Any,
+        *,
+        memory_block: str = "",
     ) -> dict[str, Any]:
         """Build the inference payload from the thread's message path.
 
         Assembler law: context = recipe/system prompt + leaf-path messages
         after the last compaction cut + frozen ref leaves.  Any part with
         sensitive=1 is redacted when the egress scope is cloud.
+        ``memory_block`` (this turn's pages and observations, read live)
+        goes in a system message just before the frozen ref leaves.
         """
         # Get the system prompt from the recipe, if any.
         system_prompt = "You are the desk's AI core. Be concrete and brief."
@@ -2237,6 +2293,8 @@ class ThreadService:
                 except (json.JSONDecodeError, TypeError):
                     pass
 
+        if memory_block:
+            messages.append({"role": "system", "content": memory_block})
         if ref_context_parts:
             messages.append({"role": "system", "content": "\n\n".join(ref_context_parts)})
 

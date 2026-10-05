@@ -42,11 +42,12 @@ if TYPE_CHECKING:
 # PHILO-10-01 (#694): ``channel.*`` joins them -- the Send's family is the
 # Room's, reached over MCP or named by a custom mode; the seeded Desk and
 # Chase palettes do not widen by classifying it for the gate.
-# Memory slice 5: ``memory.page`` is classified for the gate and reached
-# over MCP only.  The chat tool is slice 6 (MEMORY-DESIGN.md §8): the
-# admission law reserves one token per schema byte, and the seeded Chase
-# palette sits at a 32k context's edge (one more schema overflowed it).
-_MCP_ONLY = frozenset({"memory.page"})
+# Memory slice 6: ``memory.page`` joins the thread palettes (it was MCP only
+# in slice 5).  The admission law reserves one token per schema byte and the
+# seeded Chase palette sits at a 32k context's edge, so the room was made
+# first: the People tools' operator note leaves the chat rendering
+# (``thread_tools.tool_schemas_for``).  A tool here is gate-only, MCP only.
+_MCP_ONLY: frozenset[str] = frozenset()
 
 
 def _thread_side(name: str) -> bool:
@@ -86,11 +87,11 @@ _CHASE_TOOLS = frozenset(_DESK_TOOLS | _CHASE_EXTRAS)
 # --- Draft: no tools ---
 _DRAFT_TOOLS: frozenset[str] = frozenset()
 
-# --- Plan: thought.* reads + door.get + memory.search + decision_record.* reads ---
+# --- Plan: thought.* reads + door.get + memory.search/page + decision_record.* reads ---
 _PLAN_TOOLS = frozenset(
     {name for name in _EVIDENCE_READ if name.startswith("thought.")}
     | {name for name in _EVIDENCE_READ if name.startswith("decision_record.")}
-    | {"door.get", "memory.search"}
+    | {"door.get", "memory.search", "memory.page"}
 )
 
 # --- Project (MCP-007): no thread-side tools; the agent uses MCP tools
