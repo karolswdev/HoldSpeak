@@ -1,30 +1,37 @@
-"""Summarise the meetings saved before any engine existed (owner ruling 2026-10-05).
+"""Summarise the meetings saved while no engine could (owner ruling 2026-10-05).
 
-A meeting saved while ``meeting.deferred_analysis`` resolved to no engine gets
-no summary job: the queue has no "wait for an engine" state, and a job queued
-with no assignment fails when its route plan freezes.  This service pays that
-debt once the engine arrives.
+A meeting saved while ``meeting.deferred_analysis`` had no ready route gets no
+summary job: a job queued with no route fails when its plan freezes.  This
+module pays that debt, and only that debt.
 
 The rule:
 
-* When ``meeting.deferred_analysis`` GAINS an engine (no engine -> engine, or
-  the first check of this hub process finds one), the meetings that ended
-  before that moment and have no summary job are the backlog.
-* Each tick queues at most ``limit`` of them, newest first, so the oldest go
-  last (the memory conductor's order).  The backlog is drained across ticks.
-* Each job goes through the same producer the "Run intelligence" press uses:
-  the meeting's summary route is projected (``project_route``) and the job is
-  queued with that route (``db.intel.request_intel_retry``).  A route that is
-  not ready stops the tick; nothing is queued without an engine.
-* Idempotent: a meeting with ANY ``intel_jobs`` row (queued, failed, done) or
-  a ``ready`` / ``partial`` / ``queued`` / ``running`` summary is never picked.
-  A failed job is the owner's to retry; it is not re-queued here.
-* ``meeting.intelligence_auto`` decides scope: ``off`` queues nothing,
-  ``room_linked`` only meetings linked to a Room, ``every`` all of them.
+* **The mark is durable and per meeting.**  At Stop, a meeting with a
+  transcript whose summary route is not ready is marked
+  ``summary_deferred_no_engine`` (table ``meeting_summary_backlog``).  The
+  backlog is exactly the marked meetings: never inferred from a restart, a
+  clock, or an "engine gained" moment.  A meeting saved WITH an engine is never
+  marked, so the backlog never queues it (the Stop decision of HS-201-02 stands:
+  ``runtime/meeting_glue.py``).
+* **Skip clears it.**  ``MeetingIntelService.skip_recovery`` removes the mark;
+  a skipped meeting is never queued.
+* **Same route as the queue.**  Each marked meeting's route is projected with
+  ``project_route`` (the queue's own service route for
+  ``meeting.deferred_analysis``; meeting-intel-queue@2 inherits the owner's
+  global "Default for AI work").  Not ready: the marks stay, and the next tick
+  tries again.  Pending work is never dropped.
+* **Consent.**  The backlog drains by itself only to an engine whose
+  assignment runs on this machine (LOCAL lamp) or that the owner chose by his
+  own press (``made_by='owner'``).  Anything else: the marks wait.
+* **Bounded.**  At most ``limit`` jobs per tick, newest first (oldest last),
+  through the "Run intelligence" producer (``db.intel.request_intel_retry``
+  with the projected route).  A queued job removes the mark.
+* ``meeting.intelligence_auto``: ``off`` drains nothing (marks stay),
+  ``room_linked`` only meetings linked to a Room, ``every`` all marked ones.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable, Optional
 
 from ..logging_config import get_logger
@@ -33,68 +40,131 @@ from ..principals import Principal, PrincipalKind
 log = get_logger("meeting.backlog")
 
 BACKLOG_PRINCIPAL = Principal(PrincipalKind.OWNER, "auto-intel")
-BACKLOG_REASON = "auto-intel: saved before an engine existed"
+BACKLOG_REASON = "auto-intel: saved before an engine could summarise it"
+MARK_REASON = "summary_deferred_no_engine"
 #: Jobs queued per tick.  The drainer runs them one at a time anyway.
 BACKLOG_LIMIT = 10
+CAPABILITY_ID = "meeting.deferred_analysis"
+
+RouteFor = Callable[[Any, str], dict[str, Any]]
 
 
-def backlog_meeting_ids(
-    db: Any, *, cutoff: str, auto_mode: str, limit: int,
-) -> list[str]:
-    """Meetings that ended at or before ``cutoff`` with no summary job, newest first."""
+def _project_route(db: Any, meeting_id: str) -> dict[str, Any]:
+    from .meeting_route_projection import project_route
+
+    return project_route(db, invocation_id=f"meeting:{meeting_id}")
+
+
+def mark_if_no_engine(db: Any, meeting_id: str, *, route_for: Optional[RouteFor] = None) -> bool:
+    """At save: mark a transcript-bearing meeting whose summary route is not ready."""
+    with db._connection() as conn:
+        has_transcript = conn.execute(
+            "SELECT 1 FROM segments WHERE meeting_id=? LIMIT 1", (str(meeting_id),)
+        ).fetchone() is not None
+    if not has_transcript:
+        return False
+    route = (route_for or _project_route)(db, str(meeting_id))
+    if route.get("status") == "ready":
+        return False
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO meeting_summary_backlog (meeting_id, reason, marked_at) VALUES (?,?,?)",
+            (str(meeting_id), MARK_REASON, datetime.now(timezone.utc).isoformat()),
+        )
+    return True
+
+
+def clear_mark(db: Any, meeting_id: str) -> None:
+    with db._connection() as conn:
+        conn.execute("DELETE FROM meeting_summary_backlog WHERE meeting_id=?", (str(meeting_id),))
+
+
+def marked_meeting_ids(db: Any, *, auto_mode: str, limit: int) -> list[str]:
+    """Marked meetings still without a summary job, newest first."""
     if auto_mode == "off" or limit < 1:
         return []
     room_only = 1 if auto_mode == "room_linked" else 0
     with db._connection() as conn:
         rows = conn.execute(
-            """SELECT m.id FROM meetings m
-                 WHERE m.parked=0
-                   AND m.ended_at IS NOT NULL AND m.ended_at <= ?
-                   AND LOWER(COALESCE(m.intel_status,'')) NOT IN ('ready','partial','queued','running')
-                   AND EXISTS (SELECT 1 FROM segments s WHERE s.meeting_id=m.id)
-                   AND NOT EXISTS (SELECT 1 FROM intel_jobs j WHERE j.meeting_id=m.id)
-                   AND (? = 0 OR EXISTS (SELECT 1 FROM meeting_projects mp WHERE mp.meeting_id=m.id))
-                 ORDER BY m.ended_at DESC, m.id
-                 LIMIT ?""",
-            (cutoff, room_only, int(limit)),
+            """SELECT b.meeting_id FROM meeting_summary_backlog b
+                 JOIN meetings m ON m.id=b.meeting_id
+                WHERE NOT EXISTS (SELECT 1 FROM intel_jobs j WHERE j.meeting_id=b.meeting_id)
+                  AND LOWER(COALESCE(m.intel_status,'')) NOT IN ('ready','partial','queued','running')
+                  AND (? = 0 OR EXISTS (SELECT 1 FROM meeting_projects mp WHERE mp.meeting_id=b.meeting_id))
+                ORDER BY COALESCE(m.ended_at, m.started_at) DESC, b.meeting_id
+                LIMIT ?""",
+            (room_only, int(limit)),
         ).fetchall()
-    return [str(row["id"]) for row in rows]
+    return [str(row["meeting_id"]) for row in rows]
 
 
-def enqueue_backlog(
+def backlog_consent(db: Any) -> dict[str, Any]:
+    """May the backlog drain by itself?  LOCAL, or chosen by the owner's press.
+
+    Reads the assignment the queue route resolves through (capability, then
+    group, then global; meeting-intel-queue@2).
+    """
+    from ..inference_capabilities import process_inference_capability_registry
+    from ..inference_locality import assignment_lamp
+
+    capability = process_inference_capability_registry().require(CAPABILITY_ID)
+    keys = (f"capability:{CAPABILITY_ID}", f"group:{capability.group_id}", "global")
+    with db._connection() as conn:
+        for key in keys:
+            row = conn.execute(
+                """SELECT h.assignment_id,h.revision,r.made_by
+                     FROM inference_assignment_heads h
+                     JOIN inference_assignment_revisions r
+                       ON r.assignment_id=h.assignment_id AND r.revision=h.revision
+                    WHERE h.assignment_key=? AND h.cleared=0""",
+                (key,),
+            ).fetchone()
+            if row is None:
+                continue
+            lamp = assignment_lamp(conn, str(row["assignment_id"]), int(row["revision"]))
+            made_by = str(row["made_by"])
+            return {
+                "allowed": lamp == "local" or made_by == "owner",
+                "lamp": lamp, "made_by": made_by, "source": key,
+            }
+    return {"allowed": False, "lamp": None, "made_by": None, "source": None}
+
+
+def drain_backlog(
     db: Any,
     *,
-    cutoff: str,
     auto_mode: str,
     limit: int = BACKLOG_LIMIT,
-    route_for: Optional[Callable[[Any, str], dict[str, Any]]] = None,
+    route_for: Optional[RouteFor] = None,
 ) -> dict[str, Any]:
-    """Queue up to ``limit`` backlog meetings through the Run-intelligence producer."""
-    if route_for is None:
-        from .meeting_route_projection import project_route
-
-        def route_for(database: Any, meeting_id: str) -> dict[str, Any]:
-            return project_route(database, invocation_id=f"meeting:{meeting_id}")
-
-    candidates = backlog_meeting_ids(db, cutoff=cutoff, auto_mode=auto_mode, limit=limit)
+    """Queue up to ``limit`` marked meetings; marks stay whenever a job is not queued."""
+    route_for = route_for or _project_route
+    candidates = marked_meeting_ids(db, auto_mode=auto_mode, limit=limit)
+    if not candidates:
+        return {"status": "idle", "queued": []}
+    consent = backlog_consent(db)
+    if not consent["allowed"]:
+        return {"status": "waiting_consent", "queued": [], "consent": consent}
     queued: list[str] = []
     for meeting_id in candidates:
         route = route_for(db, meeting_id)
         if route.get("status") != "ready":
-            # No engine after all (cleared in between): queue nothing more.
-            return {"status": "no_route", "queued": queued, "remaining": True}
+            # Detection and routing are the same call: not ready means wait.
+            return {"status": "waiting_route", "queued": queued}
         outcome = db.intel.request_intel_retry(
             meeting_id, reason=BACKLOG_REASON, planned_route=route,
         )
         if outcome == "queued":
+            clear_mark(db, meeting_id)
             queued.append(meeting_id)
             _record(db, meeting_id, route)
-    remaining = len(candidates) >= limit
-    return {"status": "queued" if queued else "empty", "queued": queued, "remaining": remaining}
+        elif outcome in {"ready", "empty", "missing"}:
+            clear_mark(db, meeting_id)  # nothing left to summarise
+    return {"status": "queued" if queued else "idle", "queued": queued}
 
 
 def _record(db: Any, meeting_id: str, route: dict[str, Any]) -> None:
-    """The same ledger event the after-capture auto-intel writes, mode ``backlog``."""
+    """The ledger event the after-capture auto-intel writes, mode ``backlog``."""
     try:
         from .service_event_ledger import ServiceEventLedger
 
@@ -116,53 +186,30 @@ def _record(db: Any, meeting_id: str, route: dict[str, Any]) -> None:
 
 
 class MeetingSummaryBacklog:
-    """Watches for ``meeting.deferred_analysis`` gaining an engine; drains the backlog."""
+    """One tick of the defaults watcher: drain the marked meetings, bounded."""
 
     def __init__(
         self,
         db_factory: Callable[[], Any],
         *,
-        has_engine: Optional[Callable[[Any, Principal], bool]] = None,
         auto_mode: Optional[Callable[[], str]] = None,
         limit: int = BACKLOG_LIMIT,
-        route_for: Optional[Callable[[Any, str], dict[str, Any]]] = None,
+        route_for: Optional[RouteFor] = None,
         wake: Optional[Callable[[], Any]] = None,
-        clock: Callable[[], datetime] = datetime.now,
     ) -> None:
-        if has_engine is None:
-            from ..runtime.routing_glue import deferred_analysis_has_engine as has_engine
         self._db_factory = db_factory
-        self._has_engine = has_engine
         self._auto_mode = auto_mode or _configured_auto_mode
         self._limit = limit
         self._route_for = route_for
         self._wake = wake
-        self._clock = clock
-        self._had_engine: Optional[bool] = None
-        #: The gain moment while a backlog is being drained; None when idle.
-        self._cutoff: Optional[str] = None
 
     def tick(self) -> dict[str, Any]:
-        db = self._db_factory()
-        has = bool(self._has_engine(db, BACKLOG_PRINCIPAL))
-        gained = has and not self._had_engine
-        self._had_engine = has
-        if not has:
-            self._cutoff = None
-            return {"status": "no_engine"}
-        if gained:
-            self._cutoff = self._clock().isoformat()
-        if self._cutoff is None:
-            return {"status": "idle"}
-        result = enqueue_backlog(
-            db, cutoff=self._cutoff, auto_mode=self._auto_mode(),
+        result = drain_backlog(
+            self._db_factory(), auto_mode=self._auto_mode(),
             limit=self._limit, route_for=self._route_for,
         )
-        if not result["remaining"] or not result["queued"]:
-            # Drained, or nothing more could be queued: wait for the next gain.
-            self._cutoff = None
         if result["queued"]:
-            log.info("Queued %d meeting summaries saved before an engine existed.", len(result["queued"]))
+            log.info("Queued %d meeting summaries saved while no engine could run them.", len(result["queued"]))
             if self._wake is not None:
                 try:
                     self._wake()

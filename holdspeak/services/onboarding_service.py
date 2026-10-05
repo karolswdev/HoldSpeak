@@ -25,7 +25,8 @@ Connections
     is never read out), Jira and Confluence from ``acli``'s
     ``jira_config.yaml`` / ``confluence_config.yaml`` (site and email).
   * ``connections_use`` adds the connector and runs its existing status probe:
-    GitHub ``gh auth status`` (gh checks its token against each host's API);
+    GitHub ``gh auth status --hostname <host>`` (gh checks its token against
+    that host only; the answer names the host and login);
     Jira / Confluence ``acli <product> auth switch`` + ``auth status`` under
     the acli lock (the switch-and-verify law).  Those probes reach the
     provider; the answer names the host.
@@ -92,7 +93,11 @@ def read_gh_accounts(path: Path) -> list[dict[str, Any]]:
             return []
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
     except Exception as exc:
-        log.debug("could not read gh hosts at %s: %s", path, exc)
+        from .jira_provider import config_read_failure
+
+        # Class and position only: the YAML error text quotes the file, and
+        # hosts.yml holds tokens.
+        log.debug("could not read gh hosts at %s: %s", path, config_read_failure(exc))
         return []
     if not isinstance(data, dict):
         return []
@@ -289,7 +294,8 @@ class OnboardingService:
                 "account": row["login"],
                 "site": row["host"],
                 "active": row["active"],
-                "connected": row["active"] and ("github", "") in connected,
+                # Connected only for the host and login the last probe named.
+                "connected": row["active"] and ("github", _gh_account_ref(row["host"], row["login"])) in connected,
                 "lamp": _lamp_for_host(row["host"]),
                 "egress_host": row["host"],
                 "verb": VERB if row["active"] and gh_installed else None,
@@ -334,7 +340,9 @@ class OnboardingService:
         for tool in tools:
             provider = str(tool.get("provider_id") or "")
             if provider == "github" and tool.get("state") == "connected":
-                refs.add(("github", ""))
+                login = str((tool.get("account") or {}).get("login") or "")
+                if login:
+                    refs.add(("github", login))
             for row in tool.get("connections") or []:
                 if row.get("state") == "connected":
                     refs.add((provider, str(row.get("connection_ref") or "")))
@@ -356,7 +364,13 @@ class OnboardingService:
             raise ConflictError("This account cannot be used from here.", code=code)
         provider = match["provider"]
         if provider == "github":
-            entry = self._connections.recheck(principal, "github")
+            # One host: `gh auth status --hostname <host>`; egress to that host.
+            entry = self._connections.recheck(principal, "github", ref=match["site"])
+            expected = _gh_account_ref(match["site"], match["account"])
+            if entry.get("state") == "connected" and str((entry.get("account") or {}).get("login") or "") != expected:
+                raise ConflictError(
+                    "gh is signed in to this host as another account.", code="github_identity_changed",
+                )
         else:
             adapter = self._jira if provider == "jira" else self._confluence
             if adapter is None:
@@ -364,7 +378,14 @@ class OnboardingService:
             adapter.add_connection(principal, match["site"], match["account"])
             ref = candidate_id.split(":", 1)[1]
             entry = self._connections.recheck(principal, provider, ref=ref)
-        return {"candidate": match["id"], "provider": provider, "entry": entry}
+        return {
+            "candidate": match["id"], "provider": provider, "egress_host": match["egress_host"], "entry": entry,
+        }
+
+
+def _gh_account_ref(host: str, login: str) -> str:
+    """How the GitHub connector stores an account: ``login`` on github.com, else ``host:login``."""
+    return login if host == "github.com" else f"{host}:{login}"
 
 
 def _calendar_name(raw: bytes) -> str:

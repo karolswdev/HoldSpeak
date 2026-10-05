@@ -1685,6 +1685,19 @@ class JiraProviderAdapter:
         return self._with_account(principal, connection_ref_str, _run)
 
 
+def config_read_failure(exc: BaseException) -> str:
+    """A loggable description of a config-file read failure: class and position only.
+
+    A YAML error's message and ``str()`` quote the offending source line, and a
+    CLI config file (gh ``hosts.yml``, acli registries) can hold a token, so the
+    text never reaches a log.
+    """
+    mark = getattr(exc, "problem_mark", None) or getattr(exc, "context_mark", None)
+    if mark is not None:
+        return f"{type(exc).__name__} at line {int(mark.line) + 1}, column {int(mark.column) + 1}"
+    return type(exc).__name__
+
+
 def read_acli_profiles(path: Path) -> list[dict[str, Any]]:
     """The accounts one acli registry file names (``~/.config/acli/<product>_config.yaml``).
 
@@ -1703,7 +1716,9 @@ def read_acli_profiles(path: Path) -> list[dict[str, Any]]:
         if not isinstance(data, dict):
             return result
     except Exception as exc:
-        _log.debug("Could not read acli registry at %s: %s", path, exc)
+        # Never the exception text: a YAML error quotes the file, and these
+        # files can hold credentials.  The class and position are enough.
+        _log.debug("Could not read acli registry at %s: %s", path, config_read_failure(exc))
         return result
 
     current_profile = data.get("current_profile", "")

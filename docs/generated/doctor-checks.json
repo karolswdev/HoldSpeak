@@ -1124,11 +1124,11 @@
     {
       "path": "holdspeak/doctor.py",
       "symbol": "_check_hub_health",
-      "line": 85,
+      "line": 109,
       "condition_source": "def _check_hub_health(url: str, token: str) -> DoctorResult:\n    try:\n        status, payload = _get_json(url, \"/health\", token)\n        if status == 200 and payload == {\"status\": \"ok\"}:\n            return DoctorResult(\"PASS\", \"hub-health\", \"/health \u2192 ok\")\n        return DoctorResult(\"FAIL\", \"hub-health\", f\"unexpected response: {payload!r}\")\n    except Exception as exc:  # each doctor check must remain independent\n        return DoctorResult(\"FAIL\", \"hub-health\", _failure(exc))",
       "outcomes": [
         {
-          "line": 90,
+          "line": 114,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1138,7 +1138,7 @@
           "fields": {}
         },
         {
-          "line": 89,
+          "line": 113,
           "constructor": "DoctorResult",
           "args": [
             "'PASS'",
@@ -1148,7 +1148,7 @@
           "fields": {}
         },
         {
-          "line": 92,
+          "line": 116,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1162,11 +1162,11 @@
     {
       "path": "holdspeak/doctor.py",
       "symbol": "_check_runtime_status",
-      "line": 95,
+      "line": 119,
       "condition_source": "def _check_runtime_status(url: str, token: str) -> DoctorResult:\n    try:\n        status, payload = _get_json(url, \"/api/runtime/status\", token)\n        ready = isinstance(payload, dict) and (\n            payload.get(\"status\") in {\"ok\", \"ready\"}\n            or payload.get(\"runtime_status\") == \"ready\"\n        )\n        if status == 200 and ready:\n            return DoctorResult(\"PASS\", \"runtime-status\", \"ready\")\n        return DoctorResult(\"FAIL\", \"runtime-status\", f\"unexpected response: {payload!r}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"runtime-status\", _failure(exc))",
       "outcomes": [
         {
-          "line": 104,
+          "line": 128,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1176,7 +1176,7 @@
           "fields": {}
         },
         {
-          "line": 103,
+          "line": 127,
           "constructor": "DoctorResult",
           "args": [
             "'PASS'",
@@ -1186,7 +1186,7 @@
           "fields": {}
         },
         {
-          "line": 106,
+          "line": 130,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1200,11 +1200,11 @@
     {
       "path": "holdspeak/doctor.py",
       "symbol": "_check_runtime_preflight",
-      "line": 109,
+      "line": 133,
       "condition_source": "def _check_runtime_preflight(url: str, token: str) -> DoctorResult:\n    \"\"\"Report the configured inference endpoint's actual reachability.\"\"\"\n    try:\n        status, payload = _post_json(url, \"/api/setup/runtime-test\", token)\n        if not isinstance(payload, dict):\n            return DoctorResult(\"FAIL\", \"runtime-preflight\", f\"unexpected response: {payload!r}\")\n        detail = str(payload.get(\"detail\") or payload.get(\"error\") or \"no detail\")\n        if status == 200 and payload.get(\"ok\") is True:\n            return DoctorResult(\"PASS\", \"runtime-preflight\", detail)\n        return DoctorResult(\"FAIL\", \"runtime-preflight\", detail)\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"runtime-preflight\", _failure(exc))",
       "outcomes": [
         {
-          "line": 118,
+          "line": 142,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1214,7 +1214,7 @@
           "fields": {}
         },
         {
-          "line": 114,
+          "line": 138,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1224,7 +1224,7 @@
           "fields": {}
         },
         {
-          "line": 117,
+          "line": 141,
           "constructor": "DoctorResult",
           "args": [
             "'PASS'",
@@ -1234,7 +1234,7 @@
           "fields": {}
         },
         {
-          "line": 120,
+          "line": 144,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1248,11 +1248,11 @@
     {
       "path": "holdspeak/doctor.py",
       "symbol": "_check_websocket",
-      "line": 123,
-      "condition_source": "def _check_websocket(url: str, token: str) -> DoctorResult:\n    if not token:\n        return DoctorResult(\"SKIP\", \"websocket\", \"no token configured\")\n    try:\n        from websockets.sync.client import connect\n    except ImportError:\n        return DoctorResult(\"FAIL\", \"websocket\", \"websockets package unavailable\")\n\n    parsed = urlparse(url)\n    scheme = \"wss\" if parsed.scheme == \"https\" else \"ws\"\n    ws_url = f\"{scheme}://{parsed.netloc}{parsed.path.rstrip('/')}/ws\"\n    start = time.monotonic()\n    try:\n        with connect(\n            ws_url,\n            additional_headers=_headers(token),\n            open_timeout=_TIMEOUT_SECONDS,\n            close_timeout=_TIMEOUT_SECONDS,\n        ) as websocket:\n            websocket.send(\"ping\")\n            # The hub also pushes its own frames (the first is \"duration\"), so\n            # read until the pong, bounded by the timeout and a frame count.\n            deadline = start + _TIMEOUT_SECONDS\n            frame: object = None\n            for _ in range(50):\n                remaining = deadline - time.monotonic()\n                if remaining <= 0:\n                    break\n                frame = websocket.recv(timeout=remaining)\n                if frame == \"pong\":\n                    break\n        elapsed_ms = int((time.monotonic() - start) * 1000)\n        if frame == \"pong\":\n            return DoctorResult(\"PASS\", \"websocket\", f\"pong received in {elapsed_ms}ms\")\n        return DoctorResult(\"FAIL\", \"websocket\", f\"no pong; last frame: {frame!r}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"websocket\", _failure(exc))",
+      "line": 147,
+      "condition_source": "def _check_websocket(url: str, token: str) -> DoctorResult:\n    if not token:\n        return DoctorResult(\"SKIP\", \"websocket\", \"no token configured\")\n    try:\n        from websockets.sync.client import connect\n    except ImportError:\n        return DoctorResult(\"FAIL\", \"websocket\", \"websockets package unavailable\")\n\n    parsed = urlparse(url)\n    scheme = \"wss\" if parsed.scheme == \"https\" else \"ws\"\n    ws_url = f\"{scheme}://{parsed.netloc}{parsed.path.rstrip('/')}/ws\"\n    start = time.monotonic()\n    try:\n        from .loopback_http import is_loopback_url\n\n        with connect(\n            ws_url,\n            additional_headers=_headers(token),\n            # A loopback hub is reached directly, never through a proxy (the\n            # sync client follows no redirect).\n            **({\"proxy\": None} if is_loopback_url(url) else {}),\n            open_timeout=_TIMEOUT_SECONDS,\n            close_timeout=_TIMEOUT_SECONDS,\n        ) as websocket:\n            websocket.send(\"ping\")\n            # The hub also pushes its own frames (the first is \"duration\"), so\n            # read until the pong, bounded by the timeout and a frame count.\n            deadline = start + _TIMEOUT_SECONDS\n            frame: object = None\n            for _ in range(50):\n                remaining = deadline - time.monotonic()\n                if remaining <= 0:\n                    break\n                frame = websocket.recv(timeout=remaining)\n                if frame == \"pong\":\n                    break\n        elapsed_ms = int((time.monotonic() - start) * 1000)\n        if frame == \"pong\":\n            return DoctorResult(\"PASS\", \"websocket\", f\"pong received in {elapsed_ms}ms\")\n        return DoctorResult(\"FAIL\", \"websocket\", f\"no pong; last frame: {frame!r}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"websocket\", _failure(exc))",
       "outcomes": [
         {
-          "line": 125,
+          "line": 149,
           "constructor": "DoctorResult",
           "args": [
             "'SKIP'",
@@ -1262,7 +1262,7 @@
           "fields": {}
         },
         {
-          "line": 157,
+          "line": 186,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1272,7 +1272,7 @@
           "fields": {}
         },
         {
-          "line": 129,
+          "line": 153,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1282,7 +1282,7 @@
           "fields": {}
         },
         {
-          "line": 156,
+          "line": 185,
           "constructor": "DoctorResult",
           "args": [
             "'PASS'",
@@ -1292,7 +1292,7 @@
           "fields": {}
         },
         {
-          "line": 159,
+          "line": 188,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1306,11 +1306,11 @@
     {
       "path": "holdspeak/doctor.py",
       "symbol": "_check_desk_bootstrap",
-      "line": 162,
+      "line": 191,
       "condition_source": "def _check_desk_bootstrap(url: str, token: str) -> DoctorResult:\n    try:\n        status, body = _get_html(url)\n        if status == 200 and \"<html\" in body.lower():\n            return DoctorResult(\"PASS\", \"desk-bootstrap\", \"/ \u2192 200\")\n        return DoctorResult(\"FAIL\", \"desk-bootstrap\", \"response is not HTML\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"desk-bootstrap\", _failure(exc))",
       "outcomes": [
         {
-          "line": 167,
+          "line": 196,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1320,7 +1320,7 @@
           "fields": {}
         },
         {
-          "line": 166,
+          "line": 195,
           "constructor": "DoctorResult",
           "args": [
             "'PASS'",
@@ -1330,7 +1330,7 @@
           "fields": {}
         },
         {
-          "line": 169,
+          "line": 198,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1344,11 +1344,11 @@
     {
       "path": "holdspeak/doctor.py",
       "symbol": "_check_auth",
-      "line": 172,
+      "line": 201,
       "condition_source": "def _check_auth(url: str, token: str) -> DoctorResult:\n    if not token:\n        return DoctorResult(\"SKIP\", \"auth\", \"no token configured\")\n    try:\n        status, payload = _get_json(url, \"/api/runtime/status\", token)\n        if status == 200 and isinstance(payload, dict):\n            return DoctorResult(\"PASS\", \"auth\", \"principal: authenticated\")\n        return DoctorResult(\"FAIL\", \"auth\", f\"unexpected response: {payload!r}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"auth\", _failure(exc))",
       "outcomes": [
         {
-          "line": 174,
+          "line": 203,
           "constructor": "DoctorResult",
           "args": [
             "'SKIP'",
@@ -1358,7 +1358,7 @@
           "fields": {}
         },
         {
-          "line": 179,
+          "line": 208,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1368,7 +1368,7 @@
           "fields": {}
         },
         {
-          "line": 178,
+          "line": 207,
           "constructor": "DoctorResult",
           "args": [
             "'PASS'",
@@ -1378,7 +1378,7 @@
           "fields": {}
         },
         {
-          "line": 181,
+          "line": 210,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1392,11 +1392,11 @@
     {
       "path": "holdspeak/doctor.py",
       "symbol": "_check_mcp_server",
-      "line": 184,
+      "line": 213,
       "condition_source": "def _check_mcp_server() -> DoctorResult:\n    executable = shutil.which(\"holdspeak-mcp\")\n    if executable is None:\n        return DoctorResult(\"SKIP\", \"mcp-server\", \"not available\")\n\n    process: subprocess.Popen[str] | None = None\n    try:\n        process = subprocess.Popen(\n            [executable],\n            stdin=subprocess.PIPE,\n            stdout=subprocess.PIPE,\n            stderr=subprocess.DEVNULL,\n            text=True,\n            bufsize=1,\n        )\n        assert process.stdin is not None and process.stdout is not None\n        process.stdin.write(\n            json.dumps(\n                {\n                    \"jsonrpc\": \"2.0\",\n                    \"id\": 1,\n                    \"method\": \"initialize\",\n                    \"params\": {\n                        \"protocolVersion\": \"2024-11-05\",\n                        \"capabilities\": {},\n                        \"clientInfo\": {\"name\": \"holdspeak-doctor\", \"version\": \"1\"},\n                    },\n                }\n            )\n            + \"\\n\"\n        )\n        process.stdin.flush()\n        executor = ThreadPoolExecutor(max_workers=1)\n        try:\n            line = executor.submit(process.stdout.readline).result(timeout=_TIMEOUT_SECONDS)\n        finally:\n            # Do not wait for readline before terminating the sidecar below:\n            # an unavailable sidecar must make doctor fail promptly.\n            executor.shutdown(wait=False, cancel_futures=True)\n        response = json.loads(line)\n        if response.get(\"id\") == 1 and \"result\" in response:\n            return DoctorResult(\"PASS\", \"mcp-server\", \"initialization received\")\n        return DoctorResult(\"FAIL\", \"mcp-server\", f\"unexpected response: {response!r}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"mcp-server\", _failure(exc))\n    finally:\n        if process is not None:\n            process.terminate()\n            try:\n                process.wait(timeout=1)\n            except subprocess.TimeoutExpired:\n                process.kill()\n                process.wait()",
       "outcomes": [
         {
-          "line": 187,
+          "line": 216,
           "constructor": "DoctorResult",
           "args": [
             "'SKIP'",
@@ -1406,7 +1406,7 @@
           "fields": {}
         },
         {
-          "line": 226,
+          "line": 255,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1416,7 +1416,7 @@
           "fields": {}
         },
         {
-          "line": 225,
+          "line": 254,
           "constructor": "DoctorResult",
           "args": [
             "'PASS'",
@@ -1426,7 +1426,7 @@
           "fields": {}
         },
         {
-          "line": 228,
+          "line": 257,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1440,11 +1440,11 @@
     {
       "path": "holdspeak/doctor.py",
       "symbol": "_check_inference",
-      "line": 239,
+      "line": 268,
       "condition_source": "def _check_inference(url: str, token: str) -> DoctorResult:\n    if not token:\n        return DoctorResult(\"SKIP\", \"inference\", \"no token configured\")\n    try:\n        status, payload = _get_json(url, \"/api/inference-targets\", token)\n        targets = payload.get(\"targets\", []) if isinstance(payload, dict) else []\n        ready = [target for target in targets if target.get(\"readiness\", {}).get(\"available\")]\n        if status == 200 and ready:\n            return DoctorResult(\"PASS\", \"inference\", f\"target: {ready[0].get('id', 'ready')}\")\n        if status == 200:\n            return DoctorResult(\"SKIP\", \"inference\", \"no targets configured\")\n        return DoctorResult(\"FAIL\", \"inference\", f\"unexpected response: {payload!r}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"inference\", _failure(exc))",
       "outcomes": [
         {
-          "line": 241,
+          "line": 270,
           "constructor": "DoctorResult",
           "args": [
             "'SKIP'",
@@ -1454,7 +1454,7 @@
           "fields": {}
         },
         {
-          "line": 250,
+          "line": 279,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1464,7 +1464,7 @@
           "fields": {}
         },
         {
-          "line": 247,
+          "line": 276,
           "constructor": "DoctorResult",
           "args": [
             "'PASS'",
@@ -1474,7 +1474,7 @@
           "fields": {}
         },
         {
-          "line": 249,
+          "line": 278,
           "constructor": "DoctorResult",
           "args": [
             "'SKIP'",
@@ -1484,7 +1484,7 @@
           "fields": {}
         },
         {
-          "line": 252,
+          "line": 281,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1498,11 +1498,11 @@
     {
       "path": "holdspeak/doctor.py",
       "symbol": "_check_database",
-      "line": 255,
+      "line": 284,
       "condition_source": "def _check_database() -> DoctorResult:\n    try:\n        from .db import get_database\n        from .principals import Principal, PrincipalKind\n        from .services.primitive_service import PrimitiveService\n\n        PrimitiveService(get_database()).list_notes(Principal(PrincipalKind.OWNER, \"doctor\"))\n        return DoctorResult(\"PASS\", \"database\", \"primitives readable\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"database\", _failure(exc))",
       "outcomes": [
         {
-          "line": 262,
+          "line": 291,
           "constructor": "DoctorResult",
           "args": [
             "'PASS'",
@@ -1512,7 +1512,7 @@
           "fields": {}
         },
         {
-          "line": 264,
+          "line": 293,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1526,11 +1526,11 @@
     {
       "path": "holdspeak/doctor.py",
       "symbol": "check_observer",
-      "line": 267,
+      "line": 296,
       "condition_source": "def check_observer() -> DoctorResult:\n    \"\"\"Verify the pipeline observer's event table can round-trip an event.\"\"\"\n    try:\n        from .db import get_database\n\n        database = get_database()\n        with database._connection() as conn:\n            table = conn.execute(\n                \"SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?\",\n                (\"pipeline_events\",),\n            ).fetchone()\n            if table is None:\n                return DoctorResult(\n                    \"FAIL\", \"observer\", \"unhealthy: pipeline_events table missing; 24h events: unavailable\"\n                )\n\n            recent_events = conn.execute(\n                \"SELECT COUNT(*) FROM pipeline_events WHERE timestamp >= ?\",\n                (time.time() - 86_400,),\n            ).fetchone()[0]\n            event_id = f\"doctor-probe-{uuid.uuid4()}\"\n            try:\n                conn.execute(\n                    \"\"\"\n                    INSERT INTO pipeline_events (\n                        event_id, timestamp, service, method, principal_kind\n                    ) VALUES (?, ?, ?, ?, ?)\n                    \"\"\",\n                    (event_id, time.time(), \"doctor\", \"check_observer\", \"system\"),\n                )\n                event = conn.execute(\n                    \"SELECT event_id FROM pipeline_events WHERE event_id = ?\", (event_id,)\n                ).fetchone()\n                if event is None:\n                    raise RuntimeError(\"probe event was not readable\")\n            finally:\n                conn.execute(\"DELETE FROM pipeline_events WHERE event_id = ?\", (event_id,))\n\n        return DoctorResult(\"PASS\", \"observer\", f\"healthy: 24h events: {recent_events}\")\n    except Exception as exc:\n        return DoctorResult(\"FAIL\", \"observer\", f\"degraded: {_failure(exc)}; 24h events: unavailable\")",
       "outcomes": [
         {
-          "line": 305,
+          "line": 334,
           "constructor": "DoctorResult",
           "args": [
             "'PASS'",
@@ -1540,7 +1540,7 @@
           "fields": {}
         },
         {
-          "line": 307,
+          "line": 336,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",
@@ -1550,7 +1550,7 @@
           "fields": {}
         },
         {
-          "line": 279,
+          "line": 308,
           "constructor": "DoctorResult",
           "args": [
             "'FAIL'",

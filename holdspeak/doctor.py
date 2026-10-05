@@ -13,10 +13,10 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Callable
+from typing import Any, Callable
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener, urlopen
 
 DEFAULT_URL = "http://127.0.0.1:8765"
 _TIMEOUT_SECONDS = 3.0
@@ -51,9 +51,33 @@ def _headers(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}", "X-HoldSpeak-Token": token}
 
 
+class _NoRedirect(HTTPRedirectHandler):
+    """A request that carries the hub token never follows a redirect."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
+        raise HTTPError(req.full_url, code, "redirect refused: the request carries a token", headers, fp)
+
+
+#: A token-bearing request to a named hub: no redirect (proxies as configured).
+_TOKEN_OPENER = build_opener(_NoRedirect())
+#: A token-bearing request to a loopback hub: no redirect and no proxy, so the
+#: token reaches 127.0.0.1 and nothing else (holdspeak/loopback_http.py rules).
+_LOOPBACK_TOKEN_OPENER = build_opener(ProxyHandler({}), _NoRedirect())
+
+
+def _open(request: Request) -> Any:
+    """Open one doctor request.  With a token: never a redirect; loopback: no proxy."""
+    if not request.has_header("Authorization"):
+        return urlopen(request, timeout=_TIMEOUT_SECONDS)  # noqa: S310 - operator-configured hub
+    from .loopback_http import is_loopback_url
+
+    opener = _LOOPBACK_TOKEN_OPENER if is_loopback_url(request.full_url) else _TOKEN_OPENER
+    return opener.open(request, timeout=_TIMEOUT_SECONDS)  # noqa: S310 - operator-configured hub
+
+
 def _get_json(url: str, path: str, token: str = "") -> tuple[int, object]:
     request = Request(f"{url}{path}", headers=_headers(token), method="GET")
-    with urlopen(request, timeout=_TIMEOUT_SECONDS) as response:  # noqa: S310 - operator-configured hub
+    with _open(request) as response:
         raw = response.read()
         return response.status, json.loads(raw.decode("utf-8"))
 
@@ -69,7 +93,7 @@ def _post_json(url: str, path: str, token: str = "") -> tuple[int, object]:
         f"{url}{path}", headers=_headers(token), data=b"{}", method="POST"
     )
     request.add_header("Content-Type", "application/json")
-    with urlopen(request, timeout=_TIMEOUT_SECONDS) as response:  # noqa: S310 - operator-configured hub
+    with _open(request) as response:
         raw = response.read()
         return response.status, json.loads(raw.decode("utf-8"))
 
@@ -133,9 +157,14 @@ def _check_websocket(url: str, token: str) -> DoctorResult:
     ws_url = f"{scheme}://{parsed.netloc}{parsed.path.rstrip('/')}/ws"
     start = time.monotonic()
     try:
+        from .loopback_http import is_loopback_url
+
         with connect(
             ws_url,
             additional_headers=_headers(token),
+            # A loopback hub is reached directly, never through a proxy (the
+            # sync client follows no redirect).
+            **({"proxy": None} if is_loopback_url(url) else {}),
             open_timeout=_TIMEOUT_SECONDS,
             close_timeout=_TIMEOUT_SECONDS,
         ) as websocket:
@@ -353,10 +382,16 @@ def run_checks(url: str | None = None, token: str | None = None) -> list[DoctorR
 
     credential = token if token is not None else os.environ.get("HOLDSPEAK_TOKEN", "")
     if not credential and not url and not os.environ.get("HOLDSPEAK_URL", ""):
+        from .loopback_http import is_loopback_url, pin_loopback_url
+
         # The hub on THIS machine (its owner lock, or 127.0.0.1:8765): its
-        # owner token is in the config file, as holdspeak-mcp reads it.  Never
-        # sent to a URL the caller named.
-        credential = _local_owner_token()
+        # owner token is in the config file, as holdspeak-mcp reads it.  It
+        # goes only to a loopback literal (pinned 127.0.0.1), never through a
+        # proxy and never across a redirect (_open), and never to a URL the
+        # caller named.
+        if is_loopback_url(hub_url):
+            hub_url = pin_loopback_url(hub_url)
+            credential = _local_owner_token()
     return [
         _check_hub_health(hub_url, credential),
         _check_runtime_status(hub_url, credential),

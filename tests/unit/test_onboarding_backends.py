@@ -330,7 +330,7 @@ def test_use_it_connects_github_through_its_status_probe(tmp_path) -> None:
     log: list[list[str]] = []
     service, _db = _connections(tmp_path, log)
     result = service.connections_use(OWNER, {"id": "github:github.com:karolswdev"})
-    assert ["gh", "auth", "status"] in log
+    assert ["gh", "auth", "status", "--hostname", "github.com"] in log
     assert result["entry"]["state"] == "connected"
     detected = {c["id"]: c for c in service.connections_detect(OWNER)["candidates"]}
     assert detected["github:github.com:karolswdev"]["connected"] is True
@@ -412,3 +412,81 @@ def test_the_hub_mounts_the_routes(tmp_path, monkeypatch) -> None:
     )
     assert answer.status_code == 200, answer.text
     assert set(answer.json()) == {"candidates", "tools"}
+
+
+_TWO_HOSTS_YML = """\
+github.com:
+    users:
+        karolswdev:
+            oauth_token: gho_SECRET_ONE
+    user: karolswdev
+ghe.example.com:
+    users:
+        bob:
+            oauth_token: gho_SECRET_THREE
+    user: bob
+"""
+
+
+def test_use_it_on_one_github_host_probes_and_connects_only_that_host(tmp_path) -> None:
+    log: list[list[str]] = []
+    service, _db = _connections(tmp_path, log)
+    (tmp_path / "home" / ".config" / "gh" / "hosts.yml").write_text(_TWO_HOSTS_YML)
+
+    def gh(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        argv = list(args[0])
+        log.append(argv)
+        host = argv[argv.index("--hostname") + 1] if "--hostname" in argv else "github.com"
+        login = {"github.com": "karolswdev", "ghe.example.com": "bob"}[host]
+        return subprocess.CompletedProcess(argv, 0, stdout=f"{host}\n  Logged in to {host} account {login} (keyring)\n", stderr="")
+
+    service._connections._github._runner = gh  # the process edge only
+    result = service.connections_use(OWNER, {"id": "github:ghe.example.com:bob"})
+    assert log == [["gh", "auth", "status", "--hostname", "ghe.example.com"]]
+    assert result["egress_host"] == "ghe.example.com"
+    assert result["entry"]["state"] == "connected"
+    detected = {c["id"]: c["connected"] for c in service.connections_detect(OWNER)["candidates"]}
+    assert detected == {"github:github.com:karolswdev": False, "github:ghe.example.com:bob": True,
+                        "jira:alpha.atlassian.net|karol@example.com": False,
+                        "confluence:alpha.atlassian.net|karol@example.com": False}
+    service.connections_use(OWNER, {"id": "github:github.com:karolswdev"})
+    assert log[-1] == ["gh", "auth", "status", "--hostname", "github.com"]
+    detected = {c["id"]: c["connected"] for c in service.connections_detect(OWNER)["candidates"]}
+    assert detected["github:github.com:karolswdev"] is True
+    assert detected["github:ghe.example.com:bob"] is False  # the last probe named github.com
+
+
+@pytest.mark.parametrize("name", ["gh/hosts.yml", "acli/jira_config.yaml"])
+def test_a_malformed_cli_config_never_logs_its_text(tmp_path, monkeypatch, name) -> None:
+    import logging
+
+    from holdspeak import logging_config
+    from holdspeak.services.jira_provider import read_acli_profiles
+
+    root = logging.getLogger("holdspeak")
+    saved = (root.level, list(root.handlers))
+    log_file = tmp_path / "logs" / "holdspeak.log"
+    monkeypatch.setattr(logging_config, "LOG_DIR", log_file.parent)
+    monkeypatch.setattr(logging_config, "LOG_FILE", log_file)
+    logger = logging_config.setup_logging()
+    try:
+        path = tmp_path / "home" / ".config" / name
+        path.parent.mkdir(parents=True)
+        # The YAML error points at line 3 and quotes it: the token is on it.
+        path.write_text("github.com:\n  user: karol\n  oauth_token: gho_SYNTHETIC_TOKEN_123: x\n")
+        if name.startswith("gh/"):
+            assert read_gh_accounts(path) == []
+        else:
+            assert read_acli_profiles(path) == []
+        for handler in logger.handlers:
+            handler.flush()
+        text = log_file.read_text()
+    finally:
+        for handler in list(logger.handlers):
+            handler.close()
+        logger.handlers[:] = saved[1]
+        root.setLevel(saved[0])
+    assert "could not read" in text.lower()  # the failure is logged
+    assert "line 3" in text  # with its position
+    assert "SYNTHETIC" not in text and "oauth_token" not in text
+

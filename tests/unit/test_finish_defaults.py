@@ -25,6 +25,7 @@ from holdspeak.defaults_conductor import DefaultsConductor
 from holdspeak.services.meeting_backlog_service import (
     BACKLOG_REASON,
     MeetingSummaryBacklog,
+    mark_if_no_engine,
 )
 from tests.unit.test_batteries_default import (  # noqa: F401  (engines is a fixture)
     _desk,
@@ -144,6 +145,88 @@ def test_doctor_uses_the_local_owner_token_only_for_the_local_hub(monkeypatch) -
     seen.clear()
     doctor.run_checks("http://192.168.1.9:8765")  # a hub he named: his local token never goes there
     assert {token for _url, token in seen} == {""}
+
+
+class _Recorder:
+    """A real HTTP server on 127.0.0.1 that records what reached it."""
+
+    def __init__(self, redirect_to: str = "") -> None:
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+        self.seen: list[dict[str, str]] = []
+        recorder = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def _answer(self) -> None:
+                recorder.seen.append({k.lower(): v for k, v in self.headers.items()})
+                if redirect_to:
+                    self.send_response(302)
+                    self.send_header("Location", redirect_to + self.path)
+                    self.end_headers()
+                    return
+                body = b'{"status": "ok"}'
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            do_GET = _answer
+            do_POST = _answer
+
+            def log_message(self, *_args) -> None:
+                pass
+
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.url = f"http://127.0.0.1:{self.server.server_address[1]}"
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def close(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+
+
+def test_doctor_never_carries_the_auto_loaded_token_across_a_redirect(monkeypatch) -> None:
+    """Astra's repro: the local hub's /health redirects to another server; the
+    owner token doctor loaded by itself must not reach it."""
+    from holdspeak import doctor
+
+    other = _Recorder()
+    hub = _Recorder(redirect_to=other.url)
+    try:
+        monkeypatch.delenv("HOLDSPEAK_URL", raising=False)
+        monkeypatch.delenv("HOLDSPEAK_TOKEN", raising=False)
+        monkeypatch.setattr(doctor, "discovered_hub_url", lambda: hub.url)
+        monkeypatch.setattr(doctor, "_local_owner_token", lambda: "owner-secret")
+        results = {r.name: r for r in doctor.run_checks()}
+    finally:
+        hub.close()
+        other.close()
+    assert any(h.get("authorization") == "Bearer owner-secret" for h in hub.seen)  # the hub got it
+    leaked = [h for h in other.seen if "owner-secret" in repr(h)]
+    assert leaked == [], leaked
+    assert results["hub-health"].status == "FAIL"  # a redirect is not the hub
+
+
+def test_doctor_loads_the_owner_token_only_for_a_loopback_literal(monkeypatch) -> None:
+    from holdspeak import doctor
+
+    monkeypatch.delenv("HOLDSPEAK_URL", raising=False)
+    monkeypatch.delenv("HOLDSPEAK_TOKEN", raising=False)
+    monkeypatch.setattr(doctor, "_local_owner_token", lambda: "owner-secret")
+    seen: list[str] = []
+    monkeypatch.setattr(doctor, "_check_hub_health", lambda url, token: seen.append(token) or None)
+    for name in ("_check_runtime_status", "_check_runtime_preflight", "_check_websocket",
+                 "_check_desk_bootstrap", "_check_auth", "_check_inference"):
+        monkeypatch.setattr(doctor, name, lambda url, token: None)
+    for name in ("_check_mcp_server", "_check_database", "check_observer"):
+        monkeypatch.setattr(doctor, name, lambda: None)
+    for discovered, expected in (("http://192.168.1.9:8765", ""), ("http://hub.example:8765", ""),
+                                 ("http://localhost:8765", "owner-secret")):
+        monkeypatch.setattr(doctor, "discovered_hub_url", lambda d=discovered: d)
+        seen.clear()
+        doctor.run_checks()
+        assert seen == [expected], discovered
 
 
 @pytest.mark.timeout(30)
@@ -284,7 +367,7 @@ def test_the_rescan_never_runs_over_a_default_the_owner_made(tmp_path: Path, eng
     assert _receipts(desk.db) == []
 
 
-# ── 4. the summary backlog ────────────────────────────────────────────────
+# ── 4. the summary backlog: durable per-meeting marks ─────────────────────
 
 
 def _jobs(db: Database) -> dict[str, str]:
@@ -293,90 +376,177 @@ def _jobs(db: Database) -> dict[str, str]:
     return {str(r["meeting_id"]): str(r["status"]) for r in rows}
 
 
+def _marks(db: Database) -> set[str]:
+    with db._connection() as conn:
+        return {str(r[0]) for r in conn.execute("SELECT meeting_id FROM meeting_summary_backlog")}
+
+
 def _set_ended(db: Database, meeting_id: str, when: datetime) -> None:
     with db._connection() as conn:
         conn.execute("UPDATE meetings SET ended_at=? WHERE id=?", (when.isoformat(), meeting_id))
 
 
-def _backlog(db: Database, *, auto: str = "every", limit: int = 10, now=None) -> MeetingSummaryBacklog:
-    return MeetingSummaryBacklog(
-        lambda: db, auto_mode=lambda: auto, limit=limit,
-        clock=(lambda: now) if now else datetime.now,
-    )
+def _backlog(db: Database, *, auto: str = "every", limit: int = 10, route_for=None) -> MeetingSummaryBacklog:
+    return MeetingSummaryBacklog(lambda: db, auto_mode=lambda: auto, limit=limit, route_for=route_for)
 
 
-def test_meetings_saved_before_an_engine_are_queued_once_it_has_one(tmp_path: Path) -> None:
+def _saved_without_engine(db: Database, meeting_id: str, *, ended: datetime | None = None, **kwargs) -> None:
+    """A meeting saved at Stop while no engine could summarise it: the real mark."""
+    _seed_meeting(db, meeting_id, **kwargs)
+    if ended is not None:
+        _set_ended(db, meeting_id, ended)
+    assert mark_if_no_engine(db, meeting_id) is True
+
+
+def test_a_meeting_saved_with_no_engine_is_marked_and_queued_once_one_can(tmp_path: Path) -> None:
     db = Database(tmp_path / "backlog.db")
     base = datetime.now() - timedelta(days=3)
     for index in range(3):
-        _seed_meeting(db, f"m{index}")
-        _set_ended(db, f"m{index}", base + timedelta(hours=index))
+        _saved_without_engine(db, f"m{index}", ended=base + timedelta(hours=index))
     _seed_meeting(db, "empty", has_segments=False)
+    assert mark_if_no_engine(db, "empty") is False  # no transcript, nothing to summarise
+    assert _marks(db) == {"m0", "m1", "m2"}
+
     backlog = _backlog(db)
+    assert backlog.tick()["status"] == "waiting_consent"  # no engine at all: marks wait
+    assert _jobs(db) == {} and _marks(db) == {"m0", "m1", "m2"}
 
-    assert backlog.tick() == {"status": "no_engine"}  # no engine: nothing queued
-    assert _jobs(db) == {}
-
-    assign_meeting_engine(db)  # the engine arrives
+    assign_meeting_engine(db)  # the owner assigns an engine
     result = backlog.tick()
-    assert result["status"] == "queued"
     assert result["queued"] == ["m2", "m1", "m0"]  # newest first, oldest last
     assert _jobs(db) == {"m0": "queued", "m1": "queued", "m2": "queued"}
+    assert _marks(db) == set()
     with db._connection() as conn:
         reasons = {r[0] for r in conn.execute("SELECT intel_status_detail FROM meetings WHERE id LIKE 'm%'")}
         events = conn.execute(
             "SELECT COUNT(*) FROM service_events WHERE event_type='meeting.auto_intel_enqueued'"
         ).fetchone()[0]
-    assert reasons == {BACKLOG_REASON}
-    assert events == 3
+    assert reasons == {BACKLOG_REASON} and events == 3
+    assert backlog.tick() == {"status": "idle", "queued": []}
 
-    # Idempotent: the next ticks queue nothing more.
-    assert backlog.tick() == {"status": "idle"}
-    assert _backlog(db).tick()["queued"] == []  # a fresh hub process: still nothing
+
+def test_a_restart_never_queues_a_meeting_saved_with_an_engine(tmp_path: Path) -> None:
+    """Astra's repro: saved WITH an engine (left transcript-only by the Stop
+    decision), then the hub restarts: the backlog must not summarise it."""
+    db = Database(tmp_path / "restart.db")
+    assign_meeting_engine(db)
+    _seed_meeting(db, "with-engine")
+    assert mark_if_no_engine(db, "with-engine") is False  # its route was ready at Stop
+    for _restart in range(2):
+        assert _backlog(db).tick() == {"status": "idle", "queued": []}  # a fresh process each time
+    assert _jobs(db) == {} and _marks(db) == set()
+
+
+def test_an_explicit_skip_clears_the_mark(tmp_path: Path) -> None:
+    from holdspeak.services.meeting_intel_service import MeetingIntelService
+    from tests.unit.test_batteries_default import OWNER
+
+    db = Database(tmp_path / "skip.db")
+    _saved_without_engine(db, "skipped")
+    _saved_without_engine(db, "kept")
+    MeetingIntelService(db).skip_recovery(OWNER, "skipped")
+    assert _marks(db) == {"kept"}
+    assign_meeting_engine(db)
+    assert _backlog(db).tick()["queued"] == ["kept"]
+    assert set(_jobs(db)) == {"kept"}
 
 
 def test_the_backlog_is_bounded_per_tick_and_drains_oldest_last(tmp_path: Path) -> None:
     db = Database(tmp_path / "bounded.db")
     base = datetime.now() - timedelta(days=10)
     for index in range(5):
-        _seed_meeting(db, f"m{index}")
-        _set_ended(db, f"m{index}", base + timedelta(days=index))
+        _saved_without_engine(db, f"m{index}", ended=base + timedelta(days=index))
     assign_meeting_engine(db)
     backlog = _backlog(db, limit=2)
     assert backlog.tick()["queued"] == ["m4", "m3"]
     assert backlog.tick()["queued"] == ["m2", "m1"]
     assert backlog.tick()["queued"] == ["m0"]
-    assert backlog.tick() == {"status": "idle"}
-
-
-def test_a_meeting_saved_after_the_engine_arrived_is_not_backlog(tmp_path: Path) -> None:
-    db = Database(tmp_path / "after.db")
-    gained = datetime.now() - timedelta(hours=1)
-    _seed_meeting(db, "before")
-    _set_ended(db, "before", gained - timedelta(hours=1))
-    _seed_meeting(db, "after")
-    _set_ended(db, "after", gained + timedelta(minutes=5))
-    assign_meeting_engine(db)
-    assert _backlog(db, now=gained).tick()["queued"] == ["before"]
+    assert backlog.tick() == {"status": "idle", "queued": []}
 
 
 def test_the_backlog_follows_intelligence_auto(tmp_path: Path) -> None:
     db = Database(tmp_path / "auto.db")
-    _seed_meeting(db, "linked")
-    _seed_meeting(db, "loose")
+    _saved_without_engine(db, "linked")
+    _saved_without_engine(db, "loose")
     _seed_project(db, "room")
     _link_meeting_project(db, "linked", "room")
     assign_meeting_engine(db)
     assert _backlog(db, auto="off").tick()["queued"] == []
     assert _backlog(db, auto="room_linked").tick()["queued"] == ["linked"]
-    assert set(_jobs(db)) == {"linked"}
+    assert set(_jobs(db)) == {"linked"} and _marks(db) == {"loose"}  # pending, never dropped
 
 
-def test_a_failed_or_summarised_meeting_is_never_requeued(tmp_path: Path) -> None:
-    db = Database(tmp_path / "done.db")
-    _seed_meeting(db, "ready")
-    _seed_meeting(db, "fresh")
-    with db._connection() as conn:
-        conn.execute("UPDATE meetings SET intel_status='ready' WHERE id='ready'")
+def test_a_route_that_is_not_ready_keeps_the_marks_and_resumes(tmp_path: Path) -> None:
+    from holdspeak.services.meeting_route_projection import project_route
+
+    db = Database(tmp_path / "repair.db")
+    _saved_without_engine(db, "pending")
     assign_meeting_engine(db)
-    assert _backlog(db).tick()["queued"] == ["fresh"]
+    broken = {"on": True}
+
+    def route_for(database, meeting_id):
+        if broken["on"]:
+            return {"status": "unavailable", "reason_code": "route unavailable", "legs": []}
+        return project_route(database, invocation_id=f"meeting:{meeting_id}")
+
+    backlog = _backlog(db, route_for=route_for)
+    assert backlog.tick()["status"] == "waiting_route"
+    assert _marks(db) == {"pending"} and _jobs(db) == {}
+    broken["on"] = False  # the route is repaired
+    assert backlog.tick()["queued"] == ["pending"]
+    assert _marks(db) == set()
+
+
+def test_a_network_engine_the_owner_did_not_press_for_never_gets_backlog_work(tmp_path: Path) -> None:
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_batteries_default import OWNER
+    from tests.unit.test_phase143_inference_assignments import _profile
+
+    db = Database(tmp_path / "consent.db")
+    _saved_without_engine(db, "waiting")
+    from holdspeak.inference_capabilities import process_inference_capability_registry
+
+    schema = process_inference_capability_registry().require("meeting.deferred_analysis")
+    _profile(db, "lan-engine", boundary="private_network",
+             claims=("language", f"result_schema:{schema.output_schema_sha256}"))
+    assignments = InferenceAssignmentService(db)
+    # Not something the product writes by itself (#855 fences that); here the
+    # revision says HoldSpeak made a network default, and the backlog refuses it.
+    unpressed = assignments.set_assignment(OWNER, {
+        "command_id": "unpressed-lan", "expected_revision": 0, "scope": {"kind": "global"},
+        "entries": [{"profile_id": "lan-engine", "profile_revision": 1}],
+    }, made_by="holdspeak_default")
+    result = _backlog(db).tick()
+    assert result["status"] == "waiting_consent"
+    assert result["consent"] == {"allowed": False, "lamp": "private_network", "made_by": "holdspeak_default",
+                                 "source": "global"}
+    assert _jobs(db) == {} and _marks(db) == {"waiting"}
+
+    assignments.set_assignment(OWNER, {  # the owner presses for the same engine
+        "command_id": "pressed-lan", "expected_revision": int(unpressed["revision"]), "scope": {"kind": "global"},
+        "entries": [{"profile_id": "lan-engine", "profile_revision": 1}],
+    })
+    assert _backlog(db).tick()["queued"] == ["waiting"]
+
+
+def test_the_default_for_ai_work_routes_the_backlog_through_the_conductor(tmp_path: Path, engines) -> None:
+    """The defaults watcher assigns a loopback default; the same tick queues the
+    marked meeting through the queue's own route (meeting-intel-queue@2)."""
+    from holdspeak.services.meeting_route_projection import project_route
+
+    found: list = []
+    desk = _desk(tmp_path, scan=lambda: list(found))
+    _saved_without_engine(desk.db, "before-engine")
+    conductor = DefaultsConductor(
+        defaults_service=desk.defaults, backlog=_backlog(desk.db), interval=3600,
+    )
+    first = conductor.tick()
+    assert first["rescan"]["status"] == "none" and first["backlog"]["status"] == "waiting_consent"
+
+    ollama = engines(["qwen3:8b"], tags={"qwen3:8b": "8.2B"})
+    found.extend(_scan_of((ollama, "Ollama"))())
+    second = conductor.tick()
+    assert second["rescan"]["status"] == "assigned"
+    assert project_route(desk.db, invocation_id="meeting:before-engine")["status"] == "ready"
+    assert second["backlog"]["queued"] == ["before-engine"]
+    assert _jobs(desk.db) == {"before-engine": "queued"}
