@@ -1140,7 +1140,11 @@ class ThreadService:
                         # and observations are optional.  Fit them again to
                         # THIS pass (it carries the tool exchange), so they
                         # never make a pass fail that fits without them.
-                        if reflect:
+                        # Every pass starts from the turn's payload, which
+                        # holds the block as first sent: refit whenever it
+                        # was sent, so a part fitted to empty stays empty
+                        # (review round 2, Astra).
+                        if reflect_sent:
                             pass_payload, reflect = self._refit_reflect(
                                 pass_payload, reflect_sent, reflect, operation_id=new_inv,
                             )

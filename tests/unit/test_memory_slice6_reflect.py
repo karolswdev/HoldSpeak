@@ -548,3 +548,45 @@ def test_a_memory_page_tool_result_is_never_replayed_on_a_later_turn(hub, mode: 
     kept = [part.text for message in db.threads.list_path(first["thread_id"]) if message.role == "tool"
             for part in db.threads.get_parts(message.id)]
     assert any("ZEPHYRSECRET" in str(text) for text in kept)  # the receipt is kept
+
+
+class _SearchFourTimes(_ChatEngine):
+    """Astra's round 2 repro: four sequential memory.search calls with
+    distinct ids, then an answer."""
+
+    def run_prompt_stream(self, *, messages=None, temperature=None, max_tokens=None, tools=None, **kw):
+        msgs = [dict(m) for m in (messages or [])]
+        self.calls.append(msgs)
+        self.tools_seen.append(tools)
+        done = sum(1 for m in msgs if m.get("role") == "tool")
+        if done < 4:
+            yield Delta(kind="tool_calls", meta={"tool_calls": [{
+                "id": f"call_search_{done + 1}", "name": "memory.search",
+                "arguments": json.dumps({"query": "ZZZNOTFOUNDZZZ"}),
+            }]})
+        else:
+            yield Delta(kind="text", text="OK")
+        yield Delta(kind="usage", meta={"prompt_tokens": 5, "completion_tokens": 2})
+        yield Delta(kind="done")
+
+
+def test_a_part_fitted_to_empty_stays_empty_on_every_later_pass(hub) -> None:
+    """Review round 2 (Astra): 40 desk beliefs, Plan, the long question, four
+    memory.search continuations.  All five passes run, and the memory lines
+    never increase from one pass to the next (main runs all five)."""
+    for index in range(40):
+        _filed_note(hub.db, f"n{index:02d}", f"Desk topic{index:02d} is value{index:02d}-" + "x" * 60 + ".", None)
+    _built(hub.db)
+    engine = _SearchFourTimes()
+    hub.broker.inference_runner._engine_factory = lambda _rev, **_kw: engine
+    hub.engine = engine
+    turn = _turn(hub, "Proceed. " + "a" * 25500, mode="hs-seed-mode-plan")
+    assert turn["outcome"] == "succeeded" and len(turn["calls"]) == 5, turn
+
+    def memory_lines(call: list[dict]) -> int:
+        return sum(str(m.get("content", "")).count("\n- ") for m in call
+                   if m.get("role") == "system" and str(m.get("content", "")).startswith("[MEMORY"))
+
+    lines = [memory_lines(call) for call in turn["calls"]]
+    assert lines[0] > 0 and lines[-1] == 0, lines
+    assert all(later <= earlier for earlier, later in zip(lines, lines[1:])), lines
