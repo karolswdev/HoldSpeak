@@ -60,6 +60,7 @@ export function useFirstTake({
   const [failure, setFailure] = useState<DictationFailure | null>(null);
   const [level, setLevel] = useState(0);
   const [keeping, setKeeping] = useState(false);
+  const [kept, setKept] = useState(false);
   const [message, setMessage] = useState("");
   const [playing, setPlaying] = useState(false);
   const session = useRef<StreamSession | null>(null);
@@ -209,28 +210,61 @@ export function useFirstTake({
     void begin();
   }, [begin]);
 
-  /** The heard sentence becomes a real note, then the normal Desk opens on it. */
+  /** Save the heard sentence as a real note (once; the id is stable). */
+  const saveNote = useCallback(async (text: string) => {
+    const noteId = firstValueKeepNoteId();
+    const result = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
+      method: "POST",
+      json: { id: noteId, title: "First dictation", body_markdown: text, tags: ["dictation"] },
+    });
+    return `note:${String(result.note?.id || noteId)}`;
+  }, []);
+
+  /** Option A "One screen" (owner ratified 2026-10-05): the heard sentence
+   * becomes a real note and the face stays, so the Calendar and the
+   * Connections cards are next on the same screen. */
   const keep = useCallback(async () => {
-    if (!take || keeping) return;
+    if (!take || keeping || kept) return;
     setKeeping(true);
     setMessage("");
     void tracker.current?.event("keep_selected");
     try {
-      const noteId = firstValueKeepNoteId();
-      const result = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
-        method: "POST",
-        json: { id: noteId, title: "First dictation", body_markdown: take.text, tags: ["dictation"] },
-      });
-      stageFirstValueNoteOpen(`note:${String(result.note?.id || noteId)}`);
+      await saveNote(take.text);
+      setKept(true);
       await tracker.current?.finish("success").catch(() => undefined);
-      await onHandoff("completed");
-      clearFirstValueKeepNoteId();
     } catch (error) {
       setMessage(readableError(error));
     } finally {
       setKeeping(false);
     }
-  }, [take, keeping, onHandoff]);
+  }, [take, keeping, kept, saveNote]);
+
+  /** A start verb on the ready face: keep an unkept sentence (custody),
+   * hand off to the Desk as completed, then open where the verb goes. */
+  const finish = useCallback(
+    async (then?: () => void | Promise<unknown>) => {
+      if (keeping) return false;
+      setKeeping(true);
+      setMessage("");
+      abandon();
+      try {
+        if (take && !kept) {
+          await saveNote(take.text);
+          setKept(true);
+        }
+        await onHandoff("completed");
+        if (take) clearFirstValueKeepNoteId();
+        await then?.();
+        return true;
+      } catch (error) {
+        setMessage(readableError(error));
+        return false;
+      } finally {
+        setKeeping(false);
+      }
+    },
+    [take, kept, keeping, onHandoff, abandon, saveNote],
+  );
 
   /** Continue later keeps a heard, unkept sentence first (custody). */
   const leave = useCallback(async () => {
@@ -241,12 +275,8 @@ export function useFirstTake({
     abandon();
     try {
       if (take) {
-        const noteId = firstValueKeepNoteId();
-        const result = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
-          method: "POST",
-          json: { id: noteId, title: "First dictation", body_markdown: take.text, tags: ["dictation"] },
-        });
-        stageFirstValueNoteOpen(`note:${String(result.note?.id || noteId)}`);
+        const ref = kept ? `note:${firstValueKeepNoteId()}` : await saveNote(take.text);
+        stageFirstValueNoteOpen(ref);
       }
       await onHandoff("dismissed");
       if (take) clearFirstValueKeepNoteId();
@@ -255,7 +285,7 @@ export function useFirstTake({
     } finally {
       setKeeping(false);
     }
-  }, [take, keeping, onHandoff, abandon]);
+  }, [take, kept, keeping, onHandoff, abandon, saveNote]);
 
   return {
     leave,
@@ -272,6 +302,8 @@ export function useFirstTake({
     play,
     again,
     keep,
+    kept,
+    finish,
     canPlay: Boolean(take?.audio),
   };
 }
