@@ -764,8 +764,14 @@ class HeartbeatService:
         # already checked it).  For "every_sweep", skip the edge and fire
         # on any non-zero count not held by quiet hours.
         if notify_mode == "every_sweep" and not result["fired"] and result["reason"] == "no_edge":
-            # Override edge: fire if count > 0 and not quiet.
-            if count > 0:
+            # Override edge: fire if count > 0 and not quiet.  The quiet
+            # check is this sweep's own instant: heartbeat_notify returns
+            # "no_edge" before it looks at quiet hours, so without it an
+            # every_sweep owner was woken at night (Astra, #853).
+            if count > 0 and self.in_quiet_hours(self._now_local()):
+                result["held"] = True
+                result["reason"] = "quiet_hours"
+            elif count > 0:
                 from holdspeak.desktop_notify import notify as _do_notify
 
                 if project_count > 1:
