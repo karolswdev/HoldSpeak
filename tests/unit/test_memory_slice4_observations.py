@@ -350,7 +350,8 @@ def test_refines_moves_the_prior_text_to_history(tmp_path: Path) -> None:
     _learn(db, Rules(on_change="refines"))
     [belief] = _obs(db, project_id="atlas")
     assert belief["text"] == "Atlas launch is 2026-10-01." and belief["state"] == "current"
-    assert belief["proof_count"] == 2
+    # The day is backed by the fact that gave it; the month fact backs the month.
+    assert belief["proof_count"] == 1
     assert [h["prior_text"] for h in belief["history"]] == ["Atlas launch is 2026-10."]
 
 
@@ -531,7 +532,7 @@ def test_a_deleted_source_retires_its_observation_and_keeps_the_other_evidence(t
     assert refresh_observations(db)["retired"] == 1 and _served(db) == []
 
 
-def test_a_history_text_is_withheld_when_no_fact_behind_it_is_live(tmp_path: Path) -> None:
+def test_a_history_entry_is_withheld_when_a_version_behind_it_is_not_live(tmp_path: Path) -> None:
     db = _desk(tmp_path)
     _filed_note(db, "n1", "Atlas launch is 2026-10.", "atlas")
     _learn(db)
@@ -541,7 +542,7 @@ def test_a_history_text_is_withheld_when_no_fact_behind_it_is_live(tmp_path: Pat
     assert belief["history"][0]["prior_text"] == "Atlas launch is 2026-10."
     db.notes.delete("n1")
     [belief] = _obs(db)
-    assert belief["history"][0]["prior_text"] is None and belief["history"][0]["withheld"] is True
+    assert belief["text"] == "Atlas launch is 2026-10-01." and belief["history"] == []
     assert "2026-10." not in json.dumps(belief)
 
 
@@ -913,3 +914,241 @@ def test_the_conductor_reports_the_true_call_count_after_a_provider_error(tmp_pa
     monkeypatch.setattr(memory_conductor, "live_work", lambda *_a: "")
     report = memory_conductor._extract_step(db, SimpleNamespace(), None)
     assert report["error"] == "provider 503" and report["calls"] == 1
+
+
+# ── review round 1 (Astra, PR #843): the five defects, each fenced ───────
+
+
+def _month_then_day(db: Database, mode: str) -> tuple[str, Callable[[], None], dict]:
+    """The month from one source, the day refined from a second source, and
+    the function that withdraws the second source by ``mode``."""
+    if mode == "sensitive":
+        _filed_note(db, "n-month", "Atlas launch is 2026-10.", None)
+        thread = db.threads.create_thread(title="Planning")
+        message = db.threads.append_message(thread.id, role="user")
+        part = db.threads.append_part(message.id, kind="text", text="Atlas launch is 2026-10-01.")
+        scope: dict = {}
+        ref = f"thread:{thread.id}"
+
+        def withdraw() -> None:
+            db.threads.append_part(message.id, kind="text", text=part.text, sensitive=True)
+            db.threads.delete_part(part.id)
+    else:
+        _filed_note(db, "n-month", "Atlas launch is 2026-10.", "atlas")
+        _learn(db)
+        ref = _filed_note(db, "general", "Atlas launch is 2026-10-01.", "atlas")
+        scope = {"project_id": "atlas"}
+
+        def withdraw() -> None:
+            if mode == "move":
+                db.project_relationships.upsert(project_id="atlas", resource_ref=ref, deleted=True)
+                db.project_relationships.upsert(project_id="harbor", resource_ref=ref)
+            elif mode == "delete":
+                db.notes.delete("general")
+            elif mode == "edit":
+                _filed_note(db, "general", "Lunch is at noon.", "atlas")
+    if mode == "sensitive":
+        sweep(db)
+        extract_pending(db, Facts())
+        with db._connection() as conn:
+            month = [dict(r) for r in conn.execute("SELECT * FROM memory_facts WHERE text LIKE '%2026-10.'")]
+        consolidate_batch(db, Rules(), ("desk", ""), month)
+    _learn(db, Rules(on_change="refines"))
+    [belief] = _obs(db, **scope)
+    assert belief["text"] == "Atlas launch is 2026-10-01."
+    return ref, withdraw, scope
+
+
+def _everything_served(db: Database, scope: dict, **search: Any) -> str:
+    """Recall, the read API (with history and evidence) and the next prompt's
+    view of the observations, as one text."""
+    parts = [repr(db.memory.search("Atlas launch", kinds="observation", **scope, **search).to_dict())]
+    parts.append(json.dumps(_obs(db)))
+    with db._connection() as conn:
+        live, scopes = consolidate_module.LiveText(conn), consolidate_module.ScopeReader(conn)
+        for each in (("project", "atlas"), ("project", "harbor"), ("desk", "")):
+            parts += [o["text"] for o in consolidate_module.scope_observations(conn, each, [], live=live, scopes=scopes)]
+    return "\n".join(parts)
+
+
+@pytest.mark.parametrize("mode", ["move", "delete", "edit", "sensitive"])
+def test_a_withdrawn_refinement_falls_back_to_the_text_its_own_evidence_backs(tmp_path: Path, mode: str) -> None:
+    db = _desk(tmp_path)
+    ref, withdraw, scope = _month_then_day(db, mode)
+    withdraw()
+    for moment in ("before the sweep", "after the sweep"):
+        served_text = _everything_served(db, scope)
+        assert "2026-10-01" not in served_text, moment
+        [belief] = [o for o in _obs(db) if o["text"].startswith("Atlas launch")]
+        assert belief["text"] == "Atlas launch is 2026-10." and belief["proof_count"] == 1, moment
+        assert belief["history"] == []  # the refine entry names the withdrawn fact
+        assert [e["ref"] for e in belief["evidence"]] == ["note:n-month"]
+        sweep(db)
+    # Nothing is retired: the month is still backed.
+    assert refresh_observations(db)["retired"] == 0
+    # The next consolidation in that scope is shown the month, never the day.
+    _filed_note(db, "n-more", "Atlas launch is 2026-10.", None if mode == "sensitive" else "atlas")
+    rules = Rules()
+    _learn(db, rules)
+    assert "Atlas launch is 2026-10." in rules.received() and "2026-10-01" not in rules.received()
+    # The month's source goes too: now it retires.
+    db.notes.delete("n-month")
+    db.notes.delete("n-more")
+    sweep(db)
+    assert refresh_observations(db)["retired"] == 1
+    assert "Atlas launch" not in _everything_served(db, scope)
+
+
+def test_an_excluded_refinement_is_not_served_to_that_search(tmp_path: Path) -> None:
+    db = _desk(tmp_path)
+    ref, _withdraw, scope = _month_then_day(db, "exclude")
+    [(text, _state, evidence)] = _obs_hits(db, "Atlas launch", exclude_refs=[ref], **scope)
+    assert text == "Atlas launch is 2026-10." and evidence == ("note:n-month",)
+    assert "2026-10-01" not in repr(db.memory.search("Atlas launch", kinds="observation", exclude_refs=[ref]).to_dict())
+    # The other searches still see the day.
+    assert _obs_hits(db, "Atlas launch", **scope)[0][0] == "Atlas launch is 2026-10-01."
+
+
+def test_a_refiled_source_stops_counting_in_its_old_project_at_once(tmp_path: Path) -> None:
+    db = _desk(tmp_path)
+    ref = _filed_note(db, "n1", "Atlas launch is 2026-10-01.", "atlas")
+    _learn(db)
+    db.project_relationships.upsert(project_id="atlas", resource_ref=ref, deleted=True)
+    db.project_relationships.upsert(project_id="harbor", resource_ref=ref)
+    assert "2026-10-01" not in _everything_served(db, {"project_id": "atlas"})
+    assert _obs(db, project_id="harbor") == []  # its old belief never moves with it
+
+
+def test_a_history_reason_with_withdrawn_text_is_withheld(tmp_path: Path) -> None:
+    db = _desk(tmp_path)
+    _filed_note(db, "n-oct", "Atlas launch is 2026-10-01.", "atlas")
+    _learn(db)
+    _filed_note(db, "n-dec", "Atlas launch is 2026-12-24.", "atlas")
+    rules = Rules()
+    base = rules.consolidate
+
+    def with_reason(payload: dict) -> Any:
+        answer = Rules.consolidate(Rules(), payload)
+        for item in answer["updates"]:
+            item["reason"] = item["text"]  # the reason repeats the new day
+        return answer
+
+    rules.answer = with_reason
+    _learn(db, rules)
+    old = next(o for o in _obs(db) if o["state"] == "superseded")
+    assert "2026-12-24" in json.dumps(old["history"])  # shown while it is live
+    db.notes.delete("n-dec")
+    sweep(db)
+    refresh_observations(db)
+    [belief] = _obs(db)
+    assert belief["id"] == old["id"] and belief["superseded_by"] is None
+    assert "2026-12-24" not in json.dumps(_obs(db)) and belief["history"] == []
+    assert base is not None
+
+
+@pytest.mark.parametrize("raw", [
+    "\n".join(["A" * 64, "B" * 64, "C" * 64]),
+    "x" * 589 + " ghp_" + "A" * 36,
+    "x" * 595 + " ghp_" + "A" * 36,  # the marker crosses the limit: it goes whole
+])
+def test_a_model_text_is_redacted_before_it_is_folded_or_cut(tmp_path: Path, raw: str) -> None:
+    from holdspeak.memory.defense import redact
+
+    assert redact(raw) != raw  # the whole text is a secret shape
+    db = _desk(tmp_path)
+    _filed_note(db, "n1", "Atlas launch is 2026-10-01.", "atlas")
+    sweep(db)
+    extract_pending(db, Facts())
+    rules = Rules()
+    rules.answer = {"creates": [{"text": raw, "fact_ids": ["f1"], "reason": raw}], "updates": []}
+    consolidate_pending(db, rules)
+    held = _memory_text(db) + json.dumps(_obs(db))
+    for leak in ("A" * 64, "B" * 64, "C" * 64, "ghp_A"):
+        assert leak not in held
+    # A cut never leaves part of a marker (or of a secret) behind.
+    with db._connection() as conn:
+        written = [str(r[0]) for r in conn.execute(
+            "SELECT text FROM memory_observation_versions UNION ALL SELECT text FROM memory_observations"
+            " UNION ALL SELECT prior_text||reason FROM memory_observation_history")]
+    for text in written + [o["text"] for o in _obs(db)]:
+        assert re.search(r"\[(?!redacted\])", text) is None, text
+    [belief] = _obs(db)
+    assert belief["text"] in (REDACTED, "x" * 589 + " " + REDACTED, "x" * 595)
+
+
+def test_a_fact_text_is_redacted_before_it_is_cut(tmp_path: Path) -> None:
+    db = Database(tmp_path / "fact-cut.db")
+    _note(db, "n", "Plan", "Atlas launch is 2026-10-01.")
+    sweep(db)
+    engine = Scripted()
+    raw = "x" * 589 + " ghp_" + "A" * 36
+    engine.answer = {"facts": [F(raw, "Atlas", [("Atlas", "project")], obj=raw)]}
+    extract_pending(db, engine)
+    assert "ghp_A" not in _memory_text(db)
+
+
+@pytest.mark.parametrize("answer", [
+    # Astra's repro: one fact makes a create AND disputes o1.
+    {"creates": [{"text": "Atlas owner is Lee.", "fact_ids": ["f1"], "reason": "new"}],
+     "updates": [{"observation_id": "o1", "relation": "contradicts", "text": "Atlas owner is Lee Moreau.",
+                  "fact_ids": ["f1"], "reason": "x"}]},
+    {"creates": [{"text": "Atlas owner is Lee.", "fact_ids": ["f1"], "reason": "new"}],
+     "updates": [{"observation_id": "o1", "relation": "contradicts", "text": "Atlas owner is Lee.",
+                  "fact_ids": ["f1"], "reason": "x"}]},
+    {"creates": [{"text": "Atlas owner is Dana.", "fact_ids": ["f1"], "reason": "again"}],
+     "updates": [{"observation_id": "o1", "relation": "supports", "text": "", "fact_ids": ["f2"], "reason": "x"}]},
+    {"creates": [{"text": "Atlas owner is Lee.", "fact_ids": ["f1"], "reason": "new"}],
+     "updates": [{"observation_id": "o1", "relation": "contradicts", "text": "Atlas owner is Lee.",
+                  "fact_ids": ["f2"], "reason": "x"}]},
+])
+def test_an_answer_whose_entries_conflict_fails_whole(tmp_path: Path, answer: dict) -> None:
+    db = _desk(tmp_path)
+    _meeting(db, "m1", "Atlas owner is Dana.", day=1)
+    _learn(db)
+    _meeting(db, "m2", "Atlas owner is Lee.", day=2)
+    _meeting(db, "m3", "Atlas owner is Lee.", day=3)
+    sweep(db)
+    extract_pending(db, Facts())
+    before = _table_rows(db, *OBS_TABLES, "memory_observation_versions", "memory_observation_backing")
+    rules = Rules()
+    rules.answer = answer
+    stats = consolidate_pending(db, rules)
+    assert stats["failed"] == 1 and stats["jobs"] == 0
+    assert _table_rows(db, *OBS_TABLES, "memory_observation_versions", "memory_observation_backing") == before
+    assert [o["state"] for o in _obs(db)] == ["current"]
+
+
+@pytest.mark.parametrize("table,statement", [
+    ("memory_observation_history",
+     "INSERT OR REPLACE INTO memory_observation_history(id,observation_id,at,prior_text,prior_state)"
+     " SELECT id,observation_id,at,'rewritten',prior_state FROM memory_observation_history LIMIT 1"),
+    ("memory_observation_versions",
+     "INSERT OR REPLACE INTO memory_observation_versions(observation_id,version,text,at)"
+     " SELECT observation_id,version,'rewritten',at FROM memory_observation_versions LIMIT 1"),
+    ("memory_observation_versions", "UPDATE memory_observation_versions SET text='rewritten'"),
+    ("memory_observation_versions", "DELETE FROM memory_observation_versions"),
+])
+def test_history_and_versions_refuse_a_replace_on_the_real_connection(tmp_path: Path, table: str, statement: str) -> None:
+    db = _desk(tmp_path)
+    _meeting(db, "m1", "Atlas launch is 2026-10.", day=1)
+    _learn(db)
+    _meeting(db, "m2", "Atlas launch is 2026-10-01.", day=2)
+    _learn(db, Rules(on_change="refines"))
+    before = _table_rows(db, table)
+    with db._connection() as conn:
+        assert conn.execute("PRAGMA recursive_triggers").fetchone()[0] == 0
+        with pytest.raises(sqlite3.IntegrityError, match="append only"):
+            conn.execute(statement)
+    assert _table_rows(db, table) == before and "rewritten" not in repr(before)
+
+
+def test_a_belief_two_facts_made_needs_both(tmp_path: Path) -> None:
+    db = _desk(tmp_path)
+    _filed_note(db, "n1", "Atlas launch is 2026-10-01.", "atlas")
+    _filed_note(db, "n2", "Atlas launch is 2026-10-01.", "atlas")
+    _learn(db)  # one batch: one create from both facts
+    [belief] = _obs(db)
+    assert belief["proof_count"] == 2
+    db.notes.delete("n2")
+    # The text came from both facts together: half of it is no backing.
+    assert _obs(db) == [] and _obs_hits(db, "Atlas launch") == []

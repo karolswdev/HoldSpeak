@@ -32,7 +32,7 @@ from datetime import datetime
 from typing import Any, Callable, Optional, Protocol
 
 from ..logging_config import get_logger
-from .defense import redact
+from .defense import redact, redact_clip
 from .entities import entity_kind, fold, is_name
 
 log = get_logger("memory.extract")
@@ -273,12 +273,14 @@ def validate_output(raw: Any) -> list[dict[str, Any]]:
             raise ExtractionOutputError(reason)
     facts: list[dict[str, Any]] = []
     for item in raw["facts"][:MAX_FACTS_PER_CHUNK]:
-        text = redact(_clip(item["text"], FACT_TEXT_CHARS))
+        # Redact the raw text, fold, redact, then cut on a word: a cut never
+        # breaks a secret's shape (defense.redact_clip).
+        text = redact_clip(item["text"], FACT_TEXT_CHARS)
         entities: list[dict[str, str]] = []
         seen: set[tuple[str, str]] = set()
         for entity in item["entities"]:
             name = _clip(entity["name"], 120)
-            if not is_name(name) or redact(name) != name:
+            if not is_name(name) or redact(name) != name or redact(entity["name"]) != entity["name"]:
                 continue
             kind = entity_kind(entity["kind"])
             key = (kind, fold(name))
@@ -291,9 +293,9 @@ def validate_output(raw: Any) -> list[dict[str, Any]]:
         facts.append({
             "text": text,
             "kind": item["kind"],
-            "subject": redact(_clip(item["subject"])),
-            "predicate": redact(_clip(item["predicate"], 120)) or "states",
-            "object": redact(_clip(item["object"])),
+            "subject": redact_clip(item["subject"], FACT_FIELD_CHARS),
+            "predicate": redact_clip(item["predicate"], 120) or "states",
+            "object": redact_clip(item["object"], FACT_FIELD_CHARS),
             "occurred_start": _when(item["occurred_start"]),
             "occurred_end": _when(item["occurred_end"]),
             "confidence": _confidence(item["confidence"]),

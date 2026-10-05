@@ -148,4 +148,21 @@ def redact_parts(parts: list[str]) -> tuple[list[str], bool]:
     return out, True
 
 
-__all__ = ["REDACTED", "redact", "redact_parts", "redaction_spans"]
+def redact_clip(text: object, limit: int) -> str:
+    """A model-written text made safe to store and serve: redact the RAW
+    text (a secret over many lines is one secret), fold the white space,
+    redact again (folding can make a new shape), then cut to ``limit`` on a
+    space.  The word that crosses the limit is dropped whole, so a cut never
+    ends inside ``[redacted]`` or leaves the head of a secret that no
+    pattern knows any more.  A text whose first word is longer than the
+    limit gives ""."""
+    value = redact(str(text if text is not None else ""))
+    value = redact(" ".join(value.split()))
+    if len(value) <= limit:
+        return value
+    head = value[: limit + 1]
+    space = head.rfind(" ")
+    return redact(value[:space].rstrip()) if space > 0 else ""
+
+
+__all__ = ["REDACTED", "redact", "redact_clip", "redact_parts", "redaction_spans"]

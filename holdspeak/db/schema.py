@@ -4749,7 +4749,10 @@ CREATE TABLE IF NOT EXISTS memory_observation_history (
     prior_state TEXT NOT NULL,
     reason TEXT NOT NULL DEFAULT '',
     fact_ids_json TEXT NOT NULL DEFAULT '[]',
-    prior_evidence_json TEXT NOT NULL DEFAULT '[]'
+    prior_evidence_json TEXT NOT NULL DEFAULT '[]',
+    -- The text version `prior_text` is (memory_observation_versions); NULL on
+    -- a row that holds no version (a retire row).
+    prior_version INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_memory_observation_history_observation
     ON memory_observation_history(observation_id, id);
@@ -4761,6 +4764,48 @@ CREATE TRIGGER IF NOT EXISTS memory_observation_history_no_delete
     BEFORE DELETE ON memory_observation_history BEGIN
     SELECT RAISE(ABORT, 'memory_observation_history is append only');
 END;
+-- INSERT OR REPLACE deletes the old row with no DELETE trigger when
+-- recursive_triggers is off: refuse an insert over an existing id.
+CREATE TRIGGER IF NOT EXISTS memory_observation_history_no_replace
+    BEFORE INSERT ON memory_observation_history
+    WHEN EXISTS (SELECT 1 FROM memory_observation_history WHERE id=NEW.id) BEGIN
+    SELECT RAISE(ABORT, 'memory_observation_history is append only');
+END;
+-- Each text an observation has had, bound to the evidence that made it.
+-- A reader serves the NEWEST version that still has a backing group whose
+-- facts are ALL live evidence in the observation's scope now; none: the
+-- observation is not served.  Append only (three triggers).
+CREATE TABLE IF NOT EXISTS memory_observation_versions (
+    observation_id TEXT NOT NULL,
+    version INTEGER NOT NULL,
+    text TEXT NOT NULL,
+    at TEXT NOT NULL,
+    PRIMARY KEY (observation_id, version)
+);
+CREATE TRIGGER IF NOT EXISTS memory_observation_versions_no_update
+    BEFORE UPDATE ON memory_observation_versions BEGIN
+    SELECT RAISE(ABORT, 'memory_observation_versions is append only');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_observation_versions_no_delete
+    BEFORE DELETE ON memory_observation_versions BEGIN
+    SELECT RAISE(ABORT, 'memory_observation_versions is append only');
+END;
+CREATE TRIGGER IF NOT EXISTS memory_observation_versions_no_replace
+    BEFORE INSERT ON memory_observation_versions
+    WHEN EXISTS (SELECT 1 FROM memory_observation_versions
+                 WHERE observation_id=NEW.observation_id AND version=NEW.version) BEGIN
+    SELECT RAISE(ABORT, 'memory_observation_versions is append only');
+END;
+-- The fact groups that back one version: the entry that introduced it, and
+-- each later `supports` entry while it was the text served.  A group backs
+-- the version only while EVERY fact of it is live evidence.
+CREATE TABLE IF NOT EXISTS memory_observation_backing (
+    observation_id TEXT NOT NULL,
+    version INTEGER NOT NULL,
+    grp TEXT NOT NULL,
+    fact_id TEXT NOT NULL,
+    PRIMARY KEY (observation_id, version, grp, fact_id)
+);
 -- One row per model job that failed on its input (a bad output), so a source
 -- the engine cannot read waits with a back-off and stops after six tries.  A
 -- job that succeeds needs no row: the ledger stamp says it is done.

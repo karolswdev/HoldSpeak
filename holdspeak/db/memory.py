@@ -1217,7 +1217,7 @@ class MemoryRepository(BaseRepository):
         observation when one live evidence source is inside it.  Ranked by
         the question's words the text holds, then proof count.
         """
-        from ..memory.consolidate import LiveText, ScopeReader, live_evidence, supporting
+        from ..memory.consolidate import LiveText, ScopeReader, served
 
         index = self._db.memory_index
         if not index.has_observations():
@@ -1226,22 +1226,28 @@ class MemoryRepository(BaseRepository):
             scope=("project", project) if project else None, states=("current", "disputed")
         )
         wanted = [term.casefold() for term in terms]
-        scored: list[tuple[int, int, str, dict[str, Any]]] = []
-        for row in rows:
-            words = set(_WORD.findall(str(row["text"]).casefold()))
-            named = sum(1 for term in wanted if term in words)
-            if named:
-                scored.append((-named, -int(row["proof_count"] or 0), str(row["id"]), row))
-        scored.sort(key=lambda item: item[:3])
         out: list[dict[str, Any]] = []
         with self._connection() as conn:
             live, scopes = LiveText(conn), ScopeReader(conn)
-            for _named, _proof, _id, row in scored:
+            # What may be served of each NOW (the excluded refs count as not
+            # live): the text ranked and shown is that version, never a
+            # newer one whose facts were withdrawn.
+            views = served(conn, rows, live=live, scopes=scopes, excluded=excluded)
+            scored: list[tuple[int, int, str, dict[str, Any], dict[str, Any]]] = []
+            for row in rows:
+                view = views[str(row["id"])]
+                if view is None:
+                    continue  # nothing live stands behind it: never served
+                words = set(_WORD.findall(view["text"].casefold()))
+                named = sum(1 for term in wanted if term in words)
+                if named:
+                    scored.append((-named, -len(view["facts"]), str(row["id"]), row, view))
+            scored.sort(key=lambda item: item[:3])
+            for _named, _proof, _id, row, view in scored:
                 if len(out) >= _VECTOR_RESULT_LIMIT:
                     break
-                held = supporting(
-                    live_evidence(conn, [row], live=live, scopes=scopes, excluded=excluded)[str(row["id"])]
-                )
+                held = [item for item in view["evidence"]
+                        if item["stance"] == "supports" and str(item["fact_id"]) in view["facts"]]
                 if start or end:
                     held = [
                         item for item in held
@@ -1252,8 +1258,8 @@ class MemoryRepository(BaseRepository):
                         )
                     ]
                 if not held:
-                    continue  # nothing live stands behind it: never served
-                text = _redacted(row["text"])
+                    continue
+                text = _redacted(view["text"])
                 out.append({
                     "kind": "observation",
                     "source_ref": f"observation:{row['id']}",

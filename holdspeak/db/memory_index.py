@@ -602,29 +602,54 @@ class MemoryIndexRepository(BaseRepository):
 
     @staticmethod
     def _history(
-        conn: sqlite3.Connection, observation_id: str, at: str, reason: str, fact_ids: Sequence[str]
+        conn: sqlite3.Connection,
+        observation_id: str,
+        at: str,
+        reason: str,
+        fact_ids: Sequence[str],
+        *,
+        prior_text: str,
+        prior_state: str,
+        prior_version: Optional[int],
     ) -> None:
-        """Append the observation's text and state as they are now, with the
-        facts behind that text.  Append only."""
-        row = conn.execute(
-            "SELECT text,state FROM memory_observations WHERE id=?", (observation_id,)
-        ).fetchone()
-        prior = [
-            str(r[0]) for r in conn.execute(
-                "SELECT fact_id FROM memory_observation_evidence"
-                " WHERE observation_id=? AND stance='supports' ORDER BY fact_id",
-                (observation_id,),
-            )
-        ]
+        """Append one history row: the text and state before a change, the
+        version that text is, and the facts of the change.  Append only."""
         conn.execute(
             "INSERT INTO memory_observation_history"
-            "(observation_id,at,prior_text,prior_state,reason,fact_ids_json,prior_evidence_json)"
+            "(observation_id,at,prior_text,prior_state,reason,fact_ids_json,prior_version)"
             " VALUES (?,?,?,?,?,?,?)",
-            (
-                observation_id, at, str(row["text"]), str(row["state"]), reason,
-                json.dumps(sorted(fact_ids)), json.dumps(prior),
-            ),
+            (observation_id, at, prior_text, prior_state, reason, json.dumps(sorted(fact_ids)), prior_version),
         )
+
+    @staticmethod
+    def _back(
+        conn: sqlite3.Connection, observation_id: str, version: int, facts: Sequence[dict[str, Any]], kind: str
+    ) -> None:
+        """One backing group for one version: these facts, all of them."""
+        count = conn.execute(
+            "SELECT count(DISTINCT grp) FROM memory_observation_backing WHERE observation_id=? AND version=?",
+            (observation_id, int(version)),
+        ).fetchone()[0]
+        group = f"{kind}{int(count) + 1}"
+        conn.executemany(
+            "INSERT OR IGNORE INTO memory_observation_backing(observation_id,version,grp,fact_id)"
+            " VALUES (?,?,?,?)",
+            [(observation_id, int(version), group, str(f["id"])) for f in facts],
+        )
+
+    @staticmethod
+    def _version(conn: sqlite3.Connection, observation_id: str, text: str, at: str) -> int:
+        """Append the next text version; returns its number."""
+        last = conn.execute(
+            "SELECT COALESCE(MAX(version),0) FROM memory_observation_versions WHERE observation_id=?",
+            (observation_id,),
+        ).fetchone()[0]
+        number = int(last) + 1
+        conn.execute(
+            "INSERT INTO memory_observation_versions(observation_id,version,text,at) VALUES (?,?,?,?)",
+            (observation_id, number, text, at),
+        )
+        return number
 
     @staticmethod
     def _add_evidence(
@@ -731,6 +756,13 @@ class MemoryIndexRepository(BaseRepository):
                         (new_id, scope_kind, scope_id, text, state, first, last, boundary,
                          int(version), at),
                     )
+                    number = self._version(conn, new_id, text, at)
+                else:
+                    number = int(conn.execute(
+                        "SELECT MAX(version) FROM memory_observation_versions WHERE observation_id=?",
+                        (new_id,),
+                    ).fetchone()[0] or self._version(conn, new_id, text, at))
+                self._back(conn, new_id, number, chosen, "i")
                 self._add_evidence(conn, new_id, chosen, "supports", at)
                 touched.add(new_id)
                 return new_id
@@ -750,11 +782,17 @@ class MemoryIndexRepository(BaseRepository):
             for item in answer["creates"]:
                 create(item["text"], [facts[i] for i in item["facts"]], "current")
             for item in answer["updates"]:
-                old = str(observations[item["observation"]]["id"])
+                shown = observations[item["observation"]]
+                old = str(shown["id"])
+                # The version the engine was shown (``scope_observations``):
+                # a supports backs it; a change records it as the prior text.
+                prior = {"prior_text": str(shown["text"]), "prior_state": str(shown["state"]),
+                         "prior_version": int(shown["version"])}
                 chosen = [facts[i] for i in item["facts"]]
                 ids = [str(f["id"]) for f in chosen]
                 relation = item["relation"]
                 if relation == "supports":
+                    self._back(conn, old, int(shown["version"]), chosen, "s")
                     self._add_evidence(conn, old, chosen, "supports", at)
                     widen(old, chosen)
                     conn.execute(
@@ -762,7 +800,9 @@ class MemoryIndexRepository(BaseRepository):
                         (at, boundary, old),
                     )
                 elif relation == "refines":
-                    self._history(conn, old, at, f"refines: {item['reason']}", ids)
+                    self._history(conn, old, at, f"refines: {item['reason']}", ids, **prior)
+                    number = self._version(conn, old, item["text"], at)
+                    self._back(conn, old, number, chosen, "i")
                     conn.execute(
                         "UPDATE memory_observations SET text=?,updated_at=?,boundary=?,"
                         "consolidator_version=? WHERE id=?",
@@ -772,7 +812,7 @@ class MemoryIndexRepository(BaseRepository):
                     widen(old, chosen)
                 elif relation == "supersedes":
                     new_id = create(item["text"], chosen, "current")
-                    self._history(conn, old, at, f"superseded by {new_id}: {item['reason']}", ids)
+                    self._history(conn, old, at, f"superseded by {new_id}: {item['reason']}", ids, **prior)
                     conn.execute(
                         "UPDATE memory_observations SET state='superseded',superseded_by=?,"
                         "updated_at=? WHERE id=?",
@@ -780,7 +820,7 @@ class MemoryIndexRepository(BaseRepository):
                     )
                 else:  # contradicts, with no clear winner: both disputed
                     new_id = create(item["text"], chosen, "disputed")
-                    self._history(conn, old, at, f"disputed by {new_id}: {item['reason']}", ids)
+                    self._history(conn, old, at, f"disputed by {new_id}: {item['reason']}", ids, **prior)
                     conn.execute(
                         "UPDATE memory_observations SET state='disputed',updated_at=? WHERE id=?",
                         (at, old),
@@ -802,11 +842,12 @@ class MemoryIndexRepository(BaseRepository):
         return True
 
     def refresh_observations(self) -> dict[str, int]:
-        """Retire each served observation with no live supporting evidence
-        (a history row first) and set every other one's ``proof_count`` to
-        its live supporting evidence.  ONE transaction.  One row read when
+        """Retire each observation no version of which is backed by live
+        evidence now (``consolidate.served``; a history row first) and set
+        every other one's ``proof_count`` to the live facts that back its
+        served version.  ONE transaction.  One row read when
         memory holds no observation that is not retired."""
-        from ..memory.consolidate import LiveText, ScopeReader, live_evidence, supporting
+        from ..memory.consolidate import LiveText, ScopeReader, served
 
         out = {"retired": 0, "checked": 0}
         with self._connection() as conn:
@@ -822,14 +863,17 @@ class MemoryIndexRepository(BaseRepository):
                     " WHERE state<>'retired' ORDER BY id"
                 )
             ]
-            evidence = live_evidence(conn, rows, live=LiveText(conn), scopes=ScopeReader(conn))
+            views = served(conn, rows, live=LiveText(conn), scopes=ScopeReader(conn))
             at = _now()
             changed = False
             for row in rows:
                 out["checked"] += 1
-                held = supporting(evidence[str(row["id"])])
+                view = views[str(row["id"])]
+                held = view["facts"] if view else set()
                 if not held:
-                    self._history(conn, str(row["id"]), at, "retired: no live evidence", [])
+                    # No text: a retire row carries none (the versions hold it).
+                    self._history(conn, str(row["id"]), at, "retired: no live evidence", [],
+                                  prior_text="", prior_state=str(row["state"]), prior_version=None)
                     conn.execute(
                         "UPDATE memory_observations SET state='retired',proof_count=0,updated_at=?"
                         " WHERE id=?",

@@ -41,7 +41,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Iterable, Optional, Protocol
 
 from ..logging_config import get_logger
-from .defense import redact
+from .defense import redact, redact_clip
 
 log = get_logger("memory.consolidate")
 
@@ -320,6 +320,116 @@ def supporting(evidence: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [row for row in evidence if row["stance"] == "supports"]
 
 
+def served(
+    conn: Any,
+    observations: Iterable[dict[str, Any]],
+    *,
+    live: Optional[LiveText] = None,
+    scopes: Optional[ScopeReader] = None,
+    excluded: Iterable[str] = (),
+) -> dict[str, Optional[dict[str, Any]]]:
+    """``observation id -> what may be served of it now``, or None.
+
+    Each text version is bound to the fact groups that back it
+    (``memory_observation_backing``): the entry that introduced it, and each
+    later ``supports`` entry.  A group backs its version only while EVERY
+    fact of it is live evidence in the observation's scope NOW
+    (``live_evidence``; ``excluded`` refs count as not live).  The served
+    text is the NEWEST version with a backing group; a refinement whose
+    facts were withdrawn falls back to the text before it.  No version
+    backed: None (never served; ``refresh_observations`` retires it).
+
+    The value: ``{"version", "text", "facts" (the live facts of the backing
+    groups), "backed" (every version with a backing group), "evidence"
+    (the live evidence rows), "live_facts"}``.
+    """
+    live = live or LiveText(conn)
+    scopes = scopes or ScopeReader(conn)
+    wanted = list(observations)
+    evidence = live_evidence(conn, wanted, live=live, scopes=scopes, excluded=excluded)
+    ids = json.dumps([str(o["id"]) for o in wanted])
+    texts: dict[str, list[tuple[int, str]]] = {}
+    for row in conn.execute(
+        "SELECT observation_id,version,text FROM memory_observation_versions"
+        " WHERE observation_id IN (SELECT value FROM json_each(?)) ORDER BY version DESC",
+        (ids,),
+    ):
+        texts.setdefault(str(row[0]), []).append((int(row[1]), str(row[2])))
+    groups: dict[tuple[str, int], dict[str, set[str]]] = {}
+    for row in conn.execute(
+        "SELECT observation_id,version,grp,fact_id FROM memory_observation_backing"
+        " WHERE observation_id IN (SELECT value FROM json_each(?))",
+        (ids,),
+    ):
+        groups.setdefault((str(row[0]), int(row[1])), {}).setdefault(str(row[2]), set()).add(str(row[3]))
+    out: dict[str, Optional[dict[str, Any]]] = {}
+    for observation in wanted:
+        key = str(observation["id"])
+        live_facts = {str(item["fact_id"]) for item in supporting(evidence[key])}
+        backed: dict[int, set[str]] = {}
+        for version, _text in texts.get(key, []):
+            full = [g for g in groups.get((key, version), {}).values() if g and g <= live_facts]
+            if full:
+                backed[version] = set().union(*full)
+        best = next(((v, t) for v, t in texts.get(key, []) if v in backed), None)
+        out[key] = None if best is None else {
+            "version": best[0],
+            "text": best[1],
+            "facts": backed[best[0]],
+            "backed": set(backed),
+            "evidence": evidence[key],
+            "live_facts": live_facts,
+        }
+    return out
+
+
+def facts_live(
+    conn: Any, fact_ids: Iterable[str], scope: tuple[str, str], *, live: LiveText, scopes: ScopeReader
+) -> set[str]:
+    """The facts of ``fact_ids`` that are live now (``live``, their chunk in
+    the source's live text) AND whose source is in ``scope`` now."""
+    found: set[str] = set()
+    for fact in fact_ids:
+        row = conn.execute(
+            "SELECT id,source_ref,chunk_id,chunk_sha,anchor,state FROM memory_facts WHERE id=?", (str(fact),)
+        ).fetchone()
+        if row is not None and fact_is_live(live, dict(row)) and scopes.in_scope(str(row["source_ref"]), scope):
+            found.add(str(fact))
+    return found
+
+
+def served_history(
+    conn: Any, observation: dict[str, Any], view: dict[str, Any], *, live: LiveText, scopes: ScopeReader
+) -> list[dict[str, Any]]:
+    """The history rows of one observation a reader may see: a row is shown
+    only while EVERY fact of its change is live evidence in scope and the
+    version its prior text is still has a backing group.  Any other row
+    (its text OR its reason could carry withdrawn text) is withheld whole.
+    It stays in the table."""
+    shown: list[dict[str, Any]] = []
+    for item in conn.execute(
+        "SELECT at,prior_text,prior_state,reason,fact_ids_json,prior_version"
+        " FROM memory_observation_history WHERE observation_id=? ORDER BY id",
+        (str(observation["id"]),),
+    ):
+        try:
+            changed = {str(fact) for fact in json.loads(item["fact_ids_json"] or "[]")}
+        except ValueError:
+            continue
+        if item["prior_version"] is None or int(item["prior_version"]) not in view["backed"]:
+            continue
+        scope = (str(observation["scope_kind"]), str(observation["scope_id"]))
+        if not changed or facts_live(conn, changed, scope, live=live, scopes=scopes) != changed:
+            continue
+        shown.append({
+            "at": str(item["at"]),
+            "prior_state": str(item["prior_state"]),
+            "reason": redact(str(item["reason"] or "")),
+            "prior_text": redact(str(item["prior_text"])),
+        })
+    return shown
+
+
 # ── the engine over the router ─────────────────────────────────────────
 
 
@@ -467,7 +577,9 @@ def _labels(value: Any, count: int, where: str) -> list[int]:
     return found
 
 
-def validate_output(raw: Any, fact_count: int, observation_count: int) -> dict[str, list[dict[str, Any]]]:
+def validate_output(
+    raw: Any, fact_count: int, observation_count: int, observation_texts: Optional[list[str]] = None
+) -> dict[str, list[dict[str, Any]]]:
     """The engine's answer, checked entry by entry against the closed schema
     and the input.  Raises ``ConsolidationOutputError`` on ANY bad entry: the
     whole answer is a failed attempt and nothing is written.
@@ -492,9 +604,9 @@ def validate_output(raw: Any, fact_count: int, observation_count: int) -> dict[s
         if not isinstance(item["reason"], str):
             raise ConsolidationOutputError(f"{where}: reason is not a string")
         out["creates"].append({
-            "text": redact(_clip(item["text"], OBSERVATION_TEXT_CHARS)),
+            "text": _safe_text(item["text"], where),
             "facts": _labels(item["fact_ids"], fact_count, where),
-            "reason": redact(_clip(item["reason"], REASON_CHARS)),
+            "reason": redact_clip(item["reason"], REASON_CHARS),
         })
     touched: set[int] = set()
     for number, item in enumerate(updates, start=1):
@@ -523,11 +635,47 @@ def validate_output(raw: Any, fact_count: int, observation_count: int) -> dict[s
         out["updates"].append({
             "observation": position,
             "relation": relation,
-            "text": redact(_clip(item["text"], OBSERVATION_TEXT_CHARS)) if relation != "supports" else "",
+            "text": _safe_text(item["text"], where) if relation != "supports" else "",
             "facts": _labels(item["fact_ids"], fact_count, where),
-            "reason": redact(_clip(item["reason"], REASON_CHARS)),
+            "reason": redact_clip(item["reason"], REASON_CHARS),
         })
+    _no_conflict(out, observation_texts or [])
     return out
+
+
+def _safe_text(value: str, where: str) -> str:
+    text = redact_clip(value, OBSERVATION_TEXT_CHARS)
+    if not text:
+        raise ConsolidationOutputError(f"{where}: no text is left after the memory defense")
+    return text
+
+
+def _fold_text(text: str) -> str:
+    return " ".join(str(text or "").casefold().split()).rstrip(".")
+
+
+def _no_conflict(answer: dict[str, list[dict[str, Any]]], observation_texts: list[str]) -> None:
+    """One answer must not say two things about one fact or one belief: a
+    fact used by two entries, two entries with the same text, or a create
+    that repeats an observation of the input (that is an update) fail the
+    whole answer."""
+    used: set[int] = set()
+    for item in answer["creates"] + answer["updates"]:
+        if used & set(item["facts"]):
+            raise ConsolidationOutputError("one fact is used by two entries")
+        used |= set(item["facts"])
+    seen: set[str] = set()
+    for item in answer["creates"] + answer["updates"]:
+        if not item["text"]:
+            continue
+        key = _fold_text(item["text"])
+        if key in seen:
+            raise ConsolidationOutputError("two entries give the same text")
+        seen.add(key)
+    existing = {_fold_text(text) for text in observation_texts}
+    for item in answer["creates"]:
+        if _fold_text(item["text"]) in existing:
+            raise ConsolidationOutputError("a create repeats an observation of the input")
 
 
 def observation_id(scope: tuple[str, str], text: str, fact_ids: Iterable[str]) -> str:
@@ -628,8 +776,18 @@ def scope_observations(
     ]
     if not rows:
         return []
-    evidence = live_evidence(conn, rows, live=live, scopes=scopes)
-    rows = [row for row in rows if supporting(evidence[str(row["id"])])]
+    views = served(conn, rows, live=live, scopes=scopes)
+    kept = []
+    for row in rows:
+        view = views[str(row["id"])]
+        if view is None:
+            continue  # nothing live backs it: never shown to the engine
+        # The engine sees the version a reader is served, never a newer one
+        # whose facts were withdrawn.
+        row.update(text=view["text"], version=view["version"])
+        kept.append(row)
+    rows = kept
+    evidence = {key: (view["evidence"] if view else []) for key, view in views.items()}
     wanted = set().union(*(_words(fact["text"]) for fact in facts)) if facts else set()
     fact_ids = [str(fact["id"]) for fact in facts]
     entities = {
@@ -683,9 +841,11 @@ def _still_live(scope: tuple[str, str], facts: list[dict[str, Any]], observation
             if row is None or (row["state"], row["updated_at"]) != (observation["state"], observation["updated_at"]):
                 return False
         if observations:
-            evidence = live_evidence(conn, observations, live=live, scopes=scopes)
-            if any(not supporting(evidence[str(o["id"])]) for o in observations):
-                return False
+            views = served(conn, observations, live=live, scopes=scopes)
+            for observation in observations:
+                view = views[str(observation["id"])]
+                if view is None or (view["version"], view["text"]) != (observation["version"], observation["text"]):
+                    return False
         return True
 
     return check
@@ -724,7 +884,9 @@ def consolidate_batch(
         observations = scope_observations(conn, scope, facts, live=live, scopes=scopes)
     payload = build_payload(facts, observations)
     budget.calls += 1
-    answer = validate_output(consolidator.consolidate(payload), len(facts), len(observations))
+    answer = validate_output(
+        consolidator.consolidate(payload), len(facts), len(observations), [o["text"] for o in observations]
+    )
     written = db.memory_index.write_observations(
         scope=scope,
         facts=facts,
@@ -820,11 +982,13 @@ def read_observations(
     """The read API (§5 MCP ``memory.observations``): the observations of one
     scope (a project, the desk) or of every scope, newest first.
 
-    An observation is served only while it has LIVE supporting evidence (the
-    same check as recall), whatever its stored state: text derived only from
-    withdrawn, edited or sensitive sources is never served.  Its evidence is
-    the live rows only.  A history row shows its prior text only while one
-    fact behind that text is still live evidence; else the text is withheld.
+    An observation is served only while a version of its text has a backing
+    group whose facts are all live evidence in its scope now (``served``),
+    whatever its stored state; the text served is the newest such version.
+    Text derived from withdrawn, edited, refiled or sensitive sources is
+    never served.  Its evidence is the live rows only.  A history row is
+    shown only by ``served_history``'s rule; any other is withheld whole.
+    ``superseded_by`` names a replacement only while that one is served.
     ``retired`` is never served.  Every text is redacted again on the way out.
     """
     from ..services.memory_grounding import DESK_REF_KINDS
@@ -845,36 +1009,24 @@ def read_observations(
         for row in rows:
             if len(out) >= bounded:
                 break
-            evidence = live_evidence(conn, [row], live=live, scopes=scopes)[str(row["id"])]
-            held = supporting(evidence)
-            if not held:
+            view = served(conn, [row], live=live, scopes=scopes)[str(row["id"])]
+            if view is None:
                 continue
-            live_facts = {str(item["fact_id"]) for item in held}
-            history = []
-            for item in conn.execute(
-                "SELECT at,prior_text,prior_state,reason,prior_evidence_json"
-                " FROM memory_observation_history WHERE observation_id=? ORDER BY id",
-                (row["id"],),
-            ):
-                try:
-                    behind = {str(fact) for fact in json.loads(item["prior_evidence_json"] or "[]")}
-                except ValueError:
-                    behind = set()
-                shown = bool(behind & live_facts)
-                history.append({
-                    "at": str(item["at"]),
-                    "prior_state": str(item["prior_state"]),
-                    "reason": redact(str(item["reason"] or "")),
-                    "prior_text": redact(str(item["prior_text"])) if shown else None,
-                    "withheld": not shown,
-                })
+            successor = row["superseded_by"]
+            if successor:
+                target = conn.execute(
+                    "SELECT id,scope_kind,scope_id FROM memory_observations WHERE id=? AND state<>'retired'",
+                    (successor,),
+                ).fetchone()
+                if target is None or served(conn, [dict(target)], live=live, scopes=scopes)[str(successor)] is None:
+                    successor = None
             out.append({
                 "id": str(row["id"]),
                 "scope": {"kind": str(row["scope_kind"]), "id": str(row["scope_id"])},
-                "text": redact(str(row["text"])),
+                "text": redact(view["text"]),
                 "state": str(row["state"]),
-                "superseded_by": row["superseded_by"],
-                "proof_count": len(held),
+                "superseded_by": successor,
+                "proof_count": len(view["facts"]),
                 "first_seen": row["first_seen"],
                 "last_seen": row["last_seen"],
                 "boundary": str(row["boundary"] or ""),
@@ -885,9 +1037,9 @@ def read_observations(
                         "stance": str(item["stance"]),
                         "fact": redact(str(item["fact_text"] or "")),
                     }
-                    for item in evidence
+                    for item in view["evidence"]
                 ],
-                "history": history,
+                "history": served_history(conn, row, view, live=live, scopes=scopes),
             })
     return out
 
@@ -919,6 +1071,8 @@ __all__ = [
     "pending_batches",
     "read_observations",
     "refresh_observations",
+    "served",
+    "served_history",
     "resolve_consolidator",
     "validate_output",
 ]

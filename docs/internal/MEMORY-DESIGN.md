@@ -552,6 +552,25 @@ Job `consolidate`, one per scope with new facts, after extraction.
   Ask grounding (slice 6). A default search is the same with observations in
   memory (fenced). (2) The observation retriever ranks by the question's
   words, not by vectors: no observation is embedded yet.
+- **Each text is bound to the evidence that made it** (review round 1,
+  Astra). `memory_observation_versions` holds every text an observation
+  has had; `memory_observation_backing` holds the fact groups behind each:
+  the entry that introduced it, and each later `supports`. A group backs
+  its version only while EVERY fact of it is live evidence in the scope the
+  source is in NOW (a refiled source stops counting at once; a search's
+  excluded refs count as not live). The text served is the NEWEST backed
+  version: a withdrawn refinement falls back to the text before it; no
+  backed version, not served, then retired. A history row (text and reason)
+  is shown only while every fact of its change is live in scope and its
+  prior version is backed; else it is withheld whole. `superseded_by`
+  names a replacement only while that one is served. The versions table
+  and the history table refuse UPDATE, DELETE and INSERT OR REPLACE.
+- **Model text is made safe before it is cut** (`defense.redact_clip`):
+  redact the raw text, fold the white space, redact again, cut on a space
+  (the crossing word goes whole). Facts take the same path.
+- **One answer says one thing per fact and per belief.** A fact in two
+  entries, two entries with one text, or a create that repeats an input
+  observation fails the whole answer.
 - **Rebuild.** `memory rebuild` keeps the observation tables. The facts
   come back with the same ids; an observation whose facts do not come back
   is retired by the next pass.
