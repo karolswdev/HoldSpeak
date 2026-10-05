@@ -80,6 +80,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/model_profile_service.py", "_profile_projection"): ("canonical Profile owner projection", "143-03"),
     ("holdspeak/services/model_profile_service.py", "_route_plan_dependencies"): ("exact Profile assignment dependency lookup", "143-03"),
     ("holdspeak/services/inference_default_service.py", "_local_profile_candidates"): ("lists ready Model Library profiles that run on this machine as batteries-included default candidates; the global assignment itself is written by InferenceAssignmentService.set_assignment with expected_revision 0 (owner ruling 2026-10-05)", "143-04"),
+    ("holdspeak/services/inference_default_service.py", "_profile_lamp"): ("reads one candidate profile's bound deployment lamp so the batteries-included default refuses any non-local engine before it writes; selects and dispatches nothing", "143-04"),
     ("holdspeak/services/concierge_service.py", "_model_profile_revision"): ("immutable model-library revision read; no assignment selection", "143-12"),
     ("holdspeak/services/concierge_service.py", "_detected_profile_fields"): ("immutable model-library revision projection; no assignment selection", "143-12"),
     ("holdspeak/services/profile_service.py", "_target_fields"): ("profile transport-neutral mutation", "143-03"),

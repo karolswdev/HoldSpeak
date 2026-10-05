@@ -44,7 +44,11 @@ from typing import Any, Callable, Iterable, Optional, Sequence
 from urllib.parse import urlparse
 from urllib.request import ProxyHandler, Request, build_opener
 
-from ..inference_locality import LAMP_RANK, assignment_lamp, deployment_lamp
+from ..inference_locality import (
+    AUTO_ASSIGNED_OPERATION as ASSIGNED_OPERATION,
+    assignment_lamp,
+    deployment_lamp,
+)
 from ..logging_config import get_logger
 from ..principals import Principal, PrincipalKind
 from .errors import NotFound, ServiceError, ValidationError
@@ -53,8 +57,8 @@ log = get_logger("inference.default")
 
 #: The principal of the product's own default write.
 DEFAULT_PRINCIPAL = Principal(PrincipalKind.OWNER, "batteries-default")
-#: The kernel operation that records the product's own default write.
-ASSIGNED_OPERATION = "inference.default_assigned"
+#: The kernel operation that records the product's own default write
+#: (``ASSIGNED_OPERATION``, imported from inference_locality).
 ASSIGN_REASON = "batteries-included default"
 
 #: (port, engine) on this machine, in rank order.
@@ -412,6 +416,19 @@ class InferenceDefaultService:
         provider = receipt.get("provider") or {}
         return str(provider["profile_id"]), int(provider["profile_revision"])
 
+    def _profile_lamp(self, profile_id: str, revision: int) -> str:
+        """The lamp of one profile revision's bound deployment, read before any write."""
+        with self._db._connection() as conn:
+            row = conn.execute(
+                """SELECT d.boundary,d.endpoint FROM model_profile_binding_heads h
+                     JOIN model_profile_binding_revisions b
+                       ON b.binding_id=h.binding_id AND b.revision=h.revision
+                     JOIN deployment_revisions d ON d.id=b.deployment_revision_id
+                    WHERE h.profile_id=? AND b.profile_revision=?""",
+                (profile_id, revision),
+            ).fetchone()
+        return "unknown" if row is None else deployment_lamp(row["boundary"], row["endpoint"])
+
     def _ready(self, profile_id: str, revision: int) -> bool:
         with self._db._connection() as conn:
             row = conn.execute(
@@ -434,6 +451,11 @@ class InferenceDefaultService:
             else:
                 reference = (candidate["profile_id"], int(candidate["profile_revision"]))
             profile_id, revision = reference
+            if self._profile_lamp(profile_id, revision) != "local":
+                # The product never makes a network or cloud default by
+                # itself: memory follows a default it made only when local.
+                log.error("default candidate %s is not local; refused", candidate["id"])
+                return None
             if not self._ready(profile_id, revision):
                 log.info("default candidate %s is not ready; trying the next", candidate["id"])
                 return None
@@ -452,8 +474,6 @@ class InferenceDefaultService:
         assignment_revision = int(result.get("revision") or 1)
         with self._db._connection() as conn:
             lamp = assignment_lamp(conn, assignment_id, assignment_revision)
-        if lamp != "local":  # pragma: no cover - candidates are local by construction
-            log.error("batteries default %s is not local (%s)", candidate["id"], lamp)
         label = str(candidate.get("label") or f"{candidate['model']} on {candidate['engine']}")
         receipt_id = self._write_receipt(
             assignment_id=assignment_id,
@@ -664,6 +684,8 @@ class InferenceDefaultService:
             default: dict[str, Any]
             if global_row is not None and not int(global_row["cleared"]):
                 lamp = assignment_lamp(conn, str(global_row["assignment_id"]), int(global_row["revision"]))
+                # "made by": the product's own write leaves a receipt naming
+                # this exact revision; every other revision is an owner press.
                 made = conn.execute(
                     """SELECT r.receipt_id FROM kernel_operations o
                          JOIN kernel_receipts r ON r.operation_id=o.operation_id
@@ -719,8 +741,9 @@ class InferenceDefaultService:
                     row.update(state="needs_setup", reason="embedding_model_needed",
                                inherited_from=None, lamp=None)
                 elif definition.id in LOCAL_INHERITING_CAPABILITIES and _assignment_head(conn, definition.id) is None:
-                    # A network or cloud default does not carry memory off the machine.
-                    row.update(state="needs_setup", reason="default_not_local")
+                    # A non-local default the owner did not make never carries
+                    # memory off the machine.
+                    row.update(state="needs_setup", reason="default_not_local_not_owner")
                 else:
                     row.update(state="inherited_from_default")
                 capabilities.append(row)

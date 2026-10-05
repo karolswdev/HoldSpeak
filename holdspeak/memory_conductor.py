@@ -74,7 +74,7 @@ def _principal() -> Any:
 def _assigned(db: Any) -> bool:
     """True when ``memory.embed``, ``memory.extract``, ``memory.consolidate``
     or ``memory.page`` has an engine now: its own assignment, or for the
-    last three a LOCAL wider one (``engine._assignment_head``)."""
+    last three a LOCAL or owner-made wider one (``engine._assignment_head``)."""
     from .memory.consolidate import CONSOLIDATE_CAPABILITY
     from .memory.engine import _assignment_head
     from .memory.extract import EXTRACT_CAPABILITY

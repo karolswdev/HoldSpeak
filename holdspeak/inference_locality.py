@@ -103,6 +103,27 @@ def assignment_lamp(conn: Any, assignment_id: str, revision: int) -> str:
     return max(lamps, key=lambda lamp: LAMP_RANK[lamp])
 
 
+#: The kernel operation the batteries-included default writes
+#: (services/inference_default_service.py).  It is the one record of an
+#: assignment HoldSpeak made by itself; every other assignment revision was
+#: written by an owner-only command (the owner's own press).
+AUTO_ASSIGNED_OPERATION = "inference.default_assigned"
+
+
+def made_by_holdspeak(conn: Any, assignment_id: str, revision: int) -> bool:
+    """True when this exact assignment revision was the product's own write.
+
+    Read from the receipt that write leaves (``result_ref`` names the
+    revision); no other assignment revision carries one.
+    """
+    return conn.execute(
+        """SELECT 1 FROM kernel_operations o
+             JOIN kernel_receipts r ON r.operation_id=o.operation_id
+            WHERE o.name=? AND r.result_ref=?""",
+        (AUTO_ASSIGNED_OPERATION, f"inference_assignment:{assignment_id}@{int(revision)}"),
+    ).fetchone() is not None
+
+
 def head_lamp(conn: Any, assignment_key: str) -> str | None:
     """The lamp of the live head at ``assignment_key``; None when there is none."""
     row = conn.execute(
@@ -115,4 +136,7 @@ def head_lamp(conn: Any, assignment_key: str) -> str | None:
     return assignment_lamp(conn, str(row["assignment_id"]), int(row["revision"]))
 
 
-__all__ = ["LAMP_RANK", "assignment_lamp", "deployment_lamp", "head_lamp"]
+__all__ = [
+    "AUTO_ASSIGNED_OPERATION", "LAMP_RANK", "assignment_lamp", "deployment_lamp",
+    "head_lamp", "made_by_holdspeak",
+]

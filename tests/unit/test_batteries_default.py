@@ -309,6 +309,10 @@ def test_a_lan_engine_is_a_proposal_and_never_assigned(tmp_path: Path, monkeypat
     state = desk.defaults.state(OWNER)
     assert state["default"] == {"status": "assigned", "lamp": "private_network",
                                 "made_by": "owner", "receipt_id": None}
+    # "Use it" is the owner's press: memory follows it onto the LAN.
+    with desk.db._connection() as conn:
+        for capability in LOCAL_INHERITING_CAPABILITIES:
+            assert _assignment_head(conn, capability) is not None, capability
 
 
 # ── fence 5: detection never touches a non-loopback address ──────────────
@@ -355,11 +359,37 @@ def test_a_non_loopback_host_is_refused_before_any_socket(sockets) -> None:
 # ── fence 6: memory inherits a LOCAL default, never a network one ────────
 
 
-def _assign_global(db: Database, profile_id: str) -> None:
-    InferenceAssignmentService(db).set_assignment(OWNER, {
+def _assign_global(db: Database, profile_id: str) -> dict[str, Any]:
+    """The owner's own press: an owner-only set_assignment, no product receipt."""
+    return InferenceAssignmentService(db).set_assignment(OWNER, {
         "command_id": f"global-{profile_id}", "expected_revision": 0, "scope": {"kind": "global"},
         "entries": [{"profile_id": profile_id, "profile_revision": 1}],
     })
+
+
+def mark_made_by_holdspeak(db: Database, assignment: dict[str, Any]) -> None:
+    """Leave the receipt the product's own default write leaves (the only
+    record that tells it from an owner press), for a revision it did not make.
+    The auto-assign itself refuses a non-local default
+    (``test_the_auto_assign_never_writes_a_network_default``); this forges the
+    impossible state so the memory guard is fenced on its own."""
+    import time
+
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO kernel_operations
+               (operation_id, request_id, idempotency_key, name, version, principal_kind,
+                principal_identity, target_ref, placement, envelope_sha256, policy_version,
+                authority_basis, state, revision, native_id, created_at, updated_at)
+               VALUES ('forged-op','forged','forged',?,1,'owner','batteries-default','t',
+                       'private_network','','','test','succeeded',1,'forged-op',?,?)""",
+            (ASSIGNED_OPERATION, time.time(), time.time()),
+        )
+        conn.execute(
+            """INSERT INTO kernel_receipts (receipt_id, operation_id, state, outcome, result_ref, created_at)
+               VALUES ('forged-receipt','forged-op','succeeded','forged',?,?)""",
+            (f"inference_assignment:{assignment['id']}@{assignment['revision']}", time.time()),
+        )
 
 
 def test_memory_jobs_are_in_the_background_group() -> None:
@@ -380,39 +410,61 @@ def test_memory_jobs_inherit_a_local_default(tmp_path: Path) -> None:
     assert resolve_extractor(_configure(db), OWNER) is not None
 
 
-def test_memory_jobs_inherit_a_loopback_endpoint_default(tmp_path: Path, engines) -> None:
+def test_memory_jobs_inherit_an_auto_assigned_local_default(tmp_path: Path, engines) -> None:
     llama = engines(["Qwen3.5-27B-Instruct"])
     desk = _desk(tmp_path, scan=_scan_of((llama, "llama.cpp")))
     assert desk.defaults.ensure(reason="boot")["status"] == "assigned"
+    assert len(_receipts(desk.db)) == 1  # made by HoldSpeak, and local
     with desk.db._connection() as conn:
         for capability in LOCAL_INHERITING_CAPABILITIES:
             assert _assignment_head(conn, capability) is not None, capability
 
 
 @pytest.mark.parametrize("boundary", ["private_network", "cloud", "mesh"])
-def test_memory_jobs_do_not_inherit_a_network_or_cloud_default(tmp_path: Path, boundary: str) -> None:
+def test_memory_jobs_inherit_a_network_default_the_owner_set(tmp_path: Path, boundary: str) -> None:
+    # Owner ruling 2026-10-05: his LAN server is his default INCLUDING memory.
     db = Database(tmp_path / f"{boundary}.db")
     _profile(db, "far-model", boundary=boundary)
     _assign_global(db, "far-model")
+    with db._connection() as conn:
+        for capability in LOCAL_INHERITING_CAPABILITIES:
+            assert _assignment_head(conn, capability) is not None, capability
+    assert resolve_extractor(_configure(db), OWNER) is not None
+
+
+@pytest.mark.parametrize("boundary", ["private_network", "cloud", "mesh"])
+def test_memory_jobs_stay_dark_on_a_network_default_without_the_owners_press(tmp_path: Path, boundary: str) -> None:
+    db = Database(tmp_path / f"{boundary}.db")
+    _profile(db, "far-model", boundary=boundary)
+    mark_made_by_holdspeak(db, _assign_global(db, "far-model"))
     with db._connection() as conn:
         for capability in LOCAL_INHERITING_CAPABILITIES:
             assert _assignment_head(conn, capability) is None, capability
     assert resolve_extractor(_configure(db), OWNER) is None
 
 
-def test_a_network_background_group_wins_over_a_local_default(tmp_path: Path) -> None:
+def test_the_auto_assign_never_writes_a_network_default(tmp_path: Path) -> None:
+    desk = _desk(tmp_path)
+    _profile(desk.db, "lan-model", boundary="private_network")
+    candidate = {"id": "profile:lan-model", "source": "profile", "profile_id": "lan-model",
+                 "profile_revision": 1, "label": "LAN model", "model": "lan-model", "engine": "x"}
+    assert desk.defaults._try_assign(candidate) is None
+    assert _global(desk.db) is None and _receipts(desk.db) == []
+
+
+def test_an_owner_network_background_group_is_inherited_before_the_default(tmp_path: Path) -> None:
     db = Database(tmp_path / "group.db")
     _profile(db, "local-model")
     _profile(db, "lan-model", boundary="private_network")
     _assign_global(db, "local-model")
-    InferenceAssignmentService(db).set_assignment(OWNER, {
+    group = InferenceAssignmentService(db).set_assignment(OWNER, {
         "command_id": "group-bg", "expected_revision": 0,
         "scope": {"kind": "group", "group_id": "background"},
         "entries": [{"profile_id": "lan-model", "profile_revision": 1}],
     })
     with db._connection() as conn:
         for capability in LOCAL_INHERITING_CAPABILITIES:
-            assert _assignment_head(conn, capability) is None, capability
+            assert _assignment_head(conn, capability) == f"{group['id']}@1", capability
 
 
 def test_an_own_network_assignment_still_runs_memory(tmp_path: Path) -> None:
@@ -467,15 +519,27 @@ def test_state_after_the_local_default(tmp_path: Path, engines) -> None:
     assert rows["memory.embed"]["state"] == "needs_setup"
 
 
-def test_state_with_a_network_default_keeps_memory_dark(tmp_path: Path) -> None:
+def test_state_with_an_owner_network_default_shows_memory_on_lan(tmp_path: Path) -> None:
     desk = _desk(tmp_path)
     _profile(desk.db, "lan-model", boundary="private_network")
     _assign_global(desk.db, "lan-model")
+    state = desk.defaults.state(OWNER)
+    assert (state["default"]["made_by"], state["default"]["lamp"]) == ("owner", "private_network")
+    rows = _by_id(state)
+    for capability in ("chat.turn", *LOCAL_INHERITING_CAPABILITIES):
+        assert (rows[capability]["state"], rows[capability]["lamp"]) == (
+            "inherited_from_default", "private_network"), capability
+
+
+def test_state_with_a_network_default_without_the_owners_press_keeps_memory_dark(tmp_path: Path) -> None:
+    desk = _desk(tmp_path)
+    _profile(desk.db, "lan-model", boundary="private_network")
+    mark_made_by_holdspeak(desk.db, _assign_global(desk.db, "lan-model"))
     rows = _by_id(desk.defaults.state(OWNER))
     assert rows["chat.turn"]["state"] == "inherited_from_default"
-    assert rows["chat.turn"]["lamp"] == "private_network"
     for capability in LOCAL_INHERITING_CAPABILITIES:
-        assert (rows[capability]["state"], rows[capability]["reason"]) == ("needs_setup", "default_not_local")
+        assert (rows[capability]["state"], rows[capability]["reason"]) == (
+            "needs_setup", "default_not_local_not_owner"), capability
 
 
 def test_state_with_a_proposal_says_proposed(tmp_path: Path, monkeypatch) -> None:

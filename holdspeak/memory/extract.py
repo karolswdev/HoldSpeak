@@ -15,9 +15,9 @@ facts, resolves their entities, retires the source's old facts and stamps
   hash as the ledger says, or the job waits for the next sweep.
 * **Its own assignment, or a LOCAL default.**  The engine exists when
   ``memory.extract`` has its own assignment, or when the wider assignment
-  (Background, then "Default for AI work") runs on this machine
-  (``engine._assignment_head``).  A network or cloud default is never used
-  here.  With no engine nothing is called and nothing is written.
+  (Background, then "Default for AI work") runs on this machine or was
+  made by the owner's press (``engine._assignment_head``).  A network or
+  cloud default HoldSpeak made by itself is never used here.  With no engine nothing is called and nothing is written.
 * **The old facts serve until the new ones commit.**  A version bump or an
   edited source keeps its facts in recall while the engine runs.
 
@@ -456,7 +456,7 @@ class RouterExtractor:
 
 def resolve_extractor(broker: Any, principal: Any) -> Optional[RouterExtractor]:
     """The engine for ``memory.extract`` now, or None when it has no
-    assignment of its own and no LOCAL wider one (``engine._assignment_head``)."""
+    assignment of its own and no usable wider one (``engine._assignment_head``)."""
     from .engine import assigned_revision
 
     revision = assigned_revision(broker, EXTRACT_CAPABILITY)

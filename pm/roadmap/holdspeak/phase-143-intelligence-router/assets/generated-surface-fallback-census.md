@@ -249,8 +249,9 @@ owner's press. Classified in `BACKEND_PRIVATE_DECISIONS` under the existing
 
 `holdspeak/services/inference_default_service.py` adds `_local_profile_candidates`.
 It lists ready Model Library profiles that run on this machine (lamp `local`)
-as candidates for "Default for AI work". It does not choose a route leg and
-does not retry. The `global` assignment is written by
+as candidates for "Default for AI work", and `_profile_lamp` reads one
+candidate's deployment lamp so a non-local engine is refused before any write.
+Neither chooses a route leg or retries. The `global` assignment is written by
 `InferenceAssignmentService.set_assignment` with `expected_revision` 0, so an
 owner assignment is never changed (owner ruling 2026-10-05). Classified in
 `BACKEND_PRIVATE_DECISIONS` under the existing 143-04 assignment family.

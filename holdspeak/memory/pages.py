@@ -33,7 +33,7 @@ disputed observations and the top recall for the question in that scope.
   append-only history (no reader serves a history row).
 * **No engine:** nothing is called; the last page is served with its age.
   No page: the reader gets nothing.
-* **Its own assignment, or a LOCAL default**, like ``memory.consolidate``.
+* **Its own assignment, or a LOCAL or owner-made default**, like ``memory.consolidate``.
 """
 from __future__ import annotations
 

@@ -765,16 +765,19 @@ def test_no_engine_nothing_is_called_and_recall_is_unchanged(routed) -> None:
     assert bench.keyword_snapshot(routed.db, routed.refs) == golden
 
 
-def test_a_network_default_is_never_used_for_consolidation(routed) -> None:
-    # Owner ruling 2026-10-05: a LOCAL default is inherited
-    # (tests/unit/test_batteries_default.py); a network default never is.
+def test_a_network_default_made_without_the_owners_press_is_never_used_for_consolidation(routed) -> None:
+    # Owner rulings 2026-10-05: a LOCAL or owner-made default is inherited
+    # (tests/unit/test_batteries_default.py); a network default HoldSpeak
+    # made by itself never is.
+    from tests.unit.test_batteries_default import mark_made_by_holdspeak
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 
     _profile(routed.db, "chat-model", boundary="private_network")
-    InferenceAssignmentService(routed.db).set_assignment(OWNER, {
+    made = InferenceAssignmentService(routed.db).set_assignment(OWNER, {
         "command_id": "assign-global", "expected_revision": 0, "scope": {"kind": "global"},
         "entries": [{"profile_id": "chat-model", "profile_revision": 1}],
     })
+    mark_made_by_holdspeak(routed.db, made)
     assert resolve_consolidator(routed.broker, OWNER) is None
 
 

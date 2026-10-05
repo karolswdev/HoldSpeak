@@ -154,9 +154,11 @@ class EmbeddingAdapter:
 
 #: The memory jobs that write text (facts, observations, pages).  With no
 #: assignment of their own they use the wider assignment (Background, then
-#: "Default for AI work") ONLY when it runs on this machine: a network or cloud
-#: default never starts to send every meeting chunk off the machine by itself
-#: (owner ruling 2026-10-05, "strong defaults, batteries included").
+#: "Default for AI work") when it runs on this machine, OR when the owner made
+#: it with his own press (owner rulings 2026-10-05: "strong defaults,
+#: batteries included"; his LAN server is his default INCLUDING memory).  A
+#: network or cloud default HoldSpeak made by itself never sends meeting
+#: chunks off the machine (and the auto-assign writes only local defaults).
 #: ``memory.embed`` is not here: an embedding call never falls through to a
 #: chat model.
 LOCAL_INHERITING_CAPABILITIES = frozenset(
@@ -180,9 +182,11 @@ def _assignment_head(conn: Any, capability: str = MEMORY_EMBED_CAPABILITY) -> Op
     * ``memory.embed``: its OWN assignment only (see the module text).
     * ``memory.extract`` / ``consolidate`` / ``page``: its own assignment;
       with none, the first wider head in the planner's order (``group:
-      background``, then ``global``), only when every model in it runs on
-      this machine (lamp ``local``).  A wider head that is not local keeps
-      the job dark: the planner would route there, so nothing is called.
+      background``, then ``global``), when every model in it runs on this
+      machine (lamp ``local``) OR the owner made it (no
+      ``inference.default_assigned`` receipt names that revision).  A
+      non-local wider head HoldSpeak made keeps the job dark: the planner
+      would route there, so nothing is called.
 
     The value changes when the head changes, so an engine bound to it stops
     at once (``live()``)."""
@@ -191,13 +195,14 @@ def _assignment_head(conn: Any, capability: str = MEMORY_EMBED_CAPABILITY) -> Op
         return f"{row[0]}@{row[1]}"
     if capability not in LOCAL_INHERITING_CAPABILITIES:
         return None
-    from ..inference_locality import assignment_lamp
+    from ..inference_locality import assignment_lamp, made_by_holdspeak
 
     for key in (f"group:{_MEMORY_GROUP}", "global"):
         wider = _head_row(conn, key)
         if wider is None:
             continue
-        if assignment_lamp(conn, str(wider[0]), int(wider[1])) != "local":
+        local = assignment_lamp(conn, str(wider[0]), int(wider[1])) == "local"
+        if not local and made_by_holdspeak(conn, str(wider[0]), int(wider[1])):
             return None
         return f"{wider[0]}@{wider[1]}"
     return None
