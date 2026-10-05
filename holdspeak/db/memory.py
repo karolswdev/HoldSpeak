@@ -744,6 +744,38 @@ def rebuild_memory_index(conn: sqlite3.Connection) -> dict[str, int]:
     return counts
 
 
+def _public_match(
+    matcher: sqlite3.Connection,
+    kind: str,
+    title: str,
+    units: list[tuple[str, str]],
+    expression: str,
+    terms: list[str],
+) -> bool:
+    """Does the query match this redacted text the way search matches?"""
+    # The reader writes "Summary: ..." and "Topics: ..."; the LIKE pass
+    # reads the bare summary and topic text.
+    summary = [
+        text.split(": ", 1)[1] if ": " in text else text
+        for anchor, text in units if kind == "meeting" and anchor in ("summary", "topics")
+    ]
+    body = [text for anchor, text in units if not (kind == "meeting" and anchor in ("summary", "topics"))]
+    if kind in _FTS_MATCH_KINDS or kind == "meeting":
+        text = "\n".join(([title] if kind in _FTS_TITLE_KINDS else []) + body)
+        matcher.execute("DELETE FROM m")
+        matcher.execute("INSERT INTO m(rowid,body) VALUES (1,?)", (text,))
+        if expression and matcher.execute("SELECT 1 FROM m WHERE m MATCH ?", (expression,)).fetchone():
+            return True
+        if kind != "meeting":
+            return False
+    haystack = "\n".join([title] + (summary if kind == "meeting" else body)) if kind != "meeting" \
+        else "\n".join(summary)
+    return any(
+        matcher.execute("SELECT lower(?) LIKE ?", (haystack, f"%{term.casefold()}%")).fetchone()[0]
+        for term in terms
+    )
+
+
 class MemoryRepository(BaseRepository):
     """One search contract over independently normalized local FTS corpora."""
 
@@ -1844,7 +1876,7 @@ class MemoryRepository(BaseRepository):
                             if matcher is None:
                                 matcher = sqlite3.connect(":memory:")
                                 matcher.execute("CREATE VIRTUAL TABLE m USING fts5(body)")
-                            keep = self._public_match(matcher, kind, title, units, expression, terms)
+                            keep = _public_match(matcher, kind, title, units, expression, terms)
                 except Exception:  # pragma: no cover - a check never fails a search
                     keep = True
                 verdict[base] = keep
@@ -1853,38 +1885,6 @@ class MemoryRepository(BaseRepository):
         if matcher is not None:
             matcher.close()
         return kept
-
-    @staticmethod
-    def _public_match(
-        matcher: sqlite3.Connection,
-        kind: str,
-        title: str,
-        units: list[tuple[str, str]],
-        expression: str,
-        terms: list[str],
-    ) -> bool:
-        """Does the query match this redacted text the way search matches?"""
-        # The reader writes "Summary: ..." and "Topics: ..."; the LIKE pass
-        # reads the bare summary and topic text.
-        summary = [
-            text.split(": ", 1)[1] if ": " in text else text
-            for anchor, text in units if kind == "meeting" and anchor in ("summary", "topics")
-        ]
-        body = [text for anchor, text in units if not (kind == "meeting" and anchor in ("summary", "topics"))]
-        if kind in _FTS_MATCH_KINDS or kind == "meeting":
-            text = "\n".join(([title] if kind in _FTS_TITLE_KINDS else []) + body)
-            matcher.execute("DELETE FROM m")
-            matcher.execute("INSERT INTO m(rowid,body) VALUES (1,?)", (text,))
-            if expression and matcher.execute("SELECT 1 FROM m WHERE m MATCH ?", (expression,)).fetchone():
-                return True
-            if kind != "meeting":
-                return False
-        haystack = "\n".join([title] + (summary if kind == "meeting" else body)) if kind != "meeting" \
-            else "\n".join(summary)
-        return any(
-            matcher.execute("SELECT lower(?) LIKE ?", (haystack, f"%{term.casefold()}%")).fetchone()[0]
-            for term in terms
-        )
 
     @classmethod
     def _ref_in_project(
