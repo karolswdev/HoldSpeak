@@ -14,6 +14,9 @@ export interface TrustDestination {
   authority_basis: string;
   background_ability: string;
   revoke_action: string;
+  /** A saved Send destination (trust_destinations.py): ready to use even
+   * when `enabled` is false (a folder on this device sends nothing out). */
+  saved?: boolean;
   last_receipt?: Record<string, unknown> | null;
 }
 

@@ -8,7 +8,8 @@ import {
   GadgetTable,
   StringGadget,
 } from "../../desk/surface/gadgets";
-import { countLabel } from "../../desk/surface";
+import { countLabel, StateChip } from "../../desk/surface";
+import { humanizeWireValue } from "../../lib/productLanguage";
 import { useWindowTitle } from "../../desk/surface/title";
 import { windowName } from "../../desk/windowName";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
@@ -26,9 +27,25 @@ interface SnapshotEvent {
 
 type Phase =
   | { step: "review"; events: SnapshotEvent[]; anchor: string; confidence: string }
-  | { step: "error"; message: string }
+  | { step: "error"; verb: "READ" | "SAVE"; message: string }
   | { step: "confirming" }
   | { step: "done"; count: number; sourceLabel: string };
+
+/** UX-CANON A10 (honest states, plain reasons): a refusal reads
+ * `CAN'T READ · <plain reason>`, never the hub's code
+ * (`no_vision_model_assigned`) or a sentence (B0-L1, Tenet 4). */
+const REASONS: Record<string, string> = {
+  no_vision_model_assigned: "No vision model",
+  unreadable_screenshot: "Not a calendar image",
+  no_import: "No screenshot",
+};
+
+export function refusalReason(message: string): string {
+  const m = message.trim();
+  if (REASONS[m]) return REASONS[m];
+  // Any other code the hub sends: its words, never its snake_case.
+  return /^[a-z0-9]+(_[a-z0-9]+)+$/.test(m) ? humanizeWireValue(m) : m;
+}
 
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
@@ -38,7 +55,7 @@ function parseScope(scope: string | undefined): {
   confidence: string;
   error: string | null;
 } {
-  if (!scope) return { events: [], anchor: "", confidence: "absent", error: "This review window opened without an import. Close it and re-import the screenshot." };
+  if (!scope) return { events: [], anchor: "", confidence: "absent", error: "no_import" };
   try {
     const data = JSON.parse(scope);
     if (data.error) {
@@ -61,7 +78,7 @@ function parseScope(scope: string | undefined): {
       events: [],
       anchor: "",
       confidence: "absent",
-      error: "Could not read events from this screenshot. Nothing was written. Retry with a clearer capture.",
+      error: "unreadable_screenshot",
     };
   }
 }
@@ -78,7 +95,7 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
 
   const [phase, setPhase] = useState<Phase>(() => {
     if (initial.error) {
-      return { step: "error", message: initial.error };
+      return { step: "error", verb: "READ", message: initial.error };
     }
     return {
       step: "review",
@@ -114,10 +131,10 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
           sourceLabel: result.source_label ?? "O365 SNAPSHOT",
         });
       } else {
-        setPhase({ step: "error", message: result.error ?? "Could not save the events. Your review is still open. Try again." });
+        setPhase({ step: "error", verb: "SAVE", message: result.error ?? "Events not saved" });
       }
     } catch (err) {
-      setPhase({ step: "error", message: readableError(err) });
+      setPhase({ step: "error", verb: "SAVE", message: readableError(err) });
     }
   }, [phase]);
 
@@ -125,10 +142,9 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
     return (
       <div className="surface-padded">
         <SurfaceSection label="Calendar snapshot">
-          <p className="surface-state-quiet">
-            {phase.message === "unreadable_screenshot"
-              ? "Could not read the screenshot as a calendar. Try a clearer image."
-              : phase.message}
+          <p className="surface-state-quiet" data-testid="calendar-snapshot-refusal">
+            <StateChip state="failure" label={`CAN'T ${phase.verb}`} />{" "}
+            <span className="surface-token" data-chip="">{refusalReason(phase.message)}</span>
           </p>
         </SurfaceSection>
         <SurfaceFooter />
