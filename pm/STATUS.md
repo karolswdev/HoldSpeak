@@ -56,6 +56,8 @@ Test state on main `f1dc2c577` (2026-10-04, quiet machine): default run 13,407 p
 
 ## Last merged (newest first)
 
+- #837 — The calendar test seeds its event in the local week (it failed every Sunday evening west of UTC)
+- #836 — Recipe chat searches memory through the thread turn, proven by a live test; the agent tool turn is recorded as retired code
 - #834 — An edited dictation is remembered by its new words (memory and the Journal search); Replay's before-text is the edited text
 - #832 — Memory slice 2: Brief items, dictation, steward runs and Room answers are remembered; keyword search over the memory index works with no engine; time ranges compare as instants
 - #830 — Memory for every AI job: one policy row per capability; cadence, decision, PR review and rails drafts read memory; memory fits the job's token budget; no self-recall
