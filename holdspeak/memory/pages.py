@@ -12,8 +12,10 @@ disputed observations and the top recall for the question in that scope.
 * **Every sentence cites its inputs.**  The engine answers in a closed
   schema: ``{"sentences": [{"text", "refs"}]}``; a ref is an input label
   (``o1``.. for an observation, ``r1``.. for a recall chunk).  A sentence
-  with no ref, or with a ref that is not in the input, is CUT by code.  An
-  answer outside the closed schema fails whole: back-off, nothing written.
+  with no ref, or with a ref that is not in the input, is CUT by code; so
+  is a sentence with a content token (a word, or a number as a whole
+  token) that the inputs IT cites do not hold.  An answer outside the
+  closed schema fails whole: back-off, nothing written.
 * **A sentence is served only while every input it cites is live in the
   page's scope NOW.**  An observation: still current or disputed, and the
   text version the engine was shown still backed by live evidence in scope
@@ -22,7 +24,9 @@ disputed observations and the top recall for the question in that scope.
   exclusion withdraws it), and the source still in the page's scope (a
   refile counts at once).  The check runs at READ time, so a page built
   before a withdrawal never serves the withdrawn sentence, also before the
-  next rewrite.  A served sentence needs one ref the Desk opens.
+  next rewrite.  A served sentence needs one ref the Desk opens.  The
+  belt: a sentence holding a token that only withdrawn inputs of the page
+  held (``inputs_json``, hashed tokens) is withheld, whatever it cites.
 * **Stale** when a source or an observation in the scope changed after
   ``last_memory_seen_at``.  The job rewrites a stale page at most once an
   hour; a missing page is written at once.  The old page goes to the
@@ -200,16 +204,22 @@ def _bases(refs: Iterable[str]) -> set[str]:
 
 def _changes(conn: Any, scope: tuple[str, str], since: str, scopes: ScopeReader) -> list[tuple[str, str]]:
     """``(key, updated_at)`` of each observation and each source in the scope
-    stamped at or after ``since``."""
+    stamped at or after ``since``.  The key names the CONTENT, not only the
+    row: a source's content hash and state; an observation's state, newest
+    text version and evidence count.  So a second change in the same second
+    (the stamps are to the second) is a new key."""
     found = [
-        (f"o:{row[0]}", str(row[1])) for row in conn.execute(
-            "SELECT id,updated_at FROM memory_observations WHERE scope_kind=? AND scope_id=? AND updated_at>=?",
+        (f"o:{row[0]}@{row[2]}@{row[3]}@{row[4]}", str(row[1])) for row in conn.execute(
+            "SELECT o.id,o.updated_at,o.state,"
+            " (SELECT COALESCE(MAX(v.version),0) FROM memory_observation_versions v WHERE v.observation_id=o.id),"
+            " (SELECT count(*) FROM memory_observation_evidence e WHERE e.observation_id=o.id)"
+            " FROM memory_observations o WHERE o.scope_kind=? AND o.scope_id=? AND o.updated_at>=?",
             (scope[0], scope[1], since),
         )
     ]
     found += [
-        (f"s:{row[0]}", str(row[1])) for row in conn.execute(
-            "SELECT source_ref,updated_at FROM memory_sources WHERE updated_at>=?", (since,)
+        (f"s:{row[0]}@{row[2]}@{row[3]}", str(row[1])) for row in conn.execute(
+            "SELECT source_ref,updated_at,content_sha,state FROM memory_sources WHERE updated_at>=?", (since,)
         ) if scopes.in_scope(str(row[0]), scope)
     ]
     return found
@@ -218,7 +228,7 @@ def _changes(conn: Any, scope: tuple[str, str], since: str, scopes: ScopeReader)
 def memory_marker(conn: Any, scope: tuple[str, str], scopes: ScopeReader) -> tuple[str, list[str]]:
     """The newest change in the scope memory holds now (an observation's
     ``updated_at`` or an in-scope source's ledger ``updated_at``), and the
-    keys of the changes stamped exactly then."""
+    content keys of everything stamped exactly then."""
     row = conn.execute(
         "SELECT MAX(updated_at) FROM memory_observations WHERE scope_kind=? AND scope_id=?", scope
     ).fetchone()
@@ -236,7 +246,10 @@ def memory_marker(conn: Any, scope: tuple[str, str], scopes: ScopeReader) -> tup
 def is_stale(conn: Any, scope: tuple[str, str], seen: str, seen_keys: Iterable[str], scopes: ScopeReader) -> bool:
     """True when an observation or a source in the scope changed after the
     job saw the scope (``H/engine/memory_engine.py:20043-20050``): stamped
-    after ``seen``, or in that same second and not one the job saw."""
+    after ``seen``, or stamped in that same second with content (a hash, a
+    state, a version, an evidence count) the job did not see.  Every change
+    restamps its row, so a row stamped before ``seen`` is as the job saw
+    it."""
     known = set(seen_keys)
     return any(at > seen or key not in known for key, at in _changes(conn, scope, seen, scopes))
 
@@ -286,22 +299,47 @@ def page_observations(
     return kept[:MAX_OBSERVATIONS]
 
 
-_RECALL_COLUMNS = (
-    "SELECT c.id,c.source_ref,c.anchor,c.text,c.content_sha,c.occurred_at,s.kind"
-    " FROM memory_chunks c JOIN memory_sources s ON s.source_ref=c.source_ref"
-)
+_RECALL_FROM = " FROM memory_chunks c JOIN memory_sources s ON s.source_ref=c.source_ref"
+_RECALL_FTS = " JOIN memory_chunks_fts f ON f.rowid=c.rowid AND f.chunk_id=c.id"
 _RECALL_WHERE = (
     " WHERE s.state='live'"
-    " AND (? IS NULL OR s.kind IN (SELECT value FROM json_each(?)))"
+    " AND s.kind IN (SELECT value FROM json_each(?))"
     " AND substr(COALESCE(c.occurred_at,''),1,10)>=?"
 )
-_RECALL_ORDER = " ORDER BY COALESCE(c.occurred_at,s.updated_at) DESC,c.source_ref,c.ordinal LIMIT 400"
-_RECALL_SQL = _RECALL_COLUMNS + _RECALL_WHERE + _RECALL_ORDER
-_RECALL_MATCH_SQL = (
-    _RECALL_COLUMNS
-    + " JOIN memory_chunks_fts f ON f.rowid=c.rowid AND f.chunk_id=c.id"
-    + _RECALL_WHERE + " AND memory_chunks_fts MATCH ?" + _RECALL_ORDER
+#: Step 1: the sources the question could read (no bound).
+_CANDIDATES_SQL = "SELECT DISTINCT c.source_ref" + _RECALL_FROM + _RECALL_WHERE
+_CANDIDATES_MATCH_SQL = (
+    "SELECT DISTINCT c.source_ref" + _RECALL_FROM + _RECALL_FTS + _RECALL_WHERE + " AND memory_chunks_fts MATCH ?"
 )
+#: Step 2: their chunks, ONLY the sources in the scope, at most
+#: ``RECALL_PER_SOURCE`` a source, newest first.  No LIMIT: the caller
+#: stops reading at ``MAX_RECALL``.
+_CHUNKS_SELECT = (
+    "SELECT * FROM (SELECT c.id,c.source_ref,c.anchor,c.text,c.content_sha,c.occurred_at,c.ordinal,"
+    "s.kind,s.updated_at,ROW_NUMBER() OVER (PARTITION BY c.source_ref ORDER BY c.ordinal) nth"
+)
+_CHUNKS_SCOPE = " AND c.source_ref IN (SELECT value FROM json_each(?))"
+_CHUNKS_ORDER = (
+    ") WHERE nth<=? ORDER BY COALESCE(occurred_at,updated_at) DESC,source_ref,ordinal"
+)
+_CHUNKS_SQL = _CHUNKS_SELECT + _RECALL_FROM + _RECALL_WHERE + _CHUNKS_SCOPE + _CHUNKS_ORDER
+_CHUNKS_MATCH_SQL = (
+    _CHUNKS_SELECT + _RECALL_FROM + _RECALL_FTS + _RECALL_WHERE + " AND memory_chunks_fts MATCH ?"
+    + _CHUNKS_SCOPE + _CHUNKS_ORDER
+)
+
+
+def _openable_kinds(wanted: Iterable[str] = ()) -> list[str]:
+    """Memory source kinds whose ref the Desk opens (``action`` opens as
+    ``action_item``), within ``wanted`` when given."""
+    from ..services.memory_grounding import DESK_REF_KINDS
+    from .retain import SOURCE_READERS
+
+    chosen = set(wanted)
+    return sorted(
+        kind for kind in SOURCE_READERS
+        if desk_ref(f"{kind}:x").split(":", 1)[0] in DESK_REF_KINDS and (not chosen or kind in chosen)
+    )
 
 
 def recall_items(
@@ -314,40 +352,42 @@ def recall_items(
     now: Optional[datetime] = None,
 ) -> list[dict[str, Any]]:
     """The top recall for the question, in the scope: chunks of the kinds the
-    question reads, newest first, at most ``RECALL_PER_SOURCE`` per source.  Each is checked as a
-    reader checks it: the source in the scope now, the chunk in its live
-    text now, and a kind the Desk opens.  No model call."""
-    from ..services.memory_grounding import DESK_REF_KINDS
+    question reads (only kinds the Desk opens), newest first, at most
+    ``RECALL_PER_SOURCE`` per source.
 
+    The scope is applied BEFORE any bound: step 1 lists every source the
+    question could read, the scope rule (``ScopeReader``, the rule search
+    uses) keeps the sources in the scope NOW, and step 2 reads chunks of
+    those sources only.  So no other project's sources can fill the list.
+    Each chunk is then checked as a reader checks it (in its source's live
+    text now).  No model call."""
     since = ""
     if spec.days:
         # When the thing happened (the source's own time), by day: a sweep
         # or a rebuild does not make an old source "this week".
         since = ((now or datetime.now(timezone.utc)) - timedelta(days=spec.days)).date().isoformat()
-    kinds = json.dumps(list(spec.kinds)) if spec.kinds else None
+    kinds = json.dumps(_openable_kinds(spec.kinds))
     if spec.match:
-        rows = conn.execute(_RECALL_MATCH_SQL, (kinds, kinds, since, spec.match)).fetchall()
+        candidates = conn.execute(_CANDIDATES_MATCH_SQL, (kinds, since, spec.match)).fetchall()
     else:
-        rows = conn.execute(_RECALL_SQL, (kinds, kinds, since)).fetchall()
+        candidates = conn.execute(_CANDIDATES_SQL, (kinds, since)).fetchall()
+    in_scope = json.dumps(sorted(str(r[0]) for r in candidates if scopes.in_scope(str(r[0]), scope)))
+    if spec.match:
+        cursor = conn.execute(_CHUNKS_MATCH_SQL, (kinds, since, spec.match, in_scope, RECALL_PER_SOURCE))
+    else:
+        cursor = conn.execute(_CHUNKS_SQL, (kinds, since, in_scope, RECALL_PER_SOURCE))
+    rows = cursor.fetchall()
     out: list[dict[str, Any]] = []
-    taken: dict[str, int] = {}
     for row in rows:
         item = dict(row)
         source_ref = str(item["source_ref"])
-        if taken.get(source_ref, 0) >= RECALL_PER_SOURCE:
-            continue
-        ref = desk_ref(source_ref, str(item["anchor"] or ""))
-        if ref.split(":", 1)[0] not in DESK_REF_KINDS:
-            continue
-        if not scopes.in_scope(source_ref, scope):
-            continue
         if not live.holds(source_ref, item["id"], item["content_sha"], item["anchor"]):
             continue
-        taken[source_ref] = taken.get(source_ref, 0) + 1
         out.append({
             "source_ref": source_ref, "chunk_id": str(item["id"]), "chunk_sha": str(item["content_sha"]),
             "anchor": str(item["anchor"] or ""), "text": str(item["text"]), "kind": str(item["kind"]),
-            "occurred_at": str(item["occurred_at"] or ""), "ref": ref,
+            "occurred_at": str(item["occurred_at"] or ""),
+            "ref": desk_ref(source_ref, str(item["anchor"] or "")),
         })
         if len(out) >= MAX_RECALL:
             break
@@ -403,12 +443,27 @@ def _fold(text: str) -> str:
     return " ".join(str(text or "").casefold().split()).rstrip(".")
 
 
-#: A token that carries a number: a date, an amount, a count, a version.
-_NUMBER = re.compile(r"[\w.,:/-]*\d[\w.,:/-]*")
+#: Words that say nothing about a source.  Every OTHER word of a sentence,
+#: and every number as a whole token, must be in the inputs it cites.
+_STOPWORDS = frozenset("""
+a an the and or but nor so yet of to in on at by for from with as into onto over under about after before
+since until than then is are was were be been being am has have had do does did will would shall should
+can could may might must it its this that these those there here which who whom whose what when where why
+how all any some each no not also only just still very more most less least we our ours us they their
+them he his him she her i my me you your yours one
+""".split())
+_TOKEN = re.compile(r"\w+", re.UNICODE)
 
 
-def _numbers(text: str) -> set[str]:
-    return {token.strip(".,:/-").casefold() for token in _NUMBER.findall(str(text or ""))} - {""}
+def content_tokens(text: str) -> set[str]:
+    """The content tokens of a text: each word or number (a WHOLE token:
+    "26" is not part of "2026"), case-folded, less the stopwords."""
+    return {t for t in (w.casefold() for w in _TOKEN.findall(str(text or ""))) if t not in _STOPWORDS}
+
+
+def _token_key(token: str) -> str:
+    """A token as the page row keeps it: a hash, never the word."""
+    return hashlib.sha256(f"memory-page-token:{token}".encode("utf-8")).hexdigest()[:16]
 
 
 def validate_output(raw: Any, labels: Any) -> tuple[list[dict[str, Any]], int]:
@@ -418,10 +473,12 @@ def validate_output(raw: Any, labels: Any) -> tuple[list[dict[str, Any]], int]:
     ``PageOutputError``: the whole answer is a failed attempt and nothing is
     written.  A well-formed sentence with no ref, a ref that is not an input
     label, no text left after the memory defense, or a repeat is CUT.  When
-    ``labels`` maps each label to its input text, a sentence that names a
-    number (a date, an amount) that none of ITS cited inputs holds is CUT
-    too: it says something its refs do not, so a withdrawal of the input it
-    really came from could not withdraw it.
+    ``labels`` maps each label to its input text, attribution is checked by
+    code: every content token of the sentence (``content_tokens``: each
+    word less the stopwords, each number as a whole token) must be in the
+    text of the inputs THAT sentence cites, or it is CUT.  A sentence that
+    says something its refs do not could not be withdrawn with the input it
+    really came from.
     Returns ``(kept sentences, number cut)``; each kept text is redacted
     before it is folded and cut (``defense.redact_clip``).
     """
@@ -451,8 +508,8 @@ def validate_output(raw: Any, labels: Any) -> tuple[list[dict[str, Any]], int]:
             cut += 1
             continue
         if texts is not None:
-            cited = " ".join(texts[ref] for ref in refs).casefold()
-            if any(number not in cited for number in _numbers(text)):
+            cited = set().union(*(content_tokens(texts[ref]) for ref in refs))
+            if not content_tokens(text) <= cited:
                 cut += 1
                 continue
         seen.add(_fold(text))
@@ -536,6 +593,25 @@ class _Checker:
         return refs
 
 
+def _withdrawn_tokens(checker: "_Checker", row: dict[str, Any]) -> set[str]:
+    """The belt behind the write-time attribution check: the hashed content
+    tokens that only WITHDRAWN inputs of the page held.  An input is
+    withdrawn when it is not live in the page's scope now (``_Checker.cite``:
+    edited, deleted, sensitive, refiled, excluded, superseded, unbacked).
+    A sentence that holds one of these tokens is withheld, whatever it
+    cites."""
+    try:
+        stored = json.loads(row.get("inputs_json") or "[]")
+    except ValueError:
+        return set()
+    gone: set[str] = set()
+    kept: set[str] = set()
+    for item in stored:
+        tokens = set(item.get("tokens") or ())
+        (kept if checker.cite(item) is not None else gone).update(tokens)
+    return gone - kept
+
+
 def _keys(row: dict[str, Any]) -> list[str]:
     try:
         return [str(key) for key in json.loads(row.get("seen_keys_json") or "[]")]
@@ -583,11 +659,12 @@ def read(
         except ValueError:
             return None
         checker = _Checker(conn, scope, exclude_refs)
+        withdrawn = _withdrawn_tokens(checker, row)
         sentences: list[dict[str, Any]] = []
         withheld = 0
         for sentence in stored:
             refs = checker.sentence(sentence)
-            if refs is None:
+            if refs is None or (withdrawn & {_token_key(t) for t in content_tokens(sentence.get("text") or "")}):
                 withheld += 1
                 continue
             sentences.append({
@@ -785,6 +862,12 @@ def write_page(
         {"text": item["text"], "cites": [_cites(label, observations, recall) for label in item["refs"]]}
         for item in kept
     ]
+    # Every input the page was built from, cited or not, with the hashed
+    # content tokens of its text: the read-time belt (``_withdrawn_tokens``).
+    page_inputs_kept = [
+        {**_cites(label, observations, recall), "tokens": sorted(_token_key(t) for t in content_tokens(text))}
+        for label, text in labels.items()
+    ]
     # The page as built, checked as a reader checks it (the sources list).
     with db._connection() as conn:
         checker = _Checker(conn, scope)
@@ -797,6 +880,7 @@ def write_page(
         answer_md="\n".join(f"- {s['text']}" for s in sentences),
         sources=sources,
         sentences=sentences,
+        inputs=page_inputs_kept,
         seen=inputs["seen"],
         seen_keys=inputs["seen_keys"],
         boundary=str(getattr(writer, "boundary", "") or ""),

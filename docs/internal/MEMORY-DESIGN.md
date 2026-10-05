@@ -648,7 +648,10 @@ the owner's canvas (UX-CANON).
   question, not the fused search: chunks of the kinds the question reads
   (decisions; action items; an FTS match on risk words; this week by the
   source's own date), newest first, at most 3 a source, only kinds the
-  Desk opens. The fused search would embed the question (a second model
+  Desk opens. The scope is applied before any bound: the sources the
+  question could read are listed, the scope rule keeps those in the scope
+  now, and the chunk query reads only those (no LIMIT; the reader stops at
+  8), so other projects never fill the list. The fused search would embed the question (a second model
   call in the job) and returns search names, not chunks. (4) A desk page
   reads the desk's scope (sources in no project), as observations do.
 - **Every sentence cites its inputs.** The closed schema is
@@ -657,9 +660,12 @@ the owner's canvas (UX-CANON).
   types, more than 12 sentences) fails the whole answer: back-off in
   `memory_jobs` (30 s doubling to 900 s, `failed` after 6), nothing
   written. A sentence with no ref, a label not in the input, no text after
-  `defense.redact_clip`, or a repeat is CUT by code. A sentence that names
-  a number (a date, an amount) that none of ITS cited inputs holds is cut
-  too: a withdrawal of the input it really came from could not withdraw it.
+  `defense.redact_clip`, or a repeat is CUT by code. **Attribution is
+  checked by code** (review round 1, Astra): every content token of a
+  sentence (each word less a small stopword list, case-folded; each number
+  as a WHOLE token, so "26" is not "2026") must be in the text of the
+  inputs THAT sentence cites, or it is cut. A sentence that says something
+  its refs do not could not be withdrawn with the input it came from.
 - **Read time decides, not the next rewrite.** Each stored sentence keeps
   what it cites: an observation and the text version the engine was shown,
   or a chunk (id, hash, anchor). A sentence is served only while EVERY
@@ -669,12 +675,21 @@ the owner's canvas (UX-CANON).
   source's live text, cut again now (edit, delete, sensitive part, park),
   and the source in the page's scope now (a refile counts at once). A
   caller's `exclude_refs` count as not live. A served sentence needs one
-  ref the Desk opens. A page with no sentence live is no page.
+  ref the Desk opens. A page with no sentence live is no page. **The belt:**
+  the page keeps every input it was built from (cited or not) with the
+  HASHED content tokens of its text (`inputs_json`; no word is stored).
+  When an input is not live now, a sentence holding a token that only
+  withdrawn inputs held is withheld, whatever it cites.
 - **Stale and rewrite.** `last_memory_seen_at` is the newest change in the
   scope when the job read it (an observation's `updated_at` or an in-scope
-  source's ledger `updated_at`), with the keys stamped in that same second
-  (`seen_keys_json`; the stamps are to the second). Stale: a change after
-  it, or one in that second the job did not see. A missing page is written
+  source's ledger `updated_at`), with the content keys of everything
+  stamped in that same second (`seen_keys_json`; the stamps are to the
+  second). A key names the content: a source's content hash and state; an
+  observation's state, newest version and evidence count. Stale: a change
+  stamped after it, or a key in that second the job did not see (a second
+  edit in the same second is a new hash). Every change restamps its row, so
+  a row stamped earlier is as the job saw it (a clock that runs backwards
+  is not covered). A missing page is written
   at once; a stale one at most once an hour. A scope is a candidate when it
   has an observation that stands or a page already. The write takes the
   write lock, checks every input again and that the page is the one it
@@ -697,8 +712,9 @@ the owner's canvas (UX-CANON).
 - **Not done.** No face reads a page. A source filed into a project does
   not move its ledger stamp, so a refile makes the old project's sentences
   drop at once but does not mark the new project's pages stale. The
-  attribution check is for numbers only: a sentence whose words (not
-  numbers) came from an input it does not cite is not caught. The real LAN
+  attribution check is by words: a sentence made only of words its cited
+  inputs also hold is kept, even when its meaning came from elsewhere (a
+  paraphrase the inputs do not support word for word is cut). The real LAN
   model is not run for this job; no recorded answers.
 
 ### 3.5 REFLECT

@@ -931,6 +931,7 @@ class MemoryIndexRepository(BaseRepository):
         sources: Sequence[str],
         sentences: Sequence[dict[str, Any]],
         seen: str,
+        inputs: Sequence[dict[str, Any]] = (),
         seen_keys: Sequence[str] = (),
         boundary: str = "",
         model: str = "",
@@ -961,16 +962,19 @@ class MemoryIndexRepository(BaseRepository):
                 )
             conn.execute(
                 """INSERT INTO memory_pages(id,scope_kind,scope_id,slug,question,answer_md,sources_json,
-                     sentences_json,built_at,last_memory_seen_at,seen_keys_json,boundary,model,
-                     writer_version)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                     sentences_json,inputs_json,built_at,last_memory_seen_at,seen_keys_json,boundary,
+                     model,writer_version)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                    ON CONFLICT(id) DO UPDATE SET question=excluded.question,answer_md=excluded.answer_md,
                      sources_json=excluded.sources_json,sentences_json=excluded.sentences_json,
+                     inputs_json=excluded.inputs_json,
                      built_at=excluded.built_at,last_memory_seen_at=excluded.last_memory_seen_at,
-                     seen_keys_json=excluded.seen_keys_json,boundary=excluded.boundary,model=excluded.model,writer_version=excluded.writer_version""",
+                     seen_keys_json=excluded.seen_keys_json,boundary=excluded.boundary,
+                     model=excluded.model,writer_version=excluded.writer_version""",
                 (page_id, scope[0], scope[1], slug, question, answer_md,
                  json.dumps(list(sources), ensure_ascii=False),
                  json.dumps(list(sentences), ensure_ascii=False, sort_keys=True),
+                 json.dumps(list(inputs), ensure_ascii=False, sort_keys=True),
                  _now(), seen, json.dumps(sorted(seen_keys)), boundary, model, int(version)),
             )
             conn.execute(

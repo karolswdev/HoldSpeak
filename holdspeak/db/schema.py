@@ -4850,6 +4850,10 @@ CREATE TABLE IF NOT EXISTS memory_pages (
     answer_md TEXT NOT NULL,
     sources_json TEXT NOT NULL,
     sentences_json TEXT NOT NULL DEFAULT '[]',
+    -- Every input the page was built from (cited or not), each with the
+    -- HASHED content tokens of its text: at read time a sentence holding a
+    -- token only withdrawn inputs held is withheld.
+    inputs_json TEXT NOT NULL DEFAULT '[]',
     built_at TEXT NOT NULL,
     last_memory_seen_at TEXT NOT NULL,
     -- The changes stamped exactly `last_memory_seen_at` that the job saw

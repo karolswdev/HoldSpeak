@@ -429,31 +429,185 @@ def test_a_sentence_whose_ref_is_not_in_the_input_is_cut(tmp_path: Path) -> None
         assert cut not in held
 
 
-def test_a_sentence_that_names_a_number_its_refs_do_not_hold_is_cut(tmp_path: Path) -> None:
-    """A sentence that carries a date from o2 but cites only o1 would
-    survive o2's withdrawal: it is cut when it is written."""
+# ── attribution (review round 1, Astra, PR #848) ──────────────────────
+
+WITHDRAWALS = ["delete", "edit", "exclude", "refile", "sensitive"]
+
+
+def _status_and_codename(db: Database, mode: str) -> tuple[tuple[str, str], str, Callable[[], None], dict]:
+    """Astra's repro: a status source and a codename source in one scope.
+    Returns the scope, the codename's ref, the withdrawal for ``mode`` and
+    the read arguments (an exclusion withdraws by the caller's refs)."""
+    if mode == "sensitive":
+        _filed_note(db, "n-status", "Desk status is approved.", None)
+        thread = db.threads.create_thread(title="Planning")
+        message = db.threads.append_message(thread.id, role="user")
+        part = db.threads.append_part(message.id, kind="text", text="Desk codename is ZEPHYRSECRET.")
+
+        def withdraw() -> None:
+            db.threads.append_part(message.id, kind="text", text=part.text, sensitive=True)
+            db.threads.delete_part(part.id)
+
+        return DESK, f"thread:{thread.id}", withdraw, {}
+    _filed_note(db, "n-status", "Atlas status is approved.", "atlas")
+    _filed_note(db, "n-code", "Atlas codename is ZEPHYRSECRET.", "atlas")
+
+    def withdraw() -> None:
+        if mode == "delete":
+            db.notes.delete("n-code")
+        elif mode == "edit":
+            _filed_note(db, "n-code", "Lunch is at noon.", "atlas")
+        elif mode == "refile":
+            db.project_relationships.upsert(project_id="atlas", resource_ref="note:n-code", deleted=True)
+            db.project_relationships.upsert(project_id="harbor", resource_ref="note:n-code")
+
+    return ATLAS, "note:n-code", withdraw, ({"exclude_refs": ["note:n-code"]} if mode == "exclude" else {})
+
+
+def _misattributing(payload: dict) -> dict:
+    """The status sentence, rightly cited, and the codename sentence cited
+    to the STATUS input (the model's wrong attribution)."""
+    lines = Pages.lines(payload)
+    status = next(label for label, text in lines.items() if "status is approved" in text)
+    word = "Desk" if "Desk status" in lines[status] else "Atlas"
+    return {"sentences": [
+        {"text": f"{word} status is approved.", "refs": [status]},
+        {"text": f"{word} codename is ZEPHYRSECRET.", "refs": [status]},
+    ]}
+
+
+def _drafted(db: Database, scope: tuple[str, str], **kwargs: Any) -> str:
+    pages = (scope + (CHANGED,),)
+    project = scope[1] or None
+    return memory_for("project.update_draft", db, project_id=project, query="status codename",
+                      pages=pages, **kwargs).prompt_block()
+
+
+@pytest.mark.parametrize("mode", WITHDRAWALS)
+def test_a_sentence_cited_to_the_wrong_input_is_cut_when_it_is_written(tmp_path: Path, mode: str) -> None:
     db = _desk(tmp_path)
-    _filed_note(db, "n1", "Atlas launch is 2026-10-01.", "atlas")
-    _filed_note(db, "n2", "Atlas budget is 40k.", "atlas")
+    scope, _ref, withdraw, kwargs = _status_and_codename(db, mode)
     _learn(db)
-    writer = Pages(recall=False)
+    writer = Pages()
+    writer.answer = _misattributing
+    assert write_page(db, writer, scope, spec_for(scope[0], CHANGED))["cut"] == 1
+    page = _page(db, scope, CHANGED)
+    assert [s["text"] for s in page["sentences"]] == [f"{'Desk' if scope == DESK else 'Atlas'} status is approved."]
+    with db._connection() as conn:
+        assert "ZEPHYRSECRET" not in conn.execute("SELECT sentences_json||answer_md FROM memory_pages").fetchone()[0]
+    withdraw()
+    for step in (lambda: None, lambda: sweep(db), lambda: _learn(db)):
+        step()
+        assert "ZEPHYRSECRET" not in json.dumps(_page(db, scope, CHANGED, **kwargs))
+        drafted_kwargs = {"exclude_refs": kwargs["exclude_refs"]} if kwargs else {}
+        assert "ZEPHYRSECRET" not in _drafted(db, scope, **drafted_kwargs)
+
+
+@pytest.mark.parametrize("mode", WITHDRAWALS)
+def test_read_time_withholds_a_token_only_a_withdrawn_input_held(tmp_path: Path, mode: str, monkeypatch) -> None:
+    """The belt: a page whose sentence carries the codename but cites the
+    status input (written past the write-time check, as an older writer
+    could) loses that sentence at READ time once the codename's source is
+    withdrawn, whatever the sentence cites."""
+    db = _desk(tmp_path)
+    scope, _ref, withdraw, kwargs = _status_and_codename(db, mode)
+    _learn(db)
+    real = pages_module.validate_output
+    monkeypatch.setattr(pages_module, "validate_output", lambda raw, labels: real(raw, list(labels)))
+    writer = Pages()
+    writer.answer = _misattributing
+    write_page(db, writer, scope, spec_for(scope[0], CHANGED))
+    page = _page(db, scope, CHANGED)
+    assert "ZEPHYRSECRET" in json.dumps(page) and page["withheld"] == 0  # the codename's source is live
+    withdraw()
+    for step in (lambda: None, lambda: sweep(db), lambda: _learn(db)):
+        step()
+        page = _page(db, scope, CHANGED, **kwargs)
+        assert "ZEPHYRSECRET" not in json.dumps(page)
+        assert page is not None and "status is approved" in json.dumps(page) and page["withheld"] == 1
+        drafted_kwargs = {"exclude_refs": kwargs["exclude_refs"]} if kwargs else {}
+        drafted = _drafted(db, scope, **drafted_kwargs)
+        assert "ZEPHYRSECRET" not in drafted and "status is approved" in drafted
+
+
+def test_a_number_matches_only_as_a_whole_token(tmp_path: Path) -> None:
+    """Astra's repro: "26" is not "2026"."""
+    db = _desk(tmp_path)
+    _filed_note(db, "n1", "Atlas build is 2026.", "atlas")
+    _filed_note(db, "n2", "Atlas budget is 26.", "atlas")
+    _learn(db)
+    writer = Pages()
 
     def answer(payload: dict) -> dict:
         lines = Pages.lines(payload)
-        launch = next(label for label, text in lines.items() if "launch" in text)
-        budget = next(label for label, text in lines.items() if "budget" in text)
+        build = next(label for label, text in lines.items() if "build is 2026" in text)
+        budget = next(label for label, text in lines.items() if "budget is 26" in text)
         return {"sentences": [
-            {"text": "Atlas launch is 2026-10-01 and the budget is 40k.", "refs": [launch]},
-            {"text": "Atlas launch is 2026-10-01 and the budget is 40k!", "refs": [launch, budget]},
-            {"text": "Atlas launch is in October 2026.", "refs": [launch]},
+            {"text": "Atlas budget is 26.", "refs": [build]},          # wrong input: cut
+            {"text": "Atlas budget is 26 for 2026.", "refs": [build, budget]},
+            {"text": "Atlas launch is in October 2026.", "refs": [build]},  # "launch", "october": cut
         ]}
 
     writer.answer = answer
-    write_page(db, writer, ATLAS, spec_for("project", CHANGED))
-    texts = [s["text"] for s in _page(db, ATLAS, CHANGED)["sentences"]]
-    assert texts == ["Atlas launch is 2026-10-01 and the budget is 40k!", "Atlas launch is in October 2026."]
-    db.notes.delete("n2")
-    assert "40k" not in json.dumps(_page(db, ATLAS, CHANGED))
+    assert write_page(db, writer, ATLAS, spec_for("project", CHANGED))["cut"] == 2
+    assert [s["text"] for s in _page(db, ATLAS, CHANGED)["sentences"]] == ["Atlas budget is 26 for 2026."]
+    assert pages_module.content_tokens("Atlas budget is 26.") == {"atlas", "budget", "26"}
+    # Only the number differs: "26" is not in "2026".
+    kept, cut = pages_module.validate_output(
+        {"sentences": [{"text": "Atlas budget is 26.", "refs": ["o1"]}]}, {"o1": "Atlas budget is 2026."})
+    assert (kept, cut) == ([], 1)
+
+
+# ── stale: a second change in the same second (Astra, PR #848) ──────────
+
+
+def test_a_second_change_in_the_same_second_makes_the_page_stale(tmp_path: Path, monkeypatch) -> None:
+    from holdspeak.db import memory_index
+
+    frozen = datetime.now(timezone.utc).replace(microsecond=0)
+    monkeypatch.setattr(memory_index, "_now", lambda: frozen.isoformat(timespec="seconds"))
+    db = _desk(tmp_path)
+    _filed_note(db, "n1", "Atlas launch is 2026-10-01.", "atlas")
+    _filed_note(db, "n2", "Send the weekly report on Monday.", "atlas")  # recall only: no fact
+    _built(db)
+    page = _page(db, ATLAS, CHANGED)
+    assert "Monday" in json.dumps(page) and page["stale"] is False
+    _filed_note(db, "n2", "Send the weekly report on Friday.", "atlas")
+    _learn(db)  # the same second: every stamp is the same
+    page = _page(db, ATLAS, CHANGED)
+    assert page["withheld"] == 1 and page["stale"] is True
+    later = frozen + timedelta(hours=2)
+    assert (ATLAS, CHANGED) in [(d["scope"], d["spec"].slug) for d in pending_pages(db, now=later)]
+    write_pending(db, Pages(), now=later)
+    assert "Friday" in json.dumps(_page(db, ATLAS, CHANGED))
+
+
+# ── recall: other projects never fill the bound (Astra, PR #848) ────────
+
+
+def test_other_projects_never_exhaust_a_projects_recall(tmp_path: Path, monkeypatch) -> None:
+    from holdspeak.db import primitives
+
+    db = _desk(tmp_path)
+    # The Atlas notes are older (still this week) than the 401 Harbor notes,
+    # so the Harbor chunks come first in "newest first".  The note producer
+    # stamps from the wall clock: pin it for the two Atlas notes.
+    older = (datetime.now(timezone.utc) - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    monkeypatch.setattr(primitives, "_now_iso", lambda: older)
+    _filed_note(db, "a1", "Atlas launch is 2026-10-01.", "atlas")
+    _filed_note(db, "a2", "Send the weekly report on Friday.", "atlas")
+    monkeypatch.undo()
+    for index in range(401):
+        _filed_note(db, f"h{index:03d}", f"Harbor item {index} is open.", "harbor")
+    sweep(db)
+    for slug in ("what-changed-this-week", "risks-and-disputes"):
+        recall = pages_module.page_inputs(db, ATLAS, spec_for("project", slug))["recall"]
+        assert all(item["source_ref"] in ("note:a1", "note:a2") for item in recall)
+    recall = pages_module.page_inputs(db, ATLAS, spec_for("project", CHANGED))["recall"]
+    assert {item["source_ref"] for item in recall} == {"note:a1", "note:a2"}
+    assert any("Friday" in item["text"] for item in recall)
+    write_page(db, Pages(), ATLAS, spec_for("project", CHANGED))
+    assert "Friday" in json.dumps(_page(db, ATLAS, CHANGED))
 
 
 @pytest.mark.parametrize("answer", [
