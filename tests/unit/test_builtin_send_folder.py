@@ -235,7 +235,6 @@ def _icloud(monkeypatch: pytest.MonkeyPatch, home: Path, *, synced: bool) -> lis
 
     def read(path: str, name: str):
         asked.append(path)
-        assert path.startswith(os.path.realpath(home)), path  # never outside the isolated HOME
         if synced and name == "com.apple.file-provider-domain-id" and path == documents:
             return CLOUD_ID
         return None
@@ -315,3 +314,166 @@ def test_the_real_xattr_on_a_scratch_folder_is_read(home: Path) -> None:
     assert channel_contract.icloud_synced(sent, "darwin") is False
     subprocess.run(["xattr", "-w", "com.apple.file-provider-domain-id", CLOUD_ID.decode(), str(documents)], check=True)
     assert channel_contract.icloud_synced(sent, "darwin") is True
+
+
+# ── Astra's review of #864 (2026-10-05): the five defects, fenced ─────────
+
+
+def test_a_documents_symlinked_outside_home_with_the_icloud_xattr_is_icloud(
+        hub: Hub, home: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """D1a: the xattr is read on the RESOLVED folder's ancestors, with no HOME stop."""
+    from holdspeak.services import channel_contract
+
+    outside = tmp_path / "other-volume-docs"
+    outside.mkdir()
+    (home / "Documents").symlink_to(outside)
+    monkeypatch.setattr(channel_contract, "PLATFORM", "darwin")
+    real_outside = os.path.realpath(outside)
+    monkeypatch.setattr(channel_contract, "_read_xattr",
+                        lambda path, name: CLOUD_ID if path == real_outside else None)
+    _pid, update = room(hub)
+    sent = press(hub, update, "outside-1")
+    assert sent["outcome"] == "sent", sent
+    assert (sent["send"]["proof"]["egress"], sent["send"]["badge"]) == ("icloud", "cloud"), sent["send"]
+    assert sent["send"]["proof"]["path"].startswith(real_outside)
+
+
+@pytest.mark.parametrize("finder_switch", [True, False])
+def test_a_documents_symlinked_into_icloud_drive_is_icloud_with_no_xattr(
+        hub: Hub, home: Path, monkeypatch: pytest.MonkeyPatch, finder_switch: bool) -> None:
+    """D1b: a resolved path inside ~/Library/Mobile Documents is iCloud Drive's own store (with or without Finder's switch)."""
+    import plistlib
+
+    from holdspeak.services import channel_contract
+
+    store = home / "Library" / "Mobile Documents" / "com~apple~CloudDocs" / "Documents"
+    store.mkdir(parents=True)
+    (home / "Documents").symlink_to(store)
+    prefs = home / "Library" / "Preferences"
+    prefs.mkdir(parents=True)
+    (prefs / "com.apple.finder.plist").write_bytes(plistlib.dumps({"FXICloudDriveDocuments": finder_switch}))
+    monkeypatch.setattr(channel_contract, "PLATFORM", "darwin")
+    monkeypatch.setattr(channel_contract, "_read_xattr", lambda path, name: None)
+    [d] = hub.client.get("/api/channels/destinations").json()["destinations"]
+    assert (d["target"].get("cloud"), d["badge"]) == ("icloud", "cloud"), d
+    _pid, update = room(hub)
+    sent = press(hub, update, "mobile-1")
+    assert (sent["send"]["proof"]["egress"], sent["send"]["badge"]) == ("icloud", "cloud"), sent["send"]
+
+
+def test_the_finder_switch_compares_resolved_paths(home: Path, tmp_path: Path,
+                                                    monkeypatch: pytest.MonkeyPatch) -> None:
+    """D1: Documents symlinked elsewhere, no xattr, Finder's switch on: the resolved Sent is under the resolved Documents."""
+    import plistlib
+
+    from holdspeak.services import channel_contract
+
+    elsewhere = tmp_path / "docs-elsewhere"
+    elsewhere.mkdir()
+    (home / "Documents").symlink_to(elsewhere)
+    prefs = home / "Library" / "Preferences"
+    prefs.mkdir(parents=True)
+    (prefs / "com.apple.finder.plist").write_bytes(plistlib.dumps({"FXICloudDriveDocuments": True}))
+    monkeypatch.setattr(channel_contract, "_read_xattr", lambda path, name: None)
+    assert channel_contract.icloud_synced(channel_contract.builtin_folder("darwin"), "darwin") is True
+
+
+def test_a_take_over_after_a_failed_settle_keeps_the_icloud_egress(
+        hub: Hub, home: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """D3: the egress is judged once at the boundary and stored; recovery reads the stored value."""
+    from holdspeak.services import channel_service
+
+    _icloud(monkeypatch, home, synced=True)
+    _pid, update = room(hub)
+    body = send_body(hub, "inline", update, BUILTIN, "recover-1")
+    real = channel_service.settle_in_transaction
+    failed: list[int] = []
+
+    def settle(conn, **kwargs):
+        settled = real(conn, **kwargs)
+        if not failed:
+            failed.append(1)
+            raise RuntimeError("injected: the settle write failed after the effect")
+        return settled
+
+    monkeypatch.setattr(channel_service, "settle_in_transaction", settle)
+    first = send(hub, body)
+    assert first.status_code == 500, first.text
+    [row] = sends(hub)
+    assert (row["state"], row["egress"]) == ("dispatching", "icloud"), row
+    _icloud(monkeypatch, home, synced=False)  # what the folder says NOW does not rewrite what it said at send
+    again = send(hub, body)  # the same key: the take-over reads the file back
+    assert again.status_code == 200, again.text
+    taken = again.json()["send"]
+    assert (taken["state"], taken["proof"]["egress"], taken["badge"]) == ("sent", "icloud", "cloud"), taken
+    with hub.db._connection() as conn:
+        history = conn.execute("SELECT proof_json FROM project_update_deliveries").fetchall()
+    assert ['"egress":"icloud"' in r["proof_json"] for r in history] == [True]
+
+
+@pytest.mark.parametrize(("raw", "expected"), [
+    ('"$HOME/Work\\$Docs"', "{home}/Work$Docs"),
+    ('"$HOME/My \\"Docs\\""', '{home}/My "Docs"'),
+    ('"$HOME/back\\\\slash"', "{home}/back\\slash"),
+    ('"$HOME/tick\\`s"', "{home}/tick`s"),
+    ('"/srv/plain docs"', "/srv/plain docs"),
+    ('"$HOME/Dokumente"', "{home}/Dokumente"),
+])
+def test_xdg_values_decode_their_shell_escapes(home: Path, raw: str, expected: str) -> None:
+    """D4: the documented user-dirs.dirs format, decoded."""
+    from holdspeak.services.channel_contract import documents_dir
+
+    config = home / ".config"
+    config.mkdir()
+    (config / "user-dirs.dirs").write_text(f"XDG_DOCUMENTS_DIR={raw}\n")
+    assert documents_dir("linux") == os.path.normpath(expected.format(home=home))
+
+
+@pytest.mark.parametrize("raw", [
+    '"$HOME/a\\nb"',        # an escape the format does not write
+    '"$HOME/a$b"',          # an unescaped $
+    '"$HOME/a`b`"',         # an unescaped backquote
+    '"$HOME/a"b"',          # an unescaped quote
+    '"${HOME}/Docs"',       # not the documented form
+    "$HOME/Docs",           # not quoted
+    '"Docs"',               # not absolute
+])
+def test_an_xdg_value_that_cannot_be_decoded_falls_back_to_home_documents(
+        home: Path, raw: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak.services.channel_contract import documents_dir
+
+    monkeypatch.setenv("XDG_DOCUMENTS_DIR", "/should/not/be/used")
+    config = home / ".config"
+    config.mkdir()
+    (config / "user-dirs.dirs").write_text(f"XDG_DOCUMENTS_DIR={raw}\n")
+    assert documents_dir("linux") == str(home / "Documents")
+
+
+def test_a_real_send_on_linux_goes_to_the_decoded_folder(hub: Hub, home: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from holdspeak.services import channel_contract
+
+    monkeypatch.setattr(channel_contract, "PLATFORM", "linux")
+    config = home / ".config"
+    config.mkdir()
+    (config / "user-dirs.dirs").write_text('XDG_DOCUMENTS_DIR="$HOME/Work\\$Docs"\n')
+    _pid, update = room(hub)
+    sent = press(hub, update, "xdg-1")
+    assert sent["outcome"] == "sent", sent
+    assert len(files(home / "Work$Docs" / "HoldSpeak" / "Sent")) == 1
+    assert not (home / "Work\\$Docs").exists()
+
+
+@pytest.mark.parametrize("synced", [True, False])
+def test_trust_names_a_stop_that_exists_for_the_builtin(hub: Hub, home: Path, monkeypatch: pytest.MonkeyPatch,
+                                                         synced: bool) -> None:
+    """D5: the built-in cannot be parked (DELETE refuses it; Settings has no Remove), so Trust never says park."""
+    from holdspeak.trust_destinations import BUILTIN_ICLOUD_STOP, BUILTIN_LOCAL_STOP
+
+    _icloud(monkeypatch, home, synced=synced)
+    status = hub.client.get("/api/setup/status").json()
+    [row] = [d for d in status["trust"]["destinations"] if d["id"] == f"channel:{BUILTIN}"]
+    assert row["revoke_action"] == (BUILTIN_ICLOUD_STOP if synced else BUILTIN_LOCAL_STOP), row
+    assert "Park" not in row["revoke_action"]
+    assert row["boundary"] == ("Outside this device" if synced else "This device")
+    removed = hub.client.request("DELETE", f"/api/channels/destinations/{BUILTIN}", json={})
+    assert removed.json()["code"] == "destination_builtin"

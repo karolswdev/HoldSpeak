@@ -1,0 +1,121 @@
+{
+  "ref": "project_update:pupd_c3a6d0b32e87434494a909711680a69c",
+  "destinations": {
+    "destinations": [
+      {
+        "id": "holdspeak-folder",
+        "name": "HoldSpeak folder",
+        "channel": "file",
+        "account": {},
+        "target": {
+          "builtin": "documents",
+          "folder": "/tmp/fixture/home/Documents/HoldSpeak/Sent",
+          "display": "~/Documents/HoldSpeak/Sent",
+          "cloud": "icloud"
+        },
+        "builtin": true,
+        "target_digest": "fd9961900ca6267811a8b99949df5afca789de5ccd014383651ea3ea9b9d43af",
+        "synced": true,
+        "state": "active",
+        "badge": "cloud",
+        "created_at": "2026-10-05T19:09:07+00:00",
+        "parked_at": null,
+        "connection": null
+      }
+    ]
+  },
+  "before": {
+    "sends": [
+      {
+        "id": "chs_523142cd7694f4ea6f0d2db2",
+        "document_ref": "project_update:pupd_c3a6d0b32e87434494a909711680a69c",
+        "destination_id": "holdspeak-folder",
+        "destination_name": "HoldSpeak folder",
+        "channel": "file",
+        "badge": "cloud",
+        "account": {},
+        "target": {
+          "builtin": "documents",
+          "folder": "/tmp/fixture/home/Documents/HoldSpeak/Sent",
+          "display": "~/Documents/HoldSpeak/Sent",
+          "cloud": "icloud"
+        },
+        "target_digest": "fd9961900ca6267811a8b99949df5afca789de5ccd014383651ea3ea9b9d43af",
+        "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "document_json": {
+          "label": "REV 1",
+          "slug": "payments-ledger-cutover",
+          "title": "Payments ledger cutover \u2014 update r1 (2026-10-05)"
+        },
+        "size": 286,
+        "preview": {
+          "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+        },
+        "prepared_by": {
+          "kind": "owner",
+          "identity": "owner-session"
+        },
+        "prepare_operation_id": "op_f4148926b1d64fb1a5a91efcd3896b37",
+        "send_operation_id": null,
+        "state": "prepared",
+        "reason": null,
+        "proof": null,
+        "file_path": null,
+        "created_at": "2026-10-05T19:09:07+00:00",
+        "dispatch_started_at": null,
+        "settled_at": null,
+        "dispatch_seq": null,
+        "egress": null
+      }
+    ]
+  },
+  "after": {
+    "send": {
+      "id": "chs_523142cd7694f4ea6f0d2db2",
+      "document_ref": "project_update:pupd_c3a6d0b32e87434494a909711680a69c",
+      "destination_id": "holdspeak-folder",
+      "destination_name": "HoldSpeak folder",
+      "channel": "file",
+      "badge": "cloud",
+      "account": {},
+      "target": {
+        "builtin": "documents",
+        "folder": "/tmp/fixture/home/Documents/HoldSpeak/Sent",
+        "display": "~/Documents/HoldSpeak/Sent",
+        "cloud": "icloud"
+      },
+      "target_digest": "fd9961900ca6267811a8b99949df5afca789de5ccd014383651ea3ea9b9d43af",
+      "payload_digest": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+      "document_json": {
+        "label": "REV 1",
+        "slug": "payments-ledger-cutover",
+        "title": "Payments ledger cutover \u2014 update r1 (2026-10-05)"
+      },
+      "size": 286,
+      "preview": {
+        "text": "## Progress\n\nNo focus items in this window.\n\n## Decisions\n\nNo decisions in this window.\n\n## Risks & Blockers\n\nNo risks or blockers in this window.\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\nNo upcoming actions.\n\n## Source Coverage\n\nAll sources consulted successfully.\n"
+      },
+      "prepared_by": {
+        "kind": "owner",
+        "identity": "owner-session"
+      },
+      "prepare_operation_id": "op_f4148926b1d64fb1a5a91efcd3896b37",
+      "send_operation_id": "op_65e220215880405991fb7de2cbdef0da",
+      "state": "sent",
+      "reason": null,
+      "proof": {
+        "egress": "icloud",
+        "path": "/tmp/fixture/home/Documents/HoldSpeak/Sent/2026-10-05-payments-ledger-cutover-rev-1-523142cd.md",
+        "sha256": "d7b925962d69e570241eb266af82bb2afa7d8efec010b5f073075f8d46de550b",
+        "size": 286
+      },
+      "file_path": "/tmp/fixture/home/Documents/HoldSpeak/Sent/2026-10-05-payments-ledger-cutover-rev-1-523142cd.md",
+      "created_at": "2026-10-05T19:09:07+00:00",
+      "dispatch_started_at": "2026-10-05T19:09:07.983135+00:00",
+      "settled_at": "2026-10-05T19:09:07+00:00",
+      "dispatch_seq": 1,
+      "egress": "icloud"
+    },
+    "outcome": "sent"
+  }
+}

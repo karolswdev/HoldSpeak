@@ -64,6 +64,9 @@ def settle_in_transaction(conn: Any, *, send_operation_id: str, state: str, reas
     if row is None:
         return None
     settled_at = now_iso()
+    if proof and row["egress"]:
+        # The egress judged at the boundary names itself on the receipt, on every settle path.
+        proof = {**dict(proof), "egress": row["egress"]}
     proof_json = canonical_json(dict(proof)) if proof else None
     changed = conn.execute(
         "UPDATE channel_sends SET state=?, reason=?, proof_json=?, settled_at=? "

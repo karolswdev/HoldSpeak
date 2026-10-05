@@ -308,14 +308,23 @@ function ClosedReceipt({ o, last }: { o: Outcome; last: Send | undefined }) {
 }
 
 /** The destination's latest send: the one receipt the open row shows. */
+/** The egress a send's receipt names (judged at its boundary, kept on its row
+ *  and in its proof): iCloud Drive took the file off this device. Every
+ *  receipt branch (latest, prepared result, history) shows it. */
+export function ReceiptEgress({ s }: { s: Pick<Send, "proof"> & { egress?: string | null } }) {
+  const egress = s.egress ?? (s.proof?.egress as string | undefined);
+  return egress === "icloud"
+    ? <EgressChip label={ICLOUD_EGRESS.label} scope={ICLOUD_EGRESS.scope} title={ICLOUD_EGRESS.title} />
+    : null;
+}
+
 function LatestReceipt({ s }: { s: Send | undefined }) {
   if (!s) return null;
   if (s.state === "sent") return (
     <span className="send-line" data-testid="send-sent" data-receipt="latest" data-state="sent">
       <StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} />
       <ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} />
-      {/* The receipt names the egress: the file was written here and iCloud Drive took it off this device. */}
-      {s.proof?.egress === "icloud" ? <EgressChip label={ICLOUD_EGRESS.label} scope={ICLOUD_EGRESS.scope} title={ICLOUD_EGRESS.title} /> : null}
+      <ReceiptEgress s={s} />
     </span>
   );
   if (s.state === "failed") return (
@@ -329,6 +338,7 @@ function LatestReceipt({ s }: { s: Send | undefined }) {
     <span className="send-line" data-testid="send-unknown" data-receipt="latest" data-state="unknown">
       <StateChip state="warning" label={SEND_WORDS.unknownChip} />
       <span className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</span>
+      <ReceiptEgress s={s} />
     </span>
   );
   if (s.state === "dispatching") return (
@@ -652,9 +662,9 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
 
   const result = waiting ? null
     : running ? <span data-testid="prepared-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>
-    : s.state === "sent" ? <><StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} /></>
+    : s.state === "sent" ? <><StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} /><ReceiptEgress s={s} /></>
     : s.state === "failed" ? <><StateChip state="failure" label="FAILED" /><span className="surface-token" data-chip>{failedWord(s.reason ?? "")}</span><span className="surface-token" data-chip>{SEND_WORDS.nothingSent}</span></>
-    : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><span className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</span></>
+    : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><span className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "NO ANSWER")}</span><ReceiptEgress s={s} /></>
     : <StateChip state="idle" label={SEND_WORDS.discarded} />;
 
   return (
@@ -749,6 +759,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
                     cells={<span className="send-cells">
                       {formChip}
                       {r.reason ? <span className="surface-token" data-chip>{unknownWord(r.reason)}</span> : null}
+                      <ReceiptEgress s={r} />
                       {far ? <Button dense variant="ghost" data-testid="history-check" data-href={far} onClick={() => openFar(far)}>{SEND_WORDS.check}</Button> : null}
                       <span className="surface-token" data-chip>{stamp(r.settled_at)}</span>
                     </span>} />
@@ -762,6 +773,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
                     {formChip}
                     <span className="surface-token" data-chip data-tone="ok" data-testid="history-word">{sentWord(r.channel, r.proof, r.account)}</span>
                     <ProofCell channel={r.channel} proof={r.proof} target={r.target} account={r.account} />
+                    <ReceiptEgress s={r} />
                     <span className="surface-token" data-chip>{stamp(r.settled_at)}</span>
                   </span>} />
               );

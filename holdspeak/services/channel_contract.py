@@ -28,7 +28,7 @@ import re
 import shutil
 import tempfile
 from contextlib import contextmanager
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Iterator, Mapping, Optional, Protocol
 
@@ -328,35 +328,63 @@ def documents_dir(platform: Optional[str] = None) -> str:
     in the XDG convention, so it falls back too. Every other platform:
     ``~/Documents``.
     """
-    import sys
     from pathlib import Path
 
     home = str(Path.home())
     fallback = os.path.join(home, "Documents")
-    if not str(platform or sys.platform).startswith("linux"):
+    if not str(platform or PLATFORM).startswith("linux"):
         return fallback
 
-    def expand(raw: str) -> str:
-        text = raw.strip().strip('"')
-        if text.startswith("$HOME"):
-            text = home + text[len("$HOME"):]
-        return os.path.normpath(text) if os.path.isabs(text) else ""
-
     config = os.environ.get("XDG_CONFIG_HOME") or os.path.join(home, ".config")
-    found = ""
+    found, written = "", False
     try:
         with open(os.path.join(config, "user-dirs.dirs"), encoding="utf-8") as handle:
             for line in handle:
                 key, _, value = line.strip().partition("=")
                 if key == "XDG_DOCUMENTS_DIR":
-                    found = expand(value)
+                    written, found = True, decode_user_dir(value, home)
     except OSError:
         pass
+    if written and not found:
+        return fallback  # a value that cannot be decoded: never a wrong literal path
     if not found:
-        found = expand(os.environ.get("XDG_DOCUMENTS_DIR", ""))
+        env = os.environ.get("XDG_DOCUMENTS_DIR", "")  # the shell already expanded it: a literal path
+        found = os.path.normpath(env) if os.path.isabs(env) else ""
     if not found or os.path.normpath(found) == os.path.normpath(home):
         return fallback
     return found
+
+
+def decode_user_dir(raw: str, home: str) -> str:
+    """One ``user-dirs.dirs`` value, decoded as ``xdg-user-dirs`` writes it; "" when it cannot be.
+
+    The format is a shell assignment: a double-quoted value, ``$HOME`` only at
+    its start (then ``/`` or the end), and the backslash escapes ``\\$``,
+    ``\\"``, ``\\\\`` and ``\\``` for those literal characters. Any other
+    backslash, an unescaped ``$``, backquote or quote inside, or a value that
+    is not absolute is not decoded.
+    """
+    text = raw.strip()
+    if len(text) < 2 or text[0] != '"' or text[-1] != '"':
+        return ""
+    body, out, i = text[1:-1], [], 0
+    if body.startswith("$HOME") and (len(body) == 5 or body[5] == "/"):
+        out.append(home)
+        i = 5
+    while i < len(body):
+        ch = body[i]
+        if ch == "\\":
+            if i + 1 < len(body) and body[i + 1] in '$"\\`':
+                out.append(body[i + 1])
+                i += 2
+                continue
+            return ""
+        if ch in '$`"':
+            return ""
+        out.append(ch)
+        i += 1
+    path = "".join(out)
+    return os.path.normpath(path) if os.path.isabs(path) else ""
 
 
 def builtin_folder(platform: Optional[str] = None) -> str:
@@ -364,7 +392,7 @@ def builtin_folder(platform: Optional[str] = None) -> str:
     return os.path.realpath(os.path.join(documents_dir(platform), "HoldSpeak", "Sent"))
 
 
-#: The platform the iCloud detector reads (a seam: a fence on Linux sets "darwin").
+#: The platform the Documents resolver and the iCloud detector read (a seam: a fence sets "darwin" or "linux").
 PLATFORM = __import__("sys").platform
 
 #: The xattr macOS puts on a folder that a File Provider (iCloud Drive) manages.
@@ -413,29 +441,57 @@ def _finder_pref(key: str) -> bool:
 def icloud_synced(folder: str, platform: Optional[str] = None) -> bool:
     """Whether iCloud Drive syncs *folder* (macOS only; read now, it can change).
 
-    Primary: the folder's nearest existing ancestor (up to the home folder)
-    carries the File Provider xattr naming ``com.apple.CloudDocs``. Fallback:
-    Finder's "Desktop & Documents Folders" switch for a path under
-    ~/Documents (``FXICloudDriveDocuments``) or ~/Desktop (``FXICloudDriveDesktop``).
+    Every path is resolved first (a symlinked Documents is judged where it
+    really is). In order:
+
+    1. The resolved folder is inside the resolved ``~/Library/Mobile Documents``
+       (iCloud Drive's own store).
+    2. The nearest existing folder of the resolved path, then each folder above
+       it up to the filesystem root, carries the File Provider xattr: synced
+       when it names ``com.apple.CloudDocs`` (another provider: not iCloud).
+    3. Finder's "Desktop & Documents Folders" switch for a resolved path under
+       the resolved ~/Documents (``FXICloudDriveDocuments``) or ~/Desktop
+       (``FXICloudDriveDesktop``).
+
     Linux and every other platform: never (THIS DEVICE).
     """
     if not str(platform or PLATFORM).startswith("darwin"):
         return False
-    home = os.path.realpath(os.path.expanduser("~"))
+    home = os.path.expanduser("~")
     path = os.path.realpath(folder)
+
+    def under(base: str) -> bool:
+        return path == base or path.startswith(base.rstrip(os.sep) + os.sep)
+
+    if under(os.path.realpath(os.path.join(home, "Library", "Mobile Documents"))):
+        return True
     probe = path
     while not os.path.exists(probe) and os.path.dirname(probe) != probe:
         probe = os.path.dirname(probe)
-    while probe.startswith(home + os.sep):
+    while True:
         value = _read_xattr(probe, _FILE_PROVIDER_XATTR)
         if value is not None:
             return b"com.apple.CloudDocs" in value
-        probe = os.path.dirname(probe)
+        parent = os.path.dirname(probe)
+        if parent == probe:
+            break
+        probe = parent
     for top, key in (("Documents", "FXICloudDriveDocuments"), ("Desktop", "FXICloudDriveDesktop")):
-        base = os.path.join(home, top)
-        if path == base or path.startswith(base + os.sep):
+        if under(os.path.realpath(os.path.join(home, top))):
             return _finder_pref(key)
     return False
+
+
+def egress_at_boundary(target: Mapping[str, Any], folder: Optional[str]) -> Optional[str]:
+    """The send's egress, judged ONCE at the dispatch boundary and stored on its row.
+
+    The built-in folder: ``"icloud"`` when iCloud Drive syncs the folder the
+    file goes to. Every other destination: None (a saved folder carries its
+    own ``synced`` flag).
+    """
+    if folder and is_builtin_target(target):
+        return "icloud" if icloud_synced(folder) else None
+    return None
 
 
 def builtin_egress() -> Optional[str]:
@@ -545,7 +601,6 @@ class FileChannel:
 
     def dispatch(self, row: Mapping[str, Any], seam: Any = None) -> Outcome:
         path, payload, digest = str(row["file_path"]), bytes(row["payload"]), str(row["payload_digest"])
-        egress = None
         if is_builtin_target(_target_of(row)):
             # The built-in folder only: made on the first send, made again when it
             # was deleted. A SAVED folder is never made (it may be an unmounted drive).
@@ -553,15 +608,6 @@ class FileChannel:
                 os.makedirs(os.path.dirname(path), mode=BUILTIN_FOLDER_MODE, exist_ok=True)
             except OSError:
                 return Outcome("failed", "folder_not_created")
-            # Read at send time: the write is local, but iCloud Drive takes the file off this device.
-            egress = "icloud" if icloud_synced(os.path.dirname(path)) else None
-        outcome = self._write(path, payload, digest)
-        if egress and outcome.state == "sent":
-            # The receipt names the egress: the file left this device through iCloud Drive.
-            outcome = replace(outcome, proof={**dict(outcome.proof), "egress": egress})
-        return outcome
-
-    def _write(self, path: str, payload: bytes, digest: str) -> Outcome:
         flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
         try:
             fd = os.open(path, flags, 0o644)

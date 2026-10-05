@@ -70,6 +70,8 @@ export type Send = {
   settled_at: string | null;
   /** The order sends LEFT in, allocated inside the boundary transaction. */
   dispatch_seq?: number | null;
+  /** The built-in folder: "icloud" when iCloud Drive synced it at the send's boundary. */
+  egress?: string | null;
 };
 
 export type PreviewField = { label: string; value: string };

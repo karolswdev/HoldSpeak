@@ -146,3 +146,81 @@ class TestBuiltinSendFolderGlass:
                 assert not errors, errors
             finally:
                 browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_a_phase11_brief_send_to_a_saved_folder_with_the_builtin_present(self, width: int) -> None:
+        """Astra's note on #864: one older flow WITH the built-in present (not parked).
+
+        The Phase 11 brief flow on the Chair: a saved folder beside the
+        built-in; nothing is picked by itself (two destinations); he picks the
+        saved folder and sends; the file lands there, the built-in folder is
+        not made, and the built-in row stays as it was. Then he picks the
+        built-in and sends: its own file, its own receipt.
+        """
+        from playwright.sync_api import sync_playwright
+
+        sent = Path(os.path.realpath(self.tmp / "home" / "Documents")) / "HoldSpeak" / "Sent"
+        team_dir = (self.tmp / "Reports" / "Team").resolve()
+        team_dir.mkdir(parents=True)
+        team_row = f"{CH} [data-testid=destination-row]:has([data-destination='Team folder'])"
+        team_open = f"{CH} [data-testid=send-open][data-destination='Team folder']"
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1)
+            page = ctx.new_page()
+            page.set_default_timeout(45_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                _api(page, "POST", "/api/channels/destinations",
+                     {"name": "Team folder", "channel": "file", "folder": str(team_dir)}, token=TOKEN)
+                _api(page, "POST", "/api/decisions", {"title": "Freeze the old ledger on Nov 3", "status": "proposed",
+                                                      "decision_markdown": "Freeze the old ledger on Nov 3."}, token=TOKEN)
+                brief = _api(page, "POST", "/api/brief/generate", {}, token=TOKEN)
+                ref = f"monday_brief:{brief['id']}"
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.wait_for_timeout(1200)
+                if width <= 720:
+                    open_chair_window(page, "Brief")
+                    page.wait_for_timeout(600)
+                _settle(page)
+
+                page.locator(team_row).wait_for(timeout=T)
+                page.locator(ROW).wait_for(timeout=T)
+                assert page.locator(f"{CH} [data-testid=destination-row]").count() == 2
+                assert page.locator(f"{CH} [data-testid=send-open]").count() == 0, "two destinations: nothing picked by itself"
+
+                page.locator(team_row).first.click()
+                page.locator(f"{team_open} [data-testid=send-preview]").wait_for(timeout=T)
+                verb = f"{team_open} [data-testid=send-verb]"
+                page.wait_for_function("(s) => { const b = document.querySelector(s); return b && !b.disabled; }",
+                                       arg=verb, timeout=T)
+                page.locator(verb).first.click()
+                page.locator(f"{team_open} [data-receipt=latest][data-state=sent]").first.wait_for(timeout=T)
+                [row] = _api(page, "GET", f"/api/channels/sends?document_ref={ref}", token=TOKEN)["sends"]
+                assert row["destination_name"] == "Team folder" and row["state"] == "sent", row
+                assert len([p for p in team_dir.iterdir() if p.is_file()]) == 1
+                assert not sent.exists(), "a send to a saved folder never makes the built-in folder"
+                builtin_line = " ".join(page.locator(ROW).first.inner_text().split())
+                assert "THIS DEVICE" in builtin_line and "SAVED" not in builtin_line, builtin_line
+
+                page.locator(ROW).first.click()
+                page.locator(f"{OPEN} [data-testid=send-preview]").wait_for(timeout=T)
+                verb = f"{OPEN} [data-testid=send-verb]"
+                page.wait_for_function("(s) => { const b = document.querySelector(s); return b && !b.disabled; }",
+                                       arg=verb, timeout=T)
+                page.locator(verb).first.click()
+                page.locator(f"{OPEN} [data-receipt=latest][data-state=sent]").first.wait_for(timeout=T)
+                rows = _api(page, "GET", f"/api/channels/sends?document_ref={ref}", token=TOKEN)["sends"]
+                sent_to = {r["destination_name"] for r in rows if r["state"] == "sent"}
+                assert sent_to == {"Team folder", NAME} and len(rows) == 2, rows
+                assert len([p for p in sent.iterdir() if p.is_file()]) == 1
+                assert len([p for p in team_dir.iterdir() if p.is_file()]) == 1
+                assert not errors, errors
+            finally:
+                browser.close()

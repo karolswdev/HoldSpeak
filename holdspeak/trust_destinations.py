@@ -179,6 +179,22 @@ def _shown(target: Any) -> dict[str, Any]:
     return shown_target(target)
 
 
+#: The built-in HoldSpeak folder cannot be removed (``destination_builtin``):
+#: its stop instruction names a control that exists. iCloud Drive's switch is
+#: in System Settings (Apple Account, iCloud, iCloud Drive); a local folder
+#: sends nothing out.
+BUILTIN_ICLOUD_STOP = "Turn off Desktop & Documents Folders in iCloud Drive"
+BUILTIN_LOCAL_STOP = "Nothing leaves this device"
+
+
+def _revoke_action(destination_id: str, synced: bool) -> str:
+    from .db.channels import BUILTIN_FOLDER_ID
+
+    if destination_id == BUILTIN_FOLDER_ID:
+        return BUILTIN_ICLOUD_STOP if synced else BUILTIN_LOCAL_STOP
+    return "Park the destination in Settings, Connections"
+
+
 def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
     """The owner's saved Send destinations (Settings, Connections).
 
@@ -212,7 +228,7 @@ def _saved_send_destinations(database: Any) -> list[dict[str, Any]]:
             "data_class": "The document you send",
             "authority_basis": "You press Send",
             "background_ability": "No. Each send needs your press",
-            "revoke_action": "Park the destination in Settings, Connections",
+            "revoke_action": _revoke_action(str(row.get("id") or ""), synced),
             "enabled": not local,
             "saved": True,
             "destination": _short_target(_shown(target)),
