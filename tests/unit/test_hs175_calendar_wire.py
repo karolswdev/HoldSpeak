@@ -347,8 +347,22 @@ class TestManualLinkOverrides:
 # -- Test 5: door.week days/total -----------------------------------------
 
 class TestDoorWeek:
-    def test_week_strip_with_events(self, db: Database, ics_file: Path) -> None:
+    def test_week_strip_with_events(self, db: Database, tmp_path: Path) -> None:
         """door.week carries days with counts and total when calendar is connected."""
+        # Seed inside the CURRENT LOCAL week (the strip's window). The shared
+        # fixture seeds now + 2 h, which on a Sunday after 22:00 local is next
+        # week (failed 2026-10-04 22:22 MDT).
+        # The ingest keeps only events still to come, so the event sits
+        # halfway between now and the end of this local week.
+        local_now = datetime.now().astimezone()
+        next_monday = (local_now + timedelta(days=7 - local_now.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0)
+        start_dt = (local_now + (next_monday - local_now) / 2).astimezone(timezone.utc)
+        ics_file = tmp_path / "cal-week.ics"
+        ics_file.write_bytes(_make_ics(
+            start=start_dt.strftime("%Y%m%dT%H%M%SZ"),
+            end=(start_dt + timedelta(minutes=20)).strftime("%Y%m%dT%H%M%SZ"),
+        ))
         from holdspeak.services.door_service import DoorService
         from holdspeak.services.follow_through_service import FollowThroughService
         from holdspeak.services.refinement_thought_service import RefinementThoughtService
@@ -377,7 +391,7 @@ class TestDoorWeek:
         assert week["has_calendar"] is True
         assert len(week["days"]) == 7
         assert week["total"] >= 1
-        # The event we seeded is in the future, so at least one day has count > 0.
+        # The event we seeded is in this local week, so one day has count > 0.
         day_counts = [d["count"] for d in week["days"]]
         assert sum(day_counts) == week["total"]
 
