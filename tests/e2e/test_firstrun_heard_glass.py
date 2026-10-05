@@ -178,6 +178,28 @@ def _real_local_ai(monkeypatch: pytest.MonkeyPatch, source: Source) -> None:
     monkeypatch.setattr(module, "LocalAISetupService", build)
 
 
+def _seed_lan_proposal(monkeypatch: pytest.MonkeyPatch) -> str:
+    """One ready LAN engine, stored as a proposal by #855's own producer
+    (`InferenceDefaultService._record_proposals`); detection is the leaf."""
+    from holdspeak.db import get_database
+    from holdspeak.services import concierge_service
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from holdspeak.services.inference_default_service import InferenceDefaultService
+
+    from .glass_infra import ENGINE_PROFILE
+
+    engine = {
+        "id": f"lan:{ENGINE_PROFILE}", "kind": concierge_service.KIND_LAN, "name": "qwen3.8-27b",
+        "host": "192.168.1.43", "state": concierge_service.STATE_READY,
+        "baseUrl": "http://192.168.1.43:8080/v1", "profileId": ENGINE_PROFILE, "profileRevision": 1,
+    }
+    monkeypatch.setattr(concierge_service, "detect", lambda **_: {"engines": [engine]})
+    db = get_database()
+    service = InferenceDefaultService(db, assignment_service=InferenceAssignmentService(db))
+    assert service._record_proposals() == 1
+    return engine["id"]
+
+
 def _no_cut(page: Any, selector: str) -> list[str]:
     """Every matching label whose text is cut (scrollWidth > clientWidth)."""
     return page.eval_on_selector_all(
@@ -219,6 +241,7 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     engine_profile()
     assign_engine(SPEECH_CAPABILITY, 1)
+    proposal_id = _seed_lan_proposal(monkeypatch)
     out = Path(os.environ.get("FIRSTRUN_SHOTS") or tmp_path / "shots")
     out.mkdir(parents=True, exist_ok=True)
     try:
@@ -249,6 +272,11 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
             expect(words.get_by_role("button", name="Dictate one sentence")).to_be_disabled()
             expect(words.get_by_text("WAITS FOR SPEECH")).to_be_visible()
             assert _display_count(page) == 1
+            # FOUND: the stored LAN proposal, its egress chip on its row.
+            found = page.get_by_test_id("firstrun-found")
+            expect(found).to_contain_text("qwen3.8-27b")
+            expect(found).to_contain_text("LAN SERVER")
+            expect(found.locator(".gadget-chip-egress")).to_have_text("192.168.1.43 · LAN")
             shot("before")
 
             # ── You: the name and the aliases, stored ──
@@ -306,6 +334,19 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
             expect(local_ai.get_by_text("3 MODELS · 149 MB · FROM HUGGINGFACE.CO")).to_be_visible(timeout=30_000)
             assert any(p == STARTER_PATH and r.startswith("bytes=") for p, r in source.requests), source.requests
             expect(local_ai.locator(".gadget-chip-egress")).to_have_count(0)
+
+            # ── Use it: the owner's press makes the LAN engine the default ──
+            with page.expect_response(lambda r: r.url.endswith("/api/inference/defaults/use-proposal")) as used:
+                found.get_by_role("button", name="Use qwen3.8-27b", exact=True).click()
+            assert used.value.ok, used.value.text()
+            assert used.value.request.post_data_json == {"proposal_id": proposal_id}
+            expect(found.get_by_role("status", name="IN USE · DEFAULT")).to_be_visible()
+            from holdspeak.db import get_database
+
+            with get_database()._connection() as conn:
+                row = conn.execute(
+                    "SELECT state FROM inference_default_proposals WHERE engine_id=?", (proposal_id,)).fetchone()
+            assert row["state"] == "used"
 
             # ── listening -> writing -> heard ──
             if width < 720:

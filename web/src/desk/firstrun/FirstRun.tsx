@@ -32,6 +32,7 @@ import {
   useLocalAi,
   type LocalAiGroup,
 } from "./localAi";
+import { Found, useProposals } from "./Found";
 import { useOwnerName } from "./ownerName";
 import { useFirstTake } from "./useFirstTake";
 import "../../features/concierge/concierge.css";
@@ -365,6 +366,7 @@ export function FirstRun() {
     await useDesk.getState().refresh();
   }, []);
   const take = useFirstTake({ onHandoff: handoff });
+  const proposals = useProposals();
   const heard = take.state === "heard";
   return (
     <section className="firstrun" data-heard={heard || undefined} aria-label="Get ready" data-testid="firstrun">
@@ -378,6 +380,7 @@ export function FirstRun() {
         <YouCard />
         <FirstWordsCard ready={speech} take={take} />
       </div>
+      <Found proposals={proposals} />
       <div className="firstrun-foot">
         <Button variant="ghost" dense disabled={take.keeping} loading={take.keeping} onClick={() => void take.leave()}>
           {heard ? "Save draft & continue" : "Continue later"}

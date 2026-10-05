@@ -200,3 +200,9 @@
     order: -1;
   }
 }
+
+@container surface (max-width: 559.9px) {
+  .firstrun .concierge-found-line2 {
+    margin-left: 0;
+  }
+}
