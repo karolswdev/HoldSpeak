@@ -1111,17 +1111,17 @@ def builtin_capability_definitions() -> tuple[InferenceCapabilityDefinition, ...
         # claims the result-schema hash, and an endpoint profile from the
         # model library claims only the meeting schema
         # (model_library_service.py `_profile_body`), so the owner's LAN model
-        # could not be assigned.  Used only with its OWN assignment: it ships dark.
+        # could not be assigned.  Runs on its own assignment, or on a LOCAL default (memory/engine.py _assignment_head).
         _capability("memory.extract", "Memory facts", *background, "Read facts and the names they hold from admitted memory text.", operation="memory.extract", output_kind="memory_facts", minimum_context_tokens=4096, policy="retry.structured.standard", fallback_dispositions=structured_fallback, source_module="holdspeak.memory.extract"),
         # Memory slice 4 (MEMORY-DESIGN.md §3.3, §4): facts in, observation
         # changes out.  Same shape as memory.extract: the closed schema is the
         # call's response_format and code checks every entry
-        # (memory/consolidate.py).  Used only with its OWN assignment: it ships dark.
+        # (memory/consolidate.py).  Runs on its own assignment, or on a LOCAL default (memory/engine.py _assignment_head).
         _capability("memory.consolidate", "Memory observations", *background, "Fold memory facts into observations with evidence and history.", operation="memory.consolidate", output_kind="memory_observations", minimum_context_tokens=4096, policy="retry.structured.standard", fallback_dispositions=structured_fallback, source_module="holdspeak.memory.consolidate"),
         # Memory slice 5 (MEMORY-DESIGN.md §3.4, §4): observations and recall in,
         # one standing answer out.  Same shape as memory.consolidate: the
         # closed schema is the call's response_format and code checks every
-        # sentence (memory/pages.py).  Used only with its OWN assignment: it ships dark.
+        # sentence (memory/pages.py).  Runs on its own assignment, or on a LOCAL default (memory/engine.py _assignment_head).
         _capability("memory.page", "Memory pages", *background, "Write standing answers from memory observations and recall, each sentence with its sources.", operation="memory.page", output_kind="memory_page", minimum_context_tokens=4096, policy="retry.structured.standard", fallback_dispositions=structured_fallback, source_module="holdspeak.memory.pages"),
         _capability("internal.inference.dispatch", "Inference dispatch", *internal, "Context-gated provider adapter work supplied by a typed parent capability.", operation="internal.inference.dispatch", minimum_context_tokens=1, policy="retry.internal.lifecycle", fallback_dispositions=("known_no_generation_transient",), visibility="internal", source_module="holdspeak.kernel.inference_runner"),
         _capability("internal.speech.runtime_assembly", "Speech runtime assembly", *internal, "Context-gated speech runtime assembly supplied by a typed parent capability.", operation="internal.speech.runtime.assembly", minimum_context_tokens=1, policy="retry.internal.lifecycle", fallback_dispositions=("known_no_generation_transient",), visibility="internal", source_module="holdspeak.speech_session"),

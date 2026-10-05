@@ -20,6 +20,7 @@ from ..inference_capabilities import (
     InferenceCapabilityRegistry,
     process_inference_capability_registry,
 )
+from ..inference_locality import deployment_lamp
 from ..principals import Principal, PrincipalKind
 from .errors import ConflictError, NotFound, ServiceError, ValidationError
 from .model_profile_service import (
@@ -2289,7 +2290,8 @@ class InferenceAssignmentService:
                 SimpleNamespace(**dict(row)), db=self._db
             ).deployment_revision
             return {
-                "boundary": _BOUNDARY_ALIASES.get(str(deployment.boundary), "unknown"),
+                # The lamp: a loopback endpoint is ``local`` (inference_locality).
+                "boundary": deployment_lamp(deployment.boundary, deployment.endpoint),
                 "readiness": "unknown",
             }
         binding = conn.execute(
@@ -2302,7 +2304,7 @@ class InferenceAssignmentService:
         if binding is None:
             return {"boundary": "unknown", "readiness": "missing"}
         deployment = conn.execute(
-            "SELECT boundary FROM deployment_revisions WHERE id=?",
+            "SELECT boundary,endpoint FROM deployment_revisions WHERE id=?",
             (binding["deployment_revision_id"],),
         ).fetchone()
         observation = conn.execute(
@@ -2313,7 +2315,7 @@ class InferenceAssignmentService:
             "boundary": (
                 "unknown"
                 if deployment is None
-                else _BOUNDARY_ALIASES.get(str(deployment["boundary"]), "unknown")
+                else deployment_lamp(deployment["boundary"], deployment["endpoint"])
             ),
             "readiness": "disabled"
             if not bool(binding["enabled"])

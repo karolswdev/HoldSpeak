@@ -13900,6 +13900,42 @@
         "summary": "Api Inference Capability"
       }
     },
+    "/api/inference/defaults": {
+      "get": {
+        "operationId": "get_defaults_api_inference_defaults_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Get Defaults Api Inference Defaults Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Defaults"
+      }
+    },
+    "/api/inference/defaults/use-proposal": {
+      "post": {
+        "operationId": "use_proposal_api_inference_defaults_use_proposal_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Use Proposal Api Inference Defaults Use Proposal Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Use Proposal"
+      }
+    },
     "/api/inference/model-library": {
       "get": {
         "operationId": "get_model_library_api_inference_model_library_get",

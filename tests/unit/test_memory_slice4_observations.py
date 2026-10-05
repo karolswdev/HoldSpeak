@@ -765,10 +765,12 @@ def test_no_engine_nothing_is_called_and_recall_is_unchanged(routed) -> None:
     assert bench.keyword_snapshot(routed.db, routed.refs) == golden
 
 
-def test_a_wider_assignment_is_never_used_for_consolidation(routed) -> None:
+def test_a_network_default_is_never_used_for_consolidation(routed) -> None:
+    # Owner ruling 2026-10-05: a LOCAL default is inherited
+    # (tests/unit/test_batteries_default.py); a network default never is.
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 
-    _profile(routed.db, "chat-model")
+    _profile(routed.db, "chat-model", boundary="private_network")
     InferenceAssignmentService(routed.db).set_assignment(OWNER, {
         "command_id": "assign-global", "expected_revision": 0, "scope": {"kind": "global"},
         "entries": [{"profile_id": "chat-model", "profile_revision": 1}],

@@ -32,6 +32,16 @@ def _safe_error(exc: ServiceError) -> JSONResponse:
     return JSONResponse({"code": exc.code, "message": exc.detail}, status_code=status)
 
 
+def _live_hub() -> bool:
+    """True in the hub that owns the database: it scans loopback engine ports."""
+    try:
+        from ...intel_queue_conductor import owns_database
+
+        return owns_database()
+    except Exception:  # pragma: no cover
+        return False
+
+
 def build_concierge_router(ctx: WebContext) -> APIRouter:
     router = APIRouter(prefix="/api/concierge", tags=["concierge"])
 
@@ -64,12 +74,17 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             from pathlib import Path
             home = setup_svc._home_provider() if setup_svc is not None else Path.home()
 
+            live_hub = _live_hub()
             result = detect(
                 db=db,
                 home=home,
                 assignment_service=ctx.inference_assignment_service,
                 principal=getattr(request.state, "principal", None),
+                scan_loopback=live_hub,
             )
+            # A detection is an engine change the default rule must see.
+            if live_hub and ctx.inference_default_service is not None:
+                ctx.inference_default_service.kick("detect")
             # HS-200-04: `needs_attention` resolved into named repair states,
             # each carrying the ONE verb that opens an existing control.  A
             # repair read never blocks the face: it degrades to no rows.
@@ -110,7 +125,7 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             from pathlib import Path
             home = setup_svc._home_provider() if setup_svc is not None else Path.home()
 
-            detection = detect(db=db, home=home)
+            detection = detect(db=db, home=home, scan_loopback=_live_hub())
             result = propose(engines=detection["engines"])
             return JSONResponse(result)
         except ServiceError as exc:

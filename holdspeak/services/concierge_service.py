@@ -389,11 +389,16 @@ def detect(
     http_get: Optional[Callable[..., tuple[int, bytes]]] = None,
     assignment_service: Any = None,
     principal: Any = None,
+    scan_loopback: bool = False,
+    loopback_scan: Optional[Callable[[], list[dict[str, Any]]]] = None,
 ) -> dict[str, Any]:
     """Every engine found: LAN endpoints, local files, cloud keys, presets.
 
     No network scan.  Reads known endpoints, local model dirs, runtimes,
-    key presence, and catalog presets.
+    key presence, and catalog presets.  With ``scan_loopback`` it also asks
+    the usual engine ports on 127.0.0.1 only (Ollama, LM Studio, llama.cpp;
+    ``inference_default_service.scan_loopback_engines``): a loopback call
+    does not leave this machine.
     """
     from ..services.inference_setup_service import (
         inspect_hardware,
@@ -516,6 +521,40 @@ def detect(
                 "state": STATE_READY,
                 **_detected_profile_fields(db, str(profile.id)),
                 "baseUrl": base,
+            })
+
+    # 1b. Engines that run on this machine's loopback ports and are not yet
+    # a known endpoint.  Same row shape as a loopback endpoint profile.
+    if scan_loopback or loopback_scan is not None:
+        from .inference_default_service import scan_loopback_engines
+
+        known = {
+            (str(p.base_url or "").strip().rstrip("/"), str(getattr(p, "model", "") or ""))
+            for p in db.profiles.list()
+            if not p.deleted
+        }
+        try:
+            scanned = (loopback_scan or scan_loopback_engines)()
+        except Exception as exc:
+            log.info(f"loopback engine scan failed: {exc}")
+            scanned = []
+        for found in scanned:
+            if (str(found["base_url"]).rstrip("/"), str(found["model"])) in known:
+                continue
+            display, quant = engine_display_name(
+                profile_name=str(found["model"]), profile_model=str(found["model"]),
+            )
+            engines.append({
+                "id": str(found["id"]),
+                "kind": KIND_LOCAL,
+                "name": display,
+                "quantToken": quant or None,
+                "legacyLabel": str(found["model"]),
+                "host": "THIS DEVICE",
+                "runtimeToken": str(found["engine"]).upper(),
+                "state": STATE_READY,
+                "baseUrl": str(found["base_url"]),
+                "loopbackPort": int(found["port"]),
             })
 
     # 2. Paired devices (mesh nodes)

@@ -243,3 +243,14 @@ model. It does not choose a route leg and does not retry. The `memory.embed`
 assignment is written by `InferenceAssignmentService.set_assignment` on the
 owner's press. Classified in `BACKEND_PRIVATE_DECISIONS` under the existing
 143-12 owner-surface migration family.
+
+
+## Batteries-included default (2026-10-05)
+
+`holdspeak/services/inference_default_service.py` adds `_local_profile_candidates`.
+It lists ready Model Library profiles that run on this machine (lamp `local`)
+as candidates for "Default for AI work". It does not choose a route leg and
+does not retry. The `global` assignment is written by
+`InferenceAssignmentService.set_assignment` with `expected_revision` 0, so an
+owner assignment is never changed (owner ruling 2026-10-05). Classified in
+`BACKEND_PRIVATE_DECISIONS` under the existing 143-04 assignment family.

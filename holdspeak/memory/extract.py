@@ -13,10 +13,11 @@ facts, resolves their entities, retires the source's old facts and stamps
   promoted or deleted since the last sweep is never sent to the engine.
   The chunks it sends are cut again from the redacted text of now, and must
   hash as the ledger says, or the job waits for the next sweep.
-* **Assigned explicitly, or not at all.**  The engine exists only when
-  ``memory.extract`` has its OWN assignment (a chat model assigned wider is
-  never used here).  With no engine nothing is called and nothing is
-  written: one row read.
+* **Its own assignment, or a LOCAL default.**  The engine exists when
+  ``memory.extract`` has its own assignment, or when the wider assignment
+  (Background, then "Default for AI work") runs on this machine
+  (``engine._assignment_head``).  A network or cloud default is never used
+  here.  With no engine nothing is called and nothing is written.
 * **The old facts serve until the new ones commit.**  A version bump or an
   edited source keeps its facts in recall while the engine runs.
 
@@ -455,7 +456,7 @@ class RouterExtractor:
 
 def resolve_extractor(broker: Any, principal: Any) -> Optional[RouterExtractor]:
     """The engine for ``memory.extract`` now, or None when it has no
-    assignment of its own (one row read)."""
+    assignment of its own and no LOCAL wider one (``engine._assignment_head``)."""
     from .engine import assigned_revision
 
     revision = assigned_revision(broker, EXTRACT_CAPABILITY)
