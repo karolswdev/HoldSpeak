@@ -607,6 +607,11 @@ def test_faster_whisper_loads_only_a_local_folder(boot, monkeypatch) -> None:
     snapshot.mkdir(parents=True)
     (snapshot / "config.json").write_text("{}")
     (snapshot / "model.bin").write_bytes(b"model")
+    (snapshot / "vocabulary.txt").write_text("a")
+    with pytest.raises(TranscriberError):  # no tokenizer.json: the loader would fetch one
+        _FasterWhisperTranscriber(model_name="base")
+    assert constructed == []
+    (snapshot / "tokenizer.json").write_text("{}")
     _FasterWhisperTranscriber(model_name="base")
     assert constructed == [str(snapshot)]
     assert boot.connects == []
@@ -740,3 +745,86 @@ def test_never_loaded_whisper_profile_is_not_broken(monkeypatch) -> None:
     monkeypatch.setattr(Library, "_local_speech_on_disk", staticmethod(lambda item: True))
     row = library._profile_row(item)
     assert (row["status"], row["selected_action"], row["repair"]) == ("configured", "Checking", None)
+
+
+# ── faster-whisper: no tokenizer on disk, no load (Astra iteration 2) ──
+
+_DENYING_PROXY_RUN = r'''
+import json, os, sys, threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+seen = []
+
+class Deny(BaseHTTPRequestHandler):
+    def log_message(self, *args):
+        pass
+
+    def do_CONNECT(self):
+        seen.append(self.path)
+        self.send_error(403, "the test denies the network")
+
+    do_GET = do_CONNECT
+
+proxy = ThreadingHTTPServer(("127.0.0.1", 0), Deny)
+threading.Thread(target=proxy.serve_forever, daemon=True).start()
+# The Rust tokenizer downloader ignores Python sockets but obeys the proxy.
+for key in ("HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY", "https_proxy", "http_proxy", "all_proxy"):
+    os.environ[key] = f"http://127.0.0.1:{proxy.server_port}"
+for key in ("NO_PROXY", "no_proxy", "HF_HOME", "HF_HUB_CACHE", "HF_HUB_OFFLINE"):
+    os.environ.pop(key, None)
+os.environ["HF_HUB_ETAG_TIMEOUT"] = "1"
+os.environ["HF_HUB_DOWNLOAD_TIMEOUT"] = "1"
+from holdspeak.transcribe import _FasterWhisperTranscriber
+outcome = "loaded"
+try:
+    _FasterWhisperTranscriber(model_name=sys.argv[1])
+except Exception as exc:
+    outcome = type(exc).__name__ + ": " + str(exc)
+proxy.shutdown()
+print(json.dumps({"connects": seen, "outcome": outcome}))
+'''
+
+
+def _real_faster_whisper_files() -> dict[str, Path] | None:
+    """A real faster-whisper model on the owner's account (read only).
+
+    The real ctranslate2 constructor needs a real ``model.bin``; the test
+    never downloads one, so it skips where none exists (for example CI).
+    """
+    import importlib.util
+    import pwd
+
+    if importlib.util.find_spec("faster_whisper") is None:
+        return None
+    hub = Path(pwd.getpwuid(os.getuid()).pw_dir) / ".cache/huggingface/hub"
+    for snapshot in sorted(hub.glob("models--Systran--faster-whisper-*/snapshots/*")):
+        files = {name: snapshot / name for name in ("config.json", "model.bin", "vocabulary.txt")}
+        if all(path.exists() for path in files.values()):
+            return {name: path.resolve() for name, path in files.items()}
+    return None
+
+
+@pytest.mark.parametrize("selected", ["cached", "explicit_folder"])
+def test_a_faster_whisper_folder_without_its_tokenizer_never_reaches_the_hub(tmp_path: Path, selected) -> None:
+    import subprocess
+    import sys
+
+    real = _real_faster_whisper_files()
+    if real is None:
+        pytest.skip("no real faster-whisper model on this account")
+    home = tmp_path / "home"
+    folder = home / ".cache/huggingface/hub/models--Systran--faster-whisper-small/snapshots/c1"
+    folder.mkdir(parents=True)
+    for name, source in real.items():  # every file but tokenizer.json
+        (folder / name).symlink_to(source)
+    name = "small" if selected == "cached" else str(folder)
+    env = {key: value for key, value in os.environ.items()}
+    env["HOME"] = str(home)
+    out = subprocess.run(
+        [sys.executable, "-c", _DENYING_PROXY_RUN, name],
+        capture_output=True, text=True, env=env, timeout=120,
+        cwd=str(Path(__file__).resolve().parents[2]),
+    )
+    result = json.loads(out.stdout.strip().splitlines()[-1])
+    assert result["connects"] == [], result
+    assert "not on this device" in result["outcome"], result

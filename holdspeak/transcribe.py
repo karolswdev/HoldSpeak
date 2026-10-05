@@ -192,7 +192,7 @@ def _local_source(path_or_hf_repo: str) -> str:
     """
     from .whisper_models import local_whisper_dir
 
-    local = local_whisper_dir(path_or_hf_repo)
+    local = local_whisper_dir(path_or_hf_repo, backend="mlx")
     if local is None:
         raise WhisperModelNotOnDevice(
             f"Whisper model {path_or_hf_repo!r} is not on this device. Set up local AI downloads it."
@@ -510,7 +510,7 @@ class _FasterWhisperTranscriber:
             # path and has nothing to fetch (owner ruling 2026-10-05).
             local = next(
                 (found for repo in repositories_for(model_name, "faster-whisper")
-                 if (found := local_whisper_dir(repo)) is not None),
+                 if (found := local_whisper_dir(repo, backend="faster-whisper")) is not None),
                 None,
             )
             if local is None:

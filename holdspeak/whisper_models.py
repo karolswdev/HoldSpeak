@@ -65,10 +65,18 @@ _PINNED: dict[tuple[str, str], tuple[PinnedModel, ...]] = {
     ),
 }
 
-#: The files a model folder must hold before a backend can load it.
+#: The files a model folder must hold before a backend can load it WITHOUT
+#: the network.  faster-whisper's ``WhisperModel`` reads ``model.bin``,
+#: ``config.json`` and the vocabulary from the folder; when the folder has no
+#: ``tokenizer.json`` it calls ``tokenizers.Tokenizer.from_pretrained(
+#: "openai/whisper-tiny")`` (a Rust downloader).  So the tokenizer is
+#: required: a folder without it is "not on this device".
+#: (``preprocessor_config.json`` is optional and read only from the folder.)
 _REQUIRED = {
     "mlx": (("config.json",), ("weights.npz", "weights.safetensors")),
-    "faster-whisper": (("config.json",), ("model.bin",)),
+    "faster-whisper": (
+        ("config.json",), ("model.bin",), ("tokenizer.json",), ("vocabulary.txt", "vocabulary.json"),
+    ),
 }
 
 
@@ -112,7 +120,9 @@ def _pinned_folder_ready(repository: str, home: Path) -> Optional[Path]:
     files = _pins_for(repository)
     if not files or folder.is_symlink():
         return None
-    if all(is_pinned_file(item, folder / item.filename) for item in files):
+    if all(is_pinned_file(item, folder / item.filename) for item in files) and _complete(
+        folder, _backend_for(repository)
+    ):
         return folder
     return None
 
@@ -153,14 +163,14 @@ def _hub_snapshot(repository: str, home: Path) -> Optional[Path]:
         return None
     pins = _pins_for(repository)
     for folder in ordered:
-        if not folder.is_dir():
+        if not folder.is_dir() or not _complete(folder, backend):
             continue
         if pins:
             # A pinned model counts only when every file has the pinned bytes:
             # a truncated or changed cache copy is not "on this device".
             if all(_verified_in(folder, item) for item in pins):
                 return folder
-        elif _complete(folder, backend):
+        else:
             return folder
     return None
 
@@ -173,18 +183,26 @@ def pinned_file_on_device(model: PinnedModel, *, home: Optional[Path] = None) ->
     return _hub_snapshot(model.repository, where) is not None
 
 
-def local_whisper_dir(repository: str, *, home: Optional[Path] = None) -> Optional[Path]:
+def local_whisper_dir(
+    repository: str, *, home: Optional[Path] = None, backend: Optional[str] = None,
+) -> Optional[Path]:
     """The folder on this device that holds ``repository``, or ``None``.
 
     ``repository`` is a Hugging Face id (``org/name``) or a local path.  This
-    reads the disk only; it never makes a network request.
+    reads the disk only; it never makes a network request.  A folder counts
+    only when it holds every file its backend loads (``_REQUIRED``), so the
+    loader has nothing to fetch.
     """
     clean = str(repository or "").strip()
     if not clean:
         return None
     as_path = Path(clean).expanduser()
     if as_path.is_absolute() or clean.startswith(("~", ".")):
-        return as_path if as_path.exists() else None
+        # An explicitly selected folder obeys the same completeness rule.
+        backends = (backend,) if backend in _REQUIRED else tuple(_REQUIRED)
+        if as_path.is_dir() and any(_complete(as_path, item) for item in backends):
+            return as_path
+        return None
     if "/" not in clean:
         return None
     where = home or Path.home()
@@ -207,7 +225,10 @@ def repositories_for(name: str, backend: str) -> list[str]:
 
 def whisper_on_disk(name: str, backend: str, *, home: Optional[Path] = None) -> bool:
     """True when the model ``name`` for ``backend`` is on this device."""
-    return any(local_whisper_dir(repo, home=home) is not None for repo in repositories_for(name, backend))
+    return any(
+        local_whisper_dir(repo, home=home, backend=backend) is not None
+        for repo in repositories_for(name, backend)
+    )
 
 
 __all__ = [
