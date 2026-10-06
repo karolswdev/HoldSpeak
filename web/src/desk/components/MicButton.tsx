@@ -185,11 +185,22 @@ export function MicButton({
   }, []);
 
   const handledSignalRef = useRef(0);
+  /* Conductor F2 (Astra round 2 on #906): each capture has an identity, and
+     a request that arrives while the last capture is still transcribing
+     waits for it (queued). An old capture's completion never touches a
+     newer capture's state. */
+  const captureIdRef = useRef(0);
+  const stoppingRef = useRef(false);
+  const queuedStartRef = useRef(false);
   useEffect(() => {
     if (!startSignal || startSignal === handledSignalRef.current) return;
     handledSignalRef.current = startSignal;
     if (!(speakToFillSupported() || micStreamSupported())) return;
     if (sessionRef.current || startingRef.current) return;   // already capturing
+    if (stoppingRef.current) {
+      queuedStartRef.current = true;   // starts once the transcript settles
+      return;
+    }
     void startSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startSignal]);
@@ -295,6 +306,7 @@ export function MicButton({
   const startSession = async () => {
     if (startingRef.current) return;
     startingRef.current = true;
+    const id = ++captureIdRef.current;
     setFailure(null);
     setFailureCode(null);
     try {
@@ -339,6 +351,7 @@ export function MicButton({
         } else if (event.type === "error") {
           // HS-132-05: the refusal arrives NAMED — reason, failure_category,
           // and the closed-interval marker — and it is shown by that name.
+          if (id !== captureIdRef.current) return;   // an old capture's refusal
           refusedRef.current = event;
           fail(streamFailure(event), refusalCode(event));
           const session = sessionRef.current;
@@ -370,9 +383,29 @@ export function MicButton({
     const session = sessionRef.current;
     if (!session) return;
     sessionRef.current = null;
+    stoppingRef.current = true;
     go("busy");
     try {
+      await settleStop(session, captureIdRef.current);
+    } finally {
+      stoppingRef.current = false;
+      if (queuedStartRef.current && mountedRef.current) {
+        queuedStartRef.current = false;
+        void startSession();
+      }
+    }
+  };
+
+  const settleStop = async (session: StreamSession, id: number) => {
+    // Every state change below belongs to capture `id` only.
+    const current = () => id === captureIdRef.current && mountedRef.current;
+    try {
       const text = await session.stop();
+      if (!current()) {
+        // A newer capture owns the field's state now; the words still land.
+        if (text && mountedRef.current) await routeTranscript(text);
+        return;
+      }
       const fired = firedRef.current;
       firedRef.current = null;
       if (fired) {
@@ -403,6 +436,7 @@ export function MicButton({
         fail("no_speech", null);
       }
     } catch (error) {
+      if (!current()) return;
       fail(dictationFailure(error), null);
       await markRetained(session);
     }
