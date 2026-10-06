@@ -41,7 +41,7 @@ custody contract than the normal plaintext HoldSpeak database.
 
 People does not enter generic MCP primitives, Follow-through resources, or
 search. People tools and resources default to `write` for the local owner
-process. Set `HOLDSPEAK_MCP_PEOPLE_ACCESS` before the stdio sidecar starts:
+process. Set `HOLDSPEAK_MCP_PEOPLE_ACCESS` in the hub's environment before the hub starts:
 
 - `read` reduces access.
 - `off` disables People over MCP. The adapter then leaves out `person_sections`.

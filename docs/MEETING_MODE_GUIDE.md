@@ -226,13 +226,9 @@ Filters combine with each other and with the search text.
 
 ## Where your transcript goes
 
-HoldSpeak transcribes on your machine. Only the summary can send text to another host.
+HoldSpeak transcribes on your machine. The summary and assigned plugins can send text to their model hosts.
 
-| `meeting.intel_provider` | Behavior |
-| --- | --- |
-| `local` (default) | Uses a local GGUF model. The text stays on your machine. |
-| `cloud` | Sends the text to your assigned OpenAI-compatible endpoint. A LAN server, Ollama, vLLM, llama.cpp, or a hosted API all work. |
-| `auto` | Uses the local model first. It sends the text to the endpoint when no local model is ready. |
+Meeting model work uses the assigned route for each capability. Check the primary and fallback hosts in **Settings > Models**. The retained `meeting.intel_provider` value is a legacy migration input. It does not select a current route or prevent egress.
 
 - Add and assign models in **Settings > Models**. See [Models](MODELS.md).
 - The host chip beside **Run summary** shows the destination before you run. The receipt shows the hosts that HoldSpeak contacted.
@@ -282,7 +278,7 @@ Use **Settings** in the browser when you can. The file is `~/.config/holdspeak/c
 | `export_format` | `markdown` | `txt`, `markdown`, or `json` for the terminal recorder. |
 | `intel_enabled` | `true` | Allows summaries. |
 | `intelligence_auto` | `every` | When to run the summary by itself: `every`, `room_linked`, or `off`. |
-| `intel_provider` | `local` | `local`, `cloud`, or `auto`. |
+| `intel_provider` | `local` | Legacy migration input. Use the model assignments to select current routes. |
 | `intel_realtime_model` | local starter model | Path to a GGUF model for local runs. |
 | `intel_summary_model` | `null` | Larger local model for the summary. `null` uses the main one. |
 | `intel_deferred_enabled` | `true` | Queue the summary when no model is ready. |

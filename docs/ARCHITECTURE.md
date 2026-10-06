@@ -557,13 +557,12 @@ database to the shape in `SCHEMA_SQL` (`holdspeak/db/schema.py`).
 
 - It creates missing tables, indexes and triggers.
 - It adds missing columns with `ALTER TABLE ADD COLUMN`.
-- If it changes a populated database, it first writes a timestamped backup.
+- If the shape changed on an existing database, it writes a timestamped backup after schema repairs and before the grouped data backfills.
 - It then runs the idempotent data backfills.
-- It is additive. It never drops a table or column and never deletes a row.
+- General repair is additive. Named legacy repairs rebuild tables and replace schema objects.
 - There is no version gate. A database stamped with a newer version opens
   normally. The `schema_version` table is informational.
-- SQLite cannot widen a CHECK constraint on an existing column. The reconcile
-  does not try.
+- Named legacy repairs widen CHECK constraints by rebuilding the affected tables.
 
 Back up with `holdspeak backup`. Restore with `holdspeak restore`. See
 [Storage and migrations](STORAGE_AND_MIGRATIONS.md). The iPad keeps its own

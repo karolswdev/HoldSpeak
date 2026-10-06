@@ -11,7 +11,7 @@ Then set up models for Threads, Interview, and other AI work.
 
 The base install includes the transcription backend for Apple Silicon (MLX Whisper), the local GGUF text runtime, and the OpenAI-compatible client.
 Linux needs the `linux` extra for faster-whisper.
-The transcription backend can download model files on first use.
+Use **Set up local AI** to download the speech model before dictation.
 The local text runtime builds from source, so it needs CMake and a C++ compiler.
 
 On macOS, install PortAudio if it is missing: `brew install portaudio`.
@@ -83,17 +83,17 @@ Read [Security & Privacy](SECURITY.md) before you enable remote access.
 
 ## Keep your first sentence
 
-1. Select **Dictate one sentence** on the Desk.
-2. Allow browser microphone access if the browser asks.
-3. Say a short sentence.
-4. Edit the text if necessary.
-5. Select **Copy** or **Keep as Note**.
+1. In **Local AI**, select **Set up local AI** if the speech model is missing.
+2. Wait until **First words** shows **SPEECH READY**.
+3. Select **Dictate one sentence** and allow microphone access.
+4. Speak, then select **Stop**.
+5. Select **Keep as note** to save the result. Select **Again** to repeat it.
 
-This step needs no model.
-If you have no microphone, type the sentence.
+Without a microphone, select **Continue later**, then **Desk > New Note**.
+Enter your text in the Note.
 A setup state of `needs_attention` or `blocked` affects later AI work only.
 
-The first **Keep as Note** creates six drawers: Inbox, Personal, Work, Meetings, Decisions, and Reference.
+Entering the Desk from setup creates six drawers: Inbox, Personal, Work, Meetings, Decisions, and Reference.
 It also creates a Note named Start here and the **Everyday context** prompts.
 The prompts hold questions and examples. They hold no guessed personal facts.
 

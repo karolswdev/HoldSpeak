@@ -24,8 +24,9 @@ with the schema of the build and repairs the difference. It adds missing
 tables and columns. It also runs a few table rebuilds and data repairs.
 
 - **No database.** HoldSpeak creates the declared schema.
-- **Existing database.** HoldSpeak repairs the shape. Repair only adds data
-  structures. It does not drop tables, columns or rows.
+- **Existing database.** HoldSpeak repairs the shape. General repair adds
+  missing structures. Named legacy repairs rebuild tables and replace schema
+  objects.
 - **Newer schema stamp.** HoldSpeak still opens the file. A downgrade is not
   guaranteed to work. Inspect the schema before you rely on one.
 - **Config.** An older config loads forward and keeps your settings. A newer

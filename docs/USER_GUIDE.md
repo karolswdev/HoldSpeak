@@ -411,7 +411,7 @@ After a meeting, its row in the Meetings stream shows one state.
 | **REC** | The meeting is recording. | |
 
 **Run summary** writes the summary, topics, and action items.
-It does not run the proposal plugins.
+It also runs the routed plugins whose model assignments can be frozen. Their results can produce proposals.
 For meeting details, read [Meeting mode](MEETING_MODE_GUIDE.md) and [Meeting intelligence](MEETING_INTELLIGENCE.md).
 
 ### The auto-run setting
@@ -432,7 +432,7 @@ If no model is assigned, the chip reads **NO MODEL** and auto-run jobs queue wit
 Meeting intelligence runs locally or on an OpenAI-compatible endpoint.
 Transcripts, artifacts, and queues stay on this device.
 No external system receives a write unless a connector or export does it.
-If `meeting.intel_provider` is `cloud` (or `auto`, which can fall back to it), meeting text can go to your chosen endpoint.
+Meeting text can go to the primary or fallback hosts in its capability assignments.
 Add the endpoint in **Settings > Models**.
 Select it for **Meetings** and apply **Use these**.
 The `intel_cloud_*` fields only migrate old settings.
@@ -621,11 +621,13 @@ There is no relay and no cloud proxy.
 
 ### Turn remote access on
 
-1. Open **Settings > System**.
-2. Switch the hub row from `REMOTE OFF` to `REMOTE ON`.
+1. Stop the hub. Start it with `HOLDSPEAK_WEB_HOST=0.0.0.0 holdspeak web --no-open`.
+   This binds all IPv4 interfaces, including loopback.
+2. Open **Settings > System** and switch remote access on.
+3. Connect the runner to the hub's tailnet IP and actual listening port.
 
-The row shows the tailnet address the hub listens on.
-The listener is off by default.
+Remote access is off by default. Its switch controls MCP admission.
+The stored `bind_host` value does not change the listener.
 
 ### Issue a credential
 
@@ -994,7 +996,7 @@ It shows open assignments, overdue commitments, the last meeting, the agenda, wh
 The `people.one_on_one.brief` MCP tool returns only `shared_intent` material.
 It never returns leader-private items.
 The People MCP capability defaults to write for the local owner.
-Set `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` or `=off` before the sidecar starts to reduce it.
+Set `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` or `=off` in the hub's environment before the hub starts to reduce it.
 
 ### The 1:1 card
 

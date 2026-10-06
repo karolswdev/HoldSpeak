@@ -48,20 +48,12 @@ codex exec \
 
 ### Limit People access
 
-The People family defaults to `write` for the local owner process. To
-restrict it, set `HOLDSPEAK_MCP_PEOPLE_ACCESS` in the server entry:
+The People family defaults to `write` for the local owner. Set
+`HOLDSPEAK_MCP_PEOPLE_ACCESS` in the hub's environment before you start the
+hub. This restriction applies to all MCP clients of that hub.
 
-```json
-{
-  "mcpServers": {
-    "holdspeak": {
-      "command": "uv",
-      "args": ["run", "holdspeak-mcp"],
-      "cwd": ".",
-      "env": {"HOLDSPEAK_MCP_PEOPLE_ACCESS": "read"}
-    }
-  }
-}
+```sh
+HOLDSPEAK_MCP_PEOPLE_ACCESS=read holdspeak web
 ```
 
 Use `read` for read-only access. Use `off` to disable the family. The
