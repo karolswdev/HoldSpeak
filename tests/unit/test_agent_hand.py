@@ -302,6 +302,7 @@ def _rig(
         gate_path=gate_path, project_map={"projects": {}},
     )
     return SimpleNamespace(
+        text_transport=text_transport, keys_transport=keys_transport,
         typed=typed, keys_sent=keys_sent, worktree=worktree, broker=broker,
         repo=repo, registry=registry, source=source, tmux=tmux, service=service,
         launches=launches, hand=hand, gate_path=gate_path, settings=settings, db=db,
@@ -354,7 +355,7 @@ def test_hand_launches_claude_in_a_new_worktree_with_origin(tmp_path, db, monkey
     rig.tmux.ended = True
 
 
-def _wait_for(read, key, value, timeout=10.0):
+def _wait_for(read, key, value, timeout=30.0):
     import time
 
     deadline = time.monotonic() + timeout

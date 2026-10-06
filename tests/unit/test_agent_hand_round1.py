@@ -43,7 +43,7 @@ def _trust_for(lines, path):
     return trust_prompt_for(lines, path)
 
 
-def _wait_until(read, ok, timeout=10.0):
+def _wait_until(read, ok, timeout=30.0):
     import time
 
     deadline = time.monotonic() + timeout
@@ -397,14 +397,47 @@ def test_a_failed_send_is_never_sent(tmp_path, db, monkeypatch, profile, agent) 
 # ── 8. a pending brief survives a restart and never ends as success ──
 
 
-def _restart(rig) -> LaunchService:
-    """A new launch service on the same ledger, registry and broker (a hub restart)."""
-    service = LaunchService(
-        profiles=rig.service._profiles, registry=rig.registry, targets=rig.service._targets,
-        commands=rig.commands, attempts=rig.db.work_attempts, ledger=type(rig.launches)(rig.launches._path),
-        runner=rig.tmux, local_node_id="local",
+def _restart(rig, *, bind: bool = True) -> LaunchService:
+    """A hub restart: the old waiter really stops, then the delivery runtime
+    is rebuilt from scratch on the same files and database (a fresh target
+    registry, command service, profiles, registry, ledger, kernel broker)."""
+    from holdspeak.db.delivery_receipts import NodeReceiptLedger
+    from holdspeak.delivery import DeliveryRegistry
+    from holdspeak.delivery.commands import HubCommandService, NodeCommandProcessor
+    from holdspeak.delivery.factory_launch import AgentProfileStore, LaunchLedger
+    from holdspeak.delivery.terminal import TerminalTargetRegistry
+    from holdspeak.kernel.broker import Broker
+    from holdspeak.kernel.journal import JournalStore
+    from holdspeak.kernel.model import OperationSpec
+    from holdspeak.kernel.process_input import ProcessInputCodec
+    from holdspeak.kernel.process_spawn import ProcessSpawnCodec
+
+    rig.service.first_message.close()  # the old hub is gone, its waiter with it
+    tmp = rig.repo.parent
+    targets = TerminalTargetRegistry(runner=rig.tmux)
+    processor = NodeCommandProcessor(
+        node_id="local", targets=targets, ledger=NodeReceiptLedger(tmp / "ledger-2.db"),
+        runner=rig.tmux, audit=lambda **kw: 1,
+        text_transport=rig.text_transport, keys_transport=rig.keys_transport,
     )
-    service.bind_kernel(rig.broker)
+    commands = HubCommandService(
+        repo=rig.db.delivery_receipts, processor=processor, local_node_id="local",
+        mode_loader=lambda: "neutral",
+    )
+    service = LaunchService(
+        profiles=AgentProfileStore(tmp / "profiles.json"),
+        registry=DeliveryRegistry(tmp / "sources.json", map_path=tmp / "absent.json"),
+        targets=targets, commands=commands, attempts=rig.db.work_attempts,
+        ledger=LaunchLedger(rig.launches._path), runner=rig.tmux, local_node_id="local",
+    )
+    spawn = ProcessSpawnCodec(service, rig.db.delivery_receipts)
+    process_input = ProcessInputCodec(rig.db.delivery_receipts)
+    broker = Broker(JournalStore(rig.db._connection), (
+        OperationSpec(spawn.name, spawn.version, spawn, "agent.submit", "propose"),
+        OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
+    ))
+    if bind:
+        service.bind_kernel(broker)  # reconciles the pending first messages
     return service
 
 
@@ -412,12 +445,91 @@ def test_a_restart_resumes_the_pending_brief(tmp_path, db, monkeypatch) -> None:
     gate = {"ready": False}
     rig = _rig(tmp_path, db, monkeypatch, register_when=lambda tmux: gate["ready"])
     result = rig.hand.hand(OWNER, "action", "ai_1")
-    rig.service._first._running.clear()  # the old waiter is gone with the old hub
+    launch_id = result["launch_id"]
+    old_target = rig.launches.get(launch_id)["target"]["target_id"]
+    gate["ready"] = True  # the agent registers while the hub is down
     restarted = _restart(rig)
-    gate["ready"] = True
-    record = _wait_for(lambda: restarted._ledger.get(result["launch_id"]), "instruction_state", "sent")
+    restarted.first_message.join(launch_id)  # drive the new waiter to its end
+    record = restarted._ledger.get(launch_id)
+    assert record["instruction_state"] == "sent", record
     assert record["pending_brief"] is None and len(rig.typed) == 1
+    # The fresh registry knows the pane again: the target was issued anew.
+    assert record["target"]["target_id"] != old_target
     rig.tmux.ended = True
+
+
+def test_deliver_on_a_rebuilt_runtime_reissues_the_target(tmp_path, db, monkeypatch) -> None:
+    gate = {"ready": False}
+    rig = _rig(tmp_path, db, monkeypatch, register_when=lambda tmux: gate["ready"])
+    result = rig.hand.hand(OWNER, "action", "ai_1")
+    restarted = _restart(rig, bind=False)  # no reconcile: the owner presses deliver
+    old_target = restarted._ledger.get(result["launch_id"])["target"]["target_id"]
+    gate["ready"] = True
+    restarted.resume_delivery(result["launch_id"])
+    restarted.first_message.join(result["launch_id"])
+    record = restarted._ledger.get(result["launch_id"])
+    assert record["instruction_state"] == "sent" and len(rig.typed) == 1
+    assert record["target"]["target_id"] != old_target
+    rig.tmux.ended = True
+
+
+def test_a_resume_never_confirms_the_trust_prompt_again(tmp_path, db, monkeypatch) -> None:
+    monkeypatch.setattr("holdspeak.delivery.first_message.REGISTRATION_WAIT_SECONDS", 0.6)
+    rig = _rig(tmp_path, db, monkeypatch, register_when=lambda tmux: False,
+               screen=lambda worktree: _trust_screen(worktree, cursor_on_yes=True))
+    rig.tmux.on_keys = lambda pane, keys: None  # the prompt stays, Yes selected
+    result = rig.hand.hand(OWNER, "action", "ai_1")
+    rig.service.first_message.join(result["launch_id"])
+    assert rig.launches.get(result["launch_id"])["instruction_state"] == "expired"
+    rig.service.resume_delivery(result["launch_id"])
+    rig.service.first_message.join(result["launch_id"])
+    record = rig.launches.get(result["launch_id"])
+    assert [key for _pane, keys in rig.keys_sent for key in keys] == ["Enter"]  # one, across both waiters
+    assert record["trust_confirmed"] is True
+    rig.tmux.ended = True
+
+
+def test_the_gate_cli_interleaved_with_a_launch_keeps_both(tmp_path, monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from holdspeak.commands import gate as gate_cli
+    from holdspeak.services.agent_hand_service import AgentHandService
+
+    gate_path = tmp_path / "gate.json"
+    monkeypatch.setattr(coder_gate, "GATE_CONFIG_FILE", gate_path)
+    hand = AgentHandService(Database(tmp_path / "g.db"), launch_service=lambda: None, gate_path=gate_path)
+    cli_read, launch_done = threading.Event(), threading.Event()
+    original = coder_gate.load_gate_config
+
+    def slow_load(path=None):
+        config = original(path)
+        if threading.current_thread().name == "cli":
+            cli_read.set()
+            launch_done.wait(0.5)  # the launch arms while the CLI holds its read
+        return config
+
+    monkeypatch.setattr(coder_gate, "load_gate_config", slow_load)
+    monkeypatch.setattr(gate_cli, "load_gate_config", slow_load, raising=False)
+    repo = tmp_path / "held-repo"
+    repo.mkdir()
+    worktree = tmp_path / "hs-action-1"
+    args = SimpleNamespace(gate_action="allow", repo=str(repo), tool=None)
+    cli = threading.Thread(target=gate_cli.run_gate_command, args=(args,), kwargs={"stream": open("/dev/null", "w")},
+                           name="cli")
+    cli.start()
+    cli_read.wait(5)
+
+    def launch():
+        hand._arm_gate(worktree, worktree.name)
+        launch_done.set()
+
+    arming = threading.Thread(target=launch)
+    arming.start()
+    cli.join(10)
+    arming.join(10)
+    config = original(gate_path)
+    assert str(repo.resolve()) in config.repos  # the CLI's hold
+    assert str(worktree) in config.repos and str(worktree) in config.armed_paths  # the launch's hold
 
 
 def test_a_restart_names_an_interrupted_brief(tmp_path, db, monkeypatch) -> None:

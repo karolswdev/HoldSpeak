@@ -145,6 +145,8 @@ class FirstMessage:
         self._lock = threading.Lock()
         self._running: set[str] = set()
         self._watched: set[str] = set()
+        self._threads: dict[str, threading.Thread] = {}
+        self._stop = threading.Event()
 
     # the public verbs ------------------------------------------------------
 
@@ -169,12 +171,56 @@ class FirstMessage:
     def start(self, launch_id: str) -> None:
         """Wait for registration, then type the brief (one waiter per launch)."""
         with self._lock:
-            if launch_id in self._running:
+            if launch_id in self._running or self._stop.is_set():
                 return
             self._running.add(launch_id)
-        threading.Thread(
-            target=self._guarded, args=(launch_id,), name=f"launch-brief-{launch_id}", daemon=True
-        ).start()
+            thread = threading.Thread(
+                target=self._guarded, args=(launch_id,), name=f"launch-brief-{launch_id}", daemon=True
+            )
+            self._threads[launch_id] = thread
+        thread.start()
+
+    def join(self, launch_id: str, timeout: float = 30.0) -> None:
+        """Wait for this launch's waiter to finish (tests; a clean shutdown)."""
+        with self._lock:
+            thread = self._threads.get(launch_id)
+        if thread is not None:
+            thread.join(timeout)
+
+    def close(self, timeout: float = 30.0) -> None:
+        """Stop every waiter of this service (a hub shutting down): each
+        leaves its launch as it is, so the next service resumes it."""
+        self._stop.set()
+        with self._lock:
+            threads = list(self._threads.values())
+        for thread in threads:
+            thread.join(timeout)
+
+    def retarget(self, launch_id: str) -> Optional[dict[str, Any]]:
+        """The launch record with a terminal target that proves itself NOW.
+
+        A restarted hub has a fresh target registry: the stored target is
+        unknown to it. The session's pane is then read from the live tmux
+        session and its immutable target issued again, the way the launch
+        first bound it. ``None`` when no live pane proves itself."""
+        svc = self._svc
+        record = svc._ledger.get(launch_id) or {}
+        target = record.get("target") or {}
+        if target.get("target_id"):
+            verified = svc._targets.verify(target.get("target_id"), target.get("target_generation"))
+            if verified.get("status") == "ok":
+                return record
+        pane = svc._first_pane(str(record.get("session") or ""))
+        if not pane:
+            return None
+        issued = svc._targets.issue(f"pane:{pane}")
+        if issued.get("status") != "issued":
+            return None
+        return svc._ledger.update(launch_id, target={
+            "target_id": issued["target_id"],
+            "target_generation": issued["target_generation"],
+            "pane_id": issued["pane_id"],
+        })
 
     def resume(self, launch_id: str) -> dict[str, Any]:
         """Deliver the pending brief of an existing launch (no relaunch)."""
@@ -235,6 +281,8 @@ class FirstMessage:
         def watch() -> None:
             try:
                 while self._svc._session_alive(session):
+                    if self._stop.is_set():
+                        return  # shutting down: the next service watches it
                     time.sleep(LAUNCH_POLL_SECONDS)
                 self.settle(launch_id)
             finally:
@@ -300,6 +348,8 @@ class FirstMessage:
         trust = _Trust(self, record, principal, held) if held.get("trust") else None
         deadline = time.monotonic() + REGISTRATION_WAIT_SECONDS
         while True:
+            if self._stop.is_set():
+                return  # this service is shutting down; the launch stays pending
             now_state = (svc._ledger.get(launch_id) or {}).get("instruction_state")
             if now_state != "pending":
                 return  # another waiter (a restarted service) took it, or it was settled
@@ -324,8 +374,15 @@ class FirstMessage:
         # One send, ever: claim the delivery under the ledger's lock. A second
         # waiter on the same launch (a recreated service) finds it taken.
         with _claim_lock(getattr(svc._ledger, "_path", "")):
+            if self._stop.is_set():
+                return
             if (svc._ledger.get(launch_id) or {}).get("instruction_state") != "pending":
                 return
+            fresh = self.retarget(launch_id)
+            if fresh is None:
+                svc._ledger.update(launch_id, instruction_state="target_gone")
+                return
+            record = fresh
             svc._ledger.update(launch_id, instruction_state="delivering")
         sent = svc._send_instruction(
             record, str(held.get("text") or ""), principal,
@@ -389,8 +446,10 @@ class _Trust:
         self._deadline = time.monotonic() + TRUST_WAIT_SECONDS
         self.state: Optional[str] = None if self._path else "not_seen"
         self._seen = False
-        self._moved = False
-        self._confirmed = False
+        # The progress lives on the launch record, so a second waiter (a
+        # resume, a restarted hub) never moves or confirms again.
+        self._moved = bool(record.get("trust_moved"))
+        self._confirmed = bool(record.get("trust_confirmed"))
 
     def _set(self, state: str) -> None:
         self.state = state
@@ -406,7 +465,11 @@ class _Trust:
         if time.monotonic() >= self._deadline:
             self._set("timeout" if self._seen else "not_seen")
             return
-        pane = str((self._record.get("target") or {}).get("pane_id") or "")
+        record = self._delivery.retarget(self._launch_id)
+        if record is None:
+            return  # no live pane proves itself now; the session check decides
+        self._record = record
+        pane = str((record.get("target") or {}).get("pane_id") or "")
         peek = coder_steering.peek_pane(pane, lines=60, runner=self._svc._runner)
         if peek.get("status") != "live":
             return
@@ -421,8 +484,10 @@ class _Trust:
         if prompt["cursor"] == "yes":
             if self._press(["Enter"]):
                 self._confirmed = True
+                self._svc._ledger.update(self._launch_id, trust_confirmed=True)
         elif prompt["cursor"] == "no" and not self._moved:
             self._moved = True
+            self._svc._ledger.update(self._launch_id, trust_moved=True)
             self._press(["Down"])
 
     def _press(self, keys: list[str]) -> bool:
