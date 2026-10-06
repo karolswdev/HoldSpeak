@@ -120,6 +120,7 @@ def build_coder_steering_router(
         a second poll. `raw=1` opts into ANSI passthrough (HS-111-11).
         """
         from .... import coder_steering
+        from ....agent_context.models import is_blocked
 
         try:
             session = _registry_session(key)
@@ -136,6 +137,9 @@ def build_coder_steering_router(
             "stale": stale,
             "awaiting_response": session.awaiting_response,
             "question": session.question,
+            # Conductor F2 (K5b): the one blocked predicate, so a question a
+            # permission Notification set shows as the question.
+            "blocked": is_blocked(session),
             "updated_at": session.updated_at,
             "grant": {
                 "armed": grant is not None,
@@ -203,6 +207,7 @@ def build_coder_steering_router(
         renders them in place, never a toast-shaped apology.
         """
         from .... import coder_steering
+        from ....agent_context.models import is_blocked
 
         try:
             session = _registry_session(key)
@@ -368,6 +373,7 @@ def build_coder_steering_router(
         pane posture. Delivered or refused, the attempt is audited.
         """
         from .... import coder_steering
+        from ....agent_context.models import is_blocked
 
         try:
             session = _registry_session(key)
@@ -446,6 +452,7 @@ def build_coder_steering_router(
         audited, and revoking refusals broadcast their frame.
         """
         from .... import coder_steering
+        from ....agent_context.models import is_blocked
 
         try:
             session = _registry_session(key)

@@ -147,3 +147,22 @@ def test_peek_pane_gone_rides_the_envelope_not_a_500(monkeypatch, client) -> Non
     res = client.get("/api/coders/claude:abc/peek")
     assert res.status_code == 200
     assert res.json()["peek"]["status"] == "pane_gone"
+
+
+def test_peek_names_a_permission_notification_as_blocked(monkeypatch, client) -> None:
+    """Conductor F2 (K5b): a question a permission Notification set is a
+    wait (the one blocked predicate), though `awaiting_response` is false."""
+    _register(monkeypatch, _session(
+        question="Allow Bash: rm -rf build?", hook_event_name="Notification",
+        notification_type="permission_prompt", lifecycle="waiting",
+    ))
+    monkeypatch.setattr(coder_steering, "peek_pane", lambda target, *, lines, last_hash: {"status": "live", "hash": "h", "lines": []})
+    body = client.get("/api/coders/claude:abc/peek").json()
+    assert body["awaiting_response"] is False
+    assert body["blocked"] is True
+
+
+def test_peek_a_working_session_is_not_blocked(monkeypatch, client) -> None:
+    _register(monkeypatch, _session())
+    monkeypatch.setattr(coder_steering, "peek_pane", lambda target, *, lines, last_hash: {"status": "live", "hash": "h", "lines": []})
+    assert client.get("/api/coders/claude:abc/peek").json()["blocked"] is False

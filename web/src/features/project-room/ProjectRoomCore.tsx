@@ -93,6 +93,8 @@ import { DecisionRecordPreparedChip, DecisionRecordSendWells } from "../../desk/
 import { fetchUpdates } from "./update/api";
 import { Unreadable } from "../../desk/surface/send";
 import { retryRoomLink, useRoomSendLink } from "../../desk/windowSend";
+import { flightForItem, isInFlight, mergeReceipt, useAgentFlights, useAgentFlightsLive } from "../../desk/agentFlights";
+import { FlightChip, FlightVerbs } from "../../desk/components/AgentFlight";
 
 /* ── sub-components (kept for backward-compat re-exports) ── */
 
@@ -847,6 +849,8 @@ function NeedsYouSection({
   // PHILO-10-02: the Room's own state of each Send it pressed (pending, unknown, failed, sent)
   // survives closing and reopening the card, and a late answer reaches the current card.
   const [localNudges, setLocalNudges] = useState<Record<string, NudgeLocal>>({});
+  // Conductor F2 (K4b): each row wears its agent where it lives.
+  const flights = useAgentFlights((s) => s.flights);
 
   const reviewAction = pendingCount > 0 ? (
     <Button dense variant="ghost" loading={reviewCtrl.loading} onClick={() => void reviewCtrl.enterReview()} data-testid="review-verb" data-verb="review">
@@ -959,6 +963,7 @@ function NeedsYouSection({
                 </React.Fragment>
               );
             }
+            const flight = flightForItem(flights, item);
             return (
               <SurfaceLedgerRow
                 key={`${item.source}-${item.title}-${i}`}
@@ -967,20 +972,26 @@ function NeedsYouSection({
                 primary={<span className="surface-primary">{item.title}</span>}
                 wrap
                 cells={
-                  <span
-                    className="surface-token room-why-token"
-                    style={{ color: severityColor(item.severity) }}
-                    data-tone={severityTone(item.severity)}
-                    data-testid="needs-you-why"
-                  >
-                    {needsYouWhyWords(item)}
+                  <span className="room-why-cells">
+                    <span
+                      className="surface-token room-why-token"
+                      style={{ color: severityColor(item.severity) }}
+                      data-tone={severityTone(item.severity)}
+                      data-testid="needs-you-why"
+                    >
+                      {needsYouWhyWords(item)}
+                    </span>
+                    <FlightChip flight={flight} />
                   </span>
                 }
                 trailing={<>
-                  {/* Hand to agent (Conductor K2e): before the row's Open, as drawn. */}
-                  <HandRowVerb item={{ title: item.title, source: item.source, actionItemId: item.actionItemId, projectId: ctrl.projectId }} />
-                  {
-                  item.verb === "decide" ? (
+                  {/* Conductor F2: an item in flight shows its flight and its
+                      verb; Hand to agent (Conductor K2e) only on an item no
+                      agent holds, before the row's Open, as drawn. */}
+                  {isInFlight(flight)
+                    ? <FlightVerbs flight={flight} title={item.title} />
+                    : <HandRowVerb item={{ title: item.title, source: item.source, actionItemId: item.actionItemId, projectId: ctrl.projectId }} />}
+                  {item.verb === "decide" ? (
                     <Button dense variant="ghost" onClick={() => {
                       if (item.url) window.open(item.url, "_blank", "noopener");
                     }}>Decide</Button>
@@ -998,8 +1009,7 @@ function NeedsYouSection({
                     >
                       Open
                     </Button>
-                  ) : null
-                }
+                  ) : null}
                 </>}
               />
             );
@@ -2164,6 +2174,8 @@ function computeHistoryCounts(changes: RoomChangeRow[]): { todayCount: number; w
 
 export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   const ctrl = useProjectRoomController(scope, scopeLabel);
+  useAgentFlightsLive();
+  const agentFlights = useAgentFlights((s) => s.flights);
   const loading = ctrl.loadStatus === "loading";
   // A write in another window (a meeting filed, an update published, an
   // agent's write) shows in this Room with no reload.
@@ -2331,7 +2343,14 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     if (w === 0) return `${t} TODAY · NOTHING THIS WEEK`;
     return `${t} TODAY · ${w} THIS WEEK`;
   })();
-  const footerReceipt = ctrl.view === "history" ? (
+  // Conductor F2 (K6): a commitment an agent's merged PR closed names
+  // itself on the receipt line (K4's follow-through: the PR, the close).
+  const merged = mergeReceipt(agentFlights, ctrl.projectId);
+  const footerReceipt = ctrl.view !== "history" && merged ? (
+    <span className="surface-footer-receipt-line" data-tone="ok" role="status" data-testid="room-merge-receipt">
+      {`DONE · ${merged.title} · PR #${merged.pr?.number ?? ""} MERGED · ${formatTimeShort(merged.mergedAt ?? "")}`}
+    </span>
+  ) : ctrl.view === "history" ? (
     <span className="surface-footer-receipt-line" role="status" data-testid="room-footer-receipt">
       {historyReceipt}
     </span>

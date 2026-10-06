@@ -35,16 +35,14 @@ vi.mock("../../../lib/api", async (importOriginal) => {
   return {
     ...mod,
     apiFetch: vi.fn(async (url: string) => {
-      if (url === "/api/coders/status")
+      if (url === "/api/coders/sessions?include_ended=false")
         return {
-          agent: {
-            sessions: [{
-              key: "claude:s1",
-              session: blocked
-                ? { session_id: "s1", project: "holdspeak", awaiting_response: true, question: "Drop the old migration?" }
-                : { session_id: "s1", project: "holdspeak", awaiting_response: false },
-            }],
-          },
+          sessions: [{
+            session: blocked
+              ? { agent: "claude", session_id: "s1", project_name: "holdspeak", state: "waiting", awaiting_response: true, question: "Drop the old migration?" }
+              : { agent: "claude", session_id: "s1", project_name: "holdspeak", state: "working", awaiting_response: false },
+          }],
+          flights: [],
         };
       return {};
     }),
@@ -54,7 +52,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
 vi.mock("../../../desk/shell", () => ({ openCoderSession: vi.fn(), openPersona: vi.fn() }));
 
 const coderCalls = () =>
-  vi.mocked(apiFetch).mock.calls.filter(([url]) => url === "/api/coders/status").length;
+  vi.mocked(apiFetch).mock.calls.filter(([url]) => url === "/api/coders/sessions?include_ended=false").length;
 
 describe("Agents window follows the coder frame (Conductor K3)", () => {
   it("re-reads on a coder frame and not on another intel_status frame", async () => {

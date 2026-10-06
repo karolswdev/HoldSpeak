@@ -152,8 +152,10 @@ export function openPersona(personaId: string): void {
 }
 
 /** Open a Coder session's window (the one session surface). */
-export function openCoderSession(key: string): void {
+export function openCoderSession(key: string, opts?: { answer?: boolean }): void {
+  // Conductor F2 (K5b): `answer` opens the answer well in the window's body,
+  // the steer composer recording.
   void import("./steering").then((m) =>
-    m.useSteering.getState().openSession(key),
+    m.useSteering.getState().openSession(key, opts),
   );
 }

@@ -3110,7 +3110,8 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
            producer_clock: str | None = None,
            record_rehearsal: bool = False,
            transcript_path: str | None = None,
-           cli_runner: str | None = None) -> None:
+           cli_runner: str | None = None,
+           transcribe_double: str | None = None) -> None:
     """The rig's hub subprocess: a real MeetingWebServer on a fresh HOME.
 
     It takes the product's OWN database owner lock and runs the product's own
@@ -3204,6 +3205,19 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
               flush=True)
         lacks.append("the database owner lock (another process holds it)")
 
+    on_transcribe = None
+    if transcribe_double:
+        # Conductor F2: a DETERMINISTIC transcription double at the hub's own
+        # transcribe seam (`WebRuntimeCallbacks.on_transcribe`). The browser
+        # mic streams real (fake-device) audio over /ws/dictation/stream; only
+        # the model is replaced, and it always answers this text.
+        def on_transcribe(_audio: Any, **_kwargs: Any) -> str:
+            return str(transcribe_double)
+
+        has.append("a deterministic transcription double at the transcribe seam")
+    else:
+        lacks.append("a transcriber (no double requested; the browser mic is refused by name)")
+
     def _no_microphone(**_kwargs: Any) -> Any:
         raise ValidationError(
             "microphone forbidden: this rig never opens the owner's microphone "
@@ -3217,6 +3231,7 @@ def _serve(port: int, token: str, host: str = "127.0.0.1",
             on_meeting_stop=lambda: None,
             get_state=lambda: {"active": False, "id": "", "status": "idle",
                                "activity": {"state": "idle", "source": "rig"}},
+            on_transcribe=on_transcribe,
         ),
         host=host, port=port, auth_token=token,
         brief_clock=brief_clock,
@@ -7356,6 +7371,9 @@ def main(argv: list[str] | None = None) -> int:
                          help="opt-in rehearsal JSONL path (must be under HOME)")
     p_serve.add_argument("--cli-runner", default=None,
                          help="a recording runner script for the CLI channels' process edge")
+    p_serve.add_argument("--transcribe-double", default=None,
+                         help="a deterministic transcript at the hub's transcribe seam "
+                              "(on_transcribe); the browser's audio still streams")
 
     p_cal_serve = sub.add_parser("serve-calibration",
                                  help="(internal) the calibration fixture server")
@@ -7375,7 +7393,8 @@ def main(argv: list[str] | None = None) -> int:
                producer_clock=getattr(args, "producer_clock", None),
                record_rehearsal=bool(getattr(args, "record_rehearsal", False)),
                transcript_path=getattr(args, "transcript_path", None),
-               cli_runner=getattr(args, "cli_runner", None))
+               cli_runner=getattr(args, "cli_runner", None),
+               transcribe_double=getattr(args, "transcribe_double", None))
         return 0
 
     if args.mode == "calibrate":

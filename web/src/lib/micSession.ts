@@ -73,6 +73,19 @@ let session: Session | null = null;
 let starting: Promise<Session> | null = null;
 let holdActive = false;
 let holdChunks: Float32Array[] = [];
+/* Conductor F2 (Astra round 2 on #906): every hold has an identity. A
+   capture that holds a token may end, drain or abort ONLY its own hold: an
+   obsolete capture (its field left while the grant was pending) must never
+   abort the hold its successor now owns. Callers with no token keep the old
+   behaviour (whatever hold is current). */
+let holdToken = 0;
+
+/** The hold a capture owns; pass it back to `endHold`/`drainHold`/`abortHold`. */
+export type HoldToken = number;
+
+function ownsHold(token?: HoldToken): boolean {
+  return holdActive && (token === undefined || token === holdToken);
+}
 let openMicOn = false;
 let vad: Vad | null = null;
 let onSegment: ((segment: Segment) => void) | null = null;
@@ -295,7 +308,8 @@ export function micSessionLive(): boolean {
 
 /* ── push-to-talk: the floor's first owner ── */
 
-export async function beginHold(): Promise<void> {
+export async function beginHold(): Promise<HoldToken> {
+  const token = ++holdToken;
   holdChunks = [];
   holdActive = true;
   // the open mic yields mid-word rather than double-capturing.
@@ -303,17 +317,22 @@ export async function beginHold(): Promise<void> {
   try {
     await ensureSession();
   } catch (error) {
-    holdActive = false;
-    setPhase(restPhase());
+    if (token === holdToken) {
+      holdActive = false;
+      setPhase(restPhase());
+    }
     throw error;
   }
-  if (!holdActive) return; // released before the grant landed
+  // Released before the grant landed, or a newer hold took the floor: this
+  // hold changes nothing now.
+  if (!holdActive || token !== holdToken) return token;
   setPhase("held");
+  return token;
 }
 
 /** End the hold and hand back what it captured (null when nothing). */
-export function endHold(): { chunks: Float32Array[]; rate: number } | null {
-  if (!holdActive) return null;
+export function endHold(token?: HoldToken): { chunks: Float32Array[]; rate: number } | null {
+  if (!ownsHold(token)) return null;
   holdActive = false;
   const chunks = holdChunks;
   holdChunks = [];
@@ -336,16 +355,16 @@ export function endHold(): { chunks: Float32Array[]; rate: number } | null {
  *  an active capture and frames could fall between the two calls. Draining
  *  moves the buffer and touches nothing else: the hold stays held, the
  *  device stays live, and the lamp keeps telling the truth. */
-export function drainHold(): { chunks: Float32Array[]; rate: number } | null {
-  if (!holdActive) return null;
+export function drainHold(token?: HoldToken): { chunks: Float32Array[]; rate: number } | null {
+  if (!ownsHold(token)) return null;
   const chunks = holdChunks;
   holdChunks = [];
   return chunks.length ? { chunks, rate: session?.rate ?? 16_000 } : null;
 }
 
 /** Abandon the hold, keeping the grant (the gesture was cancelled). */
-export function abortHold(): void {
-  if (!holdActive) return;
+export function abortHold(token?: HoldToken): void {
+  if (!ownsHold(token)) return;
   holdActive = false;
   holdChunks = [];
   if (openMicOn) {

@@ -28,7 +28,7 @@ import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { controlModeLabel, humanizeWireValue } from "../../lib/productLanguage";
-import { PaneWell, SurfaceFacts } from "../surface/Surface";
+import { PaneWell, ScrollHint, SurfaceFacts } from "../surface/Surface";
 import {
   CycleGadget,
   LampGadget,
@@ -431,7 +431,7 @@ function FactoryControls() {
 }
 
 /** The voice-first composer (HS-87-03), available under resolved authority. */
-function SteerComposer() {
+function SteerComposer({ listenSignal = 0 }: { listenSignal?: number } = {}) {
   const steerState = useSteering((s) => s.steerState);
   const steerDetail = useSteering((s) => s.steerDetail);
   const openKey = useSteering((s) => s.openKey);
@@ -464,6 +464,7 @@ function SteerComposer() {
       <div className="desk-steer-row">
         <MicButton
           label="Speak"
+          startSignal={listenSignal}
           draftScope={`steer:${openKey || "unattached"}`}
           onText={(t) => setText((prev) => (prev ? `${prev} ${t}` : t))}
         />
@@ -475,6 +476,12 @@ function SteerComposer() {
           placeholder="Steer"
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(event) => {
+            // Conductor F2 (K5c): Enter sends; Shift+Enter is a new line.
+            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              if (text.trim() && steerState !== "sending") void send();
+              return;
+            }
             if (event.key !== "Escape") return;
             event.preventDefault();
             event.stopPropagation();
@@ -530,30 +537,29 @@ function SteerComposer() {
         <span className="desk-arm-refusal"><span aria-hidden="true">{GLYPH_CLOSE}</span> {steerDetail}</span>
       )}
       {steerState === "sent" && (
-        <span className="desk-steer-sent"><span aria-hidden="true">{GLYPH_CHECK}</span> {steerDetail || "sent"}</span>
+        <span className="desk-steer-sent"><span aria-hidden="true">{GLYPH_CHECK}</span> {/* Conductor F2 (K5c): the word is `sent`; the receipt follows it. */}{!steerDetail || steerDetail === "sent" ? "sent" : `sent · ${steerDetail}`}</span>
       )}
     </div>
   );
 }
 
-/** The policy line as axis-named tokens (HS-111-04): PANE · AUTHORITY
- * · RECEIPT — never a sentence. */
-function SteeringPolicyFacts() {
+/** The policy line as axis-named tokens (HS-111-04): AUTHORITY ·
+ * RECEIPT — never a sentence. Conductor F2: compact tokens on the footer
+ * row (a facts list there squeezed to one letter per line), and the pane
+ * is said once, in the body's facts. */
+export function SteeringPolicyFacts() {
   const operation = useSteering((s) => s.operation);
   const policy = useSteering((s) => s.policy);
   if (!operation || !policy) return null;
   const authority =
     policy.authority_basis === "control_posture"
-      ? `${controlModeLabel(policy.mode || "yolo")} posture`
-      : "armed pane grant";
+      ? `${controlModeLabel(policy.mode || "yolo")} POSTURE`
+      : "ARMED PANE GRANT";
   return (
-    <SurfaceFacts
-      value={{
-        pane: operation.destination || "unresolved",
-        authority,
-        receipt: "after every attempt",
-      }}
-    />
+    <span className="desk-session-policy" data-testid="session-policy">
+      <span className="surface-token" data-chip>{`AUTHORITY · ${authority.toUpperCase()}`}</span>
+      <span className="surface-token" data-chip>RECEIPT · EVERY ATTEMPT</span>
+    </span>
   );
 }
 
@@ -662,9 +668,12 @@ export function SessionPullout() {
   const paneChangedAt = useSteering((s) => s.paneChangedAt);
   const armed = useSteering((s) => s.armed);
   const postureAuthorized = useSteering((s) => s.postureAuthorized);
+  const answerOpen = useSteering((s) => s.answerOpen);
+  const answerSeq = useSteering((s) => s.answerSeq);
   const paneId = useSteering((s) => s.paneId);
   const targetNode = useSteering((s) => s.targetNode);
   const { closeSession } = useSteering.getState();
+  const controlsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!openKey) return;
@@ -737,10 +746,20 @@ export function SessionPullout() {
             state: session?.stale ? "stale" : "",
           }}
         />
-        {session?.awaitingResponse && session.question ? (
+        {(session?.awaitingResponse || session?.blocked) && session.question ? (
           <pre className="desk-pullout-md desk-session-question">
             {session.question}
           </pre>
+        ) : null}
+        {/* Conductor F2 (K5b): Speak answer opens the answer well here, in
+            the body under the question: the steer composer, its mic
+            already recording. The footer does not draw it twice. */}
+        {answerOpen ? (
+          <div className="desk-session-answer" data-testid="session-answer-well">
+            {/* Keyed by the session: a switch unmounts the old composer and
+                its mic cancels any capture it holds. */}
+            <SteerComposer key={openKey} listenSignal={answerSeq} />
+          </div>
         ) : null}
         {/* HS-111-06/11 — the shared PaneWell seam: the raw stream
             renders through xterm; a stripped-only hub falls back to
@@ -760,32 +779,41 @@ export function SessionPullout() {
       </div>
 
       <SurfaceFooter
+        // Conductor F2: one wrapping row (session-pullout.css), never a
+        // squeezed column.
+        className="desk-session-footer"
         // The session id is not in the title (the window is named by its
         // project); it stays findable here, a quiet token.
         egress={<span className="surface-token desk-session-id" title="Session id" data-testid="session-id-token">SESSION · {sessionId}</span>}
         receipt={<ReceiptLine sessionKey={openKey} />}
-        verbs={<>
-          <ArmStrip />
-          {(armed || postureAuthorized) && (
-            <>
-              <SteeringPolicyFacts />
-              <KeyPalette />
-              <SteerComposer />
-              {armed ? (
-                <FactoryControls />
-              ) : (
-                <button
-                  type="button"
-                  className="desk-chip quiet"
-                  onClick={() => void useSteering.getState().arm()}
-                >
-                  Arm pane {paneId || "unresolved"} for rename and kill
-                </button>
+        verbs={
+          // Conductor F2: the controls wrap on one row; on a phone they are
+          // capped and scroll, and the well announces it (ScrollHint).
+          <ScrollHint axis="y" scrollRef={controlsRef} className="desk-session-controls-hint">
+            <div ref={controlsRef} className="desk-session-controls" data-testid="session-controls">
+              <ArmStrip />
+              {(armed || postureAuthorized) && (
+                <>
+                  <SteeringPolicyFacts />
+                  <KeyPalette />
+                  {answerOpen ? null : <SteerComposer />}
+                  {armed ? (
+                    <FactoryControls />
+                  ) : (
+                    <button
+                      type="button"
+                      className="desk-chip quiet"
+                      onClick={() => void useSteering.getState().arm()}
+                    >
+                      Arm pane {paneId || "unresolved"} for rename and kill
+                    </button>
+                  )}
+                </>
               )}
-            </>
-          )}
-          <ClassifySection sessionKey={openKey} />
-        </>}
+              <ClassifySection sessionKey={openKey} />
+            </div>
+          </ScrollHint>
+        }
       />
     </DeskWindowFrame>
   );

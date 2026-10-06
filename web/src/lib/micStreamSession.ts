@@ -97,7 +97,9 @@ export async function startStreamSession(
     retainScope = "",
   }: { pipeline?: boolean; retainScope?: string } = {},
 ): Promise<StreamSession> {
-  await beginHold();
+  // This capture's own hold: every hold verb below names it, so a capture
+  // that outlived its field can never end its successor's hold.
+  const hold = await beginHold();
 
   const ws = new WebSocket(
     websocketUrl("/ws/dictation/stream"),
@@ -179,7 +181,7 @@ export async function startStreamSession(
           // The utterance failed on the server: keep its audio before the
           // socket tears the capture down, so Retry has something to retry.
           refused = true;
-          drainInto(drainHold());
+          drainInto(drainHold(hold));
           retaining = persist();
         }
         onEvent(msg);
@@ -195,10 +197,10 @@ export async function startStreamSession(
         // A socket that dropped mid-utterance is a failure too: retain first,
         // abandon the hold second.
         if (!refused) {
-          drainInto(drainHold());
+          drainInto(drainHold(hold));
           retaining = persist();
         }
-        abortHold();
+        abortHold(hold);
         if (!refused) {
           // A named refusal already told the user WHAT happened; a generic
           // "connection lost" must never overwrite it.
@@ -222,7 +224,7 @@ export async function startStreamSession(
     // HS-132-05: DRAIN, never end-and-rebegin. The hold stays held for the
     // whole capture — the phase lamp reads held and the level meter stays
     // live instead of being zeroed ~1.6×/s.
-    const pcm = drainInto(drainHold());
+    const pcm = drainInto(drainHold(hold));
     if (pcm) ws.send(pcm);
   };
 
@@ -244,7 +246,7 @@ export async function startStreamSession(
       stopped = true;
       window.clearInterval(chunkTimer);
 
-      const captured = endHold();
+      const captured = endHold(hold);
       const tail = drainInto(captured);
       if (tail && wsOpen) ws.send(tail);
 
@@ -256,7 +258,7 @@ export async function startStreamSession(
       if (wsOpen) {
         ws.send(JSON.stringify({ type: "end" }));
       } else {
-        abortHold();
+        abortHold(hold);
         ws.close();
         return "";
       }
@@ -275,7 +277,7 @@ export async function startStreamSession(
       if (stopped) return;
       stopped = true;
       window.clearInterval(chunkTimer);
-      abortHold();
+      abortHold(hold);
       ws.close();
     },
     retained(): Promise<boolean> {

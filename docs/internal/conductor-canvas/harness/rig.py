@@ -81,6 +81,11 @@ def seed_hub(hub: str, home: str) -> dict:
 class Stack:
     """One hub + one vite on one scratch HOME. `with Stack() as st:` removes the HOME at exit."""
 
+    #: Extra `graph_walk.py serve` arguments and hub environment (Conductor F2's
+    #: built proof: a transcription double, a fake `gh` on PATH). Empty by default.
+    serve_extra: list[str] = []
+    hub_env: dict[str, str] = {}
+
     def __init__(self, mode: str = "proposal", shims: str = "k"):
         self.mode = mode
         self.shims = shims
@@ -91,12 +96,12 @@ class Stack:
         self.hub_port, self.port = free_port(), free_port()
         self.hub = f"http://127.0.0.1:{self.hub_port}"
         env = {**os.environ, "HOME": self.home, "PYTHONPATH": str(REPO),
-               "HOLDSPEAK_PEOPLE_KEYSTORE_FILE": f"{self.home}/people.key"}
+               "HOLDSPEAK_PEOPLE_KEYSTORE_FILE": f"{self.home}/people.key", **self.hub_env}
         seeded = subprocess.run([PY, str(HERE / "seed_db.py")], cwd=REPO, env=env, capture_output=True, text=True, timeout=300)
         if seeded.returncode:
             raise RuntimeError(f"seed_db failed: {seeded.stderr[-2000:]}")
         self.seed = json.loads(seeded.stdout.strip().splitlines()[-1])
-        self.procs.append(subprocess.Popen([PY, "scripts/graph_walk.py", "serve", "--port", str(self.hub_port), "--token", TOKEN],
+        self.procs.append(subprocess.Popen([PY, "scripts/graph_walk.py", "serve", "--port", str(self.hub_port), "--token", TOKEN, *self.serve_extra],
                                            cwd=REPO, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
         self.vlog = Path(self.home) / "vite.log"
         self.procs.append(subprocess.Popen([str(WEB / "node_modules/.bin/vite"), "--config", str(HERE / "vite.config.mjs")], cwd=WEB,

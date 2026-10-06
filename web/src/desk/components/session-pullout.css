@@ -1,6 +1,11 @@
 /* ── HS-87-01: the session pull-out (attach — the live pane view) ── */
 .desk-next .desk-pullout.is-session {
   width: min(620px, 92vw);
+  /* Conductor F2: the session window is its own `surface` container, so
+     its footer answers to the WINDOW's width (UX-CANON D), never the
+     viewport's. */
+  container-type: inline-size;
+  container-name: surface;
 }
 .desk-next .desk-session-glyph {
   font-size: 16px;
@@ -40,6 +45,16 @@
   border: 1px solid var(--desk-aerogel-edge);
   max-height: 120px;
   overflow-y: auto;
+}
+/* Conductor F2 (K5b): the answer well under the question, in the body. */
+.desk-next .desk-session-answer {
+  margin: 8px 0 12px;
+  flex-shrink: 0;
+}
+/* The question and the answer well keep their height; the pane well below
+   them takes what is left (the body scrolls). */
+.desk-next .desk-pullout.is-session .desk-session-question {
+  flex-shrink: 0;
 }
 .desk-next .desk-session-state {
   color: var(--text-muted);
@@ -296,4 +311,79 @@
 .desk-next .desk-panepicker input,
 .desk-next .desk-panepicker button {
   min-height: 30px;
+}
+
+/* ── Conductor F2: the session footer is ONE wrapping row ──
+   SESSION · <key>, the mode key (YOLO · DIRECT or ARM), the policy
+   tokens, the keys, Classify. The shared footer grid gives the verbs a
+   max-content column; with the steering controls in it the window's
+   footer squeezed the policy facts to one letter per line and grew taller
+   than the body. Here the slots flow and wrap instead. */
+.desk-next .desk-pullout.is-session .surface-footer {
+  height: auto;
+}
+.desk-next .surface-footer-layout.desk-session-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  height: auto;
+  padding-block: 6px;
+}
+.desk-next .desk-session-footer .surface-footer-receipt:empty {
+  display: none;
+}
+.desk-next .desk-session-footer .surface-footer-verbs {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+}
+.desk-next .desk-session-footer .desk-keypad,
+.desk-next .desk-session-footer .desk-classify,
+.desk-next .desk-session-footer .desk-factory {
+  width: auto;
+  max-width: 100%;
+}
+.desk-next .desk-session-controls-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.desk-next .desk-session-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+}
+/* The answer well's steer row wraps before the field gets narrow (a mic
+   failure name beside the mic took the row: the field read "S t"). */
+.desk-next .desk-session-answer .desk-steer-row {
+  flex-wrap: wrap;
+}
+.desk-next .desk-session-answer .desk-steer-input {
+  flex: 1 1 200px;
+  min-width: 160px;
+}
+.desk-next .desk-session-policy {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.desk-next .desk-session-policy > .surface-token {
+  white-space: nowrap;
+}
+@container surface (max-width: 520px) {
+  /* A narrow session WINDOW (the phone sheet, or a window narrowed on a
+     wide desk): the controls cap and scroll (the ScrollHint names it) so
+     the question and the answer well keep the body. */
+  .desk-next .desk-session-controls {
+    max-height: 30vh;
+    overflow-y: auto;
+    justify-content: flex-start;
+  }
 }

@@ -8,7 +8,7 @@
  * (`openSourceRef`), `openProjectRoom`, the People surface, Intelligence. */
 import { apiFetch } from "../lib/api";
 import { openIntelligence } from "./intelligenceNavigation";
-import { openProjectRoom, openSurfaceOr } from "./shell";
+import { openCoderSession, openProjectRoom, openSurfaceOr } from "./shell";
 import { openSourceRef } from "./surface";
 
 export type Opener = () => void;
@@ -78,6 +78,12 @@ export function refOpener(ref: string | null | undefined): Opener | null {
   if (clean.startsWith("project:")) {
     const id = clean.slice("project:".length);
     return id ? () => openProjectRoom(id) : null;
+  }
+  // Conductor F2: a Needs you coder row (R5) is `coder:<agent>:<session_id>`;
+  // it opens the agent's session window.
+  if (clean.startsWith("coder:")) {
+    const key = clean.slice("coder:".length);
+    return key.includes(":") ? () => openCoderSession(key) : null;
   }
   const followThrough = FOLLOW_THROUGH_REF.exec(clean);
   if (followThrough) {
