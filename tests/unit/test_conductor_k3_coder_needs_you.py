@@ -140,6 +140,30 @@ def test_auth_success_does_not_block(hooks: Hooks) -> None:
     assert hooks.members(T0) == []
 
 
+def test_a_non_prompt_notification_never_creates_a_wait_after_work(hooks: Hooks) -> None:
+    """Round 2 (B): Stop(question) -> PostToolUse -> Notification(auth_success)
+    made a TO ANSWER row and a new wait id from a surviving flag."""
+    hooks.ask("Keep the old migration?", T0)
+    worked = hooks.event("PostToolUse", T0 + timedelta(minutes=1), tool_name="Bash")
+    assert worked.awaiting_response is False  # working events clear the flag
+    for kind in ("auth_success", "some_future_subtype"):
+        after = hooks.notify("Authenticated", T0 + timedelta(minutes=2), kind=kind)
+        assert after.wait_id is None and after.question is None
+        assert hooks.members(T0 + timedelta(minutes=2)) == []
+        assert wait_snapshot(hooks.sessions()) == {"claude:s1": ""}
+
+
+def test_a_non_prompt_notification_never_extends_a_wait(hooks: Hooks) -> None:
+    first = hooks.ask("Keep the old migration?", T0)
+    later = hooks.notify("Authenticated", T0 + timedelta(minutes=20), kind="auth_success")
+    # The open wait is unchanged: the same episode, the same question, and
+    # its freshness is NOT moved, so it still expires 30 min after the ask.
+    assert later.wait_id == first.wait_id and later.question == "Keep the old migration?"
+    assert later.updated_at == first.updated_at
+    assert len(hooks.members(T0 + timedelta(minutes=29))) == 1
+    assert hooks.members(T0 + timedelta(minutes=31)) == []
+
+
 def test_an_idle_reminder_keeps_the_question_the_agent_asked(hooks: Hooks) -> None:
     hooks.ask("Keep the old migration?", T0)
     hooks.notify("Claude is waiting for your input", T0 + timedelta(minutes=1), kind="idle_prompt")
@@ -159,10 +183,10 @@ def test_membership_and_the_watcher_agree_through_work_and_a_permission_prompt(h
 
     hooks.ask("Keep the old migration?", T0)
     assert step() == (1, True, True)
-    # The agent went on working: the question is cleared, the old
-    # awaiting_response flag survives in the registry, and it is NOT blocked.
+    # The agent went on working: the question and the awaiting_response
+    # flag are cleared (round 2), and it is NOT blocked.
     hooks.event("PostToolUse", T0 + timedelta(minutes=1), tool_name="Bash")
-    assert hooks.sessions()[0].awaiting_response is True
+    assert hooks.sessions()[0].awaiting_response is False
     assert step() == (0, False, False)
     hooks.notify("Claude needs your permission to use Bash", T0 + timedelta(minutes=2),
                  kind="permission_prompt")
@@ -380,7 +404,13 @@ def test_a_registry_with_a_wait_composes_and_recomposes_one_coverage_record(
     assert len([r for r in again["coverage"] if r["kind"] == "coder"]) == 1
 
 
-@pytest.mark.parametrize("body", ["{not json", "[]", '{"sessions": []}'])
+@pytest.mark.parametrize("body", [
+    "{not json", "[]", '{"sessions": []}',
+    # Round 2 (A): a registry with no sessions object, or with a row that is
+    # not an object, is not an all-clear either.
+    '{"version": 1}', '{"sessions": {"claude:s1": null}}',
+    '{"sessions": {"claude:s1": "waiting"}}',
+])
 def test_a_malformed_registry_is_a_coverage_error_never_an_all_clear(
     hooks: Hooks, monkeypatch: pytest.MonkeyPatch, body: str,
 ) -> None:

@@ -221,12 +221,13 @@ class AgentSession:
         }
 
 
-#: Notification subtypes that do NOT block on the owner (Claude Code's
-#: ``auth_success``). Every other Notification with a captured ask blocks.
-NON_BLOCKING_NOTIFICATIONS = frozenset({"auth_success"})
+#: Notification subtypes that block on the owner (Claude Code hook input
+#: ``notification_type``). Any other subtype (``auth_success``, an unknown
+#: one) never creates or extends a wait. A Notification with no subtype (an
+#: older payload whose message did not name it) is read as blocking.
+BLOCKING_NOTIFICATIONS = frozenset({"permission_prompt", "idle_prompt", "elicitation_dialog"})
 
-#: The Notification subtype of a permission prompt (Claude Code hook input
-#: ``notification_type``).
+#: The Notification subtype of a permission prompt.
 PERMISSION_NOTIFICATION = "permission_prompt"
 
 
@@ -236,27 +237,30 @@ def _field(session: Any, name: str) -> Any:
     return getattr(session, name, None)
 
 
+def is_blocking_notification(notification_type: Any) -> bool:
+    """True for a prompt subtype, or no subtype at all (an older payload)."""
+    kind = str(notification_type or "").strip()
+    return not kind or kind in BLOCKING_NOTIFICATIONS
+
+
 def is_blocked(session: Any) -> bool:
     """THE blocked predicate (Conductor K3): the session waits on the owner.
 
     One rule for the Needs you membership (R5) and the hub's coder watcher.
-    Not ended, a non-empty captured question, and either the agent asked
-    (``awaiting_response``) or its latest hook event is a blocking
-    ``Notification`` (a permission or input prompt). A working event clears
-    the question, so a session that resumed is not blocked even when an
-    older ``awaiting_response`` flag survived. Freshness is the reader's
+    Not ended and a non-empty captured question; then, when the latest hook
+    event is a ``Notification``, its subtype decides (a prompt blocks, a
+    non-blocking subtype never does); otherwise the agent asked
+    (``awaiting_response``). Working events clear the question and the flag,
+    so a session that resumed is not blocked. Freshness is the reader's
     rule, not this one.
     """
     if str(_field(session, "lifecycle") or "") == LIFECYCLE_ENDED:
         return False
     if not str(_field(session, "question") or "").strip():
         return False
-    if bool(_field(session, "awaiting_response")):
-        return True
-    return (
-        str(_field(session, "hook_event_name") or "") == "Notification"
-        and str(_field(session, "notification_type") or "") not in NON_BLOCKING_NOTIFICATIONS
-    )
+    if str(_field(session, "hook_event_name") or "") == "Notification":
+        return is_blocking_notification(_field(session, "notification_type"))
+    return bool(_field(session, "awaiting_response"))
 
 
 def wait_kind(session: Any) -> str:

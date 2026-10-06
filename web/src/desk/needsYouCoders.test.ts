@@ -73,6 +73,19 @@ describe("R5: a coding agent that waits for the owner", () => {
     expect(coderItems([{ ...prompt, hook_event_name: "PreToolUse" }], NOW)).toEqual([]);
   });
 
+  it("never blocks on a non-prompt Notification, even with a surviving flag", () => {
+    // Round 2 (B): the subtype decides before awaiting_response.
+    const auth = session({
+      awaiting_response: true, hook_event_name: "Notification",
+      notification_type: "auth_success", question: "Authenticated",
+    });
+    expect(isBlockedCoder(auth)).toBe(false);
+    expect(coderItems([auth], NOW)).toEqual([]);
+    expect(isBlockedCoder({ ...auth, notification_type: "some_future_subtype" })).toBe(false);
+    expect(isBlockedCoder({ ...auth, notification_type: "elicitation_dialog" })).toBe(true);
+    expect(isBlockedCoder({ ...auth, notification_type: null })).toBe(true);
+  });
+
   it("shares the blocked predicate: a surviving awaiting flag without a question is not blocked", () => {
     const worked = session({ awaiting_response: true, question: null, hook_event_name: "PostToolUse", lifecycle: "working" });
     expect(isBlockedCoder(worked)).toBe(false);

@@ -31,6 +31,7 @@ from .models import (
     STATE_VERSION,
     SUPPORTED_AGENTS,
     is_blocked,
+    is_blocking_notification,
 )
 
 
@@ -200,11 +201,26 @@ def ingest_agent_hook_event(
         )
         question = _optional_str(previous.get("question"))
         notification_type = _optional_str(previous.get("notification_type"))
-        if lifecycle == LIFECYCLE_WORKING:
+        message = _optional_str(payload.get("message")) or _optional_str(payload.get("prompt"))
+        # Conductor K3: a Notification that is not a prompt (``auth_success``,
+        # an unknown subtype) does not ask the owner anything. It never
+        # creates or extends a wait: the session's blocked state, its event
+        # name and its freshness stay as they were.
+        passive = hook_event_name == "Notification" and not is_blocking_notification(
+            _notification_type(payload, message)
+        )
+        recorded_event = hook_event_name
+        updated_at = timestamp
+        if passive:
+            lifecycle = _optional_str(previous.get("lifecycle")) or LIFECYCLE_WORKING
+            recorded_event = _optional_str(previous.get("hook_event_name")) or hook_event_name
+            updated_at = _optional_str(previous.get("updated_at")) or timestamp
+        elif lifecycle == LIFECYCLE_WORKING:
             question = None
             notification_type = None
+            # The coder resumed: an earlier ask is not pending any more.
+            awaiting_response = False
         elif hook_event_name == "Notification":
-            message = _optional_str(payload.get("message")) or _optional_str(payload.get("prompt"))
             notification_type = _notification_type(payload, message)
             # An idle reminder ("waiting for your input") does not replace a
             # question the agent already asked: the question is the ask.
@@ -218,8 +234,8 @@ def ingest_agent_hook_event(
             agent=normalized_agent,
             session_id=session_id,
             cwd=str(cwd_path),
-            updated_at=timestamp,
-            hook_event_name=hook_event_name,
+            updated_at=updated_at,
+            hook_event_name=recorded_event,
             repo_root=str(repo.root) if repo else None,
             repo_anchor=repo.anchor if repo else None,
             project_name=repo.project_name if repo else None,
@@ -1017,10 +1033,15 @@ def read_agent_sessions_strict(*, state_path: Path | None = None) -> list[AgentS
         raise AgentRegistryUnreadable(f"agent registry unreadable: {exc}") from exc
     if not isinstance(data, dict):
         raise AgentRegistryUnreadable("agent registry is not an object")
-    raw = data.get("sessions", {})
+    raw = data.get("sessions")
     if not isinstance(raw, dict):
-        raise AgentRegistryUnreadable("agent registry sessions is not an object")
-    sessions = [AgentSession.from_mapping(row) for row in raw.values() if isinstance(row, dict)]
+        # The hooks always write ``sessions``: a registry without it (or with
+        # another shape) is not one this reader understands.
+        raise AgentRegistryUnreadable("agent registry has no sessions object")
+    bad = [key for key, row in raw.items() if not isinstance(row, dict)]
+    if bad:
+        raise AgentRegistryUnreadable(f"agent registry rows are not objects: {', '.join(map(str, bad[:3]))}")
+    sessions = [AgentSession.from_mapping(row) for row in raw.values()]
     return sorted(sessions, key=lambda item: item.updated_at, reverse=True)
 
 

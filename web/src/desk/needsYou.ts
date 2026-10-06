@@ -283,17 +283,23 @@ function coderExcerpt(text: string): string {
   return `${flat.slice(0, CODER_EXCERPT_CHARS - 1).trimEnd()}\u2026`;
 }
 
-/** The blocked predicate (`agent_context.models.is_blocked`): not ended, a
- * captured question, and either the agent asked (`awaiting_response`) or its
- * latest hook event is a blocking `Notification` (not `auth_success`). */
+/** Notification subtypes that block on the owner
+ * (`agent_context.models.BLOCKING_NOTIFICATIONS`). Any other subtype
+ * (`auth_success`, an unknown one) never makes a wait; no subtype (an older
+ * payload) is read as blocking. */
+const BLOCKING_NOTIFICATIONS = new Set(["permission_prompt", "idle_prompt", "elicitation_dialog"]);
+
+/** The blocked predicate (`agent_context.models.is_blocked`): not ended and a
+ * captured question; then a latest `Notification` decides by its subtype,
+ * and any other latest event by `awaiting_response`. */
 export function isBlockedCoder(session: NeedsYouCoder): boolean {
   if (String(session.lifecycle ?? "") === "ended") return false;
   if (!String(session.question ?? "").trim()) return false;
-  if (session.awaiting_response) return true;
-  return (
-    String(session.hook_event_name ?? "") === "Notification" &&
-    String(session.notification_type ?? "") !== "auth_success"
-  );
+  if (String(session.hook_event_name ?? "") === "Notification") {
+    const kind = String(session.notification_type ?? "").trim();
+    return !kind || BLOCKING_NOTIFICATIONS.has(kind);
+  }
+  return Boolean(session.awaiting_response);
 }
 
 /** `approve` for a permission prompt, else `answer` (`wait_kind`). */
