@@ -113,12 +113,38 @@ def load_gate_config(path: Path | None = None) -> GateConfig:
 
 
 def save_gate_config(config: GateConfig, path: Path | None = None) -> Path:
+    """Write the gate file whole: a temp file in the same folder, then an
+    atomic replace, so a reader never sees half a file."""
     target = path or GATE_CONFIG_FILE
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
+    tmp = target.with_name(f".{target.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp")
+    tmp.write_text(
         json.dumps(config.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
+    os.replace(tmp, target)
     return target
+
+
+def update_gate_config(
+    mutate: Callable[[GateConfig], Any], path: Path | None = None
+) -> Any:
+    """Read, change and write the gate file under one exclusive lock, so two
+    writers (two launches arming at once) never lose each other's change.
+    Returns what ``mutate`` returns."""
+    import fcntl
+
+    target = path or GATE_CONFIG_FILE
+    target.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = target.with_name(target.name + ".lock")
+    with open(lock_path, "a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        try:
+            config = load_gate_config(target)
+            result = mutate(config)
+            save_gate_config(config, target)
+            return result
+        finally:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
 
 def gate_matches(config: GateConfig, *, cwd: str, tool: str) -> bool:

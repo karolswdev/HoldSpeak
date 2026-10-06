@@ -32,6 +32,7 @@ from ..delivery.factory_launch import (
 )
 from ..delivery.registry import RegistryError, normalize_git_url
 from ..logging_config import get_logger
+from .errors import ServiceError
 from .agent_brief import (
     AgentBriefRefused,
     compose_agent_brief,
@@ -48,13 +49,29 @@ DESK_PROJECT = "desk"
 _NAME_UNSAFE = re.compile(r"[^A-Za-z0-9_.-]+")
 
 
-class AgentHandRefused(ValueError):
-    """A typed refusal; ``reason`` is machine-readable, the message is
-    path-free."""
+#: Refusals that name a missing thing (HTTP 404); every other one is 409.
+_NOT_FOUND_REASONS = frozenset({"item_unknown", "launch_unknown"})
+
+
+class AgentHandRefused(ServiceError):
+    """A typed refusal. ``code`` (also ``reason``) is machine-readable and
+    rides every transport (HTTP and MCP answer ``{error, code}``); the
+    message is path-free."""
 
     def __init__(self, reason: str, message: Optional[str] = None) -> None:
-        super().__init__(message or reason)
+        status = 404 if reason in _NOT_FOUND_REASONS else 409
+        super().__init__(reason, message or reason, context={"status": status})
         self.reason = reason
+
+
+def item_exists(db: Any, kind: str, item_id: str) -> bool:
+    from ..grounding import hydrate_refs_detailed
+
+    try:
+        hydrated = hydrate_refs_detailed(db, [], [], "summary", [f"{kind}:{item_id}"])
+    except Exception:
+        return False
+    return bool(hydrated.blocks) and not hydrated.unknown
 
 
 def worktree_spec(kind: str, item_id: str) -> dict[str, str]:
@@ -86,8 +103,8 @@ def resolve_project_repository(
 
     In order: a repository filed in the Project (``repository:<source_id>``);
     the GitHub repositories the Project's Room watches, matched by origin
-    against the registered sources and then against the project map; a
-    project-map entry named like the Project. ``None`` when nothing names a
+    against the registered sources; the one registered clone labelled with
+    the Project's name; then the project map (by watch origin or name). ``None`` when nothing names a
     local clone."""
     if not project_id:
         return None
@@ -123,6 +140,15 @@ def resolve_project_repository(
         for source in registry.sources():
             if source.primary_path and _matches_repo(registry, source.primary_path, repositories):
                 return source
+    if project_name:
+        # A clone registered under the Project's own name (the label the
+        # repository drawer or the project map gave it), when only one is.
+        named = [
+            source for source in registry.sources()
+            if source.primary_path and source.label.strip().lower() == project_name.strip().lower()
+        ]
+        if len(named) == 1:
+            return named[0]
     if project_map is None:
         from ..missioncontrol_bridge import load_project_map
 
@@ -171,6 +197,9 @@ class AgentHandService:
             kind, item_id = parse_item_ref({"kind": kind, "id": item_id})
         except AgentBriefRefused as exc:
             raise AgentHandRefused(exc.reason, str(exc)) from exc
+        # The item first: an unknown item is item_unknown, whatever else is missing.
+        if not item_exists(self._db, kind, item_id):
+            raise AgentHandRefused("item_unknown", f"{kind}:{item_id} is not on the desk")
         launcher = self._launch_service()
         profile_id = str(profile or DEFAULT_PROFILE_ID)
         agent = launcher._profiles.get(profile_id)
@@ -195,6 +224,21 @@ class AgentHandService:
         except LaunchRefused as exc:
             raise AgentHandRefused(exc.reason, str(exc)) from exc
         if worktree_path.exists():
+            # Handed before: an earlier launch of this item whose brief is
+            # still held resumes on that launch; it is never relaunched.
+            existing = _launch_for_origin(launcher, kind, item_id)
+            if existing is not None and existing.get("instruction_state") != "sent" and isinstance(
+                existing.get("pending_brief"), Mapping
+            ):
+                try:
+                    record = launcher.resume_delivery(str(existing["launch_id"]))
+                except LaunchRefused as exc:
+                    raise AgentHandRefused(exc.reason, str(exc)) from exc
+                return self._answer(
+                    {"launch": record, "operation_id": record.get("operation_id")},
+                    spec, source, None, kind, item_id, project_id, self._control_mode(),
+                    resumed=True,
+                )
             raise AgentHandRefused(
                 "worktree_duplicate", f"worktree {spec['name']!r} already exists"
             )
@@ -227,11 +271,21 @@ class AgentHandService:
             result = self._launch_gated(launcher, request, brief["text"], principal, worktree_path, spec["name"])
         else:
             result = self._launch_ungated(launcher, request, brief["text"], principal)
+        return self._answer(result, spec, source, brief, kind, item_id, project_id, mode)
+
+    def _answer(
+        self, result: Mapping[str, Any], spec: Mapping[str, str], source: Any,
+        brief: Optional[Mapping[str, Any]], kind: str, item_id: str,
+        project_id: Optional[str], mode: str, *, resumed: bool = False,
+    ) -> dict[str, Any]:
         launch = result.get("launch") or {}
+        story_ref = launch.get("story_ref") or derived_story_ref(project_id or DESK_PROJECT, kind, item_id)
         return {
-            "status": "launched" if launch.get("state") == "launched" else "failed",
-            "instruction_state": launch.get("instruction_state")
-            or ("sent" if (launch.get("commands") or {}).get("instruction") else None),
+            "status": "launched" if launch.get("state") in ("launched", "registered") else "failed",
+            "resumed": resumed,
+            # The receipt decides: "sent" only after a delivered process.input.
+            "instruction_state": launch.get("instruction_state"),
+            "trust_state": launch.get("trust_state"),
             "launch_id": launch.get("launch_id"),
             "attempt_id": launch.get("attempt_id"),
             "operation_id": result.get("operation_id"),
@@ -249,7 +303,7 @@ class AgentHandService:
                 "bytes": brief["bytes"],
                 "refs": brief["refs"],
                 "people_cut": brief["people_cut"],
-            },
+            } if brief else None,
         }
 
     def hand_item(
@@ -274,44 +328,63 @@ class AgentHandService:
         self, launcher: Any, request: dict[str, Any], text: str, principal: Any,
         worktree_path: Path, name: str,
     ) -> dict[str, Any]:
-        armed = self._arm_gate(worktree_path, name)
+        prior = self._arm_gate(worktree_path, name)
         try:
-            # The brief is typed once the rider registers the session, so a
-            # folder-trust dialog or a slow start cannot eat it.
-            return launcher.submit_process_spawn(
+            # The brief is held and typed once the rider registers the
+            # session, so a folder-trust prompt or a slow start cannot eat it.
+            result = launcher.submit_process_spawn(
                 request, text, principal, after_registration=True
             )
         except LaunchRefused as exc:
-            if armed and not worktree_path.exists():
-                self._disarm_gate(worktree_path, name)  # nothing launched there
+            self._release_gate(worktree_path, name, prior, "the launch refused before it ran")
             raise AgentHandRefused(exc.reason, str(exc)) from exc
+        except Exception:
+            self._release_gate(worktree_path, name, prior, "the launch failed before it ran")
+            raise
+        launch = result.get("launch") or {}
+        stage = str((launch.get("failure") or {}).get("stage") or "")
+        if launch.get("state") == "failed" and stage in ("worktree_create", "spawn"):
+            # No process runs there: this call's hold goes, the rest stays.
+            self._release_gate(worktree_path, name, prior, f"the launch failed at {stage}")
+        return result
 
-    def _arm_gate(self, worktree_path: Path, name: str) -> bool:
+    def _arm_gate(self, worktree_path: Path, name: str) -> dict[str, Any]:
         """Hold Bash for exactly the new worktree path; the press on the
-        verb is the consent. Audited. Returns whether this call added it."""
+        verb is the consent. One locked read-modify-write; audited. Returns
+        what the path held before, so a failed launch restores exactly it."""
         from .. import coder_gate
 
-        config = coder_gate.load_gate_config(self._gate_path)
         key = str(worktree_path)
-        added = key not in config.repos
-        config.repos[key] = list(coder_gate.DEFAULT_TOOLS)
-        # Armed on its own: the master switch is not touched, so no other
-        # listed repo becomes held.
-        if key not in config.armed_paths:
-            config.armed_paths.append(key)
-        coder_gate.save_gate_config(config, self._gate_path)
+
+        def arm(config: Any) -> dict[str, Any]:
+            prior = {"tools": config.repos.get(key), "own": key in config.armed_paths}
+            config.repos[key] = list(coder_gate.DEFAULT_TOOLS)
+            # Armed on its own: the master switch is not touched, so no
+            # other listed repo becomes held.
+            if key not in config.armed_paths:
+                config.armed_paths.append(key)
+            return prior
+
+        prior = coder_gate.update_gate_config(arm, self._gate_path)
         self._audit(name, outcome="gate_armed", detail=f"hold Bash for worktree {name} only")
-        return added
+        return prior
 
-    def _disarm_gate(self, worktree_path: Path, name: str) -> None:
+    def _release_gate(self, worktree_path: Path, name: str, prior: Mapping[str, Any], why: str) -> None:
+        """Undo this call's arm, and only it: the path's prior entry returns."""
         from .. import coder_gate
 
-        config = coder_gate.load_gate_config(self._gate_path)
         key = str(worktree_path)
-        config.armed_paths = [path for path in config.armed_paths if path != key]
-        if config.repos.pop(key, None) is not None:
-            coder_gate.save_gate_config(config, self._gate_path)
-            self._audit(name, outcome="gate_released", detail="the launch refused before it ran")
+
+        def release(config: Any) -> None:
+            if prior.get("tools") is None:
+                config.repos.pop(key, None)
+            else:
+                config.repos[key] = list(prior["tools"])
+            if not prior.get("own"):
+                config.armed_paths = [path for path in config.armed_paths if path != key]
+
+        coder_gate.update_gate_config(release, self._gate_path)
+        self._audit(name, outcome="gate_released", detail=why)
 
     def _audit(self, name: str, *, outcome: str, detail: str) -> None:
         try:
@@ -328,40 +401,67 @@ class AgentHandService:
     def _launch_ungated(
         self, launcher: Any, request: dict[str, Any], text: str, principal: Any,
     ) -> dict[str, Any]:
-        from .. import coder_steering
-
+        """Codex: the ungated launch. The brief is held and typed only when
+        Codex's rider hooks register the session (its readiness); with no
+        hooks installed it stays held as ``hooks_missing`` (K1's one-press
+        install, then resume on the same launch)."""
         try:
             record = launcher.launch(request)
         except LaunchRefused as exc:
             raise AgentHandRefused(exc.reason, str(exc)) from exc
         if record.get("state") != "launched":
             return {"launch": record}
-        target = record.get("target") or {}
-        armed = coder_steering.arm(
-            str(record.get("session") or ""), str(target.get("pane_id") or ""),
-            runner=launcher._runner,
-        )
-        if armed.get("status") != "armed":
-            raise AgentHandRefused(str(armed.get("status") or "arm_refused"), "the agent pane could not be armed")
-        sent = launcher._commands.submit_process_input(
-            {
-                "node_id": str(record.get("node_id") or "local"),
-                "target_id": target.get("target_id"),
-                "target_generation": target.get("target_generation"),
-                "operation": {"family": "coder_steering", "verb": "terminal.text"},
-                "payload": {
-                    "text": text,
-                    "submit": True,
-                    "session_key": record.get("session"),
-                    "agent": str(request.get("agent_profile_id") or "agent"),
-                },
-            },
-            principal,
-        )
-        commands = dict(record.get("commands") or {})
-        commands["instruction"] = sent.get("command_id")
-        record = launcher._ledger.update(record["launch_id"], commands=commands) or record
-        return {"launch": record, "operation_id": sent.get("operation_id")}
+        ready = codex_hooks_installed()
+        record = launcher.first_message.hold(
+            str(record["launch_id"]), text, principal,
+            agent=str(request.get("agent_profile_id") or "codex-default"),
+            trust=False, state="pending" if ready else "hooks_missing",
+        ) or record
+        if ready:
+            launcher.first_message.start(str(record["launch_id"]))
+        launcher.first_message.watch(str(record["launch_id"]))
+        return {"launch": record}
+
+    def resume(self, principal: Any, launch_id: str) -> dict[str, Any]:
+        """Deliver the held brief of an existing launch (no relaunch). The
+        owner's press only, as ``agent.hand`` is."""
+        from ..principals import PrincipalKind
+
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise ServiceError(
+                "owner_required", "Only the owner resumes a launch's brief.", context={"status": 403}
+            )
+        launcher = self._launch_service()
+        try:
+            record = launcher.resume_delivery(str(launch_id))
+        except LaunchRefused as exc:
+            raise AgentHandRefused(exc.reason, str(exc)) from exc
+        return {
+            "launch_id": record.get("launch_id"),
+            "state": record.get("state"),
+            "instruction_state": record.get("instruction_state"),
+            "trust_state": record.get("trust_state"),
+        }
+
+
+def codex_hooks_installed(path: Optional[Path] = None) -> bool:
+    """Whether Codex's hook file carries HoldSpeak's rider hooks."""
+    from ..agent_context.hooks import AGENT_HOOK_COMMAND_MARKER
+
+    target = path or Path.home() / ".codex" / "hooks.json"
+    try:
+        return AGENT_HOOK_COMMAND_MARKER in target.read_text(encoding="utf-8")
+    except OSError:
+        return False
+
+
+def _launch_for_origin(launcher: Any, kind: str, item_id: str) -> Optional[dict[str, Any]]:
+    """The newest launch whose origin is this item."""
+    for record in reversed(launcher._ledger.list()):
+        origin = record.get("origin_ref") or {}
+        if origin.get("kind") == kind and origin.get("id") == item_id:
+            return record
+    return None
 
 
 def _config_control_mode() -> str:

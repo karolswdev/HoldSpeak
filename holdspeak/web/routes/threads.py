@@ -501,6 +501,7 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
             result = await _service().agent_from_thread(
                 _principal(request), thread_id, text,
                 profile=(body or {}).get("profile") or None,
+                project_id=(body or {}).get("project_id") or None,
             )
             status = 202 if result.get("status") == "ok" else 409
             return JSONResponse(result, status_code=status)

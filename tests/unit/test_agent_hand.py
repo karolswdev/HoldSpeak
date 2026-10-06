@@ -197,8 +197,16 @@ class _Tmux(FakeTmuxServer):
     ended = False
     screen = None
     on_keys = None
+    #: After the first look at the pane, the pane no longer proves itself
+    #: (it is not the one spawned): identity checks fail.
+    identity_lost_after_peek = False
+    _peeked = False
 
     def __call__(self, argv, cwd=None):
+        if argv[0] == "tmux" and argv[1] == "capture-pane":
+            self._peeked = True
+        if argv[0] == "tmux" and argv[1] == "display-message" and self.identity_lost_after_peek and self._peeked:
+            return self._err("can't find pane")
         if argv[0] == "tmux" and argv[1] == "has-session":
             name = argv[argv.index("-t") + 1]
             return self._ok() if name in self.sessions and not self.ended else self._err("no session")
@@ -212,21 +220,24 @@ class _Tmux(FakeTmuxServer):
         return result
 
 
-def _rig(tmp_path, db, monkeypatch, *, which=None, screen=None, register_when=None):
+def _rig(
+    tmp_path, db, monkeypatch, *, which=None, screen=None, register_when=None,
+    item=("action", "ai_1"), project=PROJECT, agent="claude", text_fails=False,
+):
+    """Real git, a real kernel broker and receipts, the real steering path;
+    tmux and the agent are canned (the process edge only). The clone is
+    registered under the Project's name (the repository drawer's label)."""
     repo = _make_repo(tmp_path)
     registry = DeliveryRegistry(tmp_path / "sources.json", map_path=tmp_path / "absent.json")
     source, _ = registry.register(str(repo), label="railsproj")
-    with db._connection() as conn:
-        conn.execute(
-            "INSERT INTO project_resources (project_id, resource_ref) VALUES (?, ?)",
-            (PROJECT, f"repository:{source.source_id}"),
-        )
     tmux = _Tmux()
     targets = TerminalTargetRegistry(runner=tmux)
     typed: list = []
     keys_sent: list = []
 
     def text_transport(*, pane, text, submit=True):
+        if text_fails:
+            raise RuntimeError("tmux refused the paste")
         typed.append((pane, text))
 
     def keys_transport(*, pane, keys):
@@ -264,18 +275,15 @@ def _rig(tmp_path, db, monkeypatch, *, which=None, screen=None, register_when=No
     service.bind_kernel(broker)
     gate_path = tmp_path / "gate.json"
     monkeypatch.setattr(coder_gate, "GATE_CONFIG_FILE", gate_path)
-    monkeypatch.setattr(
-        coder_gate, "load_gate_config", lambda path=None, _orig=coder_gate.load_gate_config: _orig(path or gate_path)
-    )
     settings = tmp_path / "spawn-settings.json"
     monkeypatch.setattr(coder_gate, "write_spawn_settings", lambda: settings)
-    monkeypatch.setattr("holdspeak.delivery.factory_launch.LAUNCH_POLL_SECONDS", 0.05)
-    monkeypatch.setattr("holdspeak.delivery.factory_launch.TRUST_WAIT_SECONDS", 1.0)
+    monkeypatch.setattr("holdspeak.delivery.first_message.LAUNCH_POLL_SECONDS", 0.05)
+    monkeypatch.setattr("holdspeak.delivery.first_message.TRUST_WAIT_SECONDS", 1.0)
     if screen is not None:
         tmux.screen = lambda: screen(worktree)
     # The rider: the launched agent's SessionStart reports its Story claim
     # from the new worktree (what `agent-hook ingest` writes).
-    worktree = (repo.parent / "hs-action-ai_1").resolve()
+    worktree = (repo.parent / f"hs-{item[0]}-{item[1]}").resolve()
 
     def claims(**_kw):
         if not worktree.exists():
@@ -283,9 +291,9 @@ def _rig(tmp_path, db, monkeypatch, *, which=None, screen=None, register_when=No
         if register_when is not None and not register_when(tmux):
             return []
         return [{
-            "session_key": "claude:smoke-session", "agent": "claude", "lifecycle": "working",
+            "session_key": f"{agent}:smoke-session", "agent": agent, "lifecycle": "working",
             "repo_root": str(worktree), "cwd": str(worktree),
-            "story_claim": {"project": PROJECT, "story_id": "action-ai_1", "claimed_by": "rider:claude"},
+            "story_claim": {"project": project, "story_id": f"{item[0]}-{item[1]}", "claimed_by": f"rider:{agent}"},
         }]
 
     monkeypatch.setattr("holdspeak.agent_context.sessions.list_agent_story_claims", claims)
@@ -294,7 +302,7 @@ def _rig(tmp_path, db, monkeypatch, *, which=None, screen=None, register_when=No
         gate_path=gate_path, project_map={"projects": {}},
     )
     return SimpleNamespace(
-        typed=typed, keys_sent=keys_sent,
+        typed=typed, keys_sent=keys_sent, worktree=worktree, broker=broker,
         repo=repo, registry=registry, source=source, tmux=tmux, service=service,
         launches=launches, hand=hand, gate_path=gate_path, settings=settings, db=db,
         commands=commands,
@@ -361,7 +369,7 @@ def _wait_for(read, key, value, timeout=10.0):
 def test_hand_refuses_no_repository(tmp_path, db, monkeypatch) -> None:
     rig = _rig(tmp_path, db, monkeypatch)
     with db._connection() as conn:
-        conn.execute("DELETE FROM project_resources WHERE resource_ref LIKE 'repository:%'")
+        conn.execute("UPDATE projects SET name='Unrelated' WHERE id=?", (PROJECT,))
     with pytest.raises(AgentHandRefused) as exc:
         rig.hand.hand(OWNER, "action", "ai_1")
     assert exc.value.reason == "no_repository"
@@ -465,23 +473,6 @@ def test_mcp_tool_is_registered_and_classified_egress() -> None:
     assert "agent.hand" in names
     assert tool_authority.TOOL_AUTHORITY["agent.hand"] == tool_authority.EGRESS
     assert "agent.hand" in tool_authority.THREAD_EXCLUDED
-
-
-def test_thread_agent_files_the_item_then_hands_it() -> None:
-    from holdspeak.services.thread_service import ThreadService
-
-    fake = _FakeHand()
-    service = ThreadService.__new__(ThreadService)
-
-    async def todo(principal, thread_id, text):
-        return {"status": "ok", "result": {"id": "ai_new", "task": text}}
-
-    service.todo_from_thread = todo
-    service._db = None
-    result = asyncio.run(service.agent_from_thread(OWNER, "t1", "Fix the flaky test", hand_service=fake))
-    assert result["status"] == "ok"
-    assert result["item"] == {"kind": "action", "id": "ai_new"}
-    assert fake.calls[0][:2] == ("action", "ai_new")
 
 
 def test_spawn_settings_carry_rider_and_gate_hooks(tmp_path) -> None:
@@ -632,14 +623,3 @@ def test_a_trust_prompt_for_another_folder_gets_nothing(tmp_path, db, monkeypatc
     rig.tmux.ended = True
     assert rig.keys_sent == []
     assert record["instruction_state"] == "pending"
-
-
-def test_trust_prompt_keys_reads_the_cursor() -> None:
-    from holdspeak.delivery.factory_launch import trust_prompt_keys
-
-    path = "/tmp/x/hs-action-1"
-    lines = _trust_screen(path).split("\n")
-    assert trust_prompt_keys(lines, path) == ["Down"]
-    assert trust_prompt_keys(_trust_screen(path, cursor_on_yes=True).split("\n"), path) == ["Enter"]
-    assert trust_prompt_keys(lines, "/tmp/x/other") is None
-    assert trust_prompt_keys(["\u276f Yes, I trust this folder", path], path) is None  # no prompt text

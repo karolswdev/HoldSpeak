@@ -47,8 +47,10 @@ AGENT_HAND = OperationDescriptor(
     principal="derived by the transport (HTTP auth middleware; MCP auth resolver); the owner's press",
     effect="write",
     result=(
-        "{status: launched or failed, instruction_state: pending or sent (the brief is typed when the "
-        "agent session registers), launch_id, attempt_id, operation_id, state, failure, gate, session, "
+        "{status: launched or failed, resumed (true when an earlier launch of this item got its held "
+        "brief again), instruction_state (pending, sent, hooks_missing or the steering refusal: the "
+        "brief is typed when the agent session registers and is sent only on a delivered receipt), "
+        "trust_state, launch_id, attempt_id, operation_id, state, failure, gate, session, "
         "worktree: {name, branch}, source_id, story_ref: {project, story_id}, origin_ref: {kind, id}, "
         "project_id, control_mode, brief: {bytes, refs, people_cut}}"
     ),

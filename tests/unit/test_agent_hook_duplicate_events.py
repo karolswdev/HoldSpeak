@@ -15,7 +15,11 @@ T0 = datetime(2026, 10, 6, 9, 0, 0, tzinfo=timezone.utc)
 
 
 def _payload(event: str, tmp_path, **extra):
-    return {"session_id": "s1", "cwd": str(tmp_path), "hook_event_name": event, **extra}
+    transcript = tmp_path / "transcript.jsonl"
+    if not transcript.exists():
+        transcript.write_text('{"type": "user", "message": {"role": "user", "content": "go"}}\n')
+    return {"session_id": "s1", "cwd": str(tmp_path), "hook_event_name": event,
+            "transcript_path": str(transcript), **extra}
 
 
 def _row(state):

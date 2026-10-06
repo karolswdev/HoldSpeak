@@ -983,6 +983,37 @@ class ThreadService:
 
     # ── Agent (Conductor K2) ────────────────────────────────────────
 
+    def thread_project(self, thread_id: str, project_id: Optional[str] = None) -> Optional[str]:
+        """The Project a Thread works in: the explicit one, else the ONE
+        Project the owner attached to a turn (its frozen refs say ``via
+        project:<id>``; a ref retrieval found does not count). Two named Projects
+        and no explicit one refuse ``project_ambiguous``."""
+        explicit = str(project_id or "").strip()
+        if explicit:
+            if self._db.projects.get_project(explicit) is None:
+                raise ValidationError("Unknown project", code="project_not_found")
+            return explicit
+        named_set: set[str] = set()
+        for ref in self._threads.get_refs(thread_id):
+            if ref.origin == "relevance":
+                continue  # retrieval found it; the owner did not name it
+            if ref.ref_kind == "project" and ref.ref_id:
+                named_set.add(ref.ref_id)
+                continue
+            try:
+                via = str((json.loads(ref.frozen_json or "{}") or {}).get("via") or "")
+            except ValueError:
+                via = ""
+            if via.startswith("project:"):
+                named_set.add(via.split(":", 1)[1])  # a member of a Project he attached
+        named = sorted(named_set)
+        if len(named) > 1:
+            raise ValidationError(
+                "This Thread names more than one Project; name the one for the agent",
+                code="project_ambiguous", context={"projects": named},
+            )
+        return named[0] if named else None
+
     async def agent_from_thread(
         self,
         principal: Principal,
@@ -990,36 +1021,43 @@ class ThreadService:
         text: str,
         *,
         profile: Optional[str] = None,
-        hand_service: Any = None,
+        project_id: Optional[str] = None,
     ) -> dict[str, Any]:
         """Execute ``/agent <text>``: file the text as an action item the way
-        ``/todo`` does, then hand that item to a coding agent.
+        ``/todo`` does, file it in the Thread's Project, then hand it through
+        the declared ``agent.hand`` operation.
 
         The owner typed the command, so the hand-off is his press (the
         ``agent.hand`` tool itself is egress and never offered to a model).
         A refused hand-off keeps the item; the refusal comes back by name.
         """
+        if not self._threads.get(thread_id):
+            raise ValidationError("Thread not found", code="thread_not_found")
+        project = self.thread_project(thread_id, project_id)
         filed = await self.todo_from_thread(principal, thread_id, text)
         item = filed.get("result") if isinstance(filed.get("result"), dict) else {}
         item_id = str((item or {}).get("id") or "")
         if filed.get("status") != "ok" or not item_id:
             return {"status": filed.get("status") or "failed", "todo": filed, "hand": None}
-        if hand_service is None:
-            from .agent_hand_service import default_agent_hand_service
+        if project:
+            from .project_service import ProjectService
 
-            hand_service = default_agent_hand_service(self._db)
-        try:
-            handed = await asyncio.to_thread(
-                hand_service.hand, principal, "action", item_id, profile=profile,
+            await asyncio.to_thread(
+                ProjectService(self._db).add_resource, principal, project, f"action:{item_id}",
             )
-        except Exception as exc:
-            reason = getattr(exc, "reason", None)
-            if reason is None:
-                raise
-            handed = {"status": "refused", "error": reason, "detail": str(exc)}
+        args: dict[str, Any] = {"kind": "action", "id": item_id}
+        if project:
+            args["project_id"] = project
+        if profile:
+            args["profile"] = profile
+        try:
+            handed = await asyncio.to_thread(_invoke_agent_hand, self._db, principal, args)
+        except ServiceError as exc:
+            handed = {"status": "refused", "error": exc.code, "code": exc.code, "detail": exc.detail}
         return {
             "status": "ok" if handed.get("status") == "launched" else str(handed.get("status")),
             "item": {"kind": "action", "id": item_id},
+            "project_id": project,
             "todo": filed,
             "hand": handed,
         }
@@ -2741,3 +2779,18 @@ class ThreadService:
             "frozen_json": ref.frozen_json,
             "created_at": ref.created_at,
         }
+
+
+def _invoke_agent_hand(db: Any, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+    """``agent.hand`` through the one declared operation (the hub's live
+    registry and service; a bare root binds over this database)."""
+    from .. import operations
+    from ..runtime.composition import service as runtime_service
+    from .agent_hand_service import default_agent_hand_service
+
+    ops = operations.for_runtime(
+        agent_hand_service=lambda: runtime_service(
+            "agent_hand_service", lambda: default_agent_hand_service(db)
+        ),
+    )
+    return ops.invoke(principal, "agent.hand", args)
