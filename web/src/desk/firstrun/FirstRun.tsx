@@ -8,7 +8,10 @@
  * YDTpkaJqFs3hyrZ4g581Mx §1): Calendar and Connections are two more cards
  * on the same screen. One card at a time is lit (the next press). When
  * every step is done, Ready goes to the top: "Ready, <his name>", the
- * success chips, and three verbs; every card stays, selected. */
+ * success chips, and three verbs; every card stays, selected.
+ *
+ * The Conductor canvas K1 (ratified 2026-10-06): an Agents card after
+ * Connections. It is optional, so it does not join `ready`. */
 import { useCallback, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
@@ -43,8 +46,10 @@ import { useFirstTake } from "./useFirstTake";
 import { Card } from "./Card";
 import { CalendarCard } from "./CalendarCard";
 import { ConnectionsCard } from "./ConnectionsCard";
+import { AgentsCard } from "./AgentsCard";
 import { useCalendarStep } from "./calendarStep";
 import { useConnectionsStep } from "./connectionsStep";
+import { useAgentsStep } from "./agentsStep";
 import { Ready } from "./Ready";
 import "../../features/concierge/concierge.css";
 import "./firstrun.css";
@@ -384,6 +389,9 @@ export function FirstRun() {
   const proposals = useProposals();
   const calendar = useCalendarStep();
   const connections = useConnectionsStep();
+  // The Agents card (Conductor K1): optional. No agent installed never
+  // blocks Ready; it lights only when it holds the next press.
+  const agents = useAgentsStep();
   // The C1 part is done: models here, his name, his words kept. Its three
   // cards fold to their receipts (canvas A: "the three C1 cards, finished").
   const c1Done = aiReady && owner.isSet && take.kept;
@@ -397,6 +405,7 @@ export function FirstRun() {
   const wordsPending = speech && !take.kept;
   const calendarLit = !ready && !wordsPending && calendar.loaded && !calendar.inUse;
   const connectionsLit = !ready && !wordsPending && calendar.inUse && connections.loaded && !connections.done;
+  const agentsLit = !wordsPending && calendar.inUse && connections.done && agents.pending.length > 0;
   return (
     <section
       className="firstrun"
@@ -430,6 +439,9 @@ export function FirstRun() {
       <div className="firstrun-cards firstrun-cards-two">
         <CalendarCard step={calendar} lit={calendarLit} />
         <ConnectionsCard step={connections} lit={connectionsLit} />
+      </div>
+      <div className="firstrun-cards firstrun-cards-one">
+        <AgentsCard step={agents} lit={agentsLit} />
       </div>
       <Found proposals={proposals} />
       {take.message && ready ? (
