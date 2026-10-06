@@ -10,7 +10,11 @@
    change class) -> drafted update text.
 4. Cleanup: the agent's tmux session ends, a clean merged worktree goes,
    its Work attempt abandons, the launch's gate path is released.
-5. New Room GitHub Watches read every PR state and carry the branch.
+5. GitHub Watches carry the branch; Room PR watches stay open-only (open
+   coverage is never derived from a bounded all-state list). Merges of
+   agent PRs are observed by the per-launch PR lookup (1-2).
+
+Astra's round-1 reproducers on #900 are ported below as fences.
 
 Real producers throughout: real git repos, the real launch engine with a
 real kernel broker and receipts (K2's rig), real WatchService observations.
@@ -86,12 +90,15 @@ def _pr(head_ref: str, head_sha: str, state: str = "MERGED") -> dict[str, Any]:
         "author": {"login": "agent"}, "reviewDecision": "APPROVED" if merged else "",
         "mergedAt": "2026-10-06T11:00:00Z" if merged else None,
         "mergeCommit": {"oid": MERGE_COMMIT} if merged else None,
+        "isCrossRepository": False,
+        "headRepositoryOwner": {"login": "acme"}, "headRepository": {"name": "railsproj"},
     }
 
 
 def _launch(tmp_path, db, monkeypatch, *, item=("action", "ai_1"), mode="yolo", gh_available=True):
     """K2's real hand-to-agent launch, then the agent's commit on its branch."""
     rig = _rig(tmp_path, db, monkeypatch, item=item)
+    _git(rig.repo, "remote", "add", "origin", "https://github.com/acme/railsproj.git")
     result = rig.hand.hand(OWNER, *item)
     assert result["status"] == "launched", result
     _wait_for(lambda: rig.launches.get(result["launch_id"]), "instruction_state", "sent")
@@ -239,7 +246,9 @@ def test_merge_closes_the_action_with_evidence_and_cleans_up(tmp_path, db, monke
     assert record["follow_through"]["close"] == "closed"
     assert record["follow_through"]["cleanup"] == {
         "session": "killed", "worktree": "worktree_removed", "gate": "released",
+        "attempts": "reconciled",
     }
+    assert record["follow_through"]["pr"]["number"] == 7 and record["follow_through"]["pr"]["url"] == PR_URL
     assert record["follow_through"]["done"] is True
 
 
@@ -281,7 +290,185 @@ def test_heuristic_or_unrelated_pr_closes_nothing(tmp_path, db, monkeypatch) -> 
     _sweep(rig)
     assert _status(db, "ai_1") == "open"
     assert rig.worktree.exists()
+    assert rig.launches.get(rig.result["launch_id"])["follow_through"]["pr_state"] == "no_pr"
     rig.tmux.ended = True
+
+
+# ── Astra round 1, finding 1: PR identity ───────────────────────────
+
+
+@pytest.mark.parametrize("case", ["other_branch_same_sha", "fork_same_branch", "reused_branch"])
+def test_unrelated_merge_must_not_close(tmp_path, db, monkeypatch, case) -> None:
+    rig = _launch(tmp_path, db, monkeypatch)
+    if case == "other_branch_same_sha":
+        row = _pr("another-branch", rig.head)
+    elif case == "fork_same_branch":
+        row = _pr(rig.branch, "0" * 40)
+        row.update(isCrossRepository=True, headRepositoryOwner={"login": "another-owner"},
+                   headRepository={"name": "railsproj"})
+    else:  # a merge on this branch name from before the launch
+        row = _pr(rig.branch, rig.head)
+        row["mergedAt"] = "2026-07-15T12:00:00Z"
+    rig.gh.prs = [row, dict(_pr(rig.branch, rig.head, "OPEN"), number=8)]
+    _sweep(rig)
+    record = rig.launches.get(rig.result["launch_id"])
+    assert _status(db, "ai_1") == "open", f"{case} closed the action"
+    # The launch's own open PR is the one selected, and kept by identity.
+    assert record["follow_through"]["pr"]["number"] == 8
+    assert record["follow_through"]["pr_state"] == "pr_open"
+    rig.tmux.ended = True
+
+
+def test_selected_pr_is_kept_by_number_and_url(tmp_path, db, monkeypatch) -> None:
+    rig = _launch(tmp_path, db, monkeypatch)
+    rig.gh.prs = [_pr(rig.branch, rig.head, "OPEN")]
+    _sweep(rig)
+    # A second PR on the same branch later: the kept PR still decides.
+    rig.gh.prs = [_pr(rig.branch, rig.head, "OPEN"), dict(_pr(rig.branch, rig.head), number=9, url=PR_URL[:-1] + "9")]
+    _sweep(rig)
+    assert _status(db, "ai_1") == "open"
+    assert rig.launches.get(rig.result["launch_id"])["follow_through"]["pr"]["number"] == 7
+    rig.tmux.ended = True
+
+
+def test_several_candidates_are_ambiguous_by_name(tmp_path, db, monkeypatch) -> None:
+    rig = _launch(tmp_path, db, monkeypatch)
+    rig.gh.prs = [_pr(rig.branch, rig.head), dict(_pr(rig.branch, rig.head, "OPEN"), number=8)]
+    _sweep(rig)
+    record = rig.launches.get(rig.result["launch_id"])
+    assert record["follow_through"]["pr_state"] == "pr_ambiguous"
+    assert "pr" not in record["follow_through"]
+    assert _status(db, "ai_1") == "open"
+    rig.tmux.ended = True
+
+
+def test_no_github_origin_is_named(tmp_path, db, monkeypatch) -> None:
+    rig = _launch(tmp_path, db, monkeypatch)
+    _git(rig.repo, "remote", "remove", "origin")
+    rig.gh.prs = [_pr(rig.branch, rig.head)]
+    _sweep(rig)
+    assert rig.launches.get(rig.result["launch_id"])["follow_through"]["pr_state"] == "repository_unknown"
+    assert _status(db, "ai_1") == "open"
+    rig.tmux.ended = True
+
+
+def test_pr_closed_without_merge_ends_follow_through(tmp_path, db, monkeypatch) -> None:
+    rig = _launch(tmp_path, db, monkeypatch)
+    rig.gh.prs = [_pr(rig.branch, rig.head, "OPEN")]
+    _sweep(rig)
+    rig.gh.prs = [_pr(rig.branch, rig.head, "CLOSED")]
+    _sweep(rig)
+    record = rig.launches.get(rig.result["launch_id"])
+    assert record["follow_through"]["pr_state"] == "pr_closed_unmerged"
+    assert record["follow_through"]["done"] is True
+    assert _status(db, "ai_1") == "open" and rig.worktree.exists()
+    calls = len(rig.gh.calls)
+    _sweep(rig)
+    assert len(rig.gh.calls) == calls, "an ended follow-through is not polled"
+    rig.tmux.ended = True
+
+
+# ── Astra round 1, finding 2: only the launch's own worktree goes ────
+
+
+def test_manual_worktree_must_survive(tmp_path, db, monkeypatch) -> None:
+    rig = _rig(tmp_path, db, monkeypatch)
+    _git(rig.repo, "remote", "add", "origin", "https://github.com/acme/railsproj.git")
+    manual = tmp_path / "my-handmade-worktree"
+    _git(rig.repo, "worktree", "add", "-b", "my-handmade-branch", str(manual))
+    (manual / "change.txt").write_text("user change")
+    _git(manual, "add", "change.txt")
+    _git(manual, "commit", "-m", "my change")
+    source, wt = rig.registry.register(str(manual))
+    record = rig.service.launch({
+        "agent_profile_id": "claude-default", "source_id": source.source_id,
+        "worktree": {"mode": "existing", "worktree_id": wt.worktree_id},
+        "story_ref": {"project": PROJECT, "story_id": "action-ai_1"},
+        "origin_ref": {"kind": "action", "id": "ai_1"}, "session_label": "handmade-probe",
+    })
+    assert record["state"] == "launched" and record["commands"]["worktree_create"] is None
+    gh = FakeGh()
+    gh.prs = [_pr(wt.branch, _git(manual, "rev-parse", "HEAD"))]
+    observer = FollowThroughObserver(
+        db, ledger=rig.launches, registry=rig.registry,
+        receipts=PrReceiptsService(rig.registry, runner=gh, gh_available=lambda: True, gate_matcher=lambda p: False),
+        attempts=WorkAttemptService(db.work_attempts), control_mode=lambda: "yolo", tmux_runner=rig.tmux,
+        gate_path=rig.gate_path, audit=lambda **kw: 1, clock=lambda: T0,
+    )
+    _sweep(rig, observer)
+    assert manual.exists(), "the user-created worktree was removed"
+    follow = rig.launches.get(record["launch_id"])["follow_through"]
+    assert follow["close"] == "closed", "the merge still closes the origin"
+    assert follow["cleanup"]["worktree"] == "worktree_kept_not_ours"
+    rig.tmux.ended = True
+
+
+def test_two_sweeps_one_close(tmp_path, db, monkeypatch) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    rig = _launch(tmp_path, db, monkeypatch)
+    rig.gh.prs = [_pr(rig.branch, rig.head)]
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        for future in [pool.submit(_sweep, rig) for _ in range(2)]:
+            future.result()
+    assert len(_completed(db)) == 1
+    assert sum(1 for c in rig.tmux.calls if c[1] == "kill-session") == 1
+
+
+# ── Astra round 1, finding 3: an exited agent is still followed ─────
+
+
+def test_agent_exit_before_merge_is_still_followed(tmp_path, db, monkeypatch) -> None:
+    rig = _launch(tmp_path, db, monkeypatch)
+    launch_id = rig.result["launch_id"]
+    rig.tmux(["tmux", "kill-session", "-t", rig.launches.get(launch_id)["session"]])
+    _wait_for(lambda: rig.launches.get(launch_id), "state", "complete")
+    rig.gh.prs = [_pr(rig.branch, rig.head)]
+    _sweep(rig)
+    assert rig.gh.calls, "the completed launch still polls its PR"
+    assert _status(db, "ai_1") == "done"
+    follow = rig.launches.get(launch_id)["follow_through"]
+    assert follow["cleanup"]["session"] == "session_gone" and follow["done"] is True
+
+
+# ── Astra round 1, finding 7: the attempt is reconciled after a crash ─
+
+
+def _crash_then_restart(rig, monkeypatch) -> None:
+    def crash_after_remove(worktree_id):
+        assert not rig.worktree.exists()
+        raise RuntimeError("crash after physical removal, before attempt marker")
+
+    monkeypatch.setattr(rig.observer._attempts, "mark_worktree_removed", crash_after_remove)
+    first = _sweep(rig)
+    assert first["follow_through"].get("errors")
+    assert not rig.worktree.exists()
+    restarted = FollowThroughObserver(
+        rig.db, ledger=type(rig.launches)(rig.launches._path), registry=rig.registry,
+        receipts=rig.receipts, attempts=WorkAttemptService(rig.db.work_attempts),
+        control_mode=lambda: "yolo", tmux_runner=rig.tmux, gate_path=rig.gate_path,
+        audit=lambda **kw: 1, clock=lambda: T0,
+    )
+    _sweep(rig, restarted)
+    attempt = rig.db.work_attempts.get(rig.result["attempt_id"])
+    follow = rig.launches.get(rig.result["launch_id"])["follow_through"]
+    assert attempt.state == "abandoned", "finished launch left its Work attempt live"
+    assert follow["cleanup"]["worktree"] == "worktree_absent"
+    assert follow["cleanup"]["attempts"] == "reconciled" and follow["done"] is True
+
+
+def test_restart_after_remove_finishes_attempt(tmp_path, db, monkeypatch) -> None:
+    rig = _launch(tmp_path, db, monkeypatch)
+    rig.gh.prs = [_pr(rig.branch, rig.head)]
+    _crash_then_restart(rig, monkeypatch)
+
+
+def test_retry_absent_worktree_finishes_attempt(tmp_path, db, monkeypatch) -> None:
+    rig = _launch(tmp_path, db, monkeypatch)
+    rig.service.first_message.close(timeout=1.0)
+    _wait_for(lambda: {"stopped": not rig.service.first_message._watched}, "stopped", True)
+    rig.gh.prs = [_pr(rig.branch, rig.head)]
+    _crash_then_restart(rig, monkeypatch)
 
 
 def test_secure_asks_through_one_door_item_then_closes_on_confirm(tmp_path, db, monkeypatch) -> None:
@@ -328,6 +515,24 @@ def test_secure_dismissed_confirm_keeps_the_origin_open(tmp_path, db, monkeypatc
     FollowThroughService(db).complete(OWNER, confirm_id, "dismiss")
     _sweep(rig)
     assert _status(db, "ai_1") == "open"
+    assert rig.launches.get(rig.result["launch_id"])["follow_through"]["close"] == "close_declined"
+
+
+def test_secure_dismiss_survives_mode_change(tmp_path, db, monkeypatch) -> None:
+    """Astra round 1, finding 4: a dismissal is final for the launch."""
+    rig = _launch(tmp_path, db, monkeypatch, mode="safe")
+    rig.gh.prs = [_pr(rig.branch, rig.head)]
+    _sweep(rig)
+    with db._connection() as conn:
+        confirm_id = conn.execute(
+            "SELECT id FROM action_items WHERE source_ref = ?",
+            (f"agent_launch:{rig.result['launch_id']}",),
+        ).fetchone()[0]
+    FollowThroughService(db).complete(OWNER, confirm_id, "dismiss")
+    rig.observer._control_mode = lambda: "yolo"
+    _sweep(rig)
+    _sweep(rig)
+    assert _status(db, "ai_1") == "open", "the explicit dismissal was ignored"
     assert rig.launches.get(rig.result["launch_id"])["follow_through"]["close"] == "close_declined"
 
 
@@ -399,18 +604,12 @@ def test_worktree_remove_refuses_by_name(tmp_path) -> None:
     assert audit == ["bad_name", "out_of_root", "worktree_absent"], "every refusal is audited"
 
 
-# ── 3. The weekly update reports a merged PR as closed ──────────────
+# ── 3. The weekly update reports merges as closed ───────────────────
 
 
-def test_merged_pr_is_closed_in_the_drafted_update(tmp_path, db) -> None:
-    """Producer to draft: a real WatchService github.pr.merged observation
-    (GitHubWatchSource with gh faked at its process boundary) -> delta ->
-    the stored proposal keeps change_class -> the drafted update text
-    reports the PR under Progress as closed."""
-    from holdspeak.services.project_delta_service import ProjectDeltaService
-    from holdspeak.services.project_evidence_collector import ProjectEvidenceCollector
-    from holdspeak.services.project_service import ProjectService
-    from holdspeak.services.project_update_service import ProjectUpdateService
+def _watch_merge(db) -> dict[str, Any]:
+    """A real WatchService github.pr.merged observation (GitHubWatchSource,
+    gh faked at its process boundary) on an explicit merged-state watch."""
     from holdspeak.services.reaction_service import ReactionService
     from holdspeak.services.watch_service import WatchService
     from holdspeak.services.watch_sources import fetch_watch_snapshot
@@ -426,17 +625,11 @@ def test_merged_pr_is_closed_in_the_drafted_update(tmp_path, db) -> None:
         label="PR watch", semantic_role="watch",
     )
     phase = {"state": "OPEN"}
-    gh_argv: list[list[str]] = []
 
     def gh(argv, **_kw):
-        gh_argv.append(list(argv))
-        row = {
-            "number": 42, "title": "Fix the login timeout",
-            "url": "https://github.com/acme/railsproj/pull/42", "state": phase["state"],
-            "isDraft": False, "reviewRequests": [], "reviewDecision": "",
-            "statusCheckRollup": [], "headRefOid": "abc123", "headRefName": "hs/action-ai_1",
-            "updatedAt": "2026-10-06T10:00:00Z", "createdAt": "2026-10-05T10:00:00Z",
-        }
+        row = dict(_pr("hs/action-ai_1", "a" * 40, phase["state"]), number=42,
+                   url="https://github.com/acme/railsproj/pull/42", reviewRequests=[],
+                   createdAt="2026-10-05T10:00:00Z", updatedAt="2026-10-06T10:00:00Z")
         return SimpleNamespace(returncode=0, stdout=json.dumps([row]), stderr="")
 
     watches = WatchService(
@@ -446,66 +639,109 @@ def test_merged_pr_is_closed_in_the_drafted_update(tmp_path, db) -> None:
     phase["state"] = "MERGED"
     evaluated = watches.evaluate_once(OWNER, watch_id)
     assert evaluated["state"] == "completed" and evaluated["observation_ids"]
-    assert "--state" in gh_argv[-1] and gh_argv[-1][gh_argv[-1].index("--state") + 1] == "all"
+    return evaluated
+
+
+def _updates(db):
+    from holdspeak.services.project_delta_service import ProjectDeltaService
+    from holdspeak.services.project_evidence_collector import ProjectEvidenceCollector
+    from holdspeak.services.project_service import ProjectService
+    from holdspeak.services.project_update_service import ProjectUpdateService
 
     delta = ProjectDeltaService(db, ProjectEvidenceCollector(db))
+    return delta, ProjectUpdateService(db, project_service=ProjectService(db, delta_service=delta), delta_service=delta)
+
+
+def _progress(body: str) -> str:
+    return body.split("## Progress", 1)[1].split("## Decisions", 1)[0]
+
+
+def test_watch_merge_is_closed_in_the_draft_whatever_the_review(db) -> None:
+    """Astra round 1, finding 6: before a review opens, while it is open,
+    and after it is accepted, the period's merge is reported as closed."""
+    _watch_merge(db)
+    delta, updates = _updates(db)
+    line = "Closed: Fix the login timeout (#42) -- merged"
+
+    before = updates.draft_update(OWNER, PROJECT)["body_md"]
     review = delta.open_review(OWNER, PROJECT)
+    during = updates.draft_update(OWNER, PROJECT)
+    delta.accept_review(OWNER, PROJECT, review["review_id"])
+    after = updates.draft_update(OWNER, PROJECT)["body_md"]
+
+    for body in (before, during["body_md"], after):
+        assert line in _progress(body)
+        assert body.count(line) == 1
+    decisions = during["body_md"].split("## Decisions", 1)[1].split("## Risks", 1)[0]
+    assert "Fix the login timeout" not in decisions, "a closed proposal is not repeated in Decisions"
+    # The delta keeps the class on the stored proposal (persisted, not dropped).
     stored = db.project_observations.list_proposals(PROJECT, review_window_key=review["review_id"])
-    merged = [p for p in stored if "github.pr.merged" in p["patch_json"]]
-    assert merged and merged[0]["change_class"] == "closed"
+    assert [p["change_class"] for p in stored if "github.pr.merged" in p["patch_json"]] == ["closed"]
+    claims = json.loads(during["claims_json"])
+    closed = [c for c in claims if c["text"] == line]
+    assert closed and closed[0]["section"] == "progress" and closed[0]["refs"][0].startswith("pobs:")
 
-    projects = ProjectService(db, delta_service=delta)
-    draft = ProjectUpdateService(db, project_service=projects, delta_service=delta).draft_update(OWNER, PROJECT)
-    body = draft["body_md"]
-    progress = body.split("## Progress", 1)[1].split("## Decisions", 1)[0]
-    decisions = body.split("## Decisions", 1)[1].split("## Risks", 1)[0]
-    assert "Closed: Fix the login timeout (#42) -- merged" in progress
-    assert "Fix the login timeout" not in decisions
+
+def test_published_update_starts_the_next_period(db) -> None:
+    _watch_merge(db)
+    _delta, updates = _updates(db)
+    draft = updates.draft_update(OWNER, PROJECT)
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE project_updates SET lifecycle='published', published_at=? WHERE id=?",
+            ("2099-01-01T00:00:00+00:00", draft["id"]),
+        )
+    assert "Closed:" not in updates.draft_update(OWNER, PROJECT)["body_md"]
+
+
+def test_agent_merge_is_closed_in_the_draft(tmp_path, db, monkeypatch) -> None:
+    """The per-launch PR lookup is the agent PR's merge observation: its
+    commitment.completed evidence is reported, with no Watch at all."""
+    rig = _launch(tmp_path, db, monkeypatch)
+    rig.gh.prs = [_pr(rig.branch, rig.head)]
+    _sweep(rig)
+    _delta, updates = _updates(db)
+    draft = updates.draft_update(OWNER, PROJECT)
+    assert "Closed: Fix the login timeout (PR #7) -- merged" in _progress(draft["body_md"])
     claims = json.loads(draft["claims_json"])
-    closed = [c for c in claims if c["text"].startswith("Closed: ")]
-    assert closed and closed[0]["section"] == "progress"
+    assert any(c["refs"] == ["action_item:ai_1"] and c["text"].startswith("Closed: ") for c in claims)
 
 
-# ── 5. Room GitHub Watch defaults ───────────────────────────────────
+# ── 5. GitHub Watch fields; open coverage stays open-only ───────────
 
 
-def test_new_room_pr_watch_reads_every_state_and_the_branch(tmp_path) -> None:
+def test_watch_carries_the_branch_and_room_prs_stay_open(tmp_path) -> None:
     from holdspeak import github_templates
-    from holdspeak.services.project_door_service import ProjectDoorService
-    from holdspeak.services.project_service import ProjectService
     from holdspeak.services.watch_sources import GH_WATCH_FIELDS, GitHubWatchSource
-    from holdspeak.services.watch_service import WatchService
 
     assert "headRefName" in GH_WATCH_FIELDS.split(",")
-    assert github_templates.compile("watch.github.review_queue", "acme/app")["subject"]["query"]["state"] == "all"
-    assert github_templates.compile("watch.github.merge_flow", "acme/app")["subject"]["query"]["state"] == "all"
-
-    database = Database(tmp_path / "door.db")
-    door = ProjectDoorService(
-        project_service=ProjectService(database),
-        watch_service=WatchService(database, snapshot_fetcher=lambda _p, **_k: []),
-    )
-    door.create(OWNER, "Ship the release", [{"provider": "github", "scope": "acme/app", "watches": ["open_prs"]}])
-    pr_watch = next(w for w in database.automations.list_watches() if w["query_kind"] == "pull_requests")
-    query = pr_watch["query"] if isinstance(pr_watch["query"], dict) else json.loads(pr_watch["query_json"])
-    assert query["state"] == "all"
-
-    argv: list[list[str]] = []
+    assert github_templates.compile("watch.github.review_queue", "acme/app")["subject"]["query"]["state"] == "open"
 
     def gh(command, **_kw):
-        argv.append(list(command))
-        rows = [
-            {"number": 1, "state": "OPEN", "headRefName": "hs/a", "title": "a", "url": "u1"},
-            {"number": 2, "state": "MERGED", "headRefName": "hs/b", "title": "b", "url": "u2"},
-        ]
+        rows = [{"number": 1, "state": "OPEN", "headRefName": "hs/a", "title": "a", "url": "u1"}]
         return SimpleNamespace(returncode=0, stdout=json.dumps(rows), stderr="")
 
-    entities = GitHubWatchSource(runner=gh).snapshot(OWNER, query_kind="pull_requests", query=query)
-    assert argv[0][argv[0].index("--state") + 1] == "all"
-    assert [e["headRefName"] for e in entities] == ["hs/a", "hs/b"]
-    # An existing watch with no state keeps its open-only read.
-    GitHubWatchSource(runner=gh).snapshot(OWNER, query_kind="pull_requests", query={"repository": "acme/app"})
-    assert argv[1][argv[1].index("--state") + 1] == "open"
-    # The Door's OPEN PRS token still counts open PRs only.
-    counted = ProjectDoorService(gh_runner=gh).count(OWNER, "github", "acme/app", ["open_prs"])
-    assert counted["tokens"][0]["count"] == 1
+    entities = GitHubWatchSource(runner=gh).snapshot(
+        OWNER, query_kind="pull_requests", query={"repository": "acme/app", "state": "open"},
+    )
+    assert entities[0]["headRefName"] == "hs/a"
+    from holdspeak.services.reaction_service import normalize_snapshot
+
+    assert normalize_snapshot("gh", entities)["entities"]["1"]["head_ref"] == "hs/a"
+
+
+def test_open_pr_count_survives_more_than_50_merged_prs() -> None:
+    """Astra round 1, finding 5: a busy repository's old open PR counts."""
+    from holdspeak.services.project_door_service import ProjectDoorService
+
+    rows = [dict(_pr(f"closed-{n}", "a" * 40), number=n) for n in range(52, 1, -1)]
+    rows.append(dict(_pr("old-but-open", "b" * 40, "OPEN"), number=1))
+
+    def gh(argv, **_kw):
+        state = argv[argv.index("--state") + 1]
+        limit = int(argv[argv.index("--limit") + 1])
+        eligible = [r for r in rows if state == "all" or r["state"].lower() == state]
+        return SimpleNamespace(returncode=0, stdout=json.dumps(eligible[:limit]), stderr="")
+
+    result = ProjectDoorService(gh_runner=gh).count(OWNER, "github", "acme/railsproj", ["open_prs"])
+    assert result["tokens"][0]["count"] == 1

@@ -75,10 +75,7 @@ GITHUB_TEMPLATES: tuple[GitHubTemplate, ...] = (
                 {"schema": ACTION_SCHEMA, "kind": "project.observe"},
             ],
         }],
-        # Conductor K4: the Room's PR watch reads every state, so a merge
-        # is an observed open -> merged transition (it was a PR that left
-        # an open-only list). The Room's asking rows read open PRs only.
-        query_defaults={"state": "all", "base": "main"},
+        query_defaults={"state": "open", "base": "main"},
     ),
     GitHubTemplate(
         template_id="watch.github.ci_health",
@@ -119,7 +116,7 @@ GITHUB_TEMPLATES: tuple[GitHubTemplate, ...] = (
                 {"schema": ACTION_SCHEMA, "kind": "project.observe"},
             ],
         }],
-        query_defaults={"state": "all", "base": "main"},
+        query_defaults={"state": "open", "base": "main"},
     ),
     GitHubTemplate(
         template_id="watch.github.delivery_drift",

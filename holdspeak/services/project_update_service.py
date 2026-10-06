@@ -438,50 +438,112 @@ def _build_decisions(
 
 
 #: The change class a merged PR or a resolved issue carries (the delta's
-#: ``_classify_observation``, persisted on the proposal since Conductor K4).
+#: ``_classify_observation``; persisted on the proposal since Conductor K4).
 CHANGE_CLASS_CLOSED = "closed"
 
 
-def _closed_line(prop: dict[str, Any]) -> str:
-    """``Closed: <what> (#<id>) -- merged`` from a closed proposal's patch."""
+def _instant(value: Any) -> datetime | None:
     try:
-        patch = json.loads(prop.get("patch_json") or "{}")
-    except (TypeError, ValueError):
-        patch = {}
-    if not isinstance(patch, dict):
-        patch = {}
-    name = " ".join(str(patch.get("entity_title") or prop.get("title") or "Untitled").split())
-    entity = str(patch.get("entity_ref") or "").strip()
-    outcome = str(patch.get("event_type") or "").rsplit(".", 1)[-1] or CHANGE_CLASS_CLOSED
-    marker = f" (#{entity})" if entity else ""
-    return f"Closed: {name}{marker} -- {outcome}"
+        stamp = datetime.fromisoformat(str(value or "").strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return stamp if stamp.tzinfo else stamp.replace(tzinfo=timezone.utc)
+
+
+def _after(value: Any, since: datetime | None) -> bool:
+    stamp = _instant(value)
+    return stamp is not None and (since is None or stamp > since)
+
+
+def period_closures(
+    observations: list[dict[str, Any]],
+    completions: list[dict[str, Any]],
+    action_tasks: dict[str, str],
+    since: datetime | None,
+) -> list[dict[str, Any]]:
+    """What closed in the reporting period, from durable records only (never
+    from a review window, which opens and closes on the owner's word):
+
+    - a Watch's closing transition (``github.pr.merged``,
+      ``jira.issue.resolved``) observed after ``since``;
+    - a ``commitment.completed`` receipt of one of the Project's action items
+      that carries PR evidence (Conductor K4: the agent launch's merged PR),
+      merged after ``since``.
+
+    ``since`` is the last published update (None: everything). One line per
+    closed thing: a PR seen by both paths is reported once (by URL)."""
+    from .project_delta_service import _classify_observation
+
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for event in completions:
+        facts = event.get("facts") or {}
+        evidence = facts.get("evidence") or {}
+        url = str(evidence.get("pr_url") or "")
+        action_id = str(facts.get("action_item_id") or "")
+        if not url or action_id not in action_tasks or not _after(evidence.get("merged_at"), since):
+            continue
+        if url in seen:
+            continue
+        seen.add(url)
+        number = url.rstrip("/").rsplit("/", 1)[-1]
+        task = " ".join(str(action_tasks[action_id] or "").split()) or "Untitled"
+        out.append({
+            "key": (str(evidence.get("merged_at") or ""), url),
+            "text": f"Closed: {task} (PR #{number}) -- merged",
+            "ref": format_ref("action_item", action_id),
+            "fields": ["status", "evidence.pr_url", "evidence.merged_at"],
+        })
+    for obs in observations:
+        if obs.get("observation_kind") != "watch.transition":
+            continue
+        if _classify_observation(obs) != CHANGE_CLASS_CLOSED or not _after(obs.get("observed_at"), since):
+            continue
+        try:
+            fact = json.loads(obs.get("fact_json") or "{}")
+        except (TypeError, ValueError):
+            fact = {}
+        if not isinstance(fact, dict):
+            fact = {}
+        entity = str(fact.get("entity_ref") or "").strip()
+        event_type = str(fact.get("event_type") or "")
+        key = str(fact.get("url") or "") or f"{obs.get('source_id')}:{entity}:{event_type}"
+        if key in seen:
+            continue
+        seen.add(key)
+        name = " ".join(str(fact.get("entity_title") or entity or "Untitled").split())
+        marker = f" (#{entity})" if entity else ""
+        outcome = event_type.rsplit(".", 1)[-1] or CHANGE_CLASS_CLOSED
+        out.append({
+            "key": (str(obs.get("observed_at") or ""), key),
+            "text": f"Closed: {name}{marker} -- {outcome}",
+            "ref": f"pobs:{obs.get('id', '')}",
+            "fields": ["observation_kind", "fact_json"],
+        })
+    return sorted(out, key=lambda c: c["key"])
 
 
 def _build_closed(
-    proposals: list[dict[str, Any]],
+    closures: list[dict[str, Any]],
     claims: list[Claim],
     source_version: str,
 ) -> list[str]:
-    """Progress lines for the window's closed items (merged, resolved)."""
+    """Progress lines for what closed in the period (merged, resolved)."""
     lines: list[str] = []
-    for ordinal, prop in enumerate(proposals):
-        prop_id = prop.get("id", "")
-        text = _closed_line(prop)
-        ref = f"decision:{prop_id}" if prop_id else f"decision:unknown_{ordinal}"
+    for ordinal, closure in enumerate(closures):
         claims.append(Claim(
             span_id=f"s_progress_closed_{ordinal}",
-            text=text,
-            refs=[ref],
+            text=closure["text"],
+            refs=[closure["ref"]],
             section="progress",
-            # The watch observed the transition; the class is read off the
-            # stored proposal (a field mapping, C2).
+            # Read off a durable record: an observation, a field mapping (C2).
             kind=KIND_OBSERVATION,
             support=SUPPORT_SUPPORTED,
             support_record=_field_mapping_support(
-                source_version, [ref], ["change_class", "patch_json"],
+                source_version, [closure["ref"]], closure["fields"],
             ),
         ))
-        lines.append(f"- {text}")
+        lines.append(f"- {closure['text']}")
     return lines
 
 
@@ -1671,12 +1733,16 @@ class ProjectUpdateService:
         # one pinned project revision this draft saw (C2).
         source_version = f"project:{project_id}@r{revision}"
 
-        # Conductor K4: a merged PR or a resolved issue is reported as
-        # closed (Progress), not as an open proposal (Decisions).
-        closed = [p for p in proposals if p.get("change_class") == CHANGE_CLASS_CLOSED]
+        # Conductor K4: what closed in the reporting period (a merged PR, a
+        # resolved issue) is reported under Progress, from durable records,
+        # whatever the review window does. A closed proposal is not repeated
+        # in Decisions.
         undecided = [p for p in proposals if p.get("change_class") != CHANGE_CLASS_CLOSED]
         progress = _build_progress(items_section, det_claims, source_version)
-        closed_lines = _build_closed(closed, det_claims, source_version)
+        closed_lines = _build_closed(
+            self._period_closures(principal, project_id, observations),
+            det_claims, source_version,
+        )
         if closed_lines:
             progress = "\n".join(closed_lines) if progress == _HONEST_MINIMAL["progress"] else (
                 progress + "\n" + "\n".join(closed_lines)
@@ -1806,6 +1872,26 @@ class ProjectUpdateService:
             generator_model=actual_model,
         )
         return self._project_axes(self._db.project_updates.get_update(new_id))
+
+    def _period_closures(
+        self, principal: Principal, project_id: str, observations: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """:func:`period_closures` over this Project's durable records, since
+        its last published update."""
+        published = self._db.project_updates.list_updates(project_id, lifecycle="published")
+        since = _instant(published[0].get("published_at")) if published else None
+        try:
+            tasks = {
+                str(a["id"]): str(a.get("task") or "")
+                for a in self._project_service.list_action_items(principal, project_id)
+            }
+        except Exception:
+            tasks = {}
+        completions = (
+            ServiceEventLedger(self._db).list(principal, event_type="commitment.completed", limit=500)
+            if tasks else []
+        )
+        return period_closures(observations, completions, tasks, since)
 
     # ── Route-facing verbs (HS-162-04) ─────────────────────────────
 

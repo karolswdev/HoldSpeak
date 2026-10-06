@@ -46,7 +46,8 @@ MAX_DIFF_BYTES = 512 * 1024
 #: The one batched query's fields — the row schema is exactly this.
 GH_FIELDS = (
     "number,title,url,headRefName,baseRefName,headRefOid,baseRefOid,state,isDraft,"
-    "statusCheckRollup,author,reviewDecision,mergedAt,mergeCommit"
+    "statusCheckRollup,author,reviewDecision,mergedAt,mergeCommit,"
+    "isCrossRepository,headRepository,headRepositoryOwner"
 )
 
 #: The named gh states of a source (Conductor K4). ``live`` means the last
@@ -170,6 +171,15 @@ def _github_repo(url: str) -> str:
     if len(path) >= 2 and urlparse(str(url or "")).hostname == "github.com":
         return f"{path[0]}/{path[1]}"
     return ""
+
+
+def _head_repo(pr: dict[str, Any]) -> str:
+    """``owner/name`` of the PR's head repository, or "" when gh did not say."""
+    owner = pr.get("headRepositoryOwner")
+    repo = pr.get("headRepository")
+    login = str(owner.get("login") or "") if isinstance(owner, dict) else ""
+    name = str(repo.get("name") or "") if isinstance(repo, dict) else ""
+    return f"{login}/{name}" if login and name else ""
 
 
 def _verb(available: bool, reason: str = "") -> dict[str, Any]:
@@ -360,6 +370,10 @@ class PrReceiptsService:
                     "merged_at": str(pr.get("mergedAt") or ""),
                     "merged_sha": str((pr.get("mergeCommit") or {}).get("oid") or "")
                     if isinstance(pr.get("mergeCommit"), dict) else "",
+                    # Repository identity (Conductor K4): a fork's PR is
+                    # never the launch's PR, whatever its branch is called.
+                    "cross_repository": bool(pr.get("isCrossRepository")),
+                    "head_repo": _head_repo(pr),
                     "observed_at": observed,
                     "needs_you": str(pr.get("state") or "").lower() == "open"
                     and rollup_conclusion(pr.get("statusCheckRollup")) in {"failing", "pending"},

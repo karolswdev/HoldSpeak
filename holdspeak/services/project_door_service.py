@@ -146,13 +146,6 @@ class ProjectDoorService:
                 entities = self._snapshot_for_key(
                     principal, provider, scope, key, default["template_id"], adjust,
                 )
-                if key == "open_prs":
-                    # The PR watch reads every state (Conductor K4); the
-                    # token counts the open ones.
-                    entities = [
-                        e for e in entities
-                        if str(e.get("state") or "open").lower() in ("open", "draft")
-                    ]
                 count = len(entities)
                 label = _count_label(key, count, entities)
                 tokens.append({"key": key, "label": label, "count": count})

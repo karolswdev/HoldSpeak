@@ -2,13 +2,19 @@
 
 docs/internal/CONDUCTOR.md, step 6 (lane K4). On each Heartbeat sweep:
 
-1. **PR refresh.** Every Delivery Source with a live or recent agent launch
-   gets one batched ``gh pr list`` (``PrReceiptsService.refresh``). A
+1. **PR refresh.** Every Delivery Source with a launch whose follow-through
+   is not resolved (whatever its session does: an agent that exits before
+   the merge is still followed) gets one batched ``gh pr list``
+   (``PrReceiptsService.refresh``). A
    missing or unauthenticated ``gh`` is a named state on the sweep receipt
    (``gh_missing``, ``gh_unauthenticated``), never a silent skip.
-2. **Close the origin on merge.** A PR with EXACT attribution (its branch or
-   head SHA is the launch's worktree) that GitHub reports ``merged`` closes
-   the item the launch came from (``origin_ref``):
+2. **Close the origin on merge.** The launch's PR is selected by identity
+   (``_select_pr``): the source's GitHub repository as base and head (never
+   a fork), the launch's branch, and a merge after the launch. Its number
+   and URL are kept on the launch; several candidates are ``pr_ambiguous``
+   and nothing is closed. A selected PR closed without a merge ends the
+   follow-through. When it is ``merged``, it closes the item the launch
+   came from (``origin_ref``):
 
    - ``action``: ``FollowThroughService.complete(..., "done")`` with the
      evidence ``{pr_url, merged_sha, merged_at, attempt_id, launch_id}`` in
@@ -22,11 +28,14 @@ docs/internal/CONDUCTOR.md, step 6 (lane K4). On each Heartbeat sweep:
    ``Merged: confirm close: ...`` (the smallest Needs you mechanism: an
    action item with no owner reads UNASSIGNED in Needs you). When the owner
    marks that item done, the next sweep closes the origin with the same
-   evidence; dismissed, the origin stays open. Normal and YOLO close at once.
+   evidence; dismissed, the origin stays open (``close_declined``), whatever
+   the mode is later. Normal and YOLO close at once.
 3. **Clean up** after the merge and the close: the agent's tmux session is
    ended (``coder_factory.kill``, audited), the worktree is removed only if
-   it is clean and merged (``execute_worktree_remove``, refusals by name),
-   its live Work attempts abandon (``mark_worktree_removed``), and the
+   the launch created it (else ``worktree_kept_not_ours``) and it is clean
+   and merged (``execute_worktree_remove``, refusals by name), its live Work
+   attempts abandon (``mark_worktree_removed``, also when the worktree is
+   already gone, before the launch reads as done), and the
    launch's own armed gate path is released under the gate file lock.
 
 Idempotent across sweeps and restarts: the state lives on the durable launch
@@ -36,7 +45,7 @@ module lock keeps two sweeps from acting at once.
 from __future__ import annotations
 
 import threading
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 
@@ -44,10 +53,8 @@ from ..logging_config import get_logger
 
 log = get_logger("delivery.follow_through")
 
-#: Launch states whose agent may still open or land a PR.
-FOLLOWED_STATES = frozenset({"launched", "registered", "failed_to_register"})
-#: How long after its launch a PR is still followed.
-FOLLOW_DAYS = 30
+#: Launch states that never ran an agent: nothing to follow.
+UNLAUNCHED_STATES = frozenset({"failed", "admitted", "approved", "rejected", "starting"})
 #: Origin kinds with a close (Conductor K4).
 CLOSABLE_KINDS = frozenset({"action", "decision", "decision_record"})
 #: Close states after which cleanup may run.
@@ -59,8 +66,10 @@ CLOSE_RESOLVED = frozenset(
 _SESSION_FINAL = frozenset({"killed", "session_gone", "no_session"})
 _WORKTREE_FINAL = frozenset(
     {"worktree_removed", "worktree_absent", "worktree_dirty", "worktree_unmerged",
-     "out_of_root", "bad_name", "no_worktree"}
+     "out_of_root", "bad_name", "no_worktree", "worktree_kept_not_ours"}
 )
+#: Worktree outcomes after which the launch's live Work attempts abandon.
+_WORKTREE_GONE = frozenset({"worktree_removed", "worktree_absent"})
 SECURE_MODE = "safe"
 
 _SWEEP_LOCK = threading.Lock()
@@ -163,15 +172,16 @@ class FollowThroughObserver:
                 receipt.setdefault("errors", []).append(str(launch.get("launch_id") or ""))
         return receipt
 
-    def _followed(self, record: Mapping[str, Any]) -> bool:
-        if str(record.get("state") or "") not in FOLLOWED_STATES:
+    @staticmethod
+    def _followed(record: Mapping[str, Any]) -> bool:
+        """Every launch that ran an agent, until its follow-through is
+        resolved (``done``). The session's state does not end it: an agent
+        that exits before the merge still has a PR to follow."""
+        if str(record.get("state") or "") in UNLAUNCHED_STATES:
             return False
-        if not record.get("worktree_id") or not record.get("source_id"):
+        if not record.get("attempt_id") or not record.get("worktree_id") or not record.get("source_id"):
             return False
-        if (record.get("follow_through") or {}).get("done"):
-            return False
-        launched = _parse(record.get("launched_at"))
-        return launched is None or self._clock() - launched <= timedelta(days=FOLLOW_DAYS)
+        return not (record.get("follow_through") or {}).get("done")
 
     # ── one launch ───────────────────────────────────────────────────
 
@@ -182,15 +192,20 @@ class FollowThroughObserver:
     ) -> None:
         launch_id = str(launch["launch_id"])
         state = dict(launch.get("follow_through") or {})
-        row = self._exact_row(launch, rows_by_source.get(str(launch.get("source_id")), []))
+        row, pr_state = self._select_pr(launch, state, rows_by_source.get(str(launch.get("source_id")), []))
+        before = dict(state)
+        state["pr_state"] = pr_state
         if row is not None:
-            pr = {
+            state["pr"] = {
                 "url": row.get("url"), "number": row.get("number"),
                 "state": row.get("state"), "review_decision": row.get("review_decision"),
             }
-            if state.get("pr") != pr:
-                state["pr"] = pr
-                self._save(launch_id, state)
+        if pr_state == "pr_closed_unmerged":
+            # The PR was closed without a merge: nothing closes, nothing is
+            # removed, and the launch is no longer followed.
+            state["done"] = True
+        if state != before:
+            self._save(launch_id, state)
         if row is None or row.get("state") != "merged":
             return
         evidence = {
@@ -217,24 +232,91 @@ class FollowThroughObserver:
         state["done"] = (
             cleanup.get("session") in _SESSION_FINAL
             and cleanup.get("worktree") in _WORKTREE_FINAL
+            and (cleanup.get("worktree") not in _WORKTREE_GONE or cleanup.get("attempts") == "reconciled")
         )
         self._save(launch_id, state)
         receipt["cleaned"].append({"launch_id": launch_id, **cleanup})
 
-    @staticmethod
-    def _exact_row(launch: Mapping[str, Any], rows: list[dict[str, Any]]) -> Optional[dict[str, Any]]:
-        """The launch's PR: exact attribution to its own worktree. A merged
-        row wins over an open one; then the newest number."""
-        matches = [
-            r for r in rows
-            if r.get("attribution") == "exact"
-            and str(r.get("worktree_id") or "") == str(launch.get("worktree_id") or "")
-        ]
-        if not matches:
-            return None
-        return sorted(
-            matches, key=lambda r: (r.get("state") != "merged", -int(r.get("number") or 0))
-        )[0]
+    def _select_pr(
+        self, launch: Mapping[str, Any], state: Mapping[str, Any], rows: list[dict[str, Any]],
+    ) -> tuple[Optional[dict[str, Any]], str]:
+        """The launch's own PR and a named state.
+
+        Once a PR is selected, its identity (number and URL) is kept on the
+        launch and only that PR is read again. To be selected, a PR must
+        have: the source's GitHub repository as its base repository, the
+        same repository as its head (never a fork), the launch's branch as
+        its head branch, and, when merged, a merge after the launch. A
+        closed (unmerged) PR is never selected. One candidate is selected;
+        several are ``pr_ambiguous`` and none is acted on."""
+        kept = state.get("pr") or {}
+        if kept.get("number") and kept.get("url"):
+            row = next(
+                (r for r in rows if r.get("number") == kept["number"] and r.get("url") == kept["url"]),
+                None,
+            )
+            if row is None:
+                return None, "pr_not_listed"
+            if row.get("state") == "closed":
+                return row, "pr_closed_unmerged"
+            return row, "pr_" + str(row.get("state") or "open")
+        repo = self._source_repo(str(launch.get("source_id") or ""))
+        if not repo:
+            return None, "repository_unknown"
+        branch = self._launch_branch(launch)
+        if not branch:
+            return None, "branch_unknown"
+        launched = _parse(launch.get("launched_at"))
+        candidates = []
+        for row in rows:
+            if str(row.get("repo") or "").lower() != repo:
+                continue
+            if row.get("cross_repository") or str(row.get("head_repo") or repo).lower() != repo:
+                continue
+            if str(row.get("head_ref") or "") != branch or row.get("state") == "closed":
+                continue
+            if row.get("state") == "merged":
+                merged = _parse(row.get("merged_at"))
+                if merged is None or launched is None or merged <= launched:
+                    continue
+            candidates.append(row)
+        if not candidates:
+            return None, "no_pr"
+        if len(candidates) > 1:
+            return None, "pr_ambiguous"
+        row = candidates[0]
+        return row, "pr_" + str(row.get("state") or "open")
+
+    def _source_repo(self, source_id: str) -> str:
+        """``owner/name`` of the source's GitHub origin, lower case; "" when
+        the clone has no GitHub origin."""
+        from .registry import normalize_git_url
+        from urllib.parse import urlsplit
+
+        source = self._registry.get(source_id)
+        if source is None or not source.primary_path:
+            return ""
+        run = self._git or _git_runner
+        try:
+            proc = run(["git", "-C", str(source.primary_path), "config", "--get", "remote.origin.url"])
+        except Exception:
+            return ""
+        if proc.returncode != 0:
+            return ""
+        url = urlsplit(normalize_git_url(str(proc.stdout or "").strip()))
+        parts = url.path.strip("/").split("/")
+        if (url.hostname or "") != "github.com" or len(parts) != 2:
+            return ""
+        return "/".join(parts).lower()
+
+    def _launch_branch(self, launch: Mapping[str, Any]) -> str:
+        source = self._registry.get(str(launch.get("source_id") or ""))
+        if source is None:
+            return ""
+        worktree = next(
+            (wt for wt in source.worktrees if wt.worktree_id == launch.get("worktree_id")), None
+        )
+        return str(getattr(worktree, "branch", "") or "") if worktree is not None else ""
 
     def _save(self, launch_id: str, state: dict[str, Any]) -> None:
         self._ledger.update(launch_id, follow_through=dict(state))
@@ -251,13 +333,17 @@ class FollowThroughObserver:
             return "no_origin"
         if kind not in CLOSABLE_KINDS:
             return "not_closable"
-        if mode == SECURE_MODE:
-            confirm = self._confirm_item(principal, launch, state, kind, item_id)
-            if confirm == "pending":
-                return "awaiting_confirm"
-            if confirm == "dismissed":
-                return "close_declined"
-            # done: the owner confirmed; close with the same evidence.
+        # Once the owner was asked, his answer decides, whatever the mode is
+        # now: a dismissal is final for this launch.
+        asked = self._confirm_status(launch)
+        if asked is None and mode == SECURE_MODE:
+            self._ask(principal, launch, state, kind, item_id)
+            return "awaiting_confirm"
+        if asked == "pending":
+            return "awaiting_confirm"
+        if asked == "dismissed":
+            return "close_declined"
+        # Confirmed, or Normal/YOLO with no question asked: close.
         return self._close(principal, kind, item_id, evidence)
 
     def _close(self, principal: Any, kind: str, item_id: str, evidence: dict[str, str]) -> str:
@@ -291,34 +377,35 @@ class FollowThroughObserver:
             return "origin_missing"
         return "linked"
 
-    def _confirm_item(
-        self, principal: Any, launch: Mapping[str, Any], state: dict[str, Any],
-        kind: str, item_id: str,
-    ) -> str:
-        """Secure: one Door item asks the owner. ``pending`` | ``done`` |
-        ``dismissed``. Found by its source ref, so a restart adds no second."""
-        source_ref = f"agent_launch:{launch['launch_id']}"
+    def _confirm_status(self, launch: Mapping[str, Any]) -> Optional[str]:
+        """The Secure question of this launch: None (never asked), or
+        ``pending`` | ``done`` | ``dismissed``. Found by its source ref."""
         with self._db._connection() as conn:
             row = conn.execute(
-                "SELECT id, status FROM action_items WHERE source_ref = ? ORDER BY created_at LIMIT 1",
-                (source_ref,),
+                "SELECT status FROM action_items WHERE source_ref = ? ORDER BY created_at LIMIT 1",
+                (f"agent_launch:{launch['launch_id']}",),
             ).fetchone()
         if row is None:
-            from ..services.door_service import DoorService
-            from ..services.follow_through_service import FollowThroughService
-
-            title = self._origin_title(kind, item_id) or f"{kind}:{item_id}"
-            number = ((state.get("pr") or {}).get("number")) or ""
-            task = f"Merged: confirm close: {title}" + (f" (PR #{number})" if number else "")
-            door = DoorService(FollowThroughService(self._db), None, None, None, db=self._db)  # type: ignore[arg-type]
-            door.add_item(principal, task, source_type="agent_launch", source_ref=source_ref)
-            return "pending"
+            return None
         status = str(row["status"] or "").lower()
-        if status == "done":
-            return "done"
-        if status == "dismissed":
-            return "dismissed"
-        return "pending"
+        return status if status in ("done", "dismissed") else "pending"
+
+    def _ask(
+        self, principal: Any, launch: Mapping[str, Any], state: Mapping[str, Any],
+        kind: str, item_id: str,
+    ) -> None:
+        """Secure: one Door item asks the owner to confirm the close."""
+        from ..services.door_service import DoorService
+        from ..services.follow_through_service import FollowThroughService
+
+        title = self._origin_title(kind, item_id) or f"{kind}:{item_id}"
+        number = ((state.get("pr") or {}).get("number")) or ""
+        task = f"Merged: confirm close: {title}" + (f" (PR #{number})" if number else "")
+        door = DoorService(FollowThroughService(self._db), None, None, None, db=self._db)  # type: ignore[arg-type]
+        door.add_item(
+            principal, task, source_type="agent_launch",
+            source_ref=f"agent_launch:{launch['launch_id']}",
+        )
 
     def _origin_title(self, kind: str, item_id: str) -> str:
         queries = {
@@ -341,13 +428,28 @@ class FollowThroughObserver:
             result["session"] = self._end_session(launch)
         path = self._worktree_path(launch)
         if result.get("worktree") not in _WORKTREE_FINAL:
-            result["worktree"] = self._remove_worktree(launch, path, merged_head)
-            if result["worktree"] == "worktree_removed":
-                self._attempts.mark_worktree_removed(str(launch.get("worktree_id") or ""))
+            if self._owns_worktree(launch):
+                result["worktree"] = self._remove_worktree(launch, path, merged_head)
+            else:
+                # A worktree the launch did not create is the owner's: kept.
+                result["worktree"] = "worktree_kept_not_ours"
+        if result["worktree"] in _WORKTREE_GONE and result.get("attempts") != "reconciled":
+            # Idempotent, and before the launch can read as done: a sweep
+            # that stopped after the removal reconciles here on the next one.
+            self._attempts.mark_worktree_removed(str(launch.get("worktree_id") or ""))
+            result["attempts"] = "reconciled"
         if result.get("session") in _SESSION_FINAL and result.get("gate") not in ("released", "not_armed"):
             # No agent runs there any more: the launch's own hold goes.
             result["gate"] = self._release_gate(path, str(launch.get("session") or ""))
         return result
+
+    @staticmethod
+    def _owns_worktree(launch: Mapping[str, Any]) -> bool:
+        """The launch created its worktree: its worktree.create command ran
+        and the launch did not fail at that stage."""
+        created = (launch.get("commands") or {}).get("worktree_create")
+        failed_stage = (launch.get("failure") or {}).get("stage")
+        return bool(created) and failed_stage != "worktree_create"
 
     def _end_session(self, launch: Mapping[str, Any]) -> str:
         from .. import coder_factory, coder_steering
@@ -434,6 +536,13 @@ class FollowThroughObserver:
         return "released"
 
 
+def _git_runner(argv: list[str]) -> Any:
+    """The launch engine's own git read (one ledgered subprocess site)."""
+    from .factory_launch import _default_git_runner
+
+    return _default_git_runner(argv)
+
+
 def default_follow_through(db: Any) -> FollowThroughObserver:
     """The production observer: the launch ledger, the registry, the shared
     PR receipts cache and the Work attempts of this hub."""
@@ -455,7 +564,7 @@ def default_follow_through(db: Any) -> FollowThroughObserver:
 
 __all__ = [
     "CLOSABLE_KINDS",
-    "FOLLOWED_STATES",
+    "UNLAUNCHED_STATES",
     "FollowThroughObserver",
     "default_follow_through",
 ]
