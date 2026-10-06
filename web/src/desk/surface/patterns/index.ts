@@ -48,6 +48,7 @@ export {
   type ParkOutcome,
   type ParkedRow,
 } from "./Parked";
+export { FoundBy, foundByWord, foundByDay, FOUND_BY_WORD } from "./FoundBy";
 export {
   StandingPage,
   RefTokens,

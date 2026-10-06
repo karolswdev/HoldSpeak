@@ -287,6 +287,16 @@
         "value": "rgba(168, 110, 74, 0.12)"
       },
       {
+        "name": "--mark-bg",
+        "value": "#ffe14d",
+        "doc": "⌘K two-line hit (2026-10-05): the matched words in a memory snippet; 14.7:1 with --mark-fg, on the plain row and on the selected plate"
+      },
+      {
+        "name": "--mark-fg",
+        "value": "#0e0f13",
+        "doc": "⌘K two-line hit (2026-10-05): the ink of the matched words"
+      },
+      {
         "name": "--accent-glow",
         "value": "rgba(168, 110, 74, 0.28)"
       },

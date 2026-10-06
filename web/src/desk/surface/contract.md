@@ -532,6 +532,32 @@ the bar and the rate go to the next line when they do not fit beside it
 (the rate keeps to the right). Only a label wider than the whole row
 ellipsizes. No prop changed.
 
+## FoundBy (⌘K memory results, 2026-10-05)
+
+The retriever that found a memory hit, as one caption token. Born on the
+⌘K palette, option B "Two-line hit" (canvas YDTpkaJqFs3hyrZ4g581Mx §3,
+owner ratified 2026-10-05).
+
+- `origin: unknown` — the hit's `retrieval_origin` from
+  `GET /api/memory/search`. The word: `lexical` → `KEYWORD`, `vector` →
+  `MEANING`, `time` → `TIME`, `entity` → `NAME`, `relationship` → `LINK`.
+  A hit carries one origin (the first retriever that found it), so one
+  token. Any other origin (`observation`, a new retriever) renders nothing.
+- The geometry of `surface-token[data-chip]` without the well: a hairline
+  box. `MEANING` has the ember border and `--text` ink. On a selected or
+  hovered command-deck row the token takes the row's ink.
+- `foundByWord(origin)` gives the word or null; `foundByDay(at)` gives the
+  hit's day (`10-01` this year, `2025-10-01` another year, empty when not
+  a time).
+
+## Command deck: the selected row's plate (⌘K canvas, 2026-10-05)
+
+A species fix, not a face fix. The selected, hovered or focused
+`desk-deck-row` is painted on `--accent-ink` (5.24:1 with
+`--text-on-accent`), not `--accent` (3.79:1). The matched words of a
+snippet use `--mark-bg` / `--mark-fg` (14.7:1), which read on the plain
+row and on the selected plate.
+
 ## StandingPage + RefTokens (memory on the Desk, canvas section 2, option B)
 
 Ratified 2026-10-05 ("Where the work lives"). A standing answer memory

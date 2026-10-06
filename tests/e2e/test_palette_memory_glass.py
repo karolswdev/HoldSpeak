@@ -140,7 +140,9 @@ class TestPaletteFindsAWordInsideAMeeting:
                            onTop: !!top && !!top.closest(sel), noScrollX: document.documentElement.scrollWidth <= innerWidth,
                            height: Math.round(r.height) }; }""", ROW)
                 assert facts["inView"] and facts["inShelf"] and facts["onTop"] and facts["noScrollX"], facts
-                assert facts["height"] == 26, facts   # the deck row species, unchanged
+                # ⌘K option B (ratified 2026-10-05): a MEMORY row is two lines
+                # (title, then the snippet and FoundBy), taller than the 26 px ledger row.
+                assert facts["height"] > 26, facts
                 page.screenshot(path=str(SHOTS / f"palette-memory-{width}.png"))
 
                 self._press(page, row, width)

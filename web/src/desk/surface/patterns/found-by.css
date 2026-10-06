@@ -1,0 +1,15 @@
+/* ── FoundBy: the retriever that found a memory hit (⌘K option B) ──
+   The chip geometry of surface-token[data-chip], without the well: a
+   hairline box around the word. MEANING (the vector retriever, the one
+   the keyword box cannot do) carries the ember border. */
+.surface-token.surface-foundby[data-chip] {
+  min-height: 0;
+  padding: 3px 5px;
+  background: transparent;
+  box-shadow: none;
+  line-height: 1;
+}
+.surface-token.surface-foundby[data-by="MEANING"] {
+  border-color: var(--accent);
+  color: var(--text);
+}
