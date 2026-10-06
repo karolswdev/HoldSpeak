@@ -177,6 +177,16 @@ _CALL_RULES = (
 # independent so harmless edits above a call do not create false drift.
 _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
     (
+        "holdspeak/services/agent_hand_preview.py",
+        "LaunchReads.launcher.alive",
+        "run",
+        1,
+    ): (
+        "Conductor F1: the side-effect-free launch preview's liveness probe, "
+        "`tmux has-session -t <session>`: a read of tmux state that changes nothing "
+        "(the preview writes no file, binds no kernel and announces nothing)"
+    ),
+    (
         "holdspeak/mcp/server.py",
         "forward_to_hub",
         "urlopen",
