@@ -981,6 +981,49 @@ class ThreadService:
             "receipt_id": result.receipt_id,
         }
 
+    # ── Agent (Conductor K2) ────────────────────────────────────────
+
+    async def agent_from_thread(
+        self,
+        principal: Principal,
+        thread_id: str,
+        text: str,
+        *,
+        profile: Optional[str] = None,
+        hand_service: Any = None,
+    ) -> dict[str, Any]:
+        """Execute ``/agent <text>``: file the text as an action item the way
+        ``/todo`` does, then hand that item to a coding agent.
+
+        The owner typed the command, so the hand-off is his press (the
+        ``agent.hand`` tool itself is egress and never offered to a model).
+        A refused hand-off keeps the item; the refusal comes back by name.
+        """
+        filed = await self.todo_from_thread(principal, thread_id, text)
+        item = filed.get("result") if isinstance(filed.get("result"), dict) else {}
+        item_id = str((item or {}).get("id") or "")
+        if filed.get("status") != "ok" or not item_id:
+            return {"status": filed.get("status") or "failed", "todo": filed, "hand": None}
+        if hand_service is None:
+            from .agent_hand_service import default_agent_hand_service
+
+            hand_service = default_agent_hand_service(self._db)
+        try:
+            handed = await asyncio.to_thread(
+                hand_service.hand, principal, "action", item_id, profile=profile,
+            )
+        except Exception as exc:
+            reason = getattr(exc, "reason", None)
+            if reason is None:
+                raise
+            handed = {"status": "refused", "error": reason, "detail": str(exc)}
+        return {
+            "status": "ok" if handed.get("status") == "launched" else str(handed.get("status")),
+            "item": {"kind": "action", "id": item_id},
+            "todo": filed,
+            "hand": handed,
+        }
+
     def _run_streaming_turn(
         self,
         *,

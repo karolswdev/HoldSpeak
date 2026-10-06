@@ -486,6 +486,29 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to add todo")
 
+    @router.post("/api/threads/{thread_id}/agent")
+    async def api_agent(thread_id: str, request: Request) -> Any:
+        """``/agent <text>``: file the text as an action item, then hand it
+        to a coding agent (Conductor K2)."""
+        body = await _json_body(request)
+        text = str((body or {}).get("text", "")).strip()
+        if not text:
+            return JSONResponse(
+                {"error": "agent_empty", "message": "Text is required"},
+                status_code=400,
+            )
+        try:
+            result = await _service().agent_from_thread(
+                _principal(request), thread_id, text,
+                profile=(body or {}).get("profile") or None,
+            )
+            status = 202 if result.get("status") == "ok" else 409
+            return JSONResponse(result, status_code=status)
+        except (ServiceError, ValidationError) as exc:
+            return _error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to hand to agent")
+
     @router.delete("/api/threads/{thread_id}/annotations/{part_id}")
     async def api_delete_annotation(thread_id: str, part_id: str, request: Request) -> Any:
         """Delete a draft annotation part."""

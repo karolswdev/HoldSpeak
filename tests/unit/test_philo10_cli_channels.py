@@ -804,7 +804,8 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
 
     blocking = {d.name for d in operations.DESCRIPTORS if d.blocking_io}
     assert blocking == {"channel.send", "channel.save_destination", "nudge.send", "connection.recheck",
-                        "channel.save_email_key", "channel.save_slack_webhook", "channel.check_destination"}
+                        "channel.save_email_key", "channel.save_slack_webhook", "channel.check_destination",
+                        "agent.hand"}
     # The secret saves are HTTP only, in no MCP palette, and config by their
     # declarations: the owner's press, owner only, with transport-held secrets.
     by_name = {d.name: d for d in operations.DESCRIPTORS}
@@ -816,7 +817,7 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
     slack = by_name["channel.save_slack_webhook"]
     assert slack.owner_press and slack.owner_only and slack.held == ("webhook_url",)
     assert "channel.save_slack_webhook" not in TOOL_AUTHORITY
-    for name in ("channel.send", "nudge.send"):
+    for name in ("channel.send", "nudge.send", "agent.hand"):
         assert TOOL_AUTHORITY[name] == EGRESS and name in owner_press_operations() and name in blocking, name
     # The kernel's steward-child refusal reads the SAME flag the descriptors declare (no second list).
     assert owner_press_operations() == frozenset(d.name for d in operations.DESCRIPTORS if d.owner_press)

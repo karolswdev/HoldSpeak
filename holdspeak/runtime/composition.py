@@ -113,6 +113,7 @@ class RuntimeServices:
     connections_service: Optional[Any] = None
     suggested_source_service: Optional[Any] = None  # PHILO-9-02: project_service=
     channel_service: Optional[Any] = None           # PHILO-10-01: the Send
+    agent_hand_service: Optional[Any] = None        # Conductor K2: Hand to agent
 
     # --- operations ------------------------------------------------------
     cadence_service: Optional[Any] = None          # Config.load().cadence
@@ -523,6 +524,7 @@ def install_from_web_context(
     from holdspeak.services.refinement_application_service import RefinementApplicationService
     from holdspeak.services.kernel_read_service import KernelReadService
     from holdspeak.services.memory_service import MemoryService
+    from holdspeak.services.agent_hand_service import default_agent_hand_service
 
     def _intel_notify(topic: str, value: Any) -> None:
         if services.broadcast is not None:
@@ -543,6 +545,10 @@ def install_from_web_context(
         "kernel_read_service": lambda: KernelReadService(resolved_db),
         # Memory slice 4: memory.observations.read binds to it.
         "memory_service": lambda: MemoryService(resolved_db, observer=resolved_observer),
+        # Conductor K2: agent.hand binds to it (the one shared launch driver).
+        "agent_hand_service": lambda: default_agent_hand_service(
+            resolved_db, delivery_service=getattr(ctx, "delivery_service", None)
+        ),
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)
