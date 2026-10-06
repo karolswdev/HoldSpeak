@@ -13,7 +13,7 @@ import threading
 import time
 from pathlib import Path
 from dataclasses import dataclass
-from datetime import datetime
+from holdspeak.timestamps import aware, local_now
 from typing import Any, Callable, Optional, TYPE_CHECKING
 
 from .logging_config import get_logger
@@ -1625,8 +1625,8 @@ class MeetingWebServer:
             return None
 
         ended_at = _parse_iso_datetime(state.get("ended_at"))
-        end = ended_at or datetime.now()
-        return _format_duration((end - started_at).total_seconds())
+        end = aware(ended_at) if ended_at else local_now()
+        return _format_duration((end - aware(started_at)).total_seconds())
 
     async def _duration_loop(self) -> None:
         """Broadcast duration updates every second."""

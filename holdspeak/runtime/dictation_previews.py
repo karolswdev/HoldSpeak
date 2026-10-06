@@ -11,7 +11,7 @@ every caller keeps the exact same methods on the runtime.
 
 from __future__ import annotations
 
-from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Optional
 
 from ..logging_config import get_logger
@@ -34,7 +34,7 @@ class DictationPreviewMixin:
         self.dictation_previews.clear()
         self.dictation_previews[token] = {
             "text": text,
-            "created_at": datetime.now().isoformat(),
+            "created_at": utc_now_iso(),
         }
         if self.server is not None:
             try:

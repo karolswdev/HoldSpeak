@@ -10,6 +10,7 @@ parent/child retrieval patterns; it does not extract or invent relationships.
 
 from __future__ import annotations
 
+from holdspeak.timestamps import sql_window
 import json
 import re
 from datetime import datetime, timedelta
@@ -1006,33 +1007,45 @@ class MemoryRepository(BaseRepository):
             # there would over-count, hand back a page shorter than `limit`, and
             # make grounding book withheld sources as mere overflow.
             excluded |= self._promoted_refs(conn)
+            # These stores mix old local and new UTC text: the SQL bound is
+            # padded, then each row's instant decides (``_in_time``).
+            sql_lo, sql_hi = sql_window(start, end)
+            sql_lo = sql_lo if start else None
+            sql_hi = sql_hi if end else None
+
+            def timed(found: list[dict[str, Any]]) -> list[dict[str, Any]]:
+                return [
+                    row for row in found
+                    if self._in_time(str(row["kind"]), str(row["occurred_at"] or ""), start, end)
+                ]
+
             if "decision" in keyword_kinds:
-                by_kind["decision"] = self._decision_rows(
-                    conn, expression, project, start, end
-                )
+                by_kind["decision"] = timed(self._decision_rows(
+                    conn, expression, project, sql_lo, sql_hi
+                ))
             if "artifact" in keyword_kinds:
-                by_kind["artifact"] = self._artifact_rows(
-                    conn, expression, project, start, end
-                )
+                by_kind["artifact"] = timed(self._artifact_rows(
+                    conn, expression, project, sql_lo, sql_hi
+                ))
             if "meeting" in keyword_kinds:
-                by_kind["meeting"] = self._meeting_rows(
-                    conn, expression, project, start, end
-                )
+                by_kind["meeting"] = timed(self._meeting_rows(
+                    conn, expression, project, sql_lo, sql_hi
+                ))
                 # The summary and topics are part of what the meeting said.
                 # A meeting the transcript pass already found keeps that hit.
                 found = {row["source_ref"] for row in by_kind["meeting"]}
                 by_kind["meeting"].extend(
                     row
-                    for row in self._meeting_summary_rows(
-                        conn, terms, project, start, end
-                    )
+                    for row in timed(self._meeting_summary_rows(
+                        conn, terms, project, sql_lo, sql_hi
+                    ))
                     if row["source_ref"] not in found
                 )
                 by_kind["meeting"].sort(
                     key=lambda row: (float(row["bm25"]), str(row["source_ref"]))
                 )
             if "note" in keyword_kinds:
-                by_kind["note"] = self._note_rows(conn, expression, project, start, end)
+                by_kind["note"] = timed(self._note_rows(conn, expression, project, sql_lo, sql_hi))
             if "thread" in keyword_kinds:
                 by_kind["thread"] = self._thread_rows(
                     conn, expression, project, start, end
@@ -1923,18 +1936,16 @@ class MemoryRepository(BaseRepository):
     def _in_time(kind: str, occurred_at: str, start: Optional[str], end: Optional[str]) -> bool:
         if not start and not end:
             return True
-        if kind in _INSTANT_TIME_KINDS:
-            # Compare the instants, never the strings: 15:00Z and
-            # 09:00-06:00 are one time.
-            from ..memory.timeparse import instant
+        # Compare the instants, never the strings: 15:00Z and 09:00-06:00 are
+        # one time, and every store now mixes old local and new UTC stamps.
+        from ..memory.timeparse import instant
 
-            at = instant(occurred_at)
-            low = instant(start) if start else None
-            high = instant(end) if end else None
-            if at is None or (start and low is None) or (end and high is None):
-                return False
-            return not ((low and at < low) or (high and at > high))
-        return not ((start and occurred_at < start) or (end and occurred_at > end))
+        at = instant(occurred_at)
+        low = instant(start) if start else None
+        high = instant(end) if end else None
+        if at is None or (start and low is None) or (end and high is None):
+            return False
+        return not ((low and at < low) or (high and at > high))
 
     @staticmethod
     def _normalize_kinds(kinds: Optional[Iterable[str]]) -> tuple[str, ...]:
@@ -2475,10 +2486,9 @@ class MemoryRepository(BaseRepository):
             row = cls._load_related_row(conn, source_ref, project=project)
             if row is None:
                 continue
-            occurred_at = str(row["occurred_at"] or "")
-            if start and occurred_at < start:
-                continue
-            if end and occurred_at > end:
+            # Instants, not strings (an offset stamp and a UTC one are one time).
+            # Instants, not strings (an offset stamp and a UTC one are one time).
+            if not cls._in_time(str(row["kind"]), str(row["occurred_at"] or ""), start, end):
                 continue
             kind = str(row["kind"])
             kind_ranks[kind] = kind_ranks.get(kind, 0) + 1

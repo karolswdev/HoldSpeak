@@ -7,6 +7,7 @@ injectable so the default test suite never makes a real outbound call.
 """
 from __future__ import annotations
 
+from holdspeak.timestamps import local_wall
 import json
 import os
 import platform
@@ -223,9 +224,8 @@ def probe_runtime(
         if last_seen is None:
             return {"ok": False, "status": "unreachable", "backend": "mesh_relay",
                     "detail": f"Mesh node '{effective.node}' is offline (no worker has polled)."}
-        from datetime import datetime
 
-        age = (datetime.now() - last_seen).total_seconds()
+        age = (local_wall() - last_seen).total_seconds()
         if age > 15:
             return {"ok": False, "status": "unreachable", "backend": "mesh_relay",
                     "detail": f"Mesh node '{effective.node}' is offline (last seen {int(age)}s ago)."}

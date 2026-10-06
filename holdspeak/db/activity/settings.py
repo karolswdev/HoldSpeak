@@ -5,6 +5,7 @@ Bodies moved verbatim from db/activity.py (HS-79-01, the Phase-63 discipline).
 from __future__ import annotations
 
 from datetime import datetime
+from holdspeak.timestamps import parse_wall, utc_iso, utc_now_iso
 from typing import Optional, Any
 
 from ..models import ActivityImportCheckpoint
@@ -28,9 +29,9 @@ class ActivitySettingsMixin:
             raise ValueError("source_browser is required")
         clean_profile = str(source_profile or "").strip()
         clean_path_hash = str(source_path_hash or "").strip()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         imported_iso = (
-            last_imported_at.isoformat()
+            utc_iso(last_imported_at)
             if isinstance(last_imported_at, datetime)
             else now_iso
         )
@@ -131,7 +132,7 @@ class ActivitySettingsMixin:
                         (id, enabled, retention_days, updated_at)
                     VALUES (1, 1, 30, ?)
                     """,
-                    (datetime.now().isoformat(),),
+                    (utc_now_iso(),),
                 )
                 row = conn.execute(
                     """
@@ -170,7 +171,7 @@ class ActivitySettingsMixin:
                     retention_days = excluded.retention_days,
                     updated_at = excluded.updated_at
                 """,
-                (int(next_enabled), int(next_retention), datetime.now().isoformat()),
+                (int(next_enabled), int(next_retention), utc_now_iso()),
             )
         return self.get_activity_privacy_settings()
 
@@ -194,7 +195,7 @@ class ActivitySettingsMixin:
                 VALUES (?, ?)
                 ON CONFLICT(nudge_key) DO UPDATE SET dismissed_at = excluded.dismissed_at
                 """,
-                (clean, datetime.now().isoformat()),
+                (clean, utc_now_iso()),
             )
 
     def _row_to_activity_checkpoint(self, row: sqlite3.Row) -> ActivityImportCheckpoint:
@@ -204,12 +205,12 @@ class ActivitySettingsMixin:
             source_path_hash=str(row["source_path_hash"] or ""),
             last_visit_raw=row["last_visit_raw"],
             last_imported_at=(
-                datetime.fromisoformat(row["last_imported_at"])
+                parse_wall(row["last_imported_at"])
                 if row["last_imported_at"]
                 else None
             ),
             last_error=row["last_error"],
             enabled=bool(row["enabled"]),
-            created_at=datetime.fromisoformat(row["created_at"]),
-            updated_at=datetime.fromisoformat(row["updated_at"]),
+            created_at=parse_wall(row["created_at"]),
+            updated_at=parse_wall(row["updated_at"]),
         )

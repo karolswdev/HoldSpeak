@@ -1,7 +1,7 @@
 """Admitted manual Workbench execution."""
 from __future__ import annotations
 import asyncio, hashlib, json, time, uuid
-from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any
 from ..kernel.prompt_adapter import CanonicalPromptAdapter
 from ..principals import Principal, PrincipalKind
@@ -226,7 +226,7 @@ class WorkbenchRunner:
             return self._replayed_result(parent.operation_id)
         # This is coordination metadata only; its receipt links are always retained.
         with self.db._connection() as conn:
-            conn.execute("INSERT INTO workbench_runs(id,workbench_id,started_at,parent_operation_id,parent_receipt_id,child_links_json,status) VALUES(?,?,?,?,'','[]','running')",(run_id,workbench_id,datetime.now().isoformat(),parent.operation_id))
+            conn.execute("INSERT INTO workbench_runs(id,workbench_id,started_at,parent_operation_id,parent_receipt_id,child_links_json,status) VALUES(?,?,?,?,'','[]','running')",(run_id,workbench_id,utc_now_iso(),parent.operation_id))
         # HS-132-03: the run is real from here — say so on the one bus.
         from ..workbench_conductor import emit_item_claimed, emit_item_done, emit_item_failed, emit_run_start
         emit_run_start(workbench_id=workbench_id, run_id=run_id, item_count=len(items))
@@ -250,7 +250,7 @@ class WorkbenchRunner:
                     return self._adopt_terminal(run_id,parent)
                 # Claim and epoch validation share one transaction. A cancellation
                 # that wins cannot leave this item claimed without a runnable child.
-                now = datetime.now().isoformat()
+                now = utc_now_iso()
                 with self.db._connection() as conn:
                     conn.execute("BEGIN IMMEDIATE")
                     claimed = conn.execute(
@@ -318,7 +318,7 @@ class WorkbenchRunner:
                     if outcome.outcome in {"cancelled", "indeterminate"} or self._winner(parent) is not None:
                         self._release_unpublished_claim(item.id)
                         return self._adopt_terminal(run_id,parent)
-                    failed+=1; self.db.workbench_items.upsert(item_id=item.id,workbench_id=workbench_id,title=item.title,body=item.body,priority=item.priority,status="failed",result=f"Error: {outcome.error or outcome.outcome}",completed_at=datetime.now().isoformat())
+                    failed+=1; self.db.workbench_items.upsert(item_id=item.id,workbench_id=workbench_id,title=item.title,body=item.body,priority=item.priority,status="failed",result=f"Error: {outcome.error or outcome.outcome}",completed_at=utc_now_iso())
                     emit_item_failed(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items),error=str(outcome.error or outcome.outcome))
                     continue
                 check=self.broker.projection_stager.finalize(iid)

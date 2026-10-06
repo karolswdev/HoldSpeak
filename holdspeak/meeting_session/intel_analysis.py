@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import threading
 import uuid
-from datetime import datetime
+from holdspeak.timestamps import local_wall, utc_iso
 from typing import Any
 
 from ..logging_config import get_logger
@@ -141,7 +141,7 @@ class IntelAnalysisMixin:
             self._deferred_intel_reason = str(error)
             self._set_intel_status("queued", f"Deferred intel required: {error}")
         else:
-            self._set_intel_status("error", str(error), completed_at=datetime.now())
+            self._set_intel_status("error", str(error), completed_at=local_wall())
 
     def _apply_live_window(self, result: Any, *, final: bool) -> bool:
         """Publish one earned live-analysis result into meeting state.
@@ -194,7 +194,7 @@ class IntelAnalysisMixin:
                     if not final
                     else "Final meeting intelligence ready."
                 )
-                self._state.intel_completed_at = datetime.now()
+                self._state.intel_completed_at = local_wall()
 
         # Durable-before-observable: persist the real winning live result and
         # create its unread revision before any frame or callback can announce it.
@@ -204,7 +204,7 @@ class IntelAnalysisMixin:
             db = get_database()
             db.meetings.save_meeting(saved_state)
             completion_revision = (
-                saved_state.intel_completed_at.isoformat()
+                utc_iso(saved_state.intel_completed_at)
                 if saved_state.intel_completed_at is not None
                 else None
             )

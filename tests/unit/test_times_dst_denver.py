@@ -202,3 +202,92 @@ def test_upgrade_leaves_calendar_linked_and_utc_schedules_alone(tmp_path):
     _boot_conductor(db, datetime(2026, 10, 5, 16, 0, tzinfo=MDT))
     assert db.scheduled_recordings.get(linked).next_fire_at == linked_fire
     assert db.scheduled_recordings.get(utc.id).next_fire_at == utc_fire
+
+
+# -- the upgrade, v2: schedules EDITED under the old code (fire computed in
+# UTC at the edit; the edit time is not stored, so v1 cannot find them) --
+
+def _old_style_edit(db, sid: str, *, edited: datetime, cron: str) -> float:
+    """The OLD update path: ``nf = next_cron_fire(effective_cron)`` at the edit."""
+    old_fire = next_cron_fire(cron, after=edited.astimezone(timezone.utc))
+    db.scheduled_recordings.update(sid, cron_expr=cron, next_fire_at=old_fire)
+    return old_fire
+
+
+def _clear_v1_milestone_state(db):
+    """A desk that already ran the #778 code: the v1 repair is spent."""
+    db.milestones.mark("scheduled_recordings.zone_fire_repair.v1")
+
+
+def test_upgrade_v2_repairs_a_recurring_schedule_edited_under_the_old_code(tmp_path):
+    from holdspeak.db.core import Database
+
+    db = Database(tmp_path / "holdspeak.db")
+    sid, _ = _old_style_schedule(
+        db, created=datetime(2026, 10, 5, 15, 0, tzinfo=MDT), cron="0 9 * * *", one_shot=False)
+    # Edited Tuesday 05:00 Denver to 09:30: the old code stored 09:30 UTC on
+    # Wednesday (03:30 Denver).
+    old_fire = _old_style_edit(
+        db, sid, edited=datetime(2026, 10, 6, 5, 0, tzinfo=MDT), cron="30 9 * * *")
+    assert datetime.fromtimestamp(old_fire, tz=MDT) == datetime(2026, 10, 7, 3, 30, tzinfo=MDT)
+    _clear_v1_milestone_state(db)
+
+    _boot_conductor(db, datetime(2026, 10, 6, 6, 0, tzinfo=MDT))
+    sched = db.scheduled_recordings.get(sid)
+    assert sched.enabled is True and sched.state == "idle"
+    assert sched.next_fire_at == datetime(2026, 10, 6, 9, 30, tzinfo=MDT).timestamp()
+
+    # Runs once: a row that looks old-style later is not touched.
+    db.scheduled_recordings.update(sid, next_fire_at=old_fire)
+    _boot_conductor(db, datetime(2026, 10, 6, 7, 0, tzinfo=MDT))
+    assert db.scheduled_recordings.get(sid).next_fire_at == old_fire
+
+
+def test_upgrade_v2_keeps_an_edited_one_shot_pending_before_its_local_time(tmp_path):
+    from holdspeak.db.core import Database
+
+    db = Database(tmp_path / "holdspeak.db")
+    sid, _ = _old_style_schedule(
+        db, created=datetime(2026, 10, 1, 12, 0, tzinfo=MDT), cron="0 9 2 10 *")
+    # Edited on the 5th to the 7th at 09:00 Denver; stored as 03:00 Denver.
+    _old_style_edit(db, sid, edited=datetime(2026, 10, 5, 12, 0, tzinfo=MDT), cron="0 9 7 10 *")
+    _clear_v1_milestone_state(db)
+
+    # 04:00 Denver on the 7th: the old fire (03:00) is past, the meeting is not.
+    _boot_conductor(db, datetime(2026, 10, 7, 4, 0, tzinfo=MDT))
+    sched = db.scheduled_recordings.get(sid)
+    assert sched.enabled is True and sched.state == "idle"
+    assert sched.next_fire_at == datetime(2026, 10, 7, 9, 0, tzinfo=MDT).timestamp()
+
+
+def test_upgrade_v2_still_reports_an_edited_fire_that_is_truly_past(tmp_path):
+    from holdspeak.db.core import Database
+
+    db = Database(tmp_path / "holdspeak.db")
+    sid, _ = _old_style_schedule(
+        db, created=datetime(2026, 10, 1, 12, 0, tzinfo=MDT), cron="0 9 2 10 *")
+    _old_style_edit(db, sid, edited=datetime(2026, 10, 5, 12, 0, tzinfo=MDT), cron="0 9 7 10 *")
+    _clear_v1_milestone_state(db)
+
+    _boot_conductor(db, datetime(2026, 10, 7, 10, 0, tzinfo=MDT))
+    sched = db.scheduled_recordings.get(sid)
+    assert sched.enabled is False and sched.last_outcome == "missed"
+
+
+def test_upgrade_v2_leaves_a_zone_correct_schedule_alone(tmp_path):
+    from holdspeak.services.scheduled_recording_service import ScheduledRecordingService
+    from holdspeak.db.core import Database
+
+    db = Database(tmp_path / "holdspeak.db")
+    _clear_v1_milestone_state(db)
+    sched = db.scheduled_recordings.create(
+        title="Standup", cron_expr="30 9 * * *", tz="America/Denver", one_shot=False,
+        duration_minutes=15, enabled=True,
+        next_fire_at=next_cron_fire_in_zone(
+            "30 9 * * *", "America/Denver",
+            now_epoch=datetime(2026, 10, 6, 6, 0, tzinfo=MDT).timestamp()),
+    )
+    before = db.scheduled_recordings.get(sched.id).next_fire_at
+    _boot_conductor(db, datetime(2026, 10, 6, 6, 0, tzinfo=MDT))
+    assert db.scheduled_recordings.get(sched.id).next_fire_at == before
+    assert ScheduledRecordingService  # the new service writes zone-correct fires

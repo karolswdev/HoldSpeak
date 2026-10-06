@@ -6,7 +6,7 @@ import shutil
 import os
 import sqlite3
 import threading
-from datetime import datetime
+from holdspeak.timestamps import local_now
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -73,7 +73,7 @@ def read_schema_version(db_path: Path) -> Optional[int]:
 
 def _timestamped_backup_path(db_path: Path) -> Path:
     """A non-clobbering, timestamped backup path next to the database."""
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    timestamp = local_now().strftime("%Y%m%d-%H%M%S")
     backup_path = db_path.with_name(f"{db_path.name}.{timestamp}.bak")
     counter = 1
     while backup_path.exists():

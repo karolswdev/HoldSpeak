@@ -49,8 +49,12 @@ describe("PHILO-6-02 round 2: a failed operation never reads as a success", () =
     expect(text).not.toMatch(IMPLEMENTATION);
     // The rows not triaged yet: the failures, the recorded meeting, and the
     // two members of the one needs-you rule the real producer now writes
-    // (no engine; the failed summary). The fold holds the rest.
-    expect(text).toContain("BRIEF · 8 THINGS WAITING");
+    // (no engine; the failed summary). The fold holds the rest. The head
+    // says the hub's one needs-you number (none mocked here: no count).
+    const shown = screen.getAllByTestId("arrival-brief-row").length;
+    const folded = Number(screen.queryByTestId("arrival-brief-more")?.textContent?.match(/^(\d+) more$/)?.[1] ?? 0);
+    expect(shown + folded).toBe(8);
+    expect(text).not.toContain("THINGS WAITING");
   });
 
   it("the Brief view (the fold's destination) shows no success line and no implementation word", async () => {

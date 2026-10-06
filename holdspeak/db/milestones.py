@@ -9,7 +9,7 @@ It stores + reads only — keys are short, opaque strings (no payload, no secret
 """
 from __future__ import annotations
 
-from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Optional
 
 from ..logging_config import get_logger
@@ -35,7 +35,7 @@ class MilestoneRepository(BaseRepository):
         clean = str(key or "").strip()
         if not clean:
             raise ValueError("milestone key is required")
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """

@@ -161,8 +161,10 @@ class TelegramSurface:
             return {"action": "missing"}
         key = f"{chat_id}:{loop_id}"
         if act == "snooze":
-            from datetime import datetime, timedelta
-            self._db.cadence.snooze(loop_id, (datetime.now() + timedelta(hours=24)).isoformat())
+            from datetime import timedelta
+
+            from holdspeak.timestamps import utc_iso, utc_now
+            self._db.cadence.snooze(loop_id, utc_iso(utc_now() + timedelta(hours=24)))
             self._answer_callback(cb_id, "Snoozed 1 day.")
         elif act == "done":
             self._db.cadence.set_status(loop_id, "closed")

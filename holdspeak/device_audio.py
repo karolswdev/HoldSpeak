@@ -27,6 +27,7 @@ import threading
 from collections import deque
 from dataclasses import dataclass, replace
 from datetime import datetime
+from holdspeak.timestamps import utc_now
 from pathlib import Path
 from typing import Any, Literal, Optional, TYPE_CHECKING
 
@@ -282,7 +283,7 @@ class DeviceRegistry:
         if not label:
             raise ValueError("label must be non-empty")
 
-        now = datetime.now()
+        now = utc_now()
         with self._lock:
             if device_id in self._descriptors:
                 raise DeviceRegistryError(
@@ -363,7 +364,7 @@ class DeviceRegistry:
         No-op (logged at debug) for an unknown id so a racing tail
         message from a just-unregistered device does not blow up.
         """
-        now = datetime.now()
+        now = utc_now()
         with self._lock:
             descriptor = self._descriptors.get(device_id)
             if descriptor is None:
@@ -387,7 +388,7 @@ class DeviceRegistry:
         Phase 17 keeps this intentionally in-memory: it is live device
         status, not a historical battery/RSSI time series.
         """
-        now = datetime.now()
+        now = utc_now()
         with self._lock:
             descriptor = self._descriptors.get(device_id)
             if descriptor is None:

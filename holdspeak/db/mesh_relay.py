@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime, timedelta
+from holdspeak.timestamps import local_wall, parse_wall, utc_iso
 from typing import Any, Optional
 
 
@@ -32,7 +33,7 @@ DEFAULT_DEADLINE_SECONDS = 120
 
 
 def _iso(dt: datetime) -> str:
-    return dt.isoformat()
+    return utc_iso(dt)
 
 
 class MeshRelayRepository(BaseRepository):
@@ -66,7 +67,7 @@ class MeshRelayRepository(BaseRepository):
         replacement credential claim work addressed to its predecessor — the
         claim below matches both persisted values or finds nothing.
         """
-        now = now or datetime.now()
+        now = now or local_wall()
         # v52 has no dedicated relay-envelope column. The queue is hub-local,
         # so preserve the transport-only metadata in its existing opaque task
         # field rather than changing the persisted schema contract.
@@ -112,7 +113,7 @@ class MeshRelayRepository(BaseRepository):
 
     def get(self, job_id: str, *, now: Optional[datetime] = None) -> Optional[MeshRelayJob]:
         """Read a job, enforcing deadline expiry first."""
-        now = now or datetime.now()
+        now = now or local_wall()
         self._expire_overdue(now)
         with self._connection() as conn:
             row = conn.execute(
@@ -125,7 +126,7 @@ class MeshRelayRepository(BaseRepository):
     def claim_next(self, node: str, *, now: Optional[datetime] = None) -> Optional[MeshRelayJob]:
         """The worker's poll: stamp liveness, expire the overdue, claim the
         oldest queued job addressed to THIS node (or None)."""
-        now = now or datetime.now()
+        now = now or local_wall()
         node = str(node or "").strip()
         if not node:
             return None
@@ -179,7 +180,7 @@ class MeshRelayRepository(BaseRepository):
         and therefore decide against a second snapshot — which is exactly the
         election this transaction exists to settle.
         """
-        now = now or datetime.now()
+        now = now or local_wall()
         node_name = str(node_name or "").strip()
         if not node_name or not str(node_id or "").strip():
             return None
@@ -325,7 +326,7 @@ class MeshRelayRepository(BaseRepository):
         on THIS connection, so first settlement is one election against one
         snapshot rather than a decision assembled from several.
         """
-        now = now or datetime.now()
+        now = now or local_wall()
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             # An expiry that lands first is an outcome, not a race we paper over.
@@ -364,7 +365,7 @@ class MeshRelayRepository(BaseRepository):
     def complete(self, job_id: str, *, result: str, now: Optional[datetime] = None) -> bool:
         """The worker posts the run's answer. False when the job is not in a
         completable state (already expired/failed — the answer arrived late)."""
-        now = now or datetime.now()
+        now = now or local_wall()
         self._expire_overdue(now)
         with self._connection() as conn:
             cur = conn.execute(
@@ -379,7 +380,7 @@ class MeshRelayRepository(BaseRepository):
 
     def fail(self, job_id: str, *, error: str, now: Optional[datetime] = None) -> bool:
         """The worker reports the node-side failure, verbatim."""
-        now = now or datetime.now()
+        now = now or local_wall()
         with self._connection() as conn:
             cur = conn.execute(
                 """
@@ -408,7 +409,7 @@ class MeshRelayRepository(BaseRepository):
         actually authenticated, so a rotate immediately makes the previous
         generation stop looking live and cannot inherit its predecessor's poll.
         """
-        now = now or datetime.now()
+        now = now or local_wall()
         with self._connection() as conn:
             self._touch_worker_on(
                 conn, node, node_id=node_id, generation=generation, now=now
@@ -434,7 +435,7 @@ class MeshRelayRepository(BaseRepository):
                 credential_generation = excluded.credential_generation
             """,
             (
-                str(node or "").strip(), _iso(now or datetime.now()),
+                str(node or "").strip(), _iso(now or local_wall()),
                 str(node_id or ""), int(generation or 0),
             ),
         )
@@ -457,7 +458,7 @@ class MeshRelayRepository(BaseRepository):
         node_id = str(node_id or "").strip()
         if not node_id or int(generation or 0) < 1:
             return False
-        now = now or datetime.now()
+        now = now or local_wall()
         with self._connection() as conn:
             row = conn.execute(
                 """
@@ -469,8 +470,10 @@ class MeshRelayRepository(BaseRepository):
         if row is None:
             return False
         try:
-            last_seen = datetime.fromisoformat(row["last_seen"])
+            last_seen = parse_wall(row["last_seen"])
         except (TypeError, ValueError):
+            return False
+        if last_seen is None:
             return False
         age = (now - last_seen).total_seconds()
         return 0 <= age <= max(1, int(window_seconds))
@@ -484,7 +487,7 @@ class MeshRelayRepository(BaseRepository):
         if row is None:
             return None
         try:
-            return datetime.fromisoformat(row["last_seen"])
+            return parse_wall(row["last_seen"])
         except (TypeError, ValueError):
             return None
 
@@ -495,7 +498,7 @@ class MeshRelayRepository(BaseRepository):
         out: dict[str, datetime] = {}
         for row in rows:
             try:
-                out[row["node"]] = datetime.fromisoformat(row["last_seen"])
+                out[row["node"]] = parse_wall(row["last_seen"])
             except (TypeError, ValueError):
                 continue
         return out
@@ -505,17 +508,17 @@ class MeshRelayRepository(BaseRepository):
     ) -> dict[str, datetime]:
         """Nodes whose worker polled within the window — the ONLY liveness
         truth the mesh has."""
-        now = now or datetime.now()
+        now = now or local_wall()
         floor = _iso(now - timedelta(seconds=max(1, int(window_seconds))))
         with self._connection() as conn:
             rows = conn.execute(
-                "SELECT node, last_seen FROM mesh_workers WHERE last_seen >= ?",
+                "SELECT node, last_seen FROM mesh_workers WHERE julianday(last_seen) >= julianday(?)",
                 (floor,),
             ).fetchall()
         out: dict[str, datetime] = {}
         for row in rows:
             try:
-                out[row["node"]] = datetime.fromisoformat(row["last_seen"])
+                out[row["node"]] = parse_wall(row["last_seen"])
             except (TypeError, ValueError):
                 continue
         return out
@@ -543,7 +546,7 @@ class MeshRelayRepository(BaseRepository):
             SET status = 'failed',
                 error = 'node ' || node || ' never claimed the run before its deadline',
                 completed_at = ?
-            WHERE status = 'queued' AND deadline_at <= ?
+            WHERE status = 'queued' AND julianday(deadline_at) <= julianday(?)
             """,
             (now_iso, now_iso),
         )
@@ -553,7 +556,7 @@ class MeshRelayRepository(BaseRepository):
             SET status = 'failed',
                 error = 'node ' || node || ' claimed the run but never completed it before its deadline',
                 completed_at = ?
-            WHERE status = 'running' AND deadline_at <= ?
+            WHERE status = 'running' AND julianday(deadline_at) <= julianday(?)
             """,
             (now_iso, now_iso),
         )

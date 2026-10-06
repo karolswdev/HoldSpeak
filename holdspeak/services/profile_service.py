@@ -2,7 +2,7 @@
 from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
-from datetime import datetime
+from holdspeak.timestamps import local_wall
 from pathlib import Path
 import time
 from typing import Any
@@ -38,7 +38,7 @@ class ProfileService:
         ]
         liveness: dict[str, Any] = {}
         nodes = {str(getattr(profile, "node", "") or "") for profile in profiles if profile.kind == "meshNode"}
-        now = datetime.now()
+        now = local_wall()
         for node in sorted(nodes - {""}):
             last = self._db.mesh_relay.worker_last_seen(node)
             age = None if last is None else (now - last).total_seconds()
@@ -128,7 +128,7 @@ class ProfileService:
         if profile.kind == "meshNode":
             from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
             last_seen = self._db.mesh_relay.worker_last_seen(profile.node)
-            age = None if last_seen is None else (datetime.now() - last_seen).total_seconds()
+            age = None if last_seen is None else (local_wall() - last_seen).total_seconds()
             reachable = age is not None and age <= DEFAULT_LIVENESS_WINDOW_SECONDS
             error = None if reachable else (f"Mesh node '{profile.node}' has never checked in" if age is None else f"Mesh node '{profile.node}' last checked in {int(age)}s ago")
             return {"reachable": reachable, "latency_ms": None, "models": [], "error": error}

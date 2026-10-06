@@ -35,6 +35,7 @@ import uuid
 import wave
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from holdspeak.timestamps import local_wall
 from pathlib import Path
 from typing import Any, Callable, Optional, Sequence
 
@@ -112,7 +113,7 @@ def _import_moment() -> datetime:
     start (sync, a fixture, a future "use the file's date" gesture) still
     passes ``started_at`` and keeps its say.
     """
-    return datetime.now()
+    return local_wall()
 
 
 def ffmpeg_available() -> bool:

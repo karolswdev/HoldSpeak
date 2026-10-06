@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime
+from holdspeak.timestamps import local_wall, utc_now_iso
 import sys
 from typing import Any, Optional
 
@@ -312,7 +312,7 @@ def _persist_cli_reroute(
     meeting_id = str(getattr(meeting, "id", "") or "").strip()
     window_id = f"{meeting_id}:cli-reroute"
     transcript_hash = _meeting_transcript_hash(meeting, transcript=transcript)
-    now_iso = datetime.now().isoformat()
+    now_iso = utc_now_iso()
 
     db.plugins.record_intent_window(
         meeting_id=meeting_id,
@@ -407,7 +407,7 @@ def _print_jobs(jobs: list[IntelJob], *, status: str) -> None:
         return
 
     print(f"{len(jobs)} {label} intel job(s):")
-    now = datetime.now()
+    now = local_wall()
     for job in jobs:
         title = job.meeting_title or "(untitled)"
         if len(title) > 42:

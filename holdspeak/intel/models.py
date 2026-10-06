@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Optional
 
 
@@ -64,7 +64,7 @@ class ActionItem:
     review_state: str = "pending"  # pending, accepted
     reviewed_at: Optional[str] = None
     source_timestamp: Optional[float] = None  # Link to transcript timestamp
-    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    created_at: str = field(default_factory=lambda: utc_now_iso())
     completed_at: Optional[str] = None
 
     def __post_init__(self) -> None:
@@ -79,17 +79,17 @@ class ActionItem:
     def mark_done(self) -> None:
         """Mark this action item as done."""
         self.status = "done"
-        self.completed_at = datetime.now().isoformat()
+        self.completed_at = utc_now_iso()
 
     def dismiss(self) -> None:
         """Dismiss this action item."""
         self.status = "dismissed"
-        self.completed_at = datetime.now().isoformat()
+        self.completed_at = utc_now_iso()
 
     def accept(self) -> None:
         """Mark this action item as reviewed/accepted."""
         self.review_state = "accepted"
-        self.reviewed_at = datetime.now().isoformat()
+        self.reviewed_at = utc_now_iso()
 
 
 @dataclass

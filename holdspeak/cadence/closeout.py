@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from holdspeak.timestamps import aware, local_now, parse_stamp, utc_iso
 from typing import Optional
 
 from .models import OpenLoop
@@ -24,9 +25,12 @@ def _age_days(loop: OpenLoop, now: datetime) -> float:
     if not loop.created_at:
         return 0.0
     try:
-        return max(0.0, (now - datetime.fromisoformat(loop.created_at)).total_seconds() / 86400.0)
+        created = parse_stamp(loop.created_at)
     except ValueError:
         return 0.0
+    if created is None:
+        return 0.0
+    return max(0.0, (aware(now) - created).total_seconds() / 86400.0)
 
 
 def escalation_severity(loop: OpenLoop, *, now: datetime) -> str:
@@ -90,7 +94,7 @@ def _recommend(loop: OpenLoop, severity: str, *, now: datetime) -> CloseoutRec:
 
 def build_closeout(db, *, now: Optional[datetime] = None) -> Closeout:
     """Group the open loops with a recommended decision for each (deterministic)."""
-    now = now or datetime.now()
+    now = aware(now) if now else local_now()
     loops = db.cadence.list_loops()  # ordered by stale_score desc
     recs = [
         _recommend(loop, escalation_severity(loop, now=now), now=now)
@@ -107,13 +111,13 @@ APPLYABLE = {"snooze", "kill", "close", "done", "delegate"}
 def apply_decision(db, loop_id: str, action: str, *, now: Optional[datetime] = None,
                    owner: Optional[str] = None) -> bool:
     """Apply one lifecycle decision. Returns True if applied. No external side effect."""
-    now = now or datetime.now()
+    now = aware(now) if now else local_now()
     loop = db.cadence.get_loop(loop_id)
     if loop is None or action not in APPLYABLE:
         return False
     if action == "snooze":
         from datetime import timedelta
-        db.cadence.snooze(loop_id, (now + timedelta(days=1)).isoformat())
+        db.cadence.snooze(loop_id, utc_iso(now + timedelta(days=1)))
     elif action == "kill":
         db.cadence.set_status(loop_id, "killed")
     elif action in ("close", "done"):

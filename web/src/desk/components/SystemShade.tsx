@@ -11,6 +11,7 @@ import { gateAge, useGate } from "../gate";
 import { useProjections } from "../projections";
 import { humanTime } from "../surface/format";
 import { countToken } from "../surface/count";
+import { readProjectCounts } from "../needsYou";
 import { EgressChip, StringGadget } from "../surface/gadgets";
 import { egressForEvent, receiptLabel } from "../surface/egress";
 import { SurfaceState } from "../surface/Surface";
@@ -38,6 +39,8 @@ type NeedsYouItem = {
   verbHref?: string;
   severity?: string;
   muted?: boolean;
+  /** The hub's mark: the owner waits on someone else (listed, not counted). */
+  waiting?: boolean;
 };
 
 type NeedsYouAggregate = {
@@ -52,10 +55,22 @@ type NeedsYouAggregate = {
   computedAt?: string;
   stale?: boolean;
   sweepId?: string | null;
+  /** The members by Project (the hub's one count, split by Project). */
+  projectCounts?: Record<string, number>;
   /** HS-200-07 (C4): one record per expected source. */
   coverage?: CoverageRecord[];
   complete?: boolean;
 };
+
+/** The rows that belong to a Room: the hub's ranked rows (they carry its
+ *  `muted` and `waiting` marks) with a Project. A reply without `items`
+ *  falls back to the Room rows. */
+function roomRows(needsYou: NeedsYouAggregate): NeedsYouItem[] {
+  const rows = Array.isArray(needsYou.items) && needsYou.items.length > 0
+    ? needsYou.items
+    : needsYou.roomItems ?? [];
+  return rows.filter((item) => Boolean(item.projectId));
+}
 
 /** Group items by projectId, returning one entry per Room with items. */
 function groupByRoom(items: NeedsYouItem[]): {
@@ -525,14 +540,17 @@ function ShadeProjects({
   needsYou: NeedsYouAggregate | null;
   onClose: () => void;
 }) {
-  const rooms = needsYou ? groupByRoom(needsYou.roomItems ?? needsYou.items) : [];
+  const rooms = needsYou ? groupByRoom(roomRows(needsYou)) : [];
   // Absent when no Room has items.
   if (rooms.length === 0) return null;
 
-  // The caption count excludes muted Rooms.
+  // Every number here is the hub's one rule split by Project
+  // (`projectCounts`): a muted Room and a row the owner waits on someone
+  // else for are listed and are not counted.
+  const counts = readProjectCounts(needsYou);
   const activeItems = rooms
     .filter((r) => !r.muted)
-    .reduce((n, r) => n + r.items.length, 0);
+    .reduce((n, r) => n + (counts[r.projectId] ?? 0), 0);
   // PHILO-13-03: a Room's open items are narrower than "needs you".
   const captionCount = countToken(activeItems, "OPEN");
 
@@ -548,7 +566,7 @@ function ShadeProjects({
 
       {rooms.map((room) => {
         const roomCount = countToken(
-          room.muted ? 0 : room.items.length,
+          room.muted ? 0 : counts[room.projectId] ?? 0,
           "OPEN",
         );
         const firstWhy = room.items[0]?.why || "";
@@ -710,7 +728,7 @@ function ShadePeople({
 
   // Derive distinct Room ids from the needs-you aggregate
   const roomIds = needsYou
-    ? groupByRoom(needsYou.roomItems ?? needsYou.items)
+    ? groupByRoom(roomRows(needsYou))
         .filter((r) => !r.muted)
         .map((r) => ({ id: r.projectId, name: r.projectName }))
     : [];

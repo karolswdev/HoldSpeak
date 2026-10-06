@@ -9,6 +9,7 @@ from holdspeak.services.observer import NullObserver, PipelineObserver, observe_
 
 import logging
 from datetime import datetime
+from holdspeak.timestamps import local_wall, parse_stamp
 from pathlib import Path
 import threading
 import uuid
@@ -256,7 +257,7 @@ class MeetingService:
                     f"occurred_at is not an ISO 8601 date and time: {occurred_at}"
                 ) from exc
         else:
-            started_at = datetime.now()
+            started_at = local_wall()
         return self.import_meeting(
             principal,
             tmp_path=tmp_path,
@@ -884,9 +885,8 @@ class MeetingService:
                 comp_raw = p.get("intel_completed_at") or intel_obj.get("completed_at")
                 if req_raw and comp_raw:
                     try:
-                        from datetime import datetime as _dt
-                        req_dt = _dt.fromisoformat(str(req_raw)) if isinstance(req_raw, str) else req_raw
-                        comp_dt = _dt.fromisoformat(str(comp_raw)) if isinstance(comp_raw, str) else comp_raw
+                        req_dt = parse_stamp(req_raw)
+                        comp_dt = parse_stamp(comp_raw)
                         p["intel_duration_s"] = max(0, int((comp_dt - req_dt).total_seconds()))
                     except Exception:
                         pass

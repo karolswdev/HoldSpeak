@@ -3,8 +3,11 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import subprocess
+import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -219,6 +222,62 @@ def _project(repo_root: Path, slug: str, include_phases: bool = True) -> dict[st
     return result
 
 
+# A roadmap read runs `dw check` and `dw next` (two Python processes) and parses
+# every phase and story file: about 300 ms a project, 1.2-2.8 s for the four
+# projects on every desk refresh. The result is kept until a file under the
+# project changes (any path, size or mtime), the archive manifest or the `dw`
+# script changes, or _PROJECT_MAX_AGE passes (`dw check` also follows links
+# out of the project).
+_PROJECT_MAX_AGE = 300.0
+_PROJECT_CACHE: dict[tuple[str, str], tuple[tuple[Any, ...], float, dict[str, Any] | None]] = {}
+_PROJECT_LOCK = threading.Lock()
+
+
+def _stamp(path: Path) -> tuple[int, int] | None:
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    return stat.st_mtime_ns, stat.st_size
+
+
+def _fingerprint(repo_root: Path, slug: str) -> tuple[Any, ...]:
+    entries: list[tuple[str, int, int]] = []
+    for directory, dirnames, filenames in os.walk(_project_root(repo_root) / slug):
+        dirnames.sort()
+        for name in sorted(filenames):
+            full = os.path.join(directory, name)
+            try:
+                stat = os.stat(full)
+            except OSError:
+                continue
+            entries.append((full, stat.st_mtime_ns, stat.st_size))
+    return (
+        tuple(entries),
+        _stamp(repo_root / "pm" / "archive-manifest.txt"),
+        _stamp(repo_root / ".githooks" / "dw"),
+    )
+
+
+def _project_cached(repo_root: Path, slug: str, include_phases: bool = True) -> dict[str, Any] | None:
+    """``_project`` with the full answer kept until the roadmap changes on disk."""
+    if _project_path(repo_root, slug) is None:
+        return None
+    key = (str(repo_root.resolve()), slug)
+    fingerprint = _fingerprint(repo_root, slug)
+    with _PROJECT_LOCK:
+        cached = _PROJECT_CACHE.get(key)
+    if cached and cached[0] == fingerprint and time.monotonic() - cached[1] < _PROJECT_MAX_AGE:
+        full = cached[2]
+    else:
+        full = _project(repo_root, slug, include_phases=True)
+        with _PROJECT_LOCK:
+            _PROJECT_CACHE[key] = (fingerprint, time.monotonic(), full)
+    if full is None or include_phases:
+        return full
+    return {k: v for k, v in full.items() if k not in {"phases", "healthIssues"}}
+
+
 def build_roadmaps_router(ctx: WebContext, *, repo_root: Path | None = None) -> APIRouter:
     """Build the read-only roadmap API. ``repo_root`` is a test seam."""
     _ = ctx
@@ -233,7 +292,7 @@ def build_roadmaps_router(ctx: WebContext, *, repo_root: Path | None = None) -> 
                 return []
             projects = []
             for directory in sorted(roadmap_root.iterdir()):
-                project = _project(root, directory.name, include_phases=False)
+                project = _project_cached(root, directory.name, include_phases=False)
                 if project:
                     projects.append(project)
             return projects
@@ -242,7 +301,7 @@ def build_roadmaps_router(ctx: WebContext, *, repo_root: Path | None = None) -> 
 
     @router.get("/api/roadmaps/{slug}")
     async def api_roadmap(slug: str) -> Any:
-        project = await asyncio.to_thread(_project, root, slug)
+        project = await asyncio.to_thread(_project_cached, root, slug)
         if project is None:
             return JSONResponse({"error": "Roadmap not found"}, status_code=404)
         return JSONResponse(project)
@@ -257,7 +316,7 @@ def build_roadmaps_router(ctx: WebContext, *, repo_root: Path | None = None) -> 
 
     @router.get("/api/roadmaps/{slug}/next")
     async def api_roadmap_next(slug: str) -> Any:
-        if _project(root, slug, include_phases=False) is None:
+        if _project_path(root, slug) is None:
             return JSONResponse({"error": "Roadmap not found"}, status_code=404)
         code, output = await asyncio.to_thread(_run, root, "next", slug, "--json")
         try:

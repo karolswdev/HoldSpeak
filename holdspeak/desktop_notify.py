@@ -306,11 +306,11 @@ def heartbeat_notify(
     ``{count, projects, origin}`` for a future LAN companion (Phase 179).
     The caller gates this on the mesh-on setting.
     """
-    from datetime import datetime
+    from holdspeak.timestamps import local_now, utc_iso
 
     # The instant is the CALLER's (the heartbeat's injectable local clock);
     # the wall clock is only for callers that pass none.
-    now = now or datetime.now()
+    now = now or local_now()
     set_based = isinstance(edge, ItemSetEdge) and item_ids is not None
     new_ids = edge.new_ids(item_ids) if set_based else []  # type: ignore[union-attr]
     escalated = edge.escalated_ids(item_ids) if set_based else []  # type: ignore[union-attr]
@@ -322,7 +322,7 @@ def heartbeat_notify(
         "reason": "",
         "newItems": len(new_ids),
         "escalatedItems": len(escalated),
-        "timestamp": now.isoformat(),
+        "timestamp": utc_iso(now),
     }
 
     # Edge check first.

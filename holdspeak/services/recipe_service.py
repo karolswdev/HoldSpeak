@@ -7,7 +7,7 @@ import json
 import time
 import uuid
 from collections.abc import Callable
-from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any
 
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
@@ -371,7 +371,7 @@ class RecipeService:
         value = dict(result) if isinstance(result, dict) else {"output": str(result)}
         target = self._route_summary(route, ordinal); output = str(value["output"]); artifact_id = "artifact_" + uuid.uuid4().hex[:12]
         model = str(value.get("model") or target["profile_id"])
-        return {"recipe_id": recipe.id, "name": f"{recipe.name or recipe.id}: {user}" if user else (recipe.name or recipe.id), "output": output, "provider": str(value.get("provider") or target["engine"]), "profile_id": target["profile_id"], "inference_target": target, "actual_placement": {"target_id": target["target_id"], "boundary": target["boundary"], "deployment_revision_id": target["deployment_revision_id"], "model": model}, "sources": sources, "artifact_id": artifact_id, "created_at": datetime.now().isoformat(), "placement": {"route_plan_id": route["id"], "route_plan_sha256": route["sha256"]}}
+        return {"recipe_id": recipe.id, "name": f"{recipe.name or recipe.id}: {user}" if user else (recipe.name or recipe.id), "output": output, "provider": str(value.get("provider") or target["engine"]), "profile_id": target["profile_id"], "inference_target": target, "actual_placement": {"target_id": target["target_id"], "boundary": target["boundary"], "deployment_revision_id": target["deployment_revision_id"], "model": model}, "sources": sources, "artifact_id": artifact_id, "created_at": utc_now_iso(), "placement": {"route_plan_id": route["id"], "route_plan_sha256": route["sha256"]}}
 
     def _chat_projection(self, result: Any, recipe: Any, payload: dict[str, Any], route: dict[str, Any], ordinal: int) -> dict[str, Any]:
         value = dict(result) if isinstance(result, dict) else {"output": str(result)}; target = self._route_summary(route, ordinal)

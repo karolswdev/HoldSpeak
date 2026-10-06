@@ -13,7 +13,7 @@ the People routes, the dictation journal recorder, the steward's
 from __future__ import annotations
 
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -349,7 +349,8 @@ def test_p1_the_version_bump_keeps_every_vector_and_recall_has_no_gap(tmp_path: 
         with db._connection() as conn:
             seg_id = conn.execute("SELECT id FROM segments WHERE meeting_id='short'").fetchone()[0]
             started = conn.execute("SELECT started_at FROM meetings WHERE id='short'").fetchone()[0]
-        assert started == "2026-10-01T09:00:00"
+        # Stored as the aware UTC instant of 09:00 local (the aware-time census).
+        assert started == datetime(2026, 10, 1, 9, 0, 0).astimezone(timezone.utc).isoformat()
         engine = HashEngine()
         # The index exactly as chunker 1 (main before this PR) wrote it: its
         # meeting units, packed, version 1, and no keyword table rows.
@@ -417,27 +418,21 @@ def test_p2_an_edited_dictation_is_not_found_by_its_old_words(hub: Hub) -> None:
 
 
 def test_p3_equal_time_ranges_give_equal_answers(hub: Hub, monkeypatch: pytest.MonkeyPatch) -> None:
-    """The journal stores the hub's local wall time (``datetime.now()``).
-    In Denver 09:00 local is 15:00Z; both spellings of the range find it."""
+    """The journal stores an aware UTC stamp (``utc_now_iso()``).
+    In Denver 09:00 local is 15:00Z; every spelling of the range finds it."""
     import time
-    from datetime import datetime as real_datetime
-
     from holdspeak.db import journal as journal_module
+    from holdspeak.timestamps import utc_now_iso as real_utc_now_iso
     from holdspeak.plugins.dictation.journal import DictationJournalRecorder, passthrough_run
 
     monkeypatch.setenv("TZ", "America/Denver")
     time.tzset()
     try:
-        class Fixed(real_datetime):
-            @classmethod
-            def now(cls, tz=None):
-                return real_datetime(2026, 10, 4, 9, 0, 0)
-
-        monkeypatch.setattr(journal_module, "datetime", Fixed)
+        monkeypatch.setattr(journal_module, "utc_now_iso", lambda: "2026-10-04T15:00:00+00:00")
         said = "The quorvane cutover is done"
         entry = DictationJournalRecorder(hub.db.dictation_journal).record(
             passthrough_run(said), source="dictation", transcript=said)
-        monkeypatch.setattr(journal_module, "datetime", real_datetime)
+        monkeypatch.setattr(journal_module, "utc_now_iso", real_utc_now_iso)
         sweep(hub.db)
         ref = f"dictation:{entry.id}"
 

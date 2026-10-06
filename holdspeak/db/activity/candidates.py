@@ -7,6 +7,7 @@ from __future__ import annotations
 import sqlite3
 import uuid
 from datetime import datetime
+from holdspeak.timestamps import parse_wall, utc_now_iso
 from typing import Optional, Any
 
 from ..models import (
@@ -46,7 +47,7 @@ class ActivityCandidatesMixin:
             meeting_url=clean_meeting_url,
             title=clean_title,
         )
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         starts_iso = self._activity_time_to_iso(starts_at)
         ends_iso = self._activity_time_to_iso(ends_at)
         clean_confidence = max(0.0, min(1.0, float(confidence)))
@@ -187,7 +188,7 @@ class ActivityCandidatesMixin:
                 SET status = ?, updated_at = ?
                 WHERE id = ?
                 """,
-                (clean_status, datetime.now().isoformat(), clean_id),
+                (clean_status, utc_now_iso(), clean_id),
             )
             if not cursor.rowcount:
                 return None
@@ -217,7 +218,7 @@ class ActivityCandidatesMixin:
                     updated_at = ?
                 WHERE id = ?
                 """,
-                (clean_meeting_id, datetime.now().isoformat(), clean_id),
+                (clean_meeting_id, utc_now_iso(), clean_id),
             )
             if not cursor.rowcount:
                 return None
@@ -291,13 +292,13 @@ class ActivityCandidatesMixin:
             ),
             dedupe_key=str(row["dedupe_key"] or ""),
             title=str(row["title"]),
-            starts_at=datetime.fromisoformat(row["starts_at"]) if row["starts_at"] else None,
-            ends_at=datetime.fromisoformat(row["ends_at"]) if row["ends_at"] else None,
+            starts_at=parse_wall(row["starts_at"]) if row["starts_at"] else None,
+            ends_at=parse_wall(row["ends_at"]) if row["ends_at"] else None,
             meeting_url=row["meeting_url"],
             started_meeting_id=row["started_meeting_id"],
             confidence=float(row["confidence"] or 0),
             status=str(row["status"]),
-            created_at=datetime.fromisoformat(row["created_at"]),
-            updated_at=datetime.fromisoformat(row["updated_at"]),
+            created_at=parse_wall(row["created_at"]),
+            updated_at=parse_wall(row["updated_at"]),
         )
 

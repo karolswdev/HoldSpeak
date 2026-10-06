@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
+from holdspeak.timestamps import local_wall
 from typing import Any, Callable, Iterable
 
 from .attention_ranking import dedup_items, rank_items
@@ -356,7 +357,7 @@ def compute_needs_you(
     by mute (each unmuted row marked ``waiting``), the blockers and the
     failed meetings.
     """
-    clock = now or datetime.now()
+    clock = now or local_wall()
     room = [dict(item) for item in room_items]
     covered = {
         str(item["actionItemId"])
@@ -713,6 +714,11 @@ def compose(
             str(item["projectId"]) for item in result["unmutedItems"]
             if item.get("projectId") and not item.get("waiting")
         }),
+        # The members by Project: the per-Project number every face shows
+        # (the shade's Projects list, the palette's project badge). It is
+        # the one rule's count split by Project, so a Project never shows a
+        # row the head does not count (a muted or a waiting row).
+        "projectCounts": project_counts(result["unmutedItems"]),
         # The Room rows alone (the input of R1), with the mute marks the
         # Room wire always carried.
         "roomItems": [
@@ -734,8 +740,24 @@ def compose(
 
 _MEMBERSHIP_KEYS = (
     "members", "blockers", "failedMeetings", "sourceErrors", "peopleStoreState", "peopleWithheld",
-    "waitingCount", "ownerNames",
+    "waitingCount", "ownerNames", "projectCounts",
 )
+
+
+def project_counts(unmuted_items: Iterable[dict[str, Any]]) -> dict[str, int]:
+    """The counted attention rows by Project: ``{projectId: n}``.
+
+    A row counts when it is a member (unmuted and not ``waiting``). The sum is
+    the attention part of ``count``; a member with no Project (a Door card,
+    a blocker, a failed meeting) is in ``count`` and in no Project.
+    """
+    counts: dict[str, int] = {}
+    for item in unmuted_items:
+        project_id = item.get("projectId")
+        if not project_id or item.get("muted") or item.get("waiting"):
+            continue
+        counts[str(project_id)] = counts.get(str(project_id), 0) + 1
+    return counts
 
 
 def room_part(answer: dict[str, Any]) -> dict[str, Any]:

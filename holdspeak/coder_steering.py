@@ -23,7 +23,7 @@ import shutil
 import subprocess
 import threading
 import time
-from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any, Callable, Mapping, Optional
 
 Runner = Callable[..., "subprocess.CompletedProcess[str]"]
@@ -361,7 +361,7 @@ def arm(
             "pane_id": identity["pane_id"],
             "target": str(target),
             "granted_at": now,
-            "issued_at": datetime.now().isoformat(),
+            "issued_at": utc_now_iso(),
             "expires_at": now + ttl,
             "actor": "owner",
             "operation_family": "coder_steering",

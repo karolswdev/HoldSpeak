@@ -21,6 +21,7 @@ from __future__ import annotations
 import os
 from contextlib import contextmanager
 from datetime import datetime
+from holdspeak.timestamps import utc_iso
 from pathlib import Path
 from typing import Any, Iterator, Optional
 
@@ -38,7 +39,7 @@ OWNER_LOCK_SUFFIX = ".mesh-owner"
 
 
 def _iso(now: Optional[datetime] = None) -> str:
-    return (now or datetime.now()).isoformat()
+    return utc_iso(now)
 
 
 class MeshWorkerRepository(BaseRepository):

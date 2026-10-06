@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 import uuid
-from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any
 
 from ..logging_config import get_logger
@@ -200,7 +200,7 @@ class SuggestedSourceService:
     ) -> list[dict[str, Any]]:
         """Persist scanned suggestions as pending rows."""
         rows: list[dict[str, Any]] = []
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._db._connection() as conn:
             for s in suggestions:
                 row_id = f"ssug_{uuid.uuid4().hex[:12]}"

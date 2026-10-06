@@ -8,6 +8,7 @@ the adapter layer (routes + MCP tools).  Nothing here writes to any store.
 from __future__ import annotations
 
 import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any
 
 
@@ -165,7 +166,7 @@ def _next_linked_one_on_one(
     if not uid_source_pairs:
         return None
 
-    now_iso = datetime.datetime.now().isoformat()
+    now_iso = utc_now_iso()
 
     try:
         with db._connection() as conn:

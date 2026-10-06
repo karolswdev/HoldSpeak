@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import datetime
+from holdspeak.timestamps import parse_wall, utc_iso, utc_now_iso
 from typing import Optional, Any, Iterator
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -50,7 +51,7 @@ class ActivityRecordsMixin:
         if value in (None, ""):
             return None
         if isinstance(value, datetime):
-            return value.isoformat()
+            return utc_iso(value)
         return str(value)
 
     def upsert_activity_record(
@@ -94,7 +95,7 @@ class ActivityRecordsMixin:
             if project_id is not None and str(project_id).strip()
             else None
         )
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         first_seen_iso = self._activity_time_to_iso(first_seen_at) or self._activity_time_to_iso(last_seen_at)
         last_seen_iso = self._activity_time_to_iso(last_seen_at) or first_seen_iso
         raw_timestamp = str(last_visit_raw) if last_visit_raw not in (None, "") else None
@@ -247,13 +248,13 @@ class ActivityRecordsMixin:
             where.append("entity_type = ?")
             params.append(str(entity_type).strip().lower())
         if since is not None:
-            where.append("last_seen_at >= ?")
-            params.append(since.isoformat())
+            where.append("julianday(last_seen_at) >= julianday(?)")
+            params.append(utc_iso(since))
 
         query = "SELECT * FROM activity_records"
         if where:
             query += " WHERE " + " AND ".join(where)
-        query += " ORDER BY last_seen_at DESC, updated_at DESC, id DESC LIMIT ?"
+        query += " ORDER BY julianday(last_seen_at) DESC, updated_at DESC, id DESC LIMIT ?"
         params.append(max(1, min(int(limit), 5000)))
         with self._connection() as conn:
             rows = conn.execute(query, params).fetchall()
@@ -284,8 +285,8 @@ class ActivityRecordsMixin:
             where.append("domain = ?")
             params.append(str(domain).strip().lower())
         if older_than is not None:
-            where.append("last_seen_at < ?")
-            params.append(older_than.isoformat())
+            where.append("julianday(last_seen_at) < julianday(?)")
+            params.append(utc_iso(older_than))
         query = "DELETE FROM activity_records"
         if where:
             query += " WHERE " + " AND ".join(where)
@@ -320,7 +321,7 @@ class ActivityRecordsMixin:
                 """
                 SELECT *
                 FROM activity_records
-                ORDER BY last_seen_at DESC, updated_at DESC, id DESC
+                ORDER BY julianday(last_seen_at) DESC, updated_at DESC, id DESC
                 """
             ).fetchall()
             return iter([self._row_to_activity_record(row) for row in rows])
@@ -336,13 +337,13 @@ class ActivityRecordsMixin:
             title=row["title"],
             domain=str(row["domain"] or ""),
             visit_count=int(row["visit_count"] or 0),
-            first_seen_at=datetime.fromisoformat(row["first_seen_at"]) if row["first_seen_at"] else None,
-            last_seen_at=datetime.fromisoformat(row["last_seen_at"]) if row["last_seen_at"] else None,
+            first_seen_at=parse_wall(row["first_seen_at"]) if row["first_seen_at"] else None,
+            last_seen_at=parse_wall(row["last_seen_at"]) if row["last_seen_at"] else None,
             last_visit_raw=row["last_visit_raw"],
             entity_type=row["entity_type"],
             entity_id=row["entity_id"],
             project_id=row["project_id"],
-            created_at=datetime.fromisoformat(row["created_at"]),
-            updated_at=datetime.fromisoformat(row["updated_at"]),
+            created_at=parse_wall(row["created_at"]),
+            updated_at=parse_wall(row["updated_at"]),
         )
 
