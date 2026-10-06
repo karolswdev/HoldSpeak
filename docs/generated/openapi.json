@@ -3412,6 +3412,24 @@
         "summary": "Status"
       }
     },
+    "/api/agent/hand": {
+      "post": {
+        "operationId": "api_agent_hand_api_agent_hand_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Hand Api Agent Hand Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Agent Hand"
+      }
+    },
     "/api/agents/capabilities": {
       "get": {
         "operationId": "api_agent_capabilities_api_agents_capabilities_get",
@@ -26874,6 +26892,46 @@
           }
         },
         "summary": "Api Abort"
+      }
+    },
+    "/api/threads/{thread_id}/agent": {
+      "post": {
+        "description": "``/agent <text>``: file the text as an action item, then hand it\nto a coding agent (Conductor K2).",
+        "operationId": "api_agent_api_threads__thread_id__agent_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "thread_id",
+            "required": true,
+            "schema": {
+              "title": "Thread Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Api Threads  Thread Id  Agent Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent"
       }
     },
     "/api/threads/{thread_id}/annotations": {

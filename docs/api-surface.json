@@ -389,6 +389,16 @@
       ]
     },
     {
+      "path": "/api/agent/hand",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agents/capabilities",
       "methods": [
         "GET"
@@ -6248,6 +6258,14 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/threads/{thread_id}/agent",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": []
     },
     {
       "path": "/api/threads/{thread_id}/annotations",

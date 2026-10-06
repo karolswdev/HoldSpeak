@@ -690,6 +690,11 @@
       "story": "MEMORY-5",
       "tool": "memory.page",
       "operation": "memory.page.read"
+    },
+    {
+      "story": "CONDUCTOR-K2",
+      "tool": "agent.hand",
+      "operation": "agent.hand"
     }
   ],
   "moved": [
@@ -707,7 +712,7 @@
     "residual_mcp": 185,
     "residual_http": 55,
     "http_constructions": 56,
-    "public_tools": 246
+    "public_tools": 249
   },
   "entries": [
     {
