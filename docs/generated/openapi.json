@@ -3430,6 +3430,46 @@
         "summary": "Api Agent Hand"
       }
     },
+    "/api/agent/launches/{launch_id}/deliver": {
+      "post": {
+        "description": "Deliver the held brief of an existing launch (after a restart, a\nhook install or a refused send): resume on the launch, no relaunch.",
+        "operationId": "api_agent_deliver_api_agent_launches__launch_id__deliver_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Deliver Api Agent Launches  Launch Id  Deliver Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Deliver"
+      }
+    },
     "/api/agents/capabilities": {
       "get": {
         "operationId": "api_agent_capabilities_api_agents_capabilities_get",
