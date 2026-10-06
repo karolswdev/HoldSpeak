@@ -142,9 +142,13 @@ def test_door_projection_composes_real_follow_through_thought_and_schedule_objec
     action_card = next(card for card in projection["board"]["now"] if card["id"] == "now-action")
     loop_card = next(card for card in projection["board"]["now"] if card["id"] == "loop-now")
     assert action_card["target_ref"] == "action_item:now-action"
-    assert [verb["arguments"]["verb"] for verb in action_card["lawful_verbs"]] == [
-        "done", "dismiss", "snooze", "delegate"
-    ]
+    assert [
+        verb["arguments"]["verb"] for verb in action_card["lawful_verbs"] if verb["name"] == "follow_through.complete"
+    ] == ["done", "dismiss", "snooze", "delegate"]
+    # Hand to agent: the Door declares the agent.hand verb on an action item.
+    assert action_card["lawful_verbs"][-1] == {
+        "name": "agent.hand", "arguments": {"kind": "action", "id": "now-action"},
+    }
     assert loop_card["target_ref"] == "cadence_loop:loop-now"
     assert {verb["arguments"]["status"] for verb in loop_card["lawful_verbs"]} == {
         "closed", "killed"

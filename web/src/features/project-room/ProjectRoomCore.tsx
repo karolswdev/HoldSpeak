@@ -3,6 +3,7 @@
 // since I last looked? What did we decide and what do I owe people?
 // Two wings: ROOM · HISTORY. Ask well at the foot. No counters of zero,
 // no REV, no raw field names, the name said once.
+import { HandRowVerb } from "../../desk/components/HandRowVerb";
 import { wireDate } from "../../desk/surface/format";
 import React, { useEffect, useRef, useState, useMemo, useCallback, useReducer } from "react";
 import {
@@ -975,7 +976,10 @@ function NeedsYouSection({
                     {needsYouWhyWords(item)}
                   </span>
                 }
-                trailing={
+                trailing={<>
+                  {/* Hand to agent (Conductor K2e): before the row's Open, as drawn. */}
+                  <HandRowVerb item={{ title: item.title, source: item.source, actionItemId: item.actionItemId, projectId: ctrl.projectId }} />
+                  {
                   item.verb === "decide" ? (
                     <Button dense variant="ghost" onClick={() => {
                       if (item.url) window.open(item.url, "_blank", "noopener");
@@ -996,6 +1000,7 @@ function NeedsYouSection({
                     </Button>
                   ) : null
                 }
+                </>}
               />
             );
           })}

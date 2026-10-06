@@ -4,6 +4,7 @@
 // The lane vocabulary is PARKED; the arrival composes directly from
 // the surface library and the needs-you wire.
 
+import { HandRowVerb } from "../components/HandRowVerb";
 import { wireDate } from "../surface/format";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chair } from "./Chair";
@@ -1658,7 +1659,7 @@ function NeedsYouRow({
           ) : null}
         </span>
       }
-      trailing={
+      trailing={<>
         <NeedsYouRowVerbs
           item={rowItem}
           isDoor={isDoor}
@@ -1671,7 +1672,9 @@ function NeedsYouRow({
           commitWell={commitWell}
           onCommitWell={(well) => { setCommitDraft(""); setCommitWell(well); }}
         />
-      }
+        {/* Hand to agent (Conductor K2d): the row's item opens the launch sheet. */}
+        <HandRowVerb item={item} />
+      </>}
       wrap
       expands={false}
       open={(sourcesOpen && sources.length > 1) || commitWell !== null}

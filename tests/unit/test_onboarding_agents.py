@@ -62,7 +62,7 @@ def test_detect_on_a_bare_home_finds_nothing_and_says_unknown_not_no(tmp_path) -
         assert row["ready"] is False
     assert rows["claude"]["hooks_path"] == str(tmp_path / ".claude" / "settings.json")
     assert rows["codex"]["hooks_path"] == str(tmp_path / ".codex" / "hooks.json")
-    assert detected["tmux"] == {"installed": False, "path": None, "install_hint": "brew install tmux"}
+    assert detected["tmux"] == {"installed": False, "path": None, "version": None, "install_hint": "brew install tmux"}
     assert detected["holdspeak"]["hook_executable"]
 
 

@@ -277,21 +277,27 @@ def _hs_block(repo_path: Optional[str]) -> Optional[GroundingBlock]:
     return GroundingBlock("hs_context", ".hs", "Repository facts (.hs/)", "", text)
 
 
-def _stanza(kind: str, item_id: str, control_mode: str) -> str:
+def acceptance_checks(kind: str, item_id: str, control_mode: str) -> list[str]:
+    """The stanza's checks, one line each (the launch sheet counts them)."""
     mode_line = _MODE_LINES.get(str(control_mode or "").lower(), _MODE_LINES["yolo"])
-    return "\n".join([
-        "Constraints and acceptance:",
-        f"- Control mode: {mode_line}",
-        "- Work only in this worktree, on its own branch. Do not push to main.",
-        "- Commit your work, push the branch, and open a pull request.",
-        f"- The pull request body names the item: {kind}:{item_id}.",
-        "- If a question blocks you, ask it and wait. Do not guess.",
-        "- The holdspeak MCP tools are yours for this launch. Use them to read the desk "
+    return [
+        f"Control mode: {mode_line}",
+        "Work only in this worktree, on its own branch. Do not push to main.",
+        "Commit your work, push the branch, and open a pull request.",
+        f"The pull request body names the item: {kind}:{item_id}.",
+        "If a question blocks you, ask it and wait. Do not guess.",
+        "The holdspeak MCP tools are yours for this launch. Use them to read the desk "
         "and memory (People data is cut), file notes, propose decisions (the owner "
         "confirms them), update the status of this item or of items you add, and ask "
         "the owner with a Door item. You cannot send anything out or change settings.",
-        "- The item is done when the pull request is open and its tests pass.",
-    ])
+        "The item is done when the pull request is open and its tests pass.",
+    ]
+
+
+def _stanza(kind: str, item_id: str, control_mode: str) -> str:
+    return "\n".join(
+        ["Constraints and acceptance:"] + [f"- {line}" for line in acceptance_checks(kind, item_id, control_mode)]
+    )
 
 
 def compose_agent_brief(
@@ -306,7 +312,7 @@ def compose_agent_brief(
 ) -> dict[str, Any]:
     """Compose the first message a coding agent receives for one item.
 
-    Returns ``{text, refs, bytes, project_id, people_cut}``. Refuses
+    Returns ``{text, refs, bytes, project_id, people_cut, sources, acceptance}``. Refuses
     ``item_kind_unsupported`` / ``item_unknown`` / ``brief_over_cap`` by
     name."""
     kind, item_id = parse_item_ref(item_ref)
@@ -376,12 +382,27 @@ def compose_agent_brief(
         ref for ref in composed["refs"]
         if ref.split(":", 1)[0] not in _SYNTHETIC_KINDS
     ]
+    # Every part the brief carries, as the launch sheet lists it: the kind,
+    # the ref, the title, and how many lines a composed part holds.
+    carried = set(composed["refs"])
+    sources = [
+        {
+            "kind": b.kind,
+            "ref": b.ref,
+            "title": b.title,
+            "lines": sum(1 for line in b.text.splitlines() if line.strip()) if b.kind in _SYNTHETIC_KINDS else None,
+        }
+        for b in blocks
+        if f"{b.kind}:{b.ref}" in carried
+    ]
     return {
         "text": text,
         "refs": refs,
         "bytes": size,
         "project_id": project_id,
         "people_cut": people_cut,
+        "sources": sources,
+        "acceptance": acceptance_checks(kind, item_id, control_mode),
     }
 
 
@@ -390,6 +411,7 @@ __all__ = [
     "AgentBriefRefused",
     "BRIEF_KINDS",
     "PEOPLE_KINDS",
+    "acceptance_checks",
     "compose_agent_brief",
     "parse_item_ref",
     "project_for_item",

@@ -29,6 +29,7 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     ("POST", "/api/mcp"): "MCP transport; writes announce at the registry",
     # Read-like: the POST carries a question; nothing a window shows is stored.
     ("POST", "/api/activity/project-rules/preview"): "read-like: previews a rule",
+    ("POST", "/api/agent/hand/preview"): "read-like: previews a hand-off, writes nothing",
     ("POST", "/api/authority/evaluate"): "read-like: evaluates an operation",
     ("POST", "/api/channels/preview"): "read-like: channel.preview is effect=read",
     ("POST", "/api/dictation/dry-run"): "read-like: runs the pipeline on text, stores nothing",
