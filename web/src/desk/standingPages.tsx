@@ -90,19 +90,23 @@ export function useStandingPages(scope: "desk" | "project", projectId?: string |
   const [cache, setCache] = useState<{ key: string; pages: StandingPageWire[] }>({ key: "", pages: [] });
   const wanted = useRef(key);
   wanted.current = key;
-  const load = useCallback(async () => {
+  const order = useRef(0);
+  const load = useCallback(async (): Promise<boolean> => {
     const asked = key;
     if (scope === "project" && !projectId) {
       setCache({ key: asked, pages: [] });
-      return;
+      return true;
     }
+    const mine = ++order.current;
     const params = scope === "project"
       ? new URLSearchParams({ project_id: String(projectId) })
       : new URLSearchParams({ scope: "desk" });
     const body = await apiFetch<{ pages?: StandingPageWire[] }>(`/api/memory/pages?${params}`);
-    // An answer for a scope this face no longer shows is dropped.
-    if (wanted.current !== asked) return;
+    // An answer for a scope this face no longer shows, or one a newer read
+    // of the same scope overtook, is dropped and releases no hold.
+    if (wanted.current !== asked || mine !== order.current) return false;
     setCache({ key: asked, pages: Array.isArray(body?.pages) ? body.pages : [] });
+    return true;
   }, [key, scope, projectId]);
   useEffect(() => {
     // A failed first read draws nothing (never an error); the hold logic

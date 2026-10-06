@@ -170,6 +170,49 @@ def _search_cutover_after_delete(page: Any) -> None:
     assert page.locator("[data-testid=recall-results]").filter(has_text="Cutover date is 10-17.").count() == 0
 
 
+def _discarded_refresh_releases_nothing(page: Any, width: int) -> None:
+    """Astra, #877 iteration 2, her exact transition with delayed REAL
+    responses: Desk memory on `cutover` -> the meeting a belief rests on is
+    deleted -> the quiet refresh is held -> Search is pressed (also held) ->
+    the refresh is released while the search is pending.  The belief must
+    stay hidden in the dimmed results, and after the search lands."""
+    results = "[data-testid=recall-results]"
+    # Beliefs only: the meeting's own hit row holds the same words.
+    beliefs = "[data-testid=recall-belief]"
+    belief = "Cutover rollback owner is Priya."
+    page.locator("[data-testid=recall-belief]").filter(has_text=belief).wait_for(timeout=T)
+    held: list[Any] = []
+    page.route("**/api/memory/recall?*", lambda route: held.append(route))
+
+    def until(n: int) -> None:
+        for _ in range(100):
+            if len(held) >= n:
+                return
+            page.wait_for_timeout(100)
+        raise AssertionError(f"expected {n} held recall reads, saw {len(held)}")
+
+    try:
+        _api(page, "DELETE", "/api/meetings/m-0929", None, token=TOKEN)
+        until(1)  # the quiet refresh, held
+        _gone(page, beliefs, belief)  # hidden from the frame on
+        page.locator(".desk-surface-window").get_by_role("button", name="Search desk memory", exact=True).click()
+        until(2)  # the search, held
+        page.locator(f"{results}[data-dimmed]").wait_for(timeout=T)
+        held[0].continue_()  # the refresh lands while the search is pending: discarded
+        page.wait_for_timeout(1500)
+        assert page.locator(beliefs).filter(has_text=belief).count() == 0, "a discarded refresh released the hold"
+        memory = page.locator(".desk-surface-window").first
+        _shots(page, "mem-B-beliefs-search-pending", width, memory)
+        held[1].continue_()
+        page.locator(f"{results}:not([data-dimmed])").wait_for(timeout=T)
+        page.wait_for_timeout(500)
+        assert page.locator(beliefs).filter(has_text=belief).count() == 0
+    finally:
+        for route in held[2:]:
+            route.continue_()
+        page.unroute("**/api/memory/recall?*")
+
+
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.timeout(600)
@@ -263,12 +306,13 @@ def test_memory_on_the_desk(tmp_path, monkeypatch, width, height):
             # is deleted: both leave, with no reload and no new search.
             _search_cutover_after_delete(page)
             _api(page, "DELETE", "/api/meetings/m-0924", None, token=TOKEN)
-            _gone(page, "[data-testid=recall-results]", "Cutover rollback owner is Marek.")
-            _gone(page, "[data-testid=recall-results]", "Cutover date is 10-10.")
+            _gone(page, "[data-testid=recall-belief]", "Cutover rollback owner is Marek.")
+            _gone(page, "[data-testid=recall-belief]", "Cutover date is 10-10.")
             memory = page.locator(".desk-surface-window").first
             _zoom(page, memory, width)
             _top(page, memory, ".recall-head")
             _shots(page, "mem-B-beliefs-after-delete", width, memory)
+            _discarded_refresh_releases_nothing(page, width)
 
             _assert_clean(page, errors)
             browser.close()

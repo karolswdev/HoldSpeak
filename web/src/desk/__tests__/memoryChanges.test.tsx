@@ -5,7 +5,7 @@
 //  P2 — the standing pages are bound to their scope: on a scope change the
 //       old scope's pages are gone at once, and a late answer for another
 //       scope is dropped (Atlas sentences never drawn in Harbor's Room).
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { RecallFace } from "../../features/project-room/recall/RecallFace";
@@ -187,5 +187,31 @@ describe("Desk memory beliefs follow the bus (P1)", () => {
     expect(screen.queryByText("Atlas cutover is 10-17.")).toBeNull();
     expect(screen.getByText("Atlas freeze is 10-12.")).toBeTruthy();
     expect(screen.queryByTestId("recall-failed-token")).toBeNull();
+  });
+
+  it("Astra #877 iteration 2: a refresh a newer search superseded releases nothing (the belief never returns in the dimmed results)", async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce(recall([BELIEF, OTHER]));
+    render(<RecallFace initialQuery="cutover" />);
+    await screen.findByText("Atlas cutover is 10-17.");
+    // DELETE /api/notes/n2; the quiet refresh is slow.
+    const refresh = deferred<unknown>();
+    vi.mocked(apiFetch).mockReturnValueOnce(refresh.promise as Promise<never>);
+    send(deleted("n2"));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(2));
+    // He presses Search while the refresh is in flight; the search is slow too.
+    const searched = deferred<unknown>();
+    vi.mocked(apiFetch).mockReturnValueOnce(searched.promise as Promise<never>);
+    fireEvent.click(screen.getByRole("button", { name: "Search desk memory" }));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(3));
+    expect(screen.getByTestId("recall-results").getAttribute("data-dimmed")).toBe("true");
+    // The refresh lands while the search is pending: it is discarded, and the
+    // deleted belief stays hidden in the dimmed (old) results.
+    await act(async () => { refresh.resolve(recall([OTHER])); });
+    expect(screen.queryByText("Atlas cutover is 10-17.")).toBeNull();
+    expect(screen.getByText("Atlas freeze is 10-12.")).toBeTruthy();
+    // The search lands: the fresh answer, still without it.
+    await act(async () => { searched.resolve(recall([OTHER])); });
+    expect(screen.queryByText("Atlas cutover is 10-17.")).toBeNull();
+    expect(screen.getByTestId("recall-display").textContent).toBe("1 remembered");
   });
 });

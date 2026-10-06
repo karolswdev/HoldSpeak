@@ -9,7 +9,9 @@
  *      evidence names a held id is not drawn;
  *   2. re-reads (debounced, as `useOnDeskChanged`);
  *   3. lets the hold go only when a re-read that STARTED after the change
- *      has landed. A re-read that fails keeps the hold.
+ *      is ACCEPTED: `reload` resolves to anything but `false`, and its
+ *      result is the one on the glass. A re-read that fails, or that a
+ *      newer read superseded (`false`), keeps the hold.
  *
  * The match is on the id alone (a ref `note:n2`, `meeting:m1#seg-4` names id
  * `n2`, `m1`): a kind has several names (`action` / `action_item`,
@@ -45,7 +47,8 @@ export function refId(ref: string): string {
 
 /**
  * Follow the bus for a memory face. `reload` re-reads the face's data and
- * resolves when the new data is on the glass (rejects on a failed read).
+ * resolves when the new data is on the glass; it resolves `false` when its
+ * answer was discarded (a newer read won) and rejects on a failed read.
  * Returns `held(refs)`: true while any ref names a changed source whose
  * re-read has not landed.
  */
@@ -66,8 +69,12 @@ export function useMemoryChanges(
       Promise.resolve()
         .then(() => latest.current())
         .then(
-          // Only a re-read that started after a change lets that change go.
-          () => setHeld((prev) => prev.filter((h) => h.seq > startedAt)),
+          // Only an ACCEPTED re-read that started after a change lets that
+          // change go; a discarded one (`false`) releases nothing.
+          (accepted) => {
+            if (accepted === false) return;
+            setHeld((prev) => prev.filter((h) => h.seq > startedAt));
+          },
           () => undefined,
         );
     }, debounceMs);
