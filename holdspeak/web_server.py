@@ -82,6 +82,54 @@ def _bind_listen_socket(host: str, preferred: int) -> socket.socket:
     return sock
 
 
+def _coder_watch_step(
+    snapshot: Optional[dict[str, str]], path: Path,
+) -> tuple[dict[str, str], list[str], list[str]]:
+    """One read of the coder watcher (Conductor K3).
+
+    Returns ``(snapshot, transitions, entered)``. The snapshot maps each
+    session to its wait episode (``coder_steering.wait_snapshot``), so a new
+    wait after an answer is a transition even when both reads saw it
+    blocked. ``snapshot=None`` is the first read: no frames, and every open
+    wait is ``entered`` (the notify decision reconciles it against the
+    persisted notified set). An absent registry is an empty baseline.
+    """
+    from . import agent_context, coder_steering
+
+    sessions = agent_context.list_agent_sessions(state_path=path) if path.exists() else []
+    current = coder_steering.wait_snapshot(sessions)
+    if snapshot is None:
+        return current, [], [key for key, wait in current.items() if wait]
+    transitions = coder_steering.awaiting_transitions(snapshot, current)
+    return current, transitions, [key for key in transitions if current.get(key)]
+
+
+def _coder_awaiting_edge(keys: list[str]) -> Optional[dict]:
+    """Conductor K3: coder sessions began to wait for the owner.
+
+    Marks the needs-you aggregate dirty and runs the Heartbeat's notify
+    decision now (Notify mode, quiet hours and the notified item set are its
+    own). The block announces itself, so the faces get one ``desk_changed``
+    frame and re-read Needs you. A failure is logged and never stops the
+    coder watcher.
+    """
+    try:
+        from .db import get_database, get_observer
+        from .runtime.announce_scope import announce_writes
+        from .services.heartbeat_service import HeartbeatService
+
+        db = get_database()
+        with announce_writes("coder", "awaiting", keys[0] if keys else "") as name:
+            for key in keys[1:]:
+                name(key)
+            return HeartbeatService(db, observer=get_observer()).notify_coder_edge(
+                session_key=",".join(keys),
+            )
+    except Exception as exc:
+        log.warning(f"coder awaiting edge failed: {exc}")
+        return None
+
+
 def _format_duration(total_seconds: float) -> str:
     """Format duration as MM:SS or HH:MM:SS."""
     total_secs = max(0, int(total_seconds))
@@ -1292,6 +1340,9 @@ class MeetingWebServer:
         mount_router(app, build_delivery_attempts_router(web_ctx))
         mount_router(app, build_delivery_dossiers_router(web_ctx))
         mount_router(app, build_delivery_prs_router(web_ctx))
+        from .web.routes.agent_hand import build_agent_hand_router
+
+        mount_router(app, build_agent_hand_router(web_ctx))  # Conductor K2: Hand to agent
         mount_router(app, build_repositories_router(web_ctx))
         # One shared NodeLinkState feeds both the node link and the terminal
         # command claim leg: commands issued at the hub reach a remote node
@@ -1655,26 +1706,30 @@ class MeetingWebServer:
 
     async def _coder_frames_loop(self) -> None:
         """THE registry watcher (HS-87-01): a `scope:"coder"` frame per
-        awaiting-response transition, so closed surfaces stay current
-        without polling. The registry file's mtime gates the read (a
-        stat every 2 s, the JSON only when the hooks actually wrote);
-        the first observation is a baseline, never a broadcast."""
-        from . import agent_context, coder_steering
+        blocked-state transition, so closed surfaces stay current without
+        polling. The registry file's mtime gates the read (a stat every 2 s,
+        the JSON only when the hooks actually wrote).
 
-        last_mtime: Optional[float] = None
-        snapshot: Optional[dict[str, bool]] = None
+        Conductor K3: the first observation reconciles instead of being
+        dropped. An absent registry is an EMPTY baseline (the first agent to
+        block is a transition); waits already open at start run the notify
+        decision, and the Heartbeat's persisted notified set keeps a wait it
+        already notified silent after a restart."""
+        from . import agent_context
+
+        unseen = object()
+        last_mtime: Any = unseen
+        snapshot: Optional[dict[str, str]] = None
         while True:
-            await asyncio.sleep(2.0)
             try:
                 path = agent_context.AGENT_CONTEXT_FILE
                 mtime = path.stat().st_mtime if path.exists() else None
-                if mtime == last_mtime:
-                    continue
-                last_mtime = mtime
-                sessions = await asyncio.to_thread(agent_context.list_agent_sessions)
-                current = coder_steering.awaiting_snapshot(sessions)
-                if snapshot is not None:
-                    for key in coder_steering.awaiting_transitions(snapshot, current):
+                if mtime != last_mtime:
+                    last_mtime = mtime
+                    snapshot, transitions, entered = await asyncio.to_thread(
+                        _coder_watch_step, snapshot, path,
+                    )
+                    for key in transitions:
                         await self._ws.broadcast(
                             BroadcastMessage(
                                 type="intel_status",
@@ -1689,11 +1744,15 @@ class MeetingWebServer:
                                 },
                             )
                         )
-                snapshot = current
+                    if entered:
+                        # After the frames: the decision builds the full
+                        # needs-you answer, and the frames must not wait on it.
+                        await asyncio.to_thread(_coder_awaiting_edge, entered)
             except asyncio.CancelledError:
                 raise
             except Exception as e:
                 log.debug(f"coder frames loop error: {e}")
+            await asyncio.sleep(2.0)
 
     async def _rails_observer_loop(self) -> None:
         """The ambient dw observer (HS-88-03) — OFF BY DEFAULT. When

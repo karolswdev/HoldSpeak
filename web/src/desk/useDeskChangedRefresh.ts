@@ -40,6 +40,7 @@
 import { useEffect, useRef } from "react";
 import { useRuntimeBus } from "../runtime/RuntimeBus";
 import { burstTimer } from "./burstTimer";
+import { isCoderFrame } from "./steering";
 import { useDesk } from "./store";
 
 /** Trailing-edge debounce window for a `desk_changed` burst, in ms. */
@@ -102,4 +103,25 @@ export function useBusSubscribe(): ReturnType<typeof useRuntimeBus>["subscribe"]
   } catch {
     return undefined;
   }
+}
+
+/** Conductor K3: a window that shows coder sessions re-reads on a
+ * `scope:"coder"` frame (an agent began or stopped waiting for the owner),
+ * the frame `MissionControlConveyor` reads with {@link isCoderFrame}. The
+ * frame is rare (one per transition), so there is no debounce. Without a bus
+ * (a component test) it does nothing. */
+export function useOnCoderFrame(reload: () => void): void {
+  const subscribe = useBusSubscribe();
+  const latest = useRef(reload);
+  latest.current = reload;
+
+  useEffect(() => {
+    if (!subscribe) return;
+    const unsubscribe = subscribe("intel_status", (frame) => {
+      if (isCoderFrame(frame)) latest.current();
+    });
+    return () => {
+      if (typeof unsubscribe === "function") unsubscribe();
+    };
+  }, [subscribe]);
 }

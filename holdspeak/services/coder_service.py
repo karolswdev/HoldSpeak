@@ -144,6 +144,7 @@ class CoderService:
         expand: str,
         *,
         query: str = "",
+        qualified_refs: list[str] | None = None,
     ) -> tuple[list[Any], list[str]]:
         """Hydrate steer grounding through the application's database boundary."""
         from ..grounding import hydrate_refs
@@ -153,6 +154,7 @@ class CoderService:
             meeting_ids,
             artifact_ids,
             expand,
+            qualified_refs=qualified_refs or None,
             query=query,
             include_memory=True,
         )

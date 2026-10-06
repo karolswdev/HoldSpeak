@@ -115,6 +115,7 @@ def compose_from_body(
     raw_m = grounding.get("meeting_ids")
     raw_a = grounding.get("artifact_ids")
     raw_r = grounding.get("rails")
+    raw_q = grounding.get("refs")
     meeting_ids = (
         [str(item).strip() for item in raw_m if str(item).strip()]
         if isinstance(raw_m, list)
@@ -130,19 +131,34 @@ def compose_from_body(
         if isinstance(raw_r, list)
         else []
     )
+    # A picked Desk resource (decision, action, note, ...) travels as a
+    # qualified ref; it counts against the same cap as every other ref.
+    qualified_refs = (
+        [str(item).strip() for item in raw_q if str(item).strip()]
+        if isinstance(raw_q, list)
+        else []
+    )
     expand = str(grounding.get("expand") or "summary").strip() or "summary"
     if expand not in GROUNDING_EXPANDS:
         return JSONResponse(
             {"error": f"expand {expand!r} is not one of {list(GROUNDING_EXPANDS)}"},
             status_code=400,
         )
-    if len(meeting_ids) + len(artifact_ids) + len(rails_refs) > GROUNDING_MAX_REFS:
+    if (
+        len(meeting_ids) + len(artifact_ids) + len(rails_refs) + len(qualified_refs)
+        > GROUNDING_MAX_REFS
+    ):
         return JSONResponse(
             {"error": f"grounding is capped at {GROUNDING_MAX_REFS} refs"},
             status_code=400,
         )
     blocks, unknown = service.hydrate_refs(
-        principal, meeting_ids, artifact_ids, expand, query=text
+        principal,
+        meeting_ids,
+        artifact_ids,
+        expand,
+        query=text,
+        qualified_refs=qualified_refs,
     )
     if rails_refs:
         from ....grounding_rails import hydrate_rails_refs

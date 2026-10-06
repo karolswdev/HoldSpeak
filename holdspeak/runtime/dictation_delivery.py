@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..logging_config import get_logger
+from ..agent_context.models import DEFAULT_RECENT_MAX_AGE_SECONDS
 
 log = get_logger("web_runtime")
 
@@ -74,7 +75,7 @@ class DictationDeliveryMixin:
 
         from ..agent_context import get_recent_awaiting_agent_session
 
-        session = get_recent_awaiting_agent_session(max_age_seconds=120)
+        session = get_recent_awaiting_agent_session(max_age_seconds=DEFAULT_RECENT_MAX_AGE_SECONDS)
         if self._try_tmux_agent_reply(text, session):
             self._mark_first_dictation()
             return {"delivered": True, "method": "process.input", "target": self._agent_tmux_pane(session)}

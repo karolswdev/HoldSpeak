@@ -108,8 +108,12 @@ class HeartbeatService:
         calendar_conductor: Any | None = None,
         clock: Any | None = None,
         local_zone: Any | None = None,
+        follow_through: Any | None = None,
     ) -> None:
         self._db = db
+        # Conductor K4: the agent launches' PRs ride the sweep (refresh,
+        # close the origin on merge, clean up). None: not followed here.
+        self._follow_through = follow_through
         self._observer = observer or NullObserver()
         self._watch_service = watch_service
         self._notifier = notifier  # injectable for tests; None = OS default
@@ -536,6 +540,15 @@ class HeartbeatService:
                     "error": str(exc),
                 }
 
+        # Conductor K4: follow the agent launches' PRs. Own failure boundary.
+        follow_through_receipt: dict[str, Any] | None = None
+        if not held and self._follow_through is not None:
+            try:
+                follow_through_receipt = self._follow_through.sweep(principal)
+            except Exception as exc:
+                log.error("heartbeat follow-through failed: %s", exc)
+                follow_through_receipt = {"kind": "follow_through", "error": str(exc)}
+
         # M3: Refresh the aggregate cache via the canonical builder
         self.refresh_aggregate(principal, sweep_id=sweep_id)
 
@@ -570,6 +583,8 @@ class HeartbeatService:
         # HS-175-04: meeting watch backfill receipt rides along.
         if meeting_watch_backfill is not None:
             receipt["meeting_watch_backfill"] = meeting_watch_backfill
+        if follow_through_receipt is not None:
+            receipt["follow_through"] = follow_through_receipt
 
         # Write kernel receipt (Article XI.2)
         self._write_receipt(receipt)
@@ -673,6 +688,34 @@ class HeartbeatService:
         except Exception:
             pass
 
+    # ── The coder edge (Conductor K3) ──────────────────────────────────
+
+    def notify_coder_edge(
+        self, principal: Principal | None = None, *, session_key: str = "",
+    ) -> dict[str, Any]:
+        """A coding agent began to wait for the owner: decide now.
+
+        The hub's coder watcher calls this on the transition into
+        ``awaiting_response``, so a blocked agent does not wait for the next
+        sweep (15 min by default). It marks the needs-you aggregate dirty and
+        runs the SAME notification decision a sweep runs: Rhythm's Notify
+        mode (``off`` sends nothing), quiet hours (held, then delivered once
+        by a later decision), and the notified item set (the coder row's id is
+        marked when it fires, so the next sweep does not fire it again).
+        """
+        from holdspeak.services.needs_you_aggregate import mark_needs_you_dirty
+
+        try:
+            mark_needs_you_dirty(self._db)
+        except Exception as exc:
+            log.warning("heartbeat coder edge: dirty mark failed: %s", exc)
+        _p = principal or Principal(PrincipalKind.OWNER, "heartbeat-coder-edge")
+        receipt = self._run_notification_decision(_p, self.get_settings())
+        receipt["trigger"] = "coder.awaiting"
+        if session_key:
+            receipt["sessionKey"] = session_key
+        return receipt
+
     # ── D3 notification decision (wired from run_sweep) ────────────────
 
     def _run_notification_decision(
@@ -712,7 +755,10 @@ class HeartbeatService:
         complete = bool(agg.get("complete", True))
 
         def _id_of(item: dict[str, Any]) -> str:
-            return str(item.get("id") or _item_id(str(item.get("projectId") or ""), item))
+            # A coder row (R5) names its wait episode: one wait notifies
+            # once, a new wait after an answer notifies again.
+            return str(item.get("notifyKey") or item.get("id")
+                       or _item_id(str(item.get("projectId") or ""), item))
 
         current_ids = {
             _id_of(it): {"project": str(it.get("projectId") or ""),

@@ -68,6 +68,7 @@ import {
   RunAttempts,
 } from "../../meetings/RouteDisclosure";
 import { egressFor } from "../surface/egress";
+import { useOnCoderFrame } from "../useDeskChangedRefresh";
 import {
   executedReceipt,
   postSummaryRun,
@@ -616,7 +617,7 @@ function Arrival() {
 
   // ── agents (coders sessions) ──
   const [agentSessions, setAgentSessions] = useState<Record<string, unknown>[]>([]);
-  useEffect(() => {
+  const readAgents = useCallback(() => {
     void apiFetch<Record<string, unknown>>("/api/coders/status")
       .then((res) => {
         const sessions = (res as any)?.agent?.sessions;
@@ -627,6 +628,15 @@ function Arrival() {
       })
       .catch(() => undefined);
   }, []);
+  useEffect(() => { readAgents(); }, [readAgents]);
+  // Conductor K3: an agent that begins or stops waiting moves this section
+  // and Needs you now (the `scope:"coder"` frame), not at the next mount or
+  // the next minute's poll.
+  const onCoderFrame = useCallback(() => {
+    readAgents();
+    void refreshNeedsYou(true);
+  }, [readAgents]);
+  useOnCoderFrame(onCoderFrame);
 
   // ── brief generate ──
   const [generating, setGenerating] = useState(false);

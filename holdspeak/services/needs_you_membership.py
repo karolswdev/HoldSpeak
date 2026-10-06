@@ -18,6 +18,11 @@ reads that answer.
     R4  the decisions that wait for the owner's review (a Desk decision
         that is ``proposed``, a meeting's decision that is ``recorded``).
         Each is an attention row with a Review verb that opens it.
+    R5  the coding agents (Claude Code, Codex) that wait for the owner's
+        answer: a session in ``awaiting_response`` with a captured question,
+        updated in the last 30 minutes (``agent_context``'s recent default).
+        Each is an attention row of kind ``coder`` that ranks with the
+        due-today rows (a blocked agent costs time now).
 
 Owner ruling 2026-10-04: a row the owner is WAITING ON someone else for (it
 names an owner, and its reason is ``WAITING ON <owner>``) is listed and is
@@ -33,7 +38,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from holdspeak.timestamps import local_wall
+from holdspeak.timestamps import local_wall, utc_now_iso
 from typing import Any, Callable, Iterable
 
 from .attention_ranking import dedup_items, rank_items
@@ -165,6 +170,126 @@ def decision_items(decisions: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
             "verbHref": None,
             "openRef": ref,
             "severity": "warning",
+        })
+    return rows
+
+
+# ── R5: the coding agents that wait for the owner's answer ──────────
+
+
+CODER_SOURCE = "coder"
+
+#: The reason token of a coder row that asks a question.
+TO_ANSWER = "TO ANSWER"
+
+#: The reason token of a coder row blocked on a permission prompt (its latest
+#: hook event is a ``Notification`` that carries the ask).
+TO_APPROVE = "TO APPROVE"
+
+
+#: The longest question excerpt a row carries (the full question stays in
+#: the session registry; the Agents window shows it).
+CODER_EXCERPT_CHARS = 200
+
+
+def _epoch_seconds(stamp: Any) -> float | None:
+    if not stamp or not isinstance(stamp, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(stamp.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.timestamp()
+
+
+def _excerpt(text: str) -> str:
+    flat = " ".join(text.split())
+    if len(flat) <= CODER_EXCERPT_CHARS:
+        return flat
+    return flat[: CODER_EXCERPT_CHARS - 1].rstrip() + "…"
+
+
+def coder_items(
+    sessions: Iterable[Any],
+    now: datetime | None = None,
+    *,
+    max_age_seconds: int | None = None,
+) -> list[dict[str, Any]]:
+    """R5: the coder sessions that wait for the owner, as attention rows.
+
+    ``sessions`` holds ``agent_context.AgentSession`` objects or their
+    ``to_dict()`` mappings. A session is a member when it is blocked
+    (``agent_context.is_blocked``: the ONE predicate the hub's coder watcher
+    reads too) and was updated within ``max_age_seconds`` (default:
+    ``DEFAULT_RECENT_MAX_AGE_SECONDS``, 30 min). Pinned sessions get no
+    exemption. The reason is ``TO APPROVE`` for a permission prompt and
+    ``TO ANSWER`` for a question or an input prompt.
+
+    ``since`` is the wait's start (``wait_started_at``), so a repeated report
+    does not move the row in the oldest-first order; freshness reads
+    ``updated_at``. ``notifyKey`` names the wait EPISODE (the stable row ref
+    plus ``wait_id``): the Heartbeat dedupes notifications on it, so a new
+    wait after an answer notifies again while one wait notifies once.
+    """
+    from holdspeak.agent_context.models import (
+        DEFAULT_RECENT_MAX_AGE_SECONDS,
+        is_blocked,
+        wait_kind,
+    )
+
+    if max_age_seconds is None:
+        max_age_seconds = DEFAULT_RECENT_MAX_AGE_SECONDS
+    clock = now or local_wall()
+    now_s = (clock if clock.tzinfo else clock.astimezone()).timestamp()
+    rows: list[dict[str, Any]] = []
+    for raw in sessions:
+        session = raw.to_dict() if hasattr(raw, "to_dict") else dict(raw or {})
+        if not is_blocked(session):
+            continue
+        question = str(session.get("question") or "").strip()
+        updated = str(session.get("updated_at") or "")
+        updated_s = _epoch_seconds(updated)
+        if updated_s is None:
+            continue
+        if max(0, int(now_s - updated_s)) > max_age_seconds:
+            continue
+        agent = str(session.get("agent") or "")
+        session_id = str(session.get("session_id") or "")
+        if not agent or not session_id:
+            continue
+        key = f"{agent}:{session_id}"
+        ref = f"{CODER_SOURCE}:{key}"
+        started = str(session.get("wait_started_at") or "") or updated
+        started_s = _epoch_seconds(started)
+        age = max(0, int(now_s - (started_s if started_s is not None else updated_s)))
+        wait_id = str(session.get("wait_id") or "")
+        approve = wait_kind(session) == "approve"
+        rows.append({
+            "id": ref,
+            "ref": ref,
+            "notifyKey": f"{ref}#{wait_id}" if wait_id else ref,
+            "projectId": "",
+            "projectName": str(session.get("project_name") or ""),
+            "title": _excerpt(question),
+            "why": TO_APPROVE if approve else TO_ANSWER,
+            "ageToken": started,
+            "since": started,
+            "dueAt": None,
+            "kind": CODER_SOURCE,
+            "source": CODER_SOURCE,
+            "verbHref": None,
+            "openRef": ref,
+            "severity": "warning",
+            "sessionKey": key,
+            "agent": agent,
+            "cwd": str(session.get("cwd") or ""),
+            "repoRoot": str(session.get("repo_root") or ""),
+            "question": _excerpt(question),
+            "waitKind": "approve" if approve else "answer",
+            "waitStartedAt": started,
+            "ageSeconds": age,
         })
     return rows
 
@@ -345,12 +470,13 @@ def compute_needs_you(
     assignment_read: str = "pending",
     meetings: Iterable[dict[str, Any]] = (),
     decisions: Iterable[dict[str, Any]] = (),
+    coders: Iterable[Any] = (),
     self_names: Iterable[str] = SELF_OWNER_NAMES,
     personal_names: Iterable[str] = (),
     now: datetime | None = None,
     dedup: Callable[[list[dict[str, Any]], datetime], list[dict[str, Any]]] = dedup_items,
 ) -> dict[str, Any]:
-    """The pure R1-R4 rule. Mirrors ``computeNeedsYou`` line for line.
+    """The pure R1-R5 rule. Mirrors ``computeNeedsYou`` line for line.
 
     ``door`` is the Door response or its board. Returns ``members`` (stable
     refs, in face order), ``count``, ``waitingCount``, the ranked rows split
@@ -403,7 +529,8 @@ def compute_needs_you(
             his = next(source for source, mark in zip(sources, marks) if not mark)
             row["why"] = YOURS if _waiting_on(his) else (his.get("why") or row.get("why"))
             row["severity"] = his.get("severity") or row.get("severity")
-    singles = people + decision_items(decisions)
+    # A coder row (R5) keeps its own row and its own ref (``coder:<key>``).
+    singles = people + decision_items(decisions) + coder_items(coders, clock)
     for row in singles:
         row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)
@@ -549,6 +676,17 @@ def _read_decisions(db: Any, principal: Any) -> list[dict[str, Any]]:
     return out
 
 
+def _read_coders() -> list[Any]:
+    """The coder sessions the agent hooks recorded (``agent_context``).
+
+    Strict: an absent registry (first run) is no sessions; an unreadable or
+    invalid one raises, so the answer names it and is never a false
+    all-clear."""
+    from holdspeak import agent_context
+
+    return list(agent_context.read_agent_sessions_strict())
+
+
 def _decision_text(text: Any) -> str:
     return " ".join(str(text or "").split()).lower()
 
@@ -670,6 +808,23 @@ def compose(
         log.warning("needs-you: the decision read failed: %s", exc)
         errors["decisions"] = _reason(exc)
 
+    # R5: the coder session registry (the hooks write it; one file read).
+    coders: list[Any] = []
+    coder_coverage = {
+        "source_id": "coders", "kind": "coder", "state": "available",
+        "observed_at": utc_now_iso(), "label": "Agents", "project_id": "",
+        "reason": None, "repair": None,
+    }
+    try:
+        coders = _read_coders()
+    except Exception as exc:
+        log.warning("needs-you: the coder read failed: %s", exc)
+        errors["coders"] = _reason(exc)
+        coder_coverage.update({
+            "state": "failed", "observed_at": None, "reason": _reason(exc),
+            "repair": {"token": "READ FAILED", "verb": "Retry", "href": "/"},
+        })
+
     # The names that mean the owner: the reserved ones, his speaker label,
     # and the name and aliases he gave on first run (``config.owner``).
     speaker: list[Any] = []
@@ -692,11 +847,19 @@ def compose(
         assignment_read=assignment_read,
         meetings=meetings,
         decisions=decisions,
+        coders=coders,
         self_names=names,
         personal_names=personal,
         now=now,
     )
     answer = dict(aggregate)
+    # One coder coverage record: a recomposed cached answer carries the last
+    # one, so it is replaced, never added twice.
+    coverage = [
+        row for row in (aggregate.get("coverage") or [])
+        if not (isinstance(row, dict) and row.get("kind") == "coder")
+    ]
+    answer["coverage"] = coverage + [coder_coverage]
     answer.update({
         "count": result["count"],
         # What the owner waits on someone else for: listed, marked
@@ -839,6 +1002,8 @@ def withhold_people_content(answer: dict[str, Any]) -> dict[str, Any]:
 
 
 __all__ = [
+    "CODER_SOURCE",
+    "coder_items",
     "PEOPLE_ROW_TITLE",
     "PEOPLE_SOURCE",
     "is_people_row",

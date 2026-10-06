@@ -104,6 +104,10 @@ def attention_class(item: dict[str, Any], now: datetime) -> str:
         if due.date() == now.date():
             return "due_today"
         return "waiting"
+    # R5: a coding agent that waits for the owner's answer ranks with the
+    # rows due today (a blocked agent costs time now), oldest wait first.
+    if item.get("kind") == "coder":
+        return "due_today"
     why = str(item.get("why") or "").strip().upper()
     if why.startswith("OVERDUE"):
         return "overdue"
@@ -124,7 +128,8 @@ def _within_class_key(rank_class: str, item: dict[str, Any]) -> float:
         # knows the overdue-since stamp uses that.
         return _epoch(due if due else since)
     if rank_class == "due_today":
-        return _epoch(due)
+        # A coder row has no due time: it is ordered by when it began to wait.
+        return _epoch(due if due else (since if item.get("kind") == "coder" else None))
     if rank_class == "not_run":
         return _epoch(since)
     if rank_class == "no_due_date":

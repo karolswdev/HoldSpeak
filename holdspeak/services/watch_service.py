@@ -860,6 +860,12 @@ class WatchService:
                             "entity_ref": entity_ref,
                             "changed": facts.get("changed", {}),
                         }
+                        # Conductor K4: name the entity, so the weekly
+                        # update can say what closed (a PR title, a URL).
+                        if facts.get("entity_title"):
+                            fact["entity_title"] = str(facts["entity_title"])
+                        if facts.get("url"):
+                            fact["url"] = str(facts["url"])
                         fact_str = json.dumps(
                             fact, sort_keys=True, separators=(",", ":"),
                         )

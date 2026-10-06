@@ -301,6 +301,73 @@ def test_grounded_steer_carries_the_object_into_the_pane(env) -> None:
     assert trail[0].grounding == [f"meeting:{mid}"]
 
 
+def test_picked_desk_resource_ref_reaches_the_pane(env) -> None:
+    """Conductor K0: a picked note travels as grounding.refs and is composed."""
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch)
+    note = env.db.notes.upsert(
+        note_id="note-k0",
+        title="Release plan",
+        body_markdown="Cut the branch on Thursday.",
+        tags=[],
+    )
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post(
+        "/api/coders/claude:abc/steer",
+        json={
+            # Text that shares no word with the note: the note must come
+            # from the pick, not from the memory relevance pass.
+            "text": "go ahead",
+            "submit": False,
+            "grounding": {
+                "meeting_ids": [],
+                "artifact_ids": [],
+                "refs": [f"note:{note.id}"],
+                "expand": "summary",
+            },
+        },
+    )
+    assert res.status_code == 200, res.json()
+    assert res.json()["status"] == "delivered"
+    sent_text = env.sent[0]["text"]
+    assert "Cut the branch on Thursday." in sent_text
+    assert sent_text.rstrip().endswith("(1 object grounded)")
+
+
+def test_picked_refs_count_against_the_ref_cap(env) -> None:
+    from holdspeak.grounding import GROUNDING_MAX_REFS
+
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch)
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post(
+        "/api/coders/claude:abc/steer",
+        json={
+            "text": "q",
+            "grounding": {
+                "meeting_ids": ["m1"],
+                "refs": [f"note:n{i}" for i in range(GROUNDING_MAX_REFS)],
+            },
+        },
+    )
+    assert res.status_code == 400
+    assert "capped" in res.json()["error"]
+    assert env.sent == []
+
+
+def test_unknown_picked_ref_refuses_naming_the_ref(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch)
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post(
+        "/api/coders/claude:abc/steer",
+        json={"text": "q", "grounding": {"refs": ["note:ghost"]}},
+    )
+    assert res.status_code == 400
+    assert res.json()["unknown_ids"] == ["note:ghost"]
+    assert env.sent == []
+
+
 def test_preview_returns_the_exact_send_text_without_delivering(env) -> None:
     _register(env.monkeypatch, _session())
     _pin_identity(env.monkeypatch)

@@ -2093,7 +2093,8 @@ CREATE TABLE IF NOT EXISTS work_attempts (
         CHECK (state IN ('starting','working','waiting','idle','ended','abandoned','unknown')),
     started_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
-    ended_at TEXT
+    ended_at TEXT,
+    origin_ref TEXT               -- kind:id of the desk object a launch works on
 );
 CREATE INDEX IF NOT EXISTS idx_work_attempts_story
 ON work_attempts(source_id, project, story_id, started_at DESC);
@@ -4160,7 +4161,11 @@ CREATE TABLE IF NOT EXISTS project_proposals (
     dismissal_basis_hash TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     decided_at TEXT,
-    decided_by_ref TEXT
+    decided_by_ref TEXT,
+    -- Conductor K4: the observation's change class (added, changed,
+    -- closed, overdue, blocked, contradicted, coverage_degraded), so the
+    -- weekly update reports a merged or resolved item as closed.
+    change_class TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_project_proposals_window
     ON project_proposals(project_id, review_window_key, lifecycle);

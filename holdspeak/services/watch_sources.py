@@ -34,7 +34,7 @@ Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 GH_WATCH_FIELDS = (
     "number,title,url,state,isDraft,reviewRequests,reviewDecision,"
-    "statusCheckRollup,headRefOid,updatedAt,createdAt"
+    "statusCheckRollup,headRefOid,headRefName,updatedAt,createdAt"
 )
 
 
@@ -108,8 +108,8 @@ class GitHubWatchSource:
                 "reviewRequests": _reviewer_names(row.get("reviewRequests")),
                 "reviewDecision": row.get("reviewDecision"),
                 "checks": rollup_conclusion(row.get("statusCheckRollup")),
-                "headRefOid": row.get("headRefOid"), "updatedAt": row.get("updatedAt"),
-                "createdAt": row.get("createdAt"),
+                "headRefOid": row.get("headRefOid"), "headRefName": row.get("headRefName"),
+                "updatedAt": row.get("updatedAt"), "createdAt": row.get("createdAt"),
             })
         return entities
 

@@ -231,7 +231,8 @@ def test_the_residual_set_paid_exactly_the_enumerated_identities() -> None:
     measurements = committed["measurements"]
     # PHILO-7-02 left (284, 223, 61) and 229 public tools; a later story's
     # paid entries and added tools are its own (PHILO-9-01 onward; PHILO-10-01's Send).
-    later_stories = ("PHILO-9", "PHILO-10")
+    # MEMORY-4/5 (memory.observations, memory.page) and CONDUCTOR-K2 (agent.hand) are later too.
+    later_stories = ("PHILO-9", "PHILO-10", "MEMORY-", "CONDUCTOR-")
     later = [e for e in committed["paid"] if e["story"].startswith(later_stories)]
     later_added = [a for a in committed["public_tools_added"] if a["story"].startswith(later_stories)]
     assert (measurements["residual_identities"] + len(later),

@@ -27,7 +27,7 @@ class DoctorCheck:
     """A single doctor check result."""
 
     name: str
-    status: str  # PASS | WARN | FAIL
+    status: str  # PASS | WARN | FAIL | INFO (INFO counts as neither)
     detail: str
     fix: str | None = None
 
@@ -1105,8 +1105,46 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         _check_people_keystore(),
         _check_agent_capabilities(),
         _check_tool_call_gate(),
+        _check_coding_agents(),
     ]
 
+
+def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:
+    """The Conductor, step 1: Claude Code or Codex installed with working HoldSpeak hooks, and tmux.
+
+    Reuses the onboarding detect (PATH and files only; no process, no network).
+    INFO with no fix when no agent is installed (tmux then does not matter).
+    """
+    if detected is None:
+        from ..services.onboarding_service import detect_agents
+
+        detected = detect_agents()
+    installed = [a for a in detected["agents"] if a["installed"]]
+    if not installed:
+        return DoctorCheck(name="Coding agents", status="INFO", detail="no coding agent on PATH (claude, codex)")
+    ready = [a for a in installed if a["ready"]]
+    unhooked = [a for a in installed if not a["ready"]]
+    status = "PASS" if ready else "WARN"
+    parts = []
+    for agent in installed:
+        if agent["hooks"] == "broken":
+            parts.append(f"{agent['label']} hooks cannot run (their holdspeak command is missing)")
+        else:
+            parts.append(f"{agent['label']} hooks {agent['hooks']}")
+    detail = "; ".join(parts)
+    fixes: list[str] = []
+    if unhooked:
+        names = " ".join(a["id"] for a in unhooked)
+        agent_flag = f" --agent {unhooked[0]['id']}" if len(unhooked) == 1 else ""
+        fixes.append(f"Install the hooks for {names}: `holdspeak agent-hook install{agent_flag}`")
+    if any(a["hooks"] == "broken" for a in installed):
+        status = "WARN"
+    tmux = detected["tmux"]
+    if not tmux["installed"]:
+        status = "WARN"
+        detail += "; tmux not on PATH"
+        fixes.append(f"Install tmux: `{tmux['install_hint']}`")
+    return DoctorCheck(name="Coding agents", status=status, detail=detail, fix="; ".join(fixes) or None)
 
 def _check_people_keystore() -> DoctorCheck:
     """HS-149-01: surface the People keystore mode and F4 both-worlds warning."""
@@ -1186,6 +1224,12 @@ def _check_tool_call_gate() -> DoctorCheck:
             name="Tool-call gate",
             status="PASS",
             detail="off (default); `holdspeak gate install` + arm + allow to hold agent calls",
+        )
+    if not config.armed and config.repos and set(config.repos) <= set(config.armed_paths):
+        return DoctorCheck(
+            name="Tool-call gate",
+            status="PASS",
+            detail=f"held for {len(config.repos)} agent worktree(s) launched by Hand to agent; master switch off",
         )
     if config.armed and config.repos:
         held = "; ".join(

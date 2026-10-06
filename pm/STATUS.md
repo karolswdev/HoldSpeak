@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-05
+**Last updated:** 2026-10-06
 
 ## Current phase
 
@@ -15,6 +15,8 @@ Now: the fast-lane change (owner ruling 2026-10-03): remove the commit gate; sto
 committing generated docs and line-number test maps; split the tests.
 
 ## Open work
+
+Now: THE CONDUCTOR (owner 2026-10-05: "work with agents, semi-autonomously, as an orchestrator, out of the box"). Plan: `docs/internal/CONDUCTOR.md` (#893). Merged: K0 #894 (steer keeps picked refs; qualified watch events classify as closed; device reply window 30 min), K1 #895 (detect claude/codex/tmux, one-press hook install as owner-only kernel op `agent_hooks.install` with receipts, doctor Coding agents check, Setup keeps `info`), K3 #896 (blocked coders join Needs you as R5 TO ANSWER / TO APPROVE, wait episodes, immediate edge notify, strict registry read), K2 #898 (Hand to agent: declared op `agent.hand` behind POST /api/agent/hand + MCP + Thread `/agent`; grounded brief with People cut and full redaction; new worktree; rider hooks via --settings; gate armed per path under a file lock; folder-trust answered once in its own pane; brief typed after registration, persisted, resumable via POST /api/agent/launches/{id}/deliver). K4 #900 (the Heartbeat follows each agent PR by identity: same repo, no fork, the launch branch, merged after launch; closes the origin on merge with PR evidence, or a Door confirm in Secure whose dismissal is final; the weekly update reports each closure once by key; cleanup kills the session and removes only a clean, merged worktree the launch created). Building: the faces canvas (DRAFT, for the owner). Waiting on the owner: the Control-mode mapping (K5). Open: K4 limits: merges of PRs no agent made reach the weekly update only through a Room Watch that reads merged PRs (Room watches stay open-only; a merged-only query is the owner's call); origins other than action items and decisions are `not_closable`; the Secure confirm item has no owner (UNASSIGNED); a removed worktree stays in the Delivery registry; drafts made before #900 carry no closure_keys; MissionControlConveyor's coder-frame refresh listens for an `hs-broadcast` event nothing sends; other agent-question lookups still use 120 s (dictation routes, dictation_runner); K1/K3 live hook delivery and credential validity not observed on a real desk; the Needs you coder row renders generically until the faces land; flakes to watch: tests/unit/test_philo5_codex_seams.py restart case (once); tests/integration/test_phase200_one_composition_root_processes.py sidecar cold start (twice on K2 FAST, passes alone). K2 limits: the trust answer knows Claude Code 2.1.x's prompt only; Codex startup prompts are not answered; `/agent` needs an explicit project_id when the attached Project stored no sources.
 
 Done: the README sells the whole product (owner 2026-10-05: "we're still selling it short"): #891 merged, Astra ratified on iteration 2. What's inside table; sections for Ask AI and Threads, cited memory, Send to six destinations, coder steering, Extend everything, MCP. Product bug found in review: Thread `/keep` asks for a Note but `thread_service.py` ignores `as_kind` and always records an Artifact (README says Artifact until fixed).
 

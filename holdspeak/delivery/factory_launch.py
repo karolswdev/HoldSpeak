@@ -78,6 +78,20 @@ _REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 _BRANCH_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._/-]{0,99}$")
 _FLAG_RE = re.compile(r"^--[A-Za-z0-9][A-Za-z0-9-]{0,63}$")
 
+#: The desk objects a launch may name as its origin (Hand to agent): the
+#: item the agent works on. Optional; carried on the launch record and the
+#: Work attempt so a later merge can close the item it came from.
+ORIGIN_KINDS = (
+    "action",
+    "decision",
+    "decision_record",
+    "project_item",
+    "note",
+    "meeting",
+    "artifact",
+)
+_ORIGIN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+
 #: Request fields a browser/native client must NEVER supply — each
 #: refuses by its own name (§9: no executable, argv, or shell string).
 _CLIENT_FORBIDDEN_FIELDS = ("executable", "argv", "command", "shell", "args", "env")
@@ -135,6 +149,33 @@ def _parse_ts(text: Any) -> Optional[datetime]:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed
+
+
+def origin_ref_of(request: Mapping[str, Any]) -> Optional[dict[str, str]]:
+    """The optional ``origin_ref`` of a launch request, validated.
+
+    Absent is ``None``. Present, it must be ``{kind, id}`` with a known
+    kind and an opaque id, else it refuses ``origin_ref_invalid``."""
+    raw = request.get("origin_ref")
+    if raw is None:
+        return None
+    if not isinstance(raw, Mapping):
+        raise LaunchRefused("origin_ref_invalid", "origin_ref must be an object")
+    kind = str(raw.get("kind") or "")
+    item_id = str(raw.get("id") or "")
+    if kind not in ORIGIN_KINDS or not _ORIGIN_ID_RE.match(item_id):
+        raise LaunchRefused("origin_ref_invalid", "origin_ref carries invalid tokens")
+    return {"kind": kind, "id": item_id}
+
+
+def derived_story_ref(project: str, kind: str, item_id: str) -> dict[str, str]:
+    """A story ref for work that has no dw story: ``<kind>-<id>`` under the
+    item's Project. It must pass the same token rule as any story ref."""
+    story_id = f"{kind}-{item_id}"
+    project = str(project or "")
+    if not _REF_RE.match(project) or not _REF_RE.match(story_id):
+        raise LaunchRefused("story_ref_invalid", "the derived story ref is not a valid token")
+    return {"project": project, "story_id": story_id}
 
 
 def valid_branch(branch: str) -> bool:
@@ -376,6 +417,80 @@ def execute_worktree_create(
     return _audited({"status": "worktree_created", "name": name, "branch": branch})
 
 
+def execute_worktree_remove(
+    payload: Mapping[str, Any],
+    *,
+    runner: Optional[Runner] = None,
+    audit: Optional[Callable[..., int]] = None,
+) -> dict[str, Any]:
+    """The ``factory.worktree_remove`` executor (Conductor K4): remove a
+    launch's worktree after its PR merged. It removes a CLEAN, MERGED
+    worktree only, and refuses everything else by name before git runs:
+
+    ``worktree_removed``, ``bad_name``, ``out_of_root``, ``worktree_absent``,
+    ``worktree_dirty`` (uncommitted or untracked changes),
+    ``worktree_unmerged`` (HEAD is not the merged head or an ancestor of
+    it: a commit made after the merge stays), ``error``.
+
+    ``merged_head`` is the head SHA the forge reports merged. The branch is
+    kept (only the checkout goes). Audited like every factory act."""
+    record = audit or coder_steering._default_audit
+    name = str(payload.get("name") or "")
+    repo_path = str(payload.get("repo_path") or "")
+    path = str(payload.get("path") or "")
+    merged_head = str(payload.get("merged_head") or "").strip()
+
+    def _audited(result: dict[str, Any]) -> dict[str, Any]:
+        try:
+            result["audit_id"] = record(
+                session_key=f"factory:worktree:{name}", agent="factory", pane_id=None,
+                text=f"worktree remove {name}", grounding=[], submit=False,
+                outcome=result["status"], detail=result.get("detail"),
+            )
+        except Exception:
+            result["audit_id"] = None
+        return result
+
+    if not coder_factory.valid_name(name):
+        return _audited({"status": "bad_name", "detail": f"invalid worktree name: {name!r}"})
+    if not repo_path or not path:
+        return _audited({"status": "error", "detail": "repo_path and path are required"})
+    try:
+        resolved = Path(path).expanduser().resolve()
+        root = Path(repo_path).expanduser().resolve().parent
+    except OSError as exc:
+        return _audited({"status": "error", "detail": _scrub(str(exc), repo_path, path)})
+    if resolved.parent != root or resolved.name != name:
+        return _audited({"status": "out_of_root", "detail": "worktree path escapes the source root"})
+    if not resolved.exists():
+        return _audited({"status": "worktree_absent", "detail": f"worktree {name!r} is not there"})
+    run = runner or _default_git_runner
+
+    def git(*args: str) -> Any:
+        return run(["git", "-C", str(resolved), *args])
+
+    try:
+        status = git("status", "--porcelain")
+        if status.returncode != 0:
+            return _audited({"status": "error", "detail": "git status failed"})
+        if (status.stdout or "").strip():
+            return _audited({"status": "worktree_dirty", "detail": f"worktree {name!r} has changes"})
+        if not merged_head or not _SAFE_TOKEN_RE.match(merged_head):
+            return _audited({"status": "worktree_unmerged", "detail": "no merged head to compare"})
+        ancestor = git("merge-base", "--is-ancestor", "HEAD", merged_head)
+        if ancestor.returncode != 0:
+            return _audited(
+                {"status": "worktree_unmerged", "detail": f"worktree {name!r} has commits the merge does not hold"}
+            )
+        removed = run(["git", "-C", str(Path(repo_path).expanduser()), "worktree", "remove", str(resolved)])
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return _audited({"status": "error", "detail": _scrub(str(exc), repo_path, path)})
+    if removed.returncode != 0:
+        detail = _scrub((removed.stderr or "").strip() or "git refused", repo_path, path)
+        return _audited({"status": "error", "detail": detail})
+    return _audited({"status": "worktree_removed", "name": name})
+
+
 # ── the launch ledger (durable launch records) ───────────────────────
 
 
@@ -476,8 +591,15 @@ class LaunchService:
         git_runner: Optional[Callable[..., Any]] = None,
         local_node_id: str = "local",
         wall_now: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
+        which: Optional[Callable[[str], Optional[str]]] = None,
     ) -> None:
         self._profiles = profiles
+        # The executable preflight. Production asks the real PATH; a test
+        # that injects a tmux runner has no real binaries, so the preflight
+        # runs there only when the test passes its own ``which``.
+        self._which = which if which is not None else (
+            shutil.which if runner is None else None
+        )
         self._registry = registry
         self._targets = targets
         self._commands = commands
@@ -488,11 +610,22 @@ class LaunchService:
         self._local_node_id = str(local_node_id)
         self._wall_now = wall_now
         self._kernel: Any = None
+        from .first_message import FirstMessage
+
+        self._first = FirstMessage(self)
+        self._reconciled = False
 
     def bind_kernel(self, broker: Any) -> None:
         """Bind the existing launch driver to the kernel executor plane."""
         self._kernel = broker
         self._commands._kernel = broker
+        if not self._reconciled:
+            # A pending first message survives a restart: resume or name it.
+            self._reconciled = True
+            try:
+                self._first.reconcile()
+            except Exception:
+                pass
 
     def launch_record(self, launch_id: str) -> Optional[dict[str, Any]]:
         return self._ledger.get(launch_id)
@@ -526,6 +659,8 @@ class LaunchService:
         self._refuse_client_execution_fields(request)
         profile_id = str(request.get("agent_profile_id") or request.get("profile_id") or "")
         self._profiles.resolve_argv(profile_id, request.get("options"))
+        origin_ref_of(request)
+        self._preflight(self._profiles.get(profile_id) or {})
         _, story_id = self._story_ref(request)
         source_id = str(request.get("source_id") or "")
         source = self._registry.get(source_id)
@@ -551,6 +686,20 @@ class LaunchService:
         assert source is not None
         _, worktree_path, _ = self._resolve_worktree(request, source)
         self._require_process_gate(profile, worktree_path)
+
+    def _preflight(self, profile: Mapping[str, Any]) -> None:
+        """Refuse before any envelope when the agent or tmux is not on
+        this machine: ``executable_absent`` / ``tmux_absent``."""
+        which = self._which
+        if which is None:
+            return
+        if which("tmux") is None:
+            raise LaunchRefused("tmux_absent", "tmux is not installed on this machine")
+        executable = str(profile.get("executable") or "")
+        if executable and which(executable) is None:
+            raise LaunchRefused(
+                "executable_absent", f"{executable} is not installed on this machine"
+            )
 
     @staticmethod
     def _require_process_gate(profile: Mapping[str, Any], worktree_path: str) -> None:
@@ -708,6 +857,9 @@ class LaunchService:
             request.get("agent_profile_id") or request.get("profile_id") or ""
         )
         argv = self._profiles.resolve_argv(profile_id, request.get("options"))
+        origin_ref = origin_ref_of(request)
+        profile = self._profiles.get(profile_id) or {}
+        self._preflight(profile)
         project, story_id = self._story_ref(request)
         source_id = str(request.get("source_id") or "")
         source = self._registry.get(source_id)
@@ -719,19 +871,19 @@ class LaunchService:
         session_name = self._session_name(request, story_id)
         gate_state = "not gated"
         if parent_operation_id:
-            profile = self._profiles.get(profile_id) or {}
             self._require_process_gate(profile, worktree_path)
+        if str(profile.get("executable") or "") == "claude":
+            # Every Claude launch carries HoldSpeak's spawn settings: the
+            # rider hooks (so the launch registers with no manual
+            # ``agent-hook install``) and the gate hooks (inert unless the
+            # gate holds this worktree).
             from .. import coder_gate
 
             settings_path = coder_gate.write_spawn_settings()
-            argv = [
-                *argv,
-                "--settings",
-                str(settings_path),
-                "--allowedTools",
-                "Bash",
-            ]
-            gate_state = "gated"
+            argv = [*argv, "--settings", str(settings_path)]
+            if parent_operation_id:
+                argv = [*argv, "--allowedTools", "Bash"]
+                gate_state = "gated"
 
         launch_id = launch_id or "launch_" + uuid.uuid4().hex[:16]
         record: dict[str, Any] = {
@@ -744,6 +896,7 @@ class LaunchService:
             "source_id": source_id,
             "worktree_id": worktree_id,
             "story_ref": {"project": project, "story_id": story_id},
+            "origin_ref": origin_ref,
             "session": session_name,
             "target": None,
             "attempt_id": None,
@@ -844,6 +997,9 @@ class LaunchService:
                 claimed_by=f"launch:{profile_id}",
                 state="starting",
                 now=self._wall_now(),
+                origin_ref=(
+                    f"{origin_ref['kind']}:{origin_ref['id']}" if origin_ref else None
+                ),
             )
         except Exception as exc:
             # The failed logical transaction leaves NO unaccounted
@@ -867,6 +1023,8 @@ class LaunchService:
 
     def submit_process_spawn(
         self, request: Mapping[str, Any], instruction: str, principal: Any,
+        *,
+        after_registration: bool = False,
     ) -> dict[str, Any]:
         """Admit, approve and execute one ``process.spawn`` owner gesture.
 
@@ -885,15 +1043,19 @@ class LaunchService:
         from ..principals import Principal, PrincipalKind
 
         launch_id = new_launch_id()
+        subject_refs = [
+            f"delivery-source:{request.get('source_id')}",
+            f"story:{(request.get('story_ref') or {}).get('story_id')}",
+        ]
+        origin = origin_ref_of(request)
+        if origin is not None:
+            subject_refs.append(f"{origin['kind']}:{origin['id']}")
         raw = {
             "request_schema": 1,
             "request_id": str(uuid.uuid4()),
             "idempotency_key": f"process.spawn:{launch_id}",
             "operation": {"name": "process.spawn", "version": 1},
-            "subject_refs": [
-                f"delivery-source:{request.get('source_id')}",
-                f"story:{(request.get('story_ref') or {}).get('story_id')}",
-            ],
+            "subject_refs": subject_refs,
             "target": {"ref": f"launch:{launch_id}"},
             "arguments": {"launch_id": launch_id, **dict(request)},
             "placement": f"node:{self._local_node_id}",
@@ -917,38 +1079,37 @@ class LaunchService:
             if record.get("state") != "launched":
                 self._kernel.receipt(operation_id, "failed", f"launch:{launch_id}", node)
                 return {"operation_id": operation_id, "launch": record}
-            target = record.get("target") or {}
-            from .. import coder_steering
-
-            armed = coder_steering.arm(
-                str(record.get("session") or ""),
-                str(target.get("pane_id") or ""),
-            )
-            if armed.get("status") != "armed":
-                raise LaunchRefused(
-                    str(armed.get("status") or "arm_refused"),
-                    str(armed.get("detail") or "spawned pane could not be armed"),
-                )
-            sent = self._commands.submit_process_input(
-                {
-                    "node_id": self._local_node_id,
-                    "target_id": target.get("target_id"),
-                    "target_generation": target.get("target_generation"),
-                    "operation": {"family": "coder_steering", "verb": "terminal.text"},
-                    "payload": {
-                        "text": text,
-                        "submit": True,
-                        "session_key": record.get("session"),
-                        "agent": str(request.get("agent_profile_id") or request.get("profile_id") or "agent"),
-                    },
-                    "parent_operation_id": operation_id,
-                },
-                principal,
-            )
+            if after_registration:
+                # The agent reads its first message only once it is up: a
+                # dialog (folder trust) or a slow start would eat text typed
+                # now. The brief is HELD on the launch record and typed when
+                # the rider registers the session (first_message.py).
+                profile = self._profiles.get(
+                    str(request.get("agent_profile_id") or request.get("profile_id") or "")
+                ) or {}
+                record = self._first.hold(
+                    launch_id, text, principal, operation_id=operation_id,
+                    agent=str(request.get("agent_profile_id") or "agent"),
+                    trust=profile.get("executable") == "claude",
+                ) or record
+                self._first.start(launch_id)
+                self._first.watch(launch_id)
+                return {
+                    "operation_id": operation_id,
+                    "correlation_id": operation_id,
+                    "launch": record,
+                    "instruction_operation_id": None,
+                    "instruction_receipt": None,
+                }
+            sent = self._send_instruction(record, text, principal, request, operation_id)
             commands = dict(record.get("commands") or {})
             commands["instruction"] = sent.get("command_id")
-            record = self._ledger.update(launch_id, commands=commands) or record
-            self._monitor_completion(operation_id, launch_id, str(record.get("session") or ""), node)
+            outcome = str((sent.get("receipt") or {}).get("outcome") or "")
+            record = self._ledger.update(
+                launch_id, commands=commands,
+                instruction_state="sent" if outcome == "delivered" else (outcome or "not_delivered"),
+            ) or record
+            self._first.watch(launch_id)
             return {
                 "operation_id": operation_id,
                 "correlation_id": operation_id,
@@ -961,23 +1122,64 @@ class LaunchService:
                 self._kernel.receipt(operation_id, "failed", f"launch:{launch_id}", node)
             raise
 
-    def _monitor_completion(
-        self, operation_id: str, launch_id: str, session_name: str, node: Any,
-    ) -> None:
-        if not session_name:
-            return
+    def _send_instruction(
+        self, record: Mapping[str, Any], text: str, principal: Any,
+        request: Mapping[str, Any], operation_id: str,
+    ) -> dict[str, Any]:
+        """Arm the spawned pane and type ``text`` as a child ``process.input``."""
+        from .. import coder_steering
 
-        def watch() -> None:
-            while self._session_alive(session_name):
-                time.sleep(1.0)
-            self._ledger.update(launch_id, state="complete", completed_at=_iso_now())
-            try:
-                if self._kernel.store.receipt(operation_id) is None:
-                    self._kernel.receipt(operation_id, "succeeded", f"launch:{launch_id}", node)
-            except Exception:
-                pass
+        target = record.get("target") or {}
+        armed = coder_steering.arm(
+            str(record.get("session") or ""),
+            str(target.get("pane_id") or ""),
+            runner=self._runner,
+        )
+        if armed.get("status") != "armed":
+            raise LaunchRefused(
+                str(armed.get("status") or "arm_refused"),
+                str(armed.get("detail") or "spawned pane could not be armed"),
+            )
+        return self._commands.submit_process_input(
+            {
+                "node_id": self._local_node_id,
+                "target_id": target.get("target_id"),
+                "target_generation": target.get("target_generation"),
+                "operation": {"family": "coder_steering", "verb": "terminal.text"},
+                "payload": {
+                    "text": text,
+                    "submit": True,
+                    "session_key": record.get("session"),
+                    "agent": str(request.get("agent_profile_id") or request.get("profile_id") or "agent"),
+                },
+                "parent_operation_id": operation_id,
+            },
+            principal,
+        )
 
-        threading.Thread(target=watch, name=f"launch-{launch_id}", daemon=True).start()
+    def _worktree_path(self, record: Mapping[str, Any]) -> str:
+        """The server-side path of the launch's worktree (never on the wire)."""
+        source = self._registry.get(str(record.get("source_id") or ""))
+        if source is None:
+            return ""
+        worktree = next(
+            (wt for wt in source.worktrees if wt.worktree_id == record.get("worktree_id")), None
+        )
+        if worktree is None:
+            return ""
+        try:
+            return str(Path(worktree.path).resolve())
+        except OSError:
+            return str(worktree.path)
+
+    @property
+    def first_message(self) -> Any:
+        """The pending first message of this service's launches."""
+        return self._first
+
+    def resume_delivery(self, launch_id: str) -> dict[str, Any]:
+        """Deliver the held brief of an existing launch (no relaunch)."""
+        return self._first.resume(launch_id)
 
     def _session_alive(self, session_name: str) -> bool:
         run = self._runner or coder_steering._default_runner
@@ -1290,8 +1492,12 @@ __all__ = [
     "LaunchLedger",
     "LaunchRefused",
     "LaunchService",
+    "ORIGIN_KINDS",
     "default_launch_service",
     "derive_worktree_path",
+    "derived_story_ref",
+    "origin_ref_of",
     "execute_worktree_create",
+    "execute_worktree_remove",
     "valid_branch",
 ]

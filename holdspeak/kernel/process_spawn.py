@@ -24,6 +24,7 @@ _ALLOWED = frozenset(
         "story_ref",
         "session_label",
         "options",
+        "origin_ref",
     }
 )
 

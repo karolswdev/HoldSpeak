@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 732 (plus static mounts). iOS-consumed: 89. Web-consumed: 564.
+Routes: 737 (plus static mounts). iOS-consumed: 89. Web-consumed: 566.
 
 ## device_audio_ws
 
@@ -98,6 +98,13 @@ Routes: 732 (plus static mounts). iOS-consumed: 89. Web-consumed: 564.
 | POST | `/api/activity/project-rules/preview` | web |
 | DELETE | `/api/activity/project-rules/{rule_id}` | web |
 | PUT | `/api/activity/project-rules/{rule_id}` | web |
+
+## web.routes.agent_hand
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/agent/hand` | web |
+| POST | `/api/agent/launches/{launch_id}/deliver` | server only |
 
 ## web.routes.authority
 
@@ -610,6 +617,8 @@ Routes: 732 (plus static mounts). iOS-consumed: 89. Web-consumed: 564.
 
 | Method | Path | Consumers |
 |---|---|---|
+| GET | `/api/onboarding/agents` | web |
+| POST | `/api/onboarding/agents/use` | server only |
 | GET | `/api/onboarding/calendar` | web |
 | POST | `/api/onboarding/calendar/check` | web |
 | POST | `/api/onboarding/calendar/macos/access` | web |
@@ -1214,6 +1223,7 @@ Routes: 732 (plus static mounts). iOS-consumed: 89. Web-consumed: 564.
 | GET | `/api/threads/{thread_id}` | web |
 | PATCH | `/api/threads/{thread_id}` | web |
 | POST | `/api/threads/{thread_id}/abort` | web |
+| POST | `/api/threads/{thread_id}/agent` | server only |
 | POST | `/api/threads/{thread_id}/annotations` | web |
 | DELETE | `/api/threads/{thread_id}/annotations/{part_id}` | web |
 | POST | `/api/threads/{thread_id}/branch` | web |
