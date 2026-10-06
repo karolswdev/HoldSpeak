@@ -33,6 +33,17 @@ Connections
   * A Send destination names one target (an issue number, a Jira key, a
     Confluence space), so "Use it" on an account connects the connector; the
     destination is saved where the owner names the target.
+
+Agents (the Conductor, step 1 "Ready")
+  * ``agents_detect`` runs no process and makes no network request: ``claude``,
+    ``codex``, ``tmux`` and ``holdspeak`` on PATH; our hook entries in
+    ``~/.claude/settings.json`` and ``~/.codex/hooks.json`` (the marker the
+    installer uses); sign-in from files only.  Claude Code on macOS keeps its
+    token in the Keychain, so a missing file reads ``unknown``, never ``no``.
+    No credential value is read out.
+  * ``agents_use`` merges the HoldSpeak hooks into that agent's settings file
+    (the same idempotent merge as ``holdspeak agent-hook install``; foreign
+    hooks are kept).  A local file write; no network.
 """
 from __future__ import annotations
 
@@ -381,6 +392,176 @@ class OnboardingService:
         return {
             "candidate": match["id"], "provider": provider, "egress_host": match["egress_host"], "entry": entry,
         }
+
+
+    # ── agents ────────────────────────────────────────────────────────
+
+    def agents_detect(self, principal: Principal) -> dict[str, Any]:
+        """Claude Code and Codex: on PATH, hooks installed, signed in; plus tmux (files only)."""
+        return detect_agents(which=self._which, home=self._home(), environ=self._environ)
+
+    def agents_use(self, principal: Principal, body: dict[str, Any]) -> dict[str, Any]:
+        """The owner's "Use it": install the HoldSpeak hooks for one agent, then detect again."""
+        from ..agent_context.hooks import install_agent_hooks
+
+        agent = str((body or {}).get("agent") or "").strip().lower()
+        if agent not in AGENTS:
+            raise ValidationError("Use it needs an agent: claude or codex.", code="agent_unknown")
+        if self._which(agent) is None:
+            raise ConflictError(f"{AGENTS[agent]} is not installed.", code=f"{agent}_not_installed")
+        path = agent_settings_path(agent, self._home())
+        try:
+            result = install_agent_hooks(path, agent_hook_template(agent))
+        except ValueError as exc:
+            raise ConflictError(
+                f"HoldSpeak cannot read {path}. Fix the JSON and try again.", code="agent_settings_unreadable",
+            ) from exc
+        log.info("agent hooks installed for %s at %s (%s)", agent, path, ", ".join(result["installed_events"]))
+        return {**self.agents_detect(principal), "used": {"agent": agent, **result}}
+
+
+#: The coding agents the Conductor launches, by command name.
+AGENTS: dict[str, str] = {"claude": "Claude Code", "codex": "Codex"}
+
+TMUX_INSTALL_HINT = {
+    "darwin": "brew install tmux",
+    "linux": "sudo apt-get install tmux",
+}
+
+
+def agent_settings_path(agent: str, home: Path) -> Path:
+    """The hook settings file for one agent, under ``home`` (the installer's own paths)."""
+    from ..agent_context.hooks import AGENT_HOOK_SETTINGS_PATHS
+
+    relative = AGENT_HOOK_SETTINGS_PATHS[agent].removeprefix("~/")
+    return home / relative
+
+
+def agent_hook_template(agent: str) -> dict[str, Any]:
+    """The hook template ``holdspeak agent-hook install`` writes for one agent (no message capture)."""
+    from ..agent_context.hooks import claude_hook_template, codex_hook_template
+
+    return claude_hook_template() if agent == "claude" else codex_hook_template()
+
+
+def _hooks_state(path: Path, events: list[str]) -> str:
+    """``installed`` (our entry on every event), ``partial``, ``missing`` or ``unreadable``."""
+    import json
+
+    from ..agent_context.hooks import _is_our_hook_entry
+
+    if not path.is_file():
+        return "missing"
+    try:
+        settings = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return "unreadable"
+    if not isinstance(settings, dict):
+        return "unreadable"
+    hooks = settings.get("hooks")
+    if not isinstance(hooks, dict):
+        return "missing"
+    ours = [
+        event for event in events
+        if isinstance(hooks.get(event), list) and any(_is_our_hook_entry(e) for e in hooks[event])
+    ]
+    if not ours:
+        return "missing"
+    return "installed" if len(ours) == len(events) else "partial"
+
+
+def _json_object(path: Path) -> dict[str, Any]:
+    import json
+
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return loaded if isinstance(loaded, dict) else {}
+
+
+def _claude_signed_in(home: Path, env: dict[str, str]) -> tuple[str, Optional[str]]:
+    """``yes`` from a file or the API key variable; else ``unknown`` (the macOS Keychain holds the token)."""
+    if str(env.get("ANTHROPIC_API_KEY") or "").strip():
+        return "yes", "ANTHROPIC_API_KEY"
+    config_dir = Path(env["CLAUDE_CONFIG_DIR"]) if env.get("CLAUDE_CONFIG_DIR") else home / ".claude"
+    credentials = config_dir / ".credentials.json"
+    if credentials.is_file() and credentials.stat().st_size > 2:
+        return "yes", str(credentials)
+    account_file = home / ".claude.json"
+    account = _json_object(account_file).get("oauthAccount")
+    if isinstance(account, dict) and account.get("accountUuid"):
+        return "yes", str(account_file)
+    return "unknown", None
+
+
+def _codex_signed_in(home: Path, env: dict[str, str]) -> tuple[str, Optional[str]]:
+    """``yes`` / ``no`` from ``auth.json``; ``unknown`` without it (Codex can keep it in the keyring)."""
+    codex_home = Path(env["CODEX_HOME"]) if env.get("CODEX_HOME") else home / ".codex"
+    auth_file = codex_home / "auth.json"
+    if not auth_file.is_file():
+        return "unknown", None
+    auth = _json_object(auth_file)
+    if auth.get("tokens") or str(auth.get("OPENAI_API_KEY") or "").strip():
+        return "yes", str(auth_file)
+    return "no", str(auth_file)
+
+
+def detect_agents(
+    *,
+    which: Callable[[str], Optional[str]] = shutil.which,
+    home: Optional[Path] = None,
+    environ: Optional[dict[str, str]] = None,
+    platform: Optional[str] = None,
+) -> dict[str, Any]:
+    """Agent readiness, read only: one row per agent, plus tmux and the hook command's ``holdspeak``.
+
+    Shared by ``agents_detect`` and ``holdspeak doctor``.  Runs no process,
+    makes no network request, writes nothing, and reads no credential value.
+    """
+    import shlex
+    import sys
+
+    from ..agent_context.hooks import _agent_hook_command
+
+    root = home or Path.home()
+    env = os.environ if environ is None else environ
+    rows: list[dict[str, Any]] = []
+    for agent, label in AGENTS.items():
+        executable = which(agent)
+        settings_path = agent_settings_path(agent, root)
+        events = list(agent_hook_template(agent)["hooks"])
+        hooks = _hooks_state(settings_path, events)
+        signed_in, signed_in_from = (_claude_signed_in if agent == "claude" else _codex_signed_in)(root, dict(env))
+        rows.append({
+            "id": agent,
+            "label": label,
+            "installed": executable is not None,
+            "path": executable,
+            "hooks": hooks,
+            "hooks_path": str(settings_path),
+            "signed_in": signed_in,
+            "signed_in_from": signed_in_from,
+            "ready": executable is not None and hooks == "installed",
+            "verb": VERB if executable is not None else None,
+        })
+    tmux = which("tmux")
+    system = platform or sys.platform
+    holdspeak = which("holdspeak")
+    return {
+        "agents": rows,
+        "tmux": {
+            "installed": tmux is not None,
+            "path": tmux,
+            "install_hint": None if tmux else TMUX_INSTALL_HINT.get(system, "Install tmux with your package manager"),
+        },
+        # The executable the installed hook command runs (the installer resolves it the same way).
+        "holdspeak": {
+            "path": holdspeak,
+            "on_path": holdspeak is not None,
+            "hook_executable": shlex.split(_agent_hook_command("claude"))[0],
+        },
+    }
 
 
 def _gh_account_ref(host: str, login: str) -> str:

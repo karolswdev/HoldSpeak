@@ -27,7 +27,7 @@ class DoctorCheck:
     """A single doctor check result."""
 
     name: str
-    status: str  # PASS | WARN | FAIL
+    status: str  # PASS | WARN | FAIL | INFO (INFO counts as neither)
     detail: str
     fix: str | None = None
 
@@ -1105,7 +1105,48 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         _check_people_keystore(),
         _check_agent_capabilities(),
         _check_tool_call_gate(),
+        _check_coding_agents(),
     ]
+
+
+def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:
+    """The Conductor, step 1: Claude Code or Codex installed with the HoldSpeak hooks, and tmux.
+
+    Reuses the onboarding detect (PATH and files only; no process, no network).
+    """
+    if detected is None:
+        from ..services.onboarding_service import detect_agents
+
+        detected = detect_agents()
+    agents = detected["agents"]
+    installed = [a for a in agents if a["installed"]]
+    ready = [a for a in installed if a["hooks"] == "installed"]
+    unhooked = [a for a in installed if a["hooks"] != "installed"]
+    tmux = detected["tmux"]
+    fixes: list[str] = []
+    if not installed:
+        status, detail = "INFO", "no coding agent on PATH (claude, codex)"
+    else:
+        parts = [f"{a['label']} hooks {a['hooks']}" for a in installed]
+        detail = "; ".join(parts)
+        if ready:
+            status = "PASS"
+        else:
+            status = "WARN"
+        if unhooked:
+            names = " ".join(a["id"] for a in unhooked)
+            agent_flag = f" --agent {unhooked[0]['id']}" if len(unhooked) == 1 else ""
+            fixes.append(f"Install the hooks for {names}: `holdspeak agent-hook install{agent_flag}`")
+    if not tmux["installed"]:
+        status = "WARN"
+        detail += "; tmux not on PATH"
+        fixes.append(f"Install tmux: `{tmux['install_hint']}`")
+    return DoctorCheck(
+        name="Coding agents",
+        status=status,
+        detail=detail,
+        fix="; ".join(fixes) or None,
+    )
 
 
 def _check_people_keystore() -> DoctorCheck:

@@ -9,6 +9,8 @@ POST /api/onboarding/calendar/check           -- {url}: validate + read one ICS 
 POST /api/onboarding/calendar/use             -- {id, label?}: add the calendar source
 GET  /api/onboarding/connections              -- signed-in gh / acli accounts (files only)
 POST /api/onboarding/connections/use          -- {id}: add the connector + its status probe
+GET  /api/onboarding/agents                   -- claude / codex / tmux readiness (files and PATH only)
+POST /api/onboarding/agents/use               -- {agent}: install that agent's HoldSpeak hooks
 """
 from __future__ import annotations
 
@@ -102,5 +104,17 @@ def build_onboarding_router(ctx: WebContext) -> APIRouter:
         except ServiceError as exc:
             return _error(exc)
         return await _call(request, "connections_use", body)
+
+    @router.get("/api/onboarding/agents")
+    async def onboarding_agents(request: Request) -> Any:
+        return await _call(request, "agents_detect")
+
+    @router.post("/api/onboarding/agents/use")
+    async def onboarding_agents_use(request: Request) -> Any:
+        try:
+            body = await _body(request)
+        except ServiceError as exc:
+            return _error(exc)
+        return await _call(request, "agents_use", body)
 
     return router
