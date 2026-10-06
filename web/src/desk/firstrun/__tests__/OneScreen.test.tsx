@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
   refresh: vi.fn(),
   arm: vi.fn(),
+  record: vi.fn(),
   openAsk: vi.fn(),
   open: vi.fn(),
   start: vi.fn(),
@@ -29,7 +30,12 @@ vi.mock("../../../lib/api", async (importOriginal) => ({
 }));
 vi.mock("../../store", () => ({
   useDesk: Object.assign(() => undefined, {
-    getState: () => ({ refresh: mocks.refresh, armEventRecording: mocks.arm, openAsk: mocks.openAsk }),
+    getState: () => ({
+      refresh: mocks.refresh,
+      armEventRecording: mocks.arm,
+      startRecording: mocks.record,
+      openAsk: mocks.openAsk,
+    }),
   }),
 }));
 vi.mock("../../shell", () => ({ openSurfaceOr: mocks.open }));
@@ -116,6 +122,8 @@ interface Hub {
   sources: { id: string; url: string; enabled: boolean }[];
   /** Per-source read state (GET /api/calendar/sources); default success. */
   status: Record<string, string>;
+  /** config.first_run.skipped, as GET /api/settings carries it. */
+  skipped: string[];
 }
 
 /** One configured source (enabled unless said). */
@@ -153,9 +161,11 @@ beforeEach(() => {
     door: { upcoming: [] },
     sources: [],
     status: {},
+    skipped: [],
   };
   mocks.refresh.mockReset().mockResolvedValue(undefined);
   mocks.arm.mockReset().mockResolvedValue(true);
+  mocks.record.mockReset().mockResolvedValue(undefined);
   mocks.openAsk.mockReset();
   mocks.retry.mockReset().mockResolvedValue(null);
   mocks.open.mockReset();
@@ -172,8 +182,12 @@ beforeEach(() => {
     switch (path) {
       case "/api/setup/local-ai":
         return hub.ai;
-      case "/api/settings":
-        return method === "GET" ? { owner: hub.owner, calendar: { sources: hub.sources } } : { settings: {} };
+      case "/api/settings": {
+        if (method === "GET") return { owner: hub.owner, calendar: { sources: hub.sources }, first_run: { skipped: hub.skipped } };
+        const patch = (init.json ?? {}) as { first_run?: { skipped?: string[] } };
+        if (patch.first_run?.skipped) hub.skipped = [...patch.first_run.skipped];
+        return { settings: {} };
+      }
       case "/api/notes":
         return { note: { id: "note_1" } };
       case "/api/onboarding/calendar":
@@ -510,6 +524,114 @@ describe("Ready", () => {
     expect(
       readyItems({ heardText: "", calendar: { week: 0 }, connections: { providers: [] } }).map((i) => i.label),
     ).toEqual(["LOCAL AI · ON DEVICE", "HEARD", "CALENDAR · IN USE"]);
+  });
+});
+
+describe("Skip (owner ruling 2026-10-06)", () => {
+  const skipButton = (title: string) => within(card(`firstrun-${title.toLowerCase()}`)).getByRole("button", { name: `Skip ${title}` });
+  const press = async (button: HTMLElement) => {
+    await act(async () => {
+      fireEvent.click(button);
+    });
+  };
+  const verbTexts = () =>
+    within(screen.getByRole("group", { name: "Start" }))
+      .getAllByRole("button")
+      .map((v) => v.textContent);
+  const stripLabels = () =>
+    [...screen.getByRole("list", { name: "Ready" }).querySelectorAll("[role=status]")].map((e) => e.getAttribute("aria-label"));
+
+  it("Skip on Calendar: SKIPPED, not lit, saved; Ready without a calendar; Ask AI opens with no week question", async () => {
+    await finishC1();
+    await screen.findByRole("heading", { name: "Get ready" });
+    expect(card("firstrun-calendar").getAttribute("data-lit")).toBe("true");
+    await press(skipButton("Calendar"));
+    expect(calls.some((c) => c.path === "/api/settings" && c.method === "PUT"
+      && JSON.stringify(c.json) === JSON.stringify({ first_run: { skipped: ["calendar"] } }))).toBe(true);
+    const cal = card("firstrun-calendar");
+    expect(within(cal).getByRole("status", { name: "SKIPPED" })).toBeTruthy();
+    expect(cal.getAttribute("data-lit")).toBeNull();
+    expect(cal.getAttribute("data-selected")).toBeNull();
+    expect(within(cal).queryByRole("textbox", { name: "Calendar URL" })).toBeNull();
+    expect(within(cal).queryByRole("button", { name: "Skip Calendar" })).toBeNull();
+    // No sign-ins on this Mac: Connections is done, so Ready shows.
+    expect(await screen.findByRole("heading", { name: "Ready, Karol" })).toBeTruthy();
+    expect(stripLabels()).toEqual(["LOCAL AI · ON DEVICE", "HEARD · 8 WORDS"]);
+    expect(verbTexts()).toEqual(["◖Dictate", "●Record", "✦Ask AI"]);
+    await press(within(screen.getByRole("group", { name: "Start" })).getByRole("button", { name: /Ask AI/ }));
+    await waitFor(() => expect(mocks.openAsk).toHaveBeenCalled());
+    expect(readDurableDraft("desk-ask")).toBeNull();
+  });
+
+  it("Skip on Connections: SKIPPED, not lit; Ready with the calendar and no SEND TO", async () => {
+    hub.sources = [source("https://cal.example.com/a.ics")];
+    hub.connections = { candidates: [gh()], tools: { gh: { installed: true }, acli: { installed: false } } };
+    await finishC1();
+    await screen.findByRole("heading", { name: "Get ready" });
+    const conn = card("firstrun-connections");
+    await waitFor(() => expect(conn.getAttribute("data-lit")).toBe("true"));
+    await press(skipButton("Connections"));
+    expect(hub.skipped).toEqual(["connections"]);
+    expect(within(conn).getByRole("status", { name: "SKIPPED" })).toBeTruthy();
+    expect(conn.getAttribute("data-lit")).toBeNull();
+    expect(within(conn).queryByRole("button", { name: /Use GitHub/ })).toBeNull();
+    expect(await screen.findByRole("heading", { name: "Ready, Karol" })).toBeTruthy();
+    expect(stripLabels()).toEqual(["LOCAL AI · ON DEVICE", "HEARD · 8 WORDS", "CALENDAR · IN USE"]);
+    expect(verbTexts()).toEqual(["◖Dictate", "✦Ask about this week"]);
+  });
+
+  it("both skipped: no CALENDAR chip, no meeting verb even with one on the Door; Record is the Desk's record now", async () => {
+    hub.connections = { candidates: [gh()], tools: { gh: { installed: true }, acli: { installed: false } } };
+    hub.door = { upcoming: [{ id: "e1", source: "calendar_event", title: "Atlas weekly", starts_at: soon() }], week: { total: 3 } };
+    await finishC1();
+    await screen.findByRole("heading", { name: "Get ready" });
+    await press(skipButton("Calendar"));
+    await waitFor(() => expect(card("firstrun-connections").getAttribute("data-lit")).toBe("true"));
+    expect(screen.queryByTestId("firstrun-ready")).toBeNull();
+    // One lit card: the skipped Calendar goes dark; Connections is the next press.
+    expect(card("firstrun-calendar").getAttribute("data-lit")).toBeNull();
+    await press(skipButton("Connections"));
+    expect(hub.skipped).toEqual(["calendar", "connections"]);
+    expect(await screen.findByRole("heading", { name: "Ready, Karol" })).toBeTruthy();
+    expect(stripLabels()).toEqual(["LOCAL AI · ON DEVICE", "HEARD · 8 WORDS"]);
+    expect(verbTexts()).toEqual(["◖Dictate", "●Record", "✦Ask AI"]);
+    expect(screen.queryByRole("button", { name: /Atlas weekly/ })).toBeNull();
+    const group = screen.getByRole("group", { name: "Start" });
+    expect(within(group).getByRole("button", { name: /Dictate/ }).className).toContain("btn--primary");
+    await press(within(group).getByRole("button", { name: "Record" }));
+    await waitFor(() => expect(mocks.record).toHaveBeenCalled());
+    expect(mocks.arm).not.toHaveBeenCalled();
+    expect(mocks.open).toHaveBeenCalledWith("record-live", "/live");
+    expect(calls.some((c) => c.path === "/api/setup/onboarding" && (c.json as { disposition: string }).disposition === "completed")).toBe(true);
+  });
+
+  it("a skip survives a reload: SKIPPED, no Skip, not lit", async () => {
+    await finishC1();
+    await screen.findByRole("heading", { name: "Get ready" });
+    await press(skipButton("Calendar"));
+    cleanup(); // the reload: the page and its memory are gone; the hub keeps the skip
+
+    render(<FirstRun />);
+    const cal = await screen.findByTestId("firstrun-calendar");
+    expect(await within(cal).findByRole("status", { name: "SKIPPED" })).toBeTruthy();
+    expect(within(cal).queryByRole("button", { name: "Skip Calendar" })).toBeNull();
+    expect(cal.getAttribute("data-lit")).toBeNull();
+  });
+
+  it("a Skip the hub refused: NOT SAVED and its reason; the step stays", async () => {
+    await finishC1();
+    await screen.findByRole("heading", { name: "Get ready" });
+    const fallback = mocks.apiFetch.getMockImplementation()!;
+    mocks.apiFetch.mockImplementation(async (path: string, init: { method?: string } = {}) => {
+      if (path === "/api/settings" && init.method === "PUT") throw new Error("disk full");
+      return fallback(path, init);
+    });
+    await press(skipButton("Calendar"));
+    const cal = card("firstrun-calendar");
+    expect(within(cal).getByRole("status", { name: "NOT SAVED" })).toBeTruthy();
+    expect(within(cal).getByText("disk full")).toBeTruthy();
+    expect(within(cal).queryByRole("status", { name: "SKIPPED" })).toBeNull();
+    expect(screen.queryByTestId("firstrun-ready")).toBeNull();
   });
 });
 

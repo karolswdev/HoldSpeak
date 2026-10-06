@@ -1,6 +1,7 @@
 /* The first-run card: ChoiceCardShell with a title and one state slot. */
 import type { ReactNode } from "react";
-import { ChoiceCardShell } from "../surface";
+import { Button } from "../../components/signal/Signal";
+import { ChoiceCardShell, StateChip } from "../surface";
 
 export function Card({
   title,
@@ -37,7 +38,47 @@ export function Card({
         </span>
       }
     >
-      <div className="firstrun-card-body">{children}</div>
+      {children ? <div className="firstrun-card-body">{children}</div> : null}
     </ChoiceCardShell>
+  );
+}
+
+/** An optional card's Skip (owner ruling 2026-10-06). */
+export interface SkipProps {
+  skipped: boolean;
+  busy: boolean;
+  error: string;
+  onSkip: () => void;
+}
+
+/** SKIPPED, as the card's state token. */
+export function SkippedChip() {
+  return <StateChip state="idle" label="SKIPPED" />;
+}
+
+/** The Skip verb at the card's foot, and NOT SAVED when the write failed. */
+export function SkipFoot({ title, skip }: { title: string; skip: SkipProps }) {
+  return (
+    <>
+      {skip.error ? (
+        <div className="firstrun-fail" role="alert">
+          <StateChip state="failure" label="NOT SAVED" />
+          <span className="firstrun-reason">{skip.error}</span>
+        </div>
+      ) : null}
+      <div className="firstrun-card-foot">
+        <Button
+          dense
+          variant="ghost"
+          className="firstrun-skip"
+          aria-label={`Skip ${title}`}
+          loading={skip.busy}
+          disabled={skip.busy}
+          onClick={skip.onSkip}
+        >
+          Skip
+        </Button>
+      </div>
+    </>
   );
 }

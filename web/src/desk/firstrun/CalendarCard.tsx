@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { EgressChip, Receipt, StateChip, StringGadget, SurfaceLedgerRow, countToken } from "../surface";
 import { egressFor } from "../surface/egress";
-import { Card } from "./Card";
+import { Card, SkipFoot, SkippedChip, type SkipProps } from "./Card";
 import { hostOf, meetingClock, stateCount, type CalendarCandidate, type CalendarStep } from "./calendarStep";
 
 function rowEgress(row: CalendarCandidate): { label: string; scope: "local" | "cloud" } {
@@ -24,13 +24,15 @@ export function calendarReceipt(week: number, next: { title: string; starts_at: 
     .join(" · ");
 }
 
-export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }) {
+export function CalendarCard({ step, lit, skip }: { step: CalendarStep; lit: boolean; skip: SkipProps }) {
   const [url, setUrl] = useState("");
   const host = hostOf(url);
   const typed = egressFor(host);
   const { macos, rows, inUse, busy, failure } = step;
   const receipt = inUse ? calendarReceipt(step.week, step.next) : "";
   const found = stateCount("FOUND", rows.length);
+  // A calendar in use outranks an earlier Skip.
+  const skipped = skip.skipped && !inUse;
   const add = async () => {
     if (!host || busy) return;
     if (await step.addUrl(url.trim())) setUrl("");
@@ -44,11 +46,14 @@ export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }
       state={
         inUse ? (
           <StateChip state="success" label="IN USE" icon="●" />
+        ) : skipped ? (
+          <SkippedChip />
         ) : found ? (
           <StateChip state="success" label={found} icon="●" />
         ) : null
       }
     >
+      {skipped ? null : <>
       {step.unread ? (
         <div className="firstrun-fail" role="alert">
           <StateChip state="unreachable" label="CAN'T CHECK" />
@@ -168,6 +173,8 @@ export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }
           <span className="firstrun-reason">{failure.reason}</span>
         </div>
       ) : null}
+      {step.loaded && !inUse ? <SkipFoot title="Calendar" skip={skip} /> : null}
+      </>}
     </Card>
   );
 }

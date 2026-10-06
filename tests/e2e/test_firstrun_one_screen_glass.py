@@ -414,3 +414,129 @@ def test_a_reload_after_keep_never_replaces_the_kept_note(
     finally:
         server.stop()
         source.close()
+
+
+@pytest.mark.parametrize("width,height", [(1440, 900), (393, 852)])
+def test_first_run_skip_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int, height: int) -> None:
+    """Owner ruling 2026-10-06: Skip on Calendar and on Connections.
+
+    Each Skip writes ``first_run.skipped`` (a reload keeps it), reads no
+    calendar and probes no host; Ready comes without a calendar: no CALENDAR
+    chip, no meeting verb; Dictate, Record, Ask AI."""
+    _ensure_build()
+    import holdspeak.web_server as web_server
+
+    eventkit = FakeEventKit(_ics("Work", []))
+    eventkit.install(monkeypatch)
+    original = web_server.WebRuntimeCallbacks
+    monkeypatch.setattr(web_server, "WebRuntimeCallbacks",
+                        lambda **kwargs: original(**kwargs, on_transcribe=lambda audio, **_: WORDS))
+    source = Source()
+    source.hold.set()
+    _real_local_ai(monkeypatch, source)
+    runner = Runner()
+    _sign_ins(tmp_path / "home", monkeypatch, tmp_path)
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=runner, acli_runner=runner)
+    engine_profile()
+    assign_engine(SPEECH_CAPABILITY, 1)
+    out = Path(os.environ.get("FIRSTRUN_SHOTS") or tmp_path / "shots")
+    out.mkdir(parents=True, exist_ok=True)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(args=[
+                "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream",
+                "--use-file-for-fake-audio-capture=" + str(WAV),
+            ])
+            page = browser.new_page(viewport={"width": width, "height": height}, device_scale_factor=2)
+            page.set_default_timeout(15_000)
+
+            def shot(name: str, target: Any = None) -> None:
+                page.wait_for_timeout(400)
+                if target is not None and width < 720:
+                    target.scroll_into_view_if_needed()
+                path = out / f"onb-A-skip-{name}-{width}.png"
+                page.screenshot(path=str(path), full_page=width < 720)
+                print("SHOT", path)
+
+            page.goto(f"{base}/?token={TOKEN}")
+            page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+            cal = page.get_by_test_id("firstrun-calendar")
+            conn = page.get_by_test_id("firstrun-connections")
+            expect(conn.get_by_role("status", name="SIGNED IN · 3")).to_be_visible()
+
+            # ── C1 first part: local AI and his name ──
+            page.get_by_test_id("firstrun-local-ai").get_by_role(
+                "button", name="Set up local AI · 149 MB", exact=True).click()
+            you = page.get_by_test_id("firstrun-you")
+            with page.expect_response(lambda r: r.url.endswith("/api/settings") and r.request.method == "PUT"):
+                you.get_by_role("textbox", name="Your name", exact=True).fill("Karol Sane")
+
+            # ── Skip Calendar: SKIPPED, saved; no prompt, no link read ──
+            expect(cal.get_by_role("button", name="Skip Calendar", exact=True)).to_be_visible()
+            expect(conn.get_by_role("button", name="Skip Connections", exact=True)).to_be_visible()
+            shot("verbs", cal)
+            with page.expect_response(lambda r: r.url.endswith("/api/settings") and r.request.method == "PUT") as saved:
+                cal.get_by_role("button", name="Skip Calendar", exact=True).click()
+            assert saved.value.ok, saved.value.text()
+            expect(cal.get_by_role("status", name="SKIPPED")).to_be_visible()
+            expect(cal.get_by_role("button", name="Allow calendar access")).to_have_count(0)
+            expect(cal.get_by_role("textbox", name="Calendar URL")).to_have_count(0)
+            assert cal.get_attribute("data-lit") is None
+            shot("cal", cal)
+
+            # ── Skip Connections: SKIPPED, saved; no host probed ──
+            conn.get_by_role("button", name="Skip Connections", exact=True).click()
+            expect(conn.get_by_role("status", name="SKIPPED")).to_be_visible()
+            expect(conn.get_by_role("button", name=re.compile("^Use "))).to_have_count(0)
+            shot("conn", conn)
+            from holdspeak.config import Config
+
+            assert Config.load().first_run.skipped == ["calendar", "connections"]
+            assert eventkit.prompts == 0 and runner.calls == []
+
+            # ── a reload keeps both skips ──
+            page.reload()
+            page.get_by_test_id("firstrun").wait_for(timeout=30_000)
+            expect(cal.get_by_role("status", name="SKIPPED")).to_be_visible()
+            expect(conn.get_by_role("status", name="SKIPPED")).to_be_visible()
+            expect(page.get_by_role("button", name=re.compile("^Skip "))).to_have_count(0)
+
+            # ── his first sentence, kept -> Ready without a calendar ──
+            words = page.get_by_test_id("firstrun-first-words")
+            dictate = words.get_by_role("button", name="◖ Dictate one sentence")
+            expect(dictate).to_be_enabled(timeout=30_000)
+            dictate.click()
+            page.wait_for_timeout(1200)
+            words.get_by_role("button", name="Stop listening", exact=True).click()
+            words.get_by_role("button", name="Keep as note", exact=True).click()
+            ready = page.get_by_test_id("firstrun-ready")
+            expect(ready.get_by_role("heading", name="Ready, Karol")).to_be_visible(timeout=30_000)
+            labels = [c.get_attribute("aria-label") for c in ready.get_by_test_id("ready-strip").get_by_role("status").all()]
+            assert labels == ["LOCAL AI · ON DEVICE", "HEARD · 8 WORDS"], labels
+            verbs = ready.get_by_role("group", name="Start").get_by_role("button")
+            expect(verbs).to_have_count(3)
+            expect(verbs.nth(0)).to_have_text(re.compile("Dictate"))
+            expect(verbs.nth(1)).to_have_text(re.compile("^●Record$"))
+            expect(verbs.nth(2)).to_have_text(re.compile("Ask AI"))
+            for card in ("firstrun-calendar", "firstrun-connections"):
+                assert page.get_by_test_id(card).get_attribute("data-lit") is None, card
+                assert page.get_by_test_id(card).get_attribute("data-selected") is None, card
+            assert _display_count(page) == 1
+            cut = page.eval_on_selector_all(
+                "[data-testid='firstrun-ready'] .surface-start-verb-word, [data-testid='ready-strip'] .surface-state-chip",
+                "els => els.filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent)")
+            assert cut == [], cut
+            page.evaluate("window.scrollTo(0, 0)")
+            shot("ready")
+
+            # ── Ask AI hands off to the Desk ──
+            with page.expect_response(lambda r: r.url.endswith("/api/setup/onboarding")
+                                      and r.request.method == "PUT") as done:
+                verbs.nth(2).click()
+            assert done.value.ok, done.value.text()
+            page.get_by_test_id("firstrun").wait_for(state="detached", timeout=15_000)
+            assert eventkit.prompts == 0 and runner.calls == []
+            browser.close()
+    finally:
+        server.stop()
+        source.close()

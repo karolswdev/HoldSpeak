@@ -51,6 +51,9 @@ from .ui import (  # noqa: F401
 # The owner's name and aliases (first run)
 from .owner import OwnerConfig  # noqa: F401
 
+# The optional first-run steps the owner skipped
+from .first_run import FirstRunConfig  # noqa: F401
+
 # Device, presence, mesh, wake word
 from .device import (  # noqa: F401
     DeviceConfig,

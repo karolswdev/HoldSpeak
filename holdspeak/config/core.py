@@ -22,6 +22,7 @@ from .meeting import (
 from .model import LLMRuntimeConfig, ModelConfig
 from .ui import HotkeyConfig, MacrosConfig, UIConfig
 from .owner import OwnerConfig
+from .first_run import FirstRunConfig
 from .device import DeviceConfig, MeshConfig, PresenceConfig, WakeWordConfig
 from .integrations import (
     CadenceConfig,
@@ -306,6 +307,8 @@ class Config:
     calendar: CalendarConfig = field(default_factory=CalendarConfig)
     # First run (C1): the owner's name and aliases; needs-you reads them as "me".
     owner: OwnerConfig = field(default_factory=OwnerConfig)
+    # First run: the optional steps (calendar, connections) he skipped.
+    first_run: FirstRunConfig = field(default_factory=FirstRunConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -374,6 +377,11 @@ class Config:
                     OwnerConfig,
                     data["owner"] if isinstance(data.get("owner"), dict) else {},
                     section="owner",
+                ),
+                first_run=_coerce(
+                    FirstRunConfig,
+                    data["first_run"] if isinstance(data.get("first_run"), dict) else {},
+                    section="first_run",
                 ),
             )
             # HS-112-01: the one-time legacy-endpoint migration runs only on

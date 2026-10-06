@@ -4,7 +4,7 @@
  * press reaches (GITHUB.COM, the Atlassian site). */
 import { Button } from "../../components/signal/Signal";
 import { EgressChip, StateChip, SurfaceLedgerRow } from "../surface";
-import { Card } from "./Card";
+import { Card, SkipFoot, SkippedChip, type SkipProps } from "./Card";
 import { stateCount } from "./calendarStep";
 import {
   PROVIDER_GLYPH,
@@ -22,8 +22,10 @@ function noVerbToken(row: ConnectionCandidate, step: ConnectionsStep): string {
   return "";
 }
 
-export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boolean }) {
+export function ConnectionsCard({ step, lit, skip }: { step: ConnectionsStep; lit: boolean; skip: SkipProps }) {
   const { rows } = step;
+  // Every usable sign-in connected outranks an earlier Skip.
+  const skipped = skip.skipped && !step.done;
   const connected = step.connected.length;
   const allDone = step.done && connected > 0;
   const connectedLabel = stateCount("CONNECTED", connected);
@@ -37,6 +39,8 @@ export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boo
       state={
         allDone && connectedLabel ? (
           <StateChip state="success" label={connectedLabel} icon="●" />
+        ) : skipped ? (
+          <SkippedChip />
         ) : signedIn ? (
           <StateChip state="success" label={signedIn} icon="●" />
         ) : step.loaded && !step.unread ? (
@@ -44,6 +48,7 @@ export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boo
         ) : null
       }
     >
+      {skipped ? null : <>
       {step.unread ? (
         <div className="firstrun-fail" role="alert">
           <StateChip state="unreachable" label="CAN'T CHECK" />
@@ -112,6 +117,8 @@ export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boo
           <span className="surface-token">{step.tools.acli?.installed ? "ACLI · NO SIGN-IN" : "ACLI NOT INSTALLED"}</span>
         </span>
       ) : null}
+      {step.loaded && !step.done ? <SkipFoot title="Connections" skip={skip} /> : null}
+      </>}
     </Card>
   );
 }
