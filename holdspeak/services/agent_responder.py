@@ -71,6 +71,8 @@ DECIDING = "deciding"
 ANSWERED = "answered"
 ESCALATED = "escalated"
 DRAFTED = "drafted"
+#: The wait ended (the owner answered) before the draft was ready.
+SUPERSEDED = "superseded"
 
 #: Launch states whose agent may still run (Conductor K2 ledger).
 LIVE_LAUNCH_STATES = frozenset({"launched", "registered"})
@@ -152,13 +154,15 @@ def parse_answer(raw: Any) -> Draft:
 
 
 def guard(question: str, draft: Draft) -> Draft:
-    """The word list: a question that names a REAL subject is REAL."""
+    """The word list, on the question AND on the answer HoldSpeak would
+    type: either one naming a REAL subject makes the draft REAL."""
     if draft.verdict != ROUTINE:
         return draft
-    lowered = " ".join(question.lower().split())
-    for word, pattern in _REAL_PATTERNS:
-        if pattern.search(lowered):
-            return Draft(REAL, f"the question names {word!r}", draft.answer)
+    for what, text in (("question", question), ("answer", draft.answer)):
+        lowered = " ".join(text.lower().split())
+        for word, pattern in _REAL_PATTERNS:
+            if pattern.search(lowered):
+                return Draft(REAL, f"the {what} names {word!r}", draft.answer)
     return draft
 
 
@@ -371,6 +375,8 @@ class AgentResponder:
         wait_id = str(getattr(session, "wait_id", "") or "")
         question = str(getattr(session, "question", "") or "").strip()
         launch_id = str(launch["launch_id"])
+        # A YOLO triage held this wait back from Needs you; Normal showed it.
+        held_back = mode == "yolo"
 
         raw = None
         error = ""
@@ -384,6 +390,20 @@ class AgentResponder:
             draft = guard(question, parse_answer(raw))
         if mode == "yolo" and draft.verdict == ROUTINE:
             draft = self._rate_limit(launch_id, question, draft)
+
+        # The model can be slow: before anything is typed or shown, read the
+        # wait and the mode again. The owner may have answered, the agent may
+        # ask something else or ask for a permission, the mode may be changed.
+        mode, stale = self._recheck(key, wait_id, question, mode)
+        if stale == SUPERSEDED:
+            self._store.put_wait(key, {
+                "wait_id": wait_id, "state": SUPERSEDED, "launch_id": launch_id, "mode": mode,
+                "verdict": draft.verdict, "reason": "the wait ended before the draft was ready",
+                "draft": draft.answer, "at": self._clock(),
+            })
+            return {"outcome": SUPERSEDED, "draft": draft.to_dict()}
+        if stale:
+            draft = Draft(REAL, stale, draft.answer)
 
         if mode == "yolo" and draft.verdict == ROUTINE:
             sent = self._deliver(launch, key, str(getattr(session, "agent", "") or ""), draft.answer)
@@ -406,9 +426,27 @@ class AgentResponder:
             "at": self._clock(),
         })
         self._receipt(key, session, draft, "answer_drafted", mode, launch_id)
-        if mode == "yolo":
+        if held_back:
             self._notify([key])  # held back while deciding: the owner hears now
         return {"outcome": state, "draft": draft.to_dict()}
+
+    def _recheck(self, key: str, wait_id: str, question: str, mode: str) -> tuple[str, str]:
+        """``(mode now, why the draft is stale)``: ``""`` when the same wait
+        still asks the same question for an answer; ``superseded`` when the
+        wait ended (answered); otherwise the REAL reason."""
+        from ..agent_context.models import is_blocked, wait_kind
+
+        now_mode = str(self._mode() or "yolo").lower()
+        session = next((s for s in self._sessions() if self._key(s) == key), None)
+        if session is None or not is_blocked(session) or str(getattr(session, "wait_id", "") or "") != wait_id:
+            return now_mode, SUPERSEDED
+        if wait_kind(session) == "approve":
+            return now_mode, "the agent now asks for a permission"
+        if str(getattr(session, "question", "") or "").strip() != question:
+            return now_mode, "the question changed while the draft was made"
+        if now_mode != mode:
+            return now_mode, f"the Control mode changed to {now_mode} while the draft was made"
+        return now_mode, ""
 
     def _rate_limit(self, launch_id: str, question: str, draft: Draft) -> Draft:
         sent = list(self._store.read()["sent"].get(launch_id) or [])

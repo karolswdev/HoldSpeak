@@ -49,6 +49,17 @@ class GateService:
         except (TypeError, ValueError):
             ttl = 0.0
         self._db.gate.expire_due()
+        standing = self._db.gate.get(proposal_id)
+        if (
+            standing is not None and principal.kind is PrincipalKind.AGENT
+            and standing.session_key != principal.identity
+        ):
+            # A proposal id is one session's: another session never re-arrives
+            # on it (and never reads its decision), as get_proposal holds.
+            raise ServiceError("principal_scope_required", "principal scope required", context={
+                "status": 403, "principal": principal.name, "principal_identity": principal.identity,
+                "missing_right": "agent.submit:other_session",
+            })
         verdict = self._checked_verdict(principal, payload)
         parent = str(payload.get("parent_operation_id") or "")
         if parent and self._launch_operation(parent):
@@ -119,8 +130,14 @@ class GateService:
         raw = classification_from_wire(payload.get("classification"))
         if raw is None:
             return {"launch_id": "", "scope": UNPARSED, "rule": "no_verdict", "read_rule": ""}
+        if (raw["proposal_id"], raw["args_sha256"]) != (
+            str(payload.get("id") or ""), str(payload.get("args_sha256") or "")
+        ):
+            # The verdict names the call it was read for; a verdict copied
+            # from another call (another id or another args hash) waits.
+            return {"launch_id": "", "scope": UNPARSED, "rule": "verdict_not_bound", "read_rule": ""}
         scope, rule = raw["scope"], raw["rule"]
-        found = self._own_launch(principal, str(payload.get("parent_operation_id") or ""))
+        found = self._own_launch(principal)
         if found is None:
             return {"launch_id": "", "scope": scope, "rule": rule, "read_rule": raw["read_rule"]}
         launch_id, worktree, branch = found
@@ -150,10 +167,11 @@ class GateService:
             return False
         return any(r.get("operation_id") == operation_id for r in records)
 
-    def _own_launch(self, principal: Principal, parent_operation_id: str) -> Optional[tuple[str, str, str]]:
+    def _own_launch(self, principal: Principal) -> Optional[tuple[str, str, str]]:
         """``(launch_id, worktree_path, branch)`` of the live launch whose
-        registered session IS this principal (before registration: the
-        launch whose operation the spawn named). ``None`` otherwise."""
+        registered session IS this principal, ``None`` otherwise. Before the
+        rider registers the session, no call is the launch's: the parent
+        operation id the hook names is a claim any session could copy."""
         if principal.kind is not PrincipalKind.AGENT:
             return None
         try:
@@ -162,11 +180,6 @@ class GateService:
             return None
         live = [r for r in reversed(records) if str(r.get("state") or "") in _LIVE_LAUNCH_STATES]
         record = next((r for r in live if r.get("session_key") == principal.identity), None)
-        if record is None and parent_operation_id:
-            record = next(
-                (r for r in live if r.get("operation_id") == parent_operation_id and not r.get("session_key")),
-                None,
-            )
         if record is None:
             return None
         path = service._worktree_path(record)

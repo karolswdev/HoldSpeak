@@ -67,6 +67,8 @@ _FIND_ACTIONS = frozenset({
     "-exec", "-execdir", "-ok", "-okdir", "-delete", "-fprint", "-fprint0",
     "-fprintf", "-fls",
 })
+#: find actions that run another command.
+_FIND_RUNS = frozenset({"-exec", "-execdir", "-ok", "-okdir"})
 _UV_VALUE_FLAGS = frozenset({
     "--extra", "--with", "--group", "--project", "--python", "-p", "--package",
     "--env-file", "--directory", "--only-group", "--with-requirements",
@@ -89,10 +91,10 @@ _REMOTE = re.compile(r"^[^/\s]+@[^/\s]+:")
 _DIGITS = re.compile(r"^[0-9]+$")
 #: The commit-message form Claude Code writes: "$(cat <<'EOF' ... EOF)". A
 #: quoted delimiter means no expansion inside, so the body is plain text.
-_QUOTED_HEREDOC = re.compile(
-    r"\$\(\s*cat\s+<<-?\s*(['\"])(?P<tag>[A-Za-z_][A-Za-z0-9_]*)\1\s*\n.*?\n\s*(?P=tag)\s*\n?\s*\)",
-    re.DOTALL,
+_HEREDOC_OPEN = re.compile(
+    r"\$\(\s*cat\s+<<(?P<dash>-?)\s*(['\"])(?P<tag>[A-Za-z_][A-Za-z0-9_]*)\2[ \t]*\n"
 )
+_HEREDOC_CLOSE = re.compile(r"\s*\)")
 
 
 @dataclass(frozen=True)
@@ -165,7 +167,7 @@ def _prepare(command: str) -> str:
     """Replace quoted here-document bodies with plain text, refuse every
     construct that expands at run time, and turn unquoted newlines into
     ``;`` (each line is its own command)."""
-    text = _QUOTED_HEREDOC.sub("HEREDOC_TEXT", command)
+    text = _quoted_heredocs(command)
     out: list[str] = []
     quote = ""
     index = 0
@@ -207,6 +209,37 @@ def _prepare(command: str) -> str:
     if quote:
         raise _Unparsed("unbalanced_quotes")
     return "".join(out)
+
+
+def _quoted_heredocs(command: str) -> str:
+    """Replace each ``$(cat <<'TAG' ... TAG)`` with plain text. The body
+    ends at the FIRST line that is exactly ``TAG`` (as bash reads it), and
+    the substitution must close right there: anything between that line and
+    ``)`` would run, so the call is unparsed."""
+    out: list[str] = []
+    pos = 0
+    while True:
+        opened = _HEREDOC_OPEN.search(command, pos)
+        if opened is None:
+            out.append(command[pos:])
+            return "".join(out)
+        tag, dash = opened.group("tag"), bool(opened.group("dash"))
+        index = opened.end()
+        while True:
+            newline = command.find("\n", index)
+            line = command[index: newline if newline >= 0 else len(command)]
+            if (line.lstrip("\t") if dash else line) == tag:
+                end = newline if newline >= 0 else len(command)
+                break
+            if newline < 0:
+                raise _Unparsed("here_document")
+            index = newline + 1
+        closed = _HEREDOC_CLOSE.match(command, end)
+        if closed is None:
+            raise _Unparsed("here_document")
+        out.append(command[pos:opened.start()])
+        out.append("HEREDOC_TEXT")
+        pos = closed.end()
 
 
 def _tokens(command: str) -> list[tuple[str, bool]]:
@@ -316,6 +349,8 @@ class _Reader:
             raise _Unparsed(f"indirect_{base}")
         if base in _INLINE_CODE and any(w in _INLINE_CODE[base] for w in words[1:]):
             raise _Unparsed("inline_code")
+        if base == "find" and any(w in _FIND_RUNS for w in words[1:]):
+            raise _Unparsed("indirect_find_exec")  # it runs a command this reading cannot see
         if base in ("cd", "pushd"):
             self._cd(words[1:])
             self.read_rules.append("cd")
@@ -326,11 +361,24 @@ class _Reader:
             self._git(words[1:])
             return
         self._args(words[1:], cwd=self.cwd)
-        read = _read_rule(base, words[1:])
+        # A read rule names a program on the PATH, never a file the call names
+        # (``./cat`` is not cat), and a read command must resolve outside the
+        # worktree (a worktree file called ``cat`` first on the PATH is not cat).
+        read = "" if "/" in name else _read_rule(base, words[1:])
+        if read and base in _READ_COMMANDS and not self._system_program(base):
+            read = ""
         if read:
             self.read_rules.append(read)
         else:
             self.all_read = False
+
+    def _system_program(self, name: str) -> bool:
+        import shutil
+
+        found = shutil.which(name, path=os.environ.get("PATH"))
+        if found is None:
+            return name in ("pwd", "echo", "true")  # shell builtins
+        return not _inside(os.path.realpath(found), self.root)
 
     def _cd(self, args: list[str]) -> None:
         targets = [a for a in args if not a.startswith("-")]
@@ -487,7 +535,7 @@ def classification_from_wire(raw: Any) -> Optional[dict[str, str]]:
     if scope not in SCOPES:
         return None
     clean: dict[str, str] = {"scope": scope}
-    for key in ("rule", "read_rule", "push_branch", "root"):
+    for key in ("rule", "read_rule", "push_branch", "root", "proposal_id", "args_sha256"):
         value = raw.get(key)
         if value is None:
             value = ""

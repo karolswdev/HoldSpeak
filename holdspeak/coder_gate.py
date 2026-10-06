@@ -370,6 +370,10 @@ def run_hook(
     # full command never leaves the agent process; the hub gets the verdict
     # and applies the Control mode (``tool_gate_rules``).
     verdict = _classify(tool, payload, cwd=cwd, root=root)
+    # Bound to this call: the hub takes the verdict only for this proposal
+    # id and this args hash (a verdict copied from another call is unparsed).
+    verdict["proposal_id"] = proposal_id
+    verdict["args_sha256"] = args_sha256
 
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
     if http_post is None or http_get is None:

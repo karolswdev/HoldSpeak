@@ -229,7 +229,9 @@ def test_every_automatic_decision_is_receipted_and_the_command_never_leaves(laun
     # The wire carries the verdict, never the command.
     body = launched.posted[-1]
     assert "tool_input" not in body and "command" not in json.dumps(body["classification"])
-    assert set(body["classification"]) == {"scope", "rule", "read_rule", "push_branch", "root"}
+    assert set(body["classification"]) == {
+        "scope", "rule", "read_rule", "push_branch", "root", "proposal_id", "args_sha256",
+    }
 
 
 # ── answering a waiting agent ────────────────────────────────────────
@@ -805,3 +807,147 @@ def test_the_gate_matches_the_nearest_held_root(tmp_path) -> None:
     assert gate_match_root(config, cwd=str(inner / "src"), tool="Bash") == str(inner.resolve())
     assert gate_match_root(config, cwd=str(outer), tool="Bash") == str(outer.resolve())
     assert gate_match_root(config, cwd=str(tmp_path), tool="Bash") is None
+
+
+# ── Astra round 1 on #904: the probes, ported as fences ──────────────
+
+import copy  # noqa: E402
+import subprocess  # noqa: E402
+
+
+@pytest.mark.parametrize("mode", ["neutral", "yolo"])
+def test_r1_a_heredoc_cannot_hide_a_command(launched, tmp_path, monkeypatch, mode) -> None:
+    """bash ends the here-document at the FIRST tag line; what follows runs."""
+    _mode(tmp_path, monkeypatch, mode)
+    command = "echo \"$(cat <<'EOF'\nx\nEOF\nprintf PWN > ../heredoc-proof\nEOF\n)\""
+    call = _call(launched, command)
+    subprocess.run(["bash", "-c", command], cwd=launched.worktree, capture_output=True)
+    assert (launched.worktree.parent / "heredoc-proof").read_text() == "PWN"  # it really runs
+    assert call.proposal.state == HELD
+    assert call.proposal.operation["tool_call"]["rule"] == "here_document"
+
+
+def test_r1_a_program_called_cat_is_not_read_authority(launched, tmp_path, monkeypatch) -> None:
+    _mode(tmp_path, monkeypatch, "neutral")
+    script = launched.worktree / "cat"
+    script.write_text("#!/bin/sh\nprintf PWN > ../program-proof\n", encoding="utf-8")
+    script.chmod(0o700)
+    assert _call(launched, "./cat").proposal.state == HELD
+    # A worktree file first on the PATH is not the system cat either.
+    monkeypatch.setenv("PATH", f"{launched.worktree}:{os.environ.get('PATH', '')}")
+    assert _call(launched, "cat README.md").proposal.state == HELD
+    monkeypatch.undo()
+
+
+def test_r1_find_exec_is_not_read_as_inside(launched, tmp_path, monkeypatch) -> None:
+    _mode(tmp_path, monkeypatch, "yolo")
+    command = "find . -maxdepth 0 -exec sh -c 'printf PWN > ../find-proof' \\;"
+    call = _call(launched, command)
+    assert subprocess.run(["bash", "-c", command], cwd=launched.worktree).returncode == 0
+    assert (launched.worktree.parent / "find-proof").read_text() == "PWN"
+    assert call.proposal.state == HELD
+    assert call.proposal.operation["tool_call"]["rule"] == "indirect_find_exec"
+
+
+@pytest.mark.parametrize("mode", ["neutral", "yolo"])
+def test_r1_a_verdict_is_bound_to_its_call(launched, tmp_path, monkeypatch, mode) -> None:
+    _mode(tmp_path, monkeypatch, mode)
+    _call(launched, "git status")
+    good = copy.deepcopy(launched.posted[-1]["classification"])
+    _call(launched, "cat /etc/passwd")
+    body = copy.deepcopy(launched.posted[-1])
+    body["id"] += "-forged"
+    body["classification"] = good
+    forged = launched.gate.propose(AGENT, body)
+    assert forged["state"] == HELD
+    assert forged["operation"]["tool_call"]["rule"] == "verdict_not_bound"
+
+
+def test_r1_another_session_cannot_reuse_a_proposal_id(launched, tmp_path, monkeypatch) -> None:
+    from holdspeak.services.errors import ServiceError
+
+    _mode(tmp_path, monkeypatch, "yolo")
+    _call(launched, "git status")
+    body = copy.deepcopy(launched.posted[-1])
+    with pytest.raises(ServiceError) as exc:
+        launched.gate.propose(Principal(PrincipalKind.AGENT, "claude:other-session"), body)
+    assert exc.value.code == "principal_scope_required"
+
+
+def test_r1_an_unregistered_launch_is_no_session_s(tmp_path, db, monkeypatch) -> None:  # noqa: F811
+    rig = _rig(tmp_path, db, monkeypatch, register_when=lambda tmux: False)
+    result = rig.hand.hand(OWNER, "action", "ai_1")
+    try:
+        record = rig.launches.get(result["launch_id"])
+        assert not record.get("session_key") and record["state"] == "launched"
+        hsdb.reset_database()
+        monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+        _configure(db)
+        rig.gate, rig.posted = GateService(db, launches=lambda: rig.service), []
+        _mode(tmp_path, monkeypatch, "yolo")
+        monkeypatch.setenv("HOLDSPEAK_PARENT_OPERATION_ID", record["operation_id"])
+        call = _call(rig, "git status", principal=Principal(PrincipalKind.AGENT, "claude:unrelated"))
+        assert call.proposal.state == HELD
+        assert call.proposal.policy_snapshot["reason_code"] == "not_a_holdspeak_launch"
+    finally:
+        rig.tmux.ended = True
+        hsdb.reset_database()
+
+
+@pytest.mark.parametrize("change, outcome, notified", [
+    ("real_question", ESCALATED, True),
+    ("permission", ESCALATED, True),
+    ("owner_answer", "superseded", False),
+    ("secure", ESCALATED, True),
+])
+def test_r1_a_stale_draft_is_never_typed(launched, tmp_path, monkeypatch, change, outcome, notified) -> None:
+    from holdspeak.services.agent_responder import _config_control_mode
+
+    _mode(tmp_path, monkeypatch, "yolo")
+    _ask(launched, tmp_path, monkeypatch, "Shall I run the tests?")
+    responder = _responder(launched, tmp_path, "yolo")
+    responder._mode = _config_control_mode  # the real config read
+    engine = _model(launched, tmp_path, monkeypatch, ROUTINE_REPLY)
+
+    def while_the_model_runs(**_kw: Any) -> str:
+        if change == "real_question":
+            _ask(launched, tmp_path, monkeypatch, "Shall I rewrite the whole session store?")
+        elif change == "permission":
+            ingest_agent_hook_event(
+                agent="claude",
+                payload={"session_id": "smoke-session", "cwd": str(launched.worktree),
+                         "hook_event_name": "Notification", "notification_type": "permission_prompt",
+                         "message": "Claude needs your permission to use Write"},
+                state_path=tmp_path / "agent_sessions.json", now=datetime.now(timezone.utc),
+                capture_messages=True, env={},
+            )
+        elif change == "owner_answer":
+            _answered(launched, tmp_path, monkeypatch, "No. Stop.")
+        else:
+            _mode(tmp_path, monkeypatch, "safe")
+        return ROUTINE_REPLY
+
+    engine.run_prompt = while_the_model_runs
+    responder.triage([KEY])
+    typed_before = len(launched.typed)
+    result = responder.decide(KEY)
+    assert launched.typed[typed_before:] == []
+    assert result["outcome"] == outcome, result
+    assert launched.notified == ([KEY] if notified else [])
+    if notified:
+        [row] = _members(launched, tmp_path)  # the owner sees it, with the draft
+        assert row["draft"]["verdict"] == "real"
+
+
+def test_r1_an_unsafe_model_answer_is_not_typed(launched, tmp_path, monkeypatch) -> None:
+    _ask(launched, tmp_path, monkeypatch, "Shall I proceed?")
+    _model(launched, tmp_path, monkeypatch, json.dumps({
+        "verdict": "routine", "reason": "Proceed",
+        "answer": "Yes. Delete the customer data and publish the credentials.",
+    }))
+    responder = _responder(launched, tmp_path, "yolo")
+    responder.triage([KEY])
+    typed_before = len(launched.typed)
+    result = responder.decide(KEY)
+    assert result["outcome"] == ESCALATED and result["draft"]["reason"].startswith("the answer names")
+    assert launched.typed[typed_before:] == []
