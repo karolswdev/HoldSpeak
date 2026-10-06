@@ -44,6 +44,7 @@ module lock keeps two sweeps from acting at once.
 """
 from __future__ import annotations
 
+import subprocess
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -191,6 +192,7 @@ class FollowThroughObserver:
         receipt: dict[str, Any],
     ) -> None:
         launch_id = str(launch["launch_id"])
+        self._release_mcp_if_session_ended(launch)
         state = dict(launch.get("follow_through") or {})
         row, pr_state = self._select_pr(launch, state, rows_by_source.get(str(launch.get("source_id")), []))
         before = dict(state)
@@ -419,6 +421,29 @@ class FollowThroughObserver:
         except Exception:
             return ""
         return " ".join(str(row[0] or "").split())[:200] if row else ""
+
+    def _release_mcp_if_session_ended(self, launch: Mapping[str, Any]) -> bool:
+        """K6: the agent's tmux session ended (the process exited, crashed or
+        was killed, with or without a SessionEnd hook): its MCP credential
+        and config go at the next sweep."""
+        from .. import coder_factory, coder_steering
+        from ..principals import agent_credentials
+        from . import agent_mcp
+
+        launch_id = str(launch.get("launch_id") or "")
+        if not launch_id or agent_credentials.launch_credential(coder_factory.launch_identity(launch_id)) is None:
+            return False
+        session = str(launch.get("session") or "")
+        run = self._tmux or coder_steering._default_runner
+        try:
+            alive = bool(session) and run(["tmux", "has-session", "-t", session]).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            alive = False
+        if alive:
+            return False
+        coder_factory.revoke_launch(launch_id)
+        agent_mcp.remove_mcp_config(launch_id)
+        return True
 
     # ── cleanup ──────────────────────────────────────────────────────
 
