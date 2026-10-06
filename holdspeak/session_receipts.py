@@ -36,6 +36,9 @@ from .agent_capabilities import (
 )
 
 PRICING_FILE = Path.home() / ".holdspeak" / "pricing.json"
+#: The steering rows of an answer HoldSpeak decided (Conductor K5):
+#: ``auto_answered`` (sent, YOLO + routine) and ``answer_drafted``.
+ANSWER_OUTCOMES = frozenset({"auto_answered", "answer_drafted"})
 PERCENTILE_SAMPLE_FLOOR = 20
 
 
@@ -76,8 +79,12 @@ def build_receipt(
     timestamps: list[float] = [p.created_at for p in proposals]
     timestamps += [p.decided_at for p in proposals if p.decided_at]
     iso_times = sorted(e.ts for e in steering if e.ts)
-    delivered = sum(1 for e in steering if e.outcome == "delivered")
-    refused = len(steering) - delivered
+    # Conductor K5: an answer HoldSpeak decided (sent or drafted) is its own
+    # row, not a steer: counted apart.
+    decisions = [e for e in steering if e.outcome in ANSWER_OUTCOMES]
+    steers = [e for e in steering if e.outcome not in ANSWER_OUTCOMES]
+    delivered = sum(1 for e in steers if e.outcome == "delivered")
+    refused = len(steers) - delivered
     holds = {
         state: sum(1 for p in proposals if p.state == state)
         for state in ("held", "approved", "denied", "expired", "invalidated")
@@ -107,6 +114,7 @@ def build_receipt(
             "elapsed_seconds": round(elapsed, 1) if elapsed is not None else None,
             "steers_delivered": delivered,
             "steers_refused": refused,
+            "answered_for_you": sum(1 for e in decisions if e.outcome == "auto_answered"),
             "holds": holds,
         },
     }
