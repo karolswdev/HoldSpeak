@@ -211,6 +211,7 @@ class AgentHandService:
             raise AgentHandRefused(exc.reason, str(exc)) from exc
 
         project_id = project_id or project_for_item(self._db, kind, item_id)
+        _reload_registry(launcher._registry)
         source = resolve_project_repository(
             self._db, project_id, launcher._registry, project_map=self._project_map
         )
@@ -442,6 +443,18 @@ class AgentHandService:
             "instruction_state": record.get("instruction_state"),
             "trust_state": record.get("trust_state"),
         }
+
+
+def _reload_registry(registry: Any) -> None:
+    """Read the source registry file again: the launch driver is shared for the
+    process, and a repository registered since it loaded (the Delivery drawer's
+    own registry instance) is otherwise invisible to it until a restart."""
+    reload = getattr(registry, "reload", None)
+    if callable(reload):
+        try:
+            reload()
+        except Exception as exc:  # the cached read still answers
+            log.warning("delivery registry not read again (%s)", exc)
 
 
 def codex_hooks_installed(path: Optional[Path] = None) -> bool:

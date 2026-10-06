@@ -3430,6 +3430,25 @@
         "summary": "Api Agent Hand"
       }
     },
+    "/api/agent/hand/preview": {
+      "post": {
+        "description": "The launch sheet's preview (K3): the brief, the repository and\nthe branch Hand to agent would use, with no side effect. Owner only.",
+        "operationId": "api_agent_hand_preview_api_agent_hand_preview_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Hand Preview Api Agent Hand Preview Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Agent Hand Preview"
+      }
+    },
     "/api/agent/launches/{launch_id}/deliver": {
       "post": {
         "description": "Deliver the held brief of an existing launch (after a restart, a\nhook install or a refused send): resume on the launch, no relaunch.",

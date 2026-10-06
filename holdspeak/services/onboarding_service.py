@@ -52,6 +52,7 @@ from __future__ import annotations
 
 import ipaddress
 import os
+import re
 import shutil
 import threading
 from datetime import datetime, timezone
@@ -575,6 +576,7 @@ def detect_agents(
             "hooks_path": str(settings_path),
             "signed_in": signed_in,
             "signed_in_from": signed_in_from,
+            "version": _version_of(executable),
             "ready": executable is not None and hooks == "installed",
             "verb": VERB if executable is not None else None,
         })
@@ -587,6 +589,7 @@ def detect_agents(
         "tmux": {
             "installed": tmux is not None,
             "path": tmux,
+            "version": _version_of(tmux),
             "install_hint": None if tmux else TMUX_INSTALL_HINT.get(system, "Install tmux with your package manager"),
         },
         # The executable a hook installed now runs (install and detect resolve it the same way).
@@ -596,6 +599,35 @@ def detect_agents(
             "hook_runs": hook_command_runs(command, which=which),
         },
     }
+
+
+_VERSION_SEGMENT = re.compile(r"^v?(\d+\.\d+(?:\.\d+)?[a-z]?)(?:[-+_].*)?$")
+
+
+def _version_of(executable: Optional[str]) -> Optional[str]:
+    """The tool's version, read from where it is installed; ``None`` when no file says it.
+
+    Runs no process: a versioned folder on the resolved path (Homebrew
+    ``Cellar/tmux/3.5a``, Claude Code ``versions/2.1.4``, Codex
+    ``releases/0.46.0-...``), after the ``package.json`` of an npm install."""
+    import json
+
+    if not executable:
+        return None
+    try:
+        real = Path(executable).resolve()
+    except OSError:
+        return None
+    # npm first: an nvm path holds the NODE version as a folder (v20.1.0).
+    for parent in list(real.parents)[:3]:
+        version = _json_object(parent / "package.json").get("version")
+        if _filled(version):
+            return str(version)
+    for part in reversed(real.parts):
+        match = _VERSION_SEGMENT.match(part)
+        if match:
+            return match.group(1)
+    return None
 
 
 def _gh_account_ref(host: str, login: str) -> str:

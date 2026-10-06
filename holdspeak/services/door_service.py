@@ -202,7 +202,7 @@ class DoorService:
         result = asdict(card)
         if card.source == "action_item":
             result["target_ref"] = f"action_item:{card.id}"
-            verbs = DoorService._action_verbs(card.id)
+            verbs = DoorService._action_verbs(card.id) + [DoorService._hand_verb("action", card.id)]
         elif card.source in {"cadence_loop", "decision"}:
             result["target_ref"] = f"cadence_loop:{card.id}"
             verbs = DoorService._cadence_verbs(card.id)
@@ -237,6 +237,12 @@ class DoorService:
                 descriptor["required_arguments"] = ["payload.to"]
             verbs.append(descriptor)
         return verbs
+
+    @staticmethod
+    def _hand_verb(kind: str, item_id: str) -> dict[str, Any]:
+        """Hand to agent (docs/internal/CONDUCTOR.md step 2): the item kind
+        and id the ``agent.hand`` operation takes (the launch sheet opens first)."""
+        return {"name": "agent.hand", "arguments": {"kind": kind, "id": item_id}}
 
     @staticmethod
     def _cadence_verbs(loop_id: str) -> list[dict[str, Any]]:
