@@ -1,41 +1,51 @@
 # Desk memory: attention and receipts
 
-Desk memory answers two returning-user questions in one place: what still needs
-me, and what happened while I was away? It is an additive read model over the
-records HoldSpeak already owns. It is not a new queue or audit log.
+Desk memory shows what still needs you and what happened while you were away.
+It is a read model over records that HoldSpeak already keeps.
+It is not a new queue and not an audit log.
 
-Open **Desk memory** from the Desk to see visible counts, search and filter the
-semantic list, and load older results without a fixed-item cutoff. Each card
-names its subject, reason, decision kind, actual destination, authority basis,
-attempt and outcome, time, and authoritative source. Meeting, artifact,
-persona/workflow run, coder steering, integration proposal, dictation, sync,
-capture recovery, background job, and Cadence records share this vocabulary.
+This page covers the **Desk memory** dock entry.
+To search what HoldSpeak remembers, see [Memory](RELATIONSHIP_AWARE_MEMORY.md).
 
-The same projections feed contextual Desk badges, Qlippy, Mission Control, and
-the native Queue HUD. Those surfaces do not reinterpret a failure or approval
-independently. They link back to the feature journal for its full detail and
-recovery or approval action.
+## Open it
 
-## Privacy and ownership
+1. Select **Desk memory** in the dock.
+2. Read the counts at the top. They show how many items need attention.
+3. Enter text in **Search receipts**, or change **Show**.
+4. Select **Filter**.
 
-Projection rows are rebuilt from their source records on every read. They do
-not copy transcripts, dictated output, proposal payloads, steering text,
-artifact bodies, conflict values, model inputs, or raw errors. The only durable
-Desk-memory state is whether the owner acknowledged or dismissed a particular
-projection.
+**Show** has three choices: **Everything**, **Needs / running**, and **Receipts**.
+Select a row to read its detail.
+A detail view names the subject, the reason, the decision kind, the actual destination, the authority basis, the attempt, the outcome, and the time.
 
-Acknowledging or dismissing a card changes presentation only. It cannot approve
-an effect, resolve a conflict, alter a meeting, change an artifact, or delete
-the source receipt. If the source advances to a new lifecycle state, that state
-gets its own stable projection and can surface again.
+The same read model feeds the badges on Desk objects, the dock badge, and Mission Control.
+These surfaces do not interpret a failure or an approval on their own.
+Each links back to the feature that owns the full detail and the recovery or approval action.
+
+## Privacy
+
+HoldSpeak rebuilds each row from its source record on every read.
+A row does not copy transcripts, dictated text, proposal payloads, steering text, Artifact bodies, conflict values, model inputs, or raw errors.
+The only stored state is whether you acknowledged or dismissed a row.
+
+Acknowledge and dismiss change only how a row looks.
+They do not approve an effect, resolve a conflict, change a Meeting or an Artifact, or delete the source receipt.
+When the source moves to a new state, that state gets its own row and can appear again.
 
 ## API
 
-`GET /api/desk/projections` supports `q`, `kind`, `attention_state`,
-`subject_ref`, `include_dismissed`, `offset`, and `limit` (capped at 200 per
-page). The response includes filtered counts, stable contextual subject counts,
-and an explicit page envelope with `total` and `has_more`.
+`GET /api/desk/projections` lists rows.
 
-`PUT /api/desk/projections/{projection_id}/presentation` accepts
-`acknowledge`, `dismiss`, or `restore`. Its response explicitly confirms that
-the subject was unchanged.
+| Parameter | Meaning |
+| --- | --- |
+| `q` | Search text. |
+| `kind` | `attention` or `receipt`. |
+| `attention_state` | `unseen`, `needs_attention`, `acknowledged`, or `resolved`. |
+| `subject_ref` | Only rows for one subject. |
+| `include_dismissed` | Include dismissed rows. |
+| `offset`, `limit` | Paging. `limit` has a maximum of 200. |
+
+The response includes counts and a page envelope with `total` and `has_more`.
+
+`PUT /api/desk/projections/{projection_id}/presentation` takes an `action` of `acknowledge`, `dismiss`, or `restore`.
+The response has `subject_unchanged: true`.

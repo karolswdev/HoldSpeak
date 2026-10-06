@@ -1,108 +1,22 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-248 tools across 43 families. The default non-owner discovery lists 34
-resources; the owner discovery lists 37 because access filtering admits 16
-static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
-custom script) can read and drive the desk without touching the web UI.
+248 tools across 43 families. Any MCP client (Claude Code, Cursor, a
+custom script) can read and drive the desk without the web UI.
 
-## The sidecar is a client of the hub
+This page is the MCP transport reference. Each tool description in the
+live catalogue is the per-tool reference. This page covers how the sidecar
+connects, the tool families, the resources, and the trust rules.
 
-The sidecar runs as a child process of the MCP client, and it **does not open
-the database**. For each JSON-RPC message it finds the running hub through the
-owner lock beside the database file (`<database>.owner.lock`, with pid
-liveness confirmed and host and port read from the body), then forwards the
-message verbatim
-to `POST http://127.0.0.1:<port>/api/mcp`, returning the hub's response
-verbatim. One process owns the database; every tool is dispatched by that
-process, through the same composed service layer its own HTTP routes use.
+## Connect a client
 
-Discovery happens per message and is never cached, so a hub started *after*
-your editor launched the sidecar starts working with no restart.
+1. Start the hub: `holdspeak web`.
+2. Point your MCP client at `uv run holdspeak-mcp`. For a PyPI install,
+   use `uvx --from holdspeak holdspeak-mcp`. The server speaks stdio
+   JSON-RPC.
 
-**With no hub running**, the handshake (`initialize`, `ping`) is answered
-locally so your client connects, and every other call returns a JSON-RPC error
-naming the situation and the remedy:
-
-```
-No running HoldSpeak hub owns /Users/you/.local/share/holdspeak/holdspeak.db;
-start `holdspeak web`, then retry.
-```
-
-Nothing is opened in that state: no schema reconcile, no `holdspeak.db`
-created.
-
-**Why, and what was rejected.** The sidecar used to be its own composition
-root. `.mcp.json` carries no `env` block, so it inherited `$HOME`, opened the
-same `holdspeak.db` a running hub owns, and ran `reconcile_schema` (a write
-transaction) on every start, without ever touching the owner lock that exists
-precisely to forbid that (`holdspeak/runtime_lock.py`: C10 "forbids introducing
-a multi-writer SQLite arrangement at all"). The rejected alternative was to
-open the file **read-only** and serve only the read tools:
-it is still a second builder of the same service layer over a file another
-process is checkpointing, and it makes the tool catalogue mean something
-different depending on who is running it. Proxying keeps one writer, one
-composition root, and one meaning per tool.
-
-**Proxy only.** The sidecar has one mode. The old diagnosis hatch
-(`HOLDSPEAK_MCP_STANDALONE=1`) is retired (PHILO-5-01). The sidecar ignores
-that variable: it composes no services, opens no database and claims no lock.
-
-**Point a client at an isolated hub.** The sidecar finds the hub through the
-database path under `$HOME`, and it reads the token from
-`$HOME/.config/holdspeak/config.json`. To use a hub that runs under another
-HOME, set `HOME` in the client's server entry. For Codex:
-
-```
-codex exec \
-  -c mcp_servers.holdspeak.command=/abs/path/.venv/bin/holdspeak-mcp \
-  -c mcp_servers.holdspeak.cwd=/abs/path \
-  -c mcp_servers.holdspeak.env.HOME=/abs/path/to/the/hub/home ...
-```
-
-`scripts/astra` passes each `-c KEY=VALUE` to `codex exec`.
-
-### Decisions go through the operation contract
-
-For `kind="decisions"`, `desk.list`, `desk.get`, `desk.create` and
-`desk.update` call the application operations `decision.list`,
-`decision.read`, `decision.create` and `decision.update`
-(`holdspeak/operations.py`). The HTTP routes `GET/POST /api/decisions` and
-`GET/PUT /api/decisions/{id}` call the same operations. The hub binds them
-once, to its one live service. The export is `docs/generated/operations.json`.
-The contract refuses unknown fields on create, and it refuses a field that
-names a principal. The transport gives the principal.
-
-### A write reaches the open desk
-
-Because dispatch goes through the hub's composed services, a write over MCP
-emits one `desk_changed` frame on the hub's `/ws` bus
-(`{"kind": ..., "id": ..., "op": "create" | "update" | "delete", "origin": ...}`),
-and any open desk re-reads itself. Exactly what emits the frame: every write
-through the hub's `PrimitiveService` and `WorkbenchService` (notes, decisions,
-knowledge bases, directories, workflows, chains, workbenches, items, skills),
-whichever caller made it (an HTTP route, MCP over stdio, MCP over `/api/mcp`,
-the iPad); the reaction and resourceful projections that add workbench items
-below those services; the note a coder reply materializes; the rails journal
-note; and the guardrail seed notes. Writes that reach a table by any other
-path (a meeting, a project room, a thought, a sync pull) emit no frame; their
-surfaces have their own signals. Previously only the browser that made the
-write knew about it (it refreshed itself), and a remote write landed in the
-database and sat there.
-
-### `POST /api/mcp` and the Reach flag
-
-`remote.streamable_http_enabled` governs the **remote** listener: scoped agent
-credentials arriving from elsewhere. A **loopback request bearing the owner
-token** is the hub's own local transport, the one the stdio sidecar proxies
-into, and is admitted with the flag off. Everything else on that route still
-requires the flag on, and an OWNER token from a non-loopback address is still
-refused with 403 (Article XI:4).
-
-## Wiring
-
-The repo ships a `.mcp.json` at the root. Claude Code discovers it
-automatically when it opens the repository:
+The repository ships a `.mcp.json` at the root. Claude Code finds it when
+it opens the repository:
 
 ```json
 {
@@ -116,426 +30,319 @@ automatically when it opens the repository:
 }
 ```
 
-To wire it into another MCP client, point it at `uv run holdspeak-mcp`
-(or `uvx --from holdspeak holdspeak-mcp` for a PyPI install). The server
-speaks stdio JSON-RPC.
+The sidecar finds the hub for each message. A hub that starts after your
+editor works with no restart.
 
-People is an additional confidential-data boundary. The local owner process
-has `write` access by default; the People family still returns only
-`shared_intent` material. To reduce that process-start capability to read-only,
-launch the sidecar with:
+### Reach a hub that runs under another HOME
 
-```json
-{
-  "mcpServers": {
-    "holdspeak": {
-      "command": "uv",
-      "args": ["run", "holdspeak-mcp"],
-      "cwd": ".",
-      "env": {"HOLDSPEAK_MCP_PEOPLE_ACCESS": "read"}
-    }
-  }
-}
+The sidecar finds the hub through the database path under `$HOME`. It reads
+the hub token from `$HOME/.config/holdspeak/config.json`. To use a hub that
+runs under another HOME, set `HOME` in the client's server entry. For Codex:
+
+```
+codex exec \
+  -c mcp_servers.holdspeak.command=/abs/path/.venv/bin/holdspeak-mcp \
+  -c mcp_servers.holdspeak.cwd=/abs/path \
+  -c mcp_servers.holdspeak.env.HOME=/abs/path/to/the/hub/home ...
 ```
 
-Set `HOLDSPEAK_MCP_PEOPLE_ACCESS=off` to disable the family entirely. The
-repository `.mcp.json` sets no override, so it uses the local-owner `write`
-default.
+### Limit People access
+
+The People family defaults to `write` for the local owner. Set
+`HOLDSPEAK_MCP_PEOPLE_ACCESS` in the hub's environment before you start the
+hub. This restriction applies to all MCP clients of that hub.
+
+```sh
+HOLDSPEAK_MCP_PEOPLE_ACCESS=read holdspeak web
+```
+
+Use `read` for read-only access. Use `off` to disable the family. The
+People family returns only `shared_intent` material in every mode.
+
+## How the sidecar works
+
+The sidecar is a client of the hub. It runs as a child process of the MCP
+client and **does not open the database**. For each JSON-RPC message, it:
+
+1. Finds the running hub through the owner lock beside the database file
+   (`<database>.owner.lock`). It confirms that the process is alive and
+   reads the host and port from the lock.
+2. Sends the message unchanged to `POST http://127.0.0.1:<port>/api/mcp`,
+   with the hub's owner token from the config file.
+3. Returns the hub's response unchanged.
+
+One process owns the database. The hub dispatches every tool through the
+same service layer as its HTTP routes. The sidecar always dials loopback,
+even when the hub binds to another address.
+
+**With no hub running**, the sidecar answers the handshake (`initialize`,
+`ping`) and notifications locally, so your client connects. Every other
+call returns a JSON-RPC error (code `-32002`) that names the situation:
+
+```
+No running HoldSpeak hub owns /Users/you/.local/share/holdspeak/holdspeak.db;
+start `holdspeak web`, then retry.
+```
+
+The sidecar opens nothing in that state. It creates no database and runs
+no schema step.
+
+The sidecar has one mode. It ignores `HOLDSPEAK_MCP_STANDALONE`.
+
+### Decisions go through the operation contract
+
+For `kind="decisions"`, `desk.list`, `desk.get`, `desk.create` and
+`desk.update` call the operations `decision.list`, `decision.read`,
+`decision.create` and `decision.update` (`holdspeak/operations.py`). The
+HTTP routes `GET/POST /api/decisions` and `GET/PUT /api/decisions/{id}`
+call the same operations. The contract refuses unknown fields on create. It
+also refuses a field that names a principal. The transport supplies the
+principal.
+
+### A write reaches the open desk
+
+A write through MCP emits one `desk_changed` frame on the hub's `/ws` bus:
+
+```json
+{"kind": "...", "id": "...", "op": "create", "origin": "..."}
+```
+
+The `op` value is `create`, `update` or `delete`. Any open desk then reads
+the change. The hub emits the frame for every write through its
+`PrimitiveService` and `WorkbenchService`, whichever caller made the write
+(an HTTP route, MCP over stdio, MCP over `/api/mcp`, or the iPad). Writes
+that reach a table by another path (a meeting, a Project, a Thought, a sync
+pull) emit no frame. Those surfaces have their own signals.
 
 ## Tool families
 
-The registered tools are organized into domain families. Each tool follows the
-`domain.verb` naming convention. Tool descriptions are the per-tool
-reference; this page covers the families and the cross-cutting rules.
+Tool names follow the `domain.verb` pattern. The registered tools are
+organized into the families below. The generated roster after this section
+lists every tool name.
 
-### desk
+| Family | What it covers |
+|---|---|
+| `desk` | List, read, create, update and delete desk primitives. Also the snapshot, the verbs and the needs-you list. |
+| `ask` | Ask the desk a question with named grounding. |
+| `thought` | Develop a durable Thought, with context and review tools. |
+| `thread` | Set a Thread's status line. |
+| `interview` | Read and change the Interview state of a Thread. |
+| `project`, `provider`, `connection`, `steward`, `nudge`, `channel` | Projects, Watches, the Steward, providers and the Send. |
+| `meeting`, `proposal`, `decision`, `decision_record`, `follow_through`, `monday_brief` | Meetings, extracted proposals, decisions and follow-through. |
+| `people` | The encrypted People ledger. |
+| `cadence`, `heartbeat`, `scheduled_recording`, `door` | The Cadence engine, the Heartbeat sweep, scheduled recordings and the Door. |
+| `model_library`, `inference`, `inference_assignment`, `concierge`, `settings` | Models, assignments and settings. |
+| `sequence`, `workflow`, `workbench`, `recipe`, `practice_recipe`, `reaction`, `watch`, `zone`, `kb` | Runs, Workbenches, recipes and Automations. |
+| `memory`, `dictation`, `event`, `pipeline`, `kernel`, `plugin_job`, `coder` | Search, journals, events, receipts, queued jobs and Coder sessions. |
 
-The original tools cover CRUD for desk primitives (meetings, notes, artifacts,
-projects, decision records, zones, workbenches, recipes, agents, sequences,
-workflows), the pipeline observer, follow-through lanes, inference
-invocations, and the Monday Brief. Five of the `desk.*` tools
-(`desk.list`, `desk.get`, `desk.create`, `desk.update`, `desk.delete`)
-operate on the primitive kind system: 6 surface kinds are stored as typed
-rows; the remaining 12 (including the singleton People surface) are computed,
-composite, or managed by a dedicated capability. Each description names
-which kinds it handles.
+### Desk
 
-### ask
+`desk.list`, `desk.get`, `desk.create`, `desk.update` and `desk.delete`
+work on desk primitive kinds. Six kinds are stored as typed rows. The other
+kinds are computed, composite, or managed by their own capability. Each
+tool description names the kinds it handles.
 
-Ask the desk a question. `ask.resolve_grounding` hydrates grounding references
-without running inference. `ask.run` submits a question through the admitted
-inference path and returns the answer with its receipt. `ask.cancel` cancels an
-in-flight invocation. `ask.keep` persists an answer as a desk artifact (not
-model-invoking). Model selection is never an Ask-side MCP control.
+### Ask
 
-### door
+`ask.resolve_grounding` hydrates grounding references without a model call.
+`ask.run` submits a question through the admitted inference path and
+returns the answer with its receipt. `ask.cancel` cancels a run in flight.
+`ask.keep` saves an answer as a desk Artifact. Model selection is never an
+MCP control on Ask.
 
-`door.get` returns one closed, read-only Dashboard Door aggregate: the board,
-active Thoughts, and a mixed upcoming timeline of calendar events (from all
-enabled ICS sources, with per-source provenance when more than one source is
-configured) and scheduled recordings, plus matching server-derived counts.
-`door.add_item` creates an action item on the Door. It is an effect tool
-(`effect_proposal`); in safe or neutral mode the call is held for the
-decision box. An item created from a thread carries
-`source_type='thread'` and `source_ref` pointing at the originating
-message; the Door card shows a "from a thread" provenance chip.
+### Project
 
-Door has no MCP resource. Its
-Follow-Through People overlay respects `HOLDSPEAK_MCP_PEOPLE_ACCESS` and is
-safely empty when that encrypted disclosure capability is unavailable or off.
+- **Read:** `project.list`, `project.get` and `project.get_room`.
+- **Commands:** create, update (with `expected_revision`), archive, restore,
+  link and unlink a Meeting, open and accept a review, decide a proposal,
+  and list, draft, edit, publish and mark delivered a project update.
+  Every effect tool accepts an optional `command_id` for idempotent replay.
+  Where the web route checks `expected_revision`, the tool checks it too.
+- **Steward:** `project.configure_steward` reads or writes the policy.
+  `project.run_steward` returns a run id at once and runs on a daemon
+  thread. `project.stop_steward` stops a run.
+  `project.get_steward_run` returns the state, steps and receipts.
+  `project.steward.trigger` evaluates and runs the due work for the desk.
+- **Setup:** `project.setup.start`, `.resume`, `.answer`, `.suggest`,
+  `.select_proposal`, `.deselect_proposal`, `.test_proposal`,
+  `.clarify_repo_scope`, `.clarify_jira_scope` and `.finalize`. The setup
+  session is durable across calls. The [Interview guide](INTERVIEW.md)
+  explains the conversation that drives these tools.
+- **Watches:** `project.watch.inspect`, `.test`, `.evaluate`, `.set_rules`,
+  `.pause`, `.resume` and `.retire`. These tools work only on graduated
+  Watches. A graduated tool that targets a legacy Watch refuses with
+  `legacy_watch_boundary`. `.set_rules` accepts an optional
+  `evaluation_cadence_minutes` value from 1 to 10080.
+- **Suggested sources:** `project.suggested_sources` lists repositories and
+  issue keys that Meetings mention. `project.add_suggested_source` creates
+  a Watch source from one. `project.dismiss_suggested_source` hides one.
+- **Items and resources:** `project.item.*` and `project.resource.*`.
+- **Nudges:** `steward.nudges` lists reviewer nudge proposals for a Project.
+  `nudge.send` approves and sends one through the gated connector.
+  `nudge.dismiss` closes one with no write. Both refuse a nudge that is not
+  in the `proposed` state.
 
-### project
+`project.get_room` returns the Room projection. It includes the Meeting
+Watch row when Meetings link to the Room. Calendar sources have no MCP
+tools. Manage them through the HTTP routes under `/api/calendar/`.
 
-Three read tools: `project.list` returns all projects (optionally
-including archived). `project.get` returns one project by id with room
-fields. `project.get_room` returns the coherent room projection.
+### Provider and connection
 
-Fourteen command tools mirror the web routes exactly (MCP-001 parity):
-`project.create`, `project.update` (with expected_revision), `project.archive`,
-`project.restore`, `project.link` / `project.unlink` (meeting association),
-`project.open_review`, `project.get_delta`, `project.decide_proposal`,
-`project.accept_review`, `project.list_updates`, `project.draft_update`,
-`project.update_draft`, `project.publish_update`. Every effect tool
-accepts an optional command_id for idempotent replay (MCP-002); where the
-web route enforces expected_revision, the tool does too.
+`provider.list` returns the configured providers and their readiness.
+`connection.list` and `connection.recheck` read and probe connections.
+Provider tools only read. HoldSpeak makes no provider writes through MCP.
+A tool refuses with a typed error when its adapter is absent
+(`provider_not_configured`).
 
-Five steward driver tools: `project.configure_steward` (policy read/write
-including `unattended_enabled`), `project.run_steward` (returns run_id
-PROMPTLY via MCP-003; phase execution on a daemon thread; typed refusals
-for STW-002/disabled/cooldown), `project.stop_steward` (durable STW-003),
-`project.get_steward_run` (pollable state with steps and receipts), and
-`project.steward.trigger` (desk-wide, principal-scoped evaluate_due +
-run_due NOW through the conductor's scheduler seam; unwired returns a typed
-503 `scheduler_not_wired` refusal; never route-level dedup).
+- **GitHub:** `provider.github_connection`, `provider.github_discover` and
+  `provider.github_validate_repo`. These use the `gh` CLI.
+- **Jira:** `provider.jira_connections`, `provider.jira_add_connection`,
+  `provider.jira_connection`, `provider.jira_discover`,
+  `provider.jira_search` and `provider.jira_validate_scope`. These use the
+  Atlassian CLI (`acli`).
+- **Confluence:** `provider.confluence_connections`,
+  `provider.confluence_discover` and `provider.confluence_validate_space`.
 
-Three reviewer-nudge tools: `steward.nudges` returns
-the pending and recent nudge proposals for a project (reviewer name, PR number,
-proposed text, state, cooldown status). `nudge.send` approves and fires one
-pending nudge through the gated connector (`gh pr comment`); the comment posts
-from the owner's `gh` identity, and the terminal receipt names the comment URL,
-PR number, reviewer, timestamp, and host. `nudge.dismiss` closes one pending
-nudge with no write; a 7-day cooldown starts. Both refuse nudges that are not
-in `proposed` state.
+A Jira connection is a (site, email) pair. One owner can hold many.
+Each call runs `auth switch`, then the command, then an `auth status`
+check, under a cross-process file lock. The lock timeout is 10 seconds. Set
+`HOLDSPEAK_ACLI_LOCK_TIMEOUT` (seconds) to change it. A mismatch on the
+check returns a typed error. Jira calls contact `<site>.atlassian.net` from
+this device. `provider.jira_search` accepts only a fixed set of search
+fields. It fills other fields through per-issue `workitem view` calls.
 
-Project setup drivers include `project.setup.start`, `project.setup.resume`,
-`project.setup.answer`, and `project.setup.suggest`.
-Use `project.setup.select_proposal` and `project.setup.deselect_proposal` to
-record the chosen scope. `project.setup.test_proposal` tests it.
-`project.setup.clarify_repo_scope` and `project.setup.clarify_jira_scope`
-refine the provider scope. `project.setup.finalize` applies the chosen setup
-through the existing Project service.
-The durable session resumes across tool calls.
-The [Interview user guide](INTERVIEW.md) explains the conversation that uses
-these drivers. The generated roster below lists all current tool names.
+### Thread and Interview
 
-Seven graduated watch tools: `project.watch.inspect`, `project.watch.test`,
-`project.watch.evaluate`, `project.watch.set_rules`, `project.watch.pause`,
-`project.watch.resume`, `project.watch.retire`. These operate ONLY on
-graduated WatchSpec@1 rows (state in active/tested/paused/retired). Legacy
-rows (state='') belong to the reactions family; the graduated tools
-refuse legacy rows with typed `legacy_watch_boundary` errors. The
-legacy side is not yet guarded in code (backlog). `project.watch.set_rules`
-accepts an optional `evaluation_cadence_minutes` field (integer, 1..10080)
-that sets the per-watch evaluation interval; the same field is accepted by
-the HTTP `PUT /api/projects/{id}/steward/policy` route.
+`thread.set_status` writes the Thread's status line. `interview.get`,
+`interview.change_section`, `interview.record_fact` and
+`interview.suggest` expose the Interview state of a Thread. Commands keep
+revision checks and source provenance. See [Agents and Threads](AGENTS_AND_THREADS.md).
 
-Three suggested-source tools: `project.suggested_sources` returns the pending
-source suggestions for a Room (repositories and issue keys mentioned in meeting
-transcripts that do not already have a Watch source). Each suggestion carries
-the provider, the reference, and the meeting that mentioned it.
-`project.add_suggested_source` accepts one suggestion and creates a Watch
-source on the Room. `project.dismiss_suggested_source` hides the suggestion;
-the same reference will not recur for this Room.
+### Thought
 
-The graduated watch tools also cover the meeting watch: a
-`MeetingWatchSource` adapter (source type `"meeting"`) sits beside
-`GitHubWatchSource` and `JiraWatchSource`. It reads from the local
-database only (meetings, meeting_projects, segments, decision_records,
-decision_commitments, intel_job_attempts). The Room projection returned
-by `project.get_room` includes the meeting watch row in SOURCES when
-meetings are linked to the Room. No calendar-specific MCP tools exist;
-calendar sources are managed through the HTTP routes
-(`/api/calendar/events`, `/api/calendar/sources`,
-`/api/calendar/snapshot`).
+A Thought develops through one explicit model turn at a time.
 
-Five resource templates expose project data: `holdspeak://projects/{id}`,
-`.../room`, `.../delta`, `.../updates/{update_id}`, and
-`.../steward/runs/{run_id}`. Unknown ids refuse typed.
+- `thought.refine` asks one question from server-loaded material.
+  `thought.reconcile` finalizes known durable proof.
+  `thought.stop_refinement` suppresses a run before best-effort
+  cancellation.
+- `thought.answer_review`, `thought.accept_review` and
+  `thought.reject_review` consume one receipt-gated review. They never
+  start the next model turn.
+- `thought.list_context`, `thought.attach_context`,
+  `thought.detach_context` and `thought.refresh_context` manage context.
+  They accept qualified references and cursors only. They never accept note
+  bodies or prompt text. None calls a model.
+- `thought.create` and `thought.adopt_note` create or adopt a Thought and
+  return its default-context receipt. `thought.get_default_context` and
+  `thought.replace_default_context` read and replace the default context
+  set. The default is empty until you set it. It applies only to later
+  create or adopt calls.
+- `thought.update_working`, `thought.answer_and_continue`,
+  `thought.complete` and `thought.resume` drive the Workbench.
 
-### provider
+The refine schema accepts no prompt, model or raw text. MCP supplies
+identities and cursors. The Thought service loads the content, as the web
+surface does. A command failure is a structured tool error. `error` holds
+the readable detail and `code` holds the stable service code.
 
-Provider discovery and connection status for GitHub and Jira.
+### Model library
 
-**GitHub (4 tools).** `provider.list` returns all configured providers
-(native + GitHub + Jira) with their capabilities and readiness.
-`provider.github_connection` reads the GitHub adapter's connection status.
-`provider.github_discover` runs bounded repository discovery through the
-configured adapter (pagination surfaced). `provider.github_validate_repo`
-validates a repository by owner/repo string. All GitHub tools refuse typed
-with `provider_not_configured` when the adapter is absent.
+- `model_library.*` are owner-only commands over the Model Library service:
+  `get`, `download`, `add_to_library`, `use_model_file`,
+  `connect_hosted_model`, `define_endpoint` and `connect_paired_device`.
+  They add or connect models. They never select a model for a capability.
+  File intake accepts a request id, a basename and base64 bytes, up to
+  16 MiB decoded. Client paths are refused. Hosted-provider secrets go in a
+  write-only `secret` field. They never appear in errors, logs or receipts.
+- `inference.cancel_model_acquisition` cancels a download before
+  verification starts.
 
-**Jira (6 tools).** `provider.jira_connections` lists all Jira connections
-(site+email pairs) and their status. `provider.jira_add_connection` adds a
-connection by site and email (no credentials stored).
-`provider.jira_connection` rechecks one connection's status (switch + auth
-status probe). `provider.jira_discover` discovers Jira resources (projects,
-issue types, statuses) for a connection. `provider.jira_search` runs a JQL
-query and returns matching issues (optional per-issue enrichment for
-duedate, resolution, updated via `workitem view`).
-`provider.jira_validate_scope` validates a Jira project key. All Jira tools
-refuse typed when the `acli` binary is absent.
+### Assignments and settings
 
-No provider writes.
+- `inference_assignment.summary`, `.editor`, `.set`,
+  `.preview_use_default` and `.clear` read and change assignments.
+- `concierge.detect`, `.propose`, `.probe`, `.apply` and `.download` detect
+  engines and apply a proposed assignment. A paid cloud probe needs
+  `generate: true`.
+- `settings.get` returns the configuration with secrets removed and a
+  `_revision` value. `settings.update` applies a partial patch.
+  `settings.hub` reads the hub state. `settings.update` cannot write
+  secrets or inference assignments. Use the Model Library and assignment
+  tools for those.
 
-**Jira over acli.** The Atlassian CLI (`acli`) is the Jira transport, the
-same relationship `gh` has with GitHub. Prerequisites: `acli` installed
-(`brew tap atlassian/homebrew-acli && brew install acli`) and at least one
-account authenticated (`acli jira auth login --site <site>.atlassian.net
---email <email> --token`). A connection is identified by (site, email);
-one owner may hold many across multiple `*.atlassian.net` sites. Every call
-follows the switch-and-verify law: `auth switch`, then the command, then
-`auth status` read-back, under a cross-process file lock (`fcntl.flock` on
-a lockfile in the data directory). The lock timeout defaults to 10 seconds
-and is configurable via `HOLDSPEAK_ACLI_LOCK_TIMEOUT` (seconds, float).
-A read-back mismatch is a typed error, never a silent wrong read. All
-access is read-only.
-The search field cap: `workitem search --fields` accepts only issuetype,
-key, assignee, priority, status, summary, labels, reporter, creator,
-description; fields such as duedate, resolution, and updated come from
-per-issue `workitem view` enrichment (calls reported in the result).
-Egress: Jira calls contact `<site>.atlassian.net` from this device.
+### Sequence
 
-Recorded shapes are from a live `acli 1.3.36-stable` session
-(tests/unit/test_jira_provider.py carries the recorded fixtures).
+`sequence.run` runs a sequence through the admitted inference path.
+`sequence.cancel` cancels a run by its parent operation id.
+`workflow.run` and `workflow.cancel` do the same for a Workflow.
 
-### thread (1 tool)
+### Meetings, decisions and follow-through
 
-`thread.set_status` writes the thread's persistent status line (shown in the
-pullout head) and returns the written value. The text is persisted across turns.
+`meeting.proposals` returns the pending proposals for a Meeting. It leaves
+out proposals that are `confirmed` or `dismissed`. `proposal.confirm`
+writes a decision record and a commitment for one `proposed` proposal. You
+can override `text`, `owner` and `due`. `proposal.dismiss` marks one
+`dismissed` and writes no record. Both refuse a proposal that is not
+`proposed`.
 
-### inference (1 tool)
+### Cadence and Heartbeat
 
-`inference.cancel_model_acquisition` cancels a model download only before
-verification begins. It cannot change model availability or any assignment.
-Model acquisition enters through the seven Model Library commands below; model
-and agent principals receive no authority through this tool.
+`cadence.status`, `.loops`, `.get_loop`, `.brief`, `.closeout`, `.history`
+and `.audit` read the engine. `cadence.snooze`, `.set_status`, `.run_now`
+and `.apply_closeout` change only the local database.
 
-### model library
+`heartbeat.status` reads the sweep settings. `heartbeat.run_now` runs one
+sweep and returns the receipt. `heartbeat.set` updates
+`sweep_every_minutes` (1 to 1440), `quiet_hours` (`{start, end}`), `notify`
+(`off`, `edge` or `every_sweep`) and `muted_projects`.
+`heartbeat.notify_test` fires one test notification.
 
-Owner-only availability commands over the same Model Library application service
-as the HTTP owner API: `model_library.get`, `model_library.download`,
-`model_library.add_to_library`, `model_library.use_model_file`,
-`model_library.connect_hosted_model`, `model_library.define_endpoint`, and
-`model_library.connect_paired_device`. They can add or connect available models
-but cannot select one for a capability; every command proves the assignment
-heads are unchanged. File intake accepts only a request ID, a basename, and
-base64 bytes capped at 16 MiB decoded. The sidecar owns temporary staging and
-deletes it after the command; client paths are refused. Hosted-provider secrets
-have a dedicated write-only `secret` field and never appear in errors, logs, or
-receipts.
-
-### inference assignment
-
-Owner-only assignment projection and command twins over the same Assignment
-application service as HTTP: `inference_assignment.summary`,
-`inference_assignment.editor`, `inference_assignment.set`,
-`inference_assignment.preview_use_default`, and
-`inference_assignment.clear`. Their schemas are recursively closed. Set and
-clear preserve the canonical narrow CAS and stable command replay; replay
-returns the original committed-effect chain and hash, never a route, endpoint,
-path, secret, or binding detail.
-
-### thought
-
-Develop a durable Thought through one explicit model turn. `thought.refine`
-asks one useful question using server-loaded authoritative material;
-`thought.reconcile` reads/finalizes only known durable proof, and
-`thought.stop_refinement` durably suppresses an exact invocation before a
-best-effort physical cancellation. `thought.answer_review`,
-`thought.accept_review`, and `thought.reject_review` consume one receipt-gated
-review through expected-revision CAS. They never start the next model turn.
-
-Four context tools use that same application authority. `thought.list_context`
-returns safe attachment metadata, pinned Everyday context, hub-local recent
-choices, and bounded search/Browse results. `thought.attach_context` and
-`thought.detach_context` replace the visible set under exact Thought cursors;
-`thought.refresh_context` is the transport name for the UI's **Update context**
-repair. They accept qualified refs and cursors only, never Note bodies, expanded
-leaves, or copied prompt material. None invokes a model.
-
-Four more Thought tools give MCP exact custody/default parity with HTTP.
-`thought.create` and `thought.adopt_note` create or adopt through the shared
-application service and return the final Thought plus its mandatory default-
-application receipt. `thought.get_default_context` reads the complete hub-local
-future set; `thought.replace_default_context` atomically replaces that set by
-qualified refs under its own revision. The default is empty until the owner
-sets it. It applies only to later local create/adopt, never changes an existing
-Thought, never syncs, and never invokes a model. A source failure skips the
-whole set and returns a named `not_applied` receipt rather than partial context.
-
-Four Workbench tools complete the transport-neutral interview seam.
-`thought.update_working` saves the live Note through the same cursor/CAS law as
-the document editor; `thought.answer_and_continue` atomically adds one answer
-and reserves exactly one next refinement turn; `thought.complete` finishes the
-Thought locally; and `thought.resume` returns a completed Thought to working
-state. The Workbench itself is available as a resource below. The model does
-not receive this owner MCP catalogue: internal inference remains on the
-separately admitted, least-authority execution path.
-
-The two default operations correspond to `GET` and `PUT
-/api/thoughts/default-context`. HTTP create/adopt use the same application
-methods, closed nested schemas, authority checks, idempotency, and receipts.
-Default reads/replacements accept no Note body, title, leaf metadata, prompt,
-model, or attachment hash. Per-Thought detach and future-policy replacement are
-different scopes.
-
-The refine schema deliberately accepts no prompt, model, raw/working text,
-grounding, or context payload. MCP supplies identities and cursors; the shared Thought
-application service loads authoritative content exactly as the web surface
-does, including the exact immutable attachment hash. The stdio sidecar keeps a coordinator loop alive for its whole process,
-but does not perform global startup recovery because the web runtime may own
-live work in the same database. (In proxy mode there is no sidecar
-coordinator at all: the hub's own coordinator runs every refinement.)
-
-Thought command failures are structured tool errors: `error` is the readable
-detail, `code` is the stable service code, and safe conflict context such as
-the current Thought projection is retained. Thought resource failures carry
-the same stable code in JSON-RPC `error.data`.
-
-### settings
-
-`settings.get` returns the current configuration with secrets redacted
-and a `_revision` field for optimistic concurrency. `settings.update`
-applies a partial patch. Secrets and inference assignments cannot be written
-through this tool.
-
-### coder
-
-Read-only inspection of coder sessions. `coder.list` lists sessions
-(optionally filtered by agent). `coder.get` returns one session by id.
-`coder.audit` reads the bounded steering audit trail.
-
-### concierge
-
-Engine detection and model assignment. `concierge.detect` returns every
-reachable engine (LAN, local, cloud, catalog presets) with hardware facts
-and probe timestamps. `concierge.propose` returns a proposed assignment
-per capability group using the same rules as the Settings, Models face.
-`concierge.probe` runs a bounded latency check against one engine; a paid
-cloud probe requires the explicit `generate:true` flag. `concierge.apply`
-writes the complete assignment set in one step (refuses while any group is
-WAITING and not OFF). `concierge.download` starts a catalog preset download
-through the existing Model Library download path.
-
-### cadence
-
-The cadence engine: reviews meetings, proposed actions, and waiting coder
-sessions, then prepares next actions. `cadence.status` returns the engine
-state. `cadence.loops` and `cadence.get_loop` read individual loops.
-`cadence.brief` returns the current brief. `cadence.closeout` reads the
-closeout. `cadence.history` and `cadence.audit` read the event history.
-`cadence.snooze`, `cadence.set_status`, `cadence.run_now`, and
-`cadence.apply_closeout` are safe write verbs that mutate only the local
-database.
-
-### sequence
-
-`sequence.run` runs a sequence (chain) through the admitted inference
-path. `sequence.cancel` cancels a running sequence by its parent operation
-id.
-
-### workflow
-
-`workflow.run` runs a workflow through the admitted inference path.
-`workflow.cancel` cancels a running workflow by its parent operation id.
-
-### memory (1 tool)
+### Memory
 
 `memory.search` queries the long-horizon memory store with optional kind,
-project, time, and pagination filters. Valid kinds are `decision`,
-`decision_record`, `desk_decision`, `artifact`, `meeting`, `note`, `thread`,
-`action`, `project_item`, `workbench_item`, and `cadence`. Each hit identifies
-whether it matched lexically or arrived over one authoritative relationship;
-the same contract powers Desk and Project search.
+project, time and pagination filters. Valid kinds are `decision`,
+`decision_record`, `desk_decision`, `artifact`, `meeting`, `note`,
+`thread`, `action`, `project_item`, `workbench_item` and `cadence`. Each
+hit states whether it matched by text or arrived over a relationship.
+`memory.page` and `memory.observations` read memory pages and observations.
 
-### meeting.proposals
+### People
 
-`meeting.proposals` returns the pending proposals for a meeting (decisions and
-action items extracted by meeting intelligence). Each proposal carries the
-extracted text, provenance (meeting title, segment timestamp, speaker label),
-and the model host at extraction time. Proposals with state `confirmed` or
-`dismissed` are excluded.
+`people.readiness` is content free and works while access is off. In
+`read` mode, the family lists relationships and reads one relationship's
+`shared_intent` 1:1s, agenda items, grounding notes, linked Project
+references, requests and commitments. `people.grounding.get` returns those
+accepted sources as an evidence bundle. It calls no model.
 
-### proposal.confirm and proposal.dismiss
+The default `write` mode also admits these tools:
 
-`proposal.confirm` writes a decision record and commitment through the kernel
-for one `proposed` proposal. The proposal transitions from `proposed` to
-`confirmed`. An optional `text`, `owner`, and `due` override the extracted
-values (the original extraction stays as provenance).
+- relationship, note, 1:1 and agenda creation;
+- request creation and acceptance;
+- commitment transitions;
+- calendar and owner-alias link and unlink.
 
-`proposal.dismiss` marks one `proposed` proposal as `dismissed`. No decision
-record or commitment is created. A `proposal.dismissed` receipt is written.
+`people.resolve` matches an identity string against owner aliases and
+display names inside the encrypted store. It returns an opaque
+relationship id, or a typed `no_match`. It never writes.
 
-Both tools refuse proposals that are not `proposed`.
+MCP never starts or recovers the encrypted store. It never returns
+leader-private sessions, prep, agenda, notes, requests or commitments. It
+has no People archive, delete, capture, transcript, inference, scoring,
+search, sync, export or connector tool. Tool results pass to your MCP
+client over stdio. HoldSpeak does not write them to its plaintext
+database, FTS index or Cadence.
 
-### people
+### Other tools
 
-The encrypted People ledger defaults to `write` for the local owner process.
-`people.readiness` is content-free and also works while access is explicitly
-disabled. Set `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` to restrict the sidecar to
-listing relationships and reading one relationship's `shared_intent` 1:1s,
-agenda items, grounding notes, linked Project refs, requests, and commitments.
-`people.grounding.get` returns those accepted manual sources as a structured
-evidence bundle; it does not invoke a model or infer an assessment. The default
-`write` capability additionally admits relationship and grounding-note creation,
-notes-only 1:1 and agenda creation, request creation/explicit acceptance, and
-done/dismiss/reopen for shared commitments. `people.calendar.link` and
-`people.calendar.unlink` manage ICS calendar source association for a
-relationship. `people.owner_alias.link` and `people.owner_alias.unlink`
-bind and unbind the owner's own alias within the People boundary.
-
-`people.resolve` matches an identity string (a GitHub login, a Jira display
-name, or a plain name) against owner aliases and display names inside the
-encrypted People store. The match runs in memory at read time; no alias
-string or relationship detail appears in the result. The tool returns an
-opaque relationship id when a match exists, or a typed `no_match` when it
-does not. It never writes.
-
-MCP never initializes or recovers the encrypted store and never returns
-leader-private sessions, private prep, agenda, grounding notes, requests, or commitments. It
-also offers no People archive/delete, capture/transcript, inference, scoring,
-search, sync, export, connector, or employment-decision tool. Tool results are
-transient stdio disclosure to the explicitly trusted parent client; they are
-not written to HoldSpeak's plaintext database, observer, FTS, or Cadence.
-
-### heartbeat
-
-The Heartbeat sweep: the unattended cadence that evaluates due Watches and
-caches the needs-you aggregate. `heartbeat.status` reads the current
-settings (interval, quiet hours, notification mode, last/next sweep
-timestamps, and whether the sweep is currently held by quiet hours).
-`heartbeat.run_now` triggers one immediate sweep and returns the receipt
-(watch count, room count, duration, outcome summary). `heartbeat.set`
-updates the sweep settings: `sweep_every_minutes` (1 to 1440, default
-15), `quiet_hours` (`{start, end}` as hour integers), `notify` (`off`,
-`edge`, or `every_sweep`), and `muted_projects` (project IDs excluded
-from the notification aggregate). `heartbeat.notify_test` fires one test
-desktop notification and returns `{fired: boolean}`.
-
-### plugin_job
-
-`plugin_job.list` and `plugin_job.summary` read deferred plugin job state.
-`plugin_job.retry` re-queues a failed or completed job. `plugin_job.cancel`
-marks a job done. Both refuse running jobs.
-
-### Repeatable Interview
-
-`interview.get`, `interview.change_section`, `interview.record_fact`, and
-`interview.suggest` expose the same Thread-scoped Interview state used by the
-Desk conversation. Commands retain revision checks and source provenance;
-manual suggestions become work only through the existing explicit Thread
-actions. The initial implementation and its limits are documented in the
-[Interview delivery record](internal/architect-assistant/DELIVERY_STATUS.md).
+- `plugin_job.list` and `.summary` read deferred plugin jobs.
+  `plugin_job.retry` re-queues a job. `plugin_job.cancel` marks a job completed.
+  Both refuse a running job.
+- `coder.list`, `coder.get` and `coder.audit` read Coder sessions and the
+  steering audit. See [Coder integration](CODER_INTEGRATION.md).
+- `door.get` returns the Dashboard Door aggregate. `door.add_item` creates
+  an action item. In a Thread, the Normal and Secure postures hold the
+  call in the decision box.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
@@ -922,62 +729,48 @@ actions. The initial implementation and its limits are documented in the
 
 ## Model-invoking tools
 
-A sidecar tool that starts model work uses the same owner service authority as
-HTTP. It cannot choose a provider, alter an already admitted run, or bypass the
-registered capability and assignment checks. Results carry the receipt and
-placement projection appropriate to that product operation, so a caller can
-inspect the boundary after the fact.
-
-Route resolution, frozen plans, controller fallback, physical execution, and
-receipt election are documented once in
-[Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
-This guide is the MCP transport reference, not a second routing specification.
-
-## The egress note on settings.update
-
-`settings.update` cannot write inference assignments or connection secrets.
-Use the Model Library and inference-assignment tools for those owner actions.
-The corresponding tool descriptions state their closed input and receipt
-contracts.
+A tool that starts model work uses the same owner service authority as
+HTTP. It cannot choose a provider, change an admitted run, or bypass the
+capability and assignment checks. Results carry the receipt and placement
+for that operation. The
+[Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md)
+describes routing, frozen plans, fallback and receipts. This page does not
+repeat them.
 
 ## Trust model
 
-The sidecar is a stdio process started by the MCP client as a child
-process. It inherits the filesystem permissions of the user who launched
-it. The trust boundary is the process boundary: the sidecar can read and
-write exactly what the user can.
+The sidecar is a stdio process that your MCP client starts. It has the file
+permissions of the user who launched it. The trust boundary is the process
+boundary. It opens no network listener.
 
-The sidecar always runs as `OWNER`. The `token` field in `.mcp.json` is an
-identity label, not an authorization credential. No network listener is
-opened; the sidecar communicates only over stdin/stdout with its parent
-process.
+The sidecar sends the hub's owner token, which it reads from
+`$HOME/.config/holdspeak/config.json`. The hub admits that token only from
+a loopback request. If no token exists, run `holdspeak web` once on this
+machine so the hub writes one.
 
-People is a further disclosure boundary within that owner process. It defaults
-to `write`; set `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` or `=off` before start to
-reduce or disable it. A trusted parent MCP client can retain or forward the
-returned relationship metadata and shared-intent text.
+People is a further boundary inside the owner process. A trusted MCP client
+can keep or forward the relationship metadata and shared-intent text that
+it receives.
 
 ## Deliberate absences
 
-Four verbs are intentionally excluded. An always-failing tool is worse
-than a missing one: it wastes a turn and breaks tool-calling agents.
+Four verbs do not exist. A tool that always fails wastes a turn, so the
+catalogue leaves it out.
 
 | Absent verb | Reason |
 |---|---|
-| `coder.reply` | Requires the live web runtime's `reply_sender` callback to deliver into an agent session's tmux pane. The stdio sidecar does not own that delivery path. |
-| `coder.select_session` | Requires the live filesystem-based agent context the sidecar does not hold. |
-| `cadence.reply` | Requires the live agent-context pane delivery infrastructure (`submit_process_input_from_owner_gesture`). The sidecar cannot deliver replies to tmux panes. |
-| `plugin_job.process` | Requires `ctx.on_process_plugin_jobs`, a live-runtime callback the sidecar does not hold. Queue processing runs in the web server. |
+| `coder.reply` | Delivery into a tmux pane needs the live web runtime. |
+| `coder.select_session` | Selection needs live agent context that the sidecar does not hold. |
+| `cadence.reply` | Reply delivery needs the live runtime. |
+| `plugin_job.process` | Queue processing runs in the web server. |
 
-Each tool description in the affected family names the absence so an MCP
-client discovers it at tool-listing time, not at call time.
+Use the Desk or the HTTP routes for these actions.
 
 ## Resources
 
 Owner discovery exposes 16 static resources and 21 resource templates. The
 default non-owner discovery filters that to 15 static resources and
-19 templates, or 34 total. List results are bounded to the first 100 items per
-read.
+19 templates, or 34 total. A list result holds at most 100 items.
 
 ### Static resources
 
@@ -986,294 +779,193 @@ read.
 | `holdspeak://desk/schema` | Primitive kinds, product nouns, synchronization classes |
 | `holdspeak://desk/verbs` | Registered desk verbs, scopes, key bindings |
 | `holdspeak://desk/constitution` | The project's constitutional context |
-| `holdspeak://inference/capabilities` | Owner-only registered intelligence jobs, result contracts, requirements, boundaries, and retry-policy facts; never profiles, paths, keys, or assignments |
-| `holdspeak://desk/snapshot` | Current desk state (objects, layout) |
+| `holdspeak://inference/capabilities` | Owner-only registered intelligence jobs, result contracts, requirements and boundaries; never profiles, paths, keys or assignments |
+| `holdspeak://desk/snapshot` | Current desk state |
 | `holdspeak://workbenches` | Workbench list and summaries |
 | `holdspeak://recipes` | Agent recipe list |
 | `holdspeak://dictation/journal` | Stored dictation entries |
-| `holdspeak://follow-through/board` | Follow-through execution lanes |
-| `holdspeak://briefs/latest` | Latest Monday Brief (or null) |
+| `holdspeak://follow-through/board` | Follow-through lanes |
+| `holdspeak://briefs/latest` | Latest Monday Brief, or null |
 | `pipeline://events/recent` | Recent pipeline events |
 | `pipeline://events/stats` | Pipeline event statistics |
-| `holdspeak://cadence/status` | Cadence engine status (enabled, pressure, loop counts) |
-| `holdspeak://people/readiness` | Content-free People MCP access/store readiness |
-| `holdspeak://people/relationships` | Active relationship metadata when People MCP read access is enabled |
-| `holdspeak://thoughts/unfinished` | Bounded owner Resume projection for unfinished Thoughts |
+| `holdspeak://cadence/status` | Cadence engine status |
+| `holdspeak://people/readiness` | Content-free People access and store readiness |
+| `holdspeak://people/relationships` | Active relationship metadata, when People read access is on |
+| `holdspeak://thoughts/unfinished` | Owner Resume projection for unfinished Thoughts |
 
 ### Resource templates
 
 | URI template | Content |
 |---|---|
-| `holdspeak://primitives/{kind}/{id}` | One desk primitive by kind and id |
-| `holdspeak://workbenches/{id}` | One workbench with its items and run summary |
-| `holdspeak://workbenches/{id}/runs` | Run history for one workbench |
+| `holdspeak://primitives/{kind}/{id}` | One desk primitive |
+| `holdspeak://workbenches/{id}` | One Workbench with its items and run summary |
+| `holdspeak://workbenches/{id}/runs` | Run history for one Workbench |
 | `holdspeak://recipes/{id}` | One agent recipe |
 | `holdspeak://zones/{id}/members` | Members of one desk zone |
-| `holdspeak://meetings/{id}` | One archived meeting |
+| `holdspeak://meetings/{id}` | One archived Meeting |
 | `holdspeak://decision-records/{id}` | One decision record with evidence and revision trail |
 | `pipeline://events/recent/{service}` | Recent pipeline events for one service |
 | `pipeline://events/correlation/{id}` | Pipeline events in one correlation chain |
-| `holdspeak://people/relationships/{id}` | One relationship with shared-intent records only |
-| `holdspeak://thoughts/{thought_id}` | One canonical Thought with its working Note, visible attachment metadata/state, and public continuity |
-| `holdspeak://thoughts/{thought_id}/reviews/{review_result_id}` | One validated receipt-gated review card with frozen cursors, Used-context metadata when present, and placement/egress receipt |
-| `holdspeak://thoughts/{thought_id}/workbench` | One coherent owner Workbench projection: Note authority, interview state, actions, context health, and placement truth |
-| `holdspeak://thoughts/{thought_id}/original` | The owner-only raw capture for a Thought; read lazily and never included in the Workbench projection |
-| `holdspeak://inference/acquisitions/{id}` | Owner-only durable download, verification, installation, and activation truth |
-| `holdspeak://inference/capabilities/{capability_id}` | Owner-only exact registered contract for one intelligence capability |
+| `holdspeak://people/relationships/{id}` | One relationship, shared-intent records only |
+| `holdspeak://thoughts/{thought_id}` | One Thought with its working Note, attachments and continuity |
+| `holdspeak://thoughts/{thought_id}/reviews/{review_result_id}` | One receipt-gated review card |
+| `holdspeak://thoughts/{thought_id}/workbench` | The owner Workbench projection |
+| `holdspeak://thoughts/{thought_id}/original` | The raw capture of a Thought, read on request |
+| `holdspeak://inference/acquisitions/{id}` | Owner-only download, verification and install state |
+| `holdspeak://inference/capabilities/{capability_id}` | Owner-only contract for one intelligence capability |
+| `holdspeak://projects/{project_id}` | One Project |
+| `holdspeak://projects/{project_id}/room` | The Project Room projection |
+| `holdspeak://projects/{project_id}/delta` | The Project delta |
+| `holdspeak://projects/{project_id}/updates/{update_id}` | One Project update |
+| `holdspeak://projects/{project_id}/steward/runs/{run_id}` | One Steward run |
 
-## The project palette (MCP-007)
+An unknown id refuses with a typed error.
+
+## The project palette
 
 The project family ships a `PROJECT_PALETTE`: a frozen set of the 65
 project.*, provider.* and connection.* tool names. Two functions in the MCP layer
-consume it.
+use it.
 
-`tools_for_palette(palette)` returns only the tools whose names are in
-the palette. A client that lists tools through this filter sees 65 tools
+`tools_for_palette(palette)` returns only the tools in the palette. A
+client that lists tools through this filter sees 65 tools
 instead of 248.
 
-`dispatch_for_palette(name, arguments, principal, palette)` dispatches
-a tool call only if `name` is in the palette. A name outside the palette
-gets a typed refusal ("Tool ... is not in the configured palette"), never
-a silent ignore.
+`dispatch_for_palette(name, arguments, principal, palette)` runs a tool
+only if `name` is in the palette. A name outside the palette gets a typed
+refusal, never a silent ignore.
 
-The palette contains exactly the tools in this family. The SS15
-acceptance scenario resolves entirely within project.* and provider.*;
-no companion families from other domains are needed.
+The named palettes are `PROJECT`, `SWEEP`, `DESK` and `ALL`
+(`holdspeak/mcp/palettes.py`). `PROJECT` adds `kernel.receipt` and the
+`channel.*` tools to the project palette. `SWEEP` adds the `heartbeat.*`
+tools to `PROJECT`.
 
-### Project thread mode
+## Transports
 
-A Project thread mode is seeded alongside the palette. It identifies
-project-agent threads and sets a scoped system prompt. The mode carries
-no thread-side tools today (its tool set is empty) because all project
-tools are MCP-only. If project tools register in the thread-side
-TOOL_NAMES in the future, the mode's palette will surface them
-automatically through the existing `palette_for` species.
-
-## Worked example: the project lifecycle (SS15)
-
-The transcript excerpts below are from a real MCP walk that drove the
-full lifecycle over stdio. The walk ran twice with deterministic results.
-Each excerpt is real structured output, trimmed where noted.
-
-### 1. Boot the sidecar
-
-Wire the sidecar into your MCP client (see Wiring above). The server
-speaks stdio JSON-RPC and forwards each message to the running hub; start
-`holdspeak web` first.
-
-### 2. Start the setup interview and create a project
-
-Start a session, answer questions, then finalize to create the project
-atomically:
-
-```json
-{"tool": "project.setup.start", "arguments": {}}
-// result: {"id": "psetup_22e34a18403a", "stage": "outcome", "state": "active"}
-
-{"tool": "project.setup.answer", "arguments": {
-  "session_id": "psetup_22e34a18403a",
-  "question_id": "outcome",
-  "payload": {"text": "Track CI health on my repos"}
-}}
-
-{"tool": "project.setup.finalize", "arguments": {
-  "session_id": "psetup_22e34a18403a",
-  "command_id": "walk-finalize-001"
-}}
-// result (trimmed): {"project_id": "proj-adcf170869d3",
-//   "name": "Track CI health on my repos",
-//   "result_kind": "created", "project_revision": 1}
-```
-
-The session is durable: `project.setup.resume` returns the full state
-at any point, including after finalize.
-
-### 3. Configure the steward and set up a watch
-
-Enable the steward with a policy, then test a watch to verify the
-connector returns data:
-
-```json
-{"tool": "project.configure_steward", "arguments": {
-  "project_id": "proj-adcf170869d3",
-  "enabled": true,
-  "unattended_enabled": true,
-  "eligible_effect_kinds": [
-    "refresh_sources", "create_proposals",
-    "apply_proposal_effects", "draft_update", "create_door_item"
-  ],
-  "cooldown_seconds": 0
-}}
-
-{"tool": "project.watch.test", "arguments": {"watch_id": "cw_walk_001"}}
-// result (trimmed): {"test_state": "passed",
-//   "result": {"entity_count": 2, "message": "Test passed - 2 current matches"}}
-```
-
-### 4. Evaluate changes and open a review
-
-Evaluate the watch to detect transitions, then open a review window
-that materializes proposals from the observations:
-
-```json
-{"tool": "project.watch.evaluate", "arguments": {"watch_id": "cw_walk_001"}}
-// result (trimmed): {"state": "completed", "transitions": 2,
-//   "evaluation_id": "weval_011bee19ce0a"}
-
-{"tool": "project.open_review", "arguments": {
-  "project_id": "proj-adcf170869d3"
-}}
-// result: review with proposals (observation_attention, conflict)
-// and source_manifest showing coverage across native + watch sources
-```
-
-### 5. Run the steward (MCP-003: prompt return, async execution)
-
-`project.run_steward` returns the run_id immediately. Phase execution
-happens on a daemon thread. Poll with `project.get_steward_run`:
-
-```json
-{"tool": "project.run_steward", "arguments": {
-  "project_id": "proj-adcf170869d3",
-  "watermark": "weval_011bee19ce0a",
-  "command_id": "walk-steward-001"
-}}
-// result: {"run_id": "pstrun_104deaf8dd3b4612bec19d9bf3d34eeb", "success": true}
-
-{"tool": "project.get_steward_run", "arguments": {
-  "run_id": "pstrun_104deaf8dd3b4612bec19d9bf3d34eeb"
-}}
-// first poll: {"run": {"state": "queued", "phase": "observe"}, "steps": []}
-// later poll: {"run": {"state": "completed", "phase": "record",
-//   "summary": {"outcome": "completed"}}, "steps": [/* 11 steps elided */]}
-```
-
-### 6. Idempotent replay (MCP-002)
-
-Replaying `run_steward` with the same `command_id` returns the original
-run_id. No new run is created:
-
-```json
-{"tool": "project.run_steward", "arguments": {
-  "project_id": "proj-adcf170869d3",
-  "watermark": "weval_011bee19ce0a",
-  "command_id": "walk-steward-001"
-}}
-// result: {"run_id": "pstrun_104deaf8dd3b4612bec19d9bf3d34eeb", "success": true}
-// same run_id as step 5 -- the command_id dedup prevented a duplicate run
-```
-
-This holds for every effect tool: same command_id + same payload returns
-the stored result. Mismatched payload with the same command_id refuses
-with a typed conflict.
-
-### 7. Draft, publish, and verify the room
-
-Draft an update, publish it, then read the room projection to confirm
-revisions:
-
-```json
-{"tool": "project.draft_update", "arguments": {
-  "project_id": "proj-adcf170869d3",
-  "generator": "deterministic",
-  "command_id": "walk-draft-001"
-}}
-// result (trimmed): {"update": {"id": "pupd_aa69557dec894e1fbb568b587bcabf93",
-//   "lifecycle": "draft", "generator": "deterministic"}}
-
-{"tool": "project.publish_update", "arguments": {
-  "update_id": "pupd_aa69557dec894e1fbb568b587bcabf93",
-  "command_id": "walk-publish-001"
-}}
-// result: lifecycle -> published, project_revision bumped
-
-{"tool": "project.get_room", "arguments": {
-  "project_id": "proj-adcf170869d3"
-}}
-// result: coherent room projection with identity, recent changes,
-// review state, published updates, and steward run history
-```
-
-The room projection is the same shape the web UI reads.
-
-## Boundary notes
-
-### Legacy reactions family vs. graduated watch tools
-
-Two watch surfaces exist. The legacy reactions family
-(`watch.list`, `watch.create`, `watch.set_enabled`, `watch.refresh`,
-`watch.preview`, `reaction.*`) owns state='' rows. The graduated
-project.watch.* tools (inspect, test, evaluate, set_rules, pause,
-resume, retire) operate only on WatchSpec@1 rows (state in
-active/tested/paused/retired).
-
-The boundary is enforced in one direction today: a graduated tool
-called on a legacy row refuses with `legacy_watch_boundary`. The
-legacy reactions tools are not yet guarded against graduated rows
-(a legacy refresh of a graduated watch is wasteful, not destructive;
-the code-side guard is backlog). Nothing was replaced; both surfaces
-coexist.
-
-### What V0 refuses
-
-Provider writes are not available through MCP. The provider.* tools
-are read-only (list, connection status, bounded discovery, validation).
-
-### The transports
-
-The MCP protocol exposes `handle_message` over three
-transports. All three announce the same protocol version.
+`handle_message` runs behind three transports. All three announce the same
+protocol version.
 
 | Transport | Entry point | Principal | Palette |
 |---|---|---|---|
-| **stdio** (the sidecar) | `server.py` stdio loop | `OWNER` | unrestricted |
-| **in-process** (the web runtime's wired fetcher) | direct call to `handle_message` | inherited from the web session | inherited |
-| **Streamable HTTP** (the remote path) | `POST /api/mcp` on the hub | `AGENT` (from a scoped credential; `OWNER` refused off-loopback) | from the credential's palette |
+| **stdio** (the sidecar) | `holdspeak-mcp`, which proxies to the hub | `OWNER` | none |
+| **in-process** (the web runtime) | direct call to `handle_message` | inherited from the web session | inherited |
+| **Streamable HTTP** | `POST /api/mcp` on the hub | `AGENT` from a scoped credential | from the credential |
 
-The Streamable HTTP listener is opt-in (off by default). When enabled, it
-accepts connections on the hub's tailnet address. A non-loopback request
-presenting the owner's web token is refused with 403. `X-Forwarded-For` is
-never read for principal derivation.
+### `POST /api/mcp` and the Reach flag
 
-Scoped credentials carry a palette and a TTL. The palette names which tool
-families the caller may invoke; calls outside the palette return a typed
-capability error. The TTL caps at 30 days. The token is shown once at issue
-time; the hub stores the hash.
+The setting `remote.streamable_http_enabled` controls the remote listener.
+It is off by default. The route derives the principal as follows:
 
-### Confluence provider tools
+| Request | Result |
+|---|---|
+| Loopback with the owner token | `OWNER`. Admitted with the flag off. This is the path the sidecar uses. |
+| Loopback with an agent credential | `AGENT`, with the credential's palette. Needs the flag on. |
+| Non-loopback with an agent credential | `AGENT`, with the credential's palette. Needs the flag on. |
+| Non-loopback with the owner token | Refused with 403. |
+| No match | Refused with 401. |
 
-The Confluence connector adds provider tools beside
-the existing Jira and GitHub tools:
+The hub never reads `X-Forwarded-For` to derive a principal.
 
-| Tool | Family | What it does |
-|---|---|---|
-| `provider.confluence_connections` | `project` | List Confluence connections |
-| `provider.confluence_discover` | `project` | Discover spaces on a connected site |
-| `provider.confluence_validate_space` | `project` | Validate a space key |
+A scoped credential carries a palette and a time to live (TTL). The
+default TTL is 12 hours. The maximum is 30 days. The hub shows the token
+once at issue and stores only a hash. Issue and revoke credentials with
+`POST /api/settings/remote/credentials` and
+`DELETE /api/settings/remote/credentials/{id}`. A call outside the palette
+returns a typed refusal.
 
-The tools follow the same read-only provider pattern as `provider_jira_*` and
-`provider_github_*`. No provider writes are available through MCP.
+## Watch tools and the fetcher
 
-### The fetcher seam
+`project.watch.evaluate` and `project.watch.test` need a snapshot fetcher
+that can reach the source. For GitHub, this needs live `gh` authentication.
+The hub injects the fetcher at startup. When a call needs a live fetch and
+no fetcher exists, the tool returns `connector_unavailable`.
 
-The sidecar's `_watch_service()` factory builds `WatchService(db)` with
-no `snapshot_fetcher`. The web server injects its fetcher via
-`_gh_watch_service_kwargs`. This means `project.watch.evaluate` and
-`project.watch.test` need a snapshot fetcher that can reach the
-GitHub API. In the walk, this was solved with a file-based fixture.
-In production, watch evaluation requires live `gh` auth (the adapter
-reads stored snapshots, but evaluation fetches new ones).
+`project.watch.evaluate` records `watch_effects`, as a scheduled
+evaluation does. It uses the same evaluation-derived idempotency key. A
+manual run followed by a scheduled one makes one effect. The first
+evaluation of a Watch with no baseline is silent. It sets the baseline and
+returns `state: "baselined"` with zero transitions, observations and
+effects.
 
-`project.watch.evaluate` **records `watch_effects`** just as
-a scheduled evaluation does, under the same evaluation-derived idempotency
-key, so a manual run followed by a scheduled one mints exactly one effect,
-and `project.steward.run_due` can act on what it mints. The first evaluation
-of a watch that has no baseline is deliberately silent: it establishes the
-baseline and returns `state: "baselined"` with zero transitions, zero
-observations and zero effects, so a watch cannot discover its whole source
-as new.
+## Legacy Watches
 
-This is pre-existing composition debt: the web app injects the fetcher
-at server startup; the sidecar does not. The watch tools will return
-`connector_unavailable` when evaluation requires a live fetch and no
-fetcher is composed.
+Two Watch surfaces exist. The `watch.*` and `reaction.*` families own
+legacy Watches. The `project.watch.*` tools own graduated Watches. A
+graduated tool refuses a legacy Watch. A legacy tool does not refuse a
+graduated Watch. A legacy refresh of a graduated Watch wastes work and
+destroys nothing.
+
+## Example: the project lifecycle
+
+The calls below create a Project and run the Steward over stdio. Start
+`holdspeak web` first. Each result is trimmed.
+
+1. Start the setup, answer a question and finalize:
+
+   ```json
+   {"tool": "project.setup.start", "arguments": {}}
+   // {"id": "psetup_...", "stage": "outcome", "state": "active"}
+
+   {"tool": "project.setup.answer", "arguments": {
+     "session_id": "psetup_...", "question_id": "outcome",
+     "payload": {"text": "Track CI health on my repos"}}}
+
+   {"tool": "project.setup.finalize", "arguments": {
+     "session_id": "psetup_...", "command_id": "finalize-001"}}
+   // {"project_id": "proj-...", "result_kind": "created", "project_revision": 1}
+   ```
+
+   `project.setup.resume` returns the full session state at any point.
+
+2. Enable the Steward and test a Watch:
+
+   ```json
+   {"tool": "project.configure_steward", "arguments": {
+     "project_id": "proj-...", "enabled": true, "unattended_enabled": true,
+     "eligible_effect_kinds": ["refresh_sources", "create_proposals",
+       "apply_proposal_effects", "draft_update", "create_door_item"],
+     "cooldown_seconds": 0}}
+
+   {"tool": "project.watch.test", "arguments": {"watch_id": "cw_..."}}
+   // {"test_state": "passed"}
+   ```
+
+3. Evaluate the Watch and open a review:
+
+   ```json
+   {"tool": "project.watch.evaluate", "arguments": {"watch_id": "cw_..."}}
+   // {"state": "completed", "transitions": 2, "evaluation_id": "weval_..."}
+
+   {"tool": "project.open_review", "arguments": {"project_id": "proj-..."}}
+   ```
+
+4. Run the Steward. The call returns a run id at once. Poll for the state:
+
+   ```json
+   {"tool": "project.run_steward", "arguments": {
+     "project_id": "proj-...", "watermark": "weval_...",
+     "command_id": "steward-001"}}
+   // {"run_id": "pstrun_...", "success": true}
+
+   {"tool": "project.get_steward_run", "arguments": {"run_id": "pstrun_..."}}
+   // {"run": {"state": "completed", "phase": "record"}, "steps": [...]}
+   ```
+
+5. Replay a command. The same `command_id` with the same payload returns
+   the stored result and makes no new run. The same `command_id` with a
+   different payload refuses with a typed conflict.
+
+6. Draft and publish an update, then read the Room:
+
+   ```json
+   {"tool": "project.draft_update", "arguments": {
+     "project_id": "proj-...", "generator": "deterministic",
+     "command_id": "draft-001"}}
+
+   {"tool": "project.publish_update", "arguments": {
+     "update_id": "pupd_...", "command_id": "publish-001"}}
+
+   {"tool": "project.get_room", "arguments": {"project_id": "proj-..."}}
+   ```
+
+   The Room projection has the same shape as the web UI reads.

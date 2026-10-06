@@ -1,90 +1,75 @@
-# HoldSpeak Dictation Pipeline Setup
+# Dictation Pipeline Guide
 
-The gap between what you say and what you meant to type is where dictation
-tools usually stop; the dictation pipeline is HoldSpeak crossing it. It
-routes an utterance through local rules, project context, Coder session context, and
-an optional LLM rewrite stage before inserting text, so rough speech lands
-as useful text for the active app.
+The dictation pipeline turns rough speech into useful text for the app you
+type in. It routes each utterance through your dictation blocks, your project
+facts, your project context, and an optional model rewrite. Then HoldSpeak
+types the result.
 
-Use this after basic voice typing works. If you are starting from zero, read
-[Getting Started](GETTING_STARTED.md) first.
+Read [Getting Started](./GETTING_STARTED.md) first if basic voice typing does
+not work yet. To see a full run first, read [The Dictation Copilot](./DICTATION_COPILOT.md).
 
-> Want to **see it in action** before configuring? [The Dictation
-> Copilot](./DICTATION_COPILOT.md) shows a real spoken→enriched run (and a
-> reproducible demo) where rough speech becomes a project-grounded coding task.
-
-## What You Are Setting Up
-
-The intelligent-typing loop is:
+The loop is:
 
 ```text
 speech -> Whisper transcript -> punctuation cleanup -> dictation pipeline -> typed text
 ```
 
-(An optional last gate sits after all of this: `dictation.preview_before_type`
-in Settings, Voice, shows the finished text on a card first. Type it commits,
-Discard drops it. Off by default.)
+The pipeline is on by default. Every stage fails open. If a stage fails or its
+model is not available, HoldSpeak types your plain transcript.
 
-The pipeline can:
+An optional last gate sits after the pipeline. Turn on **Preview before
+type** in **Settings > Voice > Typing**. HoldSpeak then shows the finished
+text on a card. **Type it** commits the text. **Discard** drops it.
 
-- classify an utterance against dictation blocks;
-- inject your **project facts** and **project context** (see below);
-- rewrite rough speech into a cleaner prompt;
-- adapt output for Codex, Claude, terminal, browser, editor, or chat;
-- suggest narrow `.hs/.../*.md` project documentation updates for review.
+## Project knowledge: facts and context
 
-> **Project knowledge has two parts, and they are different.** *Facts* (the
-> **Project Facts** tab) are a small key-value map (`kb:`) in
-> `<repo>/.holdspeak/project.yaml`. Each key becomes a `{project.kb.<key>}`
-> placeholder that the default **`kb-enricher`** stage stamps into a block's
-> template, verbatim, with no LLM. *Context* (the **Project Context** tab) is the
-> *separate* `.hs/` folder of Markdown files (`instructions`, `context`,
-> `workflows`, `targets`, plus an `ignore` for secrets); the **optional
-> `project-rewriter`** (LLM) stage reads it to rewrite your speech. In short:
-> facts are exact values stamped in; context is guidance a rewrite reads. Set up
-> both in [§5. Set Up Project Knowledge](#5-set-up-project-knowledge). HoldSpeak
-> reads both but never writes them without your approval.
+Project knowledge has two parts. They do different jobs.
 
-## 1. Open The Dictation Cockpit
+| Part | Where it lives | Used by | What it does |
+|---|---|---|---|
+| Facts | `kb:` map in `<repo>/.holdspeak/project.yaml` | `kb-enricher` stage | Stamps exact values into a block template. No model. |
+| Context | `.hs/` folder of Markdown files in your repo | `project-rewriter` stage | Guides the model when it rewrites your speech. |
 
-Start HoldSpeak:
+HoldSpeak reads both. It never writes them without your approval.
+
+## 1. Open the dictation face
+
+Start HoldSpeak and open `/dictation`.
 
 ```bash
 holdspeak
 ```
 
-Open:
+The face has four wings: **Speak**, **Journal**, **Blocks**, and **Learned**.
+The gear opens **Configure dictation**. It holds readiness, the learning
+digest, project knowledge, the runtime, automation hooks, and activity nudges.
 
-```text
-/dictation
-```
+Start in **Configure dictation**. The **Pipeline** group shows if the pipeline
+is on and what is missing.
 
-Start with the **Readiness** tab. It tells you what is configured, what is
-missing, and what to fix next.
+## 2. Choose the model
 
-## 2. Choose A Runtime Backend
+The dictation runtime is not set on the dictation face. The **Dictation
+runtime** group in **Configure dictation** says **RUNS ON LIVES IN MODELS**.
+Click **Open Models**.
 
-Open:
+1. In **Settings > Models**, add your endpoint or local model.
+2. Assign it to **Writing & dictation** in the Concierge set.
+3. Click **Use these**.
 
-```text
-/dictation -> Runtime
-```
+See [Models](./MODELS.md) for the full contract, API keys, and the headless
+fallback.
 
-Enable:
-
-- `Enable dictation pipeline`
-- Optional: `Enable project-aware rewrite stage (.hs/)`
-
-Choose one backend:
+The available backends are:
 
 | Backend | Use when |
-| --- | --- |
-| `auto` | You want HoldSpeak to prefer MLX on Apple Silicon and otherwise use llama.cpp |
-| `mlx` | You are on Apple Silicon and have an MLX model installed |
-| `llama_cpp` | You have a local GGUF model |
-| `openai_compatible` | You have a local, LAN, or hosted `/v1/chat/completions` endpoint |
+|---|---|
+| `auto` | You want MLX on Apple Silicon, and llama.cpp elsewhere. |
+| `mlx` | You are on Apple Silicon with an MLX model. |
+| `llama_cpp` | You have a local GGUF model. |
+| `openai_compatible` | You have a local, LAN, or hosted `/v1/chat/completions` endpoint. |
 
-Install extras as needed:
+Install the extra for your backend:
 
 ```bash
 uv pip install -e '.[dictation-mlx]'
@@ -92,168 +77,102 @@ uv pip install -e '.[dictation-llama]'
 uv pip install -e '.[dictation-openai]'
 ```
 
-## 3. Configure An OpenAI-Compatible Endpoint
+HoldSpeak sends `thinking: false` on every call to an OpenAI-compatible
+endpoint. This stops extended thinking on models that support it. An endpoint
+that does not support the field ignores it.
 
-Use this path for llama.cpp server, LM Studio, Ollama OpenAI bridge, vLLM,
-LiteLLM, or a hosted OpenAI-compatible API.
+The intent router and the rewriter need a model. The `kb-enricher` stage does
+not.
 
-In `/dictation -> Runtime`, set:
+## 3. Choose the stages
 
-| Field | Example |
-| --- | --- |
-| Backend | `openai_compatible` |
-| Base URL | `http://127.0.0.1:8000/v1` |
-| Model | `qwen2.5-7b-instruct` |
-| API key | Set on the model profile in **Model Library**; optional headless fallback `HOLDSPEAK_PROFILE_<ID>_KEY` |
-| Timeout seconds | `8` |
+The `dictation.pipeline.stages` list sets which stages run, in order. The
+default is `intent-router` and `kb-enricher`.
 
-Config file shape:
+| Stage | Needs model | What it does |
+|---|---|---|
+| `intent-router` | Yes | Matches the utterance to a dictation block. |
+| `kb-enricher` | No | Stamps project facts into the block template. |
+| `project-rewriter` | Yes | Rewrites speech with `.hs/` context. Adds one model call. |
 
-```json
-{
-  "dictation": {
-    "pipeline": {
-      "enabled": true,
-      "stages": ["intent-router", "project-rewriter", "kb-enricher"],
-      "target_profile_override": "auto"
-    },
-    "runtime": {
-      "backend": "openai_compatible",
-      "openai_compatible_timeout_seconds": 8
-    }
-  }
-}
-```
-
-The endpoint and model are not dictation config fields. Add the endpoint once
-in **Settings > Models** and select it for **Writing &
-dictation** in the Concierge set. Apply the set with **Use these**.
-The assignment also selects the
-`openai_compatible` backend. See
-[MODELS.md](./MODELS.md).
-
-For keyed providers, use the owner Model Library API. See [Models](MODELS.md).
-For a headless hub,
-`HOLDSPEAK_PROFILE_<ID>_KEY` remains the fallback. Do not put API keys in
-`.hs/` files.
-
-> **Extended thinking disabled by default.** HoldSpeak sets `thinking: false` on
-> every call to an OpenAI-compatible endpoint. This prevents extended-thinking
-> inference mode from activating on models that support it (e.g., Claude 3.7+
-> Sonnet), which would add significant latency and token cost to short
-> dictation rewrites. If your endpoint does not support the `extra_body` field
-> this parameter is silently ignored.
-
-A known-good local profile:
+To add the rewriter, set `stages` in **Settings > Voice**. Unfold **RAW** and
+edit **Stages** in the **Pipeline** group. Or edit the config file:
 
 ```json
 {
   "dictation": {
     "pipeline": {
-      "enabled": true,
-      "stages": ["project-rewriter"],
-      "target_profile_override": "codex_cli"
-    },
-    "runtime": {
-      "backend": "openai_compatible",
-      "openai_compatible_timeout_seconds": 20
+      "stages": ["intent-router", "kb-enricher", "project-rewriter"],
+      "max_total_latency_ms": 600
     }
   }
 }
 ```
 
-Validation used a local `/v1/chat/completions` server at `127.0.0.1:8080`
-and `holdspeak dictation dry-run`. If HoldSpeak reports that the OpenAI
-client package is missing, install:
+Enable the rewriter only when a model is assigned and you have written
+`.hs/instructions.md`.
 
-```bash
-uv pip install -e '.[dictation-openai]'
-```
+## 4. Set the output target
 
-## 4. Set The Output Target
+HoldSpeak detects the active app and shapes the text for it. Set
+`dictation.pipeline.target_profile_override` when detection is wrong.
 
-HoldSpeak tries to detect the active app automatically. If detection is wrong,
-set a manual target override in:
+| Value | Meaning |
+|---|---|
+| `auto` | Use active-window hints. This is the default. |
+| `codex_cli` | Write an implementation prompt for Codex. |
+| `claude_code` | Write a prompt or reply for Claude Code. |
+| `terminal_shell` | Keep command syntax exact. |
+| `browser` | Write plain prose for text boxes. |
+| `editor` | Write code-friendly prose. |
+| `chat` | Write conversational text. |
 
-```text
-/dictation -> Runtime -> Output target override
-```
+The **Delivery** group in **Configure dictation** shows the detected target.
+Set the value back to `auto` when detection works again.
 
-Options:
+When the window gives weak hints, the model can infer the target. Turn on
+**LLM target detect** in **Settings > Voice > RAW**. **Detect below** sets
+the confidence limit. The default is `0.8`. A manual override always wins.
 
-| Option | Meaning |
-| --- | --- |
-| `Auto-detect target` | Use active-window hints |
-| `Codex CLI` | Shape dictation as an implementation prompt for Codex |
-| `Claude Code` | Shape dictation as a prompt/reply for Claude Code |
-| `Terminal shell` | Preserve command syntax more aggressively |
-| `Browser` | Write prose suitable for browser text boxes |
-| `Editor` | Write code/editor-friendly prose |
-| `Chat` | Write conversational chat text |
+## 5. Set up project knowledge
 
-Use **Reset target to auto** when active-window detection is working again.
+### Facts
 
-## 5. Set Up Project Knowledge
+A fact is an exact value that you reuse: your stack, a deploy command, a ticket
+prefix. In **Configure dictation**, open **Knowledge**. Enter a **Fact name**
+and **Fact value**.
 
-Project knowledge is what HoldSpeak knows about this repo. It has two parts that
-do different jobs: **facts** are exact values stamped in verbatim; **context** is
-background the rewrite model reads. Set up both from the UI. HoldSpeak reads both
-but never writes them without your approval.
-
-### Facts (the Project Facts tab)
-
-A fact is an exact value you reuse a lot: your stack, a deploy command, a ticket
-prefix. Facts live in the `kb:` map of `<repo>/.holdspeak/project.yaml`. Each key
-becomes a `{project.kb.<key>}` placeholder that the default **`kb-enricher`** stage
-stamps into a matched block's template, verbatim, with no model involved (facts
-are on the default pipeline).
-
-Open:
-
-```text
-/dictation -> Project Facts
-```
-
-Click **Use starter facts**, fill in the values you care about, and Save. A fact:
+A fact in `<repo>/.holdspeak/project.yaml`:
 
 ```yaml
-# <repo>/.holdspeak/project.yaml
 kb:
   stack: Rails 7 + Postgres 16
 ```
 
-referenced by a block template:
+A block template that uses it:
 
 ```text
 Follow our stack: {project.kb.stack}
 ```
 
-comes out as exact text:
+The typed text is:
 
 ```text
 Follow our stack: Rails 7 + Postgres 16
 ```
 
-The **Project facts context** starter block (Blocks -> Starter templates) already
-references `{project.kb.stack}`, so once you set the `stack` fact a dry-run shows
-it stamped. Keys must match `[A-Za-z_][A-Za-z0-9_]*`; values are strings (or empty
-for null).
+Fact names must match `[A-Za-z_][A-Za-z0-9_]*`. Values are strings.
 
-### Context (the Project Context tab)
+If the project has no facts, the **Pipeline** group shows **Project KB:
+MISSING**. Click **Create** to write a starter file.
 
-Context is prose, not values: background the **optional `project-rewriter`** (LLM)
-stage reads so it phrases dictation the way this project expects. It only takes
-effect when you enable the rewrite stage (Runtime). Open:
+To use another repository, set **Project root** in **Knowledge** and click
+**Use**. The default is the working directory of HoldSpeak.
 
-```text
-/dictation -> Project Context
-```
+### Context
 
-The fastest start is the **Set up project knowledge** panel on that tab: "Use a
-starter set" scaffolds the files below (you review before they write), or "Draft
-with a Coder session" gives you a copiable prompt so Claude or Codex writes the
-`.hs/` files for this repo, which you then review in the tab. To do it by hand,
-create a small `.hs/` directory in your repo:
+Context is prose that the `project-rewriter` stage reads. Create a `.hs/`
+folder in your repository:
 
 ```text
 .hs/
@@ -264,26 +183,24 @@ create a small `.hs/` directory in your repo:
   ignore
 ```
 
-Start with this minimal set:
+The **Instructions** group in **Knowledge** edits `.hs/instructions.md`. A
+minimal set:
 
 ```md
 # .hs/instructions.md
 When dictating into Codex or Claude, rewrite rough speech into a concise
-engineering request. Preserve explicit filenames, commands, and test names.
+engineering request. Keep filenames, commands, and test names exact.
 
 # .hs/context.md
-This project is a local-first Python app with a FastAPI web runtime and one
-typed Vite/React frontend.
+This project is a local-first Python app with a FastAPI runtime and a
+React and Vite frontend.
 
 # .hs/workflows.md
 Run focused Python tests with `.venv/bin/pytest <path>`.
-Rebuild the web bundle with `cd web && npm run build`.
 
 # .hs/targets.md
 Codex: concise implementation request.
-Claude: product/design discussion is acceptable, but include concrete repo context.
-Terminal: preserve command syntax exactly.
-Browser: keep output plain and paste-friendly.
+Terminal: keep command syntax exact.
 
 # .hs/ignore
 .env
@@ -291,97 +208,19 @@ secrets
 private keys
 ```
 
-Write policy:
+Rules:
 
 - HoldSpeak reads `.hs/` during dictation.
-- HoldSpeak does not silently write `.hs/` files.
-- Suggested `.hs/.../*.md` updates require explicit review and apply.
-- Secret-looking content is skipped or rejected.
+- HoldSpeak does not write `.hs/` files unless you approve a suggestion.
+- HoldSpeak skips or rejects content that looks like a secret.
+- Do not put API keys in `.hs/` files.
 
-## 6. Install Claude/Codex Automation Hooks
+### Suggested documentation updates
 
-Automation hooks let Claude Code and Codex tell HoldSpeak their current `cwd`,
-session id, transcript path, and recent assistant state. This is how HoldSpeak
-can know which project an LLM CLI is working in.
-
-Use [Claude/Codex automation hook install](AGENT_HOOK_INSTALL.md) for the full
-machine-level install, verification, capture-mode, and AIPI companion checks.
-
-Open:
-
-```text
-/dictation -> Hooks
-```
-
-Copy the template for the tool you use. Or generate templates from the CLI:
-
-```bash
-holdspeak agent-hook templates --agent claude
-holdspeak agent-hook templates --agent codex
-```
-
-To let HoldSpeak capture the latest assistant message and detect when the Coder session
-is waiting for your reply:
-
-```bash
-holdspeak agent-hook templates --agent claude --capture-messages
-holdspeak agent-hook templates --agent codex --capture-messages
-```
-
-Assistant-message capture stores only a small local snippet and can be cleared
-from the `/dictation` banner.
-
-## 7. Run A Dry-Run
-
-Use the web UI:
-
-```text
-/dictation -> Dry-run
-```
-
-Try:
-
-```text
-ask codex to inspect the failing project context test and propose a minimal fix
-```
-
-Or use the CLI:
-
-```bash
-holdspeak dictation dry-run "ask codex to inspect the failing project context test and propose a minimal fix"
-```
-
-Check:
-
-- runtime status is loaded or available;
-- target profile is correct;
-- stage telemetry has no unexpected fallback;
-- final text is useful;
-- project documentation suggestion appears only when it is genuinely useful.
-
-## 8. Review Suggested Project Documentation
-
-When the project-aware rewrite stage sees durable context worth preserving, it
-may suggest a narrow project documentation update such as:
-
-```text
-.hs/memory/retry-worker-next-run.md
-.hs/decisions/agent-hooks-context-channel.md
-.hs/workflows/web-build-command.md
-```
-
-Open:
-
-```text
-/dictation -> Project Context
-```
-
-Review the suggested path, rationale, and content. You can edit the content
-before applying or dismiss the suggestion. A suggestion that mostly duplicates
-what the target file already says is **suppressed** before you ever see it, and
-a suggestion you **dismiss won't recur** for a near-duplicate utterance in the
-same session (see the quality gate in §10). Apply only writes validated paths
-under:
+When the rewriter sees durable context, it can suggest a small update, for
+example `.hs/decisions/agent-hooks-context-channel.md`. You can read, apply,
+or dismiss a suggestion through `/api/dictation/project-doc-suggestion`.
+Apply writes only to these folders:
 
 ```text
 .hs/memory/
@@ -391,506 +230,216 @@ under:
 .hs/issues/
 ```
 
-## 9. Troubleshooting
+HoldSpeak hides a suggestion that repeats the target file. HoldSpeak does not
+repeat a dismissed suggestion for a similar utterance in the same session.
 
-| Symptom | Likely cause | Fix |
-| --- | --- | --- |
-| Runtime unavailable | Missing extra/model/server | Open Readiness and Runtime; run `holdspeak doctor` |
-| Dry-run preserves original text | Stage fallback or no project context | Check dry-run telemetry and `.hs/instructions.md` |
-| Output target says `unknown` | Active-window hints unavailable | Set Output target override |
-| Codex/Claude cwd is missing | Hooks not installed/firing | Open Hooks and copy templates again |
-| Suggestions are noisy | Context too broad or prompt too generic | Narrow `.hs/instructions.md` and `.hs/targets.md` |
-| Endpoint times out | Model/server too slow | Increase timeout or use a smaller/faster model |
+## 6. Install the agent hooks
 
-## 10. Copilot Depth (multi-pass, memory, model-assist, telemetry)
+Hooks tell HoldSpeak the working directory, session id, and recent state of
+your Claude Code or Codex session. This tells HoldSpeak which project the
+agent works in. The full install is in
+[Claude/Codex automation hook install](./AGENT_HOOK_INSTALL.md).
 
-These knobs make the copilot deeper and self-improving. **Every one is opt-in
-and off by default**: with them off, behavior is identical to the basic
-pipeline. See [The Dictation Copilot](./DICTATION_COPILOT.md) for a live demo of
-all of them firing at once.
+Print a template:
 
-### Set it in the UI, no file editing
-
-```
-/dictation -> Runtime -> Copilot depth
+```bash
+holdspeak agent-hook templates --agent claude
+holdspeak agent-hook templates --agent codex
 ```
 
-Everything below is a slider or a toggle in the **Copilot depth** card. There is
-no need to touch `config.json`; set it here and it round-trips through the
-settings API.
+Add `--capture-messages` to also capture the latest assistant message. This
+lets HoldSpeak detect that the session waits for your reply. HoldSpeak stores
+only a short local snippet.
 
-![The Copilot depth card: a segmented rewrite-passes control, toggles for
-correction memory and model-assisted target detection, and a reveal-on-toggle
-confidence threshold.](assets/cockpit/copilot-depth.png)
+The **Automation hooks** group in **Configure dictation** shows a `SET` chip
+for each agent that has sent a session.
 
-| Control (Runtime → Copilot depth) | Knob (`dictation.pipeline`) | Default | What it does |
-| --- | --- | --- | --- |
-| **Rewrite passes** (segmented 1-5) | `rewrite_passes` | `1` | Project-rewriter passes (draft → critique → refine). `1` is single-pass. Extra passes are skipped if they would breach `max_total_latency_ms`. |
-| **Learn from my corrections** | `corrections_enabled` | `true` | Always on. Consult the **correction memory** on every run. A `text` correction rewrites the transcript before the stages read it. An `intent` or `target` correction nudges the routing of a similar later utterance. |
-| **Infer the target when unsure** (toggle) | `target_detect_llm_enabled` | `false` | When window/app detection is unsure, ask the LLM to infer the **output target** from your words. A manual override always wins. |
-| **Ask the model below confidence** (slider) | `target_detect_llm_below` | `0.8` | The heuristic-confidence threshold below which the LLM fallback fires. |
+## 7. Rehearse a dictation
 
-The **"Save & test in dry-run"** button saves the config and jumps straight to
-the dry-run so you can try the exact settings you just chose.
+A dry run shows the pipeline result and types nothing. In the **Speak** wing,
+turn on **DRY RUN**, type or speak an utterance, and read the result. From the
+command line:
 
-**Multi-pass rewriting.** With `rewrite_passes > 1`, the project-rewriter drafts,
-then critiques and tightens its own draft. A failed or over-budget refine pass
-falls open to the best draft so far, so enabling it never makes output worse
-than single-pass.
-
-**Correction memory.** The store holds three kinds. A `text` correction pairs a
-phrase as heard with the same phrase as you said it, and it rewrites the
-transcript inside `Pipeline.run` before the stage loop. An `intent` or a
-`target` correction pairs a gist with a block or a delivery target, and it
-nudges a later similar utterance. The memory is **DB-backed and persists across
-restarts**: corrections you make survive a relaunch (a bounded in-memory ring
-stays the fast nudge path; the SQLite store is durability). Secret-looking text
-is rejected before anything is stored, and a routing gist of one word is
-refused. Curate it on the **Learned** wing of Speak:
-
-```
-/dictation -> Learned
+```bash
+holdspeak dictation dry-run "ask codex to inspect the failing test and propose a minimal fix"
 ```
 
-![The Memory tab: "What the copilot has learned" lists the persistent
-corrections with remove buttons and an add form; "Pipeline depth · this session"
-renders per-stage p50/p95 bars, budget guidance, and the multi-pass
-timings.](assets/cockpit/memory-panel.png)
+Check these items:
 
-The **What the copilot has learned** panel lists every persistent correction
-(kind · gist · → corrected value · when) with a remove (`×`) on each, an **add**
-form and a **Forget all** button. Correction memory is always on.
+- The runtime status is loaded.
+- The target is correct.
+- No stage fell back without a reason.
+- The final text is useful.
 
-**Model-assisted target detection.** On Wayland/terminal setups where the active
-window can't be read, the heuristic returns low confidence; with the fallback on,
-the LLM infers the target (`claude_code`, `codex_cli`, `browser`, …) from the
-utterance. A manual **Target profile override** still wins over both.
+Other CLI commands:
 
-**Suggestion quality gate.** The project-doc suggestion path no longer
-re-proposes what your target `.hs/*.md` already says (suppressed as
-`already_covered`), and a suggestion you dismissed won't recur for a near-duplicate
-utterance in the same session. The dry-run response carries a `suggestion_status`
-(`stored` / `already_covered` / `dismissed` / `no_suggestion`).
+```bash
+holdspeak dictation runtime status
+holdspeak dictation blocks ls
+holdspeak dictation blocks show <id>
+holdspeak dictation blocks validate [--project PATH]
+holdspeak doctor
+```
 
-**Depth telemetry.** The **Pipeline depth · this session** panel in the Memory
-tab renders, over the session's recent runs:
+## 8. Dictation blocks
 
-- per-stage **p50/p95** latency (ms) + run count, each with a bar against your
-  latency budget (it turns red at ≥ 66%);
-- **budget guidance**: a hint when a stage's p95 reaches ≥ 66% of
-  `max_total_latency_ms` (consider a smaller/faster model);
-- the most recent **multi-pass** rewrite timings as chips;
-- the correction-store size.
+A block is a named kind of utterance. The router matches speech to a block.
+The block holds the template, which can include `{project.kb.<key>}` values.
+Use the **Blocks** wing to add, edit, and delete blocks. A project can
+override the global set with `<repo>/.holdspeak/blocks.yaml`.
 
-Telemetry is in-memory and resets on restart (run a few dry-runs to populate
-it). The same data is on `GET /api/dictation/readiness` as the `depth` block
-(`depth.stages` / `depth.guidance` / `depth.rewrite_pass_ms` /
-`depth.corrections`) for headless use.
+## Rewrite passes
 
-### Advanced: the same knobs in `config.json`
+`rewrite_passes` sets how many times the rewriter refines its draft. The range
+is 1 to 5. The default is `1`. A higher value adds a critique and a refine
+pass. HoldSpeak skips a pass that would break `max_total_latency_ms`. A failed
+refine pass keeps the best draft.
 
-Prefer to edit the file (headless / scripted setups)? The same four knobs live
-under `dictation.pipeline`:
+Set **Rewrite passes** in **Settings > Voice > RAW**, or in the config:
 
 ```json
-{
-  "dictation": {
-    "pipeline": {
-      "stages": ["intent-router", "kb-enricher", "project-rewriter"],
-      "rewrite_passes": 2,
-      "target_detect_llm_enabled": true,
-      "target_detect_llm_below": 0.8
-    }
-  }
-}
+{ "dictation": { "pipeline": { "rewrite_passes": 2 } } }
 ```
 
-## 11. Desktop Presence (ambient, on-desktop status)
+## The journal, corrections, and replay
 
-When you dictate into another app, the HoldSpeak web dashboard isn't on
-screen, so you can't see whether the copilot is **listening**,
-**transcribing**, or **typing**. Desktop presence is an **opt-in, native**
-surface that tells you, at a glance, what the runtime is doing right now,
-without ever stealing keyboard focus from the app you're typing into.
+HoldSpeak learns from your corrections. Every step runs on your machine.
 
-It is **off by default** and adds **no GUI dependency** unless you turn it on.
+1. **Dictate.** Each run is journaled, spoken or dry run.
+2. **Correct.** Mark a result **Wrong** and teach the fix.
+3. **Learn.** The correction changes later similar utterances.
+4. **See it.** The **Learned** wing shows what HoldSpeak learned.
+5. **Replay.** Run a past utterance again and compare.
 
-### Turn it on
+### The journal
 
-Presence is a **config toggle**. Flip it from the **Settings** page (or the
-welcome wizard); the runtime starts and stops the presence host live. Or set it
-directly in your config:
+Open the **Journal** wing. Each entry shows the time, the transcript, where
+it landed, the run time in milliseconds, and a source badge. Search the list.
+Filter by source: **ALL**, **DICTATION**, **BROWSER**, or **HOTKEY**. Open an
+entry to edit the transcript, **Replay**, **Copy** the transcript, or
+**Delete** it. **Clear** removes all entries after you confirm.
+
+The journal stays on your machine. It uses a secret filter before storage.
+It keeps the 500 most recent entries (`dictation.pipeline.journal_retention`).
+It never changes what gets typed.
+
+### Correct a result
+
+A result shows **OK** and **Wrong**. **OK** only acknowledges the result.
+**Wrong** opens the teach row. Pick a **FIELD**: `TEXT`, `INTENT`, or
+`TARGET`. Type the right value. Click **Teach**.
+
+| Kind | What it corrects | How it matches |
+|---|---|---|
+| `text` | A phrase Whisper heard wrong | Exact phrase. Ignores case, spacing, and edge punctuation. Matches whole words only. |
+| `intent` | The block that the router chose | Word overlap (Jaccard similarity) above a threshold. |
+| `target` | The delivery target | Word overlap, same as `intent`. |
+
+A `text` correction rewrites the transcript before the stages run. An
+`intent` or `target` correction nudges the routing of a similar utterance.
+HoldSpeak rejects text that looks like a secret. It also refuses a one-word
+routing gist. There is no model training and no embedding model.
+
+### See what it learned
+
+The **Learned** wing lists every correction with its kind, the key, and the
+corrected value. **N APPLIED** is the number of retained journal entries that
+the rule changed. The number can fall as old entries age out. **Forget**
+removes a correction. The **Learning digest** in **Configure dictation**
+counts corrections by block and target.
+
+### Replay
+
+**Replay** on a journal entry runs the stored transcript through the current
+pipeline as a dry run. It types nothing and writes no new journal entry. It
+shows the before and after. Use it to check that a correction works.
+
+## Desktop presence
+
+When you dictate into another app, the web dashboard is not visible. Desktop
+presence shows what HoldSpeak does now: listening, transcribing, processing,
+or typing. It is off by default and never takes keyboard focus.
+
+Turn on **Presence** in **Settings > Sounds & Presence**. Or set the config:
 
 ```json
 { "presence": { "enabled": true } }
 ```
 
-For a headless or power-user launch you can also force it on with an environment
-variable (a retained override; the config toggle is the normal path):
-
-```bash
-HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak
-```
-
-Install the optional native extra for your platform:
+`HOLDSPEAK_DESKTOP_PRESENCE=1` forces it on for a headless launch. Install
+the native extra:
 
 ```bash
 uv pip install -e '.[presence]'
 ```
 
-On **Linux** you also need the freedesktop system typelibs (PyGObject binds to
-them; they are not pip packages):
-
-```bash
-# Notification + tray (Tier 1)
-sudo apt-get install gir1.2-notify-0.7 gir1.2-ayatanaappindicator3-0.1
-# Floating HUD overlay (Tier 2: X11 / wlroots only)
-sudo apt-get install gir1.2-gtk-3.0 gir1.2-webkit2-4.1
-```
-
-> With the flag **unset**, the runtime is byte-identical and pulls in none of
-> these; presence is purely additive.
-
-### What you'll see: the states
-
-Presence reflects the live runtime activity and disappears when idle:
-
-| State | Label | Meaning |
-| --- | --- | --- |
-| `listening` | Listening | Hotkey held; capturing audio |
-| `recording` | Recording | Recording your utterance |
-| `transcribing` | Transcribing | Turning speech into text (Whisper) |
-| `processing` | Processing | Running the dictation pipeline |
-| `typing` | Typing | Injecting text into the active app |
-| `complete` | Complete | Done; lingers briefly, then hides |
-| `error` | Needs attention | Something failed; lingers so you notice |
-
-`idle` never renders a surface; presence is **transient** by design, present
-only while something is happening.
-
-### macOS
-
-On macOS you get the rich **floating HUD**, a frameless, non-activating panel
-that hosts the Signal presence card (native rounded corners + shadow, live over
-the websocket), plus a **menu-bar glyph**.
-
-![The macOS presence HUD: a dark Signal card with an animated state glyph,
-"Transcribing: Turning your speech into text…", and the dictation source
-("Hotkey").](assets/presence/macos-hud.png)
-
-![The HoldSpeak glyph in the macOS menu bar, alongside the system status
-items.](assets/presence/macos-menubar-glyph.png)
-
-The HUD uses an `NSWindowStyleMaskNonactivatingPanel`, so it **cannot take
-keyboard focus**: while it's visible, your keystrokes keep flowing into the
-frontmost app. Needs the `pyobjc` extra (`.[presence]`); without it (or without
-WebKit), presence falls back to the web dashboard card and nothing breaks.
-
-### Linux
-
-On Linux, Tier 1 works everywhere: an **in-place-updating notification** (one
-banner that mutates as the state changes, rather than spamming new ones) plus a
-**tray glyph** (StatusNotifierItem):
-
-![A GNOME notification banner reading "HoldSpeak: Transcribing / Turning your
-speech into text…", updating in place as the state
-changes.](assets/presence/linux-notification.png)
-
-Where the compositor allows free-floating always-on-top windows (**X11** and
-**wlroots** Wayland), you also get the same rich **floating HUD** as macOS:
-a GTK3 + WebKit2 overlay of the very same Signal card:
-
-![The Linux floating HUD overlay: the same dark Signal "Transcribing" card,
-rendered as a GTK-WebKit popup over the desktop.](assets/presence/linux-overlay.png)
-
-> **The Wayland caveat.** On mainstream Wayland (**GNOME/KDE**), the compositor
-> blocks arbitrary always-on-top overlays, so the floating HUD is **not**
-> available there; the native path is the Tier-1 **notification + tray glyph**
-> (which is focus-safe and works on every desktop). The floating HUD is for
-> macOS, X11, and wlroots compositors. HoldSpeak probes your session at startup
-> and picks the best available surface automatically.
->
-> On **GNOME** specifically, the tray glyph needs the *AppIndicator* shell
-> extension installed/enabled; without it, presence degrades to
-> notification-only.
-
-### The focus invariant
-
-The one non-negotiable rule: **the presence surface never takes keyboard
-focus.** While it's on screen, you're actively typing into another app, so any
-focus theft would land your keystrokes in the wrong window. Every surface
-guarantees this at the platform level: macOS via the non-activating panel,
-Linux via notifications and the tray (which can't be focused) and an
-override-redirect, non-focus overlay window.
-
-### Qlippy, the mascot (optional)
-
-Presence has an optional second layer: **Qlippy**, a small pixel-art
-companion who gives the runtime a face. He is a homage to a certain office
-paperclip, rebuilt for a tool that types what you say. Where the plain
-presence card tells you what the runtime is doing, Qlippy also surfaces the
-few moments that genuinely need you, and he does it without ever acting in
-your place.
-
-Qlippy is **off by default**, even when presence is on. He has his own
-toggle, so the minimal ring stays the default for existing presence users:
-
-```json
-{ "presence": { "enabled": true, "mascot": true } }
-```
-
-Or flip **"Qlippy, the mascot"** inside the Desktop presence section of
-**Settings**. Turning presence off removes the whole surface, Qlippy
-included, in one click.
-
-**Two levels.** The **dock** is ambient: a small animated sprite in the
-corner of the presence surface that mirrors the runtime state (listening,
-thinking, celebrating a finished dictation with a short flourish, dozing off
-after five quiet minutes). It has no buttons and makes no sound. The
-**card** slides out next to him only when something deserves your attention.
-One card at a time, every card dismissible, and ignoring a card is always
-safe.
-
-**Exactly these moments produce a card:**
-
-- **A decision needs you.** An action is proposed and waiting for approval,
-  for example filing an accepted meeting action as a GitHub issue. This card
-  stays until you resolve or dismiss it. It never decides for you and never
-  expires into a decision.
-- **The result of an action you approved.** It ran exactly as previewed, or
-  it failed and the card says so plainly (and that nothing was sent).
-- **Learned from you.** A correction you taught actually reaches past
-  dictations, with the honest match count. If a correction was not stored or
-  matches nothing, no card appears: Qlippy never claims learning that did
-  not happen.
-- **A finished meeting left open items.** The aftercare digest found work
-  still open, with the top items named.
-
-![The decision card: Qlippy in an alert pose beside "A decision needs you",
-the exact preview of the proposed action, the egress badge naming the
-destination, and Approve / Decline buttons.](assets/presence/qlippy-decision-card.png)
-
-**Qlippy never acts on his own.** The Approve button on a card sends the
-identical request the dashboard's Approve sends: it records your decision in
-the same audit trail, and execution stays behind the same guarded,
-permission-checked path. Dismissing a decision card is always safe; the
-proposal stays on the dashboard, untouched.
-
-**Every card carries the egress badge** instead of explanatory text: one
-small pill that says where the card's data goes, at a glance.
-
-- **⌂ Local** (green): everything involved lives on this machine. Learned,
-  aftercare, and wake preview cards are always local.
-- **☁ + a destination** (orange): approving sends the previewed content to
-  that named destination, and nowhere else. Decision and result cards name
-  their target on the badge, for example "☁ slack".
-- **⌂+☁** (orange): a mixed operation, partly local, partly out.
-
-The preview on a decision card is the exact content in question; the badge
-is the destination. That pair is the whole answer.
-
-**On the native HUD too.** On macOS and on overlay-capable Linux (X11 and
-wlroots), the same cards appear in the floating HUD. The panel accepts
-pointer clicks only while a card is showing, returns to click-through the
-moment it resolves, and at no point can it take keyboard focus, so your
-keystrokes keep landing in the app you are typing into even as you click
-Approve.
-
-![The native Linux overlay hosting the decision card over a real desktop:
-the same dark card with Qlippy, the preview, the egress badge, and the
-Approve and Decline buttons.](assets/presence/qlippy-native-overlay.png)
-
-**Motion and accessibility.** New cards are announced to screen readers.
-Hovering a card pauses its auto-dismiss timer. With reduced motion enabled,
-slide animations become simple fades and the sprites hold still.
-
-## 12. Dictation journal, corrections & replay
-
-This is the learning loop, and it is the part of HoldSpeak worth showing off: it
-hears rough speech, routes and rewrites it, records the attempt, learns from your
-corrections, shows you what it learned, and lets you replay to prove it improved.
-All of it runs on your machine. The loop has five steps, and the rest of this
-section walks them in order:
-
-1. **Dictate.** Every run is journaled (real dictation and dry-run alike).
-2. **Correct.** One tap on a result says "that was wrong" and teaches the fix.
-3. **Learn.** The correction nudges similar future utterances toward your fix.
-4. **See it.** The "What HoldSpeak learned" digest shows the honest count.
-5. **Replay.** Re-run a past utterance and watch the routing change.
-
-Open it from the **Journal** wing of Speak (`/dictation`).
-
-![The dictation Journal: a said → typed timeline. Each entry shows a source chip
-(Spoken / Dry-run), the routed block + target, a timestamp, the transcript and
-the typed text side by side, and a per-stage latency strip.](assets/journal/journal-timeline.png)
-
-### Your dictation stays local
-
-The journal is **local-only**: it never leaves your machine. Nothing about it
-is uploaded, synced, or shared. Privacy comes from *local + filter + cap +
-wipe*, not from being off:
-
-- **Secret-filtered.** Before an entry is stored, the transcript and typed text
-  are checked with the same secret-shape filter the correction memory uses; a
-  field that looks like it carries a key/token is redacted, so a secret never
-  lands in the journal.
-- **Retention-capped.** The journal keeps the most recent 500 entries and
-  prunes older ones on every write.
-- **Curatable.** Delete any single entry, or **Clear journal** to wipe it all,
-  from the tab.
-- **Always on.** The journal is always enabled;
-  journaling is a pure side-channel that never changes what gets typed or
-  how fast.
-
-### What is recorded
-
-One row per pipeline run, real dictation **and** dry-run, tagged by source:
-
-| Field | What it captures |
+| State | Label |
 |---|---|
-| transcript | what you said (secret-filtered) |
-| final text | what was typed (secret-filtered) |
-| route | the matched block + confidence |
-| target | the target profile it was headed to |
-| latency | per-stage timing + total (the latency strip) |
-| source | `dictation` (spoken) or `dry_run` |
-| corrected | set when you fix it in the moment (below) |
+| `listening` | Listening |
+| `recording` | Recording |
+| `transcribing` | Transcribing |
+| `processing` | Processing |
+| `typing` | Typing |
+| `complete` | Complete |
+| `error` | Needs attention |
 
-Search the timeline by transcript/typed text; filter by source, "only with
-warnings", or "only corrected".
+Presence shows only while something happens. It never renders `idle`.
 
-### Step 2: correct it in one tap
+On macOS, presence is a floating panel and a menu-bar glyph. The panel is
+non-activating, so it cannot take keyboard focus.
 
-When a dictation lands wrong, the cheapest time to fix it is right then. Every
-result carries a quiet **"Was that right?"** with two buttons, **Right** and
-**Fix it**. It sits on the dry-run result (the no-mic path, and the same surface
-for real dictation) and on every journal entry.
+![The macOS presence HUD with an animated state glyph and the dictation source.](assets/presence/macos-hud.png)
 
-- **Right** is a single tap. It just acknowledges the result and writes nothing,
-  so your routing is untouched.
-- **Fix it** opens the correction inline, already scoped to the likely fix. If
-  the run had a target, you pick **Wrong block** or **Wrong target** in one tap;
-  otherwise it goes straight to the block. The value it routed to is pre-filled
-  as the placeholder, so correcting is one decision, not a blank form. Type the
-  right value and press **Teach**.
+On Linux, presence is an in-place notification and a tray glyph. On X11 and
+wlroots Wayland, it also shows a floating overlay. On GNOME and KDE Wayland,
+the compositor blocks overlays, so only the notification and tray work.
+On GNOME, the tray glyph needs the AppIndicator extension. The Linux system
+packages are `gir1.2-notify-0.7` and `gir1.2-ayatanaappindicator3-0.1`. The
+overlay also needs `gir1.2-gtk-3.0` and `gir1.2-webkit2-4.1`.
 
-![The one-tap fix on a journal entry: "Was that right?" with Right and Fix it,
-and the inline "Teach the copilot the right block" form pre-scoped after one
-tap.](assets/screenshots/correction-ritual.png)
+### Qlippy, the mascot
 
-That gesture does two things. It **teaches** the copilot (it writes a correction,
-the same kind the [Memory tab](#10-copilot-depth-multi-pass-memory-model-assist-telemetry)
-manages, so similar future utterances are nudged toward your fix), and it
-**marks the journal entry corrected**. The teach is gist-only and
-secret-filtered, exactly like the Memory tab, and it never takes keyboard focus.
-The confirmation is honest about reach: it tells you how many similar utterances
-the fix now covers, and if corrections are off it says so rather than pretending.
+Qlippy is a small pixel-art companion on the presence surface. Turn on
+**Mascot** in **Settings > Sounds & Presence**, or set
+`presence.mascot` to `true`. It is off by default.
 
-### Steps 3 and 4: see what it learned
+The dock is a small animated sprite that mirrors the runtime state. A card
+slides out only in these cases:
 
-Corrections are easy to make and easy to forget. The **Memory** tab opens with
-**"What HoldSpeak learned"**, a digest of the loop over a window you choose (this
-week or all time). It shows how many corrections you made, how many dictations
-you corrected, where they landed (by block and by target), and for each
-correction a real **"learned from N similar"** count.
+- **A decision needs you.** An action waits for approval. The card stays until
+  you resolve or dismiss it.
+- **The result of an action you approved.** The card says that it ran as
+  previewed, or that it failed and nothing was sent.
+- **Learned from you.** A correction reached past dictations. The card shows
+  the real match count.
+- **A finished meeting left open items.** The card names the top items.
 
-![The "What HoldSpeak learned" digest: a window toggle, three headline counts
-(corrections made, dictations corrected, utterances nudged), a breakdown by
-block and target, and per-correction "learned from N similar"
-rows.](assets/screenshots/learning-digest-week.png)
+Qlippy never acts on his own. **Approve** on a card sends the same request as
+**Approve** on the dashboard. It uses the same audit trail and the same
+guarded path. Dismissing a card is always safe.
 
-The same "learned from N similar" signal rides the places the work happens: the
-dry-run result, each journal entry, and the Memory list. It shows up only when a
-correction actually reaches past utterances, and stays quiet at zero. Nothing
-here is decorative; every count is the real reach of your correction (see the
-limits note below).
+Each card shows the egress badge. **Local** means everything stays on this
+machine. A cloud mark with a destination means that approval sends the
+previewed content to that destination only. The preview is the exact content.
+The badge is the destination.
 
-![Inline trust signals: journal entries each carry a "learned from N similar"
-chip, while an unrelated utterance carries none.](assets/screenshots/trust-signals-journal.png)
+![The decision card with Qlippy, the preview, the egress badge, and the Approve and Decline buttons.](assets/presence/qlippy-decision-card.png)
 
-### Step 5: replay, and prove it learned
+## Troubleshooting
 
-The promise of a learning copilot only feels real when you can *see* it get
-better. Press **↻ Replay** on any journal entry to re-run that utterance's
-stored transcript through the **current** pipeline, in dry-run mode, so nothing
-is typed and no new journal row is created, and see a **before / after** diff.
-
-![A replayed utterance: the before → after diff shows the routed target changing
-from terminal_shell to browser after a correction, with "Preview only — nothing
-was typed."](assets/journal/replay-before-after.png)
-
-The satisfying loop: **correct** an utterance, **replay** it, watch the routing
-change to your corrected target. Replay reuses the same dry-run path, so it
-automatically reflects everything the copilot knows *now* (your corrections,
-project context, and config). Re-insert is **preview plus copy**: copy the
-improved result and paste it where you want. HoldSpeak never types into your
-active app from a background click.
-
-### How the learning works, and its limits
-
-The learning is real, local, and bounded. Be clear-eyed about what it is:
-
-- **Routing is token overlap, not a model that retrains.** An `intent` or
-  `target` correction matches a new utterance by Jaccard similarity (the
-  fraction of words they share) above a threshold. There is no hidden training
-  and no embedding model.
-- **A text correction is exact, not approximate.** It matches its stored phrase
-  ignoring case, repeated whitespace, and edge punctuation, and only where the
-  phrase is not inside a longer word. It has no similarity threshold, so it
-  fires on every dictation source that carries the phrase.
-- **`N APPLIED` counts firings, not similar rows.** The Learned wing reads the
-  correction ids stored on each journal row, so the number is what the rule
-  actually changed. It counts the retained journal, so it can fall as old rows
-  age out.
-- **Always on for routing.** Correction memory is always enabled. A correction
-  nudges routing from the moment you make it.
-- **It is local.** Corrections and the journal live on your machine, gist-only
-  and secret-filtered, like everything else in this loop. A secret-shaped
-  correction teaches nothing, and the confirmation says so.
-
-## Good First Configuration
-
-For daily coding-agent dictation, use:
-
-```json
-{
-  "dictation": {
-    "pipeline": {
-      "stages": ["intent-router", "kb-enricher"],
-      "max_total_latency_ms": 600,
-      "target_profile_override": "auto"
-    },
-    "runtime": {
-      "backend": "openai_compatible",
-      "openai_compatible_timeout_seconds": 8
-    }
-  }
-}
-```
-
-Then validate:
-
-```bash
-holdspeak doctor
-holdspeak dictation runtime status
-holdspeak dictation dry-run "ask codex to summarize what changed and suggest a next test"
-```
-
-> **Optional: add `project-rewriter` stage.** The default stage list
-> (`intent-router`, `kb-enricher`) classifies your utterance and stamps in your
-> project facts without invoking the LLM for rewriting. Add
-> `"project-rewriter"` to the `stages` array to also ask the runtime to rewrite
-> rough speech using `.hs/` context before enrichment. This adds one extra LLM
-> round-trip; only enable it when an OpenAI-compatible runtime is configured and
-> you have populated `.hs/instructions.md`.
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Runtime unavailable | Missing extra, model, or server | Run `holdspeak doctor` and `holdspeak dictation runtime status`. |
+| Dry run keeps the original text | A stage fell back, or no context exists | Check `.hs/instructions.md` and the model assignment. |
+| Target shows `unknown` | Window hints are not available | Set `target_profile_override`. |
+| Agent working directory is missing | Hooks are not installed | Print the templates again and install them. |
+| Suggestions are noisy | Context is too broad | Narrow `.hs/instructions.md` and `.hs/targets.md`. |
+| Endpoint times out | Model is too slow | Raise `openai_compatible_timeout_seconds` or use a smaller model. |
 
 ## Verification lanes
 
-Default automation never opens a real microphone, loads an operator-selected
-model, or types through the active keyboard. Tests marked `metal` are skipped by
-name unless the explicit hardware flag is present.
-
-Run the bounded default lane:
+Default tests never open a real microphone, load a model, or type through the
+keyboard. Tests marked `metal` need the explicit hardware flag.
 
 ```bash
 .venv/bin/pytest -q tests/unit tests/integration
@@ -898,29 +447,23 @@ cd web && npm run check
 swift test --package-path apple
 ```
 
-The Web scripts cap Vitest at two workers so the default gate remains stable on
-machines already running local models or simulators. Swift's real-endpoint,
-model-download, and model-metal proofs remain opt-in through their documented
-environment variables; the ordinary package suite skips them by name.
-
-Run the opt-in dictation hardware lane on macOS:
+The hardware lane needs microphone permission, PortAudio, and the local
+Whisper and model files. It can type into the active app. Close sensitive
+apps and use a disposable document.
 
 ```bash
 .venv/bin/pytest -q tests/e2e/test_metal.py -m metal --run-metal -s
 ```
 
-The hardware lane requires microphone permission, PortAudio, and the local
-Whisper/model assets named by the test. It may type through the active target;
-close sensitive applications and use a disposable document. Evidence should
-record the build, audio route, model, destination, elapsed time, and outcome,
-but never the dictated phrase.
+Record the build, audio route, model, destination, elapsed time, and result.
+Never record the dictated phrase.
 
 ## See also
 
-- [Getting Started](GETTING_STARTED.md): install and basic voice typing first.
-- [The Dictation Copilot](DICTATION_COPILOT.md): see the pipeline turn rough speech
-  into a project-grounded task, end to end.
-- [Models (bring your own)](MODELS.md): choosing and pointing at an LLM.
-- [Claude/Codex automation hooks](AGENT_HOOK_INSTALL.md): feed Claude/Codex context into the
-  rewriter.
-- [Security & Privacy](SECURITY.md): what's stored and what can leave your machine.
+- [Getting Started](./GETTING_STARTED.md): install and basic voice typing.
+- [The Dictation Copilot](./DICTATION_COPILOT.md): one full run.
+- [Voice Commands](./VOICE_COMMANDS.md): spoken keywords that run actions.
+- [Dictation architecture](./DICTATION_ARCHITECTURE.md): the code path.
+- [Models](./MODELS.md): choose and assign a model.
+- [Claude/Codex automation hooks](./AGENT_HOOK_INSTALL.md): hook install.
+- [Security & Privacy](./SECURITY.md): what is stored and what can leave your machine.

@@ -1,20 +1,12 @@
 # Models and assignments
 
-**Settings, Models** is where HoldSpeak keeps intelligence available. Adding,
-downloading, or connecting a model makes it available. It does not choose work
-for that model.
+Use the **Concierge** (**Settings > Models**) to make models available and to assign them to jobs. See [Models](MODELS.md) for the steps.
 
-**Settings, Assignments** is where the owner chooses which available models do
-HoldSpeak jobs. The server checks the capability, readiness, and saved boundary
-before an assignment can be saved. A missing key, unsupported capability, or
-unavailable model stays visible with a named repair. HoldSpeak never silently
-chooses another model.
+- Adding, downloading, or connecting a model makes it available. It does not give that model any work.
+- An assignment chooses which available models do a job. The server checks the capability, the readiness, and the saved boundary before it saves an assignment.
+- A missing key, an unsupported capability, or an unavailable model stays visible with a named repair. HoldSpeak never chooses another model for you.
+- When work starts, HoldSpeak freezes the assignment into an immutable plan. A later edit affects the next run only.
+- The Receipt records the frozen primary model, every attempt, the fallback reason, the model and host that served the work, and the result.
+- Keys go in only through the owner-only secret field. Settings reads report whether a key is present, never its value. Keys do not appear in sync, API responses, Receipts, or the database.
 
-When work starts, HoldSpeak freezes the selected assignment into an immutable
-plan. Editing an assignment affects the next run only. The receipt records the
-frozen primary, every attempt, any fallback reason, the actual model and
-boundary, and the terminal result without consulting today's settings.
-
-Keys are written only through the owner-only secret subresource. Settings reads
-report whether a key is present, never its value. Keys do not appear in sync,
-ordinary API responses, receipts, or the database.
+Contributors: see [Model runtime](MODEL_RUNTIME.md).

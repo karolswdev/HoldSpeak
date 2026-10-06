@@ -4,108 +4,86 @@
   <img src="assets/pixellab/aipi-lite-companion.png" alt="Pixel art AIPI-Lite companion device" width="280">
 </p>
 
-The AIPI-Lite companion is a portable ESPHome-based device for meeting capture,
-coding-agent replies, and status feedback. Put it on Wi-Fi, including a phone
-hotspot when needed, and HoldSpeak can use the bridge for real-time meeting
-transcription and intelligence.
+This page shows how to build, test, and run the AIPI-Lite bridge and firmware from the HoldSpeak checkout. For what the device does, see [AIPI-Lite companion](AIPI_LITE.md).
 
-With Claude/Codex hooks enabled, HoldSpeak can show when an agent is waiting
-for your answer. AIPI-Lite can surface that prompt state, cycle waiting
-sessions, and let you speak the reply back into the selected coding session.
-Remote control works when the device can reach your HoldSpeak bridge over a
-network path you control, such as home Wi-Fi, hotspot, VPN, or a private tunnel.
+The source is in `aipi-lite/`. The helper scripts are in `scripts/`.
 
-Hardware links:
+## 1. Create the local files
 
-- [Official AIPI Lite product page](https://aipi.com/products/aipi-lite)
-- [Amazon listing](https://www.amazon.com/dp/B0FQNNVV36)
+Git ignores these files:
 
-This is the unified-checkout workflow for the AIPI-Lite firmware and bridge.
-The source lives in `aipi-lite/`; helper scripts live at repo root in
-`scripts/`.
+- `aipi-lite/secrets.yaml`: Wi-Fi and API secrets for the firmware build.
+- `aipi-lite/bridge.env`: settings for the bridge.
+- `aipi-lite/.venv/`: the bridge and test Python environment.
+- `aipi-lite/.esphome/`: ESPHome build cache.
 
-## Local Files
-
-These files are intentionally local and ignored:
-
-- `aipi-lite/secrets.yaml`: ESPHome Wi-Fi/API secrets used at firmware compile time.
-- `aipi-lite/bridge.env`: Python bridge runtime config.
-- `aipi-lite/.venv/`: AIPI bridge/test Python environment.
-- `aipi-lite/.esphome/`: ESPHome build/cache output.
-
-Start from the checked-in templates:
+Copy the templates:
 
 ```bash
 cp aipi-lite/secrets.yaml.example aipi-lite/secrets.yaml
 cp aipi-lite/bridge.env.example aipi-lite/bridge.env
 ```
 
-Confirm they are ignored before editing:
+Confirm that Git ignores them:
 
 ```bash
 git check-ignore -v aipi-lite/secrets.yaml aipi-lite/bridge.env
 ```
 
-## Python Bridge Environment
-
-Create or update the AIPI bridge environment:
+## 2. Create the bridge environment
 
 ```bash
 scripts/aipi_setup.sh
 ```
 
-This installs `aipi-lite/requirements-dev.txt` into `aipi-lite/.venv`.
-It also installs the current HoldSpeak checkout in editable mode inside that
-venv so AIPI protocol-sync tests can import HoldSpeak's device contract
-models.
+The script installs `aipi-lite/requirements-dev.txt` into `aipi-lite/.venv`. It also installs this checkout in editable mode. The protocol-sync tests need it.
 
-Run tests:
+## 3. Run the tests
 
 ```bash
 scripts/aipi_test.sh -q
-```
-
-Run one test file:
-
-```bash
 scripts/aipi_test.sh tests/test_settings.py -q
 ```
 
-## Bridge Operation
+The second command runs one file.
 
-Start HoldSpeak first:
+## 4. Run the bridge
 
-```bash
-holdspeak web --no-open
-```
+1. Start HoldSpeak:
 
-Populate `aipi-lite/bridge.env` with at least `HOLDSPEAK_PORT` and
-`HOLDSPEAK_PSK`. The PSK comes from:
+   ```bash
+   holdspeak web --no-open
+   ```
 
-```bash
-holdspeak device-psk show
-```
+2. Read the port from the startup output. Read the PSK:
 
-Check both endpoints:
+   ```bash
+   holdspeak device-psk show
+   ```
 
-```bash
-scripts/aipi_bridge.sh --check
-```
+3. Set `HOLDSPEAK_PORT` and `HOLDSPEAK_PSK` in `aipi-lite/bridge.env`.
+4. Check both endpoints:
 
-Run the bridge:
+   ```bash
+   scripts/aipi_bridge.sh --check
+   ```
 
-```bash
-scripts/aipi_bridge.sh
-```
+5. Start the bridge:
 
-Useful diagnostics:
+   ```bash
+   scripts/aipi_bridge.sh
+   ```
+
+Diagnostics:
 
 ```bash
 scripts/aipi_bridge.sh --audio-loopback
 scripts/aipi_bridge.sh --send-test-audio path/to/16khz-mono-int16.wav
 ```
 
-## Firmware
+`bridge.env.example` lists every setting, such as `ESPHOME_HOST`, `DEVICE_ID`, `DEVICE_LABEL`, and `UDP_AUDIO_PORT`.
+
+## 5. Build and flash the firmware
 
 Install ESPHome once:
 
@@ -113,36 +91,18 @@ Install ESPHome once:
 pipx install esphome
 ```
 
-Compile:
+Then run:
 
 ```bash
 scripts/aipi_firmware.sh compile aipi.yaml
-```
-
-Flash over USB:
-
-```bash
 scripts/aipi_firmware.sh run aipi.yaml --device /dev/ttyACM0
-```
-
-Follow logs:
-
-```bash
 scripts/aipi_firmware.sh logs aipi.yaml
 ```
 
-For provisioning details, see `aipi-lite/docs/PROVISIONING.md`.
-
-## Current Boundary
-
-The AIPI bridge remains a separate Python environment under `aipi-lite/.venv`.
-That keeps ESPHome/aioesphomeapi pins out of HoldSpeak's main runtime while
-still making tests and operation first-class from the unified checkout.
+The commands compile, flash over USB, and follow the logs. For provisioning, see `aipi-lite/docs/PROVISIONING.md`.
 
 ## See also
 
-- [Device Protocol](DEVICE_PROTOCOL.md): the remote-audio WebSocket protocol the
-  bridge speaks.
-- [Agent Hook Install](AGENT_HOOK_INSTALL.md): wire agent replies through to the
-  device.
+- [Device Protocol](DEVICE_PROTOCOL.md): the WebSocket protocol the bridge speaks.
+- [Agent Hook Install](AGENT_HOOK_INSTALL.md): show agent questions on the device.
 - [Meeting Mode Guide](MEETING_MODE_GUIDE.md): what the device controls.

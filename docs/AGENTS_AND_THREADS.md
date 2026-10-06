@@ -1,191 +1,195 @@
-# Agents, Threads, Interview, MCP, memory and grounding
+# Agents and Threads
 
-Source audit at `675401a857b85336d4acaa8c65383dfc9636e4c8`. This document
-describes executable seams and inspected assertions. Source presence is not a
-release claim and none of the tests below were run for this audit.
+A Thread is a saved conversation on the hub. An Agent is a persona that you
+author. A Thread can run in a mode, such as Desk, Chase, Draft, Plan, Project
+or Interview. A coder is a different thing: it is a live Claude or Codex
+session. See [Coder integration](CODER_INTEGRATION.md).
 
-## The persistent thread
+This page describes how Threads work, what limits apply, and which routes
+serve them. For the steps to start and use a Thread, see the
+[User Guide](USER_GUIDE.md#threads).
 
-A Thread is a durable conversation record on the hub. `ThreadRepository` owns
-the thread, message, part, frozen reference, draft and tool policy rows
-(`holdspeak/db/threads.py::ThreadRepository`, lines 183-887). The HTTP surface
-is concrete:
+## What a Thread keeps
 
-| User capability | Served route | Current behavior |
-|---|---|---|
-| create/list/read/patch/park a thread | `POST /api/threads`, `GET /api/threads`, `GET /api/threads/{thread_id}`, `PATCH /api/threads/{thread_id}`, `DELETE /api/threads/{thread_id}` | CRUD and soft delete; a deleted row is not returned as a live thread |
-| send a turn | `POST /api/threads/{thread_id}/turns` | persists the user message and frozen refs, then streams the assistant result |
-| stop the active turn | `POST /api/threads/{thread_id}/abort` | closes the active run as `aborted`; an indeterminate receipt remains possible |
-| branch or regenerate | `POST /api/threads/{thread_id}/branch`, `POST /api/threads/{thread_id}/regenerate` | creates a new message path or reruns a selected assistant path |
-| keep a result | `POST /api/threads/{thread_id}/keep` | writes a separate durable artifact/note result |
-| import and inspect composition | `POST /api/threads/import`, `POST /api/threads/{thread_id}/compact`, `POST /api/threads/{thread_id}/annotations`, `POST /api/threads/{thread_id}/todo` | imports, records a compaction cut, edits draft annotations, and creates a todo |
-| tool decision | `POST /api/threads/{thread_id}/decide` | resolves a held tool call; the decision is tied to the active call handle |
-| Interview command/read | `POST /api/threads/{thread_id}/interview`, `GET /api/threads/{thread_id}/interview/promotions` | uses the same Thread and the owner-only Interview reducer |
+The hub stores each Thread with its messages, message parts, frozen source
+references, drafts and tool policy. Edit and regenerate actions create
+branches. Delete is a soft delete: a deleted Thread does not appear as live.
 
-The route roster is also recorded in [`api-surface.json`](api-surface.json),
-whose defining module for these paths is `web.routes.threads`.
+| Action | Route |
+|---|---|
+| Create, list, read, update, delete | `POST /api/threads`, `GET /api/threads`, `GET /api/threads/{thread_id}`, `PATCH /api/threads/{thread_id}`, `DELETE /api/threads/{thread_id}` |
+| Send a turn | `POST /api/threads/{thread_id}/turns` |
+| Stop the active turn | `POST /api/threads/{thread_id}/abort` |
+| Branch or regenerate | `POST /api/threads/{thread_id}/branch`, `POST /api/threads/{thread_id}/regenerate` |
+| Keep a result as a Note or Artifact | `POST /api/threads/{thread_id}/keep` |
+| Import a Thread | `POST /api/threads/import` |
+| Compact, annotate, create a todo | `POST /api/threads/{thread_id}/compact`, `POST /api/threads/{thread_id}/annotations`, `DELETE /api/threads/{thread_id}/annotations/{part_id}`, `POST /api/threads/{thread_id}/todo` |
+| Decide a held tool call | `POST /api/threads/{thread_id}/decide` |
+| Interview command and promotions | `POST /api/threads/{thread_id}/interview`, `GET /api/threads/{thread_id}/interview/promotions` |
 
-`ThreadService.start_turn` validates the thread and text, separates People
-references from grounding references, freezes the references before the model
-admission, and returns ids before the RuntimeBus stream starts
-(`holdspeak/services/thread_service.py::ThreadService.start_turn`, lines
-300-558). The stream emits `thread_turn_started`, deltas, tool pending/result,
-status and `thread_turn_done` frames. The pass loop is capped at ten passes and
-each tool call has a 30 second deadline (`_CHAT_PASS_CAP` and
-`_TOOL_DEADLINE_S`, lines 61-65). A model tool palette is resolved once at
-admission; a mid-turn mode change cannot widen it.
+[`api-surface.json`](api-surface.json) lists every route.
+
+## What happens in a turn
+
+When you send a turn, `ThreadService.start_turn` does these steps:
+
+1. It checks the Thread and the text.
+2. It separates People references from other grounding references.
+3. It freezes the references before the model call.
+4. It returns the ids, then streams the result on the runtime bus.
+
+The stream carries `thread_turn_started`, text deltas, tool pending and
+tool result frames, status frames and `thread_turn_done`.
 
 ```mermaid
 sequenceDiagram
-    participant U as Owner
+    participant U as You
     participant H as HTTP / Desk
     participant T as ThreadService
     participant K as Kernel + model route
-    participant M as MCP tool executor
+    participant M as Tool executor
     U->>H: POST /api/threads/{id}/turns
-    H->>T: validate text, refs, owner boundary
-    T->>T: append user row + freeze refs
+    H->>T: validate text and references
+    T->>T: save message, freeze references
     T->>K: admit one frozen route
-    K-->>T: streamed assistant/tool call
+    K-->>T: streamed text or tool call
     alt tool call
-        T->>M: classify, admit or hold, execute
-        M-->>T: bounded result + receipt
+        T->>M: classify, admit or hold, run
+        M-->>T: bounded result and receipt
         T->>K: next pass (maximum 10)
     end
-    K-->>T: terminal model outcome
-    T-->>H: thread_turn_done + receipt id
-    H-->>U: retained message and visible failure/state
+    K-->>T: final outcome
+    T-->>H: thread_turn_done and receipt id
+    H-->>U: saved message and visible state
 ```
 
-Tool calls use the closed classification and decision table in
-`holdspeak/services/thread_tools.py::resolve_tool_decision` (lines 407-445).
-`ThreadToolExecutor.admit`, `decide`, `execute` and `cancel` (lines 496-815)
-produce a handle state such as `admitted`, `awaiting_decision`, `denied`,
-`completed` or `discarded`. `evidence_read` and `candidate_builder` are
-different from `effect_proposal`; the control mode and a per-thread policy
-decide whether a call runs or waits. Sensitive People results remain marked
-sensitive. Tool results are capped at 32,768 bytes. An aborted turn carries
-`receipt_id = indeterminate` when the final outcome cannot be known.
+Limits:
 
-Inspected assertions in `tests/unit/test_thread_tool_loop.py` prove the frame
-order, held approval, denial, ten-pass cap and abort receipt shape. The same
-file proves cloud-route People text is redacted by
-`ThreadService._m1_redactor`; `tests/unit/test_thread_tool_gate.py` pins the
-allow/deny/hold table, child receipts, elicitation, cancellation and tool
-classification. `tests/integration/test_threads_api.py` checks CRUD, import,
-soft-delete and idempotent import. These are assertion evidence only here;
-`execution: not_run`.
+- A turn runs at most 10 passes.
+- A tool call has a 30 second deadline.
+- A tool result is capped at 32,768 bytes.
+- The tool list is fixed when the turn starts. A mode change during the turn
+  cannot widen it.
+- An aborted turn closes as `aborted`. Its receipt id is `indeterminate`
+  when the hub cannot know the final outcome.
+- A turn that sends People text to a cloud route redacts that text first.
+
+## Tool calls
+
+A Thread can call a tool from the MCP catalogue, with these limits:
+
+- A Thread receives only the tools that the authority table marks as work
+  (`holdspeak/mcp/tool_authority.py`). It never receives a tool that sends
+  data out, changes authority, or changes configuration. Those need your
+  own action.
+- Each tool has a class: `evidence_read`, `candidate_builder` or
+  `effect_proposal`.
+- A per-Thread tool policy (`allow`, `deny` or `ask`) wins first. Without a
+  policy, the Control posture decides:
+
+| Control posture | `evidence_read` | `candidate_builder` | `effect_proposal` |
+|---|---|---|---|
+| YOLO | runs | runs | runs |
+| Normal | runs | runs | held |
+| Secure | runs | held | held |
+
+A held call waits in the decision box. You resolve it with
+`POST /api/threads/{thread_id}/decide`. A tool call has one of these
+states: `admitted`, `awaiting_decision`, `denied`, `completed` or
+`discarded`. Sensitive People results keep their sensitive mark.
 
 ## Interview is a Thread mode
 
-Interview does not add a second model runtime. `INTERVIEW_MODE_ID` is the
-seeded mode `hs-seed-mode-interview`; its descriptor has eight sections:
-Goals, Projects, What matters, Cadences, People, Decision log, Delegation, and
-Sources & models (`holdspeak/services/interview_contracts.py::SECTIONS`, lines
-10-49). Its palette is the intersection of the section allow-list and the
-registered MCP catalogue (`InterviewService.palette`, lines 109-119).
+Interview is a Thread mode. It adds no second model runtime. The seeded
+mode id is `hs-seed-mode-interview`. It has eight sections: Goals,
+Projects, What matters, Cadences, People, Decision log, Delegation, and
+Sources & models. Each section allows a fixed set of tools. The Thread's
+palette is the overlap of that set and the registered MCP catalogue.
 
-Interview state is a durable revisioned projection: facts keep exact quoted
-user provenance, suggestions name their supporting fact ids and disposition,
-and the section changes without making a new Thread
-(`holdspeak/services/interview_service.py::InterviewService.get`, lines
-79-91). `InterviewService.command` requires the owner, an expected revision,
-and a caller command id. It uses an immediate transaction, rejects a stale
-revision, replays the same command and digest without applying it twice, and
-prunes facts whose source message is deleted, sensitive or a draft (lines
-142-190). A People section is a protected handoff; ThreadService refuses to
-persist a People-content turn until the owner continues in People.
+Interview state is a saved, revisioned projection:
 
-The Interview MCP family exposes `interview.get`, `interview.change_section`,
-`interview.record_fact`, and `interview.suggest`
-(`holdspeak/mcp/families/interview.py::TOOLS`, lines 21-42). Suggestions are
-manual or prerequisite-aware proposals. They do not install automation, grant
-authority, or imply that an unsupported integration exists. The inspected
-tests are `tests/unit/test_interview_service.py::test_command_replay_and_conflict_are_atomic`,
-`::test_fact_requires_actual_permitted_user_provenance`,
-`::test_people_handoff_refuses_before_input_persistence`, and
-`tests/integration/test_interview_conversation.py::test_llm_turn_calls_real_tools_saves_suggestion_keeps_result_and_revisits`.
+- A fact keeps the exact words of the message that produced it.
+- A suggestion names the facts that support it and its disposition.
+- A command needs you as the owner, an expected revision and a command id.
+  A stale revision is rejected. A repeated command with the same digest does
+  not apply twice.
+- A fact is removed when its source message is deleted, sensitive or a
+  draft.
 
-## MCP and the model/tool boundary
+The People section is a handoff. The hub refuses to save a turn that holds
+People content until you continue in People.
 
-The HTTP MCP transport is one served route, `POST /api/mcp`, implemented by
-`holdspeak/web/routes/mcp_http.py::mcp_http_endpoint` (lines 71-198). It is
-loopback-guarded for owner use; remote use requires the configured remote
-credential path. The sidecar catalogue is composed from family `TOOLS` and
-dispatches into the same services. Tool names are contracts, not permissions.
+The Interview MCP tools are `interview.get`, `interview.change_section`,
+`interview.record_fact` and `interview.suggest`. A suggestion is a proposal.
+It does not install automation or grant authority. See the
+[Interview guide](INTERVIEW.md) for the conversation.
 
-Relevant families include `ask`, `thread`, `interview`, `memory`, `coder`,
-`sequence`, `plugin_job`, `project`, `practice_recipe`, `people`, and the
-primitive/workbench catalogue. `holdspeak/mcp/tools.py::TOOLS` supplies the
-closed desk and Workbench schema. `tests/unit/test_mcp_tools.py` checks closed
-schemas, retired tools and representative Workbench/recipe/zone/KB calls;
-`tests/unit/test_mcp_phase133_ask.py` checks grounding, model receipt, cancel
-and keep; `tests/unit/test_mcp_phase133_coder_memory.py` checks coder list/get/
-audit and memory search. MCP dispatch errors remain typed `isError` results.
+## Grounding
 
-## Grounding and memory
+Grounding is explicit. You attach evidence to a turn. The hub does not
+search your data for a hidden prompt.
 
-Grounding is explicit evidence hydration, not a hidden prompt search. The
-shared resolver is `holdspeak/grounding.py::hydrate_grounding_blocks_detailed`
-(lines 602-668). It accepts meetings, artifacts, qualified references and
-optional memory search; it expands a meeting to summary or full transcript,
-deduplicates visited refs, marks unknown refs, and enforces
-`GROUNDING_MAX_REFS = 16` and `GROUNDING_TRANSCRIPT_CAP = 12_000` (lines
-24-26). The result records `selection`, `matched_count`, and `overflow_count`.
-Project refs are scoped; an unqualified query may use the memory repository,
-and promoted references are excluded from relevance-only reachability.
+`hydrate_grounding_blocks_detailed` (`holdspeak/grounding.py`) resolves the
+references. It accepts Meetings, Artifacts, qualified references and an
+optional memory search. It expands a Meeting to a summary or a transcript
+and removes duplicates. It marks an unknown reference as unknown. The caps:
 
-Roadmap rails use the same `GroundingBlock` through
-`holdspeak/grounding_rails.py::hydrate_rails_refs` (lines 100-166). It asks the
-Delivery Workbench for a named path, reads that file as opaque capped text,
-and refuses unknown, stale or unreachable refs. Rail state is not parsed from
-the Markdown body.
+- `GROUNDING_MAX_REFS = 16` references per turn.
+- `GROUNDING_TRANSCRIPT_CAP = 12_000` characters per transcript.
 
-The long-horizon store is SQLite FTS-backed
-(`holdspeak/db/memory.py::MemoryRepository.search`, lines 166-227 and the
-kind-specific row builders). `MemoryService.search` requires a principal with
-read permission and supports kind, project and time filters
-(`holdspeak/services/memory_service.py::MemoryService.search`, lines 18-48).
-The served routes are `GET /api/memory/search` and `GET /api/memory/recall`
-(`web.routes.memory`); the MCP twin is `memory.search` with a closed schema.
-Search is selection evidence, not an authority grant. An empty result is a
-real empty result.
+The result reports `selection`, `matched_count` and `overflow_count`.
+Project references stay in their Project scope.
 
-Workbench memory is a separate, advisory append-only JSONL store. It keeps at
-most 100 entries, recalls at most 20 and 2,048 bytes, and injects a `[MEMORY]`
-block into a Workbench prompt (`holdspeak/workbench_memory.py::append_memory`
-and `::recall_for_prompt`, lines 45-96). `clear_memory` is explicit. Memory
-informs a run; it never authorizes a run.
+Roadmap rails use `hydrate_rails_refs` (`holdspeak/grounding_rails.py`).
+It asks the Delivery Workbench for a named path and reads the file as
+capped plain text. It refuses unknown, stale and unreachable references.
+It does not parse the Markdown body.
 
-## Workflow and run boundary
+## Memory
 
-Workflow definitions are authorable primitives. The served routes are
-`GET /api/workflows`, `POST /api/workflows`, `GET /api/workflows/{workflow_id}`,
-`PUT /api/workflows/{workflow_id}`, `DELETE /api/workflows/{workflow_id}`,
-`POST /api/workflows/{workflow_id}/run`, and
-`POST /api/workflows/runs/{parent_operation_id}/cancel`
-(`holdspeak/web/routes/primitives/workflows.py::build_workflows_router`, lines
-16-74). The native runner is
-`holdspeak/services/sequence_workflow_service.py::SequenceWorkflowService`.
-It parses a graph, refuses branches, joins, loops and unknown node kinds, then
-freezes route/deployment evidence before admitting each child. A run returns a
-parent receipt, child receipts, steps and an artifact projection. Failure policy
-can hold, skip or carry output; cancel and restart reconciliation preserve a
-terminal receipt or honest `indeterminate` state.
+Long-horizon memory is a searchable store of your Meetings, Notes,
+Artifacts, decisions, Threads and other records. These routes serve it:
 
-The assertions in `tests/unit/test_workflow_graph.py` cover graph decoding and
-linearization refusal. `tests/unit/test_sequence_workflow_runner_migration.py`
-checks authenticated parent admission, child cardinality, retries/fallback,
-route and deployment immutability, cancellation, idempotent replay and crash
-reconciliation. The MCP twin is `sequence.run`, `sequence.cancel`,
-`workflow.run`, and `workflow.cancel` in
-`holdspeak/mcp/families/sequence.py::TOOLS`; these names expose the same
-admitted path rather than a free-running automation engine.
+- `GET /api/memory/search`
+- `GET /api/memory/recall`
+- `GET /api/memory/pages`
+- `GET /api/memory/meaning-search`, with `POST /api/memory/meaning-search/turn-on`
+  and `POST /api/memory/meaning-search/turn-off`
 
-## Limits and Tuesday use
+The MCP tool is `memory.search`. A search needs a principal with read
+permission. It supports kind, Project and time filters. Search selects
+evidence. It does not grant authority. An empty result is a real empty
+result. See [Desk memory](DESK_MEMORY.md).
 
-This inventory can show where a Senior Software Architect can open a saved
-Thread, ask with named evidence, inspect a durable Interview state, and run a
-linear Workflow with receipts. It cannot prove a configured model, live
-provider, release package, or owner observation. UI shots and a live first-use
-walk remain required before a surface is called ready.
+Workbench memory is separate. Each Workbench keeps an append-only JSONL
+file of at most 100 entries. A run recalls the most recent entries, up to
+20 entries and 2,048 bytes, and adds them to the prompt in a `[MEMORY]`
+block (`holdspeak/workbench_memory.py`). Memory informs a run. It never
+authorizes one.
+
+## Workflows
+
+A Workflow is an authorable primitive. These routes serve it:
+
+- `GET /api/workflows`, `POST /api/workflows`
+- `GET /api/workflows/{workflow_id}`, `PUT /api/workflows/{workflow_id}`,
+  `DELETE /api/workflows/{workflow_id}`
+- `POST /api/workflows/{workflow_id}/run`
+- `POST /api/workflows/runs/{parent_operation_id}/cancel`
+
+`SequenceWorkflowService` runs a Workflow. It reads the graph and refuses a
+graph that it cannot run as a line, or that has an unknown node kind. It
+freezes the route evidence before each child call. A run returns a parent
+receipt, child receipts, steps and an Artifact projection. A node failure
+policy can hold, skip or carry the output. Cancel and restart keep a
+terminal receipt or an honest `indeterminate` state.
+
+The MCP tools are `sequence.run`, `sequence.cancel`, `workflow.run` and
+`workflow.cancel`. They use the same admitted path. They are not a free
+running automation engine. See [Automation](AUTOMATION.md).
+
+## MCP
+
+`POST /api/mcp` serves MCP over HTTP. See the [MCP sidecar](MCP_SIDECAR.md)
+for tools, resources and trust rules. A tool name is a contract, not a
+permission.

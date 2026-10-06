@@ -1,174 +1,77 @@
 # Releasing, upgrading, and your data
 
-This is the contract for how HoldSpeak versions itself, what happens to your
-data when you upgrade, and how to be safe about it. HoldSpeak no longer carries
-an ordered historical migration ladder. Every supported database is reconciled
-against the canonical shape instead.
+This page explains how HoldSpeak versions itself, what happens to your data
+when you upgrade, and how to cut a release. For a first install, read
+[Getting Started](GETTING_STARTED.md).
 
-If you are installing for the first time, start with
-[`GETTING_STARTED.md`](GETTING_STARTED.md) instead.
+## Versions
 
-## Versions, and where they live
+- The package version in `pyproject.toml` (`project.version`) is the single
+  source. `holdspeak.__version__` reads it from the installed package.
+  `holdspeak doctor` shows it on the Runtime line.
+- The database has a `SCHEMA_VERSION` in `holdspeak/db/schema.py`. HoldSpeak
+  writes it on every open. It is informational. Nothing refuses to open
+  because of it.
+- The config file `~/.config/holdspeak/config.json` has a `config_version`.
+  The constant is `CONFIG_VERSION` in `holdspeak/config/core.py`.
 
-HoldSpeak has one version, and one source of truth for it.
+You do not manage these values by hand.
 
-- The package version in `pyproject.toml` is that source. `holdspeak.__version__`
-  reads it from the installed package metadata, so the running code and the
-  package always agree. `holdspeak doctor` prints it on the Runtime line.
-- The database carries a `SCHEMA_VERSION`. It is stamped into the database file
-  on every open as an informational record; nothing gates on it.
-- The config file (`~/.config/holdspeak/config.json`) carries a `config_version`.
+## What happens to your data on upgrade
 
-You do not manage any of these by hand. They exist so HoldSpeak can tell whether
-the data it found was written by this build, an older one, or a newer one, and
-act safely on the answer.
+HoldSpeak has no ordered migration ladder. At start it compares the database
+with the schema of the build and repairs the difference. It adds missing
+tables and columns. It also runs a few table rebuilds and data repairs.
 
-## What happens to your database on upgrade
+- **No database.** HoldSpeak creates the declared schema.
+- **Existing database.** HoldSpeak repairs the shape. General repair adds
+  missing structures. Named legacy repairs rebuild tables and replace schema
+  objects.
+- **Newer schema stamp.** HoldSpeak still opens the file. A downgrade is not
+  guaranteed to work. Inspect the schema before you rely on one.
+- **Config.** An older config loads forward and keeps your settings. A newer
+  config still loads. The log and `holdspeak doctor` flag it, because some
+  settings may be ignored.
 
-When HoldSpeak starts, it compares the database with the build's declared
-schema. It adds missing tables and columns. It also has specific legacy table
-rebuilds, trigger replacements and data-repair passes. The informational version
-stamp does not block an open; that is not a promise of downgrade compatibility.
-
-- **No database yet.** The runtime creates the declared schema.
-- **Existing database.** Shape checks and independent repair passes run. Some
-  data backfills run only when the shape changes.
-- **Missing tables or columns.** The runtime repairs the shape. Its automatic
-  backup occurs after some schema changes and before the grouped backfills.
-  It does not guarantee a copy of the file as it was before the upgrade.
-- **Newer version stamp.** The stamp alone does not cause refusal. Inspect the
-  actual schema and this build's repair rules before relying on a downgrade.
-
-Read [Storage and migrations](STORAGE_AND_MIGRATIONS.md) for the exact source
-order and the known limits of backup and restore.
-
-The same logic governs the config file. An older or unversioned config is read
-forward without dropping your settings. A config newer than this build is still
-loaded so you are not locked out, but it is flagged (in the log and in `doctor`)
-because some of its settings may not be understood.
+An automatic backup can happen after some schema changes. It is not a copy of
+the file as it was before the upgrade. For that copy, make your own backup.
+See [Storage and migrations](STORAGE_AND_MIGRATIONS.md) for the exact order.
 
 ## Back up before you upgrade
 
-The main HoldSpeak database is one SQLite file. To make a database snapshot:
-
-```bash
+```console
 holdspeak backup
+holdspeak restore
+holdspeak restore <backup-file>
 ```
 
-This writes a timestamped snapshot next to your database and prints the path.
-Run this command before the upgrade when you need the original database state.
-The automatic reconciliation backup uses the same copy mechanism, but it runs
-after some schema changes. Separate files and stores need their own backup.
+Use [Operations](OPERATIONS.md) for the full backup and restore steps, the
+limits of a backup, and the checks of a running hub. The short rules:
 
-To see your backups, or to put one back:
+- A backup covers the main database only. The People store and the keychain
+  credentials are outside it.
+- Restore saves your current database first.
+- Restore refuses while another process has the database open.
+- Practice a restore on a copy before you restore for real.
 
-```bash
-holdspeak restore               # list the backups next to your database
-holdspeak restore <backup-file> # restore that backup
-```
+## Run the checks
 
-Restore snapshots your current database before it overwrites it. If you restore
-the wrong file, the state you were in is still saved. A restore that cannot
-complete, because the file is missing, truncated, or is not a HoldSpeak
-database, stops before it writes anything and leaves your current database
-exactly as it was.
+Always use an isolated home. HoldSpeak resolves its database and config from
+your home directory when it imports. A test run under your real home writes to
+your real data. The test suite refuses to start against a real installation.
+A live, attended walk sets `HOLDSPEAK_ALLOW_REAL_HOME=<walk name>` to opt in.
 
-Restore refuses while HoldSpeak, or anything else, has the database open. The
-database keeps recent writes in a sidecar file beside it while it is open, and
-replacing the file under an open connection would corrupt it. The refusal
-names the running process where it can and the remedy: stop `holdspeak web`
-(and any tool holding the file), then restore.
-
-### What the backup covers, and what it does not
-
-`holdspeak backup` snapshots one file: the main HoldSpeak database. Everything
-that lives in it comes back with it, including your meetings and their
-attached artifacts.
-
-Two stores sit outside that file on purpose, and neither is inside the backup:
-
-- **The People store** (`people.v1.sqlite3`). Confidential People payloads live
-  in their own encrypted database with their own keys. Back it up separately if
-  you keep People material, and expect its keys to be required to read it.
-- **The Keychain.** Credentials are held by the operating system, not by any
-  file you can copy. Reconnect the affected accounts after a restore.
-
-Rehearse a restore on a copy before you run one for real. Copy your database to
-a scratch directory, restore the backup over the copy, open it, and confirm the
-records you care about are there.
-
-## Which parts are running
-
-A new checkout does not change a running hub. The hub loads its code and its web
-bundle at start and keeps serving those until you restart it, so it is possible
-to read a fresh checkout while an older process serves an older bundle over your
-database.
-
-Settings then System reports what the running hub actually loaded: the backend
-version and revision, the bundle the process started with, the bundle the page
-you are looking at was built from, the schema version, an opaque database
-identity, and the process start. The RAW fold under it carries the diagnostics
-detail, including the database path and the process id.
-
-When something does not line up, that block flies a token:
-
-- `STALE BUNDLE`. The web bundle on disk is not the one this process started
-  with, or no bundle has been built. Restart the hub, or build the bundle with
-  `npm --prefix web run build`.
-- `TWO RUNTIMES`. Another hub owns this database. Only one hub runs the
-  scheduled sweeps.
-- `SCHEMA AHEAD` or `SCHEMA BEHIND`. The database and this build disagree about
-  the schema version. Run the build that matches, or restore a backup.
-
-### One hub owns the database
-
-Starting a second `holdspeak web` against a database that another hub already
-holds refuses, and prints which process holds it, on which port, and since when.
-This is deliberate: two processes writing one SQLite file, both running the
-scheduled sweeps, is the arrangement that silently duplicates scheduled work.
-Stop the other hub, or open the one already running.
-
-The claim is an operating system lock on a file next to your database
-(`holdspeak.db.owner.lock`), so it releases when the process exits for any
-reason. A crashed hub leaves nothing to clean up.
-
-For a diagnosis session, `HOLDSPEAK_ALLOW_UNOWNED_DB=1` starts anyway with the
-scheduled sweeps off and `TWO RUNTIMES` flying on the Desk. It is not a daily
-setting.
-
-## What doctor tells you
-
-`holdspeak doctor` reports the state it actually found, so you are never guessing:
-
-- **Database.** The check reports the path, informational schema stamp, and
-  table count. A missing database is a clean first-run state. A file that is
-  not readable SQLite, or has no HoldSpeak tables, reads as a warning.
-- **Config.** A config newer than this build reads as a warning that some settings
-  may be ignored. Otherwise it passes and shows the config version.
-
-Run `doctor` after an upgrade if you want confirmation that everything lines up.
-
-## Running the checks
-
-There are three levels, and they answer different questions.
-
-**The critical journeys** are the release gate. Four journeys (the
-installation can say what it is, it can be backed up and restored, a cold
-install reaches a kept sentence with no model, and a Project reaches its first
-result) run the real services with only the external adapters substituted.
-They need no model, no microphone, no network and no macOS, and they run in
-seconds:
+**Critical journeys.** Four journeys use the real services and replace only
+the outside adapters: identity, backup and restore, a first sentence with no
+model, and a Project first result. They need no model, microphone or network.
 
 ```sh
 HOME=$(mktemp -d) uv run pytest -q -m critical tests/critical -p no:cacheprovider
 ```
 
-CI reports them as their own job, `Critical Journeys (G0)`, separately from
-the historical jobs, so a green line there means the release gate passed
-rather than that nothing anywhere is red.
+CI runs them as the job `Critical Journeys (G0)`.
 
-**The full suite** is the regression net. It is larger, slower, and parts of
-it depend on what this particular machine has installed:
+**Full suite.**
 
 ```sh
 HOME_REAL=$HOME; HOME=$(mktemp -d) \
@@ -177,110 +80,69 @@ HOME_REAL=$HOME; HOME=$(mktemp -d) \
   uv run pytest -q -n auto --ignore=tests/e2e/test_metal.py
 ```
 
-**The hardware lane** (`-m metal --run-metal`) needs a real microphone, model
-and keyboard, and is never run in CI.
+**Web contract.**
+
+```sh
+npm --prefix web run check
+```
+
+**Hardware lane.** `-m metal --run-metal` needs a real microphone, model and
+keyboard. CI never runs it.
+
+A test skips when its dependency is missing, and it states the reason. A skip
+describes the machine. It is not a pass.
 
 ### Evaluate a model route
 
-Tests answer whether the code behaves. They cannot answer whether a model is
-good enough to trust with real work, because a passing fixture says nothing
-about what a live model writes. That question has its own harness: a versioned
-corpus of 33 synthetic episodes across Interview, meeting extraction, and
-grounded update work, deterministic invariant checks over the outputs, and a
-runner that drives every episode through the real product path with one
-selected route.
+A passing test does not show that a model is good enough for real work. The
+evaluation harness runs 33 synthetic episodes through the real product path
+with one selected route. The episodes cover the Interview, meeting extraction
+and grounded updates.
 
 ```sh
 uv run python scripts/phase200_eval.py run \
-    --endpoint http://192.168.1.43:8080/v1 \
-    --model qwen2.5-32b-instruct \
+    --endpoint http://<host>:8080/v1 \
+    --model <model-name> \
     --report .tmp/phase200-eval.json --raw .tmp/phase200-eval-raw.json
 ```
 
-It exits 0 when no episode has a critical factual failure, and 1 when one has.
-A critical failure is an invented value, a violated correction, a restated
-superseded decision, or an irrelevant citation sold as support. It fails the
-run however many episodes passed, and it requires a person to inspect the
-source before the run means anything. The report names the model, the resolved
-route, the build, each episode's context hash, the failures by kind, the claim
-support judgments, the latency, and the review effort the result still owes.
+The command exits with 0 when no episode has a critical factual failure. It
+exits with 1 when one has, or when the run aborts. A critical failure is an invented value, a broken
+correction, a restated old decision, or an irrelevant citation. A person must
+inspect the source of each one.
 
-The run is isolated. It uses a temporary home, a temporary database per
-episode, and synthetic material only. It never reads or writes your data.
+The run uses a temporary home and a temporary database for each episode. It
+never reads your data. The report has an `aborted` column. Read the reason in
+it before you read any count. See the
+[scoring protocol](internal/architect-assistant/proof/SCORING.md) for the
+fields and the reviewer rubric.
 
-The protocol, the report's fields, the reviewer's rubric, and what this harness
-does not establish are in
-[the scoring protocol](internal/architect-assistant/proof/SCORING.md).
+## Cut a release
 
-### Why the isolated home is not optional
+1. Set the new version in `pyproject.toml`.
+2. Run `python -c "import holdspeak; print(holdspeak.__version__)"`. It must
+   print the new version. `tests/unit/test_version_ssot.py` checks this.
+3. If the database or config shape changed, raise `SCHEMA_VERSION` or
+   `CONFIG_VERSION`. Most releases change neither.
+4. Run the critical journeys, the full suite and the web contract. Read the
+   output.
+5. Check a clean install. Create a fresh virtual environment, run
+   `uv pip install -e .`, then run `holdspeak doctor`. It must exit with 0.
+   Optional gaps, such as a missing local model, are acceptable.
+6. Set the default `HOLDSPEAK_REF` in `scripts/install.sh` to the new tag.
+7. Tag the release (`vX.Y.Z`) and push the tag.
 
-`holdspeak` resolves its database and configuration from your home directory,
-and it does so at import time. A suite run under your own home writes to your
-real installation: it has created rows in it before. Every command in this
-document therefore starts with `HOME=$(mktemp -d)`, and the suite refuses to
-start if it finds itself pointed at a real installation.
+The tag push is the publish. It runs `.github/workflows/release.yml`. The
+workflow builds the web bundle, builds the sdist and the wheel, and checks
+that the wheel holds `static/_built/`. Then it publishes to PyPI with trusted
+publishing. Push the tag only when the checks pass.
 
-### Skips are information
-
-A test whose declared dependency is absent skips and says which dependency and
-why. Nothing passes silently for want of a package. If a check you expected to
-run was skipped, install what the reason names or accept that this machine
-cannot answer that question.
-
-## Maintainer release checklist
-
-For whoever cuts a release:
-
-1. Decide the new version and set it in `pyproject.toml` (`project.version`). This
-   is the only place the number lives.
-2. Confirm the code agrees: `python -c "import holdspeak; print(holdspeak.__version__)"`
-   prints the new number. The drift test (`tests/unit/test_version_ssot.py`)
-   enforces this, so step 4 also covers it.
-3. If the on-disk database or config shape changed, bump `SCHEMA_VERSION`
-   (`holdspeak/db/schema.py`) or `CONFIG_VERSION`
-   (`holdspeak/config/core.py`). The
-   schema reconcile handles forward changes automatically (additive-only); the
-   version bump is an informational stamp. Most releases change neither.
-4. Run the checks and read the output. **Always with an isolated home**, so a
-   test can never open your real database or config:
-
-   ```sh
-   # The four critical journeys. Fast, and they must be green.
-   HOME=$(mktemp -d) uv run pytest -q -m critical tests/critical -p no:cacheprovider
-
-   # The full suite the way CI sees it.
-   HOME_REAL=$HOME; HOME=$(mktemp -d) \
-     PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright \
-     npm_config_cache=$HOME_REAL/.npm \
-     uv run pytest -q -n auto --ignore=tests/e2e/test_metal.py
-
-   # The web contract.
-   npm --prefix web run check
-   ```
-
-   A run pointed at a real installation is refused before it starts, with a
-   message naming the remedy. An attended live walk that means to use the real
-   installation sets `HOLDSPEAK_ALLOW_REAL_HOME=<name of the walk>`, which is
-   echoed in the run header so the choice is never silent.
-
-   A dependency this machine does not have (a local model file, `mlx_whisper`,
-   an on-device dictation runtime) makes its tests **skip with the reason**
-   rather than fail. Read the skip reasons: a skip is a statement about the
-   machine, not a pass.
-5. Verify the clean install: a fresh virtual environment, `uv pip install -e .`,
-   then `holdspeak doctor` reaches exit 0 (optional gaps like a missing local
-   model are fine). See the captured example in the release evidence.
-6. Set the default install ref to the new tag: `HOLDSPEAK_REF` in
-   `scripts/install.sh` (default) so a script install pins the release.
-7. Tag the release (`vX.Y.Z`) and push the tag. **The tag is the publish**:
-   pushing it runs the release workflow, which builds and publishes to PyPI
-   via trusted publishing and creates the GitHub release. Only push the tag
-   when the gate above is green.
+You can also start the workflow by hand. It then publishes the current head of
+the default branch.
 
 ## Related
 
-- [`GETTING_STARTED.md`](GETTING_STARTED.md) for first-time install and run.
-- [`../README.md`](../README.md) for the install surface and project status.
-- [`MODELS.md`](MODELS.md) for the model contract.
-
-A report always carries an `aborted` column. It is empty on a completed run. When the driver stops before the episodes finish, the column names the reason, the raw file is still written, and the verdict is fail. Read the reason before reading any count.
+- [Getting Started](GETTING_STARTED.md)
+- [Operations](OPERATIONS.md)
+- [Models](MODELS.md)
+- [README](../README.md)

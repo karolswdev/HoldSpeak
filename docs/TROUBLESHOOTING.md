@@ -1,174 +1,123 @@
 # Troubleshooting
 
-This guide is a bounded source reconstruction at snapshot
-`675401a857b85336d4acaa8c65383dfc9636e4c8` (2026-09-19). It tells an operator
-which durable evidence to inspect. It does not claim that a live hub, database,
-provider or owner machine has been verified. No commands or tests were run for
-this documentation lane.
+Use this guide when HoldSpeak refuses work, stops after a restart, or shows a
+state you do not expect. Start with `holdspeak doctor`. See
+[Operations](OPERATIONS.md) for the doctor and the backup commands.
 
-## Evidence-first restart path
+The kernel records every operation with a state, a journal and a receipt.
+Read these records before you retry anything. A client timeout does not prove
+that the provider did or did not finish.
+
+## After a restart
 
 ```mermaid
 flowchart TD
   START[Restart or lost response]
-  DB[Open database and reconcile shape]
-  PARENT[Recover parent state and liveness]
   READ[Read operation state, receipt and journal]
-  PUB[Repair receipt-gated projections]
   DECIDE{Terminal receipt?}
-  SUCCESS[Use recorded result and native record]
-  UNKNOWN[Keep indeterminate or refusal; inspect destination]
-  RETRY[Admit a new idempotent operation only after review]
+  SUCCESS[Use the recorded result]
+  UNKNOWN[Keep indeterminate or refused; inspect the destination]
+  RETRY[Make a new operation after review]
 
-  START --> DB --> PARENT --> READ --> PUB --> DECIDE
+  START --> READ --> DECIDE
   DECIDE -->|yes| SUCCESS
   DECIDE -->|no| UNKNOWN --> RETRY
 ```
 
-The runtime performs parent reconciliation and liveness before projection
-repair (`holdspeak/kernel/runtime.py:138-175`). If work was awaiting a decision
-when the hub stopped, recovery invalidates it as an indeterminate restart
-outcome; if an executor missed its signed deadline, liveness produces a
-refusal or `indeterminate` (`holdspeak/kernel/broker.py:24-35`,
-`holdspeak/kernel/liveness.py:9-61`). A process view or client timeout is not
-proof that the provider did or did not complete.
+At start, the hub repairs the database shape, recovers parent work, checks
+liveness and then repairs projections. A projection never publishes before
+liveness recovery.
 
-## Trust and receipt path
-
-```mermaid
-sequenceDiagram
-  participant C as Caller
-  participant H as Hub/kernel
-  participant D as Durable store
-  participant N as Executor/provider
-  C->>H: authenticated request
-  H->>D: admit envelope and journal event
-  H->>C: decision required or refusal
-  C->>H: owner decision (if required)
-  H->>D: signed warrant
-  N->>H: claim with exact warrant
-  H->>D: claim witness
-  N->>H: result or failure evidence
-  H->>D: immutable receipt before publication
-  H-->>C: state/read view
-```
-
-Inspect the principal, operation envelope, target, warrant, claim witness,
-receipt and native result in that order. The executor checks exact envelope,
-revocation, expiry and live ancestry (`holdspeak/kernel/executor.py:26-128`).
-The kernel's journal is hash-chained (`holdspeak/kernel/journal.py:60-103`).
-
-## State symptoms
-
-| Symptom | Meaning supported by source | Evidence and action |
-| --- | --- | --- |
-| `admitting` remains after restart | Admission was interrupted before a settled decision | Read journal; runtime recovery may terminalize it. Do not dispatch from the state |
-| `awaiting_decision` after hub restart | A pending decision is no longer safe to continue | Expect `indeterminate` with `hub_restart_during_decision`; make a new request only after inspecting any destination |
-| `awaiting_execution` expired | No executor claim arrived before the signed claim deadline | Expect refusal `execution_claim_expired`; do not reuse the warrant |
-| `claimed` expired | An executor claimed but did not receipt before liveness deadline | Expect `indeterminate` `execution_liveness_expired`; inspect external side effects before compensation |
-| `refused` | Admission, authority, causality, destination or liveness blocked the operation | Read refusal outcome and journal event; correct the named prerequisite |
-| `cancelled` | Parent cancellation won the terminal race | Treat late provider output as non-publishable |
-| `indeterminate` | Completion cannot be proved, including timeout, lost provider or restart | Inspect receipt, provider/destination and native row; never call it success |
-| `succeeded` | Kernel has a terminal success receipt | Confirm the native result reference and materialized projection |
-| `failed` | Executor produced a terminal failure receipt | Read the outcome and adapter evidence; a new operation may be needed |
+## Operation states
 
 Terminal states are `succeeded`, `failed`, `refused`, `cancelled` and
-`indeterminate` (`holdspeak/kernel/model.py:9-13`). One operation has one
-terminal receipt. A fallback or retry is a distinct child operation and must
-not overwrite the first outcome.
+`indeterminate`. One operation has one terminal receipt. A retry is a new
+child operation. It never overwrites the first outcome.
 
-## Common refusal and failure causes
-
-| Code or outcome | Likely boundary | Next inspection |
+| State or symptom | Meaning | Action |
 | --- | --- | --- |
-| `principal_right_required` | Edge route right does not match the credential | Check derived principal kind and route in `holdspeak/principals.py` |
-| `unknown_operation` or unsupported family | No registered operation/policy family | Use the concrete operation registry and policy refusal; do not assume YOLO default |
-| `operation_envelope_mismatch` | Reused idempotency key with changed request | Use the original envelope or a new key after reviewing effects |
-| `causality_required` / dead parent | Parent warrant or identity chain is missing or no longer live | Inspect parent operation, warrant, principal and execution epoch |
-| `execution_claim_expired` | No claim before deadline | Re-admit only after checking that no external work started |
-| `execution_liveness_expired` | Claimed executor did not receipt | Treat external completion as unknown |
-| `hub_restart_during_decision` | Restart invalidated an unsettled decision | Decide whether a compensating or new operation is safe |
-| `kernel_parent_publication_in_progress` | Publication CAS currently owns the parent fence | Wait for the owner path and reread; do not force a state write |
-| `delegation_missing`, `delegation_revoked`, `delegation_expired` | Scheduled authority is absent or no longer live | Inspect the exact delegation terms and schedule state |
-| `delegation_target_changed` / `delegation_cadence_changed` | Schedule terms drifted from the approved snapshot | Reapprove the new terms; do not reuse old authority |
-| `duplicate_tick` | A due schedule minute was already claimed | Inspect the tick/receipt ledger before retrying |
-| `mic_floor_held` or `missed` | Scheduled capture could not start under its bounded window | Read the named holder or missed-window receipt |
-| `owner_rejected` | Owner review rejected the operation | No executor claim should exist; create a new proposal if intent changed |
+| `admitting` after restart | Admission stopped before a decision. | Read the journal. Recovery can end it. Do not dispatch from this state. |
+| `awaiting_decision` after restart | The pending decision is no longer safe. | Expect `indeterminate` with `hub_restart_during_decision`. Inspect the destination, then make a new request. |
+| `awaiting_execution` expired | No executor claimed the work before the deadline. | Expect `execution_claim_expired`. Do not reuse the warrant. |
+| `claimed` expired | An executor claimed the work but sent no receipt. | Expect `execution_liveness_expired`. Inspect external effects before you compensate. |
+| `refused` | Admission, authority, destination or liveness blocked the work. | Read the refusal and the journal event. Fix the named cause. |
+| `cancelled` | Cancellation of the parent won. | Do not publish late provider output. |
+| `indeterminate` | The result cannot be proved. | Inspect the receipt and the destination. Never call it success. |
+| `succeeded` | A success receipt exists. | Confirm the native result. |
+| `failed` | The executor wrote a failure receipt. | Read the outcome. A new operation may be needed. |
 
-Names are drawn from the broker, liveness, security contract and schedule
-paths. The exact outcome for a feature-specific adapter remains its own source
-contract.
+## Refusal codes
 
-## Authentication and authority problems
+| Code | Cause | Action |
+| --- | --- | --- |
+| `principal_right_required` | The credential lacks the right for the route. | Check the principal kind in `holdspeak/principals.py`. |
+| `unknown_operation` | No operation or policy family is registered. | Use a registered operation. YOLO does not change this. |
+| `idempotency_payload_mismatch` | An idempotency key came back with a changed request. | Use the original request, or a new key. |
+| `parent_operation_unknown`, `parent_operation_not_running`, `parent_operation_not_live` | The parent operation is missing, not running or no longer live. | Inspect the parent operation and its warrant. |
+| `execution_claim_expired` | No claim before the deadline. | Check that no external work started. Then make a new request. |
+| `execution_liveness_expired` | The executor sent no receipt. | Treat the external result as unknown. |
+| `hub_restart_during_decision` | A restart cancelled an open decision. | Decide if a new operation is safe. |
+| `kernel_parent_publication_in_progress` | Another path is publishing the parent. | Wait and read again. Do not force a state write. |
+| `delegation_missing`, `delegation_revoked`, `delegation_expired` | The schedule has no live authority. | Inspect the delegation and the schedule. |
+| `delegation_target_changed` | The schedule target differs from the approved terms. | Approve the new terms again. |
+| `duplicate_tick` | The schedule already ran for this minute. | Inspect the receipt ledger before a retry. |
+| `mic_floor_held`, `missed` | A scheduled recording could not start in its window. | Read the receipt for the holder or the missed window. |
+| `owner_rejected` | The owner rejected the operation. | Make a new proposal if the intent changed. |
 
-### Agent gets a forbidden response
+## An agent gets a forbidden response
 
-Check whether the request used a current agent credential and whether it asks
-for a route requiring `decide`, `posture`, `delegate` or `node.link`. Agent
-credentials are hash-stored, expiry checked and revocable, and the store is
-in-memory across a process restart (`holdspeak/principals.py:103-269`). An
-agent cannot turn a bearer token into an owner or node identity. The focused
-principal assertions inspect expiry, revocation, agent separation and node
-separation (`tests/integration/test_principal_separation.py`; inspected, not
-run).
+1. Check that the agent credential is current. Agent credentials expire and
+   an owner can revoke them.
+2. Check the route. Routes for `decide`, `posture`, `delegate` and
+   `node.link` need more than an agent right.
+3. Remember that an agent cannot become an owner or a node.
 
-### Approval did not execute
+Agent credentials are held in memory. A hub restart clears them.
 
-Read the three axes separately: proposal review, authorization state and
-execution state. Then read the kernel operation and receipt. An approved
-proposal can be waiting for a claim, failed at its adapter, cancelled or
-indeterminate. The existing [AUTHORITY.md](AUTHORITY.md) contract defines the
-operator-facing terms; [AUTHORITY_MODEL.md](AUTHORITY_MODEL.md) maps them to
-source.
+## An approval did not run
 
-### YOLO refused
+Read three things separately: the proposal review, the authorization state
+and the execution state. Then read the operation and its receipt. An approved
+proposal can wait for a claim, fail at its adapter, be cancelled or be
+`indeterminate`. [Authority](AUTHORITY.md) defines the terms.
 
-YOLO is a mode for future operations, not a bypass. Unsupported families,
-unknown destinations, missing fixed-destination registration, secret custody,
-payload binding, pane identity and receipt requirements still refuse
-(`holdspeak/operation_policy.py:193-360`). Read the refusal before changing
-mode or grant.
+## YOLO refused the work
 
-## Database and schema problems
+YOLO sets the mode for future operations. It is not a bypass. These cases
+still refuse:
 
-Run `holdspeak doctor` and preserve the database before changing it. Doctor's
-database check is read-oriented and reports readability/table presence;
-normal database open performs shape reconciliation
-(`holdspeak/commands/doctor.py:58-110`). Reconciliation is additive and does
-not drop tables, columns or rows (`holdspeak/db/reconcile.py:1-8`). A newer
-informational `schema_version` alone is not a failure signal.
+- an unsupported operation family
+- an unknown destination
+- a missing fixed-destination registration
+- secret custody and payload binding
+- a missing receipt requirement
 
-For an unreadable or suspicious file:
+Read the refusal before you change the mode or a grant. The rules are in
+`holdspeak/operation_policy.py`.
 
-1. Stop the hub and copy the file without deleting its WAL/SHM sidecars.
-2. Take a separate backup if SQLite can read it.
-3. Do not hand-edit schema rows or delete a journal event.
-4. Restore only from a validated backup while no owner process has the DB open.
-5. Run doctor and inspect domain rows and receipts after restart.
+## Database problems
 
-`holdspeak restore` makes a safety backup before replacement and refuses a
-live owner (`holdspeak/db/core.py:110-202`). Its focused assertions cover
-same-data restore, safety backup and invalid-candidate preservation
-(`tests/critical/test_journey_backup_restore.py:28-82`; inspected, not run).
+1. Run `holdspeak doctor`. The database check reads the file and counts
+   tables. The hub repairs the shape when it opens the database.
+2. Stop the hub. Copy the file together with its `-wal` and `-shm` files.
+3. Do not edit schema rows. Do not delete journal events.
+4. Restore only from a validated backup, and only with the hub stopped. See
+   [Operations](OPERATIONS.md).
+5. Run the doctor again. Check your records and receipts.
 
-## Projection and search problems
+Shape repair only adds. It does not drop tables, columns or rows. A newer
+informational `schema_version` alone is not a failure.
 
-If transcript search is stale, distinguish `segments` from `segments_fts`:
-the latter is an FTS projection maintained by triggers. If a process or Desk
-card disagrees with a kernel receipt, trust the operation, journal and receipt
-first, then let the owning projection repair path run. The kernel startup
-order prevents a projection from publishing ahead of liveness recovery.
+## Search or a card shows old data
 
-Do not repair a projection by writing a fabricated successful receipt. A
-receipt-gated stage has `STAGED`, `FINALIZING`, `PUBLISHED` or `DISCARDED`
-state; publication is a CAS-guarded operation (`holdspeak/db/schema.py:2201-2219`,
-`holdspeak/kernel/publication_transition.py:12-50`).
+Transcript search reads `segments_fts`. Triggers keep it in step with
+`segments`. If a card disagrees with a receipt, trust the operation, journal
+and receipt. Then let the owning repair path run.
 
-## What remains unknown
+Never write a fake success receipt to fix a projection.
 
-Source inspection cannot tell whether a particular live database has been
-reconciled, whether an external provider performed an effect after a lost
-response, whether a user saw a control, or whether all feature adapters are
-currently reachable. Those require the relevant receipt, doctor output,
-database row or owner observation. Mark them unknown and preserve the
-operation id rather than filling the gap with a successful-looking status.
+## What the records cannot tell you
+
+The records cannot show whether a provider acted after a lost response, or
+whether a person saw a control. Mark these facts unknown. Keep the operation
+id. Do not replace the gap with a success status.

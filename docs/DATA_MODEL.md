@@ -1,15 +1,17 @@
 # Data model
 
-This page describes the persistent data shape inspected at snapshot
-`675401a857b85336d4acaa8c65383dfc9636e4c8` (2026-09-19). The generated
-[schema inventory](generated/schema-inventory.json) is the mechanical list of
-declared tables, columns, indexes and triggers. It comes from `SCHEMA_SQL` and
-is explicitly a base-schema inventory; reconciliation may add shape or
-backfill data in an existing database. For meanings and lifecycle vocabulary,
-see [DOMAIN_MODEL.md](DOMAIN_MODEL.md). For kernel rows and transitions, see
-[KERNEL.md](KERNEL.md).
+HoldSpeak keeps its records in one SQLite database.
+This page groups the tables and lists the rules for keys, JSON columns, and projections.
+[DOMAIN_MODEL.md](DOMAIN_MODEL.md) defines the terms.
+[KERNEL.md](KERNEL.md) describes kernel rows.
+[STORAGE_AND_MIGRATIONS.md](STORAGE_AND_MIGRATIONS.md) covers backup and schema repair.
 
-## Relational shape
+The [schema inventory](generated/schema-inventory.json) lists every table, column, index, and trigger.
+It comes from `SCHEMA_SQL` in `holdspeak/db/schema.py`.
+It shows the declared base schema.
+It does not show the exact shape of your database.
+
+## Relationships
 
 ```mermaid
 erDiagram
@@ -20,155 +22,112 @@ erDiagram
   ARTIFACTS ||--o{ ARTIFACT_SOURCES : cites
   MEETINGS ||--o{ ACTION_ITEMS : yields
   PROJECTS ||--o{ PROJECT_RESOURCES : contains
-  ACTUATOR_PROPOSALS ||--o{ PROPOSAL_AUDIT : records
+  ACTUATOR_PROPOSALS ||--o{ ACTUATOR_PROPOSAL_AUDIT : records
   AUTHORITY_GRANTS ||--o{ AUTHORITY_GRANT_USES : consumes
   KERNEL_OPERATIONS ||--o| KERNEL_RECEIPTS : closes
   KERNEL_OPERATIONS ||--o{ KERNEL_JOURNAL : emits
   KERNEL_OPERATIONS ||--o| KERNEL_PARENT_RUNS : wraps
   KERNEL_PARENT_RUNS ||--o{ KERNEL_PARENT_CHECKPOINTS : advances
-  KERNEL_PROJECTION_STAGES ||--o| KERNEL_RECEIPTS : follows
   INFERENCE_ROUTE_EXECUTIONS ||--o{ INFERENCE_ROUTE_ATTEMPTS : contains
 ```
 
-The diagram shows the source relationships that matter to runtime reasoning.
-It is not a claim that every conceptual edge is a literal SQLite foreign key;
-some source references are deliberately retained after deletion, and some
-read models are projections. The exact declared constraints are in
-`holdspeak/db/schema.py` and the generated inventory.
+Some lines are concepts and not SQLite foreign keys.
+`holdspeak/db/schema.py` has the exact constraints.
 
-## Entity groups
+## Table groups
 
-### Capture and meeting intelligence
+### Capture and meeting analysis
 
-`meetings` is the aggregate root for captured/imported sessions. `segments`
-stores text, speaker, speaker identity and timing. `bookmarks`, `meeting_tags`,
-`topics`, `intel_snapshots`, speaker embeddings and meeting intelligence jobs
-are child or supporting records (`holdspeak/db/schema.py:24-175`).
-`segments_fts` is an FTS5 read projection maintained by insert/update/delete
-triggers (`holdspeak/db/schema.py:189-213`). It is not a second transcript
-authority.
+`meetings` is the root.
+`segments` holds the transcript.
+`bookmarks`, `meeting_tags`, `topics`, and `intel_snapshots` are child rows.
+`speakers` holds speaker embeddings and is not a child of one meeting.
+`segments_fts` is an FTS5 search index kept current by triggers.
+It is not a second copy of the transcript.
 
-`intel_jobs` stores a job id, meeting link, content-free descriptor and
-transcript hashes, queue/lease state, parent operation link, attempts and last
-error. `intel_job_attempts` is append-only attempt history. The job queue is
-not the kernel journal even where it links to a parent operation.
+`intel_jobs` is the queue of deferred analysis.
+`intel_job_attempts` is its append-only history.
+The queue is not the kernel journal.
 
 ### Memory and work objects
 
-`artifacts` and `artifact_sources` retain typed result content and its plugin,
-window and source lineage (`holdspeak/db/schema.py:339-379`). `decisions`
-holds a durable decision projection and supports recorded, accepted,
-superseded and rejected lifecycle. A source-deletion trigger preserves the
-decision while marking source state (`holdspeak/db/schema.py:385-422`).
+- `artifacts` and `artifact_sources` hold typed results and their source links.
+- `decisions` holds lasting decisions. A trigger keeps a decision when its meeting is deleted.
+- `action_items` holds tasks. `decision_commitments` links a decision to a task.
+- `follow_through_proposals` holds extracted tasks that wait for your review. It is not an actuator proposal.
+- `projects`, `meeting_projects`, and `project_resources` hold project context.
+- `notes`, `kbs`, `recipes`, `chains`, `workflows`, `directories`, and `workbenches` hold Desk objects.
+- The `memory_*` tables hold the memory index: sources, chunks, embeddings, entities, facts, observations, pages, and jobs.
 
-`action_items` is a first-class cross-meeting task with owner, due, status,
-review state and source reference. `decision_commitments` provides an
-optional accountability link from an accepted decision to an action
-(`holdspeak/db/schema.py:97-113,224-236`). `follow_through_proposals` is an
-extraction workflow; it is distinct from an actuator proposal that can cause
-an external effect.
+### Proposals and grants
 
-`projects`, `meeting_projects`, `project_resources`, project briefs and
-project task tables provide owner-defined context. Notes, knowledge bases,
-recipes, chains, workflows, directories, workbenches and their item/run
-tables form the Desk/Workbench object family. Those surfaces have separate
-documentation owners, but their runtime links can appear in parent operations
-and route evidence. See [DOMAIN_MODEL.md](DOMAIN_MODEL.md) for the current
-boundary and do not treat a Desk projection as source proof for a kernel
-effect.
+`actuator_proposals` stores candidate outside effects.
+It keeps review, authorization, and execution state in separate columns.
+It binds the approved payload and destination by hash.
+`actuator_proposal_audit` records each change.
 
-### Proposal and authority records
+`authority_grants` stores the actor, operation family, effect, destination, data classes, expiry, use limit, and a binding hash.
+`authority_grant_uses` records each use.
+A grant holds no payload and no secret.
 
-`actuator_proposals` stores candidate side effects and separates review,
-authorization and execution states. It also binds approved payload and
-destination hashes; its lifecycle is proposed, approved, executed, rejected
-or failed (`holdspeak/db/schema.py:424-485`). `holdspeak/db/actuators.py:1-12`
-shows the database actuator layer stores and reads proposals; it is not the
-external executor.
+### Kernel and inference
 
-`authority_grants` stores a bounded actor, operation family/effect,
-normalized destination, data classes, optional scope, expiry, use limits, mode
-and binding hash. `authority_grant_uses` is the per-consumption record
-(`holdspeak/db/schema.py:487-520`). Grants hold no payload or secret.
-
-### Kernel and inference records
-
-The kernel uses:
-
-| Row family | Canonical facts |
+| Table | Content |
 | --- | --- |
-| `kernel_operations` | Request identity, envelope hash, principal, target, placement, state, decision, warrant and claim |
-| `kernel_journal` | Append-only hash-chained event history and references |
+| `kernel_operations` | Request identity, envelope hash, principal, target, state, decision, warrant, claim |
+| `kernel_journal` | Append-only, hash-chained event history |
 | `kernel_receipts` | One terminal evidence row per operation |
-| `kernel_inference_receipt_attestations` | Signed inference material bound one-to-one to an inference receipt |
-| `kernel_parent_runs` | Durable bounded parent definition, deadline, epoch, child budget, lease and publication claim |
-| `kernel_parent_checkpoints` | Receipt-linked child advancement and stale/winner evidence |
-| `kernel_projection_stages` | Content/result staging before receipt-gated publication |
-| `inference_route_plans`, `inference_route_executions`, `inference_route_attempts` | Frozen route assignment, deployment revision, retry/attempt state, outcome and result hashes |
+| `kernel_inference_receipt_attestations` | Signed inference material bound to one receipt |
+| `kernel_parent_runs` | Parent definition, deadline, child budget, lease, publication claim |
+| `kernel_parent_checkpoints` | Child progress linked to receipts |
+| `kernel_projection_stages` | Staged results that wait for a receipt before publication |
+| `inference_route_plans`, `inference_route_executions`, `inference_route_attempts` | Frozen route, retry state, outcome, result hashes |
 
-Generic inference receipts carry references and hashes, but
-`kernel_parent_runs.input_json` stores caller input snapshots, which can contain
-prompt text. The model filter rejects specific audio/PCM/token keys, not every
-content-bearing string (`holdspeak/kernel/model.py:9-13`;
-`holdspeak/kernel/parent_run.py:105-106`).
-The parent/child and receipt rules are detailed in [KERNEL.md](KERNEL.md).
+Receipts carry references and hashes.
+`kernel_parent_runs.input_json` stores caller input snapshots, and a snapshot can contain prompt text.
+The kernel filter rejects named audio, PCM, and token keys.
+It does not reject every prompt string (`holdspeak/kernel/model.py`, `holdspeak/kernel/parent_run.py`).
 
-## Keys, references and event semantics
+## Keys and references
 
-SQLite primary keys are mixed by domain: text ids for meetings, jobs,
-artifacts, decisions and kernel operations; integer autoincrement ids for
-segments, bookmarks, topics and snapshots; and opaque text ids for authority
-and route records. Code must use the declared type and not assume every id is
-numeric or globally unique.
+Primary keys differ by domain.
+Meetings, jobs, artifacts, decisions, and kernel operations use text ids.
+Segments, bookmarks, topics, and snapshots use integer ids.
+Grants and route records use opaque text ids.
+Do not assume that an id is numeric or globally unique.
 
-Foreign keys are enabled at connection time. Many meeting children use
-`ON DELETE CASCADE`; decisions intentionally retain source references and
-source-deleted state. Unique constraints protect operation idempotency,
-one-receipt-per-operation, one active local inference lease, and route/attempt
-identity. The generated inventory is the quickest way to inspect the exact
-constraint for a named table.
+Every connection turns on foreign keys.
+Most meeting children use `ON DELETE CASCADE`.
+Decisions keep their source ids on purpose.
+Unique constraints protect operation idempotency, one receipt per operation, one active local inference lease, and route attempt identity.
 
-JSON columns are snapshots or structured metadata, not an invitation to put
-unbounded content in every row. Parent input JSON can contain caller request
-content; child checkpoint JSON has its own advancement contract. Proposal and
-native domain JSON must follow their owning subsystem's policy. A JSON hash or a `*_sha256` field
-is evidence that the referenced material was bound, not proof that the
-material is available locally.
+## JSON columns and hashes
 
-Append-only means different things in source. Some ledgers use code-level
-insert-only APIs; inference attestations and publication fences also have
-SQLite triggers. A row with an update timestamp is not automatically immutable.
-Inspect the table trigger or writer before relying on immutability.
+A JSON column holds a snapshot or metadata.
+Do not store unbounded content in it.
+A `*_sha256` field shows that material was bound.
+It does not show that the material is on this machine.
 
-## Projections and recovery
+## Append-only tables
 
-Read projections include FTS, process views, meeting/Desk cards and staged
-kernel projections. They may be rebuilt only by their owner from canonical
-rows and evidence. The kernel startup sequence reconciles parent liveness
-before projection repair (`holdspeak/kernel/runtime.py:138-175`). A stale
-projection must not overwrite a newer terminal receipt or make an
-`indeterminate` operation appear successful.
+Some ledgers are insert-only in code.
+Inference attestations, tool-turn history, and many inference route records also have SQLite triggers that block updates and deletes.
+A row with an update timestamp is not always immutable.
+Read the table trigger or the writer before you rely on it.
 
-The database's shape is also a projection of source declarations. `schema_version`
-is informational; shape reconciliation is additive and idempotent. See
-[STORAGE_AND_MIGRATIONS.md](STORAGE_AND_MIGRATIONS.md) for backup, repair and
-pre-existing database limits.
+## Derived views and recovery
 
-## Retention and deletion boundaries
+FTS indexes, process views, Desk cards, and staged kernel projections are derived views.
+Only their owner rebuilds them, from the owner rows.
+At startup the kernel reaps expired claims, reconciles parent runs, recovers inference routes, and then recovers projections (`holdspeak/kernel/runtime.py`).
+A stale view must not replace a newer receipt.
+It must not make an `indeterminate` operation look successful.
 
-Meeting child rows normally follow meeting deletion, while decisions can
-preserve memory with `source_deleted`. Kernel journal and receipt rows are
-runtime evidence and must not be described as user transcript retention.
-Backups can contain all database rows at their snapshot point; restore does
-not erase separate config, audio, browser or People stores. The existing
-[SECURITY.md](SECURITY.md) defines the product's data classes and People
-retention boundary.
+## Retention
 
-## Verification limits
-
-This page uses source and inspected assertions, but no tests were run for the
-documentation lane. The declared schema inventory does not prove the shape of
-a particular live database, and the broad table set includes legacy and
-feature-specific records outside this lane. Unknowns include the exact
-reconcile result for an arbitrary old store and whether a requested projection
-has already been repaired after a crash.
+Deleting a meeting removes its child rows.
+Decisions stay and are marked `source_deleted`.
+Kernel journal and receipt rows are runtime evidence and are not transcript storage.
+A backup holds every database row at its snapshot time.
+A restore does not change config, audio files, browser storage, or People data.
+[SECURITY.md](SECURITY.md) defines the data classes.

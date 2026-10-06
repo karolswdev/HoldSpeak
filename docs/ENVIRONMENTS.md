@@ -1,7 +1,7 @@
 # Places
 
 Choose an environment for the Floor and save your favorites.
-Use **Settle in** when you want fewer navigation controls around your open work.
+Use **Hide the menus** (Settle in) when you want fewer navigation controls around your open work.
 
 ## Change places
 
@@ -16,7 +16,7 @@ Arrow keys and Home/End change the selected place.
 
 ## Available places
 
-Rainy City is the default. Eight animated scenes and one still option are available.
+Rainy City is the default. Eight scenes are animated. Quiet Desk is still.
 
 | Place | Scene |
 | --- | --- |
@@ -56,7 +56,7 @@ Quiet Desk has no room sound.
 
 ## Settle in
 
-1. Select **Settle in** in the dock or Desk menu.
+1. Select **Hide the menus** in the dock or the Desk menu.
 2. Continue your work in the open windows.
 3. Select **Back to Desk** to restore the navigation controls.
 

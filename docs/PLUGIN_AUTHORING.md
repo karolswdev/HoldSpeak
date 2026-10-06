@@ -1,369 +1,223 @@
 # Plugin Authoring
 
-> A meeting-intel **plugin** turns a saved meeting's transcript into a
-> structured, reviewable artifact: decisions, requirements, a risk
-> register, an architecture diagram. The transcript is scored for
-> intent, a chain of plugins is selected, and an LLM-backed plugin receives
-> host-issued admitted dispatch to produce typed output that the web UI renders
-> read-only at `/history`.
+A meeting-intel plugin turns the transcript of a saved meeting into a typed,
+reviewable artifact. Examples are decisions, requirements, a risk register and
+an architecture diagram. HoldSpeak scores the transcript for intent, selects a
+chain of plugins, runs them, stores the output and shows it in the read-only
+History view.
 
-Writing one is the highest-leverage way to make HoldSpeak yours: the
-routing, persistence, rendering, and approval machinery already exist, so
-a new artifact type is mostly the prompt you wish your meetings produced.
-This guide documents the contract you satisfy to write one, and the
-testing surface you get for free. It is the public companion to the
-internal design RFC,
-[`internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`](internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md).
-For the analogous *activity-connector* contract, see
-[Connector Development](./CONNECTOR_DEVELOPMENT.md).
+The routing, storage, rendering and approval code already exist. A new plugin
+supplies the prompt, the output shape and a renderer.
 
----
+For the sibling contract for activity connectors, see
+[Connector Development](CONNECTOR_DEVELOPMENT.md). For plugins that propose
+external effects, see [Actuators](#actuators) and
+[Actuator Development](ACTUATOR_DEVELOPMENT.md).
 
-## TL;DR
+## Quick path
 
-A plugin is a Python object that:
+1. Write a class with `id`, `version` and a `run(context) -> dict` method.
+2. For model work, use the dispatch handle that the host puts in the context.
+3. Register a renderer so the artifact is readable in History.
+4. Add the plugin id to a routing chain, or ship it as a plugin pack.
+5. Write unit tests with an injected model reply.
 
-1. Declares `id`, `version`, and (optionally) `kind`,
-   `execution_mode`, and `required_capabilities` as attributes.
-2. Implements `run(context: dict) -> dict`: build and validate typed output.
-   An LLM-backed plugin reads the host-issued dispatch handle from its context
-   and must never construct or cache a provider of its own.
-3. Registers a **synthesis renderer** so its artifact shows up in the
-   web `/history` view.
-4. Joins one or more **plugin chains** (by profile and/or intent) so it
-   fires on the right meetings.
+The reference plugin is
+[`decision_capture.py`](../holdspeak/plugins/builtin/decision_capture.py).
+Read it next to this guide.
 
-The canonical reference is
-[`holdspeak/plugins/builtin/decision_capture.py`](../holdspeak/plugins/builtin/decision_capture.py)
-(a real, LLM-backed plugin in ~200 lines). Read it alongside this
-guide.
+## How a plugin runs
 
----
-
-## Plugin lifecycle
-
-```
-   ┌───────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
-   │  declare  │ → │  route   │ → │   run    │ → │  persist │ → │  render  │
-   │ (attrs +  │   │ (chain   │   │ (prompt→ │   │ (artifact│   │ (/history│
-   │   run)    │   │  select) │   │  LLM→    │   │  store)  │   │   view)  │
-   └───────────┘   └──────────┘   │  parse)  │   └──────────┘   └──────────┘
-                                  └──────────┘
+```mermaid
+flowchart LR
+    A[Declare] --> B[Route]
+    B --> C[Run]
+    C --> D[Persist]
+    D --> E[Render]
 ```
 
-- **Declare**: your class exposes `id`/`version` (required) plus the
-  optional `kind`/`execution_mode`/`required_capabilities` attributes
-  the host reads with `getattr`.
-- **Route**: the router scores the transcript's intents and assembles
-  a plugin chain for the meeting's profile + active intents.
-- **Run**: the host calls `run(context)` inside a timeout, after the
-  actuator and capability gates pass. For an LLM-backed plugin, the context
-  contains the host-issued dispatch handle for this admitted child. You use
-  that handle, validate the result, and return a dict.
-- **Persist**: the host stores your output as a canonical artifact
-  keyed by an idempotency hash (a re-run on the same window is a no-op).
-- **Render**: your registered renderer turns the stored output into a
-  Markdown block in the read-only `/history` view.
+- **Declare.** The class exposes `id` and `version`. It can also expose
+  `kind`, `execution_mode` and `required_capabilities`.
+- **Route.** The router scores the transcript for intents. It builds a plugin
+  chain from the meeting profile and the active intents.
+- **Run.** The host calls `run(context)` inside a timeout, after the capability
+  checks pass.
+- **Persist.** The host stores the output as an artifact. The key is an
+  idempotency hash, so a second run on the same window changes nothing.
+- **Render.** Your renderer turns the stored output into a Markdown block.
 
-Plugins run on **saved/recorded** meetings, never live audio.
+Plugins run on saved meetings. They never run on live audio.
 
----
+## The plugin contract
 
-## The `HostPlugin` contract
-
-The protocol is in
-[`holdspeak/plugins/host.py`](../holdspeak/plugins/host.py):
-
-```python
-class HostPlugin(Protocol):
-    """Minimal plugin contract for host execution."""
-
-    id: str
-    version: str
-
-    def run(self, context: dict[str, Any]) -> dict[str, Any]:
-        ...
-```
-
-`PluginHost.register()` only requires a non-empty `id` and a `run`
-method. Everything else (`kind`, `execution_mode`,
-`required_capabilities`) is read defensively via `getattr` with a
-default, so you declare only what you need.
-
-### Attribute reference
+The protocol is `HostPlugin` in
+[`holdspeak/plugins/host.py`](../holdspeak/plugins/host.py).
+`PluginHost.register()` needs a non-empty `id` and a `run` method. The host
+reads every other attribute with a default.
 
 | Attribute | Type | Required | Notes |
 |---|---|---|---|
-| `id` | `str` | **yes** | Unique, stable. Used as the artifact + idempotency key and the chain entry. Lowercase snake_case by convention (e.g. `decision_capture`). |
-| `version` | `str` | **yes** | Semver-ish. Recorded on every run result. |
-| `kind` | `str` | no | Artifact category; see below. Defaults to unset. |
-| `execution_mode` | `str` | no | `"inline"` (default) or `"deferred"`. See "Execution mode". |
-| `required_capabilities` | `list[str]` | no | Capabilities the host must have enabled, e.g. `["llm"]`. See "The `llm` capability gate". |
-
-### `kind`
-
-`kind` labels what the plugin produces; it drives the actuator gate and
-is a hint for rendering. The built-ins use these values:
-
-| `kind` | Meaning | Example built-ins |
-|---|---|---|
-| `synthesizer` | Structured intermediate data (decisions, requirements, milestones) | `decision_capture`, `requirements_extractor`, `milestone_planner` |
-| `artifact_generator` | A diagram or formatted document | `mermaid_architecture`, `adr_drafter`, `stakeholder_update_drafter` |
-| `validator` | Flags gaps or issues | `action_owner_enforcer`, `scope_guard` |
-| `signals` | Extracted signals/intelligence | `customer_signal_extractor` |
-| `actuator` | Proposes an external side effect (authority-gated) | `followup_ticket_actuator` |
-
-**Actuators propose; they never act on their own.** A plugin whose
-`kind` is `actuator` returns an `ActuatorProposal` from `run()`, a
-*description* of a side effect, which the host records (status
-`proposed`). A separate authority policy and guarded executor decide whether an
-eligible fixed-destination proposal may execute immediately under YOLO, is
-authorized by a scoped grant, or waits for an explicit decision under
-Normal/Secure. This
-is its own topic; see [Actuators](#actuators) below before authoring one.
+| `id` | `str` | Yes | Unique and stable. Lowercase snake_case, for example `decision_capture`. |
+| `version` | `str` | Yes | Recorded on every run result. |
+| `kind` | `str` | No | `synthesizer`, `artifact_generator`, `validator`, `signals`, `detector` or `actuator`. |
+| `execution_mode` | `str` | No | `inline` (default) or `deferred`. |
+| `required_capabilities` | `list[str]` | No | `llm`, `actuator`. The host blocks the plugin if a capability is off. |
 
 ### Execution mode
 
-`execution_mode` decides whether the host runs your plugin synchronously
-or queues it:
+- `inline`: `run()` executes during window dispatch. Use it for cheap,
+  deterministic work.
+- `deferred`: the host queues the run as a `DeferredPluginRun`. A background
+  worker runs it later with `PluginHost.process_next_deferred_run()`. Use it
+  for every plugin that calls a model.
 
-- `"inline"` (default): `run()` executes during window dispatch and the
-  result returns immediately.
-- `"deferred"` (synonyms accepted: `"queued"`, `"queue"`, `"heavy"`):
-  the run is queued as a `DeferredPluginRun` and processed later by the
-  background worker (`PluginHost.process_next_deferred_run()`). The
-  dispatch call returns status `queued` straight away.
+The host also accepts `queued`, `queue` and `heavy` as synonyms of `deferred`.
 
-Any plugin that makes a real (slow) LLM call should be `deferred`; that
-is what `decision_capture` does. Use `inline` only for cheap,
-deterministic work.
+### The `run` context
 
-### `run(context) -> dict`
-
-`context` is a plain `dict` (not a typed envelope), assembled by the
-dispatcher in
-[`holdspeak/plugins/dispatch.py`](../holdspeak/plugins/dispatch.py).
-The fields you can rely on:
+`run(context)` receives a plain `dict`. The dispatcher in
+[`holdspeak/plugins/dispatch.py`](../holdspeak/plugins/dispatch.py) builds it.
+Read every key with a default.
 
 | Key | Type | Notes |
 |---|---|---|
-| `transcript` | `str` | The window's transcript text. Your primary input. |
-| `active_intents` | `list[str]` | Intents that fired for this window (subset of the supported intents). |
-| `profile` | `str` | The meeting's profile (e.g. `balanced`, `architect`). |
-| `meeting_id` | `str` | The owning meeting. |
-| `window_id` | `str` | The transcript window. |
-| `tags` | `list[str]` | Window metadata tags, if any. |
-| `project_name` / `project` | `str` | Associated project, if detected. |
+| `transcript` | `str` | The window transcript. The main input. |
+| `transcript_segments` | `list` | Timed segments, when available. |
+| `active_intents` | `list[str]` | Intents that fired for this window. |
+| `profile` | `str` | The meeting profile, for example `balanced` or `architect`. |
+| `meeting_id`, `window_id` | `str` | The owning meeting and window. |
+| `tags` | `list[str]` | Window tags. |
+| `project_name`, `project` | `str` | The detected project, if any. |
 
-Context providers registered with the host
-(`register_context_provider`) may add more keys; read defensively and
-default everything. Your return value is a `dict`; the convention is
-documented next.
+Context providers that you add with `PluginHost.register_context_provider` can
+add more keys.
 
----
+Return a `dict`. A plugin that works returns its typed fields and
+`confidence_hint` set to `1.0`. A plugin that cannot work returns a `summary`
+reason and `confidence_hint` set to `0.0`, without the typed fields.
 
-## LLM-backed plugins use host-issued dispatch
+## Model calls
 
-An LLM-backed plugin declares `required_capabilities = ["llm"]`. It does not
-construct a provider, resolve configuration, read a connection, or cache an
-engine. The host owns that work.
+An LLM-backed plugin sets `required_capabilities = ["llm"]`. It never builds a
+provider, reads configuration or caches an engine. The host owns all of that.
 
-The shipped host interface is
-[`PluginHost.issued_dispatch()`](../holdspeak/plugins/host.py), used by the
-meeting execution path to issue one `PluginDispatch` handle over an already
-admitted child engine. `PluginHost.execute()` places that handle under
-`PLUGIN_DISPATCH_KEY` in a private copy of this invocation's context. The
-plugin consumes that handle for its one model completion. A deterministic plugin
-receives no handle and needs none.
+The host issues one `PluginDispatch` handle for each admitted run. It puts the
+handle in a private copy of the context under `PLUGIN_DISPATCH_KEY`. The easy
+way to use it is to subclass `IntelligenceConsumer` from
+[`holdspeak/plugins/intelligence.py`](../holdspeak/plugins/intelligence.py):
 
 ```python
-from holdspeak.plugins.intelligence import PLUGIN_DISPATCH_KEY
+from holdspeak.plugins.intelligence import PLUGIN_INTEL_SIGNALS, IntelligenceConsumer
 
-class DecisionCapturePlugin:
-    id = "decision_capture"
-    version = "1.0.0"
+class MyPlugin(IntelligenceConsumer):
+    id = "my_plugin"
+    version = "0.1.0"
+    kind = "synthesizer"
+    execution_mode = "deferred"
     required_capabilities = ["llm"]
+    intel_temperature = 0.2
+    intel_max_tokens = 800
 
-    def run(self, context: dict) -> dict:
-        dispatch = context[PLUGIN_DISPATCH_KEY]
-        text = dispatch.chat([
+    def run(self, context):
+        messages = [
             {"role": "system", "content": "Return the declared JSON shape."},
             {"role": "user", "content": context["transcript"]},
-        ], temperature=0.2, max_tokens=800)
-        return self._parse_and_validate(text, context)
+        ]
+        try:
+            raw = self._call_intel(messages, context)
+        except PLUGIN_INTEL_SIGNALS:
+            raise
+        return self._parse_and_validate(raw)
 ```
 
-`PluginDispatch` is a single-use handle, not a general provider. It is bound to
-the exact admitted engine, dispatch context, cancellation signal, deployment
-revision, and physical child. A missing, forged, released, cancelled, or
-already-used handle refuses by name. Do not catch a dispatch revocation as a
-successful plugin result. The host releases the handle when this dispatch ends,
-so a timed-out worker cannot borrow a later child's authority.
+Follow these rules:
 
-Build the prompt from the supplied context, parse the response, and validate the
-exact output shape before returning it. Return a typed success shape or a typed
-failure shape as the plugin contract requires. The router owns capability
-selection, assignment resolution, frozen route and operation plans, fallback,
-and receipts. Read [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md)
-for those mechanics.
+- The handle works for one completion. A missing, released, cancelled or used
+  handle refuses by name.
+- Do not catch the `PLUGIN_INTEL_SIGNALS` exceptions as a plugin result. They
+  are the outcome of the admitted run, not a plugin failure.
+- Validate the reply shape before you return it.
+- A deterministic plugin gets no handle and needs none.
 
-The legacy capability gate remains useful for host scheduling: the host blocks a
-plugin whose declared capability is unavailable before it starts an admitted
-child. It is not a configuration-derived provider gate and it is not permission
-to create a direct provider call.
+The router owns model selection, fallback and receipts. See
+[Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
----
+## Render the artifact
 
-## Rendering the artifact
+[`holdspeak/plugins/synthesis.py`](../holdspeak/plugins/synthesis.py) renders
+stored output for History. Two registries connect a plugin to its renderer:
 
-Stored output is rendered for the read-only `/history` view by
-[`holdspeak/plugins/synthesis.py`](../holdspeak/plugins/synthesis.py).
-Two registries connect a plugin to its renderer:
+- `_ARTIFACT_TYPE_BY_PLUGIN` maps a plugin id to an artifact type.
+- `_ARTIFACT_RENDERERS` maps an artifact type to a renderer function.
 
-```python
-# 1. plugin id  →  artifact type
-_ARTIFACT_TYPE_BY_PLUGIN: dict[str, str] = {
-    ...
-    "decision_capture": "decisions",
-    ...
-}
+A renderer takes a `_RenderContext`. Its `output` field is your `run` result.
+The renderer returns `None` for the default body. Otherwise it returns a tuple:
+the Markdown body and a dict of extra keys for the artifact JSON.
 
-# 2. artifact type  →  renderer function
-_ARTIFACT_RENDERERS: dict[str, Callable[[_RenderContext], _Rendered]] = {
-    ...
-    "decisions": _render_decisions,
-    ...
-}
-```
+To add a renderer:
 
-A renderer takes a `_RenderContext` (which carries `output`, your
-`run` return value) and returns `_Rendered`, i.e.
-`Optional[tuple[str, dict[str, Any]]]`:
+1. Add `"my_plugin": "my_artifact"` to `_ARTIFACT_TYPE_BY_PLUGIN`.
+2. Write `_render_my_artifact(ctx) -> _Rendered`.
+3. Register it under `"my_artifact"` in `_ARTIFACT_RENDERERS`.
 
-- the **first** element is the inner Markdown block for the artifact
-  body, and
-- the **second** is extra structured keys to attach to the artifact's
-  JSON payload.
+Without a renderer the artifact still persists and shows the default body.
 
-Return `None` to fall back to the default rendering.
+## Join a routing chain
 
-```python
-def _render_decisions(ctx: _RenderContext) -> _Rendered:
-    decisions = [d for d in (ctx.output.get("decisions") or []) if isinstance(d, dict)] or None
-    open_questions = [str(q).strip() for q in (ctx.output.get("open_questions") or []) if str(q).strip()] or None
-    if not (decisions or open_questions):
-        return None
-    extra: dict[str, Any] = {}
-    if decisions:
-        extra["decisions"] = decisions
-    if open_questions:
-        extra["open_questions"] = open_questions
-    return _decision_body(decisions, open_questions), extra
-```
+The router,
+[`holdspeak/plugins/router.py`](../holdspeak/plugins/router.py), scores the
+transcript against `SUPPORTED_INTENTS`: `architecture`, `delivery`, `product`,
+`incident` and `comms`.
 
-**To wire up a new plugin's rendering:**
+`build_plugin_chain(profile, active_intents)` builds the chain. It starts with
+`project_detector`, adds the profile base chain from
+`PROFILE_PLUGIN_BASE_CHAINS`, adds the chain of each active intent from
+`_INTENT_PLUGIN_CHAIN`, then removes duplicates in order.
 
-1. Add a `your_plugin_id -> "your_artifact_type"` entry to
-   `_ARTIFACT_TYPE_BY_PLUGIN`.
-2. Write a `_render_*(ctx) -> _Rendered` function.
-3. Register it under your artifact type in `_ARTIFACT_RENDERERS`.
+| Profile | Base chain |
+|---|---|
+| `balanced` | `requirements_extractor`, `action_owner_enforcer`, `decision_capture` |
+| `architect` | `requirements_extractor`, `mermaid_architecture`, `adr_drafter` |
+| `delivery` | `action_owner_enforcer`, `milestone_planner`, `dependency_mapper` |
+| `product` | `scope_guard`, `customer_signal_extractor` |
+| `incident` | `incident_timeline`, `risk_heatmap`, `stakeholder_update_drafter` |
 
-If you skip this, the artifact still persists and renders with the
-default body, but a bespoke renderer is what makes it readable.
+To make a first-party plugin fire, add its id to a profile chain, an intent
+chain, or both. The tests that assert exact chains must change in the same
+change: `tests/unit/test_intent_dispatch.py`,
+`tests/unit/test_intent_pipeline.py` and
+`tests/unit/test_multi_intent_routing.py`. Update them. Do not filter them out.
 
----
+## Register a first-party plugin
 
-## Joining a chain
+`register_builtin_plugins()` in
+[`holdspeak/plugins/builtin/__init__.py`](../holdspeak/plugins/builtin/__init__.py)
+registers the built-ins on the host. To add one:
 
-Which plugins fire on a meeting is decided by the router,
-[`holdspeak/plugins/router.py`](../holdspeak/plugins/router.py). The
-transcript is scored against the supported intents:
+1. Write the class under `holdspeak/plugins/builtin/`.
+2. Add it to `_BUILTIN_PLUGIN_DEFS` and to the real-plugin map in that file.
+3. Add its renderer and its chain entry.
 
-```python
-SUPPORTED_INTENTS = ("architecture", "delivery", "product", "incident", "comms")
-```
-
-The chain is then assembled from two maps:
-
-```python
-PROFILE_PLUGIN_BASE_CHAINS: dict[str, list[str]] = {
-    "balanced":  ["requirements_extractor", "action_owner_enforcer", "decision_capture"],
-    "architect": ["requirements_extractor", "mermaid_architecture", "adr_drafter"],
-    "delivery":  ["action_owner_enforcer", "milestone_planner", "dependency_mapper"],
-    "product":   ["scope_guard", "customer_signal_extractor"],
-    "incident":  ["incident_timeline", "risk_heatmap", "stakeholder_update_drafter"],
-}
-
-_INTENT_PLUGIN_CHAIN: dict[str, list[str]] = {
-    "architecture": ["requirements_extractor", "mermaid_architecture", "adr_drafter"],
-    "delivery":     ["action_owner_enforcer", "milestone_planner", "dependency_mapper"],
-    "product":      ["scope_guard", "customer_signal_extractor"],
-    "incident":     ["incident_timeline", "runbook_delta"],
-    "comms":        ["stakeholder_update_drafter", "decision_announcement_drafter"],
-}
-```
-
-`build_plugin_chain(profile, active_intents)` prepends `project_detector`,
-appends the profile's base chain, extends with each active intent's
-chain, and de-dupes while preserving order. To make a new plugin fire,
-add its `id` to the appropriate profile base chain and/or intent chain.
-
-> **⚠ Routing ripple: update tests in lockstep, do not silence.**
-> Adding (or suppressing) a plugin id in a chain breaks three test
-> surfaces that assert the exact chains:
->
-> - `tests/unit/test_intent_dispatch.py`: chain constants + per-window
->   plugin counts,
-> - `tests/unit/test_intent_pipeline.py` and
->   `tests/unit/test_multi_intent_routing.py`: full-pipeline tests that
->   register the *union* of plugin ids as test doubles.
->
-> Update these to reflect the new expected chains in the same change.
-> A `-k`-filtered green that hides the diff is a regression waiting to
-> ship.
-
----
-
-## Registration
-
-Built-ins are registered onto the host by `register_builtin_plugins()`
-in
-[`holdspeak/plugins/builtin/__init__.py`](../holdspeak/plugins/builtin/__init__.py),
-which walks a table of `(plugin_id, kind)` pairs and calls
-`host.register(YourPlugin())` for each. To add a first-party plugin:
-
-1. Write the plugin class under `holdspeak/plugins/builtin/`.
-2. Add it to the registrar's real-plugin map so a real instance is
-   constructed and registered.
-3. Wire its renderer (above) and its chain membership (above).
-
-Editing core is the path for a **first-party** plugin. To ship a plugin
-*without* editing core, package it as a **plugin pack** (below).
-
----
+To ship a plugin without a core change, use a plugin pack.
 
 ## Plugin packs
 
-A pack lets a plugin ship outside the built-in tree, discovered and
-registered at startup, mirroring the connector-pack system. The contract
-is a manifest plus a factory; the loader is
-[`holdspeak/plugin_pack_loader.py`](../holdspeak/plugin_pack_loader.py)
-and the manifest SDK is
-[`holdspeak/plugin_sdk.py`](../holdspeak/plugin_sdk.py).
-
-A pack is a single `.py` file that exports two names:
+A plugin pack is one `.py` file that exports a `MANIFEST` and a `create_plugin`
+factory. The loader is
+[`holdspeak/plugin_pack_loader.py`](../holdspeak/plugin_pack_loader.py). The
+manifest validator is [`holdspeak/plugin_sdk.py`](../holdspeak/plugin_sdk.py).
 
 ```python
 from holdspeak.plugin_sdk import validate_manifest
 
 MANIFEST = validate_manifest({
-    "id": "my_plugin",            # ^[a-z][a-z0-9_]{0,31}$, unique
+    "id": "my_plugin",              # ^[a-z][a-z0-9_]{0,31}$
     "label": "My Plugin",
-    "version": "0.1.0",           # MAJOR.MINOR.PATCH
-    "kind": "synthesizer",        # synthesizer|validator|artifact_generator|signals|detector
-    "required_capabilities": ["llm"],   # optional; gates execution
-    "execution_mode": "deferred",        # inline (default) | deferred
-    "intents": ["incident"],             # chain hints (see note below)
+    "version": "0.1.0",             # MAJOR.MINOR.PATCH
+    "kind": "synthesizer",
+    "required_capabilities": ["llm"],
+    "execution_mode": "deferred",
+    "intents": ["incident"],
     "profiles": ["balanced"],
 })
 
@@ -371,394 +225,115 @@ class MyPlugin:
     id = "my_plugin"
     version = "0.1.0"
     kind = "synthesizer"
-    required_capabilities = ["llm"]
     def run(self, context): ...
 
-def create_plugin():            # zero-arg factory → a HostPlugin instance
+def create_plugin():
     return MyPlugin()
 ```
 
-`validate_manifest` collects **every** problem before raising
-`PluginManifestError` (each is a `ManifestError` with a stable `code`;
+`validate_manifest` collects every problem and then raises
+`PluginManifestError`. Each problem has a stable `code`, for example
 `id_format`, `version_format`, `unknown_kind`, `unknown_capability`,
-`invalid_execution_mode`, `unknown_profile`, `unknown_intent`), so you fix
-all issues in one pass. `actuator` **is** a valid `kind` (see
-[Actuators](#actuators)); a manifest may declare one, but executing its
-proposals is authority- and gate-controlled.
+`invalid_execution_mode`, `unknown_profile` and `unknown_intent`.
 
-**Discovery.** Drop the file into `~/.holdspeak/plugin_packs/`
-(override with `HOLDSPEAK_USER_PLUGIN_PACKS_DIR`). At startup the loader
-imports each `.py` file, re-validates its `MANIFEST`, checks for a callable
-`create_plugin`, and registers the produced plugin on the host alongside
-the built-ins. Discovery is honest, not sandboxed (a file under your home
-dir is code you trust), but it **never crashes the runtime**: a bad pack
-(import error, missing manifest/factory, invalid manifest, id colliding
-with a built-in or another pack, id/manifest mismatch) is surfaced as a
-structured `DiscoveryError` and skipped. First-party/built-in ids always
-win a collision.
+Put the file in `~/.holdspeak/plugin_packs/`. To use another directory, set
+`HOLDSPEAK_USER_PLUGIN_PACKS_DIR`. At startup the loader imports each file,
+validates the manifest, calls `create_plugin` and registers the plugin on the
+host. A bad pack is skipped and reported as a `DiscoveryError`. It never
+crashes the runtime. A pack id that collides with a built-in or another pack
+loses. Packs are not sandboxed: code in your home directory is code you trust.
 
-> **Chain hints are declarative today.** A pack registers on the host so
-> it can execute by id, and its `profiles`/`intents` record where it
-> *wants* to fire, but wiring those hints into the live router chains is
-> still pending. Until then a pack plugin runs when invoked by id; the
-> built-in routing chains above are unchanged.
+The `intents` and `profiles` fields only record where the plugin wants to run.
+They do not change the router chains. A pack plugin runs when something
+invokes it by id.
 
-The committed example at
-[`tests/fixtures/plugin_packs/example_user_pack.py`](../tests/fixtures/plugin_packs/example_user_pack.py)
-is a complete, working pack.
+A complete working pack is
+[`tests/fixtures/plugin_packs/example_user_pack.py`](../tests/fixtures/plugin_packs/example_user_pack.py).
 
-### Disabling a plugin per project
+### Disable a plugin
 
-A team can suppress specific plugins without code: list their ids in
-`MeetingConfig.disabled_plugins` (the `meeting.disabled_plugins` config
-key). At dispatch a disabled id is recorded as a `skipped` run (distinct
-from a capability-`blocked` or a failed run) and never invoked. The
-*built* chain is unchanged (the skip is in the *executed* set), so this is
-a runtime suppression, not a routing change. An empty list (the default)
-runs every chain-selected plugin, exactly as before.
+Add plugin ids to `meeting.disabled_plugins` in the config. The host records a
+disabled plugin as `skipped` and never calls it. The built chain does not
+change. An empty list runs every plugin in the chain.
 
----
+## Test a plugin
 
-## Testing
+Tests inject the model reply, so they need no network and no model. The helper
+`intel_plugin` in
+[`tests/unit/plugin_dispatch_rig.py`](../tests/unit/plugin_dispatch_rig.py)
+wraps a plugin with a fake dispatch:
 
-The contract is built for cheap unit tests: the LLM is injected, so no
-network or model is needed.
-
-**Inject a fake intel call** via the plugin's constructor seam
-(`intel_call`), returning a canned response string:
-
-````python
+```python
+from tests.unit.plugin_dispatch_rig import intel_plugin
 from holdspeak.plugins.builtin.decision_capture import DecisionCapturePlugin
 
 def _plugin(response):
-    return DecisionCapturePlugin(intel_call=lambda _messages: response)
+    return intel_plugin(DecisionCapturePlugin(), lambda _m, **_kw: response)
 
-_GOOD_JSON = """```json
-{"decisions": [{"decision": "Adopt the new API gateway", "rationale": "Centralizes auth"}],
- "open_questions": ["Who owns the migration?"]}
-```"""
-````
-
-**Assert both shapes** — the success keys + `confidence_hint == 1.0`,
-and that an unparseable response yields the failure shape with the typed
-keys absent:
-
-```python
-def test_run_success() -> None:
+def test_run_success():
     out = _plugin(_GOOD_JSON).run({"transcript": "We made some calls."})
     assert out["confidence_hint"] == 1.0
-    assert out["decisions"][0]["decision"] == "Adopt the new API gateway"
 
-def test_run_unparseable_is_failure() -> None:
+def test_unparseable_reply_is_failure():
     out = _plugin("no json here").run({"transcript": "t"})
     assert out["confidence_hint"] == 0.0
-    assert "decisions" not in out
 ```
 
-**Assert the capability gate** at the host level — without the `llm`
-capability enabled, your plugin is `blocked`:
+Also test that the host blocks the plugin when the `llm` capability is off.
+`PluginHost(default_timeout_seconds=0.5)` with no enabled capabilities returns
+status `blocked` and the error `Missing capabilities: llm`. The full example is
+[`tests/unit/test_decision_capture_plugin.py`](../tests/unit/test_decision_capture_plugin.py).
 
-```python
-def test_host_blocks_without_llm_capability() -> None:
-    host = PluginHost(default_timeout_seconds=0.5)   # no enabled_capabilities
-    register_builtin_plugins(host)
-    result = host.execute(
-        "decision_capture",
-        context={"transcript": "We decided things."},
-        meeting_id="m-1", window_id="w-1", transcript_hash="abc",
-    )
-    assert result.status == "blocked"
-    assert result.error == "Missing capabilities: llm"
-```
+A plugin is done when it has:
 
-See
-[`tests/unit/test_decision_capture_plugin.py`](../tests/unit/test_decision_capture_plugin.py)
-for the full set.
-
-### The "shipped" bar
-
-A plugin is done — per the RFC's definition-of-done — only when it has
-**all** of:
-
-- [ ] A real `run()` that consumes the host-issued admitted dispatch when it
-      needs model work (not a placeholder that fabricates output).
-- [ ] A real downstream effect — the artifact persists and is fetched
-      by the history view.
-- [ ] A registered renderer so the artifact is readable at `/history`.
-- [ ] Chain membership so it actually fires on the right meetings.
-- [ ] Unit coverage (success + failure + capability gate) **and** the
-      routing/pipeline tests updated in lockstep.
-
-All 14 built-ins clear this bar today.
-
----
+- a real `run()` that uses the host dispatch handle for model work;
+- a stored artifact that History shows;
+- a registered renderer;
+- chain membership;
+- tests for success, failure and the capability gate, with the routing tests
+  updated.
 
 ## Actuators
 
-An **actuator** is the plugin system's third kind. Where an
-`artifact_generator` emits read-only structured data, an actuator
-proposes an **external side effect** — file a ticket, post a message,
-open a PR comment. Because that *leaves the machine*, actuators are built
-around one invariant:
+An actuator is a plugin with `kind = "actuator"`. It proposes an external
+effect, such as a GitHub issue or a webhook post. It never performs the
+effect. `run()` returns an `ActuatorProposal` dict with `target`, `action`,
+`preview`, `payload`, `reversible` and `required_capabilities`. The host stores
+it as `proposed`. A separate authority path and a guarded executor decide
+whether the effect runs.
 
-> **No external side effect occurs without captured, audited authority, and
-> what executes is exactly what was previewed.**
+The `actuator` capability is off by default. A registered actuator is
+`blocked` until the host enables it.
 
-The contract enforces that invariant by splitting "decide what to do"
-from "do it":
+The reference actuators are `followup_ticket_actuator`,
+`github_issue_actuator` and `webhook_post_actuator`. They are not part of
+`register_builtin_plugins`. Each has its own `register_*` function. The module
+`github_pr_actuator` is a connector builder, not a plugin. The full contract is in
+[Actuator Development](ACTUATOR_DEVELOPMENT.md).
 
-```
- actuator.run()       authority policy        guarded executor
- ─────────────► proposal ───────────────► authorized ───────► execute ──► audit
-   (proposes)   (persisted)       (posture / grant / review)  (connector)
-```
+## Built-in references
 
-### What an actuator returns: `ActuatorProposal`
-
-An actuator's `run(context)` returns a dict that parses into an
-[`ActuatorProposal`](../holdspeak/plugins/actuators.py) — a *description*
-of the side effect, never the effect itself:
-
-| Field | Meaning |
+| Plugin | Why read it |
 |---|---|
-| `target` | The system the effect lands on (`github` / `jira` / `outbox` / …). |
-| `action` | The verb (`create_issue`, `write_followup_ticket`, …). |
-| `preview` | A human-readable description of exactly what will happen. |
-| `payload` | The machine representation of the effect — the **parity source of truth**. |
-| `reversible` | Whether the effect can be undone (shown to the approver). |
-| `required_capabilities` | Capabilities the *execution* needs. |
+| [`decision_capture`](../holdspeak/plugins/builtin/decision_capture.py) | The full pattern: prompt, model call, parse, validate. Deferred and `llm` gated. |
+| [`mermaid_architecture`](../holdspeak/plugins/builtin/mermaid_architecture.py) | An `artifact_generator` that makes a Mermaid diagram. |
+| [`action_owner_enforcer`](../holdspeak/plugins/builtin/action_owner_enforcer.py) | A `validator` that flags gaps. |
+| [`followup_ticket_actuator`](../holdspeak/plugins/builtin/followup_ticket_actuator.py) | The reference actuator. It writes a local file. |
 
-`run()` **must not reach out** — building the proposal is all it does. If
-there's nothing to propose, raise; the host records a plain `error` (no
-half-formed proposal, no side effect).
-
-### Lifecycle + the gates
-
-A proposal moves through a strict lifecycle, every transition audited:
-
-```
-proposed ──► approved ──► executed
-   │            │     └──► failed ──► approved  (retry)
-   └──► rejected (terminal)
-```
-
-Three independent gates stand between a proposal and a side effect:
-
-1. **Capability (`actuator`)** — to even *propose*, the host must have
-   `actuator` in `enabled_capabilities`. It's off by default, so a
-   registered actuator is `blocked` until an operator opts in.
-2. **Authority policy** — an executor receives only an `approved` proposal.
-   YOLO may authorize an eligible operation to a registered fixed destination
-   from the captured control posture. Normal and Secure require an explicit
-   review decision or an exact, bounded grant. For registered product
-   connectors, an approval request may invoke the executor immediately; review
-   and execution are still recorded as separate state axes.
-3. **Governance (`MeetingConfig`)** — `allow_actuators` is the master switch
-   and `allowed_actuators` is the per-actuator allow-list. Shipped configuration
-   defaults to `true` and `["*"]`; an individual host/executor constructor
-   remains closed unless explicitly enabled. Projects can narrow either value.
-
-### The guarded executor
-
-[`ActuatorExecutor`](../holdspeak/plugins/actuator_executor.py) is the one
-place a side effect happens. `execute(proposal_id)` runs an `approved`
-proposal through the full stack: status check → policy gate → **payload
-parity** (a hash mismatch between what was approved and the stored payload
-aborts to `failed` with no outbound call — a TOCTOU guard) → egress via an
-**injected connector** (the executor never opens a socket itself) →
-`executed`/`failed`, recorded with the payload hash in the audit trail. A
-connector error → `failed` (retryable via `failed → approved`).
-
-The connector is supplied by *you* and is where egress policy lives. Don't
-invent a new outbound path — build it with
-[`build_gated_connector`](../holdspeak/plugins/gated_connector.py), which routes
-every call through the existing `connector_runtime.PermissionGate` behind a
-per-connector **permission manifest** (see [Write connectors](#write-connectors-the-permission-manifest)
-below). The `outbox` reference writes a local file; the GitHub and webhook
-references reach real systems under that manifest.
-
-### Worked example: `followup_ticket_actuator`
-
-The reference actuator
-([`followup_ticket_actuator.py`](../holdspeak/plugins/builtin/followup_ticket_actuator.py))
-proposes a follow-up ticket for the first action item without an owner:
-
-```python
-class FollowupTicketActuator:
-    id = "followup_ticket_actuator"
-    version = "0.1.0"
-    kind = "actuator"
-    required_capabilities = ["actuator"]   # the host must admit proposal creation
-
-    def run(self, context):
-        unowned = _first_unowned(context.get("action_items") or [])
-        if unowned is None:
-            raise ValueError("no unowned action item to follow up on")
-        task = unowned["task"]
-        return {
-            "target": "outbox",
-            "action": "write_followup_ticket",
-            "preview": f"Draft a follow-up ticket for “{task}”",
-            "payload": {"filename": f"followup-{slug(task)}.md", "body": ...},
-            "reversible": True,
-            "required_capabilities": ["actuator"],
-        }
-```
-
-Its connector (`build_outbox_connector`) performs the side effect — here a
-local **outbox** Markdown file (the simplest connector: a real, reversible,
-network-free artifact, safe to exercise in CI). Connectors that reach real
-systems are built the same way, behind a permission manifest — see
-[Write connectors](#write-connectors-the-permission-manifest) below. Wiring the loop:
-
-```python
-host = PluginHost(enabled_capabilities={"actuator"})
-register_followup_actuator(host)                       # opt-in, NOT in register_builtin_plugins
-
-result = host.execute("followup_ticket_actuator", context=ctx, ...)   # → status "proposed"
-record_actuator_proposal(db, run_from(result))         # persist
-
-# Normal/Secure example: a human approves in the UI.
-db.actuators.transition_proposal(pid, to_status="approved", actor="karol")
-
-executor = ActuatorExecutor(
-    db,
-    connector=build_outbox_connector(outbox_dir),
-    allow_actuators=True,                              # master switch
-    allowed_actuator_ids=["followup_ticket_actuator"], # allow-list
-)
-executor.execute(pid)                                  # → "executed" + audit; the file is written
-```
-
-### Write connectors (the permission manifest)
-
-The outbox connector writes a local file. To reach a **real** system — file a
-GitHub issue, POST to a webhook — the connector must still be unable to do
-anything it didn't declare. That's what
-[`build_gated_connector`](../holdspeak/plugins/gated_connector.py) gives you: a
-*write* connector behind a per-connector **permission manifest**, layered
-**under** the authority + policy + parity gates (it only ever *narrows* what can
-reach the wire — it never replaces a gate above it).
-
-A [`WriteConnectorManifest`](../holdspeak/plugins/gated_connector.py) declares
-exactly two things:
-
-- the single `PermissionGate` permission the connector needs, and
-- the concrete operations it may perform.
-
-| Permission | Gate operation | Allow-list field | Example |
-|---|---|---|---|
-| `shell:exec` | `run_subprocess` | `allowed_argv_prefixes` | `gh issue create` |
-| `network:outbound` | `open_outbound_socket` | `allowed_hosts` | `hooks.slack.com` |
-
-An **empty allow-list admits nothing** — the safe default. `build_gated_connector`
-enforces, per proposal, in order: **plan → allow-check → gate → interpret**:
-
-```python
-connector = build_gated_connector(
-    manifest,
-    plan=plan,            # proposal → the one GatedOperation it would perform
-    interpret=interpret,  # the gate's raw result → the executor's result dict
-    runner=runner,        # injected for shell:exec (defaults to subprocess.run)
-    opener=opener,        # injected for network:outbound (defaults to a urllib POST)
-)
-```
-
-An operation the manifest doesn't admit raises `ConnectorOperationRefused`
-**before** the gate is ever touched — no egress, no partial work. The executor
-records it as `failed` + an audit row, like any connector failure.
-
-**Reference 1 — `gh issue create` (`shell:exec`).**
-[`github_issue_actuator.py`](../holdspeak/plugins/builtin/github_issue_actuator.py)
-proposes a GitHub issue (payload `repo`/`title`/`body`);
-`build_github_issue_connector` is allow-listed to `gh issue create` and nothing
-else. The argv is an explicit list run **without a shell**, so a payload value is
-only ever an *argument* — it can't change the subcommand or inject a second
-command. A non-zero `gh` exit raises → `failed` + audit; the created issue URL is
-the result. (Auth is your already-authenticated local `gh`; the connector manages
-no tokens.) Tests inject a fake runner — no real `gh`:
-[`test_github_issue_actuator.py`](../tests/unit/test_github_issue_actuator.py).
-
-**Reference 2 — webhook POST (`network:outbound`).**
-[`webhook_post_actuator.py`](../holdspeak/plugins/builtin/webhook_post_actuator.py)
-proposes an HTTP POST (payload `{url, body}`); `build_webhook_connector` POSTs
-**only to an allow-listed host** — `MeetingConfig.webhook_allowed_hosts`
-(`["*"]` in the shipped config, which can be narrowed to exact hosts). An
-off-list host is refused before egress; a non-2xx /
-transport error → `failed` + audit; the status is the result. A Slack/Teams
-incoming webhook is simply a URL whose host you add to the allow-list — not a
-bespoke API integration. Tests inject a fake client — no real HTTP:
-[`test_webhook_post_actuator.py`](../tests/unit/test_webhook_post_actuator.py).
-
-Both reference connectors are **host-side** (the executor injects them; they are
-not discovered packs) and require explicit registration — reached only after
-authority resolution, the policy/parity gates, and the manifest. jira/linear/etc. are the same pattern (a CLI
-or webhook connector + a manifest), not separate machinery.
-
-### Live proposals
-
-Proposals also surface **during** a meeting, not only when you reopen a saved one.
-When the pipeline produces a proposal, the `MeetingSession` emits a **read-only**
-`actuator_proposed` broadcast — `id` / `status` / `target` / `action` / `preview`
-/ `reversible` only; the machine `payload` is **never** put on the wire — and the
-live dashboard shows it in a **"Pending actions"** panel with Approve / Reject.
-Live approval reuses the *same* gated decision endpoint
-(`POST /api/meetings/{id}/proposals/{pid}/decision`). It records the decision
-and audit; for a registered connector target, that request can also invoke the
-guarded executor. Nothing broadcasts unless an actuator is registered and its
-capability is enabled. See
-[`test_live_proposals.py`](../tests/unit/test_live_proposals.py).
-
-### Registering + testing
-
-Register actuators **explicitly and opt-in** — `register_followup_actuator` /
-`register_github_issue_actuator` / `register_webhook_post_actuator` are *not* part
-of `register_builtin_plugins`, so the default plugin set and routing chains stay
-unchanged. Test the loop end-to-end against a stub or injected connector (no real
-egress — inject the runner / HTTP client): assert the proposal is faithful, that
-executing **without authority** / with the gate off / when not allow-listed / for an
-operation the manifest doesn't admit performs **no** side effect, and that
-approve → execute writes the audited terminal state. See
-[`test_actuator_reference.py`](../tests/unit/test_actuator_reference.py).
-
----
-
-## Built-in reference implementations
-
-The cleanest references, in order of how much they'll teach you:
-
-| Plugin | File | Why read it |
-|---|---|---|
-| `decision_capture` | [`decision_capture.py`](../holdspeak/plugins/builtin/decision_capture.py) | The canonical end-to-end pattern: prompt → intel → parse → structured output, deferred, `llm`-gated. |
-| `mermaid_architecture` | [`mermaid_architecture.py`](../holdspeak/plugins/builtin/mermaid_architecture.py) | An `artifact_generator` that produces a diagram (Mermaid → SVG). |
-| `action_owner_enforcer` | [`action_owner_enforcer.py`](../holdspeak/plugins/builtin/action_owner_enforcer.py) | A `validator` that flags gaps rather than synthesizing prose. |
-| `followup_ticket_actuator` | [`followup_ticket_actuator.py`](../holdspeak/plugins/builtin/followup_ticket_actuator.py) | The reference `actuator` — proposes a side effect (local outbox file); see [Actuators](#actuators). |
-| `github_issue_actuator` | [`github_issue_actuator.py`](../holdspeak/plugins/builtin/github_issue_actuator.py) | A **write connector** — `gh issue create` behind a `shell:exec` permission manifest. |
-| `webhook_post_actuator` | [`webhook_post_actuator.py`](../holdspeak/plugins/builtin/webhook_post_actuator.py) | A **write connector** — HTTP POST to an allow-listed host (`network:outbound`). |
-
-The full set of 14 lives under
-[`holdspeak/plugins/builtin/`](../holdspeak/plugins/builtin/); the
-renderers for all of them are in
-[`synthesis.py`](../holdspeak/plugins/synthesis.py).
-
----
+All built-in plugins are in
+[`holdspeak/plugins/builtin/`](../holdspeak/plugins/builtin/).
 
 ## Out of scope
 
-This contract deliberately does **not** cover:
-
-- **Remote/third-party distribution** — there is no marketplace and no
-  loader for packages pulled from the internet. Plugin packs (when they
-  land) load from a local directory only, matching the connector-pack
-  boundary.
-- **Changing the built-ins' behavior or the default routing output** —
-  new plugins layer on; the 14 built-ins stay behavior-identical.
+- There is no marketplace and no loader for packages from the internet. Packs
+  load from a local directory only.
+- A new plugin does not change the behavior of the built-ins.
 
 ## See also
 
-- [Meeting Mode Guide](MEETING_MODE_GUIDE.md): configure the intel endpoint and the
-  routing your plugin runs under.
-- [Connector Development](CONNECTOR_DEVELOPMENT.md): the sibling contract for local
+- [Meeting Mode Guide](MEETING_MODE_GUIDE.md): configure the model endpoint and
+  the routing that your plugin runs under.
+- [Connector Development](CONNECTOR_DEVELOPMENT.md): the sibling contract for
   activity connectors.
-- [`internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`](internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md):
-  the design rationale (the parent plugin-system RFC).
+- [Actuator Development](ACTUATOR_DEVELOPMENT.md): proposals, authority and
+  write connectors.

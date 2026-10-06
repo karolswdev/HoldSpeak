@@ -1,842 +1,374 @@
-# Meeting Mode - Complete User Guide
+# Meeting Mode guide
 
-A meeting should end with decisions, owners, and follow-ups, not a recording
-you never reopen. Meeting Mode captures your microphone plus remote
-participants' audio, transcribes in real time, and runs meeting intelligence
-over the transcript: typed artifacts, action items, aftercare, and
-audited follow-through. It runs local-first, with optional endpoint
-inference when configured.
+Meeting Mode records your microphone and the audio of remote participants.
+It transcribes the meeting on your machine. After the meeting, HoldSpeak makes a summary
+and proposes decisions and action items. You review them and keep what is right.
 
-## Table of Contents
+## Contents
 
-1. [Quick Start](#quick-start)
-2. [Prerequisites](#prerequisites)
-3. [BlackHole Setup](#blackhole-setup)
-4. [Using Meeting Mode](#using-meeting-mode)
-5. [Web Interfaces](#web-interfaces)
-6. [Meeting Intelligence](#meeting-intelligence)
-7. [Meeting Aftercare (close the loop)](#meeting-aftercare-close-the-loop)
-8. [Import an Existing Recording or Transcript](#import-an-existing-recording-or-transcript)
-9. [Find Meetings in Your Archive](#find-meetings-in-your-archive)
-10. [Configuration Reference](#configuration-reference)
-11. [Web API Reference](#web-api-reference)
-12. [Troubleshooting](#troubleshooting)
+1. [Quick start](#quick-start)
+2. [Set up system audio](#set-up-system-audio)
+3. [Record a meeting](#record-a-meeting)
+4. [After the meeting](#after-the-meeting)
+5. [Import a recording or transcript](#import-a-recording-or-transcript)
+6. [Find meetings](#find-meetings)
+7. [Where your transcript goes](#where-your-transcript-goes)
+8. [Intent routing](#intent-routing)
+9. [Settings](#settings)
+10. [HTTP API](#http-api)
+11. [Troubleshooting](#troubleshooting)
 
----
-
-## Quick Start
+## Quick start
 
 ```bash
-# 1. macOS: install BlackHole for system audio capture
-brew install blackhole-2ch
-
-# 2. Check setup (Linux: verifies Pulse/PipeWire monitor source)
-holdspeak meeting --setup
-
-# 3. Start HoldSpeak web runtime (default command)
-holdspeak
-
-# 4. Open Meetings > Record and choose "Start meeting"
+brew install blackhole-2ch    # macOS only
+holdspeak meeting --setup     # check system audio
+holdspeak                     # start the web runtime
 ```
 
----
+1. Open the **Meetings** window.
+2. Open the **Record** wing and select **Record meeting**.
+3. Select **Start meeting**.
+4. Select **Stop meeting** when the meeting ends.
 
-## Prerequisites
+## Set up system audio
 
-### Required
-- **macOS or Linux**
-- **Python 3.10+**
-- **Microphone permissions** granted to Terminal/iTerm
+You need one source for remote audio. HoldSpeak always records your microphone.
 
-### For System Audio Capture
-- **BlackHole 2ch** - Virtual audio device to capture remote participants
+- **macOS:** Install BlackHole 2ch. Then create a Multi-Output Device.
+- **Linux:** HoldSpeak uses a PulseAudio or PipeWire monitor source. No install is needed.
 
-### For Meeting Intelligence (AI)
-- **GGUF model** - Local LLM for extracting topics, action items, and summaries.
-  Bring your own; any GGUF chat model works (see [MODELS.md](./MODELS.md)). A
-  current small/mid instruct model (e.g. a Qwen3.5 build) is a good default;
-  larger models give better intel at the cost of speed.
-- Optional endpoint mode: add an OpenAI-compatible endpoint to **Settings >
-  Models > Model Library**, then select it for **Meetings** in **Assignments**.
-  This supports self-hosted LAN servers, Ollama, vLLM, llama.cpp-server, and
-  hosted APIs. A key is optional for a keyless self-hosted endpoint. Legacy
-  `intel_cloud_model`, `intel_cloud_api_key_env`, and `intel_cloud_base_url`
-  values are migration inputs only; an upgrade converts them to a model profile
-  once.
+### macOS Multi-Output Device
 
-### For Web Interfaces
+1. Open **Audio MIDI Setup**.
+2. Select **+**, then **Create Multi-Output Device**.
+3. Select your speakers or headphones and **BlackHole 2ch**.
+4. Right-click the new device. Select **Use This Device For Sound Output**.
 
-FastAPI and Uvicorn are core HoldSpeak dependencies; no separate web install is
-needed. Building the browser app from source requires Node.js 20.19+ or 22.12+.
-
----
-
-## BlackHole Setup
-
-BlackHole is a free virtual audio device that lets HoldSpeak capture system audio (Zoom, Meet, Teams, etc.).
-
-### Installation
+### Check the setup
 
 ```bash
-brew install blackhole-2ch
+holdspeak meeting --setup          # reports whether system audio is ready
+holdspeak meeting --list-devices   # lists all audio devices
 ```
 
-### Audio MIDI Setup
+To select a device by name, set `meeting.system_audio_device` or `meeting.mic_device`.
+With no name set, HoldSpeak finds the device by itself.
 
-1. Open **Audio MIDI Setup** (Applications > Utilities)
-2. Click **+** at bottom left, select **Create Multi-Output Device**
-3. Check both:
-   - Your speakers/headphones (e.g., "MacBook Pro Speakers")
-   - **BlackHole 2ch**
-4. Right-click the new Multi-Output Device > **Use This Device For Sound Output**
+Use headphones. Speakers cause an echo in the microphone.
 
-### Verification
+## Record a meeting
+
+Start the web runtime:
 
 ```bash
-holdspeak meeting --setup
+holdspeak              # opens the browser
+holdspeak web --no-open   # headless: no browser opens
 ```
 
-This will check if BlackHole is detected and configured correctly.
+The **Record meeting** button opens the live face. The same face is at `/live`.
 
-### List Audio Devices
+1. Select **Start meeting**. Recording starts on the microphone and the system audio.
+2. The transcript appears with speaker labels. Your microphone is labeled **Me**. Remote audio is labeled **Remote**.
+3. Set the **Title** and **Tags** in **Meeting details**.
+4. To mark a moment, add a bookmark. Type a name in **Name this moment**.
+5. Select **Stop meeting**. HoldSpeak saves the meeting.
 
-```bash
-holdspeak meeting --list-devices
-```
+The meeting record exists before the first audio arrives. If HoldSpeak stops in the middle of a capture,
+the meeting keeps its last saved audio. The meeting shows a **Capture** state that says what happened.
 
-Shows all available audio input/output devices. Look for "BlackHole 2ch" in the list.
+If no speech model is ready, HoldSpeak records the audio only. It does not make a transcript.
 
----
+The live face has two more sections behind the gear (**Configure meeting**):
 
-## Using Meeting Mode
+- **Intent routing**: See [Intent routing](#intent-routing).
+- **Summary**: Shows the summary state and where the summary runs.
 
-### Runtime Entry Commands
+Live analysis is off during recording. HoldSpeak makes the summary after you stop.
 
-```bash
-# Default: web runtime
-holdspeak
+### Terminal recorder
 
-# Explicit web runtime
-holdspeak web
+`holdspeak meeting` records in the terminal. Press Ctrl+C to stop and transcribe.
+Use the web runtime for the full workflow.
 
-# Headless web service (no browser auto-open)
-holdspeak web --no-open
-```
+## After the meeting
 
-The web runtime is the sole interactive runtime; voice-typing hotkey capture
-runs inside it.
+Open the meeting in the **Meetings** window. The **Meetings** window has four wings:
+**Outcomes**, **Review**, **Record**, and **Artifacts**.
 
-### Starting a Meeting
+### Summary
 
-From the web runtime, open **Meetings > Record** and use **Start meeting**
-or the API directly:
-- `POST /api/meeting/start` to begin a meeting
-- `POST /api/meeting/stop` to stop and persist meeting output
+The summary holds a short overview and a list of topics.
 
-When a meeting starts:
-1. Recording begins on both mic and system audio
-2. The dashboard reflects the active meeting (the runtime URL is printed at startup, e.g. `http://127.0.0.1:8234`)
-3. Transcription happens automatically every ~10 seconds
-4. AI intelligence runs every few segments (if enabled)
+- By default, HoldSpeak runs the summary after each meeting that has a transcript and an assigned model.
+  Set **Auto-run the summary** in **Settings** to change this. The key is `meeting.intelligence_auto`.
+  Values: `every` (default), `room_linked`, and `off`.
+- To run it yourself, select **Run summary** on the meeting.
+- A host chip beside **Run summary** names where the text goes. A fallback shows as `+ FALLBACK <host>`.
+- With no route, the chip says **NO SUMMARY ROUTE** and gives the reason. **Run summary** is then absent.
+- If a run fails, select **Retry** or **Skip**.
 
-At any time, you can also open:
-- `http://127.0.0.1:<port>/history` for archive search and cross-meeting workflows
-- `http://127.0.0.1:<port>/settings` for browser-based configuration
+When the summary finishes, HoldSpeak shows a **Meeting ready** card.
+Select **Open proposals** on the card to go to the meeting.
 
-### Stopping a Meeting
+### Review proposals
 
-Use the dashboard **Stop meeting** control (or `POST /api/meeting/stop`). The
-meeting data is persisted on stop.
+The summary job also proposes decisions and action items. The **TO REVIEW** count shows how many wait for you.
+Select **Review** to open the **Review** wing.
 
----
+Each proposal shows its source in the transcript and its state. For each proposal:
 
-## Web Interfaces
+- **Confirm** keeps it.
+- **Edit** changes the text. For an action item, you can add the owner and the due date.
+- **Dismiss** rejects it.
+- **Open evidence** scrolls the transcript to the source segment.
 
-The always-on local web runtime (`127.0.0.1`) carries two meeting experiences.
+**Accept reviewed** confirms all proposals that are ready.
 
-### 1) Live Dashboard (`/live`)
+An owner is a name from the transcript, or one of two reserved names. `Me` is the speaker.
+`Remote` is the counterpart. An unknown owner stays **Unknown** until you supply one.
 
-Use this during an active meeting for real-time operations:
-- Live transcript with speaker labels and timestamps
-- Streaming intelligence updates and clear intel status (`live`, `running`, `queued`, `ready`, `error`, `disabled`)
-- Action-item lifecycle + review controls:
-  - Status: `pending`, `done`, `dismissed`
-  - Review: `pending` ("Needs review") or `accepted`
-  - Edit action items in-place; editing auto-accepts
-- Bookmark, copy, export, and stop-meeting controls
+### Decide
 
-### 2) Archive + Settings Hub (`/history` and `/settings`)
+Select **Decide** on a meeting to record a decision. Type the title and select **Save**.
+The decision links to the meeting and its Project.
 
-Use this during or after meetings for cross-session management:
-- Search meetings by transcript content
-- Track action items across meetings, toggle status, review/accept, and edit
-- Inspect and update speaker identities (name/avatar) with speaking history
-- Manage deferred-intel queue (list jobs, process now, retry meeting jobs)
-- Manage deferred MIR plugin queue (list jobs, process due jobs, force retry scheduled jobs, retry/cancel individual jobs)
-- Run MIR CLI dry-run and manual reroute flows for saved meetings
-- Edit app settings in the browser. Add runnable models in **Model Library** and
-  choose the ordered model list for **Meetings** in **Assignments**. The
-  low-level `intel_provider` (`local`, `cloud`, or `auto`) and provider tuning
-  remain available in the Meetings raw settings. When `intel_cloud_store` is
-  true, HoldSpeak forwards the OpenAI `store` flag; compatible endpoints may
-  ignore it, so verify retention behavior with the endpoint operator.
+### Send
 
-### Multiple Clients
+When a meeting has a summary, a **Send** section appears. Use the **Document** control to choose
+**Summary**, **Digest**, or **Follow-up**.
 
-Multiple local browser tabs can connect at once. Live pages receive real-time updates via WebSocket.
+- **Summary** is the summary text.
+- **Digest** lists the open items by owner, the decisions, and the change since the previous meeting.
+- **Follow-up** is a plain draft: decisions, open items with owners, and the change since last time.
 
----
+HoldSpeak builds a Digest and a Follow-up from your saved data on your machine. It uses no model for them.
 
-## Meeting Intelligence
+Pick a destination and send. The destination, the control mode, and your approvals decide when the message leaves.
+See [Execution destinations](EXECUTION_DESTINATIONS.md) and [Control modes](AUTHORITY.md).
+For Slack, save a channel destination first. The old Slack webhook setting in `meeting.slack_webhook_url` has no effect.
 
-A saved meeting's transcript becomes structured, reviewable artifacts. Each one is
-a copy-as-Markdown card at `/history`:
+A **Send** shows the exact message before it posts. A failed send is recorded on the meeting.
 
-![A saved meeting open at /history: the transcript on the left, and on the right a stack of elevated artifact cards (a Risk register table with impact / likelihood / mitigation / owner, Decisions & open questions, and typed Requirements), each with a confidence score and a copy button.](assets/screenshots/history.png)
+To file an accepted action item as a GitHub issue, use `POST /api/meetings/{meeting_id}/aftercare/file-issue`.
+The call makes a proposal. It runs `gh issue create` with your own `gh` login.
 
-*The meeting detail at `/history`. Requirements, decisions, and a risk register, each extracted by an LLM-backed plugin and rendered read-only.*
+### Read the transcript
 
-HoldSpeak supports three intelligence modes:
-- `local`: requires a local GGUF model
-- `cloud`: uses your assigned OpenAI-compatible endpoint and model-profile key
-- `auto`: local-first, then cloud fallback
+The **TRANSCRIPT** section shows each segment with its time and speaker.
+**Open evidence** and decision links scroll to the right segment.
 
-### Where your transcripts go (egress posture)
+### Artifacts
 
-Transcripts leave your machine **only** when you choose a mode that uses the
-cloud. The boundary is explicit, not accidental:
+The **Artifacts** wing lists typed results from the intent router plugins: requirements, decisions,
+risks, and more. See [Meeting intelligence](MEETING_INTELLIGENCE.md).
 
-- `local` (the default): transcripts **never** leave the machine. If no local
-  model is available, intelligence fails closed or queues locally; it does
-  **not** silently fall back to the cloud.
-- `cloud`: transcripts are sent to your configured cloud endpoint. This is your
-  choice and fully supported.
-- `auto`: local-first, but **will send transcripts to the cloud** when no local
-  model is available. Choosing `auto` is opting into that fallback.
+### Export
 
-`holdspeak doctor` prints a "Meeting intelligence egress" line stating the active
-posture, and the web runtime status exposes it (`intel_egress`) so the dashboard
-can show it without reading logs. If you ever want to be certain nothing leaves
-the machine, set `meeting.intel_provider` to `local`.
+The footer of a selected meeting has an **MD** button. It downloads the meeting as Markdown.
+The export route also gives `json`. A download holds the transcript, the summary,
+action item review state, source timestamps, and artifacts. An export stays local.
+It does not publish to any other system.
 
-If no compatible runtime is currently available and deferred mode is enabled, HoldSpeak queues intelligence and fills in topics/actions/summaries later.
-Deferred queue retries use exponential backoff automatically (up to a capped delay and max attempts) so short homelab outages recover without tight retry loops.
+The terminal recorder can save a transcript by itself. Set `meeting.auto_export` to `true`
+and set `meeting.export_format` to `txt`, `markdown`, or `json`.
+The file goes to `~/Documents`.
 
-### Meeting Intelligence Routing (MIR)
+### Park a meeting
 
-MIR classifies each meeting segment against multiple intent categories simultaneously and determines which analytical plugins run. Unlike single-label classification, a single meeting segment can have overlapping intents (e.g., both `delivery` and `incident`), and MIR tracks how the meeting's focus shifts over time.
+Select **Park** in the footer to hide a meeting. HoldSpeak does not delete it. The **PARKED** strip lists parked meetings. Restore one from there.
 
-**Enabling MIR**
+## Import a recording or transcript
 
-MIR controls are available in the shipped runtime. Automatic intent-window
-routing is opt-in: enable **Intent router** in the Meetings settings or set
-`meeting.intent_router_enabled` to `true`. The low-level `mir_enabled` field is
-pinned on and is not an ordinary Settings toggle.
+You can import a recording or a transcript file. The import becomes a normal meeting.
 
-**Intent Routing Presets**
+From the browser:
 
-The active preset sets which intents are weighted most heavily and which plugin runs are triggered:
+1. Open the **Meetings** window and the **Record** wing.
+2. Drop the file in the drop area, or browse for it.
+3. Optionally set **Title**, **Speaker**, and **Tags**.
+4. Select **Import**.
 
-| Preset | Focus |
-|---------|-------|
-| `balanced` | All categories equally weighted (default) |
-| `architect` | Architecture decisions, trade-offs, technical design |
-| `delivery` | Sprint tasks, blockers, velocity, timelines |
-| `product` | Requirements, user feedback, roadmap |
-| `incident` | Timeline reconstruction, impact, root-cause analysis |
-
-Change the preset from the web dashboard (Intent routing preset in the live meeting view) or in config:
-
-```json
-{ "meeting": { "routing_profile": "architect" } }
-```
-
-**During a Meeting**
-
-The live dashboard shows the current intent breakdown. The MIR controls (preset picker, override, dry-run preview) are in the dashboard sidebar. Use the **preset override** to force a specific intent set when automatic classification is wrong:
-
-```
-PUT /api/intents/profile   → change active profile
-PUT /api/intents/override  → pin one or more intents for this meeting
-POST /api/intents/preview  → dry-run route from current transcript without persisting
-```
-
-**After a Meeting**
-
-The `/history` view exposes the intent timeline for each saved meeting: a chronological record of how intents shifted and which plugins fired. The local Markdown and JSON exports include the timeline and any synthesized artifacts.
-
-### MIR CLI Dry-Run and Re-Route
-
-Use saved meeting transcripts to preview deterministic MIR routing (dry run), or persist a manual preset-override reroute window:
-
-```bash
-holdspeak intel --route-dry-run <MEETING_ID> --profile architect
-holdspeak intel --reroute <MEETING_ID> --profile incident --override-intents incident,comms
-```
-
-Notes:
-- `--route-dry-run` prints a stable JSON payload and does not write DB records.
-- `--reroute` writes/updates one reroute intent window (`<meeting_id>:cli-reroute`) for audit/history APIs.
-
-### Homelab Fast Path (`intel_provider=cloud`)
-
-For local-first capture plus remote intel on your LAN:
-
-1. Run an OpenAI-compatible endpoint on homelab (for example vLLM/Ollama-compatible API).
-2. Open **Settings > Models**.
-3. Add the endpoint through **Add an engine...** if it is a keyless compatible endpoint.
-4. Select the model for **Meetings** in the Concierge set.
-5. Select **Use these** to apply the set.
-6. Run `holdspeak doctor` to inspect readiness.
-
-For keyed providers, use the owner Model Library API or documented headless credential fallback.
-See [Models](MODELS.md) for those paths.
-Deferred intelligence remains enabled when the model host is temporarily unavailable.
-
-### What It Extracts
-
-**Topics**
-- Key subjects discussed
-- Automatically identified from conversation
-
-**Action Items**
-```
-Task: Document API endpoints
-Owner: Ewa
-Due: Friday
-Status: pending
-Review: pending (needs review)
-```
-
-The `owner` field is a literal person name as spoken in the transcript, or one
-of two reserved tokens: `Me` (the speaker or leader) and `Remote` (the
-counterpart). `null` means no owner was identified. Every other string is a
-literal name. Extracted items land with `review_state: pending` in the
-**Unassigned** column on the Door board.
-
-**Summary**
-- Concise overview of the meeting
-- Updates as the meeting progresses
-
-### Model Requirements
-
-Intelligence requires a GGUF model. **Bring your own** (any GGUF chat model
-works; see [MODELS.md](./MODELS.md) for the full contract). Model names are a
-moving target, so treat the table below as a rough *shape* guide, not a
-prescription: a small model is fast and fine; a larger model gives sharper intel.
-
-| Tier | Approx size | Speed | Quality |
-|------|-------------|-------|---------|
-| Small instruct (~4-9B) Q4-Q6 | ~3-8GB | fast | Good |
-| Mid instruct (~14-32B) Q4_K_M | ~10-20GB | ~8s (GPU) | Excellent |
-
-### Installing a Model
-
-Download any GGUF chat model from HuggingFace. For example, a current small/mid
-instruct model:
-
-```bash
-# Using the hf CLI; swap the repo/file for whatever model you want:
-hf download bartowski/Qwen3.5-9B-Instruct-GGUF \
-  --include "*Q6_K.gguf" \
-  --local-dir ~/Models/gguf/
-```
-
-Then point `intel_realtime_model` at the downloaded file.
-
-### GPU Acceleration
-
-HoldSpeak automatically uses Metal GPU on Apple Silicon. The `n_gpu_layers=-1` setting offloads all layers to GPU for maximum speed.
-
-With GPU: Qwen 32B processes meeting intel in ~8 seconds
-Without GPU: Same model takes 20+ minutes
-
----
-
-## Meeting Aftercare (close the loop)
-
-A finished meeting leaves you with artifacts. Aftercare turns those into your next
-move. Open a saved meeting at `/history` and the "Your next move" panel sits at the
-top of the detail view, above the artifact cards. It is read-only and it stays
-quiet when there is nothing to act on, so it only appears when a meeting actually
-has open work, decisions, or a change since last time.
-
-![The "Your next move" aftercare panel on a meeting at /history: a "Still open" count grouped by owner, a "What was decided" list, and a "Since the last meeting" section, each row carrying a "Show me the moment" jump to the transcript.](assets/aftercare/aftercare-digest.png)
-
-*The aftercare panel: open work by owner, the decisions, and a real diff against the previous meeting, each with a jump back to the transcript moment.*
-
-### What the panel shows
-
-1. **Still open.** The meeting's pending action items, grouped by owner, with the
-   unassigned ones last. This is "what is still on someone's plate."
-2. **What was decided.** The decisions captured for the meeting, each with its
-   rationale when one was recorded.
-3. **Since the last meeting.** A real diff against the chronologically previous
-   meeting: new decisions, new action items, and items from last time that have
-   since closed. If there is no prior meeting, or nothing changed, this section
-   does not appear. The numbers come from your real data; nothing is invented.
-
-### Show me the moment
-
-Wherever a result carries a real transcript timestamp, a "Show me the moment"
-button appears on it (open items, decisions, and the action-item cards). Clicking
-it scrolls the transcript to the segment that justifies the result and flashes it,
-so you can read the exact exchange before you act on it. The button only shows when
-a real timestamp resolves to a real segment, so there is no misleading jump to
-`0:00`. It reveals the segment without taking keyboard focus.
-
-### File an accepted action as an issue
-
-When you have reviewed and accepted an action item, a "File as issue" button
-appears on it in the panel. It opens a small form for a target repo (`owner/name`)
-and creates a GitHub-issue **proposal**. Proposal construction never performs the
-connector call itself. The captured control posture then decides whether the
-proposal waits for authorization or can proceed immediately.
-
-![The "File as issue" proposal in the Proposed actions section: a create_issue -> github proposal awaiting approval, showing the full payload preview (repo, title, body) with Approve and Reject controls.](assets/aftercare/file-as-issue.png)
-
-*In Secure or Normal mode, the filed proposal lands in Proposed actions and
-waits for your decision. Execution remains a separate, audited lifecycle axis.*
-
-The execution posture depends on your control mode:
-
-- **On by default (YOLO posture).** `allow_actuators` defaults to `true` with a
-  wildcard allow-list. Under YOLO, an eligible proposal to a registered fixed
-  destination can be authorized by the captured posture and execute at creation,
-  producing a receipt. Switch to Normal or Secure in **Settings > System** to
-  require a decision or bounded grant.
-- **Reviewed under Normal/Secure.** Under Normal or Secure, you
-  approve or reject each proposal yourself in the Proposed actions section.
-  For registered Slack, webhook, and GitHub targets, approval also invokes the
-  guarded executor in the same request; review and execution state remain
-  separate in the record.
-- **Audited, and what executes is what you saw.** Every state change is recorded,
-  and a payload-parity check aborts execution if the stored payload no longer
-  matches what was approved.
-
-The connector that files the issue runs your already-authenticated local `gh`; it
-manages no tokens and can only run `gh issue create`.
-
-### Draft the follow-up
-
-"Draft follow-up" in the panel header assembles a plain-markdown summary from the
-same data: the decisions, the open items with owners, and the since-last-meeting
-delta. It is assembled locally and is preview plus copy only. There is no model
-call and nothing is sent; you read it, copy it, and paste it wherever your team
-talks.
-
-![The follow-up draft preview in the aftercare panel: a monospace block with a Follow-up heading, a "What we decided" list, "Open items" by owner with due dates, and a "Since" section, plus a Copy draft button.](assets/aftercare/followup-draft.png)
-
-*The follow-up draft: assembled from the meeting's decisions and open items, ready to copy. An empty meeting yields one honest line, not filler.*
-
-### Send to Slack
-
-If your team reads Slack, the digest and the follow-up draft can go there
-directly through a Slack incoming webhook. Set the webhook URL once in
-Settings (under Meetings & intel) and every meeting's aftercare panel gains
-a "Send to Slack" button on the digest and another on the follow-up draft.
-With no URL configured, the buttons do not exist and nothing about Slack
-appears anywhere.
-
-![The aftercare panel with Send to Slack configured: a green Send to Slack pill in the panel header, the follow-up draft open with Copy draft and Send to Slack side by side, and the one-line authority note.](assets/aftercare/send-to-slack.png)
-
-*The one outbound door: the green buttons appear only after you configure a
-webhook URL. In Normal or Secure they create a proposal awaiting authority; in
-YOLO an eligible fixed-destination proposal can execute immediately.*
-
-How a send actually works:
-
-1. Clicking the button creates a **proposal** in the Proposed actions
-   section. The proposal's preview is the exact message Slack will receive,
-   so what you read is what posts, byte for byte.
-2. The captured control posture resolves authority. In YOLO, an eligible send
-   to the configured fixed destination posts immediately and records a receipt.
-   In Normal or Secure, **approving the proposal is the moment it posts**;
-   rejecting it ends there.
-3. The message can only ever go to the host of the URL you configured. The
-   connector refuses any other destination before a single byte leaves, and
-   a failed post is recorded honestly on the proposal.
-
-Two honesty notes. Slack treats webhook URLs like passwords, so HoldSpeak
-does too: the URL lives in your local config, is shown only on the Settings
-page, and never appears in a proposal, a status broadcast, or an API
-response. And the message is plain text in Slack's own formatting; a long
-digest is cut with a visible truncation notice rather than silently.
-
----
-
-## Import an Existing Recording or Transcript
-
-You can run meeting intelligence on recordings and transcripts you already
-have. If a Zoom export, a Teams download, a voice memo, or a transcript file
-is sitting on your disk, import it and HoldSpeak treats it like any other
-meeting: the content is processed locally, stored with timestamps, and the
-result appears on the History page with the same intelligence, artifacts, and
-aftercare as a live capture.
-
-From the browser: open **History**, click **Import a recording or
-transcript**, drop the file in (or browse), optionally set a title, a speaker
-label, and tags, and click Import. The meeting appears in the list immediately
-with an "Importing" badge and live progress, then resolves in place. A failed
-import says why and can be removed with one click.
-
-From the shell (the right tool for very long files or headless machines):
+From the shell:
 
 ```bash
 holdspeak import path/to/recording.wav --title "Q3 kickoff" --speaker "Team call" --tag imported
-```
-
-The command prints progress per transcription window and tells you when meeting
-intelligence has been queued.
-
-WAV imports out of the box. mp3, m4a, aac, ogg, opus, flac, webm, and mp4
-audio need `ffmpeg` on your PATH (for example `brew install ffmpeg`); without
-it, HoldSpeak refuses the import with a clear message rather than handing you
-a half-decoded transcript.
-
-The whole recording gets one speaker label, yours to choose (the default is
-"Recording"). A single mixed audio file does not carry the separate microphone
-and system streams a live capture has, and HoldSpeak does not guess speaker
-boundaries it cannot verify.
-
-The audio file itself is read, transcribed locally, and not retained. The
-transcript is the record, the same as for a live meeting, and nothing leaves
-your machine.
-
-The meeting's start time comes from the file's last-modified time, so an old
-recording sorts where it happened in your history, not where it was imported.
-
-### Importing a transcript
-
-Most meeting tools export a transcript rather than audio, and HoldSpeak
-imports those directly: `.vtt` (WebVTT, the common Teams, Zoom, and Meet
-export), `.srt` (SubRip), and plain `.txt`. A transcript import is the fast
-path. There is nothing to transcribe, so no model loads and even a long
-meeting imports in well under a second:
-
-```bash
 holdspeak import path/to/meeting.vtt --tag imported
 ```
 
-Transcripts can carry more than audio does, and HoldSpeak uses exactly what
-the file provides:
+| Input | Formats | Notes |
+| --- | --- | --- |
+| Recording | `.wav` | Works without extra tools. |
+| Recording | `.mp3`, `.m4a`, `.aac`, `.ogg`, `.opus`, `.flac`, `.webm`, `.mp4` | Needs `ffmpeg` on your PATH. Without it, the import fails with a message. |
+| Transcript | `.vtt`, `.srt`, `.txt` | No transcription. A long meeting imports in seconds. |
 
-- **Speaker names.** WebVTT voice tags (`<v Priya>`) and `Name:` line
-  prefixes become real per-segment speaker labels, so the speaker filter on
-  the History page works across imported transcripts. A file with no labels
-  gets one label of your choosing (the default is "Transcript"). HoldSpeak
-  never invents a name.
-- **Timestamps.** `.vtt` and `.srt` cues carry real start and end times, and
-  the imported segments keep them. Plain `.txt` has no timing, so segments
-  get evenly spaced approximate times. They keep the meeting ordered and
-  readable, and HoldSpeak does not present them as real moments.
+Rules for imports:
 
-A file that yields no readable content (an empty file, a subtitle file with
-no cues, something that is not text at all) is refused with a clear message.
-An import never silently creates an empty meeting.
+- HoldSpeak transcribes a recording on your machine in windows of 30 seconds. It does not keep the audio file.
+- A recording gets one speaker label. The default is **Recording**. HoldSpeak does not guess speakers.
+- A transcript keeps the speaker names and times that the file has. WebVTT `<v Name>` tags and `Name:` prefixes become speaker labels.
+  A file with no names gets one label. The default is **Transcript**. A `.txt` file has no times, so HoldSpeak spreads the segments evenly.
+- A file with no readable content is refused. An import never makes an empty meeting.
+- The meeting start time is the time of the import.
+- An import does not run the summary. Select **Run summary** on the meeting.
 
-The transcript file itself is read once and not retained. The meeting record
-is the artifact, the same as every other meeting, and nothing leaves your
-machine. Recordings import exactly as they did before; nothing about the
-audio path changed.
+## Find meetings
 
-## Find Meetings in Your Archive
+The **Meetings** list searches the full transcript text. Filters narrow the list on the server, so they cover
+all meetings, not only the visible ones:
 
-The History page searches full transcript text, and the filter row beneath the
-search box narrows the archive server-side, so filters see every meeting you
-have, not just the visible page:
+- **Date range**: from and to dates.
+- **Speaker**: meetings where the speaker has segments.
+- **Tag**: meetings with the tag.
+- **HAS OPEN ACTIONS**: meetings that still have open action items.
 
-- **Date range.** From/to dates against the meeting start time.
-- **Speaker.** Meetings where a given speaker has transcript segments.
-- **Tag.** Meetings carrying a tag (imports can be tagged on the way in).
-- **Open actions.** Only meetings that still have pending action items.
+Filters combine with each other and with the search text.
 
-Filters compose with each other and with the search box: "meetings with Alice
-in March that mention the budget and still have open actions" is one query.
-Active filters show a Clear button; with nothing set, the list shows your
-newest meetings first.
+## Where your transcript goes
 
-## Configuration Reference
+HoldSpeak transcribes on your machine. The summary and assigned plugins can send text to their model hosts.
 
-Configuration file: `~/.config/holdspeak/config.json`
+Meeting model work uses the assigned route for each capability. Check the primary and fallback hosts in **Settings > Models**. The retained `meeting.intel_provider` value is a legacy migration input. It does not select a current route or prevent egress.
 
-### Meeting Settings
+- Add and assign models in **Settings > Models**. See [Models](MODELS.md).
+- The host chip beside **Run summary** shows the destination before you run. The receipt shows the hosts that HoldSpeak contacted.
+- `holdspeak doctor` checks the meeting settings. The live face shows an egress chip: whether the text stays on this device.
+- If a summary cannot run, HoldSpeak queues it and retries with a growing delay.
+  Tune it with `meeting.intel_retry_base_seconds`, `meeting.intel_retry_max_seconds`, and `meeting.intel_retry_max_attempts`.
+- To check the queue, run `holdspeak intel`. Use `--process` to run queued jobs now and `--retry MEETING_ID` to requeue one.
 
-The browser Settings surfaces are the preferred editor. This representative
-`meeting` block shows the supported low-level controls most often needed for
-capture, intelligence, routing, and connectors.
-The model services store availability and assignments.
-Use the Concierge for current model setup. See [Models](MODELS.md).
+See [Security](SECURITY.md) for what HoldSpeak stores.
 
-```json
-{
-  "meeting": {
-    "system_audio_device": null,
-    "auto_export": false,
-    "export_format": "markdown",
-    "intel_provider": "local",
-    "intel_realtime_model": "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf",
-    "intel_retry_base_seconds": 30,
-    "intel_retry_max_seconds": 900,
-    "intel_retry_max_attempts": 6,
-    "intel_retry_failure_webhook_url": null,
-    "intel_retry_failure_webhook_header_name": null,
-    "intel_retry_failure_webhook_header_value": null,
-    "intel_cloud_reasoning_effort": null,
-    "intel_cloud_store": false,
-    "intel_summary_model": null,
-    "routing_profile": "balanced",
-    "intent_router_enabled": false,
-    "allow_actuators": true,
-    "allowed_actuators": ["*"],
-    "webhook_allowed_hosts": ["*"],
-    "slack_webhook_url": "",
-    "companion_webhook_url": "",
-    "companion_github_repo": "",
-    "diarization_enabled": false,
-    "diarize_mic": false,
-    "similarity_threshold": 0.75
-  }
-}
+## Intent routing
+
+The intent router reads the transcript and scores it against intents:
+architecture, delivery, product, incident, and comms. The scores pick which plugins run on the summary job.
+One meeting can have several intents. See [Meeting intelligence](MEETING_INTELLIGENCE.md).
+
+- The summary job routes by the words in the transcript. It always starts from the `balanced` preset.
+- A plugin runs only when it has a model assignment. Without one, HoldSpeak skips it and records the reason.
+- Presets: `balanced` (default), `architect`, `delivery`, `product`, and `incident`.
+  Set `meeting.routing_profile` for previews. The live face also has an **Intent routing** control.
+- **Preview route** on the live face tests routing on text you type. It does not touch the live meeting.
+- **Intent router** in the Meetings settings sets `meeting.intent_router_enabled`. It is off by default.
+
+Saved meetings show the intent timeline and the plugin runs.
+
+To test routing on a saved meeting from the shell:
+
+```bash
+holdspeak intel --route-dry-run MEETING_ID --profile architect
+holdspeak intel --reroute MEETING_ID --profile incident --override-intents incident,comms
 ```
 
-`intel_cloud_model`, `intel_cloud_api_key_env`, and `intel_cloud_base_url` are
-accepted only for one-time migration from older installations. Do not use them
-for new configuration. Model Library and Assignments are authoritative.
+- `--route-dry-run` prints JSON. It writes nothing.
+- `--reroute` needs `--profile`. It saves one reroute window named `MEETING_ID:cli-reroute`.
 
-### Option Details
+## Settings
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `system_audio_device` | string | null | System audio device name (e.g., "BlackHole 2ch"). Auto-detected if null. |
-| `auto_export` | bool | false | Automatically export when meeting ends |
-| `export_format` | string | "markdown" | Export format: txt, markdown, json, srt |
-| `intel_provider` | string | "local" | Intel mode: `local` (in-process GGUF), `cloud` (any OpenAI-compatible endpoint), or `auto` (local-first, endpoint fallback) |
-| `intel_realtime_model` | string | (suggested GGUF path) | Path to a GGUF model for real-time intel; bring your own |
-| `intel_retry_base_seconds` | int | 30 | Initial deferred-intel retry delay after a failed run |
-| `intel_retry_max_seconds` | int | 900 | Maximum deferred-intel retry delay cap |
-| `intel_retry_max_attempts` | int | 6 | Deferred-intel attempts before terminal `failed` status |
-| `intel_retry_failure_webhook_url` | string | null | Optional HTTP(S) webhook for sustained failure alerts |
-| `intel_retry_failure_webhook_header_name` | string | null | Optional custom header name added to failure-alert webhooks |
-| `intel_retry_failure_webhook_header_value` | string | null | Optional custom header value (set together with header name) |
-| `intel_cloud_reasoning_effort` | string | null | Optional reasoning effort forwarded to compatible endpoint models. |
-| `intel_cloud_store` | bool | false | Forward the OpenAI `store` flag; endpoint support and retention behavior vary. |
-| `intel_summary_model` | string | null | Path to larger model for end-of-meeting summary. Falls back to realtime model if null. |
-| `routing_profile` | string | `balanced` | MIR weighting preset: `balanced`, `architect`, `delivery`, `product`, or `incident`. |
-| `intent_router_enabled` | bool | false | Enable automatic intent-window routing at meeting finalization. |
-| `allow_actuators` | bool | true | Master switch for actuator execution. Control mode still determines authority. |
-| `allowed_actuators` | list | `["*"]` | Per-actuator allow-list. `["*"]` = all actuators may execute. |
-| `webhook_allowed_hosts` | list | `["*"]` | Webhook host allow-list. `["*"]` = any host may be POSTed to. |
-| `slack_webhook_url` | string | `""` | Ignored legacy value. Settings cannot read or change it. Send to Slack uses a saved channel destination. |
-| `companion_webhook_url` | string | `""` | Fixed generic webhook credential for the companion desk. |
-| `companion_github_repo` | string | `""` | Default `owner/name` repo for companion GitHub issue creation. |
-| `diarization_enabled` | bool | false | Enable speaker diarization for system audio |
-| `diarize_mic` | bool | false | Enable diarization for microphone stream |
-| `similarity_threshold` | float | 0.75 | Matching threshold for speaker recognition (`0.0` to `1.0`) |
+Use **Settings** in the browser when you can. The file is `~/.config/holdspeak/config.json`.
+[Configuration reference](CONFIGURATION_REFERENCE.md) lists every key. These `meeting` keys matter most:
 
-The config model also retains defaults such as `mic_label`, `remote_label`,
-`intel_enabled`, `intel_deferred_enabled`, `cross_meeting_recognition`, and
-`mir_enabled`. They are intentionally absent from the ordinary Settings
-surface. Removed no-op fields are not part of this reference.
+| Key | Default | Purpose |
+| --- | --- | --- |
+| `mic_device` | `null` | Microphone name. `null` uses the system default. |
+| `system_audio_device` | `null` | System audio device, for example `BlackHole 2ch`. `null` finds it. |
+| `mic_label`, `remote_label` | `Me`, `Remote` | Speaker labels for the two streams. |
+| `auto_export` | `false` | Terminal recorder only: save the transcript when the meeting ends. |
+| `export_format` | `markdown` | `txt`, `markdown`, or `json` for the terminal recorder. |
+| `intel_enabled` | `true` | Allows summaries. |
+| `intelligence_auto` | `every` | When to run the summary by itself: `every`, `room_linked`, or `off`. |
+| `intel_provider` | `local` | Legacy migration input. Use the model assignments to select current routes. |
+| `intel_realtime_model` | local starter model | Path to a GGUF model for local runs. |
+| `intel_summary_model` | `null` | Larger local model for the summary. `null` uses the main one. |
+| `intel_deferred_enabled` | `true` | Queue the summary when no model is ready. |
+| `routing_profile` | `balanced` | Intent routing preset. |
+| `intent_router_enabled` | `false` | Intent router switch. `holdspeak doctor` reports it. |
+| `disabled_plugins` | `[]` | Plugin ids to skip. |
+| `allow_actuators`, `allowed_actuators` | `true`, `["*"]` | Master switch and allow list for actions that leave HoldSpeak. |
+| `webhook_allowed_hosts` | `["*"]` | Hosts a webhook action can reach. |
+| `diarization_enabled` | `false` | Label speakers in system audio. |
+| `diarize_mic` | `false` | Label speakers in the microphone stream. |
+| `similarity_threshold` | `0.75` | Speaker match threshold, `0.0` to `1.0`. |
+| `auto_record` | `off` | Record calendar events that have a meeting link: `off`, `all_calendar`, or `room_linked`. |
 
----
+The old `intel_cloud_*` keys are read once for migration. Do not use them. Assign models in **Settings > Models**.
 
-## Web API Reference
+## HTTP API
 
-The local meeting web server exposes these routes:
+The web runtime serves these routes on `127.0.0.1`. [API reference](API_REFERENCE.md) has the full list.
 
-### HTTP Endpoints
+**Live**
 
-#### `GET /`
-Live meeting dashboard HTML.
+| Route | Purpose |
+| --- | --- |
+| `GET /api/runtime/status` | Runtime state and egress posture. |
+| `GET /api/state` | Current meeting state. |
+| `POST /api/meeting/start`, `POST /api/meeting/stop` | Start and stop a meeting. |
+| `PATCH /api/meeting` | Update the title and tags. |
+| `POST /api/bookmark` | Add a bookmark. |
+| `GET /api/intents/control` | Intent routing state. |
+| `PUT /api/intents/profile`, `PUT /api/intents/override` | Set the preset and a manual intent set. |
+| `POST /api/intents/preview` | Preview routing without saving. |
+| `PATCH /api/action-items/{item_id}` (also `/review`, `/edit`) | Change a live action item. |
 
-#### `GET /history`
-Archive/control-plane UI (meetings, actions, speakers, intel queue).
+**Saved meetings**
 
-#### `GET /settings`
-Settings UI (same web app shell as `/history`).
+| Route | Purpose |
+| --- | --- |
+| `GET /api/meetings` | List meetings. Takes `search`, `date_from`, `date_to`, `speaker`, `tag`, `has_open_actions`. |
+| `GET /api/meetings/facets` | Filter values. |
+| `GET /api/meetings/{meeting_id}` | One meeting. |
+| `GET /api/meetings/{meeting_id}/export?format=markdown\|json` | Download. |
+| `POST /api/meetings/import` | Import a recording or transcript. |
+| `POST /api/meetings/{meeting_id}/intelligence/run` | Queue a summary. Send `expected_selection_hash` from the planned route. |
+| `GET /api/meetings/{meeting_id}/intel-recovery` | Summary recovery state. Also `/retry` and `/skip`. |
+| `GET /api/meetings/{meeting_id}/outcome-review` | Proposals for review. |
+| `POST /api/meetings/{meeting_id}/proposals/accept-reviewed` | Confirm the ready proposals. |
+| `GET /api/meetings/{meeting_id}/artifacts` | Plugin artifacts. |
+| `GET /api/meetings/{meeting_id}/intent-timeline` | Intent windows. |
+| `GET /api/meetings/{meeting_id}/plugin-runs` | Plugin run history. |
+| `GET /api/meetings/{meeting_id}/aftercare` | Open items, decisions, and the change since the previous meeting. |
+| `GET /api/meetings/{meeting_id}/followup-draft` | The follow-up draft. |
+| `POST /api/meetings/{meeting_id}/aftercare/file-issue` | Propose a GitHub issue. |
+| `GET /api/all-action-items` | Action items across meetings. |
+| `GET /api/speakers`, `PATCH /api/speakers/{speaker_id}` | Speakers. |
 
-#### `GET /health`
-Health check endpoint.
+**Queues**
 
-**Response:**
-```json
-{"status": "ok"}
-```
+| Route | Purpose |
+| --- | --- |
+| `GET /api/intel/jobs`, `GET /api/intel/summary` | Summary queue. |
+| `POST /api/intel/process`, `POST /api/intel/retry/{meeting_id}` | Run or requeue. |
+| `GET /api/plugin-jobs`, `GET /api/plugin-jobs/summary` | Plugin queue. |
+| `POST /api/plugin-jobs/process` | Run due plugin jobs. |
+| `POST /api/plugin-jobs/{job_id}/retry-now`, `.../cancel` | Retry or cancel one job. |
 
-#### Live meeting APIs
-- `GET /api/runtime/status` - runtime mode + meeting-active status
-- `GET /api/state` - current meeting state
-- `POST /api/meeting/start` - start meeting from web runtime control plane
-- `POST /api/meeting/stop` - stop active meeting and persist it
-- `GET /api/intents/control` - MIR routing control state (enabled/preset/override/preview)
-- `PUT /api/intents/profile` - update the MIR routing preset
-- `PUT /api/intents/override` - update manual intent override set
-- `POST /api/intents/preview` - deterministic route preview from transcript/tags/scores
-- `POST /api/bookmark` - add bookmark
-- `POST /api/stop` - legacy stop alias (meeting stop when active)
-- `PATCH /api/action-items/{item_id}` - update in-memory action item status
-- `PATCH /api/action-items/{item_id}/review` - update in-memory action item review state (`pending` or `accepted`)
-- `PATCH /api/action-items/{item_id}/edit` - edit in-memory action item (`task`/`owner`/`due`), auto-accepts
-- `PATCH /api/meeting` - update title/tags
+**WebSocket**
 
-#### Archive/data APIs
-- `GET /api/meetings`
-- `GET /api/meetings/{meeting_id}`
-- `GET /api/meetings/{meeting_id}/export?format=markdown|json` - local handoff download with transcript, action review/provenance, and artifacts
-- `GET /api/meetings/{meeting_id}/intent-timeline` - persisted MIR timeline windows + transitions
-- `GET /api/meetings/{meeting_id}/plugin-runs` - persisted MIR plugin execution history
-- `GET /api/meetings/{meeting_id}/artifacts` - synthesized artifacts with lineage sources
-- `GET /api/meetings/{meeting_id}/aftercare` - read-only aftercare digest (open items by owner, decisions, the since-last-meeting diff)
-- `GET /api/meetings/{meeting_id}/followup-draft` - locally-assembled follow-up draft (preview + copy; nothing sent)
-- `POST /api/meetings/{meeting_id}/aftercare/file-issue` - file an accepted action as a GitHub-issue actuator proposal (under default YOLO, an eligible configured action executes with a receipt; Secure and Normal retain approval; audited)
-- Send to Slack uses the channel operations: `channel.preview`, `channel.prepare` and the owner's `channel.send`. The document reference is `meeting_digest:<meeting_id>` or `meeting_followup:<meeting_id>`. The old `/export/slack` route is removed. The Slack face is tracked in PHILO-11-05.
-- `GET /api/all-action-items`
-- `PATCH /api/all-action-items/{item_id}` - update persisted action item status
-- `PATCH /api/all-action-items/{item_id}/review` - update persisted action item review state
-- `PATCH /api/all-action-items/{item_id}/edit` - edit persisted action item (`task`/`owner`/`due`), auto-accepts
-- `GET /api/speakers`
-- `GET /api/speakers/{speaker_id}`
-- `PATCH /api/speakers/{speaker_id}`
-
-#### Settings/intel queue APIs
-- `GET /api/settings`
-- `PUT /api/settings`
-- `GET /api/intel/jobs`
-- `GET /api/intel/summary`
-- `POST /api/intel/process` (`mode`: `respect_backoff` or `retry_now`)
-- `POST /api/intel/retry/{meeting_id}`
-- `GET /api/plugin-jobs`
-- `GET /api/plugin-jobs/summary`
-- `POST /api/plugin-jobs/process` (`mode`: `respect_backoff` or `retry_now`)
-- `POST /api/plugin-jobs/{job_id}/retry-now`
-- `POST /api/plugin-jobs/{job_id}/cancel`
-
-### WebSocket
-
-#### `WS /ws`
-Real-time updates via WebSocket connection.
-
-**Message Types:**
-
-```json
-// New transcript segment
-{"type": "segment", "data": {"speaker": "Me", "text": "...", "timestamp": 123.4}}
-
-// Streaming intel token + final intel snapshot
-{"type": "intel_token", "data": "..."}
-{"type": "intel_complete", "data": {"topics": [...], "action_items": [...], "summary": "..."}}
-
-// Intel status transitions
-{"type": "intel_status", "data": {"state": "running", "detail": "Analyzing..."}}
-
-// Duration tick (every second)
-{"type": "duration", "data": "12:34"}
-
-// Bookmark added
-{"type": "bookmark", "data": {"timestamp": 300.0, "label": "..."}}
-
-// Action item updated (status, review, or edit)
-{"type": "action_item_updated", "data": {"id": "...", "task": "...", "status": "pending", "review_state": "accepted"}}
-
-// Meeting stopped
-{"type": "stopped", "data": {"status": "stopped"}}
-
-// Deferred plugin queue processing completed
-{"type": "plugin_jobs_processed", "data": {"success": true, "mode": "respect_backoff", "processed": 2}}
-```
-
-**Ping/Pong:**
-Send `"ping"` text message, receive `"pong"` response.
-
----
+`WS /ws` pushes live events. It needs owner access. Send the text `ping` to get `pong`.
+Events include `segment`, `intel_status`, `intel_complete`, `duration`, `bookmark`,
+`meeting_started`, `stopped`, and `aftercare_ready`.
 
 ## Troubleshooting
 
-### "BlackHole not found"
-
-1. Install BlackHole: `brew install blackhole-2ch`
-2. Restart Audio MIDI Setup
-3. Run `holdspeak meeting --list-devices` to verify
-
-### No remote audio captured
-
-1. Ensure Multi-Output Device is set as system output
-2. Check that BlackHole is checked in the Multi-Output Device
-3. Verify with `holdspeak meeting --setup`
-
-### Intel extraction is slow
-
-1. Check GPU is being used: Look for "Metal" in logs
-2. Use a smaller model (a ~4-9B instruct model instead of a 32B)
-3. Ensure `n_gpu_layers=-1` is set (default)
-
-### Web dashboard not loading
-
-1. Verify the HoldSpeak installation: `holdspeak doctor`
-2. Verify the runtime URL printed at startup is accessible
-3. Check firewall isn't blocking localhost
-4. Try `/history` directly on the same port to confirm server health
-
-### Cloud intel errors (`provider=cloud` or `auto`)
-
-1. Run `holdspeak doctor` and check the `Cloud intel preflight` line.
-2. If it reports DNS/connection failures, verify the homelab hostname/IP, LAN routing, and firewall.
-3. If it reports an authentication failure, check the model profile's credential configuration.
-   See [Models](MODELS.md) for owner API and headless credential paths.
-4. If it reports model mismatch, set that profile's model to one of the model IDs exposed by `/models`.
-5. Verify that profile's base URL starts with `http://` or `https://` and includes the right API prefix (commonly `/v1`). **Check** in the Concierge tests the selected engine.
-
-### Transcription quality is poor
-
-1. Check microphone permissions
-2. Reduce background noise
-3. Try a larger Whisper model in settings (small, medium)
-
-### Memory issues
-
-1. Use smaller quantization (Q4 instead of Q6)
-2. Close other applications
-3. Meeting intelligence is enabled in the shipped configuration. To reduce
-   memory, use a smaller quantization or assign a lighter model to Meetings.
-
----
-
-## Best Practices
-
-1. **Test before important meetings** - Run `holdspeak meeting --setup` first
-2. **Use headphones** - Prevents echo from speakers
-3. **Monitor the dashboard** - Keep it open in a browser tab
-4. **Add bookmarks** - Mark important decisions in real-time
-5. **Export after meetings** - Save the transcript and intel for reference
-
----
-
-## Example Workflow
-
-```bash
-# Before the meeting
-holdspeak meeting --setup    # Verify audio setup
-holdspeak                    # Start HoldSpeak (web runtime)
-
-# During the meeting (web dashboard)
-# Click "Start meeting" (or POST /api/meeting/start)
-# Add bookmarks from the dashboard when something important happens
-
-# After the meeting
-# Click "Stop meeting" (or POST /api/meeting/stop)
-# Export from dashboard, /history local handoff downloads, or auto_export
-```
-
-Saved meeting detail in `/history` offers local Markdown and JSON handoff
-downloads. Handoff files include the transcript, meeting intelligence,
-action-item review state, source timestamps when available, and synthesized
-artifacts. They are local downloads only and do not publish to Jira, Linear,
-GitHub Issues, Slack, or any other external system.
+| Problem | Action |
+| --- | --- |
+| BlackHole not found | Run `brew install blackhole-2ch`. Restart **Audio MIDI Setup**. Run `holdspeak meeting --list-devices`. |
+| No remote audio | Set the Multi-Output Device as the system output. Check **BlackHole 2ch** in it. Run `holdspeak meeting --setup`. |
+| No **Run summary** button | Read the **NO SUMMARY ROUTE** reason. Assign a model in **Settings > Models**. |
+| The summary is slow | Use a smaller model. Use a GPU. HoldSpeak uses Metal on Apple Silicon. |
+| The summary fails on an endpoint | Read the error on the meeting. Check the host, the key, and the model name in **Settings > Models**. Check that the base URL ends with the API prefix, often `/v1`. |
+| The page does not load | Run `holdspeak doctor`. Check the URL that the runtime printed. Check that nothing blocks localhost. |
+| Poor transcript quality | Check microphone permission. Reduce noise. Use a larger speech model in **Settings**. |
+| Memory use is high | Use a smaller quantization. Assign a smaller model to meetings. |
 
 ## See also
 
-- [Getting Started](GETTING_STARTED.md): install and first-run setup.
-- [Models (bring your own)](MODELS.md): configure the LLM that powers intel.
-- [Plugin Authoring](PLUGIN_AUTHORING.md): write your own meeting-intel plugin.
-- [Security & Privacy](SECURITY.md): what's stored and what can leave your machine.
+- [Getting Started](GETTING_STARTED.md)
+- [Models](MODELS.md)
+- [Meeting intelligence](MEETING_INTELLIGENCE.md)
+- [Meeting aftercare](MEETING_AFTERCARE.md)
+- [Meeting architecture](MEETING_ARCHITECTURE.md)
+- [Plugin authoring](PLUGIN_AUTHORING.md)
+- [Security](SECURITY.md)

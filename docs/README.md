@@ -1,109 +1,100 @@
 # HoldSpeak documentation
 
-Use these guides to install HoldSpeak, prepare work, and configure its tools.
-Guides follow their stated source revision. The Philo audit is pinned to a
-recorded snapshot. Check your installed version when a control is absent.
+This index lists every guide and reference by reader task.
+The product overview and install steps are in the [root README](../README.md).
+A line marked "(overlaps X)" repeats part of X. Read X first.
 
-## Start here
-
-| You want to | Read |
-| --- | --- |
-| Understand the four main jobs | [What is HoldSpeak?](WHAT_IS_HOLDSPEAK.md) |
-| Follow a task from input to result | [Use cases](USE_CASES.md) |
-| Install HoldSpeak and capture a sentence | [Getting Started](GETTING_STARTED.md) |
-| Find a daily task or product control | [User Guide](USER_GUIDE.md) |
-| Use Desk objects and windows | [The Desk](WEB_DESK.md) |
-| Select an environment or use Settle in | [Places](ENVIRONMENTS.md) |
-| Understand product terms | [Glossary](GLOSSARY.md) |
-
-## Prepare your work
+## Use
 
 | You want to | Read |
 | --- | --- |
-| Describe goals, Projects, cadences, and decisions | [Interview](INTERVIEW.md) |
-| Prepare an architecture decision or agent brief | [Architecture work recipes](ARCHITECTURE_WORK.md) |
-| Continue a conversation with tools and sources | [Threads](USER_GUIDE.md#threads) |
-| Refine a Note through questions | [Develop a thought](USER_GUIDE.md#develop-a-thought) |
-| Connect project sources and configure Watches | [Project Rooms](PROJECT_ROOMS.md) |
-| Use confidential relationship records | [People integration](PEOPLE_INTEGRATION.md) and [People security](PEOPLE_SECURITY.md) |
-
-## Dictate and meet
-
-| You want to | Read |
-| --- | --- |
+| See what HoldSpeak does | [What is HoldSpeak?](WHAT_IS_HOLDSPEAK.md) |
+| Choose a workflow by the result you need | [Use cases](USE_CASES.md) |
+| Install HoldSpeak and keep a first sentence | [Getting Started](GETTING_STARTED.md) |
+| Do a daily task or find a control | [User Guide](USER_GUIDE.md) |
+| Learn a product term | [Glossary](GLOSSARY.md) |
 | Dictate into another app | [Voice typing](USER_GUIDE.md#voice-typing) |
-| Configure project facts and optional model rewriting | [Dictation pipeline](DICTATION_PIPELINE_GUIDE.md) |
-| Follow a coding prompt example | [Dictation Copilot](DICTATION_COPILOT.md) |
-| Map spoken keywords to configured actions | [Voice commands](VOICE_COMMANDS.md) |
-| Review recent activity before dictation | [Activity pre-briefing](ACTIVITY_PREBRIEFING.md) |
-| Record, import, or review a meeting | [Meeting mode](MEETING_MODE_GUIDE.md) |
+| Set up the dictation pipeline | [Dictation pipeline](DICTATION_PIPELINE_GUIDE.md) |
+| See one enriched dictation run | [Dictation Copilot](DICTATION_COPILOT.md) |
+| Map spoken keywords to actions | [Voice commands](VOICE_COMMANDS.md) |
+| Review recent activity before you dictate | [Activity pre-briefing](ACTIVITY_PREBRIEFING.md) |
+| Record, import, and review a meeting | [Meeting mode](MEETING_MODE_GUIDE.md) |
+| Read the follow-up digest of a meeting | [Meeting aftercare](MEETING_AFTERCARE.md) |
+| Describe your goals, Projects, and decisions | [Interview](INTERVIEW.md) |
+| Prepare a decision brief or agent brief | [Architecture work](ARCHITECTURE_WORK.md) |
+| Work with Desk objects and windows | [The Desk](WEB_DESK.md) |
 | Review attention items and Receipts | [Desk memory](DESK_MEMORY.md) |
-| Find earlier work across your records | [Relationship-aware memory](RELATIONSHIP_AWARE_MEMORY.md) |
+| Find earlier work across your records | [Memory](RELATIONSHIP_AWARE_MEMORY.md) |
+| Connect sources to a Project | [Project Rooms](PROJECT_ROOMS.md) |
+| Select a Place or use Settle in | [Places](ENVIRONMENTS.md) |
+| Use confidential relationship records | [People integration](PEOPLE_INTEGRATION.md) |
+| Use Threads, Agents, and Workflows | [Agents and Threads](AGENTS_AND_THREADS.md) |
+| Use HoldSpeak on an iPad | [iPad](IPAD.md) |
+| Use the AIPI-Lite device | [AIPI-Lite](AIPI_LITE.md) |
+| Install the browser activity connector | [Firefox extension](FIREFOX_EXTENSION_GUIDE.md) |
 
-## Configure models and automation
+## Configure
 
 | You want to | Read |
 | --- | --- |
-| Select engines and assign capabilities | [Models](MODELS.md) |
-| Choose a manual, event, or scheduled execution path | [Automation](AUTOMATION.md) |
-| Review unresolved work and prepare next actions | [Cadence](CADENCE.md) |
-| Understand permissions before an effect | [Control modes](AUTHORITY.md) |
+| Select engines and assign models | [Models](MODELS.md) |
+| Understand models versus assignments | [Inference targets](INFERENCE_TARGETS.md) (overlaps [Models](MODELS.md)) |
+| Choose a manual, event, or scheduled run | [Automation](AUTOMATION.md) |
+| Review open loops on a schedule | [Cadence](CADENCE.md) |
+| Set a Control mode | [Control modes](AUTHORITY.md) |
+| Guard coding agent tool calls | [Gate](GATE.md) |
 | Connect Claude Code or Codex sessions | [Agent hooks](AGENT_HOOK_INSTALL.md) |
-| Run a remote sweep and Project Steward | [Reach Runner](REACH_RUNNER.md) |
+| Steer coder sessions from the Desk | [Coder integration](CODER_INTEGRATION.md) |
+| Connect an MCP client (248 tools across 43 families) | [MCP sidecar](MCP_SIDECAR.md) |
+| Run a remote sweep and steward | [Reach Runner](REACH_RUNNER.md) |
+| Set up connectors and actuators | [Integrations](INTEGRATIONS.md) |
+| Place work on a destination | [Execution destinations](EXECUTION_DESTINATIONS.md) |
+| Look up a configuration field | [Configuration reference](CONFIGURATION_REFERENCE.md) |
 
-## Build and integrate
-
-The MCP sidecar exposes 248 tools across 43 families.
-Its generated roster is the reference for tool names and membership.
-Discovery and execution also depend on the caller's permissions.
+## Extend
 
 | You want to | Read |
 | --- | --- |
-| Use the MCP service contract | [MCP sidecar](MCP_SIDECAR.md) |
-| Find an HTTP route and its consumers | [API surface](API_SURFACE.md) |
-| Understand the runtime and data flow | [Architecture](ARCHITECTURE.md) |
 | Write a meeting plugin | [Plugin authoring](PLUGIN_AUTHORING.md) |
 | Write an activity connector | [Connector development](CONNECTOR_DEVELOPMENT.md) |
-| Install the browser activity connector | [Firefox extension](FIREFOX_EXTENSION_GUIDE.md) |
-| Develop a portable device | [AIPI-Lite workflow](AIPI_LITE_DEV_WORKFLOW.md) and [Device protocol](DEVICE_PROTOCOL.md) |
+| Write an actuator | [Actuator development](ACTUATOR_DEVELOPMENT.md) |
+| Build for a portable device | [AIPI-Lite workflow](AIPI_LITE_DEV_WORKFLOW.md) and [Device protocol](DEVICE_PROTOCOL.md) |
+| Find an HTTP route | [API surface](API_SURFACE.md) and [API reference](API_REFERENCE.md) (overlaps [API surface](API_SURFACE.md)) |
+| Find a capability and its evidence | [Capabilities](CAPABILITIES.md) |
+| Follow the face rules for the Web app | [Web UI contract](WEB_UI_UX_SYSTEM_AUDIT.md) (overlaps `docs/internal/UX-CANON.md`) |
+| Change the code | [Contributing](../CONTRIBUTING.md) |
 
-## Operate and recover
-
-- [Security & Privacy](SECURITY.md): storage, network boundaries, and secret handling.
-- [Release and recovery](RELEASING.md): backups, restore, packaging, and release checks.
-- [Inference placement](INFERENCE_TARGETS.md): current terminology and model routing references.
-
-## Understand and verify
+## Operate
 
 | You want to | Read |
 | --- | --- |
-| Find a capability and its evidence | [Capability registry](CAPABILITIES.md) |
-| See the system and its boundaries | [System architecture](SYSTEM_ARCHITECTURE.md), [integration map](SYSTEM_INTEGRATION_MAP.md) |
-| Understand runtime work and recovery | [Kernel](KERNEL.md), [storage and migrations](STORAGE_AND_MIGRATIONS.md) |
-| Find domain and database ownership | [Domain model](DOMAIN_MODEL.md), [data model](DATA_MODEL.md) |
-| Trace a model or external action | [Model runtime](MODEL_RUNTIME.md), [authority](AUTHORITY_MODEL.md), [security](SECURITY_MODEL.md) |
-| Diagnose a failed job | [Operations](OPERATIONS.md), [troubleshooting](TROUBLESHOOTING.md) |
-| Check platform limits | [Platform matrix](PLATFORMS.md) |
-| Read the existing Desk contract and proposed changes | [Desk architecture](DESK_ARCHITECTURE.md), [Philo specification](internal/philo/README.md) |
-| Check audit scope and remaining unknowns | [Documentation audit report](generated/DOCUMENTATION_AUDIT_REPORT.md) |
+| Run the doctor, back up, and restore | [Operations](OPERATIONS.md) |
+| Fix a failed job or refusal | [Troubleshooting](TROUBLESHOOTING.md) |
+| Upgrade and release | [Releasing](RELEASING.md) |
+| Repair the database | [Storage and migrations](STORAGE_AND_MIGRATIONS.md) |
+| Read the security contract | [Security and privacy](SECURITY.md) |
+| Protect People records | [People security](PEOPLE_SECURITY.md) |
+| Check platform support | [Platform matrix](PLATFORMS.md) |
 
-## Documentation and specifications
+## Architecture
 
-User guides describe implemented behavior. Internal specifications can also describe planned behavior.
-Read each specification's status and verification record before you treat it as an available capability.
+| You want to | Read |
+| --- | --- |
+| See the system on one page | [System architecture](SYSTEM_ARCHITECTURE.md) |
+| Read the runtime map | [Architecture](ARCHITECTURE.md) |
+| See the deployment and job owners | [System integration map](SYSTEM_INTEGRATION_MAP.md) (overlaps [System architecture](SYSTEM_ARCHITECTURE.md) and [Kernel](KERNEL.md)) |
+| Read the operation runtime | [Kernel](KERNEL.md) |
+| Read the domain terms | [Domain model](DOMAIN_MODEL.md) |
+| Read the tables and keys | [Data model](DATA_MODEL.md) (overlaps [Domain model](DOMAIN_MODEL.md)) |
+| Trace a model call | [Model runtime](MODEL_RUNTIME.md) |
+| Trace authority to code | [Authority model](AUTHORITY_MODEL.md) |
+| Read the security controls | [Security model](SECURITY_MODEL.md) |
+| Read the dictation code path | [Dictation architecture](DICTATION_ARCHITECTURE.md) |
+| Read the meeting code path | [Meeting architecture](MEETING_ARCHITECTURE.md) and [Meeting intelligence](MEETING_INTELLIGENCE.md) |
+| Read the Desk code | [Desk architecture](DESK_ARCHITECTURE.md) and [Desk object model](DESK_OBJECT_MODEL.md) |
+| Read the companion topology | [Companions architecture](COMPANIONS_ARCHITECTURE.md) |
 
-- [Interview specification package](internal/architect-assistant/README.md): requirements, contracts, recipes, delivery status, and verification limits.
-- [Project Rooms specification package](internal/project-rooms/README.md): product, Web, domain, and MCP contracts.
-- [Contributing](../CONTRIBUTING.md): documentation changes and required checks.
-- [Writing standard](internal/DOCS_STYLE.md): ASD-STE100 reference, page structure, and review requirements.
-- [Documentation review](internal/DOC_AUDIT_2026-09.md): this refresh's scope, source checks, and remaining language review.
+## Internal records
 
-Historical plans and design records remain under [internal](internal/).
-Historical evidence does not establish the current product state.
-
-## See also
-
-- [Product overview](../README.md): capabilities and platform support.
-- [Getting Started](GETTING_STARTED.md): the first successful task.
-- [Glossary](GLOSSARY.md): product terms and their meanings.
-- [Configuration fields](CONFIGURATION_REFERENCE.md): declared types and defaults, with runtime limits.
+Files under [internal](internal/) hold canon, plans, and history.
+They can describe planned behavior. They do not describe the product as it is.

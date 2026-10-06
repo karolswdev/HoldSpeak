@@ -1,16 +1,10 @@
-# HoldSpeak Device Protocol
+# Device Protocol
 
-**Status:** LAN-only substrate today. Cross-network reach
-(TLS, tunnels, public URL) is future work.
+This page defines the WebSocket protocol between a device and the HoldSpeak runtime. The AIPI-Lite bridge uses it. Any compatible client can use it.
 
-This document specifies the WebSocket protocol that lets an
-external device (the AIPI-Lite ESP32-S3 robot, or any
-compatible client) feed audio into HoldSpeak's voice-typing
-and meeting paths. The on-host implementation lives in
-`holdspeak/device_audio.py`, `holdspeak/device_audio_ws.py`,
-`holdspeak/device_status.py`, `holdspeak/voice_typing.py`,
-and the route registration in `holdspeak/web_server.py`. See
-those modules for the source of truth.
+The source is in `holdspeak/device_audio.py`, `holdspeak/device_audio_ws.py`, `holdspeak/device_status.py`, and `holdspeak/runtime/device_glue.py`. The source is the final authority.
+
+The runtime binds to `127.0.0.1` by default. The client must run on the same machine, or reach the runtime through a tunnel that you set up.
 
 ## 1. Endpoint
 
@@ -18,401 +12,193 @@ those modules for the source of truth.
 ws://<host>:<port>/api/devices/audio
 ```
 
-The web runtime (`holdspeak web`, or just `holdspeak`) binds
-to `127.0.0.1`. Cross-network reach is future work; for now an
-AIPI-Lite-side bridge running on the same LAN as HoldSpeak
-forwards device audio over this loopback WebSocket.
+This route has no Bearer token. The PSK in the handshake authenticates the device.
 
-## 2. Handshake (first frame)
+## 2. Handshake
 
-The device opens the WebSocket and sends exactly one JSON
-text frame as its first message:
+The client sends one JSON text frame first:
 
 ```json
-{
-  "type": "hello",
-  "device_id": "aipi-1",
-  "label": "Karol",
-  "psk": "<the configured device PSK>",
-  "version": 1
-}
+{"type": "hello", "device_id": "aipi-1", "label": "Karol", "psk": "<PSK>", "version": 1}
 ```
 
-Field rules (Pydantic v2, `extra="forbid"`,
-`str_strip_whitespace=True`):
+| Field | Type | Rules |
+|---|---|---|
+| `type` | `"hello"` | Exact value. |
+| `device_id` | string | Not empty. Unique for each active device. |
+| `label` | string | Not empty. HoldSpeak uses it as the speaker label in transcripts. |
+| `psk` | string | Not empty. Compared with the configured PSK in constant time. |
+| `version` | integer | Currently `1`. |
 
-| field | type | required | rules |
-|---|---|---|---|
-| `type` | `"hello"` | yes | exact literal |
-| `device_id` | str | yes | non-empty after strip; unique per active device |
-| `label` | str | yes | non-empty after strip; speaker label on transcripts |
-| `psk` | str | yes | non-empty after strip; compared with the configured PSK via `hmac.compare_digest` |
-| `version` | int | yes | currently `1`; future revisions may bump this |
+The runtime rejects unknown fields. It trims whitespace in strings. An empty PSK never matches.
 
-**Auth:** the PSK is generated lazily on first run and stored
-in `~/.config/holdspeak/config.json` under `device.psk`.
-View / rotate from the CLI:
+The runtime creates the PSK on first use. It stores the PSK in the config file under `device.psk`. Manage it with:
 
 ```
-$ holdspeak device-psk show
-$ holdspeak device-psk rotate
+holdspeak device-psk show
+holdspeak device-psk rotate
 ```
 
-`hmac.compare_digest` is the comparison primitive. An empty
-PSK on either side is treated as a mismatch (so a freshly-
-installed instance with no PSK on disk cannot be
-authenticated by sending an empty string).
+A rotation applies to the next connection.
 
-**Server response (success):** the server replies with a JSON
-text frame:
+On success, the runtime replies:
 
 ```json
 {"type": "hello-ack", "device_id": "aipi-1", "label": "Karol"}
 ```
 
-After the ack, the device may send control + binary audio
-frames (§3, §4).
+On failure, the runtime closes the socket with a close code. It sends no reply frame.
 
-**Server response (failure):** the server closes the
-WebSocket with an application close code (§5). No reply
-frame is sent before the close.
+| Code | Meaning |
+|---|---|
+| 4001 | The handshake is not valid. A field is missing, the JSON is malformed, a field is unknown, or `type` is wrong. |
+| 4003 | The PSK does not match. |
+| 4009 | Another active device uses this label. |
 
-## 3. Control frames (text JSON)
+The constants are `WS_CLOSE_INVALID_HANDSHAKE`, `WS_CLOSE_PSK_MISMATCH`, and `WS_CLOSE_DUPLICATE_LABEL` in `holdspeak/device_audio.py`.
 
-After the handshake, every text frame is a control message.
-Frames the server understands:
+When the socket closes, the runtime removes the device and cancels its voice-typing session. It discards audio that it did not process.
 
-### 3.1 `start`
+## 3. Control frames (client to runtime)
+
+After the handshake, every text frame is a JSON control frame. The runtime logs and drops an unknown or malformed frame. It does not close the socket.
+
+### `start`
 
 ```json
 {"type": "start"}
 ```
 
-Begins a recording session. Behavior depends on context:
-- **No meeting active:** the device claims a voice-typing
-  session via the shared `VoiceTypingSession`. If another
-  owner already holds the session, the server replies with
-  `{type: "error", code: "session_busy", reason: "..."}`.
-- **Meeting active and this device is attached
-  (`POST /api/meeting/start {devices:[id]}`):** the
-  recorder is already running for the meeting; the start
-  frame is acknowledged with no side effect.
-- **Meeting active and this device is NOT attached:**
-  same `session_busy` reply.
+Starts a recording.
 
-### 3.2 `stop`
+- No meeting is active: the device takes the voice-typing session. If another owner holds it, the runtime replies with a `session_busy` error. If a waiting coding session cannot receive text, the runtime sends the status `No reply target` and the same error.
+- A meeting is active and the device is attached: the recorder already runs. The runtime does nothing.
+- A meeting is active and the device is not attached: the runtime replies with `session_busy`.
+
+Attach a device to a meeting with `POST /api/meeting/start` and `{"devices": ["<device_id>"]}`.
+
+### `stop`
 
 ```json
 {"type": "stop"}
 ```
 
-Ends the voice-typing recording. The server transcribes the
-buffered audio, types it via the local `TextTyper` (or
-clipboard fallback), and pushes status to the device's LCD
-(§6). For a meeting-attached device this frame is a no-op
-(the meeting owns the recorder lifecycle).
+Ends the voice-typing recording. The runtime transcribes the audio and types the text on the host. If typing is not possible, the runtime uses the clipboard. For an attached device, `stop` does nothing. The meeting controls the recorder.
 
-### 3.3 `heartbeat`
+### `heartbeat`
 
 ```json
 {"type": "heartbeat"}
 ```
 
-Refreshes the device's `last_seen` in the registry. The
-runtime exposes it via `/api/runtime/status` once that
-surface lands. No reply.
+Refreshes the last-seen time of the device. The runtime sends no reply.
 
-### 3.4 `event` (device → server)
+### `event`
 
 ```json
 {"type": "event", "name": "long_press", "at": 47.5}
 ```
 
-Reports a device-side gesture. `at` is a numeric
-device-side timestamp anchor (any int / float; optional,
-defaults to `null` server-side).
+Reports a device gesture. `at` is an optional device timestamp. Two names have an action, and only during a meeting with the device attached. `long_press` adds a bookmark and sends `Bookmark @ <seconds>s` to every attached device. `double_left_click` sends the next meeting-statistics view to this device. The runtime ignores other names.
 
-Currently honored:
-- `long_press` during an active meeting where the device is
-  attached: fires `MeetingSession.add_bookmark(...)` with
-  auto-labeling, then broadcasts a `Bookmark @ Xs` status
-  to every attached device.
-
-Other names are accepted, logged, and ignored (the protocol
-ferries them but only `long_press` has a binding in v1).
-Frames missing `name` are dropped with a warning log.
-
-### 3.5 `device_health`
+### `device_health`
 
 ```json
 {"type": "device_health", "battery_pct": 84, "rssi_dbm": -57, "at": 1234}
 ```
 
-Reports the device's last-known battery and WiFi health.
-The server stores the latest valid value in the in-memory
-device registry and projects the same values onto active
-meeting device descriptors when the device is attached.
+| Field | Type | Rules |
+|---|---|---|
+| `battery_pct` | integer | 0 to 100. |
+| `rssi_dbm` | integer | -120 to 0. |
+| `at` | integer | Device timestamp. |
 
-| field | type | required | rules |
-|---|---|---|---|
-| `type` | `"device_health"` | yes | exact literal |
-| `battery_pct` | int | yes | `0..100`; invalid values are dropped, not clamped |
-| `rssi_dbm` | int | yes | `-120..0`; invalid values are dropped, not clamped |
-| `at` | int | yes | device-side timestamp |
+The runtime drops a frame with a value out of range. It keeps the socket open. Read the latest values with `GET /api/devices/health`. Each device object has `battery_pct`, `rssi_dbm`, and `last_health_at`.
 
-The WebSocket stays open when a health frame is malformed;
-HoldSpeak logs and drops only that frame. Current values are
-available from:
-
-```text
-GET /api/devices/health
-```
-
-Each device object includes `battery_pct`, `rssi_dbm`, and
-`last_health_at` when the device has sent a health frame.
-
-### 3.6 `query`
+### `query`
 
 ```json
 {"type": "query", "name": "last_segment", "at": 1235}
 ```
 
-Requests server state for display on the device. Supported query
-names:
+The runtime answers with a `status` frame.
 
-| name | response |
-|---|---|
-| `last_segment` | most recent finalized active-meeting segment from this device, as a regular `status` frame with `ttl_ms: 5000` |
-| `agent_status` | most recent Claude/Codex hook-captured agent question, prefixed with agent/project context, as a regular `status` frame with `ttl_ms: 7000`; returns `No agent waiting` when none is fresh |
-| `agent_question` | most recent Claude/Codex hook-captured agent question without the status prefix, as a regular `status` frame with `ttl_ms: 7000`; returns `No agent waiting` when none is fresh |
+| Name | Answer | `ttl_ms` |
+|---|---|---|
+| `last_segment` | The last final meeting segment from this device. If none exists, `No transcript yet`. | 5000 |
+| `agent_status` | The question a Claude or Codex session waits on, with the agent and project. If none is fresh, `No agent waiting` (`ttl_ms` 3000). | 7000 |
+| `agent_question` | The same question without the prefix. If none is fresh, `No agent waiting`. | 7000 |
+| `agent_next` | Like `agent_status`, for the next waiting session. | 7000 |
 
-If there is no active meeting segment from this device, the
-server replies:
-
-```json
-{"type": "status", "text": "No transcript yet", "ttl_ms": 5000}
-```
-
-Unknown names receive a visible status response from the web
-runtime:
-
-```json
-{"type": "status", "text": "Unknown query: current_topic", "ttl_ms": 3000}
-```
-
-Malformed query frames are logged and dropped; the WebSocket
-stays open.
-
-### 3.7 Unknown control types
-
-Logged and dropped. The server does **not** close the
-connection; a misbehaving client doesn't kill its own audio
-session.
+An unknown name gets `Unknown query: <name>` with `ttl_ms` 3000.
 
 ## 4. Audio frames (binary)
 
-After `start`, the device pushes raw PCM as binary
-WebSocket frames. The wire format is fixed:
+After `start`, the client sends raw PCM as binary frames.
 
-- 16 kHz mono, int16 little-endian.
-- No header / framing: each frame's bytes are appended to
-  the recorder's pushed-audio buffer.
-- Odd trailing bytes (incomplete sample) are dropped.
-- Frames pushed before `start` or after `stop` are silently
-  dropped (the WebSocket may race the device's stop signal
-  and we don't want to close the connection over a tail
-  frame).
+- Format: 16 kHz, mono, signed 16-bit little-endian.
+- No header. The runtime appends each frame to the recording.
+- The runtime drops a trailing odd byte.
+- The runtime drops frames that arrive before `start` or after `stop`.
 
-A non-default wire rate (e.g. 8 kHz) is supported defensively:
-`RemoteAudioRecorder(wire_sample_rate=8_000)` resamples on
-the way out. The bridge is expected to do rate-matching on
-its side, so the resample path stays a safety net.
+The runtime can resample a different wire rate. The bridge must send 16 kHz.
 
-**Backpressure:** each device has a bounded internal ring
-of pushed frames (default 2 s of audio @ 16 k mono = 64 KB).
-On overflow, the **oldest** frame is dropped and a single
-structured warning is logged per overflow burst:
+Each device has a buffer of 2 seconds of audio. When the buffer is full, the runtime drops the oldest frames. It logs one `device.queue.overflow` warning for each burst.
 
-```
-holdspeak.audio.remote WARNING device.queue.overflow
-    device_id=aipi-1
-    dropped_samples=...
-    dropped_bytes=...
-    cap_samples=...
-    buffered_samples=...
-    max_buffer_seconds=2.0
-    wire_sample_rate=16000
-```
-
-## 5. Close codes
-
-The server uses application close codes from the 4xxx range
-on handshake-time failures:
-
-| code | meaning |
-|---|---|
-| 4001 | Invalid handshake: payload missing fields, malformed JSON, unknown extra fields, or wrong `type` literal |
-| 4003 | PSK mismatch: the device's PSK didn't match the configured value |
-| 4009 | Duplicate label: another active device is already using this label |
-
-Constants live at `holdspeak/device_audio.py:`
-`WS_CLOSE_INVALID_HANDSHAKE`, `WS_CLOSE_PSK_MISMATCH`,
-`WS_CLOSE_DUPLICATE_LABEL`. Typed exceptions
-(`InvalidHandshakeError`, `PskMismatchError`,
-`DuplicateLabelError`) carry the close code as a class
-attribute so the route does
-`await ws.close(code=exc.code)` without re-deriving the
-policy.
-
-Routine WebSocket close (1000) on either side simply tears
-the connection down; the server unregisters the device from
-the registry and cancels any in-flight voice-typing
-session. Audio buffered between the last drain and the
-disconnect is discarded.
-
-## 6. Server → device status messages
-
-The server pushes status updates onto the same WebSocket so
-the device can show them on its LCD:
+## 5. Status frames (runtime to device)
 
 ```json
 {"type": "status", "text": "Recording 00:42", "ttl_ms": 0}
 ```
 
-| field | type | meaning |
+| Field | Meaning |
+|---|---|
+| `text` | The text for the LCD. The runtime replaces `{label}` with the device label. The runtime limits the length to 150 characters. |
+| `ttl_ms` | Display time in milliseconds. `0` means until the next status. |
+
+### Voice typing
+
+| Event | Text | `ttl_ms` |
 |---|---|---|
-| `type` | `"status"` | exact literal |
-| `text` | str | the message; `{label}` is substituted with the device's registered label |
-| `ttl_ms` | int | display TTL in milliseconds; `0` means "until the next status" |
+| `start` accepted | No status. The firmware shows its own recording symbol. | - |
+| `stop` with at least 0.1 s of audio | No status. | - |
+| Transcription done | The first 150 characters of the transcript. | 4000 |
 
-### 6.1 Voice-typing turn
+The runtime sends the transcript text even when typing on the host fails.
 
-| trigger | text | ttl_ms |
+### Meeting
+
+| Event | Text | `ttl_ms` |
 |---|---|---|
-| `start` accepted, voice session begun | *(no pushback; TX arrow glyph in firmware top-right indicates recording)* | none |
-| `stop` produced ≥ 0.1 s of audio, transcription kicked off | *(no pushback; absence of TX arrow signals processing)* | none |
-| Transcription completed | `<first 150 chars of transcript>` | 4000 |
+| Meeting starts with the device attached | `Recording 00:00` | 0 |
+| Every second | `Recording MM:SS` | 0 |
+| Final transcript segment | `<speaker>: <text>` | 3000 |
+| Bookmark added | `Bookmark @ <seconds>s` | 2500 |
+| Meeting stop begins | `Saving meeting...` | 0 |
 
-AIPI-4-13 (2026-05): `Listening...` and `Thinking...` pushbacks were
-removed because they clobbered the bottom widget's persistent
-meeting/idle text. The device's firmware-side TX label glyph (top-right
-`↑` during right-button hold) now carries that state signal instead.
+`MM` stops at 99. The runtime does not show a segment on the LCD that is silence or noise from the transcriber, such as `...` or `thanks for watching`. The saved transcript keeps those segments.
 
-Note: the transcript snippet fires *outside* the local-typing
-try-block, so the device sees the snippet even if local
-typing failed (e.g., Wayland blocked synthetic typing).
-
-### 6.2 Meeting
-
-| trigger | text | ttl_ms |
-|---|---|---|
-| Meeting starts with this device attached | `Recording 00:00` | 0 |
-| **Periodic tick during meeting (currently every 1 s)** | `Recording MM:SS` | 0 |
-| **Finalized transcript segment** | `<speaker>: <text>` (bounded to the server LCD payload ceiling) | 3000 |
-| Bookmark added (web button or `long_press` event) | `Bookmark @ <seconds>s` | 2500 |
-| Meeting stop initiated | `Saving meeting...` | 0 |
-
-The periodic Recording-tick fires every
-1 second while a meeting has at least one attached device. Format
-`Recording MM:SS`, sticky (`ttl_ms: 0`) so it overwrites the previous
-sticky activity until the next tick. The ticker stops cleanly on
-meeting stop (the `Saving meeting...` frame is the last status seen
-by the device). Cap: MM clamps to `99` at 100+ minute meetings;
-cosmetic concession to LCD width.
-
-Transcript pushback filters the clearest Whisper silence/noise
-hallucinations before painting the device LCD (`...`, all-punctuation
-strings, repeated single-word artifacts, and known short phrases such
-as `thanks for watching`). The durable meeting transcript is not
-filtered by this display-only rule.
-
-### 6.3 Errors during a session
+### Errors
 
 ```json
 {"type": "error", "code": "session_busy", "reason": "another voice-typing session is already active"}
 ```
 
-Currently the only `error` code is `session_busy` (§3.1).
-The connection is **not** closed on this error; the device
-can wait and retry on the next button press.
+`session_busy` is the only error code. The socket stays open. The device can try again.
 
-## 7. End-to-end example
-
-A device-driven voice-typing turn from handshake to
-typed-text-on-host:
+## 6. Example
 
 ```
-device → server  {"type":"hello","device_id":"aipi-1","label":"Karol",
-                  "psk":"<psk>","version":1}
-server → device  {"type":"hello-ack","device_id":"aipi-1","label":"Karol"}
-
-device → server  {"type":"start"}
-                 (no status pushback — the firmware TX glyph signals recording)
-
-device → server  <16 ms of int16 LE PCM bytes>
-device → server  <16 ms of int16 LE PCM bytes>
-device → server  <16 ms of int16 LE PCM bytes>
-... (more PCM frames as the user holds the button)
-
-device → server  {"type":"stop"}
-                 (no status pushback — the absent TX glyph signals processing)
-
-(server runs Whisper, applies text_processor punctuation,
- types via TextTyper)
-
-server → device  {"type":"status","text":"Hello world.","ttl_ms":4000}
-
-(connection stays open; idle until the next start)
+device -> runtime  {"type":"hello","device_id":"aipi-1","label":"Karol","psk":"<PSK>","version":1}
+runtime -> device  {"type":"hello-ack","device_id":"aipi-1","label":"Karol"}
+device -> runtime  {"type":"start"}
+device -> runtime  <binary PCM frames>
+device -> runtime  {"type":"stop"}
+runtime -> device  {"type":"status","text":"Hello world.","ttl_ms":4000}
 ```
-
-A meeting flow with one attached device + a long-press
-bookmark:
-
-```
-(device already connected via the handshake above; meeting
- owner POSTs /api/meeting/start {"devices":["aipi-1"]} via
- a separate HTTP call)
-
-server → device  {"type":"status","text":"Recording 00:00","ttl_ms":0}
-
-device → server  <PCM frames continuously while attendee speaks>
-
-device → server  {"type":"event","name":"long_press","at":47.5}
-server → device  {"type":"status","text":"Bookmark @ 47s","ttl_ms":2500}
-
-(meeting owner clicks Stop on the web dashboard)
-server → device  {"type":"status","text":"Saving meeting...","ttl_ms":0}
-```
-
-## 8. What cross-network reach will need to revisit
-
-- **TLS termination point.** The device link is plain `ws://` on
-  loopback today. A future tunnel layer (Tailscale / Cloudflare
-  Tunnel / WireGuard) terminates TLS somewhere; the
-  WebSocket route may need to read forwarded headers to
-  preserve client-IP for audit logging.
-- **PSK rotation under reconnect.** Today rotation takes
-  effect on the *next* connection because `get_psk` is
-  called per handshake. Cross-network reconnects may take
-  longer to drain old sessions; sharing PSKs across many
-  devices on different networks needs revocation, not just
-  rotation.
-- **Per-device PSKs.** HoldSpeak uses a single shared secret
-  today. Per-device PSKs become worthwhile once HoldSpeak
-  ships to a second install or the user wants to revoke a
-  single device.
-- **Tunnel-vs-direct addressing.** The bridge currently
-  speaks to `127.0.0.1`. Cross-network deployments need a
-  resolution layer (mDNS for LAN, tunnel hostname for WAN).
-- **Per-device labels persisting across networks.** The
-  registry is in-memory; devices re-register on reconnect.
-  If the user's labels diverge across home / office /
-  coffee-shop networks, the server-side label registry will
-  need to persist (currently each reconnect is a clean
-  slate).
 
 ## See also
 
-- [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md): the firmware and bridge
-  workflow that implements this protocol.
-- [Security & Privacy](SECURITY.md): the device PSK and loopback trust boundary.
+- [AIPI-Lite companion](AIPI_LITE.md)
+- [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md)
+- [Security & Privacy](SECURITY.md)

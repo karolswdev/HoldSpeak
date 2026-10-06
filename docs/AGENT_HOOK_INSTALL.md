@@ -1,193 +1,115 @@
-# Claude/Codex Agent Hook Install
+# Agent hook install
 
-Agent hooks let Claude Code and Codex report their own `cwd`, session id,
-transcript path, model, tool activity, and latest assistant question to
+Agent hooks let Claude Code and Codex report their own working directory,
+session id, transcript path, tool activity and latest assistant question to
 HoldSpeak. This is more reliable than asking the operating system which
 terminal window is active.
 
-Install hooks once per agent environment. They then work across projects.
-Per-project `.hs/` files are optional context that improve rewrites after
-HoldSpeak knows which project the agent is using.
+Install the hooks once for each agent. They then work in every project.
 
-## What Hooks Enable
+## What hooks give you
 
 - Project detection from the agent's real working directory.
 - Target-aware dictation for Codex and Claude.
-- Assistant-question detection when message capture is enabled.
-- AIPI companion queries:
-  - `agent_status`
-  - `agent_question`
-- Better dry-run/readiness diagnostics in `/dictation`.
+- Detection of a question that an assistant asks you, when capture is on.
+- Live coder state on the Desk: working, waiting on you, idle or ended.
+- The AIPI queries `agent_status` and `agent_question`.
 
-## Prerequisites
+## Install
 
-1. Install HoldSpeak.
-
-   ```bash
-   uv pip install -e .
-   ```
-
-2. Confirm the agent can run `holdspeak`.
+1. Install HoldSpeak, and confirm that the agent can run it:
 
    ```bash
    which holdspeak
    holdspeak agent-hook latest
    ```
 
-If `which holdspeak` prints nothing, install HoldSpeak into a stable PATH
-using your preferred tool, or create a stable symlink to this checkout's
-entry point. Hooks run from the agent process, so shell aliases are not a
-reliable install path.
+   The hook runs from the agent process. A shell alias does not work. If
+   `which holdspeak` prints nothing, put HoldSpeak on a stable PATH.
 
-## One-Command Install
+2. Install the hooks:
 
-The fastest path wires the hooks for you:
+   ```bash
+   holdspeak agent-hook install
+   ```
 
-```bash
-holdspeak agent-hook install
-```
+   This merges the HoldSpeak hooks into `~/.claude/settings.json` and
+   `~/.codex/hooks.json`. It keeps your other hooks. A second run does not
+   add duplicates.
 
-That merges the HoldSpeak hooks into `~/.claude/settings.json` and
-`~/.codex/hooks.json`, preserving any hooks you already have. It is
-idempotent (running it again converges instead of stacking duplicates) and
-reversible:
+3. Start a new Claude Code or Codex session. Hooks do not apply to a
+   session that already runs.
+
+Options for `install` and `uninstall`:
+
+| Option | Effect |
+|---|---|
+| `--agent claude`, `--agent codex` | Change one agent. The default is `all`. |
+| `--capture-messages` (`install` only) | Turn on capture mode. See below. |
+| `--settings-path PATH` | Write to another settings file. Needs one `--agent`. |
+
+To remove the hooks, run:
 
 ```bash
 holdspeak agent-hook uninstall
 ```
 
-Uninstall removes only the HoldSpeak entries and restores the rest of your
-settings exactly. Scope it with `--agent claude` or `--agent codex`, and add
-`--capture-messages` to enable capture mode (described below). Hooks take
-effect for new coder sessions, not ones already running. Codex asks you to
-review and trust changed hooks the next time it starts.
+Uninstall removes only the HoldSpeak entries. HoldSpeak never edits your
+agent settings except when you run `install` or `uninstall`.
 
-With the hooks in, every live Claude Code or Codex session reports its
-lifecycle to your HoldSpeak hub: working, waiting on you (with the pending
-question), idle, or ended. That live set is what the iPad desk renders as
-coder objects, and what `GET /api/coders/sessions` serves. A session that
-stops reporting decays to idle and then to ended on its own; nothing ever
-rewrites your settings behind your back.
+## Capture mode
 
-If you prefer to paste configuration by hand, the template path below does
-the same thing manually.
+Capture mode stores a short piece of the latest assistant message. It lets
+HoldSpeak know when an agent waits for your reply. Add
+`--capture-messages` to `install`.
 
-## Choose Capture Mode
+- HoldSpeak keeps at most 4,096 characters of text.
+- It stores the text in `~/.config/holdspeak/agent_sessions.json`.
+- It marks the session `awaiting_response` only when the message looks like
+  a question.
+- The next prompt that you submit clears the text.
+- `POST /api/dictation/agent-context/clear` also clears it.
 
-Use the non-capture template when you only want project/session detection:
+Do not turn on capture mode on a shared machine unless every user accepts
+this local storage.
 
-```bash
-holdspeak agent-hook templates --agent claude
-holdspeak agent-hook templates --agent codex
-```
+## Install by hand
 
-Use capture mode when you want HoldSpeak and AIPI to know when an agent is
-waiting for your reply:
+Print a template and paste it into the agent configuration:
 
 ```bash
 holdspeak agent-hook templates --agent claude --capture-messages
 holdspeak agent-hook templates --agent codex --capture-messages
 ```
 
-Capture mode stores a bounded local snippet of the latest assistant message:
+Omit `--capture-messages` for project and session detection only.
 
-- max 4 KB;
-- stored in `~/.config/holdspeak/agent_sessions.json`;
-- marked `awaiting_response` only when the message looks like a question;
-- cleared on the next submitted user prompt;
-- manually clearable from `/dictation`.
+For Claude Code, paste the `hooks` object into the hooks section of
+`~/.claude/settings.json`.
 
-Do not enable capture mode on shared machines unless everyone using the
-machine understands the local storage behavior.
+For Codex, write the `hooks` object to `~/.codex/hooks.json`.
 
-## Install For Claude Code
+### Hook events
 
-1. Generate the Claude template.
+| Agent | Events |
+|---|---|
+| Claude Code | `SessionStart`, `CwdChanged`, `UserPromptSubmit`, `Notification`, `PostToolUse` (matcher: Bash, Edit, Write, Task), `Stop`, `SessionEnd` |
+| Codex | `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse` (matcher: Bash, apply_patch, Edit, Write), `Notification`, `Stop`, `SessionEnd` |
 
-   ```bash
-   holdspeak agent-hook templates --agent claude --capture-messages
-   ```
+`Stop` lets HoldSpeak capture the latest assistant question. `Notification`
+carries a blocking ask, such as a permission prompt. `PostToolUse` is the
+working signal. `SessionEnd` marks the session ended. A session that stops
+reporting decays to idle after 30 minutes and to ended after 4 hours.
 
-2. Open Claude Code's hook/settings configuration.
+## Verify
 
-3. Paste the generated `claude` object into the hooks section expected by
-   Claude Code.
-
-4. Restart or reload Claude Code if required by your Claude Code version.
-
-The generated Claude hooks listen for:
-
-- `SessionStart`
-- `CwdChanged`
-- `UserPromptSubmit`
-- `Notification`
-- `PostToolUse` (a bounded matcher: Bash, Edit, Write, Task)
-- `Stop`
-- `SessionEnd`
-
-`Stop` is the event that lets HoldSpeak capture the latest assistant question
-when `--capture-messages` is enabled. `Notification` carries the blocking ask
-(a permission prompt, or waiting for your input), `PostToolUse` is the working
-heartbeat, and `SessionEnd` marks the session ended.
-
-## Install For Codex
-
-1. Generate the Codex template.
-
-   ```bash
-   holdspeak agent-hook templates --agent codex --capture-messages
-   ```
-
-2. Write the generated `hooks` object to `~/.codex/hooks.json`.
-
-3. Enable hooks and point Codex at that file in `~/.codex/config.toml`.
-
-   ```toml
-   [features]
-   hooks = true
-
-   [hooks]
-   path = "/home/you/.codex/hooks.json"
-   ```
-
-   Use the absolute path for your machine; do not use `~` in the TOML value.
-
-4. Start Codex, open `/hooks`, and trust each HoldSpeak hook after reviewing
-   the command path.
-
-5. Restart or reload Codex if required by your Codex version.
-
-The generated Codex hooks listen for:
-
-- `SessionStart`
-- `UserPromptSubmit`
-- `PreToolUse`
-- `PostToolUse`
-- `Notification`
-- `Stop`
-- `SessionEnd`
-
-`Stop` is the event that lets HoldSpeak capture the latest assistant question
-when `--capture-messages` is enabled. Codex versions that do not emit
-`SessionEnd` still age out on their own: a silent session decays to idle and
-then to ended.
-
-For AI PI bridge work, keep the HoldSpeak web runtime on the same port the
-bridge is configured to use:
-
-```bash
-HOLDSPEAK_WEB_PORT=34999 holdspeak web --no-open
-```
-
-## Verify Hook Ingestion
-
-Open any project in Claude Code or Codex and send a prompt. Then run:
+Open a project in Claude Code or Codex and send a prompt. Then run:
 
 ```bash
 holdspeak agent-hook latest
 ```
 
-Expected fields:
+The output shows the latest session:
 
 ```json
 {
@@ -200,41 +122,53 @@ Expected fields:
 }
 ```
 
-If you enabled capture mode, ask the agent a question or wait for the agent to
-ask you one. Then run:
+Use `--agent` to filter, `--all` to list every session, and
+`--max-age-seconds` to change the age limit (default 1800).
 
-```bash
-holdspeak agent-hook latest
-```
+With capture on, ask the agent a question. Run the command again. Look for
+`"awaiting_response": true` and the text in `last_assistant_text`.
 
-Look for:
+In the Speak window, **Automation hooks** shows which agents have hooks
+set. The `GET /api/dictation/agent-hooks` route returns the same data.
+
+The live sessions also appear at `GET /api/coders/sessions`.
+
+## Check readiness for voice replies
+
+Open `/api/coders/status` while HoldSpeak runs:
 
 ```json
 {
-  "awaiting_response": true,
-  "last_assistant_text": "The tests pass. Should I run the full suite now?"
+  "ready_for_agent_reply": true,
+  "blockers": [],
+  "devices": {"count": 1, "query_names": ["agent_question", "agent_status"]},
+  "agent": {"awaiting_response": true},
+  "dictation": {"pipeline_enabled": true},
+  "runtime": {"text_injection_enabled": true}
 }
 ```
 
-You can also open:
+When `ready_for_agent_reply` is `false`, `blockers` names the missing
+piece:
 
-```text
-/dictation -> Agent Hooks
-```
+| Blocker | Fix |
+|---|---|
+| `no_device_connected` | Connect an AIPI-compatible device. |
+| `no_agent_waiting` | Ask the agent a question with capture on. |
+| `dictation_pipeline_disabled` | Turn on the dictation pipeline. |
+| `text_injection_unavailable` | Fix text injection for your platform. |
+| `text_injection_status_unknown` | Start the HoldSpeak runtime. |
 
-The page shows recent hook status, registry path, and whether a captured
-agent question is waiting.
+## Reply from an AIPI device
 
-## Verify From AIPI
-
-With HoldSpeak running and an AIPI-compatible device connected, the device can
-send:
+A connected device can send these queries:
 
 ```json
 {"type": "query", "name": "agent_status", "at": 1}
+{"type": "query", "name": "agent_question", "at": 2}
 ```
 
-Expected response when an agent is waiting:
+When an agent waits, the reply is a status message:
 
 ```json
 {
@@ -244,21 +178,10 @@ Expected response when an agent is waiting:
 }
 ```
 
-Question-only variant:
+When no fresh question exists, the text is `No agent waiting`. A question
+is fresh for 120 seconds.
 
-```json
-{"type": "query", "name": "agent_question", "at": 2}
-```
-
-Expected response when no fresh question is captured:
-
-```json
-{"type": "status", "text": "No agent waiting", "ttl_ms": 3000}
-```
-
-## Voice Reply Requirements
-
-For AIPI voice replies to be rewritten as Codex/Claude responses, enable the
+To rewrite a voice reply as a Codex or Claude request, turn on the
 dictation pipeline:
 
 ```json
@@ -273,82 +196,48 @@ dictation pipeline:
 }
 ```
 
-When a fresh captured Codex question is waiting, device-originated voice
-typing forces the `codex_cli` target profile for that utterance. When a fresh
-Claude question is waiting, it forces `claude_code`. This does not mutate your
-global target override.
+While a fresh Codex question waits, device voice typing uses the
+`codex_cli` target profile for that utterance. For Claude, it uses
+`claude_code`. Your global target setting does not change. With the
+pipeline off, voice typing inserts the raw transcript.
 
-If the dictation pipeline is disabled or unavailable, AIPI voice typing still
-uses the existing raw transcript insertion path.
+### tmux delivery
 
-### tmux Reply Delivery
+When the agent runs in tmux, the hook inherits `TMUX_PANE`, and HoldSpeak
+records the pane on the session. A voice reply then goes to that pane
+with `tmux send-keys`, so the agent does not need the focused window. If
+no pane exists or tmux fails, HoldSpeak types the text instead. A voice
+reply always needs an explicit action from you. To steer a pane from the
+Desk, see [Coder integration](CODER_INTEGRATION.md).
 
-When Claude/Codex runs inside tmux, the hook command inherits `TMUX_PANE`.
-HoldSpeak records that pane on the agent session. AIPI voice replies then prefer
-tmux delivery over GUI focus:
+For AIPI bridge work, run the web runtime on the port that the bridge
+uses:
 
-```text
-tmux send-keys -t <captured-pane> -l <reply text>
-tmux send-keys -t <captured-pane> Enter
+```bash
+HOLDSPEAK_WEB_PORT=34999 holdspeak web --no-open
 ```
 
-This means Claude/Codex does not need to be in the focused GUI terminal. If the
-hook did not capture a pane, or tmux delivery fails, HoldSpeak falls back to the
-normal text insertion path.
+## Add project context
 
-## Verify Companion Readiness
-
-With HoldSpeak running, open:
-
-```text
-/api/coders/status
-```
-
-Expected ready shape:
-
-```json
-{
-  "ready_for_agent_reply": true,
-  "blockers": [],
-  "devices": {
-    "count": 1,
-    "query_names": ["agent_question", "agent_status"]
-  },
-  "agent": {
-    "awaiting_response": true
-  },
-  "dictation": {
-    "pipeline_enabled": true
-  },
-  "runtime": {
-    "text_injection_enabled": true
-  }
-}
-```
-
-If setup is incomplete, `ready_for_agent_reply` is `false` and `blockers`
-names the missing piece. Common blockers:
-
-- `no_device_connected`
-- `no_agent_waiting`
-- `dictation_pipeline_disabled`
-- `text_injection_unavailable`
-- `text_injection_status_unknown`
-
-## Add Project Context
-
-Project context is optional but recommended. In each repo, create:
+Project context is optional. HoldSpeak finds the project root from a
+`.hs/` folder, a `.hs_context` file, `.git` or `.holdspeak`. In a repo,
+create:
 
 ```text
 .hs/
   instructions.md
   context.md
+  memory.md
   workflows.md
+  issues.md
+  terms.md
   targets.md
   ignore
 ```
 
-Minimal example:
+Each file is optional. A flat file such as `.hs_context` also works.
+
+For example:
 
 ```md
 # .hs/instructions.md
@@ -356,46 +245,36 @@ When dictating into Codex or Claude, rewrite rough speech into a concise
 engineering request. Preserve filenames, commands, and test names.
 ```
 
-```md
-# .hs/workflows.md
-Run focused tests with `.venv/bin/pytest <path>`.
-Run web builds with `cd web && npm run build`.
+Check what HoldSpeak reads:
+
+```bash
+holdspeak agent-hook context --project .
 ```
 
-After adding `.hs/`, open:
-
-```text
-/dictation -> Project Context
-```
-
-Confirm HoldSpeak sees the expected project root and context files.
+Add `--format json` for JSON output.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
-| --- | --- | --- |
-| `holdspeak` not found from hook | Hook process PATH does not include HoldSpeak | Use an absolute executable path in the generated template or install HoldSpeak into a stable PATH |
-| `holdspeak agent-hook latest` says no recent session | Hook not installed, not firing, or agent not reloaded | Regenerate template, re-paste config, restart the agent |
-| `cwd` is wrong | Agent hook fired before changing project | Trigger a new prompt or cwd-change event inside the target project |
-| `awaiting_response` is always false | Capture mode is not enabled or assistant did not ask a question | Regenerate with `--capture-messages` and test with a direct question |
-| AIPI shows `No agent waiting` | No fresh captured question within HoldSpeak's recency window | Ask the agent a question and wait for a captured `Stop` event |
-| Captured text is stale | Last user prompt did not clear the capture | Use **Clear** in `/dictation` or submit a new prompt through the agent |
+|---|---|---|
+| `holdspeak` not found from a hook | The hook PATH lacks HoldSpeak | Put HoldSpeak on a stable PATH, then run `install` again |
+| `latest` shows no recent session | Hooks not installed, or the agent is not restarted | Run `install` and start a new session |
+| `cwd` is wrong | The hook fired before the agent changed project | Send a new prompt in the target project |
+| `awaiting_response` is always false | Capture is off, or the agent asked no question | Run `install --capture-messages`, then ask a direct question |
+| AIPI shows `No agent waiting` | No captured question in the last 120 seconds | Ask a question and wait for the `Stop` event |
+| Captured text is stale | No new prompt cleared it | Submit a new prompt, or clear it with the clear route |
 
-## Safety Model
+## Safety
 
-- Hooks are advisory context. Basic dictation still works without them.
-- Your Claude/Codex settings change only when you run the install command,
-  and `holdspeak agent-hook uninstall` restores them exactly.
+- Hooks are advisory. Dictation works without them.
 - Capture mode stores bounded local text only.
-- Captured assistant text is used to shape user-approved dictation, not to
-  send autonomous replies.
-- AIPI can display/query waiting-agent state, but voice replies require an
-  explicit user action.
+- HoldSpeak uses captured text to shape dictation that you approve. It
+  never sends a reply on its own.
+- A hook that holds risky tool calls is a different feature. See
+  [Gate](GATE.md).
 
 ## See also
 
-- [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): how captured agent context
-  shapes a rewrite.
-- [The Dictation Copilot](DICTATION_COPILOT.md): see the agent-grounded rewrite end
-  to end.
-- [Security & Privacy](SECURITY.md): what hook capture stores and what it doesn't.
+- [Dictation pipeline setup](DICTATION_PIPELINE_GUIDE.md)
+- [The Dictation Copilot](DICTATION_COPILOT.md)
+- [Security and privacy](SECURITY.md)

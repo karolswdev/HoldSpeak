@@ -76,7 +76,7 @@ An agent can act only through the operations and grants that you give it.
 
 One service layer declares each operation. HTTP, MCP, and the test rig reach the same operation, with the same authority checks and the same Receipts.
 
-- The [MCP sidecar](docs/MCP_SIDECAR.md) exposes 236 tools across 42 families. It is a stdio proxy to the hub's `/api/mcp` endpoint.
+- The [MCP sidecar](docs/MCP_SIDECAR.md) exposes 248 tools across 43 families. It is a stdio proxy to the hub's `/api/mcp` endpoint.
 - A tool name does not grant permission. An agent acts only under the palette and grants that you give it. To let an agent file notes and record decisions, select **Allow filing** on its row in Settings, Remote Access. Select **Stop filing** to end the grant.
 - [Reach](docs/USER_GUIDE.md#reach) lets a remote agent connect with a scoped credential (a palette and a time limit, shown once).
 - [Reach Runner](docs/REACH_RUNNER.md) requests a Heartbeat sweep and steward runs from another machine.
@@ -103,11 +103,12 @@ On Linux, use `uv pip install -e '.[linux]'` for the transcription backend.
 System audio dependencies and desktop permissions depend on your platform.
 
 1. Open the local URL that HoldSpeak prints.
-2. Select **Dictate one sentence**.
-3. Edit the transcript if necessary.
-4. Select **Copy** or **Keep as Note**.
+2. In **Local AI**, select **Set up local AI** if the speech model is missing.
+3. Wait until **First words** shows **SPEECH READY**.
+4. Select **Dictate one sentence**, allow microphone access, speak, then select **Stop**.
+5. Select **Keep as note** to save the result.
 
-This first result creates the initial Desk contents.
+Entering the Desk from setup creates the initial Desk contents.
 If capture fails, use the recovery action on the screen or run `holdspeak doctor`.
 
 The main configuration file is `~/.config/holdspeak/config.json`.

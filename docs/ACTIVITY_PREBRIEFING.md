@@ -1,113 +1,82 @@
-# Activity Pre-Briefing
+# Activity pre-briefing
 
-HoldSpeak already records what you browse locally, when you turn that on. Activity
-pre-briefing turns that ledger into something useful at the moment you sit down to
-dictate: a small set of quiet cards above the dictation cockpit that name what you
-were looking at recently, cite where each one came from, and offer one action you can
-take right then.
-
-It is the opposite of a feed. There are at most three cards. They are dismissible. They
-never run on their own.
+Activity pre-briefing shows quiet notes about what you looked at recently.
+Each note cites its source. You can use one note as context for your next dictation.
+Nothing runs on its own.
 
 If you are new here, read [Getting Started](./GETTING_STARTED.md) first.
 
-> **Off until activity is on.** Pre-briefing reads the activity ledger you already
-> control. Until you turn activity tracking on, there are no records to read, and the
-> Pre-briefing block stays hidden. Turning activity off makes it disappear again.
+## Before you start
 
-## What you see
-
-Open the **Dictation** page. If activity is on and you have touched a few things
-recently, a "Pre-briefing" block sits above the cockpit tabs. The header says what it
-is and how honest it is: "Local · source-cited".
-
-Inside, you get up to three cards:
-
-- **A windowed summary.** "You touched 3 things since recently" with a stat tile and a
-  chip per source (for example, `safari/default`, `firefox/work`). This is the
-  one-glance answer to "did anything change since I was last here?".
-- **Per-record cards.** "You were looking at `github_issue owner/repo#123`" with a
-  one-line summary (visits, domain, last-seen date) and a row of citation chips: the
-  entity in the accent color, the browser and profile it came from, and the date you
-  last saw it.
-
-Each card is a quiet note. It does not steal focus from whatever you are typing.
-
-## What the citation means
-
-Every card names where its information came from. The entity chip on the left is what
-HoldSpeak recognised the page as, when it was a known kind of thing (a GitHub issue, a
-pull request, a Jira ticket, a calendar event); otherwise the chip falls back to the
-page title or URL. The source chip is the browser and profile that recorded the visit,
-for example `safari/default`, which is useful if you keep work and home in separate
-browser profiles. The date chip is the day you last opened the URL. That is the date
-of the last recorded visit, not a per-session timestamp; if you opened a page four
-times last Tuesday, the chip says Tuesday.
-
-You can verify any of this on the **Activity** page (`/activity`), which is the full
-ledger the pre-briefing reads from.
-
-## What the actions do
-
-Each card offers up to two buttons.
-
-- **Dismiss.** Closes the card and remembers that you did. The same card will not come
-  back. Dismissals are stored locally with the rest of your HoldSpeak data.
-- **Dictate with this** (per-record cards only). Pins the record so your next
-  dictation can use it as context. A confirmation strip appears just below the cards
-  with the entity name and a **Clear** button. The pin survives a page reload so the
-  affordance stays visible until you use it or clear it.
-
-That is the whole action surface. The pre-briefing never opens a URL, never sends
-anything, and never runs a command. It surfaces and offers; you decide.
-
-## How the relevance is chosen
-
-The cards are picked by a simple rule, not a learned model. HoldSpeak looks at the
-records you have touched since your previous meeting (or, if there is none, in the
-last day) and ranks them by how recent they are, whether they are a known kind of
-thing (issues and tickets rank above a bare page), and whether they belong to a
-project you have set up. Weak signals do not appear; a stale page from days ago will
-not become a card.
-
-This is on purpose. Quiet beats noisy: a card you see should be worth your second of
-attention. The picking is fully deterministic, so two refreshes a minute apart will
-give you the same answer.
-
-## What it does not do
-
-A short list, written plainly, because a privacy-shaped feature deserves it.
-
-- It does not watch your desktop apps. The only thing it reads is what activity
-  tracking already records, which is browser history (and whatever enrichment you set
-  up for it).
-- It does not call out. Computing the cards happens on your machine, against your
-  local SQLite database. Nothing about your activity leaves your laptop because of
-  pre-briefing.
-- It does not learn from your dictation. The relevance rule is a fixed heuristic, so
-  it does not adjust to what you type or what you accept.
-- It does not act on its own. Clicking a button is the only thing that fires
-  anything. Dismissals are stored, the "Dictate with this" pin is stored, and that is
-  the entire surface.
-
-## Turning it off
-
-Pre-briefing is gated by the activity tracking toggle. To turn it off:
+Pre-briefing reads the activity ledger. Turn the ledger on first:
 
 1. Open the **Activity** page (`/activity`).
-2. Switch **Activity tracking** off.
+2. Turn on **Watching**.
 
-The Pre-briefing block on the dictation cockpit will disappear on the next page load.
-You can leave activity on and individually dismiss cards you do not want to see, too;
-either way, you decide what surfaces.
+With **Watching** off, the ledger is empty and no notes appear.
+The ledger comes from local Safari and Firefox history.
+Connected sources, such as GitHub and Jira, can add detail.
 
-## Where the records come from
+## Find the notes
 
-The records the pre-briefing surfaces are the same ones the
-[Activity](./CONNECTOR_DEVELOPMENT.md) page shows. They are imported from local
-browser history (Safari, Firefox, Chromium-family) with the readers HoldSpeak ships,
-and optionally enriched with what you have connected (for example, GitHub or Jira
-metadata). If you have not set any of this up, there will be no records and no cards.
+1. Open the **Dictation** page.
+2. Open the gear (**Configure dictation**).
+3. Find the **Activity nudges** group.
 
-The full ledger and its privacy controls live on `/activity`. The pre-briefing is just
-a different way of reading what is already there.
+The page shows up to eight rows. The API returns three by default.
+Each row has this form: time, domain, and kind. Example: `14:05 · github.com · GITHUB_ISSUE`.
+With no recent activity, the group says **No recent activity to cite**.
+
+## Use or dismiss a note
+
+Each row has two buttons.
+
+- **Use**: Pins the record. Your next dictation receives it as context.
+- **Dismiss**: Closes the note. The same note does not return.
+
+The pin is one-shot. HoldSpeak keeps it for five minutes, in memory only.
+One dictation consumes it. A restart or a timeout drops it.
+
+Pre-briefing never opens a URL, sends data, or runs a command.
+
+## What a note cites
+
+Every note carries a citation. The API returns it, so you can check the record on `/activity`:
+
+- The entity: a GitHub issue, a pull request, a Jira issue, or a calendar event. Other pages give the domain, the title, and the URL.
+- The browser and profile that recorded the visit, for example `safari/default`.
+- The date of the last recorded visit.
+
+## Which notes appear
+
+HoldSpeak picks notes with a fixed rule. No model is involved, so the same input gives the same notes.
+
+1. The window starts at the end of your previous meeting. With no earlier meeting, it starts 24 hours ago.
+2. A summary note appears when the window holds at least two records. Example: "You touched 5 things since your last meeting".
+3. Per-record notes follow. The score rises with recency, with a known entity type, and with a Project match.
+4. Records with a weak score do not appear.
+
+## Privacy
+
+- Pre-briefing reads only the activity ledger. It does not watch desktop apps.
+- It computes notes on your machine, from your local database. It sends nothing out.
+- It does not learn from your dictation.
+
+## Turn it off
+
+Turn off **Watching** on the `/activity` page. The notes stop at once.
+You can also keep **Watching** on and dismiss single notes.
+
+## API
+
+| Route | Purpose |
+| --- | --- |
+| `GET /api/activity/nudges` | List notes. Takes `project_id` and `limit`. |
+| `POST /api/activity/nudges/{nudge_id}/dismiss` | Dismiss a note. |
+| `POST /api/activity/nudges/select` | Pin a record (`record_id`). |
+| `POST /api/activity/nudges/select/clear` | Clear the pin. |
+
+## See also
+
+- [Dictation pipeline](DICTATION_PIPELINE_GUIDE.md)
+- [Connector development](CONNECTOR_DEVELOPMENT.md)

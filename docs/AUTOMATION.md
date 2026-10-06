@@ -96,11 +96,11 @@ Use documented operation identities when a service supports safe retries.
 After an uncertain write result, inspect the affected record before you repeat the write.
 An external client must not claim completion from a model's narrative alone.
 
-## Current Interview boundary
+## Interview limits
 
 Interview can prepare manual results and use its supported Project setup operations.
 Its **Delegation** section prepares briefs. Its **Cadences** section explores recurring work.
-Neither section installs a general agent assignment or an arbitrary schedule in the current increment.
+Neither section installs a general agent assignment or an arbitrary schedule.
 
 A model can suggest combinations beyond the available adapters.
 Treat such a suggestion as an idea until the required tools and execution path exist.
