@@ -129,6 +129,9 @@ class AgentCredentialStore:
         # Conductor K6: per launch, the item ids the agent may change (its
         # origin item, and the items it created during the launch).
         self._launch_scope: dict[str, set[str]] = {}
+        # ... and, of those, the desk objects the agent created itself (the
+        # only owner-desk records it may edit or delete).
+        self._launch_created: dict[str, set[str]] = {}
         # Launch-bound credentials revoked under the lock; their hooks run
         # after it is released (never hold the store lock into the kernel).
         self._pending_launch_revokes: list[tuple[str, str]] = []
@@ -186,6 +189,7 @@ class AgentCredentialStore:
                 self._launch_scope[credential.launch_id] = {
                     str(item).strip() for item in scope_items if str(item or "").strip()
                 }
+                self._launch_created[credential.launch_id] = set()
             # Return a copy with the plaintext so the caller can show it once.
             return AgentCredential(
                 token=plaintext,
@@ -241,10 +245,18 @@ class AgentCredentialStore:
             return cred
 
     def scope_add(self, launch_id: str, item_id: str) -> None:
+        """An object the agent created: in its item scope, and its own."""
         with self._lock:
             scope = self._launch_scope.get(str(launch_id))
-            if scope is not None and str(item_id or "").strip():
+            created = self._launch_created.get(str(launch_id))
+            if scope is not None and created is not None and str(item_id or "").strip():
                 scope.add(str(item_id).strip())
+                created.add(str(item_id).strip())
+
+    def created_by(self, launch_id: str, object_id: str) -> bool:
+        """Whether the launch's agent created *object_id* during the launch."""
+        with self._lock:
+            return str(object_id or "").strip() in self._launch_created.get(str(launch_id), set())
 
     def in_scope(self, launch_id: str, item_id: str) -> bool:
         with self._lock:
@@ -287,6 +299,7 @@ class AgentCredentialStore:
                 self._by_id.pop(cred.id, None)
                 if cred.launch_id:
                     self._launch_scope.pop(cred.launch_id, None)
+                    self._launch_created.pop(cred.launch_id, None)
                     self._pending_launch_revokes.append((cred.launch_id, clean))
             stale = [target for target, owner in self._target_to_identity.items() if owner == clean]
             for target in stale:

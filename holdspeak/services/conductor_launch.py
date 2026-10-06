@@ -17,6 +17,11 @@ meaningful work; egress, authority and config stay at his press):
 3. **Item scope.** An item-state tool acts only on the launch's origin item
    and the items the agent created during the launch; any other id is
    refused ``not_this_launch``.
+4. **The owner's records.** A desk write that edits, files, unfiles or
+   deletes a record (``desk.update``, ``desk.delete``, ``desk.verb``, zone and
+   KB membership, workbench, thought, meeting and schedule writes) acts only
+   on what the agent created during the launch; anything else is
+   ``not_this_launch``. Creating new Notes and proposed decisions stays open.
 """
 from __future__ import annotations
 
@@ -184,30 +189,99 @@ def _cut_page(people: Any, page: Any) -> Any:
 # ── 3. item scope ────────────────────────────────────────────────────────
 
 
-def item_refused(launch_id: str, name: str, arguments: Any) -> Optional[str]:
-    """The item id a scoped tool names, when it is not this launch's."""
-    key = SCOPED_ITEM_TOOLS.get(name)
-    if key is None:
+def _ref_id(value: Any) -> str:
+    """``kind:id`` -> ``id``; a bare id stays."""
+    text = str(value or "").strip()
+    return text.split(":", 1)[1] if ":" in text else text
+
+
+#: The owner's desk records (ruling on #903, round 3): a launched agent edits
+#: or deletes only the desk objects it created during the launch. Each tool
+#: names the argument(s) that point at the record it changes.
+_OWN_OBJECT_ARGS: dict[str, tuple[str, ...]] = {
+    "desk.update": ("id",),
+    "desk.delete": ("id",),
+    "zone.file": ("primitive_id",),
+    "zone.unfile": ("primitive_id",),
+    "kb.add_member": ("ref",),
+    "kb.remove_member": ("ref",),
+    "workbench.add_item": ("workbench_id",),
+    "workbench.update": ("workbench_id",),
+    "workbench.delete": ("workbench_id",),
+    "workbench.update_item": ("workbench_id",),
+    "workbench.delete_item": ("workbench_id",),
+    "meeting.delete": ("meeting_id",),
+    "scheduled_recording.update": ("schedule_id",),
+    "scheduled_recording.delete": ("schedule_id",),
+    "scheduled_recording.cancel_armed": ("schedule_id",),
+    "thought.adopt_note": ("note_id",),
+}
+#: Every thought tool that changes a thought names it by ``thought_id``.
+_THOUGHT_WRITES = frozenset({
+    "thought.refine", "thought.reconcile", "thought.stop_refinement", "thought.attach_context",
+    "thought.detach_context", "thought.refresh_context", "thought.answer_review",
+    "thought.accept_review", "thought.reject_review", "thought.answer_and_continue",
+    "thought.update_working", "thought.complete", "thought.resume",
+})
+#: desk.verb server verbs that make something new or only run: not scoped.
+_VERB_FREE = frozenset({"desk.create", "workbench.run"})
+
+
+def _owned_ids(name: str, arguments: Mapping[str, Any]) -> Optional[list[str]]:
+    """The record ids a desk write names; None when the tool is not scoped."""
+    if name == "desk.verb":
+        verb = str(arguments.get("verb_id") or "")
+        if verb in _VERB_FREE:
+            return None
+        inner = arguments.get("arguments") if isinstance(arguments.get("arguments"), Mapping) else {}
+        ids = _owned_ids(verb, inner)
+        return ids if ids is not None else [""]  # any other verb: refused unless named and own
+    if name in _THOUGHT_WRITES:
+        return [_ref_id(arguments.get("thought_id"))]
+    keys = _OWN_OBJECT_ARGS.get(name)
+    if keys is None:
         return None
+    return [_ref_id(arguments.get(key)) for key in keys]
+
+
+def item_refused(launch_id: str, name: str, arguments: Any) -> Optional[str]:
+    """The id a scoped tool names, when it is not this launch's to change."""
     from ..principals import agent_credentials
 
-    item_id = str((arguments or {}).get(key) or "").strip() if isinstance(arguments, Mapping) else ""
-    if agent_credentials.in_scope(launch_id, item_id):
+    args = arguments if isinstance(arguments, Mapping) else {}
+    key = SCOPED_ITEM_TOOLS.get(name)
+    if key is not None:
+        item_id = str(args.get(key) or "").strip()
+        return None if agent_credentials.in_scope(launch_id, item_id) else (item_id or "(none)")
+    ids = _owned_ids(name, args)
+    if ids is None:
         return None
-    return item_id or "(none)"
+    for object_id in ids:
+        if not object_id or not agent_credentials.created_by(launch_id, object_id):
+            return object_id or "(none)"
+    return None
+
+
+_CREATED_KEYS = ("id", "thought_id", "schedule_id", "workbench_id", "note_id")
+_CREATED_NESTS = ("item", "note", "workbench", "thought", "schedule", "decision", "primitive")
+_CREATING_TOOLS = frozenset({
+    "door.add_item", "project.item.create", "desk.create", "desk.verb", "workbench.create",
+    "thought.create", "scheduled_recording.create",
+})
 
 
 def record_created(launch_id: str, name: str, result: Any) -> None:
-    """An item the agent created joins the launch's scope."""
+    """What the agent created joins the launch's scope, as its own."""
     from ..principals import agent_credentials
 
-    if not isinstance(result, Mapping):
+    if name not in _CREATING_TOOLS or not isinstance(result, Mapping):
         return
-    if name == "door.add_item":
-        agent_credentials.scope_add(launch_id, str(result.get("id") or ""))
-    elif name == "project.item.create":
-        item = result.get("item") if isinstance(result.get("item"), Mapping) else result
-        agent_credentials.scope_add(launch_id, str(item.get("id") or ""))
+    for holder in [result, *(result.get(n) for n in _CREATED_NESTS)]:
+        if not isinstance(holder, Mapping):
+            continue
+        for key in _CREATED_KEYS:
+            if holder.get(key):
+                agent_credentials.scope_add(launch_id, _ref_id(holder[key]))
 
 
 __all__ = [

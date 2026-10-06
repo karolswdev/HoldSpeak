@@ -595,8 +595,8 @@ def test_a_launch_proposes_decisions_and_nothing_else(hub: Hub) -> None:
     assert is_error and refused.get("code") == "desk_delegation_required", refused
     is_error, refused = _result(_call(agent, "desk.delete", {"kind": "decisions", "id": decision_id}))
     assert is_error and refused.get("code") == "desk_delegation_required", refused
-    note = _owner_note(hub, "N", "n")
-    is_error, refused = _result(_call(agent, "zone.file", {"directory_id": "hs-seed-inbox", "primitive_id": f"note:{note}"}))
+    # Filing even its own proposal is a desk write the grant does not hold.
+    is_error, refused = _result(_call(agent, "zone.file", {"directory_id": "hs-seed-inbox", "primitive_id": f"decision:{decision_id}"}))
     assert is_error and refused.get("code") == "desk_delegation_required", refused
 
     # The grant goes with the credential.
@@ -680,3 +680,43 @@ def test_a_session_that_ended_is_released_at_the_next_sweep(tmp_path, db, monkey
     _sweep(rig)
     assert agent_credentials.derive(token) is None
     assert not (tmp_path / "mcp" / f"{launch_id}.json").exists()
+
+
+def test_the_agent_edits_only_what_it_created(hub: Hub) -> None:
+    """Round 3 ruling: the owner's desk records are not the agent's to edit
+    or delete. The owner's note is made by the hub's own PrimitiveService."""
+    from tests.unit.test_agent_hand import OWNER as OWNER_PRESS
+
+    _reach(hub, False)
+    owner_note = hub.root.primitive_service.create_note(OWNER_PRESS, title="Owner plan", body_markdown="keep")
+    owner_id = owner_note["id"]
+    agent = _client(hub, _launch_credential().token)
+
+    def refused(name: str, args: dict[str, Any]) -> None:
+        is_error, body = _result(_call(agent, name, args))
+        assert is_error and body["code"] == "not_this_launch", (name, body)
+
+    refused("desk.update", {"kind": "notes", "id": owner_id, "data": {"title": "Hijacked"}})
+    refused("desk.delete", {"kind": "notes", "id": owner_id})
+    refused("desk.verb", {"verb_id": "desk.update", "arguments": {"kind": "notes", "id": owner_id, "data": {"title": "x"}}})
+    refused("desk.verb", {"verb_id": "desk.delete", "arguments": {"kind": "notes", "id": owner_id}})
+    refused("zone.unfile", {"directory_id": "hs-seed-inbox", "primitive_id": f"note:{owner_id}"})
+    refused("kb.remove_member", {"kb_id": "kb_x", "ref": f"note:{owner_id}"})
+    refused("thought.adopt_note", {"request_id": "r", "note_id": owner_id,
+                                   "expected_source_content_sha256": "x", "expected_source_last_modified": "x"})
+    refused("meeting.delete", {"meeting_id": "m_owner"})
+    refused("workbench.delete", {"workbench_id": "wb_owner"})
+    _err, kept = hub.mcp("desk.get", {"kind": "notes", "id": owner_id})
+    assert kept["title"] == "Owner plan" and not kept.get("deleted"), kept
+
+    # The agent's own note: created, edited, deleted.
+    is_error, mine = _result(_call(agent, "desk.create", {"kind": "notes", "data": {"title": "Agent note"}}))
+    assert is_error is False, mine
+    is_error, edited = _result(_call(agent, "desk.update", {"kind": "notes", "id": mine["id"], "data": {"title": "Agent note v2"}}))
+    assert is_error is False and edited["title"] == "Agent note v2", edited
+    is_error, gone = _result(_call(agent, "desk.delete", {"kind": "notes", "id": mine["id"]}))
+    assert is_error is False, gone
+    # Another launch does not own it.
+    other = _client(hub, _launch_credential("launch_k6other0002").token)
+    is_error, body = _result(_call(other, "desk.update", {"kind": "notes", "id": owner_id, "data": {"title": "x"}}))
+    assert is_error and body["code"] == "not_this_launch"
