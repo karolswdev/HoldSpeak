@@ -254,6 +254,26 @@ describe("the launch sheet follows the real answers (Astra #905)", () => {
     }
   });
 
+  it("a brief not sent names the reason, keeps the brief, and Send again delivers it on the same launch", async () => {
+    handAnswer = { status: 202, body: { ...REAL_PENDING, instruction_state: "session_gone" } };
+    openSheet();
+    await screen.findByText("Ledger cutover sync");
+    fireEvent.click(screen.getByTestId("hand-launch"));
+    const receipt = await screen.findByTestId("hand-launch-receipt");
+    expect(receipt.textContent).toBe("LAUNCHED · BRIEF NOT SENT · SESSION GONE · KEPT ON THE HUB · SEND AGAIN");
+    const stub = globalThis.fetch;
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      if (String(url).endsWith(`/api/agent/launches/${REAL_PENDING.launch_id}/deliver`)) {
+        calls.push({ url: String(url), body: null });
+        return Promise.resolve({ ok: true, status: 202, headers: new Headers({ "content-type": "application/json" }),
+          json: () => Promise.resolve({ launch_id: REAL_PENDING.launch_id, instruction_state: "sent" }) });
+      }
+      return stub(url, init);
+    }));
+    fireEvent.click(screen.getByTestId("hand-send-again"));
+    await waitFor(() => expect(screen.getByTestId("hand-launch-receipt").textContent).toBe("LAUNCHED · BRIEF SENT"));
+  });
+
   it("a real worktree-create failure is named WORKTREE EXISTS, never HUB UNREACHABLE", async () => {
     handAnswer = { status: 409, body: REAL_BRANCH_FAILURE };
     openSheet();

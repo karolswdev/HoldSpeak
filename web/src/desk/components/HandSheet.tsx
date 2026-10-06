@@ -73,6 +73,8 @@ export interface HandLaunch {
 }
 
 export const HAND_LAUNCH_PATH = (id: string) => `/api/agent/launches/${encodeURIComponent(id)}`;
+/** Deliver the held brief of the same launch again (no relaunch). */
+export const HAND_DELIVER_PATH = (id: string) => `${HAND_LAUNCH_PATH(id)}/deliver`;
 /** The delivery state is known once it leaves `pending` (first_message.py). */
 const DELIVERY_POLL_MS = 2000;
 
@@ -87,7 +89,7 @@ export function deliveryToken(launch: HandLaunch): { label: string; tone: "ok" |
   if (state === "sent") return { label: "LAUNCHED · BRIEF SENT", tone: "ok", done: true };
   if (state === "pending" || state === "") return { label: "LAUNCHED · BRIEF PENDING", tone: undefined, done: false };
   if (state === "hooks_missing") return { label: "LAUNCHED · BRIEF HELD · NO HOOKS", tone: "warning", done: true };
-  return { label: `LAUNCHED · BRIEF NOT SENT · ${codeWords(state)}`, tone: "danger", done: true };
+  return { label: `LAUNCHED · BRIEF NOT SENT · ${codeWords(state)} · KEPT ON THE HUB · SEND AGAIN`, tone: "danger", done: true };
 }
 
 const AGENTS: AgentId[] = ["claude", "codex"];
@@ -254,6 +256,19 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     return () => { live = false; window.clearTimeout(timer); };
   }, [launched]);
 
+  const sendAgain = useCallback(async () => {
+    if (!launched?.launch_id || launching) return;
+    setLaunching(true);
+    try {
+      const next = await apiFetch<HandLaunch>(HAND_DELIVER_PATH(String(launched.launch_id)), { method: "POST" });
+      setLaunched({ ...launched, ...next });
+    } catch (error) {
+      setLaunched({ ...launched, instruction_state: codeOf(error) });
+    } finally {
+      setLaunching(false);
+    }
+  }, [launched, launching]);
+
   const launch = useCallback(async () => {
     if (launching) return;
     setLaunching(true);
@@ -404,7 +419,15 @@ function Sheet({ origin }: { origin: HandOrigin }) {
         }
         verbs={
           launched ? (
-            <Button dense variant="ghost" onClick={close}>Close</Button>
+            <>
+              <Button dense variant="ghost" onClick={close}>Close</Button>
+              {delivery?.tone === "danger" ? (
+                <Button dense variant="primary" loading={launching} disabled={launching}
+                  onClick={() => void sendAgain()} data-testid="hand-send-again">
+                  Send again
+                </Button>
+              ) : null}
+            </>
           ) : (
             <>
               <Button dense variant="ghost" onClick={close}>Cancel</Button>
