@@ -975,28 +975,90 @@ def test_r5_ownership_holds_on_http_and_mcp(hub: Hub) -> None:
         assert mref not in _resources(hub, own), (first, second)
 
 
-def test_r5_the_agent_http_surface_is_pinned() -> None:
-    """Finding 5 (the class): every HTTP route an AGENT principal can reach.
-    A new one fails here until its launch rule is decided."""
-    from holdspeak.principals import PrincipalKind, Principal, required_right, room_agent_submit
+#: Every HTTP route an ``agent:launch`` principal can reach, and its rule
+#: (Astra round 2 on #903, finding 3). A new reachable route fails the fence
+#: below until it is listed here with its operation. Every answer on these
+#: routes passes the People cut (web_server ``_launch_cut_response``).
+AGENT_ROUTES: dict[tuple[str, str], str] = {
+    ("POST", "/api/mcp"): "mcp",  # tools.dispatch: LAUNCH_RULES, then the People cut
+    ("DELETE", "/api/principals/self"): "self.revoke",  # ends its own credential
+    ("POST", "/api/kernel/submit"): "kernel",  # every codec refuses an agent outside its grant
+    ("GET", "/api/kernel/read"): "kernel.read",  # its own operations only
+    ("GET", "/api/kernel/events"): "kernel.read",
+    ("POST", "/api/gate/proposals"): "gate",  # its own tool-gate proposals
+    ("GET", "/api/gate/proposals/{proposal_id}"): "gate",
+    ("POST", "/api/gate/proposals/{proposal_id}/receipt"): "gate",
+    ("POST", "/api/gate/usage"): "gate",
+    ("PUT", "/api/settings/remote/delegations/{identity}"): "delegation.grant",
+    ("DELETE", "/api/settings/remote/delegations/{identity}"): "delegation.revoke",
+    ("PUT", "/api/settings/remote/delegations/{identity}/projects/{project_id}"): "project.delegation.grant",
+    ("DELETE", "/api/settings/remote/delegations/{identity}/projects/{project_id}"): "project.delegation.revoke",
+    ("POST", "/api/channels/destinations"): "channel.save_destination",
+    ("DELETE", "/api/channels/destinations/{destination_id}"): "channel.remove_destination",
+    ("POST", "/api/channels/sends"): "channel.prepare",
+    ("POST", "/api/channels/sends/{send_id}/discard"): "channel.discard",
+    ("POST", "/api/channels/send"): "channel.send",
+    ("DELETE", "/api/projects/{project_id}"): "project.archive",
+    ("POST", "/api/projects/{project_id}/meetings/{meeting_id}"): "project.link",
+    ("DELETE", "/api/projects/{project_id}/meetings/{meeting_id}"): "project.unlink",
+    ("PUT", "/api/projects/{project_id}/resources/{resource_ref:path}"): "project.resource.add",
+    ("DELETE", "/api/projects/{project_id}/resources/{resource_ref:path}"): "project.resource.remove",
+    ("POST", "/api/projects/{project_id}/reviews/{review_id}/accept"): "project.accept_review",
+    ("POST", "/api/projects/{project_id}/reviews/{review_id}/proposals/{proposal_id}/decide"): "project.decide_proposal",
+    ("POST", "/api/projects/{project_id}/steward/runs"): "project.run_steward",
+    ("PUT", "/api/projects/{project_id}/steward/policy"): "project.configure_steward",
+    ("POST", "/api/steward/runs/{run_id}/stop"): "project.stop_steward",
+    ("POST", "/api/steward/trigger"): "project.steward.trigger",
+    ("POST", "/api/updates/{update_id}/publish"): "project.publish_update",
+    ("POST", "/api/updates/{update_id}/delivered"): "project.mark_update_delivered",
+    ("POST", "/api/projects/door"): "project.door.create",
+    ("POST", "/api/projects/door/count"): "project.door.count",
+    ("POST", "/api/projects/{project_id}/suggested-sources/{ref:path}/add"): "project.add_suggested_source",
+    ("POST", "/api/nudges/{step_id}/send"): "nudge.send",
+    ("POST", "/api/connections/{provider}/recheck"): "connection.recheck",
+    ("PATCH", "/api/watches/{watch_id}"): "project.watch.update",
+    ("PUT", "/api/watches/{watch_id}/rules"): "project.watch.set_rules",
+    ("POST", "/api/watches/{watch_id}/baseline"): "project.watch.baseline",
+    ("POST", "/api/watches/{watch_id}/evaluate"): "project.watch.evaluate",
+    ("POST", "/api/watches/{watch_id}/pause"): "project.watch.pause",
+    ("POST", "/api/watches/{watch_id}/resume"): "project.watch.resume",
+    ("POST", "/api/watches/{watch_id}/retire"): "project.watch.retire",
+    ("POST", "/api/watches/{watch_id}/test"): "project.watch.test",
+}
+
+
+def test_r5_every_agent_http_route_has_a_launch_rule(hub: Hub) -> None:
+    """Every route an agent:launch principal can reach is listed with its
+    operation; each kernel operation is owner-only for a launch, its prepare,
+    or one of the launch grant's three additions (which ProjectService
+    scopes). A newly reachable route fails here."""
+    import re as _re
+
+    from holdspeak.kernel import desk as desk_kernel
+    from holdspeak.kernel import project as rooms
+    from holdspeak.principals import Principal, PrincipalKind, required_right
 
     agent = Principal(PrincipalKind.AGENT, "agent:launch:x")
-    import holdspeak.principals as p
-
-    reachable_room = sorted(f"{verb} {rx.pattern}" for verb, rx in p._ROOM_AGENT_SUBMIT)
-    # Every Room route an agent reaches is a kernel-admitted operation: the
-    # ProjectCodec refuses an agent outside its grant, and the launch grant
-    # holds only link and resource add/remove, which ProjectService scopes.
-    assert len(reachable_room) == len(set(reachable_room))
-    from holdspeak.kernel import project as rooms
-
-    assert rooms.LAUNCH_GRANT_OPERATIONS == {"project.link", "project.resource.add", "project.resource.remove"}
-    for path, method in (("/api/notes", "POST"), ("/api/notes/x", "PUT"), ("/api/notes/x", "DELETE"),
-                         ("/api/decisions", "POST"), ("/api/follow-through/x/complete", "POST"),
-                         ("/api/threads/x/status", "PUT"), ("/api/projects/x", "PUT")):
-        right = required_right(method, path)
-        assert right is not None and not agent.permits(right), (method, path, right)
-    assert room_agent_submit("DELETE", "/api/projects/p/resources/note:x")
+    reachable = set()
+    for route in hub.server.app.routes:
+        concrete = _re.sub(r"\{[^}]+\}", "p", getattr(route, "path", ""))
+        for method in getattr(route, "methods", None) or []:
+            right = required_right(method, concrete)
+            if right is not None and agent.permits(right):
+                reachable.add((method, route.path))
+    assert reachable == set(AGENT_ROUTES), {
+        "unlisted": sorted(reachable - set(AGENT_ROUTES)), "gone": sorted(set(AGENT_ROUTES) - reachable)}
+    non_kernel = {"mcp", "self.revoke", "kernel", "kernel.read", "gate"}
+    owner_only = rooms.OWNER_ONLY_OPERATIONS | desk_kernel.DELEGATION_OPERATIONS
+    for route, name in AGENT_ROUTES.items():
+        if name in non_kernel:
+            continue
+        assert (
+            name in owner_only
+            or name in rooms.AGENT_PREPARE_OPERATIONS
+            or name in rooms.LAUNCH_GRANT_OPERATIONS
+            or name in rooms.PROJECT_GRANT_OPERATIONS  # a launch holds no such grant
+        ), (route, name)
 
 
 def test_r6_a_closed_unmerged_pr_does_not_keep_the_credential(tmp_path, db, monkeypatch, hub) -> None:
@@ -1054,3 +1116,108 @@ def test_r7_thread_status_of_the_owner_is_untouched(hub: Hub) -> None:
                  agent_credentials.derive(_launch_credential("launch_k6direct0002").token))
     assert refused.value.code == "not_this_launch"
     assert hub.db.threads.get(thread_id).status_line == "owner line"
+
+
+# ── 7. Astra round 2 on #903: three findings (her fences, ported) ──────────
+
+
+def test_r8_launch_create_cannot_replace_owner_workbench(hub: Hub) -> None:
+    _reach(hub, False)
+    cred = _launch_credential()
+    agent = _client(hub, cred.token)
+    err, owner = hub.mcp("workbench.create", {"name": "Owner workbench"})
+    assert not err
+    error, answer = _result(_call(agent, "workbench.create", {"name": "Agent replacement", "fields": {"id": owner["id"]}}))
+    current = hub.mcp("workbench.get", {"workbench_id": owner["id"]})[1]
+    claimed = agent_credentials.created_by(cred.launch_id, "workbench:" + owner["id"])
+    assert error and answer["code"] == "not_this_launch" and current["name"] == "Owner workbench" and not claimed, (
+        error, answer, current["name"], claimed)
+    # A new Workbench is still made, and is the launch's.
+    error, mine = _result(_call(agent, "workbench.create", {"name": "Agent workbench"}))
+    assert not error and agent_credentials.created_by(cred.launch_id, "workbench:" + mine["id"])
+
+
+@pytest.mark.parametrize("path", ["tool", "desk.verb"])
+def test_r8_launch_add_cannot_move_owner_item(hub: Hub, path: str) -> None:
+    _reach(hub, False)
+    agent = _client(hub, _launch_credential().token)
+    err, owner = hub.mcp("workbench.create", {"name": "Owner workbench"})
+    err, item = hub.mcp("workbench.add_item", {"workbench_id": owner["id"], "title": "Owner task"})
+    assert not err
+    err, mine = _result(_call(agent, "workbench.create", {"name": "Agent workbench"}))
+    assert not err
+    args = {"workbench_id": mine["id"], "title": "Hijacked", "data": {"id": item["id"]}}
+    if path == "tool":
+        error, answer = _result(_call(agent, "workbench.add_item", args))
+    else:
+        error, answer = _result(_call(agent, "desk.verb", {"verb_id": "workbench.add_item", "arguments": args}))
+    owner_items = hub.mcp("workbench.get", {"workbench_id": owner["id"]})[1]["items"]
+    assert error and answer["code"] == "not_this_launch", answer
+    assert any(i["id"] == item["id"] and i["title"] == "Owner task" for i in owner_items), owner_items
+    # Its own item, new id: added.
+    error, added = _result(_call(agent, "workbench.add_item", {"workbench_id": mine["id"], "title": "Agent task"}))
+    assert not error, added
+    # Adding into the owner's Workbench: refused.
+    error, answer = _result(_call(agent, "workbench.add_item", {"workbench_id": owner["id"], "title": "Sneak"}))
+    assert error and answer["code"] == "not_this_launch"
+
+
+def _people_rig(hub: Hub):
+    people = hub.root.web_context.people_service
+    people.setup(_owner_press())
+    person = people.create_relationship(_owner_press(), {"display_name": "SECRET_PERSON_SENTINEL"})
+    people.link_owner_alias(_owner_press(), person["id"], "opaque-owner-42")
+    err, action = hub.mcp("door.add_item", {"task": "Public task", "owner": "opaque-owner-42"})
+    assert not err
+    return person
+
+
+def test_r9_people_projections_stay_out_of_every_launch_reader(hub: Hub) -> None:
+    _reach(hub, False)
+    person = _people_rig(hub)
+    # The owner's Door shows the person.
+    _err, owner_door = hub.mcp("door.get", {})
+    assert "SECRET_PERSON_SENTINEL" in json.dumps(owner_door)
+    agent = _client(hub, _launch_credential().token)
+    readers = {
+        "desk.needs_you": _call(agent, "desk.needs_you", {}),
+        "door.get": _call(agent, "door.get", {}),
+        "desk.snapshot": _call(agent, "desk.snapshot", {}),
+        "follow_through.board": _call(agent, "follow_through.board", {}),
+    }
+    for name, answer in readers.items():
+        text = json.dumps(answer)
+        assert "SECRET_PERSON_SENTINEL" not in text and person["id"] not in text, name
+        assert "person_label" not in text and "person_relationship_id" not in text, name
+    # The Public task is still there for the agent (door.get needs the owner
+    # for its Thought lane, so the board is the agent's read).
+    assert "Public task" in json.dumps(readers["follow_through.board"])
+    assert "Public task" in json.dumps(readers["desk.needs_you"])
+
+
+def test_r9_the_output_boundary_drops_people_fields() -> None:
+    from holdspeak.services.conductor_launch import cut_value
+
+    card = {"id": "ai_1", "task": "Public", "person_label": "Ana", "person_relationship_id": "rel_1",
+            "owner_aliases": ["a"], "people": [{"x": 1}], "people_cut": 2}
+    assert cut_value(card) == {"id": "ai_1", "task": "Public", "people_cut": 2}
+    assert cut_value({"items": [{"relationship_id": "rel_1", "title": "Ana", "kind": "review_bottleneck"}, {"a": 1}]}) == {
+        "items": [{"a": 1}]}
+
+
+def test_r10_the_people_cut_covers_http_answers(hub: Hub) -> None:
+    _reach(hub, False)
+    agent = _client(hub, _launch_credential().token)
+    secret = "people:rel_42 PRIVATE_REVIEW_MARKER"
+    err, kept = hub.mcp("ask.keep", {"output": "Public agenda\n" + secret, "sources": [], "lens": "Prep"})
+    assert not err
+    args = {"document_ref": "artifact:" + kept["artifact_id"], "destination_id": "holdspeak-folder"}
+    err, mcp = _result(_call(agent, "channel.prepare", args))
+    assert not err and secret not in json.dumps(mcp)
+    http = agent.post("/api/channels/sends", json=args)
+    assert http.status_code == 200, http.text
+    assert secret not in http.text and "PRIVATE_REVIEW_MARKER" not in http.text, http.json()
+    assert "Public agenda" in http.text
+    # The owner's own HTTP answer is untouched.
+    owner = hub.client.post("/api/channels/sends", json=args)
+    assert "PRIVATE_REVIEW_MARKER" in owner.text

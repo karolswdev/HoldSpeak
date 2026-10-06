@@ -31,6 +31,7 @@ meaningful work; egress, authority and config stay at his press):
 """
 from __future__ import annotations
 
+import re
 from typing import Any, Mapping, Optional
 
 from ..logging_config import get_logger
@@ -304,7 +305,7 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     # create
     "door.add_item": (CREATE, "action", "id"),
     "thought.create": (CREATE, "thought", "id"),
-    "workbench.create": (CREATE, "workbench", "id"),
+    "workbench.create": (CREATE, "", ""),  # insert-only and recorded in WorkbenchService
     "scheduled_recording.create": (CREATE, "schedule", "id"),
     "ask.keep": (CREATE, "artifact", "id"),
     "channel.prepare": (CREATE, "send", "id"),
@@ -565,12 +566,18 @@ def cut_people_everywhere(value: Any) -> Any:
     if isinstance(value, Mapping):
         kind = str(value.get("kind") or "")
         refs = [str(value.get(k) or "") for k in ("ref", "source_ref", "uri", "resource_ref")]
-        if kind in PEOPLE_KINDS or any(
-            r.startswith(_PEOPLE_MARKERS) or r.startswith("holdspeak://people/") for r in refs if r
+        source = str(value.get("source") or "")
+        refs.append(str(value.get("target_ref") or ""))
+        if (
+            kind in PEOPLE_KINDS or source in PEOPLE_KINDS
+            or value.get("relationship_id")  # a projection of one person (name and id)
+            or any(r.startswith(_PEOPLE_MARKERS) or r.startswith("holdspeak://people/") for r in refs if r)
         ):
             return _DROP
         out = {}
         for key, item in value.items():
+            if _people_key(key):
+                continue
             kept = cut_people_everywhere(item)
             if kept is not _DROP:
                 out[key] = kept
@@ -580,12 +587,32 @@ def cut_people_everywhere(value: Any) -> Any:
     return value
 
 
+#: The People fields a projection may stamp on a non-People record (Astra
+#: round 2 on #903; grepped over holdspeak/): ``person_label``,
+#: ``person_relationship_id``, ``person_sections``, ``owner_aliases``,
+#: ``relationship_kind``, a ``people``/``person`` section, and every other
+#: ``person_*``/``people_*`` field. ``people_cut`` is the cut's own count.
+_PEOPLE_KEY = re.compile(
+    r"^(person|people)(_.*)?$|^relationship_(id|kind)$|^owner_alias(es)?$|^display_names?$"
+)
+
+
+def _people_key(key: Any) -> bool:
+    text = str(key)
+    return text != "people_cut" and bool(_PEOPLE_KEY.match(text))
+
+
+def cut_value(value: Any) -> Any:
+    """The People cut of one payload; a payload that is a People record is None."""
+    kept = cut_people_everywhere(value)
+    return None if kept is _DROP else kept
+
+
 def cut_for(principal: Any, value: Any) -> Any:
     """What a launch principal reads, after the People cut; others: as is."""
     if launch_id_of(principal) is None:
         return value
-    kept = cut_people_everywhere(value)
-    return None if kept is _DROP else kept
+    return cut_value(value)
 
 
 class _Drop:
