@@ -15,8 +15,9 @@ verb is the consent, so the tool gate is armed for exactly the new
 worktree path (audited) and the brief is the first ``process.input``.
 Codex is not gated today (``process.spawn`` takes Claude only), so it
 launches on the ungated path and the brief is typed as its first input
-through ``process.input``. The Control-mode tool-gate mapping is lane K5;
-this module keeps today's gate decisions (Bash calls wait for a human).
+through ``process.input``. The tool gate decides the agent's held Bash
+calls by Control mode (Conductor K5, ``tool_gate_rules``). At most
+:data:`MAX_LIVE_LAUNCHES` launched agents run at one time.
 """
 from __future__ import annotations
 
@@ -43,6 +44,11 @@ from .agent_brief import (
 log = get_logger("agent_hand")
 
 DEFAULT_PROFILE_ID = "claude-default"
+#: The most HoldSpeak-launched agents that run at one time (Conductor K5).
+#: One more Hand to agent refuses ``launch_cap_reached``.
+MAX_LIVE_LAUNCHES = 3
+#: Launch states whose agent may still run.
+_LIVE_STATES = frozenset({"launched", "registered"})
 #: The story-ref project token for an item that belongs to no Project.
 DESK_PROJECT = "desk"
 
@@ -176,12 +182,14 @@ class AgentHandService:
         control_mode: Optional[Callable[[], str]] = None,
         gate_path: Optional[Path] = None,
         project_map: Optional[Mapping[str, Any]] = None,
+        max_live: int = MAX_LIVE_LAUNCHES,
     ) -> None:
         self._db = db
         self._launch_service = launch_service
         self._control_mode = control_mode or _config_control_mode
         self._gate_path = gate_path
         self._project_map = project_map
+        self._max_live = int(max_live)
 
     def hand(
         self,
@@ -231,6 +239,14 @@ class AgentHandService:
             if existing is not None and existing.get("instruction_state") != "sent" and isinstance(
                 existing.get("pending_brief"), Mapping
             ):
+                held_profile = str(existing.get("profile_id") or "")
+                if profile and held_profile and str(profile) != held_profile:
+                    # The held launch runs its own agent: a hand-off that names
+                    # another one would resume an agent the owner did not pick.
+                    raise AgentHandRefused(
+                        "launch_profile_mismatch",
+                        f"the held launch of this item runs {held_profile!r}",
+                    )
                 try:
                     record = launcher.resume_delivery(str(existing["launch_id"]))
                 except LaunchRefused as exc:
@@ -242,6 +258,12 @@ class AgentHandService:
                 )
             raise AgentHandRefused(
                 "worktree_duplicate", f"worktree {spec['name']!r} already exists"
+            )
+        live = live_launches(launcher)
+        if len(live) >= self._max_live:
+            raise AgentHandRefused(
+                "launch_cap_reached",
+                f"{len(live)} agents run now; the limit is {self._max_live}",
             )
 
         mode = self._control_mode()
@@ -284,6 +306,7 @@ class AgentHandService:
         return {
             "status": "launched" if launch.get("state") in ("launched", "registered") else "failed",
             "resumed": resumed,
+            "profile": launch.get("profile_id"),
             # The receipt decides: "sent" only after a delivered process.input.
             "instruction_state": launch.get("instruction_state"),
             "trust_state": launch.get("trust_state"),
@@ -457,6 +480,21 @@ def _reload_registry(registry: Any) -> None:
             log.warning("delivery registry not read again (%s)", exc)
 
 
+def live_launches(launcher: Any) -> list[dict[str, Any]]:
+    """The HoldSpeak launches whose agent runs now: launched or registered,
+    follow-through not done, and the tmux session alive."""
+    rows: list[dict[str, Any]] = []
+    for record in launcher._ledger.list():
+        if str(record.get("state") or "") not in _LIVE_STATES:
+            continue
+        if (record.get("follow_through") or {}).get("done"):
+            continue
+        if not launcher._session_alive(str(record.get("session") or "")):
+            continue
+        rows.append(record)
+    return rows
+
+
 def codex_hooks_installed(path: Optional[Path] = None) -> bool:
     """Whether Codex's hook file carries HoldSpeak's rider hooks."""
     from ..agent_context.hooks import AGENT_HOOK_COMMAND_MARKER
@@ -490,6 +528,8 @@ __all__ = [
     "AgentHandRefused",
     "AgentHandService",
     "DEFAULT_PROFILE_ID",
+    "MAX_LIVE_LAUNCHES",
+    "live_launches",
     "default_agent_hand_service",
     "resolve_project_repository",
     "worktree_spec",
