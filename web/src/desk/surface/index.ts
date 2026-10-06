@@ -162,6 +162,10 @@ export {
   foundByWord,
   foundByDay,
   FOUND_BY_WORD,
+  StandingPage,
+  RefTokens,
+  type MemoryRefToken,
+  type StandingSentence,
 } from "./patterns";
 
 export { MicButton, type MicState } from "./controls/MicButton";

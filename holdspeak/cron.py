@@ -6,6 +6,7 @@ conductor and future cron consumers share one parser.
 from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta, tzinfo
+from holdspeak.timestamps import local_wall
 from typing import Optional
 
 
@@ -42,7 +43,7 @@ def cron_is_due(cron_expr: str, *, now: Optional[datetime] = None) -> bool:
         if len(parts) != 5:
             return False
         if now is None:
-            now = datetime.now()
+            now = local_wall()
         fields = [
             (parts[0], now.minute),
             (parts[1], now.hour),

@@ -80,8 +80,9 @@ def test_generate_creates_empty_brief(tmp_path):
 
     brief = service.generate(None, now=now)
 
-    assert brief.period_start == "2026-07-31T17:00:00"
-    assert brief.period_end == now.isoformat()
+    # A naive (hub-local) clock's window is stored as the same instant in UTC.
+    assert datetime.datetime.fromisoformat(brief.period_start) == datetime.datetime(2026, 7, 31, 17, 0).astimezone()
+    assert datetime.datetime.fromisoformat(brief.period_end) == now.astimezone()
     assert brief.sections == {
         "this_week": [],
         "changed": [],

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from holdspeak.activity_history import (
@@ -157,7 +157,8 @@ def test_import_safari_history_fixture_persists_activity_and_checkpoint(tmp_path
     assert records[0].visit_count == 2
     assert records[0].entity_type == "jira_ticket"
     assert records[0].entity_id == "HS-803"
-    assert records[0].first_seen_at == datetime(2026, 4, 30, 0, 0)
+    # The model holds hub-local wall time; the browser's instant is UTC midnight.
+    assert records[0].first_seen_at.astimezone(timezone.utc) == datetime(2026, 4, 30, 0, 0, tzinfo=timezone.utc)
     assert records[0].last_visit_raw == "799203600.0"
 
     checkpoint = db.activity.get_activity_import_checkpoint(
@@ -217,7 +218,7 @@ def test_import_firefox_history_fixture_persists_activity_and_checkpoint(tmp_pat
     assert records[0].visit_count == 4
     assert records[0].entity_type == "miro_board"
     assert records[0].entity_id == "uXjVTestBoard"
-    assert records[0].last_seen_at == datetime(2025, 4, 26, 12, 0)
+    assert records[0].last_seen_at.astimezone(timezone.utc) == datetime(2025, 4, 26, 12, 0, tzinfo=timezone.utc)
     assert records[0].last_visit_raw == "1745668800000000"
 
 

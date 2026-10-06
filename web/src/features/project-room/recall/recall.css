@@ -142,6 +142,43 @@
   font-size: var(--font-size-xs);
 }
 
+/* ── a belief: one more kind of the card (canvas section 2, option B) ── */
+.recall-belief .recall-card-title {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+.recall-belief .surface-disclosure-trigger {
+  flex: none;
+}
+.recall-belief .surface-disclosure-label {
+  overflow: visible;
+  text-overflow: clip;
+}
+.recall-belief-history {
+  display: grid;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+.recall-belief-history li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  min-width: 0;
+}
+.recall-belief-old {
+  font-size: var(--desk-type-body-size, 13px);
+  line-height: 1.5;
+  color: var(--text-muted);
+  text-decoration-color: color-mix(in srgb, var(--text-muted) 70%, transparent);
+  overflow-wrap: anywhere;
+}
+
 /* ── an owed row ── */
 .recall-owed {
   display: flex;

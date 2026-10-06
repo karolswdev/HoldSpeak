@@ -4,6 +4,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import asdict
 from datetime import date, datetime, time, timedelta, timezone, tzinfo
+from holdspeak.timestamps import utc_now_iso
 from typing import TYPE_CHECKING, Any, Callable
 
 from ..config.integrations import validate_calendar_subscription
@@ -66,7 +67,7 @@ class DoorService:
                 context={"status": 400},
             )
         item_id = "ai_" + uuid.uuid4().hex
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         delegated_at = now if owner else None
         with self._db._connection() as conn:
             conn.execute(

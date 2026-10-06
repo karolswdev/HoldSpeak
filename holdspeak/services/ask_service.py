@@ -8,7 +8,7 @@ import json
 import time
 import uuid
 from collections.abc import Callable, Sequence
-from datetime import datetime
+from holdspeak.timestamps import local_wall
 from typing import Any
 
 from ..db.core import Database
@@ -157,7 +157,7 @@ class AskService:
             if profile.kind == "meshNode" and node:
                 from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
                 last = self._db.mesh_relay.worker_last_seen(node)
-                age = None if last is None else (datetime.now() - last).total_seconds()
+                age = None if last is None else (local_wall() - last).total_seconds()
                 row.update(node=node, live=age is not None and age <= DEFAULT_LIVENESS_WINDOW_SECONDS,
                            last_seen_seconds=None if age is None else int(age))
             rows.append(row)
@@ -393,7 +393,7 @@ class AskService:
         if prof is not None and prof.kind == "meshNode":
             from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
             node = str(getattr(prof, "node", "") or ""); last = self._db.mesh_relay.worker_last_seen(node) if node else None
-            age = None if last is None else (datetime.now() - last).total_seconds()
+            age = None if last is None else (local_wall() - last).total_seconds()
             if age is None or age > DEFAULT_LIVENESS_WINDOW_SECONDS:
                 seen = "no worker has ever polled" if age is None else f"last seen {int(age)}s ago"
                 raise ValidationError(f"mesh node '{node}' is offline ({seen})")

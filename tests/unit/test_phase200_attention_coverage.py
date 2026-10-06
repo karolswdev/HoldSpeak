@@ -257,7 +257,8 @@ class TestFreshnessIsNotComputationTime:
         agg = build_aggregate(list_projects=desk.list_projects, room=desk.room,
                               principal=None, now=NOW, last_known=LastKnownStore())
 
-        assert agg["computedAt"] == NOW.isoformat()
+        # The aggregate clock, with the hub's offset (never a bare stamp).
+        assert agg["computedAt"] == NOW.astimezone().isoformat()
         assert _coverage_by_id(agg)["project:alpha"]["observed_at"] == "2026-09-05T07:00:00"
         assert agg["computedAt"] != agg["coverage"][0]["observed_at"]
 
@@ -275,7 +276,7 @@ class TestFreshnessIsNotComputationTime:
 
         row = _coverage_by_id(agg)["project:alpha"]
         assert row["observed_at"] == "2026-09-06T09:00:00"
-        assert agg["computedAt"] == "2026-09-06T11:00:00"
+        assert agg["computedAt"] == datetime(2026, 9, 6, 11, 0).astimezone().isoformat()
 
 
 # ── AC3: an empty partial result is not an all-clear ─────────────────

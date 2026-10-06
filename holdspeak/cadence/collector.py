@@ -9,6 +9,7 @@ executes nothing (that is Phase 6/7, always via the actuator path).
 from __future__ import annotations
 
 from datetime import datetime
+from holdspeak.timestamps import aware, local_now
 from typing import Optional
 
 import os
@@ -39,7 +40,7 @@ class LoopCollector:
 
     def collect(self, *, now: Optional[datetime] = None) -> list[OpenLoop]:
         """Project + score loops from the current sources; return the live set."""
-        now = now or datetime.now()
+        now = aware(now) if now else local_now()
         loops: list[OpenLoop] = []
         loops += self._collect_meeting_actions(now)
         loops += self._collect_meeting_decisions(now)

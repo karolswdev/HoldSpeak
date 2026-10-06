@@ -7,7 +7,7 @@ the one-shot token store — verbatim moves out of WebRuntime.
 from __future__ import annotations
 
 import threading
-from datetime import datetime
+from holdspeak.timestamps import utc_now, utc_now_iso
 from typing import Any, Optional
 
 import numpy as np
@@ -382,7 +382,7 @@ class WakeWordGlueMixin:
                 final = self._maybe_run_dictation_pipeline(
                     text,
                     audio_duration_s=len(audio) / 16000.0,
-                    transcribed_at=datetime.now(),
+                    transcribed_at=utc_now(),
                     journal_source="wake",
                     admission=provider,
                 )
@@ -435,7 +435,7 @@ class WakeWordGlueMixin:
                     self.wake_previews[token] = {
                         "text": final,
                         "transcript": text,
-                        "created_at": datetime.now().isoformat(),
+                        "created_at": utc_now_iso(),
                     }
                     try:
                         self.server.broadcast(

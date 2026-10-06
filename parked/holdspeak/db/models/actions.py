@@ -107,10 +107,10 @@ class AuthorityGrantRecord(Serializable):
     def state(self) -> str:
         if self.revoked_at:
             return "revoked"
-        try:
-            if datetime.fromisoformat(self.expires_at) <= datetime.now():
-                return "expired"
-        except ValueError:
+        from holdspeak.timestamps import parse_stamp, utc_now
+
+        expires = parse_stamp(self.expires_at)
+        if expires is None or expires <= utc_now():
             return "expired"
         if self.remaining_uses <= 0:
             return "exhausted"

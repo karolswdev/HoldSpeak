@@ -8,6 +8,7 @@ from __future__ import annotations
 import shutil
 import tempfile
 from datetime import datetime
+from holdspeak.timestamps import local_wall
 from pathlib import Path
 from typing import Optional
 
@@ -90,7 +91,7 @@ def build_meeting_import_router(ctx) -> APIRouter:
         started_at = (
             datetime.fromtimestamp(started_at_ms / 1000.0)
             if started_at_ms
-            else datetime.now()
+            else local_wall()
         )
         tag_list = [tag.strip() for tag in (tags or "").split(",") if tag.strip()]
         try:

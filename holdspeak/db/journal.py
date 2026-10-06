@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from holdspeak.timestamps import aware, local_now, utc_now_iso
 from typing import Any, Optional
 
 from .base import BaseRepository
@@ -87,7 +88,7 @@ class DictationJournalRepository(BaseRepository):
         if clean_source not in VALID_JOURNAL_SOURCES:
             raise ValueError(f"unknown journal source: {source!r}")
 
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         stage_json = self._json_dumps(stage_ms or {}, fallback="{}")
         passes_json = self._json_dumps(
             [float(x) for x in (rewrite_pass_ms or [])], fallback="[]"
@@ -249,8 +250,8 @@ class DictationJournalRepository(BaseRepository):
 
         The Speak footer's one surviving count says `N TODAY`; `count()` is the
         all-time retained total, so the token was mislabelled. `created_at` is
-        written as a naive LOCAL wall clock (`datetime.now().isoformat()`), so
-        the day is read off that wall clock directly.
+        an aware UTC stamp on new rows (`utc_now_iso()`) and a naive LOCAL wall
+        clock on rows written before; each is read on the local wall clock.
 
         DST-safe by the 175 rule — the local day is resolved PER INSTANT
         (`.astimezone()` with no argument consults the zone's rules for that
@@ -258,7 +259,7 @@ class DictationJournalRepository(BaseRepository):
         row that carries an explicit offset is converted to local before its
         day is taken. An unparseable `created_at` is not counted.
         """
-        reference = (now or datetime.now()).astimezone()
+        reference = aware(now) if now else local_now()
         today = reference.date()
         with self._connection() as conn:
             rows = conn.execute(

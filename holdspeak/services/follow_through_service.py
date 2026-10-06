@@ -4,7 +4,8 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import dataclass, replace
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
+from holdspeak.timestamps import parse_stamp, utc_now_iso
 from typing import Any, Protocol
 
 from holdspeak.services.observer import (
@@ -268,7 +269,7 @@ class FollowThroughService:
         due_at: str | None = None,
     ) -> dict[str, Any]:
         """Create an accountable action from an accepted decision."""
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         action_item_id = f"action-{uuid.uuid4().hex}"
         commitment_id = f"commitment-{uuid.uuid4().hex}"
 
@@ -368,7 +369,7 @@ class FollowThroughService:
             return self._people_projection.transition(principal, str(card_id), normalized_verb)
 
         data = payload or {}
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
 
         with self._db._connection() as conn:
             action = conn.execute(
@@ -554,7 +555,7 @@ class FollowThroughService:
             event_type=event_type,
             producer=type(self).__name__,
             subject_ref=f"action_item:{card_id}",
-            source_revision=datetime.now().isoformat(),
+            source_revision=utc_now_iso(),
             facts={
                 "action_item_id": card_id,
                 "commitment_ids": list(commitment_ids),
@@ -708,6 +709,11 @@ class FollowThroughService:
         snooze_text = cls._date_text(snoozed_until)
         if snooze_text is None:
             return False
+        if len(str(snoozed_until).strip()) > 10:
+            # A full stamp (UTC on new rows): its LOCAL day decides.
+            stamp = parse_stamp(snoozed_until)
+            if stamp is not None:
+                return stamp.astimezone().date() > today
         try:
             return date.fromisoformat(snooze_text) > today
         except ValueError:

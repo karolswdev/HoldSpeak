@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from holdspeak.timestamps import aware, local_now, utc_iso
 from typing import Optional
 
 from .collector import LoopCollector
@@ -53,15 +54,30 @@ class CadenceService:
 
     def _nudged_today(self, now: datetime) -> int:
         """Count nudges created today (Phase 1 creates none, so this is 0)."""
-        start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        start = utc_iso(aware(now).replace(hour=0, minute=0, second=0, microsecond=0))
         with self._db._connection() as conn:
             row = conn.execute(
-                "SELECT COUNT(*) AS n FROM cadence_nudges WHERE created_at >= ?", (start,)
+                "SELECT COUNT(*) AS n FROM cadence_nudges WHERE julianday(created_at) >= julianday(?)", (start,)
             ).fetchone()
         return int(row["n"]) if row else 0
 
     def tick(self, now: Optional[datetime] = None) -> TickResult:
-        now = now or datetime.now()
+        """One cadence pass: project the open loops and find the due ones.
+
+        A tick writes with no request (the cadence thread runs it): when it
+        changed a row it announces itself, one ``desk_changed`` frame
+        (2026-10-05).
+        """
+        from holdspeak.runtime.announce_scope import announce_writes
+
+        with announce_writes("cadence", "tick") as name:
+            result = self._tick(now)
+            for loop in result.due:
+                name(str(getattr(loop, "id", "") or ""))
+            return result
+
+    def _tick(self, now: Optional[datetime] = None) -> TickResult:
+        now = aware(now) if now else local_now()
         self._ensure_seeded()
         projected = self._collector.collect(now=now)
         open_loops = self._db.cadence.list_loops()  # excludes terminal, ordered by score
@@ -72,7 +88,7 @@ class CadenceService:
             nudged_today=self._nudged_today(now),
         )
         return TickResult(
-            at=now.isoformat(),
+            at=utc_iso(now),
             projected=len(projected),
             open_loops=len(open_loops),
             due=due,

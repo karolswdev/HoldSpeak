@@ -18,6 +18,9 @@ anything itself:
       "meetings":   [hit  ...]   # memory hits of kind meeting
       "briefs":     [hit  ...]   # Monday brief items whose text matches
       "also":       [hit  ...]   # every other memory kind (artifact, note, thread ...)
+      "beliefs":    [belief ...] # memory's observations (filter all only),
+                                 # services/memory_faces.py; drawn as one
+                                 # more kind of card in its state's section
       "remembered": n            # the head's one count
     }
 
@@ -31,6 +34,7 @@ every section.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from holdspeak.timestamps import local_wall, utc_iso
 from typing import Any
 
 from holdspeak.services.brief_carry import (
@@ -159,17 +163,17 @@ class RecallService:
         newest = bool(recent) and not q
         if not q and not newest:
             raise ValidationError("query is required")
-        clock = now or datetime.now()
+        clock = now or local_wall()
         bounded = max(1, min(int(limit), 200))
 
         result: dict[str, Any] = {
             "query": q,
             "recent": newest,
             "filter": chosen,
-            "searched_at": clock.isoformat(),
+            "searched_at": utc_iso(clock),
             "projects_searched": self._projects_searched(),
             "current": [], "superseded": [], "disputed": [],
-            "owed": [], "meetings": [], "briefs": [], "also": [],
+            "owed": [], "meetings": [], "briefs": [], "also": [], "beliefs": [],
         }
 
         cards: list[dict[str, Any]] = []
@@ -203,13 +207,18 @@ class RecallService:
                 if h.get("kind") != "meeting" and h.get("source_ref") not in drawn
             ]
 
+        if chosen == "all":
+            from holdspeak.services.memory_faces import recall_beliefs
+
+            result["beliefs"] = recall_beliefs(self._db, q, recent=newest, limit=bounded)
+
         if chosen == "commitments":
             hits = self._memory_hits(q, ("action",), bounded, recent=newest)
             result["owed"] = (result["owed"] + self._owed_actions(hits, clock)[0])[:bounded]
 
         result["remembered"] = sum(
             len(result[key]) for key in
-            ("current", "superseded", "disputed", "owed", "meetings", "briefs", "also")
+            ("current", "superseded", "disputed", "owed", "meetings", "briefs", "also", "beliefs")
         )
         return result
 

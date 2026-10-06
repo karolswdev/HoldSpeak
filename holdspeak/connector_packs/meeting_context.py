@@ -16,6 +16,7 @@ the same `value` payload.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from holdspeak.timestamps import local_wall, utc_iso
 from typing import Any, Iterable, Optional
 
 from ..connector_sdk import ConnectorManifest, validate_manifest
@@ -187,7 +188,7 @@ def run(
     re-running is mutation-safe.
     """
     del principal
-    started_at = datetime.now()
+    started_at = local_wall()
 
     capped = max(1, min(int(limit if limit is not None else DEFAULT_LIMIT), 1000))
 
@@ -273,7 +274,7 @@ def run(
             value={
                 "project_id": project.id,
                 "project_name": project.name or project.id,
-                "since": since.isoformat(),
+                "since": utc_iso(since),
                 "markdown": markdown,
                 "gh_count": len(project_gh),
                 "jira_count": len(project_jira),
@@ -283,7 +284,7 @@ def run(
         )
         created += 1
 
-    finished_at = datetime.now()
+    finished_at = local_wall()
     db.activity.record_connector_run(
         connector_id=CONNECTOR_ID,
         started_at=started_at,
@@ -299,5 +300,5 @@ def run(
     return {
         "connector_id": CONNECTOR_ID,
         "annotation_count": created,
-        "since": since.isoformat(),
+        "since": utc_iso(since),
     }

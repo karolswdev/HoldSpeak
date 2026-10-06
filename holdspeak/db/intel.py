@@ -11,6 +11,7 @@ import json
 import time
 import uuid
 from datetime import datetime
+from holdspeak.timestamps import parse_wall, utc_iso, utc_now, utc_now_iso
 from typing import Optional, Any, Callable, Mapping, Sequence
 
 from ..logging_config import get_logger
@@ -229,7 +230,7 @@ WITH lineage_leaves AS (
 ), current_jobs AS (
     SELECT *, ROW_NUMBER() OVER (
         PARTITION BY meeting_id
-        ORDER BY requested_at DESC, updated_at DESC, job_id DESC
+        ORDER BY julianday(requested_at) DESC, updated_at DESC, job_id DESC
     ) AS current_rank
     FROM lineage_leaves
 )
@@ -561,7 +562,7 @@ class IntelRepository(BaseRepository):
         the old non-running row and receives a fresh linked job ID; a running
         owner is deliberately left untouched (the Phase-B race fence).
         """
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         # Stop's Phase-B Meeting-keyed upsert is the durable handoff boundary.
         # It deliberately persists its historic plain slug list so retry/recovery
         # observes the same row even before C1 replaces it with a bound descriptor.
@@ -733,7 +734,7 @@ class IntelRepository(BaseRepository):
         ).fetchone()
         if row is None or str(row["status"]) != "reserved":
             raise ValueError("Stop handoff reservation cannot activate")
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         changed = conn.execute(
             """UPDATE intel_jobs SET status='queued',lifecycle_posture='queued',
                    updated_at=?,last_error=NULL WHERE job_id=? AND status='reserved'""",
@@ -763,7 +764,7 @@ class IntelRepository(BaseRepository):
         reason: str,
     ) -> Mapping[str, Any]:
         """Persist only an inert queue reservation inside the Stop transaction."""
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         # A live Stop runs before the final Meeting checkpoint.  Retain the
         # immutable displaced slug set now; C1's existing normal claim converts
         # it to the V3 bookmark-operation descriptor only after the checkpoint,
@@ -878,7 +879,7 @@ class IntelRepository(BaseRepository):
         unknown = (
             "dispatch_outcome_unknown", "physical_outcome_unknown", "effect_indeterminate"
         )
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         created = 0
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
@@ -1004,7 +1005,7 @@ class IntelRepository(BaseRepository):
                    AND parent_operation_id IS NOT NULL AND bundle_id IS NOT NULL
                    AND bundle_sha256 IS NOT NULL AND claim_id IS NOT NULL
                    AND (executor_lease_expires_at IS NULL OR executor_lease_expires_at<=?)
-                   ORDER BY requested_at ASC LIMIT 1""",
+                   ORDER BY julianday(requested_at) ASC LIMIT 1""",
                 (now,),
             ).fetchone()
         return self._job_from_row(row) if row is not None else None
@@ -1024,7 +1025,7 @@ class IntelRepository(BaseRepository):
                      AND parent_operation_id IS NOT NULL AND bundle_id IS NOT NULL
                      AND bundle_sha256 IS NOT NULL AND claim_id IS NOT NULL
                      AND (executor_lease_expires_at IS NULL OR executor_lease_expires_at<=?)""",
-                (token, expires_at, datetime.now().isoformat(), job_id, now),
+                (token, expires_at, utc_now_iso(), job_id, now),
             )
             if result.rowcount != 1:
                 conn.rollback()
@@ -1044,7 +1045,7 @@ class IntelRepository(BaseRepository):
                    WHERE job_id=? AND executor_lease_token=? AND executor_lease_epoch=?
                      AND status IN ('claimed','running')""",
                 (
-                    now + BOUND_EXECUTOR_LEASE_SECONDS, datetime.now().isoformat(),
+                    now + BOUND_EXECUTOR_LEASE_SECONDS, utc_now_iso(),
                     job.job_id, job.executor_lease_token, int(job.executor_lease_epoch),
                 ),
             )
@@ -1092,7 +1093,7 @@ class IntelRepository(BaseRepository):
         append one durable ledger witness, and move them to a reserved posture no
         normal claim, retry, skip, sweep, or executor recognizes as work.
         """
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             try:
@@ -1149,7 +1150,7 @@ class IntelRepository(BaseRepository):
         resolve, readiness-check, or execute anything.  The returned queued row
         still has to pass the ordinary C1 binder and current route policy.
         """
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             try:
@@ -1203,7 +1204,7 @@ class IntelRepository(BaseRepository):
 
     def claim_next_intel_job(self, *, include_scheduled: bool = False) -> Optional[IntelJob]:
         """Claim the next queued intelligence job for processing."""
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             # Selection and ownership transition are one SQLite writer epoch.
             conn.execute("BEGIN IMMEDIATE")
@@ -1230,7 +1231,7 @@ class IntelRepository(BaseRepository):
                             AND predecessor.parent_operation_id IS NOT NULL
                             AND receipt.operation_id IS NULL
                       )
-                    ORDER BY j.requested_at ASC
+                    ORDER BY julianday(j.requested_at) ASC
                     LIMIT 1
                     """
                 ).fetchone()
@@ -1241,7 +1242,7 @@ class IntelRepository(BaseRepository):
                     JOIN meetings m ON m.id=j.meeting_id
                     WHERE m.parked = 0
                       AND j.status = 'queued'
-                      AND j.requested_at <= ?
+                      AND julianday(j.requested_at) <= julianday(?)
                       AND m.capture_status IN ('finalized', 'recovered')
                       AND m.route_fence_pending = 0
                       AND NOT EXISTS (
@@ -1258,7 +1259,7 @@ class IntelRepository(BaseRepository):
                             AND predecessor.parent_operation_id IS NOT NULL
                             AND receipt.operation_id IS NULL
                       )
-                    ORDER BY j.requested_at ASC
+                    ORDER BY julianday(j.requested_at) ASC
                     LIMIT 1
                     """,
                     (now_iso,),
@@ -1266,7 +1267,7 @@ class IntelRepository(BaseRepository):
             if row is None:
                 return None
 
-            updated_at = datetime.now().isoformat()
+            updated_at = utc_now_iso()
             claim_id = _claim_id(str(row["job_id"]))
             claimed = conn.execute(
                 """UPDATE intel_jobs SET status='running', lifecycle_posture='claimed',
@@ -1293,8 +1294,8 @@ class IntelRepository(BaseRepository):
                 meeting_id=row["meeting_id"],
                 status="running",
                 transcript_hash=row["transcript_hash"],
-                requested_at=datetime.fromisoformat(row["requested_at"]),
-                updated_at=datetime.fromisoformat(updated_at),
+                requested_at=parse_wall(row["requested_at"]),
+                updated_at=parse_wall(updated_at),
                 attempts=int(row["attempts"]) + 1,
                 # Preserve the queued reason on the claimed value so the
                 # worker can resume the exact incomplete stage. The persisted
@@ -1330,10 +1331,10 @@ class IntelRepository(BaseRepository):
         references, and the ledger event as one unit.  This C1 primitive does
         not execute model work; execution is an after-commit concern.
         """
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
-            due = "" if include_scheduled else " AND j.requested_at <= ?"
+            due = "" if include_scheduled else " AND julianday(j.requested_at) <= julianday(?)"
             params: tuple[Any, ...] = () if include_scheduled else (now,)
             row = conn.execute(
                 """SELECT j.* FROM intel_jobs j JOIN meetings m ON m.id=j.meeting_id
@@ -1350,7 +1351,7 @@ class IntelRepository(BaseRepository):
                          WHERE predecessor.job_id=j.origin_job_id
                            AND predecessor.parent_operation_id IS NOT NULL
                            AND receipt.operation_id IS NULL)
-                   ORDER BY j.requested_at ASC LIMIT 1""",
+                   ORDER BY julianday(j.requested_at) ASC LIMIT 1""",
                 params,
             ).fetchone()
             if row is None:
@@ -1690,7 +1691,7 @@ class IntelRepository(BaseRepository):
         durable_hash = _durable_transcript_hash(conn, meeting_id)
         if durable_hash == str(old["transcript_hash"]):
             return None
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         if conn.execute(
             """UPDATE intel_jobs SET status='superseded',lifecycle_posture='superseded',
                updated_at=?,last_error=? WHERE job_id=? AND executor_lease_token=?
@@ -1773,7 +1774,7 @@ class IntelRepository(BaseRepository):
         """Terminalize only the exact current C1 bearer and append completion truth."""
         if not job.job_id or not job.executor_lease_token or not job.executor_lease_epoch:
             return False
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             row = self._bound_executor_row_in_transaction(
@@ -1839,7 +1840,7 @@ class IntelRepository(BaseRepository):
         """
         if not job.job_id or not job.executor_lease_token or not job.executor_lease_epoch:
             return False
-        now = datetime.now()
+        now = utc_now()
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             old = self._bound_executor_row_in_transaction(
@@ -1862,7 +1863,7 @@ class IntelRepository(BaseRepository):
                        updated_at=?,last_error=? WHERE job_id=? AND executor_lease_token=?
                        AND executor_lease_epoch=? AND status IN ('claimed','running')
                        AND executor_lease_expires_at>?""",
-                    (now.isoformat(), error, str(job.job_id), str(job.executor_lease_token),
+                    (utc_iso(now), error, str(job.job_id), str(job.executor_lease_token),
                      int(job.executor_lease_epoch), time.time()),
                 ).rowcount
                 if changed:
@@ -1870,13 +1871,13 @@ class IntelRepository(BaseRepository):
                         """UPDATE meetings SET intel_status='error',intel_status_detail=?,
                            intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now')
                            WHERE id=?""",
-                        (error, now.isoformat(), meeting_id),
+                        (error, utc_iso(now), meeting_id),
                     )
                     conn.execute(
                         """INSERT INTO intel_job_attempts (
                             meeting_id,job_id,event_kind,attempt,outcome,error,retry_at,created_at
                         ) VALUES (?,?,'attempt',?,?,?,NULL,?)""",
-                        (meeting_id, str(job.job_id), attempt, outcome, audit_detail, now.isoformat()),
+                        (meeting_id, str(job.job_id), attempt, outcome, audit_detail, utc_iso(now)),
                     )
                 conn.commit()
                 return bool(changed)
@@ -1884,13 +1885,13 @@ class IntelRepository(BaseRepository):
             if retry_at is None:
                 conn.rollback()
                 return False
-            retry_at_iso = retry_at.isoformat()
+            retry_at_iso = utc_iso(retry_at)
             changed = conn.execute(
                 """UPDATE intel_jobs SET status='failed',lifecycle_posture='terminal',
                     updated_at=?,last_error=? WHERE job_id=? AND executor_lease_token=?
                     AND executor_lease_epoch=? AND status IN ('claimed','running')
                     AND executor_lease_expires_at>?""",
-                (now.isoformat(), error, str(job.job_id), str(job.executor_lease_token),
+                (utc_iso(now), error, str(job.job_id), str(job.executor_lease_token),
                  int(job.executor_lease_epoch), time.time()),
             ).rowcount
             if changed != 1:
@@ -1909,7 +1910,7 @@ class IntelRepository(BaseRepository):
                 ) VALUES (?,?,?,?,?,?,?,?,?,?,?, ?,?)""",
                 (successor_id, meeting_id, str(job.job_id), str(old["work_descriptor_sha256"]),
                  str(old["transcript_hash"]), str(old["displaced_work"]),
-                 successor_status, successor_posture, retry_at_iso, now.isoformat(), attempt, error,
+                 successor_status, successor_posture, retry_at_iso, utc_iso(now), attempt, error,
                  old["planned_route_json"]),
             )
             conn.execute(
@@ -1919,7 +1920,7 @@ class IntelRepository(BaseRepository):
                 ) VALUES (?,?,?,?,?,?, 'attempt',?,'scheduled_retry',?,?,?)""",
                 (meeting_id, str(job.job_id), str(old["origin_job_id"] or "") or None,
                  str(old["claim_id"] or "") or None, str(old["parent_operation_id"] or "") or None,
-                 str(old["bundle_id"] or "") or None, attempt, error, retry_at_iso, now.isoformat()),
+                 str(old["bundle_id"] or "") or None, attempt, error, retry_at_iso, utc_iso(now)),
             )
             conn.execute(
                 """INSERT INTO intel_job_attempts (
@@ -1928,12 +1929,12 @@ class IntelRepository(BaseRepository):
                 ) VALUES (?,?,?,?,?,?, 'retry_linkage',?,'queued',?,?,?)""",
                 (meeting_id, successor_id, str(job.job_id), str(old["claim_id"] or "") or None,
                  str(old["parent_operation_id"] or "") or None, str(old["bundle_id"] or "") or None,
-                 attempt, error, retry_at_iso, now.isoformat()),
+                 attempt, error, retry_at_iso, utc_iso(now)),
             )
             conn.execute(
                 """UPDATE meetings SET intel_status='queued',intel_status_detail=?,
                     intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
-                (error, now.isoformat(), meeting_id),
+                (error, utc_iso(now), meeting_id),
             )
             conn.commit()
             return True
@@ -1949,7 +1950,7 @@ class IntelRepository(BaseRepository):
         from ..kernel.model import KernelRefused
         from ..services.errors import ServiceError
 
-        now = datetime.now()
+        now = utc_now()
         # Product text stays plain.  Service refusals already carry their
         # user-facing detail; unknown admission faults get one honest generic
         # sentence instead of exposing an exception class name.
@@ -1974,14 +1975,14 @@ class IntelRepository(BaseRepository):
                     """UPDATE intel_jobs SET status='failed',lifecycle_posture='terminal',
                        attempts=?,updated_at=?,last_error=?
                        WHERE job_id=? AND status='queued'""",
-                    (admission_attempt, now.isoformat(), detail, job_id),
+                    (admission_attempt, utc_iso(now), detail, job_id),
                 ).rowcount
                 if changed:
                     conn.execute(
                         """UPDATE meetings SET intel_status='error',intel_status_detail=?,
                            intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now')
                            WHERE id=?""",
-                        (detail, now.isoformat(), str(row["meeting_id"])),
+                        (detail, utc_iso(now), str(row["meeting_id"])),
                     )
                     outcome, retry_at = "refused", None
                 else:
@@ -1991,22 +1992,22 @@ class IntelRepository(BaseRepository):
                 changed = conn.execute(
                     """UPDATE intel_jobs SET attempts=?,requested_at=?,updated_at=?,last_error=?
                        WHERE job_id=? AND status='queued'""",
-                    (admission_attempt, retry_at_value.isoformat(), now.isoformat(), detail, job_id),
+                    (admission_attempt, utc_iso(retry_at_value), utc_iso(now), detail, job_id),
                 ).rowcount
                 if changed:
                     conn.execute(
                         """UPDATE meetings SET intel_status='queued',intel_status_detail=?,
                            sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
-                        (detail, now.isoformat(), str(row["meeting_id"])),
+                        (detail, utc_iso(now), str(row["meeting_id"])),
                     )
-                outcome, retry_at = "scheduled_retry", retry_at_value.isoformat()
+                outcome, retry_at = "scheduled_retry", utc_iso(retry_at_value)
             if changed:
                 conn.execute(
                     """INSERT INTO intel_job_attempts (
                         meeting_id,job_id,event_kind,attempt,outcome,error,retry_at,created_at
                     ) VALUES (?,?, 'refusal', ?,?,?,?,?)""",
                     (str(row["meeting_id"]), job_id, admission_attempt, outcome,
-                     detail, retry_at, now.isoformat()),
+                     detail, retry_at, utc_iso(now)),
                 )
             conn.commit()
         # A disclosed route refusal is itself a durable, empty run receipt. Do
@@ -2036,7 +2037,7 @@ class IntelRepository(BaseRepository):
         makes a process loss or injected close failure leave the successor safely
         reserved rather than creating a second execution owner.
         """
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             if executor_job is not None:
@@ -2096,7 +2097,7 @@ class IntelRepository(BaseRepository):
         earned its receipt.  The one writer transaction makes this idempotent:
         only the winning reserved→queued transition receives an event.
         """
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             rows = conn.execute(
@@ -2143,14 +2144,14 @@ class IntelRepository(BaseRepository):
         This replaces the old owner-release mutation.  A running descriptor is
         never made queued again, so recovery cannot create a second executor.
         """
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             work = _freeze_displaced_work(conn, meeting_id, displaced_work)
             descriptor = _work_descriptor_sha256(meeting_id, transcript_hash, work)
             old = conn.execute(
                 """SELECT * FROM intel_jobs WHERE meeting_id=?
                    AND status IN ('running','claimed')
-                   ORDER BY requested_at DESC LIMIT 1""",
+                   ORDER BY julianday(requested_at) DESC LIMIT 1""",
                 (meeting_id,),
             ).fetchone()
             if old is None:
@@ -2195,9 +2196,9 @@ class IntelRepository(BaseRepository):
         max_attempts: int,
     ) -> None:
         """Terminalize the owner and schedule one linked fresh queue job."""
-        now = datetime.now().isoformat()
-        retry_at_iso = retry_at.isoformat()
-        retry_label = retry_at.replace(microsecond=0).isoformat()
+        now = utc_now_iso()
+        retry_at_iso = utc_iso(retry_at)
+        retry_label = retry_at.astimezone().strftime("%Y-%m-%dT%H:%M:%S")  # a label for the owner, not a stamp
         detail = (
             f"Deferred intel attempt {attempt}/{max_attempts} failed: {error} "
             f"Retrying at {retry_label}."
@@ -2206,7 +2207,7 @@ class IntelRepository(BaseRepository):
             old = conn.execute(
                 """SELECT * FROM intel_jobs WHERE meeting_id=?
                    AND status IN ('running','claimed')
-                   ORDER BY requested_at DESC LIMIT 1""",
+                   ORDER BY julianday(requested_at) DESC LIMIT 1""",
                 (meeting_id,),
             ).fetchone()
             if old is None:
@@ -2267,7 +2268,7 @@ class IntelRepository(BaseRepository):
             row = conn.execute(
                 """SELECT model_host FROM intel_jobs
                    WHERE meeting_id = ? AND model_host IS NOT NULL
-                   ORDER BY requested_at DESC LIMIT 1""",
+                   ORDER BY julianday(requested_at) DESC LIMIT 1""",
                 (meeting_id,),
             ).fetchone()
         return str(row["model_host"]) if row and row["model_host"] else None
@@ -2324,7 +2325,7 @@ class IntelRepository(BaseRepository):
             rows = conn.execute(
                 """SELECT run_receipt_json FROM intel_jobs
                    WHERE meeting_id=? AND run_receipt_json IS NOT NULL
-                   ORDER BY requested_at DESC, updated_at DESC, job_id DESC""",
+                   ORDER BY julianday(requested_at) DESC, updated_at DESC, job_id DESC""",
                 (meeting_id,),
             ).fetchall()
         receipts: list[dict[str, Any]] = []
@@ -2395,7 +2396,7 @@ class IntelRepository(BaseRepository):
         configuration.  The route stored here is the read-time projection; the
         receipt's selection hash remains the hash carried by the gesture.
         """
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         route_hash = str(planned_route.get("selection_hash") or "")
         refusal_key = f"route-refusal:{expected_selection_hash or ''}:{route_hash}"
         with self._connection() as conn:
@@ -2527,7 +2528,7 @@ class IntelRepository(BaseRepository):
 
     def complete_intel_job(self, meeting_id: str) -> None:
         """Retain completed job history while removing it from ordinary readers."""
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """UPDATE intel_jobs SET status='succeeded',lifecycle_posture='terminal',
@@ -2543,13 +2544,13 @@ class IntelRepository(BaseRepository):
             meeting_id=row["meeting_id"],
             status=row["status"],
             transcript_hash=row["transcript_hash"],
-            requested_at=datetime.fromisoformat(row["requested_at"]),
-            updated_at=datetime.fromisoformat(row["updated_at"]),
+            requested_at=parse_wall(row["requested_at"]),
+            updated_at=parse_wall(row["updated_at"]),
             attempts=int(row["attempts"]),
             last_error=row["last_error"],
             meeting_title=row["meeting_title"] if "meeting_title" in keys else None,
             started_at=(
-                datetime.fromisoformat(row["meeting_started_at"])
+                parse_wall(row["meeting_started_at"])
                 if "meeting_started_at" in keys and row["meeting_started_at"]
                 else None
             ),
@@ -2692,7 +2693,7 @@ class IntelRepository(BaseRepository):
 
     def get_intel_queue_summary(self) -> IntelQueueSummary:
         """Return aggregate telemetry for deferred-intel queue state."""
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             row = conn.execute(
                 _CURRENT_LINEAGE_CTE + """
@@ -2700,8 +2701,8 @@ class IntelRepository(BaseRepository):
                     SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued_jobs,
                     SUM(CASE WHEN status IN ('claimed','running') THEN 1 ELSE 0 END) AS running_jobs,
                     SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed_jobs,
-                    SUM(CASE WHEN status = 'queued' AND requested_at <= ? THEN 1 ELSE 0 END) AS queued_due_jobs,
-                    SUM(CASE WHEN status = 'queued' AND requested_at > ? THEN 1 ELSE 0 END) AS scheduled_retry_jobs
+                    SUM(CASE WHEN status = 'queued' AND julianday(requested_at) <= julianday(?) THEN 1 ELSE 0 END) AS queued_due_jobs,
+                    SUM(CASE WHEN status = 'queued' AND julianday(requested_at) > julianday(?) THEN 1 ELSE 0 END) AS scheduled_retry_jobs
                 FROM current_jobs
                 WHERE current_rank=1
                   AND status IN ('reserved','queued','claimed','running','failed')
@@ -2711,18 +2712,20 @@ class IntelRepository(BaseRepository):
 
             next_row = conn.execute(
                 _CURRENT_LINEAGE_CTE + """
-                SELECT MIN(requested_at) AS next_retry_at
+                SELECT requested_at AS next_retry_at
                 FROM current_jobs
                 WHERE current_rank=1 AND status = 'queued'
-                  AND requested_at > ?
+                  AND julianday(requested_at) > julianday(?)
                   AND last_error IS NOT NULL
+                ORDER BY julianday(requested_at) ASC
+                LIMIT 1
                 """,
                 (now_iso,),
             ).fetchone()
 
         next_retry_at = None
         if next_row is not None and next_row["next_retry_at"]:
-            next_retry_at = datetime.fromisoformat(next_row["next_retry_at"])
+            next_retry_at = parse_wall(next_row["next_retry_at"])
 
         return IntelQueueSummary(
             total_jobs=int(row["total_jobs"] or 0),
@@ -2744,7 +2747,7 @@ class IntelRepository(BaseRepository):
         retry_at: Optional[datetime] = None,
     ) -> None:
         """Append an intel-attempt history event."""
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             job = conn.execute(
                 _CURRENT_LINEAGE_CTE + """
@@ -2759,7 +2762,7 @@ class IntelRepository(BaseRepository):
                 ) VALUES (?, ?, 'attempt', ?, ?, ?, ?, ?)""",
                 (meeting_id, str(job["job_id"]) if job is not None else None,
                  int(attempt), str(outcome), error,
-                 retry_at.isoformat() if retry_at else None, now),
+                 utc_iso(retry_at) if retry_at else None, now),
             )
 
     def list_intel_job_attempts(self, meeting_id: str, *, limit: int = 5) -> list[IntelJobAttempt]:
@@ -2783,8 +2786,8 @@ class IntelRepository(BaseRepository):
                 attempt=int(row["attempt"]),
                 outcome=row["outcome"],
                 error=row["error"],
-                retry_at=(datetime.fromisoformat(row["retry_at"]) if row["retry_at"] else None),
-                created_at=datetime.fromisoformat(row["created_at"]),
+                retry_at=(parse_wall(row["retry_at"]) if row["retry_at"] else None),
+                created_at=parse_wall(row["created_at"]),
                 job_id=(str(row["job_id"]) if row["job_id"] else None),
                 event_kind=str(row["event_kind"]),
             )
@@ -2793,7 +2796,7 @@ class IntelRepository(BaseRepository):
 
     def fail_intel_job(self, meeting_id: str, error: str) -> None:
         """Mark a deferred intelligence job as failed."""
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -2819,7 +2822,7 @@ class IntelRepository(BaseRepository):
 
     def mark_intel_job_partial(self, meeting_id: str, detail: str) -> None:
         """Retain completed analysis while marking routed work incomplete."""
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -2860,7 +2863,7 @@ class IntelRepository(BaseRepository):
         A running job is never overwritten by a manual action, and a completed
         Meeting is not silently processed again through a route named Retry.
         """
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         detail = reason or MANUAL_INTEL_RETRY_REASON
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
@@ -2984,7 +2987,7 @@ class IntelRepository(BaseRepository):
         decision is recorded in the same transaction as the queue/status change.
         ``intel_completed_at`` stays empty because Skip is not completion.
         """
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             meeting = conn.execute(
@@ -3099,9 +3102,9 @@ class IntelRepository(BaseRepository):
                 (
                     status,
                     detail,
-                    requested_at.isoformat() if requested_at else None,
-                    completed_at.isoformat() if completed_at else None,
-                    datetime.now().isoformat(),
+                    utc_iso(requested_at) if requested_at else None,
+                    utc_iso(completed_at) if completed_at else None,
+                    utc_now_iso(),
                     meeting_id,
                 ),
             )

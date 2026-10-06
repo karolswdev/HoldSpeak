@@ -4,7 +4,8 @@ from holdspeak.services.observer import NullObserver, PipelineObserver, observe_
 
 import asyncio
 import hashlib
-from datetime import datetime, timedelta
+from datetime import timedelta
+from holdspeak.timestamps import local_now, utc_iso, utc_now
 from typing import Any
 
 from ..intel.providers import endpoint_egress
@@ -72,7 +73,7 @@ class CadenceService:
 
     def closeout(self, principal: Principal) -> dict[str, Any]:
         from ..cadence.closeout import build_closeout
-        closeout = build_closeout(self._db, now=datetime.now())
+        closeout = build_closeout(self._db, now=local_now())
         return {"date": closeout.date, "open_count": closeout.open_count, "summary": closeout.summary,
                 "recs": [{"loop": self._loop_dict(rec.loop), "severity": rec.severity,
                           "action": rec.action, "reason": rec.reason} for rec in closeout.recs],
@@ -99,7 +100,7 @@ class CadenceService:
         self._required_loop(loop_id)
         until = payload.get("until")
         if not until:
-            until = (datetime.now() + timedelta(hours=float(payload.get("hours", 24)))).isoformat()
+            until = utc_iso(utc_now() + timedelta(hours=float(payload.get("hours", 24))))
         self._db.cadence.snooze(loop_id, until)
         return self._loop_dict(self._required_loop(loop_id))
 
@@ -164,7 +165,7 @@ class CadenceService:
 
     def run_now(self, principal: Principal) -> dict[str, Any]:
         from ..cadence.service import CadenceService as TickService
-        result = TickService(self._db, self._config).tick(datetime.now())
+        result = TickService(self._db, self._config).tick(local_now())
         return {"at": result.at, "projected": result.projected, "open_loops": result.open_loops,
                 "due": [self._loop_dict(loop) for loop in result.due], "egress": _LOCAL_EGRESS}
 

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from holdspeak.timestamps import local_wall
 from typing import Any, Iterable, Optional
 from urllib.parse import urlsplit
 
@@ -190,7 +191,7 @@ def ingest_extension_events(
     raw_events: Iterable[Any],
 ) -> IngestResult:
     """Validate, normalize, and upsert a batch of extension events."""
-    started_at = datetime.now()
+    started_at = local_wall()
     accepted: list[int] = []
     rejected: list[dict[str, Any]] = []
     output_bytes = 0
@@ -226,7 +227,7 @@ def ingest_extension_events(
     if accepted:
         project_rule_updates = db.activity.apply_activity_project_rules()
 
-    finished_at = datetime.now()
+    finished_at = local_wall()
     error_text = (
         f"{len(rejected)} event(s) rejected" if rejected and not accepted else None
     )

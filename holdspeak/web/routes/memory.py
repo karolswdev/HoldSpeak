@@ -37,6 +37,22 @@ def build_memory_router(ctx: WebContext) -> APIRouter:
             response = exc.context.get("response")
             return JSONResponse(response if isinstance(response, dict) else {"error": exc.detail}, status_code=int(exc.context.get("status") or 400))
 
+    @router.get("/pages")
+    async def memory_pages(
+        request: Request, scope: Optional[str] = None, project_id: Optional[str] = None,
+    ) -> Any:
+        """The standing pages of one scope (the Room's project, the Brief's
+        desk): a read with no model call (MemoryService.standing_pages)."""
+        try:
+            return JSONResponse(await run_in_threadpool(
+                service.standing_pages, request.state.principal, scope=scope, project_id=project_id,
+            ))
+        except ValidationError as exc:
+            return JSONResponse({"error": exc.detail}, status_code=400)
+        except ServiceError as exc:
+            response = exc.context.get("response")
+            return JSONResponse(response if isinstance(response, dict) else {"error": exc.detail}, status_code=int(exc.context.get("status") or 400))
+
     @router.get("/recall")
     async def recall_memory(
         request: Request, query: str = "", filter: Optional[str] = "all",

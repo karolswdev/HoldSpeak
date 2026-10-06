@@ -8,6 +8,7 @@ import sqlite3
 import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from holdspeak.timestamps import local_wall
 from pathlib import Path
 from typing import Iterable, Optional
 from urllib.parse import urlsplit
@@ -235,7 +236,7 @@ def _import_history_source(
 
         retention_days = int(privacy.get("retention_days") or 30)
         db.activity.delete_activity_records(
-            older_than=datetime.now() - timedelta(days=retention_days)
+            older_than=local_wall() - timedelta(days=retention_days)
         )
 
         db.activity.set_activity_import_checkpoint(
@@ -361,13 +362,14 @@ def _row_to_history_dict(row: sqlite3.Row) -> dict[str, object]:
 def _safari_timestamp_to_datetime(raw: object) -> Optional[datetime]:
     if raw in (None, ""):
         return None
-    return (SAFARI_EPOCH + timedelta(seconds=float(raw))).replace(tzinfo=None)
+    # Aware UTC: the record stores the instant exactly (utc_iso).
+    return SAFARI_EPOCH + timedelta(seconds=float(raw))
 
 
 def _firefox_timestamp_to_datetime(raw: object) -> Optional[datetime]:
     if raw in (None, ""):
         return None
-    return datetime.fromtimestamp(int(raw) / 1_000_000, tz=timezone.utc).replace(tzinfo=None)
+    return datetime.fromtimestamp(int(raw) / 1_000_000, tz=timezone.utc)
 
 
 def _max_raw_timestamp(left: Optional[str], right: Optional[str]) -> Optional[str]:

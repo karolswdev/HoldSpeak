@@ -323,6 +323,7 @@ __all__ = [
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from holdspeak.timestamps import aware, utc_now
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -413,7 +414,7 @@ class PipelineRunner:
         self._by_id = {p.manifest.id: p for p in packs}
         self._db = db
         self._principal = principal
-        self._now = now or datetime.now
+        self._now = now or utc_now
 
     # ────────────────────────── Plan ────────────────────────────
 
@@ -546,4 +547,4 @@ class PipelineRunner:
         if not latest.succeeded:
             return False
         cutoff = self._now() - timedelta(seconds=window_seconds)
-        return latest.finished_at >= cutoff
+        return aware(latest.finished_at) >= aware(cutoff)

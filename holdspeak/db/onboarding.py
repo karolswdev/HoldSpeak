@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from holdspeak.timestamps import utc_iso, utc_now_iso
 import re
 from typing import Any, Optional
 
@@ -101,7 +102,7 @@ class OnboardingRepository(BaseRepository):
         clean = str(disposition or "").strip().lower()
         if clean not in ONBOARDING_DISPOSITIONS:
             raise ValueError(f"invalid onboarding disposition: {disposition!r}")
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -120,7 +121,7 @@ class OnboardingRepository(BaseRepository):
         if clean_destination not in FIRST_VALUE_DESTINATIONS:
             raise ValueError(f"invalid first-value destination: {destination!r}")
         attempt_id = uuid.uuid4().hex
-        started_at = datetime.now().isoformat()
+        started_at = utc_now_iso()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -173,7 +174,7 @@ class OnboardingRepository(BaseRepository):
         )
         if not expected.fullmatch(eid):
             raise ValueError("event_id must contain only attempt, sequence, and kind")
-        occurred_at = (now or datetime.now()).isoformat()
+        occurred_at = utc_iso(now)
         with self._connection() as conn:
             attempt = conn.execute(
                 "SELECT id, finished_at FROM first_value_attempts WHERE id = ?", (pid,)
@@ -258,7 +259,7 @@ class OnboardingRepository(BaseRepository):
         )
         if not 1 <= bounded_steps <= 20 or not 0 <= bounded_decisions <= 20:
             raise ValueError("steps must be 1..20 and decisions must be 0..20")
-        finished_at = datetime.now().isoformat()
+        finished_at = utc_now_iso()
         pid = str(attempt_id or "").strip()
         with self._connection() as conn:
             row = conn.execute(

@@ -139,3 +139,35 @@ class MemoryService:
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
         return {"page": read(self._db, chosen, project, str(slug).strip())}
+
+    def standing_pages(
+        self,
+        principal: Principal,
+        *,
+        scope: str | None = None,
+        project_id: str | None = None,
+    ) -> dict[str, Any]:
+        """The standing pages of one scope (canvas section 2, option B): the
+        Room reads its project's, the Brief the desk's.  Each page is
+        ``pages.read`` (NO model call, no write) with short ref tokens; a
+        page with no live sentence is not in the list, and a withheld
+        sentence is not in the shape at all.  Nothing here comes from the
+        People store."""
+        if not principal.permits(PrincipalRight.READ):
+            status = 401 if principal.kind is PrincipalKind.NONE else 403
+            raise ServiceError(
+                "read_forbidden",
+                "principal does not permit memory reads",
+                context={"status": status, "response": refusal(principal, PrincipalRight.READ)},
+            )
+        from .memory_faces import standing_pages
+
+        project = str(project_id or "").strip()
+        chosen = str(scope or "").strip().lower() or ("project" if project else "")
+        if chosen not in ("desk", "project"):
+            raise ValidationError("scope must be desk or project")
+        if chosen == "project" and not project:
+            raise ValidationError("scope project needs a project_id")
+        if chosen == "desk" and project:
+            raise ValidationError("scope desk takes no project_id")
+        return {"pages": standing_pages(self._db, chosen, project)}

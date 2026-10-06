@@ -16,7 +16,7 @@ calendar / video-call domains and propose meeting candidates.
 
 from __future__ import annotations
 
-from datetime import datetime
+from holdspeak.timestamps import local_wall
 from typing import Any, Optional
 
 from ..activity_candidates import (
@@ -44,7 +44,7 @@ def run(
     """
     del principal
     capped = max(1, min(int(limit if limit is not None else DEFAULT_LIMIT), 200))
-    started_at = datetime.now()
+    started_at = local_wall()
     records = db.activity.list_activity_records(limit=max(capped * 4, 50))
     previews = preview_calendar_meeting_candidates(records, limit=capped)
     persisted = 0
@@ -63,7 +63,7 @@ def run(
         output_bytes += len(preview.title.encode("utf-8")) + len(
             (preview.meeting_url or "").encode("utf-8")
         )
-    finished_at = datetime.now()
+    finished_at = local_wall()
     db.activity.record_connector_run(
         connector_id=CALENDAR_CONNECTOR_ID,
         started_at=started_at,

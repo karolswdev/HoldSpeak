@@ -43,7 +43,7 @@ Every carry writes a kernel receipt (``decision.carried``, Article XI).
 """
 from __future__ import annotations
 
-from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any
 from uuid import uuid4
 
@@ -165,7 +165,7 @@ def carry_into_brief(
     rid = record_id_of(record_id)
     if not rid:
         raise ValueError("record_id is required")
-    now = datetime.now().isoformat()
+    now = utc_now_iso()
     with db._connection() as conn:
         record = conn.execute(
             "SELECT id, lifecycle, decision_text FROM decision_records WHERE id = ? AND deleted = 0",
@@ -276,7 +276,7 @@ def consume_carries(db: Any, project_id: str, brief_id: str) -> int:
     bid = str(brief_id or "").strip()
     if not pid or not bid:
         raise ValueError("project_id and brief_id are required")
-    now = datetime.now().isoformat()
+    now = utc_now_iso()
     with db._connection() as conn:
         cur = conn.execute(
             """UPDATE preparation_carries SET consumed_at = ?, consumed_by = ?

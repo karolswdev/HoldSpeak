@@ -26,6 +26,7 @@ import json
 import re
 import uuid
 from datetime import datetime, timedelta, timezone
+from holdspeak.timestamps import local_wall, utc_now_iso
 from typing import Any, Optional
 
 from ..db.core import Database
@@ -948,7 +949,7 @@ class ProjectService:
         """NEEDS YOU: items derived from Watch snapshots + Delta review."""
         watches = self._db.automations.list_project_watches(project_id)
         needs: list[dict[str, Any]] = []
-        now = datetime.now()
+        now = local_wall()
 
         for watch in watches:
             connector_id = watch.get("connector_id", "")
@@ -1593,7 +1594,7 @@ class ProjectService:
                         continue
                     try:
                         due_dt = datetime.fromisoformat(str(due_at).replace("Z", "+00:00").split("T")[0])
-                        days = (datetime.now().replace(tzinfo=None) - due_dt.replace(tzinfo=None)).days
+                        days = (local_wall().replace(tzinfo=None) - due_dt.replace(tzinfo=None)).days
                     except (ValueError, TypeError):
                         continue
                     if days > 0:
@@ -1719,7 +1720,7 @@ class ProjectService:
         from holdspeak.services.room_people_service import room_people as _room_people
 
         watches = self._db.automations.list_project_watches(project_id)
-        now = datetime.now()
+        now = local_wall()
 
         overdue_count = 0
         ci_failing = False
@@ -1924,7 +1925,7 @@ class ProjectService:
         A SQL error is not a count of zero: it surfaces.
         """
         return sum(
-            1 for item in self._room_commitment_items(project_id, datetime.now())
+            1 for item in self._room_commitment_items(project_id, local_wall())
             if item["severity"] == "danger"
         )
 
@@ -2285,7 +2286,7 @@ class ProjectService:
             return {"targetAt": None, "daysLeft": None, "passed": False}
         try:
             target_dt = datetime.fromisoformat(target_at.split("T")[0])
-            now = datetime.now()
+            now = local_wall()
             delta = (target_dt.replace(tzinfo=None) - now.replace(tzinfo=None)).days
             return {
                 "targetAt": target_at,
@@ -2398,7 +2399,7 @@ class ProjectService:
     def mark_room_read(self, principal: Principal, project_id: str) -> dict[str, Any]:
         """Set the per-project read marker to now."""
         self._require_project(project_id)
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         self._db.projects.set_room_read_at(project_id, now_iso)
         return {"readAt": now_iso}
 
@@ -2780,7 +2781,7 @@ class ProjectService:
 
         project_id = f"proj-{uuid.uuid4().hex[:12]}"
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         new_revision = 1  # first revision for a new project
 
         with self._command_txn(command_id) as conn:
@@ -2886,7 +2887,7 @@ class ProjectService:
 
         project_id = f"proj-{uuid.uuid4().hex[:12]}"
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         new_revision = 1
         proposals = setup_payload.get("proposals") or []
 
@@ -3144,7 +3145,7 @@ class ProjectService:
         if replay is not None:
             return replay
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         project_ref = format_ref("project", project_id)
         with self._command_txn(command_id) as conn:
             accepted = conn.execute(
@@ -3356,7 +3357,7 @@ class ProjectService:
             fields["modules_json"] = mods
 
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         project_ref = format_ref("project", project_id)
 
         with self._command_txn(command_id) as conn:
@@ -3491,7 +3492,7 @@ class ProjectService:
             return True
 
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         project_ref = format_ref("project", project_id)
 
         with self._command_txn(command_id) as conn:
@@ -3607,7 +3608,7 @@ class ProjectService:
             return replay
 
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         project_ref = format_ref("project", project_id)
 
         if not project.is_archived:
@@ -3724,7 +3725,7 @@ class ProjectService:
             return {**row.to_dict(), **replay} if row is not None else replay
 
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         project_ref = format_ref("project", project_id)
 
         # HS-173-08 / 158 S-1: single transaction for revision bump +
@@ -3846,7 +3847,7 @@ class ProjectService:
             return bool(replay.get("removed", True))
 
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         project_ref = format_ref("project", project_id)
 
         # HS-173-08 / 158 S-1: single transaction for revision bump +
@@ -3953,7 +3954,7 @@ class ProjectService:
             return True
 
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         project_ref = format_ref("project", project_id)
         meeting_ref = format_ref("meeting", meeting_id)
 
@@ -4084,7 +4085,7 @@ class ProjectService:
             return True
 
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         project_ref = format_ref("project", project_id)
         meeting_ref = format_ref("meeting", meeting_id)
 
@@ -4247,7 +4248,7 @@ class ProjectService:
 
         item_id = generate_pitem_id()
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         project_ref = format_ref("project", project_id)
 
         with self._command_txn(command_id) as conn:
@@ -4407,7 +4408,7 @@ class ProjectService:
 
         item_id = generate_pitem_id()
         cmd_id = generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         project_ref = format_ref("project", project_id)
 
         current_rev = self._get_revision(conn, project_id)
@@ -4563,7 +4564,7 @@ class ProjectService:
             return replay
 
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         project_ref = format_ref("project", project_id)
 
         with self._command_txn(command_id) as conn:
@@ -4709,7 +4710,7 @@ class ProjectService:
             return replay
 
         cmd_id = command_id or generate_pcmd_id()
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         project_ref = format_ref("project", project_id)
 
         with self._command_txn(command_id) as conn:

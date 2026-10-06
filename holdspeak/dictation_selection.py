@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import threading
 from datetime import datetime
+from holdspeak.timestamps import local_wall
 from typing import Optional
 
 # Default freshness window: a pin must be consumed within this many seconds of
@@ -47,7 +48,7 @@ def set_selected_record(record_id: int, *, now: Optional[datetime] = None) -> No
     except (TypeError, ValueError):
         return
     with _lock:
-        _pending = (clean, now or datetime.now())
+        _pending = (clean, now or local_wall())
 
 
 def consume_selected_record(
@@ -68,7 +69,7 @@ def consume_selected_record(
             return None
         record_id, at = _pending
         _pending = None  # one-shot: clear whether fresh or stale
-    age = ((now or datetime.now()) - at).total_seconds()
+    age = ((now or local_wall()) - at).total_seconds()
     if age > max(0, int(max_age_seconds)):
         return None
     return record_id

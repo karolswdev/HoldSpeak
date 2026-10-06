@@ -8,6 +8,7 @@ which are due (delivery is Phase 2+).
 """
 from __future__ import annotations
 
+from holdspeak.timestamps import local_now
 from typing import Optional
 
 from ..logging_config import get_logger
@@ -47,6 +48,14 @@ class CadenceMixin:
         return self._cadence_service_obj
 
     def _cadence_tick_once(self) -> None:
+        from .announce_scope import announce_writes
+
+        # The whole tick (loops, the brief push, the brief regenerate) is one
+        # write with no request: ONE desk_changed frame when it changed a row.
+        with announce_writes("cadence", "tick"):
+            self._cadence_tick_body()
+
+    def _cadence_tick_body(self) -> None:
         try:
             result = self._cadence_service().tick()
             if result.due:
@@ -68,7 +77,6 @@ class CadenceMixin:
         if tg is None or not tg.is_active or not tg.allowed_chat_ids:
             return
         try:
-            from datetime import datetime
 
             from ..cadence.brief import should_send_daily_brief
             from ..cadence.models import CadencePolicy
@@ -79,7 +87,7 @@ class CadenceMixin:
             policy = db.cadence.get_policy("daily_brief")
             last_sent = (policy.config.get("last_sent_date") if policy else None)
             earliest = int(getattr(self.config.cadence, "quiet_hours_end", 8))
-            now = datetime.now()
+            now = local_now()
             if not should_send_daily_brief(now, last_sent_date=last_sent, earliest_hour=earliest):
                 return
             surface = TelegramSurface(db, tg)
@@ -99,7 +107,6 @@ class CadenceMixin:
         receipted via pipeline_events.
         """
         try:
-            from datetime import datetime
 
             from ..cadence.brief import should_send_daily_brief
             from ..cadence.models import CadencePolicy
@@ -110,7 +117,7 @@ class CadenceMixin:
             policy = db.cadence.get_policy("brief_regeneration")
             last_regen = (policy.config.get("last_regen_date") if policy else None)
             earliest = int(getattr(self.config.cadence, "quiet_hours_end", 8))
-            now = datetime.now()
+            now = local_now()
             if not should_send_daily_brief(now, last_sent_date=last_regen, earliest_hour=earliest):
                 return
 

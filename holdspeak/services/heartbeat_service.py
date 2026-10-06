@@ -368,13 +368,27 @@ class HeartbeatService:
            reported success. The receipt records `quiet_overridden` when
            the sweep fired inside the window.
         """
+        from holdspeak.runtime.announce_scope import announce_writes
+
+        sweep_id = f"sweep_{uuid.uuid4().hex[:12]}"
+        # A sweep writes with no request: it announces itself (one frame).
+        with announce_writes("heartbeat", "sweep", sweep_id):
+            return self._run_sweep(principal, owner_hand=owner_hand, sweep_id=sweep_id)
+
+    def _run_sweep(
+        self,
+        principal: Principal,
+        *,
+        owner_hand: bool,
+        sweep_id: str,
+    ) -> dict[str, Any]:
+        """:meth:`run_sweep` without the announcement."""
         from holdspeak.services.watch_service import WATCH_SWEEP_MAX
 
         limit = None if owner_hand else WATCH_SWEEP_MAX
         t0 = time.time()
         now = self._now_utc()
         settings = self.get_settings()
-        sweep_id = f"sweep_{uuid.uuid4().hex[:12]}"
 
         # Quiet hours check. Quiet hours are the owner's LOCAL hours, so the one
         # sweep instant is converted to this machine's zone rather than read

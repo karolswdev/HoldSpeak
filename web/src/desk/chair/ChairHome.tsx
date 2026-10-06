@@ -1231,6 +1231,7 @@ function Arrival() {
             <div data-testid="arrival-brief">
               <BriefSection
                 items={untriagedBrief}
+                waiting={needs.count}
                 busyId={busyBriefId}
                 onShelf={doBriefShelf}
                 actions={briefVerbs}
@@ -2123,11 +2124,16 @@ const BRIEF_CAP = 3;
 
 function BriefSection({
   items,
+  waiting,
   busyId,
   onShelf,
   actions,
 }: {
   items: BriefItem[];
+  /** The hub's one needs-you count (`desk.needs_you`): the number the bell,
+   *  the Chair head and the Brief headline say. The caption never counts the
+   *  Brief's own rows (changed and broke rows are not waiting). */
+  waiting: number;
   busyId: string | null;
   onShelf: (id: string, state: "acknowledged" | "deferred") => void;
   /** PHILO-4-01: the head verbs (the badge, then Generate). */
@@ -2135,10 +2141,11 @@ function BriefSection({
 }) {
   const visible = items.slice(0, BRIEF_CAP);
   const overflow = items.length - visible.length;
+  const waitingToken = countToken(waiting, "THING WAITING", "THINGS WAITING");
 
   return (
     <SurfaceSection
-      label={`BRIEF · ${countToken(items.length, "THING WAITING", "THINGS WAITING") ?? ""}`}
+      label={waitingToken ? `BRIEF · ${waitingToken}` : "BRIEF"}
       actions={actions}
     >
       <SurfaceLedger count={null} cols="room">

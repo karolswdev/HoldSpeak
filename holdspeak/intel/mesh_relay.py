@@ -20,6 +20,7 @@ from __future__ import annotations
 import time as _time
 from contextlib import nullcontext
 from datetime import datetime
+from holdspeak.timestamps import local_wall
 from typing import Any, Callable, Optional
 
 from ..logging_config import get_logger
@@ -53,7 +54,7 @@ class MeshRelayIntel:
         warrant: Optional[dict[str, Any]] = None,
         token_store: Any = None,
         sleep: Callable[[float], None] = _time.sleep,
-        now: Callable[[], datetime] = datetime.now,
+        now: Callable[[], datetime] = local_wall,
     ) -> None:
         self.node = str(node or "").strip()
         self.model_hint = str(model_hint or "")

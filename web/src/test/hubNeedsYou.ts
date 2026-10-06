@@ -13,6 +13,7 @@ import { fromWireMeeting } from "../desk/api";
 import {
   computeNeedsYou,
   meetingNeedsYou,
+  projectCountsOf,
   type NeedsYouAnswer,
   type NeedsYouRoomItem,
 } from "../desk/needsYou";
@@ -83,6 +84,7 @@ export async function hubAnswer(impl: Fetch, path = "/api/desk/needs-you"): Prom
       ...result.mutedItems.map((item) => ({ ...item, muted: true })),
     ],
     mutedCount: result.mutedItems.length,
+    projectCounts: projectCountsOf(result.unmutedItems),
     blockers: result.blockers,
     failedMeetings: failing,
     roomItems,

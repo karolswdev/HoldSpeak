@@ -1683,14 +1683,17 @@ class TestDashboardLifecycleStateTransitions:
         assert broadcast_events[0][1]["id"] == "meeting-1"
         assert broadcast_events[2][1]["meeting"]["id"] == "meeting-1"
         assert broadcast_events[4][1]["id"] == "meeting-2"
-        # The route has no id in its path, so the announcement names the kind
-        # only: POST /api/meeting/start and /api/meeting/stop are both
-        # ``meeting "" create`` by the middleware rule.
-        announcement = {
-            "kind": "meeting", "id": "", "op": "create", "origin": "hub",
-            "changes": [{"kind": "meeting", "id": "", "op": "create"}],
-        }
-        assert [broadcast_events[i][1] for i in (1, 3, 5)] == [announcement] * 3
+        # The route has no id in its path: the announcement takes the verb
+        # from the path and the meeting id from the answer (2026-10-05).
+        named = [
+            (broadcast_events[i][1]["kind"], broadcast_events[i][1]["id"], broadcast_events[i][1]["op"])
+            for i in (1, 3, 5)
+        ]
+        assert named == [
+            ("meeting", "meeting-1", "start"),
+            ("meeting", "", "stop"),  # this test's stop answer names no meeting
+            ("meeting", "meeting-2", "start"),
+        ]
 
     def test_websocket_supports_ping_pong_keepalive(self):
         server = MeetingWebServer(
@@ -2511,10 +2514,10 @@ class TestPluginRunQueueApiEndpoints:
         assert callback_calls == [{"max_jobs": 5, "include_scheduled": True}]
         # The route's own frame, then ONE ``desk_changed`` announcement when
         # the request ends (holdspeak/web/announce.py). The route has no id in
-        # its path, so the announcement names the kind only.
+        # its path and its answer names no one job: the op is the path's verb.
         announcement = {
-            "kind": "plugin_job", "id": "", "op": "create", "origin": "hub",
-            "changes": [{"kind": "plugin_job", "id": "", "op": "create"}],
+            "kind": "plugin_job", "id": "", "op": "process", "origin": "hub",
+            "changes": [{"kind": "plugin_job", "id": "", "op": "process"}],
         }
         assert [name for name, _ in broadcasts] == ["plugin_jobs_processed", "desk_changed"]
         assert broadcasts[0][1]["processed"] == 2
