@@ -971,6 +971,8 @@ class LaunchService:
                     "name": session_name, "command": command, "launch_id": launch_id,
                     # K6 item scope: the agent may change its origin item.
                     "scope_items": [origin_ref["id"]] if origin_ref else [],
+                    # K6: the Project the agent may add to (a hand-off's own).
+                    "project_id": project if origin_ref and project != "desk" else None,
                 },
             }
         )
@@ -1056,21 +1058,29 @@ class LaunchService:
         record["state"] = "launched"
         # K6: the owner's press on the launch grants the launch identity
         # decision PROPOSALS (decision.create, status proposed) for its life.
-        record["mcp"]["decision_proposals"] = self._grant_proposals(principal, launch_id)
+        record["mcp"]["decision_proposals"] = self._grant(principal, launch_id, None)
+        # ... and additions (links, resources) to its own Project.
+        launch_project = project if origin_ref and project != "desk" else None
+        record["mcp"]["project_additions"] = (
+            self._grant(principal, launch_id, launch_project) if launch_project else "no_project"
+        )
         self._ledger.record(record)
         return record
 
     @staticmethod
-    def _grant_proposals(principal: Any, launch_id: str) -> str:
+    def _grant(principal: Any, launch_id: str, project_id: Optional[str]) -> str:
         from .. import coder_factory
-        from ..services.conductor_launch import grant_decision_proposals
+        from ..services import conductor_launch
 
+        identity = coder_factory.launch_identity(launch_id)
         try:
-            granted = grant_decision_proposals(
-                principal, coder_factory.launch_identity(launch_id), ttl_seconds=43_200.0,
+            granted = (
+                conductor_launch.grant_project_additions(principal, identity, project_id, ttl_seconds=43_200.0)
+                if project_id
+                else conductor_launch.grant_decision_proposals(principal, identity, ttl_seconds=43_200.0)
             )
-        except Exception as exc:  # the grant never fails the launch
-            log.warning("decision-proposal grant not made for %s (%s)", launch_id, exc)
+        except Exception as exc:  # a grant never fails the launch
+            log.warning("launch grant not made for %s (%s)", launch_id, exc)
             return "not_granted"
         return "granted" if granted else "not_granted"
 

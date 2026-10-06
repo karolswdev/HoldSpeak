@@ -652,6 +652,7 @@ class NodeCommandProcessor:
                 command=payload.get("command"),
                 launch_id=(str(payload.get("launch_id") or "") or None),
                 scope_items=tuple(str(i) for i in (payload.get("scope_items") or []) if i),
+                project_id=(str(payload.get("project_id") or "") or None),
                 **kwargs,
             )
             basis = "authenticated_owner"

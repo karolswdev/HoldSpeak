@@ -97,6 +97,9 @@ class AgentCredential:
     #: credential the owner issued by hand). A launch-bound credential reaches
     #: POST /api/mcp from loopback with the Reach switch off.
     launch_id: Optional[str] = None
+    #: Conductor K6: the launch's own Project (None: the desk). The agent may
+    #: ADD to it (links, resources); it writes no other Project.
+    project_id: Optional[str] = None
 
 
 # HS-174 max TTL cap (counsel H2: 30 days).
@@ -160,6 +163,7 @@ class AgentCredentialStore:
         palette_name: Optional[str] = None,
         launch_id: Optional[str] = None,
         scope_items: Iterable[str] = (),
+        project_id: Optional[str] = None,
     ) -> AgentCredential:
         """Mint a new credential.  Returns the credential with the plaintext
         token; the store keeps only the hash (C4)."""
@@ -181,6 +185,7 @@ class AgentCredentialStore:
                 last_used_at=None,
                 palette_name=palette_name,
                 launch_id=(str(launch_id).strip() or None) if launch_id else None,
+                project_id=(str(project_id).strip() or None) if project_id and launch_id else None,
             )
             self._by_hash[token_hash] = credential
             self._by_identity[clean] = token_hash
@@ -200,6 +205,7 @@ class AgentCredentialStore:
                 last_used_at=credential.last_used_at,
                 palette_name=credential.palette_name,
                 launch_id=credential.launch_id,
+                project_id=credential.project_id,
             )
 
     def derive(self, token: Optional[str]) -> Optional[Principal]:

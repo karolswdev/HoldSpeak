@@ -22,6 +22,12 @@ meaningful work; egress, authority and config stay at his press):
    KB membership, workbench, thought, meeting and schedule writes) acts only
    on what the agent created during the launch; anything else is
    ``not_this_launch``. Creating new Notes and proposed decisions stays open.
+5. **Projects.** The agent ADDS to the launch's own Project (a link or a
+   resource, under the launch's project grant) and removes only a resource
+   it added; ``project.update``, ``unlink``, ``restore`` and
+   ``archive`` are refused on every Project, and any write on another
+   Project (or one naming none: create, setup, a global trigger) is
+   ``not_this_launch``. Reads stay open.
 """
 from __future__ import annotations
 
@@ -86,17 +92,47 @@ def grant_decision_proposals(
     )
 
 
+def grant_project_additions(
+    principal: Any, identity: str, project_id: str, *, ttl_seconds: float, database: Any = None,
+) -> Optional[dict[str, Any]]:
+    """Grant *identity* the launch's additions in its own Project (round 4):
+    ``project.link``, ``project.resource.add`` and ``project.resource.remove``
+    (the MCP gate lets the agent remove only a resource it added)."""
+    from ..kernel.project_grant import LAUNCH_GRANT_OPERATIONS
+    from ..principals import PrincipalKind
+    from . import project_delegation
+
+    if getattr(principal, "kind", None) is not PrincipalKind.OWNER or not str(project_id or "").strip():
+        return None
+    database = database or _hub_database()
+    if database is None:
+        return None
+    install_revoke_hook()
+    expires_at = project_delegation._now(database) + float(ttl_seconds)
+    return project_delegation.grant(
+        principal, identity, str(project_id), {"expires_at": expires_at},
+        database=database, operations=LAUNCH_GRANT_OPERATIONS,
+    )
+
+
 def revoke_decision_grant(launch_id: str, identity: str, *, database: Any = None) -> bool:
-    """End the launch's grant, if one is LIVE (a hook on the credential's revoke)."""
+    """End the launch's grants, desk and project, that are LIVE (a hook on
+    the credential's revoke)."""
     from ..principals import Principal, PrincipalKind
-    from . import desk_delegation
+    from . import desk_delegation, project_delegation
 
     database = database or _hub_database()
-    if database is None or not desk_delegation.live_grant(identity, database=database):
+    if database is None:
         return False
     owner = Principal(PrincipalKind.OWNER, "conductor-launch")
-    desk_delegation.revoke(owner, identity, "credential_revoked", database=database)
-    return True
+    revoked = False
+    if desk_delegation.live_grant(identity, database=database):
+        desk_delegation.revoke(owner, identity, "credential_revoked", database=database)
+        revoked = True
+    if project_delegation.live_projects(identity, database=database):
+        project_delegation.revoke_for_credential(owner, identity, database=database)
+        revoked = True
+    return revoked
 
 
 def install_revoke_hook() -> None:
@@ -244,11 +280,69 @@ def _owned_ids(name: str, arguments: Mapping[str, Any]) -> Optional[list[str]]:
     return [_ref_id(arguments.get(key)) for key in keys]
 
 
+#: Project reads and watch checks: open on every Project.
+_PROJECT_FREE = frozenset({
+    "project.list", "project.get", "project.get_room", "project.get_delta",
+    "project.list_updates", "project.item.list", "project.resource.list",
+    "project.get_steward_run", "project.suggested_sources",
+    "project.watch.inspect", "project.watch.test", "project.watch.evaluate",
+})
+#: Never, on any Project (round 4 ruling on #903): the owner's metadata,
+#: his links and his lifecycle.
+_PROJECT_NEVER = frozenset({
+    "project.update", "project.unlink", "project.restore", "project.archive",
+})
+#: Writes named by an id the agent must have made (its draft, its run).
+_PROJECT_BY_OWN_ID: dict[str, str] = {
+    "project.update_draft": "update_id",
+    "project.publish_update": "update_id",
+    "project.stop_steward": "run_id",
+}
+
+
+def _resource_key(project_id: Any, resource_ref: Any) -> str:
+    return f"resource:{project_id}:{resource_ref}"
+
+
+def _project_refused(launch_id: str, name: str, args: Mapping[str, Any]) -> Optional[str]:
+    """A project.* write: only on the launch's own Project, and there only
+    adding (links, resources, items, drafts) or changing what the agent
+    made. Reads stay open."""
+    from .. import coder_factory
+    from ..principals import agent_credentials
+
+    if not name.startswith("project.") or name in _PROJECT_FREE:
+        return None
+    named = str(args.get("project_id") or "").strip()
+    if name in _PROJECT_NEVER:
+        return named or name
+    if name in _PROJECT_BY_OWN_ID:
+        own = str(args.get(_PROJECT_BY_OWN_ID[name]) or "").strip()
+        return None if own and agent_credentials.created_by(launch_id, own) else (own or name)
+    credential = agent_credentials.launch_credential(coder_factory.launch_identity(launch_id))
+    project = credential.project_id if credential is not None else None
+    if not named or project is None or named != project:
+        # Another Project, or a write that names none (create, setup, a
+        # steward trigger over every Project).
+        return named or name
+    if name == "project.resource.remove":
+        key = _resource_key(named, args.get("resource_ref"))
+        return None if agent_credentials.created_by(launch_id, key) else str(args.get("resource_ref") or name)
+    return None
+
+
 def item_refused(launch_id: str, name: str, arguments: Any) -> Optional[str]:
     """The id a scoped tool names, when it is not this launch's to change."""
     from ..principals import agent_credentials
 
+    from ..mcp.palettes import CONDUCTOR, resolve_palette
+
+    if name not in resolve_palette(CONDUCTOR):
+        return None  # the palette refuses it first (MCP-005)
     args = arguments if isinstance(arguments, Mapping) else {}
+    project_refusal = _project_refused(launch_id, name, args)
+    if project_refusal is not None:
+        return project_refusal
     key = SCOPED_ITEM_TOOLS.get(name)
     if key is not None:
         item_id = str(args.get(key) or "").strip()
@@ -262,18 +356,25 @@ def item_refused(launch_id: str, name: str, arguments: Any) -> Optional[str]:
     return None
 
 
-_CREATED_KEYS = ("id", "thought_id", "schedule_id", "workbench_id", "note_id")
-_CREATED_NESTS = ("item", "note", "workbench", "thought", "schedule", "decision", "primitive")
+_CREATED_KEYS = ("id", "thought_id", "schedule_id", "workbench_id", "note_id", "update_id", "run_id")
+_CREATED_NESTS = ("item", "note", "workbench", "thought", "schedule", "decision", "primitive", "update", "run")
 _CREATING_TOOLS = frozenset({
     "door.add_item", "project.item.create", "desk.create", "desk.verb", "workbench.create",
-    "thought.create", "scheduled_recording.create",
+    "thought.create", "scheduled_recording.create", "project.draft_update", "project.run_steward",
 })
 
 
-def record_created(launch_id: str, name: str, result: Any) -> None:
+def record_created(launch_id: str, name: str, result: Any, arguments: Any = None) -> None:
     """What the agent created joins the launch's scope, as its own."""
     from ..principals import agent_credentials
 
+    args = arguments if isinstance(arguments, Mapping) else {}
+    if name == "project.resource.add":
+        agent_credentials.scope_add(launch_id, _resource_key(args.get("project_id"), args.get("resource_ref")))
+        return
+    if name == "project.link":
+        agent_credentials.scope_add(launch_id, f"link:{args.get('project_id')}:{args.get('meeting_id')}")
+        return
     if name not in _CREATING_TOOLS or not isinstance(result, Mapping):
         return
     for holder in [result, *(result.get(n) for n in _CREATED_NESTS)]:

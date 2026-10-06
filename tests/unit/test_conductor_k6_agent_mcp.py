@@ -99,11 +99,12 @@ def _call(client: TestClient, name: str, arguments: dict[str, Any]) -> dict[str,
     return response.json()
 
 
-def _launch_credential(launch_id: str = "launch_k6test0001", scope: tuple[str, ...] = ()):
+def _launch_credential(launch_id: str = "launch_k6test0001", scope: tuple[str, ...] = (), project: str = ""):
     return agent_credentials.issue(
         coder_factory.launch_identity(launch_id),
         palette=resolve_palette(CONDUCTOR), palette_name=CONDUCTOR, launch_id=launch_id,
         **({"scope_items": scope} if scope else {}),
+        **({"project_id": project} if project else {}),
     )
 
 
@@ -335,6 +336,8 @@ def test_a_claude_launch_gets_the_mcp_and_its_credential(tmp_path, db, monkeypat
     assert record["mcp"] == {
         "server": "holdspeak", "palette": "CONDUCTOR", "pre_approved": True,
         "decision_proposals": "granted",  # the hub is up and the owner pressed
+        # The rig's Project is not a Project row in the hub: nothing to add to.
+        "project_additions": "not_granted",
     }
 
     # End to end: the token the session holds reaches the hub's MCP with
@@ -720,3 +723,83 @@ def test_the_agent_edits_only_what_it_created(hub: Hub) -> None:
     other = _client(hub, _launch_credential("launch_k6other0002").token)
     is_error, body = _result(_call(other, "desk.update", {"kind": "notes", "id": owner_id, "data": {"title": "x"}}))
     assert is_error and body["code"] == "not_this_launch"
+
+
+def test_the_agent_adds_to_its_own_project_and_writes_no_other(hub: Hub) -> None:
+    """Round 4 ruling: add links and resources to the launch's own Project;
+    never edit, unlink, restore or archive; never write another Project."""
+    from datetime import datetime as _dt
+
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+    from holdspeak.services.conductor_launch import grant_project_additions
+    from tests.unit.test_agent_hand import OWNER as OWNER_PRESS
+
+    _reach(hub, False)
+    own = hub.client.post("/api/projects", json={"name": "Launch project"}).json()["project"]
+    other = hub.client.post("/api/projects", json={"name": "Second project"}).json()["project"]
+    hub.db.meetings.save_meeting(MeetingState(
+        id="m-k6", started_at=_dt(2026, 10, 6, 9, 0), ended_at=_dt(2026, 10, 6, 9, 30), title="Cutover", tags=[],
+        segments=[TranscriptSegment(text="Plan the cutover.", speaker="Me", start_time=0.0, end_time=2.0)]))
+    owner_note = hub.root.primitive_service.create_note(OWNER_PRESS, title="Spec", body_markdown="s")["id"]
+    _err, owner_res = hub.mcp("project.resource.add", {"project_id": own["id"], "resource_ref": f"note:{owner_note}"})
+    assert _err is False, owner_res
+
+    identity = coder_factory.launch_identity("launch_k6test0001")
+    agent = _client(hub, _launch_credential(project=own["id"]).token)
+    # Without the launch's grant the kernel refuses the link, with a receipt.
+    is_error, body = _result(_call(agent, "project.link", {"project_id": own["id"], "meeting_id": "m-k6"}))
+    assert is_error and body["code"] == "project_delegation_required", body
+    # Another agent (not a launch) is still refused as owner-only.
+    _reach(hub, True)
+    reach = hub.client.post("/api/settings/remote/credentials", json={"identity": "reach-agent-2", "palette": "ALL"})
+    is_error, body = _result(_call(_client(hub, reach.json()["token"]), "project.link",
+                                    {"project_id": own["id"], "meeting_id": "m-k6"}))
+    assert is_error and body["code"] == "owner_principal_required", body
+    _reach(hub, False)
+    assert grant_project_additions(OWNER_PRESS, identity, own["id"], ttl_seconds=3600) is not None
+
+    def refused(name: str, args: dict[str, Any]) -> None:
+        is_error, body = _result(_call(agent, name, args))
+        assert is_error and body["code"] == "not_this_launch", (name, body)
+
+    # Never, on any Project.
+    for pid in (own["id"], other["id"]):
+        refused("project.update", {"project_id": pid, "patch": {"name": "Hijacked"}})
+        refused("project.unlink", {"project_id": pid, "meeting_id": "m-k6"})
+        refused("project.restore", {"project_id": pid})
+    # Never another Project, and nothing that names none.
+    refused("project.link", {"project_id": other["id"], "meeting_id": "m-k6"})
+    refused("project.resource.add", {"project_id": other["id"], "resource_ref": f"note:{owner_note}"})
+    refused("project.create", {"name": "Agent project"})
+    # The owner's resource stays his.
+    refused("project.resource.remove", {"project_id": own["id"], "resource_ref": f"note:{owner_note}"})
+
+    # Adding to its own Project: a link and a resource, receipted as the agent.
+    is_error, linked = _result(_call(agent, "project.link", {"project_id": own["id"], "meeting_id": "m-k6"}))
+    assert is_error is False, linked
+    is_error, mine = _result(_call(agent, "desk.create", {"kind": "notes", "data": {"title": "Agent findings"}}))
+    is_error, added = _result(_call(agent, "project.resource.add", {"project_id": own["id"], "resource_ref": f"note:{mine['id']}"}))
+    assert is_error is False, added
+    with hub.db._connection() as conn:
+        actors = {(r["name"], r["principal_identity"]) for r in conn.execute(
+            "SELECT name, principal_identity FROM kernel_operations WHERE name IN ('project.link','project.resource.add') "
+            "AND state='succeeded'")}
+    assert ("project.link", identity) in actors and ("project.resource.add", identity) in actors
+    # ... and removing the resource it added.
+    is_error, removed = _result(_call(agent, "project.resource.remove", {"project_id": own["id"], "resource_ref": f"note:{mine['id']}"}))
+    assert is_error is False, removed
+
+    # The owner's Projects: names unchanged, the second one untouched.
+    _err, read_own = hub.mcp("project.get", {"project_id": own["id"]})
+    _err, read_other = hub.mcp("project.get", {"project_id": other["id"]})
+    assert json.dumps(read_own).count("Launch project") and "Hijacked" not in json.dumps(read_own)
+    _err, other_res = hub.mcp("project.resource.list", {"project_id": other["id"]})
+    assert f"note:{owner_note}" not in json.dumps(other_res) and "m-k6" not in json.dumps(read_other)
+    _err, own_res = hub.mcp("project.resource.list", {"project_id": own["id"]})
+    assert f"note:{owner_note}" in json.dumps(own_res)
+
+    # The grant goes with the credential.
+    coder_factory.revoke_launch("launch_k6test0001")
+    from holdspeak.services import project_delegation
+
+    assert project_delegation.live_projects(identity, database=hub.db) == []

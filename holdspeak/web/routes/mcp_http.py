@@ -335,7 +335,10 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 try:
                     import json as _json
 
-                    record_created(launch_scope, tool_name, _json.loads(result["content"][0].get("text") or "{}"))
+                    record_created(
+                        launch_scope, tool_name,
+                        _json.loads(result["content"][0].get("text") or "{}"), params.get("arguments"),
+                    )
                 except (ValueError, TypeError, KeyError, IndexError):
                     pass
 
