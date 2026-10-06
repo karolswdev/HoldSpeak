@@ -437,6 +437,54 @@ def _build_decisions(
     return "\n".join(lines)
 
 
+#: The change class a merged PR or a resolved issue carries (the delta's
+#: ``_classify_observation``, persisted on the proposal since Conductor K4).
+CHANGE_CLASS_CLOSED = "closed"
+
+
+def _closed_line(prop: dict[str, Any]) -> str:
+    """``Closed: <what> (#<id>) -- merged`` from a closed proposal's patch."""
+    try:
+        patch = json.loads(prop.get("patch_json") or "{}")
+    except (TypeError, ValueError):
+        patch = {}
+    if not isinstance(patch, dict):
+        patch = {}
+    name = " ".join(str(patch.get("entity_title") or prop.get("title") or "Untitled").split())
+    entity = str(patch.get("entity_ref") or "").strip()
+    outcome = str(patch.get("event_type") or "").rsplit(".", 1)[-1] or CHANGE_CLASS_CLOSED
+    marker = f" (#{entity})" if entity else ""
+    return f"Closed: {name}{marker} -- {outcome}"
+
+
+def _build_closed(
+    proposals: list[dict[str, Any]],
+    claims: list[Claim],
+    source_version: str,
+) -> list[str]:
+    """Progress lines for the window's closed items (merged, resolved)."""
+    lines: list[str] = []
+    for ordinal, prop in enumerate(proposals):
+        prop_id = prop.get("id", "")
+        text = _closed_line(prop)
+        ref = f"decision:{prop_id}" if prop_id else f"decision:unknown_{ordinal}"
+        claims.append(Claim(
+            span_id=f"s_progress_closed_{ordinal}",
+            text=text,
+            refs=[ref],
+            section="progress",
+            # The watch observed the transition; the class is read off the
+            # stored proposal (a field mapping, C2).
+            kind=KIND_OBSERVATION,
+            support=SUPPORT_SUPPORTED,
+            support_record=_field_mapping_support(
+                source_version, [ref], ["change_class", "patch_json"],
+            ),
+        ))
+        lines.append(f"- {text}")
+    return lines
+
+
 def _build_risks_blockers(
     items_section: dict[str, Any],
     claims: list[Claim],
@@ -1623,11 +1671,20 @@ class ProjectUpdateService:
         # one pinned project revision this draft saw (C2).
         source_version = f"project:{project_id}@r{revision}"
 
+        # Conductor K4: a merged PR or a resolved issue is reported as
+        # closed (Progress), not as an open proposal (Decisions).
+        closed = [p for p in proposals if p.get("change_class") == CHANGE_CLASS_CLOSED]
+        undecided = [p for p in proposals if p.get("change_class") != CHANGE_CLASS_CLOSED]
+        progress = _build_progress(items_section, det_claims, source_version)
+        closed_lines = _build_closed(closed, det_claims, source_version)
+        if closed_lines:
+            progress = "\n".join(closed_lines) if progress == _HONEST_MINIMAL["progress"] else (
+                progress + "\n" + "\n".join(closed_lines)
+            )
         det_sections: dict[str, str] = {
-            "progress": _build_progress(
-                items_section, det_claims, source_version),
+            "progress": progress,
             "decisions": _build_decisions(
-                review_section, proposals, det_claims, source_version),
+                review_section, undecided, det_claims, source_version),
             "risks_blockers": _build_risks_blockers(
                 items_section, det_claims, source_version),
             "dependencies": _build_dependencies(
