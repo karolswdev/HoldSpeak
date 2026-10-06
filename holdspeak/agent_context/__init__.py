@@ -41,6 +41,8 @@ from .models import (
     STATE_VERSION,
     SUPPORTED_AGENTS,
     _SECRET_CONTEXT_RE,
+    is_blocked,
+    wait_kind,
 )
 from .hs_context import (
     RepoRoot,
@@ -75,6 +77,7 @@ from .sessions import (
     _session_key,
     _state_lock,
     _write_state,
+    AgentRegistryUnreadable,
     clear_agent_session_response,
     clear_stale_agent_sessions,
     effective_state,
@@ -86,6 +89,7 @@ from .sessions import (
     list_agent_sessions,
     list_recent_awaiting_agent_sessions,
     looks_like_agent_question,
+    read_agent_sessions_strict,
     pin_agent_session,
     select_awaiting_agent_session,
     select_next_awaiting_agent_session,
@@ -94,6 +98,10 @@ from .sessions import (
 
 __all__ = [
     "AGENT_CONTEXT_FILE",
+    "AgentRegistryUnreadable",
+    "is_blocked",
+    "read_agent_sessions_strict",
+    "wait_kind",
     "AgentSession",
     "DEFAULT_ASSISTANT_CAPTURE_MAX_CHARS",
     "DEFAULT_CONTEXT_HARD_FILE_MAX_BYTES",

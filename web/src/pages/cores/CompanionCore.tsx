@@ -1,5 +1,5 @@
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { countLabel } from "../../desk/surface";
 import { openCoderSession, openPersona } from "../../desk/shell";
 import type {
@@ -23,6 +23,8 @@ import { DeliveryListSection } from "../../desk/components/DeliveryListSection";
 import { PrReceiptsSection } from "../../desk/components/PrReceiptsSection";
 import { deliveryListRows, useDelivery } from "../../desk/delivery";
 import { usePrReceipts } from "../../desk/prReceipts";
+import { useOnCoderFrame } from "../../desk/useDeskChangedRefresh";
+import { apiFetch } from "../../lib/api";
 
 const WINGS = [
   { id: "roster", label: "Roster" },
@@ -60,6 +62,15 @@ export function CompanionCore({ hero }: CoreProps) {
   );
   const recipes = useResource<RecipesResponse>("/api/recipes", {});
   const coders = useResource<CodersStatusResponse>("/api/coders/status", {});
+  // Conductor K3: an agent that begins or stops waiting moves the roster now
+  // (the `scope:"coder"` frame). The reload is quiet: the last read stays.
+  const setCoders = coders.setData;
+  const rereadCoders = useCallback(() => {
+    void apiFetch<CodersStatusResponse>("/api/coders/status")
+      .then((data) => setCoders(data))
+      .catch(() => undefined);
+  }, [setCoders]);
+  useOnCoderFrame(rereadCoders);
   // Inventory 2026-10-03 (defect 9): the roster dropped every seeded agent
   // (Chase, Desk, Draft, ...: kind='mode') while the Floor showed them as
   // agents, so the roster read "New Agent" rows only. The roster reads the
