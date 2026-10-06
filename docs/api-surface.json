@@ -399,6 +399,26 @@
       ]
     },
     {
+      "path": "/api/agent/hand/preview",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/agent/launches/{launch_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agent/launches/{launch_id}/deliver",
       "methods": [
         "POST"
@@ -4142,7 +4162,9 @@
         "POST"
       ],
       "module": "web.routes.onboarding",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/onboarding/calendar",

@@ -4,6 +4,7 @@
 // The lane vocabulary is PARKED; the arrival composes directly from
 // the surface library and the needs-you wire.
 
+import { HandRowVerb } from "../components/HandRowVerb";
 import { wireDate } from "../surface/format";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chair } from "./Chair";
@@ -72,6 +73,7 @@ import { useOnCoderFrame } from "../useDeskChangedRefresh";
 import {
   agentWord,
   flightForItem,
+  isInFlight,
   liveAgentSessions,
   useAgentFlights,
   useAgentFlightsLive,
@@ -1673,23 +1675,25 @@ function NeedsYouRow({
           ) : null}
         </span>
       }
-      trailing={
-        <>
-          <NeedsYouRowVerbs
-            item={rowItem}
-            isDoor={isDoor}
-            isUnassigned={isUnassigned}
-            isToReview={isToReview}
-            doorCard={ext._doorCard}
-            ownerCardId={doorOwnerCardId}
-            primary={primary}
-            onProposalConfirm={onProposalConfirm}
-            commitWell={commitWell}
-            onCommitWell={(well) => { setCommitDraft(""); setCommitWell(well); }}
-          />
-          <FlightVerbs flight={flight} title={item.title} />
-        </>
-      }
+      trailing={<>
+        <NeedsYouRowVerbs
+          item={rowItem}
+          isDoor={isDoor}
+          isUnassigned={isUnassigned}
+          isToReview={isToReview}
+          doorCard={ext._doorCard}
+          ownerCardId={doorOwnerCardId}
+          primary={primary}
+          onProposalConfirm={onProposalConfirm}
+          commitWell={commitWell}
+          onCommitWell={(well) => { setCommitDraft(""); setCommitWell(well); }}
+        />
+        {/* Conductor F2: an item in flight shows its flight and its verb;
+            Hand to agent (Conductor K2d) only on an item no agent holds. */}
+        {isInFlight(flight)
+          ? <FlightVerbs flight={flight} title={item.title} />
+          : <HandRowVerb item={item} />}
+      </>}
       wrap
       expands={false}
       open={(sourcesOpen && sources.length > 1) || commitWell !== null}

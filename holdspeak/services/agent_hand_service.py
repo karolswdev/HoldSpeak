@@ -219,6 +219,7 @@ class AgentHandService:
             raise AgentHandRefused(exc.reason, str(exc)) from exc
 
         project_id = project_id or project_for_item(self._db, kind, item_id)
+        _reload_registry(launcher._registry)
         source = resolve_project_repository(
             self._db, project_id, launcher._registry, project_map=self._project_map
         )
@@ -238,6 +239,14 @@ class AgentHandService:
             if existing is not None and existing.get("instruction_state") != "sent" and isinstance(
                 existing.get("pending_brief"), Mapping
             ):
+                held_profile = str(existing.get("profile_id") or "")
+                if profile and held_profile and str(profile) != held_profile:
+                    # The held launch runs its own agent: a hand-off that names
+                    # another one would resume an agent the owner did not pick.
+                    raise AgentHandRefused(
+                        "launch_profile_mismatch",
+                        f"the held launch of this item runs {held_profile!r}",
+                    )
                 try:
                     record = launcher.resume_delivery(str(existing["launch_id"]))
                 except LaunchRefused as exc:
@@ -297,6 +306,7 @@ class AgentHandService:
         return {
             "status": "launched" if launch.get("state") in ("launched", "registered") else "failed",
             "resumed": resumed,
+            "profile": launch.get("profile_id"),
             # The receipt decides: "sent" only after a delivered process.input.
             "instruction_state": launch.get("instruction_state"),
             "trust_state": launch.get("trust_state"),
@@ -456,6 +466,18 @@ class AgentHandService:
             "instruction_state": record.get("instruction_state"),
             "trust_state": record.get("trust_state"),
         }
+
+
+def _reload_registry(registry: Any) -> None:
+    """Read the source registry file again: the launch driver is shared for the
+    process, and a repository registered since it loaded (the Delivery drawer's
+    own registry instance) is otherwise invisible to it until a restart."""
+    reload = getattr(registry, "reload", None)
+    if callable(reload):
+        try:
+            reload()
+        except Exception as exc:  # the cached read still answers
+            log.warning("delivery registry not read again (%s)", exc)
 
 
 def live_launches(launcher: Any) -> list[dict[str, Any]]:

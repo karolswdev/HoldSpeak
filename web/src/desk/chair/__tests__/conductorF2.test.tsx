@@ -109,6 +109,31 @@ describe("Conductor F2 on the Chair", () => {
     expect(openCoderSession).toHaveBeenCalledWith("claude:c1");
   });
 
+  it("F1 x F2: an in-flight row shows its flight and not Hand to agent; a row with no flight keeps Hand to agent", async () => {
+    render(<ChairHome />);
+    await waitFor(() => expect(screen.getAllByTestId("flight-chip").length).toBeGreaterThan(0));
+    const row = () => screen.getAllByTestId("arrival-needs-you-row").find((r) => r.textContent?.includes("Write the rollback runbook"))!;
+    expect(within(row()).queryByRole("button", { name: /^Hand to agent/ })).toBeNull();
+    expect(within(row()).getByRole("button", { name: "Open session: Write the rollback runbook" })).toBeTruthy();
+  });
+
+  it("F1 x F2: with no flight the same row offers Hand to agent", async () => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
+      const url = String(path);
+      if (url === "/api/inference/assignments")
+        return { schema: "InferenceAssignmentSummary@1", rows: [], task_overrides: [], issue_count: 0 };
+      if (url.startsWith("/api/coders/sessions")) return { sessions: [], flights: [] };
+      if (url.startsWith("/api/desk/needs-you"))
+        return { count: 1, projects: ["p-ledger"], items: [RUNBOOK_ROW], next: null, coverage: [], complete: true };
+      if (url.startsWith("/api/door")) return { board: {}, counts: {}, upcoming: [], calendar_configured: false };
+      return null;
+    }));
+    render(<ChairHome />);
+    const row = await screen.findByTestId("arrival-needs-you-row");
+    await waitFor(() => expect(within(row).getByRole("button", { name: "Hand to agent: Write the rollback runbook" })).toBeTruthy());
+    expect(within(row).queryByTestId("flight-chip")).toBeNull();
+  });
+
   it("K4c: AGENTS lists every live session; a handed one names its item", async () => {
     render(<ChairHome />);
     const section = await screen.findByTestId("arrival-agents");

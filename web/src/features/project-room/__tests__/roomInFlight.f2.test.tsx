@@ -276,11 +276,26 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
     expect(within(rows[0]).getByTestId("needs-you-open-action")).toBeTruthy();
   });
 
-  it("a row with no flight wears no chip", async () => {
+  it("a row with no flight wears no chip and keeps Hand to agent (F1)", async () => {
     wire([]);
     render(<WindowHarness scope="project:p1" />);
-    await screen.findAllByTestId("needs-you-row");
+    const rows = await screen.findAllByTestId("needs-you-row");
     expect(screen.queryByTestId("flight-chip")).toBeNull();
+    expect(within(rows[0]).getByRole("button", { name: "Hand to agent: Write the rollback runbook" })).toBeTruthy();
+  });
+
+  it("an in-flight row (STARTING, WAITING, PR OPEN, MERGED awaiting confirm) shows no Hand to agent", async () => {
+    wire([
+      flight({ state: "starting", session_key: null }),
+      flight({ origin_ref: "action:ai-recon", id: "ai-recon", title: "Shard the reconciliation job", state: "merged", close: "awaiting_confirm",
+        pr: { number: 9, url: "https://github.com/acme/ledger/pull/9", state: "merged" } }),
+      flight({ origin_ref: "action:ai-flag", id: "ai-flag", title: "Add the ledger freeze flag", state: "pr_open", session_key: null,
+        pr: { number: 412, url: "https://github.com/acme/ledger/pull/412", state: "open" } }),
+    ]);
+    render(<WindowHarness scope="project:p1" />);
+    await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(3));
+    expect(screen.queryAllByRole("button", { name: /^Hand to agent/ })).toHaveLength(0);
+    expect(screen.getAllByTestId("flight-chip")[0].textContent).toContain("CLAUDE CODE · STARTING");
   });
 });
 

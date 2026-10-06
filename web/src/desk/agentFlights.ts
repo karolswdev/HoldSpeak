@@ -143,6 +143,15 @@ export function flightForItem(flights: readonly AgentFlight[], item: Parameters<
   return flights.find((f) => refs.includes(f.originRef) && f.state !== "ended" && f.state !== "expired") ?? null;
 }
 
+/** An agent holds the item: STARTING, WORKING, WAITING, PR OPEN, or MERGED
+ * with the close still awaiting the owner's confirmation (Secure). Such a row
+ * shows its flight and not Hand to agent. */
+export function isInFlight(flight: AgentFlight | null | undefined): flight is AgentFlight {
+  if (!flight) return false;
+  if (["starting", "working", "waiting", "pr_open"].includes(flight.state)) return true;
+  return flight.state === "merged" && flight.close === "awaiting_confirm";
+}
+
 /** K4's cleanup outcomes that end the agent's session. */
 const SESSION_LEFT = new Set(["killed", "session_gone", "no_session"]);
 

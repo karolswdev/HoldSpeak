@@ -18,6 +18,7 @@ import { objectByRef } from "./world";
 import { DESK_TOOLS, KIND_GLYPH } from "./tools";
 import { applicationForAction } from "./applications";
 import { primitiveCan } from "../lib/primitives";
+import { handKindOf, openHand } from "./agentHand";
 import { usePalette, useShortcutSheet } from "./chromeState";
 import { useSettleState } from "./settleState";
 import { useChairState } from "./chairState";
@@ -497,6 +498,28 @@ export const VERBS: Verb[] = [
       const desk = useDesk.getState();
       desk.setSelected([`${o.kind}:${o.id}`]);
       desk.openAsk();
+    },
+  },
+  {
+    // Hand to agent (Conductor K2, the canvas ratified 2026-10-06): one
+    // registry verb reaches the Object menu, the object context menu and ⌘K.
+    // It opens the launch sheet on every hand-off (the owner's ruling).
+    id: "object.hand-to-agent",
+    label: "Hand to agent",
+    menu: "object",
+    scope: "object",
+    glyph: "⇥",
+    keywords: ["agent", "claude", "codex", "coder", "launch", "delegate"],
+    ghost: (ctx) => {
+      const o = selected(ctx);
+      if (!o) return "Select an object";
+      return primitiveCan(o.kind, "hand") && handKindOf(o.kind) ? null : "Not a work item";
+    },
+    run: (ctx) => {
+      const o = selected(ctx);
+      const kind = o ? handKindOf(o.kind) : null;
+      if (!o || !kind || !primitiveCan(o.kind, "hand")) return;
+      openHand({ kind, id: o.id, title: String(o.title ?? "") || o.id });
     },
   },
   {

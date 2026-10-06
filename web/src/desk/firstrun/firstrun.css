@@ -165,6 +165,28 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
+/* The Agents card (the Conductor canvas K1): one full-width card under the two. */
+.firstrun-cards-one {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.firstrun-agent-cells {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.firstrun-agents-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .firstrun-ready {
   display: grid;
   gap: 16px;
@@ -217,7 +239,8 @@
   .firstrun-cards,
   .firstrun[data-heard] .firstrun-cards,
   .firstrun-cards-two,
-  .firstrun[data-heard] .firstrun-cards-two {
+  .firstrun[data-heard] .firstrun-cards-two,
+  .firstrun-cards-one {
     grid-template-columns: 1fr;
   }
 

@@ -26,6 +26,7 @@ import { NewWorkbenchChooser } from "./components/NewWorkbenchChooser";
 import { ScheduleCreateWindow } from "./components/ScheduleCreateWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
 import { AskPanel } from "./components/AskPanel";
+import { HandSheet } from "./components/HandSheet";
 import { GlassDropLayer } from "./components/GlassDropLayer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
 import { Dock, Expose, SnapGhost, Switcher } from "./components/DeskWindow";
@@ -255,6 +256,8 @@ function DeskFaces() {
       {/* Floor/List own their Ask panel. The Chair's primary Ask AI verb uses
           the same store seam, so mount that existing panel here as well. */}
       {!arrivalRequired && !showFloor && askOpen && <AskPanel />}
+      {/* Hand to agent (Conductor K3): the launch sheet, the Ask AI posture, on every face. */}
+      {!arrivalRequired && <HandSheet />}
       {/* HS-135-13 fix: the InlineEditor must render on the Chair too,
           not only the Floor (DeskListView/WorldStage own their own copy).
           Without this, "New Agent" from a Workbench on the Chair sets

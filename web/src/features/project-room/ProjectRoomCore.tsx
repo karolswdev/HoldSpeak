@@ -3,6 +3,7 @@
 // since I last looked? What did we decide and what do I owe people?
 // Two wings: ROOM · HISTORY. Ask well at the foot. No counters of zero,
 // no REV, no raw field names, the name said once.
+import { HandRowVerb } from "../../desk/components/HandRowVerb";
 import { wireDate } from "../../desk/surface/format";
 import React, { useEffect, useRef, useState, useMemo, useCallback, useReducer } from "react";
 import {
@@ -92,7 +93,7 @@ import { DecisionRecordPreparedChip, DecisionRecordSendWells } from "../../desk/
 import { fetchUpdates } from "./update/api";
 import { Unreadable } from "../../desk/surface/send";
 import { retryRoomLink, useRoomSendLink } from "../../desk/windowSend";
-import { flightForItem, mergeReceipt, useAgentFlights, useAgentFlightsLive } from "../../desk/agentFlights";
+import { flightForItem, isInFlight, mergeReceipt, useAgentFlights, useAgentFlightsLive } from "../../desk/agentFlights";
 import { FlightChip, FlightVerbs } from "../../desk/components/AgentFlight";
 
 /* ── sub-components (kept for backward-compat re-exports) ── */
@@ -984,7 +985,12 @@ function NeedsYouSection({
                   </span>
                 }
                 trailing={<>
-                  <FlightVerbs flight={flight} title={item.title} />
+                  {/* Conductor F2: an item in flight shows its flight and its
+                      verb; Hand to agent (Conductor K2e) only on an item no
+                      agent holds, before the row's Open, as drawn. */}
+                  {isInFlight(flight)
+                    ? <FlightVerbs flight={flight} title={item.title} />
+                    : <HandRowVerb item={{ title: item.title, source: item.source, actionItemId: item.actionItemId, projectId: ctrl.projectId }} />}
                   {item.verb === "decide" ? (
                     <Button dense variant="ghost" onClick={() => {
                       if (item.url) window.open(item.url, "_blank", "noopener");
