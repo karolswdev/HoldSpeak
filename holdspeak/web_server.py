@@ -130,6 +130,25 @@ def _coder_awaiting_edge(keys: list[str]) -> Optional[dict]:
         return None
 
 
+def _coder_answer_triage(keys: list[str]) -> list[str]:
+    """Conductor K5: the waits that began, split by Control mode. Returns
+    the keys to notify now; a HoldSpeak-launched agent's wait in YOLO is
+    answered or escalated in the background (the responder notifies a REAL
+    one itself), and in Normal a draft follows the notification. Fails
+    toward notifying every key."""
+    try:
+        from .db import get_database
+        from .services.agent_responder import default_agent_responder
+
+        responder = default_agent_responder(get_database(), notify=_coder_awaiting_edge)
+        split = responder.triage(keys)
+        responder.start(split["decide"])
+        return list(split["notify"])
+    except Exception as exc:
+        log.warning(f"coder answer triage failed: {exc}")
+        return list(keys)
+
+
 def _format_duration(total_seconds: float) -> str:
     """Format duration as MM:SS or HH:MM:SS."""
     total_secs = max(0, int(total_seconds))
@@ -1747,7 +1766,11 @@ class MeetingWebServer:
                     if entered:
                         # After the frames: the decision builds the full
                         # needs-you answer, and the frames must not wait on it.
-                        await asyncio.to_thread(_coder_awaiting_edge, entered)
+                        # Conductor K5: a launched agent's wait may be
+                        # answered by Control mode first (never blocks here).
+                        notify_now = await asyncio.to_thread(_coder_answer_triage, entered)
+                        if notify_now:
+                            await asyncio.to_thread(_coder_awaiting_edge, notify_now)
             except asyncio.CancelledError:
                 raise
             except Exception as e:
