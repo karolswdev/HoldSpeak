@@ -37,6 +37,13 @@ class _VoiceResolutionAdapter:
         return self._inner.cancel()
 
 
+def _launch_own(principal: Principal, *refs: str) -> None:
+    """Conductor K6: a launch changes only Workbenches it created."""
+    from .conductor_launch import require_own
+
+    require_own(principal, *refs)
+
+
 @observe_service
 class WorkbenchService:
     # Route adapters create a short-lived service per request; limiter state is shared.
@@ -103,9 +110,19 @@ class WorkbenchService:
         fields = self._wb_fields(body)
         if fields["schedule_enabled"] and principal.kind is not PrincipalKind.OWNER:
             raise ServiceError("owner_principal_required", "Only the owner can enable a schedule", context={"status": 403})
-        workbench_id = str(body.pop("id", "") or _new_id("workbench"))
+        supplied = str(body.pop("id", "") or "")
+        # Conductor K6 (Astra round 2 on #903): a launch creates only NEW
+        # Workbenches; an existing id (live or deleted) is refused before any
+        # write, and ownership is recorded only after the insert.
+        from .conductor_launch import record_own, require_new
+
+        if supplied:
+            require_new(principal, f"workbench:{supplied}",
+                        lambda: self._db.workbenches.get(supplied, include_deleted=True) is not None)
+        workbench_id = supplied or _new_id("workbench")
         if not fields["schedule_enabled"]:
             wb = self._db.workbenches.upsert(workbench_id=workbench_id, **fields)
+            record_own(principal, f"workbench:{wb.id}")
             self._changed("workbench", wb.id, "create")
             return self._wb_payload(wb, principal)
         # The owner's single enable gesture commits its configuration, captured
@@ -123,6 +140,7 @@ class WorkbenchService:
     def update_workbench(
         self, principal: Principal, workbench_id: str, **fields: Any
     ) -> dict[str, Any]:
+        _launch_own(principal, f"workbench:{workbench_id}")
         existing = self._require_workbench(workbench_id)
         if principal.kind is PrincipalKind.OWNER:
             from holdspeak.kernel.runtime import _configure
@@ -159,6 +177,7 @@ class WorkbenchService:
         return self._wb_payload(wb, principal)
 
     def delete_workbench(self, principal: Principal, workbench_id: str) -> bool:
+        _launch_own(principal, f"workbench:{workbench_id}")
         if self._db.workbench_items.has_active_items(workbench_id):
             raise ConflictError(
                 "Cannot delete workbench with active items. Wait for running items to complete."
@@ -187,9 +206,18 @@ class WorkbenchService:
     ) -> dict[str, Any]:
         if not title.strip():
             raise ValidationError("Item title is required")
+        _launch_own(principal, f"workbench:{workbench_id}")
         self._require_workbench(workbench_id)
+        supplied = str(fields.get("id") or "")
+        if supplied:
+            # An item id names ONE item anywhere: a launch never re-homes or
+            # overwrites an existing one (live or parked).
+            from .conductor_launch import require_new
+
+            require_new(principal, f"workbench_item:{supplied}",
+                        lambda: self._db.workbench_items.get(supplied, include_parked=True) is not None)
         item = self._db.workbench_items.upsert(
-            item_id=str(fields.get("id") or _new_id("wbi")),
+            item_id=supplied or _new_id("wbi"),
             workbench_id=workbench_id,
             title=title,
             body=str(fields.get("body", "")),
@@ -197,12 +225,16 @@ class WorkbenchService:
             grounding=fields.get("grounding") or {},
             context=fields.get("context") or {},
         )
+        from .conductor_launch import record_own
+
+        record_own(principal, f"workbench_item:{item.id}")
         self._changed("workbench_item", item.id, "create")
         return item.to_dict()
 
     def update_item(
         self, principal: Principal, workbench_id: str, item_id: str, **fields: Any
     ) -> dict[str, Any]:
+        _launch_own(principal, f"workbench:{workbench_id}")
         existing = self._require_item(workbench_id, item_id)
 
         def pick(key: str, default: Any) -> Any:
@@ -229,10 +261,12 @@ class WorkbenchService:
     def delete_item(
         self, principal: Principal, workbench_id: str, item_id: str
     ) -> dict[str, Any]:
+        _launch_own(principal, f"workbench:{workbench_id}")
         return self.park_item(principal, workbench_id, item_id)
 
     def park_item(self, principal: Principal, workbench_id: str, item_id: str) -> dict[str, Any]:
         """Park one item while retaining every result and run link."""
+        _launch_own(principal, f"workbench:{workbench_id}")
         self._require_workbench(workbench_id)
         self._require_item(workbench_id, item_id, include_parked=True)
         changed, reason, bad_ids = self._db.workbench_items.park_many(
@@ -249,6 +283,7 @@ class WorkbenchService:
         self, principal: Principal, workbench_id: str, item_ids: list[str]
     ) -> dict[str, list[str]]:
         """Park a validated set atomically, or leave every item untouched."""
+        _launch_own(principal, f"workbench:{workbench_id}")
         ids = self._validate_item_ids(item_ids)
         self._require_workbench(workbench_id)
         changed, reason, bad_ids = self._db.workbench_items.park_many(workbench_id, ids)
@@ -261,6 +296,7 @@ class WorkbenchService:
         self, principal: Principal, workbench_id: str, item_id: str
     ) -> dict[str, Any]:
         """Restore one parked item without rewriting its contents."""
+        _launch_own(principal, f"workbench:{workbench_id}")
         self._require_workbench(workbench_id)
         self._require_item(workbench_id, item_id, include_parked=True)
         changed, reason, bad_ids = self._db.workbench_items.restore_many(
@@ -277,6 +313,7 @@ class WorkbenchService:
         self, principal: Principal, workbench_id: str, item_ids: list[str]
     ) -> dict[str, list[str]]:
         """Restore a validated set atomically, or leave every item untouched."""
+        _launch_own(principal, f"workbench:{workbench_id}")
         ids = self._validate_item_ids(item_ids)
         self._require_workbench(workbench_id)
         changed, reason, bad_ids = self._db.workbench_items.restore_many(workbench_id, ids)
@@ -286,6 +323,7 @@ class WorkbenchService:
         return {"restored": changed}
 
     def retry_mint(self, principal: Principal, workbench_id: str, item_id: str) -> dict[str, Any]:
+        _launch_own(principal, f"workbench:{workbench_id}")
         item = self._require_item(workbench_id, item_id)
         if item.status != "done" or not item.result:
             raise ValidationError("Item is not done or has no result")
@@ -498,11 +536,13 @@ class WorkbenchService:
         return read_memory(workbench_id)
 
     def clear_memory(self, principal: Principal, workbench_id: str) -> bool:
+        _launch_own(principal, f"workbench:{workbench_id}")
         from holdspeak.workbench_memory import clear_memory
         clear_memory(workbench_id)
         return True
 
     def promote_memory(self, principal: Principal, workbench_id: str, index: int) -> dict[str, Any]:
+        _launch_own(principal, f"workbench:{workbench_id}")
         from holdspeak.workbench_memory import read_memory
         entries = read_memory(workbench_id)
         if index < 0 or index >= len(entries):

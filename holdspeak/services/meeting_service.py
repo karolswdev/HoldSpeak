@@ -109,6 +109,14 @@ def notify_desk_changed(kind: str, obj_id: str, op: str) -> None:
     notify(kind, obj_id, op)
 
 
+
+def _launch_reader(principal: Any) -> bool:
+    """A launched agent (Conductor K6): no person is resolved for its read."""
+    from .conductor_launch import launch_id_of
+
+    return launch_id_of(principal) is not None
+
+
 class MeetingService:
     """One service boundary for meeting capture and persisted meeting data."""
 
@@ -411,7 +419,7 @@ class MeetingService:
         else:
             total = len(meetings) if filtered else self._db.meetings.get_meeting_count(parked=parked)
         payloads = [self._summary_payload(meeting) for meeting in meetings]
-        self._enrich_calendar_origin(payloads)
+        self._enrich_calendar_origin(payloads, people=not _launch_reader(principal))
         self._enrich_intel_status(payloads)
         return {
             "meetings": payloads,
@@ -437,7 +445,7 @@ class MeetingService:
         if meeting is None:
             raise NotFound("meeting", resolved_id)
         payload = meeting.to_dict()
-        self._enrich_calendar_origin([payload])
+        self._enrich_calendar_origin([payload], people=not _launch_reader(principal))
         # HS-172-02: intel host + duration on the detail payload.
         self._enrich_intel_status([payload])
         return payload
@@ -787,7 +795,7 @@ class MeetingService:
         except (TypeError, ValueError) as exc:
             raise ValidationError("cursor must be a non-negative integer") from exc
 
-    def _enrich_calendar_origin(self, payloads: list[dict[str, Any]]) -> None:
+    def _enrich_calendar_origin(self, payloads: list[dict[str, Any]], *, people: bool = True) -> None:
         """Attach calendar event title and source label to meeting payloads.
 
         Honest degradation: when the calendar_events row is gone (feed moved
@@ -817,7 +825,7 @@ class MeetingService:
                 p["calendar_event_title"] = ev.title
                 p["calendar_source_label"] = ev.source_label
                 # HS-149-04: resolve person display name when the sidecar is open.
-                if self._resolve_person is not None:
+                if self._resolve_person is not None and people:
                     try:
                         person = self._resolve_person(ev.uid, ev.source_id)
                         if person:

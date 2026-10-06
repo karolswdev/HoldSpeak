@@ -19,6 +19,26 @@ PROJECT_GRANT_OPERATIONS: frozenset[str] = frozenset({
     "project.run_steward", "project.stop_steward", "project.publish_update",
 })
 
+#: Conductor K6 (ruling on #903, round 4): what a LAUNCH may do in its own
+#: Project under the grant the owner's press on Hand to agent makes: add a
+#: link or a resource, and remove a resource (the MCP gate allows that only
+#: for a resource the agent added). Only a launch identity is granted these.
+LAUNCH_GRANT_OPERATIONS: frozenset[str] = frozenset({
+    "project.link", "project.resource.add", "project.resource.remove",
+})
+LAUNCH_IDENTITY_PREFIX = "agent:launch:"
+
+
+def launch_grantable(name: str, identity: Any) -> bool:
+    """A launch identity's operation that its launch grant may admit."""
+    return str(name) in LAUNCH_GRANT_OPERATIONS and str(identity or "").startswith(LAUNCH_IDENTITY_PREFIX)
+
+
+def granted_operation(name: str, identity: Any) -> bool:
+    """An agent operation a LIVE project grant decides."""
+    return str(name) in PROJECT_GRANT_OPERATIONS or launch_grantable(name, identity)
+
+
 REQUIRED = "project_delegation_required"
 EXPIRED = "project_delegation_expired"
 REVOKED = "project_delegation_revoked"
@@ -28,10 +48,14 @@ GRANT_CODES: frozenset[str] = frozenset({REQUIRED, EXPIRED, REVOKED})
 _TABLE = "kernel_project_delegations"
 
 
-def terms_for(agent_identity: str, project_id: str) -> dict[str, Any]:
-    """The grant's terms, stored in the row: a later code change never widens an old grant."""
+def terms_for(agent_identity: str, project_id: str, operations: Any = None) -> dict[str, Any]:
+    """The grant's terms, stored in the row: a later code change never widens an old grant.
+
+    ``operations`` (K6, a launch's grant) chooses from the grantable sets."""
+    chosen = PROJECT_GRANT_OPERATIONS if operations is None else (
+        frozenset(operations) & (PROJECT_GRANT_OPERATIONS | LAUNCH_GRANT_OPERATIONS))
     return {"agent_identity": agent_identity, "project_id": project_id,
-            "operations": sorted(PROJECT_GRANT_OPERATIONS)}
+            "operations": sorted(chosen)}
 
 
 def terms_sha256(terms: Mapping[str, Any], expires_at: float | None) -> str:
@@ -162,8 +186,9 @@ class ProjectGrantRefused(Exception):
 
 
 def grant_effect(*, grant_id: str, agent_identity: str, project_id: str, delegator_kind: str,
-                 delegator_identity: str, expires_at: float | None, operation_id: str, now: float) -> Any:
-    terms = terms_for(agent_identity, project_id)
+                 delegator_identity: str, expires_at: float | None, operation_id: str, now: float,
+                 operations: Any = None) -> Any:
+    terms = terms_for(agent_identity, project_id, operations)
     sha = terms_sha256(terms, expires_at)
 
     def effect(conn: Any) -> None:

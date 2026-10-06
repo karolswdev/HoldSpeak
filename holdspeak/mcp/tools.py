@@ -901,11 +901,18 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     from holdspeak.db.connection import watch_writes
     from holdspeak.runtime.announce_scope import announce_scope
 
+    # Conductor K6: a launched agent's call meets its launch rule here, the
+    # one dispatcher every MCP transport reaches (services/conductor_launch).
+    from holdspeak.services import conductor_launch
+
+    arguments = conductor_launch.gate_call(name, arguments, principal)
     with announce_scope() as announce, watch_writes() as wrote:
         result = _dispatch(name, arguments, principal)
+        conductor_launch.after_call(name, arguments, result, principal)
         if wrote() and not is_read_tool(name):
             announce(*operations.changed_for(name, arguments, result))
-    return result
+    # ... and reads every answer through the People cut.
+    return conductor_launch.cut_for(principal, result)
 
 
 #: The last name segment of a tool that only reads. A read may still write a
@@ -1379,9 +1386,18 @@ def dispatch_for_palette(
     arguments: dict[str, Any] | None,
     principal: Principal,
     palette: frozenset[str],
+    *,
+    call_gate: Any = None,
 ) -> Any:
-    """Dispatch scoped by *palette* -- typed refusal for tools outside it."""
-    if name not in palette:
+    """Dispatch scoped by *palette* -- typed refusal for tools outside it.
+
+    ``call_gate(name, arguments) -> bool`` (Conductor K6) refuses one call of a
+    palette tool on its arguments, the same way (a mixed tool that would
+    schedule or delegate)."""
+    outside = name not in palette
+    if not outside and call_gate is not None and not call_gate(name, arguments):
+        outside = True
+    if outside:
         # PHILO-7-02: the palette refusal of a tool that names an ADMITTED
         # operation leaves a refusal receipt (a read or exempt tool: none).
         error = ToolError(f"Tool {name!r} is not in the configured palette")

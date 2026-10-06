@@ -46,6 +46,7 @@ from .project_grant import (  # noqa: E402,F401
     PROJECT_GRANT_OPERATIONS, REQUIRED, EXPIRED, REVOKED, PROJECT_BASIS_KIND, GRANT_CODES,
     terms_for, terms_sha256, basis, parse_basis, check_row, by_identity, by_grant, by_basis,
     provenance, grant_code, frozen_grant_code, grant_view, ProjectGrantRefused, grant_effect, revoke_effect,
+    LAUNCH_GRANT_OPERATIONS, launch_grantable, granted_operation,
 )
 #: The beat's section 5: one child per executed policy slot that has no
 #: admitted operation of its own. Internal: no transport, never grantable.
@@ -214,7 +215,8 @@ def project_approval_code(broker: Any, operation: Mapping[str, Any], principal: 
     if agent_steward_child(name, principal, str(operation.get("parent_operation_id") or "")):
         with broker.store._connection() as conn:
             return agent_child_code(conn, principal, broker._clock())
-    if name in PROJECT_GRANT_OPERATIONS and parse_basis(str(operation.get("authority_basis") or "")):
+    if granted_operation(name, getattr(principal, "identity", "")) and parse_basis(
+            str(operation.get("authority_basis") or "")):
         with broker.store._connection() as conn:
             return by_basis(conn, operation, None, broker._clock(), authoritative=True)
     return None

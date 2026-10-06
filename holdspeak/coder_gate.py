@@ -292,9 +292,19 @@ def run_session_start(payload: Mapping[str, Any], *, hub_url: str | None = None)
         return False
 
 
+#: SessionEnd reasons after which the process keeps running: ``/clear`` and
+#: ``/resume`` end the conversation, not the agent, so the credential stays.
+#: Claude Code 2.1.288 sends one of clear, resume, logout, prompt_input_exit,
+#: other; the last three end the process and revoke.
+SESSION_END_KEEPS_CREDENTIAL = frozenset({"clear", "resume"})
+
+
 def run_session_end(payload: Mapping[str, Any], *, hub_url: str | None = None) -> bool:
     session_id = str(payload.get("session_id") or "").strip()
     if not session_id:
+        return False
+    if str(payload.get("reason") or "").strip().lower() in SESSION_END_KEEPS_CREDENTIAL:
+        # Conductor K6: a /clear or /resume must not cut the agent off its MCP.
         return False
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
     return revoke_agent_credential(session_id, base)

@@ -38,7 +38,8 @@ def _refuse_body(name: str, principal: Any, agent_identity: str, database: Any) 
                                         receipt=(kernel or {}).get("receipt"))
 
 
-def grant(principal: Any, agent_identity: str, body: Any, *, database: Any = None) -> dict[str, Any]:
+def grant(principal: Any, agent_identity: str, body: Any, *, database: Any = None,
+          operations: Any = None) -> dict[str, Any]:
     """``delegation.grant``: one LIVE grant for *agent_identity* (a re-grant replaces the old one).
 
     *body* is the request body (``{expires_at?}``). A non-object body is an
@@ -61,6 +62,7 @@ def grant(principal: Any, agent_identity: str, body: Any, *, database: Any = Non
             grant_id=str(minted["grant_id"]), agent_identity=str(minted["agent_identity"]).strip(),
             delegator_kind=principal.name, delegator_identity=principal.identity,
             expires_at=minted.get("expires_at"), operation_id=operation_id, now=_now(database),
+            operations=operations,  # in-process callers only (K6); never from the body
         )
         effect.result_ref = desk_kernel.target_ref(desk.BASIS_KIND, minted["grant_id"])  # type: ignore[attr-defined]
         return effect

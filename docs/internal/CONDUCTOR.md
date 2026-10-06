@@ -36,6 +36,7 @@ Backend slices need no canvas. Faces are drawn on the library and ratified by th
 | **K3 escalate (backend)** | Coders as Needs you R5; immediate dirty + notify on the awaiting edge; arrival and Agents window refetch on coder frames | none |
 | **K4 follow through** | PR refresh on Heartbeat for live launches; close the origin on merge with evidence; `link_work`; cleanup of session and clean merged worktree; Watch `state=all` + `headRefName` | K2 |
 | **K5 gate by Control mode** | `tool_gate` in `resolve_policy`; Codex gated path; drafted answers for routine questions under policy; live-launch cap and wall-clock escalation | owner ruling on the mapping (below) |
+| **K6 the HoldSpeak MCP in every launch** | The launch spawn issues a launch-bound credential with the CONDUCTOR palette (every `work` tool of `mcp/tool_authority.py`, no People tool); POST /api/mcp admits it from loopback with Reach off; Claude Code gets `--mcp-config` (environment variables, no token) and Codex `-c mcp_servers.holdspeak.*`; Normal and YOLO pre-approve the tools, Secure does not; revoked on session end, K4 cleanup and a failed launch | none |
 | **F faces** | First-run Agents card; **Hand to agent** in menus, ⌘K, Door rows; launch sheet (agent, brief preview, Control mode); Needs you coder row with **Speak answer**; Enter sends in the steer composer | canvas ratified |
 
 ### The Control-mode mapping (owner rules)

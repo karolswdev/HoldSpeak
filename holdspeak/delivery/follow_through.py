@@ -44,6 +44,7 @@ module lock keeps two sweeps from acting at once.
 """
 from __future__ import annotations
 
+import subprocess
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -138,6 +139,11 @@ class FollowThroughObserver:
             return self._sweep(principal)
 
     def _sweep(self, principal: Any) -> dict[str, Any]:
+        # K6 (Astra round 1 on #903): credential lifetimes are swept FIRST and
+        # over EVERY launch, whatever its PR state: a launch whose PR closed
+        # unmerged (done) still loses its credential and grants when its
+        # session ends, before any provider is asked.
+        released = [r["launch_id"] for r in self._ledger.list() if self._release_mcp_if_session_ended(r)]
         launches = [r for r in self._ledger.list() if self._followed(r)]
         if launches and callable(getattr(self._registry, "reload", None)):
             # A launch registers its new worktree through its own registry
@@ -145,6 +151,7 @@ class FollowThroughObserver:
             self._registry.reload()
         receipt: dict[str, Any] = {
             "kind": "follow_through",
+            "released": released,
             "launches": len(launches),
             "sources": [],
             "closed": [],
@@ -515,12 +522,45 @@ class FollowThroughObserver:
             return ""
         return " ".join(str(row[0] or "").split())[:200] if row else ""
 
+    def _release_mcp_if_session_ended(self, launch: Mapping[str, Any]) -> bool:
+        """K6: the agent's tmux session ended (the process exited, crashed or
+        was killed, with or without a SessionEnd hook): its MCP credential
+        and config go at the next sweep."""
+        from .. import coder_factory, coder_steering
+        from ..principals import agent_credentials
+        from . import agent_mcp
+
+        launch_id = str(launch.get("launch_id") or "")
+        if not launch_id or agent_credentials.launch_credential(coder_factory.launch_identity(launch_id)) is None:
+            return False
+        session = str(launch.get("session") or "")
+        run = self._tmux or coder_steering._default_runner
+        try:
+            alive = bool(session) and run(["tmux", "has-session", "-t", session]).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            alive = False
+        if alive:
+            return False
+        coder_factory.revoke_launch(launch_id)
+        agent_mcp.remove_mcp_config(launch_id)
+        return True
+
     # ── cleanup ──────────────────────────────────────────────────────
 
     def _cleanup(self, launch: Mapping[str, Any], done: Mapping[str, Any], merged_head: str) -> dict[str, Any]:
         result = dict(done)
         if result.get("session") not in _SESSION_FINAL:
             result["session"] = self._end_session(launch)
+        if result.get("mcp") != "released":
+            # K6: the launch's MCP credential and its config file go with the
+            # session, also when the session had already ended on its own.
+            from .. import coder_factory
+            from . import agent_mcp
+
+            launch_id = str(launch.get("launch_id") or "")
+            coder_factory.revoke_launch(launch_id)
+            agent_mcp.remove_mcp_config(launch_id)
+            result["mcp"] = "released"
         path = self._worktree_path(launch)
         if result.get("worktree") not in _WORKTREE_FINAL:
             if self._owns_worktree(launch):
