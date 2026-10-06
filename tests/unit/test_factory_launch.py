@@ -337,7 +337,10 @@ def test_launch_creates_one_attempt_one_target_one_receipt(rig) -> None:
     command = spawn_argv[spawn_argv.index("-s") + 2]
     assert command.startswith(f"cd {shlex.quote(str(rig.repo))} && ")
     assert "HOLDSPEAK_STORY_REF=demo/DM-1-01" in command
-    assert command.endswith("exec claude")
+    # Conductor K2: every Claude launch carries HoldSpeak's spawn settings
+    # (rider + gate hooks); only a gated process.spawn adds --allowedTools.
+    assert "exec claude --settings " in command
+    assert "--allowedTools" not in command
     assert "hs-dm-1-01" in rig.tmux.sessions
 
     # The wire record is path-free (§13).

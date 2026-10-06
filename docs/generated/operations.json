@@ -5668,6 +5668,98 @@
         "arguments": [],
         "enforced": true
       }
+    },
+    {
+      "name": "agent.hand",
+      "version": 1,
+      "description": "Hand one desk item to a coding agent. HoldSpeak writes a brief from the item, its meeting, the Project's decisions and open commitments, memory and the repository's .hs/ facts (no People data), makes a new git worktree hs-<kind>-<id> in the Project repository and starts Claude Code (profile claude-default) or Codex (codex-default) there. Only the owner hands; an agent is refused.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "action",
+              "decision",
+              "decision_record",
+              "project_item",
+              "note",
+              "meeting",
+              "artifact"
+            ],
+            "description": "The item kind."
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "The item id."
+          },
+          "instruction": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 4000,
+            "description": "Optional words for the agent."
+          },
+          "profile": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Agent profile id: claude-default (the default) or codex-default."
+          },
+          "project_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional Project id, when the item names no Project."
+          }
+        },
+        "required": [
+          "kind",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver); the owner's press",
+      "effect": "write",
+      "result": "{status: launched or failed, resumed (true when an earlier launch of this item got its held brief again), instruction_state (pending, sent, hooks_missing or the steering refusal: the brief is typed when the agent session registers and is sent only on a delivered receipt), trust_state, launch_id, attempt_id, operation_id, state, failure, gate, session, worktree: {name, branch}, source_id, story_ref: {project, story_id}, origin_ref: {kind, id}, project_id, control_mode, brief: {bytes, refs, people_cut}}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "owner_required: only the owner hands an item to an agent",
+        "item_kind_unsupported",
+        "item_unknown",
+        "profile_unknown",
+        "tmux_absent",
+        "executable_absent",
+        "no_repository",
+        "worktree_duplicate",
+        "worktree_name_invalid",
+        "brief_over_cap",
+        "story_ref_invalid",
+        "process_spawn_not_gated",
+        "kernel_unavailable"
+      ],
+      "completion": "synchronous launch; the process.spawn kernel operation (operation_id) holds the launch receipt; GET /api/delivery/attempts shows the Work attempt with its origin_ref",
+      "exposure": [
+        "http:POST /api/agent/hand",
+        "mcp:agent.hand"
+      ],
+      "held": [],
+      "owner_only": true,
+      "blocking_io": true,
+      "owner_press": true,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Starts a process and crosses egress (XI.1): admitted by the kernel's process.spawn operation, one terminal receipt per launch. The owner's press.",
+        "arguments": [],
+        "enforced": false
+      }
     }
   ]
 }

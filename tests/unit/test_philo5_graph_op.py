@@ -40,8 +40,9 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
     # PHILO-7-02's nine (decision.status is HTTP only: OP_HTTP_ONLY), then
     # PHILO-9-01's twenty-five Room rows (the Door's create is HTTP only),
     # then PHILO-9-02's twenty-one (the Door's count, a watch's update and
-    # its baseline are HTTP only), then PHILO-10-01's nine (the Send).
-    assert len(gw.OP_MCP_PROJECTIONS) == 98
+    # its baseline are HTTP only), then PHILO-10-01's nine (the Send), then
+    # Conductor K2's one (agent.hand).
+    assert len(gw.OP_MCP_PROJECTIONS) == 99
     assert set(gw.OP_MCP_PROJECTIONS) == {
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.summary.run",
@@ -70,6 +71,7 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "channel.check_destination", "channel.preview", "channel.prepare", "channel.discard",
         "channel.send", "channel.sends",
         "memory.observations.read", "memory.page.read",
+        "agent.hand",
     }
     assert gw.OP_HTTP_ONLY == {"decision.status", "project.door.create",
                                "project.door.count", "project.watch.update", "project.watch.baseline",

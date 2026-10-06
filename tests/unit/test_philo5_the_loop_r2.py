@@ -219,6 +219,7 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
     # Both secret saves are owner only and HTTP only, with held inputs.
     assert [d.name for d in operations.DESCRIPTORS if d.owner_only] == [
         "meeting.import", "channel.save_email_key", "channel.save_slack_webhook", "agent_hooks.install",
+        "agent.hand",  # Conductor K2: only the owner hands an item to an agent
     ]
     assert "owner_required" in operations.MEETING_IMPORT.export()["refusals"]
 
@@ -576,6 +577,23 @@ def _p_agent_hooks_install(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return hub.root.operations.invoke(OWNER, "agent_hooks.install", {"agent": "claude", "settings_path": target})
 
 
+def _p_agent_hand(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    # The process edge only: tmux and the agent are the canned runner of the
+    # launch rig (git is real); the hub's own AgentHandService and route run.
+    from tests.unit.test_agent_hand import _rig as hand_rig, _seed
+
+    _seed(hub.root.db)
+    rig = hand_rig(tmp_path / "hand", hub.root.db, monkeypatch)
+    service = hub.root.agent_hand_service
+    monkeypatch.setattr(service, "_launch_service", lambda: rig.service)
+    monkeypatch.setattr(service, "_gate_path", rig.gate_path)
+    monkeypatch.setattr(service, "_project_map", {"projects": {}})
+    monkeypatch.setattr(service, "_control_mode", lambda: "yolo")
+    resp = hub.client.post("/api/agent/hand", json={"kind": "action", "id": "ai_1"})
+    assert resp.status_code == 202, resp.text
+    return resp.json()
+
+
 PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "meeting.list": _p_meeting_list,
     "meeting.import": _p_meeting_import,
@@ -616,6 +634,8 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "channel.save_slack_webhook": _p_channel_save_slack_webhook,
     # The Conductor K1: the one-press hook install.
     "agent_hooks.install": _p_agent_hooks_install,
+    # Conductor K2: Hand to agent.
+    "agent.hand": _p_agent_hand,
 }
 
 

@@ -52,6 +52,61 @@ _WORKING_EVENTS = {
 _WAITING_EVENTS = {"Notification", "Stop"}
 _ENDED_EVENTS = {"SessionEnd"}
 
+#: Conductor K2: a Hand-to-agent launch carries the rider hooks in its
+#: ``--settings`` file, and the owner may also have them in
+#: ``~/.claude/settings.json`` (K1's one-press install). Claude Code then runs
+#: both for one event. The second run is the SAME event when its genuine
+#: identity matches the session's last event within this window: it is
+#: merged (a capturing hook's question is kept, whichever runs first) and
+#: not counted again.
+DUPLICATE_EVENT_WINDOW_SECONDS = 5.0
+_TRANSCRIPT_TAIL_BYTES = 4096
+
+
+def _transcript_mark(payload: Mapping[str, Any]) -> Optional[str]:
+    """Where the session's transcript stands: its size and the hash of its
+    tail. Two runs of one event see the same mark; a later event (a new
+    Stop after more work) sees another."""
+    import hashlib
+
+    raw = str(payload.get("transcript_path") or "").strip()
+    if not raw:
+        return None
+    try:
+        path = Path(raw).expanduser()
+        size = path.stat().st_size
+        with path.open("rb") as handle:
+            handle.seek(max(0, size - _TRANSCRIPT_TAIL_BYTES))
+            tail = handle.read()
+    except OSError:
+        return None
+    return f"{size}:{hashlib.sha256(tail).hexdigest()}"
+
+
+def _event_identity(event: str, payload: Mapping[str, Any], *context: Any) -> Optional[str]:
+    """The event's genuine identity, or ``None`` when the payload has none
+    (then the event is always recorded: equal payloads are not enough).
+
+    A tool event has its ``tool_use_id``. Any other event is identified by
+    where the transcript stands plus its own message fields (a Stop by its
+    transcript, a Notification by its message and type)."""
+    import hashlib
+
+    tool_use_id = str(payload.get("tool_use_id") or "").strip()
+    if tool_use_id:
+        basis: list[Any] = [event, "tool", tool_use_id]
+    else:
+        mark = _transcript_mark(payload)
+        if mark is None:
+            return None
+        basis = [
+            event, "transcript", mark,
+            payload.get("message"), payload.get("notification_type"),
+            payload.get("prompt"), payload.get("source"), payload.get("reason"),
+        ]
+    canonical = json.dumps([*basis, *context], sort_keys=True, default=str, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
 
 def _lifecycle_for_event(hook_event_name: str, previous_lifecycle: str) -> str:
     if hook_event_name in _ENDED_EVENTS:
@@ -166,13 +221,24 @@ def ingest_agent_hook_event(
         )
     tmux_context = detect_tmux_context(payload, env=env)
     detected_claim = detect_story_claim(payload, env=env)
+    identity = _event_identity(hook_event_name, payload, detected_claim, tmux_context)
 
     with _state_lock(state_file):
         state = _read_state(state_file)
         sessions = state.setdefault("sessions", {})
         previous_raw = sessions.get(key) if isinstance(sessions, dict) else None
         previous = previous_raw if isinstance(previous_raw, dict) else {}
-        event_count = int(previous.get("event_count") or 0) + 1
+        duplicate = False
+        if identity is not None and previous.get("last_event_id") == identity:
+            seen = _parse_timestamp(_optional_str(previous.get("last_event_at")) or "")
+            current = _parse_timestamp(timestamp)
+            duplicate = (
+                seen is not None
+                and current is not None
+                and abs((current - seen).total_seconds()) <= DUPLICATE_EVENT_WINDOW_SECONDS
+            )
+        # The same event from a second hook source is merged, not counted.
+        event_count = int(previous.get("event_count") or 0) + (0 if duplicate else 1)
         previous_capture = bool(previous.get("capture_messages"))
         effective_capture_messages = capture_messages or previous_capture
         is_user_prompt = hook_event_name in {"UserPromptSubmit", "UserPromptExpansion"}
@@ -210,7 +276,7 @@ def ingest_agent_hook_event(
             _notification_type(payload, message)
         )
         recorded_event = hook_event_name
-        updated_at = timestamp
+        updated_at = (_optional_str(previous.get("updated_at")) or timestamp) if duplicate else timestamp
         if passive:
             lifecycle = _optional_str(previous.get("lifecycle")) or LIFECYCLE_WORKING
             recorded_event = _optional_str(previous.get("hook_event_name")) or hook_event_name
@@ -293,6 +359,11 @@ def ingest_agent_hook_event(
         )
         if story_claim:
             record["story_claim"] = story_claim
+        if identity is not None:
+            record["last_event_id"] = identity
+            record["last_event_at"] = (
+                _optional_str(previous.get("last_event_at")) or timestamp
+            ) if duplicate else timestamp
         sessions[key] = record
         state["version"] = STATE_VERSION
         _prune_sessions(state, max_sessions=MAX_SESSIONS)

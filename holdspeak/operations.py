@@ -2157,6 +2157,8 @@ from holdspeak.room_operations import STEWARD_CONNECTOR_OPERATIONS  # noqa: E402
 from holdspeak.channel_operations import CHANNEL_OPERATIONS  # noqa: E402
 # The Conductor K1: the one-press agent hook install.
 from holdspeak.onboarding_operations import ONBOARDING_OPERATIONS  # noqa: E402
+# Conductor K2: Hand to agent.
+from holdspeak.agent_operations import AGENT_OPERATIONS  # noqa: E402
 
 #: The whole catalogue, in export order.
 DESCRIPTORS: tuple[OperationDescriptor, ...] = (
@@ -2170,7 +2172,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     ZONE_FILE, ZONE_UNFILE, ZONE_MEMBERS, KB_MEMBER_ADD, KB_MEMBER_REMOVE, KB_MEMBERS,
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
-) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS
+) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + AGENT_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))

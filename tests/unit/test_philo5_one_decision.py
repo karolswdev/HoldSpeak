@@ -257,6 +257,8 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "channel.save_email_key", "channel.save_slack_webhook",
         # The Conductor K1: the one-press hook install (HTTP only, owner only).
         "agent_hooks.install",
+        # Conductor K2: Hand to agent.
+        "agent.hand",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

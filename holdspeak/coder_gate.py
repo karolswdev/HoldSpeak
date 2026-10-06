@@ -69,13 +69,21 @@ class GateConfig:
     armed: bool = False
     #: repo path (resolved, absolute) → held tool names.
     repos: dict[str, list[str]] = field(default_factory=dict)
+    #: Paths armed on their own, by a launch the owner pressed (Hand to
+    #: agent). Held whatever the master switch says; the switch still
+    #: decides every other listed repo, so arming one worktree never holds
+    #: another.
+    armed_paths: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        doc: dict[str, Any] = {
             "gate_schema": GATE_CONFIG_SCHEMA,
             "armed": self.armed,
             "repos": {path: list(tools) for path, tools in sorted(self.repos.items())},
         }
+        if self.armed_paths:
+            doc["armed_paths"] = sorted(set(self.armed_paths))
+        return doc
 
 
 def load_gate_config(path: Path | None = None) -> GateConfig:
@@ -96,30 +104,64 @@ def load_gate_config(path: Path | None = None) -> GateConfig:
                 cleaned = [str(t).strip() for t in tools if str(t).strip()]
                 if cleaned:
                     repos[str(repo_path)] = cleaned
-    return GateConfig(armed=bool(raw.get("armed")), repos=repos)
+    raw_paths = raw.get("armed_paths")
+    armed_paths = [
+        str(path) for path in (raw_paths if isinstance(raw_paths, list) else [])
+        if str(path).strip() and str(path) in repos
+    ]
+    return GateConfig(armed=bool(raw.get("armed")), repos=repos, armed_paths=armed_paths)
 
 
 def save_gate_config(config: GateConfig, path: Path | None = None) -> Path:
+    """Write the gate file whole: a temp file in the same folder, then an
+    atomic replace, so a reader never sees half a file."""
     target = path or GATE_CONFIG_FILE
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
+    tmp = target.with_name(f".{target.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp")
+    tmp.write_text(
         json.dumps(config.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
+    os.replace(tmp, target)
     return target
+
+
+def update_gate_config(
+    mutate: Callable[[GateConfig], Any], path: Path | None = None
+) -> Any:
+    """Read, change and write the gate file under one exclusive lock, so two
+    writers (two launches arming at once) never lose each other's change.
+    Returns what ``mutate`` returns."""
+    import fcntl
+
+    target = path or GATE_CONFIG_FILE
+    target.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = target.with_name(target.name + ".lock")
+    with open(lock_path, "a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        try:
+            config = load_gate_config(target)
+            result = mutate(config)
+            save_gate_config(config, target)
+            return result
+        finally:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
 
 def gate_matches(config: GateConfig, *, cwd: str, tool: str) -> bool:
     """The double opt-in, resolved: master switch AND a configured
     repo whose path contains ``cwd`` AND the tool in that repo's
     list."""
-    if not config.armed or not tool:
+    if not tool:
         return False
     try:
         cwd_path = Path(cwd).resolve()
     except OSError:
         return False
+    own = set(config.armed_paths)
     for repo_path, tools in config.repos.items():
         if tool not in tools:
+            continue
+        if not config.armed and repo_path not in own:
             continue
         try:
             repo_resolved = Path(repo_path).expanduser().resolve()
@@ -491,7 +533,7 @@ def run_stop_hook(
         for tools in cfg.repos.values()
         for tool in tools
     )
-    if not cfg.armed or not held_repo:
+    if not held_repo:  # gate_matches already applies the switch and armed paths
         return False
     session_id = str(payload.get("session_id") or "").strip()
     transcript = str(payload.get("transcript_path") or "").strip()
@@ -635,13 +677,37 @@ def write_spawn_settings(
     root = (project_root or Path(__file__).resolve().parents[1]).resolve()
     root_key = hashlib.sha256(str(root).encode("utf-8")).hexdigest()[:16]
     target = path or Path.home() / ".holdspeak" / "gate-spawn-settings" / f"{root_key}.json"
-    command = f"uv run --project {shlex.quote(str(root))} holdspeak gate hook"
+    prefix = f"uv run --project {shlex.quote(str(root))} holdspeak"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(
-        json.dumps(_hook_settings(command), indent=2, sort_keys=True) + "\n",
+        json.dumps(spawn_settings(prefix), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return target
+
+
+def spawn_settings(prefix: str) -> dict[str, Any]:
+    """The gate hooks plus the rider hooks, in one settings document.
+
+    The rider hooks (``agent-hook ingest --agent claude``) report the
+    session, its Story claim and its state to the hub, so a launched agent
+    registers with no manual ``holdspeak agent-hook install``. The gate
+    hooks stay inert unless the gate holds the worktree. ``prefix`` is the
+    command that runs this HoldSpeak checkout (``uv run --project ...
+    holdspeak``)."""
+    import copy
+
+    from .agent_context.hooks import claude_hook_template
+
+    merged = _hook_settings(f"{prefix} gate hook")
+    rider = copy.deepcopy(claude_hook_template())
+    rider_command = f"{prefix} agent-hook ingest --agent claude"
+    for event, entries in (rider.get("hooks") or {}).items():
+        for entry in entries:
+            for hook in entry.get("hooks") or []:
+                hook["command"] = rider_command
+        merged["hooks"].setdefault(event, []).extend(entries)
+    return merged
 
 
 def install_block(executable: str = "holdspeak") -> str:

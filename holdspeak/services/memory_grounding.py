@@ -213,8 +213,14 @@ def memory_context(
     max_excerpts: int = MEMORY_MAX_EXCERPTS,
     excerpt_chars: int = MEMORY_EXCERPT_CHARS,
     block_chars: int = MEMORY_BLOCK_CHARS,
+    block_filter: Callable[[GroundingBlock], GroundingBlock | None] | None = None,
 ) -> MemoryContext:
     """Read memory for one scope with the grounding call Ask uses.
+
+    ``block_filter`` sees each source block whole (headings and lines
+    intact) BEFORE it is flattened into an excerpt; it returns the block to
+    keep (cut or not) or ``None`` to leave it out.  The agent brief uses it
+    to cut People content, which the flattened line no longer shows.
 
     ``exclude_refs`` names what the drafter already holds, so memory adds
     only what is new to it.  ``exclude_texts`` names the job's own words: a
@@ -258,6 +264,11 @@ def memory_context(
         for block in result.blocks:
             if own_texts and _carries(block, own_texts):
                 continue  # the job's own source under another name
+            if block_filter is not None:
+                kept = block_filter(block)
+                if kept is None:
+                    continue
+                block = kept
             excerpt = _excerpt(block, excerpt_chars)
             if excerpt is None or excerpt.ref in seen:
                 continue
@@ -292,6 +303,7 @@ def page_excerpts(
     exclude_refs: Iterable[str] = (),
     block_chars: int = MEMORY_BLOCK_CHARS,
     max_excerpts: int = MEMORY_MAX_EXCERPTS,
+    sentence_filter: Callable[[Mapping[str, Any]], bool] | None = None,
 ) -> list[MemoryExcerpt]:
     """The served pages of ``pages`` as plain-context excerpts, whole
     sentences only, bounded.  A page read makes no model call; a page that
@@ -319,6 +331,8 @@ def page_excerpts(
         cap = min(PAGE_EXCERPT_CHARS, room - used)
         text = ""
         for sentence in page["sentences"]:
+            if sentence_filter is not None and not sentence_filter(sentence):
+                continue  # the caller leaves this sentence out (its sources)
             words = " ".join(redact(str(sentence["text"])).split())
             candidate = f"{text} {words}".strip()
             if len(MemoryExcerpt(ref="", kind=PAGE_EXCERPT_KIND, title=title, text=candidate,
@@ -345,6 +359,8 @@ def memory_for(
     exclude_refs: Iterable[str] = (),
     exclude_texts: Iterable[str] = (),
     pages: Iterable[tuple[str, str, str]] = (),
+    block_filter: Callable[[GroundingBlock], GroundingBlock | None] | None = None,
+    sentence_filter: Callable[[Mapping[str, Any]], bool] | None = None,
 ) -> MemoryContext:
     """THE call an AI job makes to read memory: the job's policy, then the read.
 
@@ -369,6 +385,7 @@ def memory_for(
         read_pages = page_excerpts(
             db, pages, exclude_refs=exclude_refs,
             block_chars=policy.block_chars, max_excerpts=policy.max_excerpts,
+            sentence_filter=sentence_filter,
         ) if pages else []
         if not read_pages:
             # No page: exactly today's read.
@@ -381,6 +398,7 @@ def memory_for(
                 max_excerpts=policy.max_excerpts,
                 excerpt_chars=min(MEMORY_EXCERPT_CHARS, policy.block_chars),
                 block_chars=policy.block_chars,
+                block_filter=block_filter,
             )
         used = sum(len(excerpt.line()) + 1 for excerpt in read_pages)
         rest = memory_context(
@@ -392,6 +410,7 @@ def memory_for(
             max_excerpts=policy.max_excerpts - len(read_pages),
             excerpt_chars=min(MEMORY_EXCERPT_CHARS, policy.block_chars),
             block_chars=policy.block_chars - used,
+            block_filter=block_filter,
         )
         return MemoryContext(tuple(read_pages) + rest.excerpts)
     except Exception as exc:  # memory never fails a job

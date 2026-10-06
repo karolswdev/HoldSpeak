@@ -1340,6 +1340,9 @@ class MeetingWebServer:
         mount_router(app, build_delivery_attempts_router(web_ctx))
         mount_router(app, build_delivery_dossiers_router(web_ctx))
         mount_router(app, build_delivery_prs_router(web_ctx))
+        from .web.routes.agent_hand import build_agent_hand_router
+
+        mount_router(app, build_agent_hand_router(web_ctx))  # Conductor K2: Hand to agent
         mount_router(app, build_repositories_router(web_ctx))
         # One shared NodeLinkState feeds both the node link and the terminal
         # command claim leg: commands issued at the hub reach a remote node

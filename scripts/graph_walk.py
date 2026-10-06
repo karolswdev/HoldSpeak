@@ -895,6 +895,8 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
     "memory.observations.read": {"kind": "tool", "name": "memory.observations"},
     # Memory slice 5: the page read.
     "memory.page.read": {"kind": "tool", "name": "memory.page"},
+    # Conductor K2: Hand to agent.
+    "agent.hand": {"kind": "tool", "name": "agent.hand"},
 }
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.

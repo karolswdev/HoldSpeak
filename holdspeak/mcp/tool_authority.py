@@ -284,6 +284,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "practice_recipe.list": WORK,
     "practice_recipe.get": WORK,
     "practice_recipe.compile": WORK,
+    "agent.hand": EGRESS,  # starts a cloud coding agent and sends it a brief from the desk
 }
 
 #: What a thread never offers or admits, in any mode.

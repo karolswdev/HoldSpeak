@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 
 from ..coder_gate import (
     DEFAULT_TOOLS,
@@ -24,7 +24,7 @@ from ..coder_gate import (
     install_block,
     load_gate_config,
     run_hook,
-    save_gate_config,
+    update_gate_config,
 )
 
 _EXIT_OK = 0
@@ -65,10 +65,18 @@ def run_gate_command(args, *, stdin: TextIO | None = None, stream: TextIO | None
         )
         print(install_block(), file=out)
         return _EXIT_OK
+    # Every write is one locked read-modify-write with an atomic replace
+    # (``update_gate_config``): a launch arming its worktree at the same
+    # moment never loses its hold, and this command never loses its own.
     if action == "arm":
-        config = load_gate_config()
-        config.armed = True
-        path = save_gate_config(config)
+        def arm(config: Any) -> Any:
+            config.armed = True
+            return config
+
+        config = update_gate_config(arm)
+        from .. import coder_gate as _gate
+
+        path = _gate.GATE_CONFIG_FILE
         print(f"Gate armed ({path}).", file=out)
         if not config.repos:
             print(
@@ -78,30 +86,37 @@ def run_gate_command(args, *, stdin: TextIO | None = None, stream: TextIO | None
             )
         return _EXIT_OK
     if action == "disarm":
-        config = load_gate_config()
-        config.armed = False
-        save_gate_config(config)
+        def disarm(config: Any) -> None:
+            config.armed = False
+
+        update_gate_config(disarm)
         print("Gate disarmed. Every hook arrival is inert.", file=out)
         return _EXIT_OK
     if action == "allow":
-        config = load_gate_config()
         repo = str(Path(args.repo).expanduser().resolve())
         tools = [t for t in (args.tool or list(DEFAULT_TOOLS)) if str(t).strip()]
-        config.repos[repo] = tools
-        save_gate_config(config)
+
+        def allow(config: Any) -> Any:
+            config.repos[repo] = tools
+            return config
+
+        config = update_gate_config(allow)
         held = ", ".join(tools)
         print(f"Holding {held} for {repo}.", file=out)
         if not config.armed:
             print("The master switch is off; `holdspeak gate arm` completes the opt-in.", file=out)
         return _EXIT_OK
     if action == "revoke":
-        config = load_gate_config()
         repo = str(Path(args.repo).expanduser().resolve())
-        if config.repos.pop(repo, None) is None:
-            print(f"{repo} was not held.", file=out)
-        else:
-            save_gate_config(config)
+
+        def revoke(config: Any) -> bool:
+            config.armed_paths = [path for path in config.armed_paths if path != repo]
+            return config.repos.pop(repo, None) is not None
+
+        if update_gate_config(revoke):
             print(f"No longer holding {repo}.", file=out)
+        else:
+            print(f"{repo} was not held.", file=out)
         return _EXIT_OK
     if action == "status":
         config = load_gate_config()

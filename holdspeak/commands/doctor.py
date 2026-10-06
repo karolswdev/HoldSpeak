@@ -1225,6 +1225,12 @@ def _check_tool_call_gate() -> DoctorCheck:
             status="PASS",
             detail="off (default); `holdspeak gate install` + arm + allow to hold agent calls",
         )
+    if not config.armed and config.repos and set(config.repos) <= set(config.armed_paths):
+        return DoctorCheck(
+            name="Tool-call gate",
+            status="PASS",
+            detail=f"held for {len(config.repos)} agent worktree(s) launched by Hand to agent; master switch off",
+        )
     if config.armed and config.repos:
         held = "; ".join(
             f"{', '.join(tools)} in {repo}" for repo, tools in sorted(config.repos.items())
