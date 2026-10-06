@@ -99,11 +99,17 @@ def _call(client: TestClient, name: str, arguments: dict[str, Any]) -> dict[str,
     return response.json()
 
 
-def _launch_credential(launch_id: str = "launch_k6test0001"):
+def _launch_credential(launch_id: str = "launch_k6test0001", scope: tuple[str, ...] = ()):
     return agent_credentials.issue(
         coder_factory.launch_identity(launch_id),
         palette=resolve_palette(CONDUCTOR), palette_name=CONDUCTOR, launch_id=launch_id,
+        **({"scope_items": scope} if scope else {}),
     )
+
+
+def _result(body: dict[str, Any]) -> tuple[bool, Any]:
+    result = body["result"]
+    return result["isError"], json.loads(result["content"][0]["text"])
 
 
 def _refused_by_palette(body: dict[str, Any]) -> bool:
@@ -118,9 +124,12 @@ def test_conductor_palette_is_every_work_tool_except_people() -> None:
 
     registered = {t["name"] for t in TOOLS}
     palette = resolve_palette(CONDUCTOR)
+    from holdspeak.mcp.palettes import CONDUCTOR_OWNER_CONFIRM
+
     expected = {
         name for name in registered
         if TOOL_AUTHORITY.get(name) == WORK and not name.startswith("people.")
+        and name not in CONDUCTOR_OWNER_CONFIRM
     }
     assert palette == expected
     assert not any(TOOL_AUTHORITY[name] != WORK for name in palette)
@@ -130,6 +139,8 @@ def test_conductor_palette_is_every_work_tool_except_people() -> None:
             "memory.search", "desk.snapshot", "decision_record.search"} <= palette
     assert {"agent.hand", "channel.send", "nudge.send", "settings.update",
             "project.archive", "channel.save_destination"}.isdisjoint(palette)
+    # The owner's Confirm stays his: the agent proposes, never confirms.
+    assert CONDUCTOR_OWNER_CONFIRM.isdisjoint(palette)
     # Only a launch issues it: the owner's Reach well does not offer it.
     assert CONDUCTOR not in PALETTE_NAMES
 
@@ -254,7 +265,7 @@ def test_the_kernel_receipt_of_an_agent_call_names_the_agent(hub: Hub) -> None:
     _reach(hub, False)
     agent = _client(hub, _launch_credential().token)
     # A decision is an admitted kernel operation: the agent's attempt leaves a
-    # receipt that names the agent (without a desk grant it is refused).
+    # receipt that names the agent (without the launch's grant it is refused).
     body = _call(agent, "desk.create", {"kind": "decisions", "data": {"title": "Use SQLite", "status": "proposed"}})
     payload = json.loads(body["result"]["content"][0]["text"])
     assert payload["receipt"]["actor_kind"] == "agent"
@@ -321,7 +332,10 @@ def test_a_claude_launch_gets_the_mcp_and_its_credential(tmp_path, db, monkeypat
         assert token.encode() not in stored.read_bytes(), stored
     assert token not in caplog.text
     record = rig.launches.get(launch_id)
-    assert record["mcp"] == {"server": "holdspeak", "palette": "CONDUCTOR", "pre_approved": True}
+    assert record["mcp"] == {
+        "server": "holdspeak", "palette": "CONDUCTOR", "pre_approved": True,
+        "decision_proposals": "granted",  # the hub is up and the owner pressed
+    }
 
     # End to end: the token the session holds reaches the hub's MCP with
     # Reach off, as the agent, with the CONDUCTOR palette.
@@ -338,8 +352,12 @@ def test_the_brief_names_the_mcp_tools(tmp_path, db, monkeypatch) -> None:
     result = rig.hand.hand(OWNER, "action", "ai_1")
     _wait_for(lambda: rig.launches.get(result["launch_id"]), "instruction_state", "sent")
     typed = "\n".join(text for _pane, text in rig.typed)
-    assert "Use the holdspeak MCP tools to read the desk for context, file notes, " \
-           "propose decisions, update your item and ask the owner." in typed
+    assert (
+        "- The holdspeak MCP tools are yours for this launch. Use them to read the desk "
+        "and memory (People data is cut), file notes, propose decisions (the owner "
+        "confirms them), update the status of this item or of items you add, and ask "
+        "the owner with a Door item. You cannot send anything out or change settings."
+    ) in typed
     rig.tmux.ended = True
 
 
@@ -494,3 +512,171 @@ def test_a_target_failure_revokes_the_spawned_credential(tmp_path, db, monkeypat
     # The session itself is retained and named, as before (a kill is gated).
     assert rig.launches.get(result["launch_id"])["rollback"]["session"] == "retained"
     rig.tmux.ended = True
+
+
+# ── 5. Rulings on #903: memory, decision proposals, item scope, /clear ─
+
+
+def _owner_note(hub: Hub, title: str, body: str) -> str:
+    is_error, note = hub.mcp("desk.create", {"kind": "notes", "data": {"title": title, "body_markdown": body}})
+    assert is_error is False, note
+    return note["id"]
+
+
+def test_a_launch_reads_memory_with_the_people_cut(hub: Hub) -> None:
+    _reach(hub, False)
+    plain = _owner_note(hub, "Rollout plan", "We use blue-green for the zebra rollout.")
+    people = _owner_note(hub, "Zebra 1:1 prep", "zebra notes\npeople:rel_42 wants more ownership")
+    # The owner reads both.
+    _err, mine = hub.mcp("memory.search", {"query": "zebra"})
+    assert {h["source_ref"] for h in mine["hits"]} == {f"note:{plain}", f"note:{people}"}
+
+    credential = _launch_credential()
+    agent = _client(hub, credential.token)
+    is_error, found = _result(_call(agent, "memory.search", {"query": "zebra"}))
+    assert is_error is False, found
+    assert [h["source_ref"] for h in found["hits"]] == [f"note:{plain}"]
+    assert found["people_cut"] == 1 and found["page"]["total"] == 1
+    for name, args in (("memory.observations", {}), ("memory.page", {"slug": "what-i-owe", "scope": "desk"})):
+        is_error, read = _result(_call(agent, name, args))
+        assert is_error is False, (name, read)
+
+    # Revoked with the credential: a hand-issued agent has no read right.
+    coder_factory.revoke_launch("launch_k6test0001")
+    _reach(hub, True)
+    issued = hub.client.post("/api/settings/remote/credentials", json={"identity": "reach-reader", "palette": "ALL"})
+    is_error, refused = _result(_call(_client(hub, issued.json()["token"]), "memory.search", {"query": "zebra"}))
+    assert is_error is True and refused["code"] == "read_forbidden"
+
+
+def _grant(launch_id: str = "launch_k6test0001") -> dict[str, Any]:
+    from holdspeak.services.conductor_launch import grant_decision_proposals
+    from tests.unit.test_agent_hand import OWNER as OWNER_PRESS
+
+    granted = grant_decision_proposals(OWNER_PRESS, coder_factory.launch_identity(launch_id), ttl_seconds=3600)
+    assert granted is not None
+    return granted
+
+
+def test_a_launch_proposes_decisions_and_nothing_else(hub: Hub) -> None:
+    _reach(hub, False)
+    credential = _launch_credential()
+    agent = _client(hub, credential.token)
+    identity = coder_factory.launch_identity("launch_k6test0001")
+    # Before the grant: refused, as every agent is today.
+    is_error, refused = _result(_call(agent, "desk.create", {"kind": "decisions", "data": {"title": "Use SQLite"}}))
+    assert is_error and refused["code"] == "desk_delegation_required"
+    _grant()
+
+    is_error, made = _result(_call(agent, "desk.create", {"kind": "decisions", "data": {"title": "Use SQLite", "decision_markdown": "SQLite"}}))
+    assert is_error is False, made
+    decision_id = made["id"]
+    assert made["status"] == "proposed"
+    # Receipted with the agent principal (its identity carries the launch id)
+    # under the launch's grant.
+    with hub.db._connection() as conn:
+        row = conn.execute(
+            "SELECT o.principal_identity, o.authority_basis FROM kernel_operations o "
+            "WHERE o.name='decision.create' ORDER BY o.rowid DESC LIMIT 1"
+        ).fetchone()
+        grant = conn.execute(
+            "SELECT id, operations_json, state FROM kernel_desk_delegations WHERE agent_identity=?", (identity,)
+        ).fetchone()
+    assert row["principal_identity"] == identity
+    assert row["authority_basis"].startswith(f"desk-delegation:{grant['id']}:")
+    assert json.loads(grant["operations_json"]) == ["decision.create"] and grant["state"] == "LIVE"
+
+    # Never a confirmed decision, never a record, never another desk write.
+    assert _refused_by_palette(_call(agent, "desk.create", {"kind": "decisions", "data": {"title": "X", "status": "accepted"}}))
+    assert _refused_by_palette(_call(agent, "desk.verb", {"verb_id": "desk.create", "arguments": {"kind": "decisions", "data": {"title": "X", "status": "accepted"}}}))
+    assert _refused_by_palette(_call(agent, "decision_record.create_from_desk", {"decision_id": decision_id}))
+    assert _refused_by_palette(_call(agent, "proposal.confirm", {"proposal_id": "p"}))
+    is_error, refused = _result(_call(agent, "desk.update", {"kind": "decisions", "id": decision_id, "data": {"status": "accepted"}}))
+    assert is_error and refused.get("code") == "desk_delegation_required", refused
+    is_error, refused = _result(_call(agent, "desk.delete", {"kind": "decisions", "id": decision_id}))
+    assert is_error and refused.get("code") == "desk_delegation_required", refused
+    note = _owner_note(hub, "N", "n")
+    is_error, refused = _result(_call(agent, "zone.file", {"directory_id": "hs-seed-inbox", "primitive_id": f"note:{note}"}))
+    assert is_error and refused.get("code") == "desk_delegation_required", refused
+
+    # The grant goes with the credential.
+    coder_factory.revoke_launch("launch_k6test0001")
+    with hub.db._connection() as conn:
+        state = conn.execute("SELECT state, revocation_reason FROM kernel_desk_delegations WHERE id=?", (grant["id"],)).fetchone()
+    assert (state["state"], state["revocation_reason"]) == ("REVOKED", "credential_revoked")
+
+
+def test_item_state_tools_act_only_on_this_launchs_items(hub: Hub) -> None:
+    _reach(hub, False)
+    _err, origin = hub.mcp("door.add_item", {"task": "The origin item"})
+    _err, other = hub.mcp("door.add_item", {"task": "Somebody else's item"})
+    agent = _client(hub, _launch_credential(scope=(origin["id"],)).token)
+
+    is_error, refused = _result(_call(agent, "follow_through.complete", {"card_id": other["id"], "verb": "done"}))
+    assert is_error and refused["code"] == "not_this_launch" and refused["item_id"] == other["id"]
+    is_error, refused = _result(_call(agent, "project.item.transition", {"project_id": "p", "item_id": "it_x", "verb": "done"}))
+    assert is_error and refused["code"] == "not_this_launch"
+
+    is_error, done = _result(_call(agent, "follow_through.complete", {"card_id": origin["id"], "verb": "done"}))
+    assert is_error is False, done
+    # An item the agent adds joins its scope.
+    _is_error, mine = _result(_call(agent, "door.add_item", {"task": "Agent asks: which DB?"}))
+    is_error, done = _result(_call(agent, "follow_through.complete", {"card_id": mine["id"], "verb": "done"}))
+    assert is_error is False, done
+    with hub.db._connection() as conn:
+        status = {r["id"]: r["status"] for r in conn.execute("SELECT id, status FROM action_items")}
+    assert status[origin["id"]] == "done" and status[mine["id"]] == "done" and status[other["id"]] == "open"
+
+
+def test_the_launch_scopes_the_origin_and_grants_proposals(tmp_path, db, monkeypatch, hub) -> None:
+    _reach(hub, False)
+    rig = _rig(tmp_path / "rig", db, monkeypatch)
+    result = rig.hand.hand(OWNER, "action", "ai_1")
+    assert result["status"] == "launched", result
+    launch_id = result["launch_id"]
+    assert agent_credentials.in_scope(launch_id, "ai_1")
+    assert rig.launches.get(launch_id)["mcp"]["decision_proposals"] == "granted"
+    agent = _client(hub, _env_token(_spawn(rig)[0]))
+    is_error, made = _result(_call(agent, "desk.create", {"kind": "decisions", "data": {"title": "Proposed by the agent"}}))
+    assert is_error is False and made["status"] == "proposed", made
+    _wait_for(lambda: rig.launches.get(launch_id), "instruction_state", "sent")
+    rig.tmux.ended = True
+
+
+@pytest.mark.parametrize("reason,revoked", [
+    ("clear", False), ("resume", False),
+    ("logout", True), ("prompt_input_exit", True), ("other", True),
+])
+def test_session_end_revokes_only_when_the_process_ends(hub: Hub, monkeypatch, reason, revoked) -> None:
+    from urllib.parse import urlsplit
+
+    _reach(hub, False)
+    credential = _launch_credential()
+    agent = _client(hub, credential.token)
+
+    def send(request, _timeout):
+        response = agent.request(request.get_method(), urlsplit(request.full_url).path,
+                                 headers=dict(request.header_items()))
+        return response.status_code, response.json()
+
+    monkeypatch.setattr(coder_gate, "_send", send)
+    monkeypatch.setenv("HOLDSPEAK_AGENT_CREDENTIAL", credential.token)
+    coder_gate.run_session_end({"session_id": "s1", "reason": reason}, hub_url="http://127.0.0.1:8765")
+    assert (agent_credentials.derive(credential.token) is None) is revoked
+    assert _rpc(agent, "tools/list").status_code == (401 if revoked else 200)
+
+
+def test_a_session_that_ended_is_released_at_the_next_sweep(tmp_path, db, monkeypatch) -> None:
+    """No hook ran (a crash, a kill): the Heartbeat sweep finds the tmux
+    session gone and revokes, before any PR exists."""
+    from tests.unit.test_conductor_k4_follow_through import _launch, _sweep
+
+    rig = _launch(tmp_path, db, monkeypatch)
+    launch_id = rig.result["launch_id"]
+    token = _env_token(_spawn(rig)[0])
+    _sweep(rig)
+    assert agent_credentials.derive(token) is not None, "a live session keeps its credential"
+    rig.tmux.ended = True  # tmux has-session now fails
+    _sweep(rig)
+    assert agent_credentials.derive(token) is None
+    assert not (tmp_path / "mcp" / f"{launch_id}.json").exists()
