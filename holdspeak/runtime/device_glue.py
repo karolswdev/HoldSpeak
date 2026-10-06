@@ -21,6 +21,7 @@ import numpy as np
 
 from ..audio import AudioRecorder
 from ..config import Config
+from ..agent_context.models import DEFAULT_RECENT_MAX_AGE_SECONDS
 from ..audio import AudioSource
 from ..device_audio import DeviceRegistry, ensure_device_psk
 from ..web_auth import ensure_web_token
@@ -100,7 +101,7 @@ class DeviceGlueMixin:
             return False
         from ..agent_context import get_recent_awaiting_agent_session
 
-        agent_reply_session = get_recent_awaiting_agent_session(max_age_seconds=120)
+        agent_reply_session = get_recent_awaiting_agent_session(max_age_seconds=DEFAULT_RECENT_MAX_AGE_SECONDS)
         if not self._agent_reply_deliverable(agent_reply_session):
             with self.state_lock:
                 self.runtime_status["last_error"] = "Agent reply target unavailable"
@@ -184,7 +185,7 @@ class DeviceGlueMixin:
 
         from ..agent_context import get_recent_awaiting_agent_session
 
-        agent_reply_session = get_recent_awaiting_agent_session(max_age_seconds=120)
+        agent_reply_session = get_recent_awaiting_agent_session(max_age_seconds=DEFAULT_RECENT_MAX_AGE_SECONDS)
 
         def _device_transcript_complete(text: str) -> None:
             snippet = (text or "").strip()[:150]
@@ -308,10 +309,10 @@ class DeviceGlueMixin:
 
         if name in AGENT_QUERY_NAMES:
             if name == AGENT_NEXT_QUERY:
-                session = select_next_awaiting_agent_session(max_age_seconds=120)
+                session = select_next_awaiting_agent_session(max_age_seconds=DEFAULT_RECENT_MAX_AGE_SECONDS)
                 response_name = "agent_status"
             else:
-                session = get_recent_awaiting_agent_session(max_age_seconds=120)
+                session = get_recent_awaiting_agent_session(max_age_seconds=DEFAULT_RECENT_MAX_AGE_SECONDS)
                 response_name = name
             response = build_agent_query_response(response_name, session)
             if response is not None:
