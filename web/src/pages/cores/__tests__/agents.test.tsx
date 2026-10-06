@@ -14,29 +14,31 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     apiFetch: vi.fn(async (url: string) => {
       if (url === "/api/recipes")
         return { recipes: [{ id: "r1", name: "Summarize like a PM" }] };
-      if (url === "/api/coders/status")
+      // Conductor F2: the roster reads every live session (the sessions route).
+      if (url === "/api/coders/sessions?include_ended=false")
         return {
-          agent: {
-            sessions: [
-              {
-                key: "claude:run-1",
-                session: {
-                  session_id: "run-1",
-                  project: "holdspeak-mobile",
-                  awaiting_response: false,
-                },
+          sessions: [
+            {
+              session: {
+                agent: "claude",
+                session_id: "run-1",
+                project_name: "holdspeak-mobile",
+                state: "working",
+                awaiting_response: false,
               },
-              {
-                key: "claude:blocked-1",
-                session: {
-                  session_id: "blocked-1",
-                  project: "holdspeak",
-                  awaiting_response: true,
-                  question: "Regenerate the schema snapshot?",
-                },
+            },
+            {
+              session: {
+                agent: "claude",
+                session_id: "blocked-1",
+                project_name: "holdspeak",
+                state: "waiting",
+                awaiting_response: true,
+                question: "Regenerate the schema snapshot?",
               },
-            ],
-          },
+            },
+          ],
+          flights: [],
         };
       return {};
     }),

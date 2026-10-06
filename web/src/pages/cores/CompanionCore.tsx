@@ -1,12 +1,8 @@
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { countLabel } from "../../desk/surface";
 import { openCoderSession, openPersona } from "../../desk/shell";
-import type {
-  CoreProps,
-  RecipesResponse,
-  CodersStatusResponse,
-} from "./core-types";
+import type { CoreProps, RecipesResponse } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { asRows, rowId, useResource } from "../pageSupport";
 import {
@@ -23,8 +19,12 @@ import { DeliveryListSection } from "../../desk/components/DeliveryListSection";
 import { PrReceiptsSection } from "../../desk/components/PrReceiptsSection";
 import { deliveryListRows, useDelivery } from "../../desk/delivery";
 import { usePrReceipts } from "../../desk/prReceipts";
-import { useOnCoderFrame } from "../../desk/useDeskChangedRefresh";
-import { apiFetch } from "../../lib/api";
+import {
+  liveAgentSessions,
+  useAgentFlights,
+  useAgentFlightsLive,
+  type CoderSessionRow,
+} from "../../desk/agentFlights";
 
 const WINGS = [
   { id: "roster", label: "Roster" },
@@ -61,54 +61,35 @@ export function CompanionCore({ hero }: CoreProps) {
     [view, doorOpen, hasDelivery],
   );
   const recipes = useResource<RecipesResponse>("/api/recipes", {});
-  const coders = useResource<CodersStatusResponse>("/api/coders/status", {});
-  // Conductor K3: an agent that begins or stops waiting moves the roster now
-  // (the `scope:"coder"` frame). The reload is quiet: the last read stays.
-  const setCoders = coders.setData;
-  const rereadCoders = useCallback(() => {
-    void apiFetch<CodersStatusResponse>("/api/coders/status")
-      .then((data) => setCoders(data))
-      .catch(() => undefined);
-  }, [setCoders]);
-  useOnCoderFrame(rereadCoders);
+  // Conductor F2 (K4c): every live session, from `/api/coders/sessions`
+  // (the agents store). `/api/coders/status` lists only sessions that set
+  // `awaiting_response` in the last 30 minutes, so this roster read
+  // "No sessions" while agents worked. The store re-reads on the
+  // `scope:"coder"` frame (Conductor K3); the last read stays.
+  useAgentFlightsLive();
+  const sessionRows = useAgentFlights((s) => s.sessions);
   // Inventory 2026-10-03 (defect 9): the roster dropped every seeded agent
   // (Chase, Desk, Draft, ...: kind='mode') while the Floor showed them as
   // agents, so the roster read "New Agent" rows only. The roster reads the
   // same set the Floor does (desk/api.ts: every recipe that is not deleted).
   const recipeRows = asRows(recipes.data, ["recipes"]).filter((row) => !row.deleted);
-  const allSessions = asRows(
-    coders.data.agent?.sessions,
-    ["items", "sessions"],
-  );
-  const isBlocked = (row: Record<string, unknown>) =>
-    Boolean(
-      (row.session as Record<string, unknown> | undefined)?.awaiting_response ??
-        row.awaiting_response ??
-        row.state === "waiting",
-    );
+  const allSessions = useMemo(() => liveAgentSessions(sessionRows), [sessionRows]);
+  const isBlocked = (row: CoderSessionRow) => row.blocked;
   // Blocked-first is the ordering contract (pinned by test).
   const blocked = useMemo(() => allSessions.filter(isBlocked), [allSessions]);
   const running = useMemo(
     () => allSessions.filter((row) => !isBlocked(row)),
     [allSessions],
   );
-  const sessionKey = (row: Record<string, unknown>, session: Record<string, unknown>) =>
-    String(
-      row.key ??
-        session.key ??
-        `${String(session.agent ?? "claude")}:${String(session.session_id ?? "")}`,
-    );
-  const sessionRow = (row: Record<string, unknown>, index: number, tone: "blocked" | "run") => {
-    const session = (row.session as Record<string, unknown> | undefined) ?? row;
-    const key = sessionKey(row, session);
+  const sessionRow = (row: CoderSessionRow, index: number, tone: "blocked" | "run") => {
+    const session = (row.raw.session as Record<string, unknown> | undefined) ?? row.raw;
+    const key = row.key;
     // A blocked row opens in place by default: its question IS the board.
     const open = toggled[key] ?? tone === "blocked";
     return (
       <SurfaceLedgerRow
         key={rowId(session, index)}
-        primary={String(
-          session.project ?? session.cwd ?? session.session_id ?? "session",
-        )}
+        primary={row.name}
         open={open}
         onToggle={() => setToggled((t) => ({ ...t, [key]: !open }))}
         cells={

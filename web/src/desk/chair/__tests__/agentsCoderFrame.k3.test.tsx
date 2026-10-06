@@ -22,7 +22,7 @@ vi.mock("../../../runtime/RuntimeBus", () => {
       return () => set.delete(handler);
     },
   };
-  return { useRuntimeBus: () => value, useRuntimeFrame: () => null };
+  return { useRuntimeBus: () => value, useOptionalRuntimeBus: () => value, useRuntimeFrame: () => null };
 });
 vi.mock("../../thoughts", () => ({ unfinishedThoughts: async () => ({ items: [] }) }));
 vi.mock("../../components/MicButton", () => ({ MicButton: () => null }));
@@ -43,14 +43,14 @@ describe("arrival AGENTS follows the coder frame (Conductor K3)", () => {
 
   it("re-reads the agents and Needs you on a coder frame", async () => {
     render(<ChairHome />);
-    await waitFor(() => expect(calls("/api/coders/status")).toBe(1));
+    await waitFor(() => expect(calls("/api/coders/sessions?include_ended=false")).toBe(1));
     const freshBefore = calls("/api/desk/needs-you?fresh=1");
 
     act(() => emit({ type: "intel_status", data: { scope: "belt" } }));
-    expect(calls("/api/coders/status")).toBe(1);
+    expect(calls("/api/coders/sessions?include_ended=false")).toBe(1);
 
     act(() => emit({ type: "intel_status", data: { state: "ready", scope: "coder" } }));
-    await waitFor(() => expect(calls("/api/coders/status")).toBe(2));
+    await waitFor(() => expect(calls("/api/coders/sessions?include_ended=false")).toBe(2));
     await waitFor(() => expect(calls("/api/desk/needs-you?fresh=1")).toBeGreaterThan(freshBefore));
   });
 });

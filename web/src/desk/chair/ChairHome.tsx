@@ -70,6 +70,15 @@ import {
 import { egressFor } from "../surface/egress";
 import { useOnCoderFrame } from "../useDeskChangedRefresh";
 import {
+  agentWord,
+  flightForItem,
+  liveAgentSessions,
+  useAgentFlights,
+  useAgentFlightsLive,
+  type CoderSessionRow,
+} from "../agentFlights";
+import { FlightChip, FlightVerbs } from "../components/AgentFlight";
+import {
   executedReceipt,
   postSummaryRun,
   routeReady,
@@ -122,6 +131,12 @@ interface NeedsYouItem {
   unknowns?: string[];
   nextAction?: "name_owner" | "set_date" | "mark_done" | null;
   decisionRecordId?: string | null;
+  /** Conductor K3 (R5): a coder row's session, agent, question and wait. */
+  sessionKey?: string;
+  agent?: string;
+  question?: string;
+  waitStartedAt?: string;
+  ageSeconds?: number;
 }
 
 interface NeedsYouPayload {
@@ -616,26 +631,18 @@ function Arrival() {
   const drainerAbsent = queueFrame?.drainer === "absent";
 
   // ── agents (coders sessions) ──
-  const [agentSessions, setAgentSessions] = useState<Record<string, unknown>[]>([]);
-  const readAgents = useCallback(() => {
-    void apiFetch<Record<string, unknown>>("/api/coders/status")
-      .then((res) => {
-        const sessions = (res as any)?.agent?.sessions;
-        const raw = Array.isArray(sessions)
-          ? sessions
-          : (sessions as any)?.items;
-        if (Array.isArray(raw)) setAgentSessions(raw.filter(Boolean));
-      })
-      .catch(() => undefined);
-  }, []);
-  useEffect(() => { readAgents(); }, [readAgents]);
-  // Conductor K3: an agent that begins or stops waiting moves this section
-  // and Needs you now (the `scope:"coder"` frame), not at the next mount or
-  // the next minute's poll.
+  // Conductor F2 (K4c): every live session, from `/api/coders/sessions`
+  // (the agents store). `/api/coders/status` lists only sessions that set
+  // `awaiting_response` in the last 30 minutes, so a working agent and an
+  // agent a Notification stopped were never listed. The store re-reads on
+  // the `scope:"coder"` frame and on `desk_changed`.
+  useAgentFlightsLive();
+  const agentSessions = liveAgentSessions(useAgentFlights((s) => s.sessions));
+  // Conductor K3: an agent that begins or stops waiting moves Needs you now
+  // (the `scope:"coder"` frame), not at the next minute's poll.
   const onCoderFrame = useCallback(() => {
-    readAgents();
     void refreshNeedsYou(true);
-  }, [readAgents]);
+  }, []);
   useOnCoderFrame(onCoderFrame);
 
   // ── brief generate ──
@@ -1586,6 +1593,13 @@ function NeedsYouRow({
     if (event.target !== event.currentTarget) event.stopPropagation();
   };
   const opener = useNeedsYouOpener(item, ext._doorCard);
+  // Conductor F2 (K4a): the item wears its agent where it lives.
+  const flight = flightForItem(useAgentFlights((s) => s.flights), {
+    ...item, _doorCard: ext._doorCard ?? null,
+  });
+  if (item.kind === "coder" && item.sessionKey) {
+    return <CoderNeedsYouRow item={item} now={now} primary={primary} />;
+  }
   return (
     <SurfaceLedgerRow
       // PHILO-13-06 (B1): the row opens its object (a commitment, its person).
@@ -1622,6 +1636,7 @@ function NeedsYouRow({
           >
             {reasonToken(doorOwnerNamed ? rowItem : item, now)}
           </span>
+          <FlightChip flight={flight} />
           {muted ? (
             <span className="arrival-project-token">MUTED</span>
           ) : null}
@@ -1659,18 +1674,21 @@ function NeedsYouRow({
         </span>
       }
       trailing={
-        <NeedsYouRowVerbs
-          item={rowItem}
-          isDoor={isDoor}
-          isUnassigned={isUnassigned}
-          isToReview={isToReview}
-          doorCard={ext._doorCard}
-          ownerCardId={doorOwnerCardId}
-          primary={primary}
-          onProposalConfirm={onProposalConfirm}
-          commitWell={commitWell}
-          onCommitWell={(well) => { setCommitDraft(""); setCommitWell(well); }}
-        />
+        <>
+          <NeedsYouRowVerbs
+            item={rowItem}
+            isDoor={isDoor}
+            isUnassigned={isUnassigned}
+            isToReview={isToReview}
+            doorCard={ext._doorCard}
+            ownerCardId={doorOwnerCardId}
+            primary={primary}
+            onProposalConfirm={onProposalConfirm}
+            commitWell={commitWell}
+            onCommitWell={(well) => { setCommitDraft(""); setCommitWell(well); }}
+          />
+          <FlightVerbs flight={flight} title={item.title} />
+        </>
       }
       wrap
       expands={false}
@@ -2516,54 +2534,50 @@ function MeetingsSection({
 
 // ── Agents (M-3) ──────────────────────────────────────────────────
 
-/** Blocked predicate (from parked AgentsLane). */
-function isBlocked(row: Record<string, unknown>): boolean {
-  const session = (row.session as Record<string, unknown> | undefined) ?? row;
-  return Boolean(
-    session.awaiting_response ?? row.awaiting_response ?? row.state === "waiting",
-  );
+/** Conductor F2 (K4c): the item a session works on, as its row names it. */
+function originWord(title: string): string {
+  return title;
 }
 
-function sessionKey(row: Record<string, unknown>): string {
-  const session = (row.session as Record<string, unknown> | undefined) ?? row;
-  return String(
-    row.key ?? session.key ??
-      `${String(session.agent ?? "claude")}:${String(session.session_id ?? "")}`,
-  );
-}
-
-function sessionName(row: Record<string, unknown>): string {
-  const session = (row.session as Record<string, unknown> | undefined) ?? row;
-  return String(session.project ?? session.cwd ?? session.session_id ?? "session");
-}
-
-function AgentsSection({ sessions }: { sessions: Record<string, unknown>[] }) {
-  const blocked = useMemo(() => sessions.filter(isBlocked), [sessions]);
-  const running = useMemo(() => sessions.filter((r) => !isBlocked(r)), [sessions]);
+function AgentsSection({ sessions }: { sessions: CoderSessionRow[] }) {
+  const blocked = sessions.filter((row) => row.blocked);
+  const running = sessions.filter((row) => !row.blocked);
   const ordered = [...blocked, ...running];
 
   return (
     <SurfaceSection label={countLabel("AGENTS", ordered.length)}>
       <SurfaceLedger count={null} cols="room">
         {ordered.map((row) => {
-          const key = sessionKey(row);
-          const name = sessionName(row);
-          const rowBlocked = isBlocked(row);
+          const key = row.key;
+          const rowBlocked = row.blocked;
+          const flight = row.flight;
           return (
             <SurfaceLedgerRow
               key={key}
-              primary={name}
+              primary={row.name}
               cells={
-                <span className="arrival-meeting-badge" data-badge={rowBlocked ? "off" : "saved"}>
-                  {rowBlocked ? "BLOCKED" : "RUNNING"}
-                </span>
+                flight ? (
+                  <span className="arrival-agent-flight" data-testid="arrival-agent-flight">
+                    <StateChip
+                      state={rowBlocked ? "warning" : "working"}
+                      label={`${agentWord(row.agent)} · ${rowBlocked ? "WAITING" : "WORKING"}`}
+                    />
+                    <span className="surface-token" data-testid="arrival-agent-origin" title={flight.title}>
+                      ↳ {originWord(flight.title)}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="arrival-meeting-badge" data-badge={rowBlocked ? "off" : "saved"}>
+                    {rowBlocked ? "BLOCKED" : "RUNNING"}
+                  </span>
+                )
               }
               trailing={
                 rowBlocked ? (
                   <Button
                     variant="primary"
                     dense
-                    onClick={() => openCoderSession(key)}
+                    onClick={() => openCoderSession(key, { answer: true })}
                   >
                     Answer
                   </Button>
@@ -2586,6 +2600,83 @@ function AgentsSection({ sessions }: { sessions: Record<string, unknown>[] }) {
       </SurfaceLedger>
     </SurfaceSection>
   );
+}
+
+/** Conductor F2 (K5a): the Needs you row of an agent that waits (R5, TO
+ *  ANSWER / TO APPROVE). The question, `CLAUDE CODE · WAITING · <age>`, the
+ *  Project of the item it works on; `Speak answer` (the session window,
+ *  its steer composer recording) and `Open`. */
+function CoderNeedsYouRow({ item, now, primary }: { item: NeedsYouItem; now: Date; primary: boolean }) {
+  const key = String(item.sessionKey);
+  const agent = String(item.agent ?? key.split(":", 1)[0]);
+  const session = useAgentFlights((s) => s.sessions.find((row) => row.key === key));
+  const flights = useAgentFlights((s) => s.flights);
+  const flight = session?.flight ?? flights.find((f) => f.sessionKey === key) ?? null;
+  const name = agentWord(agent);
+  const projectId = flight?.projectId || item.projectId || "";
+  const projectName = flight?.projectName || (item.projectId ? item.projectName : "") || "";
+  const speak = () => openCoderSession(key, { answer: true });
+  return (
+    <SurfaceLedgerRow
+      onToggle={() => openCoderSession(key)}
+      lead={
+        <span className="arrival-source-emblem" data-testid="arrival-source-emblem">
+          {agent === "codex" ? "CX" : "CC"}
+        </span>
+      }
+      primary={<span data-testid="arrival-coder-question">{item.question || item.title}</span>}
+      cells={
+        <span className="arrival-needs-you-meta">
+          <span className="arrival-why-token" data-tone="warning" data-testid="arrival-why">
+            {`${name} · WAITING · ${coderAgeWord(item, now)}`}
+          </span>
+          {projectId && projectName ? (
+            <ProjectButton
+              name={projectName}
+              onOpen={() => openProjectRoom(projectId)}
+              data-testid="arrival-project"
+            />
+          ) : null}
+        </span>
+      }
+      trailing={
+        <>
+          <Button
+            dense
+            variant={primary ? "primary" : "ghost"}
+            aria-label={`Speak answer: ${name === "CODEX" ? "Codex" : "Claude Code"}`}
+            data-testid="arrival-speak-answer"
+            onClick={speak}
+          >
+            Speak answer
+          </Button>
+          <Button
+            dense
+            variant="ghost"
+            aria-label={`Open: ${name === "CODEX" ? "Codex" : "Claude Code"} session`}
+            data-testid="arrival-coder-open"
+            onClick={() => openCoderSession(key)}
+          >
+            Open
+          </Button>
+        </>
+      }
+      wrap
+      expands={false}
+      data-testid="arrival-coder-row"
+    />
+  );
+}
+
+/** How long the agent has waited: `JUST NOW`, `<n> MIN`, `<n> H`. */
+export function coderAgeWord(item: { since?: string | null; waitStartedAt?: string | null; ageSeconds?: number | null }, now: Date): string {
+  const stamp = Date.parse(String(item.waitStartedAt || item.since || ""));
+  const seconds = Number.isFinite(stamp)
+    ? Math.max(0, Math.floor((now.getTime() - stamp) / 1000))
+    : Math.max(0, Number(item.ageSeconds ?? 0));
+  if (seconds < 60) return "JUST NOW";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} MIN`;
+  return `${Math.floor(seconds / 3600)} H`;
 }
 
 // ── Week Strip (HS-175-02) ─────────────────────────────────────────

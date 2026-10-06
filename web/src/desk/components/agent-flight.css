@@ -1,0 +1,26 @@
+/* Conductor F2 (K4a, K4b, K4c): the flight's chip and verbs sit in a row's
+   existing slots; they wrap, never push the row's wings out. */
+.desk-flight-verbs {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.room-why-cells {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+.arrival-agent-flight {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
