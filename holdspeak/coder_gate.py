@@ -151,13 +151,22 @@ def gate_matches(config: GateConfig, *, cwd: str, tool: str) -> bool:
     """The double opt-in, resolved: master switch AND a configured
     repo whose path contains ``cwd`` AND the tool in that repo's
     list."""
+    return gate_match_root(config, cwd=cwd, tool=tool) is not None
+
+
+def gate_match_root(config: GateConfig, *, cwd: str, tool: str) -> Optional[str]:
+    """The held repo path that contains ``cwd`` for ``tool`` (the nearest
+    one when held paths nest), or ``None``: the matcher of
+    :func:`gate_matches`, naming its match. Conductor K5 reads a held
+    call against this root."""
     if not tool:
-        return False
+        return None
     try:
         cwd_path = Path(cwd).resolve()
     except OSError:
-        return False
+        return None
     own = set(config.armed_paths)
+    best: Optional[tuple[int, str]] = None
     for repo_path, tools in config.repos.items():
         if tool not in tools:
             continue
@@ -168,8 +177,10 @@ def gate_matches(config: GateConfig, *, cwd: str, tool: str) -> bool:
         except OSError:
             continue
         if cwd_path == repo_resolved or repo_resolved in cwd_path.parents:
-            return True
-    return False
+            depth = len(repo_resolved.parts)
+            if best is None or depth > best[0]:
+                best = (depth, str(repo_resolved))
+    return best[1] if best else None
 
 
 # -- redaction -------------------------------------------------------------
@@ -339,15 +350,26 @@ def run_hook(
             pass
     tool = str(payload.get("tool_name") or "").strip()
     cwd = str(payload.get("cwd") or "").strip()
+    parent_operation_id = str(
+        os.environ.get("HOLDSPEAK_PARENT_OPERATION_ID") or ""
+    ).strip()
 
     # The inert fast path: not armed for this (cwd, tool) — no
-    # proposal, no audit, no hub contact.
-    if not gate_matches(cfg, cwd=cwd, tool=tool):
+    # proposal, no audit, no hub contact. Conductor K5: an agent HoldSpeak
+    # launched under the gate (its spawn sets the parent operation) is held
+    # for the gate's tools wherever its working folder is, so a working
+    # folder outside its worktree cannot make a call inert.
+    root = gate_match_root(cfg, cwd=cwd, tool=tool)
+    if root is None and not (parent_operation_id and tool in DEFAULT_TOOLS):
         return HookDecision(deny=None)
 
     session_id = str(payload.get("session_id") or "").strip() or "unknown-session"
     proposal_id = str(payload.get("tool_use_id") or "").strip() or f"gate-{uuid.uuid4()}"
     args_sha256, args_head = redact_args(payload.get("tool_input"))
+    # Conductor K5: the call is read HERE, against the held worktree, so the
+    # full command never leaves the agent process; the hub gets the verdict
+    # and applies the Control mode (``tool_gate_rules``).
+    verdict = _classify(tool, payload, cwd=cwd, root=root)
 
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
     if http_post is None or http_get is None:
@@ -375,10 +397,8 @@ def run_hook(
         "args_head": args_head,
         "cwd": cwd,
         "ttl_seconds": ttl_seconds,
+        "classification": verdict,
     }
-    parent_operation_id = str(
-        os.environ.get("HOLDSPEAK_PARENT_OPERATION_ID") or ""
-    ).strip()
     if parent_operation_id:
         body["parent_operation_id"] = parent_operation_id
 
@@ -417,6 +437,24 @@ def run_hook(
     return HookDecision(
         deny="gate hold expired with no decision; the call was not run"
     )
+
+
+def _classify(
+    tool: str, payload: Mapping[str, Any], *, cwd: str, root: Optional[str],
+) -> dict[str, str]:
+    """The Conductor K5 verdict on one call; a reading error is ``unparsed``
+    (the call waits), never an allow."""
+    from .tool_gate_rules import classify_tool_call
+
+    try:
+        raw = payload.get("tool_input")
+        verdict = classify_tool_call(
+            tool, raw if isinstance(raw, Mapping) else None, cwd=cwd, root=root
+        ).to_dict()
+    except Exception:
+        verdict = {"scope": "unparsed", "rule": "read_failed", "read_rule": "", "push_branch": ""}
+    verdict["root"] = root or ""
+    return verdict
 
 
 def _deny_reason(response: Mapping[str, Any]) -> str:

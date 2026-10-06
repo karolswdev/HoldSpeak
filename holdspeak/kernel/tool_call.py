@@ -12,7 +12,13 @@ from ..operation_policy import describe_operation, resolve_policy
 from .model import Admission, KernelRefused, OperationRequest, forbidden_content
 
 _HASH = re.compile(r"^[0-9a-f]{64}$")
-_ALLOWED = frozenset({"proposal_id", "tool", "args_sha256", "args_head", "cwd", "ttl_seconds"})
+_ALLOWED = frozenset({
+    "proposal_id", "tool", "args_sha256", "args_head", "cwd", "ttl_seconds",
+    # Conductor K5: the hub-checked verdict on the call (GateService). It
+    # names no argument text: launch id, scope, rule, read rule.
+    "classification",
+})
+_VERDICT_KEYS = ("launch_id", "scope", "rule", "read_rule")
 
 
 @dataclass(frozen=True)
@@ -90,14 +96,22 @@ class ToolCallCodec:
             fixed_destination=bool(args.get("cwd")),
             consequence="execute_on_approval",
         )
+        raw = args.get("classification")
+        verdict = {
+            key: str(raw.get(key) or "")[:200] for key in _VERDICT_KEYS
+        } if isinstance(raw, Mapping) else {}
         operation = descriptor.to_dict()
         operation["kernel_operation_id"] = operation_id
         operation["admitted_envelope_sha256"] = admission.payload_hash
+        if verdict:
+            # The receipt names the rule the Control mode decided on.
+            operation["tool_call"] = verdict
         return ToolCallAdmission(
             **admission.__dict__,
             operation=operation,
             policy=resolve_policy(
-                descriptor, mode=self._mode_loader(), source="config"
+                descriptor, mode=self._mode_loader(), source="config",
+                tool_call=verdict,
             ).to_dict(),
         )
 
