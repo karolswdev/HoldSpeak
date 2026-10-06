@@ -347,6 +347,15 @@ def _count_unit(count: int, unit: str) -> str:
     return f"{count} {unit}" if count == 1 else f"{count} {unit}S"
 
 
+def _pr_is_live(entity: dict[str, Any]) -> bool:
+    """A PR still in play: open (or a draft), or a snapshot row with no state.
+
+    Conductor K4 seeds Room GitHub Watches with ``state=all`` so merges are
+    observed; the rows that ask the owner read only the live PRs.
+    """
+    return str(entity.get("state") or "open").lower() in ("open", "draft")
+
+
 def _format_age(iso_str: str, now: datetime) -> str:
     """Format an ISO timestamp as a human-readable age token."""
     if not iso_str:
@@ -970,6 +979,8 @@ class ProjectService:
                 # review -- otherwise it is a source token only).
                 owner_login = self._get_github_owner_login()
                 for entity in entities:
+                    if not _pr_is_live(entity):
+                        continue
                     # Handle both raw (reviewRequests) and normalized (review_requests) field names
                     review_requests = entity.get("review_requests") or entity.get("reviewRequests") or []
                     review_decision = (
@@ -1562,7 +1573,7 @@ class ProjectService:
                 if owner_login:
                     waiting = sum(
                         1 for e in entities
-                        if owner_login.lower() in [
+                        if _pr_is_live(e) and owner_login.lower() in [
                             r.lower() for r in (
                                 e.get("review_requests") or e.get("reviewRequests") or []
                             )
@@ -1574,7 +1585,7 @@ class ProjectService:
                 # unless the PR is the owner's or awaits their review)
                 checks_failing = sum(
                     1 for e in entities
-                    if str(e.get("checks") or "").lower() == "failing"
+                    if _pr_is_live(e) and str(e.get("checks") or "").lower() == "failing"
                 )
                 if checks_failing:
                     tokens.append(f"{checks_failing} CHECKS FAILING")
@@ -1768,6 +1779,8 @@ class ProjectService:
                 pr_entities.extend(entities)
                 owner_login = self._get_github_owner_login()
                 for entity in entities:
+                    if not _pr_is_live(entity):
+                        continue
                     review_requests = entity.get("review_requests") or entity.get("reviewRequests") or []
                     if owner_login and owner_login.lower() in [r.lower() for r in review_requests]:
                         updated_at_str = entity.get("updated_at") or entity.get("updatedAt") or ""
@@ -3029,6 +3042,12 @@ class ProjectService:
         repos = scope.get("repositories", [])
         if repos:
             query_filters["repository"] = repos[0]
+        # Conductor K4: a new Room GitHub Watch reads every PR state, so a
+        # merge is an observed transition (open -> merged), not a PR that
+        # left the list. An explicit state in the spec wins; stored
+        # watches keep the query they were armed with.
+        if connector_id == "gh" and query_kind == "pull_requests":
+            query_filters.setdefault("state", "all")
         # HS-166-03: flatten jira scope into the stored query
         # the way repos[0] is flattened for gh.
         jira_connection_ref = scope.get("connection_ref") or spec.get("provider", {}).get("connection_ref")

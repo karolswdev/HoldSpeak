@@ -44,7 +44,8 @@ class TestGitHubQueryParity:
         stored = _flatten_github_query(spec)
 
         assert stored["repository"] == _REPO
-        assert stored.get("state") == "open"
+        # Conductor K4: the Room's PR watch reads every state, so merges are seen.
+        assert stored.get("state") == "all"
         assert stored.get("base") == "main"
         assert "repositories" not in stored
 
