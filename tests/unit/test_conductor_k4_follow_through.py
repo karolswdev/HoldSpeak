@@ -745,3 +745,48 @@ def test_open_pr_count_survives_more_than_50_merged_prs() -> None:
 
     result = ProjectDoorService(gh_runner=gh).count(OWNER, "github", "acme/railsproj", ["open_prs"])
     assert result["tokens"][0]["count"] == 1
+
+
+# ── Astra round 2, finding 6: publication boundaries keep progress ──
+
+
+def test_merge_observed_after_draft_before_publish_is_not_lost(db) -> None:
+    """A draft frozen before the merge is published later: the merge is
+    reported in the next draft (no time cutoff at publication)."""
+    _delta, updates = _updates(db)
+    previous = updates.draft_update(OWNER, PROJECT)
+    assert "Closed:" not in _progress(previous["body_md"])
+    _watch_merge(db)
+    updates.publish_update(OWNER, previous["id"])
+    current = updates.draft_update(OWNER, PROJECT)
+    assert "Closed: Fix the login timeout (#42) -- merged" in _progress(current["body_md"])
+    # Once a draft that reports it is published, it is not reported again.
+    updates.publish_update(OWNER, current["id"])
+    assert "Closed:" not in _progress(updates.draft_update(OWNER, PROJECT)["body_md"])
+
+
+def test_secure_close_after_publication_is_reported(tmp_path, db, monkeypatch) -> None:
+    """Secure: an update is published while the confirmation is pending;
+    the commitment completed later is reported in the next draft."""
+    rig = _launch(tmp_path, db, monkeypatch, mode="safe")
+    rig.gh.prs = [_pr(rig.branch, rig.head)]
+    try:
+        _sweep(rig)
+        assert _status(db, "ai_1") == "open"
+        _delta, updates = _updates(db)
+        previous = updates.draft_update(OWNER, PROJECT)
+        assert "Closed:" not in _progress(previous["body_md"])
+        updates.publish_update(OWNER, previous["id"])
+        with db._connection() as conn:
+            confirm_id = conn.execute(
+                "SELECT id FROM action_items WHERE source_ref = ?",
+                (f"agent_launch:{rig.result['launch_id']}",),
+            ).fetchone()[0]
+        FollowThroughService(db).complete(OWNER, confirm_id, "done")
+        _sweep(rig)
+        assert _status(db, "ai_1") == "done"
+        current = updates.draft_update(OWNER, PROJECT)
+        assert "Closed: Fix the login timeout (PR #7) -- merged" in _progress(current["body_md"])
+        assert json.loads(current["source_manifest_json"])["closure_keys"] == [PR_URL]
+    finally:
+        rig.tmux.ended = True

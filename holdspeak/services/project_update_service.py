@@ -442,36 +442,29 @@ def _build_decisions(
 CHANGE_CLASS_CLOSED = "closed"
 
 
-def _instant(value: Any) -> datetime | None:
-    try:
-        stamp = datetime.fromisoformat(str(value or "").strip().replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return stamp if stamp.tzinfo else stamp.replace(tzinfo=timezone.utc)
-
-
-def _after(value: Any, since: datetime | None) -> bool:
-    stamp = _instant(value)
-    return stamp is not None and (since is None or stamp > since)
+#: The source-manifest key that freezes what a draft reported as closed.
+CLOSURE_KEYS = "closure_keys"
 
 
 def period_closures(
     observations: list[dict[str, Any]],
     completions: list[dict[str, Any]],
     action_tasks: dict[str, str],
-    since: datetime | None,
+    reported: set[str],
 ) -> list[dict[str, Any]]:
-    """What closed in the reporting period, from durable records only (never
-    from a review window, which opens and closes on the owner's word):
+    """What closed and no PUBLISHED update has reported yet, from durable
+    records only (never from a review window, which opens and closes on the
+    owner's word, and never by a time cutoff, which a draft frozen before its
+    publication would miss):
 
     - a Watch's closing transition (``github.pr.merged``,
-      ``jira.issue.resolved``) observed after ``since``;
+      ``jira.issue.resolved``);
     - a ``commitment.completed`` receipt of one of the Project's action items
-      that carries PR evidence (Conductor K4: the agent launch's merged PR),
-      merged after ``since``.
+      that carries PR evidence (Conductor K4: the agent launch's merged PR).
 
-    ``since`` is the last published update (None: everything). One line per
-    closed thing: a PR seen by both paths is reported once (by URL)."""
+    Each closure has a key (the PR URL, else the watch entity and event).
+    ``reported`` holds the keys every published update froze into its source
+    manifest. One line per key: a PR seen by both paths is reported once."""
     from .project_delta_service import _classify_observation
 
     out: list[dict[str, Any]] = []
@@ -481,15 +474,16 @@ def period_closures(
         evidence = facts.get("evidence") or {}
         url = str(evidence.get("pr_url") or "")
         action_id = str(facts.get("action_item_id") or "")
-        if not url or action_id not in action_tasks or not _after(evidence.get("merged_at"), since):
+        if not url or action_id not in action_tasks:
             continue
-        if url in seen:
+        if url in seen or url in reported:
             continue
         seen.add(url)
         number = url.rstrip("/").rsplit("/", 1)[-1]
         task = " ".join(str(action_tasks[action_id] or "").split()) or "Untitled"
         out.append({
-            "key": (str(evidence.get("merged_at") or ""), url),
+            "key": url,
+            "order": (str(evidence.get("merged_at") or ""), url),
             "text": f"Closed: {task} (PR #{number}) -- merged",
             "ref": format_ref("action_item", action_id),
             "fields": ["status", "evidence.pr_url", "evidence.merged_at"],
@@ -497,7 +491,7 @@ def period_closures(
     for obs in observations:
         if obs.get("observation_kind") != "watch.transition":
             continue
-        if _classify_observation(obs) != CHANGE_CLASS_CLOSED or not _after(obs.get("observed_at"), since):
+        if _classify_observation(obs) != CHANGE_CLASS_CLOSED:
             continue
         try:
             fact = json.loads(obs.get("fact_json") or "{}")
@@ -508,19 +502,20 @@ def period_closures(
         entity = str(fact.get("entity_ref") or "").strip()
         event_type = str(fact.get("event_type") or "")
         key = str(fact.get("url") or "") or f"{obs.get('source_id')}:{entity}:{event_type}"
-        if key in seen:
+        if key in seen or key in reported:
             continue
         seen.add(key)
         name = " ".join(str(fact.get("entity_title") or entity or "Untitled").split())
         marker = f" (#{entity})" if entity else ""
         outcome = event_type.rsplit(".", 1)[-1] or CHANGE_CLASS_CLOSED
         out.append({
-            "key": (str(obs.get("observed_at") or ""), key),
+            "key": key,
+            "order": (str(obs.get("observed_at") or ""), key),
             "text": f"Closed: {name}{marker} -- {outcome}",
             "ref": f"pobs:{obs.get('id', '')}",
             "fields": ["observation_kind", "fact_json"],
         })
-    return sorted(out, key=lambda c: c["key"])
+    return sorted(out, key=lambda c: c["order"])
 
 
 def _build_closed(
@@ -1739,10 +1734,8 @@ class ProjectUpdateService:
         # in Decisions.
         undecided = [p for p in proposals if p.get("change_class") != CHANGE_CLASS_CLOSED]
         progress = _build_progress(items_section, det_claims, source_version)
-        closed_lines = _build_closed(
-            self._period_closures(principal, project_id, observations),
-            det_claims, source_version,
-        )
+        closures = self._period_closures(principal, project_id, observations)
+        closed_lines = _build_closed(closures, det_claims, source_version)
         if closed_lines:
             progress = "\n".join(closed_lines) if progress == _HONEST_MINIMAL["progress"] else (
                 progress + "\n" + "\n".join(closed_lines)
@@ -1772,6 +1765,9 @@ class ProjectUpdateService:
         manifest = _build_source_manifest(
             room, review_id, observation_ids, caveats,
         )
+        # What this draft reports as closed, frozen with it: once it is
+        # published, the next draft does not report these again.
+        manifest = {**manifest, CLOSURE_KEYS: sorted(c["key"] for c in closures)}
         manifest_json = json.dumps({
             **manifest, "week_source_refs": week["source_refs"],
         }, sort_keys=True, separators=(",", ":"))
@@ -1876,10 +1872,18 @@ class ProjectUpdateService:
     def _period_closures(
         self, principal: Principal, project_id: str, observations: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        """:func:`period_closures` over this Project's durable records, since
-        its last published update."""
-        published = self._db.project_updates.list_updates(project_id, lifecycle="published")
-        since = _instant(published[0].get("published_at")) if published else None
+        """:func:`period_closures` over this Project's durable records, less
+        what its published updates already reported."""
+        reported: set[str] = set()
+        for row in self._db.project_updates.list_updates(
+            project_id, lifecycle="published", limit=100_000,
+        ):
+            try:
+                frozen = json.loads(row.get("source_manifest_json") or "{}")
+            except (TypeError, ValueError):
+                frozen = {}
+            if isinstance(frozen, dict):
+                reported.update(str(k) for k in frozen.get(CLOSURE_KEYS) or [])
         try:
             tasks = {
                 str(a["id"]): str(a.get("task") or "")
@@ -1891,7 +1895,7 @@ class ProjectUpdateService:
             ServiceEventLedger(self._db).list(principal, event_type="commitment.completed", limit=500)
             if tasks else []
         )
-        return period_closures(observations, completions, tasks, since)
+        return period_closures(observations, completions, tasks, reported)
 
     # ── Route-facing verbs (HS-162-04) ─────────────────────────────
 
