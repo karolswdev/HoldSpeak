@@ -62,7 +62,9 @@ export type PrimitiveCapability =
   | "rename"
   | "duplicate"
   | "delete"
-  | "send";
+  | "send"
+  /** Hand to agent (Conductor K2): a kind `agent.hand` takes (agent_brief BRIEF_KINDS). */
+  | "hand";
 
 /** Static metadata for each kind — drives the type-legible Desk language. */
 export interface PrimitiveDescriptor {
@@ -466,7 +468,7 @@ export const PRIMITIVES = {
     blurb: "A captured conversation with transcript and intelligence.",
     icon: "M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-5 4z",
     authorable: false,
-    capabilities: ["ask", "send"],
+    capabilities: ["ask", "send", "hand"],
     surface: { type: "pullout" },
   },
   artifact: {
@@ -478,7 +480,7 @@ export const PRIMITIVES = {
       "A synthesized output (summary, decisions, actions …) from a meeting.",
     icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h6",
     authorable: false,
-    capabilities: ["ask", "send"],
+    capabilities: ["ask", "send", "hand"],
     surface: { type: "pullout" },
   },
   note: {
@@ -489,7 +491,7 @@ export const PRIMITIVES = {
     blurb: "A free-standing markdown note you write anywhere.",
     icon: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z",
     authorable: true,
-    capabilities: ["ask", "edit", "rename", "duplicate", "delete"],
+    capabilities: ["ask", "edit", "rename", "duplicate", "delete", "hand"],
     surface: { type: "pullout" },
   },
   decision: {
@@ -500,7 +502,7 @@ export const PRIMITIVES = {
     blurb: "Architecture decision record",
     icon: "M5 3h14v18H5zM8 8h8M8 12h8M8 16h5",
     authorable: true,
-    capabilities: ["duplicate", "delete", "send"],
+    capabilities: ["duplicate", "delete", "send", "hand"],
     surface: { type: "pullout" },
   },
   directory: {

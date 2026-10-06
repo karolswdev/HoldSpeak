@@ -1,0 +1,50 @@
+/* The launch sheet (the Conductor canvas K3). Layout only: every color is a
+   product token; the material is the library's species. */
+.desk-hand-body {
+  padding: 12px 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: auto;
+}
+
+.desk-hand-tokens {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.desk-hand-refused {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.desk-hand-lead {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #9ba2b0);
+}
+
+.desk-hand-text {
+  white-space: pre-wrap;
+  font-size: 12px;
+}
+
+.desk-hand-body .surface-ledger-row .desk-hand-tokens {
+  justify-content: flex-end;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* A long path or branch wraps inside the window at 393; it never runs past it. */
+.desk-hand-body [data-testid="hand-where"] .surface-token {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
