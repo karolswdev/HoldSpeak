@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime
 
-from holdspeak.timestamps import in_window, local_now, local_wall, parse_stamp, sql_instant, sql_window
+from holdspeak.timestamps import aware, in_window, local_now, local_wall, parse_stamp, sql_instant, sql_window, utc_iso
 import json
 import logging
 import re
@@ -285,6 +285,16 @@ _MEETING_PRIORITY = 50
 SHELF_STATES = ("acknowledged", "deferred")
 
 
+
+def _stored_stamp(value: datetime.datetime) -> str:
+    """A window or generation time as stored: always with an offset, never
+    bare. An aware value keeps its own offset and instant; a naive (hub-local)
+    one gets the hub's offset for that instant (its ``fold`` decides the
+    repeated hour). The offset keeps the producer's day and the GENERATED label
+    on the hub's clock (PHILO-3-03, PHILO-6-02); julianday reads any offset."""
+    return aware(value).isoformat()
+
+
 class _NeedsYouRows(list):
     """The Brief's WAITING rows from the one ``needs you`` rule.
 
@@ -463,7 +473,8 @@ class MondayBriefService:
 
             # Last brief generated_at for "since last brief" filtering
             last_brief_row = conn.execute(
-                "SELECT MAX(generated_at) AS latest FROM monday_briefs"
+                "SELECT generated_at AS latest FROM monday_briefs "
+                "ORDER BY julianday(generated_at) DESC LIMIT 1"
             ).fetchone()
             last_brief_at = str(last_brief_row["latest"]) if (
                 last_brief_row and last_brief_row["latest"]
@@ -519,15 +530,16 @@ class MondayBriefService:
             headline, sections = self._compose(
                 sections, waiting_count=needs_you_count, counted_decisions=counted_decisions,
             )
-            generated_at = period_end.isoformat()
+            # Never bare (Astra, #872): see _stored_stamp.
+            generated_at = _stored_stamp(period_end)
             conn.execute(
                 """INSERT INTO monday_briefs
                    (id, period_start, period_end, headline, generated_at)
                    VALUES (?, ?, ?, ?, ?)""",
                 (
                     brief_id,
-                    period_start.isoformat(),
-                    period_end.isoformat(),
+                    _stored_stamp(period_start),
+                    _stored_stamp(period_end),
                     headline,
                     generated_at,
                 ),

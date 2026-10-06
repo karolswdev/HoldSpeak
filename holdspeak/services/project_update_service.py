@@ -1862,7 +1862,7 @@ class ProjectUpdateService:
                 conn.execute(
                     "INSERT INTO project_commands (id, project_id, command_kind, request_hash, "
                     "status, created_at) VALUES (?, ?, 'draft_update', ?, 'pending', ?)",
-                    (command_id, project_id, req_hash, datetime.now().isoformat()),
+                    (command_id, project_id, req_hash, utc_now_iso()),
                 )
                 return None
             if row["request_hash"] != req_hash:

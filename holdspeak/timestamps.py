@@ -22,7 +22,7 @@ from typing import Any, Optional
 
 __all__ = [
     "utc_now", "utc_now_iso", "utc_iso", "local_now", "local_wall", "parse_stamp", "aware",
-    "sql_window", "in_window", "parse_wall", "sql_instant",
+    "sql_window", "in_window", "parse_wall", "sql_instant", "naive_local",
 ]
 
 
@@ -52,11 +52,19 @@ def local_wall() -> datetime:
     """Now on the hub's wall clock, NAIVE: only for a read that compares
     against naive local values (a parsed legacy stamp, a quiet-hours clock).
     Never store it: a stored stamp is ``utc_now_iso()``."""
-    return datetime.now().astimezone().replace(tzinfo=None)
+    # With its fold: a value that is written back after all (mesh relay
+    # deadlines are computed from it) keeps its instant in the repeated hour.
+    return naive_local(datetime.now(timezone.utc))
 
 
 def aware(value: datetime) -> datetime:
-    """A datetime made aware: a naive value is hub-local wall time."""
+    """A datetime made aware: a naive value is hub-local wall time.
+
+    An aware value is returned as it is: its instant is never re-read through
+    the local zone. A naive value in the repeated autumn hour is read by its
+    ``fold`` (0, the default, is the first occurrence; ``naive_local`` sets 1
+    for the second), and a naive time inside the spring gap moves forward by
+    the gap (Python's rule for local time)."""
     if value.tzinfo is None:
         return value.astimezone()
     return value
@@ -133,7 +141,25 @@ def parse_wall(value: Any) -> Optional[datetime]:
     stamp = parse_stamp(value)
     if stamp is None:
         return None
-    return stamp.astimezone().replace(tzinfo=None)
+    return naive_local(stamp)
+
+
+def naive_local(value: datetime) -> datetime:
+    """An aware instant as NAIVE hub-local wall time that keeps the instant.
+
+    In the repeated autumn hour one wall time names two instants; ``fold``
+    tells them apart (PEP 495), and ``aware``/``utc_iso`` honour it. Without
+    it 08:30Z on 2026-11-01 (01:30 MST, the second 01:30 in Denver) came back
+    as 07:30Z (Astra, #872). A naive input is returned as it is.
+    """
+    if value.tzinfo is None:
+        return value
+    wall = value.astimezone().replace(tzinfo=None)
+    for fold in (0, 1):
+        candidate = wall.replace(fold=fold)
+        if candidate.astimezone() == value:
+            return candidate
+    return wall
 
 
 def sql_instant(value: Any) -> Optional[str]:

@@ -298,8 +298,9 @@ class TestBriefGenerationThisWeek:
         brief = svc.generate(OWNER, now=now)
 
         start_dt = datetime.datetime.fromisoformat(brief.period_start)
-        # Lookback: Thursday -> previous day 17:00 = Wednesday 17:00
-        assert start_dt == datetime.datetime(2026, 9, 2, 17, 0)
+        # Lookback: Thursday -> previous day 17:00 = Wednesday 17:00 (local;
+        # a naive clock's window is stored as the same instant in UTC).
+        assert start_dt == datetime.datetime(2026, 9, 2, 17, 0).astimezone()
 
     def test_sections_include_this_week(self, db):
         """The generated brief always has a this_week key in sections."""

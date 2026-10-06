@@ -8,6 +8,7 @@ else for, minted through the real proposal bridge. It prints the payloads
 the faces read, each from its real route or producer:
 
     needsYou   GET /api/desk/needs-you?fresh=1 (the hub's one rule)
+    needsYouAfterMute  the same read after the owner mutes "A2 oracle room"
     brief      the morning's Brief (``MondayBriefService.generate``), made
                before A1 is marked done (``PATCH /api/all-action-items/A1``)
     door       GET /api/door
@@ -91,10 +92,20 @@ def main() -> int:
             needs_you = client.get("/api/desk/needs-you?fresh=1").json()
             door = client.get("/api/door").json()
             projects = client.get("/api/projects").json()
+            # The owner mutes the counted Room (the service behind PUT
+            # /api/settings/heartbeat); the hub's next answer drops it (a face
+            # must follow, Astra #872).
+            from holdspeak.services.heartbeat_service import HeartbeatService
+
+            rows = projects if isinstance(projects, list) else projects.get("projects", [])
+            room = next(row["id"] for row in rows if row.get("name") == "A2 oracle room")
+            HeartbeatService(db).update_settings({"muted_projects": [room]})
+            needs_you_after_mute = client.get("/api/desk/needs-you?fresh=1").json()
     finally:
         db.close()
     print(json.dumps({
-        "ids": seeded["ids"], "needsYou": needs_you, "brief": brief,
+        "ids": seeded["ids"], "needsYou": needs_you, "needsYouAfterMute": needs_you_after_mute,
+        "brief": brief,
         "door": door, "projects": projects,
     }, default=str))
     return 0

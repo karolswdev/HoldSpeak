@@ -53,7 +53,7 @@ import logging
 import threading
 import time
 from datetime import datetime, timedelta
-from holdspeak.timestamps import local_wall, utc_iso, utc_now_iso
+from holdspeak.timestamps import aware, local_wall, utc_iso, utc_now_iso
 from typing import Any, Callable
 
 from .attention_ranking import rank_and_dedup
@@ -561,7 +561,8 @@ def build_aggregate(
         except Exception:
             pass
 
-    computed_at = clock_now.isoformat()
+    # With the hub's offset, never bare (Astra, #872).
+    computed_at = aware(clock_now).isoformat()
     return {
         "count": len(items),
         "projects": sorted(project_ids),

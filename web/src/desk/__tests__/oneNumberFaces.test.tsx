@@ -141,6 +141,35 @@ describe("one needs-you number on every face (one seeded desk, real producers)",
     await waitFor(() => expect(row?.textContent).toContain(`${hub.projectCounts[room.id]} OPEN`));
   });
 
+  it("the palette re-reads the hub when it opens again: a muted Room loses its badge", async () => {
+    const hub = desk.needsYou as Json;
+    const after = desk.needsYouAfterMute as Json;
+    const room = projectsOf(desk.projects).find((p) => p.name === "A2 oracle room")!;
+    expect(after.projectCounts?.[room.id] ?? 0).toBe(0);
+    let answer: Json = hub;
+    mocks.apiFetch.mockImplementation(async (path: string) => {
+      const url = String(path);
+      if (url.startsWith("/api/desk/needs-you")) return structuredClone(answer);
+      return null;
+    });
+    render(
+      <MemoryRouter>
+        <DeskToolShelf />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    const label = await screen.findByText(`Open ${room.name}`);
+    await waitFor(() =>
+      expect(label.closest("li, [role=option], div")?.textContent).toContain(`${hub.projectCounts[room.id]} OPEN`));
+    // The owner mutes the Room; the palette closes and opens again.
+    answer = after;
+    act(() => usePalette.setState({ open: false }));
+    act(() => usePalette.setState({ open: true }));
+    const again = await screen.findByText(`Open ${room.name}`);
+    await waitFor(() =>
+      expect(again.closest("li, [role=option], div")?.textContent).not.toMatch(/\d+ OPEN/));
+  });
+
   it("the Chair's Brief caption says the hub's count, not the Brief's own rows", async () => {
     const hub = desk.needsYou as Json;
     await act(async () => {

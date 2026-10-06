@@ -30,6 +30,13 @@ MILESTONE = "timestamps.zoneless_to_utc.v1"
 #: A bare ISO date-time with no zone: the shape the old naive writers stored.
 _BARE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,6})?)?$")
 
+def _is_bare_clock(value: object) -> bool:
+    """A bare stamp a writer's clock made. A value before 2000 is a schema
+    sentinel (``'1970-01-01T00:00:00'``, a default that means "never"), not
+    a time, and keeps its text."""
+    return isinstance(value, str) and bool(_BARE.match(value)) and value[:4] >= "2000"
+
+
 #: A column is a time column by name.
 _TIME_COLUMN = re.compile(r"(_at|^timestamp|^first_seen|^last_seen|_since|_until)$")
 
@@ -38,6 +45,23 @@ _TIME_COLUMN = re.compile(r"(_at|^timestamp|^first_seen|^last_seen|_since|_until
 #: facts). Their bare values are not a writer's clock and are left alone.
 _NOT_A_CLOCK = frozenset({
     "due_at", "target_at", "start_at", "starts_at", "ends_at", "calendar_starts_at",
+})
+
+#: Columns the old sync parser also wrote (``services/sync_service.py`` before
+#: 2026-10-05 cut an incoming ``...Z`` to its UTC wall clock and the writer
+#: stored it bare): a bare value there is UTC when the iPad wrote the row and
+#: local when the hub did, and no column tells which (a hub meeting the iPad
+#: pushed back wins the merge and is rewritten through sync). Left as they are
+#: (Astra, #872): readers parse them, and the new writers store UTC.
+_SYNC_WRITTEN = frozenset({
+    ("meetings", "started_at"),
+    ("meetings", "ended_at"),
+    ("meetings", "intel_requested_at"),
+    ("meetings", "intel_completed_at"),
+    ("meetings", "capture_checkpoint_at"),
+    ("meetings", "sync_modified_at"),
+    ("bookmarks", "created_at"),
+    ("artifacts", "updated_at"),
 })
 
 #: Bare stamps that were naive UTC, not local.
@@ -63,6 +87,8 @@ def time_columns(conn: sqlite3.Connection) -> list[tuple[str, str]]:
                 continue
             if name in _NOT_A_CLOCK or not _TIME_COLUMN.search(name):
                 continue
+            if (table, name) in _SYNC_WRITTEN:
+                continue
             found.append((table, name))
     return found
 
@@ -82,7 +108,7 @@ def zoneless_rows(conn: sqlite3.Connection) -> dict[tuple[str, str], int]:
             f'SELECT "{column}" FROM "{table}" WHERE "{column}" GLOB ?',
             ("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]*",),
         ).fetchall()
-        count = sum(1 for (value,) in values if isinstance(value, str) and _BARE.match(value))
+        count = sum(1 for (value,) in values if _is_bare_clock(value))
         if count:
             left[(table, column)] = count
     return left
@@ -107,7 +133,7 @@ def repair_zoneless_stamps(conn: sqlite3.Connection, *, force: bool = False) -> 
             f'SELECT DISTINCT "{column}" FROM "{table}" WHERE "{column}" GLOB ?',
             ("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]*",),
         ).fetchall()
-        bare = [value for (value,) in values if isinstance(value, str) and _BARE.match(value)]
+        bare = [value for (value,) in values if _is_bare_clock(value)]
         if not bare:
             continue
         utc = (table, column) in _BARE_IS_UTC

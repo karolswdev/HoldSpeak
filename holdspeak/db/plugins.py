@@ -656,11 +656,13 @@ class PluginArtifactRepository(BaseRepository):
 
             next_row = conn.execute(
                 """
-                SELECT MIN(requested_at) AS next_retry_at
+                SELECT requested_at AS next_retry_at
                 FROM plugin_run_jobs
                 WHERE status = 'queued'
                   AND julianday(requested_at) > julianday(?)
                   AND last_error IS NOT NULL
+                ORDER BY julianday(requested_at) ASC
+                LIMIT 1
                 """,
                 (now_iso,),
             ).fetchone()

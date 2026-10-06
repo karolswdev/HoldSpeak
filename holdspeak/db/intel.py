@@ -2198,7 +2198,7 @@ class IntelRepository(BaseRepository):
         """Terminalize the owner and schedule one linked fresh queue job."""
         now = utc_now_iso()
         retry_at_iso = utc_iso(retry_at)
-        retry_label = retry_at.astimezone().replace(microsecond=0, tzinfo=None).isoformat()
+        retry_label = retry_at.astimezone().strftime("%Y-%m-%dT%H:%M:%S")  # a label for the owner, not a stamp
         detail = (
             f"Deferred intel attempt {attempt}/{max_attempts} failed: {error} "
             f"Retrying at {retry_label}."
@@ -2712,11 +2712,13 @@ class IntelRepository(BaseRepository):
 
             next_row = conn.execute(
                 _CURRENT_LINEAGE_CTE + """
-                SELECT MIN(requested_at) AS next_retry_at
+                SELECT requested_at AS next_retry_at
                 FROM current_jobs
                 WHERE current_rank=1 AND status = 'queued'
                   AND julianday(requested_at) > julianday(?)
                   AND last_error IS NOT NULL
+                ORDER BY julianday(requested_at) ASC
+                LIMIT 1
                 """,
                 (now_iso,),
             ).fetchone()

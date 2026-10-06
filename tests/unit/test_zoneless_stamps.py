@@ -316,3 +316,166 @@ def test_an_old_related_artifact_is_expanded_by_its_instant(tmp_path: Path) -> N
     refs = [hit.source_ref for hit in db.memory.search(
         "zephyr", project_id="p1", time_from=start, time_to=before).hits]
     assert "meeting:m1" in refs and "artifact:a1" not in refs, refs
+
+
+# -- 3. review of #872 (Astra): DST round trips, legacy sync rows, producers --
+
+def _sync_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Database:
+    import holdspeak.db as hsdb
+
+    db = Database(tmp_path / "sync.db")
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    return db
+
+
+def _meeting_record(mid: str, start: str, end: str, lm: str) -> dict:
+    return {
+        "meta": {"id": mid, "kind": "meeting", "last_modified": lm, "deleted": False},
+        "value": {
+            "id": mid, "title": "Fold", "started_at": start, "ended_at": end,
+            "segments": [{"text": "words", "speaker": "Me", "start_time": 0.0, "end_time": 1.0}],
+            "capture_status": "finalized", "provenance": "native",
+        },
+    }
+
+
+@pytest.mark.parametrize(("start", "end"), [
+    ("2026-11-01T07:30:00Z", "2026-11-01T07:45:00Z"),  # the first 01:30 in Denver (MDT)
+    ("2026-11-01T08:30:00Z", "2026-11-01T08:45:00Z"),  # the second 01:30 (MST)
+    ("2026-03-08T09:30:00Z", "2026-03-08T09:45:00Z"),  # 03:30 MDT, just after the spring gap
+])
+def test_a_synced_meeting_keeps_its_instants_across_dst_load_and_save(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, start: str, end: str,
+) -> None:
+    """Astra's repro: 08:30Z / 08:45Z on 2026-11-01 were stored 07:30Z / 07:45Z,
+    and a load and save moved the end before the start."""
+    from holdspeak.services.sync_service import _merge_meetings
+
+    db = _sync_db(tmp_path, monkeypatch)
+    assert _merge_meetings(db, [_meeting_record("m-fold", start, end, end)]) == 1
+
+    def stored() -> tuple[str, str]:
+        with db._connection() as conn:
+            row = conn.execute("SELECT started_at, ended_at FROM meetings WHERE id='m-fold'").fetchone()
+        return row[0], row[1]
+
+    want = (start.replace("Z", "+00:00"), end.replace("Z", "+00:00"))
+    assert stored() == want
+    # Load and save, twice: nothing moves.
+    for _ in range(2):
+        meeting = db.meetings.get_meeting("m-fold")
+        from holdspeak.timestamps import aware
+        assert aware(meeting.started_at) < aware(meeting.ended_at)
+        db.meetings.save_meeting(meeting)
+        assert stored() == want
+
+
+def test_a_naive_wall_time_keeps_its_fold() -> None:
+    from holdspeak.timestamps import parse_wall, utc_iso
+
+    for stamp in ("2026-11-01T07:30:00+00:00", "2026-11-01T08:30:00+00:00",
+                  "2026-03-08T09:30:00+00:00", "2026-07-01T12:00:00+00:00"):
+        assert utc_iso(parse_wall(stamp)) == stamp
+
+
+def _main_sync_parse_dt(value):
+    """``_parse_dt`` exactly as main shipped it before this branch: an incoming
+    ``...Z`` cut to its UTC wall clock, returned naive."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.replace(tzinfo=None) if value.tzinfo is not None else value
+    text = str(value).strip()
+    if not text:
+        return None
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    parsed = datetime.fromisoformat(text)
+    return parsed.replace(tzinfo=None) if parsed.tzinfo is not None else parsed
+
+
+def test_a_legacy_ipad_synced_meeting_is_not_shifted_by_the_backfill(tmp_path: Path) -> None:
+    """Astra, #872: main's sync stored "2026-10-05T15:00:00Z" as bare 15:00 (UTC
+    wall time); a backfill that reads bare as local made it 21:00+00:00."""
+    path = tmp_path / "hub.db"
+    db = Database(path)
+    incoming = {"started_at": "2026-10-05T15:00:00Z", "ended_at": "2026-10-05T15:30:00Z",
+                "sync_modified_at": "2026-10-05T15:31:00Z"}
+    # Main's writer: the meetings row stored ``value.isoformat()`` of the parsed time.
+    stored = {k: _main_sync_parse_dt(v).isoformat() for k, v in incoming.items()}
+    _insert(db, "meetings", {"id": "m-ipad", "title": "iPad capture", **stored})
+    db.plugins.record_artifact(
+        artifact_id="a-ipad", meeting_id="m-ipad", artifact_type="memo",
+        title="Synced", body_markdown="x",
+        updated_at=_main_sync_parse_dt("2026-10-05T15:40:00Z").isoformat(),
+    )
+    db = _reopen(path, db)
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT started_at, ended_at, sync_modified_at FROM meetings WHERE id='m-ipad'"
+        ).fetchone()
+        artifact = conn.execute("SELECT updated_at FROM artifacts WHERE id='a-ipad'").fetchone()[0]
+    assert tuple(row) == (stored["started_at"], stored["ended_at"], stored["sync_modified_at"])
+    assert artifact == "2026-10-05T15:40:00"
+
+
+def test_a_brief_and_a_draft_command_store_no_zoneless_stamp(tmp_path: Path) -> None:
+    """Astra, #872: the Brief serialised its naive clock and the draft command
+    claim stored ``datetime.now()``; both on a fresh desk after the repair."""
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.monday_brief_service import MondayBriefService
+    from holdspeak.services.project_update_service import ProjectUpdateService
+
+    db = Database(tmp_path / "fresh.db")
+    owner = Principal(PrincipalKind.OWNER, "the-owner")
+    MondayBriefService(db).generate(owner)
+    db.projects.create_project(project_id="p-draft", name="Draft room")
+    ProjectUpdateService(db, project_service=None)._claim_draft_command("cmd-1", "p-draft", "hash")
+    with db._connection() as conn:
+        assert zoneless_rows(conn) == {}
+        assert conn.execute("SELECT COUNT(*) FROM monday_briefs").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM project_commands").fetchone()[0] == 1
+
+
+def test_the_plugin_queue_names_the_earliest_retry_by_instant(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Astra, #872: MIN(requested_at) as text picked '2026-10-05 15:00:00' over
+    '2026-10-05T14:00:00+00:00'."""
+    import holdspeak.db.plugins as plugins_module
+    from holdspeak.timestamps import aware
+
+    db = Database(tmp_path / "hub.db")
+    for key in ("k-a", "k-b"):
+        db.plugins.enqueue_plugin_run_job(
+            meeting_id="m-q", window_id=key, plugin_id="p", plugin_version="1",
+            transcript_hash="h", idempotency_key=key,
+        )
+    ids = sorted(job.id for job in db.plugins.list_plugin_run_jobs())
+    for job_id, stamp in zip(ids, ("2026-10-05 15:00:00", "2026-10-05T14:00:00+00:00")):
+        _set(db, "UPDATE plugin_run_jobs SET status='queued', last_error='x', requested_at=? WHERE id=?",
+             stamp, job_id)
+    monkeypatch.setattr(plugins_module, "utc_now_iso", lambda: "2026-10-05T12:00:00+00:00")
+    summary = db.plugins.get_plugin_run_job_summary()
+    assert aware(summary.next_retry_at) == datetime(2026, 10, 5, 14, 0, tzinfo=timezone.utc)
+
+
+def test_the_intel_queue_names_the_earliest_retry_by_instant(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import holdspeak.db.intel as intel_module
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+    from holdspeak.timestamps import aware
+
+    db = Database(tmp_path / "hub.db")
+    for mid, stamp in (("m-a", "2026-10-05 15:00:00"), ("m-b", "2026-10-05T14:00:00+00:00")):
+        db.meetings.save_meeting(MeetingState(
+            id=mid, started_at=datetime(2026, 10, 1, 10, 0), title=mid,
+            segments=[TranscriptSegment(text="x", speaker="Me", start_time=0.0, end_time=1.0)],
+        ))
+        db.intel.enqueue_intel_job(mid, transcript_hash="h")
+        _set(db, "UPDATE intel_jobs SET status='queued', last_error='x', requested_at=? WHERE meeting_id=?",
+             stamp, mid)
+    monkeypatch.setattr(intel_module, "utc_now_iso", lambda: "2026-10-05T12:00:00+00:00")
+    summary = db.intel.get_intel_queue_summary()
+    assert aware(summary.next_retry_at) == datetime(2026, 10, 5, 14, 0, tzinfo=timezone.utc), summary

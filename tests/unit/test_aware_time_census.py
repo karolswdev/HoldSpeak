@@ -11,7 +11,11 @@ fails on every form that makes a naive local stamp:
 * ``datetime.utcnow()`` and ``datetime.today()``;
 * ``datetime.now`` handed over as a callable (``default_factory=datetime.now``);
 * ``time.strftime(fmt)`` with no time tuple (the local wall clock as text);
-* ``local_wall().isoformat()`` (the compare-only clock written out).
+* ``local_wall().isoformat()`` (the compare-only clock written out);
+* ``x.isoformat()`` where ``x`` is a naive wall time in the same function
+  (from ``local_wall()``, ``parse_wall()``, ``.replace(tzinfo=None)``, a
+  ``datetime(...)``/``datetime.combine(...)`` with no zone, or arithmetic on
+  one of those): a naive clock serialised as a zoneless stamp.
 
 The allowlist is empty. Add an entry only with a one-line reason.
 """
@@ -93,7 +97,86 @@ def naive_sites(source: str, rel: str) -> list[str]:
             if isinstance(parent, ast.Call) and parent.func is node:
                 continue  # a call, judged above
             found.append(f"{rel}:{node.lineno} datetime.now passed as a clock")
+    found.extend(_serialised_naive(tree, rel, classes))
+    return list(dict.fromkeys(found))
+
+
+#: Calls that give a NAIVE local wall time (compare-only values).
+_NAIVE_CALLS = frozenset({"local_wall", "parse_wall", "naive_local"})
+
+
+def _is_naive_source(node: ast.AST, naive: set[str], classes: set[str]) -> bool:
+    """True when *node* evaluates to a naive datetime by its own shape."""
+    if isinstance(node, ast.Name):
+        return node.id in naive
+    if isinstance(node, ast.BoolOp):  # ``now or local_wall()``
+        return any(_is_naive_source(value, naive, classes) for value in node.values)
+    if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub)):
+        return _is_naive_source(node.left, naive, classes)
+    if not isinstance(node, ast.Call):
+        return False
+    name = _dotted(node.func)
+    keywords = {kw.arg for kw in node.keywords}
+    if name.rsplit(".", 1)[-1] in _NAIVE_CALLS:
+        return True
+    if isinstance(node.func, ast.Attribute) and node.func.attr == "replace":
+        if "tzinfo" in keywords:
+            tz = next(kw.value for kw in node.keywords if kw.arg == "tzinfo")
+            return isinstance(tz, ast.Constant) and tz.value is None
+        return _is_naive_source(node.func.value, naive, classes)
+    constructors = {f"{c}" for c in classes} | {f"{c}.combine" for c in classes} | {
+        "datetime.datetime", "datetime.datetime.combine"}
+    if name in constructors and "tzinfo" not in keywords:
+        positional_tz = 8 if not name.endswith("combine") else 3
+        return len(node.args) < positional_tz
+    return False
+
+
+def _serialised_naive(tree: ast.AST, rel: str, classes: set[str]) -> list[str]:
+    """``x.isoformat()`` where ``x`` is a naive wall time in the same function:
+    a naive clock written out as a zoneless stamp (Astra, #872)."""
+    found: list[str] = []
+    scopes = [tree] + [
+        node for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    ]
+    for scope in scopes:
+        naive: set[str] = set()
+        body = scope.body if hasattr(scope, "body") else []
+        for node in _walk_in_order(body):
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        if _is_naive_source(node.value, naive, classes):
+                            naive.add(target.id)
+                        else:
+                            naive.discard(target.id)
+            elif (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "isoformat"
+                and _is_naive_source(node.func.value, naive, classes)
+                and not (isinstance(node.func.value, ast.Call)
+                         and _dotted(node.func.value.func) == "local_wall")
+            ):
+                found.append(f"{rel}:{node.lineno} a naive wall time serialised with isoformat()")
     return found
+
+
+def _walk_in_order(body: list[ast.stmt]):
+    """Nodes of *body* in source order, not entering nested functions."""
+    stack = list(reversed(body))
+    while stack:
+        node = stack.pop()
+        yield node
+        children = [
+            child for child in ast.iter_child_nodes(node)
+            if not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef))
+        ]
+        # An assignment's value is read before its target is bound.
+        if isinstance(node, ast.Assign):
+            children = [node.value] + [c for c in children if c is not node.value]
+        stack.extend(reversed(children))
 
 
 def test_no_naive_time_source_in_production() -> None:
@@ -127,9 +210,22 @@ def test_census_sees_every_naive_form() -> None:
         "ok1 = datetime.now().astimezone()\n"
         "ok2 = datetime.now(timezone.utc)\n"
         "ok3 = time.strftime('%H', time.gmtime(0))\n"
+        "def h(now=None):\n"
+        "    end = now or local_wall()\n"
+        "    start = end - timedelta(days=1)\n"
+        "    day = datetime.combine(end.date(), time_of_day)\n"
+        "    gone = parse_wall(row).replace(hour=0)\n"
+        "    a = start.isoformat()\n"
+        "    b = day.isoformat()\n"
+        "    return a, b, gone.isoformat()\n"
+        "def k(stamp):\n"
+        "    ok4 = utc_iso(local_wall())\n"
+        "    ok5 = datetime.combine(d, t, tzinfo=timezone.utc).isoformat()\n"
+        "    return ok4, ok5, aware(stamp).isoformat()\n"
     )
-    lines = sorted(int(site.split(":")[1].split()[0]) for site in naive_sites(sample, "x.py"))
-    assert lines == [3, 4, 5, 6, 7, 8, 11]
+    sites = naive_sites(sample, "x.py")
+    lines = sorted(int(site.split(":")[1].split()[0]) for site in sites)
+    assert lines == [3, 4, 5, 6, 7, 8, 11, 20, 21, 22], sites
 
 
 def test_allowlist_entries_carry_a_reason() -> None:
