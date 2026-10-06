@@ -68,14 +68,14 @@ Record your microphone and system audio, or import a recording or a transcript f
 
 Every piece of your work is something you can talk to.
 
-- **Ask AI** on a Meeting, a Note, an Artifact, a Knowledge collection, or a Workflow. The answer shows what it was grounded on, with citations you can open. **Keep** it as an Artifact with the exact sources and instruction, or **Bin** it and nothing is stored.
+- **Ask AI** on a Meeting, a Note, an Artifact, a Knowledge collection, or a Workflow. The answer shows what it was grounded on, with citations you can open. **Keep** it as an Artifact with the exact sources and instruction, or select **Bin** to close it without creating an Artifact. The run result and its receipt stay stored.
 - **Ask this project** sits in every Project Room. Ask what is blocked, who owes what, or what changed, and get an answer from that project's records.
 - **Develop a thought.** Keep a rough sentence as a Note and select **Develop this thought**. Each **Ask AI** turn asks you one question, until the idea is clear. Your original text is always kept.
 - **Threads** are saved, multi-turn conversations with your work:
   - Type `@` to attach Meetings, Notes, Artifacts, and decisions. Select **Continue in thread** on a Desk object to start from it.
   - Pick a mode: **Desk**, **Chase**, **Draft**, **Plan**, **Project**, or **Interview**. Each one gives the model its own instructions and tools.
   - **The Thread has hands.** The model can call real tools. A held call asks you: **Allow once**, **Allow always**, or **Deny**.
-  - Slash commands: `/todo` creates an action item, `/keep` saves the reply as a Note, `/fork` branches, `/compact` summarizes, `/prompt` inserts a saved prompt.
+  - Slash commands: `/todo` creates an action item, `/keep` saves the reply as an Artifact, `/fork` branches, `/compact` summarizes, `/prompt` inserts a saved prompt.
   - Edit or regenerate a message to branch the conversation. Saved prompts and guardrails are Notes with a tag.
   - **The Call** turns a Thread into a voice conversation: you speak, and it answers aloud.
 - **Interview mode** asks about your goals, Projects, cadences, and decisions, and saves the answers as context.
@@ -89,7 +89,7 @@ You never save to memory. Your normal work is the write path.
 - **Facts become beliefs.** Background jobs extract facts from your records and fold them into beliefs that keep their evidence. A later fact can refine, supersede, or contradict one.
 - **Standing pages** answer the recurring questions. For each Project: what we decided, what is open and who owes it, risks and disputes, and what changed this week. Every sentence cites its sources. A sentence with no source is cut. When you delete a source, the sentence that cites it disappears.
 
-These jobs run on the model you assign to them. With no model, nothing runs and nothing is written.
+Fact extraction, belief consolidation, and page generation need an assigned model. Search indexing and evidence cleanup run without one.
 
 ## A Desk for the work you lead
 
@@ -124,9 +124,9 @@ Your Claude Code and Codex sessions report to the Desk through agent hooks.
 
 - **See who needs you.** Blocked sessions come first, with the question they are asking.
 - **Watch live.** Open a session to see its terminal pane, read-only.
-- **Answer by voice.** Select **Arm this pane**, hold the microphone, and speak the reply. HoldSpeak shows the exact text before it types it into that pane, on this machine or another.
+- **Answer by voice.** Select **Arm this pane** when the Control mode asks for it. Click the microphone, speak, and click it again to stop. Review your reply and select **SEND** to type it into that pane, on this machine or a configured remote machine.
 - **Ground the answer.** Attach a meeting or an Artifact, so the agent gets the context you have.
-- **Follow the pull request.** Mission Control tracks each PR through review to merge, with receipts.
+- **Watch the pull requests.** Mission Control shows open PRs and their CI status.
 
 ## Extend everything
 
@@ -136,7 +136,7 @@ HoldSpeak is built from parts you can add to. You do not need to fork it.
 | --- | --- | --- |
 | **Meeting plugin** | Turns a transcript into a typed artifact. Drop a Python file in `~/.holdspeak/plugin_packs/`. | [Plugin authoring](docs/PLUGIN_AUTHORING.md) |
 | **Connector** | Reads activity from any tool into HoldSpeak. Drop a pack in `~/.holdspeak/connector_packs/`. | [Connector development](docs/CONNECTOR_DEVELOPMENT.md) |
-| **Actuator** | Proposes an effect outside HoldSpeak, such as an issue or a webhook post. It runs only what you previewed. | [Actuator development](docs/ACTUATOR_DEVELOPMENT.md) |
+| **Actuator** | Proposes an effect outside HoldSpeak, such as an issue or a webhook post. It executes a fixed proposal. In YOLO mode, configured destinations can run without asking. | [Actuator development](docs/ACTUATOR_DEVELOPMENT.md) |
 | **Agent** | A role you author, with its own instructions. | [Agents and Threads](docs/AGENTS_AND_THREADS.md) |
 | **Workflow** | A sequence of steps that runs with a receipt for each step. | [Automation](docs/AUTOMATION.md) |
 | **Voice command** | Maps a spoken phrase to a registered action. | [Voice commands](docs/VOICE_COMMANDS.md) |
