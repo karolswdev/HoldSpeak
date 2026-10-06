@@ -286,6 +286,10 @@ def acceptance_checks(kind: str, item_id: str, control_mode: str) -> list[str]:
         "Commit your work, push the branch, and open a pull request.",
         f"The pull request body names the item: {kind}:{item_id}.",
         "If a question blocks you, ask it and wait. Do not guess.",
+        "The holdspeak MCP tools are yours for this launch. Use them to read the desk "
+        "and memory (People data is cut), file notes, propose decisions (the owner "
+        "confirms them), update the status of this item or of items you add, and ask "
+        "the owner with a Door item. You cannot send anything out or change settings.",
         "The item is done when the pull request is open and its tests pass.",
     ]
 

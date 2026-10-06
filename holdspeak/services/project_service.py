@@ -3712,7 +3712,14 @@ class ProjectService:
         # Idempotency
         req_hash = _request_hash({"project_id": project_id,
                                   "resource_ref": ref_str, **body})
+        from .conductor_launch import launch_id_of, record_own, refuse
+
+        launch = launch_id_of(principal)
         replay = self._check_idempotency(command_id, req_hash, "add_resource")
+        if replay is not None and launch is not None:
+            # A replay answers the ORIGINAL caller; it never answers (or
+            # transfers ownership to) a launch (Astra round 1 on #903).
+            refuse(ref_str, "a launch replays no other caller's command")
         if replay is not None:
             # PHILO-9-01 round three (Codex Astra r2, R1-2): the replay answers
             # the ORIGINAL response, recorded whole with the command -- never
@@ -3735,6 +3742,16 @@ class ProjectService:
             raise ValueError(f"unknown project relationship: {relation}")
 
         with self._command_txn(command_id) as conn:
+            if launch is not None:
+                # Conductor K6: only a NEW membership is the launch's. An
+                # existing live one stays its owner's: refused, in the same
+                # transaction that would write it (no race).
+                live = conn.execute(
+                    "SELECT 1 FROM project_resources WHERE project_id=? AND resource_ref=? AND deleted=0",
+                    (project_id, ref_str),
+                ).fetchone()
+                if live is not None:
+                    refuse(ref_str, f"{ref_str} is already in this Project; a launch adds only new resources")
             current_rev = self._get_revision(conn, project_id)
             if expected_revision is not None and current_rev != expected_revision:
                 raise ConflictError(
@@ -3825,6 +3842,8 @@ class ProjectService:
                 req_hash, envelope, result=result,
             )
 
+        if launch is not None:
+            record_own(principal, f"resource:{project_id}:{ref_str}")
         return result
 
     @_serialized_command
@@ -3835,6 +3854,11 @@ class ProjectService:
     ) -> bool:
         self._require_project(project_id)
         ref_str = self._project_resource_ref(resource_ref)
+        # Conductor K6: a launch removes only a membership it added (HTTP,
+        # MCP and the kernel all reach this one method).
+        from .conductor_launch import require_own
+
+        require_own(principal, f"resource:{project_id}:{ref_str}")
 
         # Idempotency
         req_hash = _request_hash({"project_id": project_id,

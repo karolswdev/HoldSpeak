@@ -69,9 +69,13 @@ def desk_path() -> Iterator[None]:
         _DESK_PATH.reset(token)
 
 
-def terms_for(agent_identity: str) -> dict[str, Any]:
-    """The grant's terms: the agent and the SORTED operation set, stored in the row."""
-    return {"agent_identity": agent_identity, "operations": sorted(DESK_GRANT_OPERATIONS)}
+def terms_for(agent_identity: str, operations: Any = None) -> dict[str, Any]:
+    """The grant's terms: the agent and the SORTED operation set, stored in the row.
+
+    ``operations`` narrows the set (Conductor K6: a launch's grant is
+    ``decision.create`` only); it never widens it past the admitted writes."""
+    chosen = DESK_GRANT_OPERATIONS if operations is None else frozenset(operations) & DESK_GRANT_OPERATIONS
+    return {"agent_identity": agent_identity, "operations": sorted(chosen)}
 
 
 def terms_sha256(terms: Mapping[str, Any], expires_at: float | None) -> str:
@@ -192,8 +196,9 @@ class DeskEffectRefused(Exception):
 
 
 def grant_effect(*, grant_id: str, agent_identity: str, delegator_kind: str, delegator_identity: str,
-                 expires_at: float | None, operation_id: str, now: float) -> Callable[[Any], None]:
-    terms = terms_for(agent_identity)
+                 expires_at: float | None, operation_id: str, now: float,
+                 operations: Any = None) -> Callable[[Any], None]:
+    terms = terms_for(agent_identity, operations)
     sha = terms_sha256(terms, expires_at)
 
     def effect(conn: Any) -> None:

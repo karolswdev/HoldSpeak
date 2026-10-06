@@ -67,7 +67,7 @@ def test_preview_is_the_hands_brief_and_writes_nothing(tmp_path, db, monkeypatch
     assert result["branch"] == "hs/action-ai_1" and result["worktree"] == "hs-action-ai_1"
     assert result["control_mode"] == "yolo" and result["profile"] == "claude-default"
     assert result["refused"] == []
-    assert len(result["acceptance"]) == 6
+    assert len(result["acceptance"]) == 7
     kinds = [s["kind"] for s in result["sources"]]
     assert kinds[0] == "action" and result["sources"][0]["title"] == "Fix the login timeout"
     assert "meeting" in kinds

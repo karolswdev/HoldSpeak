@@ -44,7 +44,8 @@ def _project_exists(database: Any, project_id: str) -> bool:
     return row is not None and str(row["lifecycle"]) != "archived"
 
 
-def grant(principal: Any, agent_identity: str, project_id: str, body: Any, *, database: Any = None) -> dict[str, Any]:
+def grant(principal: Any, agent_identity: str, project_id: str, body: Any, *, database: Any = None,
+          operations: Any = None) -> dict[str, Any]:
     """``project.delegation.grant``: one LIVE grant for (agent, project); a re-grant replaces the old one.
 
     *body* is ``{expires_at?}`` (epoch seconds, optional, no default). Any
@@ -77,6 +78,7 @@ def grant(principal: Any, agent_identity: str, project_id: str, body: Any, *, da
             project_id=str(minted["project_id"]), delegator_kind=principal.name,
             delegator_identity=principal.identity, expires_at=minted.get("expires_at"),
             operation_id=handle.operation_id, now=_now(database),
+            operations=operations,  # in-process callers only (K6); never from the body
         )
         handle.terminal("succeeded", "succeeded", f"{rooms.PROJECT_BASIS_KIND}:{minted['grant_id']}", effect=effect)
         return {"grant_id": minted["grant_id"]}

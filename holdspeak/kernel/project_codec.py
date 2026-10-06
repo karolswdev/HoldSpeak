@@ -97,7 +97,7 @@ class ProjectCodec:
             # Admitted as the run's child; its approval and its claim re-check
             # the frozen grant, so a refused child keeps its parent and receipt.
             return _steward_basis(admission, context or {})
-        if self.name in rooms.OWNER_ONLY_OPERATIONS:
+        if self.name in rooms.OWNER_ONLY_OPERATIONS and not rooms.launch_grantable(self.name, principal.identity):
             # PHILO-9-06 (found by the closing use): outside the owner's bound
             # no grant can ever admit it, so the code names the owner, never a
             # delegation the agent could ask for. #694: the set is data.
@@ -169,7 +169,8 @@ class ProjectCodec:
             if code:
                 raise KernelRefused(code)
             return
-        if self.name not in rooms.PROJECT_GRANT_OPERATIONS or str(operation.get("principal_kind")) != "agent":
+        if (not rooms.granted_operation(self.name, operation.get("principal_identity"))
+                or str(operation.get("principal_kind")) != "agent"):
             return
         # The project was bound to the stored object at admission and a run's
         # or an update's project never changes: the frozen row's own project.

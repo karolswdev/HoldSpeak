@@ -48,7 +48,10 @@ from typing import Any, Callable, Mapping, Optional
 
 from .. import coder_factory, coder_steering
 from ..coder_steering import Runner
+from ..logging_config import get_logger
 from .attempts import resolver_from_registry
+
+log = get_logger("delivery.factory_launch")
 
 AGENT_PROFILES_SCHEMA = 1
 LAUNCHES_SCHEMA = 1
@@ -592,8 +595,16 @@ class LaunchService:
         local_node_id: str = "local",
         wall_now: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
         which: Optional[Callable[[str], Optional[str]]] = None,
+        control_mode: Optional[Callable[[], str]] = None,
+        mcp_config_dir: Optional[Path] = None,
     ) -> None:
         self._profiles = profiles
+        # Conductor K6: the Control mode read at launch decides whether the
+        # agent's ``holdspeak`` MCP tools are pre-approved in its pane.
+        from . import agent_mcp
+
+        self._control_mode = control_mode or agent_mcp.config_control_mode
+        self._mcp_config_dir = mcp_config_dir
         # The executable preflight. Production asks the real PATH; a test
         # that injects a tmux runner has no real binaries, so the preflight
         # runs there only when the test passes its own ``which``.
@@ -835,6 +846,7 @@ class LaunchService:
 
     def launch(
         self, request: Any, *, launch_id: str = "", parent_operation_id: str = "",
+        principal: Any = None,
     ) -> dict[str, Any]:
         """§9 agent.launch. All refusals are typed and pre-execution;
         the execution order (and what each failure leaves behind) is:
@@ -872,7 +884,12 @@ class LaunchService:
         gate_state = "not gated"
         if parent_operation_id:
             self._require_process_gate(profile, worktree_path)
-        if str(profile.get("executable") or "") == "claude":
+        launch_id = launch_id or "launch_" + uuid.uuid4().hex[:16]
+        from . import agent_mcp
+
+        mode = self._control_mode()
+        executable = str(profile.get("executable") or "")
+        if executable == "claude":
             # Every Claude launch carries HoldSpeak's spawn settings: the
             # rider hooks (so the launch registers with no manual
             # ``agent-hook install``) and the gate hooks (inert unless the
@@ -881,11 +898,16 @@ class LaunchService:
 
             settings_path = coder_gate.write_spawn_settings()
             argv = [*argv, "--settings", str(settings_path)]
+            # Conductor K6: the HoldSpeak MCP, from the launch's credential.
+            mcp_config = agent_mcp.write_mcp_config(launch_id, self._mcp_config_dir)
+            allowed: tuple[str, ...] = ("Bash",) if parent_operation_id else ()
+            argv = [*argv, *agent_mcp.claude_args(mcp_config, mode, allowed=allowed)]
             if parent_operation_id:
-                argv = [*argv, "--allowedTools", "Bash"]
                 gate_state = "gated"
+        elif executable == "codex":
+            from ..principals import agent_credentials
 
-        launch_id = launch_id or "launch_" + uuid.uuid4().hex[:16]
+            argv = [*argv, *agent_mcp.codex_args(agent_credentials.hub_url, mode)]
         record: dict[str, Any] = {
             "launch_schema": LAUNCHES_SCHEMA,
             "launch_id": launch_id,
@@ -907,6 +929,11 @@ class LaunchService:
             "operation_id": parent_operation_id or None,
             "rollback": None,
             "launched_at": _iso_now(self._wall_now()),
+            "mcp": {
+                "server": agent_mcp.SERVER_NAME,
+                "palette": "CONDUCTOR",
+                "pre_approved": agent_mcp.pre_approved(mode),
+            },
         }
 
         # 1. the DISTINCT worktree-create op, through the envelope.
@@ -926,6 +953,7 @@ class LaunchService:
                     "stage": "worktree_create",
                     "outcome": str(receipt.get("outcome") or created.get("state")),
                 }
+                self._release_mcp(launch_id)
                 self._ledger.record(record)
                 return record
             registered_source, registered = self._registry.register(worktree_path)
@@ -941,7 +969,14 @@ class LaunchService:
             {
                 "node_id": self._local_node_id,
                 "operation": {"family": "coder_factory", "verb": "factory.spawn"},
-                "payload": {"name": session_name, "command": command},
+                # launch_id: the spawn issues the launch-bound credential.
+                "payload": {
+                    "name": session_name, "command": command, "launch_id": launch_id,
+                    # K6 item scope: the agent may change its origin item.
+                    "scope_items": [f"{origin_ref['kind']}:{origin_ref['id']}"] if origin_ref else [],
+                    # K6: the Project the agent may add to (a hand-off's own).
+                    "project_id": project if origin_ref and project != "desk" else None,
+                },
             }
         )
         record["commands"]["spawn"] = spawned.get("command_id")
@@ -959,6 +994,7 @@ class LaunchService:
                     "worktree": "retained",
                     "worktree_command_id": record["commands"]["worktree_create"],
                 }
+            self._release_mcp(launch_id)
             self._ledger.record(record)
             return record
 
@@ -976,6 +1012,7 @@ class LaunchService:
                 **(record.get("rollback") or {}),
                 "session": "retained",  # named here; ending it is a gated act
             }
+            self._release_mcp(launch_id)
             self._ledger.record(record)
             return record
         record["target"] = {
@@ -1016,13 +1053,48 @@ class LaunchService:
                 **(record.get("rollback") or {}),
                 "session": "retained",
             }
+            self._release_mcp(launch_id)
             self._ledger.record(record)
             return record
 
         record["attempt_id"] = attempt.attempt_id
         record["state"] = "launched"
+        # K6: the owner's press on the launch grants the launch identity
+        # decision PROPOSALS (decision.create, status proposed) for its life.
+        record["mcp"]["decision_proposals"] = self._grant(principal, launch_id, None)
+        # ... and additions (links, resources) to its own Project.
+        launch_project = project if origin_ref and project != "desk" else None
+        record["mcp"]["project_additions"] = (
+            self._grant(principal, launch_id, launch_project) if launch_project else "no_project"
+        )
         self._ledger.record(record)
         return record
+
+    @staticmethod
+    def _grant(principal: Any, launch_id: str, project_id: Optional[str]) -> str:
+        from .. import coder_factory
+        from ..services import conductor_launch
+
+        identity = coder_factory.launch_identity(launch_id)
+        try:
+            granted = (
+                conductor_launch.grant_project_additions(principal, identity, project_id, ttl_seconds=43_200.0)
+                if project_id
+                else conductor_launch.grant_decision_proposals(principal, identity, ttl_seconds=43_200.0)
+            )
+        except Exception as exc:  # a grant never fails the launch
+            log.warning("launch grant not made for %s (%s)", launch_id, exc)
+            return "not_granted"
+        return "granted" if granted else "not_granted"
+
+    def _release_mcp(self, launch_id: str) -> None:
+        """A failed launch: its MCP credential and config go (K6). The
+        session, when one was spawned, is retained and named as before."""
+        from .. import coder_factory
+        from . import agent_mcp
+
+        coder_factory.revoke_launch(launch_id)
+        agent_mcp.remove_mcp_config(launch_id, self._mcp_config_dir)
 
     def submit_process_spawn(
         self, request: Mapping[str, Any], instruction: str, principal: Any,
@@ -1077,7 +1149,8 @@ class LaunchService:
         operation_id = str(handle["operation_id"])
         try:
             record = self.launch(
-                request, launch_id=launch_id, parent_operation_id=operation_id
+                request, launch_id=launch_id, parent_operation_id=operation_id,
+                principal=principal,
             )
             if record.get("state") != "launched":
                 self._kernel.receipt(operation_id, "failed", f"launch:{launch_id}", node)
@@ -1123,6 +1196,7 @@ class LaunchService:
         except Exception:
             if self._kernel.store.receipt(operation_id) is None:
                 self._kernel.receipt(operation_id, "failed", f"launch:{launch_id}", node)
+            self._release_mcp(launch_id)
             raise
 
     def _send_instruction(

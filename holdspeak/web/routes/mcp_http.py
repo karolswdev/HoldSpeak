@@ -26,6 +26,10 @@ Principal derivation per D3:
 - Non-loopback + owner token -> 403 (Article XI:4, per-route guard C5).
 - Non-loopback + agent credential -> AGENT (palette from credential).
 - No match -> 401.
+- Conductor K6: loopback + a LAUNCH-BOUND agent credential (one a launch
+  issued, ``AgentCredential.launch_id``) passes with the Reach switch off,
+  as AGENT with its CONDUCTOR palette. A hand-issued agent credential, and
+  any agent credential from elsewhere, still needs the switch on.
 
 **The enable flag governs the REMOTE listener, not the local transport
 (HS-200-45 R3).** ``remote.streamable_http_enabled`` is the owner's switch for
@@ -138,12 +142,34 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             principal_probe.kind is PrincipalKind.OWNER
             and is_loopback_host(probe_host)
         )
+        # The credential behind an AGENT principal (palette, launch binding).
+        from ...web_auth import extract_request_token
+
+        credential_store = _get_credential_store(request)
+        token = extract_request_token(
+            authorization=request.headers.get("authorization"),
+            header_token=request.headers.get("x-holdspeak-token"),
+            query_token=None,
+        )
+        cred = (
+            credential_store.derive_credential(token)
+            if token and principal_probe.kind is PrincipalKind.AGENT
+            else None
+        )
+        # Conductor K6: an agent HoldSpeak launched on this machine is local
+        # work, not Reach. Its launch-bound credential, from loopback, passes
+        # with the Reach switch off. A hand-issued credential still needs it.
+        loopback_launch_agent = (
+            cred is not None
+            and cred.launch_id is not None
+            and is_loopback_host(probe_host)
+        )
 
         # Gate: return 404 when the REMOTE transport is not enabled. A loopback
         # OWNER is the hub's own local transport (HS-200-45 R3) and passes with
         # the flag off -- the stdio sidecar proxies through here rather than
         # opening the database as a second writer.
-        if not _remote_enabled(request) and not loopback_owner:
+        if not _remote_enabled(request) and not (loopback_owner or loopback_launch_agent):
             return JSONResponse(
                 {"error": "streamable_http_not_enabled"},
                 status_code=404,
@@ -181,20 +207,29 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 status_code=401,
             )
 
-        # Derive palette from the credential (if AGENT).
+        # An AGENT whose credential died between the edge and here is refused,
+        # never served without its palette.
+        if principal.kind is PrincipalKind.AGENT and cred is None:
+            return JSONResponse({"error": "unauthenticated"}, status_code=401)
+
+        # Derive palette from the credential (if AGENT), derived above.
         palette: frozenset[str] | None = None
-        credential_store = _get_credential_store(request)
-        # The middleware already derived the principal; to get the palette
-        # we need to re-derive the credential from the token.
-        from ...web_auth import extract_request_token
-        token = extract_request_token(
-            authorization=request.headers.get("authorization"),
-            header_token=request.headers.get("x-holdspeak-token"),
-            query_token=None,
-        )
-        cred = credential_store.derive_credential(token) if token else None
+        call_gate: Any = None
+        resource_gate: Any = None
         if cred and cred.palette is not None:
             palette = cred.palette
+        if cred and cred.palette_name == "CONDUCTOR":
+            # The palette is re-resolved per request, so a tool added since
+            # the launch classifies itself; mixed tools are classed per call.
+            from ...mcp.palettes import (
+                conductor_call_allowed,
+                conductor_resource_allowed,
+                resolve_palette,
+            )
+
+            palette = resolve_palette("CONDUCTOR")
+            call_gate = conductor_call_allowed
+            resource_gate = conductor_resource_allowed
 
         # Parse JSON-RPC request body.
         try:
@@ -234,7 +269,12 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             caller_token = _caller.set(client_host)
             identity_token = _caller_identity.set(identity_label)
             try:
-                return handle_message_for_principal(body, principal, palette=palette)
+                gates = (
+                    {"call_gate": call_gate, "resource_gate": resource_gate}
+                    if call_gate is not None or resource_gate is not None
+                    else {}
+                )
+                return handle_message_for_principal(body, principal, palette=palette, **gates)
             finally:
                 _origin.reset(origin_token)
                 _caller.reset(caller_token)
