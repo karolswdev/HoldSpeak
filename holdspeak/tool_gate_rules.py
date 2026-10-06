@@ -67,6 +67,20 @@ _FIND_ACTIONS = frozenset({
     "-exec", "-execdir", "-ok", "-okdir", "-delete", "-fprint", "-fprint0",
     "-fprintf", "-fls",
 })
+#: What a command word runs (Astra round 2 on #904): a bash builtin (a bare
+#: name bash runs itself, whatever the PATH holds), a SYSTEM program (a bare
+#: name the PATH resolves outside the worktree), or anything else: a path the
+#: call names, a bare name the PATH resolves into the worktree (shadowed), or
+#: no program at all. Only a builtin or a system program earns read authority
+#: or the cd/git/find readings; anything else is a plain worktree program.
+BUILTIN, SYSTEM, OTHER = "builtin", "system", "other"
+_BUILTINS = frozenset({"cd", "pushd", "popd", "echo", "pwd", "true", "false", "printf", "test", "[", ":"})
+#: Builtins that change how later words resolve (PATH, aliases, builtins).
+_SHELL_STATE = frozenset({
+    "export", "unset", "alias", "unalias", "hash", "enable", "set", "shopt",
+    "declare", "typeset", "readonly", "local", "trap", "source", ".",
+})
+
 #: find actions that run another command.
 _FIND_RUNS = frozenset({"-exec", "-execdir", "-ok", "-okdir"})
 _UV_VALUE_FLAGS = frozenset({
@@ -150,8 +164,9 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
         real_cwd = os.path.realpath(cwd or root)
         if not _inside(real_cwd, real_root):
             return BashCall(OUTSIDE, "cwd_outside_worktree")
-        segments = _segments(_tokens(command))
-        return _Reader(real_root, real_cwd).read(segments)
+        reader = _Reader(real_root, real_cwd)
+        segments = _segments(_tokens(command, cat_is_system=reader.identity("cat") == SYSTEM))
+        return reader.read(segments)
     except _Unparsed as exc:
         return BashCall(UNPARSED, exc.rule)
     except _Outside as exc:
@@ -163,11 +178,11 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
 # ── lexing ─────────────────────────────────────────────────────────────
 
 
-def _prepare(command: str) -> str:
+def _prepare(command: str, *, cat_is_system: bool = True) -> str:
     """Replace quoted here-document bodies with plain text, refuse every
     construct that expands at run time, and turn unquoted newlines into
     ``;`` (each line is its own command)."""
-    text = _quoted_heredocs(command)
+    text = _quoted_heredocs(command, cat_is_system=cat_is_system)
     out: list[str] = []
     quote = ""
     index = 0
@@ -211,7 +226,7 @@ def _prepare(command: str) -> str:
     return "".join(out)
 
 
-def _quoted_heredocs(command: str) -> str:
+def _quoted_heredocs(command: str, *, cat_is_system: bool = True) -> str:
     """Replace each ``$(cat <<'TAG' ... TAG)`` with plain text. The body
     ends at the FIRST line that is exactly ``TAG`` (as bash reads it), and
     the substitution must close right there: anything between that line and
@@ -223,6 +238,9 @@ def _quoted_heredocs(command: str) -> str:
         if opened is None:
             out.append(command[pos:])
             return "".join(out)
+        if not cat_is_system:
+            # The substitution runs ``cat``: only the system cat makes it text.
+            raise _Unparsed("heredoc_cat_not_system")
         tag, dash = opened.group("tag"), bool(opened.group("dash"))
         index = opened.end()
         while True:
@@ -242,9 +260,9 @@ def _quoted_heredocs(command: str) -> str:
         pos = closed.end()
 
 
-def _tokens(command: str) -> list[tuple[str, bool]]:
+def _tokens(command: str, *, cat_is_system: bool = True) -> list[tuple[str, bool]]:
     """``(token, is_operator)`` pairs. Quoted text is never an operator."""
-    lexer = shlex.shlex(_prepare(command), posix=True, punctuation_chars=";&|<>")
+    lexer = shlex.shlex(_prepare(command, cat_is_system=cat_is_system), posix=True, punctuation_chars=";&|<>")
     lexer.whitespace_split = True
     lexer.commenters = ""
     result: list[tuple[str, bool]] = []
@@ -331,7 +349,10 @@ class _Reader:
                 self.all_read = False  # a write is never a Normal read
         words = list(words)
         while words and _ENV_ASSIGN.match(words[0]):
-            value = words.pop(0).split("=", 1)[1]
+            assignment = words.pop(0)
+            if assignment.split("=", 1)[0] == "PATH":
+                raise _Unparsed("path_change")  # the program would resolve elsewhere
+            value = assignment.split("=", 1)[1]
             if _looks_like_path(value):
                 self._path(value, cwd=self.cwd, rule="env_path_outside_worktree")
             self.all_read = False
@@ -351,34 +372,48 @@ class _Reader:
             raise _Unparsed("inline_code")
         if base == "find" and any(w in _FIND_RUNS for w in words[1:]):
             raise _Unparsed("indirect_find_exec")  # it runs a command this reading cannot see
-        if base in ("cd", "pushd"):
+        if name in _SHELL_STATE:
+            raise _Unparsed("shell_state_change")
+        # Identity first: no special reading and no read authority for a
+        # program that is not the builtin or the system program it is named
+        # after. A path-invoked ``./cd`` cannot move the shell's cwd.
+        identity = self.identity(name)
+        if identity == BUILTIN and name in ("cd", "pushd"):
             self._cd(words[1:])
             self.read_rules.append("cd")
             return
-        if base in ("source", "."):
-            self.all_read = False
-        if base == "git":
+        if identity == SYSTEM and name == "git":
             self._git(words[1:])
             return
         self._args(words[1:], cwd=self.cwd)
-        # A read rule names a program on the PATH, never a file the call names
-        # (``./cat`` is not cat), and a read command must resolve outside the
-        # worktree (a worktree file called ``cat`` first on the PATH is not cat).
-        read = "" if "/" in name else _read_rule(base, words[1:])
-        if read and base in _READ_COMMANDS and not self._system_program(base):
-            read = ""
+        read = _read_rule(name, words[1:]) if identity in (BUILTIN, SYSTEM) else ""
         if read:
             self.read_rules.append(read)
         else:
             self.all_read = False
 
-    def _system_program(self, name: str) -> bool:
-        import shutil
-
-        found = shutil.which(name, path=os.environ.get("PATH"))
+    def identity(self, name: str) -> str:
+        """``builtin`` | ``system`` | ``other`` for one command word."""
+        if "/" in name or not name:
+            return OTHER
+        if name in _BUILTINS:
+            return BUILTIN
+        found = self._which(name)
         if found is None:
-            return name in ("pwd", "echo", "true")  # shell builtins
-        return not _inside(os.path.realpath(found), self.root)
+            return OTHER
+        return OTHER if _inside(found, self.root) else SYSTEM
+
+    def _which(self, name: str) -> Optional[str]:
+        """The PATH lookup bash makes, with relative PATH entries (``.``,
+        ``""``, ``bin``) read from the call's working folder."""
+        for entry in (os.environ.get("PATH") or "").split(os.pathsep):
+            folder = entry or "."
+            if not os.path.isabs(folder):
+                folder = os.path.join(self.cwd, folder)
+            candidate = os.path.join(folder, name)
+            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+                return os.path.realpath(candidate)
+        return None
 
     def _cd(self, args: list[str]) -> None:
         targets = [a for a in args if not a.startswith("-")]

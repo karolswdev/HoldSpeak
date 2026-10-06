@@ -951,3 +951,132 @@ def test_r1_an_unsafe_model_answer_is_not_typed(launched, tmp_path, monkeypatch)
     result = responder.decide(KEY)
     assert result["outcome"] == ESCALATED and result["draft"]["reason"].startswith("the answer names")
     assert launched.typed[typed_before:] == []
+
+
+# ── Astra round 2 on #904: program identity, newer waits, withheld waits ──
+
+
+@pytest.mark.parametrize("program, command, on_path", [
+    ("git", "./git status", False),
+    ("git", "git status", True),        # a worktree git first on the PATH
+    ("find", "find .", True),
+    ("cd", "./cd .", False),
+    ("cat", "echo \"$(cat <<'EOF'\nx\nEOF\n)\"", True),  # the heredoc's cat
+])
+def test_r2_read_authority_needs_the_real_program(launched, tmp_path, monkeypatch, program, command, on_path) -> None:
+    _mode(tmp_path, monkeypatch, "neutral")
+    script = launched.worktree / program
+    script.write_text("#!/bin/sh\nprintf PROOF > ../r2-program-proof\n", encoding="utf-8")
+    script.chmod(0o700)
+    with monkeypatch.context() as patch:
+        if on_path:
+            patch.setenv("PATH", str(launched.worktree) + os.pathsep + os.environ["PATH"])
+        call = _call(launched, command)
+        ran = subprocess.run(["/bin/bash", "-c", command], cwd=launched.worktree, capture_output=True)
+    assert ran.returncode == 0, ran.stderr
+    assert (launched.worktree.parent / "r2-program-proof").read_text() == "PROOF"  # it really ran
+    assert call.proposal.state == HELD, (command, call.proposal.operation)
+
+
+@pytest.mark.parametrize("mode", ["neutral", "yolo"])
+def test_r2_a_path_invoked_cd_does_not_move_the_cwd(launched, tmp_path, monkeypatch, mode) -> None:
+    _mode(tmp_path, monkeypatch, mode)
+    (launched.worktree / "subdir").mkdir()
+    script = launched.worktree / "cd"
+    script.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    script.chmod(0o700)
+    (launched.worktree.parent / "r2-outside").write_text("OUTSIDE", encoding="utf-8")
+    command = "./cd subdir && cat ../r2-outside"
+    call = _call(launched, command)
+    ran = subprocess.run(["/bin/bash", "-c", command], cwd=launched.worktree, capture_output=True, text=True)
+    assert ran.returncode == 0 and ran.stdout == "OUTSIDE"  # ../ is outside the worktree
+    assert call.proposal.state == HELD
+    # The bare builtin still moves it: cd subdir && cat ../x reads inside.
+    assert classify_bash("cd subdir && cat ../x", cwd=str(launched.worktree), root=str(launched.worktree)).scope == "inside"
+
+
+def test_r2_a_path_change_or_shell_state_change_is_unparsed(tmp_path) -> None:
+    for command, rule in (
+        ("PATH=. git status", "path_change"),
+        ("export PATH=bin", "shell_state_change"),
+        ("enable -n cd", "shell_state_change"),
+        ("source .venv/bin/activate", "shell_state_change"),
+    ):
+        verdict = classify_bash(command, cwd=str(tmp_path), root=str(tmp_path))
+        assert (verdict.scope, verdict.rule) == ("unparsed", rule), command
+
+
+@pytest.mark.parametrize("mode", ["safe", "neutral"])
+def test_r2_a_mode_change_after_triage_shows_the_wait_at_once(launched, tmp_path, monkeypatch, mode) -> None:
+    from holdspeak.services.agent_responder import _config_control_mode
+
+    _mode(tmp_path, monkeypatch, "yolo")
+    _ask(launched, tmp_path, monkeypatch, "Shall I run the tests?")
+    engine = _model(launched, tmp_path, monkeypatch, ROUTINE_REPLY)
+    responder = _responder(launched, tmp_path, "yolo")
+    responder._mode = _config_control_mode
+    seen_when_drafting: list[int] = []
+    original = engine.run_prompt
+
+    def model(**kw: Any) -> str:
+        seen_when_drafting.append(len(_members(launched, tmp_path)))
+        return original(**kw)
+
+    engine.run_prompt = model
+    assert responder.triage([KEY]) == {"notify": [], "decide": [KEY]}
+    _mode(tmp_path, monkeypatch, mode)
+    typed_before = len(launched.typed)
+    responder.decide(KEY)
+    assert launched.typed[typed_before:] == []
+    assert len(_members(launched, tmp_path)) == 1
+    assert launched.notified == [KEY]  # exactly once
+    if mode == "safe":
+        assert engine.prompts == []  # Secure never drafts
+    else:
+        assert seen_when_drafting == [1]  # shown before the model ran
+        [row] = _members(launched, tmp_path)
+        assert row["draft"]["text"] == "Yes. Run the tests, then open the pull request."
+
+
+def test_r2_an_old_draft_never_overwrites_a_newer_answer(launched, tmp_path, monkeypatch) -> None:
+    _ask(launched, tmp_path, monkeypatch, "Shall I run the tests?")
+    engine = _model(launched, tmp_path, monkeypatch, ROUTINE_REPLY)
+    responder = _responder(launched, tmp_path, "yolo")
+    responder.triage([KEY])
+    original = engine.run_prompt
+
+    def model_with_a_new_wait(**kwargs: Any) -> str:
+        _answered(launched, tmp_path, monkeypatch, "Yes. Run them.")
+        _ask(launched, tmp_path, monkeypatch, "Shall I open the pull request?")
+        assert responder.triage([KEY]) == {"notify": [], "decide": [KEY]}
+        engine.run_prompt = original
+        # Wait B is drafted on its own (A's model call is still running).
+        own, responder._drafter = responder._drafter, lambda **_kw: ROUTINE_REPLY
+        try:
+            assert responder.decide(KEY)["outcome"] == ANSWERED
+        finally:
+            responder._drafter = own
+        return ROUTINE_REPLY
+
+    engine.run_prompt = model_with_a_new_wait
+    assert responder.decide(KEY)["outcome"] == "superseded"
+    assert _members(launched, tmp_path) == []
+    assert launched.store.wait(KEY)["state"] == ANSWERED
+
+
+def test_r2_a_failed_old_worker_never_overwrites_a_newer_wait(launched, tmp_path, monkeypatch) -> None:
+    _ask(launched, tmp_path, monkeypatch, "Shall I run the tests?")
+    responder = _responder(launched, tmp_path, "yolo")
+    responder.triage([KEY])
+
+    def broken(**_kw: Any) -> str:
+        _answered(launched, tmp_path, monkeypatch, "Yes.")
+        _ask(launched, tmp_path, monkeypatch, "Shall I open the pull request?")
+        responder.triage([KEY])  # the new wait is deciding
+        raise RuntimeError("x")
+
+    responder._drafter = broken
+    monkeypatch.setattr(responder, "_recheck", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    responder._decide_guarded(KEY)  # the worker thread's entry: it fails
+    stored = launched.store.wait(KEY)
+    assert stored["state"] == "deciding"  # the newer wait's record stands

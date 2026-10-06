@@ -73,6 +73,8 @@ ESCALATED = "escalated"
 DRAFTED = "drafted"
 #: The wait ended (the owner answered) before the draft was ready.
 SUPERSEDED = "superseded"
+#: Normal: the wait is shown; the draft is being made.
+DRAFTING = "drafting"
 
 #: Launch states whose agent may still run (Conductor K2 ledger).
 LIVE_LAUNCH_STATES = frozenset({"launched", "registered"})
@@ -332,33 +334,42 @@ class AgentResponder:
             if state == DECIDING:
                 if self._clock() - float(entry.get("at") or 0) < DECIDE_STALE_SECONDS:
                     return "none"
-                self._store.put_wait(key, {
-                    **entry, "state": ESCALATED, "verdict": REAL,
+                self._write(key, wait_id, {
+                    **entry, "state": ESCALATED, "verdict": REAL, "withheld": False,
                     "reason": "the decision did not finish", "at": self._clock(),
                 })
                 return "notify"
-            return "notify"  # escalated or drafted: the notified set dedupes
-        if mode == "yolo":
-            self._store.put_wait(key, {
-                "wait_id": wait_id, "state": DECIDING, "launch_id": launch["launch_id"],
-                "mode": mode, "at": self._clock(),
-            })
-            return "decide"
-        return "notify+draft"  # Normal: the owner sees the wait now, the draft follows
+            return "notify"  # escalated, drafted or drafting: the notified set dedupes
+        # A new wait: its record replaces any older wait's record. ``withheld``
+        # remembers that THIS triage held the wait back from Needs you.
+        withheld = mode == "yolo"
+        self._store.put_wait(key, {
+            "wait_id": wait_id, "state": DECIDING if withheld else DRAFTING,
+            "launch_id": launch["launch_id"], "mode": mode, "withheld": withheld,
+            "at": self._clock(),
+        })
+        return "decide" if withheld else "notify+draft"  # Normal: shown now, the draft follows
+
+    def _write(self, key: str, wait_id: str, entry: Mapping[str, Any]) -> bool:
+        """Write the record of ``wait_id`` only while it is the stored wait:
+        a worker that drafted an older wait never replaces a newer one."""
+        def put(doc: dict[str, Any]) -> bool:
+            current = doc["waits"].get(key)
+            if isinstance(current, dict) and current.get("wait_id") and current.get("wait_id") != wait_id:
+                return False
+            doc["waits"][key] = {**dict(entry), "wait_id": wait_id}
+            return True
+
+        return bool(self._store.update(put))
 
     # the decision ----------------------------------------------------------
 
     def _decide_guarded(self, key: str) -> None:
         try:
             self.decide(key)
-        except Exception as exc:  # the wait goes to the owner, never lost
+        except Exception as exc:  # decide escalates its own wait; this is the last net
             log.warning("agent responder decision failed for %s: %s", key, exc)
             try:
-                entry = self._store.wait(key) or {}
-                self._store.put_wait(key, {
-                    **entry, "state": ESCALATED, "verdict": REAL,
-                    "reason": "the decision failed", "at": self._clock(),
-                })
                 self._notify([key])
             except Exception:
                 pass
@@ -369,14 +380,54 @@ class AgentResponder:
 
         session = next((s for s in self._sessions() if self._key(s) == key), None)
         launch = self._launch_for(key)
-        mode = str(self._mode() or "yolo").lower()
         if session is None or launch is None or not is_blocked(session):
             return {"outcome": "not_waiting"}
         wait_id = str(getattr(session, "wait_id", "") or "")
+        entry = self._store.wait(key) or {}
+        # Whether THIS wait was held back from Needs you at triage (YOLO).
+        state = {"held_back": entry.get("wait_id") == wait_id and bool(entry.get("withheld"))}
+        try:
+            return self._decide_wait(key, session, launch, wait_id, state)
+        except Exception:
+            self._write(key, wait_id, {
+                "state": ESCALATED, "launch_id": str(launch["launch_id"]), "verdict": REAL,
+                "reason": "the decision failed", "withheld": False, "at": self._clock(),
+            })
+            if state["held_back"]:
+                self._notify([key])
+            raise
+
+    def _reveal(self, key: str, wait_id: str, state: dict[str, Any]) -> None:
+        """The owner sees the wait now (one notification), if it was held back."""
+        if state["held_back"]:
+            state["held_back"] = False
+            self._notify([key])
+
+    def _decide_wait(
+        self, key: str, session: Any, launch: Mapping[str, Any], wait_id: str, state: dict[str, Any],
+    ) -> dict[str, Any]:
+        from ..agent_context.models import wait_kind
+
         question = str(getattr(session, "question", "") or "").strip()
         launch_id = str(launch["launch_id"])
-        # A YOLO triage held this wait back from Needs you; Normal showed it.
-        held_back = mode == "yolo"
+        mode = str(self._mode() or "yolo").lower()
+
+        # Before the model: Secure never drafts and a permission prompt is
+        # the owner's; a wait held back by a YOLO triage is shown at once.
+        if mode == "safe" or wait_kind(session) == "approve":
+            reason = "Secure: the owner answers" if mode == "safe" else "the agent asks for a permission"
+            self._write(key, wait_id, {
+                "state": ESCALATED, "launch_id": launch_id, "mode": mode, "verdict": REAL,
+                "reason": reason, "draft": "", "withheld": False, "at": self._clock(),
+            })
+            self._reveal(key, wait_id, state)
+            return {"outcome": ESCALATED, "draft": Draft(REAL, reason).to_dict()}
+        if mode == "neutral" and state["held_back"]:
+            self._write(key, wait_id, {
+                "state": DRAFTING, "launch_id": launch_id, "mode": mode, "withheld": False,
+                "at": self._clock(),
+            })
+            self._reveal(key, wait_id, state)
 
         raw = None
         error = ""
@@ -396,8 +447,8 @@ class AgentResponder:
         # ask something else or ask for a permission, the mode may be changed.
         mode, stale = self._recheck(key, wait_id, question, mode)
         if stale == SUPERSEDED:
-            self._store.put_wait(key, {
-                "wait_id": wait_id, "state": SUPERSEDED, "launch_id": launch_id, "mode": mode,
+            self._write(key, wait_id, {
+                "state": SUPERSEDED, "launch_id": launch_id, "mode": mode, "withheld": False,
                 "verdict": draft.verdict, "reason": "the wait ended before the draft was ready",
                 "draft": draft.answer, "at": self._clock(),
             })
@@ -410,8 +461,8 @@ class AgentResponder:
             outcome = str((sent.get("receipt") or {}).get("outcome") or sent.get("status") or "")
             if outcome == "delivered":
                 self._record_sent(launch_id, question)
-                self._store.put_wait(key, {
-                    "wait_id": wait_id, "state": ANSWERED, "launch_id": launch_id, "mode": mode,
+                self._write(key, wait_id, {
+                    "state": ANSWERED, "launch_id": launch_id, "mode": mode, "withheld": False,
                     "verdict": ROUTINE, "reason": draft.reason, "draft": draft.answer,
                     "at": self._clock(), "operation_id": sent.get("operation_id"),
                 })
@@ -419,16 +470,15 @@ class AgentResponder:
                 return {"outcome": ANSWERED, "draft": draft.to_dict(), "operation_id": sent.get("operation_id")}
             draft = Draft(REAL, f"the answer was not delivered ({outcome or 'refused'})", draft.answer)
 
-        state = DRAFTED if mode == "neutral" else ESCALATED
-        self._store.put_wait(key, {
-            "wait_id": wait_id, "state": state, "launch_id": launch_id, "mode": mode,
+        final = DRAFTED if mode == "neutral" else ESCALATED
+        self._write(key, wait_id, {
+            "state": final, "launch_id": launch_id, "mode": mode, "withheld": False,
             "verdict": draft.verdict, "reason": draft.reason, "draft": draft.answer,
             "at": self._clock(),
         })
         self._receipt(key, session, draft, "answer_drafted", mode, launch_id)
-        if held_back:
-            self._notify([key])  # held back while deciding: the owner hears now
-        return {"outcome": state, "draft": draft.to_dict()}
+        self._reveal(key, wait_id, state)  # held back while deciding: the owner hears now
+        return {"outcome": final, "draft": draft.to_dict()}
 
     def _recheck(self, key: str, wait_id: str, question: str, mode: str) -> tuple[str, str]:
         """``(mode now, why the draft is stale)``: ``""`` when the same wait
