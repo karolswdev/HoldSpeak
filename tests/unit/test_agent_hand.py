@@ -277,6 +277,8 @@ def _rig(
     monkeypatch.setattr(coder_gate, "GATE_CONFIG_FILE", gate_path)
     settings = tmp_path / "spawn-settings.json"
     monkeypatch.setattr(coder_gate, "write_spawn_settings", lambda: settings)
+    # K6: the per-launch --mcp-config files stay in this test's directory.
+    monkeypatch.setattr("holdspeak.delivery.agent_mcp.mcp_config_dir", lambda: tmp_path / "mcp")
     monkeypatch.setattr("holdspeak.delivery.first_message.LAUNCH_POLL_SECONDS", 0.05)
     monkeypatch.setattr("holdspeak.delivery.first_message.TRUST_WAIT_SECONDS", 1.0)
     if screen is not None:

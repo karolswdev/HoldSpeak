@@ -175,7 +175,9 @@ class FakeTmuxServer:
 
 
 @pytest.fixture
-def rig(tmp_path):
+def rig(tmp_path, monkeypatch):
+    # K6: the per-launch --mcp-config files stay in this test's directory.
+    monkeypatch.setattr("holdspeak.delivery.agent_mcp.mcp_config_dir", lambda: tmp_path / "mcp")
     repo = _make_repo(tmp_path)
     registry = DeliveryRegistry(
         tmp_path / "sources.json", map_path=tmp_path / "absent-map.json"
@@ -338,9 +340,11 @@ def test_launch_creates_one_attempt_one_target_one_receipt(rig) -> None:
     assert command.startswith(f"cd {shlex.quote(str(rig.repo))} && ")
     assert "HOLDSPEAK_STORY_REF=demo/DM-1-01" in command
     # Conductor K2: every Claude launch carries HoldSpeak's spawn settings
-    # (rider + gate hooks); only a gated process.spawn adds --allowedTools.
+    # (rider + gate hooks); only a gated process.spawn allows Bash. K6: the
+    # HoldSpeak MCP rides every launch; YOLO (the default) pre-approves it.
     assert "exec claude --settings " in command
-    assert "--allowedTools" not in command
+    assert command.endswith("--allowedTools mcp__holdspeak")
+    assert " Bash" not in command
     assert "hs-dm-1-01" in rig.tmux.sessions
 
     # The wire record is path-free (§13).
@@ -369,7 +373,7 @@ def test_process_spawn_installs_gate_settings_and_allows_bash(rig, monkeypatch) 
     command = spawn_argv[spawn_argv.index("-s") + 2]
     assert "HOLDSPEAK_PARENT_OPERATION_ID=op_parent123" in command
     assert f"--settings {settings}" in command
-    assert command.endswith("--allowedTools Bash")
+    assert command.endswith("--allowedTools Bash mcp__holdspeak")
     assert any(arg.startswith("HOLDSPEAK_AGENT_CREDENTIAL=") for arg in spawn_argv)
     assert any(arg.startswith("HOLDSPEAK_HUB_URL=") for arg in spawn_argv)
 
