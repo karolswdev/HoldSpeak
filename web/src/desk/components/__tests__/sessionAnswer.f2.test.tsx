@@ -12,7 +12,7 @@ const mic = vi.hoisted(() => ({ props: [] as Array<Record<string, unknown>> }));
 vi.mock("../MicButton", () => ({
   MicButton: (props: Record<string, unknown>) => {
     mic.props.push(props);
-    return <span data-testid="mic" data-auto={String(Boolean(props.autoStart))} />;
+    return <span data-testid="mic" data-auto={String(Boolean(props.startSignal))} />;
   },
 }));
 
@@ -27,6 +27,7 @@ function open(answer: boolean, wire: Record<string, unknown> = {}) {
     useSteering.setState({
       openKey: "claude:c1",
       answerOpen: answer,
+      answerSeq: answer ? 1 : 0,
       session: fromWireSteeringSession({
         key: "claude:c1", agent: "claude", question: QUESTION,
         awaiting_response: false, blocked: true, ...wire,
@@ -86,7 +87,7 @@ describe("Speak answer: the answer well (K5b, K5c)", () => {
     render(<SessionPullout />);
     expect(screen.queryByTestId("session-answer-well")).toBeNull();
     expect(screen.queryByText(QUESTION, { selector: "pre" })).toBeNull();
-    expect(mic.props.some((p) => p.autoStart)).toBe(false);
+    expect(mic.props.some((p) => p.startSignal)).toBe(false);
   });
 
   it("openSession(key, {answer}) sets the well; closeSession clears it", () => {
