@@ -75,6 +75,24 @@ export interface NeedsYouDecision {
   since?: string | null;
 }
 
+/** R5: a coder session as the hub's rule reads it (`agent_context`
+ * `AgentSession.to_dict()`, snake_case on the wire). */
+export interface NeedsYouCoder {
+  agent?: string | null;
+  session_id?: string | null;
+  cwd?: string | null;
+  project_name?: string | null;
+  repo_root?: string | null;
+  updated_at?: string | null;
+  awaiting_response?: boolean | null;
+  lifecycle?: string | null;
+  question?: string | null;
+}
+
+/** The freshness window of R5 (`agent_context` `DEFAULT_RECENT_MAX_AGE_SECONDS`). */
+export const CODER_MAX_AGE_SECONDS = 30 * 60;
+const CODER_EXCERPT_CHARS = 200;
+
 export interface NeedsYouDoorProjection {
   board?: Partial<Record<DoorColumn | "active", NeedsYouDoorCard[]>>;
 }
@@ -90,6 +108,8 @@ export interface NeedsYouInputs {
   meetings?: readonly Meeting[];
   /** R4: the decisions that wait for the owner's review. */
   decisions?: readonly NeedsYouDecision[];
+  /** R5: the coder sessions (the agent hook registry). */
+  coders?: readonly NeedsYouCoder[];
   /** The names that mean the owner himself (the hub's `ownerNames`). */
   selfNames?: readonly string[];
   now?: Date;
@@ -253,6 +273,63 @@ function decisionItems(decisions: readonly NeedsYouDecision[]): NeedsYouRoomItem
   return rows;
 }
 
+function coderExcerpt(text: string): string {
+  const flat = text.split(/\s+/).filter(Boolean).join(" ");
+  if (flat.length <= CODER_EXCERPT_CHARS) return flat;
+  return `${flat.slice(0, CODER_EXCERPT_CHARS - 1).trimEnd()}\u2026`;
+}
+
+/** R5: the coder sessions that wait for the owner's answer, as attention
+ * rows (`needs_you_membership.coder_items`). A member is `awaiting_response`
+ * with a captured question, not ended, and updated within 30 minutes. */
+export function coderItems(
+  coders: readonly NeedsYouCoder[],
+  now: Date = new Date(),
+  maxAgeSeconds: number = CODER_MAX_AGE_SECONDS,
+): NeedsYouRoomItem[] {
+  const rows: NeedsYouRoomItem[] = [];
+  for (const session of coders) {
+    if (!session?.awaiting_response) continue;
+    const question = String(session.question ?? "").trim();
+    if (!question) continue;
+    if (String(session.lifecycle ?? "") === "ended") continue;
+    const updated = String(session.updated_at ?? "");
+    const updatedMs = updated ? new Date(updated).getTime() : Number.NaN;
+    if (!Number.isFinite(updatedMs)) continue;
+    const age = Math.max(0, Math.floor((now.getTime() - updatedMs) / 1000));
+    if (age > maxAgeSeconds) continue;
+    const agent = String(session.agent ?? "");
+    const sessionId = String(session.session_id ?? "");
+    if (!agent || !sessionId) continue;
+    const key = `${agent}:${sessionId}`;
+    const ref = `coder:${key}`;
+    const excerpt = coderExcerpt(question);
+    rows.push({
+      id: ref,
+      ref,
+      projectId: "",
+      projectName: String(session.project_name ?? ""),
+      title: excerpt,
+      why: "TO ANSWER",
+      ageToken: updated,
+      since: updated,
+      dueAt: null,
+      kind: "coder",
+      source: "coder",
+      verbHref: null,
+      openRef: ref,
+      severity: "warning",
+      sessionKey: key,
+      agent,
+      cwd: String(session.cwd ?? ""),
+      repoRoot: String(session.repo_root ?? ""),
+      question: excerpt,
+      ageSeconds: age,
+    });
+  }
+  return rows;
+}
+
 /** The names that mean the owner himself. The People store reserves `me`
  * and `you` and its follow-through projection names the owner `you` /
  * `manager`; the hub adds the configured meeting speaker label (`ownerNames`
@@ -326,6 +403,7 @@ export function meetingNeedsYou(meeting: Meeting): boolean {
  * The merged rows then use the shared deduplication and ranking functions.
  * R2 and R3 are appended as members with stable refs of their own.
  * R4 is the decisions that wait for the owner's review, as attention rows.
+ * R5 is the coding agents that wait for the owner's answer, as attention rows.
  *
  * Owner ruling 2026-10-04: a row the owner waits on someone else for
  * (`waitsOnOther`) is listed, marked `waiting`, and is not a member.
@@ -374,7 +452,12 @@ export function computeNeedsYou(
       severity: his.severity || row.severity,
     };
   });
-  const singles = [...people, ...decisionItems(input.decisions ?? [])].map((row) => (
+  // A coder row (R5) keeps its own row and its own ref (`coder:<key>`).
+  const singles = [
+    ...people,
+    ...decisionItems(input.decisions ?? []),
+    ...coderItems(input.coders ?? [], now),
+  ].map((row) => (
     { ...row, waiting: waitsOnOther(row, selfNames) }
   ));
   const ranked = rankAttention([...merged, ...singles], now) as NeedsYouRoomItem[];
@@ -414,7 +497,7 @@ export function computeNeedsYou(
   };
 }
 
-type SourceName = "door" | "room" | "assignments" | "meetings" | "decisions" | "mutedProjects";
+type SourceName = "door" | "room" | "assignments" | "meetings" | "decisions" | "coders" | "mutedProjects";
 export type NeedsYouErrors = Partial<Record<SourceName, string>>;
 
 export interface NeedsYouSnapshot extends NeedsYouResult {
@@ -446,7 +529,7 @@ export interface NeedsYouAnswer {
   /** The Room rows alone (the Room input of R1). */
   roomItems?: NeedsYouRoomItem[];
   /** A hub source that could not be read, by name. */
-  sourceErrors?: Partial<Record<"door" | "assignments" | "meetings" | "decisions", string>>;
+  sourceErrors?: Partial<Record<"door" | "assignments" | "meetings" | "decisions" | "coders", string>>;
   projects?: unknown;
   /** The members by Project (`{projectId: n}`): the one count, split by
    *  Project. The shade's Projects list and the palette's badge read it. */

@@ -82,6 +82,32 @@ def _bind_listen_socket(host: str, preferred: int) -> socket.socket:
     return sock
 
 
+def _coder_awaiting_edge(keys: list[str]) -> Optional[dict]:
+    """Conductor K3: coder sessions began to wait for the owner.
+
+    Marks the needs-you aggregate dirty and runs the Heartbeat's notify
+    decision now (Notify mode, quiet hours and the notified item set are its
+    own). The block announces itself, so the faces get one ``desk_changed``
+    frame and re-read Needs you. A failure is logged and never stops the
+    coder watcher.
+    """
+    try:
+        from .db import get_database, get_observer
+        from .runtime.announce_scope import announce_writes
+        from .services.heartbeat_service import HeartbeatService
+
+        db = get_database()
+        with announce_writes("coder", "awaiting", keys[0] if keys else "") as name:
+            for key in keys[1:]:
+                name(key)
+            return HeartbeatService(db, observer=get_observer()).notify_coder_edge(
+                session_key=",".join(keys),
+            )
+    except Exception as exc:
+        log.warning(f"coder awaiting edge failed: {exc}")
+        return None
+
+
 def _format_duration(total_seconds: float) -> str:
     """Format duration as MM:SS or HH:MM:SS."""
     total_secs = max(0, int(total_seconds))
@@ -1674,7 +1700,12 @@ class MeetingWebServer:
                 sessions = await asyncio.to_thread(agent_context.list_agent_sessions)
                 current = coder_steering.awaiting_snapshot(sessions)
                 if snapshot is not None:
-                    for key in coder_steering.awaiting_transitions(snapshot, current):
+                    transitions = coder_steering.awaiting_transitions(snapshot, current)
+                    # Conductor K3: a coder that BEGAN to wait reaches Needs
+                    # you now (dirty mark + the Heartbeat's notify decision),
+                    # not at the next sweep.
+                    entered = [key for key in transitions if current.get(key)]
+                    for key in transitions:
                         await self._ws.broadcast(
                             BroadcastMessage(
                                 type="intel_status",
@@ -1689,6 +1720,10 @@ class MeetingWebServer:
                                 },
                             )
                         )
+                    if entered:
+                        # After the frames: the decision builds the full
+                        # needs-you answer, and the frames must not wait on it.
+                        await asyncio.to_thread(_coder_awaiting_edge, entered)
                 snapshot = current
             except asyncio.CancelledError:
                 raise

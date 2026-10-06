@@ -673,6 +673,34 @@ class HeartbeatService:
         except Exception:
             pass
 
+    # ── The coder edge (Conductor K3) ──────────────────────────────────
+
+    def notify_coder_edge(
+        self, principal: Principal | None = None, *, session_key: str = "",
+    ) -> dict[str, Any]:
+        """A coding agent began to wait for the owner: decide now.
+
+        The hub's coder watcher calls this on the transition into
+        ``awaiting_response``, so a blocked agent does not wait for the next
+        sweep (15 min by default). It marks the needs-you aggregate dirty and
+        runs the SAME notification decision a sweep runs: Rhythm's Notify
+        mode (``off`` sends nothing), quiet hours (held, then delivered once
+        by a later decision), and the notified item set (the coder row's id is
+        marked when it fires, so the next sweep does not fire it again).
+        """
+        from holdspeak.services.needs_you_aggregate import mark_needs_you_dirty
+
+        try:
+            mark_needs_you_dirty(self._db)
+        except Exception as exc:
+            log.warning("heartbeat coder edge: dirty mark failed: %s", exc)
+        _p = principal or Principal(PrincipalKind.OWNER, "heartbeat-coder-edge")
+        receipt = self._run_notification_decision(_p, self.get_settings())
+        receipt["trigger"] = "coder.awaiting"
+        if session_key:
+            receipt["sessionKey"] = session_key
+        return receipt
+
     # ── D3 notification decision (wired from run_sweep) ────────────────
 
     def _run_notification_decision(
