@@ -33,12 +33,11 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Send folder: six older Send glass rigs park the built-in (direct DB write) to keep their ratified boards; Google Drive / OneDrive provider ids unverified on real installs (fall back to SYNCED). Onboarding: a sign-in connects the account but saves no Send destination; no System Settings verb when Calendar access is denied (needs a hub route); real EventKit, gh/acli auth and transcription unverified on his desk | — | — |
 | Defaults: the 4B starter's meeting analysis is untested on real hardware; the real faster-whisper fence skips in CI (needs a cached model) | — | — |
 | Defaults: never run against a real Ollama/LM Studio/llama.cpp server; a binding disabled and re-enabled between the backlog tick and the claim consumes the mark (manual retry); GitHub Enterprise entry.egress_host says github.com; meeting import does not write the backlog mark; real EventKit prompt/read unverified | — | — |
-| Memory faces (need a canvas): the Desk memory card with observations, the standing pages, the ⌘K palette's use of fused recall | Muad'Dib | — |
 | Memory: thread rows saved before the origin column ('' origin) that were project hits and later refiled still replay (accepted, Astra #852); Chase has about 440 bytes of palette room at 32k | — | — |
 | Memory pages: never run with the real LAN model; no person pages (no non-People key exists for a person scope) | owner | — |
 | Memory observations: never run with the real LAN model; no benchmark group; join default search only by naming kind `observation` | — | — |
 | Memory facts: never run through the product path with the real LAN model | — | — |
-| Memory: summary and topic as their own chunks not built — needs one transition over vectors, facts, observations and pages (MEMORY-DESIGN.md); the Desk memory face does not show the four new kinds | — | — |
+| Memory: summary and topic as their own chunks not built — needs one transition over vectors, facts, observations and pages (MEMORY-DESIGN.md); the Desk memory face does not show the four new kinds; beliefs show only under the All filter | — | — |
 | Memory: the agent tool turn (RecipeService.chat → run_recipe) is retired code with no caller; Recipe chat runs as a thread turn whose default tools include memory.search (proved by tests/unit/test_thread_memory_search_live.py). The update draft and Prep are not fitted to a token budget (their path has none) | — | — |
 | Memory: live meeting analysis and voice resolve read no memory (a lookup is 100–400 ms against a 50 ms bar) | — | — |
 | Memory: the decision-promotion self-recall test passes before the fix; mint through DecisionLifecycleService.promote (Astra, #830) | — | — |
@@ -49,6 +48,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- #877 — Memory where the work lives (owner pick B): beliefs in Desk memory with evidence and history; standing pages in the Room (project) and the Brief (desk); withdrawn evidence hides at once on any desk change; pages bound to their scope; SOURCES counts distinct sources
 - #872 — Backend coherence: one needs-you number on every face (palette re-reads on open and on change); roadmaps read cached (~60 ms warm); every stored stamp aware UTC (census fence), DST-safe, a one-time backfill of old local stamps (sync-written columns excluded) and instant compares on the queues; People text scrubbed from old Brief sends; background writers and MCP announce
 - #876 — Onboarding on one screen (owner pick A): Calendar and Connections cards under the first-run three; Ready on top with his name and three verbs (Record the next meeting, Dictate, Ask about this week); every card lit; macOS prompt only on press
 - #875 — Route in footer (owner pick C): a lamp per Ask/chat turn from its receipt (least private sent attempt; FALLBACK marked); the footer carries the last turn's host, model and its own receipt; failed Asks keep their route; one egress classifier everywhere
