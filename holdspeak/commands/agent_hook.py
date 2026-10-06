@@ -17,7 +17,7 @@ from ..agent_context import (
     render_hs_context_for_prompt,
 )
 from ..agent_context.hooks import (
-    AGENT_HOOK_SETTINGS_PATHS,
+    agent_settings_path,
     install_agent_hooks,
     uninstall_agent_hooks,
 )
@@ -135,7 +135,7 @@ def _install_targets(args) -> list[tuple[str, Path]]:
             raise ValueError("--settings-path requires --agent claude or --agent codex")
         return [(agent, Path(override).expanduser())]
     agents = ["claude", "codex"] if agent == "all" else [agent]
-    return [(a, Path(AGENT_HOOK_SETTINGS_PATHS[a]).expanduser()) for a in agents]
+    return [(a, agent_settings_path(a)) for a in agents]
 
 
 def _cmd_install(args, *, out: TextIO, err: TextIO) -> int:

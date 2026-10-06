@@ -1028,10 +1028,10 @@
       "path": "holdspeak/commands/doctor.py",
       "symbol": "_check_coding_agents",
       "line": 1112,
-      "condition_source": "def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:\n    \"\"\"The Conductor, step 1: Claude Code or Codex installed with the HoldSpeak hooks, and tmux.\n\n    Reuses the onboarding detect (PATH and files only; no process, no network).\n    \"\"\"\n    if detected is None:\n        from ..services.onboarding_service import detect_agents\n\n        detected = detect_agents()\n    agents = detected[\"agents\"]\n    installed = [a for a in agents if a[\"installed\"]]\n    ready = [a for a in installed if a[\"hooks\"] == \"installed\"]\n    unhooked = [a for a in installed if a[\"hooks\"] != \"installed\"]\n    tmux = detected[\"tmux\"]\n    fixes: list[str] = []\n    if not installed:\n        status, detail = \"INFO\", \"no coding agent on PATH (claude, codex)\"\n    else:\n        parts = [f\"{a['label']} hooks {a['hooks']}\" for a in installed]\n        detail = \"; \".join(parts)\n        if ready:\n            status = \"PASS\"\n        else:\n            status = \"WARN\"\n        if unhooked:\n            names = \" \".join(a[\"id\"] for a in unhooked)\n            agent_flag = f\" --agent {unhooked[0]['id']}\" if len(unhooked) == 1 else \"\"\n            fixes.append(f\"Install the hooks for {names}: `holdspeak agent-hook install{agent_flag}`\")\n    if not tmux[\"installed\"]:\n        status = \"WARN\"\n        detail += \"; tmux not on PATH\"\n        fixes.append(f\"Install tmux: `{tmux['install_hint']}`\")\n    return DoctorCheck(\n        name=\"Coding agents\",\n        status=status,\n        detail=detail,\n        fix=\"; \".join(fixes) or None,\n    )",
+      "condition_source": "def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:\n    \"\"\"The Conductor, step 1: Claude Code or Codex installed with working HoldSpeak hooks, and tmux.\n\n    Reuses the onboarding detect (PATH and files only; no process, no network).\n    INFO with no fix when no agent is installed (tmux then does not matter).\n    \"\"\"\n    if detected is None:\n        from ..services.onboarding_service import detect_agents\n\n        detected = detect_agents()\n    installed = [a for a in detected[\"agents\"] if a[\"installed\"]]\n    if not installed:\n        return DoctorCheck(name=\"Coding agents\", status=\"INFO\", detail=\"no coding agent on PATH (claude, codex)\")\n    ready = [a for a in installed if a[\"ready\"]]\n    unhooked = [a for a in installed if not a[\"ready\"]]\n    status = \"PASS\" if ready else \"WARN\"\n    parts = []\n    for agent in installed:\n        if agent[\"hooks\"] == \"broken\":\n            parts.append(f\"{agent['label']} hooks cannot run (their holdspeak command is missing)\")\n        else:\n            parts.append(f\"{agent['label']} hooks {agent['hooks']}\")\n    detail = \"; \".join(parts)\n    fixes: list[str] = []\n    if unhooked:\n        names = \" \".join(a[\"id\"] for a in unhooked)\n        agent_flag = f\" --agent {unhooked[0]['id']}\" if len(unhooked) == 1 else \"\"\n        fixes.append(f\"Install the hooks for {names}: `holdspeak agent-hook install{agent_flag}`\")\n    if any(a[\"hooks\"] == \"broken\" for a in installed):\n        status = \"WARN\"\n    tmux = detected[\"tmux\"]\n    if not tmux[\"installed\"]:\n        status = \"WARN\"\n        detail += \"; tmux not on PATH\"\n        fixes.append(f\"Install tmux: `{tmux['install_hint']}`\")\n    return DoctorCheck(name=\"Coding agents\", status=status, detail=detail, fix=\"; \".join(fixes) or None)",
       "outcomes": [
         {
-          "line": 1144,
+          "line": 1147,
           "constructor": "DoctorCheck",
           "args": [],
           "fields": {
@@ -1040,17 +1040,27 @@
             "detail": "detail",
             "fix": "'; '.join(fixes) or None"
           }
+        },
+        {
+          "line": 1124,
+          "constructor": "DoctorCheck",
+          "args": [],
+          "fields": {
+            "name": "'Coding agents'",
+            "status": "'INFO'",
+            "detail": "'no coding agent on PATH (claude, codex)'"
+          }
         }
       ]
     },
     {
       "path": "holdspeak/commands/doctor.py",
       "symbol": "_check_people_keystore",
-      "line": 1152,
+      "line": 1149,
       "condition_source": "def _check_people_keystore() -> DoctorCheck:\n    \"\"\"HS-149-01: surface the People keystore mode and F4 both-worlds warning.\"\"\"\n    env = os.environ.get(\"HOLDSPEAK_PEOPLE_KEYSTORE_FILE\", \"\").strip()\n    if not env:\n        return DoctorCheck(\n            name=\"People keystore\",\n            status=\"PASS\",\n            detail=\"native (macOS Keychain / Secret Service)\",\n        )\n    # Dev file keystore is active -- always WARN so it is LOUD.\n    from ..people.store import DEFAULT_PEOPLE_DB_PATH, _dev_sidecar_path\n\n    keyfile = Path(env)\n    dev_sidecar = _dev_sidecar_path(keyfile)\n    prod_exists = DEFAULT_PEOPLE_DB_PATH.exists()\n    dev_exists = dev_sidecar.exists()\n\n    parts = [f\"DEV FILE keystore at {keyfile} -- not for real use\"]\n    if dev_exists:\n        parts.append(f\"dev sidecar: {dev_sidecar}\")\n    if prod_exists and dev_exists:\n        parts.append(\n            f\"BOTH WORLDS EXIST: production sidecar at {DEFAULT_PEOPLE_DB_PATH} \"\n            f\"and dev sidecar at {dev_sidecar} -- the dev store never opens the production sidecar\"\n        )\n    detail = \"; \".join(parts)\n    fix = (\n        \"Unset HOLDSPEAK_PEOPLE_KEYSTORE_FILE for production use. \"\n        \"The file keystore is for development and testing only.\"\n    )\n    return DoctorCheck(\n        name=\"People keystore\",\n        status=\"WARN\",\n        detail=detail,\n        fix=fix,\n    )",
       "outcomes": [
         {
-          "line": 1182,
+          "line": 1179,
           "constructor": "DoctorCheck",
           "args": [],
           "fields": {
@@ -1061,7 +1071,7 @@
           }
         },
         {
-          "line": 1156,
+          "line": 1153,
           "constructor": "DoctorCheck",
           "args": [],
           "fields": {
@@ -1075,11 +1085,11 @@
     {
       "path": "holdspeak/commands/doctor.py",
       "symbol": "_check_agent_capabilities",
-      "line": 1190,
+      "line": 1187,
       "condition_source": "def _check_agent_capabilities() -> DoctorCheck:\n    \"\"\"HS-104-01: the capability-ledger census. Fails when any registered\n    ledger consumer requests a capability its adapter declares\n    ``unavailable`` \u2014 a lying surface caught before it renders.\"\"\"\n    from ..agent_capabilities import LEDGER, LEDGER_CONSUMERS, consumer_violations\n\n    violations = consumer_violations()\n    if violations:\n        return DoctorCheck(\n            name=\"Agent capabilities\",\n            status=\"FAIL\",\n            detail=f\"{len(violations)} consumer(s) outrun the ledger\",\n            fix=(\n                \"Align the consumer with holdspeak/agent_capabilities.py \"\n                \"(flip the standing in the same commit as the code, or drop \"\n                \"the consumer):\\n  \" + \"\\n  \".join(violations)\n            ),\n        )\n    return DoctorCheck(\n        name=\"Agent capabilities\",\n        status=\"PASS\",\n        detail=(\n            f\"{len(LEDGER)} adapters declared, \"\n            f\"{len(LEDGER_CONSUMERS)} consumers, all backed by the ledger\"\n        ),\n    )",
       "outcomes": [
         {
-          "line": 1208,
+          "line": 1205,
           "constructor": "DoctorCheck",
           "args": [],
           "fields": {
@@ -1089,7 +1099,7 @@
           }
         },
         {
-          "line": 1198,
+          "line": 1195,
           "constructor": "DoctorCheck",
           "args": [],
           "fields": {
@@ -1104,11 +1114,11 @@
     {
       "path": "holdspeak/commands/doctor.py",
       "symbol": "_check_tool_call_gate",
-      "line": 1218,
+      "line": 1215,
       "condition_source": "def _check_tool_call_gate() -> DoctorCheck:\n    \"\"\"HS-104-02: the gate's double opt-in, read plainly. Off is the\n    healthy default; armed names every held repo so the fail-closed\n    trade is always visible.\"\"\"\n    from ..coder_gate import load_gate_config\n\n    config = load_gate_config()\n    if not config.armed and not config.repos:\n        return DoctorCheck(\n            name=\"Tool-call gate\",\n            status=\"PASS\",\n            detail=\"off (default); `holdspeak gate install` + arm + allow to hold agent calls\",\n        )\n    if config.armed and config.repos:\n        held = \"; \".join(\n            f\"{', '.join(tools)} in {repo}\" for repo, tools in sorted(config.repos.items())\n        )\n        return DoctorCheck(\n            name=\"Tool-call gate\",\n            status=\"PASS\",\n            detail=f\"ARMED, fail-closed: {held}\",\n        )\n    missing = \"no repos held\" if config.armed else \"master switch off\"\n    present = \"master switch armed\" if config.armed else f\"{len(config.repos)} repo(s) held\"\n    return DoctorCheck(\n        name=\"Tool-call gate\",\n        status=\"WARN\",\n        detail=f\"half opted-in ({present}, but {missing}); the gate is inert\",\n        fix=\"Complete or clear the opt-in: `holdspeak gate arm` / `gate allow --repo <path>` / `gate disarm`\",\n    )",
       "outcomes": [
         {
-          "line": 1242,
+          "line": 1239,
           "constructor": "DoctorCheck",
           "args": [],
           "fields": {
@@ -1119,7 +1129,7 @@
           }
         },
         {
-          "line": 1226,
+          "line": 1223,
           "constructor": "DoctorCheck",
           "args": [],
           "fields": {
@@ -1129,7 +1139,7 @@
           }
         },
         {
-          "line": 1235,
+          "line": 1232,
           "constructor": "DoctorCheck",
           "args": [],
           "fields": {
