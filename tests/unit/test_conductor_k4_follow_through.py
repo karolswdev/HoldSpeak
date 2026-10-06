@@ -246,7 +246,7 @@ def test_merge_closes_the_action_with_evidence_and_cleans_up(tmp_path, db, monke
     assert record["follow_through"]["close"] == "closed"
     assert record["follow_through"]["cleanup"] == {
         "session": "killed", "worktree": "worktree_removed", "gate": "released",
-        "attempts": "reconciled",
+        "attempts": "reconciled", "mcp": "released",
     }
     assert record["follow_through"]["pr"]["number"] == 7 and record["follow_through"]["pr"]["url"] == PR_URL
     assert record["follow_through"]["done"] is True
