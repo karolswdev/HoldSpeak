@@ -426,6 +426,16 @@ class FollowThroughObserver:
         result = dict(done)
         if result.get("session") not in _SESSION_FINAL:
             result["session"] = self._end_session(launch)
+        if result.get("mcp") != "released":
+            # K6: the launch's MCP credential and its config file go with the
+            # session, also when the session had already ended on its own.
+            from .. import coder_factory
+            from . import agent_mcp
+
+            launch_id = str(launch.get("launch_id") or "")
+            coder_factory.revoke_launch(launch_id)
+            agent_mcp.remove_mcp_config(launch_id)
+            result["mcp"] = "released"
         path = self._worktree_path(launch)
         if result.get("worktree") not in _WORKTREE_FINAL:
             if self._owns_worktree(launch):

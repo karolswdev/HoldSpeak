@@ -650,6 +650,7 @@ class NodeCommandProcessor:
             result = coder_factory.spawn(
                 str(payload.get("name") or ""),
                 command=payload.get("command"),
+                launch_id=(str(payload.get("launch_id") or "") or None),
                 **kwargs,
             )
             basis = "authenticated_owner"

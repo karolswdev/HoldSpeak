@@ -46,12 +46,20 @@ def spawn(
     name: str,
     *,
     command: Optional[str] = None,
+    launch_id: Optional[str] = None,
     runner: Optional[Runner] = None,
     audit: Optional[Callable[..., int]] = None,
 ) -> dict[str, Any]:
     """Create a detached tmux session `name` (optionally running `command`),
     and return its first pane. Statuses: ``spawned``, ``bad_name``,
-    ``tmux_absent``, ``exists``, ``error``. Audited."""
+    ``tmux_absent``, ``exists``, ``error``. Audited.
+
+    Conductor K6: a spawn for an agent launch (``launch_id``) issues a
+    launch-bound credential, identity ``agent:launch:<launch_id>``, with the
+    CONDUCTOR palette: the launched agent reaches the HoldSpeak MCP from this
+    machine with the Reach switch off. Revoked when the session ends (the
+    rider's SessionEnd self-revoke, ``kill``), on cleanup and on a failed
+    launch (``revoke_launch``)."""
     record = audit or coder_steering._default_audit
 
     def _audited(result: dict[str, Any], pane_id: Optional[str] = None) -> dict[str, Any]:
@@ -72,8 +80,20 @@ def spawn(
         return _audited({"status": "tmux_absent"})
     from .principals import agent_credentials
 
-    identity = f"agent:tmux:{name}"
-    credential = agent_credentials.issue(identity)
+    launch = str(launch_id or "").strip()
+    if launch:
+        from .mcp.palettes import CONDUCTOR, resolve_palette
+
+        identity = launch_identity(launch)
+        credential = agent_credentials.issue(
+            identity,
+            palette=resolve_palette(CONDUCTOR),
+            palette_name=CONDUCTOR,
+            launch_id=launch,
+        )
+    else:
+        identity = f"agent:tmux:{name}"
+        credential = agent_credentials.issue(identity)
     # tmux installs these in the new session's environment before its first
     # process starts.  The supervised agent receives only its scoped token,
     # never the owner's browser credential.
@@ -107,6 +127,19 @@ def spawn(
         pane_id = None
     agent_credentials.bind_target(identity, name, pane_id)
     return _audited({"status": "spawned", "session": name, "pane_id": pane_id}, pane_id)
+
+
+def launch_identity(launch_id: str) -> str:
+    """The principal identity of a launch-bound agent credential."""
+    return f"agent:launch:{str(launch_id).strip()}"
+
+
+def revoke_launch(launch_id: str) -> bool:
+    """Revoke the launch-bound credential of one launch (idempotent)."""
+    from .principals import agent_credentials
+
+    clean = str(launch_id or "").strip()
+    return bool(clean) and agent_credentials.revoke(launch_identity(clean))
 
 
 def rename(
@@ -199,4 +232,4 @@ def kill(
     return _audited({"status": "killed", "pane_id": pane_id, "scope": scope}, pane_id)
 
 
-__all__ = ["NAME_RE", "kill", "rename", "spawn", "valid_name"]
+__all__ = ["NAME_RE", "kill", "launch_identity", "rename", "revoke_launch", "spawn", "valid_name"]

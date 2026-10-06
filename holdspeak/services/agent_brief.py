@@ -286,6 +286,8 @@ def _stanza(kind: str, item_id: str, control_mode: str) -> str:
         "- Commit your work, push the branch, and open a pull request.",
         f"- The pull request body names the item: {kind}:{item_id}.",
         "- If a question blocks you, ask it and wait. Do not guess.",
+        "- Use the holdspeak MCP tools to read the desk for context, file notes, "
+        "propose decisions, update your item and ask the owner.",
         "- The item is done when the pull request is open and its tests pass.",
     ])
 
