@@ -87,7 +87,10 @@ export function agentOfProfile(profile: string | null | undefined, fallback: Age
 export function deliveryToken(launch: HandLaunch): { label: string; tone: "ok" | "warning" | "danger" | undefined; done: boolean } {
   const state = String(launch.instruction_state ?? "");
   if (state === "sent") return { label: "LAUNCHED · BRIEF SENT", tone: "ok", done: true };
+  // Not known yet: the brief waits for the agent (pending), or its typing has
+  // started and has no receipt yet (delivering, first_message.py). Retry is withheld.
   if (state === "pending" || state === "") return { label: "LAUNCHED · BRIEF PENDING", tone: undefined, done: false };
+  if (state === "delivering") return { label: "LAUNCHED · BRIEF DELIVERING", tone: undefined, done: false };
   if (state === "hooks_missing") return { label: "LAUNCHED · BRIEF HELD · NO HOOKS", tone: "warning", done: true };
   return { label: `LAUNCHED · BRIEF NOT SENT · ${codeWords(state)} · KEPT ON THE HUB · SEND AGAIN`, tone: "danger", done: true };
 }
@@ -216,7 +219,9 @@ function Sheet({ origin }: { origin: HandOrigin }) {
   const close = useAgentHand((s) => s.close);
   const detect = useDetect();
   const [agent, setAgent] = useState<AgentId>(DEFAULT_AGENT);
-  const [preview, setPreview] = useState<HandPreview | null>(null);
+  // Each preview carries the key of the request that produced it (item, Project,
+  // profile): Launch arms only when that key is the current request's.
+  const [preview, setPreview] = useState<(HandPreview & { requestKey: string }) | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [briefOpen, setBriefOpen] = useState(false);
   const [launching, setLaunching] = useState(false);
@@ -227,22 +232,23 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     useDesk.getState().focusPanel(HAND_WINDOW_ID);
   }, [origin.kind, origin.id]);
 
+  const request = { kind: origin.kind, id: origin.id, profile: AGENT_PROFILE[agent], project_id: origin.projectId || null };
+  const requestKey = JSON.stringify(request);
+
   useEffect(() => {
     let live = true;
     setPreviewError(null);
     setLaunchError(null);
-    apiFetch<HandPreview>(HAND_PREVIEW_PATH, {
-      method: "POST",
-      json: { kind: origin.kind, id: origin.id, profile: AGENT_PROFILE[agent], project_id: origin.projectId || null },
-    })
-      .then((p) => { if (live) setPreview(p); })
+    const key = requestKey;
+    apiFetch<HandPreview>(HAND_PREVIEW_PATH, { method: "POST", json: JSON.parse(key) })
+      .then((p) => { if (live) setPreview({ ...p, requestKey: key }); })
       .catch((error) => {
         if (!live) return;
         setPreview(null);
         setPreviewError(codeOf(error));
       });
     return () => { live = false; };
-  }, [origin.kind, origin.id, origin.projectId, agent]);
+  }, [requestKey]);
 
   // The delivery is known once it leaves `pending`: read the launch until then.
   useEffect(() => {
@@ -269,7 +275,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     }
   }, [launched, launching]);
 
-  const launch = useCallback(async () => {
+  const launch = useCallback(async (launchProfile: string) => {
     if (launching) return;
     setLaunching(true);
     setLaunchError(null);
@@ -278,7 +284,8 @@ function Sheet({ origin }: { origin: HandOrigin }) {
         method: "POST",
         json: { kind: origin.kind, id: origin.id, profile: AGENT_PROFILE[agent], project_id: origin.projectId || null },
       });
-      setLaunched(answer ?? {});
+      // The receipt belongs to the launch: its agent is frozen with it.
+      setLaunched({ profile: launchProfile, ...(answer ?? {}) });
     } catch (error) {
       setLaunchError(codeOf(error));
       if (!(error instanceof ApiError)) console.warn("hand to agent:", readableError(error));
@@ -289,18 +296,18 @@ function Sheet({ origin }: { origin: HandOrigin }) {
 
   // The preview on screen is the one for THIS item and THIS pick; a late answer
   // for another pick never arms Launch.
-  const current = preview !== null
-    && (preview.requested_profile ?? preview.profile) === AGENT_PROFILE[agent]
-    && (preview.kind ?? origin.kind) === origin.kind
-    && (preview.id ?? origin.id) === origin.id;
+  const current = preview !== null && preview.requestKey === requestKey;
   const blocked = preview?.refused ?? [];
   const sources = preview?.sources ?? [];
   const mode = modeWord(preview?.control_mode);
   // The agent the launch really runs: a held launch keeps its own.
-  const actual = current ? agentOfProfile(preview?.profile, agent) : agent;
+  const previewed = current ? agentOfProfile(preview?.profile, agent) : agent;
+  // After Launch the receipt and Send again follow the launched agent, never the pick.
+  const actual = launched ? agentOfProfile(launched.profile, previewed) : previewed;
+  const frozen = launching || launched !== null;
   const canLaunch = current && blocked.length === 0 && !launching && launched === null;
   const delivery = launched ? deliveryToken(launched) : null;
-  const pick = (value: string) => setAgent(value as AgentId);
+  const pick = (value: string) => { if (!frozen) setAgent(value as AgentId); };
   return (
     <DeskWindowFrame
       id={HAND_WINDOW_ID}
@@ -317,13 +324,14 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     >
       <div className="desk-pullout-body desk-hand-body" data-testid="hand-sheet">
         <SurfaceSection label="AGENT">
-          <ChoiceCardGroup name="hand-agent" value={agent} layout="row" ariaLabel="Agent" onChange={pick}>
+          <ChoiceCardGroup name="hand-agent" value={agent} layout="row" ariaLabel="Agent" onChange={pick} disabled={frozen}>
             {AGENTS.map((a) => (
               <ChoiceCard
                 key={a}
                 name="hand-agent"
                 selectedValue={agent}
                 onChange={pick}
+                disabled={frozen}
                 value={a}
                 label={AGENT_NAME[a]}
                 summary={<AgentSummary agent={a} detect={detect} />}
@@ -400,7 +408,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
         ) : null}
       </div>
       <SurfaceFooter
-        className="desk-hand-footer"
+        className={launched ? "desk-hand-footer is-launched" : "desk-hand-footer"}
         egress={<EgressChip label={AGENT_HOST[actual]} scope="cloud" />}
         receipt={
           delivery ? (
@@ -436,7 +444,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                 variant="primary"
                 loading={launching}
                 disabled={!canLaunch}
-                onClick={() => void launch()}
+                onClick={() => void launch(AGENT_PROFILE[actual])}
                 data-testid="hand-launch"
               >
                 Launch

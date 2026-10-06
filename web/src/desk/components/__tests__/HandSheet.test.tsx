@@ -334,3 +334,97 @@ describe("the launch sheet follows the real answers (Astra #905)", () => {
     expect(document.querySelector(".desk-hand-footer .gadget-chip-egress")!.textContent).toContain("API.ANTHROPIC.COM");
   });
 });
+
+
+/* Astra round 2 on #905: the producer's own transition (pending -> delivering ->
+ * sent, first_message.py) and a failed delivery, minted through POST /api/agent/hand
+ * and GET /api/agent/launches/{id} on the real rig, copied verbatim. */
+const R2 = {"pending": {"status": "launched", "resumed": false, "profile": "claude-default", "instruction_state": "pending", "trust_state": null, "launch_id": "launch_53d9e2ce6fe3424e", "attempt_id": "att_2df280850b514487", "operation_id": "op_ec2ffabf75964cb78b6836f0b34475df", "state": "launched", "failure": null, "gate": "gated", "session": "hs-action-ai_1-01ca49", "worktree": {"name": "hs-action-ai_1", "branch": "hs/action-ai_1"}, "source_id": "src_c28d03cdff5503e5", "story_ref": {"project": "proj-0123456789ab", "story_id": "action-ai_1"}, "origin_ref": {"kind": "action", "id": "ai_1"}, "project_id": "proj-0123456789ab", "control_mode": "yolo", "brief": {"bytes": 1270, "refs": ["action:ai_1", "meeting:m1"], "people_cut": 1}}, "delivering": {"launch_id": "launch_53d9e2ce6fe3424e", "state": "registered", "instruction_state": "delivering", "trust_state": "not_seen", "failure": null, "profile_id": "claude-default", "profile": "claude-default"}, "sent": {"launch_id": "launch_53d9e2ce6fe3424e", "state": "registered", "instruction_state": "sent", "trust_state": "not_seen", "failure": null, "profile_id": "claude-default", "profile": "claude-default"}};
+const R2_FAILED = {"launch_id": "launch_23bf46a6c80d4a34", "state": "registered", "instruction_state": "transport_error", "trust_state": "not_seen", "failure": null, "profile_id": "claude-default", "profile": "claude-default"};
+
+describe("after Launch (Astra #905 round 2)", () => {
+  it("delivering is not an outcome: the receipt keeps following, no Send again, then SENT", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      handAnswer = { status: 202, body: R2.pending };
+      let step: "delivering" | "sent" = "delivering";
+      launchAnswer = () => ({ status: 200, body: R2[step] });
+      openSheet();
+      await screen.findByText("Ledger cutover sync");
+      fireEvent.click(screen.getByTestId("hand-launch"));
+      expect((await screen.findByTestId("hand-launch-receipt")).textContent).toBe("LAUNCHED · BRIEF PENDING");
+      await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
+      await waitFor(() => expect(screen.getByTestId("hand-launch-receipt").textContent).toBe("LAUNCHED · BRIEF DELIVERING"));
+      expect(screen.queryByTestId("hand-send-again")).toBeNull();
+      const reads = calls.filter((c) => c.url.includes("/api/agent/launches/")).length;
+      await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
+      expect(calls.filter((c) => c.url.includes("/api/agent/launches/")).length).toBeGreaterThan(reads);
+      step = "sent";
+      await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
+      await waitFor(() => expect(screen.getByTestId("hand-launch-receipt").textContent).toBe("LAUNCHED · BRIEF SENT"));
+      expect(screen.queryByTestId("hand-send-again")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("a failed delivery from the producer offers Send again", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      handAnswer = { status: 202, body: R2.pending };
+      launchAnswer = () => ({ status: 200, body: R2_FAILED });
+      openSheet();
+      await screen.findByText("Ledger cutover sync");
+      fireEvent.click(screen.getByTestId("hand-launch"));
+      await screen.findByTestId("hand-launch-receipt");
+      await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
+      await waitFor(() => expect(screen.getByTestId("hand-launch-receipt").textContent)
+        .toBe("LAUNCHED · BRIEF NOT SENT · TRANSPORT ERROR · KEPT ON THE HUB · SEND AGAIN"));
+      expect(screen.getByTestId("hand-send-again")).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("the receipt takes the footer's full-width row (the face hook)", async () => {
+    handAnswer = { status: 202, body: R2.pending };
+    openSheet();
+    await screen.findByText("Ledger cutover sync");
+    expect(document.querySelector(".desk-hand-footer")!.classList.contains("is-launched")).toBe(false);
+    fireEvent.click(screen.getByTestId("hand-launch"));
+    await screen.findByTestId("hand-launch-receipt");
+    expect(document.querySelector(".desk-hand-footer")!.classList.contains("is-launched")).toBe(true);
+  });
+
+  it("the pick freezes after Launch; the receipt's egress stays the launched agent's", async () => {
+    handAnswer = { status: 202, body: R2.pending };
+    launchAnswer = () => ({ status: 200, body: R2.sent });
+    openSheet();
+    await screen.findByText("Ledger cutover sync");
+    fireEvent.click(screen.getByTestId("hand-launch"));
+    await screen.findByTestId("hand-launch-receipt");
+    const codex = screen.getByRole("radio", { name: /Codex/ }) as HTMLInputElement;
+    expect(codex.disabled).toBe(true);
+    fireEvent.click(codex);
+    expect(document.querySelector(".desk-hand-footer .gadget-chip-egress")!.textContent).toContain("API.ANTHROPIC.COM");
+    expect(calls.filter((c) => c.url.endsWith("/api/agent/hand/preview") && c.body?.profile === "codex-default")).toEqual([]);
+  });
+
+  it("another Project for the same item: Launch waits for that Project's preview", async () => {
+    let release: (() => void) | null = null;
+    const stub = globalThis.fetch;
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      if (String(url).endsWith("/api/agent/hand/preview") && JSON.parse(String(init?.body)).project_id === "p-other") {
+        return new Promise((resolve) => { release = () => resolve(stub(url, init)); });
+      }
+      return stub(url, init);
+    }));
+    openSheet();
+    await screen.findByText("Ledger cutover sync");
+    expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(false);
+    act(() => useAgentHand.getState().open({ ...ORIGIN, projectId: "p-other" }));
+    await waitFor(() => expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(true));
+    await act(async () => { release?.(); await Promise.resolve(); await Promise.resolve(); });
+    await waitFor(() => expect((screen.getByTestId("hand-launch") as HTMLButtonElement).disabled).toBe(false));
+  });
+});

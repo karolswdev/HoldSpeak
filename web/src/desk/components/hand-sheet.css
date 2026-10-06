@@ -48,3 +48,25 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
+
+/* After Launch the receipt is the footer's fact: it takes a full-width row of
+   its own under the egress chip and the verbs, and wraps (never clips), at
+   every width (Astra #905 r2: PENDING / SENT read the same when clipped). */
+.desk-next .surface-footer-layout.desk-hand-footer.is-launched {
+  grid-template-columns: minmax(0, 1fr) max-content;
+  grid-template-areas: "egress verbs" "receipt receipt";
+  row-gap: 4px;
+  padding: 4px 0;
+  height: auto;
+}
+.desk-next .desk-hand-footer.is-launched .surface-footer-receipt {
+  justify-content: flex-start;
+  min-width: 0;
+}
+.desk-next .desk-hand-footer.is-launched .surface-footer-receipt > .surface-footer-receipt-line {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
