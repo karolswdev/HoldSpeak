@@ -43,6 +43,27 @@ OWN44 = r"""() => [...document.querySelectorAll(
   .map((t) => (t.getAttribute('aria-label') || t.innerText || t.getAttribute('placeholder') || t.className || '').toString().trim().replace(/\s+/g, ' ').slice(0, 32))"""
 
 
+ISSUE_SEED = r"""
+import json
+from datetime import date, timedelta
+from holdspeak.db import get_database
+db = get_database()
+with db._connection() as conn:
+    db.automations.create_watch_in_transaction(
+        conn, watch_id="w-ledger-jira", connector_id="jira", query_kind="issues",
+        name="Ledger issues", query_json=json.dumps({"jql": "project = PAY"}), enabled=True,
+        project_id="p-ledger", subject_kind="issue")
+day = lambda n: (date.today() - timedelta(days=n)).isoformat()
+db.automations.record_refresh("w-ledger-jira", {"schema": 1, "entities": {
+    "PAY-418": {"key": "PAY-418", "summary": "Reconciliation job slow on month-end data", "due_at": day(2),
+                "url": "https://acme.atlassian.net/browse/PAY-418"},
+    "PAY-421": {"key": "PAY-421", "summary": "Add the ledger freeze flag", "due_at": day(1),
+                "url": "https://acme.atlassian.net/browse/PAY-421"},
+}}, [])
+print("issues: 2")
+"""
+
+
 class BuiltStack(rig.Stack):
     """rig.Stack in `today` mode (the product as built). `bare` hides claude, codex and tmux
     from the hub's PATH (K1c). After boot: one git clone, registered as the Project's repository."""
@@ -82,6 +103,14 @@ class BuiltStack(rig.Stack):
         status, body = rig.hub_api(self.hub, "POST", "/api/delivery/sources",
                                    {"path": str(clone), "label": "Payments ledger cutover"})
         self.seed["repository"] = {"status": status, "ok": isinstance(body, dict) and body.get("success")}
+        # The canvas's issue rows (#418, #421; its stand-in S4) through a REAL producer: the
+        # Room's OPEN HERE reads issue rows only from a Jira `issues` Watch snapshot
+        # (ProjectService._read_room_needs_you; a GitHub issues Watch yields no row on main).
+        seeded = subprocess.run(
+            [rig.PY, "-c", ISSUE_SEED], cwd=REPO, capture_output=True, text=True, timeout=120,
+            env={**os.environ, "HOME": self.home, "PYTHONPATH": str(REPO)},
+        )
+        self.seed["issues"] = seeded.stdout.strip() or seeded.stderr[-400:]
         return self
 
 
@@ -196,7 +225,13 @@ def boards(r: board.Runner) -> None:
     rrow = page.locator(f"[id='{ROOM}'] [data-testid=needs-you-row]:has-text('{RUNBOOK}')").first
     rrow.scroll_into_view_if_needed()
     settle(400)
-    r.shoot("K2e-room-row-verb", "Payments ledger cutover", whole=[f"[id='{ROOM}'] [aria-label='Hand to agent: {RUNBOOK}']"])
+    rows = ev(f"() => [...document.querySelectorAll(\"[id='{ROOM}'] [data-testid=needs-you-row]\")].map((c) => c.innerText.replace(/\\s+/g, ' ').trim())")
+    issue_rows = [x for x in rows if "PAY-418" in x or "PAY-421" in x]
+    r.shoot("K2e-room-row-verb", "Payments ledger cutover", whole=[f"[id='{ROOM}'] [aria-label='Hand to agent: {RUNBOOK}']"],
+            checks={"the two issue rows are in OPEN HERE (real producer)": len(issue_rows) == 2,
+                    "an issue row has no Hand to agent (agent.hand takes no issue)": not any("Hand to agent" in x for x in issue_rows),
+                    "the runbook row has Hand to agent": any(RUNBOOK in x and "Hand to agent" in x for x in rows)},
+            extra={"open_here": rows})
     r.tap(rrow.locator("[data-testid=hand-row-verb]"), 2500)
     r.tap(page.locator("[data-testid=hand-sheet] label.surface-choice-card:has-text('Codex')").first, 2000)
     r.shoot("K3b-launch-sheet-codex", "Hand to agent", whole=["[data-testid=hand-launch]", ".desk-hand-footer .gadget-chip-egress"],
