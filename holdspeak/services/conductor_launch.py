@@ -40,12 +40,6 @@ log = get_logger("services.conductor_launch")
 #: The one desk write a launch may make: a decision, always ``proposed``.
 PROPOSAL_OPERATIONS: tuple[str, ...] = ("decision.create",)
 
-#: Item-state tools and the argument that names the item.
-SCOPED_ITEM_TOOLS: dict[str, str] = {
-    "follow_through.complete": "card_id",
-    "project.item.transition": "item_id",
-    "project.item.update": "item_id",
-}
 
 NOT_THIS_LAUNCH = "not_this_launch"
 
@@ -148,6 +142,64 @@ def install_revoke_hook() -> None:
     _HOOK_INSTALLED = True
 
 
+# ── the shared boundary: launch ownership by canonical ref ──────────────
+#
+# Astra round 1 on #903: the launch rules hold at the service and kernel
+# boundary, not only on MCP, and ownership is a canonical ``kind:id`` ref
+# recorded where the record is INSERTED (never a bare id, never a replay).
+
+LAUNCH_IDENTITY_PREFIX = "agent:launch:"
+
+
+def launch_id_of(principal: Any) -> Optional[str]:
+    """The launch id of a launch principal (live or not), else None."""
+    from ..principals import PrincipalKind
+
+    if getattr(principal, "kind", None) is not PrincipalKind.AGENT:
+        return None
+    identity = str(getattr(principal, "identity", "") or "")
+    if not identity.startswith(LAUNCH_IDENTITY_PREFIX):
+        return None
+    return identity[len(LAUNCH_IDENTITY_PREFIX):] or None
+
+
+def refuse(ref: str, detail: str = "") -> None:
+    from .errors import ServiceError
+
+    raise ServiceError(
+        NOT_THIS_LAUNCH,
+        detail or f"{ref} is not this launch's to change",
+        context={"status": 403, "ref": ref, "item_id": ref},
+    )
+
+
+def require_new(principal: Any, ref: str, exists: Any) -> None:
+    """Launch creation is INSERT-ONLY: an existing id (live or deleted) is
+    refused before any write."""
+    if launch_id_of(principal) is not None and exists():
+        refuse(ref, f"{ref} already exists; a launch creates only new records")
+
+
+def require_own(principal: Any, *refs: str) -> None:
+    """A launch changes only records it created during the launch."""
+    from ..principals import agent_credentials
+
+    launch = launch_id_of(principal)
+    if launch is None:
+        return
+    for ref in refs:
+        if not agent_credentials.created_by(launch, ref):
+            refuse(ref)
+
+
+def record_own(principal: Any, ref: str) -> None:
+    from ..principals import agent_credentials
+
+    launch = launch_id_of(principal)
+    if launch is not None and ref:
+        agent_credentials.scope_add(launch, ref)
+
+
 # ── 1. the People cut on memory reads ────────────────────────────────────
 
 
@@ -222,7 +274,156 @@ def _cut_page(people: Any, page: Any) -> Any:
     return cut
 
 
-# ── 3. item scope ────────────────────────────────────────────────────────
+# ── 3. every mutating tool's launch scope (the audit; Astra round 1 #7) ──
+#
+# Each tool of the CONDUCTOR palette that is not a read (``tools.is_read_tool``)
+# has ONE rule here. A tool with no rule is refused at the call and fails the
+# fence (``test_every_conductor_tool_has_a_launch_rule``): nothing falls
+# through as unrestricted. The rules:
+#
+# * ``create``  -- makes a NEW record; the ref it returns is recorded as the
+#   launch's own. Idempotency keys are namespaced per launch, so a replay of
+#   the owner's command never answers the agent (and never grants ownership).
+# * ``desk``    -- a desk write: held in ``PrimitiveService`` (insert-only
+#   creation, own-only edits), the boundary every transport reaches.
+# * ``own``     -- changes an existing record: only one the launch created.
+# * ``item``    -- the launch's origin item, or an item it created.
+# * ``project`` -- the launch's own Project, adding only; held in
+#   ``ProjectService`` and the kernel's project grant as well.
+# * ``never``   -- the owner's state, a global run, or a target a launch can
+#   never own: not offered (out of the palette) and refused at the call.
+# * ``composer``-- a model answer composed over desk records: the People cut
+#   cannot see a paraphrase, so it is not offered to a cloud agent.
+
+CREATE, DESK, OWN, ITEM, PROJECT, NEVER, COMPOSER = (
+    "create", "desk", "own", "item", "project", "never", "composer",
+)
+
+#: tool -> (rule, ref kind, argument naming the target / the created id).
+LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
+    # create
+    "door.add_item": (CREATE, "action", "id"),
+    "thought.create": (CREATE, "thought", "id"),
+    "workbench.create": (CREATE, "workbench", "id"),
+    "scheduled_recording.create": (CREATE, "schedule", "id"),
+    "ask.keep": (CREATE, "artifact", "id"),
+    "channel.prepare": (CREATE, "send", "id"),
+    # desk (PrimitiveService)
+    "desk.create": (DESK, "", ""),
+    "desk.update": (DESK, "", ""),
+    "desk.delete": (DESK, "", ""),
+    "desk.verb": (DESK, "", ""),
+    "zone.file": (DESK, "", ""),
+    "zone.unfile": (DESK, "", ""),
+    "kb.add_member": (DESK, "", ""),
+    "kb.remove_member": (DESK, "", ""),
+    "decision.supersede": (DESK, "", ""),
+    # own
+    "thought.adopt_note": (OWN, "note", "note_id"),
+    "thought.accept_review": (OWN, "thought", "thought_id"),
+    "thought.answer_review": (OWN, "thought", "thought_id"),
+    "thought.attach_context": (OWN, "thought", "thought_id"),
+    "thought.complete": (OWN, "thought", "thought_id"),
+    "thought.detach_context": (OWN, "thought", "thought_id"),
+    "thought.reconcile": (OWN, "thought", "thought_id"),
+    "thought.refresh_context": (OWN, "thought", "thought_id"),
+    "thought.reject_review": (OWN, "thought", "thought_id"),
+    "thought.resume": (OWN, "thought", "thought_id"),
+    "thought.stop_refinement": (OWN, "thought", "thought_id"),
+    "thought.update_working": (OWN, "thought", "thought_id"),
+    "workbench.add_item": (OWN, "workbench", "workbench_id"),
+    "workbench.update": (OWN, "workbench", "workbench_id"),
+    "workbench.delete": (OWN, "workbench", "workbench_id"),
+    "workbench.update_item": (OWN, "workbench", "workbench_id"),
+    "workbench.delete_item": (OWN, "workbench", "workbench_id"),
+    "scheduled_recording.update": (OWN, "schedule", "schedule_id"),
+    "scheduled_recording.delete": (OWN, "schedule", "schedule_id"),
+    "scheduled_recording.cancel_armed": (OWN, "schedule", "schedule_id"),
+    # item
+    "follow_through.complete": (ITEM, "action", "card_id"),
+    "project.item.update": (ITEM, "project_item", "item_id"),
+    "project.item.transition": (ITEM, "project_item", "item_id"),
+    # project
+    "project.item.create": (PROJECT, "project_item", "id"),
+    "project.link": (PROJECT, "", ""),
+    "project.resource.add": (PROJECT, "", ""),
+    "project.resource.remove": (PROJECT, "", ""),
+    "project.open_review": (PROJECT, "", ""),
+    # never: the owner's records and state, or a global run
+    "thread.set_status": (NEVER, "thread", "thread_id"),
+    "interview.change_section": (NEVER, "thread", "thread_id"),
+    "interview.record_fact": (NEVER, "thread", "thread_id"),
+    "cadence.set_status": (NEVER, "loop", "loop_id"),
+    "cadence.snooze": (NEVER, "loop", "loop_id"),
+    "cadence.apply_closeout": (NEVER, "", ""),
+    "cadence.closeout": (NEVER, "", ""),
+    "cadence.run_now": (NEVER, "", ""),
+    "follow_through.commit_decision": (NEVER, "decision", "decision_id"),
+    "meeting.delete": (NEVER, "meeting", "meeting_id"),
+    "meeting.start_capture": (NEVER, "", ""),
+    "meeting.stop_capture": (NEVER, "meeting", "meeting_id"),
+    "nudge.dismiss": (NEVER, "", ""),
+    "plugin_job.cancel": (NEVER, "", ""),
+    "plugin_job.retry": (NEVER, "", ""),
+    "reaction.process": (NEVER, "", ""),
+    "heartbeat.run_now": (NEVER, "", ""),
+    "heartbeat.notify_test": (NEVER, "", ""),
+    "concierge.propose": (NEVER, "", ""),
+    "connection.recheck": (NEVER, "", ""),
+    "watch.refresh": (NEVER, "", ""),
+    "project.watch.test": (NEVER, "", ""),
+    "practice_recipe.compile": (NEVER, "", ""),
+    "sequence.cancel": (NEVER, "", ""),
+    "workflow.cancel": (NEVER, "", ""),
+    "ask.cancel": (NEVER, "", ""),
+    "project.create": (NEVER, "", ""),
+    "project.update": (NEVER, "", ""),
+    "project.unlink": (NEVER, "", ""),
+    "project.restore": (NEVER, "", ""),
+    "project.dismiss_suggested_source": (NEVER, "", ""),
+    "project.run_steward": (NEVER, "", ""),
+    "project.stop_steward": (NEVER, "", ""),
+    "project.steward.trigger": (NEVER, "", ""),
+    "project.publish_update": (NEVER, "", ""),
+    "project.update_draft": (NEVER, "", ""),
+    "project.setup.start": (NEVER, "", ""),
+    "project.setup.resume": (NEVER, "", ""),
+    "project.setup.answer": (NEVER, "", ""),
+    "project.setup.suggest": (NEVER, "", ""),
+    "project.setup.select_proposal": (NEVER, "", ""),
+    "project.setup.deselect_proposal": (NEVER, "", ""),
+    "project.setup.test_proposal": (NEVER, "", ""),
+    "project.setup.clarify_jira_scope": (NEVER, "", ""),
+    "project.setup.clarify_repo_scope": (NEVER, "", ""),
+    # composer: model text over desk records
+    "ask.run": (COMPOSER, "", ""),
+    "recipe.run": (COMPOSER, "", ""),
+    "recipe.chat": (COMPOSER, "", ""),
+    "workflow.run": (COMPOSER, "", ""),
+    "sequence.run": (COMPOSER, "", ""),
+    "workbench.run": (COMPOSER, "", ""),
+    "monday_brief.generate": (COMPOSER, "", ""),
+    "cadence.brief": (COMPOSER, "", ""),
+    "meeting.run_intelligence": (COMPOSER, "", ""),
+    "thought.refine": (COMPOSER, "", ""),
+    "thought.answer_and_continue": (COMPOSER, "", ""),
+    "interview.suggest": (COMPOSER, "", ""),
+    "project.draft_update": (COMPOSER, "", ""),
+}
+
+#: Not offered to a launch at all (the palette leaves them out).
+NOT_OFFERED: frozenset[str] = frozenset(n for n, (rule, _k, _a) in LAUNCH_RULES.items() if rule in (NEVER, COMPOSER))
+
+#: Kept for callers of the round-2 name.
+SCOPED_ITEM_TOOLS: dict[str, str] = {n: a for n, (rule, _k, a) in LAUNCH_RULES.items() if rule == ITEM}
+
+#: Idempotency keys a launch's call carries: namespaced per launch.
+_IDEMPOTENCY_KEYS = ("command_id", "request_id")
+
+#: desk.verb server verbs, and the tool each one is.
+_VERB_TOOLS = {"desk.create": "desk.create", "desk.update": "desk.update",
+               "desk.delete": "desk.delete", "workbench.add_item": "workbench.add_item",
+               "workbench.run": "workbench.run"}
 
 
 def _ref_id(value: Any) -> str:
@@ -231,168 +432,181 @@ def _ref_id(value: Any) -> str:
     return text.split(":", 1)[1] if ":" in text else text
 
 
-#: The owner's desk records (ruling on #903, round 3): a launched agent edits
-#: or deletes only the desk objects it created during the launch. Each tool
-#: names the argument(s) that point at the record it changes.
-_OWN_OBJECT_ARGS: dict[str, tuple[str, ...]] = {
-    "desk.update": ("id",),
-    "desk.delete": ("id",),
-    "zone.file": ("primitive_id",),
-    "zone.unfile": ("primitive_id",),
-    "kb.add_member": ("ref",),
-    "kb.remove_member": ("ref",),
-    "workbench.add_item": ("workbench_id",),
-    "workbench.update": ("workbench_id",),
-    "workbench.delete": ("workbench_id",),
-    "workbench.update_item": ("workbench_id",),
-    "workbench.delete_item": ("workbench_id",),
-    "meeting.delete": ("meeting_id",),
-    "scheduled_recording.update": ("schedule_id",),
-    "scheduled_recording.delete": ("schedule_id",),
-    "scheduled_recording.cancel_armed": ("schedule_id",),
-    "thought.adopt_note": ("note_id",),
-}
-#: Every thought tool that changes a thought names it by ``thought_id``.
-_THOUGHT_WRITES = frozenset({
-    "thought.refine", "thought.reconcile", "thought.stop_refinement", "thought.attach_context",
-    "thought.detach_context", "thought.refresh_context", "thought.answer_review",
-    "thought.accept_review", "thought.reject_review", "thought.answer_and_continue",
-    "thought.update_working", "thought.complete", "thought.resume",
-})
-#: desk.verb server verbs that make something new or only run: not scoped.
-_VERB_FREE = frozenset({"desk.create", "workbench.run"})
+_DESK_KINDS = {"notes": "note", "decisions": "decision", "kbs": "kb", "directories": "directory",
+               "workflows": "workflow", "chains": "chain"}
 
 
-def _owned_ids(name: str, arguments: Mapping[str, Any]) -> Optional[list[str]]:
-    """The record ids a desk write names; None when the tool is not scoped."""
-    if name == "desk.verb":
-        verb = str(arguments.get("verb_id") or "")
-        if verb in _VERB_FREE:
-            return None
-        inner = arguments.get("arguments") if isinstance(arguments.get("arguments"), Mapping) else {}
-        ids = _owned_ids(verb, inner)
-        return ids if ids is not None else [""]  # any other verb: refused unless named and own
-    if name in _THOUGHT_WRITES:
-        return [_ref_id(arguments.get("thought_id"))]
-    keys = _OWN_OBJECT_ARGS.get(name)
-    if keys is None:
-        return None
-    return [_ref_id(arguments.get(key)) for key in keys]
+def _qualified(value: Any) -> str:
+    text = str(value or "").strip()
+    kind, sep, rest = text.partition(":")
+    return f"{kind.strip().lower()}:{rest.strip()}" if sep else f"?:{text}"
 
 
-#: Project reads and watch checks: open on every Project.
-_PROJECT_FREE = frozenset({
-    "project.list", "project.get", "project.get_room", "project.get_delta",
-    "project.list_updates", "project.item.list", "project.resource.list",
-    "project.get_steward_run", "project.suggested_sources",
-    "project.watch.inspect", "project.watch.test", "project.watch.evaluate",
-})
-#: Never, on any Project (round 4 ruling on #903): the owner's metadata,
-#: his links and his lifecycle.
-_PROJECT_NEVER = frozenset({
-    "project.update", "project.unlink", "project.restore", "project.archive",
-})
-#: Writes named by an id the agent must have made (its draft, its run).
-_PROJECT_BY_OWN_ID: dict[str, str] = {
-    "project.update_draft": "update_id",
-    "project.publish_update": "update_id",
-    "project.stop_steward": "run_id",
-}
+def _desk_targets(name: str, args: Mapping[str, Any]) -> list[str]:
+    """The existing records a desk write changes, as canonical refs."""
+    if name in ("desk.update", "desk.delete"):
+        return [f"{_DESK_KINDS.get(str(args.get('kind') or ''), str(args.get('kind') or '?'))}:{args.get('id') or ''}"]
+    if name in ("zone.file", "zone.unfile"):
+        return [f"directory:{args.get('directory_id') or ''}", _qualified(args.get("primitive_id"))]
+    if name in ("kb.add_member", "kb.remove_member"):
+        return [f"kb:{args.get('kb_id') or ''}"]
+    if name == "decision.supersede":
+        return [f"decision:{args.get('decision_id') or ''}"]
+    return []  # desk.create: insert-only, held in PrimitiveService
 
 
-def _resource_key(project_id: Any, resource_ref: Any) -> str:
-    return f"resource:{project_id}:{resource_ref}"
-
-
-def _project_refused(launch_id: str, name: str, args: Mapping[str, Any]) -> Optional[str]:
-    """A project.* write: only on the launch's own Project, and there only
-    adding (links, resources, items, drafts) or changing what the agent
-    made. Reads stay open."""
+def _launch_project(launch_id: str) -> Optional[str]:
     from .. import coder_factory
     from ..principals import agent_credentials
 
-    if not name.startswith("project.") or name in _PROJECT_FREE:
-        return None
-    named = str(args.get("project_id") or "").strip()
-    if name in _PROJECT_NEVER:
-        return named or name
-    if name in _PROJECT_BY_OWN_ID:
-        own = str(args.get(_PROJECT_BY_OWN_ID[name]) or "").strip()
-        return None if own and agent_credentials.created_by(launch_id, own) else (own or name)
     credential = agent_credentials.launch_credential(coder_factory.launch_identity(launch_id))
-    project = credential.project_id if credential is not None else None
-    if not named or project is None or named != project:
-        # Another Project, or a write that names none (create, setup, a
-        # steward trigger over every Project).
-        return named or name
-    if name == "project.resource.remove":
-        key = _resource_key(named, args.get("resource_ref"))
-        return None if agent_credentials.created_by(launch_id, key) else str(args.get("resource_ref") or name)
-    return None
+    return credential.project_id if credential is not None else None
 
 
-def item_refused(launch_id: str, name: str, arguments: Any) -> Optional[str]:
-    """The id a scoped tool names, when it is not this launch's to change."""
-    from ..principals import agent_credentials
+def gate_call(name: str, arguments: Any, principal: Any) -> Any:
+    """The launch rule of one tool call, BEFORE it runs (``tools.dispatch``).
 
-    from ..mcp.palettes import CONDUCTOR, resolve_palette
+    Returns the arguments to dispatch (idempotency keys namespaced), or
+    raises ``not_this_launch``. Not a launch: the arguments, untouched."""
+    from ..mcp.tools import is_read_tool
 
-    if name not in resolve_palette(CONDUCTOR):
-        return None  # the palette refuses it first (MCP-005)
-    args = arguments if isinstance(arguments, Mapping) else {}
-    project_refusal = _project_refused(launch_id, name, args)
-    if project_refusal is not None:
-        return project_refusal
-    key = SCOPED_ITEM_TOOLS.get(name)
-    if key is not None:
-        item_id = str(args.get(key) or "").strip()
-        return None if agent_credentials.in_scope(launch_id, item_id) else (item_id or "(none)")
-    ids = _owned_ids(name, args)
-    if ids is None:
-        return None
-    for object_id in ids:
-        if not object_id or not agent_credentials.created_by(launch_id, object_id):
-            return object_id or "(none)"
-    return None
+    launch = launch_id_of(principal)
+    if launch is None:
+        return arguments
+    args = dict(arguments) if isinstance(arguments, Mapping) else {}
+    if name == "desk.verb":
+        verb = str(args.get("verb_id") or "")
+        inner_tool = _VERB_TOOLS.get(verb)
+        if inner_tool is None:
+            refuse(verb or name, f"desk.verb {verb!r} is not open to a launch")
+        if inner_tool != "desk.verb":
+            inner = args.get("arguments") if isinstance(args.get("arguments"), Mapping) else {}
+            args["arguments"] = gate_call(inner_tool, inner, principal)
+        return args
+    rule = LAUNCH_RULES.get(name)
+    if rule is None:
+        if is_read_tool(name):
+            return args
+        refuse(name, f"{name} has no launch rule; a launch may not call it")
+    if rule[0] == DESK:
+        # Held in PrimitiveService too; named here first, so the answer is
+        # the launch rule, never a later kernel code.
+        require_own(principal, *_desk_targets(name, args))
+    kind, key = rule[1], rule[2]
+    for idem in _IDEMPOTENCY_KEYS:
+        if args.get(idem):
+            args[idem] = f"{launch}:{args[idem]}"
+    if rule[0] in (NEVER, COMPOSER):
+        refuse(f"{kind}:{args.get(key)}" if kind and key and args.get(key) else name,
+               f"{name} is not open to a launch")
+    if rule[0] == OWN:
+        require_own(principal, f"{kind}:{_ref_id(args.get(key))}")
+    elif rule[0] == ITEM:
+        from ..principals import agent_credentials
+
+        ref = f"{kind}:{_ref_id(args.get(key))}"
+        if not agent_credentials.in_scope(launch, ref):
+            refuse(ref)
+    if rule[0] == PROJECT or rule[1] == "project_item":
+        named = str(args.get("project_id") or "").strip()
+        project = _launch_project(launch)
+        if name in ("project.item.update", "project.item.transition", "project.item.create",
+                    "project.link", "project.resource.add", "project.resource.remove", "project.open_review"):
+            if not named or project is None or named != project:
+                refuse(f"project:{named or '(none)'}", "a launch adds only to its own Project")
+    return args
 
 
-_CREATED_KEYS = ("id", "thought_id", "schedule_id", "workbench_id", "note_id", "update_id", "run_id")
-_CREATED_NESTS = ("item", "note", "workbench", "thought", "schedule", "decision", "primitive", "update", "run")
-_CREATING_TOOLS = frozenset({
-    "door.add_item", "project.item.create", "desk.create", "desk.verb", "workbench.create",
-    "thought.create", "scheduled_recording.create", "project.draft_update", "project.run_steward",
-})
-
-
-def record_created(launch_id: str, name: str, result: Any, arguments: Any = None) -> None:
-    """What the agent created joins the launch's scope, as its own."""
-    from ..principals import agent_credentials
-
-    args = arguments if isinstance(arguments, Mapping) else {}
-    if name == "project.resource.add":
-        agent_credentials.scope_add(launch_id, _resource_key(args.get("project_id"), args.get("resource_ref")))
+def after_call(name: str, arguments: Any, result: Any, principal: Any) -> None:
+    """Record what a ``create`` tool made as the launch's own (desk and
+    Project records are recorded where they are inserted)."""
+    launch = launch_id_of(principal)
+    rule = LAUNCH_RULES.get(name)
+    if launch is None or rule is None or not isinstance(result, Mapping):
         return
-    if name == "project.link":
-        agent_credentials.scope_add(launch_id, f"link:{args.get('project_id')}:{args.get('meeting_id')}")
+    if rule[0] not in (CREATE, PROJECT) or not rule[1]:
         return
-    if name not in _CREATING_TOOLS or not isinstance(result, Mapping):
-        return
-    for holder in [result, *(result.get(n) for n in _CREATED_NESTS)]:
-        if not isinstance(holder, Mapping):
-            continue
-        for key in _CREATED_KEYS:
-            if holder.get(key):
-                agent_credentials.scope_add(launch_id, _ref_id(holder[key]))
+    kind = rule[1]
+    for holder in (result, result.get("item"), result.get(kind), result.get("thought"),
+                   result.get("workbench"), result.get("schedule"), result.get("send")):
+        if isinstance(holder, Mapping):
+            for key in ("id", f"{kind}_id", "thought_id", "schedule_id", "workbench_id", "send_id"):
+                if holder.get(key):
+                    record_own(principal, f"{kind}:{_ref_id(holder[key])}")
+                    return
+
+
+# ── 4. the People cut on every read a launch reaches ─────────────────────
+
+
+def _people_text(text: str) -> str:
+    from .agent_brief import _people_section_cut
+
+    return _people_section_cut(text)
+
+
+def cut_people_everywhere(value: Any) -> Any:
+    """The brief's People classification over ANY read payload: a People
+    record is dropped, a People-marked line or a Brief People section is cut
+    from every string (JSON carried inside a string included)."""
+    from .agent_brief import PEOPLE_KINDS, _PEOPLE_MARKERS
+
+    if isinstance(value, str):
+        stripped = value.lstrip()
+        if stripped[:1] in ("{", "["):
+            import json
+
+            try:
+                parsed = json.loads(value)
+            except ValueError:
+                return _people_text(value)
+            return json.dumps(cut_people_everywhere(parsed), default=str)
+        return _people_text(value)
+    if isinstance(value, Mapping):
+        kind = str(value.get("kind") or "")
+        refs = [str(value.get(k) or "") for k in ("ref", "source_ref", "uri", "resource_ref")]
+        if kind in PEOPLE_KINDS or any(
+            r.startswith(_PEOPLE_MARKERS) or r.startswith("holdspeak://people/") for r in refs if r
+        ):
+            return _DROP
+        out = {}
+        for key, item in value.items():
+            kept = cut_people_everywhere(item)
+            if kept is not _DROP:
+                out[key] = kept
+        return out
+    if isinstance(value, (list, tuple)):
+        return [kept for kept in (cut_people_everywhere(v) for v in value) if kept is not _DROP]
+    return value
+
+
+def cut_for(principal: Any, value: Any) -> Any:
+    """What a launch principal reads, after the People cut; others: as is."""
+    if launch_id_of(principal) is None:
+        return value
+    kept = cut_people_everywhere(value)
+    return None if kept is _DROP else kept
+
+
+class _Drop:
+    def __repr__(self) -> str:  # pragma: no cover
+        return "<dropped People record>"
+
+
+_DROP = _Drop()
 
 
 __all__ = [
+    "LAUNCH_RULES",
+    "NOT_OFFERED",
+    "after_call",
+    "cut_people_everywhere",
+    "gate_call",
     "NOT_THIS_LAUNCH",
     "PROPOSAL_OPERATIONS",
     "SCOPED_ITEM_TOOLS",
     "cut_memory",
     "grant_decision_proposals",
     "install_revoke_hook",
-    "item_refused",
-    "record_created",
     "revoke_decision_grant",
 ]

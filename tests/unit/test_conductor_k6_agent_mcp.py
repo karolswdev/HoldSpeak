@@ -51,6 +51,8 @@ from tests.unit.test_agent_hand import OWNER, _rig, _seed, _wait_for  # noqa: E4
 
 REMOTE_HOST = "192.0.2.77"  # TEST-NET-1: never loopback
 
+from holdspeak.services.conductor_launch import NOT_OFFERED as NEVER_OFFERED  # noqa: E402
+
 
 @pytest.fixture
 def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -126,11 +128,12 @@ def test_conductor_palette_is_every_work_tool_except_people() -> None:
     registered = {t["name"] for t in TOOLS}
     palette = resolve_palette(CONDUCTOR)
     from holdspeak.mcp.palettes import CONDUCTOR_OWNER_CONFIRM
+    from holdspeak.services.conductor_launch import NOT_OFFERED
 
     expected = {
         name for name in registered
         if TOOL_AUTHORITY.get(name) == WORK and not name.startswith("people.")
-        and name not in CONDUCTOR_OWNER_CONFIRM
+        and name not in CONDUCTOR_OWNER_CONFIRM and name not in NOT_OFFERED
     }
     assert palette == expected
     assert not any(TOOL_AUTHORITY[name] != WORK for name in palette)
@@ -598,9 +601,9 @@ def test_a_launch_proposes_decisions_and_nothing_else(hub: Hub) -> None:
     assert is_error and refused.get("code") == "desk_delegation_required", refused
     is_error, refused = _result(_call(agent, "desk.delete", {"kind": "decisions", "id": decision_id}))
     assert is_error and refused.get("code") == "desk_delegation_required", refused
-    # Filing even its own proposal is a desk write the grant does not hold.
+    # Filing even its own proposal into the owner's zone: the zone is his.
     is_error, refused = _result(_call(agent, "zone.file", {"directory_id": "hs-seed-inbox", "primitive_id": f"decision:{decision_id}"}))
-    assert is_error and refused.get("code") == "desk_delegation_required", refused
+    assert is_error and refused.get("code") == "not_this_launch", refused
 
     # The grant goes with the credential.
     coder_factory.revoke_launch("launch_k6test0001")
@@ -613,10 +616,10 @@ def test_item_state_tools_act_only_on_this_launchs_items(hub: Hub) -> None:
     _reach(hub, False)
     _err, origin = hub.mcp("door.add_item", {"task": "The origin item"})
     _err, other = hub.mcp("door.add_item", {"task": "Somebody else's item"})
-    agent = _client(hub, _launch_credential(scope=(origin["id"],)).token)
+    agent = _client(hub, _launch_credential(scope=(f"action:{origin['id']}",)).token)
 
     is_error, refused = _result(_call(agent, "follow_through.complete", {"card_id": other["id"], "verb": "done"}))
-    assert is_error and refused["code"] == "not_this_launch" and refused["item_id"] == other["id"]
+    assert is_error and refused["code"] == "not_this_launch" and refused["item_id"] == f"action:{other['id']}"
     is_error, refused = _result(_call(agent, "project.item.transition", {"project_id": "p", "item_id": "it_x", "verb": "done"}))
     assert is_error and refused["code"] == "not_this_launch"
 
@@ -637,7 +640,7 @@ def test_the_launch_scopes_the_origin_and_grants_proposals(tmp_path, db, monkeyp
     result = rig.hand.hand(OWNER, "action", "ai_1")
     assert result["status"] == "launched", result
     launch_id = result["launch_id"]
-    assert agent_credentials.in_scope(launch_id, "ai_1")
+    assert agent_credentials.in_scope(launch_id, "action:ai_1")
     assert rig.launches.get(launch_id)["mcp"]["decision_proposals"] == "granted"
     agent = _client(hub, _env_token(_spawn(rig)[0]))
     is_error, made = _result(_call(agent, "desk.create", {"kind": "decisions", "data": {"title": "Proposed by the agent"}}))
@@ -696,7 +699,11 @@ def test_the_agent_edits_only_what_it_created(hub: Hub) -> None:
     agent = _client(hub, _launch_credential().token)
 
     def refused(name: str, args: dict[str, Any]) -> None:
-        is_error, body = _result(_call(agent, name, args))
+        answer = _call(agent, name, args)
+        if name in NEVER_OFFERED:  # not offered: the palette refuses it first
+            assert _refused_by_palette(answer), (name, answer)
+            return
+        is_error, body = _result(answer)
         assert is_error and body["code"] == "not_this_launch", (name, body)
 
     refused("desk.update", {"kind": "notes", "id": owner_id, "data": {"title": "Hijacked"}})
@@ -759,7 +766,11 @@ def test_the_agent_adds_to_its_own_project_and_writes_no_other(hub: Hub) -> None
     assert grant_project_additions(OWNER_PRESS, identity, own["id"], ttl_seconds=3600) is not None
 
     def refused(name: str, args: dict[str, Any]) -> None:
-        is_error, body = _result(_call(agent, name, args))
+        answer = _call(agent, name, args)
+        if name in NEVER_OFFERED:  # not offered: the palette refuses it first
+            assert _refused_by_palette(answer), (name, answer)
+            return
+        is_error, body = _result(answer)
         assert is_error and body["code"] == "not_this_launch", (name, body)
 
     # Never, on any Project.
@@ -803,3 +814,243 @@ def test_the_agent_adds_to_its_own_project_and_writes_no_other(hub: Hub) -> None
     from holdspeak.services import project_delegation
 
     assert project_delegation.live_projects(identity, database=hub.db) == []
+
+
+# ── 6. Astra round 1 on #903: seven findings, each fenced ──────────────────
+
+
+def _owner_press():
+    from tests.unit.test_agent_hand import OWNER as OWNER_PRESS
+
+    return OWNER_PRESS
+
+
+def test_r1_launch_creation_is_insert_only(hub: Hub) -> None:
+    """Finding 1: an existing id is refused before any write, through
+    desk.create and desk.verb; an owner's accepted decision is not replaced."""
+    _reach(hub, False)
+    prims = hub.root.primitive_service
+    note = prims.create_note(_owner_press(), title="Owner plan", body_markdown="keep")["id"]
+    decision = prims.create_decision(_owner_press(), title="Use Postgres", status="accepted")["id"]
+    agent = _client(hub, _launch_credential().token)
+    _grant()
+
+    for name, args in (
+        ("desk.create", {"kind": "notes", "data": {"note_id": note, "title": "Replaced"}}),
+        ("desk.verb", {"verb_id": "desk.create", "arguments": {"kind": "notes", "data": {"note_id": note, "title": "Replaced"}}}),
+        ("desk.create", {"kind": "decisions", "data": {"decision_id": decision, "title": "Use SQLite"}}),
+        ("desk.verb", {"verb_id": "desk.create", "arguments": {"kind": "decisions", "data": {"decision_id": decision, "title": "Use SQLite"}}}),
+    ):
+        is_error, body = _result(_call(agent, name, args))
+        assert is_error and body["code"] == "not_this_launch", (name, body)
+    assert prims.get_note(_owner_press(), note)["title"] == "Owner plan"
+    kept = prims.get_decision(_owner_press(), decision)
+    assert (kept["title"], kept["status"]) == ("Use Postgres", "accepted")
+    is_error, body = _result(_call(agent, "desk.delete", {"kind": "notes", "id": note}))
+    assert is_error and body["code"] == "not_this_launch"
+    # A new record (no id given, or a fresh one) is still made.
+    is_error, made = _result(_call(agent, "desk.create", {"kind": "notes", "data": {"note_id": "note_agentfresh01", "title": "Mine"}}))
+    assert is_error is False and made["id"] == "note_agentfresh01", made
+
+
+def test_r2_ownership_is_kind_qualified(hub: Hub) -> None:
+    """Finding 2: a Chain made with an owner Note's id owns the Chain, not the Note."""
+    _reach(hub, False)
+    prims = hub.root.primitive_service
+    note = prims.create_note(_owner_press(), title="Owner note", body_markdown="keep")["id"]
+    agent = _client(hub, _launch_credential().token)
+    is_error, chain = _result(_call(agent, "desk.create", {"kind": "chains", "data": {"chain_id": note, "name": "My chain"}}))
+    assert is_error is False and chain["id"] == note, chain
+    assert agent_credentials.created_by("launch_k6test0001", f"chain:{note}")
+    assert not agent_credentials.created_by("launch_k6test0001", f"note:{note}")
+    for name, args in (
+        ("desk.update", {"kind": "notes", "id": note, "data": {"title": "Hijacked"}}),
+        ("desk.delete", {"kind": "notes", "id": note}),
+    ):
+        is_error, body = _result(_call(agent, name, args))
+        assert is_error and body["code"] == "not_this_launch", (name, body)
+    assert prims.get_note(_owner_press(), note)["title"] == "Owner note"
+    # Its own chain it may edit.
+    is_error, edited = _result(_call(agent, "desk.update", {"kind": "chains", "id": note, "data": {"name": "Renamed"}}))
+    assert is_error is False, edited
+
+
+PEOPLE_LINE = "people:rel_42 wants more ownership"
+
+
+def test_r3_the_people_cut_holds_on_every_reader(hub: Hub) -> None:
+    """Finding 3: the same People-bearing Note through every reader a launch
+    reaches: none answers the People line; the owner still reads it."""
+    _reach(hub, False)
+    note = hub.root.primitive_service.create_note(
+        _owner_press(), title="Zebra 1:1 prep", body_markdown=f"zebra agenda\n{PEOPLE_LINE}",
+    )["id"]
+    _err, owner_view = hub.mcp("desk.get", {"kind": "notes", "id": note})
+    assert PEOPLE_LINE in json.dumps(owner_view)
+    agent = _client(hub, _launch_credential().token)
+    readers: dict[str, Any] = {
+        "desk.get": _call(agent, "desk.get", {"kind": "notes", "id": note}),
+        "desk.list": _call(agent, "desk.list", {"kind": "notes"}),
+        "desk.snapshot": _call(agent, "desk.snapshot", {}),
+        "desk.needs_you": _call(agent, "desk.needs_you", {}),
+        "memory.search": _call(agent, "memory.search", {"query": "zebra"}),
+        "resource notes": _rpc(agent, "resources/read", {"uri": f"holdspeak://primitives/notes/{note}"}).json(),
+        "resource snapshot": _rpc(agent, "resources/read", {"uri": "holdspeak://desk/snapshot"}).json(),
+    }
+    listed = _rpc(agent, "resources/list").json()["result"]
+    for row in listed["resources"]:
+        readers[f"resource {row['uri']}"] = _rpc(agent, "resources/read", {"uri": row["uri"]}).json()
+    for reader, answer in readers.items():
+        assert PEOPLE_LINE not in json.dumps(answer) and "rel_42" not in json.dumps(answer), reader
+    # The rest of the Note still reads.
+    assert "zebra agenda" in json.dumps(readers["desk.get"])
+    # The model composers are not offered: a paraphrase is past the cut.
+    for name in ("ask.run", "recipe.run", "monday_brief.generate", "workflow.run"):
+        assert _refused_by_palette(_call(agent, name, {})), name
+
+
+def _launch_project_rig(hub: Hub):
+    own = hub.client.post("/api/projects", json={"name": "Launch project"}).json()["project"]["id"]
+    agent_cred = _launch_credential(project=own)
+    from holdspeak.services.conductor_launch import grant_project_additions
+
+    assert grant_project_additions(_owner_press(), coder_factory.launch_identity("launch_k6test0001"), own,
+                                   ttl_seconds=3600) is not None
+    owner_note = hub.root.primitive_service.create_note(_owner_press(), title="Spec", body_markdown="s")["id"]
+    ref = f"note:{owner_note}"
+    _err, added = hub.mcp("project.resource.add", {"project_id": own, "resource_ref": ref, "command_id": "owner-cmd-1"})
+    assert _err is False, added
+    return own, agent_cred, ref
+
+
+def _resources(hub: Hub, project_id: str) -> str:
+    _err, listed = hub.mcp("project.resource.list", {"project_id": project_id})
+    return json.dumps(listed)
+
+
+def test_r4_re_adding_an_owner_resource_grants_nothing(hub: Hub) -> None:
+    """Finding 4: add of an existing membership, or a replay of the owner's
+    command, never makes it the launch's: the remove is refused."""
+    _reach(hub, False)
+    own, cred, ref = _launch_project_rig(hub)
+    agent = _client(hub, cred.token)
+    is_error, body = _result(_call(agent, "project.resource.add", {"project_id": own, "resource_ref": ref}))
+    assert is_error and body["code"] == "not_this_launch", body
+    # The owner's command id, replayed by the launch: namespaced, so not his answer.
+    is_error, body = _result(_call(agent, "project.resource.add",
+                                   {"project_id": own, "resource_ref": ref, "command_id": "owner-cmd-1"}))
+    assert is_error and body["code"] == "not_this_launch", body
+    # Over HTTP, the same replay.
+    http = _client(hub, cred.token).put(f"/api/projects/{own}/resources/{ref}", json={"command_id": "owner-cmd-1"})
+    assert http.status_code >= 400, http.text
+    is_error, body = _result(_call(agent, "project.resource.remove", {"project_id": own, "resource_ref": ref}))
+    assert is_error and body["code"] == "not_this_launch", body
+    assert ref in _resources(hub, own)
+
+
+def test_r5_ownership_holds_on_http_and_mcp(hub: Hub) -> None:
+    """Finding 5: the same owner resource, removed over both transports by
+    the launch credential: refused on both; a resource the launch added it
+    removes on both."""
+    _reach(hub, False)
+    own, cred, ref = _launch_project_rig(hub)
+    agent = _client(hub, cred.token)
+    http = _client(hub, cred.token).delete(f"/api/projects/{own}/resources/{ref}")
+    assert http.status_code >= 400 and "not_this_launch" in http.text, (http.status_code, http.text)
+    is_error, body = _result(_call(agent, "project.resource.remove", {"project_id": own, "resource_ref": ref}))
+    assert is_error and body["code"] == "not_this_launch", body
+    assert ref in _resources(hub, own)
+    # Its own additions: added over HTTP, removed over MCP; and the reverse.
+    for first, second in (("http", "mcp"), ("mcp", "http")):
+        is_error, made = _result(_call(agent, "desk.create", {"kind": "notes", "data": {"title": f"agent {first}"}}))
+        mref = f"note:{made['id']}"
+        if first == "http":
+            assert _client(hub, cred.token).put(f"/api/projects/{own}/resources/{mref}", json={}).status_code < 400
+        else:
+            assert _result(_call(agent, "project.resource.add", {"project_id": own, "resource_ref": mref}))[0] is False
+        if second == "mcp":
+            assert _result(_call(agent, "project.resource.remove", {"project_id": own, "resource_ref": mref}))[0] is False
+        else:
+            assert _client(hub, cred.token).delete(f"/api/projects/{own}/resources/{mref}").status_code < 400
+        assert mref not in _resources(hub, own), (first, second)
+
+
+def test_r5_the_agent_http_surface_is_pinned() -> None:
+    """Finding 5 (the class): every HTTP route an AGENT principal can reach.
+    A new one fails here until its launch rule is decided."""
+    from holdspeak.principals import PrincipalKind, Principal, required_right, room_agent_submit
+
+    agent = Principal(PrincipalKind.AGENT, "agent:launch:x")
+    import holdspeak.principals as p
+
+    reachable_room = sorted(f"{verb} {rx.pattern}" for verb, rx in p._ROOM_AGENT_SUBMIT)
+    # Every Room route an agent reaches is a kernel-admitted operation: the
+    # ProjectCodec refuses an agent outside its grant, and the launch grant
+    # holds only link and resource add/remove, which ProjectService scopes.
+    assert len(reachable_room) == len(set(reachable_room))
+    from holdspeak.kernel import project as rooms
+
+    assert rooms.LAUNCH_GRANT_OPERATIONS == {"project.link", "project.resource.add", "project.resource.remove"}
+    for path, method in (("/api/notes", "POST"), ("/api/notes/x", "PUT"), ("/api/notes/x", "DELETE"),
+                         ("/api/decisions", "POST"), ("/api/follow-through/x/complete", "POST"),
+                         ("/api/threads/x/status", "PUT"), ("/api/projects/x", "PUT")):
+        right = required_right(method, path)
+        assert right is not None and not agent.permits(right), (method, path, right)
+    assert room_agent_submit("DELETE", "/api/projects/p/resources/note:x")
+
+
+def test_r6_a_closed_unmerged_pr_does_not_keep_the_credential(tmp_path, db, monkeypatch, hub) -> None:
+    """Finding 6: open PR swept, closed unmerged, the process exits with no
+    hook: the next sweep rejects the token and revokes the grants."""
+    from holdspeak.services import desk_delegation
+    from tests.unit.test_conductor_k4_follow_through import _launch, _pr, _sweep
+
+    _reach(hub, False)
+    rig = _launch(tmp_path, db, monkeypatch)
+    launch_id = rig.result["launch_id"]
+    identity = coder_factory.launch_identity(launch_id)
+    token = _env_token(_spawn(rig)[0])
+    assert desk_delegation.live_grant(identity, database=hub.db), "the launch's decision grant"
+    rig.gh.prs = [_pr(rig.branch, rig.head, state="OPEN")]
+    _sweep(rig)
+    rig.gh.prs = [_pr(rig.branch, rig.head, state="CLOSED")]
+    _sweep(rig)
+    assert rig.launches.get(launch_id)["follow_through"].get("done") is True
+    assert _rpc(_client(hub, token), "tools/list").status_code == 200, "the session still runs"
+    rig.tmux.ended = True  # the process exits, no SessionEnd hook
+    receipt = _sweep(rig)
+    assert receipt["follow_through"]["released"] == [launch_id]
+    assert agent_credentials.derive(token) is None
+    assert _rpc(_client(hub, token), "tools/list").status_code == 401
+    assert not desk_delegation.live_grant(identity, database=hub.db)
+
+
+def test_r7_no_mutating_tool_falls_through() -> None:
+    """Finding 7: every CONDUCTOR tool is a read or has ONE launch rule; the
+    never/composer rules are not offered."""
+    from holdspeak.mcp.tools import is_read_tool
+    from holdspeak.services.conductor_launch import LAUNCH_RULES, NOT_OFFERED
+
+    palette = resolve_palette(CONDUCTOR)
+    unruled = sorted(n for n in palette if not is_read_tool(n) and n not in LAUNCH_RULES)
+    assert unruled == [], unruled
+    assert NOT_OFFERED.isdisjoint(palette)
+
+
+def test_r7_thread_status_of_the_owner_is_untouched(hub: Hub) -> None:
+    _reach(hub, False)
+    made = hub.client.post("/api/threads", json={"title": "Owner thread"})
+    assert made.status_code == 201, made.text
+    thread_id = (made.json().get("thread") or made.json())["id"]
+    hub.db.threads.patch(thread_id, status_line="owner line")
+    agent = _client(hub, _launch_credential().token)
+    assert _refused_by_palette(_call(agent, "thread.set_status", {"thread_id": thread_id, "text": "hijacked"}))
+    # Even past the palette, the dispatcher refuses it by its launch rule.
+    from holdspeak.mcp.tools import dispatch
+    from holdspeak.services.errors import ServiceError
+
+    with pytest.raises(ServiceError) as refused:
+        dispatch("thread.set_status", {"thread_id": thread_id, "text": "hijacked"},
+                 agent_credentials.derive(_launch_credential("launch_k6direct0002").token))
+    assert refused.value.code == "not_this_launch"
+    assert hub.db.threads.get(thread_id).status_line == "owner line"

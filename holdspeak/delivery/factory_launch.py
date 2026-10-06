@@ -970,7 +970,7 @@ class LaunchService:
                 "payload": {
                     "name": session_name, "command": command, "launch_id": launch_id,
                     # K6 item scope: the agent may change its origin item.
-                    "scope_items": [origin_ref["id"]] if origin_ref else [],
+                    "scope_items": [f"{origin_ref['kind']}:{origin_ref['id']}"] if origin_ref else [],
                     # K6: the Project the agent may add to (a hand-off's own).
                     "project_id": project if origin_ref and project != "desk" else None,
                 },

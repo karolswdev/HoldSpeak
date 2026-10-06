@@ -21,6 +21,29 @@ def _new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
+# Conductor K6 (Astra round 1 on #903): a launched agent's desk writes are
+# held HERE, the one service every transport reaches: creation is
+# insert-only, and an edit, a filing or a delete touches only what the
+# launch created (canonical ``kind:id`` refs). The owner is unaffected.
+def _launch_new(principal: Principal, kind: str, supplied: str | None, get: Callable[..., Any]) -> None:
+    if supplied:
+        from .conductor_launch import require_new
+
+        require_new(principal, f"{kind}:{supplied}", lambda: get(supplied, include_deleted=True) is not None)
+
+
+def _launch_own(principal: Principal, *refs: str) -> None:
+    from .conductor_launch import require_own
+
+    require_own(principal, *refs)
+
+
+def _launch_made(principal: Principal, kind: str, obj_id: str) -> None:
+    from .conductor_launch import record_own
+
+    record_own(principal, f"{kind}:{obj_id}")
+
+
 @observe_service
 class PrimitiveService:
     def __init__(
@@ -71,6 +94,7 @@ class PrimitiveService:
         body_markdown: str = "",
         tags: list[str] | None = None,
     ) -> dict[str, Any]:
+        _launch_new(principal, "note", note_id, self._db.notes.get)
         target_id = note_id or _new_id("note")
         if self._db.refinement_thoughts.get_by_note(target_id) is not None:
             raise ConflictError("thought-owned notes require expected revision", code="thought_expected_revision_required")
@@ -85,6 +109,7 @@ class PrimitiveService:
             if "thought-owned notes require expected revision" not in str(exc):
                 raise
             raise ConflictError("thought-owned notes require expected revision", code="thought_expected_revision_required") from exc
+        _launch_made(principal, "note", note.id)
         self._changed("note", note.id, "create")
         return note.to_dict()
 
@@ -99,6 +124,7 @@ class PrimitiveService:
         expected_aggregate_revision: int | None = None,
         expected_working_revision: int | None = None,
     ) -> dict[str, Any]:
+        _launch_own(principal, f"note:{note_id}")
         if self._db.refinement_thoughts.get_by_note(note_id) is not None:
             from .refinement_thought_service import RefinementThoughtService
             thought = RefinementThoughtService(self._db).update_note(
@@ -126,6 +152,7 @@ class PrimitiveService:
 
     def delete_note(self, principal: Principal, note_id: str, *, expected_aggregate_revision: int | None = None,
                     expected_lifecycle_revision: int | None = None) -> bool:
+        _launch_own(principal, f"note:{note_id}")
         if self._db.refinement_thoughts.get_by_note(note_id) is not None:
             from .refinement_thought_service import RefinementThoughtService
             return self._owned_note_response(RefinementThoughtService(self._db).tombstone_note(
@@ -182,6 +209,12 @@ class PrimitiveService:
         consequences_markdown: str = "",
         tags: list[str] | None = None,
     ) -> dict[str, Any]:
+        _launch_new(principal, "decision", decision_id, self._db.desk_decisions.get)
+        if str(status or "").strip().lower() != "proposed":
+            from .conductor_launch import launch_id_of, refuse
+
+            if launch_id_of(principal) is not None:
+                refuse(f"decision:{decision_id or 'new'}", "a launch proposes decisions; the owner confirms them")
         decision = self._db.desk_decisions.upsert(
             decision_id=decision_id or _new_id("decision"),
             title=title,
@@ -194,12 +227,14 @@ class PrimitiveService:
             consequences_markdown=consequences_markdown,
             tags=tags or [],
         )
+        _launch_made(principal, "decision", decision.id)
         self._changed("decision", decision.id, "create")
         return decision.to_dict()
 
     def update_decision(
         self, principal: Principal, decision_id: str, **fields: Any
     ) -> dict[str, Any]:
+        _launch_own(principal, f"decision:{decision_id}")
         decision = self._db.desk_decisions.update(decision_id, **fields)
         if decision is None:
             raise NotFound("decision", decision_id)
@@ -207,6 +242,7 @@ class PrimitiveService:
         return decision.to_dict()
 
     def delete_decision(self, principal: Principal, decision_id: str) -> bool:
+        _launch_own(principal, f"decision:{decision_id}")
         if not self._db.desk_decisions.delete(decision_id):
             raise NotFound("decision", decision_id)
         self._changed("decision", decision_id, "delete")
@@ -215,6 +251,7 @@ class PrimitiveService:
     def update_decision_status(
         self, principal: Principal, decision_id: str, status: str
     ) -> dict[str, Any]:
+        _launch_own(principal, f"decision:{decision_id}")
         decision = self._db.desk_decisions.update(decision_id, status=status)
         if decision is None:
             raise NotFound("decision", decision_id)
@@ -226,6 +263,7 @@ class PrimitiveService:
     ) -> dict[str, Any]:
         # PHILO-7-02: the admitted path mints the successor id BEFORE
         # submission, so the two-row write is one immutable payload.
+        _launch_own(principal, f"decision:{decision_id}")
         successor = self._db.desk_decisions.supersede(
             decision_id, successor_id or _new_id("decision")
         )
@@ -256,11 +294,13 @@ class PrimitiveService:
     ) -> dict[str, Any]:
         if not name.strip():
             raise ValidationError("kb name is required")
+        _launch_new(principal, "kb", kb_id, self._db.kbs.get)
         kb = self._db.kbs.upsert(
             kb_id=kb_id or _new_id("kb"),
             name=name,
             member_ids=member_ids or [],
         )
+        _launch_made(principal, "kb", kb.id)
         self._changed("kb", kb.id, "create")
         return kb.to_dict()
 
@@ -272,6 +312,7 @@ class PrimitiveService:
         name: str | None = None,
         member_ids: list[str] | None = None,
     ) -> dict[str, Any]:
+        _launch_own(principal, f"kb:{kb_id}")
         existing = self._db.kbs.get(kb_id)
         if existing is None:
             raise NotFound("kb", kb_id)
@@ -292,6 +333,7 @@ class PrimitiveService:
         return kb.to_dict()
 
     def delete_kb(self, principal: Principal, kb_id: str) -> bool:
+        _launch_own(principal, f"kb:{kb_id}")
         if not self._db.kbs.delete(kb_id):
             raise NotFound("kb", kb_id)
         self._changed("kb", kb_id, "delete")
@@ -308,6 +350,7 @@ class PrimitiveService:
     def add_kb_member(
         self, principal: Principal, kb_id: str, resource_ref: str
     ) -> dict[str, Any]:
+        _launch_own(principal, f"kb:{kb_id}")
         member = self._db.knowledge_memberships.upsert(
             knowledge_id=kb_id, resource_ref=resource_ref
         )
@@ -317,6 +360,7 @@ class PrimitiveService:
     def remove_kb_member(
         self, principal: Principal, kb_id: str, resource_ref: str
     ) -> bool:
+        _launch_own(principal, f"kb:{kb_id}")
         removed = self._db.knowledge_memberships.delete(kb_id, resource_ref)
         if removed:
             self._changed("kb", kb_id, "update")
@@ -356,6 +400,9 @@ class PrimitiveService:
         parent_id: str | None = None,
     ) -> dict[str, Any]:
         self._validate_zone_name(name)
+        _launch_new(principal, "directory", directory_id, self._db.directories.get)
+        if parent_id:
+            _launch_own(principal, f"directory:{parent_id}")
         try:
             directory = self._db.directories.upsert(
                 directory_id=directory_id or _new_id("dir"),
@@ -366,6 +413,7 @@ class PrimitiveService:
             raise ConflictError(
                 "zone_name_taken", existing_name=exc.existing_name
             ) from exc
+        _launch_made(principal, "directory", directory.id)
         self._changed("directory", directory.id, "create")
         return directory.to_dict()
 
@@ -377,6 +425,7 @@ class PrimitiveService:
         name: str | None = None,
         parent_id: str | None = ...,  # type: ignore[assignment]
     ) -> dict[str, Any]:
+        _launch_own(principal, f"directory:{directory_id}")
         existing = self._db.directories.get(directory_id)
         if existing is None:
             raise NotFound("directory", directory_id)
@@ -404,6 +453,7 @@ class PrimitiveService:
         return directory.to_dict()
 
     def delete_directory(self, principal: Principal, directory_id: str) -> bool:
+        _launch_own(principal, f"directory:{directory_id}")
         if not self._db.directories.delete(directory_id):
             raise NotFound("directory", directory_id)
         self._changed("directory", directory_id, "delete")
@@ -425,6 +475,7 @@ class PrimitiveService:
         if self._db.directories.get(directory_id) is None:
             raise NotFound("directory", directory_id)
         primitive_ref = qualified_ref(primitive_id)
+        _launch_own(principal, f"directory:{directory_id}", primitive_ref)
         from .refinement_thought_service import RefinementThoughtService
         RefinementThoughtService(self._db).assert_live_filing_allowed(primitive_ref)
         membership = self._db.directory_memberships.upsert(
@@ -440,6 +491,7 @@ class PrimitiveService:
         from ..db.relationships import qualified_ref
 
         ref = qualified_ref(primitive_id)
+        _launch_own(principal, f"directory:{directory_id}", ref)
         from .refinement_thought_service import RefinementThoughtService
         RefinementThoughtService(self._db).assert_live_filing_allowed(ref)
         existing = self._db.directory_memberships.get(ref)
@@ -471,12 +523,14 @@ class PrimitiveService:
     ) -> dict[str, Any]:
         if not name.strip():
             raise ValidationError("workflow name is required")
+        _launch_new(principal, "workflow", workflow_id, self._db.workflows.get)
         workflow = self._db.workflows.upsert(
             workflow_id=workflow_id or _new_id("workflow"),
             name=name,
             prompt=prompt,
             graph_json=graph_json or {},
         )
+        _launch_made(principal, "workflow", workflow.id)
         self._changed("workflow", workflow.id, "create")
         return self._workflow_payload(workflow)
 
@@ -489,6 +543,7 @@ class PrimitiveService:
         prompt: str | None = None,
         graph_json: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        _launch_own(principal, f"workflow:{workflow_id}")
         existing = self._db.workflows.get(workflow_id)
         if existing is None:
             raise NotFound("workflow", workflow_id)
@@ -502,6 +557,7 @@ class PrimitiveService:
         return self._workflow_payload(workflow)
 
     def delete_workflow(self, principal: Principal, workflow_id: str) -> bool:
+        _launch_own(principal, f"workflow:{workflow_id}")
         if not self._db.workflows.delete(workflow_id):
             raise NotFound("workflow", workflow_id)
         self._changed("workflow", workflow_id, "delete")
@@ -528,11 +584,13 @@ class PrimitiveService:
     ) -> dict[str, Any]:
         if not name.strip():
             raise ValidationError("Sequence name is required")
+        _launch_new(principal, "chain", chain_id, self._db.chains.get)
         chain = self._db.chains.upsert(
             chain_id=chain_id or _new_id("chain"),
             name=name,
             steps=steps or [],
         )
+        _launch_made(principal, "chain", chain.id)
         self._changed("chain", chain.id, "create")
         return self._chain_payload(chain)
 
@@ -544,6 +602,7 @@ class PrimitiveService:
         name: str | None = None,
         steps: list[str] | None = None,
     ) -> dict[str, Any]:
+        _launch_own(principal, f"chain:{chain_id}")
         existing = self._db.chains.get(chain_id)
         if existing is None:
             raise NotFound("chain", chain_id)
@@ -556,6 +615,7 @@ class PrimitiveService:
         return self._chain_payload(chain)
 
     def delete_chain(self, principal: Principal, chain_id: str) -> bool:
+        _launch_own(principal, f"chain:{chain_id}")
         if not self._db.chains.delete(chain_id):
             raise NotFound("chain", chain_id)
         self._changed("chain", chain_id, "delete")

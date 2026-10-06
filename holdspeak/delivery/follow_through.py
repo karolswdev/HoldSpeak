@@ -133,6 +133,11 @@ class FollowThroughObserver:
             return self._sweep(principal)
 
     def _sweep(self, principal: Any) -> dict[str, Any]:
+        # K6 (Astra round 1 on #903): credential lifetimes are swept FIRST and
+        # over EVERY launch, whatever its PR state: a launch whose PR closed
+        # unmerged (done) still loses its credential and grants when its
+        # session ends, before any provider is asked.
+        released = [r["launch_id"] for r in self._ledger.list() if self._release_mcp_if_session_ended(r)]
         launches = [r for r in self._ledger.list() if self._followed(r)]
         if launches and callable(getattr(self._registry, "reload", None)):
             # A launch registers its new worktree through its own registry
@@ -140,6 +145,7 @@ class FollowThroughObserver:
             self._registry.reload()
         receipt: dict[str, Any] = {
             "kind": "follow_through",
+            "released": released,
             "launches": len(launches),
             "sources": [],
             "closed": [],
@@ -192,7 +198,6 @@ class FollowThroughObserver:
         receipt: dict[str, Any],
     ) -> None:
         launch_id = str(launch["launch_id"])
-        self._release_mcp_if_session_ended(launch)
         state = dict(launch.get("follow_through") or {})
         row, pr_state = self._select_pr(launch, state, rows_by_source.get(str(launch.get("source_id")), []))
         before = dict(state)

@@ -85,7 +85,15 @@ def _lazy_conductor_tools() -> frozenset[str]:
         if TOOL_AUTHORITY.get(name) == WORK
         and not name.startswith(CONDUCTOR_EXCLUDED_PREFIXES)
         and name not in CONDUCTOR_OWNER_CONFIRM
+        and name not in _not_offered()
     )
+
+
+def _not_offered() -> frozenset[str]:
+    """The tools the launch audit never offers (``services/conductor_launch``)."""
+    from holdspeak.services.conductor_launch import NOT_OFFERED
+
+    return NOT_OFFERED
 
 
 def _decision_not_proposed(name: str, arguments: dict[str, Any]) -> bool:
@@ -105,7 +113,7 @@ def conductor_call_allowed(name: str, arguments: Any) -> bool:
 
     if name not in TOOL_AUTHORITY or name.startswith(CONDUCTOR_EXCLUDED_PREFIXES):
         return False
-    if name in CONDUCTOR_OWNER_CONFIRM:
+    if name in CONDUCTOR_OWNER_CONFIRM or name in _not_offered():
         return False
     args = arguments if isinstance(arguments, dict) else {}
     if _decision_not_proposed(name, args):
