@@ -7041,7 +7041,7 @@
     },
     "/api/coders/sessions": {
       "get": {
-        "description": "The live coder set (HSM-17-02) in the HSM-17-01 shape.\n\nEvery session the hooks reported, newest first \u2014 not just the ones\nwaiting on a reply \u2014 each carrying its raw `lifecycle`, the pending\n`question` (secret-filtered at ingest), and the decayed effective\n`state` (working | waiting | idle | ended). Sessions past the dead\nwindow fall out of the live set entirely; `include_ended=false` also\ndrops fresh tombstones.",
+        "description": "The live coder set (HSM-17-02) in the HSM-17-01 shape.\n\nEvery session the hooks reported, newest first \u2014 not just the ones\nwaiting on a reply \u2014 each carrying its raw `lifecycle`, the pending\n`question` (secret-filtered at ingest), and the decayed effective\n`state` (working | waiting | idle | ended). Sessions past the dead\nwindow fall out of the live set entirely; `include_ended=false` also\ndrops fresh tombstones. `flights` lists each item an agent was\nhanded (Conductor F2, `services.agent_flights`); a session that\nworks on one carries it as `flight`.",
         "operationId": "api_coders_sessions_api_coders_sessions_get",
         "parameters": [
           {

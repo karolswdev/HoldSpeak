@@ -306,13 +306,29 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
         `question` (secret-filtered at ingest), and the decayed effective
         `state` (working | waiting | idle | ended). Sessions past the dead
         window fall out of the live set entirely; `include_ended=false` also
-        drops fresh tombstones.
+        drops fresh tombstones. `flights` lists each item an agent was
+        handed (Conductor F2, `services.agent_flights`); a session that
+        works on one carries it as `flight`.
         """
         try:
             items = _service().list_sessions(
                 getattr(request.state, "principal", None), agent=agent, include_ended=include_ended
             )
-            return JSONResponse({"sessions": items, "count": len(items)})
+        except Exception as e:
+            return error_500("coders sessions", e, log)
+        # Conductor F2: the item each agent works on and how far it is (the
+        # launch ledger joined to the session), read beside the live set.
+        flights: list[dict[str, Any]] = []
+        try:
+            from ....db import get_database
+            from ....services.agent_flights import agent_flights, annotate_sessions
+
+            flights = agent_flights(get_database(), items)
+            annotate_sessions(items, flights)
+        except Exception as e:
+            log.warning(f"agent flights unread: {e}")
+        try:
+            return JSONResponse({"sessions": items, "count": len(items), "flights": flights})
         except Exception as e:
             return error_500("coders sessions", e, log)
 
