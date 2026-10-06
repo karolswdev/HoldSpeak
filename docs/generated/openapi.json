@@ -3449,6 +3449,46 @@
         "summary": "Api Agent Hand Preview"
       }
     },
+    "/api/agent/launches/{launch_id}": {
+      "get": {
+        "description": "One launch's delivery, read from the launch ledger (no driver, no\nreconcile): the launch sheet's receipt follows it until the brief is\nsent, held or refused.",
+        "operationId": "api_agent_launch_api_agent_launches__launch_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Launch Api Agent Launches  Launch Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Launch"
+      }
+    },
     "/api/agent/launches/{launch_id}/deliver": {
       "post": {
         "description": "Deliver the held brief of an existing launch (after a restart, a\nhook install or a refused send): resume on the launch, no relaunch.",
