@@ -3825,7 +3825,9 @@ CREATE TABLE IF NOT EXISTS thread_messages (
     updated_at REAL NOT NULL,
     completed_at REAL,
     aborted_at REAL,
-    deleted_at REAL
+    deleted_at REAL,
+    egress_receipt_id TEXT NOT NULL DEFAULT '',
+    egress_fallback INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_thread_messages_thread_created
 ON thread_messages(thread_id, created_at);

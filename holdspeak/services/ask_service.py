@@ -34,6 +34,11 @@ _ASK_SYSTEM_PROMPT = "You are the desk's AI core. Follow the instruction using t
 ASK_SERVICE_CONTRACT = "holdspeak.ask"
 ASK_SERVICE_SCHEMA_VERSION = "1"
 ASK_PAYLOAD_SCHEMA_VERSION = 1
+#: The operation id the Thought's pages and observations are fitted with,
+#: at reservation (the refinement coordinator) and at dispatch (Ask): one
+#: fixed value, longer than any real Ask id, so both sides fit the same bytes
+#: and the real request is never larger than the one that was fitted.
+THOUGHT_FIT_OPERATION_ID = "ask_" + "0" * 60
 
 
 class _QuestionOrSynthesisAdapter:
@@ -212,8 +217,9 @@ class AskService:
         if frozen_grounding is not None:
             frozen_grounding.validate()
         # Memory slice 6 (MEMORY-DESIGN.md §3.5): the scope's pages, then its
-        # observations, BEFORE the fused recall in the grounding block.  Not
-        # on the frozen Thought path: its coordinator reserved those bytes.
+        # observations, BEFORE the fused recall in the grounding block.  The
+        # routed Thought reads them below, as its coordinator did when it
+        # reserved the bytes (``thought_reflect``).
         reflect = EMPTY_MEMORY
         if frozen_grounding is None and not routed_execution_id:
             reflect = reflect_for(
@@ -255,7 +261,14 @@ class AskService:
                     "max_tokens": int(max_tokens) if max_tokens is not None else None,
                 }
 
-            if reflect:
+            if routed_execution_id and capability_id == "thought.interview":
+                # The routed Thought: the same read and fit the coordinator
+                # made at reservation, so the dispatched bytes are the
+                # reserved bytes (checked below).
+                reflect = await asyncio.to_thread(
+                    self.thought_reflect, prompt, exclude_refs=memory_exclude_refs, build=_payload,
+                )
+            elif reflect:
                 # One budget: the pages and observations never push the Ask
                 # over the route admission will freeze.
                 reflect = await asyncio.to_thread(
@@ -329,9 +342,10 @@ class AskService:
                 before_physical_dispatch=before_physical_dispatch,
             )
             if routed["outcome"] != "succeeded" or not isinstance(routed["result"], dict):
+                # A failed Ask keeps where its bytes went (Astra, #875).
                 raise ServiceError(
                     "inference_route_failed", "No assigned model completed this request",
-                    context={"receipt": routed["receipt"], "status": 409},
+                    context={"receipt": routed["receipt"], "route": self._receipt_route(routed["receipt"]), "status": 409},
                 )
             winner = str(routed["winning_reservation"]["child_invocation_id"])
             result = self._broker.projection_stager.finalize(winner)
@@ -343,6 +357,13 @@ class AskService:
                 )
             result = dict(result)
             result["route_execution_receipt"] = routed["receipt"]
+            # The route the face names: the least private SENT attempt of
+            # this receipt, with its token (inference_locality.served_route).
+            route = self._receipt_route(routed["receipt"])
+            if route is not None:
+                result["route"] = route
+                if route["lamp"]:
+                    result["egress"] = {"scope": route["lamp"], **({"host": route["host"]} if route["host"] else {})}
             self._emit("ready", kind="ask", ref="ask", name=lens)
             return result
         from ..inference_targets import resolve_placement, target_refusal
@@ -401,6 +422,12 @@ class AskService:
         self._emit("ready", kind="ask", ref="ask", name=lens)
         return dict(result)
 
+    def _receipt_route(self, receipt: Any) -> dict[str, Any] | None:
+        from ..inference_locality import served_route
+
+        with self._db._connection() as conn:
+            return served_route(conn, receipt)
+
     def _routed_assignments_active(self) -> bool:
         with self._db._connection() as conn:
             return conn.execute(
@@ -421,9 +448,23 @@ class AskService:
                 "SELECT engine,model FROM deployment_revisions WHERE id=?",
                 (str(leg["deployment_revision_id"]),),
             ).fetchone()
+            # Where the bytes went (the winning attempt's deployment, the
+            # #855 loopback rule): the lamp and the host the Ask face names.
+            from ..inference_locality import served_route
+
+            # At publish time the receipt is not written yet: the leg that
+            # answered.  ask() replaces it with the full receipt route.
+            served = served_route(conn, receipt) or served_route(conn, {
+                "attempts": [{"attempt_id": "leg", "deployment_revision_id": str(leg["deployment_revision_id"]),
+                              "boundary": boundary, "send_phase": "provider_returned"}],
+                "winning_attempt_id": "leg",
+            })
         if deployment is None:
             raise ServiceError("inference_route_deployment_missing", "Frozen deployment is missing")
         engine, model = str(deployment["engine"]), str(deployment["model"])
+        egress: dict[str, Any] = {"scope": (served or {}).get("lamp") or boundary}
+        if (served or {}).get("host"):
+            egress["host"] = served["host"]
         semantic_output = (
             json.dumps(output, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
             if "kind" in output else str(output["output"])
@@ -442,7 +483,7 @@ class AskService:
                 "engine": engine,
                 "model": model, "fallback_reason": None,
             },
-            "egress": {"scope": boundary},
+            "egress": egress,
             "context_ids": list(payload["context_ids"]),
             "context_titles": list(payload["context_titles"]),
         }
@@ -472,6 +513,15 @@ class AskService:
                                   "actual_placement": actual_placement,
                                   "egress": egress, "model": selected_model,
                                   "context_ids": list(payload["context_ids"]), "context_titles": list(payload["context_titles"])}
+        # The route the face names, from the attempt's placement receipt
+        # (the one classifier; no execution receipt id on this path).
+        from ..inference_locality import deployment_lamp
+        endpoint = str(getattr(target.deployment, "endpoint", "") or "") if target.deployment else ""
+        lamp = deployment_lamp(actual_boundary, endpoint)
+        lamp = "cloud" if lamp == "unknown" else lamp
+        host = "" if lamp == "local" else str(egress.get("host") or urlparse(endpoint).hostname or "")
+        result["route"] = {"lamp": lamp, "host": host,
+                           "model": selected_model, "receipt": "", "fallback": False}
         if placement_block is not None: result["placement"] = placement_block
         if payload["grounding"] is not None: result["grounding"] = payload["grounding"]
         source_text = str(payload["source_text"])
@@ -592,6 +642,36 @@ class AskService:
             else ""
         )
         return envelope, echo, ids, titles, instruction
+
+    def thought_reflect(
+        self,
+        prompt: str,
+        *,
+        exclude_refs: Sequence[str] = (),
+        build: Callable[[MemoryContext], dict[str, Any]],
+    ) -> MemoryContext:
+        """The desk's pages and observations for a routed Thought turn,
+        fitted to the route with ``build`` (the whole payload for a part).
+
+        The refinement coordinator calls this before it reserves the bytes,
+        and Ask calls it again at dispatch with the same arguments: the same
+        memory gives the same bytes.  A change between the two (a page
+        rewrite, a withdrawn source) is the dispatch-material check's, as for
+        the recall.  No broker, or any failure: the empty context."""
+        try:
+            reflect = reflect_for(
+                "thought.interview", self._db, scopes=reflect_scopes((), explicit=False),
+                query=prompt, exclude_refs=exclude_refs,
+            )
+            if not reflect or self._broker is None:
+                return EMPTY_MEMORY
+            return fit_reflect(
+                self._broker.inference_adoption_service, reflect,
+                capability_id="thought.interview", operation_id=THOUGHT_FIT_OPERATION_ID,
+                reserved_output_tokens=512, build=build,
+            )
+        except Exception:  # memory never fails a Thought
+            return EMPTY_MEMORY
 
     @staticmethod
     def _reflect_scopes(grounding: Any) -> list[tuple[str, str]]:

@@ -469,6 +469,11 @@ _ENTITY_NAME_WORDS = 6
 _TIME_QUESTION_MAX_CHARS = 400
 _MARK = re.compile(r"</?mark>")
 _WORD = re.compile(r"\w+", re.UNICODE)
+#: The keyword kinds whose hit comes from an FTS5 MATCH; the others (the
+#: canonical-store kinds, a meeting's summary and topics) from LIKE.
+_FTS_MATCH_KINDS = frozenset({"decision", "artifact", "note", "thread", *_CHUNK_KEYWORD_KINDS})
+#: The FTS tables of these kinds index the title too.
+_FTS_TITLE_KINDS = frozenset({"artifact", "note"})
 _QUERY_STOPWORDS = frozenset(
     "a an and are about did do does for from how i in is it of on or the to was what when where which who why with we you".split()
 )
@@ -738,6 +743,38 @@ def rebuild_memory_index(conn: sqlite3.Connection) -> dict[str, int]:
     }
     counts["total"] = sum(counts.values())
     return counts
+
+
+def _public_match(
+    matcher: sqlite3.Connection,
+    kind: str,
+    title: str,
+    units: list[tuple[str, str]],
+    expression: str,
+    terms: list[str],
+) -> bool:
+    """Does the query match this redacted text the way search matches?"""
+    # The reader writes "Summary: ..." and "Topics: ..."; the LIKE pass
+    # reads the bare summary and topic text.
+    summary = [
+        text.split(": ", 1)[1] if ": " in text else text
+        for anchor, text in units if kind == "meeting" and anchor in ("summary", "topics")
+    ]
+    body = [text for anchor, text in units if not (kind == "meeting" and anchor in ("summary", "topics"))]
+    if kind in _FTS_MATCH_KINDS or kind == "meeting":
+        text = "\n".join(([title] if kind in _FTS_TITLE_KINDS else []) + body)
+        matcher.execute("DELETE FROM m")
+        matcher.execute("INSERT INTO m(rowid,body) VALUES (1,?)", (text,))
+        if expression and matcher.execute("SELECT 1 FROM m WHERE m MATCH ?", (expression,)).fetchone():
+            return True
+        if kind != "meeting":
+            return False
+    haystack = "\n".join([title] + (summary if kind == "meeting" else body)) if kind != "meeting" \
+        else "\n".join(summary)
+    return any(
+        matcher.execute("SELECT lower(?) LIKE ?", (haystack, f"%{term.casefold()}%")).fetchone()[0]
+        for term in terms
+    )
 
 
 class MemoryRepository(BaseRepository):
@@ -1034,6 +1071,13 @@ class MemoryRepository(BaseRepository):
                     by_kind[kind] = self._chunk_rows(
                         conn, kind, expression, project, start, end
                     )
+
+            # A secret is never a search key: the keyword tables hold the
+            # raw text, so a hit that a query token reaches only inside a
+            # secret of its source is dropped (the returned text was already
+            # redacted; now the key is too).
+            for kind in list(by_kind):
+                by_kind[kind] = self._drop_secret_keyed(conn, kind, by_kind[kind], expression, terms)
 
         normalized: dict[str, list[dict[str, Any]]] = {}
         for kind, rows in by_kind.items():
@@ -1807,6 +1851,54 @@ class MemoryRepository(BaseRepository):
                 )
         return rows
 
+    def _drop_secret_keyed(
+        self,
+        conn: sqlite3.Connection,
+        kind: str,
+        rows: list[dict[str, Any]],
+        expression: str,
+        terms: list[str],
+    ) -> list[dict[str, Any]]:
+        """``rows`` less each hit that only a secret made (Astra, #871).
+
+        A hit whose source holds a secret survives only when the query
+        matches the source's REDACTED text under the search's own semantics:
+        the same FTS5 MATCH expression (default unicode61: case and accent
+        folding, whole tokens) for an FTS kind, the same LIKE patterns for a
+        canonical-store kind (a substring), both for a meeting (its
+        transcript by MATCH, its summary and topics by LIKE).  So a secret, a
+        piece of it, or an accent-folded form of it finds nothing, and a
+        public word in the same source still finds it (the query is OR).  A
+        source with no secret, or one memory cannot read, keeps its hit."""
+        if not rows or not (expression or terms):
+            return rows
+        from ..memory.retain import current_source, redact_source
+
+        verdict: dict[str, bool] = {}
+        matcher: Optional[sqlite3.Connection] = None
+        kept: list[dict[str, Any]] = []
+        for row in rows:
+            base = self._base_ref(str(row["source_ref"]))
+            if base not in verdict:
+                keep = True
+                try:
+                    source = current_source(conn, base)
+                    if source is not None:
+                        title, units, held = redact_source(source)
+                        if held:
+                            if matcher is None:
+                                matcher = sqlite3.connect(":memory:")
+                                matcher.execute("CREATE VIRTUAL TABLE m USING fts5(body)")
+                            keep = _public_match(matcher, kind, title, units, expression, terms)
+                except Exception:  # pragma: no cover - a check never fails a search
+                    keep = True
+                verdict[base] = keep
+            if verdict[base]:
+                kept.append(row)
+        if matcher is not None:
+            matcher.close()
+        return kept
+
     @classmethod
     def _ref_in_project(
         cls, conn: sqlite3.Connection, kind: str, resource_id: str, project: str
@@ -2114,12 +2206,20 @@ class MemoryRepository(BaseRepository):
                                 )))"""
             )
             params.extend((project, project, project, project))
-        if start:
-            clauses.append("t.updated_at>=CAST(strftime('%s',?) AS REAL)")
-            params.append(start)
-        if end:
-            clauses.append("t.updated_at<=CAST(strftime('%s',?) AS REAL)")
-            params.append(end)
+        # The bounds as instants (``timeparse.instant``), compared with the
+        # thread's epoch stamp: a bare local time ("2026-10-04T08:30:00") is
+        # the hub's wall time, never UTC (SQLite's strftime read it as UTC).
+        # A bound that is not a time finds nothing, as ``_in_time`` does.
+        from ..memory.timeparse import instant
+
+        for bound, op in ((start, ">="), (end, "<=")):
+            if not bound:
+                continue
+            at = instant(bound)
+            if at is None:
+                return []
+            clauses.append(f"t.updated_at{op}?")
+            params.append(at.timestamp())
         # FTS auxiliary functions (bm25, snippet) must be computed in the
         # same query level as the MATCH, so pre-compute them in the first
         # CTE and then window-rank over the materialized column.

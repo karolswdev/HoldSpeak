@@ -317,7 +317,8 @@ def test_abort_semantics(db, broadcast_fn, broadcasts) -> None:
     done_frames = [d for ft, d in broadcasts if ft == "thread_turn_done"]
     assert len(done_frames) == 1
     assert done_frames[0]["outcome"] == "aborted"
-    assert done_frames[0]["receipt_id"] == "indeterminate"
+    # Astra #875: the real receipt id the pass returned, never a placeholder.
+    assert done_frames[0]["receipt_id"] == "receipt_slow"
 
     # Check DB state.
     msg = db.threads.get_message(result["assistant_message_id"])
@@ -615,6 +616,15 @@ def test_real_coordinator_with_fake_engine(tmp_path: Path) -> None:
         assert msg.streaming is False
         assert msg.receipt_id, "receipt_id should be set"
         assert msg.egress_scope, "egress_scope should be set"
+        # Owner pick 2026-10-05 (route in footer): the turn's route is read
+        # from its receipt: the winning deployment, the #855 lamp word.
+        assert done_frames[0]["egress"] == "local"
+        assert done_frames[0]["host"] == ""
+        assert done_frames[0]["model"] == "regr-local"
+        assert msg.egress_scope == "local"
+        assert msg.model_id == "regr-local"
+        listed = svc.get(tid)["messages"]
+        assert [m["egress_host"] for m in listed if m["role"] == "assistant"] == [""]
 
         server.stop()
     finally:

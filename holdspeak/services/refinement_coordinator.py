@@ -580,16 +580,31 @@ class RefinementCoordinator:
             context_titles = [str(value) for value in grounding_echo.pop("_titles", [])]
         system = "You are the desk's AI core. Follow the instruction using the material provided. Be concrete and brief."
         system += instruction
-        return {
-            "schema_version": 2, "system_prompt": system,
-            "user_prompt": sealed_prompt + ("\n\nGrounding:\n" + envelope if envelope else ""),
-            "lens": "Refine",
-            "context_ids": context_ids,
-            "context_titles": context_titles,
-            "grounding": grounding_echo,
-            "source_text": "\n\n" + envelope if envelope else "",
-            "temperature": None, "max_tokens": None,
-        }
+
+        def build(memory: Any) -> dict[str, Any]:
+            from .memory_grounding import reflect_block
+
+            # Ask's order: the pages and observations, then the recall.
+            env = "\n\n".join(part for part in (reflect_block(memory), envelope) if part)
+            return {
+                "schema_version": 2, "system_prompt": system,
+                "user_prompt": sealed_prompt + ("\n\nGrounding:\n" + env if env else ""),
+                "lens": "Refine",
+                "context_ids": context_ids,
+                "context_titles": context_titles,
+                "grounding": grounding_echo,
+                "source_text": "\n\n" + env if env else "",
+                "temperature": None, "max_tokens": None,
+            }
+
+        # Memory slice 6 (#850): the desk's pages and observations, read and
+        # fitted as Ask reads them at dispatch (``AskService.thought_reflect``).
+        thought_reflect = getattr(ask, "thought_reflect", None)
+        memory = (
+            thought_reflect(sealed_prompt, exclude_refs=list(own_refs or []), build=build)
+            if callable(thought_reflect) else None
+        )
+        return build(memory)
 
     @staticmethod
     def _sealed_prompt(body_markdown: str) -> str:

@@ -27,6 +27,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/delivery/factory_launch.py", "_valid_profile"): ("agent delivery validation", "143-10"),
     ("holdspeak/desktop_presence.py", "_select_presence_renderer"): ("non-inference false positive", "143-01"),
     ("holdspeak/dictation_telemetry.py", "_fallback_category"): ("lexical/degraded telemetry, never model fallback", "143-07"),
+    ("holdspeak/inference_locality.py", "_attempt_route"): ("receipt reader: names where a sent attempt went; selects nothing", "143-06"),
     ("holdspeak/inference_targets.py", "_profile_key_present"): ("profile credential readiness", "143-03"),
     ("holdspeak/intel/engine.py", "_compatibility_retry"): ("provider dialect attempt; separate admitted physical child", "143-06"),
     ("holdspeak/intel/engine.py", "_response_format_compatibility_retry"): ("provider dialect attempt (structured output); separate admitted physical child", "151-01"),

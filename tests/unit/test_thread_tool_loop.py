@@ -485,7 +485,8 @@ class TestAbortDuringExecute:
 
         done_frame = next(d for ft, d in broadcasts if ft == "thread_turn_done")
         assert done_frame["outcome"] == "aborted"
-        assert done_frame["receipt_id"] == "indeterminate"
+        # Astra #875: no receipt came back, so no id: never a placeholder.
+        assert done_frame["receipt_id"] == ""
 
         # The abort should complete quickly (the executor may be blocking
         # in dispatch, but the turn ends as aborted regardless).

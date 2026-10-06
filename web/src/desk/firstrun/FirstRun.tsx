@@ -2,11 +2,16 @@
  * FzBum28aTJQbsqwBvLuP16 v2). Three cards on one screen: Local AI · You ·
  * First words. One press downloads every local model; First words lights
  * when the speech model lands, so he can speak while the chat model still
- * downloads; his sentence comes back at the display step. */
-import { useCallback, useState, type ReactNode } from "react";
+ * downloads; his sentence comes back at the display step.
+ *
+ * Option A "One screen" (owner ratified 2026-10-05, canvas
+ * YDTpkaJqFs3hyrZ4g581Mx §1): Calendar and Connections are two more cards
+ * on the same screen. One card at a time is lit (the next press). When
+ * every step is done, Ready goes to the top: "Ready, <his name>", the
+ * success chips, and three verbs; every card stays, selected. */
+import { useCallback, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
-  ChoiceCardShell,
   EgressChip,
   HeardQuote,
   LampGadget,
@@ -35,6 +40,12 @@ import {
 import { Found, useProposals } from "./Found";
 import { useOwnerName } from "./ownerName";
 import { useFirstTake } from "./useFirstTake";
+import { Card } from "./Card";
+import { CalendarCard } from "./CalendarCard";
+import { ConnectionsCard } from "./ConnectionsCard";
+import { useCalendarStep } from "./calendarStep";
+import { useConnectionsStep } from "./connectionsStep";
+import { Ready } from "./Ready";
 import "../../features/concierge/concierge.css";
 import "./firstrun.css";
 
@@ -55,46 +66,6 @@ const FAILURE_TOKENS: Record<DictationFailure, { chip: string; reason: string }>
   audio_floor_held: { chip: "MIC BUSY", reason: "ANOTHER CAPTURE" },
   unknown: { chip: "NOT HEARD", reason: "NO REASON GIVEN" },
 };
-
-function Card({
-  title,
-  state,
-  lit,
-  selected,
-  disabled,
-  className,
-  testId,
-  children,
-}: {
-  title: string;
-  state?: ReactNode;
-  lit?: boolean;
-  selected?: boolean;
-  disabled?: boolean;
-  className?: string;
-  testId: string;
-  children: ReactNode;
-}) {
-  return (
-    <ChoiceCardShell
-      as="section"
-      aria-label={title}
-      className={`firstrun-card${className ? ` ${className}` : ""}`}
-      data-lit={lit || undefined}
-      data-testid={testId}
-      selected={selected}
-      disabled={disabled}
-      label={
-        <span className="firstrun-cardhead">
-          <span className="firstrun-card-title">{title}</span>
-          {state ? <span className="firstrun-cardstate">{state}</span> : null}
-        </span>
-      }
-    >
-      <div className="firstrun-card-body">{children}</div>
-    </ChoiceCardShell>
-  );
-}
 
 function ModelRows({ groups, ready }: { groups: LocalAiGroup[]; ready: boolean }) {
   return (
@@ -121,7 +92,7 @@ function ModelRows({ groups, ready }: { groups: LocalAiGroup[]; ready: boolean }
   );
 }
 
-function LocalAiCard({ ai }: { ai: ReturnType<typeof useLocalAi> }) {
+function LocalAiCard({ ai, folded }: { ai: ReturnType<typeof useLocalAi>; folded: boolean }) {
   const status = ai.read.kind === "ok" ? ai.read.status : null;
   const groups = groupsOf(status);
   const state = status?.state;
@@ -149,7 +120,7 @@ function LocalAiCard({ ai }: { ai: ReturnType<typeof useLocalAi> }) {
       ) : null}
       {status && (running || state === "failed") ? (
         <ProgressPlan compact steps={planSteps(status, ai.rate)} ariaLabel="Local AI download" />
-      ) : status ? (
+      ) : status && !(folded && ready) ? (
         <ModelRows groups={groups} ready={ready} />
       ) : null}
       {status && stopped ? (
@@ -197,8 +168,7 @@ function LocalAiCard({ ai }: { ai: ReturnType<typeof useLocalAi> }) {
   );
 }
 
-function YouCard() {
-  const owner = useOwnerName();
+function YouCard({ owner, folded }: { owner: ReturnType<typeof useOwnerName>; folded: boolean }) {
   const [alias, setAlias] = useState("");
   const commit = () => {
     if (!alias.trim()) return;
@@ -212,6 +182,20 @@ function YouCard() {
       selected={owner.isSet}
       state={owner.isSet ? <StateChip state="success" label="SET" icon="●" /> : null}
     >
+      {folded ? (
+        <>
+          <span className="firstrun-owner">{owner.name}</span>
+          {owner.aliases.length ? (
+            <span className="firstrun-alias-row">
+              {owner.aliases.map((name) => (
+                <span key={name} className="surface-token" data-chip>
+                  {name}
+                </span>
+              ))}
+            </span>
+          ) : null}
+        </>
+      ) : (
       <div className="firstrun-name">
         <label className="firstrun-field">
           <span className="firstrun-caption">YOUR NAME</span>
@@ -253,6 +237,7 @@ function YouCard() {
           </span>
         </label>
       </div>
+      )}
       {owner.error ? (
         <div className="firstrun-fail" role="alert">
           <StateChip state="failure" label="NOT SAVED" />
@@ -279,8 +264,11 @@ function FirstWordsCard({
       className="firstrun-words"
       disabled={!ready}
       lit={ready && !heard}
+      selected={take.kept}
       state={
-        ready ? (
+        take.kept ? (
+          <StateChip state="success" label="HEARD" icon="●" />
+        ) : ready ? (
           <StateChip state="success" label="SPEECH READY" icon="●" />
         ) : (
           <StateChip state="idle" label="WAITS FOR SPEECH" />
@@ -297,8 +285,9 @@ function FirstWordsCard({
           seconds={take.take.seconds}
           at={take.take.at}
           local
+          size={take.kept ? "primary" : "display"}
           verbs={
-            <>
+            take.kept ? undefined : <>
               {take.canPlay ? (
                 <Button dense variant="secondary" aria-pressed={take.playing} onClick={take.play}>
                   {"▶ Play"}
@@ -381,9 +370,11 @@ function FirstWordsCard({
 
 export function FirstRun() {
   const ai = useLocalAi();
+  const owner = useOwnerName();
   // Speech on this device lights First words. A read that failed leaves it
   // open: the dictation path names its own failure (honest, never stuck).
   const speech = ai.read.kind === "unread" || (ai.read.kind === "ok" && speechReady(ai.read.status));
+  const aiReady = ai.read.kind === "ok" && ai.read.status.state === "ready";
   const handoff = useCallback(async (disposition: "completed" | "dismissed") => {
     await apiFetch("/api/desk/seed", { method: "POST" });
     await apiFetch("/api/setup/onboarding", { method: "PUT", json: { disposition } });
@@ -391,25 +382,69 @@ export function FirstRun() {
   }, []);
   const take = useFirstTake({ onHandoff: handoff });
   const proposals = useProposals();
-  const heard = take.state === "heard";
+  const calendar = useCalendarStep();
+  const connections = useConnectionsStep();
+  // The C1 part is done: models here, his name, his words kept. Its three
+  // cards fold to their receipts (canvas A: "the three C1 cards, finished").
+  const c1Done = aiReady && owner.isSet && take.kept;
+  // While the ingest still reads a source just added, the Door's next
+  // meeting may change: Ready waits for the read (calendarStep `follow`).
+  const ready = c1Done && calendar.inUse && !calendar.following && connections.done;
+  // His words are back and not kept yet: they are the face's display fact.
+  const heard = take.state === "heard" && !take.kept;
+  // One lit card: the next press. First words lights itself while it waits
+  // for his sentence; then the Calendar; then the Connections.
+  const wordsPending = speech && !take.kept;
+  const calendarLit = !ready && !wordsPending && calendar.loaded && !calendar.inUse;
+  const connectionsLit = !ready && !wordsPending && calendar.inUse && connections.loaded && !connections.done;
   return (
-    <section className="firstrun" data-heard={heard || undefined} aria-label="Get ready" data-testid="firstrun">
+    <section
+      className="firstrun"
+      data-heard={heard || undefined}
+      data-ready={ready || undefined}
+      aria-label="Get ready"
+      data-testid="firstrun"
+    >
       {/* One display element per face: the heading until his words come
-          back; then his words are the display fact. */}
-      <h1 className={heard ? "firstrun-heading is-quiet" : "surface-display firstrun-heading"}>
-        {heard ? "Heard" : "Get ready"}
-      </h1>
+          back; then his words are the display fact; when every step is
+          done, "Ready, <his name>". */}
+      {ready ? (
+        <Ready
+          name={owner.name}
+          heardText={take.take?.text ?? ""}
+          calendar={calendar}
+          connections={connections}
+          finish={take.finish}
+          busy={take.keeping}
+        />
+      ) : (
+        <h1 className={heard ? "firstrun-heading is-quiet" : "surface-display firstrun-heading"}>
+          {heard ? "Heard" : "Get ready"}
+        </h1>
+      )}
       <div className="firstrun-cards">
-        <LocalAiCard ai={ai} />
-        <YouCard />
+        <LocalAiCard ai={ai} folded={c1Done} />
+        <YouCard owner={owner} folded={c1Done} />
         <FirstWordsCard ready={speech} take={take} />
       </div>
-      <Found proposals={proposals} />
-      <div className="firstrun-foot">
-        <Button variant="ghost" dense disabled={take.keeping} loading={take.keeping} onClick={() => void take.leave()}>
-          {heard ? "Save draft & continue" : "Continue later"}
-        </Button>
+      <div className="firstrun-cards firstrun-cards-two">
+        <CalendarCard step={calendar} lit={calendarLit} />
+        <ConnectionsCard step={connections} lit={connectionsLit} />
       </div>
+      <Found proposals={proposals} />
+      {take.message && ready ? (
+        <div className="firstrun-fail" role="alert">
+          <StateChip state="failure" label="NOT KEPT" />
+          <span className="firstrun-reason">{take.message}</span>
+        </div>
+      ) : null}
+      {ready ? null : (
+        <div className="firstrun-foot">
+          <Button variant="ghost" dense disabled={take.keeping} loading={take.keeping} onClick={() => void take.leave()}>
+            {heard ? "Save draft & continue" : "Continue later"}
+          </Button>
+        </div>
+      )}
     </section>
   );
 }
