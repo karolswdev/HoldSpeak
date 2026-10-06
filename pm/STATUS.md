@@ -16,6 +16,8 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
+Done: the README sells the whole product (owner 2026-10-05: "we're still selling it short"): #891 merged, Astra ratified on iteration 2. What's inside table; sections for Ask AI and Threads, cited memory, Send to six destinations, coder steering, Extend everything, MCP. Product bug found in review: Thread `/keep` asks for a Note but `thread_service.py` ignores `as_kind` and always records an Artifact (README says Artifact until fixed).
+
 Done: the README as the front page (owner 2026-10-05: "the main readme should be alluring enough"): #889 merged, Astra ratified on iteration 2. Hero card, pitch, two current Desk shots (docs/assets/readme/), pillars, a How it works diagram, quick start, comparison. The hero shot shows a temporary test path; replace it with a clean capture when convenient.
 
 Done: docs sweep (owner 2026-10-05): #887 merged. A Sonnet 5.5 fleet rewrote README, CONTRIBUTING and every docs/*.md against source; Astra ratified on iteration 2. Open: five overlapping docs marked "(overlaps X)" in docs/README.md (INFERENCE_TARGETS, DATA_MODEL, SYSTEM_INTEGRATION_MAP, WEB_UI_UX_SYSTEM_AUDIT, API_REFERENCE), park or merge them; generated PLATFORMS.md is a stale snapshot (regenerate or park); API_REFERENCE prose lives in scripts/philo_api_reference.py; Mermaid render not verified locally; FirstWords.tsx "Keep as Note" vs FirstRun.tsx "Keep as note".
