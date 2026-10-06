@@ -11,9 +11,23 @@ import re
 
 REDACTED = "[redacted]"
 
+#: A value after a label ("token=...", "password: ...", "Authorization:
+#: Bearer ..."): the label and its value are redacted as one span, as
+#: before, but only when the value is not a type or an identifier name
+#: (Astra, #871: "token: Identifier; api_key: Optional[str]" in a schema is
+#: not a secret).
+_LABELED = re.compile(
+    r"(?i)(?:token|password|passwd|secret|api[_-]?key|authorization)\s*[=:]\s*(?:bearer\s+)?(\S+)"
+)
+_BEARER = re.compile(r"(?i)\bbearer\s+(\S+)")
+#: Values that name a type, never a secret.
+_TYPE_WORDS = frozenset(
+    "str string int integer bool boolean float double bytes none null nil true false any object "
+    "dict list tuple set optional unknown void number char uuid date datetime".split()
+)
+_TYPE_SHAPE = re.compile(r"[A-Z][A-Za-z]*(?:\[[A-Za-z0-9_\[\], .|]*\])?|[a-z]+\[[A-Za-z0-9_\[\], .|]*\]")
 _SECRET = re.compile(
-    r"(?i)(bearer\s+\S+|(?:token|password|passwd|secret|api[_-]?key|authorization)\s*[=:]\s*(?:bearer\s+)?\S+"
-    r"|gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{16,}|xox[abprs]-[A-Za-z0-9-]{10,}"
+    r"(?i)(gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{16,}|xox[abprs]-[A-Za-z0-9-]{10,}"
     r"|SG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}|ATATT[A-Za-z0-9_=-]{16,}"
     r"|sk-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16})"
 )
@@ -61,6 +75,18 @@ _DIGIT = re.compile(r"\d")
 _LONG_WORD = re.compile(r"[A-Za-z0-9+/]{40}")
 
 
+def _type_like(value: str) -> bool:
+    """True when the value after a label names a type or an identifier
+    ("Identifier", "Optional[str]", "str", "list[int]"), not a secret.  A
+    value with a digit, or that is already ``[redacted]``, is never one."""
+    clean = value.rstrip(".,;:)\"'")
+    if not clean:
+        return True
+    if clean == REDACTED or _DIGIT.search(clean):
+        return False
+    return clean.casefold() in _TYPE_WORDS or bool(_TYPE_SHAPE.fullmatch(clean))
+
+
 def redaction_spans(text: str) -> list[tuple[int, int]]:
     """Where the secrets are in ``text``: merged ``(start, end)`` spans.
 
@@ -80,6 +106,15 @@ def redaction_spans(text: str) -> list[tuple[int, int]]:
     lowered = value.casefold()
     if any(word in lowered for word in _SECRET_WORDS):
         spans.extend(match.span() for match in _SECRET.finditer(value))
+        for pattern, bare in ((_LABELED, False), (_BEARER, True)):
+            for match in pattern.finditer(value):
+                start, end = match.start(), match.end(1)
+                token = match.group(1)
+                if bare and not (_DIGIT.search(token) or len(token) >= 16):
+                    continue  # "bearer of bad news" is not a token
+                if _type_like(token):
+                    continue
+                spans.append((start, end))
     if _DIGIT.search(value):
         spans.extend(match.span() for match in _CARD.finditer(value) if _card(match) == REDACTED)
     if _LONG_WORD.search(value):

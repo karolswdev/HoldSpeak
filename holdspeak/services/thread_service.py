@@ -37,6 +37,7 @@ from ..kernel.inference_stream import (
     emit_thread_turn_started,
 )
 from ..kernel.prompt_adapter import StreamingPromptAdapter
+from ..inference_locality import least_private, served_route
 from ..principals import Principal, PrincipalKind
 from .errors import ServiceError, ValidationError
 
@@ -70,6 +71,38 @@ _LIVE_ONLY_STUBS = {
 }
 _LIVE_ONLY_TOOLS = frozenset(_LIVE_ONLY_STUBS)
 _LIVE_ONLY_STUB = _LIVE_ONLY_STUBS["memory.page"]
+#: Every other READ tool (class ``evidence_read`` or ``candidate_builder`` in
+#: ``thread_tools``: a note read, a meeting, a decision record, a People
+#: read ...) returns source text that can be withdrawn too.  On replay it is
+#: a stub that says to read again; the stored result stays as the receipt.
+#: An ``effect_proposal`` result (what a write did) replays as stored.
+_READ_CLASSES = frozenset({"evidence_read", "candidate_builder"})
+#: A tool result whose originating call is not found (Astra, #871): fail
+#: closed, never the stored text.
+_UNKNOWN_CALL_STUB = json.dumps({
+    "result": None,
+    "note": "This tool result was read in an earlier turn and is not kept. Call the tool again to read it now.",
+})
+
+
+def _replay_stub(tool_name: Optional[str]) -> Optional[str]:
+    """The stub a later turn gets for a tool result, or None to replay the
+    stored text.  Memory reads keep their own stubs; any other read tool
+    gets the generic one; an unknown name fails closed (a stub)."""
+    if not tool_name:
+        return None
+    if tool_name in _LIVE_ONLY_STUBS:
+        return _LIVE_ONLY_STUBS[tool_name]
+    from .thread_tools import _ALL_TOOL_CLASSES
+
+    entry = _ALL_TOOL_CLASSES.get(tool_name)
+    if entry is not None and entry[0] not in _READ_CLASSES:
+        return None
+    return json.dumps({
+        "result": None,
+        "note": f"This {tool_name} result was read in an earlier turn and is not kept. "
+                f"Call {tool_name} again to read it now.",
+    })
 _PEOPLE_REF_KINDS = frozenset({"person"})
 
 _UNSET = object()  # sentinel for "caller did not provide parent_id"
@@ -593,7 +626,9 @@ class ThreadService:
             parent_id=user_msg.id,
             operation_id=invocation_id,
             invocation_id=invocation_id,
-            egress_scope=egress_scope,
+            # No lamp before a receipt: the admitted plan is not where bytes
+            # went (Article III).  The receipt route lands at turn end.
+            egress_scope="",
             model_id=model_id,
             route_plan_id=str(route_plan.get("id", "")),
         )
@@ -606,7 +641,7 @@ class ThreadService:
             message_id=assistant_msg.id,
             user_message_id=user_msg.id,
             model_id=model_id,
-            egress=egress_scope,
+            egress="",
         )
 
         # HS-154-03: if the thread is in call mode, emit THINKING transition.
@@ -1010,6 +1045,10 @@ class ThreadService:
         outcome = "succeeded"
         receipt_id = ""
         error_code = ""
+        # Each pass's route execution, in order, and the receipt it returned:
+        # the turn's route is read from these (inference_locality).
+        pass_executions: list[str] = [str(admitted["execution"]["id"])]
+        pass_receipts: dict[str, Any] = {}
 
         # D3 hook: sensitive text accumulator across passes (counsel M1).
         sensitive_texts: list[str] = list(payload.get("_sensitive_texts", []))
@@ -1191,6 +1230,8 @@ class ThreadService:
                 tool_calls_this_pass.clear()
 
                 # -- Stream this pass --
+                if current_execution_id not in pass_executions:
+                    pass_executions.append(str(current_execution_id))
                 routed = self._broker.inference_adoption_service.execute_stream(
                     principal,
                     execution_id=current_execution_id,
@@ -1200,6 +1241,7 @@ class ThreadService:
                     payload_redactor=self._m1_redactor,
                     **({"parent_context": outer_run.context, "planned_node": "interview-model"} if outer_run else {}),
                 )
+                pass_receipts[str(current_execution_id)] = routed.get("receipt")
 
                 # -- No tool calls: text answer, done --
                 if not tool_calls_this_pass:
@@ -1676,6 +1718,19 @@ class ThreadService:
                 outcome = "indeterminate"
                 stats["error"] = f"Interview settlement requires reconciliation: {exc}"
 
+        # -- The turn's route (Article III): the least private attempt that
+        #    was SENT in any pass, with that pass's receipt id.  No sent
+        #    attempt, or no route receipt: no lamp, no route.
+        route = least_private([
+            r for r in (self._served(eid, pass_receipts.get(eid)) for eid in pass_executions) if r
+        ]) or {}
+        done_egress, done_host, done_model = route.get("lamp", ""), route.get("host", ""), route.get("model", "")
+        route_receipt, fallback = str(route.get("receipt", "")), bool(route.get("fallback"))
+        self._threads.set_message_route(
+            assistant_msg_id, egress_scope=done_egress, egress_host=done_host,
+            model_id=done_model, egress_receipt_id=route_receipt, egress_fallback=fallback,
+        )
+
         # -- Flush any remaining buffered text --
         if part_id is not None and cadence.finish():
             pending = cadence.pending
@@ -1685,9 +1740,10 @@ class ThreadService:
         # -- Complete the message --
         stats_json = json.dumps(stats, separators=(",", ":"), sort_keys=True) if stats else ""
         if cancel_event.is_set():
-            self._threads.abort_message(assistant_msg_id)
+            # The real receipt id, never a placeholder (Astra, #875).
+            receipt_id = receipt_id or route_receipt
+            self._threads.abort_message(assistant_msg_id, receipt_id=receipt_id)
             outcome = "aborted"
-            receipt_id = "indeterminate"
         else:
             error_json_str = ""
             if outcome in ("failed", "indeterminate") and (stats.get("error") or error_code):
@@ -1738,8 +1794,12 @@ class ThreadService:
             message_id=assistant_msg_id,
             receipt_id=receipt_id,
             outcome=outcome,
-            egress=egress_scope,
+            egress=done_egress,
             stats=done_stats,
+            host=done_host,
+            model=done_model,
+            route_receipt_id=route_receipt,
+            fallback=fallback,
         )
 
         # HS-154-03: if the thread is still in call mode, transition back to LISTENING.
@@ -1755,6 +1815,22 @@ class ThreadService:
         if tool_executor is not None:
             ThreadService._tool_executor.unregister(assistant_msg_id)
         self._active_turns.pop(assistant_msg_id, None)
+
+    def _served(self, execution_id: str, returned: Any) -> dict[str, Any] | None:
+        """One pass's route: the controller's durable receipt for the
+        execution (it holds every attempt, even when the pass raised or was
+        cancelled), else the receipt the pass returned."""
+        receipt = returned
+        try:
+            from .inference_fallback_controller import INFERENCE_FALLBACK_AUTHORITY
+
+            receipt = self._broker.inference_adoption_service.controller.get_route_execution_receipt(
+                INFERENCE_FALLBACK_AUTHORITY, execution_id=execution_id,
+            )
+        except Exception:
+            pass
+        with self._db._connection() as conn:
+            return served_route(conn, receipt)
 
     # ── Abort ───────────────────────────────────────────────────────
 
@@ -2390,18 +2466,24 @@ class ThreadService:
             messages.append({"role": "system", "content": person_line})
 
         sensitive_texts: list[str] = []
-        # Memory slice 6 (review round 1, Astra): the name of each tool call
-        # on the path, by its call id (the assistant's ``tool_call`` parts).
-        call_names: dict[str, str] = {}
+        # Memory slice 6 (review round 1, Astra): a tool result is classed by
+        # the call that MADE it: the ``tool_call`` parts of the latest
+        # assistant message before it on the path (Astra, #871: a provider
+        # may reuse a call id in a later turn, and one id map for the whole
+        # thread let a later write's name replay an earlier read).
         path_parts = {msg.id: self._threads.get_parts(msg.id) for msg in path}
-        for parts in path_parts.values():
-            for part in parts:
-                if part.kind == "tool_call" and part.tool_call_id:
-                    try:
-                        call_names[part.tool_call_id] = str(json.loads(part.meta_json or "{}").get("name") or "")
-                    except (json.JSONDecodeError, TypeError, AttributeError):
-                        pass
+        open_calls: dict[str, str] = {}
         for msg in path:
+            if msg.role == "assistant":
+                open_calls = {}
+                for part in path_parts[msg.id]:
+                    if part.kind == "tool_call" and part.tool_call_id:
+                        try:
+                            open_calls[part.tool_call_id] = str(
+                                json.loads(part.meta_json or "{}").get("name") or ""
+                            )
+                        except (json.JSONDecodeError, TypeError, AttributeError):
+                            open_calls[part.tool_call_id] = ""
             # HS-153-04: skip the draft message from the payload.
             if self._threads.is_draft_message(msg.id):
                 continue
@@ -2414,13 +2496,17 @@ class ThreadService:
             text_parts = []
             for part in parts:
                 if part.kind in ("text", "annotation") and part.text:
-                    tool_name = call_names.get(part.tool_call_id) if msg.role == "tool" else None
-                    if tool_name in _LIVE_ONLY_STUBS:
-                        # A memory read is true only at the time it is read:
-                        # its sources can be withdrawn later.  The stored
-                        # result (the receipt) stays; a later turn gets a
-                        # stub, never the stored text.
-                        text_parts.append(_LIVE_ONLY_STUBS[tool_name])
+                    stub = None
+                    if msg.role == "tool":
+                        # No originating call found: fail closed (a stub).
+                        name = open_calls.get(str(part.tool_call_id or ""))
+                        stub = _replay_stub(name) if name else _UNKNOWN_CALL_STUB
+                    if stub is not None:
+                        # A read is true only at the time it is read: its
+                        # sources can be withdrawn later.  The stored result
+                        # (the receipt) stays; a later turn gets a stub,
+                        # never the stored text.
+                        text_parts.append(stub)
                         continue
                     text_parts.append(part.text)
                     if part.sensitive and part.text:
@@ -2577,6 +2663,9 @@ class ThreadService:
             "streaming": msg.streaming,
             "receipt_id": msg.receipt_id,
             "egress_scope": msg.egress_scope,
+            "egress_host": msg.egress_host,
+            "egress_receipt_id": msg.egress_receipt_id,
+            "egress_fallback": msg.egress_fallback,
             "model_id": msg.model_id,
             "error_json": error_json,
             "stats_json": stats_json,

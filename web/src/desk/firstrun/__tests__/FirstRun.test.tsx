@@ -15,7 +15,8 @@ const mocks = vi.hoisted(() => ({
   closeMic: vi.fn(),
 }));
 
-vi.mock("../../../lib/api", () => ({
+vi.mock("../../../lib/api", async (importOriginal) => ({
+  ApiError: (await importOriginal<typeof import("../../../lib/api")>()).ApiError,
   apiFetch: mocks.apiFetch,
   readableError: (error: unknown) => (error instanceof Error ? error.message : "Request failed"),
 }));
@@ -83,6 +84,8 @@ beforeEach(() => {
     if (path === "/api/settings" && method === "GET") return { owner: { name: "", aliases: [] } };
     if (path === "/api/settings") return { settings: { owner: init.json && (init.json as { owner: unknown }).owner } };
     if (path === "/api/notes") return { note: { id: "note_1" } };
+    if (path === "/api/onboarding/calendar") return { macos: { state: "unavailable", can_request: false }, candidates: [], sources: 0 };
+    if (path === "/api/onboarding/connections") return { candidates: [], tools: { gh: { installed: false }, acli: { installed: false } } };
     return {};
   });
 });
@@ -164,18 +167,21 @@ describe("FirstRun", () => {
     expect(screen.getByRole("heading", { name: "Heard" }).className).not.toContain("surface-display");
     expect(screen.getByRole("button", { name: "▶ Play" })).toBeTruthy();
 
-    // Keep as note: the note producer, then the handoff to the Desk.
+    // Keep as note: the note producer; option A keeps the one screen open
+    // (Calendar and Connections are next), so no handoff yet.
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Keep as note" }));
     });
     const note = calls.find((c) => c.path === "/api/notes");
     expect(note?.method).toBe("POST");
     expect(note?.json).toMatchObject({ title: "First dictation", body_markdown: "Send the cutover plan to Priya before Friday." });
-    await waitFor(() =>
-      expect(calls.some((c) => c.path === "/api/setup/onboarding" && (c.json as { disposition: string }).disposition === "completed")).toBe(true),
-    );
-    expect(mocks.refresh).toHaveBeenCalled();
-  });
+    await screen.findByRole("heading", { name: "Get ready" });
+    // The card head and the quote both say HEARD (artboard onb-A-cal).
+    expect(screen.getAllByRole("status", { name: "HEARD" })).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: "Keep as note" })).toBeNull();
+    expect(calls.some((c) => c.path === "/api/setup/onboarding")).toBe(false);
+    expect(mocks.refresh).not.toHaveBeenCalled();
+  }, 15_000); // a long walk on real-timer polls: 2.5 s alone, more under the full suite
 
   it("withholds Play when the browser kept no audio of the take", async () => {
     local = status({ all: true, state: "ready" });

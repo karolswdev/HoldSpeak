@@ -12,17 +12,26 @@ import {
 } from "../surface/Surface";
 import { Material } from "../surface/Material";
 import { intelBadge } from "../chair/intelBadge";
-import { LampGadget } from "../surface/gadgets";
 import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
-import { boundaryEgressLamp, egressScopeLamp, type EgressLamp } from "../inferenceEgress";
+import { SurfaceFooter } from "../surface/SurfaceFooter";
+import { RouteEgressChip, TurnLamp, lastTurnLine, routeLamp, type TurnRoute } from "../turnRoute";
 
-/** The server stores the boundary name (e.g. "same_device") in egress_scope,
- * not the abstract scope ("local"). Try boundary first, fall back to scope. */
-function threadEgressLamp(scope: string | null | undefined): EgressLamp {
-  if (!scope) return { label: "NO MODEL", tone: "fail" };
-  const boundary = boundaryEgressLamp(scope);
-  if (boundary.label !== "NO MODEL") return boundary;
-  return egressScopeLamp(scope);
+/** Owner pick 2026-10-05 (route in footer): a turn's lamp is its receipt
+ * route. The server writes egress_scope, egress_host and egress_receipt_id
+ * from the turn's receipts when it lands; a streaming turn has no receipt
+ * yet, and a turn with no sent attempt has no route: neither wears a lamp. */
+function threadTurnRoute(msg: ThreadMessage): TurnRoute | null {
+  // A lamp needs receipt provenance (Astra, #875): the scope alone is not it.
+  if (msg.role !== "assistant" || msg.streaming || !msg.egressReceiptId) return null;
+  const lamp = routeLamp(msg.egressScope);
+  if (!lamp) return null;
+  return {
+    lamp,
+    host: msg.egressHost || "",
+    model: msg.modelId || "",
+    receipt: msg.egressReceiptId,
+    fallback: Boolean(msg.egressFallback),
+  };
 }
 import { useWriteReceipt } from "../hooks/useWriteReceipt";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
@@ -1003,9 +1012,6 @@ function MessageRow({
 
   const [showRaw, setShowRaw] = useState(false);
   const [editing, setEditing] = useState(false);
-  const receiptShort = msg.receiptId && msg.receiptId.length > 4
-    ? msg.receiptId.slice(-4)
-    : msg.receiptId || null;
   const routineTools = toolRows?.filter((row) =>
     row.state === "pending" || row.state === "running" || row.state === "receipted",
   ) ?? [];
@@ -1059,17 +1065,8 @@ function MessageRow({
       data-message-id={msg.id}
     >
       <div className="thread-row-head">
-        <span className="thread-row-label">
-          {msg.modelId || "ASSISTANT"}
-        </span>
-        {receiptShort && (
-          <span className="thread-row-receipt">
-            {"receipt ····"}{receiptShort}
-          </span>
-        )}
-        {msg.egressScope && (
-          <LampGadget on {...threadEgressLamp(msg.egressScope)} />
-        )}
+        <span className="thread-row-label">ASSISTANT</span>
+        <TurnLamp lamp={threadTurnRoute(msg)?.lamp ?? null} />
       </div>
 
       {crashed && (
@@ -1599,9 +1596,11 @@ function ThreadPulloutInner({
   const lastAssistant = detail?.messages
     .filter((m) => m.role === "assistant")
     .at(-1);
-  const egressLamp = lastAssistant?.egressScope
-    ? threadEgressLamp(lastAssistant.egressScope)
-    : null;
+  // The footer names the full route of the last finished model turn.
+  const lastRoute = (detail?.messages ?? [])
+    .filter((m) => m.role === "assistant" && !m.streaming)
+    .map(threadTurnRoute)
+    .at(-1) ?? null;
 
   if (loading && !detail) {
     return (
@@ -1697,7 +1696,6 @@ function ThreadPulloutInner({
               isStreaming={isStreaming}
               onReload={() => void loadThread(threadId)}
             />
-            {egressLamp && <LampGadget on {...egressLamp} />}
             {(liveStatusLine || detail.thread?.status_line) && (
               <span className="thread-status-line">{liveStatusLine || detail.thread?.status_line}</span>
             )}
@@ -1805,6 +1803,13 @@ function ThreadPulloutInner({
           restoreFocus={restoreFocus}
         />}
       </div>
+      {lastRoute ? (
+        <SurfaceFooter
+          className="thread-route-footer turn-route-footer"
+          egress={<RouteEgressChip route={lastRoute} />}
+          receipt={<span className="surface-footer-receipt-line">{lastTurnLine(lastRoute)}</span>}
+        />
+      ) : null}
     </>
   );
 }

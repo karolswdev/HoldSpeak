@@ -315,9 +315,16 @@ and id of each change.
 
 - Meeting summary and topics: the `meeting` reader holds them (since
   #786), packed with the transcript turns. One chunk per summary and per
-  topic is not built: a new cut drops every old meeting vector until the
-  new ones are embedded, and nothing yet keeps the old vectors serving
-  (see Versions below).
+  topic is not built. Checked 2026-10-05: a new cut needs more than old
+  vectors serving. (1) A fact serves only through its own live chunk, and
+  extraction is keyed on the source text (`extracted_sha`), not the cut:
+  a re-cut meeting whose text did not change keeps facts that never serve
+  again and is never read again. (2) Its observations then lose their
+  backing and `refresh_observations` retires them. (3) A page sentence
+  cites its chunk; the scope digest keys a source by its text, so the page
+  is not stale and the sentence stays withheld. The cut waits for a
+  transition that covers vectors, facts (extraction keyed on the cut),
+  observations and pages together.
 - Commitments: no kind of their own. Each commitment writes its
   `action_items` row (task, owner, due) in the same transaction, and the
   `action` kind holds that row.
@@ -334,7 +341,10 @@ and id of each change.
 - Keyword search for the four kinds reads `memory_chunks_fts`. The sweep
   writes it, so it works with no engine. A hit must be a chunk of the live
   text (same id and hash), so an edited source is not found by its old
-  words. Their time filter compares instants (`timeparse.instant`).
+  words. Their time filter compares instants (`timeparse.instant`). So
+  does the thread keyword pass since 2026-10-05: a bare local bound
+  ("2026-10-04T08:30:00") is the hub's wall time, not UTC (SQLite's
+  `strftime` read it as UTC).
 - `CHUNKER_VERSION` 2 fills the keyword table. It cuts each source as 1
   did, so every vector stays. The wake reaches `ask_answer`
   (change kind `ask_task`) and `steward_run` (change kind `steward`, on
@@ -390,7 +400,11 @@ dark: nothing runs until `memory.extract` has its own assignment.
   a live meeting, for any open call on the same engine (same deployment,
   same endpoint and model, or same model file; any boundary), and, for a
   local engine, for any live local call or one that ended less than 20 s
-  ago. The checked answer of each chunk is kept
+  ago. **A dead owner holds nothing** (2026-10-05): an open call that no
+  runner in this process holds and that has not changed for 60 s
+  (`FOREIGN_CALL_SECONDS`) is one a crashed process left; it no longer
+  holds extraction for up to 600 s. A call this process runs counts
+  however old it is (to 600 s). The checked answer of each chunk is kept
   (`memory_extract_parts`), so a stopped source goes on from its next
   chunk.
 - **Measured.** The five relation questions
@@ -416,15 +430,57 @@ dark: nothing runs until `memory.extract` has its own assignment.
   each date follows the tense of its own verb. A span ends at its start
   plus its length. Measured on `qwen3.8-27b` over the ten date cases
   (`tests/memory_bench/date_facts.json`, `corpus.DATE_CASES`): 10 of 10
-  (the version 1 prompt: 5; the rule without the line: 7). Astra's exact
-  line "On the ninth I said I will ship on the thirtieth." gives no fact at
-  all (no wrong date); with an object ("the sensor batch") it gives
-  2026-09-09 and 2026-09-30. Gap: the hard-corpus note "T. Wierzbicki
-  confirmed the sensor batch ships on the twentieth" (2026-09-23) still
-  gives 2026-09-20 (strict xfail). A first try that told the model to name
-  the title's project in the fact made source titles into project entities
-  ("Offline first for forms"); it is gone, and a fence checks that no
-  project entity is a source title.
+  (the version 1 prompt: 5; the rule without the line: 7). A first try
+  that told the model to name the title's project in the fact made source
+  titles into project entities ("Offline first for forms"); it is gone, and
+  a fence checks that no project entity is a source title.
+- **A named month keeps its month; reported speech keeps its facts**
+  (`EXTRACTOR_VERSION` 3, 2026-10-05). Astra (#845 iteration 2): "The
+  deadline is the ninth of September. That deadline was missed." (meeting of
+  2026-09-22) was stored as 2026-08-09 on two live calls. Measured on the
+  version 2 prompt: "The review was on the ninth of September. The next
+  review is on the twentieth." and "We shipped on September 3rd and the
+  audit starts on the fifth." gave an EMPTY answer; "On the ninth I said I
+  will ship on the thirtieth." gave an empty answer; the supplier note gave
+  2026-09-20. The fix is in the prompt and its lines; still no code changes
+  a date the model writes. (1) `day_hints` adds a second line for each day
+  whose month is named ("the ninth of September", "9 September",
+  "September 3rd", "Sept. 9"), with its date (version 4, below: both
+  dates, by tense): `Days with a month: "the ninth of September" = ...`. A day with a year written ("September 9, 2026") gets no line,
+  and a named-month day is never also a bare day. (2) The prompt: a named
+  month keeps its month whatever the tense; the tense of a day is the tense
+  of the thing on that day, not of a verb that reports it ("Dana confirmed
+  the batch ships on the twelfth" is the next twelfth); "Return an empty list
+  only for a text with none of these" (was "An empty list is a good
+  answer"). Measured on `qwen3.8-27b` over the sixteen date cases (the ten,
+  plus `explicit_note`, `mixed`, `month_first`, `supplier`,
+  `reported_third`, and `reported` now wanting both dates): the recording
+  passes 15 of 15. Live runs of the same prompt: 100 of 102 case runs pass;
+  the two misses were empty answers ("leave", both in one run), never a
+  wrong date. The server is not deterministic at temperature 0 when other
+  calls share it, which is how Astra's two live calls differed from the
+  recording. The hint line alone (version 2 prompt): 12 of 14; seven other
+  prompt wordings: 7 to 13 of 14, each losing a different case to an empty
+  answer (the model is sensitive to wording). The base corpus, the hard
+  corpus and the date cases are recorded again at version 3. Bench numbers
+  did not move: relation MRR 1.000, same-word MRR with facts 0.885, hard
+  keyword + walk complete@5 0.889 (8 of 9: r11 by the initial rule, r09
+  Kestrel still a strict xfail without vectors).
+- **A named month takes its year by tense** (`EXTRACTOR_VERSION` 4,
+  Astra #870 round 2). The nearest-date hint put "We shipped the sensor
+  batch on January 9." (source 2026-09-22) in 2027, and "The next sensor
+  batch will ship on December 9." (source 2026-03-22) in 2025. The "Days
+  with a month" line now gives both dates, as a bare day's line does:
+  `"January 9" = 2026-01-09 if it already happened, 2027-01-09 if it is
+  still to come`. The month never changes. A day equal to the source date
+  has one date; 29 February looks up to four years each way. The prompt
+  text stays version 3's: seven rewordings of the named-month rule each
+  lost a date case or a base-corpus fact on `qwen3.8-27b` (one made "Ana
+  will pair with Lee" into "Ana will pair with the owner", and the walk
+  lost r03). Two new date cases (`month_past_year`, `month_future_year`);
+  all three fixture files recorded again at version 4: the recording passes
+  17 of 17; live runs 66 of 68 (the two misses: empty answers on `leave`,
+  both in one run). Bench numbers unchanged.
 
 **Steps, each idempotent and resumable:**
 
@@ -450,7 +506,15 @@ dark: nothing runs until `memory.extract` has its own assignment.
    `name_key` prefix and token overlap in SQL, then 0.5 × name ratio + 0.3 ×
    shared neighbours + 0.2 × closeness in time, match at 0.6, with the
    per-token guard (`entity_resolver.py:1309-1344`, `:82-85`). Below 0.6: a new
-   entity. Never merge two entities by LLM guess.
+   entity. Never merge two entities by LLM guess. **The initial rule**
+   (2026-10-05, `entities.initial_form`): a name with a given name cut to
+   its initial and the same surname ("T. Wierzbicki", "Tomasz Wierzbicki")
+   joins at 0.6 whatever the rest of the score (it was 0.585: no shared
+   neighbour, a day apart). Narrow: the same number of words, the surname
+   equal and longer than one letter, at least one initial. The #839 guard
+   still runs on every name the candidate is known by, and one match only
+   holds: with "Tomasz" and "Teresa Wierzbicki" both known, "T. Wierzbicki"
+   is its own entity.
 
 **Versions.** `CHUNKER_VERSION`, `EXTRACTOR_VERSION`, `CONSOLIDATOR_VERSION` and
 `PAGE_WRITER_VERSION` are integers in code. A bump makes the sweep see every
@@ -666,6 +730,15 @@ the owner's canvas (UX-CANON).
   as a WHOLE token, so "26" is not "2026") must be in the text of the
   inputs THAT sentence cites, or it is cut. A sentence that says something
   its refs do not could not be withdrawn with the input it came from.
+  **One input holds the whole sentence** (2026-10-05, Astra #870,
+  `pages.attributed`): every content token of the sentence must be in ONE
+  input it cites. Tokens spread over two inputs are not enough: "Atlas
+  budget is 40." + "Atlas headcount is 80." never make "Atlas budget is
+  80.", and "Atlas owner is Dana" + "Harbor owner is Lee" never make "Atlas
+  owner is Lee". Word order, case and stopwords may change ("The Atlas
+  launch date is 2026-10-01." serves from "Atlas launch date: 2026-10-01").
+  A sentence that joins two inputs is cut: a cut serves less, never a
+  wrong claim.
 - **Read time decides, not the next rewrite.** Each stored sentence keeps
   what it cites: an observation and the text version the engine was shown,
   or a chunk (id, hash, anchor). A sentence is served only while EVERY
@@ -680,16 +753,18 @@ the owner's canvas (UX-CANON).
   HASHED content tokens of its text (`inputs_json`; no word is stored).
   When an input is not live now, a sentence holding a token that only
   withdrawn inputs held is withheld, whatever it cites.
-- **Stale and rewrite.** `last_memory_seen_at` is the newest change in the
-  scope when the job read it (an observation's `updated_at` or an in-scope
-  source's ledger `updated_at`), with the content keys of everything
-  stamped in that same second (`seen_keys_json`; the stamps are to the
-  second). A key names the content: a source's content hash and state; an
-  observation's state, newest version and evidence count. Stale: a change
-  stamped after it, or a key in that second the job did not see (a second
-  edit in the same second is a new hash). Every change restamps its row, so
-  a row stamped earlier is as the job saw it (a clock that runs backwards
-  is not covered). A missing page is written
+- **Stale and rewrite.** By CONTENT only (2026-10-05; was stamp order).
+  The job takes the scope digest first (`scope_digest`): a hash of the key
+  of every source and observation in the scope now. A key names the
+  content: a source's ref, content hash and state; an observation's id,
+  state, newest version and evidence count. Stale: the digest now is not the
+  one the job saw (`seen_keys_json`). A second edit in the same second, a
+  refile into or out of the scope (it moves a key from one scope's set to
+  the other's: both projects' pages are stale), and a change stamped by a
+  clock that ran backwards all change the digest. `last_memory_seen_at`
+  still records the newest stamp, for display only. Cost: about 75 ms a
+  scope on a desk of 2,000 sources and 5 projects (the scope rule runs per
+  source). A page written before the digest is stale once. A missing page is written
   at once; a stale one at most once an hour. A scope is a candidate when it
   has an observation that stands or a page already. The write takes the
   write lock, checks every input again and that the page is the one it
@@ -709,13 +784,11 @@ the owner's canvas (UX-CANON).
   (`what-changed-this-week`, `what-is-open`), each excluding its own
   sources. Not wired: the Brief and the Steward make no model call, so a
   page could only reach them as a new item on a face.
-- **Not done.** No face reads a page. A source filed into a project does
-  not move its ledger stamp, so a refile makes the old project's sentences
-  drop at once but does not mark the new project's pages stale. The
-  attribution check is by words: a sentence made only of words its cited
-  inputs also hold is kept, even when its meaning came from elsewhere (a
-  paraphrase the inputs do not support word for word is cut). The real LAN
-  model is not run for this job; no recorded answers.
+- **Not done.** No face reads a page. Attribution is by words and names,
+  not by meaning: a claim whose words and names all sit in one cited input
+  is kept even if that input says something else with them (a paraphrase
+  the inputs do not support word for word is cut). The real LAN model is
+  not run for this job; no recorded answers.
 
 ### 3.5 REFLECT
 
@@ -770,7 +843,16 @@ is a face and waits for its canvas).
   container row by the hand-attach rule, any other row is not sent (that
   producer stamped project hits `reference`, like a named ref). The
   `memory.search` and `memory.observations` tool results replay as a stub,
-  as `memory.page` does.
+  as `memory.page` does; since 2026-10-05 so does every read tool
+  (`evidence_read` or `candidate_builder` in `thread_tools`: a note read, a
+  meeting, a decision record, a People read), with a stub that names the
+  tool to call again (`thread_service._replay_stub`). A write's result
+  replays as stored; an unknown tool name gets the stub. A result is
+  classed by the call that MADE it: the `tool_call` parts of the latest
+  assistant message before it on the path (Astra, #871 round 2: a provider
+  may reuse a call id in a later turn, and one id map for the whole thread
+  let a later write replay an earlier read). A result whose call is not
+  found gets a stub.
 - **One budget.** The job's `block_chars` (5,200 for `ask.answer` and
   `chat.turn`); the pages take at most half; whole sentences only. Then
   `fit_reflect` drops excerpts from the end (observations first) until the
@@ -782,9 +864,15 @@ is a face and waits for its canvas).
   cut: it is what main sends.
 - **Nothing served: nothing added.** The prompt is byte-identical to main
   (fenced for Ask and for the chat payload).
-- **Not on the frozen Thought path** (`thought.interview` through the
-  refinement coordinator): its coordinator reserves the bytes before
-  dispatch.
+- **The routed Thought too** (2026-10-05). The refinement coordinator
+  reserves the payload's bytes before dispatch, and Ask checks the bytes it
+  dispatches against them. Both read the desk's pages and observations the
+  same way (`AskService.thought_reflect`: the desk scope, the Thought's own
+  note held out, fitted with one fixed operation id that is longer than any
+  real one), so the same memory gives the same bytes. A page rewrite or a
+  withdrawal between the two is the material check's, as for the recall
+  (the turn fails, as it does for the recall). The legacy (un-migrated) Thought
+  path is unchanged.
 - **`memory.page` joins the default chat, Desk and Chase palettes. No
   palette grows versus main** (fenced: `MAIN_PALETTE_BYTES`). The room:
   the page's schema words are short (516 bytes rendered, was 611), and
@@ -1071,14 +1159,37 @@ group passes.
   a key block (no header for a pattern to see) or end inside a secret. So the
   source's complete admitted text is redacted as one text (a secret across
   transcript turns is one secret), and every chunk, snippet, recent row,
-  relation row and memory-selected grounding block is cut from that.
+  relation row and grounding block is cut from that. Since 2026-10-05 that
+  includes a source the owner attached by hand (`grounding._defended`, the
+  hydration of a named ref and its replay on a later turn): a key in a note
+  he attaches never reaches a model.
 - **Secrets.** Every title and snippet memory returns is redacted. The
   keyword tables `*_memory_fts` are filled by triggers in the writer's own
   transaction, so the sweep (and the rebuild) replaces the copy of a source
-  that holds a secret and merges the index. Not done: `segments_fts` and
-  `thread_messages_fts` hold no copy of the text, only tokens; a secret said
-  in a meeting or a thread is still a search key there (the result is
-  redacted).
+  that holds a secret and merges the index. `segments_fts` and
+  `thread_messages_fts` hold no copy of the text, only tokens, and keep the
+  raw words. **A secret is not a search key** (2026-10-05, Astra #871
+  round 2, `MemoryRepository._drop_secret_keyed`): a keyword hit whose
+  source holds a secret survives only when the query matches the source's
+  REDACTED text under the search's own semantics: the same FTS5 MATCH
+  expression (unicode61: case and accent folding, whole tokens) for an FTS
+  kind, the same LIKE patterns (a substring) for a canonical-store kind,
+  and both for a meeting (transcript by MATCH, summary and topics by LIKE).
+  So the secret, a piece of it, or its accent-folded form finds nothing,
+  and a public word of the same source still finds it (the query is OR).
+  A word that sits only inside a redacted span ("token" in "token=...")
+  is not a key either. A source with no secret, or one memory cannot read,
+  keeps its hit.
+- **What counts as a labelled secret** (2026-10-05, Astra #871 round 2,
+  `defense._type_like`): after "token", "password", "secret", "api_key" or
+  "authorization", the label and its value are redacted as one span only
+  when the value is not a type or an identifier name ("Identifier",
+  "Optional[str]", "str", "list[int]"). A value with a digit is always
+  redacted. "Atlas compiler schema: token: Identifier; api_key:
+  Optional[str]." is kept whole; "password: fluffy" and "token=hunter2" are
+  redacted. Known: a password that is one capitalised word with no digit
+  ("secret: Hunter") reads as an identifier and is kept. Prefixed tokens
+  (ghp_, sk-, xoxb-, AKIA, JWT, PEM, database URLs, cards) are unchanged.
 
 On a corpus this small the vector top 50 holds almost every source, so a
 keyword hit on a common word is in both lists and can rank above the one

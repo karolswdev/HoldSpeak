@@ -7,6 +7,8 @@ export { ProgressPlan, type PlanStep } from "./ProgressPlan";
 export { HeardQuote, heardFacts, heardWordCount, heardDuration } from "./HeardQuote";
 export { ChoiceCardGroup, ChoiceCard } from "./ChoiceCardGroup";
 export { ChoiceCardShell, type ChoiceCardShellProps } from "./ChoiceCardShell";
+export { ReadyStrip, type ReadyStripItem } from "./ReadyStrip";
+export { StartVerb, StartVerbs } from "./StartVerb";
 export { Popover } from "./Popover";
 export { ProvenanceChip, Receipt } from "./ProvenanceChip";
 export {

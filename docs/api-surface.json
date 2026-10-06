@@ -4114,7 +4114,9 @@
         "POST"
       ],
       "module": "web.routes.onboarding",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/onboarding/calendar/macos/access",
@@ -4122,7 +4124,9 @@
         "POST"
       ],
       "module": "web.routes.onboarding",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/onboarding/calendar/use",
@@ -4130,7 +4134,9 @@
         "POST"
       ],
       "module": "web.routes.onboarding",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/onboarding/connections",
@@ -4148,7 +4154,9 @@
         "POST"
       ],
       "module": "web.routes.onboarding",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/people/commitments/{commitment_id}/execution",

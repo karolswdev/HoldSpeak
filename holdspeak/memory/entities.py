@@ -12,6 +12,11 @@ guess:
   each that the other does not have ("John Smith", "Jane Smith") are never
   one entity, however high the rest of the score is.  An initial is the same
   word as the name it starts ("J. Smith", "John Smith").
+* **The initial rule.**  A name with a given name cut to its initial and
+  the same surname ("T. Wierzbicki", "Tomasz Wierzbicki") joins at
+  ``MATCH_SCORE`` whatever the rest of the score is, but only when the guard
+  passes on every name the candidate is known by and no second candidate
+  could take it.
 * **No model merge.**  Nothing here calls a model.
 
 Candidates come from SQL: the same kind, and a name that starts the same or
@@ -120,6 +125,33 @@ def token_guard(left_key: str, right_key: str) -> bool:
     return not (left_only and right_only)
 
 
+def initial_form(left_key: str, right_key: str) -> bool:
+    """True when one name is the other with a given name cut to its initial:
+    "t wierzbicki" and "tomasz wierzbicki".
+
+    The rule is narrow on purpose: the same number of words, the LAST word
+    (the surname) equal and longer than one letter, every other word equal or
+    the initial of the other, and at least one initial.  "J. Smith" against
+    "John Smith" is True; against "Jane Smith" it is True too, so two full
+    names of one surname make the mention ambiguous and ``resolve`` keeps it
+    its own entity (one match only).
+    """
+    left, right = tokens(left_key), tokens(right_key)
+    if len(left) < 2 or len(left) != len(right):
+        return False
+    if left[-1] != right[-1] or len(left[-1]) < 2:
+        return False
+    initials = 0
+    for one, other in zip(left[:-1], right[:-1]):
+        one, other = one.rstrip("."), other.rstrip(".")
+        if one == other:
+            continue
+        if not _same_word(one, other):
+            return False
+        initials += 1
+    return initials > 0
+
+
 def name_similarity(left_key: str, right_key: str) -> float:
     if left_key == right_key:
         return 1.0
@@ -175,7 +207,13 @@ def score(
     name = max(name_similarity(name_key, key) for key in candidate_keys)
     shared = (len(neighbours & candidate_neighbours) / len(neighbours)) if neighbours else 0.0
     closeness = time_closeness(seen, first_seen, last_seen)
-    return NAME_WEIGHT * name + NEIGHBOUR_WEIGHT * shared + TIME_WEIGHT * closeness
+    value = NAME_WEIGHT * name + NEIGHBOUR_WEIGHT * shared + TIME_WEIGHT * closeness
+    if any(initial_form(name_key, key) for key in candidate_keys):
+        # The initial rule: "T. Wierzbicki" is "Tomasz Wierzbicki" when the
+        # guard passed on every known name.  Ambiguity (two full names of
+        # one surname) is ``resolve``'s one-match rule.
+        return max(value, MATCH_SCORE)
+    return value
 
 
 def _candidates(conn: sqlite3.Connection, kind: str, name_key: str) -> list[sqlite3.Row]:
@@ -319,6 +357,7 @@ __all__ = [
     "fold",
     "fold_question",
     "fold_words",
+    "initial_form",
     "is_name",
     "name_similarity",
     "recount",

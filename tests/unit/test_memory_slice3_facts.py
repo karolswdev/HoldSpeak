@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -861,6 +862,74 @@ def test_extraction_yields_to_a_live_chat_turn_on_the_same_lan_model(tmp_path: P
     assert report["sources"] == 1 and extract_calls == [False]
 
 
+def test_an_open_call_whose_owner_is_gone_holds_extraction_no_longer(tmp_path: Path) -> None:
+    """#839 note: an open call a crashed process left in ``kernel_operations``
+    made extraction wait up to 600 s.  A call no runner here holds and that
+    went quiet for ``FOREIGN_CALL_SECONDS`` has a dead owner; a call the
+    runner holds counts however old it is."""
+    import asyncio
+
+    from holdspeak.kernel.inference_stream import Delta
+    from holdspeak.services.thread_service import ThreadService
+    from tests.unit.test_phase143_inference_assignments import _result_claim
+
+    db = Database(tmp_path / "dead.db")
+    broker = _configure(db)
+    _profile(db, "shared-lan", model="same-endpoint-model", boundary="private_network",
+             claims=("language", _result_claim("chat.turn")))
+    _assign(db, EXTRACT_CAPABILITY, ["shared-lan"])
+    _assign(db, "chat.turn", ["shared-lan"])
+    started, release = threading.Event(), threading.Event()
+
+    class Engine:
+        active_provider = "fixture"
+        active_model = "same-endpoint-model"
+
+        def run_prompt_stream(self, **_kwargs):
+            started.set()
+            assert release.wait(15)
+            yield Delta(kind="text", text="Hello.")
+            yield Delta(kind="done")
+
+        def run_prompt(self, **_kwargs):
+            return '{"facts": []}'
+
+    broker.inference_runner._engine_factory = lambda revision, **_kwargs: Engine()
+    done = threading.Event()
+    service = ThreadService(db, broadcast=lambda kind, _data: done.set() if kind == "thread_turn_done" else None,
+                            broker=broker)
+    thread = db.threads.create_thread(title="Live chat")
+    runner = broker.inference_runner
+    try:
+        asyncio.run(service.start_turn(OWNER, thread.id, "Write a short greeting."))
+        assert started.wait(10)
+        extractor = resolve_extractor(broker, OWNER)
+        quiet = time.time() - memory_conductor.FOREIGN_CALL_SECONDS - 60
+        with db._connection() as conn:
+            conn.execute("UPDATE kernel_operations SET updated_at=? WHERE name='inference.invoke'"
+                         " AND state IN ('admitting','awaiting_decision','awaiting_execution','claimed')", (quiet,))
+        # The runner here holds the call: it is live, however quiet.
+        assert memory_conductor.live_work(db, extractor) == "a model call on the same engine is live"
+        # The owner is gone (no runner holds it): it no longer holds extraction.
+        with runner._active_lock:
+            held = dict(runner._active)
+            runner._active.clear()
+        try:
+            assert memory_conductor.live_work(db, extractor) == ""
+            # A fresh foreign call (one being admitted elsewhere) still counts.
+            with db._connection() as conn:
+                conn.execute("UPDATE kernel_operations SET updated_at=? WHERE name='inference.invoke'"
+                             " AND state IN ('admitting','awaiting_decision','awaiting_execution','claimed')",
+                             (time.time(),))
+            assert memory_conductor.live_work(db, extractor) == "a model call on the same engine is live"
+        finally:
+            with runner._active_lock:
+                runner._active.update(held)
+    finally:
+        release.set()
+        done.wait(10)
+
+
 def test_every_attempted_call_counts_against_the_budget(tmp_path: Path) -> None:
     db = Database(tmp_path / "bad-budget.db")
     for index in range(30):
@@ -885,6 +954,10 @@ def test_one_malformed_entry_fails_the_answer_and_the_old_facts_stay(tmp_path: P
         {"facts": [good, {**good, "entities": [{"name": "Atlas"}]}]},
         {"facts": [good, {**good, "confidence": "high"}]},
         {"facts": [good], "notes": "extra"},
+        # An entity kind that is not a string: a bad entry, never a TypeError
+        # (#839 note; the set test on an unhashable value raised).
+        {"facts": [good, {**good, "entities": [{"name": "Atlas", "kind": ["project"]}]}]},
+        {"facts": [good, {**good, "entities": [{"name": "Atlas", "kind": {"is": "project"}}]}]},
     ):
         engine.answer = bad
         with pytest.raises(ExtractionOutputError):
@@ -917,7 +990,7 @@ def test_a_short_name_two_full_names_could_take_is_its_own_entity(tmp_path: Path
     assert people == {"Dana Lee": [], "Dana Kim": [], "Dana": []}
 
 
-# ── a day with no month takes its month by tense (EXTRACTOR_VERSION 2) ──
+# ── a day takes its month by tense; a named month stays (EXTRACTOR_VERSION 2, 3) ──
 
 
 def test_the_prompt_dates_a_day_with_no_month_by_tense() -> None:
@@ -925,6 +998,11 @@ def test_the_prompt_dates_a_day_with_no_month_by_tense() -> None:
     assert "for a thing to come" in prompt and "the next such day on or after the date of the source" in prompt
     assert "for a thing that already happened" in prompt and "the most recent such day on or before it" in prompt
     assert "title of the source" not in prompt  # Astra, #845: a title rule invented a project
+    # EXTRACTOR_VERSION 3: a named month keeps its month; a reported thing
+    # takes its own tense; a dated plan is never an empty answer.
+    assert "keeps that month, whatever the tense" in prompt and '"Days with a month"' in prompt
+    assert "not of a verb that reports it" in prompt
+    assert "An empty list is a good answer" not in prompt
     assert not hasattr(extract_module, "roll_past_days")  # no code moves a date
 
 
@@ -940,12 +1018,88 @@ def test_the_prompt_dates_a_day_with_no_month_by_tense() -> None:
     # A day 31 skips the months without one.
     ("It starts on the thirty-first.", "2026-09-22",
      'Days with no month: "the thirty-first" = 2026-08-31 if it already happened, 2026-10-31 if it is still to come\n'),
-    # A named month is not a day with no month; no day, no line.
-    ("The deadline was the ninth of September.", "2026-09-22", ""),
+    # A named month is not a day with no month: it has its own line.  The
+    # month never changes (Astra, #845); the YEAR goes by tense (Astra, #870).
+    ("The deadline was the ninth of September.", "2026-09-22",
+     'Days with a month: "the ninth of September" = 2026-09-09 if it already happened, 2027-09-09 if it is still to come\n'),
+    ("We shipped the sensor batch on January 9.", "2026-09-22",
+     'Days with a month: "January 9" = 2026-01-09 if it already happened, 2027-01-09 if it is still to come\n'),
+    ("The next sensor batch will ship on December 9.", "2026-03-22",
+     'Days with a month: "December 9" = 2025-12-09 if it already happened, 2026-12-09 if it is still to come\n'),
+    ("Due on September 22.", "2026-09-22", 'Days with a month: "September 22" = 2026-09-22\n'),
+    ("Due on 29 February.", "2026-03-22",
+     'Days with a month: "29 February" = 2024-02-29 if it already happened, 2028-02-29 if it is still to come\n'),
+    ("The review was on the ninth of September. The next review is on the twentieth.", "2026-09-22",
+     'Days with no month: "the twentieth" = 2026-09-20 if it already happened, 2026-10-20 if it is still to come\n'
+     'Days with a month: "the ninth of September" = 2026-09-09 if it already happened, 2027-09-09 if it is still to come\n'),
+    ("We shipped on September 3rd and Jan 4 is next.", "2026-12-20",
+     'Days with a month: "September 3rd" = 2026-09-03 if it already happened, 2027-09-03 if it is still to come; '
+     '"Jan 4" = 2026-01-04 if it already happened, 2027-01-04 if it is still to come\n'),
+    # A full date (a year written) needs no line, and its day is not bare.
+    ("Due September the ninth, 2026.", "2026-09-22", ""),
     ("No day here.", "2026-09-22", ""),
     ("the ninth", None, ""),
 ])
 def test_the_prompt_gives_both_dates_of_a_day_with_no_month(text: str, at, line: str) -> None:
     assert extract_module.day_hints(text, at) == line
     payload = extract_module.build_payload(text, kind="meeting", title="t", occurred_at=at)
-    assert (line in payload["user_prompt"]) if line else ("Days with no month" not in payload["user_prompt"])
+    assert (line in payload["user_prompt"]) if line else ("Days with" not in payload["user_prompt"])
+
+
+# ── the initial rule: "T. Wierzbicki" is "Tomasz Wierzbicki" ────────────
+
+
+def _resolve_people(db: Database, mentions: list[tuple[str, str]]) -> dict[str, set[str]]:
+    """Resolve each (name, seen) in order through the real resolver, with no
+    neighbours; return each person entity's known names."""
+    from holdspeak.memory.entities import resolve
+
+    with db._connection() as conn:
+        for name, seen in mentions:
+            resolve(conn, name=name, kind="person", seen=seen)
+        return {
+            str(r["name"]): {fold_key(str(r["name"]))} | {fold_key(a) for a in json.loads(r["aliases_json"])}
+            for r in conn.execute("SELECT name,aliases_json FROM memory_entities WHERE kind='person'")
+        }
+
+
+@pytest.mark.parametrize("first", ["full", "initial"])
+def test_an_initial_joins_the_full_name_with_no_neighbour_and_weeks_apart(tmp_path: Path, first: str) -> None:
+    """The bench gap (#841): score 0.585 < 0.6 with no shared neighbour.  The
+    rule joins an initial to the one full name it can be, in either order,
+    however far apart in time."""
+    db = Database(tmp_path / "initial.db")
+    mentions = [("Tomasz Wierzbicki", "2026-08-01"), ("T. Wierzbicki", "2026-09-23")]
+    if first == "initial":
+        mentions.reverse()
+    people = _resolve_people(db, mentions)
+    assert list(people.values()) == [{"tomasz wierzbicki", "t wierzbicki"}], people
+
+
+@pytest.mark.parametrize("order", list(__import__("itertools").permutations(range(3))))
+def test_an_initial_never_joins_two_full_names_of_one_surname(tmp_path: Path, order) -> None:
+    """The #839 guard still holds: "T. Wierzbicki" with "Tomasz" and
+    "Teresa Wierzbicki" never makes one entity of the two full names, in
+    any order; when both full names are known first, the initial is its own
+    entity (one match only)."""
+    db = Database(tmp_path / "two.db")
+    names = ["Tomasz Wierzbicki", "Teresa Wierzbicki", "T. Wierzbicki"]
+    people = _resolve_people(db, [(names[index], "2026-09-23") for index in order])
+    for known in people.values():
+        assert not {"tomasz wierzbicki", "teresa wierzbicki"} <= known, (order, people)
+    if order[2] == 2:
+        assert people["T. Wierzbicki"] == {"t wierzbicki"}, people
+
+
+def test_the_initial_rule_is_narrow() -> None:
+    from holdspeak.memory.entities import initial_form
+
+    assert initial_form("t wierzbicki", "tomasz wierzbicki")
+    assert initial_form("tomasz wierzbicki", "t wierzbicki")
+    assert initial_form("j smith", "john smith")
+    assert not initial_form("t wierzbicki", "tomasz wierzbick")   # the surname must be equal
+    assert not initial_form("t wierzbicki", "w wierzbicki")       # an initial must agree
+    assert not initial_form("tomasz wierzbicki", "tomasz wierzbicki")  # no initial: not this rule
+    assert not initial_form("t", "tomasz")                         # one word: never
+    assert not initial_form("t w", "tomasz w")                     # a one-letter surname: never
+    assert not initial_form("t a wierzbicki", "tomasz wierzbicki")  # word counts differ

@@ -234,7 +234,8 @@ describe("turn lifecycle", () => {
     expect(msg).toBeDefined();
     expect(msg!.streaming).toBe(true);
     expect(msg!.modelId).toBe("qwen");
-    expect(msg!.egressScope).toBe("local");
+    // Astra #875: the admitted plan is not a receipt; the stub has no route.
+    expect(msg!.egressScope).toBeNull();
     expect(useThreadStore.getState().buffers["msg-a"]).toBeDefined();
   });
 

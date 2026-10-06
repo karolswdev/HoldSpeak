@@ -1,0 +1,36 @@
+/* StartVerb — the library Button on a larger plate: glyph over word. */
+
+.surface-start-verbs {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.surface-start-verb.btn {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  white-space: normal;
+  text-align: center;
+  min-width: 0;
+}
+
+.surface-start-verb-glyph {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.surface-start-verb-word {
+  overflow-wrap: anywhere;
+}
+
+@container surface (max-width: 720px) {
+  .surface-start-verbs {
+    grid-auto-flow: row;
+  }
+}
