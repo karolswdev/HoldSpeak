@@ -30,7 +30,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 |---|---|---|
 | Memory dates: Kestrel (r09) found only with vectors (strict xfail); live extraction occasionally returns an empty answer (2 of 68 repeats); a one-word capitalised password with no digit ("secret: Hunter") is kept | — | — |
 | First run: the browser copy of the needs-you rule (web/src/desk/needsYou.ts) lacks the person-identity guard (no production caller today); physical mic and real model inference not verified | — | — |
-| Send folder: six older Send glass rigs park the built-in (direct DB write) to keep their ratified boards; Google Drive / OneDrive provider ids unverified on real installs (fall back to SYNCED); GitHub / Jira offered when signed in (inventory item 9b) not built; inventory item 8 (calendar row at first run) not built | — | — |
+| Send folder: six older Send glass rigs park the built-in (direct DB write) to keep their ratified boards; Google Drive / OneDrive provider ids unverified on real installs (fall back to SYNCED). Onboarding: a sign-in connects the account but saves no Send destination; no System Settings verb when Calendar access is denied (needs a hub route); real EventKit, gh/acli auth and transcription unverified on his desk | — | — |
 | Defaults: the 4B starter's meeting analysis is untested on real hardware; the real faster-whisper fence skips in CI (needs a cached model) | — | — |
 | Defaults: never run against a real Ollama/LM Studio/llama.cpp server; a binding disabled and re-enabled between the backlog tick and the claim consumes the mark (manual retry); GitHub Enterprise entry.egress_host says github.com; meeting import does not write the backlog mark; real EventKit prompt/read unverified | — | — |
 | Memory faces (need a canvas): the Desk memory card with observations, the standing pages, the ⌘K palette's use of fused recall | Muad'Dib | — |
@@ -53,6 +53,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- #876 — Onboarding on one screen (owner pick A): Calendar and Connections cards under the first-run three; Ready on top with his name and three verbs (Record the next meeting, Dictate, Ask about this week); every card lit; macOS prompt only on press
 - #875 — Route in footer (owner pick C): a lamp per Ask/chat turn from its receipt (least private sent attempt; FALLBACK marked); the footer carries the last turn's host, model and its own receipt; failed Asks keep their route; one egress classifier everywhere
 - #871 — Memory leftovers: every read tool replays as a re-read stub (classed by its originating call); the routed Thought reflects pages and observations; thread time bounds as instants; dead runners stop holding extraction; secrets are never search keys; hand-attached sources redacted (schema text kept)
 - #870 — Memory accuracy: dates by named month and reported tense, both years by tense (EXTRACTOR_VERSION 4, re-recorded live); the initial-alias rule; one cited input must hold every content word of a page sentence; content-hash page staleness
