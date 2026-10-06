@@ -902,7 +902,9 @@ OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create",
                           # PHILO-9-02: the charter's HTTP capability exceptions.
                           "project.door.count", "project.watch.update", "project.watch.baseline",
                           # PHILO-10-03: the email key is a held input, HTTP only (never a tool argument).
-                          "channel.save_email_key", "channel.save_slack_webhook"})
+                          "channel.save_email_key", "channel.save_slack_webhook",
+                          # The Conductor K1: the owner's one-press hook install (config, HTTP only).
+                          "agent_hooks.install"})
 
 # PHILO-7-01: the desk kind and id argument of each slice prefix.
 _DESK_OP_KINDS: dict[str, tuple[str, str]] = {

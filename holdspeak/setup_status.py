@@ -26,7 +26,7 @@ from .logging_config import get_logger
 log = get_logger("setup_status")
 
 # Severity ordering for picking the single primary action + the overall verdict.
-_SEVERITY = {"fail": 3, "warn": 2, "unknown": 1, "pass": 0}
+_SEVERITY = {"fail": 3, "warn": 2, "unknown": 1, "pass": 0, "info": 0}
 
 
 def _slug(name: str) -> str:
@@ -37,7 +37,7 @@ def _slug(name: str) -> str:
 
 def _section_from_check(check: Any) -> dict[str, Any]:
     status = str(getattr(check, "status", "") or "").strip().lower()
-    if status not in ("pass", "warn", "fail"):
+    if status not in ("pass", "warn", "fail", "info"):
         status = "unknown"
     return {
         "id": _slug(getattr(check, "name", "")),

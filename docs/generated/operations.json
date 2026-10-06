@@ -5615,6 +5615,59 @@
         "arguments": [],
         "enforced": true
       }
+    },
+    {
+      "name": "agent_hooks.install",
+      "version": 1,
+      "description": "Install the HoldSpeak hooks for one coding agent (Claude Code or Codex) in the settings file that agent reads. Foreign hooks stay. A second install changes nothing.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "agent": {
+            "enum": [
+              "claude",
+              "codex"
+            ]
+          },
+          "settings_path": {
+            "type": "string",
+            "description": "Bound by the hub before admission (the agent's settings file); never sent by a client."
+          }
+        },
+        "required": [
+          "agent",
+          "settings_path"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (the HTTP auth middleware); owner only",
+      "effect": "write",
+      "result": "{agents, tmux, holdspeak, used: {agent, path, installed_events, created_file}} and the receipt",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "owner_required",
+        "claude_not_installed",
+        "codex_not_installed",
+        "agent_settings_unreadable",
+        "agent_settings_path_changed",
+        "holdspeak_not_found"
+      ],
+      "completion": "synchronous; GET /api/onboarding/agents shows hooks installed",
+      "exposure": [
+        "http:POST /api/onboarding/agents/use"
+      ],
+      "held": [],
+      "owner_only": true,
+      "blocking_io": false,
+      "owner_press": true,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Config: the owner's press writes a coding agent's hook settings file (HTTP only, in no palette). The agent and the file are bound at admission.",
+        "arguments": [],
+        "enforced": true
+      }
     }
   ]
 }
