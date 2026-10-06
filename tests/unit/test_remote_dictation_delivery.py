@@ -194,3 +194,46 @@ def test_default_target_is_byte_identical_to_agent_path(monkeypatch, _patch_sess
         "target": "cli:0.1",
     }
     assert len(calls) == 2
+
+
+def test_reply_window_is_the_shared_agent_question_default(monkeypatch):
+    """Conductor K0: the device reply window is the 30 min default, not 120 s."""
+    from holdspeak.agent_context import DEFAULT_RECENT_MAX_AGE_SECONDS
+
+    seen: list[int] = []
+
+    def _recent(*_a, **k):
+        seen.append(k.get("max_age_seconds"))
+        return None
+
+    monkeypatch.setattr(
+        "holdspeak.agent_context.get_recent_awaiting_agent_session", _recent
+    )
+    rt = _Runtime(typer=_RecordingTyper())
+    rt._deliver_remote_dictation("ship it")
+    assert seen == [DEFAULT_RECENT_MAX_AGE_SECONDS]
+    assert DEFAULT_RECENT_MAX_AGE_SECONDS == 30 * 60
+
+
+@pytest.mark.parametrize("query", ["agent_status", "agent_question", "agent_next"])
+def test_device_agent_query_uses_the_shared_window(monkeypatch, query):
+    from holdspeak.agent_context import DEFAULT_RECENT_MAX_AGE_SECONDS
+    from holdspeak.agent_device import AGENT_QUERY_NAMES
+    from holdspeak.runtime.device_glue import DeviceGlueMixin
+
+    assert query in AGENT_QUERY_NAMES
+    seen: list[int] = []
+
+    def _lookup(*_a, **k):
+        seen.append(k.get("max_age_seconds"))
+        return None
+
+    monkeypatch.setattr(
+        "holdspeak.agent_context.get_recent_awaiting_agent_session", _lookup
+    )
+    monkeypatch.setattr(
+        "holdspeak.agent_context.select_next_awaiting_agent_session", _lookup
+    )
+    response = DeviceGlueMixin._on_device_query(object(), "dev-1", query, None)
+    assert response is not None
+    assert seen == [DEFAULT_RECENT_MAX_AGE_SECONDS]

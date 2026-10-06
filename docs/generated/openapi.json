@@ -18063,6 +18063,48 @@
         ]
       }
     },
+    "/api/onboarding/agents": {
+      "get": {
+        "operationId": "onboarding_agents_api_onboarding_agents_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Agents Api Onboarding Agents Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Agents",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/onboarding/agents/use": {
+      "post": {
+        "operationId": "onboarding_agents_use_api_onboarding_agents_use_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Agents Use Api Onboarding Agents Use Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Agents Use",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
     "/api/onboarding/calendar": {
       "get": {
         "operationId": "onboarding_calendar_api_onboarding_calendar_get",

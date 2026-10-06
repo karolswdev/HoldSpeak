@@ -30,6 +30,8 @@ from .models import (
     MAX_SESSIONS,
     STATE_VERSION,
     SUPPORTED_AGENTS,
+    is_blocked,
+    is_blocking_notification,
 )
 
 
@@ -59,6 +61,23 @@ def _lifecycle_for_event(hook_event_name: str, previous_lifecycle: str) -> str:
     if hook_event_name in _WORKING_EVENTS:
         return LIFECYCLE_WORKING
     return previous_lifecycle or LIFECYCLE_WORKING
+
+
+def _notification_type(payload: Mapping[str, Any], message: str | None) -> str | None:
+    """The Notification subtype: Claude Code's hook input carries
+    ``notification_type`` (``permission_prompt``, ``idle_prompt``,
+    ``auth_success``, ``elicitation_dialog``). An older payload without it is
+    read from its message ("Claude needs your permission to use Bash",
+    "Claude is waiting for your input")."""
+    given = _optional_str(payload.get("notification_type"))
+    if given:
+        return given.strip().lower()
+    text = (message or "").lower()
+    if "permission" in text:
+        return "permission_prompt"
+    if "waiting for your input" in text:
+        return "idle_prompt"
+    return None
 
 
 def _filter_question(text: str | None) -> str | None:
@@ -181,21 +200,42 @@ def ingest_agent_hook_event(
             hook_event_name, _optional_str(previous.get("lifecycle")) or LIFECYCLE_WORKING
         )
         question = _optional_str(previous.get("question"))
-        if lifecycle == LIFECYCLE_WORKING:
+        notification_type = _optional_str(previous.get("notification_type"))
+        message = _optional_str(payload.get("message")) or _optional_str(payload.get("prompt"))
+        # Conductor K3: a Notification that is not a prompt (``auth_success``,
+        # an unknown subtype) does not ask the owner anything. It never
+        # creates or extends a wait: the session's blocked state, its event
+        # name and its freshness stay as they were.
+        passive = hook_event_name == "Notification" and not is_blocking_notification(
+            _notification_type(payload, message)
+        )
+        recorded_event = hook_event_name
+        updated_at = timestamp
+        if passive:
+            lifecycle = _optional_str(previous.get("lifecycle")) or LIFECYCLE_WORKING
+            recorded_event = _optional_str(previous.get("hook_event_name")) or hook_event_name
+            updated_at = _optional_str(previous.get("updated_at")) or timestamp
+        elif lifecycle == LIFECYCLE_WORKING:
             question = None
+            notification_type = None
+            # The coder resumed: an earlier ask is not pending any more.
+            awaiting_response = False
         elif hook_event_name == "Notification":
-            question = _filter_question(
-                _optional_str(payload.get("message")) or _optional_str(payload.get("prompt"))
-            ) or question
+            notification_type = _notification_type(payload, message)
+            # An idle reminder ("waiting for your input") does not replace a
+            # question the agent already asked: the question is the ask.
+            if not (notification_type == "idle_prompt" and question):
+                question = _filter_question(message) or question
         elif hook_event_name == "Stop" and assistant_text and awaiting_response:
             question = _filter_question(assistant_text)
+            notification_type = None
 
         session = AgentSession(
             agent=normalized_agent,
             session_id=session_id,
             cwd=str(cwd_path),
-            updated_at=timestamp,
-            hook_event_name=hook_event_name,
+            updated_at=updated_at,
+            hook_event_name=recorded_event,
             repo_root=str(repo.root) if repo else None,
             repo_anchor=repo.anchor if repo else None,
             project_name=repo.project_name if repo else None,
@@ -218,7 +258,23 @@ def ingest_agent_hook_event(
             pinned=bool(previous.get("pinned")),
             lifecycle=lifecycle,
             question=question,
+            notification_type=notification_type,
         )
+        # Conductor K3: the wait episode. A session that becomes blocked
+        # starts a new episode (start time + id); one that stays blocked keeps
+        # it (repeated reports, a restart: the registry holds it); one that
+        # is not blocked has none.
+        if is_blocked(session):
+            if is_blocked(previous) and previous.get("wait_id"):
+                session = replace(
+                    session,
+                    wait_started_at=_optional_str(previous.get("wait_started_at")) or timestamp,
+                    wait_id=str(previous["wait_id"]),
+                )
+            else:
+                session = replace(
+                    session, wait_started_at=timestamp, wait_id=f"{timestamp}#{event_count}",
+                )
         record = session.to_dict()
         # HS-94-04: additive rider-claim emission. When the hook's context
         # carries an explicit Story identity (typed payload or the launcher's
@@ -581,6 +637,8 @@ def clear_agent_session_response(
             last_assistant_text_at=None,
             summary=None,
             awaiting_response=False,
+            wait_started_at=None,
+            wait_id=None,
         )
         raw_sessions[selected_key] = cleared.to_dict()
         state["version"] = STATE_VERSION
@@ -717,6 +775,8 @@ def clear_stale_agent_sessions(
                 last_assistant_text_at=None,
                 summary=None,
                 awaiting_response=False,
+                wait_started_at=None,
+                wait_id=None,
             ).to_dict()
             cleared += 1
         if cleared:
@@ -950,6 +1010,39 @@ def _read_state(path: Path) -> dict[str, Any]:
         data["sessions"] = {}
     data["version"] = STATE_VERSION
     return data
+
+
+class AgentRegistryUnreadable(RuntimeError):
+    """The session registry exists and cannot be read as a registry."""
+
+
+def read_agent_sessions_strict(*, state_path: Path | None = None) -> list[AgentSession]:
+    """The registry's sessions, or an error -- never a silent empty list.
+
+    For a reader that must tell "no agents" from "could not read" (the Needs
+    you coverage, Conductor K3). An absent file is a first run: no sessions.
+    A file that cannot be read, is not JSON, or does not hold a registry
+    raises :class:`AgentRegistryUnreadable`.
+    """
+    path = state_path or _default_state_file()
+    if not path.exists():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise AgentRegistryUnreadable(f"agent registry unreadable: {exc}") from exc
+    if not isinstance(data, dict):
+        raise AgentRegistryUnreadable("agent registry is not an object")
+    raw = data.get("sessions")
+    if not isinstance(raw, dict):
+        # The hooks always write ``sessions``: a registry without it (or with
+        # another shape) is not one this reader understands.
+        raise AgentRegistryUnreadable("agent registry has no sessions object")
+    bad = [key for key, row in raw.items() if not isinstance(row, dict)]
+    if bad:
+        raise AgentRegistryUnreadable(f"agent registry rows are not objects: {', '.join(map(str, bad[:3]))}")
+    sessions = [AgentSession.from_mapping(row) for row in raw.values()]
+    return sorted(sessions, key=lambda item: item.updated_at, reverse=True)
 
 
 def _write_state(path: Path, state: Mapping[str, Any]) -> None:

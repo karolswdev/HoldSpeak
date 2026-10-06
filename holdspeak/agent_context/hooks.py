@@ -7,6 +7,7 @@ import os
 import shlex
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -18,6 +19,73 @@ AGENT_HOOK_SETTINGS_PATHS: dict[str, str] = {
     "claude": "~/.claude/settings.json",
     "codex": "~/.codex/hooks.json",
 }
+#: The variable that moves each agent's config directory (the agent reads its
+#: hooks from there, so install and detect both follow it).
+AGENT_CONFIG_DIR_ENV: dict[str, str] = {
+    "claude": "CLAUDE_CONFIG_DIR",
+    "codex": "CODEX_HOME",
+}
+
+
+def agent_settings_path(
+    agent: str,
+    *,
+    home: Path | None = None,
+    env: Mapping[str, str] | None = None,
+) -> Path:
+    """The hook settings file the agent reads: its config-dir variable, else the default under *home*.
+
+    The one resolver for ``holdspeak agent-hook install``, the onboarding
+    install and the onboarding detect.
+    """
+    source_env = os.environ if env is None else env
+    default = AGENT_HOOK_SETTINGS_PATHS[agent]
+    override = str(source_env.get(AGENT_CONFIG_DIR_ENV[agent]) or "").strip()
+    if override:
+        return Path(override).expanduser() / Path(default).name
+    return (home or Path.home()) / default.removeprefix("~/")
+
+
+def holdspeak_executable() -> str | None:
+    """The ``holdspeak`` the hook command runs: on PATH, else beside this interpreter (a venv)."""
+    found = shutil.which("holdspeak")
+    if found:
+        return found
+    beside = Path(sys.executable).parent / "holdspeak"
+    if beside.is_file() and os.access(beside, os.X_OK):
+        return str(beside)
+    return None
+
+
+def hook_command_runs(command: str, *, which: Any = shutil.which) -> bool:
+    """True when the executable of a hook command exists and can run."""
+    try:
+        parts = shlex.split(str(command or ""))
+    except ValueError:
+        return False
+    if not parts:
+        return False
+    executable = parts[0]
+    if os.sep in executable:
+        path = Path(executable).expanduser()
+        return path.is_file() and os.access(path, os.X_OK)
+    return which(executable) is not None
+
+
+def our_hook_commands(settings: Mapping[str, Any]) -> list[str]:
+    """The commands of OUR hook entries in a settings object (marker match)."""
+    hooks = settings.get("hooks")
+    commands: list[str] = []
+    if not isinstance(hooks, Mapping):
+        return commands
+    for entries in hooks.values():
+        for entry in entries if isinstance(entries, list) else []:
+            if not _is_our_hook_entry(entry):
+                continue
+            for hook in entry.get("hooks") or []:
+                if isinstance(hook, Mapping) and AGENT_HOOK_COMMAND_MARKER in str(hook.get("command") or ""):
+                    commands.append(str(hook.get("command")))
+    return commands
 
 
 def detect_tmux_context(
@@ -301,7 +369,7 @@ def _write_settings(settings_path: "Path", settings: Mapping[str, Any]) -> None:
 
 
 def _agent_hook_command(agent: str, *, capture_messages: bool = False) -> str:
-    executable = shutil.which("holdspeak") or "holdspeak"
+    executable = holdspeak_executable() or "holdspeak"
     capture = " --capture-messages" if capture_messages else ""
     return f"{shlex.quote(executable)} agent-hook ingest --agent {agent}{capture}"
 

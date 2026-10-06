@@ -33,6 +33,20 @@ Connections
   * A Send destination names one target (an issue number, a Jira key, a
     Confluence space), so "Use it" on an account connects the connector; the
     destination is saved where the owner names the target.
+
+Agents (the Conductor, step 1 "Ready")
+  * ``agents_detect`` runs no process and makes no network request: ``claude``,
+    ``codex``, ``tmux`` and ``holdspeak`` on PATH; our hook entries in the
+    settings file each agent reads (``CLAUDE_CONFIG_DIR`` / ``CODEX_HOME``, else
+    ``~/.claude/settings.json`` / ``~/.codex/hooks.json``), and whether their
+    command can run; sign-in from stored credentials only.  Inconclusive
+    evidence reads ``unknown`` (the macOS Keychain, the Codex keyring), never
+    ``no``.  No credential value is read out.
+  * ``agents_use`` is the admitted, owner-only kernel operation
+    ``agent_hooks.install``: one receipt for success, refusal or failure.  It
+    merges the HoldSpeak hooks into the file the operation bound at admission
+    (the same idempotent merge as ``holdspeak agent-hook install``; foreign
+    hooks are kept).  A local file write; no network.
 """
 from __future__ import annotations
 
@@ -381,6 +395,207 @@ class OnboardingService:
         return {
             "candidate": match["id"], "provider": provider, "egress_host": match["egress_host"], "entry": entry,
         }
+
+
+    # ── agents ────────────────────────────────────────────────────────
+
+    def agents_detect(self, principal: Principal) -> dict[str, Any]:
+        """Claude Code and Codex: on PATH, hooks installed and runnable, signed in; plus tmux (files only)."""
+        return detect_agents(which=self._which, home=self._home(), environ=self._environ)
+
+    def agent_settings_target(self, agent: str) -> Optional[str]:
+        """The settings file the install for *agent* writes (``None`` for an unknown agent).
+
+        The route binds it into the admitted operation's arguments BEFORE
+        execution; :meth:`agents_use` writes only that file.
+        """
+        from ..agent_context.hooks import agent_settings_path
+
+        if agent not in AGENTS:
+            return None
+        return str(agent_settings_path(agent, home=self._home(), env=self._env()))
+
+    def _env(self) -> dict[str, str]:
+        return dict(os.environ if self._environ is None else self._environ)
+
+    def agents_use(self, principal: Principal, agent: str, settings_path: str) -> dict[str, Any]:
+        """The owner's "Use it" (``agent_hooks.install``): install the HoldSpeak hooks for one agent.
+
+        Runs only as the admitted kernel operation: the receipt names success,
+        the refusal or the failure.  It writes exactly the file the operation
+        bound at admission.
+        """
+        from ..agent_context.hooks import holdspeak_executable, install_agent_hooks
+        from . import project_kernel
+
+        if project_kernel.current() is None:
+            raise RuntimeError("agent_hooks.install runs only as an admitted kernel operation")
+        agent = str(agent or "").strip().lower()
+        if agent not in AGENTS:
+            raise ValidationError("Use it needs an agent: claude or codex.", code="agent_unknown")
+        if self._which(agent) is None:
+            raise ConflictError(f"{AGENTS[agent]} is not installed.", code=f"{agent}_not_installed")
+        if settings_path != self.agent_settings_target(agent):
+            raise ConflictError("The agent's settings file changed. Try again.", code="agent_settings_path_changed")
+        if holdspeak_executable() is None:
+            raise ConflictError("HoldSpeak cannot find its own command for the hook.", code="holdspeak_not_found")
+        path = Path(settings_path)
+        try:
+            result = install_agent_hooks(path, agent_hook_template(agent))
+        except ValueError as exc:
+            raise ConflictError(
+                f"HoldSpeak cannot read {path}. Fix the JSON and try again.", code="agent_settings_unreadable",
+            ) from exc
+        log.info("agent hooks installed for %s at %s (%s)", agent, path, ", ".join(result["installed_events"]))
+        return {**self.agents_detect(principal), "used": {"agent": agent, **result}}
+
+
+#: The coding agents the Conductor launches, by command name.
+AGENTS: dict[str, str] = {"claude": "Claude Code", "codex": "Codex"}
+
+TMUX_INSTALL_HINT = {
+    "darwin": "brew install tmux",
+    "linux": "sudo apt-get install tmux",
+}
+
+
+def agent_hook_template(agent: str) -> dict[str, Any]:
+    """The hook template ``holdspeak agent-hook install`` writes for one agent (no message capture)."""
+    from ..agent_context.hooks import claude_hook_template, codex_hook_template
+
+    return claude_hook_template() if agent == "claude" else codex_hook_template()
+
+
+def _hooks_state(path: Path, events: list[str], which: Callable[[str], Optional[str]]) -> str:
+    """``installed``, ``partial``, ``missing``, ``unreadable``, or ``broken`` (our command cannot run)."""
+    import json
+
+    from ..agent_context.hooks import _is_our_hook_entry, hook_command_runs, our_hook_commands
+
+    if not path.is_file():
+        return "missing"
+    try:
+        settings = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return "unreadable"
+    if not isinstance(settings, dict):
+        return "unreadable"
+    hooks = settings.get("hooks")
+    if not isinstance(hooks, dict):
+        return "missing"
+    ours = [
+        event for event in events
+        if isinstance(hooks.get(event), list) and any(_is_our_hook_entry(e) for e in hooks[event])
+    ]
+    if not ours:
+        return "missing"
+    if not all(hook_command_runs(command, which=which) for command in our_hook_commands(settings)):
+        return "broken"
+    return "installed" if len(ours) == len(events) else "partial"
+
+
+def _json_object(path: Path) -> dict[str, Any]:
+    import json
+
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return loaded if isinstance(loaded, dict) else {}
+
+
+def _filled(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _claude_signed_in(home: Path, env: dict[str, str]) -> tuple[str, Optional[str]]:
+    """``yes`` only from a credential (the API key variable or a stored OAuth token); else ``unknown``.
+
+    Claude Code on macOS keeps its token in the Keychain, and account
+    metadata alone proves nothing, so the answer is never ``no``.
+    """
+    if _filled(env.get("ANTHROPIC_API_KEY")):
+        return "yes", "ANTHROPIC_API_KEY"
+    config_dir = Path(env["CLAUDE_CONFIG_DIR"]).expanduser() if _filled(env.get("CLAUDE_CONFIG_DIR")) \
+        else home / ".claude"
+    credentials = config_dir / ".credentials.json"
+    oauth = _json_object(credentials).get("claudeAiOauth")
+    if isinstance(oauth, dict) and (_filled(oauth.get("accessToken")) or _filled(oauth.get("refreshToken"))):
+        return "yes", str(credentials)
+    return "unknown", None
+
+
+def _codex_signed_in(home: Path, env: dict[str, str]) -> tuple[str, Optional[str]]:
+    """``yes`` only from a stored token or key in ``auth.json``; else ``unknown`` (Codex can use the keyring)."""
+    codex_home = Path(env["CODEX_HOME"]).expanduser() if _filled(env.get("CODEX_HOME")) else home / ".codex"
+    auth_file = codex_home / "auth.json"
+    auth = _json_object(auth_file)
+    tokens = auth.get("tokens")
+    if _filled(auth.get("OPENAI_API_KEY")) or (
+        isinstance(tokens, dict) and any(_filled(tokens.get(k)) for k in ("access_token", "refresh_token", "id_token"))
+    ):
+        return "yes", str(auth_file)
+    return "unknown", None
+
+
+def detect_agents(
+    *,
+    which: Callable[[str], Optional[str]] = shutil.which,
+    home: Optional[Path] = None,
+    environ: Optional[dict[str, str]] = None,
+    platform: Optional[str] = None,
+) -> dict[str, Any]:
+    """Agent readiness, read only: one row per agent, plus tmux and the hook command's ``holdspeak``.
+
+    Shared by ``agents_detect`` and ``holdspeak doctor``.  Runs no process,
+    makes no network request, writes nothing, and reads no credential value
+    out.  ``ready`` needs the agent on PATH and every event of our hook
+    installed with a command that can run.
+    """
+    import shlex
+    import sys
+
+    from ..agent_context.hooks import _agent_hook_command, agent_settings_path, hook_command_runs
+
+    root = home or Path.home()
+    env = dict(os.environ if environ is None else environ)
+    rows: list[dict[str, Any]] = []
+    for agent, label in AGENTS.items():
+        executable = which(agent)
+        settings_path = agent_settings_path(agent, home=root, env=env)
+        events = list(agent_hook_template(agent)["hooks"])
+        hooks = _hooks_state(settings_path, events, which)
+        signed_in, signed_in_from = (_claude_signed_in if agent == "claude" else _codex_signed_in)(root, env)
+        rows.append({
+            "id": agent,
+            "label": label,
+            "installed": executable is not None,
+            "path": executable,
+            "hooks": hooks,
+            "hooks_path": str(settings_path),
+            "signed_in": signed_in,
+            "signed_in_from": signed_in_from,
+            "ready": executable is not None and hooks == "installed",
+            "verb": VERB if executable is not None else None,
+        })
+    tmux = which("tmux")
+    system = platform or sys.platform
+    command = _agent_hook_command("claude")
+    hook_executable = shlex.split(command)[0]
+    return {
+        "agents": rows,
+        "tmux": {
+            "installed": tmux is not None,
+            "path": tmux,
+            "install_hint": None if tmux else TMUX_INSTALL_HINT.get(system, "Install tmux with your package manager"),
+        },
+        # The executable a hook installed now runs (install and detect resolve it the same way).
+        "holdspeak": {
+            "path": which("holdspeak"),
+            "hook_executable": hook_executable,
+            "hook_runs": hook_command_runs(command, which=which),
+        },
+    }
 
 
 def _gh_account_ref(host: str, login: str) -> str:

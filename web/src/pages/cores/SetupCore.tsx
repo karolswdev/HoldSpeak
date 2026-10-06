@@ -97,7 +97,7 @@ export function SetupCore({ hero }: CoreProps) {
                       }
                       meta={
                         <LampGadget
-                          on
+                          on={status !== "info"}
                           tone={
                             status === "pass"
                               ? "ok"

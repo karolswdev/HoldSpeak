@@ -455,6 +455,9 @@ CHANGE_CLASSES: frozenset[str] = frozenset({
 })
 
 
+_CLOSING_EVENT_OUTCOMES: frozenset[str] = frozenset({"closed", "merged", "resolved"})
+
+
 def _classify_observation(obs: dict[str, Any]) -> str:
     """Classify a single observation into a change class.
 
@@ -476,8 +479,10 @@ def _classify_observation(obs: dict[str, Any]) -> str:
     if kind == "decision.review_due":
         return "changed"
     if kind == "watch.transition":
-        event_type = facts.get("event_type", "")
-        if event_type in ("closed", "merged", "resolved"):
+        # Real events are qualified (github.pr.merged, jira.issue.resolved);
+        # the last segment names the outcome. Bare names still work.
+        event_type = str(facts.get("event_type", "") or "")
+        if event_type.rsplit(".", 1)[-1] in _CLOSING_EVENT_OUTCOMES:
             return "closed"
         return "changed"
 

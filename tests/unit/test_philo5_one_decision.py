@@ -255,6 +255,8 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "channel.send", "channel.sends",
         # PHILO-10-03: the email key (HTTP only; the key is a held input).
         "channel.save_email_key", "channel.save_slack_webhook",
+        # The Conductor K1: the one-press hook install (HTTP only, owner only).
+        "agent_hooks.install",
         # Conductor K2: Hand to agent.
         "agent.hand",
     ]

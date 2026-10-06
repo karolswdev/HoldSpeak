@@ -4119,6 +4119,24 @@
       ]
     },
     {
+      "path": "/api/onboarding/agents",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/onboarding/agents/use",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": []
+    },
+    {
       "path": "/api/onboarding/calendar",
       "methods": [
         "GET"

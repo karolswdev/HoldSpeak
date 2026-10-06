@@ -36,6 +36,8 @@ STEWARD_AND_CONNECTORS_ADMITTED: frozenset[str] = frozenset({
     "project.watch.update", "project.watch.baseline", "project.add_suggested_source",
     "connection.recheck", "project.mark_update_delivered",
 })
+#: The Conductor K1: the owner's one-press agent hook install (config, his press, HTTP only).
+ONBOARDING_ADMITTED: frozenset[str] = frozenset({"agent_hooks.install"})
 #: PHILO-10-01: the Send's rows live beside their settle (``kernel/channel_send.py``).
 from .channel_send import AGENT_PREPARE_OPERATIONS, CHANNEL_ADMITTED, SETTLED_ROW_REPLAY, STEWARD_SEND_CHILDREN, owner_press_operations  # noqa: E402,F401,E501
 #: PHILO-9-07: the project delegation grant lives in its own concern module
@@ -60,7 +62,8 @@ PROJECT_DELEGATION_OPERATIONS: frozenset[str] = frozenset({
 })
 #: Scopes the atomic terminal writes, the claim and the recovery ONLY; never an authority set.
 PROJECT_KERNEL_OPERATIONS: frozenset[str] = (ROOM_ADMITTED | STEWARD_AND_CONNECTORS_ADMITTED | {STEWARD_EFFECT}
-                                             | PROJECT_DELEGATION_OPERATIONS | CHANNEL_ADMITTED)
+                                             | PROJECT_DELEGATION_OPERATIONS | CHANNEL_ADMITTED
+                                             | ONBOARDING_ADMITTED)
 #: #694 (Codex Astra counsel r2): the Room operations an AGENT can never be
 #: admitted to outside its own steward run -- no grant covers them and they
 #: are not the agent's prepare. ``ProjectCodec.authorize`` refuses a non-owner

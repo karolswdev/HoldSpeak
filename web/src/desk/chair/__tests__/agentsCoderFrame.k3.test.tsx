@@ -1,0 +1,56 @@
+// Conductor K3: the arrival's AGENTS section and Needs you re-read on a
+// `scope:"coder"` frame, not only on mount (ChairHome fetched the agents once).
+import { act, render, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { apiFetch } from "../../../lib/api";
+import { ChairHome } from "../ChairHome";
+
+const bus = vi.hoisted(() => ({ handlers: new Map<string, Set<(frame: unknown) => void>>() }));
+
+vi.mock("../../../lib/api", async (original) => ({
+  ...await original<typeof import("../../../lib/api")>(),
+  apiFetch: vi.fn(),
+}));
+vi.mock("../../../runtime/RuntimeBus", () => {
+  const value = {
+    state: "connected",
+    lastFrame: null,
+    subscribe: (type: string, handler: (frame: unknown) => void) => {
+      const set = bus.handlers.get(type) ?? new Set();
+      set.add(handler);
+      bus.handlers.set(type, set);
+      return () => set.delete(handler);
+    },
+  };
+  return { useRuntimeBus: () => value, useRuntimeFrame: () => null };
+});
+vi.mock("../../thoughts", () => ({ unfinishedThoughts: async () => ({ items: [] }) }));
+vi.mock("../../components/MicButton", () => ({ MicButton: () => null }));
+
+function emit(frame: { type: string; data: unknown }) {
+  for (const handler of bus.handlers.get(frame.type) ?? []) handler(frame);
+}
+
+const calls = (path: string) =>
+  vi.mocked(apiFetch).mock.calls.filter(([url]) => url === path).length;
+
+describe("arrival AGENTS follows the coder frame (Conductor K3)", () => {
+  beforeEach(() => {
+    bus.handlers.clear();
+    vi.mocked(apiFetch).mockReset();
+    vi.mocked(apiFetch).mockImplementation(async () => null);
+  });
+
+  it("re-reads the agents and Needs you on a coder frame", async () => {
+    render(<ChairHome />);
+    await waitFor(() => expect(calls("/api/coders/status")).toBe(1));
+    const freshBefore = calls("/api/desk/needs-you?fresh=1");
+
+    act(() => emit({ type: "intel_status", data: { scope: "belt" } }));
+    expect(calls("/api/coders/status")).toBe(1);
+
+    act(() => emit({ type: "intel_status", data: { state: "ready", scope: "coder" } }));
+    await waitFor(() => expect(calls("/api/coders/status")).toBe(2));
+    await waitFor(() => expect(calls("/api/desk/needs-you?fresh=1")).toBeGreaterThan(freshBefore));
+  });
+});

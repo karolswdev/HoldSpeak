@@ -135,6 +135,9 @@ export function attentionClass(item: RankableItem, now: Date = new Date()): Rank
     if (dueDay === today) return "due_today";
     return "waiting";
   }
+  // R5: a coding agent that waits for the owner's answer ranks with the rows
+  // due today (a blocked agent costs time now), oldest wait first.
+  if (item.kind === "coder") return "due_today";
   const why = (item.why || "").trim().toUpperCase();
   if (why.startsWith("OVERDUE")) return "overdue";
   if (why.startsWith("DUE TODAY")) return "due_today";
@@ -155,7 +158,8 @@ function withinClassKey(cls: RankClass, item: RankableItem): number {
     case "overdue":
       return epoch(due || since);
     case "due_today":
-      return epoch(due);
+      // A coder row has no due time: it is ordered by when it began to wait.
+      return epoch(due || (item.kind === "coder" ? since : undefined));
     case "not_run":
       return epoch(since);
     case "no_due_date": {
