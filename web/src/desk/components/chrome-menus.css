@@ -488,10 +488,13 @@
   color: var(--text-muted);
   font: 600 var(--font-size-xs) var(--font-mono);
 }
+/* ⌘K canvas YDTpkaJqFs3hyrZ4g581Mx (2026-10-05), a species fix: the plate
+   under the selected row's text is --accent-ink (5.24:1 with
+   --text-on-accent). --accent read 3.79:1. */
 .desk-next .desk-deck-row.is-selected,
 .desk-next .desk-deck-row:hover:not(.is-ghost),
 .desk-next .desk-deck-row:focus-visible:not(.is-ghost) {
-  background: var(--accent);
+  background: var(--accent-ink);
   color: var(--text-on-accent);
   outline: 0;
 }
@@ -501,6 +504,46 @@
 .desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-glyph,
 .desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-kind,
 .desk-next .desk-deck-row:hover:not(.is-ghost) kbd {
+  color: var(--text-on-accent);
+}
+/* ⌘K memory results, option B "Two-line hit" (ratified 2026-10-05): under
+   the title, the snippet (sans, wraps), then FoundBy and the day. */
+.desk-next .desk-deck-title {
+  display: block;
+}
+.desk-next .desk-deck-hit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 4px;
+}
+.desk-next .desk-deck-snippet {
+  flex: 1 0 100%;
+  color: var(--text-muted);
+  font: 400 13px/1.4 var(--font-sans);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.desk-next .desk-deck-mark {
+  padding: 0 1px;
+  background: var(--mark-bg);
+  color: var(--mark-fg);
+}
+.desk-next .desk-deck-hit-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.desk-next .desk-deck-row.is-selected .desk-deck-snippet,
+.desk-next .desk-deck-row.is-selected .desk-deck-day,
+.desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-snippet,
+.desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-day {
+  color: var(--text-on-accent);
+}
+.desk-next .desk-deck-row.is-selected .surface-foundby,
+.desk-next .desk-deck-row:hover:not(.is-ghost) .surface-foundby {
+  border-color: currentColor;
   color: var(--text-on-accent);
 }
 .desk-next .desk-deck-row.is-ghost {

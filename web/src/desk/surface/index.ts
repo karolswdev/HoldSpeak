@@ -154,6 +154,10 @@ export {
   RESTORE_REFUSED,
   type ParkOutcome,
   type ParkedRow,
+  FoundBy,
+  foundByWord,
+  foundByDay,
+  FOUND_BY_WORD,
 } from "./patterns";
 
 export { MicButton, type MicState } from "./controls/MicButton";

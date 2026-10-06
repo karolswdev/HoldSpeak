@@ -39,6 +39,7 @@ import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
 import { useLaunchers } from "./DeskWindow";
 import type { CoverageRecord } from "../coverage";
 import { Button } from "../../components/signal/Signal";
+import { PaletteHitLine, snippetParts, snippetText, type PaletteHit } from "./paletteHit";
 
 // Re-exported so existing imports keep one source (the data moved to
 // desk/tools.ts so the registry never imports a component).
@@ -78,8 +79,9 @@ interface DeckRow {
   wrap?: boolean;
   /** HS-171-07: trailing badge chip (e.g. "2 NEED YOU"); absent when falsy. */
   badge?: string;
-  /** A MEMORY row: the words that matched, after the title. */
-  detail?: string;
+  /** A MEMORY row (⌘K option B, ratified 2026-10-05): the second line
+   * under the title — the snippet with the match marked, FoundBy, the day. */
+  hit?: PaletteHit;
   run(): void;
 }
 
@@ -258,18 +260,15 @@ interface MemoryHit {
   source_ref?: string;
   title?: string;
   snippet?: string;
+  /** The retriever that found it (lexical | vector | time | entity | relationship). */
+  retrieval_origin?: string;
+  occurred_at?: string;
 }
 
 /** The parent object of a hit: a transcript segment or a message part names
  * its meeting or thread before the `#`. */
 function memoryBaseRef(ref: string): string {
   return ref.split("#", 1)[0];
-}
-
-/** The search answer's snippet marks its match with `<mark>`; the row shows
- * plain words. */
-function plainSnippet(snippet: string | undefined): string {
-  return (snippet ?? "").replace(/<\/?mark>/g, "").replace(/\s+/g, " ").trim();
 }
 
 /** PHILO-13-14 (C4): the words inside an object the palette can match. */
@@ -759,8 +758,10 @@ export function DeskToolShelf() {
       if (!opener || shown.has(base) || shown.has(`memory:${base}`)) continue;
       shown.add(`memory:${base}`);
       const kind = String(hit.kind ?? base.split(":", 1)[0]);
-      const detail = plainSnippet(hit.snippet);
-      const title = String(hit.title ?? "").trim() || detail;
+      const named = String(hit.title ?? "").trim();
+      const parts = snippetParts(hit.snippet, normalized, named);
+      const detail = snippetText(parts);
+      const title = named || detail;
       if (!title) continue;
       out.push({
         id: `memory:${base}`,
@@ -768,7 +769,12 @@ export function DeskToolShelf() {
         glyph: KIND_GLYPH[kind] ?? (kind === "meeting" ? "▣" : "○"),
         label: title,
         kind: (KIND_LABEL[kind] ?? kind.replace(/_/g, " ")).toUpperCase(),
-        detail: detail && detail !== title ? detail : undefined,
+        wrap: true,
+        hit: {
+          parts: detail && detail !== title ? parts : [],
+          origin: hit.retrieval_origin,
+          at: hit.occurred_at,
+        },
         // The hit can be older than its desk list (24 meetings, 24
         // artifacts, ...): hold its object so the next load reads it by id,
         // load, then open. A window whose object is not in the store is
@@ -931,12 +937,11 @@ export function DeskToolShelf() {
                             {row.glyph}
                           </span>
                           <span className="desk-deck-label">
-                            {row.label}
+                            {row.hit ? <span className="desk-deck-title">{row.label}</span> : row.label}
                             {row.ghost ? (
                               <small className="quiet"> · {row.ghost}</small>
-                            ) : row.detail ? (
-                              <small className="quiet"> · {row.detail}</small>
                             ) : null}
+                            {row.hit ? <PaletteHitLine hit={row.hit} /> : null}
                           </span>
                           {row.badge ? (
                             <span className="desk-deck-badge">{row.badge}</span>

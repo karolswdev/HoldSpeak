@@ -100,6 +100,8 @@
   --accent-ink-press: #834f32; /* HS-202-05: the settle, darker than --accent-ink; 6.04:1 with --text-on-accent */
   --accent-text: #bc8058; /* PHILO-13-11 (C1, R5): ember TEXT on the dark well (5.43:1 on --surface-1); --accent text reads 4.26:1. Filled verbs stay on --accent-ink. */
   --accent-tint: rgba(168, 110, 74, 0.12);
+  --mark-bg: #ffe14d; /* ⌘K two-line hit (2026-10-05): the matched words in a memory snippet; 14.7:1 with --mark-fg, on the plain row and on the selected plate */
+  --mark-fg: #0e0f13; /* ⌘K two-line hit (2026-10-05): the ink of the matched words */
   --accent-glow: rgba(168, 110, 74, 0.28);
   --accent-gradient: linear-gradient( 135deg, #da9868 0%, #a86e4a 50%, #834f32 100% );
   --bg-gradient: linear-gradient( 180deg, #191b23 0%, #0e0f13 100% );
