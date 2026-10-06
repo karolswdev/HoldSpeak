@@ -52,6 +52,24 @@ _WORKING_EVENTS = {
 _WAITING_EVENTS = {"Notification", "Stop"}
 _ENDED_EVENTS = {"SessionEnd"}
 
+#: Conductor K2: a Hand-to-agent launch carries the rider hooks in its
+#: ``--settings`` file, and the owner may also have them in
+#: ``~/.claude/settings.json`` (K1's one-press install). Claude Code then runs
+#: both for one event, with the same payload. The second, within this window
+#: and identical to the session's last event, is the same event: it is not
+#: recorded again.
+DUPLICATE_EVENT_WINDOW_SECONDS = 5.0
+
+
+def _event_fingerprint(agent: str, payload: Mapping[str, Any], *context: Any) -> str:
+    """The event's identity: its payload plus what the hook read from its
+    environment (the Story claim, the tmux pane), so a session moving to a
+    new Story is a new event even when the payload is the same."""
+    import hashlib
+
+    canonical = json.dumps([dict(payload), *context], sort_keys=True, default=str, separators=(",", ":"))
+    return hashlib.sha256(f"{agent}\n{canonical}".encode("utf-8")).hexdigest()
+
 
 def _lifecycle_for_event(hook_event_name: str, previous_lifecycle: str) -> str:
     if hook_event_name in _ENDED_EVENTS:
@@ -166,12 +184,23 @@ def ingest_agent_hook_event(
         )
     tmux_context = detect_tmux_context(payload, env=env)
     detected_claim = detect_story_claim(payload, env=env)
+    fingerprint = _event_fingerprint(normalized_agent, payload, detected_claim, tmux_context)
 
     with _state_lock(state_file):
         state = _read_state(state_file)
         sessions = state.setdefault("sessions", {})
         previous_raw = sessions.get(key) if isinstance(sessions, dict) else None
         previous = previous_raw if isinstance(previous_raw, dict) else {}
+        if previous.get("last_event_fp") == fingerprint:
+            seen = _parse_timestamp(_optional_str(previous.get("last_event_at")) or "")
+            current = _parse_timestamp(timestamp)
+            if (
+                seen is not None
+                and current is not None
+                and abs((current - seen).total_seconds()) <= DUPLICATE_EVENT_WINDOW_SECONDS
+            ):
+                # The same event from a second hook source: nothing changes.
+                return AgentSession.from_mapping(previous)
         event_count = int(previous.get("event_count") or 0) + 1
         previous_capture = bool(previous.get("capture_messages"))
         effective_capture_messages = capture_messages or previous_capture
@@ -293,6 +322,8 @@ def ingest_agent_hook_event(
         )
         if story_claim:
             record["story_claim"] = story_claim
+        record["last_event_fp"] = fingerprint
+        record["last_event_at"] = timestamp
         sessions[key] = record
         state["version"] = STATE_VERSION
         _prune_sessions(state, max_sessions=MAX_SESSIONS)
