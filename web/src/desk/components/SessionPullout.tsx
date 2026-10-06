@@ -431,7 +431,7 @@ function FactoryControls() {
 }
 
 /** The voice-first composer (HS-87-03), available under resolved authority. */
-function SteerComposer({ listen = false }: { listen?: boolean } = {}) {
+function SteerComposer({ listenSignal = 0 }: { listenSignal?: number } = {}) {
   const steerState = useSteering((s) => s.steerState);
   const steerDetail = useSteering((s) => s.steerDetail);
   const openKey = useSteering((s) => s.openKey);
@@ -464,7 +464,7 @@ function SteerComposer({ listen = false }: { listen?: boolean } = {}) {
       <div className="desk-steer-row">
         <MicButton
           label="Speak"
-          autoStart={listen}
+          startSignal={listenSignal}
           draftScope={`steer:${openKey || "unattached"}`}
           onText={(t) => setText((prev) => (prev ? `${prev} ${t}` : t))}
         />
@@ -669,6 +669,7 @@ export function SessionPullout() {
   const armed = useSteering((s) => s.armed);
   const postureAuthorized = useSteering((s) => s.postureAuthorized);
   const answerOpen = useSteering((s) => s.answerOpen);
+  const answerSeq = useSteering((s) => s.answerSeq);
   const paneId = useSteering((s) => s.paneId);
   const targetNode = useSteering((s) => s.targetNode);
   const { closeSession } = useSteering.getState();
@@ -755,7 +756,9 @@ export function SessionPullout() {
             already recording. The footer does not draw it twice. */}
         {answerOpen ? (
           <div className="desk-session-answer" data-testid="session-answer-well">
-            <SteerComposer listen />
+            {/* Keyed by the session: a switch unmounts the old composer and
+                its mic cancels any capture it holds. */}
+            <SteerComposer key={openKey} listenSignal={answerSeq} />
           </div>
         ) : null}
         {/* HS-111-06/11 — the shared PaneWell seam: the raw stream

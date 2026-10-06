@@ -76,7 +76,7 @@ export function MicButton({
   onProposalConfirm,
   pipeline,
   onCommand,
-  autoStart = false,
+  startSignal = 0,
 }: {
   /* HS-176 C1 — the second argument carries the SPOKEN run's own facts
      (`raw_text`, `corrections_applied`, `journal_id`) when the server sent
@@ -103,10 +103,10 @@ export function MicButton({
      server (it fired, once). Nothing is dictated as prose; a surface that
      shows receipts can name the command that ran. */
   onCommand?: (fired: VoiceCommandFired) => void;
-  /* Conductor F2 (K5b): start listening once, when the button mounts (the
-     Speak answer well opens with its mic already recording). A second
-     click stops it, as always (click-to-toggle). */
-  autoStart?: boolean;
+  /* Conductor F2 (K5b): each new non-zero value is ONE request to start
+     listening (a Speak answer press). It is consumed once; a capture that
+     runs is left alone; a click stops it, as always (click-to-toggle). */
+  startSignal?: number;
 }) {
   const pipelined = pipeline ?? variant === "transport";
   const [state, setState] = useState<MicState>("idle");
@@ -174,21 +174,25 @@ export function MicButton({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const mountedRef = useRef(true);
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
       sessionRef.current?.cancel();
       sessionRef.current = null;
     };
   }, []);
 
-  const autoStartedRef = useRef(false);
+  const handledSignalRef = useRef(0);
   useEffect(() => {
-    if (!autoStart || autoStartedRef.current) return;
-    autoStartedRef.current = true;
+    if (!startSignal || startSignal === handledSignalRef.current) return;
+    handledSignalRef.current = startSignal;
     if (!(speakToFillSupported() || micStreamSupported())) return;
+    if (sessionRef.current || startingRef.current) return;   // already capturing
     void startSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoStart]);
+  }, [startSignal]);
 
   const transport = variant === "transport";
 
@@ -347,6 +351,12 @@ export function MicButton({
         pipeline: pipelined,
         retainScope: draftScope,
       });
+      if (!mountedRef.current) {
+        // The button left while the capture was opening (the owner switched
+        // sessions): the capture never outlives its field.
+        session.cancel();
+        return;
+      }
       sessionRef.current = session;
       go("listening");
     } catch (error) {

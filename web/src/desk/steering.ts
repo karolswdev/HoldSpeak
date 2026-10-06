@@ -175,6 +175,9 @@ interface SteeringState {
   classifyState: "idle" | "kept" | "failed";
   /** Conductor F2 (K5b): the answer well is open in the body (Speak answer). */
   answerOpen: boolean;
+  /** Conductor F2: each Speak answer press is one request to record, bound to
+   * the session it opened (`openKey`); the well's mic consumes it once. */
+  answerSeq: number;
   openSession(key: string, opts?: { answer?: boolean }): void;
   closeSession(): void;
   poll(): Promise<void>;
@@ -220,6 +223,7 @@ interface SteeringState {
 }
 
 let timer: ReturnType<typeof setInterval> | null = null;
+let answerRequests = 0;
 
 const PIN_KEY = "hs.steering.pins";
 
@@ -312,12 +316,14 @@ export const useSteering = create<SteeringState>((set, get) => ({
   factoryDetail: "",
 
   answerOpen: false,
+  answerSeq: 0,
 
   openSession(key, opts) {
     if (timer !== null) clearInterval(timer);
     set({
       openKey: key,
       answerOpen: Boolean(opts?.answer),
+      answerSeq: opts?.answer ? ++answerRequests : 0,
       session: null,
       paneStatus: "idle",
       paneDetail: "",
@@ -350,6 +356,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
     set({
       openKey: null,
       answerOpen: false,
+      answerSeq: 0,
       session: null,
       paneStatus: "idle",
       paneDetail: "",

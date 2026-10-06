@@ -111,7 +111,7 @@ describe("MicButton click-to-toggle (HS-119-01)", () => {
   });
 });
 
-describe("MicButton autoStart (Conductor F2, K5b)", () => {
+describe("MicButton startSignal (Conductor F2, K5b)", () => {
   beforeEach(() => {
     support.supported = true;
     support.reason = null;
@@ -119,20 +119,42 @@ describe("MicButton autoStart (Conductor F2, K5b)", () => {
     mocks.startStreamSession.mockReset();
   });
 
-  it("starts listening once on mount; a click stops it (click-to-toggle)", async () => {
+  it("each new signal is one start; a re-render does not start again; a click stops it", async () => {
     const stopFn = vi.fn().mockResolvedValue("Jordan owns it");
     mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
     const onText = vi.fn();
-    const { rerender } = render(<MicButton onText={onText} autoStart />);
+    const { rerender } = render(<MicButton onText={onText} startSignal={1} />);
     const mic = await screen.findByRole("button", { name: "Stop listening" });
-    await waitFor(() => expect(mic.className).toContain("is-listening"));
-    rerender(<MicButton onText={onText} autoStart />);
+    rerender(<MicButton onText={onText} startSignal={1} />);
     expect(mocks.startStreamSession).toHaveBeenCalledTimes(1);
     fireEvent.click(mic);
     await waitFor(() => expect(onText).toHaveBeenCalledWith("Jordan owns it"));
+    // A second press (a new signal) on the same field starts again.
+    rerender(<MicButton onText={onText} startSignal={2} />);
+    await screen.findByRole("button", { name: "Stop listening" });
+    expect(mocks.startStreamSession).toHaveBeenCalledTimes(2);
   });
 
-  it("without autoStart nothing listens until a click", () => {
+  it("a new signal while a capture runs leaves it running (no second capture)", async () => {
+    mocks.startStreamSession.mockResolvedValue({ stop: vi.fn().mockResolvedValue(""), cancel: vi.fn() });
+    const { rerender } = render(<MicButton onText={vi.fn()} startSignal={1} />);
+    await screen.findByRole("button", { name: "Stop listening" });
+    rerender(<MicButton onText={vi.fn()} startSignal={2} />);
+    expect(mocks.startStreamSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("unmounted while the capture opens: the capture is cancelled, never left recording", async () => {
+    const cancel = vi.fn();
+    let resolve!: (s: unknown) => void;
+    mocks.startStreamSession.mockReturnValue(new Promise((r) => { resolve = r; }));
+    const { unmount } = render(<MicButton onText={vi.fn()} startSignal={1} />);
+    await waitFor(() => expect(mocks.startStreamSession).toHaveBeenCalledTimes(1));
+    unmount();
+    resolve({ stop: vi.fn(), cancel });
+    await waitFor(() => expect(cancel).toHaveBeenCalledTimes(1));
+  });
+
+  it("without a signal nothing listens until a click", () => {
     render(<MicButton onText={vi.fn()} />);
     expect(mocks.startStreamSession).not.toHaveBeenCalled();
   });

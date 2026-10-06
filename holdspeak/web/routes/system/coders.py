@@ -323,7 +323,9 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
             from ....db import get_database
             from ....services.agent_flights import agent_flights, annotate_sessions
 
-            flights = agent_flights(get_database(), items)
+            # The whole registry: lifecycle and freshness resolve before the
+            # presentation filter above (include_ended, the dead window).
+            flights = agent_flights(get_database())
             annotate_sessions(items, flights)
         except Exception as e:
             log.warning(f"agent flights unread: {e}")

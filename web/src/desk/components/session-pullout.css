@@ -1,6 +1,11 @@
 /* ── HS-87-01: the session pull-out (attach — the live pane view) ── */
 .desk-next .desk-pullout.is-session {
   width: min(620px, 92vw);
+  /* Conductor F2: the session window is its own `surface` container, so
+     its footer answers to the WINDOW's width (UX-CANON D), never the
+     viewport's. */
+  container-type: inline-size;
+  container-name: surface;
 }
 .desk-next .desk-session-glyph {
   font-size: 16px;
@@ -372,9 +377,10 @@
 .desk-next .desk-session-policy > .surface-token {
   white-space: nowrap;
 }
-@media (max-width: 720px) {
-  /* The phone sheet: the controls cap and scroll (the ScrollHint names
-     it) so the question and the answer well keep the body. */
+@container surface (max-width: 520px) {
+  /* A narrow session WINDOW (the phone sheet, or a window narrowed on a
+     wide desk): the controls cap and scroll (the ScrollHint names it) so
+     the question and the answer well keep the body. */
   .desk-next .desk-session-controls {
     max-height: 30vh;
     overflow-y: auto;

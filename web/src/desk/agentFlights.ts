@@ -14,7 +14,7 @@ import { apiFetch } from "../lib/api";
 import { useOnCoderFrame, useOnDeskChanged } from "./useDeskChangedRefresh";
 import { isBlockedCoder, type NeedsYouCoder } from "./needsYou";
 
-export type FlightState = "working" | "waiting" | "pr_open" | "merged" | "ended";
+export type FlightState = "starting" | "working" | "waiting" | "pr_open" | "merged" | "ended" | "expired";
 export type AgentName = "claude" | "codex";
 
 export interface AgentFlight {
@@ -29,6 +29,10 @@ export interface AgentFlight {
   sessionKey: string | null;
   pr: { number: number | null; url: string; state: string } | null;
   close: string | null;
+  /** K4's cleanup of the agent's session (`killed`, `session_gone`,
+   * `no_session`): the evidence that it left. Null while the close waits
+   * for the owner (Secure) or cleanup is outstanding. */
+  sessionCleanup: string | null;
   mergedAt: string | null;
 }
 
@@ -52,6 +56,8 @@ export function agentWord(agent: string): string {
   return AGENT_WORD[agent as AgentName] ?? agent.toUpperCase();
 }
 
+const FLIGHT_STATES: readonly string[] = ["starting", "working", "waiting", "pr_open", "merged", "ended", "expired"];
+
 export function fromWireFlight(body: any): AgentFlight {
   const pr = body?.pr;
   return {
@@ -62,10 +68,11 @@ export function fromWireFlight(body: any): AgentFlight {
     projectId: String(body?.project_id ?? ""),
     projectName: String(body?.project_name ?? ""),
     agent: body?.agent === "codex" ? "codex" : "claude",
-    state: (["working", "waiting", "pr_open", "merged", "ended"].includes(body?.state) ? body.state : "working") as FlightState,
+    state: (FLIGHT_STATES.includes(body?.state) ? body.state : "starting") as FlightState,
     sessionKey: body?.session_key ? String(body.session_key) : null,
     pr: pr ? { number: pr.number == null ? null : Number(pr.number), url: String(pr.url ?? ""), state: String(pr.state ?? "") } : null,
     close: body?.close ? String(body.close) : null,
+    sessionCleanup: body?.session_cleanup ? String(body.session_cleanup) : null,
     mergedAt: body?.merged_at ? String(body.merged_at) : null,
   };
 }
@@ -94,12 +101,14 @@ export function flightLabel(flight: AgentFlight): string | null {
   if ((flight.state === "pr_open" || flight.state === "merged") && flight.pr?.number) {
     return `PR #${flight.pr.number} · ${flight.state === "pr_open" ? "OPEN" : "MERGED"}`;
   }
+  if (flight.state === "starting") return `${agentWord(flight.agent)} · STARTING`;
   if (flight.state === "working") return `${agentWord(flight.agent)} · WORKING`;
   if (flight.state === "waiting") return `${agentWord(flight.agent)} · WAITING`;
   return null;
 }
 
-export function flightTone(state: FlightState): "working" | "warning" | "active" | "success" {
+export function flightTone(state: FlightState): "working" | "warning" | "active" | "success" | "idle" {
+  if (state === "starting") return "idle";
   return state === "waiting" ? "warning" : state === "pr_open" ? "active" : state === "merged" ? "success" : "working";
 }
 
@@ -131,13 +140,18 @@ export function itemOriginRefs(item: {
 export function flightForItem(flights: readonly AgentFlight[], item: Parameters<typeof itemOriginRefs>[0]): AgentFlight | null {
   const refs = itemOriginRefs(item);
   if (!refs.length) return null;
-  return flights.find((f) => refs.includes(f.originRef) && f.state !== "ended") ?? null;
+  return flights.find((f) => refs.includes(f.originRef) && f.state !== "ended" && f.state !== "expired") ?? null;
 }
 
-/** The live sessions the AGENTS section lists: a merged launch's session has
- * left (K4's follow-through ends it), ended sessions are gone. */
+/** K4's cleanup outcomes that end the agent's session. */
+const SESSION_LEFT = new Set(["killed", "session_gone", "no_session"]);
+
+/** The live sessions the AGENTS section lists. A session leaves only on
+ * terminal evidence: its own SessionEnd, or K4's cleanup of it. A merged
+ * launch whose close waits for the owner (Secure) or whose cleanup is still
+ * outstanding keeps its session listed. */
 export function liveAgentSessions(rows: readonly CoderSessionRow[]): CoderSessionRow[] {
-  return rows.filter((row) => row.state !== "ended" && row.flight?.state !== "merged");
+  return rows.filter((row) => row.state !== "ended" && !SESSION_LEFT.has(String(row.flight?.sessionCleanup ?? "")));
 }
 
 interface AgentFlightsState {
@@ -148,24 +162,36 @@ interface AgentFlightsState {
 }
 
 let inflight: Promise<void> | null = null;
+let again = false;
 
-export const useAgentFlights = create<AgentFlightsState>((set) => ({
+export const useAgentFlights = create<AgentFlightsState>((set, get) => ({
   sessions: [],
   flights: [],
   loaded: false,
   load() {
-    if (inflight) return inflight;
+    // A refresh that arrives while a read is out is kept: one trailing read
+    // follows it, so a transition that happened mid-read is never lost.
+    if (inflight) {
+      again = true;
+      return inflight;
+    }
     inflight = apiFetch<{ sessions?: unknown[]; flights?: unknown[] }>("/api/coders/sessions?include_ended=false")
       .then((body) => {
         if (!body || typeof body !== "object") return;
         set({
-          sessions: (Array.isArray(body?.sessions) ? body.sessions : []).map(fromWireSessionRow),
-          flights: (Array.isArray(body?.flights) ? body.flights : []).map(fromWireFlight),
+          sessions: (Array.isArray(body.sessions) ? body.sessions : []).map(fromWireSessionRow),
+          flights: (Array.isArray(body.flights) ? body.flights : []).map(fromWireFlight),
           loaded: true,
         });
       })
       .catch(() => undefined)   // the last read stays; the next frame reads again
-      .finally(() => { inflight = null; });
+      .finally(() => {
+        inflight = null;
+        if (again) {
+          again = false;
+          void get().load();
+        }
+      });
     return inflight;
   },
 }));

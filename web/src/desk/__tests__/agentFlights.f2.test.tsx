@@ -11,6 +11,7 @@ import {
   itemOriginRefs,
   liveAgentSessions,
   mergeReceipt,
+  useAgentFlights,
 } from "../agentFlights";
 import { FlightChip, FlightVerbs } from "../components/AgentFlight";
 import { refOpener } from "../openObject";
@@ -33,8 +34,10 @@ describe("the flight's words", () => {
     expect(flightLabel(fromWireFlight(wire({ agent: "codex", state: "working" })))).toBe("CODEX · WORKING");
     expect(flightLabel(fromWireFlight(wire({ state: "pr_open", pr: { number: 412, url: "u", state: "open" } })))).toBe("PR #412 · OPEN");
     expect(flightLabel(fromWireFlight(wire({ state: "merged", pr: { number: 413, url: "u", state: "merged" } })))).toBe("PR #413 · MERGED");
-    // An ended agent with no PR draws nothing.
+    // No session bound yet: STARTING. Ended or expired draws nothing.
+    expect(flightLabel(fromWireFlight(wire({ state: "starting", session_key: null })))).toBe("CLAUDE CODE · STARTING");
     expect(flightLabel(fromWireFlight(wire({ state: "ended" })))).toBeNull();
+    expect(flightLabel(fromWireFlight(wire({ state: "expired" })))).toBeNull();
   });
 });
 
@@ -54,16 +57,20 @@ describe("the item join", () => {
 });
 
 describe("the live set (K4c, K6)", () => {
-  it("drops ended sessions and the session of a merged launch; reads the blocked predicate", () => {
+  it("drops ended sessions and sessions K4 cleaned up; keeps a merged one still awaiting confirm or cleanup", () => {
     const rows = [
       fromWireSessionRow({ session: { agent: "claude", session_id: "s1", state: "waiting", question: "Jordan or Avery?", hook_event_name: "Notification", repo_root: "/x/payments-ledger-runbook" }, flight: wire() }),
       fromWireSessionRow({ session: { agent: "codex", session_id: "x1", state: "working" } }),
       fromWireSessionRow({ session: { agent: "claude", session_id: "s2", state: "ended" } }),
-      fromWireSessionRow({ session: { agent: "claude", session_id: "s3", state: "working" }, flight: wire({ state: "merged" }) }),
+      fromWireSessionRow({ session: { agent: "claude", session_id: "s3", state: "working" }, flight: wire({ state: "merged", close: "closed", session_cleanup: "killed" }) }),
+      // Secure: merged, the close waits for the owner, the session is alive.
+      fromWireSessionRow({ session: { agent: "claude", session_id: "s4", state: "working" }, flight: wire({ state: "merged", close: "awaiting_confirm" }) }),
+      // Closed, cleanup still outstanding.
+      fromWireSessionRow({ session: { agent: "claude", session_id: "s5", state: "working" }, flight: wire({ state: "merged", close: "closed" }) }),
     ];
     expect(rows[0]).toMatchObject({ key: "claude:s1", name: "payments-ledger-runbook", blocked: true });
     expect(rows[0].flight?.title).toBe("Write the rollback runbook");
-    expect(liveAgentSessions(rows).map((r) => r.key)).toEqual(["claude:s1", "codex:x1"]);
+    expect(liveAgentSessions(rows).map((r) => r.key)).toEqual(["claude:s1", "codex:x1", "claude:s4", "claude:s5"]);
   });
 
   it("the merge receipt: this Project's newest closed merge within a day", () => {
@@ -73,6 +80,24 @@ describe("the live set (K4c, K6)", () => {
     expect(mergeReceipt([merged({ merged_at: "2026-10-04T15:29:00Z" })], "p1", now)).toBeNull();
     expect(mergeReceipt([merged({ merged_at: "2026-10-06T15:29:00Z", close: "awaiting_confirm" })], "p1", now)).toBeNull();
     expect(mergeReceipt([merged({ merged_at: "2026-10-06T15:29:00Z" })], "p2", now)).toBeNull();
+  });
+});
+
+describe("the store keeps a refresh that arrives mid-read (finding 5)", () => {
+  it("one trailing read follows the outstanding GET, and its answer lands", async () => {
+    const api = await import("../../lib/api");
+    const spy = vi.spyOn(api, "apiFetch");
+    let first!: (v: unknown) => void;
+    spy.mockImplementationOnce(() => new Promise((r) => { first = r; }) as never);
+    spy.mockImplementationOnce(async () => ({ sessions: [], flights: [wire({ state: "merged", close: "closed", session_cleanup: "killed", pr: { number: 413, url: "u", state: "merged" } })] }) as never);
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    const a = useAgentFlights.getState().load();
+    void useAgentFlights.getState().load();       // the frame that arrives mid-read
+    first({ sessions: [], flights: [wire()] });
+    await a;
+    await vi.waitFor(() => expect(useAgentFlights.getState().flights[0]?.state).toBe("merged"));
+    expect(spy).toHaveBeenCalledTimes(2);
+    spy.mockRestore();
   });
 });
 

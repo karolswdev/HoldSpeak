@@ -43,13 +43,18 @@ describe("the session footer never squeezes the policy facts (Conductor F2)", ()
     expect(document.body.textContent!.match(/%0/g)?.length).toBe(2); // the body fact and the Arm pane verb
   });
 
-  it("the CSS: a token never wraps inside; the footer row flows and wraps; the controls scroll on a phone", () => {
+  it("the CSS: a token never wraps inside; the footer row flows and wraps; the controls scroll in a narrow window", () => {
     expect(rule(".desk-next .desk-session-policy > .surface-token")).toContain("white-space: nowrap");
     const footer = rule(".desk-next .surface-footer-layout.desk-session-footer");
     expect(footer).toContain("display: flex");
     expect(footer).toContain("flex-wrap: wrap");
     expect(rule(".desk-next .desk-session-controls")).toContain("flex-wrap: wrap");
-    expect(css).toMatch(/@media \(max-width: 720px\) \{\s*\/\*[^]*?\*\/\s*\.desk-next \.desk-session-controls \{\s*max-height: 30vh;\s*overflow-y: auto;/);
+    // The cap answers to the session WINDOW (its own `surface` container),
+    // never the viewport (UX-CANON D).
+    expect(rule(".desk-next .desk-pullout.is-session")).toMatch(/container-type: inline-size;[^]*container-name: surface;/);
+    expect(css).toMatch(/@container surface \(max-width: 520px\) \{\s*\/\*[^]*?\*\/\s*\.desk-next \.desk-session-controls \{\s*max-height: 30vh;\s*overflow-y: auto;/);
+    const media = [...css.matchAll(/@media[^{]*\{([^]*?)\n\}/g)].map((m) => m[1]).join("\n");
+    expect(media).not.toContain("desk-session");
     // The steer field keeps a readable width in the answer well.
     expect(rule(".desk-next .desk-session-answer .desk-steer-input")).toContain("min-width: 160px");
   });

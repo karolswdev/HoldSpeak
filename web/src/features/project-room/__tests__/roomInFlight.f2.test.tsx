@@ -1,7 +1,7 @@
 // Conductor F2 (ratified boards K4b, K6): the Room's OPEN HERE rows wear the
 // agent working on them, and a merged PR that closed a commitment names it on
 // the Room receipt line. Harness copied from roomOpen.philo1306.test.tsx.
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useAgentFlights } from "../../../desk/agentFlights";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -27,6 +27,21 @@ vi.mock("../../../lib/api", async () => {
       "../../../lib/api",
     );
   return { ...actual, apiFetch: (...args: unknown[]) => apiFetch(...args) };
+});
+
+const bus = vi.hoisted(() => ({ handlers: new Map<string, Set<(frame: unknown) => void>>() }));
+vi.mock("../../../runtime/RuntimeBus", () => {
+  const value = {
+    state: "connected",
+    lastFrame: null,
+    subscribe: (type: string, handler: (frame: unknown) => void) => {
+      const set = bus.handlers.get(type) ?? new Set();
+      set.add(handler);
+      bus.handlers.set(type, set);
+      return () => set.delete(handler);
+    },
+  };
+  return { useRuntimeBus: () => value, useOptionalRuntimeBus: () => value, useRuntimeFrame: () => null };
 });
 
 vi.mock("../../../desk/shell", async () => {
@@ -293,5 +308,31 @@ describe("Conductor F2 K6: the merge receipt", () => {
     await screen.findAllByTestId("needs-you-row");
     expect(screen.queryByTestId("room-merge-receipt")).toBeNull();
     expect(screen.getByTestId("room-footer-receipt")).toBeTruthy();
+  });
+});
+
+describe("Conductor F2 K6 on a mounted Room (Astra finding 5)", () => {
+  beforeEach(() => useAgentFlights.setState({ sessions: [], flights: [], loaded: false }));
+
+  it("the merge lands while the Room stays open: the row leaves, the receipt appears", async () => {
+    let flights: unknown[] = [flight({})];
+    let needsYou: unknown = OPEN_HERE;
+    apiFetch.mockImplementation((url: string) => {
+      if (url.startsWith("/api/coders/sessions")) return Promise.resolve({ sessions: [], flights });
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
+      if (url.includes("/room")) return Promise.resolve(roomResponse({ needsYou }));
+      return Promise.resolve(detailResponse(url));
+    });
+    render(<WindowHarness scope="project:p1" />);
+    await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(1));
+    expect(screen.queryByTestId("room-merge-receipt")).toBeNull();
+
+    flights = [flight({ state: "merged", close: "closed", session_cleanup: "killed", merged_at: MERGED_AT,
+      pr: { number: 413, url: "https://github.com/acme/ledger/pull/413", state: "merged" } })];
+    needsYou = { state: "ok", count: 2, items: OPEN_HERE.items.slice(1) };
+    act(() => { for (const h of bus.handlers.get("desk_changed") ?? []) h({ type: "desk_changed", data: {} }); });
+    const receipt = await screen.findByTestId("room-merge-receipt");
+    expect(receipt.textContent).toContain("DONE · Write the rollback runbook · PR #413 MERGED");
+    await waitFor(() => expect(screen.queryByText("Write the rollback runbook", { selector: ".surface-primary" })).toBeNull());
   });
 });

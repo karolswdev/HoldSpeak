@@ -12,13 +12,26 @@ K4c, K5a and K6). One read join over three records that exist:
 - the live agent sessions (``CoderService.list_sessions``): the session's
   state and its question.
 
-A flight is one launch, newest per item. Its ``state`` is one of
-``working``, ``waiting``, ``pr_open``, ``merged`` or ``ended``: once a PR
-exists the PR is the fact, else the session is. The faces draw the first
-four (``ended`` draws nothing). Nothing here writes.
+A flight is one launch, newest per item. Its ``state``:
+
+- ``merged`` / ``pr_open``: once a PR exists the PR is the fact (K4's
+  selected PR), whatever the session does;
+- ``waiting`` / ``working``: the session the Work attempt is BOUND to (the
+  rider's report, the authoritative binding) is live, blocked or not;
+- ``starting``: no session is bound yet (the agent has not registered);
+- ``ended``: the bound session ended (SessionEnd, sticky);
+- ``expired``: the bound session is past the dead window or gone from the
+  registry.
+
+Lifecycle and freshness are resolved against the WHOLE registry, before
+any presentation filter (``include_ended``). A session is never matched by
+name: only the attempt's binding names it. The faces draw ``working``,
+``waiting``, ``pr_open`` and ``merged`` (``starting`` as STARTING) and
+nothing for ``ended`` / ``expired``. Nothing here writes.
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Iterable, Mapping, Optional
 
 from ..logging_config import get_logger
@@ -34,30 +47,44 @@ def _agent_of(record: Mapping[str, Any]) -> str:
     return "codex" if profile.startswith("codex") else "claude"
 
 
-def _session_index(sessions: Iterable[Mapping[str, Any]]) -> tuple[dict[str, dict], dict[str, str]]:
-    """``key -> session payload`` and ``tmux session name -> key``."""
-    by_key: dict[str, dict] = {}
-    by_tmux: dict[str, str] = {}
-    for row in sessions:
-        session = dict((row or {}).get("session") or row or {})
-        agent, sid = str(session.get("agent") or ""), str(session.get("session_id") or "")
-        if not agent or not sid:
-            continue
-        key = f"{agent}:{sid}"
-        by_key[key] = session
-        tmux = str(session.get("tmux_session") or "")
-        if tmux:
-            by_tmux.setdefault(tmux, key)
-    return by_key, by_tmux
+def _session_index(sessions: Iterable[Any]) -> dict[str, Any]:
+    """``<agent>:<session_id> -> session`` over the whole registry."""
+    by_key: dict[str, Any] = {}
+    for raw in sessions:
+        session = raw.get("session", raw) if isinstance(raw, Mapping) else raw
+        agent = str(_field(session, "agent") or "")
+        sid = str(_field(session, "session_id") or "")
+        if agent and sid:
+            by_key[f"{agent}:{sid}"] = session
+    return by_key
 
 
-def _session_state(session: Optional[Mapping[str, Any]]) -> str:
-    from ..agent_context.models import is_blocked
+def _field(session: Any, name: str) -> Any:
+    if isinstance(session, Mapping):
+        return session.get(name)
+    return getattr(session, name, None)
+
+
+def _session_state(session: Any, now: datetime) -> str:
+    """The bound session's state, from its raw lifecycle and its age."""
+    from ..agent_context.models import (
+        DEFAULT_LIFECYCLE_DEAD_SECONDS,
+        LIFECYCLE_ENDED,
+        is_blocked,
+    )
 
     if session is None:
-        return "working"
-    if str(session.get("state") or session.get("lifecycle") or "") == "ended":
+        return "expired"   # bound, but gone from the registry
+    if str(_field(session, "lifecycle") or "") == LIFECYCLE_ENDED:
         return "ended"
+    try:
+        updated = datetime.fromisoformat(str(_field(session, "updated_at") or "").replace("Z", "+00:00"))
+        if updated.tzinfo is None:
+            updated = updated.replace(tzinfo=timezone.utc)
+    except ValueError:
+        updated = None
+    if updated is not None and (now - updated).total_seconds() > DEFAULT_LIFECYCLE_DEAD_SECONDS:
+        return "expired"
     return "waiting" if is_blocked(session) else "working"
 
 
@@ -84,16 +111,25 @@ def _project_of(db: Any, kind: str, item_id: str) -> tuple[str, str]:
 
 def agent_flights(
     db: Any,
-    sessions: Iterable[Mapping[str, Any]],
+    sessions: Optional[Iterable[Any]] = None,
     *,
     ledger: Any = None,
+    now: Optional[datetime] = None,
 ) -> list[dict[str, Any]]:
-    """One flight per item an agent was handed, newest launch per item."""
+    """One flight per item an agent was handed, newest launch per item.
+
+    ``sessions`` is the WHOLE agent registry (``AgentSession`` objects or
+    their mappings); ``None`` reads it (``agent_context.list_agent_sessions``)."""
     if ledger is None:
         from ..delivery.factory_launch import LaunchLedger
 
         ledger = LaunchLedger()
-    by_key, by_tmux = _session_index(sessions)
+    if sessions is None:
+        from ..agent_context import list_agent_sessions
+
+        sessions = list_agent_sessions()
+    clock = now or datetime.now(timezone.utc)
+    by_key = _session_index(sessions)
     newest: dict[str, Mapping[str, Any]] = {}
     for record in ledger.list():
         origin = record.get("origin_ref") or {}
@@ -112,8 +148,6 @@ def agent_flights(
             except Exception:
                 attempt = None
             session_key = str(getattr(attempt, "session_id", "") or "")
-        if not session_key:
-            session_key = by_tmux.get(str(record.get("session") or ""), "")
         follow = record.get("follow_through") or {}
         pr = follow.get("pr") or None
         pr_state = str((pr or {}).get("state") or "")
@@ -121,8 +155,10 @@ def agent_flights(
             state = "merged"
         elif pr and pr_state == "open":
             state = "pr_open"
+        elif not session_key:
+            state = "starting"
         else:
-            state = _session_state(by_key.get(session_key)) if session_key else "working"
+            state = _session_state(by_key.get(session_key), clock)
         project_id, project_name = _project_of(db, kind, item_id)
         evidence = follow.get("evidence") or {}
         flights.append({
@@ -141,6 +177,10 @@ def agent_flights(
                 "state": pr_state,
             } if pr else None,
             "close": follow.get("close"),
+            # K4's cleanup of the agent's session (killed, session_gone,
+            # no_session): the evidence that it left; absent while the close
+            # waits for confirmation (Secure) or cleanup is outstanding.
+            "session_cleanup": (follow.get("cleanup") or {}).get("session"),
             "merged_at": evidence.get("merged_at") or None,
             "launch_id": record.get("launch_id"),
         })
