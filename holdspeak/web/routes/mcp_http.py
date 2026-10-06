@@ -298,6 +298,24 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         # holds only the calls on its own objects.
         # The flag decides ordering only; no tool needs it to work.
         params = body.get("params") if isinstance(body.get("params"), dict) else {}
+        # Conductor K6 (item scope): a launched agent changes only its own
+        # items -- the launch's origin item and the items it created.
+        launch_scope = cred.launch_id if cred is not None and cred.palette_name == "CONDUCTOR" else None
+        tool_name = str(params.get("name") or "")
+        if launch_scope and body.get("method") == "tools/call":
+            from ...services.conductor_launch import NOT_THIS_LAUNCH, item_refused
+
+            refused_item = item_refused(launch_scope, tool_name, params.get("arguments"))
+            if refused_item is not None:
+                import json as _json
+
+                return JSONResponse({"jsonrpc": "2.0", "id": body.get("id"), "result": {
+                    "content": [{"type": "text", "text": _json.dumps({
+                        "error": f"{tool_name} may change only this launch's items; {refused_item} is not one",
+                        "code": NOT_THIS_LAUNCH, "item_id": refused_item,
+                    })}],
+                    "isError": True,
+                }})
         if body.get("method") != "tools/call":
             response = handle()
         elif params.get("name") in _blocking_io_tools():
@@ -308,6 +326,18 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             import asyncio
 
             response = await asyncio.get_running_loop().run_in_executor(_tool_worker(), handle)
+
+        if launch_scope and body.get("method") == "tools/call" and isinstance(response, dict):
+            result = response.get("result") or {}
+            if not result.get("isError") and result.get("content"):
+                from ...services.conductor_launch import record_created
+
+                try:
+                    import json as _json
+
+                    record_created(launch_scope, tool_name, _json.loads(result["content"][0].get("text") or "{}"))
+                except (ValueError, TypeError, KeyError, IndexError):
+                    pass
 
         if response is None:
             # Notification (no response expected). A bare Response: a

@@ -47,6 +47,7 @@ def spawn(
     *,
     command: Optional[str] = None,
     launch_id: Optional[str] = None,
+    scope_items: tuple[str, ...] = (),
     runner: Optional[Runner] = None,
     audit: Optional[Callable[..., int]] = None,
 ) -> dict[str, Any]:
@@ -90,6 +91,7 @@ def spawn(
             palette=resolve_palette(CONDUCTOR),
             palette_name=CONDUCTOR,
             launch_id=launch,
+            scope_items=scope_items,  # the launch's origin item
         )
     else:
         identity = f"agent:tmux:{name}"

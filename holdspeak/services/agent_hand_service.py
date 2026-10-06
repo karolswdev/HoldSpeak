@@ -406,7 +406,7 @@ class AgentHandService:
         hooks installed it stays held as ``hooks_missing`` (K1's one-press
         install, then resume on the same launch)."""
         try:
-            record = launcher.launch(request)
+            record = launcher.launch(request, principal=principal)
         except LaunchRefused as exc:
             raise AgentHandRefused(exc.reason, str(exc)) from exc
         if record.get("state") != "launched":

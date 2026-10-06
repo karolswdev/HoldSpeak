@@ -48,7 +48,10 @@ from typing import Any, Callable, Mapping, Optional
 
 from .. import coder_factory, coder_steering
 from ..coder_steering import Runner
+from ..logging_config import get_logger
 from .attempts import resolver_from_registry
+
+log = get_logger("delivery.factory_launch")
 
 AGENT_PROFILES_SCHEMA = 1
 LAUNCHES_SCHEMA = 1
@@ -843,6 +846,7 @@ class LaunchService:
 
     def launch(
         self, request: Any, *, launch_id: str = "", parent_operation_id: str = "",
+        principal: Any = None,
     ) -> dict[str, Any]:
         """§9 agent.launch. All refusals are typed and pre-execution;
         the execution order (and what each failure leaves behind) is:
@@ -963,7 +967,11 @@ class LaunchService:
                 "node_id": self._local_node_id,
                 "operation": {"family": "coder_factory", "verb": "factory.spawn"},
                 # launch_id: the spawn issues the launch-bound credential.
-                "payload": {"name": session_name, "command": command, "launch_id": launch_id},
+                "payload": {
+                    "name": session_name, "command": command, "launch_id": launch_id,
+                    # K6 item scope: the agent may change its origin item.
+                    "scope_items": [origin_ref["id"]] if origin_ref else [],
+                },
             }
         )
         record["commands"]["spawn"] = spawned.get("command_id")
@@ -1046,8 +1054,25 @@ class LaunchService:
 
         record["attempt_id"] = attempt.attempt_id
         record["state"] = "launched"
+        # K6: the owner's press on the launch grants the launch identity
+        # decision PROPOSALS (decision.create, status proposed) for its life.
+        record["mcp"]["decision_proposals"] = self._grant_proposals(principal, launch_id)
         self._ledger.record(record)
         return record
+
+    @staticmethod
+    def _grant_proposals(principal: Any, launch_id: str) -> str:
+        from .. import coder_factory
+        from ..services.conductor_launch import grant_decision_proposals
+
+        try:
+            granted = grant_decision_proposals(
+                principal, coder_factory.launch_identity(launch_id), ttl_seconds=43_200.0,
+            )
+        except Exception as exc:  # the grant never fails the launch
+            log.warning("decision-proposal grant not made for %s (%s)", launch_id, exc)
+            return "not_granted"
+        return "granted" if granted else "not_granted"
 
     def _release_mcp(self, launch_id: str) -> None:
         """A failed launch: its MCP credential and config go (K6). The
@@ -1111,7 +1136,8 @@ class LaunchService:
         operation_id = str(handle["operation_id"])
         try:
             record = self.launch(
-                request, launch_id=launch_id, parent_operation_id=operation_id
+                request, launch_id=launch_id, parent_operation_id=operation_id,
+                principal=principal,
             )
             if record.get("state") != "launched":
                 self._kernel.receipt(operation_id, "failed", f"launch:{launch_id}", node)

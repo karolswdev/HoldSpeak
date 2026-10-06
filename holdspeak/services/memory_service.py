@@ -9,6 +9,23 @@ from ..principals import Principal, PrincipalKind, PrincipalRight, refusal
 from .errors import ServiceError, ValidationError
 
 
+def _may_read(principal: Principal) -> bool:
+    """The READ right, or a live launch-bound agent (Conductor K6)."""
+    from ..principals import launch_reader
+
+    return principal.permits(PrincipalRight.READ) or launch_reader(principal)
+
+
+def _people_cut(db: Any, principal: Principal, method: str, result: Any) -> Any:
+    """A launch reader reads memory with the brief's People cut; the owner
+    reads it whole."""
+    if principal.permits(PrincipalRight.READ):
+        return result
+    from .conductor_launch import cut_memory
+
+    return cut_memory(db, method, result)
+
+
 @observe_service
 class MemoryService:
     def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
@@ -30,7 +47,7 @@ class MemoryService:
         limit: int = 50,
         offset: int = 0,
     ) -> dict[str, Any]:
-        if not principal.permits(PrincipalRight.READ):
+        if not _may_read(principal):
             status = 401 if principal.kind is PrincipalKind.NONE else 403
             raise ServiceError(
                 "read_forbidden",
@@ -43,7 +60,7 @@ class MemoryService:
             # The question's embedding call, when there is one, is admitted
             # for THIS principal: the receipt names who searched.
             with memory_caller(principal):
-                return self._db.memory.search(
+                return _people_cut(self._db, principal, "search", self._db.memory.search(
                     query,
                     kinds=kind,
                     project_id=project_id,
@@ -51,7 +68,7 @@ class MemoryService:
                     time_to=time_to,
                     limit=limit,
                     offset=offset,
-                ).to_dict()
+                ).to_dict())
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
 
@@ -70,7 +87,7 @@ class MemoryService:
         every scope.  ``state`` is ``current``, ``disputed`` or
         ``superseded`` (default: all three).  Nothing here comes from the
         People store: memory admits no People kind."""
-        if not principal.permits(PrincipalRight.READ):
+        if not _may_read(principal):
             status = 401 if principal.kind is PrincipalKind.NONE else 403
             raise ServiceError(
                 "read_forbidden",
@@ -100,7 +117,7 @@ class MemoryService:
             states=states,
             limit=max(1, min(bounded, 200)),
         )
-        return {"observations": rows, "count": len(rows)}
+        return _people_cut(self._db, principal, "observations", {"observations": rows, "count": len(rows)})
 
     def page(
         self,
@@ -117,7 +134,7 @@ class MemoryService:
         No page, or no sentence of it live now: ``{"page": null}``.  Each
         sentence is served only while every input it cites is live in the
         scope now.  Nothing here comes from the People store."""
-        if not principal.permits(PrincipalRight.READ):
+        if not _may_read(principal):
             status = 401 if principal.kind is PrincipalKind.NONE else 403
             raise ServiceError(
                 "read_forbidden",
@@ -138,7 +155,7 @@ class MemoryService:
             spec_for(chosen, str(slug or "").strip())
         except ValueError as exc:
             raise ValidationError(str(exc)) from exc
-        return {"page": read(self._db, chosen, project, str(slug).strip())}
+        return _people_cut(self._db, principal, "page", {"page": read(self._db, chosen, project, str(slug).strip())})
 
     def standing_pages(
         self,
@@ -153,7 +170,7 @@ class MemoryService:
         page with no live sentence is not in the list, and a withheld
         sentence is not in the shape at all.  Nothing here comes from the
         People store."""
-        if not principal.permits(PrincipalRight.READ):
+        if not _may_read(principal):
             status = 401 if principal.kind is PrincipalKind.NONE else 403
             raise ServiceError(
                 "read_forbidden",
@@ -170,4 +187,4 @@ class MemoryService:
             raise ValidationError("scope project needs a project_id")
         if chosen == "desk" and project:
             raise ValidationError("scope desk takes no project_id")
-        return {"pages": standing_pages(self._db, chosen, project)}
+        return _people_cut(self._db, principal, "standing_pages", {"pages": standing_pages(self._db, chosen, project)})

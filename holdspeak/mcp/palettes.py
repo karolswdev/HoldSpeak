@@ -63,6 +63,18 @@ CONDUCTOR = "CONDUCTOR"
 CONDUCTOR_EXCLUDED_PREFIXES: tuple[str, ...] = ("people.",)
 CONDUCTOR_EXCLUDED_RESOURCE_PREFIXES: tuple[str, ...] = ("holdspeak://people/",)
 
+#: The owner's Confirm: tools that confirm a decision or a proposal on his
+#: behalf (mint a decision record, confirm or drop a proposal, accept a
+#: review). A launched agent proposes; the owner confirms (ruling on #903).
+CONDUCTOR_OWNER_CONFIRM: frozenset[str] = frozenset({
+    "decision_record.create_from_desk",
+    "decision_record.create_from_meeting",
+    "proposal.confirm",
+    "proposal.dismiss",
+    "project.decide_proposal",
+    "project.accept_review",
+})
+
 
 def _lazy_conductor_tools() -> frozenset[str]:
     from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK
@@ -72,7 +84,19 @@ def _lazy_conductor_tools() -> frozenset[str]:
         for name in _lazy_all_tools()
         if TOOL_AUTHORITY.get(name) == WORK
         and not name.startswith(CONDUCTOR_EXCLUDED_PREFIXES)
+        and name not in CONDUCTOR_OWNER_CONFIRM
     )
+
+
+def _decision_not_proposed(name: str, arguments: dict[str, Any]) -> bool:
+    """A desk decision the agent writes is a PROPOSAL: status ``proposed``."""
+    if name == "desk.verb" and arguments.get("verb_id") == "desk.create":
+        inner = arguments.get("arguments")
+        return _decision_not_proposed("desk.create", inner if isinstance(inner, dict) else {})
+    if name != "desk.create" or arguments.get("kind") != "decisions":
+        return False
+    data = arguments.get("data") if isinstance(arguments.get("data"), dict) else {}
+    return str(data.get("status") or "proposed").strip().lower() != "proposed"
 
 
 def conductor_call_allowed(name: str, arguments: Any) -> bool:
@@ -81,7 +105,12 @@ def conductor_call_allowed(name: str, arguments: Any) -> bool:
 
     if name not in TOOL_AUTHORITY or name.startswith(CONDUCTOR_EXCLUDED_PREFIXES):
         return False
-    return call_class(name, arguments if isinstance(arguments, dict) else {}) == WORK
+    if name in CONDUCTOR_OWNER_CONFIRM:
+        return False
+    args = arguments if isinstance(arguments, dict) else {}
+    if _decision_not_proposed(name, args):
+        return False
+    return call_class(name, args) == WORK
 
 
 def conductor_resource_allowed(uri: str) -> bool:

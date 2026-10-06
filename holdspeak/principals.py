@@ -126,6 +126,13 @@ class AgentCredentialStore:
         self._by_id: dict[str, str] = {}  # credential id -> hash
         self._target_to_identity: dict[str, str] = {}
         self._hub_url = "http://127.0.0.1:8765"
+        # Conductor K6: per launch, the item ids the agent may change (its
+        # origin item, and the items it created during the launch).
+        self._launch_scope: dict[str, set[str]] = {}
+        # Launch-bound credentials revoked under the lock; their hooks run
+        # after it is released (never hold the store lock into the kernel).
+        self._pending_launch_revokes: list[tuple[str, str]] = []
+        self.launch_revoked_hooks: list[Any] = []
 
     # -- Legacy compat: _by_token property for old callers (read-only). --
     @property
@@ -149,14 +156,15 @@ class AgentCredentialStore:
         palette: Optional[frozenset[str]] = None,
         palette_name: Optional[str] = None,
         launch_id: Optional[str] = None,
+        scope_items: Iterable[str] = (),
     ) -> AgentCredential:
         """Mint a new credential.  Returns the credential with the plaintext
         token; the store keeps only the hash (C4)."""
         clean = str(identity or "").strip()
         if not clean:
             raise ValueError("agent identity is required")
+        self.revoke(clean)
         with self._lock:
-            self.revoke(clean)
             ttl = min(max(1.0, float(ttl_seconds)), _MAX_TTL_SECONDS)
             plaintext = secrets.token_urlsafe(32)
             token_hash = _hash_token(plaintext)
@@ -174,6 +182,10 @@ class AgentCredentialStore:
             self._by_hash[token_hash] = credential
             self._by_identity[clean] = token_hash
             self._by_id[cred_id] = token_hash
+            if credential.launch_id:
+                self._launch_scope[credential.launch_id] = {
+                    str(item).strip() for item in scope_items if str(item or "").strip()
+                }
             # Return a copy with the plaintext so the caller can show it once.
             return AgentCredential(
                 token=plaintext,
@@ -202,18 +214,54 @@ class AgentCredentialStore:
         if not provided:
             return None
         provided_hash = _hash_token(provided)
+        found: Optional[AgentCredential] = None
         with self._lock:
             # Do not expose dict lookup timing as a credential oracle.
             for stored_hash, credential in list(self._by_hash.items()):
                 if credential.expires_at <= self._clock():
-                    self.revoke(credential.principal.identity)
+                    self._revoke_locked(credential.principal.identity)
                     continue
-                if hmac.compare_digest(provided_hash.encode(), stored_hash.encode()):
+                if found is None and hmac.compare_digest(provided_hash.encode(), stored_hash.encode()):
                     # Touch last_used_at (frozen dataclass -> replace).
-                    updated = replace(credential, last_used_at=self._clock())
-                    self._by_hash[stored_hash] = updated
-                    return updated
-        return None
+                    found = replace(credential, last_used_at=self._clock())
+                    self._by_hash[stored_hash] = found
+        self._flush_launch_revokes()
+        return found
+
+    # -- Conductor K6: the launch-bound credential's scope ---------------
+
+    def launch_credential(self, identity: str) -> Optional[AgentCredential]:
+        """The live launch-bound credential of *identity*, else None."""
+        clean = str(identity or "").strip()
+        with self._lock:
+            token_hash = self._by_identity.get(clean)
+            cred = self._by_hash.get(token_hash) if token_hash else None
+            if cred is None or not cred.launch_id or cred.expires_at <= self._clock():
+                return None
+            return cred
+
+    def scope_add(self, launch_id: str, item_id: str) -> None:
+        with self._lock:
+            scope = self._launch_scope.get(str(launch_id))
+            if scope is not None and str(item_id or "").strip():
+                scope.add(str(item_id).strip())
+
+    def in_scope(self, launch_id: str, item_id: str) -> bool:
+        with self._lock:
+            return str(item_id or "").strip() in self._launch_scope.get(str(launch_id), set())
+
+    def _flush_launch_revokes(self) -> None:
+        with self._lock:
+            pending, self._pending_launch_revokes = self._pending_launch_revokes, []
+            hooks = list(self.launch_revoked_hooks)
+        for launch_id, identity in pending:
+            for hook in hooks:
+                try:
+                    hook(launch_id, identity)
+                except Exception:  # a hook never blocks a revoke
+                    import logging
+
+                    logging.getLogger(__name__).warning("launch revoke hook failed", exc_info=True)
 
     def bind_target(self, identity: str, *targets: Optional[str]) -> None:
         with self._lock:
@@ -223,6 +271,12 @@ class AgentCredentialStore:
                     self._target_to_identity[clean] = identity
 
     def revoke(self, identity: str) -> bool:
+        with self._lock:
+            revoked = self._revoke_locked(identity)
+        self._flush_launch_revokes()
+        return revoked
+
+    def _revoke_locked(self, identity: str) -> bool:
         clean = str(identity or "").strip()
         with self._lock:
             token_hash = self._by_identity.pop(clean, None)
@@ -231,6 +285,9 @@ class AgentCredentialStore:
             cred = self._by_hash.pop(token_hash, None)
             if cred:
                 self._by_id.pop(cred.id, None)
+                if cred.launch_id:
+                    self._launch_scope.pop(cred.launch_id, None)
+                    self._pending_launch_revokes.append((cred.launch_id, clean))
             stale = [target for target, owner in self._target_to_identity.items() if owner == clean]
             for target in stale:
                 self._target_to_identity.pop(target, None)
@@ -241,12 +298,9 @@ class AgentCredentialStore:
         clean = str(credential_id or "").strip()
         with self._lock:
             token_hash = self._by_id.get(clean)
-            if token_hash is None:
-                return False
-            cred = self._by_hash.get(token_hash)
-            if cred:
-                return self.revoke(cred.principal.identity)
-        return False
+            cred = self._by_hash.get(token_hash) if token_hash is not None else None
+            identity = cred.principal.identity if cred else None
+        return self.revoke(identity) if identity else False
 
     def identity_for_id(self, credential_id: str) -> Optional[str]:
         """The principal identity of a credential id, removing nothing (PHILO-7-02).
@@ -290,6 +344,15 @@ class AgentCredentialStore:
 
 
 agent_credentials = AgentCredentialStore()
+
+
+def launch_reader(principal: Any) -> bool:
+    """Conductor K6: an AGENT whose launch-bound credential is live reads
+    memory for the life of its launch (the People cut applies to what it
+    reads). Revoked with the credential."""
+    if getattr(principal, "kind", None) is not PrincipalKind.AGENT:
+        return False
+    return agent_credentials.launch_credential(principal.identity) is not None
 
 
 def derive_owner(token: Optional[str], expected: Optional[str]) -> Optional[Principal]:
