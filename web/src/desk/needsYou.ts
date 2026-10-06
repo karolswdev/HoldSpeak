@@ -84,6 +84,7 @@ export interface NeedsYouCoder {
   project_name?: string | null;
   repo_root?: string | null;
   updated_at?: string | null;
+  hook_event_name?: string | null;
   awaiting_response?: boolean | null;
   lifecycle?: string | null;
   question?: string | null;
@@ -279,9 +280,11 @@ function coderExcerpt(text: string): string {
   return `${flat.slice(0, CODER_EXCERPT_CHARS - 1).trimEnd()}\u2026`;
 }
 
-/** R5: the coder sessions that wait for the owner's answer, as attention
- * rows (`needs_you_membership.coder_items`). A member is `awaiting_response`
- * with a captured question, not ended, and updated within 30 minutes. */
+/** R5: the coder sessions that wait for the owner, as attention rows
+ * (`needs_you_membership.coder_items`). A member has a captured question, is
+ * not ended, was updated within 30 minutes, and is blocked: `awaiting_response`
+ * (reason `TO ANSWER`) or a permission prompt, its latest hook event a
+ * `Notification` (reason `TO APPROVE`). */
 export function coderItems(
   coders: readonly NeedsYouCoder[],
   now: Date = new Date(),
@@ -289,7 +292,8 @@ export function coderItems(
 ): NeedsYouRoomItem[] {
   const rows: NeedsYouRoomItem[] = [];
   for (const session of coders) {
-    if (!session?.awaiting_response) continue;
+    const permission = String(session?.hook_event_name ?? "") === "Notification";
+    if (!session?.awaiting_response && !permission) continue;
     const question = String(session.question ?? "").trim();
     if (!question) continue;
     if (String(session.lifecycle ?? "") === "ended") continue;
@@ -310,7 +314,7 @@ export function coderItems(
       projectId: "",
       projectName: String(session.project_name ?? ""),
       title: excerpt,
-      why: "TO ANSWER",
+      why: permission ? "TO APPROVE" : "TO ANSWER",
       ageToken: updated,
       since: updated,
       dueAt: null,

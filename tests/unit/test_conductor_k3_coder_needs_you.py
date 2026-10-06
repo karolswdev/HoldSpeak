@@ -33,6 +33,7 @@ def _session(
     awaiting: bool = True,
     question: str | None = "Should I keep the old migration or drop it?",
     lifecycle: str = "waiting",
+    event: str = "Stop",
 ) -> dict[str, Any]:
     return {
         "agent": agent,
@@ -41,7 +42,7 @@ def _session(
         "project_name": "holdspeak",
         "repo_root": "/work/holdspeak",
         "updated_at": (NOW - timedelta(minutes=minutes_ago)).isoformat(),
-        "hook_event_name": "Stop",
+        "hook_event_name": event,
         "awaiting_response": awaiting,
         "lifecycle": lifecycle,
         "question": question,
@@ -82,6 +83,42 @@ def test_an_answered_coder_is_not_a_member() -> None:
     assert coder_items([_session(awaiting=False)], NOW) == []
     assert coder_items([_session(question=None)], NOW) == []
     assert coder_items([_session(question="   ")], NOW) == []
+
+
+def test_a_permission_prompt_is_a_member_to_approve() -> None:
+    # The Notification hook records the ask and lifecycle ``waiting`` but
+    # does not set ``awaiting_response``: the agent is still blocked on him.
+    prompt = _session(awaiting=False, event="Notification",
+                      question="Claude needs your permission to use Bash")
+    rows = coder_items([prompt], NOW)
+    assert [r["ref"] for r in rows] == ["coder:claude:s1"]
+    assert rows[0]["why"] == "TO APPROVE"
+    assert attention_class(rows[0], NOW.astimezone().replace(tzinfo=None)) == "due_today"
+    # A question stays TO ANSWER.
+    assert coder_items([_session()], NOW)[0]["why"] == "TO ANSWER"
+
+
+def test_a_permission_prompt_that_is_stale_ended_or_empty_is_not_a_member() -> None:
+    def prompt(**kw: Any) -> dict[str, Any]:
+        base: dict[str, Any] = dict(awaiting=False, event="Notification", question="Allow Bash?")
+        base.update(kw)
+        return _session(**base)
+
+    assert coder_items([prompt(minutes_ago=31)], NOW) == []
+    assert coder_items([prompt(lifecycle="ended")], NOW) == []
+    assert coder_items([prompt(question=None)], NOW) == []
+    # Answered: the next working event replaces the latest hook event.
+    assert coder_items([prompt(event="PreToolUse", lifecycle="working")], NOW) == []
+
+
+def test_the_watcher_counts_a_permission_prompt_as_blocked() -> None:
+    from holdspeak.agent_context import AgentSession
+    from holdspeak.coder_steering import awaiting_snapshot
+
+    prompt = AgentSession.from_mapping(
+        _session(awaiting=False, event="Notification", question="Allow Bash?"))
+    idle = AgentSession.from_mapping(_session("s2", awaiting=False, question=None, lifecycle="working"))
+    assert awaiting_snapshot([prompt, idle]) == {"claude:s1": True, "claude:s2": False}
 
 
 def test_an_ended_coder_is_not_a_member() -> None:

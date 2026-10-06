@@ -179,8 +179,15 @@ def decision_items(decisions: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
 
 CODER_SOURCE = "coder"
 
-#: The reason token of a coder row.
+#: The reason token of a coder row that asks a question.
 TO_ANSWER = "TO ANSWER"
+
+#: The reason token of a coder row blocked on a permission prompt (its latest
+#: hook event is a ``Notification`` that carries the ask).
+TO_APPROVE = "TO APPROVE"
+
+#: The hook event of a permission prompt ("Claude needs your permission ...").
+PERMISSION_EVENT = "Notification"
 
 #: The longest question excerpt a row carries (the full question stays in
 #: the session registry; the Agents window shows it).
@@ -215,12 +222,15 @@ def coder_items(
     """R5: the coder sessions that wait for the owner, as attention rows.
 
     ``sessions`` holds ``agent_context.AgentSession`` objects or their
-    ``to_dict()`` mappings. A session is a member when it is
-    ``awaiting_response``, carries a ``question`` (secret-filtered when the
-    hook captured it), is not ended, and was updated within
-    ``max_age_seconds`` (default: ``DEFAULT_RECENT_MAX_AGE_SECONDS``, 30 min).
-    An answered session clears ``awaiting_response`` and its question, so it
-    leaves the set.
+    ``to_dict()`` mappings. A session is a member when it carries a
+    ``question`` (secret-filtered when the hook captured it), is not ended,
+    was updated within ``max_age_seconds`` (default:
+    ``DEFAULT_RECENT_MAX_AGE_SECONDS``, 30 min), and is blocked on the owner:
+    ``awaiting_response`` (a question, reason ``TO ANSWER``) or its latest
+    hook event is a permission prompt (``Notification``, reason
+    ``TO APPROVE``; the hook does not set ``awaiting_response`` for it). An
+    answered session clears ``awaiting_response`` and its question, so it
+    leaves the set. Pinned sessions get no exemption from the 30 min window.
     """
     if max_age_seconds is None:
         from holdspeak.agent_context.models import DEFAULT_RECENT_MAX_AGE_SECONDS
@@ -231,7 +241,8 @@ def coder_items(
     rows: list[dict[str, Any]] = []
     for raw in sessions:
         session = raw.to_dict() if hasattr(raw, "to_dict") else dict(raw or {})
-        if not session.get("awaiting_response"):
+        permission = str(session.get("hook_event_name") or "") == PERMISSION_EVENT
+        if not session.get("awaiting_response") and not permission:
             continue
         question = str(session.get("question") or "").strip()
         if not question:
@@ -258,7 +269,7 @@ def coder_items(
             "projectId": "",
             "projectName": str(session.get("project_name") or ""),
             "title": _excerpt(question),
-            "why": TO_ANSWER,
+            "why": TO_APPROVE if permission else TO_ANSWER,
             "ageToken": updated,
             "since": updated,
             "dueAt": None,

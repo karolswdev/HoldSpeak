@@ -55,6 +55,21 @@ describe("R5: a coding agent that waits for the owner", () => {
     expect(coderItems([session({ lifecycle: "ended" })], NOW)).toEqual([]);
   });
 
+  it("counts a permission prompt as TO APPROVE, in the same rank class", () => {
+    const prompt = session({
+      awaiting_response: false, hook_event_name: "Notification",
+      question: "Claude needs your permission to use Bash",
+    });
+    const rows = coderItems([prompt], NOW);
+    expect(rows.map((row) => [row.ref, row.why])).toEqual([["coder:claude:s1", "TO APPROVE"]]);
+    expect(attentionClass(rows[0], NOW)).toBe("due_today");
+    expect(coderItems([session()], NOW)[0].why).toBe("TO ANSWER");
+    expect(coderItems([{ ...prompt, lifecycle: "ended" }], NOW)).toEqual([]);
+    expect(coderItems([{ ...prompt, question: null }], NOW)).toEqual([]);
+    expect(coderItems([{ ...prompt, hook_event_name: "PreToolUse" }], NOW)).toEqual([]);
+    expect(coderItems([session({ awaiting_response: false, hook_event_name: "Notification", minutesAgo: 31 })], NOW)).toEqual([]);
+  });
+
   it("ranks with the due-today rows, oldest wait first", () => {
     const [coder] = coderItems([session()], NOW);
     expect(attentionClass(coder, NOW)).toBe("due_today");

@@ -205,11 +205,23 @@ def peek_pane(
 
 
 def awaiting_snapshot(sessions: list[Any]) -> dict[str, bool]:
-    """``{key: awaiting_response}`` over the registry — the watcher's
-    per-tick view, keyed the way every coder surface keys sessions."""
-    return {
-        f"{s.agent}:{s.session_id}": bool(s.awaiting_response) for s in sessions
-    }
+    """``{key: blocked}`` over the registry — the watcher's per-tick view,
+    keyed the way every coder surface keys sessions.
+
+    Blocked is ``awaiting_response`` (a question), or a permission prompt:
+    the latest hook event is a ``Notification`` that carries the ask, which
+    the hook records without ``awaiting_response`` (Conductor K3, R5)."""
+    return {f"{s.agent}:{s.session_id}": _blocked(s) for s in sessions}
+
+
+def _blocked(session: Any) -> bool:
+    if bool(getattr(session, "awaiting_response", False)):
+        return True
+    return (
+        str(getattr(session, "hook_event_name", "") or "") == "Notification"
+        and bool(str(getattr(session, "question", "") or "").strip())
+        and str(getattr(session, "lifecycle", "") or "") != "ended"
+    )
 
 
 def awaiting_transitions(
