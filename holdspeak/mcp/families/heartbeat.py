@@ -88,7 +88,12 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
 
     if name == "heartbeat.run_now":
         ws = WatchService(db, observer=obs)
-        hb_with_ws = HeartbeatService(db, observer=obs, watch_service=ws)
+        from holdspeak.delivery.follow_through import default_follow_through
+
+        hb_with_ws = HeartbeatService(
+            db, observer=obs, watch_service=ws,
+            follow_through=default_follow_through(db),
+        )
         # HS-200-43: the owner's hand evaluates everything and is not
         # held by quiet hours; only the unattended sweep is.
         return hb_with_ws.run_sweep(principal, owner_hand=True)

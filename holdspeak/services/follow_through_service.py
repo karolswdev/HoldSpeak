@@ -49,6 +49,22 @@ class _FollowThroughObserver:
         self._delegate.on_event(event)
 
 
+#: The evidence a ``done`` may carry into its ``commitment.completed``
+#: receipt (Conductor K4: the merged PR of an agent launch).
+COMPLETION_EVIDENCE_KEYS = ("pr_url", "merged_sha", "merged_at", "attempt_id", "launch_id")
+
+
+def _completion_evidence(raw: Any) -> dict[str, str]:
+    """The known evidence keys as short strings; anything else is dropped."""
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        key: str(raw[key])[:512]
+        for key in COMPLETION_EVIDENCE_KEYS
+        if raw.get(key) not in (None, "")
+    }
+
+
 @dataclass(frozen=True)
 class CardProvenance:
     """The verified meeting moment from which a follow-through card derives."""
@@ -428,12 +444,17 @@ class FollowThroughService:
                 # receipt (Article XI).  Nothing else in this service --
                 # naming an owner, setting a date, linking work -- ever
                 # writes `done`; only this verb does, and it says who.
+                facts: dict[str, Any] = {"status": action_status}
+                evidence = _completion_evidence(data.get("evidence"))
+                if evidence and normalized_verb == "done":
+                    # Conductor K4: the merged PR that closed the commitment.
+                    facts["evidence"] = evidence
                 self._receipt(
                     conn, principal,
                     event_type=("commitment.completed" if normalized_verb == "done"
                                 else "commitment.dismissed"),
                     card_id=card_id, action=action, commitment_ids=commitment_ids,
-                    facts={"status": action_status},
+                    facts=facts,
                 )
             elif normalized_verb == "snooze":
                 until = data.get("until")

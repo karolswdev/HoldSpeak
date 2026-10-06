@@ -16,8 +16,12 @@ the match proves); otherwise unattributed.
 Egress: the batched `gh` call here and the EXPLICIT `git fetch` verb
 are the only network touches; the grep census pins both
 (tests/unit/test_pr_receipts.py). Refresh is manual (the surface
-verb) or by a per-source `pr_refresh_seconds` cadence explicitly set
-in the registry entry — never ambient.
+verb), by a per-source `pr_refresh_seconds` cadence explicitly set
+in the registry entry, or by the Heartbeat sweep for a source with a
+live agent launch (Conductor K4, ``delivery/follow_through.py``).
+
+Every refresh leaves a named gh state on its source (:func:`gh_state`):
+``gh_missing`` and ``gh_unauthenticated`` are states, never a silent skip.
 """
 
 from __future__ import annotations
@@ -40,7 +44,28 @@ MAX_PRS_PER_SOURCE = 50
 MAX_DIFF_BYTES = 512 * 1024
 
 #: The one batched query's fields — the row schema is exactly this.
-GH_FIELDS = "number,title,url,headRefName,baseRefName,headRefOid,baseRefOid,state,isDraft,statusCheckRollup,author"
+GH_FIELDS = (
+    "number,title,url,headRefName,baseRefName,headRefOid,baseRefOid,state,isDraft,"
+    "statusCheckRollup,author,reviewDecision,mergedAt,mergeCommit"
+)
+
+#: The named gh states of a source (Conductor K4). ``live`` means the last
+#: poll answered; every other value names why there are no fresh rows.
+GH_STATES = ("live", "gh_missing", "gh_unauthenticated", "gh_failed", "no_worktree", "not_polled")
+
+_DETAIL_STATE = {
+    "gh CLI is not installed": "gh_missing",
+    "gh credentials unavailable": "gh_unauthenticated",
+    "source has no local worktree": "no_worktree",
+    "not yet collected": "not_polled",
+}
+
+
+def gh_state(status: str, detail: str) -> str:
+    """One named state from a source's ``status`` and ``detail``."""
+    if status == "live":
+        return "live"
+    return _DETAIL_STATE.get(str(detail or ""), "gh_failed")
 
 Runner = Callable[..., "subprocess.CompletedProcess[str]"]
 
@@ -204,6 +229,7 @@ class PrReceiptsService:
                         "label": source.label,
                         "status": state.status,
                         "detail": state.detail,
+                        "gh_state": gh_state(state.status, state.detail),
                         "observed_at": state.observed_at,
                         # None only when never observed (the §13 rule).
                         "prs": None if state.rows is None else sorted(state.rows, key=order_key),
@@ -330,6 +356,10 @@ class PrReceiptsService:
                     "state": pr_state(pr.get("state"), pr.get("isDraft")),
                     "ci": rollup_conclusion(pr.get("statusCheckRollup")),
                     "author": str((pr.get("author") or {}).get("login") or ""),
+                    "review_decision": str(pr.get("reviewDecision") or "").lower(),
+                    "merged_at": str(pr.get("mergedAt") or ""),
+                    "merged_sha": str((pr.get("mergeCommit") or {}).get("oid") or "")
+                    if isinstance(pr.get("mergeCommit"), dict) else "",
                     "observed_at": observed,
                     "needs_you": str(pr.get("state") or "").lower() == "open"
                     and rollup_conclusion(pr.get("statusCheckRollup")) in {"failing", "pending"},
@@ -501,3 +531,19 @@ class PrReceiptsService:
         if proc.returncode != 0:
             return None
         return (proc.stdout or "")[:max_bytes]
+
+
+_DEFAULT_LOCK = threading.Lock()
+_DEFAULT: Optional[PrReceiptsService] = None
+
+
+def default_pr_receipts() -> PrReceiptsService:
+    """The one production receipts cache, shared by the PR route and the
+    Heartbeat sweep, so a sweep's refresh is what the next read shows."""
+    global _DEFAULT
+    with _DEFAULT_LOCK:
+        if _DEFAULT is None:
+            from . import DeliveryRegistry
+
+            _DEFAULT = PrReceiptsService(DeliveryRegistry())
+        return _DEFAULT

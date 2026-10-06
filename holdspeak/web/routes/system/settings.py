@@ -355,7 +355,12 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             db = get_database()
             obs = get_observer()
             ws = WatchService(db, observer=obs)
-            hb = HeartbeatService(db, observer=obs, watch_service=ws)
+            from ....delivery.follow_through import default_follow_through
+
+            hb = HeartbeatService(
+                db, observer=obs, watch_service=ws,
+                follow_through=default_follow_through(db),
+            )
             # HS-200-43: Run now is the owner's explicit trigger. It
             # evaluates every due watch (no WATCH_SWEEP_MAX) and runs
             # inside quiet hours -- which is what this route's own
