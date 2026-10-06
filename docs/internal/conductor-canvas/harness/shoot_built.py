@@ -21,6 +21,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 
 sys.dont_write_bytecode = True
 from pathlib import Path
@@ -69,6 +70,8 @@ class BuiltStack(rig.Stack):
     from the hub's PATH (K1c). After boot: one git clone, registered as the Project's repository."""
 
     bare = False
+    launch = False          # the receipt boards: tmux and claude doubles first on the hub's PATH
+    tmux_state: Path | None = None
 
     def __init__(self, mode: str = "today", shims: str = "k"):
         super().__init__("today", shims)
@@ -89,10 +92,28 @@ class BuiltStack(rig.Stack):
                         (shim / name).symlink_to(target)
                 node_dir = str(shim)
             os.environ["PATH"] = f"{node_dir}:{BARE_PATH}"
+        saved_env = {k: os.environ.get(k) for k in ("F1_TMUX_STATE", "F1_HOLDSPEAK")}
+        if self.launch:
+            state = Path(f"/tmp/f1-tmux-{os.getpid()}-{os.urandom(3).hex()}")
+            (state / "bin").mkdir(parents=True)
+            double = Path(__file__).resolve().parent / "tmux_double.py"
+            for name, twin in (("tmux", ""), ("claude", "F1_TWIN=claude ")):
+                exe = state / "bin" / name
+                exe.write_text(f"#!/bin/bash\n{twin}exec {rig.PY} {double} \"$@\"\n")
+                exe.chmod(0o755)
+            BuiltStack.tmux_state = state
+            os.environ["PATH"] = f"{state / 'bin'}:{saved}"
+            os.environ["F1_TMUX_STATE"] = str(state)
+            os.environ["F1_HOLDSPEAK"] = str(Path(rig.PY).parent / "holdspeak")
         try:
             super().__enter__()
         finally:
             os.environ["PATH"] = saved
+            for key, value in saved_env.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
         clone = Path(self.home) / "dev" / "payments-ledger"
         clone.mkdir(parents=True)
         git = ["git", "-C", str(clone), "-c", "user.name=canvas", "-c", "user.email=canvas@example.invalid"]
@@ -119,6 +140,8 @@ rig.Stack = BuiltStack
 
 def first_run(r: board.Runner) -> None:
     r.scope44 = OWN44
+    if BuiltStack.launch:
+        return
     card = "[data-testid=firstrun-agents]"
     r.page.locator(card).scroll_into_view_if_needed()
     r.settle(800)
@@ -146,6 +169,9 @@ def boards(r: board.Runner) -> None:
     ev, settle, page, phone = r.ev, r.settle, r.page, r.phone
     r.scope44 = OWN44
     if BuiltStack.bare:
+        return
+    if BuiltStack.launch:
+        receipts(r)
         return
 
     # ── K2a the Object menu (the Floor list, the decision selected) ──
@@ -240,6 +266,59 @@ def boards(r: board.Runner) -> None:
     close_sheet(r)
 
 
+RECEIPT_LINE = r"""() => { const e = document.querySelector('[data-testid=hand-launch-receipt]'); if (!e) return null;
+  const r = e.getBoundingClientRect(), f = e.closest('.desk-window-shell').getBoundingClientRect();
+  return { text: e.textContent, clipped: e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1,
+           inside: r.left >= f.left - 1 && r.right <= f.right + 1 && r.bottom <= Math.min(f.bottom, innerHeight) + 1 }; }"""
+
+
+def receipts(r: board.Runner) -> None:
+    """After Launch, on the real hub with tmux and claude doubles at the process boundary:
+    PENDING (the agent has not registered), DELIVERING (the brief is being typed),
+    NOT SENT (the typing failed: the brief is kept), then Send again -> SENT."""
+    ev, settle, page = r.ev, r.settle, r.page
+    state = BuiltStack.tmux_state
+    ev("() => window.__cOpen.chair()")
+    settle(1500)
+    show = page.locator("[data-testid=arrival-needs-you] button:has-text('Show all')").first
+    if show.count():
+        r.tap(show, 900)
+    row = page.locator(f"[data-testid=arrival-needs-you-row]:has-text('{RUNBOOK}')").first
+    row.scroll_into_view_if_needed()
+    r.tap(row.locator("[data-testid=hand-row-verb]"), 2500)
+    r.tap(page.locator("[data-testid=hand-launch]"), 400)
+
+    def wait_receipt(word: str, timeout: float = 60) -> dict:
+        end = time.time() + timeout
+        while time.time() < end:
+            line = ev(RECEIPT_LINE)
+            if line and word in line["text"]:
+                return line
+            settle(500)
+        r.fails.append(f"receipt-{r.width}: never read {word!r} (last: {ev(RECEIPT_LINE)})")
+        return ev(RECEIPT_LINE) or {}
+
+    def shoot(name: str, word: str) -> None:
+        line = wait_receipt(word)
+        settle(400)
+        r.shoot(name, "Hand to agent", whole=["[data-testid=hand-launch-receipt]", ".desk-hand-footer .gadget-chip-egress"],
+                checks={f"the receipt reads {word}": word in str(line.get("text")),
+                        "the receipt is whole (not clipped, inside the window)": not line.get("clipped") and line.get("inside")},
+                extra={"receipt": line})
+
+    shoot("K3r-receipt-pending", "BRIEF PENDING")
+    (state / "hold").touch()
+    (state / "register").touch()
+    shoot("K3r-receipt-delivering", "BRIEF DELIVERING")
+    (state / "fail").touch()
+    (state / "hold").unlink()
+    shoot("K3r-receipt-failed", "BRIEF NOT SENT")
+    (state / "fail").unlink()
+    r.tap(page.locator("[data-testid=hand-send-again]"), 600)
+    shoot("K3r-receipt-sent", "BRIEF SENT")
+    r.facts[f"_tmux_argv_{r.width}"] = (state / "argv.log").read_text().splitlines()[-40:] if (state / "argv.log").exists() else []
+
+
 PAIRS = ["K1a-agents-found", "K1b-agents-done-receipt", "K1c-agents-not-installed", "K2a-object-menu", "K2b-context-menu",
          "K2c-command-deck", "K2d-door-row-verb", "K2e-room-row-verb", "K3a-launch-sheet-claude", "K3b-launch-sheet-codex"]
 
@@ -266,12 +345,15 @@ def main() -> int:
     widths = [w for w in board.B.ALL_WIDTHS if not os.environ.get("ONLY_WIDTH") or str(w[0]) == os.environ["ONLY_WIDTH"]]
     facts: dict = {}
     fails: list[str] = []
-    for bare in (False, True):
-        BuiltStack.bare = bare
+    legs = [(False, False), (True, False), (False, True)]
+    if os.environ.get("ONLY_RECEIPTS"):
+        legs = [(False, True)]
+    for bare, launch in legs:
+        BuiltStack.bare, BuiltStack.launch = bare, launch
         for width, height in widths:
             r = board.Runner(OUT, "K", width, height, "k", None)
             r.first_run = first_run
-            if bare:
+            if bare or launch:
                 os.environ["NO_WARMUP"] = "1"
             r.run(boards)
             os.environ.pop("NO_WARMUP", None)
