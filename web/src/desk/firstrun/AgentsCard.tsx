@@ -132,7 +132,7 @@ export function AgentsCard({ step, lit }: { step: AgentsStep; lit: boolean }) {
       {step.unread ? (
         <div className="firstrun-fail" role="alert">
           <StateChip state="unreachable" label="CAN'T CHECK" />
-          <span className="firstrun-reason">{step.unread}</span>
+          <span className="surface-token" data-testid="firstrun-agents-unread">{step.unread}</span>
           <Button dense variant="secondary" onClick={() => void step.read()}>
             Try again
           </Button>

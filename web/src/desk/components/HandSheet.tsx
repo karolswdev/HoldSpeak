@@ -50,8 +50,44 @@ export interface HandPreview {
   worktree: string;
   project_id: string | null;
   control_mode: string;
+  /** The item the preview is for, and the profile asked for (Launch matches them). */
+  kind?: string;
+  id?: string;
+  requested_profile?: string;
+  /** The profile the launch would really run (a held launch keeps its own). */
   profile: string;
+  /** A held launch of this item that Launch resumes (its brief, its agent). */
+  resume?: { launch_id: string; profile: string; instruction_state: string | null } | null;
   refused: string[];
+}
+
+/** POST /api/agent/hand (202) and GET /api/agent/launches/{id}: the launch's delivery. */
+export interface HandLaunch {
+  launch_id?: string | null;
+  status?: string;
+  state?: string | null;
+  instruction_state?: string | null;
+  resumed?: boolean;
+  profile?: string | null;
+  failure?: { stage?: string; outcome?: string } | null;
+}
+
+export const HAND_LAUNCH_PATH = (id: string) => `/api/agent/launches/${encodeURIComponent(id)}`;
+/** The delivery state is known once it leaves `pending` (first_message.py). */
+const DELIVERY_POLL_MS = 2000;
+
+const PROFILE_AGENT: Record<string, AgentId> = { "claude-default": "claude", "codex-default": "codex" };
+export function agentOfProfile(profile: string | null | undefined, fallback: AgentId): AgentId {
+  return PROFILE_AGENT[String(profile ?? "")] ?? fallback;
+}
+
+/** The launch's delivery as one token: the brief is pending, held, sent or refused. */
+export function deliveryToken(launch: HandLaunch): { label: string; tone: "ok" | "warning" | "danger" | undefined; done: boolean } {
+  const state = String(launch.instruction_state ?? "");
+  if (state === "sent") return { label: "LAUNCHED · BRIEF SENT", tone: "ok", done: true };
+  if (state === "pending" || state === "") return { label: "LAUNCHED · BRIEF PENDING", tone: undefined, done: false };
+  if (state === "hooks_missing") return { label: "LAUNCHED · BRIEF HELD · NO HOOKS", tone: "warning", done: true };
+  return { label: `LAUNCHED · BRIEF NOT SENT · ${codeWords(state)}`, tone: "danger", done: true };
 }
 
 const AGENTS: AgentId[] = ["claude", "codex"];
@@ -124,6 +160,13 @@ export function refusalToken(code: string, agent: AgentId): string {
       return "KIND NOT SUPPORTED";
     case "owner_required":
       return "OWNER ONLY";
+    case "launch_cap_reached":
+      return "AGENT LIMIT REACHED";
+    case "launch_profile_mismatch":
+      // `agent` is the HELD launch's agent here (the sheet passes it).
+      return `HELD FOR ${AGENT_NAME[agent].toUpperCase()}`;
+    case "hub_unreachable":
+      return "HUB UNREACHABLE";
     default:
       return codeWords(code);
   }
@@ -134,11 +177,16 @@ function tilde(path: string): string {
   return path.replace(/^\/(?:Users|home)\/[^/]+/, "~");
 }
 
-function codeOf(error: unknown): string {
+/** The refusal's name: a named refusal ({code} / {error}), or a launch that
+ * failed ({failure: {stage, outcome}}); HUB UNREACHABLE only when no answer came. */
+export function codeOf(error: unknown): string {
   if (error instanceof ApiError) {
-    const payload = error.payload as Record<string, unknown> | null;
-    const code = payload?.code ?? payload?.error;
-    if (typeof code === "string" && code) return code;
+    const payload = (error.payload ?? {}) as Record<string, unknown>;
+    const failure = (payload.failure ?? null) as { stage?: unknown; outcome?: unknown } | null;
+    for (const code of [payload.code, payload.error, failure?.outcome, failure?.stage]) {
+      if (typeof code === "string" && code) return code;
+    }
+    return `http_${error.status}`;
   }
   return "hub_unreachable";
 }
@@ -171,6 +219,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
   const [briefOpen, setBriefOpen] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
+  const [launched, setLaunched] = useState<HandLaunch | null>(null);
 
   useEffect(() => {
     useDesk.getState().focusPanel(HAND_WINDOW_ID);
@@ -193,28 +242,49 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     return () => { live = false; };
   }, [origin.kind, origin.id, origin.projectId, agent]);
 
+  // The delivery is known once it leaves `pending`: read the launch until then.
+  useEffect(() => {
+    if (!launched?.launch_id || deliveryToken(launched).done) return;
+    let live = true;
+    const timer = window.setTimeout(() => {
+      apiFetch<HandLaunch>(HAND_LAUNCH_PATH(String(launched.launch_id)))
+        .then((next) => { if (live) setLaunched({ ...launched, ...next }); })
+        .catch(() => { if (live) setLaunched({ ...launched }); });
+    }, DELIVERY_POLL_MS);
+    return () => { live = false; window.clearTimeout(timer); };
+  }, [launched]);
+
   const launch = useCallback(async () => {
     if (launching) return;
     setLaunching(true);
     setLaunchError(null);
     try {
-      await apiFetch(HAND_PATH, {
+      const answer = await apiFetch<HandLaunch>(HAND_PATH, {
         method: "POST",
         json: { kind: origin.kind, id: origin.id, profile: AGENT_PROFILE[agent], project_id: origin.projectId || null },
       });
-      close();
+      setLaunched(answer ?? {});
     } catch (error) {
       setLaunchError(codeOf(error));
       if (!(error instanceof ApiError)) console.warn("hand to agent:", readableError(error));
     } finally {
       setLaunching(false);
     }
-  }, [agent, close, launching, origin.id, origin.kind, origin.projectId]);
+  }, [agent, launching, origin.id, origin.kind, origin.projectId]);
 
+  // The preview on screen is the one for THIS item and THIS pick; a late answer
+  // for another pick never arms Launch.
+  const current = preview !== null
+    && (preview.requested_profile ?? preview.profile) === AGENT_PROFILE[agent]
+    && (preview.kind ?? origin.kind) === origin.kind
+    && (preview.id ?? origin.id) === origin.id;
   const blocked = preview?.refused ?? [];
   const sources = preview?.sources ?? [];
   const mode = modeWord(preview?.control_mode);
-  const canLaunch = preview !== null && blocked.length === 0 && !launching;
+  // The agent the launch really runs: a held launch keeps its own.
+  const actual = current ? agentOfProfile(preview?.profile, agent) : agent;
+  const canLaunch = current && blocked.length === 0 && !launching && launched === null;
+  const delivery = launched ? deliveryToken(launched) : null;
   const pick = (value: string) => setAgent(value as AgentId);
   return (
     <DeskWindowFrame
@@ -289,7 +359,13 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                 {preview.repo ? (
                   <>
                     <span className="surface-token" data-chip>{preview.repo_label || tilde(preview.repo)}</span>
-                    <span className="surface-token" data-chip>NEW WORKTREE</span>
+                    {preview.resume ? (
+                      <span className="surface-token" data-chip data-testid="hand-resume">
+                        RESUMES · BRIEF {codeWords(preview.resume.instruction_state || "pending")}
+                      </span>
+                    ) : (
+                      <span className="surface-token" data-chip>NEW WORKTREE</span>
+                    )}
                     <span className="surface-token" data-chip>{preview.branch}</span>
                   </>
                 ) : null}
@@ -298,7 +374,9 @@ function Sheet({ origin }: { origin: HandOrigin }) {
               {blocked.length ? (
                 <span className="desk-hand-refused" role="alert" data-testid="hand-refused">
                   {blocked.map((code) => (
-                    <span key={code} className="surface-token" data-tone="danger">{refusalToken(code, agent)}</span>
+                    <span key={code} className="surface-token" data-tone="danger">
+                      {refusalToken(code, code === "launch_profile_mismatch" ? actual : agent)}
+                    </span>
                   ))}
                 </span>
               ) : null}
@@ -308,32 +386,40 @@ function Sheet({ origin }: { origin: HandOrigin }) {
       </div>
       <SurfaceFooter
         className="desk-hand-footer"
-        egress={<EgressChip label={AGENT_HOST[agent]} scope="cloud" />}
+        egress={<EgressChip label={AGENT_HOST[actual]} scope="cloud" />}
         receipt={
-          launchError ? (
+          delivery ? (
+            <span className="surface-footer-receipt-line" data-tone={delivery.tone} role="status" data-testid="hand-launch-receipt">
+              {delivery.label}
+            </span>
+          ) : launchError ? (
             <span className="surface-footer-receipt-line" data-tone="danger" role="alert" data-testid="hand-launch-refused">
               NOT LAUNCHED · {refusalToken(launchError, agent)}
             </span>
           ) : (
             <span className="surface-footer-receipt-line">
-              {AGENT_NAME[agent].toUpperCase()}{preview ? ` · ${mode}` : ""}
+              {AGENT_NAME[actual].toUpperCase()}{preview ? ` · ${mode}` : ""}
             </span>
           )
         }
         verbs={
-          <>
-            <Button dense variant="ghost" onClick={close}>Cancel</Button>
-            <Button
-              dense
-              variant="primary"
-              loading={launching}
-              disabled={!canLaunch}
-              onClick={() => void launch()}
-              data-testid="hand-launch"
-            >
-              Launch
-            </Button>
-          </>
+          launched ? (
+            <Button dense variant="ghost" onClick={close}>Close</Button>
+          ) : (
+            <>
+              <Button dense variant="ghost" onClick={close}>Cancel</Button>
+              <Button
+                dense
+                variant="primary"
+                loading={launching}
+                disabled={!canLaunch}
+                onClick={() => void launch()}
+                data-testid="hand-launch"
+              >
+                Launch
+              </Button>
+            </>
+          )
         }
       />
     </DeskWindowFrame>

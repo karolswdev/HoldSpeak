@@ -142,3 +142,37 @@ describe("the Agents card", () => {
     expect(codeWords("agent_settings_path_changed")).toBe("AGENT SETTINGS PATH CHANGED");
   });
 });
+
+
+/* Astra round 1 on #905: the producer's own detect answer (detect_agents on a
+ * home with both agents hooked and no tmux), copied verbatim. */
+const REAL_NO_TMUX = {"agents": [{"id": "claude", "label": "Claude Code", "installed": true, "path": "/opt/bin/claude", "hooks": "installed", "hooks_path": "/tmp/hs905-detect.AHfklN/.claude/settings.json", "signed_in": "unknown", "signed_in_from": null, "version": null, "ready": true, "verb": "Use it"}, {"id": "codex", "label": "Codex", "installed": true, "path": "/opt/bin/codex", "hooks": "installed", "hooks_path": "/tmp/hs905-detect.AHfklN/.codex/hooks.json", "signed_in": "unknown", "signed_in_from": null, "version": null, "ready": true, "verb": "Use it"}], "tmux": {"installed": false, "path": null, "version": null, "install_hint": "brew install tmux"}, "holdspeak": {"path": "/opt/bin/holdspeak", "hook_executable": "/Users/karol/.local/bin/holdspeak", "hook_runs": true}} as unknown as AgentsDetect;
+
+describe("readiness stays honest (Astra #905)", () => {
+  it("hooks in but tmux missing: no READY fold; TMUX NOT INSTALLED and Check again stay", async () => {
+    state = REAL_NO_TMUX;
+    render(<Harness />);
+    const card = await screen.findByTestId("firstrun-agents");
+    await within(card).findByText("TMUX NOT INSTALLED");
+    expect(within(card).queryByTestId("firstrun-agents-receipt")).toBeNull();
+    expect(card.textContent).not.toContain("AGENTS READY");
+    expect(within(card).getByTestId("firstrun-agents-check")).toBeTruthy();
+  });
+
+  it("a failed read is a token beside Try again, never the request's sentence", async () => {
+    mocks.apiFetch.mockRejectedValue(new ApiError(503, "HoldSpeak could not complete that request (HTTP 503).", {}));
+    render(<Harness />);
+    const card = await screen.findByTestId("firstrun-agents");
+    await within(card).findByText("CAN'T CHECK");
+    expect(within(card).getByTestId("firstrun-agents-unread").textContent).toBe("HTTP 503");
+    expect(card.textContent).not.toContain("HoldSpeak could not complete that request");
+    expect(within(card).getByRole("button", { name: "Try again" })).toBeTruthy();
+  });
+
+  it("no answer at all reads HUB OFFLINE", async () => {
+    mocks.apiFetch.mockRejectedValue(new TypeError("Failed to fetch"));
+    render(<Harness />);
+    const card = await screen.findByTestId("firstrun-agents");
+    expect((await within(card).findByTestId("firstrun-agents-unread")).textContent).toBe("HUB OFFLINE");
+  });
+});

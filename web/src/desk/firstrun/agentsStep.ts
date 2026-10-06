@@ -10,7 +10,7 @@
  * HOOKS IN is the hub's fact: after the press the face reads the list again.
  * The step is optional: no agent installed never blocks Ready. */
 import { useCallback, useEffect, useState } from "react";
-import { ApiError, apiFetch, readableError } from "../../lib/api";
+import { ApiError, apiFetch } from "../../lib/api";
 
 export const AGENTS_PATH = "/api/onboarding/agents";
 export const AGENTS_USE_PATH = "/api/onboarding/agents/use";
@@ -69,7 +69,9 @@ export function useAgentsStep() {
       setDetect(await apiFetch<AgentsDetect>(AGENTS_PATH));
       setUnread("");
     } catch (error) {
-      setUnread(readableError(error));
+      // A token, never the request's sentence: the status when the hub
+      // answered, HUB OFFLINE when it did not.
+      setUnread(error instanceof ApiError ? `HTTP ${error.status}` : "HUB OFFLINE");
     } finally {
       setChecking(false);
     }
@@ -115,8 +117,9 @@ export function useAgentsStep() {
     refused,
     busy,
     checking,
-    // Done: at least one agent, and every installed agent has its hooks in.
-    done: detect !== null && installed.length > 0 && pending.length === 0,
+    // Done: at least one agent, every installed agent has its hooks in, and
+    // tmux is here (every launch runs in tmux; without it none can start).
+    done: detect !== null && installed.length > 0 && pending.length === 0 && Boolean(detect?.tmux.installed),
     read,
     install,
   };
