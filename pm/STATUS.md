@@ -43,16 +43,13 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Memory: live meeting analysis and voice resolve read no memory (a lookup is 100–400 ms against a 50 ms bar) | — | — |
 | Memory: the decision-promotion self-recall test passes before the fix; mint through DecisionLifecycleService.promote (Astra, #830) | — | — |
 | Memory: not measured on the owner's real desk; new items take up to 120 s to become searchable by meaning | — | — |
-| Bus: background writers (calendar ingest, heartbeat sweep, cadence tick) and MCP tools outside the registry send no frame; announcements carry an empty id and op "create" on some routes | — | — |
-| Needs you (#872 in review): the shade and palette show a per-Room count; the Chair caption "BRIEF · N THINGS WAITING" is a different count | — | — |
-| Times: about 150 writers still store timestamps with no zone; a schedule edited under the old code keeps a wrong time until saved again | — | — |
-| Sent Brief: People text stays in old prepared and discarded rows on disk; the re-render check covers the Brief only | — | — |
-| The roadmaps read takes 2–3 s on each desk refresh | — | — |
 | The Dock overflows at 1440 with five projects (the ratified shelf scrolls; Places and Record go off the right edge): owner's design call pending — recommendation: pin Places and Record; Calendar cannot tell no-vision-model from a failed model (the hub sends one code); Ask shows "GROUNDED ON 0 OF 0" (a counter of zero); older thread rows and task-resume Ask answers show no route lamp | owner / — | — |
+| Times: a ZoneInfo datetime with fold=1 still loses the fold (timestamps.py:160); about 68 rarer time compares stay textual (one shape per column after the backfill); old rows not rewritten in sync-written columns; a calendar refresh announces every time | — | — |
 | Decisions (housekeeping #867): fold the older ReactionService watch system into WatchService (Workbench automations are its only face); three primitives/decisions routes are unreachable in the hub; six routes have no caller (incl. POST /api/setup/local-ai/cancel); connector_fixtures.py lives in the product package; heartbeat.run_now builds WatchService without the Jira adapter; a test left tmux session hs10605_kill_62847 on the owner's server | owner | — |
 
 ## Last merged (newest first)
 
+- #872 — Backend coherence: one needs-you number on every face (palette re-reads on open and on change); roadmaps read cached (~60 ms warm); every stored stamp aware UTC (census fence), DST-safe, a one-time backfill of old local stamps (sync-written columns excluded) and instant compares on the queues; People text scrubbed from old Brief sends; background writers and MCP announce
 - #876 — Onboarding on one screen (owner pick A): Calendar and Connections cards under the first-run three; Ready on top with his name and three verbs (Record the next meeting, Dictate, Ask about this week); every card lit; macOS prompt only on press
 - #875 — Route in footer (owner pick C): a lamp per Ask/chat turn from its receipt (least private sent attempt; FALLBACK marked); the footer carries the last turn's host, model and its own receipt; failed Asks keep their route; one egress classifier everywhere
 - #871 — Memory leftovers: every read tool replays as a re-read stub (classed by its originating call); the routed Thought reflects pages and observations; thread time bounds as instants; dead runners stop holding extraction; secrets are never search keys; hand-attached sources redacted (schema text kept)
