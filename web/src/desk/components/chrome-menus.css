@@ -503,7 +503,10 @@
 .desk-next .desk-deck-row.is-selected kbd,
 .desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-glyph,
 .desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-kind,
-.desk-next .desk-deck-row:hover:not(.is-ghost) kbd {
+.desk-next .desk-deck-row:hover:not(.is-ghost) kbd,
+.desk-next .desk-deck-row:focus-visible:not(.is-ghost) .desk-deck-glyph,
+.desk-next .desk-deck-row:focus-visible:not(.is-ghost) .desk-deck-kind,
+.desk-next .desk-deck-row:focus-visible:not(.is-ghost) kbd {
   color: var(--text-on-accent);
 }
 /* ⌘K memory results, option B "Two-line hit" (ratified 2026-10-05): under
@@ -538,11 +541,14 @@
 .desk-next .desk-deck-row.is-selected .desk-deck-snippet,
 .desk-next .desk-deck-row.is-selected .desk-deck-day,
 .desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-snippet,
-.desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-day {
+.desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-day,
+.desk-next .desk-deck-row:focus-visible:not(.is-ghost) .desk-deck-snippet,
+.desk-next .desk-deck-row:focus-visible:not(.is-ghost) .desk-deck-day {
   color: var(--text-on-accent);
 }
 .desk-next .desk-deck-row.is-selected .surface-foundby,
-.desk-next .desk-deck-row:hover:not(.is-ghost) .surface-foundby {
+.desk-next .desk-deck-row:hover:not(.is-ghost) .surface-foundby,
+.desk-next .desk-deck-row:focus-visible:not(.is-ghost) .surface-foundby {
   border-color: currentColor;
   color: var(--text-on-accent);
 }

@@ -220,6 +220,43 @@ class TestPaletteTwoLineHit:
                 assert _contrast(ink["bg"], ink["snip"]) >= 4.5, ink
                 page.locator("#desk-tool-shelf").screenshot(
                     path=str(SHOTS / f"palette-two-line-{width}-memory-selected.png"))
+                # #882 review 2: a hovered row and a keyboard-focused row ink every
+                # child on the plate (snippet, FoundBy, day), as rendered.
+                inks = """(sel) => { const r = document.querySelector(sel);
+                  const num = (c) => c.match(/[\\d.]+/g).slice(0, 3).map(Number);
+                  const ink = (q) => num(getComputedStyle(r.querySelector(q)).color);
+                  return { bg: num(getComputedStyle(r).backgroundColor), selected: r.classList.contains('is-selected'),
+                           focus: r.matches(':focus-visible'), hover: r.matches(':hover'),
+                           snip: ink('.desk-deck-snippet'), by: ink('.surface-foundby'), day: ink('.desk-deck-day') }; }"""
+
+                def plate_inks(state: dict, where: str) -> None:
+                    for child in ("snip", "by", "day"):
+                        assert _contrast(state["bg"], state[child]) >= 4.5, (where, child, state)
+
+                if width >= 720:
+                    page.locator(MEANING_ROW).hover()
+                    page.wait_for_timeout(400)
+                    hovered = page.evaluate(inks, MEANING_ROW)
+                    # The deck moves its selection to the row under the pointer
+                    # (onPointerEnter), so a hovered row is also the selected one.
+                    assert hovered["hover"], hovered
+                    plate_inks(hovered, "hover")
+                    page.mouse.move(2, 2)
+                focused = None
+                page.locator("[aria-controls=desk-palette-listbox]").focus()
+                for _ in range(30):
+                    page.keyboard.press("Tab")
+                    state = page.evaluate("""() => { const a = document.activeElement;
+                      return a && a.id && a.id.startsWith('desk-palette-option-memory:')
+                        && !a.classList.contains('is-selected') && a.matches(':focus-visible') ? '#' + CSS.escape(a.id) : null; }""")
+                    if state:
+                        page.wait_for_timeout(400)   # the plate's colour transition settles
+                        focused = page.evaluate(inks, state)
+                        break
+                assert focused and focused["focus"] and not focused["selected"], "no keyboard-focused unselected memory row"
+                assert focused["bg"] != [0, 0, 0], focused   # the plate is painted (not transparent)
+                plate_inks(focused, "focus-visible")
+                page.locator("#desk-tool-shelf").screenshot(path=str(SHOTS / f"palette-two-line-{width}-focused.png"))
                 assert not errors, errors
             finally:
                 browser.close()

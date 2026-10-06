@@ -229,3 +229,97 @@ describe("the selected palette row reads ≥ 4.5:1", () => {
     expect(contrast(token("--surface-3"), token(ink))).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+/* ── Astra's review of #882 (2026-10-05): four repros, each a fence ── */
+const partsOf = (snippet: string, query: string, title = "") =>
+  snippetParts(snippet, query, title).map((p) => [p.text, p.mark ? "mark" : p.redacted ? "redacted" : ""]);
+
+describe("#882 review 1: only the title and its separator leave the snippet", () => {
+  it("her repro: `Atlas: -5%` keeps the minus", async () => {
+    hits = [{ kind: "meeting", source_ref: "meeting:review-negative", title: "Atlas",
+      snippet: "Atlas: -5% <mark>rollback</mark> capacity.", retrieval_origin: "lexical" }];
+    await search("rollback");
+    expect(row(/Atlas/).querySelector(".desk-deck-snippet")?.textContent).toBe("-5% rollback capacity.");
+  });
+
+  it.each([
+    ["Atlas -5% drop", "-5% drop"],
+    ["Atlas — -3 days", "-3 days"],
+    ["Atlas: .5 of the budget", ".5 of the budget"],
+    ["Atlas, Priya and Marek", "Atlas, Priya and Marek"], // not a separator: whole
+    ["Atlas.", "Atlas."],                                 // nothing after: whole
+  ])("%s → %s", (snippet, shown) => {
+    expect(snippetParts(snippet, "zz", "Atlas").map((p) => p.text).join("")).toBe(shown);
+  });
+});
+
+describe("#882 review 3: a [redacted] marker is whole and never marked", () => {
+  it("her repro: the server marked the marker's inside", async () => {
+    hits = [{ kind: "meeting", source_ref: "meeting:review-redacted", title: "Imported transcript",
+      snippet: "The [<mark>redacted</mark>] plan is approved.", retrieval_origin: "lexical" }];
+    await search("redacted");
+    const option = row(/Imported transcript/);
+    expect(marks(option)).toEqual([]);
+    expect([...option.querySelectorAll(".desk-deck-redacted")].map((r) => r.textContent)).toEqual(["[redacted]"]);
+    expect(option.querySelector(".desk-deck-snippet")?.textContent).toBe("The [redacted] plan is approved.");
+  });
+
+  it("a server mark only inside a marker counts as no mark: the question's words outside are marked", () => {
+    expect(partsOf("The [<mark>redacted</mark>] rollback plan", "redacted rollback")).toEqual([
+      ["The ", ""], ["[redacted]", "redacted"], [" ", ""], ["rollback", "mark"], [" plan", ""],
+    ]);
+  });
+
+  it("a server mark across a marker keeps its words outside the marker only", () => {
+    expect(partsOf("x <mark>key [redac</mark>ted] y", "zz")).toEqual([
+      ["x ", ""], ["key ", "mark"], ["[redacted]", "redacted"], [" y", ""],
+    ]);
+  });
+});
+
+describe("#882 review 4: a length-changing case never shifts a mark", () => {
+  it("her repro: `İ rollback` marks exactly `rollback`", async () => {
+    hits = [{ kind: "meeting", source_ref: "meeting:review-unicode", title: "Deploy window",
+      snippet: "Owner: İ rollback plan; password=reviewSecret882", retrieval_origin: "lexical" }];
+    await search("rollback");
+    expect(marks(row(/Deploy window/))).toEqual(["rollback"]);
+  });
+
+  it.each(["ß", "ẞ", "ﬁ", "İİ"])("%s before the word: the mark is the word", (lead) => {
+    const parts = snippetParts(`${lead} rollback plan`, "rollback");
+    expect(parts.filter((p) => p.mark).map((p) => p.text)).toEqual(["rollback"]);
+    expect(parts.map((p) => p.text).join("")).toBe(`${lead} rollback plan`);
+  });
+
+  it("a query in another case marks the original letters", () => {
+    expect(partsOf("Die Maße sind ROLLBACK", "maße rollback").filter(([, k]) => k === "mark").map(([t]) => t))
+      .toEqual(["Maße", "ROLLBACK"]);
+  });
+});
+
+/* review 2: every state that paints the plate also inks every child. */
+function inkFor(selector: string): string | null {
+  for (const block of chromeMenusCss.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+    const selectors = block[1].split(",").map((s) => s.replace(/\/\*[\s\S]*?\*\//g, "").trim());
+    if (!selectors.includes(selector)) continue;
+    const m = /(?:^|[;\s{])color:\s*var\((--[\w-]+)\)/.exec(block[2]);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+describe("#882 review 2: the plate's ink covers selected, hovered and focused rows", () => {
+  const plate = ruleDecl(".desk-next .desk-deck-row.is-selected,\n", "background");
+  const states = [".is-selected", ":hover:not(.is-ghost)", ":focus-visible:not(.is-ghost)"];
+  const children = [".desk-deck-snippet", ".desk-deck-day", ".surface-foundby", ".desk-deck-kind", ".desk-deck-glyph"];
+  it.each(states.flatMap((s) => children.map((c) => [s, c])))("%s %s ≥ 4.5:1", (state, child) => {
+    const ink = inkFor(`.desk-next .desk-deck-row${state} ${child}`);
+    expect(ink, `no ink rule for ${state} ${child}`).not.toBeNull();
+    expect(contrast(token(plate), token(ink!))).toBeGreaterThanOrEqual(4.5);
+  });
+  it("each state paints the plate", () => {
+    const at = chromeMenusCss.indexOf(".desk-next .desk-deck-row.is-selected,\n");
+    const head = chromeMenusCss.slice(at, chromeMenusCss.indexOf("{", at));
+    for (const state of states) expect(head).toContain(`.desk-next .desk-deck-row${state}`);
+  });
+});
