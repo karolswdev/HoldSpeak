@@ -1,6 +1,6 @@
 # The Conductor canvas: the faces
 
-**Status: DRAFT for the owner's ruling. NOT RATIFIED** (UX-CANON A.2). Nothing in product code changes. Every change is in `harness/`.
+**Status: RATIFIED by the owner 2026-10-06 ("Yes I approve"). Build what is drawn: default agent Claude Code; the launch sheet shows on every hand-off.** (UX-CANON A.2). Nothing in product code changes. Every change is in `harness/`.
 
 Source: `docs/internal/CONDUCTOR.md` (the loop, "F faces", "The Control-mode mapping"). Method: the story-15 canvas (`pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-15-canvas/`). Its runner and C1's fences are imported unchanged (`harness/board.py`).
 
