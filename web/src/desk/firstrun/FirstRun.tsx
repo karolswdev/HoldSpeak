@@ -8,7 +8,10 @@
  * YDTpkaJqFs3hyrZ4g581Mx §1): Calendar and Connections are two more cards
  * on the same screen. One card at a time is lit (the next press). When
  * every step is done, Ready goes to the top: "Ready, <his name>", the
- * success chips, and three verbs; every card stays, selected. */
+ * success chips, and three verbs; every card stays, selected.
+ *
+ * Skip (owner ruling 2026-10-06): Calendar and Connections each have one
+ * Skip. A skipped step counts as done for Ready; Settings sets it up later. */
 import { useCallback, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
@@ -45,6 +48,8 @@ import { CalendarCard } from "./CalendarCard";
 import { ConnectionsCard } from "./ConnectionsCard";
 import { useCalendarStep } from "./calendarStep";
 import { useConnectionsStep } from "./connectionsStep";
+import { useSkips, type SkippableStep, type Skips } from "./skips";
+import type { SkipProps } from "./Card";
 import { Ready } from "./Ready";
 import "../../features/concierge/concierge.css";
 import "./firstrun.css";
@@ -368,6 +373,15 @@ function FirstWordsCard({
   );
 }
 
+function skipProps(skips: Skips, step: SkippableStep): SkipProps {
+  return {
+    skipped: skips[step],
+    busy: skips.busy === step,
+    error: skips.error?.step === step ? skips.error.reason : "",
+    onSkip: () => void skips.skip(step),
+  };
+}
+
 export function FirstRun() {
   const ai = useLocalAi();
   const owner = useOwnerName();
@@ -384,19 +398,24 @@ export function FirstRun() {
   const proposals = useProposals();
   const calendar = useCalendarStep();
   const connections = useConnectionsStep();
+  const skips = useSkips();
+  // Each optional step is done when it is in use, or when he skipped it.
+  const calendarSkipped = skips.calendar && !calendar.inUse;
+  const calendarDone = calendar.inUse || calendarSkipped;
+  const connectionsDone = connections.done || skips.connections;
   // The C1 part is done: models here, his name, his words kept. Its three
   // cards fold to their receipts (canvas A: "the three C1 cards, finished").
   const c1Done = aiReady && owner.isSet && take.kept;
   // While the ingest still reads a source just added, the Door's next
   // meeting may change: Ready waits for the read (calendarStep `follow`).
-  const ready = c1Done && calendar.inUse && !calendar.following && connections.done;
+  const ready = c1Done && skips.loaded && calendarDone && !calendar.following && connectionsDone;
   // His words are back and not kept yet: they are the face's display fact.
   const heard = take.state === "heard" && !take.kept;
   // One lit card: the next press. First words lights itself while it waits
   // for his sentence; then the Calendar; then the Connections.
   const wordsPending = speech && !take.kept;
-  const calendarLit = !ready && !wordsPending && calendar.loaded && !calendar.inUse;
-  const connectionsLit = !ready && !wordsPending && calendar.inUse && connections.loaded && !connections.done;
+  const calendarLit = !ready && !wordsPending && skips.loaded && calendar.loaded && !calendarDone;
+  const connectionsLit = !ready && !wordsPending && skips.loaded && calendarDone && connections.loaded && !connectionsDone;
   return (
     <section
       className="firstrun"
@@ -413,6 +432,7 @@ export function FirstRun() {
           name={owner.name}
           heardText={take.take?.text ?? ""}
           calendar={calendar}
+          calendarSkipped={calendarSkipped}
           connections={connections}
           finish={take.finish}
           busy={take.keeping}
@@ -428,8 +448,8 @@ export function FirstRun() {
         <FirstWordsCard ready={speech} take={take} />
       </div>
       <div className="firstrun-cards firstrun-cards-two">
-        <CalendarCard step={calendar} lit={calendarLit} />
-        <ConnectionsCard step={connections} lit={connectionsLit} />
+        <CalendarCard step={calendar} lit={calendarLit} skip={skipProps(skips, "calendar")} />
+        <ConnectionsCard step={connections} lit={connectionsLit} skip={skipProps(skips, "connections")} />
       </div>
       <Found proposals={proposals} />
       {take.message && ready ? (

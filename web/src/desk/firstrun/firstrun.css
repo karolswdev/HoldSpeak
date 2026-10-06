@@ -133,6 +133,11 @@
   color: var(--text);
 }
 
+/* Skip (owner ruling 2026-10-06): the quiet verb at the card's end. */
+.firstrun-card-foot > .firstrun-skip {
+  margin-left: auto;
+}
+
 .firstrun-fail {
   display: flex;
   flex-wrap: wrap;

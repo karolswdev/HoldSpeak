@@ -3,7 +3,12 @@
  * step is done: "Ready, <his name>", one success chip per step, and three
  * verbs from his own data. "Record <next meeting> · <time>" arms the
  * recording of the next meeting on his calendar; with no meeting there is
- * no such verb (no dead verbs). Each verb hands off to the Desk. */
+ * no such verb (no dead verbs). Each verb hands off to the Desk.
+ *
+ * Calendar skipped (owner ruling 2026-10-06): no CALENDAR chip, no meeting
+ * verb. Ready offers Dictate, the Desk's own Record (record now, the live
+ * window rides along), and Ask AI with an empty draft: "Ask about this
+ * week" asks the calendar, and there is none. */
 import { useEffect, useState } from "react";
 import { ReadyStrip, StartVerb, StartVerbs, StateChip, heardWordCount, countToken, type ReadyStripItem } from "../surface";
 import { readDurableDraft, writeDurableDraft } from "../../lib/durableDraft";
@@ -17,7 +22,10 @@ import { PROVIDER_NAME, type ConnectionsStep } from "./connectionsStep";
 const ASK_SCOPE = "desk-ask";
 export const ASK_THIS_WEEK = "What is on my calendar this week?";
 /** The Ask application's own glyph (the manifest is the one source). */
-const ASK_GLYPH = DESK_APPLICATIONS.find((app) => app.action === "ask")?.glyph ?? "";
+const ASK_APP = DESK_APPLICATIONS.find((app) => app.action === "ask");
+const ASK_GLYPH = ASK_APP?.glyph ?? "";
+/** "Ask AI": the Ask application's own name (the manifest is the one source). */
+const ASK_LABEL = ASK_APP?.label ?? "Ask";
 
 /** "Karol Sane" -> "Karol". */
 export function firstName(name: string): string {
@@ -30,7 +38,7 @@ export function readyItems({
   connections,
 }: {
   heardText: string;
-  calendar: Pick<CalendarStep, "week">;
+  calendar: Pick<CalendarStep, "week"> & { skipped?: boolean };
   connections: Pick<ConnectionsStep, "providers">;
 }): ReadyStripItem[] {
   const words = countToken(heardWordCount(heardText), "WORD");
@@ -38,7 +46,9 @@ export function readyItems({
   return [
     { key: "local-ai", label: "LOCAL AI · ON DEVICE" },
     { key: "heard", label: words ? `HEARD · ${words}` : "HEARD" },
-    { key: "calendar", label: calendar.week > 0 ? `CALENDAR · ${calendar.week} THIS WEEK` : "CALENDAR · IN USE" },
+    ...(calendar.skipped
+      ? []
+      : [{ key: "calendar", label: calendar.week > 0 ? `CALENDAR · ${calendar.week} THIS WEEK` : "CALENDAR · IN USE" }]),
     ...(sendTo.length ? [{ key: "send-to", label: `SEND TO · ${sendTo.join(" · ")}` }] : []),
   ];
 }
@@ -47,6 +57,7 @@ export function Ready({
   name,
   heardText,
   calendar,
+  calendarSkipped = false,
   connections,
   finish,
   busy,
@@ -54,20 +65,21 @@ export function Ready({
   name: string;
   heardText: string;
   calendar: CalendarStep;
+  calendarSkipped?: boolean;
   connections: ConnectionsStep;
   finish: (then?: () => void | Promise<unknown>) => Promise<boolean>;
   busy: boolean;
 }) {
-  const [pressed, setPressed] = useState<"" | "record" | "dictate" | "ask">("");
+  const [pressed, setPressed] = useState<"" | "record" | "record-now" | "dictate" | "ask">("");
   const [notArmed, setNotArmed] = useState(false);
-  const next = calendar.next;
+  const next = calendarSkipped ? null : calendar.next;
   const short = firstName(name);
   const { readDoor } = calendar;
 
   // The next meeting is the Door's answer NOW: read it when Ready shows.
   useEffect(() => {
-    void readDoor();
-  }, [readDoor]);
+    if (!calendarSkipped) void readDoor();
+  }, [readDoor, calendarSkipped]);
 
   const record = async () => {
     if (!next) return;
@@ -96,10 +108,20 @@ export function Ready({
     await finish(() => openSurfaceOr("dictate", "/dictation"));
     setPressed("");
   };
+  /** The Desk's own Record (DeskStartActions): record now, with the live window. */
+  const recordNow = async () => {
+    setPressed("record-now");
+    await finish(() => {
+      void useDesk.getState().startRecording();
+      openSurfaceOr("record-live", "/live");
+    });
+    setPressed("");
+  };
   const ask = async () => {
     setPressed("ask");
     await finish(() => {
-      if (!readDurableDraft(ASK_SCOPE)?.text.trim()) writeDurableDraft(ASK_SCOPE, ASK_THIS_WEEK);
+      // No calendar: the week's question has no answer, so no draft is set.
+      if (!calendarSkipped && !readDurableDraft(ASK_SCOPE)?.text.trim()) writeDurableDraft(ASK_SCOPE, ASK_THIS_WEEK);
       useDesk.getState().openAsk();
     });
     setPressed("");
@@ -108,7 +130,7 @@ export function Ready({
   return (
     <div className="firstrun-ready" data-testid="firstrun-ready">
       <h1 className="surface-display firstrun-heading">{short ? `Ready, ${short}` : "Ready"}</h1>
-      <ReadyStrip items={readyItems({ heardText, calendar, connections })} />
+      <ReadyStrip items={readyItems({ heardText, calendar: { week: calendar.week, skipped: calendarSkipped }, connections })} />
       <StartVerbs ariaLabel="Start">
         {next ? (
           <StartVerb
@@ -130,8 +152,13 @@ export function Ready({
         >
           Dictate
         </StartVerb>
+        {calendarSkipped ? (
+          <StartVerb glyph="●" loading={pressed === "record-now"} disabled={busy} onClick={() => void recordNow()}>
+            Record
+          </StartVerb>
+        ) : null}
         <StartVerb glyph={ASK_GLYPH} loading={pressed === "ask"} disabled={busy} onClick={() => void ask()}>
-          Ask about this week
+          {calendarSkipped ? ASK_LABEL : "Ask about this week"}
         </StartVerb>
       </StartVerbs>
       {notArmed ? (

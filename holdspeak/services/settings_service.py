@@ -344,6 +344,7 @@ class SettingsService:
             MeetingConfig,
             ModelConfig,
             OwnerConfig,
+            FirstRunConfig,
             PresenceConfig,
             RailsObserverConfig,
             ThoughtsConfig,
@@ -1001,9 +1002,19 @@ class SettingsService:
             name=str(owner_data.get("name", "") or ""), aliases=raw_aliases,
         )
 
+        # First run: the optional steps he skipped. Unknown names drop.
+        first_run_data = merged.get("first_run", {}) or {}
+        if not isinstance(first_run_data, dict):
+            return {"success": False, "error": "first_run must be an object"}
+        skipped = first_run_data.get("skipped", [])
+        if not isinstance(skipped, list):
+            return {"success": False, "error": "first_run.skipped must be a list"}
+        first_run_cfg = FirstRunConfig(skipped=skipped)
+
         updated = replace(
             current,
             owner=owner_cfg,
+            first_run=first_run_cfg,
             hotkey=HotkeyConfig(**hotkey_data),
             model=ModelConfig(**model_data),
             ui=UIConfig(**ui_data),

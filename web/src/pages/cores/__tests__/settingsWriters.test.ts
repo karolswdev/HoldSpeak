@@ -69,10 +69,13 @@ describe("the subtree-writer allowlist (HS-130-07)", () => {
     // owns the companion-repo key — each is the ONE writer of its subtree and
     // those rows no longer render in SettingsCore. No other writer is
     // permitted. First run C1: the You card writes ONLY the `owner`
-    // subtree (his name and aliases), from desk/firstrun/ownerName.ts.
+    // subtree (his name and aliases), from desk/firstrun/ownerName.ts. First
+    // run Skip (owner ruling 2026-10-06) writes ONLY `first_run.skipped`,
+    // from desk/firstrun/skips.ts.
     expect(writers).toEqual([
       "desk/components/DeliveryBoard.tsx",
       "desk/firstrun/ownerName.ts",
+      "desk/firstrun/skips.ts",
       "pages/cores/CommandsCore.tsx",
       "pages/cores/SettingsCore.tsx",
       "pages/cores/history/MeetingsConfig.tsx",
