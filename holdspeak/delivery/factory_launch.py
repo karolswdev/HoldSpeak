@@ -69,6 +69,58 @@ DEFAULT_REGISTER_TIMEOUT_SECONDS = 120
 #: Claude Code's folder trust, in the pane).
 REGISTRATION_WAIT_SECONDS = 30 * 60
 
+#: How long a launch looks for Claude Code's folder-trust prompt on the pane
+#: it spawned. No known prompt in this window: ``trust_state: not_seen``, and
+#: nothing is typed.
+TRUST_WAIT_SECONDS = 20.0
+
+#: How often the launch waiter looks at the pane and the rider registry.
+LAUNCH_POLL_SECONDS = 1.0
+
+#: Claude Code's folder-trust prompt, as it reads on screen (2.1.x, and the
+#: older wording). The prompt is answered only when one of these is on the
+#: pane AND the pane names the worktree path this launch created.
+TRUST_PROMPT_MARKERS = (
+    "Is this a project you created or one you trust",
+    "Do you trust the files in this folder",
+)
+#: The confirming choice of that prompt.
+TRUST_CONFIRM_LABELS = ("Yes, I trust this folder", "Yes, proceed")
+_TRUST_CURSOR = "\u276f"  # the ❯ that marks the selected choice
+
+
+def trust_prompt_keys(lines: list[str], worktree_path: str) -> Optional[list[str]]:
+    """The keys that confirm the folder-trust prompt for ``worktree_path``.
+
+    ``None`` when the pane does not show a known trust prompt, when it names
+    another path, or when the cursor is not on (or directly above) the
+    confirming choice: then nothing is typed. ``["Enter"]`` when the cursor
+    is on the confirming choice, ``["Down"]`` when it is on the choice just
+    above it (the caller looks again before it presses Enter)."""
+    text = "\n".join(lines)
+    if not any(marker in text for marker in TRUST_PROMPT_MARKERS):
+        return None
+    compact = "".join(text.split())
+    path = str(worktree_path)
+    candidates = {path}
+    home = str(Path.home())
+    if path.startswith(home + "/"):
+        candidates.add("~" + path[len(home):])
+    if not any("".join(c.split()) in compact for c in candidates if c):
+        return None
+    yes_index = next(
+        (i for i, line in enumerate(lines) if any(label in line for label in TRUST_CONFIRM_LABELS)),
+        None,
+    )
+    cursor_index = next((i for i, line in enumerate(lines) if _TRUST_CURSOR in line), None)
+    if yes_index is None or cursor_index is None:
+        return None
+    if cursor_index == yes_index:
+        return ["Enter"]
+    if cursor_index == yes_index - 1:
+        return ["Down"]
+    return None
+
 #: How many launch records the ledger retains (newest kept).
 LAUNCH_LEDGER_MAX_ROWS = 200
 
@@ -946,7 +998,7 @@ class LaunchService:
         *,
         after_registration: bool = False,
         registration_timeout: float = REGISTRATION_WAIT_SECONDS,
-        poll_seconds: float = 1.0,
+        poll_seconds: Optional[float] = None,
     ) -> dict[str, Any]:
         """Admit, approve and execute one ``process.spawn`` owner gesture.
 
@@ -1009,7 +1061,8 @@ class LaunchService:
                 record = self._ledger.update(launch_id, instruction_state="pending") or record
                 self._deliver_after_registration(
                     launch_id, record, text, principal, request, operation_id,
-                    timeout=registration_timeout, poll_seconds=poll_seconds,
+                    timeout=registration_timeout,
+                    poll_seconds=LAUNCH_POLL_SECONDS if poll_seconds is None else poll_seconds,
                 )
                 self._monitor_completion(operation_id, launch_id, str(record.get("session") or ""), node)
                 return {
@@ -1047,6 +1100,7 @@ class LaunchService:
         armed = coder_steering.arm(
             str(record.get("session") or ""),
             str(target.get("pane_id") or ""),
+            runner=self._runner,
         )
         if armed.get("status") != "armed":
             raise LaunchRefused(
@@ -1070,12 +1124,60 @@ class LaunchService:
             principal,
         )
 
+    def _worktree_path(self, record: Mapping[str, Any]) -> str:
+        """The server-side path of the launch's worktree (never on the wire)."""
+        source = self._registry.get(str(record.get("source_id") or ""))
+        if source is None:
+            return ""
+        worktree = next(
+            (wt for wt in source.worktrees if wt.worktree_id == record.get("worktree_id")), None
+        )
+        if worktree is None:
+            return ""
+        try:
+            return str(Path(worktree.path).resolve())
+        except OSError:
+            return str(worktree.path)
+
+    def _send_keys(
+        self, record: Mapping[str, Any], keys: list[str], principal: Any,
+        request: Mapping[str, Any], operation_id: str,
+    ) -> dict[str, Any]:
+        """Named keys to the spawned pane as a child ``process.input``
+        (pane identity re-checked by the steering delivery path)."""
+        target = record.get("target") or {}
+        armed = coder_steering.arm(
+            str(record.get("session") or ""), str(target.get("pane_id") or ""),
+            runner=self._runner,
+        )
+        if armed.get("status") != "armed":
+            raise LaunchRefused(str(armed.get("status") or "arm_refused"))
+        return self._commands.submit_process_input(
+            {
+                "node_id": self._local_node_id,
+                "target_id": target.get("target_id"),
+                "target_generation": target.get("target_generation"),
+                "operation": {"family": "coder_steering", "verb": "terminal.keys"},
+                "payload": {
+                    "keys": list(keys),
+                    "session_key": record.get("session"),
+                    "agent": str(request.get("agent_profile_id") or request.get("profile_id") or "agent"),
+                },
+                "parent_operation_id": operation_id,
+            },
+            principal,
+        )
+
     def _deliver_after_registration(
         self, launch_id: str, record: Mapping[str, Any], text: str, principal: Any,
         request: Mapping[str, Any], operation_id: str,
         *, timeout: float, poll_seconds: float,
     ) -> None:
         """Type the first message once the rider registers the session.
+
+        While it waits, it answers Claude Code's folder-trust prompt for
+        exactly this launch's worktree (``trust_state``: ``answered``,
+        ``not_seen`` or ``timeout``): the owner's press armed this pane.
 
         ``instruction_state`` on the launch record: ``pending`` → ``sent``,
         or ``expired`` (no registration in ``timeout``), ``session_gone``
@@ -1084,6 +1186,41 @@ class LaunchService:
         ``pending``, and the owner types the brief himself."""
         attempt_id = str(record.get("attempt_id") or "")
         session = str(record.get("session") or "")
+        worktree_path = self._worktree_path(record)
+        trust_deadline = time.monotonic() + TRUST_WAIT_SECONDS  # read at call time (tests shorten it)
+        trust = {"state": None if worktree_path else "not_seen", "seen": False, "keys": 0}
+
+        def look_for_trust() -> None:
+            """One look at the pane: answer this launch's trust prompt, once."""
+            if trust["state"] is not None:
+                return
+            if time.monotonic() >= trust_deadline:
+                trust["state"] = "timeout" if trust["seen"] else "not_seen"
+                self._ledger.update(launch_id, trust_state=trust["state"])
+                return
+            pane = str((record.get("target") or {}).get("pane_id") or "")
+            peek = coder_steering.peek_pane(pane, lines=60, runner=self._runner)
+            keys = trust_prompt_keys(list(peek.get("lines") or []), worktree_path)
+            if keys is None:
+                if trust["seen"]:
+                    # The prompt was ours and is gone after the confirm.
+                    trust["state"] = "answered"
+                    self._ledger.update(launch_id, trust_state="answered")
+                return
+            trust["seen"] = True
+            if trust["keys"] >= 2:
+                return  # one Down and one Enter at most: never type again
+            sent = self._send_keys(record, keys, principal, request, operation_id)
+            trust["keys"] += 1
+            current = self._ledger.get(launch_id) or dict(record)
+            commands = dict(current.get("commands") or {})
+            commands["trust"] = [*(commands.get("trust") or []), sent.get("command_id")]
+            self._ledger.update(launch_id, commands=commands)
+            outcome = str((sent.get("receipt") or {}).get("outcome") or "")
+            if outcome != "delivered":
+                # Refused by the steering path (pane changed, not armed): stop.
+                trust["state"] = outcome or "refused"
+                self._ledger.update(launch_id, trust_state=trust["state"])
 
         def guarded() -> None:
             try:
@@ -1101,11 +1238,19 @@ class LaunchService:
                     self._ledger.update(launch_id, instruction_state="session_gone")
                     return
                 try:
+                    look_for_trust()
+                except Exception:
+                    trust["state"] = "error"
+                    self._ledger.update(launch_id, trust_state="error")
+                try:
                     self.bind_rider_claims()
                 except Exception:
                     pass  # a claims read failure is retried on the next poll
                 attempt = self._attempts.get(attempt_id) if attempt_id else None
                 if attempt is not None and attempt.session_id:
+                    if trust["state"] is None:
+                        trust["state"] = "answered" if trust["seen"] else "not_seen"
+                        self._ledger.update(launch_id, trust_state=trust["state"])
                     break
                 if time.monotonic() >= deadline:
                     self._ledger.update(launch_id, instruction_state="expired")
@@ -1113,6 +1258,9 @@ class LaunchService:
                 time.sleep(poll_seconds)
             try:
                 sent = self._send_instruction(record, text, principal, request, operation_id)
+                outcome = str((sent.get("receipt") or {}).get("outcome") or "")
+                if outcome != "delivered":
+                    raise LaunchRefused(outcome or "instruction_not_delivered")
             except Exception as exc:
                 reason = getattr(exc, "reason", None) or "instruction_failed"
                 self._ledger.update(launch_id, instruction_state=str(reason))

@@ -293,23 +293,23 @@ class AgentHandService:
 
         config = coder_gate.load_gate_config(self._gate_path)
         key = str(worktree_path)
-        prior_armed = config.armed
         added = key not in config.repos
         config.repos[key] = list(coder_gate.DEFAULT_TOOLS)
-        config.armed = True
+        # Armed on its own: the master switch is not touched, so no other
+        # listed repo becomes held.
+        if key not in config.armed_paths:
+            config.armed_paths.append(key)
         coder_gate.save_gate_config(config, self._gate_path)
-        self._audit(
-            name,
-            outcome="gate_armed",
-            detail=f"hold Bash for worktree {name}; master switch was {'on' if prior_armed else 'off'}",
-        )
+        self._audit(name, outcome="gate_armed", detail=f"hold Bash for worktree {name} only")
         return added
 
     def _disarm_gate(self, worktree_path: Path, name: str) -> None:
         from .. import coder_gate
 
         config = coder_gate.load_gate_config(self._gate_path)
-        if config.repos.pop(str(worktree_path), None) is not None:
+        key = str(worktree_path)
+        config.armed_paths = [path for path in config.armed_paths if path != key]
+        if config.repos.pop(key, None) is not None:
             coder_gate.save_gate_config(config, self._gate_path)
             self._audit(name, outcome="gate_released", detail="the launch refused before it ran")
 
@@ -337,7 +337,10 @@ class AgentHandService:
         if record.get("state") != "launched":
             return {"launch": record}
         target = record.get("target") or {}
-        armed = coder_steering.arm(str(record.get("session") or ""), str(target.get("pane_id") or ""))
+        armed = coder_steering.arm(
+            str(record.get("session") or ""), str(target.get("pane_id") or ""),
+            runner=launcher._runner,
+        )
         if armed.get("status") != "armed":
             raise AgentHandRefused(str(armed.get("status") or "arm_refused"), "the agent pane could not be armed")
         sent = launcher._commands.submit_process_input(

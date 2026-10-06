@@ -69,13 +69,21 @@ class GateConfig:
     armed: bool = False
     #: repo path (resolved, absolute) → held tool names.
     repos: dict[str, list[str]] = field(default_factory=dict)
+    #: Paths armed on their own, by a launch the owner pressed (Hand to
+    #: agent). Held whatever the master switch says; the switch still
+    #: decides every other listed repo, so arming one worktree never holds
+    #: another.
+    armed_paths: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        doc: dict[str, Any] = {
             "gate_schema": GATE_CONFIG_SCHEMA,
             "armed": self.armed,
             "repos": {path: list(tools) for path, tools in sorted(self.repos.items())},
         }
+        if self.armed_paths:
+            doc["armed_paths"] = sorted(set(self.armed_paths))
+        return doc
 
 
 def load_gate_config(path: Path | None = None) -> GateConfig:
@@ -96,7 +104,12 @@ def load_gate_config(path: Path | None = None) -> GateConfig:
                 cleaned = [str(t).strip() for t in tools if str(t).strip()]
                 if cleaned:
                     repos[str(repo_path)] = cleaned
-    return GateConfig(armed=bool(raw.get("armed")), repos=repos)
+    raw_paths = raw.get("armed_paths")
+    armed_paths = [
+        str(path) for path in (raw_paths if isinstance(raw_paths, list) else [])
+        if str(path).strip() and str(path) in repos
+    ]
+    return GateConfig(armed=bool(raw.get("armed")), repos=repos, armed_paths=armed_paths)
 
 
 def save_gate_config(config: GateConfig, path: Path | None = None) -> Path:
@@ -112,14 +125,17 @@ def gate_matches(config: GateConfig, *, cwd: str, tool: str) -> bool:
     """The double opt-in, resolved: master switch AND a configured
     repo whose path contains ``cwd`` AND the tool in that repo's
     list."""
-    if not config.armed or not tool:
+    if not tool:
         return False
     try:
         cwd_path = Path(cwd).resolve()
     except OSError:
         return False
+    own = set(config.armed_paths)
     for repo_path, tools in config.repos.items():
         if tool not in tools:
+            continue
+        if not config.armed and repo_path not in own:
             continue
         try:
             repo_resolved = Path(repo_path).expanduser().resolve()
@@ -491,7 +507,7 @@ def run_stop_hook(
         for tools in cfg.repos.values()
         for tool in tools
     )
-    if not cfg.armed or not held_repo:
+    if not held_repo:  # gate_matches already applies the switch and armed paths
         return False
     session_id = str(payload.get("session_id") or "").strip()
     transcript = str(payload.get("transcript_path") or "").strip()

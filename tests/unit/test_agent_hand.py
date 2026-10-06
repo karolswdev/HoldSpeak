@@ -195,6 +195,8 @@ def test_project_for_item_follows_meeting_and_filing(db) -> None:
 
 class _Tmux(FakeTmuxServer):
     ended = False
+    screen = None
+    on_keys = None
 
     def __call__(self, argv, cwd=None):
         if argv[0] == "tmux" and argv[1] == "has-session":
@@ -203,10 +205,14 @@ class _Tmux(FakeTmuxServer):
         if argv[0] == "tmux" and argv[1] in ("send-keys", "load-buffer", "paste-buffer"):
             self.calls.append(list(argv))
             return self._ok()
-        return super().__call__(argv, cwd)
+        result = super().__call__(argv, cwd)
+        if argv[0] == "tmux" and argv[1] == "new-session" and self.screen is not None and result.returncode == 0:
+            pane = self.sessions[argv[argv.index("-s") + 1]][0]
+            self.meta[pane]["content"] = self.screen()
+        return result
 
 
-def _rig(tmp_path, db, monkeypatch, *, which=None):
+def _rig(tmp_path, db, monkeypatch, *, which=None, screen=None, register_when=None):
     repo = _make_repo(tmp_path)
     registry = DeliveryRegistry(tmp_path / "sources.json", map_path=tmp_path / "absent.json")
     source, _ = registry.register(str(repo), label="railsproj")
@@ -217,9 +223,23 @@ def _rig(tmp_path, db, monkeypatch, *, which=None):
         )
     tmux = _Tmux()
     targets = TerminalTargetRegistry(runner=tmux)
+    typed: list = []
+    keys_sent: list = []
+
+    def text_transport(*, pane, text, submit=True):
+        typed.append((pane, text))
+
+    def keys_transport(*, pane, keys):
+        keys_sent.append((pane, [value for _kind, value in keys]))
+        on_keys = getattr(tmux, "on_keys", None)
+        if on_keys is not None:
+            on_keys(pane, [value for _kind, value in keys])
+
+    # No transport reaches a real tmux server: text and keys are recorded.
     processor = NodeCommandProcessor(
         node_id="local", targets=targets, ledger=NodeReceiptLedger(tmp_path / "ledger.db"),
         runner=tmux, audit=lambda **kw: 1, wall_now=lambda: T0,
+        text_transport=text_transport, keys_transport=keys_transport,
     )
     commands = HubCommandService(
         repo=db.delivery_receipts, processor=processor, local_node_id="local",
@@ -249,15 +269,18 @@ def _rig(tmp_path, db, monkeypatch, *, which=None):
     )
     settings = tmp_path / "spawn-settings.json"
     monkeypatch.setattr(coder_gate, "write_spawn_settings", lambda: settings)
-    monkeypatch.setattr(
-        "holdspeak.coder_steering.arm", lambda key, target, **kw: {"status": "armed", "pane_id": target}
-    )
+    monkeypatch.setattr("holdspeak.delivery.factory_launch.LAUNCH_POLL_SECONDS", 0.05)
+    monkeypatch.setattr("holdspeak.delivery.factory_launch.TRUST_WAIT_SECONDS", 1.0)
+    if screen is not None:
+        tmux.screen = lambda: screen(worktree)
     # The rider: the launched agent's SessionStart reports its Story claim
     # from the new worktree (what `agent-hook ingest` writes).
     worktree = (repo.parent / "hs-action-ai_1").resolve()
 
     def claims(**_kw):
         if not worktree.exists():
+            return []
+        if register_when is not None and not register_when(tmux):
             return []
         return [{
             "session_key": "claude:smoke-session", "agent": "claude", "lifecycle": "working",
@@ -271,6 +294,7 @@ def _rig(tmp_path, db, monkeypatch, *, which=None):
         gate_path=gate_path, project_map={"projects": {}},
     )
     return SimpleNamespace(
+        typed=typed, keys_sent=keys_sent,
         repo=repo, registry=registry, source=source, tmux=tmux, service=service,
         launches=launches, hand=hand, gate_path=gate_path, settings=settings, db=db,
         commands=commands,
@@ -303,8 +327,9 @@ def test_hand_launches_claude_in_a_new_worktree_with_origin(tmp_path, db, monkey
     # The gate holds Bash for exactly the new worktree, and the spawn
     # carries HoldSpeak's settings.
     gate = json.loads(rig.gate_path.read_text(encoding="utf-8"))
-    assert gate["armed"] is True
+    assert gate["armed"] is False
     assert gate["repos"] == {str(worktree.resolve()): ["Bash"]}
+    assert gate["armed_paths"] == [str(worktree.resolve())]
     spawn_argv = next(c for c in rig.tmux.calls if c[1] == "new-session")
     command = spawn_argv[spawn_argv.index("-s") + 2]
     assert command.startswith(f"cd {shlex.quote(str(worktree.resolve()))} && ")
@@ -517,3 +542,104 @@ def test_resolve_repository_matches_a_room_github_watch_by_origin(tmp_path, db) 
         conn.execute("UPDATE projects SET name='Other name' WHERE id=?", (PROJECT,))
     source = resolve_project_repository(db, PROJECT, registry, project_map={"projects": {}})
     assert source is not None and source.source_id == registered.source_id
+
+
+def test_hand_arms_only_its_worktree_not_other_listed_repos(tmp_path, db, monkeypatch) -> None:
+    rig = _rig(tmp_path, db, monkeypatch)
+    other = tmp_path / "other-repo"
+    other.mkdir()
+    coder_gate.save_gate_config(
+        coder_gate.GateConfig(armed=False, repos={str(other.resolve()): ["Bash"]}), rig.gate_path
+    )
+    result = rig.hand.hand(OWNER, "action", "ai_1")
+    assert result["status"] == "launched", result
+    _wait_for(lambda: rig.launches.get(result["launch_id"]), "instruction_state", "sent")
+    rig.tmux.ended = True
+    config = coder_gate.load_gate_config(rig.gate_path)
+    worktree = (rig.repo.parent / "hs-action-ai_1").resolve()
+    assert config.armed is False  # the master switch is not touched
+    assert coder_gate.gate_matches(config, cwd=str(worktree), tool="Bash")
+    assert not coder_gate.gate_matches(config, cwd=str(other.resolve()), tool="Bash")
+
+
+# ── folder trust: answered once, only for this launch's worktree ─────
+
+
+def _trust_screen(path, cursor_on_yes=False):
+    no, yes = ("  ", "\u276f ") if cursor_on_yes else ("\u276f ", "  ")
+    shown = str(path)
+    return (
+        " Accessing workspace:\n\n " + shown[:40] + "\n " + shown[40:] + "\n\n"
+        " Quick safety check: Is this a project you created or one you trust? (Like your\n"
+        " own code, a well-known open source project, or work from your team).\n\n"
+        f" {no}No, exit\n {yes}Yes, I trust this folder\n\n Enter to confirm \u00b7 Esc to cancel"
+    )
+
+
+def _trusting_tmux(rig):
+    """The fake Claude: Down moves the cursor, Enter on Yes clears the prompt."""
+    state = {"cursor_on_yes": False}
+
+    def on_keys(pane, keys):
+        for key in keys:
+            if key == "Down":
+                state["cursor_on_yes"] = True
+                rig.tmux.meta[pane]["content"] = _trust_screen(rig.worktree, cursor_on_yes=True)
+            elif key == "Enter" and state["cursor_on_yes"]:
+                rig.tmux.meta[pane]["content"] = "Claude Code ready\n\u276f "
+
+    rig.tmux.on_keys = on_keys
+
+
+def test_trust_prompt_for_this_worktree_gets_exactly_one_confirm(tmp_path, db, monkeypatch) -> None:
+    rig = _rig(
+        tmp_path, db, monkeypatch,
+        screen=lambda worktree: _trust_screen(worktree),
+        register_when=lambda tmux: all("trust" not in m["content"] for m in tmux.meta.values()),
+    )
+    rig.worktree = (rig.repo.parent / "hs-action-ai_1").resolve()
+    _trusting_tmux(rig)
+    result = rig.hand.hand(OWNER, "action", "ai_1")
+    record = _wait_for(lambda: rig.launches.get(result["launch_id"]), "instruction_state", "sent")
+    rig.tmux.ended = True
+    assert record["trust_state"] == "answered"
+    sequence = [key for _pane, keys in rig.keys_sent for key in keys]
+    assert sequence == ["Down", "Enter"]  # one confirm, never typed blindly
+    assert len(record["commands"]["trust"]) == 2  # each key a receipted process.input
+    assert len(rig.typed) == 1 and "action:ai_1" in rig.typed[0][1]  # then the brief
+
+
+def test_any_other_screen_gets_nothing(tmp_path, db, monkeypatch) -> None:
+    rig = _rig(
+        tmp_path, db, monkeypatch,
+        screen=lambda worktree: "Welcome to Claude Code\n\u276f Dark mode\n  Light mode",
+    )
+    result = rig.hand.hand(OWNER, "action", "ai_1")
+    record = _wait_for(lambda: rig.launches.get(result["launch_id"]), "instruction_state", "sent")
+    rig.tmux.ended = True
+    assert record["trust_state"] == "not_seen"
+    assert rig.keys_sent == []
+
+
+def test_a_trust_prompt_for_another_folder_gets_nothing(tmp_path, db, monkeypatch) -> None:
+    rig = _rig(
+        tmp_path, db, monkeypatch,
+        screen=lambda worktree: _trust_screen(tmp_path / "somewhere-else", cursor_on_yes=True),
+        register_when=lambda tmux: False,
+    )
+    result = rig.hand.hand(OWNER, "action", "ai_1")
+    record = _wait_for(lambda: rig.launches.get(result["launch_id"]), "trust_state", "not_seen")
+    rig.tmux.ended = True
+    assert rig.keys_sent == []
+    assert record["instruction_state"] == "pending"
+
+
+def test_trust_prompt_keys_reads_the_cursor() -> None:
+    from holdspeak.delivery.factory_launch import trust_prompt_keys
+
+    path = "/tmp/x/hs-action-1"
+    lines = _trust_screen(path).split("\n")
+    assert trust_prompt_keys(lines, path) == ["Down"]
+    assert trust_prompt_keys(_trust_screen(path, cursor_on_yes=True).split("\n"), path) == ["Enter"]
+    assert trust_prompt_keys(lines, "/tmp/x/other") is None
+    assert trust_prompt_keys(["\u276f Yes, I trust this folder", path], path) is None  # no prompt text
