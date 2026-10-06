@@ -58,6 +58,7 @@ AGENT_HAND = OperationDescriptor(
         "owner_required: only the owner hands an item to an agent",
         "item_kind_unsupported", "item_unknown", "profile_unknown", "tmux_absent", "executable_absent",
         "no_repository", "worktree_duplicate", "worktree_name_invalid", "brief_over_cap",
+        "launch_cap_reached: 3 HoldSpeak-launched agents run now (the limit)",
         "story_ref_invalid", "process_spawn_not_gated", "kernel_unavailable",
     ),
     completion=(

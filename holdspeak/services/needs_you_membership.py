@@ -248,6 +248,12 @@ def coder_items(
         session = raw.to_dict() if hasattr(raw, "to_dict") else dict(raw or {})
         if not is_blocked(session):
             continue
+        # Conductor K5: a wait HoldSpeak is answering (YOLO, deciding) or
+        # answered (routine, sent) is not the owner's
+        # (``agent_responder.annotate_sessions``).
+        answer = session.get("answer") if isinstance(session.get("answer"), dict) else {}
+        if answer.get("hidden"):
+            continue
         question = str(session.get("question") or "").strip()
         updated = str(session.get("updated_at") or "")
         updated_s = _epoch_seconds(updated)
@@ -291,6 +297,13 @@ def coder_items(
             "waitStartedAt": started,
             "ageSeconds": age,
         })
+        if answer.get("state") in ("escalated", "drafted") and (answer.get("draft") or answer.get("reason")):
+            # The drafted answer and why it waits for the owner (K5).
+            rows[-1]["draft"] = {
+                "verdict": str(answer.get("verdict") or ""),
+                "reason": str(answer.get("reason") or ""),
+                "text": str(answer.get("draft") or ""),
+            }
     return rows
 
 
@@ -683,8 +696,15 @@ def _read_coders() -> list[Any]:
     invalid one raises, so the answer names it and is never a false
     all-clear."""
     from holdspeak import agent_context
+    from holdspeak.services.agent_responder import annotate_sessions
 
-    return list(agent_context.read_agent_sessions_strict())
+    sessions = list(agent_context.read_agent_sessions_strict())
+    try:
+        # Conductor K5: each wait carries HoldSpeak's answer record.
+        return annotate_sessions(sessions)
+    except Exception as exc:  # the record is a garnish, never a reason to drop a wait
+        log.warning("needs-you: the answer records were not read: %s", exc)
+        return sessions
 
 
 def _decision_text(text: Any) -> str:
