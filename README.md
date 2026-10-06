@@ -49,10 +49,10 @@ Hold the hotkey (Right Option by default), speak, and release. The text goes int
 Record your microphone and system audio, or import a recording or a transcript file.
 
 - **14 built-in plugins** read the transcript on your model and extract decisions, action items, risks, requirements, and more.
-- **You stay in charge.** Each extracted decision or action is a proposal. Nothing becomes a record until you select **Confirm**.
+- **You stay in charge.** Meeting intelligence saves the summary and the extracted action items. Decisions arrive as proposals: select **Confirm** to create the linked decisions and commitments.
 - **Meeting aftercare** shows what is open, what was decided, and what changed since the last meeting.
 - **Actuators** turn a confirmed action into a filed issue or a sent update. They show a preview first and run exactly what you saw.
-- **The clock.** Connect a calendar to see your week and get a weekly brief. Turn on **Auto-record**, and HoldSpeak starts a recording five minutes before each meeting.
+- **The clock.** Connect a calendar to see your week and get a weekly brief. **Auto-record** is off by default. Turn it on for calendar events with meeting links: all of them, or only those linked to a Room. A recording arms five minutes before the event, then starts after a countdown.
 
 ### A Desk for the work you lead
 
@@ -71,7 +71,7 @@ Record your microphone and system audio, or import a recording or a transcript f
 One service layer declares every operation. The web app, the MCP server, and the tests all reach the same operation, with the same authority checks.
 
 - **The MCP sidecar** gives Claude Code, Cursor, or any MCP client 248 tools across 43 families.
-- **A tool name is not a permission.** An agent acts only under the grants you give it. Each consequential write leaves a Receipt.
+- **A tool name is not a permission.** The local MCP sidecar acts with your owner authority. Agents that use Reach are limited by their credential's tool palette and your grants. Each consequential write leaves a Receipt.
 - **Reach** lets a remote agent connect with a scoped credential: a tool palette and a time limit, shown once.
 - **Extend it** with your own [meeting plugins](docs/PLUGIN_AUTHORING.md) and [activity connectors](docs/CONNECTOR_DEVELOPMENT.md).
 
@@ -85,7 +85,7 @@ flowchart LR
     W --> L["Your model<br/>local or your endpoint"]
     L --> P["Proposals"]
     P -->|Confirm| D["The Desk<br/>decisions, actions, people"]
-    D --> A["Agents over MCP<br/>under your grants"]
+    D --> A["Agents over MCP<br/>local owner or scoped Reach"]
 ```
 
 Transcription is always local. Model work goes to the host you assign in **Settings > Models**, and the Desk shows that host before you run. See [Security & Privacy](docs/SECURITY.md) for every data boundary.
@@ -108,7 +108,7 @@ Then, in the browser tab that HoldSpeak opens:
 2. When **First words** shows **SPEECH READY**, select **Dictate one sentence**.
 3. Speak, select **Stop**, then select **Keep as note**.
 
-You are on the Desk. If something does not work, run `holdspeak doctor`. It tells you what is broken and what to do.
+Setup then offers your calendar and connections. Set them up now, or select **Continue later** to enter the Desk. If something does not work, run `holdspeak doctor`. It tells you what is broken and what to do.
 
 Full instructions, permissions, and Linux packages: [Getting Started](docs/GETTING_STARTED.md).
 
