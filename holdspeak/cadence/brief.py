@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from holdspeak.timestamps import aware, local_now
 from typing import Callable, Optional
 
 from .models import NextBestAction, OpenLoop
@@ -36,7 +37,7 @@ class Brief:
 
 def build_brief(db, *, now: Optional[datetime] = None, limit: int = 5) -> Brief:
     """Rank open loops, take the top `limit` pushable ones, attach next actions."""
-    now = now or datetime.now()
+    now = aware(now) if now else local_now()
     loops = db.cadence.list_loops()  # excludes terminal, ordered by stale_score desc
     pushable = [l for l in loops if not l.needs_review]
     top = pushable[:limit]

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import types
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -60,7 +60,8 @@ def _empty_primitive_repo():
 
 def _fake_db(tmp_path, *, meetings=(), artifacts=None):
     artifacts = artifacts or {}
-    summaries = [types.SimpleNamespace(id=m, started_at=datetime(2026, 1, 1)) for m in meetings]
+    # Aware UTC: a naive datetime is hub-local wall time (holdspeak/timestamps.py).
+    summaries = [types.SimpleNamespace(id=m, started_at=datetime(2026, 1, 1, tzinfo=timezone.utc)) for m in meetings]
     states = {m: _meeting_state(m) for m in meetings}
     # Equilibrium 23-04: the push route now live-merges meetings/artifacts, so the
     # fake repos record the merge calls (LWW reads return None → the push wins).
@@ -327,7 +328,11 @@ def test_iso_emits_strict_wire_timestamps():
     from holdspeak.web.routes.sync import _iso
 
     assert _iso(None) is None
-    assert _iso(datetime(2026, 7, 4, 9, 12, 48, 721541)) == "2026-07-04T09:12:48Z"
-    assert _iso(datetime(2026, 7, 4, 9, 12, 48)) == "2026-07-04T09:12:48Z"
+    # A naive datetime is hub-local wall time (holdspeak/timestamps.py): it
+    # goes on the wire as the same instant in UTC.
+    local = datetime(2026, 7, 4, 9, 12, 48).astimezone().astimezone(timezone.utc)
+    expected_local = local.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert _iso(datetime(2026, 7, 4, 9, 12, 48, 721541)) == expected_local
+    assert _iso(datetime(2026, 7, 4, 9, 12, 48)) == expected_local
     assert _iso(datetime(2026, 7, 4, 9, 12, 48, 5, tzinfo=timezone.utc)) == "2026-07-04T09:12:48Z"
     assert _iso("2026-07-04T09:12:48Z") == "2026-07-04T09:12:48Z"

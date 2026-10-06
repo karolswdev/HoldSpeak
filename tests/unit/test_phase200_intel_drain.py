@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -339,7 +339,7 @@ def test_a_failing_provider_retries_with_backoff_then_lands_failed_on_the_face(t
     engine.error = "provider exploded"
     _queued_meeting(db, "m-retry")
 
-    started = datetime.now()
+    started = datetime.now(timezone.utc)  # stored stamps are aware UTC
     worker = start_intel_queue_worker(
         None,
         retry_base_seconds=1,

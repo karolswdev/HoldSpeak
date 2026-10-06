@@ -238,7 +238,19 @@ class CalendarIngestConductor:
         log.info("Calendar ingest conductor stopped")
 
     def refresh(self) -> bool:
-        """Perform one contained refresh; return whether any projection was applied."""
+        """Perform one contained refresh; return whether any projection was applied.
+
+        A refresh writes with no request (the heartbeat sweep runs it): when
+        it changed a row it announces itself, one ``desk_changed`` frame that
+        names each calendar source it applied (2026-10-05).
+        """
+        from .runtime.announce_scope import announce_writes
+
+        with announce_writes("calendar", "refresh") as name:
+            return self._refresh(name)
+
+    def _refresh(self, name: Any) -> bool:
+        """:meth:`refresh`; ``name(source_id)`` names each applied source on the bus."""
         try:
             config = self._config_loader()
         except Exception as exc:
@@ -256,6 +268,7 @@ class CalendarIngestConductor:
             if self._refresh_source(source):
                 any_applied = True
                 applied_ids.append(source.id)
+                name(source.id)
 
         # C4: Remove/Disable disarms.  The prune runs even with ZERO enabled
         # sources -- the old early return left a removed source's events on

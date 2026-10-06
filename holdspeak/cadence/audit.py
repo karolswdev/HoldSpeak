@@ -8,12 +8,13 @@ after the fact without any telemetry leaving the machine. Pure read; produces a 
 from __future__ import annotations
 
 from datetime import datetime
+from holdspeak.timestamps import aware, local_now, utc_iso
 from typing import Optional
 
 
 def export_audit(db, *, now: Optional[datetime] = None, nudge_limit: int = 500) -> dict:
     """A local-only snapshot of all cadence state. No network, no telemetry."""
-    now = now or datetime.now()
+    now = aware(now) if now else local_now()
     loops = db.cadence.list_loops(include_terminal=True)
     by_status: dict[str, int] = {}
     by_source: dict[str, int] = {}
@@ -23,7 +24,7 @@ def export_audit(db, *, now: Optional[datetime] = None, nudge_limit: int = 500) 
     from ..intel.providers import endpoint_egress
 
     return {
-        "generated_at": now.isoformat(),
+        "generated_at": utc_iso(now),
         "egress": endpoint_egress(
             cloud=False, label="Local audit — nothing leaves this machine"
         ),

@@ -9,6 +9,7 @@ import sqlite3
 import hashlib
 import json
 from datetime import datetime, timedelta
+from holdspeak.timestamps import aware, local_wall, parse_stamp, parse_wall, utc_iso, utc_now, utc_now_iso
 from typing import TYPE_CHECKING, Optional, Any
 
 from ..logging_config import get_logger
@@ -141,7 +142,7 @@ class MeetingRepository(BaseRepository):
             ).fetchone()
             if row is None:
                 return None
-            revision = str(ready_at or row["intel_completed_at"] or datetime.now().isoformat())
+            revision = str(ready_at or row["intel_completed_at"] or utc_now_iso())
             conn.execute(
                 """INSERT INTO meeting_ready_reads (meeting_id, ready_at, read_at)
                    VALUES (?, ?, NULL)
@@ -223,7 +224,7 @@ class MeetingRepository(BaseRepository):
         if status == "pending":
             return None
         if completed_at in (None, ""):
-            return datetime.now().isoformat()
+            return utc_now_iso()
         return str(completed_at)
 
     # === Meeting CRUD ===
@@ -320,14 +321,10 @@ class MeetingRepository(BaseRepository):
                 "SELECT sync_modified_at FROM meetings WHERE id = ?",
                 (meeting_id,),
             ).fetchone()
-            resolution_clock = datetime.now()
+            resolution_clock = utc_now()
             if clock_row is not None and clock_row["sync_modified_at"]:
-                contested_clock = datetime.fromisoformat(
-                    str(clock_row["sync_modified_at"]).replace("Z", "+00:00")
-                )
-                if contested_clock.tzinfo is not None:
-                    contested_clock = contested_clock.replace(tzinfo=None)
-                if resolution_clock <= contested_clock:
+                contested_clock = parse_stamp(clock_row["sync_modified_at"])
+                if contested_clock is not None and resolution_clock <= contested_clock:
                     resolution_clock = contested_clock + timedelta(microseconds=1)
 
             if resolution == "use_incoming":
@@ -339,13 +336,13 @@ class MeetingRepository(BaseRepository):
                         """UPDATE meetings
                            SET parked = 1, sync_modified_at = ?, updated_at = datetime('now')
                            WHERE id = ?""",
-                        (resolution_clock.isoformat(), meeting_id),
+                        (utc_iso(resolution_clock), meeting_id),
                     )
                     conn.execute(
                         """UPDATE meeting_sync_conflicts
                            SET winner = 'incoming', resolved_at = ?
                            WHERE id = ? AND meeting_id = ? AND resolved_at IS NULL""",
-                        (datetime.now().isoformat(), conflict_id, meeting_id),
+                        (utc_now_iso(), conflict_id, meeting_id),
                     )
                     return "deleted"
                 if incoming_state is None or incoming_state.id != meeting_id:
@@ -377,7 +374,7 @@ class MeetingRepository(BaseRepository):
                     """UPDATE meetings
                        SET sync_modified_at = ?, updated_at = datetime('now')
                        WHERE id = ?""",
-                    (resolution_clock.isoformat(), meeting_id),
+                    (utc_iso(resolution_clock), meeting_id),
                 )
 
             winner = "incoming" if resolution == "use_incoming" else "local"
@@ -385,7 +382,7 @@ class MeetingRepository(BaseRepository):
                 """UPDATE meeting_sync_conflicts
                    SET winner = ?, resolved_at = ?
                    WHERE id = ? AND meeting_id = ? AND resolved_at IS NULL""",
-                (winner, datetime.now().isoformat(), conflict_id, meeting_id),
+                (winner, utc_now_iso(), conflict_id, meeting_id),
             )
         return "resolved"
 
@@ -454,14 +451,14 @@ class MeetingRepository(BaseRepository):
                 updated_at = datetime('now')
         """, (
             state.id,
-            state.started_at.isoformat(),
-            state.ended_at.isoformat() if state.ended_at else None,
+            utc_iso(state.started_at),
+            utc_iso(state.ended_at) if state.ended_at else None,
             state.title,
             state.duration if state.ended_at else None,
             state.intel_status,
             state.intel_status_detail,
-            state.intel_requested_at.isoformat() if state.intel_requested_at else None,
-            state.intel_completed_at.isoformat() if state.intel_completed_at else None,
+            utc_iso(state.intel_requested_at) if state.intel_requested_at else None,
+            utc_iso(state.intel_completed_at) if state.intel_completed_at else None,
             state.mic_label,
             state.remote_label,
             state.web_url,
@@ -470,11 +467,11 @@ class MeetingRepository(BaseRepository):
             state.transcription_status,
             json.dumps(state.transcription_status_detail, sort_keys=True, separators=(",", ":"))
             if state.transcription_status_detail is not None else None,
-            state.capture_checkpoint_at.isoformat() if state.capture_checkpoint_at else None,
+            utc_iso(state.capture_checkpoint_at) if state.capture_checkpoint_at else None,
             state.capture_checkpoint_seconds,
             state.provenance,
             state.calendar_event_id,
-            (sync_modified_at or datetime.now()).isoformat(),
+            utc_iso(sync_modified_at),
         ))
 
         conn.execute("DELETE FROM meeting_tags WHERE meeting_id = ?", (state.id,))
@@ -517,7 +514,7 @@ class MeetingRepository(BaseRepository):
             conn.execute("""
                 INSERT INTO bookmarks (meeting_id, timestamp, label, created_at)
                 VALUES (?, ?, ?, ?)
-            """, (meeting_id, bm.timestamp, bm.label, bm.created_at.isoformat()))
+            """, (meeting_id, bm.timestamp, bm.label, utc_iso(bm.created_at)))
 
     def _save_intel(
         self, conn: sqlite3.Connection, meeting_id: str,
@@ -549,7 +546,7 @@ class MeetingRepository(BaseRepository):
                 status = action_item.status
                 review_state = getattr(action_item, 'review_state', 'pending')
                 source_timestamp = getattr(action_item, 'source_timestamp', None)
-                created_at = getattr(action_item, 'created_at', datetime.now().isoformat())
+                created_at = getattr(action_item, 'created_at', utc_now_iso())
                 completed_at = getattr(action_item, 'completed_at', None)
                 reviewed_at = getattr(action_item, 'reviewed_at', None)
             else:
@@ -561,7 +558,7 @@ class MeetingRepository(BaseRepository):
                 status = item.get('status', 'pending')
                 review_state = item.get('review_state', 'pending')
                 source_timestamp = item.get('source_timestamp')
-                created_at = item.get('created_at', datetime.now().isoformat())
+                created_at = item.get('created_at', utc_now_iso())
                 completed_at = item.get('completed_at')
                 reviewed_at = item.get('reviewed_at')
 
@@ -577,9 +574,9 @@ class MeetingRepository(BaseRepository):
             if review_state == "pending":
                 reviewed_at = None
             elif reviewed_at in (None, ""):
-                reviewed_at = datetime.now().isoformat()
+                reviewed_at = utc_now_iso()
 
-            now_iso = datetime.now().isoformat()
+            now_iso = utc_now_iso()
             conn.execute("""
                 INSERT INTO action_items
                 (id, meeting_id, task, owner, due, status, review_state, reviewed_at,
@@ -678,7 +675,7 @@ class MeetingRepository(BaseRepository):
             Bookmark(
                 timestamp=r['timestamp'],
                 label=r['label'],
-                created_at=datetime.fromisoformat(r['created_at']),
+                created_at=parse_wall(r['created_at']),
             )
             for r in conn.execute(
                 "SELECT * FROM bookmarks WHERE meeting_id = ? ORDER BY timestamp",
@@ -699,9 +696,9 @@ class MeetingRepository(BaseRepository):
 
         return MeetingState(
             id=meeting_id,
-            started_at=datetime.fromisoformat(row['started_at']),
+            started_at=parse_wall(row['started_at']),
             parked=bool(row['parked']),
-            ended_at=datetime.fromisoformat(row['ended_at']) if row['ended_at'] else None,
+            ended_at=parse_wall(row['ended_at']) if row['ended_at'] else None,
             title=row['title'],
             tags=tags,
             segments=segments,
@@ -709,8 +706,8 @@ class MeetingRepository(BaseRepository):
             intel=intel,
             intel_status=row["intel_status"] or "disabled",
             intel_status_detail=row["intel_status_detail"],
-            intel_requested_at=datetime.fromisoformat(row["intel_requested_at"]) if row["intel_requested_at"] else None,
-            intel_completed_at=datetime.fromisoformat(row["intel_completed_at"]) if row["intel_completed_at"] else None,
+            intel_requested_at=parse_wall(row["intel_requested_at"]) if row["intel_requested_at"] else None,
+            intel_completed_at=parse_wall(row["intel_completed_at"]) if row["intel_completed_at"] else None,
             mic_label=row['mic_label'],
             remote_label=row['remote_label'],
             web_url=row['web_url'],
@@ -722,14 +719,14 @@ class MeetingRepository(BaseRepository):
                 if row["transcription_status_detail_json"] else None
             ),
             capture_checkpoint_at=(
-                datetime.fromisoformat(row['capture_checkpoint_at'])
+                parse_wall(row['capture_checkpoint_at'])
                 if row['capture_checkpoint_at'] else None
             ),
             capture_checkpoint_seconds=float(row['capture_checkpoint_seconds'] or 0.0),
             provenance=row['provenance'] or "desktop",
             calendar_event_id=row['calendar_event_id'] if row['calendar_event_id'] else None,
             sync_modified_at=(
-                datetime.fromisoformat(row['sync_modified_at'])
+                parse_wall(row['sync_modified_at'])
                 if row['sync_modified_at'] else None
             ),
         )
@@ -837,10 +834,10 @@ class MeetingRepository(BaseRepository):
 
             if date_from:
                 query += " AND m.started_at >= ?"
-                params.append(date_from.isoformat())
+                params.append(utc_iso(date_from))
             if date_to:
                 query += " AND m.started_at <= ?"
-                params.append(date_to.isoformat())
+                params.append(utc_iso(date_to))
             if tag:
                 query += " AND m.id IN (SELECT meeting_id FROM meeting_tags WHERE tag = ?)"
                 params.append(tag)
@@ -867,8 +864,8 @@ class MeetingRepository(BaseRepository):
             return [
                 MeetingSummary(
                     id=r['id'],
-                    started_at=datetime.fromisoformat(r['started_at']),
-                    ended_at=datetime.fromisoformat(r['ended_at']) if r['ended_at'] else None,
+                    started_at=parse_wall(r['started_at']),
+                    ended_at=parse_wall(r['ended_at']) if r['ended_at'] else None,
                     title=r['title'],
                     duration_seconds=r['duration_seconds'] or 0.0,
                     segment_count=r['segment_count'],
@@ -889,8 +886,8 @@ class MeetingRepository(BaseRepository):
                     attendees=attendees_by_meeting.get(str(r["id"]), []),
                     transcript_words=int(r["transcript_words"]) if r["segment_count"] and r["transcript_words"] else None,
                     needs_you_count=int(r["needs_you_count"]) if r["needs_you_count"] else 0,
-                    intel_requested_at=datetime.fromisoformat(r["intel_requested_at"]) if r["intel_requested_at"] else None,
-                    intel_completed_at=datetime.fromisoformat(r["intel_completed_at"]) if r["intel_completed_at"] else None,
+                    intel_requested_at=parse_wall(r["intel_requested_at"]) if r["intel_requested_at"] else None,
+                    intel_completed_at=parse_wall(r["intel_completed_at"]) if r["intel_completed_at"] else None,
                     has_summary=bool(r["has_summary"]),
                     parked=bool(r["parked"]),
                 )
@@ -957,9 +954,9 @@ class MeetingRepository(BaseRepository):
         finalized = str(row["capture_status"]) == "finalized"
         pending_fence = bool(row["route_fence_pending"])
         if not finalized:
-            meeting.ended_at = meeting.capture_checkpoint_at or datetime.now()
-            if meeting.ended_at < meeting.started_at:
-                meeting.ended_at = datetime.now()
+            meeting.ended_at = meeting.capture_checkpoint_at or local_wall()
+            if aware(meeting.ended_at) < aware(meeting.started_at):
+                meeting.ended_at = local_wall()
             meeting.capture_status = "recovered"
             meeting.capture_failure = None
             self.save_meeting(meeting)
@@ -1118,11 +1115,11 @@ class MeetingRepository(BaseRepository):
             review_state=row['review_state'] or "pending",
             meeting_id=row['meeting_id'] or "",
             meeting_title=row['meeting_title'],
-            meeting_date=datetime.fromisoformat(meeting_date_raw) if meeting_date_raw else datetime.min,
+            meeting_date=parse_wall(meeting_date_raw) if meeting_date_raw else datetime.min,
             source_timestamp=row['source_timestamp'],
-            created_at=datetime.fromisoformat(row['created_at']),
-            completed_at=datetime.fromisoformat(row['completed_at']) if row['completed_at'] else None,
-            reviewed_at=datetime.fromisoformat(row['reviewed_at']) if row['reviewed_at'] else None,
+            created_at=parse_wall(row['created_at']),
+            completed_at=parse_wall(row['completed_at']) if row['completed_at'] else None,
+            reviewed_at=parse_wall(row['reviewed_at']) if row['reviewed_at'] else None,
             delegated_at=row['delegated_at'] if row['delegated_at'] else None,
             source_type=row['source_type'] if 'source_type' in row.keys() else None,
             source_ref=row['source_ref'] if 'source_ref' in row.keys() else None,
@@ -1170,7 +1167,7 @@ class MeetingRepository(BaseRepository):
         """Update action item review state. Returns True if found."""
         review_state = self._normalize_action_item_review_state(review_state)
         with self._connection() as conn:
-            reviewed_at = datetime.now().isoformat() if review_state == "accepted" else None
+            reviewed_at = utc_now_iso() if review_state == "accepted" else None
             result = conn.execute(
                 """
                 UPDATE action_items
@@ -1196,7 +1193,7 @@ class MeetingRepository(BaseRepository):
 
         clean_owner = owner.strip() if isinstance(owner, str) else owner
         clean_due = due.strip() if isinstance(due, str) else due
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             # SELECT-compare: stamp delegated_at only when owner actually changes.
             existing = conn.execute(
@@ -1512,7 +1509,7 @@ class MeetingRepository(BaseRepository):
             for row in rows:
                 mid = row["meeting_id"]
                 if mid not in meeting_groups:
-                    meeting_date = datetime.fromisoformat(row["meeting_date"])
+                    meeting_date = parse_wall(row["meeting_date"])
                     meeting_groups[mid] = {
                         "meeting_id": mid,
                         "meeting_title": row["meeting_title"],
@@ -1567,9 +1564,9 @@ class MeetingRepository(BaseRepository):
             first_seen = None
             last_seen = None
             if row["first_seen"]:
-                first_seen = datetime.fromisoformat(row["first_seen"])
+                first_seen = parse_wall(row["first_seen"])
             if row["last_seen"]:
-                last_seen = datetime.fromisoformat(row["last_seen"])
+                last_seen = parse_wall(row["last_seen"])
 
             return {
                 "total_segments": row["total_segments"] or 0,

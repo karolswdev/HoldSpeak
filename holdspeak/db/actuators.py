@@ -17,7 +17,8 @@ from __future__ import annotations
 import uuid
 import hashlib
 import json
-from datetime import datetime, timedelta
+from datetime import timedelta
+from holdspeak.timestamps import utc_iso, utc_now, utc_now_iso
 from typing import Any, Optional
 
 from ..actuator_authority import authority_binding
@@ -108,7 +109,7 @@ class ActuatorRepository(BaseRepository):
             uuid.UUID(proposal_id)
         except (TypeError, ValueError) as exc:
             raise ValueError("proposal_id must be a UUID") from exc
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         payload_json = self._json_dumps(payload or {}, fallback="{}")
         caps_json = self._json_dumps(
             [str(c).strip().lower() for c in (required_capabilities or []) if str(c).strip()],
@@ -282,7 +283,7 @@ class ActuatorRepository(BaseRepository):
             raise ValueError(f"unknown proposal status: {target_status!r}")
 
         pid = str(proposal_id).strip()
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             row = conn.execute(
                 "SELECT * FROM actuator_proposals WHERE id = ?", (pid,)
@@ -400,7 +401,7 @@ class ActuatorRepository(BaseRepository):
         clean = str(decision).strip().lower()
         if clean not in {"accepted", "dismissed"}:
             raise ValueError("review decision must be accepted or dismissed")
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             row = conn.execute(
                 "SELECT status FROM actuator_proposals WHERE id=?", (proposal_id,)
@@ -429,7 +430,7 @@ class ActuatorRepository(BaseRepository):
         clean = str(state).strip().lower()
         if clean not in allowed:
             raise ValueError(f"invalid execution state: {state!r}")
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             row = conn.execute("SELECT status FROM actuator_proposals WHERE id=?", (proposal_id,)).fetchone()
             if row is None:
@@ -501,7 +502,7 @@ class ActuatorRepository(BaseRepository):
             raise ValueError("grant requires actor, operation family, effect, destination, and data classes")
         ttl = max(10, min(int(ttl_seconds), 30 * 24 * 60 * 60))
         uses = max(1, min(int(max_uses), 10_000))
-        issued = datetime.now()
+        issued = utc_now()
         expires = issued + timedelta(seconds=ttl)
         grant_id = f"grant_{uuid.uuid4().hex[:16]}"
         bound = {
@@ -523,7 +524,7 @@ class ActuatorRepository(BaseRepository):
                 (
                     grant_id, clean_actor, clean_family, clean_effect, clean_destination,
                     self._json_dumps(clean_data, fallback="[]"), project_scope,
-                    resource_scope, issued.isoformat(), expires.isoformat(), uses,
+                    resource_scope, utc_iso(issued), utc_iso(expires), uses,
                     uses, binding_hash, normalize_control_mode(control_mode),
                 ),
             )
@@ -550,7 +551,7 @@ class ActuatorRepository(BaseRepository):
             cursor = conn.execute(
                 """UPDATE authority_grants SET revoked_at=?,revoke_reason=?
                    WHERE id=? AND revoked_at IS NULL""",
-                (datetime.now().isoformat(), str(reason or "owner_revoked"), grant_id),
+                (utc_now_iso(), str(reason or "owner_revoked"), grant_id),
             )
         return bool(cursor.rowcount)
 
@@ -560,7 +561,7 @@ class ActuatorRepository(BaseRepository):
             cursor = conn.execute(
                 """UPDATE authority_grants SET revoked_at=?,revoke_reason=?
                    WHERE revoked_at IS NULL AND remaining_uses>0""",
-                (datetime.now().isoformat(), str(reason or "configuration_changed")),
+                (utc_now_iso(), str(reason or "configuration_changed")),
             )
         return int(cursor.rowcount)
 
@@ -568,7 +569,7 @@ class ActuatorRepository(BaseRepository):
         self, grant_id: str, *, operation_id: str = "unknown"
     ) -> AuthorityGrantRecord:
         """Atomically burn one use and append a queryable use receipt."""
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             row = conn.execute("SELECT * FROM authority_grants WHERE id=?", (grant_id,)).fetchone()
             if row is None:

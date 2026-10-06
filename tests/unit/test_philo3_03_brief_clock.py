@@ -73,9 +73,9 @@ def test_the_producer_clock_moves_the_brief_day_and_keeps_the_same_day_id(tmp_pa
 
 def test_the_default_clock_is_the_wall_clock(tmp_path):
     service = MondayBriefService(Database(tmp_path / "brief.db"))
-    before = datetime.datetime.now()
+    before = datetime.datetime.now().astimezone()
     brief = service.generate(None)
-    after = datetime.datetime.now()
+    after = datetime.datetime.now().astimezone()
     generated = datetime.datetime.fromisoformat(brief.generated_at)
     assert before <= generated <= after
 

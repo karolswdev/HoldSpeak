@@ -13,6 +13,7 @@ import hashlib
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
+from holdspeak.timestamps import aware, local_now, local_wall
 from pathlib import Path
 from typing import Optional
 
@@ -22,7 +23,7 @@ class Bookmark:
     """A marked moment in the meeting."""
     timestamp: float  # Seconds since meeting start
     label: str = ""
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(default_factory=local_wall)
 
     def to_dict(self) -> dict:
         return {
@@ -162,8 +163,8 @@ class MeetingState:
     @property
     def duration(self) -> float:
         """Duration in seconds."""
-        end = self.ended_at or datetime.now()
-        return (end - self.started_at).total_seconds()
+        end = aware(self.ended_at) if self.ended_at else local_now()
+        return (end - aware(self.started_at)).total_seconds()
 
     def format_duration(self) -> str:
         """Format duration as MM:SS or HH:MM:SS."""

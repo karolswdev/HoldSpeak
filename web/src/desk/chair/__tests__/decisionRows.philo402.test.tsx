@@ -113,7 +113,9 @@ function expectDecisionRows() {
     expect.stringContaining("Review decision: Old decision one"),
     expect.stringContaining("Review decision: Old decision two"),
   ]);
-  expect(within(section).getByRole("heading", { name: "BRIEF · 7 THINGS WAITING" })).toBeTruthy();
+  // The head says the hub's one needs-you number (here 0, so no count); the
+  // Arrival's 7 open rows are the 3 shown and the 4 folded.
+  expect(within(section).getByRole("heading", { name: "BRIEF" })).toBeTruthy();
   expect(within(section).getByTestId("arrival-brief-more").textContent).toBe("4 more");
 }
 

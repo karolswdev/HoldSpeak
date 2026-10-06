@@ -10,11 +10,12 @@
 //     zone from the hub. The caption and the receipt must tell ONE time, the
 //     producer's instant in the viewer's zone. Before the repair the caption
 //     read the hub's 07:19 and the receipt the browser's 8:19 PM.
-// (b) Each count equals what its label claims: the head counts the Arrival
-//     rows still waiting (decisions, changed, broke, waiting; not shelved;
-//     THIS WEEK outside); the receipt counts the generated snapshot. Before
-//     the repair the raw `Service.method` rows were waiting but hidden, so
-//     the head claimed fewer than were waiting.
+// (b) Each count equals what its label claims: the head's "N THINGS
+//     WAITING" is the hub's one needs-you count (2026-10-05: it counted the
+//     Arrival's own rows, changed and broke rows too, so it disagreed with
+//     the bell); the rows shown and folded are the Arrival rows still open
+//     (decisions, changed, broke, waiting; not shelved; THIS WEEK outside);
+//     the receipt counts the generated snapshot.
 const tz = vi.hoisted(() => {
   const previous = process.env.TZ;
   process.env.TZ = "Europe/Warsaw";
@@ -79,15 +80,32 @@ describe("PHILO-6-02 the brief tells one time and counts what its labels say", (
     expect(captionTime).toBe("SEP 25 20:19");
   });
 
-  it("(b) the head counts the rows waiting; the receipt counts the generated snapshot", async () => {
+  it("(b) the head says the hub's number; the rows are the open Arrival rows; the receipt counts the snapshot", async () => {
+    // The hub's answer: two members (its one rule), not the Arrival's rows.
+    const hub = {
+      count: 2,
+      members: [{ ref: "hub-a", kind: "attention" }, { ref: "hub-b", kind: "attention" }],
+      items: [
+        { id: "hub-a", ref: "hub-a", source: "door", kind: "action", projectId: "", projectName: "", title: "Send the plan", why: "OVERDUE", severity: "danger", muted: false },
+        { id: "hub-b", ref: "hub-b", source: "door", kind: "action", projectId: "", projectName: "", title: "Name the owner", why: "UNASSIGNED", severity: "warning", muted: false },
+      ],
+      blockers: [], failedMeetings: [], complete: true, sourceErrors: {},
+    };
+    mocks.apiFetch.mockImplementation(async (path: string) =>
+      String(path) === "/api/brief/latest" ? brief
+        : String(path).startsWith("/api/desk/needs-you") ? hub : null,
+    );
+    expect(waiting.length).not.toBe(hub.count);
     render(<ChairHome />);
     const receipt = await screen.findByTestId("arrival-brief-receipt");
     // The snapshot: every row the producer generated, THIS WEEK and the
     // shelved row included. The historical snapshot is not rewritten.
     expect(receipt.textContent).toContain(`Brief ready · ${snapshot} items`);
-    // The head: the Arrival rows still waiting, nothing hidden.
+    // The head: the hub's one number, the number the bell says.
     const section = screen.getByTestId("arrival-brief");
-    expect(section.textContent).toContain(`BRIEF · ${waiting.length} THINGS WAITING`);
+    await vi.waitFor(() =>
+      expect(section.textContent).toContain(`BRIEF · ${hub.count} THINGS WAITING`));
+    // The rows: the Arrival rows still open, nothing hidden.
     const shown = within(section).getAllByTestId("arrival-brief-row").length;
     const folded = Number(
       within(section).queryByTestId("arrival-brief-more")?.textContent?.match(/^(\d+) more$/)?.[1] ?? 0,

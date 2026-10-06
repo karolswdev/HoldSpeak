@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-import time
+
+from holdspeak.timestamps import utc_now_iso
 import uuid
 from typing import Any
 
@@ -13,7 +14,7 @@ from .projection_stager import _PublicationPermit
 
 def _artifact(conn: Any, *, artifact_id: str, meeting_id: str, artifact_type: str,
               title: str, body: str, plugin_id: str, sources: list[dict[str, str]]) -> None:
-    now = time.strftime("%Y-%m-%dT%H:%M:%S")
+    now = utc_now_iso()
     conn.execute(
         """INSERT INTO artifacts (id,meeting_id,origin,artifact_type,title,body_markdown,
            structured_json,confidence,status,plugin_id,plugin_version,created_at,updated_at)
@@ -47,7 +48,7 @@ def _decision(conn: Any, stage: Any) -> dict[str, Any]:
     structured["promotion"] = {"decision_id": decision_id, "meeting_id": str(row["source_meeting_id"]), "model_assisted": True}
     artifact_id = derive_promoted_artifact_id(decision_id, artifact_type)
     # Decision artifacts retain their structured causal body, unlike run outputs.
-    now = time.strftime("%Y-%m-%dT%H:%M:%S")
+    now = utc_now_iso()
     conn.execute("""INSERT INTO artifacts (id,meeting_id,origin,artifact_type,title,body_markdown,structured_json,confidence,status,plugin_id,plugin_version,created_at,updated_at)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET body_markdown=excluded.body_markdown,structured_json=excluded.structured_json,status=excluded.status,updated_at=excluded.updated_at""",
         (artifact_id, row["source_meeting_id"], "meeting", artifact_type, title, str(projection["output"]).strip(), json.dumps(structured, sort_keys=True, separators=(",", ":")), 1.0, "draft", "decision_promotion", "1", now, now))

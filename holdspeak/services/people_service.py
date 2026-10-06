@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
+from holdspeak.timestamps import local_wall
 from typing import Any
 
 from ..principals import PrincipalKind
@@ -688,7 +689,7 @@ class PeopleService:
 
         prs_waiting: list[dict[str, Any]] = []
         open_assignments: list[dict[str, Any]] = []
-        now = datetime.now()
+        now = local_wall()
 
         try:
             _cm = db._connection()

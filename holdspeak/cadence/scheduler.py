@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from holdspeak.timestamps import aware, parse_stamp
 from typing import Optional
 
 from .models import OpenLoop
@@ -44,10 +45,7 @@ def _repeat_hours(pressure: str) -> float:
 def _parse(ts: Optional[str]) -> Optional[datetime]:
     if not ts:
         return None
-    try:
-        return datetime.fromisoformat(ts)
-    except ValueError:
-        return None
+    return parse_stamp(ts)
 
 
 def due_loops(
@@ -63,6 +61,7 @@ def due_loops(
     """
     if config.max_nudges_per_day and nudged_today >= config.max_nudges_per_day:
         return []
+    now = aware(now)
     if in_quiet_hours(now, config.quiet_hours_start, config.quiet_hours_end):
         return []  # Phase 1 has no urgent agent-blocker exception yet (Phase 3)
 

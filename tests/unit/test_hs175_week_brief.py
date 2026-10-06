@@ -298,8 +298,9 @@ class TestBriefGenerationThisWeek:
         brief = svc.generate(OWNER, now=now)
 
         start_dt = datetime.datetime.fromisoformat(brief.period_start)
-        # Lookback: Thursday -> previous day 17:00 = Wednesday 17:00
-        assert start_dt == datetime.datetime(2026, 9, 2, 17, 0)
+        # Lookback: Thursday -> previous day 17:00 = Wednesday 17:00 (local;
+        # a naive clock's window is stored as the same instant in UTC).
+        assert start_dt == datetime.datetime(2026, 9, 2, 17, 0).astimezone()
 
     def test_sections_include_this_week(self, db):
         """The generated brief always has a this_week key in sections."""
@@ -435,7 +436,10 @@ import textwrap
 from holdspeak.services.monday_brief_service import BriefItem
 
 UTC = datetime.timezone.utc
-COMPUTE_WINDOW_BODY_SHA256 = "2a4925ac6b2f80ae2d3061b52a148af34af7a2cc03c0171d55f7a792c02b4a9f"
+# Re-pinned 2026-10-05 (aware-time census): the default clock is
+# ``local_wall()`` (the same naive local wall time as ``datetime.now()``);
+# the window arithmetic is unchanged.
+COMPUTE_WINDOW_BODY_SHA256 = "c135fe2dff41bdb57567f4a8e6200f78952f8281ca972d9ac88d3547292af462"
 
 
 def _seed_utc_event(db, eid: str, title: str, starts_at: str, *, uid: str | None = None) -> None:

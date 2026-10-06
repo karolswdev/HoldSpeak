@@ -35,11 +35,52 @@ checkpoint first — see :func:`checkpoint` and ``holdspeak/db/core.py``'s
 """
 from __future__ import annotations
 
+import contextvars
 import sqlite3
 import threading
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Callable, Iterator, Optional
+
+
+#: The rows written while a :func:`watch_writes` block is open, for the bus.
+#: A write root (an MCP tool call, a background tick) asks "did this change
+#: anything?" here, so a read sends no ``desk_changed`` frame and a write
+#: always does (2026-10-05, "every write announces itself" for the writers
+#: with no HTTP request and no registry operation).
+_write_watch: contextvars.ContextVar[Optional[list]] = contextvars.ContextVar(
+    "db_write_watch", default=None
+)
+
+
+@contextmanager
+def watch_writes() -> Iterator[Callable[[], int]]:
+    """Count the rows this context writes; yields ``wrote() -> int``.
+
+    Counted by SQLite's ``total_changes`` on each connection checkout (rows
+    inserted, updated or deleted). A nested watch adds its count to the outer.
+    """
+    holder = [0]
+    outer = _write_watch.get()
+    token = _write_watch.set(holder)
+    try:
+        yield lambda: holder[0]
+    finally:
+        _write_watch.reset(token)
+        if outer is not None:
+            outer[0] += holder[0]
+
+
+def _note_writes(conn: sqlite3.Connection, before: int) -> None:
+    holder = _write_watch.get()
+    if holder is None:
+        return
+    try:
+        changed = conn.total_changes - before
+    except Exception:  # pragma: no cover - a closed connection
+        return
+    if changed > 0:
+        holder[0] += changed
 
 
 @contextmanager
@@ -54,9 +95,11 @@ def connection(db_path: Path) -> Iterator[sqlite3.Connection]:
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     _apply_pragmas(conn)
+    before = conn.total_changes
     try:
         yield conn
         conn.commit()
+        _note_writes(conn, before)
     except Exception:
         conn.rollback()
         raise
@@ -182,9 +225,11 @@ class ConnectionCache:
             with connection(self._db_path) as fresh:
                 yield fresh
             return
+        before = conn.total_changes
         try:
             yield conn
             conn.commit()
+            _note_writes(conn, before)
         except BaseException:
             broken = False
             try:

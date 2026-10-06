@@ -18,6 +18,7 @@ commit together.
 from __future__ import annotations
 
 import hashlib
+import re
 import json
 from datetime import datetime, timezone
 from typing import Any, Mapping, Optional
@@ -111,6 +112,80 @@ def seed_builtin_destination(conn: Any) -> int:
         (BUILTIN_FOLDER_ID, BUILTIN_FOLDER_NAME, canonical_json(BUILTIN_FOLDER_TARGET),
          target_digest("file", {}, BUILTIN_FOLDER_TARGET), now_iso()),
     ).rowcount
+
+
+#: Where the People overlay of the old Brief renderer starts, in each channel's
+#: bytes (before #767 it was always the tail of the Brief): the Markdown heading
+#: (file, GitHub, Jira, email text), its Slack form, its Confluence form, and the
+#: "unavailable" line in all of them.
+_BRIEF_PEOPLE_START = re.compile(
+    r"\n*(?:^## People$|^\*People\*$|^PEOPLE · UNAVAILABLE$|<h2>People</h2>|<p>PEOPLE · UNAVAILABLE</p>)",
+    re.MULTILINE,
+)
+
+
+def _without_brief_people(text: str) -> str:
+    match = _BRIEF_PEOPLE_START.search(text)
+    if match is None:
+        return text
+    head = text[:match.start()]
+    return head + ("\n" if text.endswith("\n") and head and not head.endswith("\n") else "")
+
+
+def _scrubbed_payload(payload: bytes) -> Optional[bytes]:
+    """The payload with the old Brief People overlay cut, or None when it has none.
+
+    A JSON payload (Slack, email, Confluence) stays valid JSON, so the Send
+    list can still show its preview; a text payload (file, GitHub, Jira) is cut.
+    """
+    try:
+        text = bytes(payload).decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    try:
+        data = json.loads(text)
+    except ValueError:
+        data = None
+    if isinstance(data, (dict, list)):
+        def walk(value: Any) -> Any:
+            if isinstance(value, str):
+                return _without_brief_people(value)
+            if isinstance(value, list):
+                return [walk(item) for item in value]
+            if isinstance(value, dict):
+                return {key: walk(item) for key, item in value.items()}
+            return value
+
+        cleaned = walk(data)
+        if cleaned == data:
+            return None
+        return json.dumps(cleaned, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    cleaned_text = _without_brief_people(text)
+    return None if cleaned_text == text else cleaned_text.encode("utf-8")
+
+
+def scrub_brief_people_text(conn: Any) -> int:
+    """Cut the People text from Brief sends the old renderer froze (before #767).
+
+    Only ``prepared`` and ``discarded`` rows: they never left the desk, yet
+    their payload held names, who-owes-whom counts and the next 1:1 in plain
+    text. The row stays (never DELETE); only the People lines leave its
+    payload. ``payload_digest`` is kept, so a prepared row still refuses Send
+    (``payload_changed`` / ``preview_changed``) and he takes a fresh preview.
+    Idempotent: a scrubbed payload has no People marker and is skipped.
+    """
+    rows = conn.execute(
+        "SELECT id, payload FROM channel_sends WHERE document_ref LIKE 'monday_brief:%'"
+        " AND state IN ('prepared', 'discarded')"
+    ).fetchall()
+    changed = 0
+    for row in rows:
+        cleaned = _scrubbed_payload(row[1])
+        if cleaned is None:
+            continue
+        conn.execute("UPDATE channel_sends SET payload=? WHERE id=?", (cleaned, row[0]))
+        changed += 1
+    return changed
 
 
 class ChannelDestinationsRepository(BaseRepository):

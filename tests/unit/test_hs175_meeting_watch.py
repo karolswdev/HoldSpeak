@@ -613,7 +613,7 @@ class TestRetireIsATombstone:
         created = ensure_meeting_watch(db, project_id)
         db.automations.update_watch_spec(created["id"], state="retired")
 
-        # The exact predicate heartbeat_service.run_sweep uses.
+        # The exact predicate heartbeat_service._run_sweep uses.
         with db._connection() as conn:
             rows = conn.execute(
                 """SELECT DISTINCT mp.project_id
@@ -632,7 +632,7 @@ class TestRetireIsATombstone:
         import inspect
         from holdspeak.services import heartbeat_service
 
-        source = inspect.getsource(heartbeat_service.HeartbeatService.run_sweep)
+        source = inspect.getsource(heartbeat_service.HeartbeatService._run_sweep)
         block = source[source.index("backfill meeting Watches"):]
         block = block[: block.index("meeting_watch_backfill = {")]
         assert "cw.connector_id = 'meeting'" in block

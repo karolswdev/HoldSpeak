@@ -478,7 +478,12 @@ class TestBriefAndDecisionSendGlass(_Rig):
                             seat=".chair [data-testid=arrival-brief]")
                 shots.shoot(page, "T3a2-chair-last-item-receipt", CH, [t_sel, c_sel], seat=row(CH, "Team folder"))
                 before = receipt_now()
-                assert "1 THING WAITING" in page.locator(".chair [data-testid=arrival-brief] .surface-section-head").first.inner_text()
+                # The head says the hub's one needs-you number (2026-10-05), not
+                # the Brief's own open rows (one row is left here).
+                hub = _api(page, "GET", "/api/desk/needs-you", token=TOKEN)["count"]
+                head = page.locator(".chair [data-testid=arrival-brief] .surface-section-head").first.inner_text()
+                assert f"BRIEF · {hub} THING" in head, (hub, head)
+                assert page.locator(".chair [data-testid=arrival-brief] .btn", has_text="Ack").count() == 1
                 ack.click()
                 page.locator(".chair [data-testid=arrival-brief-headline], .chair [data-testid=arrival-brief-handled]").first.wait_for(timeout=T)
                 page.wait_for_timeout(900)

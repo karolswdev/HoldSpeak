@@ -384,10 +384,15 @@ class EncryptedPeopleStore:
         if readiness is not PeopleReadiness.READY:
             raise PeopleStoreError(readiness)
         conn = self._connect()
+        before = conn.total_changes
         try:
             key_id = self._key_id(conn)
             yield conn, key_id, self.key_store.get(key_id)
             conn.commit()
+            # A People write is a desk write too: the bus counts it.
+            from ..db.connection import _note_writes
+
+            _note_writes(conn, before)
         except Exception:
             conn.rollback()
             raise

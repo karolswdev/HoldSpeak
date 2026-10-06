@@ -6,7 +6,7 @@ import hashlib
 import json
 import time
 import uuid
-from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any
 
 from ..kernel.prompt_adapter import CanonicalPromptAdapter
@@ -246,7 +246,7 @@ class SequenceWorkflowService:
                 "output": output,
                 "sources": sources,
                 "steps": steps,
-                "created_at": datetime.now().isoformat(),
+                "created_at": utc_now_iso(),
                 "inference_target": target,
             },
         )

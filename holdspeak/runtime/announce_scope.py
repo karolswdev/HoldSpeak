@@ -80,3 +80,32 @@ def announce_scope() -> Iterator[Callable[[str, str, str], None]]:
                 )
                 if sender is not None:
                     sender._send_desk_changed(scope.changes)
+
+
+@contextlib.contextmanager
+def announce_writes(kind: str, op: str, obj_id: str = "") -> Iterator[Callable[[str], None]]:
+    """A write root with no HTTP request and no registry operation.
+
+    The background writers (the heartbeat sweep, a calendar refresh, a
+    cadence tick) and the MCP tools outside the registry. When the block
+    changed a row and no service inside it announced, ONE ``desk_changed``
+    frame goes out naming ``(kind, id, op)`` for each id: *obj_id* and every
+    id the block names through the yielded ``name(id)``. A block that
+    changed nothing sends nothing.
+    """
+    from holdspeak.db.connection import watch_writes
+
+    named: list[str] = [obj_id] if obj_id else []
+
+    def name(value: str) -> None:
+        if value:
+            named.append(str(value))
+
+    with announce_scope(), watch_writes() as wrote:
+        scope = _announced.get()
+        before = len(scope.changes) if scope is not None else 0
+        yield name
+        if wrote() and scope is not None and not scope.closed and len(scope.changes) == before:
+            origin = _origin()
+            for value in list(dict.fromkeys(named)) or [""]:
+                scope.changes.append((kind, value, op, origin))

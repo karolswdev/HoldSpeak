@@ -10,7 +10,7 @@ side effect (those go through the actuator path in later phases).
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Optional
 
 from ..cadence.models import (
@@ -27,7 +27,7 @@ _USER_DECIDED = {"killed", "snoozed", "delegated"}
 
 
 def _now() -> str:
-    return datetime.now().isoformat()
+    return utc_now_iso()
 
 
 class CadenceRepository(BaseRepository):

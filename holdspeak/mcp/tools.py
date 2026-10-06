@@ -890,7 +890,52 @@ def _meeting_import(registry: operations.OperationRegistry, meetings: Any, princ
 
 
 def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) -> Any:
-    """Call one day-one MCP tool and return JSON-serializable data."""
+    """Call one day-one MCP tool and return JSON-serializable data.
+
+    Every tool call that writes announces itself: ONE ``desk_changed`` frame
+    when the call returns and changed a row (2026-10-05). A tool that goes
+    through ``OperationRegistry.invoke``, or whose service announces, adds
+    to the same frame; a tool outside both is named here, so no MCP write is
+    silent and no read sends a frame.
+    """
+    from holdspeak.db.connection import watch_writes
+    from holdspeak.runtime.announce_scope import announce_scope
+
+    with announce_scope() as announce, watch_writes() as wrote:
+        result = _dispatch(name, arguments, principal)
+        if wrote() and not is_read_tool(name):
+            announce(*operations.changed_for(name, arguments, result))
+    return result
+
+
+#: The last name segment of a tool that only reads. A read may still write a
+#: row of its own (a kernel read receipt, a cache), so a changed row alone does
+#: not make a call a write. Any other tool that changed a row announces; a new
+#: tool is a write until its verb is named here (a spare frame costs one
+#: re-read; a silent write leaves a window stale).
+READ_VERBS: frozenset[str] = frozenset({
+    "list", "get", "status", "preview", "search", "history", "events",
+    "list_members", "list_runs", "list_updates", "list_context", "loops",
+    "get_loop", "get_delta", "get_room", "get_steward_run", "get_default_context",
+    "destinations", "check_destination", "sends", "snapshot", "board",
+    "needs_you", "observations", "page", "readiness", "suggested_sources",
+    "evaluate", "inspect", "presets", "hub", "nudges", "shelf", "shelf_read",
+    "resolve_grounding", "preview_use_default", "export", "proposals",
+    "summary", "audit", "editor", "receipt", "detect", "probe",
+    "confluence_connections", "confluence_discover", "confluence_validate_space",
+    "github_connection", "github_discover", "github_validate_repo",
+    "jira_connection", "jira_connections", "jira_discover", "jira_search",
+    "jira_validate_scope",
+})
+
+
+def is_read_tool(name: str) -> bool:
+    """True when the tool *name* only reads (its last segment is a read verb)."""
+    return name.rsplit(".", 1)[-1] in READ_VERBS
+
+
+def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) -> Any:
+    """:func:`dispatch` without the announcement."""
     args = arguments or {}
     if not isinstance(args, dict):
         error = ToolError("arguments must be an object")

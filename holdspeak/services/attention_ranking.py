@@ -37,6 +37,7 @@ from __future__ import annotations
 import math
 import re
 from datetime import datetime
+from holdspeak.timestamps import local_wall
 from typing import Any, Iterable
 
 #: The closed class vocabulary, in rank order.
@@ -151,7 +152,7 @@ def rank_items(
 ) -> list[dict[str, Any]]:
     """Rank attention rows.  Returns NEW dicts, each stamped with its
     ``rankClass`` and 1-based ``rank``; the input is not mutated."""
-    clock_now = now or datetime.now()
+    clock_now = now or local_wall()
     out: list[dict[str, Any]] = []
     for item in items:
         row = dict(item)
@@ -281,7 +282,7 @@ def dedup_items(
     stands alone when several do.  The input is not mutated and the
     output order is the input order of each group's first member.
     """
-    clock_now = now or datetime.now()
+    clock_now = now or local_wall()
     rows = [dict(item) for item in items]
     by_title: dict[str, list[dict[str, Any]]] = {}
     order: list[str] = []
@@ -332,7 +333,7 @@ def rank_and_dedup(
     items: Iterable[dict[str, Any]], now: datetime | None = None,
 ) -> list[dict[str, Any]]:
     """The one call the aggregate makes: dedup, then rank."""
-    clock_now = now or datetime.now()
+    clock_now = now or local_wall()
     return rank_items(dedup_items(items, clock_now), clock_now)
 
 

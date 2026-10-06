@@ -3034,7 +3034,7 @@
       },
       "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
       "effect": "read",
-      "result": "the needs-you answer (count, waitingCount, members, items, blockers, failedMeetings, roomItems, projects, mutedCount, computedAt, coverage, complete, sourceErrors)",
+      "result": "the needs-you answer (count, waitingCount, members, items, blockers, failedMeetings, roomItems, projects, projectCounts, mutedCount, computedAt, coverage, complete, sourceErrors)",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",

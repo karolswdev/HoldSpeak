@@ -12,7 +12,7 @@ Tests for:
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import patch
 import time
 
@@ -178,10 +178,10 @@ class TestActionItemMarkDone:
 
     def test_mark_done_completed_at_is_recent(self):
         """completed_at should be set to approximately current time."""
-        before = datetime.now()
+        before = datetime.now(timezone.utc)
         item = ActionItem(task="Task")
         item.mark_done()
-        after = datetime.now()
+        after = datetime.now(timezone.utc)
 
         completed = datetime.fromisoformat(item.completed_at)
         assert before <= completed <= after
@@ -412,9 +412,9 @@ class TestActionItemCreatedAt:
 
     def test_created_at_is_recent(self):
         """created_at should be approximately current time."""
-        before = datetime.now()
+        before = datetime.now(timezone.utc)
         item = ActionItem(task="Task")
-        after = datetime.now()
+        after = datetime.now(timezone.utc)
 
         created = datetime.fromisoformat(item.created_at)
         assert before <= created <= after

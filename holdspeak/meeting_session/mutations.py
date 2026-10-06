@@ -8,7 +8,7 @@ from __future__ import annotations
 import threading
 import time
 import uuid
-from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from pathlib import Path
 from typing import Any, Callable, Optional, TYPE_CHECKING
 import json
@@ -90,7 +90,7 @@ class MeetingMutationsMixin:
                     if normalized == "pending":
                         item["completed_at"] = None
                     else:
-                        item["completed_at"] = datetime.now().isoformat()
+                        item["completed_at"] = utc_now_iso()
                     log.info(f"Action item {item_id} updated to status={normalized}")
                     return item
 
@@ -123,7 +123,7 @@ class MeetingMutationsMixin:
                             item.accept()
                         else:
                             item.review_state = "accepted"
-                            item.reviewed_at = datetime.now().isoformat()
+                            item.reviewed_at = utc_now_iso()
                     else:
                         item.review_state = "pending"
                         item.reviewed_at = None
@@ -132,7 +132,7 @@ class MeetingMutationsMixin:
 
                 if isinstance(item, dict) and item.get("id") == item_id:
                     item["review_state"] = normalized
-                    item["reviewed_at"] = datetime.now().isoformat() if normalized == "accepted" else None
+                    item["reviewed_at"] = utc_now_iso() if normalized == "accepted" else None
                     log.info(f"Action item {item_id} updated to review_state={normalized}")
                     return item
 
@@ -178,7 +178,7 @@ class MeetingMutationsMixin:
                         item.accept()
                     else:
                         item.review_state = "accepted"
-                        item.reviewed_at = datetime.now().isoformat()
+                        item.reviewed_at = utc_now_iso()
                     log.info(f"Action item {item_id} edited and accepted")
                     return item.to_dict()
 
@@ -187,7 +187,7 @@ class MeetingMutationsMixin:
                     item["owner"] = clean_owner or None
                     item["due"] = clean_due or None
                     item["review_state"] = "accepted"
-                    item["reviewed_at"] = datetime.now().isoformat()
+                    item["reviewed_at"] = utc_now_iso()
                     log.info(f"Action item {item_id} edited and accepted")
                     return item
 

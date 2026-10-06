@@ -11,7 +11,7 @@
 // band: `/api/memory/search`, debounced, after the local matches; each
 // row opens its object through `refOpener`.
 import "./chrome-menus.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { openSurface } from "../shell";
 import { SYSTEM } from "../systemSprites";
@@ -38,6 +38,8 @@ import { useAllOpenWindows, useFrontWindowId } from "./window/windowRegistry";
 import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
 import { useLaunchers } from "./DeskWindow";
 import type { CoverageRecord } from "../coverage";
+import { readProjectCounts } from "../needsYou";
+import { useOnDeskChanged } from "../useDeskChangedRefresh";
 import { Button } from "../../components/signal/Signal";
 
 // Re-exported so existing imports keep one source (the data moved to
@@ -322,27 +324,25 @@ export function DeskToolShelf() {
   const [memory, setMemory] = useState<{ query: string; hits: MemoryHit[] }>({ query: "", hits: [] });
 
   // HS-171-07: needs-you counts per project for the PROJECTS section.
-  // Fetches the cached aggregate once on mount (the server cache is
-  // <= 50 ms; no second fetch storm -- the shade reads the same route).
+  // Read on mount, each time the palette opens, and after a desk_changed
+  // burst (Astra, #872: a mute made the hub drop a Room while a reopened
+  // palette still showed "1 OPEN"). The server cache is <= 50 ms.
   const [projectNeedsYou, setProjectNeedsYou] = useState<Record<string, number>>({});
   // HS-200-07 (C4): a Room whose coverage is not `available` shows its
   // repair token instead of a silent zero — no fake all-clear on the deck.
   const [projectCoverage, setProjectCoverage] = useState<Record<string, string>>({});
-  useEffect(() => {
+  const readNeedsYou = useCallback(() => {
     void apiFetch<{
-      items?: Array<{ projectId?: string; muted?: boolean }>;
-      /** The Room rows alone: a project badge is per Room ("N OPEN"). */
-      roomItems?: Array<{ projectId?: string; muted?: boolean }>;
+      items?: Array<{ projectId?: string; muted?: boolean; waiting?: boolean }>;
+      /** The hub's members by Project: a project badge ("N OPEN"). */
+      projectCounts?: Record<string, number>;
       coverage?: CoverageRecord[];
     }>("/api/desk/needs-you")
       .then((payload) => {
-        const counts: Record<string, number> = {};
-        // One count everywhere: muted Rooms' items never inflate a badge (counsel C1).
-        for (const item of (payload?.roomItems ?? payload?.items ?? []).filter((i) => !i.muted)) {
-          const pid = item.projectId;
-          if (pid) counts[pid] = (counts[pid] ?? 0) + 1;
-        }
-        setProjectNeedsYou(counts);
+        // One count everywhere: the badge is the hub's one rule split by
+        // Project, so a muted Room or a row the owner waits on someone else
+        // for never inflates it.
+        setProjectNeedsYou(readProjectCounts(payload));
         const gaps: Record<string, string> = {};
         for (const row of payload?.coverage ?? []) {
           if (row.state === "available" || !row.project_id) continue;
@@ -354,6 +354,10 @@ export function DeskToolShelf() {
       })
       .catch(() => null);
   }, []);
+  useEffect(() => {
+    if (open) readNeedsYou();
+  }, [open, readNeedsYou]);
+  useOnDeskChanged(readNeedsYou);
 
   useEffect(() => {
     // ⌘K itself lives in desk/keymap.ts (the one binder). PHILO-13-14 (C4):

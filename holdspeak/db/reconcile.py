@@ -803,9 +803,17 @@ def reconcile_schema(
     # The built-in "HoldSpeak folder" Send destination (owner ruling
     # 2026-10-05): present on every desk with no setup. Ungated, like the
     # privacy seed above: an up-to-date desk gains it on its next open.
-    from .channels import seed_builtin_destination
+    from .channels import scrub_brief_people_text, seed_builtin_destination
 
     seed_builtin_destination(conn)
+    # People text the old Brief renderer froze into prepared and discarded
+    # sends (before #767). Ungated and idempotent: a scrubbed row is skipped.
+    scrub_brief_people_text(conn)
+    # Old zoneless stamps (hub-local wall time) become UTC instants, once,
+    # so a text compare on a time column compares instants (2026-10-05).
+    from .zoneless_stamps import repair_zoneless_stamps
+
+    repair_zoneless_stamps(conn)
 
     # ── 5. Informational version stamp (never read to gate) ────────────
     conn.execute(

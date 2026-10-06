@@ -1,7 +1,7 @@
 """Transport-neutral deferred meeting-intelligence operations."""
 from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
-from datetime import datetime
+from holdspeak.timestamps import local_wall
 from typing import Any, Callable
 from ..config import Config
 from ..db.core import Database
@@ -130,7 +130,7 @@ class MeetingIntelService:
     def list_jobs(self, principal: Principal, filters: dict[str, Any]) -> dict[str, Any]:
         status, limit = filters.get("status", "all"), filters.get("limit", 20)
         history_limit = max(1, min(int(filters.get("history_limit", 5)), 20))
-        retry_max = max(1, int(Config.load().meeting.intel_retry_max_attempts)); now = datetime.now()
+        retry_max = max(1, int(Config.load().meeting.intel_retry_max_attempts)); now = local_wall()
         jobs = self._db.intel.list_intel_jobs(status=status, limit=limit)
         return {"jobs": [{"job_id": j.job_id, "origin_job_id": j.origin_job_id, "work_descriptor_sha256": j.work_descriptor_sha256, "claim_id": j.claim_id, "parent_operation_id": j.parent_operation_id, "bundle_id": j.bundle_id, "bundle_sha256": j.bundle_sha256, "lifecycle_posture": j.lifecycle_posture, "meeting_id": j.meeting_id, "status": j.status, "transcript_hash": j.transcript_hash, "requested_at": j.requested_at.isoformat(), "updated_at": j.updated_at.isoformat(), "attempts": j.attempts, "last_error": j.last_error, "planned_route": j.planned_route, "run_receipt": j.run_receipt, "meeting_title": j.meeting_title, "started_at": j.started_at.isoformat() if j.started_at else None, "intel_status_detail": j.intel_status_detail, "retry_scheduled": j.status == "queued" and bool(j.last_error) and j.requested_at > now, "next_retry_at": j.requested_at.isoformat() if j.status == "queued" and bool(j.last_error) and j.requested_at > now else None, "retries_remaining": max(0, retry_max - int(j.attempts)), "retry_max_attempts": retry_max, "retry_history": [{"job_id": e.job_id, "event_kind": e.event_kind, "attempt": e.attempt, "outcome": e.outcome, "error": e.error, "retry_at": e.retry_at.isoformat() if e.retry_at else None, "created_at": e.created_at.isoformat()} for e in self._db.intel.list_intel_job_attempts(j.meeting_id, limit=history_limit)]} for j in jobs]}
     def queue_summary(self, principal: Principal) -> dict[str, Any]:

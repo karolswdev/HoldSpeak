@@ -45,7 +45,7 @@ def _record_run(conn: Any, projection: dict[str, Any]) -> None:
         else None
     )
     error = str(projection.get("error") or "") or None
-    now = time.strftime("%Y-%m-%dT%H:%M:%S")
+    now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     columns = """meeting_id, window_id, plugin_id, plugin_version, status,
                  idempotency_key, duration_ms, output_json, error, deduped, created_at, updated_at"""
     values = (meeting_id, window_id, plugin_id, version, status, key,
@@ -94,7 +94,7 @@ def _runs_for(conn: Any, meeting_id: str) -> list[dict[str, Any]]:
 
 
 def _write_artifact(conn: Any, artifact: Any) -> None:
-    now = time.strftime("%Y-%m-%dT%H:%M:%S")
+    now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     origin = "meeting" if str(artifact.meeting_id or "").strip() else "run"
     conn.execute(
         """INSERT INTO artifacts (id,meeting_id,origin,artifact_type,title,body_markdown,
@@ -155,7 +155,7 @@ def _write_title(conn: Any, projection: dict[str, Any]) -> dict[str, Any]:
     if not title:
         # The provider had no title to offer: an honest zero-write, not a refusal.
         return {**projection, "title_written": 0}
-    now = time.strftime("%Y-%m-%dT%H:%M:%S")
+    now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     cursor = conn.execute(
         """UPDATE meetings SET title=?, sync_modified_at=?, updated_at=datetime('now')
            WHERE id=? AND (title IS NULL OR title='')""",
@@ -198,7 +198,7 @@ def _write_bookmark_label(conn: Any, projection: dict[str, Any]) -> dict[str, An
     if written:
         conn.execute(
             "UPDATE meetings SET sync_modified_at=?, updated_at=datetime('now') WHERE id=?",
-            (time.strftime("%Y-%m-%dT%H:%M:%S"), meeting_id),
+            (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), meeting_id),
         )
         return {**projection, "labels_written": written}
     # The frozen identity no longer resolves (or its timestamp changed).  This
@@ -296,9 +296,9 @@ def _write_bound_analysis(conn: Any, projection: dict[str, Any]) -> dict[str, An
                VALUES (?,?,?,?,?,'pending','pending',?)
                ON CONFLICT(id) DO UPDATE SET task=excluded.task,owner=excluded.owner,due=excluded.due""",
             (item_id, meeting_id, str(item.get("task") or ""), item.get("owner"),
-             item.get("due"), time.strftime("%Y-%m-%dT%H:%M:%S")),
+             item.get("due"), time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())),
         )
-    now = time.strftime("%Y-%m-%dT%H:%M:%S")
+    now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     conn.execute(
         """UPDATE meetings SET intel_status='running',
            intel_status_detail='Meeting saved. Summary, topics, and action items saved. Routed intelligence running.',

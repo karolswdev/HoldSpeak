@@ -6,7 +6,7 @@ out of MeetingSession; `self` is the session.
 
 from __future__ import annotations
 
-from datetime import datetime
+from holdspeak.timestamps import local_wall
 from typing import Optional
 
 import numpy as np
@@ -296,7 +296,7 @@ class TranscribeLoopMixin:
                     if state is not None:
                         state.capture_status = "recording"
                         state.capture_failure = None
-                        state.capture_checkpoint_at = datetime.now()
+                        state.capture_checkpoint_at = local_wall()
                         state.capture_checkpoint_seconds = max(
                             state.capture_checkpoint_seconds,
                             self._last_transcribe_time,

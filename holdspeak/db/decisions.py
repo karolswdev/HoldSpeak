@@ -11,6 +11,7 @@ import json
 import sqlite3
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
+from holdspeak.timestamps import utc_now_iso
 from typing import Any, Optional
 
 from ..errors import DatabaseError as _DatabaseErrorBase
@@ -261,7 +262,7 @@ def _project_artifact_row(
         (meeting_id,),
     ).fetchall()
     meeting_started_at = str(meeting["started_at"])
-    now_iso = datetime.now().isoformat()
+    now_iso = utc_now_iso()
     for raw in entries:
         if not isinstance(raw, dict):
             counts["skipped"] += 1
@@ -567,7 +568,7 @@ class DecisionRepository(BaseRepository):
                 {"source_type": "meeting", "source_ref": decision.source_meeting_id},
             ],
         )
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         receipt_key = f"{decision.id}|{clean_type}|{clean_actor}|{now_iso}"
         return DecisionPromotionReceipt(
             receipt_id="dec-prom-rec-" + hashlib.sha256(receipt_key.encode()).hexdigest()[:20],
@@ -614,7 +615,7 @@ class DecisionRepository(BaseRepository):
         targets = {"accept": "accepted", "reject": "rejected", "supersede": "superseded"}
         if action not in targets:
             raise ValueError(f"unknown decision lifecycle action: {action}")
-        now_iso = datetime.now().isoformat()
+        now_iso = utc_now_iso()
         with self._connection() as conn:
             row = conn.execute(
                 "SELECT * FROM decisions WHERE id = ? AND deleted = 0", (clean_id,)

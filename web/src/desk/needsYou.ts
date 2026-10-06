@@ -448,6 +448,9 @@ export interface NeedsYouAnswer {
   /** A hub source that could not be read, by name. */
   sourceErrors?: Partial<Record<"door" | "assignments" | "meetings" | "decisions", string>>;
   projects?: unknown;
+  /** The members by Project (`{projectId: n}`): the one count, split by
+   *  Project. The shade's Projects list and the palette's badge read it. */
+  projectCounts?: Record<string, number>;
   coverage?: CoverageRecord[];
   complete?: unknown;
   roomComplete?: unknown;
@@ -455,6 +458,42 @@ export interface NeedsYouAnswer {
   stale?: unknown;
   next?: unknown;
   sweepId?: unknown;
+}
+
+/** The members by Project, from rows the hub has marked (`muted`,
+ *  `waiting`). The twin of `project_counts` in
+ *  `holdspeak/services/needs_you_membership.py`. */
+export function projectCountsOf(
+  items: readonly { projectId?: unknown; muted?: unknown; waiting?: unknown }[],
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const item of items) {
+    const projectId = item.projectId ? String(item.projectId) : "";
+    if (!projectId || item.muted || item.waiting) continue;
+    counts[projectId] = (counts[projectId] ?? 0) + 1;
+  }
+  return counts;
+}
+
+/** The per-Project number every face shows: the hub's `projectCounts`
+ *  (its members split by Project). An answer without the field is read from
+ *  the hub's own row marks; the Room rows alone (`roomItems`) are never
+ *  counted, because they hold rows the hub does not count (a row the owner
+ *  waits on someone else for). */
+export function readProjectCounts(
+  answer: { projectCounts?: unknown; items?: unknown } | null | undefined,
+): Record<string, number> {
+  const given = answer?.projectCounts;
+  if (given && typeof given === "object" && !Array.isArray(given)) {
+    const out: Record<string, number> = {};
+    for (const [projectId, n] of Object.entries(given as Record<string, unknown>)) {
+      const value = Number(n);
+      if (projectId && Number.isFinite(value) && value > 0) out[projectId] = value;
+    }
+    return out;
+  }
+  const items = Array.isArray(answer?.items) ? (answer?.items as NeedsYouRoomItem[]) : [];
+  return projectCountsOf(items);
 }
 
 /** Read the hub's answer into the shared result. No rule is applied here:

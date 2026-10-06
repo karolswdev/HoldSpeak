@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import datetime
+
+from holdspeak.timestamps import aware, in_window, local_now, local_wall, parse_stamp, sql_instant, sql_window, utc_iso
 import json
 import logging
 import re
@@ -283,6 +285,16 @@ _MEETING_PRIORITY = 50
 SHELF_STATES = ("acknowledged", "deferred")
 
 
+
+def _stored_stamp(value: datetime.datetime) -> str:
+    """A window or generation time as stored: always with an offset, never
+    bare. An aware value keeps its own offset and instant; a naive (hub-local)
+    one gets the hub's offset for that instant (its ``fold`` decides the
+    repeated hour). The offset keeps the producer's day and the GENERATED label
+    on the hub's clock (PHILO-3-03, PHILO-6-02); julianday reads any offset."""
+    return aware(value).isoformat()
+
+
 class _NeedsYouRows(list):
     """The Brief's WAITING rows from the one ``needs you`` rule.
 
@@ -352,7 +364,7 @@ class MondayBriefService:
         # PHILO-3-03: the producer's ONE clock. It is the wall clock unless the
         # composition passes another (the rig's own hub, a test); a case that
         # needs the next producer-day moves this, never the machine clock.
-        self._clock = clock or datetime.datetime.now
+        self._clock = clock or local_wall
 
     def compute_window(
         self, now: datetime.datetime | None = None
@@ -366,7 +378,7 @@ class MondayBriefService:
         HS-175-05: the forward-looking "THIS WEEK" section uses
         ``compute_lookahead`` separately; this function is not widened.
         """
-        period_end = now or datetime.datetime.now()
+        period_end = now or local_wall()
         weekday = period_end.weekday()
         if weekday == 0:  # Monday starts from the preceding Friday close.
             days_back = 3
@@ -391,7 +403,7 @@ class MondayBriefService:
         HS-175-05: used by the calendar-events and meeting-watch
         collectors for the "what is coming" half of the brief.
         """
-        period_start = now or datetime.datetime.now().astimezone()
+        period_start = now or local_now()
         days_since_monday = period_start.weekday()
         days_to_sunday = 6 - days_since_monday
         sunday = (period_start + datetime.timedelta(days=days_to_sunday)).date()
@@ -461,7 +473,8 @@ class MondayBriefService:
 
             # Last brief generated_at for "since last brief" filtering
             last_brief_row = conn.execute(
-                "SELECT MAX(generated_at) AS latest FROM monday_briefs"
+                "SELECT generated_at AS latest FROM monday_briefs "
+                "ORDER BY julianday(generated_at) DESC LIMIT 1"
             ).fetchone()
             last_brief_at = str(last_brief_row["latest"]) if (
                 last_brief_row and last_brief_row["latest"]
@@ -517,15 +530,16 @@ class MondayBriefService:
             headline, sections = self._compose(
                 sections, waiting_count=needs_you_count, counted_decisions=counted_decisions,
             )
-            generated_at = period_end.isoformat()
+            # Never bare (Astra, #872): see _stored_stamp.
+            generated_at = _stored_stamp(period_end)
             conn.execute(
                 """INSERT INTO monday_briefs
                    (id, period_start, period_end, headline, generated_at)
                    VALUES (?, ?, ?, ?, ?)""",
                 (
                     brief_id,
-                    period_start.isoformat(),
-                    period_end.isoformat(),
+                    _stored_stamp(period_start),
+                    _stored_stamp(period_end),
                     headline,
                     generated_at,
                 ),
@@ -914,18 +928,24 @@ class MondayBriefService:
         durable rows rather than from pipeline receipts, which is the honest
         source: a meeting exists whether or not an observed method ran.
         """
+        # Stored stamps mix old local and new UTC text: a padded text
+        # prefilter, then the exact instant test and order.
         with self._db._connection() as conn:
             rows = conn.execute(
                 """SELECT m.id, m.title, m.started_at, m.ended_at, m.duration_seconds,
+                          COALESCE(m.ended_at, m.started_at) AS window_at,
                           (SELECT COUNT(*) FROM action_items a
                             WHERE a.meeting_id = m.id) AS action_count
                    FROM meetings AS m
                    WHERE m.parked = 0
                      AND COALESCE(m.ended_at, m.started_at) BETWEEN ? AND ?
-                     AND m.capture_status NOT IN ('recording', 'provisional')
-                   ORDER BY COALESCE(m.ended_at, m.started_at) ASC, m.id ASC""",
-                (window_start, window_end),
+                     AND m.capture_status NOT IN ('recording', 'provisional')""",
+                sql_window(window_start, window_end),
             ).fetchall()
+        rows = sorted(
+            (r for r in rows if in_window(r["window_at"], window_start, window_end)),
+            key=lambda r: (parse_stamp(r["window_at"]), str(r["id"])),
+        )
 
         items: list[BriefItem] = []
         for row in rows:
@@ -1005,13 +1025,20 @@ class MondayBriefService:
                    WHERE type = 'table' AND name = 'connector_runs'"""
             ).fetchone()
             if connector_table is not None:
-                connector_rows = conn.execute(
-                    """SELECT id, connector_id, started_at, error
-                       FROM connector_runs
-                       WHERE succeeded = 0 AND started_at BETWEEN ? AND ?
-                       ORDER BY started_at DESC, id DESC""",
-                    (window_start, window_end),
-                ).fetchall()
+                # Old local and new UTC text: padded, then the instant decides.
+                connector_rows = sorted(
+                    (
+                        r for r in conn.execute(
+                            """SELECT id, connector_id, started_at, error
+                               FROM connector_runs
+                               WHERE succeeded = 0 AND started_at BETWEEN ? AND ?""",
+                            sql_window(window_start, window_end),
+                        ).fetchall()
+                        if in_window(r["started_at"], window_start, window_end)
+                    ),
+                    key=lambda r: (parse_stamp(r["started_at"]), int(r["id"])),
+                    reverse=True,
+                )
                 seen_connectors: set[str] = set()
                 for row in connector_rows:
                     connector_id = str(row["connector_id"])
@@ -1448,10 +1475,10 @@ class MondayBriefService:
                    FROM decision_records r
                    JOIN decision_record_sources s ON s.record_id = r.id
                    WHERE s.source_type = 'meeting'
-                     AND r.created_at >= ? AND r.created_at < ?
+                     AND julianday(r.created_at) >= julianday(?) AND julianday(r.created_at) < julianday(?)
                      AND r.deleted = 0
-                   ORDER BY r.created_at DESC""",
-                (since, week_end),
+                   ORDER BY julianday(r.created_at) DESC""",
+                (sql_instant(since), sql_instant(week_end)),
             ).fetchall()
 
             if decision_rows:
@@ -1533,16 +1560,20 @@ class MondayBriefService:
         """
         with self._db._connection() as conn:
             rows = conn.execute(
-                """SELECT DISTINCT m.calendar_event_id AS event_id
+                """SELECT m.calendar_event_id AS event_id,
+                          COALESCE(m.ended_at, m.started_at) AS window_at
                    FROM meetings AS m
                    WHERE m.parked = 0
                      AND m.calendar_event_id IS NOT NULL
                      AND m.calendar_event_id != ''
                      AND COALESCE(m.ended_at, m.started_at) BETWEEN ? AND ?
                      AND m.capture_status NOT IN ('recording', 'provisional')""",
-                (window_start, window_end),
+                sql_window(window_start, window_end),
             ).fetchall()
-        return {str(r["event_id"]) for r in rows}
+        return {
+            str(r["event_id"]) for r in rows
+            if in_window(r["window_at"], window_start, window_end)
+        }
 
     @staticmethod
     def _commitments_due_rows(conn: Any, due_lo: str, due_hi: str) -> list[Any]:

@@ -530,12 +530,21 @@ class ChannelService:
             document = (contract.document_from_json(document_ref, row["document_json"])
                         if row.get("document_json") else None)
             document_json = row.get("document_json")
-            # A prepared Brief is sent only when its frozen bytes are the bytes
-            # the Brief renders NOW (inventory gap 5, 2026-10-03). A row frozen
-            # by the renderer that carried the People overlay never leaves:
-            # it refuses PREVIEW CHANGED and he takes a fresh preview.
-            if str(document_ref).startswith("monday_brief:"):
-                fresh = contract.serialize_for(destination, contract.render_document(self._db, document_ref))
+            # A prepared send leaves only when its frozen bytes are the bytes
+            # its document renders NOW, for every document kind (inventory
+            # gap 5, 2026-10-03; every kind 2026-10-05). A row frozen by an
+            # older renderer (the Brief's People overlay) or before its source
+            # changed never leaves: it refuses PREVIEW CHANGED and he takes a
+            # fresh preview. A source deleted since prepare still sends its
+            # frozen bytes (PHILO-11), except a Brief: it refuses as before.
+            try:
+                current = contract.render_document(self._db, document_ref)
+            except ChannelRefused as exc:
+                if exc.code != "document_not_found" or str(document_ref).startswith("monday_brief:"):
+                    raise
+                current = None
+            if current is not None:
+                fresh = contract.serialize_for(destination, current)
                 if contract.sha256(fresh) != row["payload_digest"]:
                     raise ChannelRefused("preview_changed", "The document changed since this send was prepared")
         else:
@@ -566,8 +575,8 @@ class ChannelService:
         if channel_name == "file":
             # A new row carries its complete naming provenance. A legacy row
             # has no document_json, so retain the Phase 10 lookup only for the
-            # file channel that needs a path; other channels already have
-            # frozen bytes and never reread their source at Send.
+            # file channel that needs a path; other channels send their
+            # frozen bytes (checked against a fresh render above).
             if document is None:
                 document = contract.naming(self._db, document_ref)
             path = chan.choose_path(folder, document, send_id)

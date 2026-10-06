@@ -1890,7 +1890,7 @@ DESK_NEEDS_YOU = OperationDescriptor(
     args_schema={"type": "object", "properties": {}, "additionalProperties": False},
     principal=_ROOM_PRINCIPAL,
     effect="read",
-    result="the needs-you answer (count, waitingCount, members, items, blockers, failedMeetings, roomItems, projects, mutedCount, computedAt, coverage, complete, sourceErrors)",
+    result="the needs-you answer (count, waitingCount, members, items, blockers, failedMeetings, roomItems, projects, projectCounts, mutedCount, computedAt, coverage, complete, sourceErrors)",
     refusals=_CONTRACT_REFUSALS,
     completion="synchronous; the HTTP route serves it from a cache (computedAt, stale, sweepId)",
     exposure=("http:GET /api/desk/needs-you", "mcp:desk.needs_you"),
@@ -2423,6 +2423,11 @@ _ID_ARGUMENTS = (
 )
 
 
+def changed_for(name: str, args: Any, result: Any) -> tuple[str, str, str]:
+    """The public name of :func:`_changed` (the MCP root uses it too)."""
+    return _changed(name, args, result)
+
+
 def _changed(name: str, args: Any, result: Any) -> tuple[str, str, str]:
     """``(kind, id, op)`` for the ``desk_changed`` frame of the write *name*.
 
@@ -2439,6 +2444,11 @@ def _changed(name: str, args: Any, result: Any) -> tuple[str, str, str]:
         inner = result.get(kind)
         if not obj_id and isinstance(inner, Mapping):
             obj_id = inner.get("id")
+    if not obj_id and result is not None and not isinstance(result, (Mapping, str, bytes, list, tuple)):
+        # A service answers with its record (a dataclass): the Brief, a run.
+        value = getattr(result, "id", None)
+        if isinstance(value, (str, int)):
+            obj_id = value
     return kind, str(obj_id or ""), op or "write"
 
 

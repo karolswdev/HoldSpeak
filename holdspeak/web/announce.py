@@ -68,19 +68,72 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
 _KIND = {"people": "person", "all_action_items": "action_item"}
 
 
-def changed(method: str, path: str, path_params: Any) -> tuple[str, str, str]:
-    """``(kind, id, op)`` from the request: ``/api/meetings/{id}`` PUT is ``meeting <id> update``."""
-    segment = path.split("/")[2].replace("-", "_") if path.count("/") >= 2 else ""
+def changed(method: str, path: str, path_params: Any, body: Any = None) -> tuple[str, str, str]:
+    """``(kind, id, op)`` from the request: ``/api/meetings/{id}`` PUT is ``meeting <id> update``.
+
+    A POST with no path parameter is ``create`` only on a collection
+    (``POST /api/notes``); on a verb path its op is the verb
+    (``POST /api/brief/generate`` is ``brief generate``). Its id is read from
+    the answer (*body*, the response JSON) when the path has none.
+    """
+    parts = [part for part in path.split("/") if part][1:]  # drop "api"
+    segment = parts[0].replace("-", "_") if parts else ""
     kind = _KIND.get(segment) or (segment[:-1] if segment.endswith("s") and len(segment) > 3 else segment)
     params = list(path_params.values()) if isinstance(path_params, dict) else []
     obj_id = str(params[0]) if params else ""
     if method == "DELETE":
         op = "delete"
     elif method == "POST" and not params:
-        op = "create"
+        verb = ".".join(part.replace("-", "_") for part in parts[1:])
+        op = verb or "create"
     else:
         op = "update"
+    if not obj_id:
+        obj_id = _answer_id(body, kind, segment)
     return kind or "desk", obj_id, op
+
+
+def _answer_id(body: Any, kind: str, segment: str) -> str:
+    """The object id a write's answer names: ``id``, ``<kind>_id`` or ``<kind>.id``."""
+    if not isinstance(body, dict):
+        return ""
+    for key in ("id", f"{kind}_id", f"{segment}_id"):
+        value = body.get(key)
+        if isinstance(value, (str, int)) and str(value):
+            return str(value)
+    for key in (kind, segment):
+        inner = body.get(key)
+        if isinstance(inner, dict) and isinstance(inner.get("id"), (str, int)) and str(inner["id"]):
+            return str(inner["id"])
+    objects = [value for value in body.values() if isinstance(value, dict) and value.get("id")]
+    if len(objects) == 1 and isinstance(objects[0]["id"], (str, int)):
+        return str(objects[0]["id"])
+    return ""
+
+
+async def _read_answer(response: Any) -> tuple[Any, Any]:
+    """The JSON answer of *response*, and a response that still carries it."""
+    if "json" not in (response.headers.get("content-type") or ""):
+        return None, response
+    iterator = getattr(response, "body_iterator", None)
+    if iterator is None:
+        raw = getattr(response, "body", b"")
+    else:
+        raw = b"".join([chunk async for chunk in iterator])
+        from starlette.responses import Response
+
+        headers = dict(response.headers)
+        headers.pop("content-length", None)
+        response = Response(
+            content=raw, status_code=response.status_code, headers=headers,
+            media_type=response.media_type,
+        )
+    try:
+        import json
+
+        return json.loads(raw or b"null"), response
+    except ValueError:
+        return None, response
 
 
 def install(app: Any) -> None:
@@ -97,5 +150,10 @@ def install(app: Any) -> None:
             response = await call_next(request)
             route = getattr(request.scope.get("route"), "path", None)
             if 200 <= response.status_code < 300 and (method, route) not in QUIET_ROUTES:
-                announce(*changed(method, path, request.scope.get("path_params")))
+                path_params = request.scope.get("path_params")
+                body = None
+                if not path_params and method == "POST":
+                    # The new object's id is only in the answer.
+                    body, response = await _read_answer(response)
+                announce(*changed(method, path, path_params, body))
         return response

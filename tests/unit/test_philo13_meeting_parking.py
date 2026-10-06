@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -836,8 +836,9 @@ def test_project_stats_hide_parked_meeting_actions_and_artifacts(tmp_path: Path)
     service = ProjectService(db)
     assert service.summary(OWNER, "project-stats") == {
         "meeting_count": 1,
-        "first_meeting": "2026-10-01T10:00:00",
-        "last_meeting": "2026-10-01T10:00:00",
+        # Stored as the aware UTC instant of 10:00 local (the aware-time census).
+        "first_meeting": datetime(2026, 10, 1, 10, 0, 0).astimezone(timezone.utc).isoformat(),
+        "last_meeting": datetime(2026, 10, 1, 10, 0, 0).astimezone(timezone.utc).isoformat(),
         "action_items_by_status": {"pending": 1},
         "artifact_count": 1,
     }

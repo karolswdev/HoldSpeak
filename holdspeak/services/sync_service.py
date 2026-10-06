@@ -166,19 +166,26 @@ def _iso(value: Any) -> Any:
     """
     if value is None:
         return None
-    if hasattr(value, "isoformat"):
-        s = value.isoformat(timespec="seconds")
-        if s.endswith("+00:00"):
-            return s[:-6] + "Z"
-        return s if s.endswith("Z") else s + "Z"
+    from datetime import date, datetime, timezone
+
+    from holdspeak.timestamps import parse_stamp
+
+    if isinstance(value, datetime):
+        # A naive datetime is hub-local wall time (the in-memory form every
+        # repository hands out, holdspeak/timestamps.py); an aware one is exact.
+        aware_value = value if value.tzinfo is not None else value.astimezone()
+        return aware_value.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    if isinstance(value, date):
+        return value.isoformat()
     raw = str(value).strip()
     if not raw:
         return raw
     try:
-        from datetime import datetime, timezone
-        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-        if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=timezone.utc)
+        # A stored stamp: an offset or Z is exact, a bare ISO stamp is
+        # hub-local, the SQLite space form is UTC.
+        parsed = parse_stamp(raw)
+        if parsed is None:
+            raise ValueError(raw)
         return parsed.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     except ValueError:
         return raw
@@ -275,25 +282,20 @@ def _project_record(project: Any) -> dict[str, Any]:
 
 
 def _parse_dt(value: Any) -> Any:
-    """ISO-8601 string → naive datetime; tolerant of a trailing ``Z`` (UTC).
+    """ISO-8601 string -> naive hub-local datetime (``parse_wall``).
 
-    Returned naive (tzinfo dropped) to match how every other meeting path stores
-    timestamps (naive ``datetime.now()``); a stored mix of naive/aware stamps
-    breaks ``MeetingState.duration`` (naive ``now`` minus an aware ``started_at``).
+    Returned naive, the in-memory form every meeting path holds; a ``Z`` or
+    offset stamp is converted to local wall time (it was cut to its UTC wall
+    clock before), a bare stamp is already local.
     """
-    from datetime import datetime
+    from holdspeak.timestamps import parse_wall
 
     if value is None:
         return None
-    if isinstance(value, datetime):
-        return value.replace(tzinfo=None) if value.tzinfo is not None else value
-    text = str(value).strip()
-    if not text:
-        return None
-    if text.endswith("Z"):
-        text = text[:-1] + "+00:00"
-    parsed = datetime.fromisoformat(text)
-    return parsed.replace(tzinfo=None) if parsed.tzinfo is not None else parsed
+    parsed = parse_wall(value)
+    if parsed is None and str(value).strip():
+        raise ValueError(f"not an ISO 8601 time: {value!r}")
+    return parsed
 
 
 def meeting_state_from_sync_value(value: dict[str, Any]) -> Any:
@@ -373,9 +375,9 @@ def meeting_state_from_sync_value(value: dict[str, Any]) -> Any:
 
     started = _parse_dt(value.get("started_at"))
     if started is None:
-        from datetime import datetime
+        from holdspeak.timestamps import local_wall
 
-        started = datetime.now()
+        started = local_wall()
 
     return MeetingState(
         id=str(value.get("id") or "").strip(),

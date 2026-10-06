@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from holdspeak.timestamps import utc_now
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -295,7 +296,7 @@ async def process_transcript(
         config=config,
         server=server,
         audio_duration_s=0.0,
-        transcribed_at=datetime.now(),
+        transcribed_at=utc_now(),
         journal_source=source,
         skip_target_detection=skip_target_detection,
         agent_reply_session=agent_reply_session,

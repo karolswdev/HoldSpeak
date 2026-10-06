@@ -14,6 +14,7 @@ import hashlib
 import json
 import threading
 from datetime import datetime, timedelta
+from holdspeak.timestamps import utc_now
 from typing import Any, Optional
 from urllib import request as urlrequest
 from urllib.parse import urlsplit
@@ -135,7 +136,7 @@ def _retry_or_fail_job(
             int(job.attempts), base_seconds=base_delay_seconds,
             max_seconds=max_delay_seconds,
         )
-        retry_at = datetime.now() + timedelta(seconds=delay)
+        retry_at = utc_now() + timedelta(seconds=delay)
     changed = db.intel.settle_bound_execution(
         job, error=error, retry_at=retry_at, max_attempts=int(max_attempts),
     )
@@ -1081,7 +1082,7 @@ class IntelQueueWorker:
         except Exception as exc:
             log.error(f"Deferred intel failure-alert check failed: {exc}")
             return
-        self._update_failure_alert_state(summary, now=datetime.now())
+        self._update_failure_alert_state(summary, now=utc_now())
 
     def _run(self) -> None:
         while not self._stop_event.is_set():

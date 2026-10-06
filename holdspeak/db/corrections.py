@@ -13,7 +13,7 @@ carries a secret.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from holdspeak.timestamps import utc_now_iso
 from typing import Any, Optional
 
 from ..logging_config import get_logger
@@ -52,7 +52,7 @@ class DictationCorrectionRepository(BaseRepository):
         if not clean_value:
             raise ValueError("value is required")
 
-        now = datetime.now().isoformat()
+        now = utc_now_iso()
         with self._connection() as conn:
             cursor = conn.execute(
                 """
