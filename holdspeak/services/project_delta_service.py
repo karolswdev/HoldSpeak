@@ -1822,6 +1822,7 @@ class ProjectDeltaService:
                     confidence=None,
                     producer_kind=p.get("provenance_class"),
                     lifecycle="open",
+                    change_class=p.get("change_class"),
                 )
         return None
 

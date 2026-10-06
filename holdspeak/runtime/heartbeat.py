@@ -128,9 +128,13 @@ class HeartbeatMixin:
                     # HS-175-02: the calendar refresh rides the heartbeat sweep;
                     # the standalone conductor thread is retired.
                     from ..calendar_ingest_conductor import _conductor as _cal_conductor
+                    from ..delivery.follow_through import default_follow_through
+
                     hb_with_ws = HeartbeatService(
                         db, observer=obs, watch_service=ws,
                         calendar_conductor=_cal_conductor,
+                        # Conductor K4: the agent launches' PRs ride the sweep.
+                        follow_through=default_follow_through(db),
                     )
                     principal = Principal(PrincipalKind.OWNER, "heartbeat-conductor")
                     receipt = hb_with_ws.run_sweep(principal)

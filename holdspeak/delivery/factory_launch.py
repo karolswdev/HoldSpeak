@@ -417,6 +417,80 @@ def execute_worktree_create(
     return _audited({"status": "worktree_created", "name": name, "branch": branch})
 
 
+def execute_worktree_remove(
+    payload: Mapping[str, Any],
+    *,
+    runner: Optional[Runner] = None,
+    audit: Optional[Callable[..., int]] = None,
+) -> dict[str, Any]:
+    """The ``factory.worktree_remove`` executor (Conductor K4): remove a
+    launch's worktree after its PR merged. It removes a CLEAN, MERGED
+    worktree only, and refuses everything else by name before git runs:
+
+    ``worktree_removed``, ``bad_name``, ``out_of_root``, ``worktree_absent``,
+    ``worktree_dirty`` (uncommitted or untracked changes),
+    ``worktree_unmerged`` (HEAD is not the merged head or an ancestor of
+    it: a commit made after the merge stays), ``error``.
+
+    ``merged_head`` is the head SHA the forge reports merged. The branch is
+    kept (only the checkout goes). Audited like every factory act."""
+    record = audit or coder_steering._default_audit
+    name = str(payload.get("name") or "")
+    repo_path = str(payload.get("repo_path") or "")
+    path = str(payload.get("path") or "")
+    merged_head = str(payload.get("merged_head") or "").strip()
+
+    def _audited(result: dict[str, Any]) -> dict[str, Any]:
+        try:
+            result["audit_id"] = record(
+                session_key=f"factory:worktree:{name}", agent="factory", pane_id=None,
+                text=f"worktree remove {name}", grounding=[], submit=False,
+                outcome=result["status"], detail=result.get("detail"),
+            )
+        except Exception:
+            result["audit_id"] = None
+        return result
+
+    if not coder_factory.valid_name(name):
+        return _audited({"status": "bad_name", "detail": f"invalid worktree name: {name!r}"})
+    if not repo_path or not path:
+        return _audited({"status": "error", "detail": "repo_path and path are required"})
+    try:
+        resolved = Path(path).expanduser().resolve()
+        root = Path(repo_path).expanduser().resolve().parent
+    except OSError as exc:
+        return _audited({"status": "error", "detail": _scrub(str(exc), repo_path, path)})
+    if resolved.parent != root or resolved.name != name:
+        return _audited({"status": "out_of_root", "detail": "worktree path escapes the source root"})
+    if not resolved.exists():
+        return _audited({"status": "worktree_absent", "detail": f"worktree {name!r} is not there"})
+    run = runner or _default_git_runner
+
+    def git(*args: str) -> Any:
+        return run(["git", "-C", str(resolved), *args])
+
+    try:
+        status = git("status", "--porcelain")
+        if status.returncode != 0:
+            return _audited({"status": "error", "detail": "git status failed"})
+        if (status.stdout or "").strip():
+            return _audited({"status": "worktree_dirty", "detail": f"worktree {name!r} has changes"})
+        if not merged_head or not _SAFE_TOKEN_RE.match(merged_head):
+            return _audited({"status": "worktree_unmerged", "detail": "no merged head to compare"})
+        ancestor = git("merge-base", "--is-ancestor", "HEAD", merged_head)
+        if ancestor.returncode != 0:
+            return _audited(
+                {"status": "worktree_unmerged", "detail": f"worktree {name!r} has commits the merge does not hold"}
+            )
+        removed = run(["git", "-C", str(Path(repo_path).expanduser()), "worktree", "remove", str(resolved)])
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return _audited({"status": "error", "detail": _scrub(str(exc), repo_path, path)})
+    if removed.returncode != 0:
+        detail = _scrub((removed.stderr or "").strip() or "git refused", repo_path, path)
+        return _audited({"status": "error", "detail": detail})
+    return _audited({"status": "worktree_removed", "name": name})
+
+
 # ── the launch ledger (durable launch records) ───────────────────────
 
 
@@ -1424,5 +1498,6 @@ __all__ = [
     "derived_story_ref",
     "origin_ref_of",
     "execute_worktree_create",
+    "execute_worktree_remove",
     "valid_branch",
 ]

@@ -14,6 +14,6 @@
   "project_revision": 2,
   "published_at": null,
   "review_id": null,
-  "source_manifest_json": "{\"caveats\":[],\"observation_ids\":[],\"project_revision\":2,\"week_source_refs\":[\"action_item:act-fixture-01\",\"meeting:m-fixture\"]}",
+  "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"observation_ids\":[],\"project_revision\":2,\"week_source_refs\":[\"action_item:act-fixture-01\",\"meeting:m-fixture\"]}",
   "updated_at": "<volatile>"
 }

@@ -268,6 +268,7 @@ class DeltaRepository(BaseRepository):
         lifecycle: str = "open",
         deferred_until: Optional[str] = None,
         dismissal_basis_hash: Optional[str] = None,
+        change_class: Optional[str] = None,
     ) -> None:
         """Insert a proposal."""
         with self._connection() as conn:
@@ -288,6 +289,7 @@ class DeltaRepository(BaseRepository):
                 lifecycle=lifecycle,
                 deferred_until=deferred_until,
                 dismissal_basis_hash=dismissal_basis_hash,
+                change_class=change_class,
             )
 
     def insert_proposal_in_transaction(
@@ -309,6 +311,7 @@ class DeltaRepository(BaseRepository):
         lifecycle: str = "open",
         deferred_until: Optional[str] = None,
         dismissal_basis_hash: Optional[str] = None,
+        change_class: Optional[str] = None,
     ) -> None:
         """Insert a proposal on a caller-owned connection."""
         self._insert_proposal(
@@ -328,6 +331,7 @@ class DeltaRepository(BaseRepository):
             lifecycle=lifecycle,
             deferred_until=deferred_until,
             dismissal_basis_hash=dismissal_basis_hash,
+            change_class=change_class,
         )
 
     @staticmethod
@@ -349,14 +353,15 @@ class DeltaRepository(BaseRepository):
         lifecycle: str,
         deferred_until: Optional[str],
         dismissal_basis_hash: Optional[str],
+        change_class: Optional[str] = None,
     ) -> None:
         conn.execute(
             """INSERT INTO project_proposals
                (id, project_id, review_window_key, proposal_kind, target_ref,
                 title, rationale, patch_json, materiality, confidence,
                 producer_kind, model_receipt_ref, lifecycle,
-                deferred_until, dismissal_basis_hash)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                deferred_until, dismissal_basis_hash, change_class)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 str(proposal_id).strip(),
                 str(project_id).strip(),
@@ -373,6 +378,7 @@ class DeltaRepository(BaseRepository):
                 lifecycle,
                 deferred_until,
                 dismissal_basis_hash,
+                change_class,
             ),
         )
 

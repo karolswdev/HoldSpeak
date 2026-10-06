@@ -65,6 +65,9 @@ def _normalize_entity(connector_id: str, entity: Any) -> dict[str, Any]:
             ).lower(),
             "checks": str(entity.get("checks") or entity.get("ci") or "").lower(),
             "head_sha": str(entity.get("head_sha") or entity.get("headRefOid") or ""),
+            # Conductor K4: the branch, so a merge observation names the
+            # branch an agent launch worked on.
+            "head_ref": str(entity.get("head_ref") or entity.get("headRefName") or ""),
         })
     elif connector_id == "jira":
         common.update({

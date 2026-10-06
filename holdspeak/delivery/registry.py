@@ -278,6 +278,11 @@ class DeliveryRegistry:
     def sources(self) -> list[SourceRecord]:
         return list(self._sources)
 
+    def reload(self) -> None:
+        """Read the registry file again: another instance (the launch
+        service's) may have registered a worktree since this one loaded."""
+        self._load_or_import()
+
     def get(self, source_id: str) -> Optional[SourceRecord]:
         for source in self._sources:
             if source.source_id == source_id:

@@ -70,10 +70,14 @@ def build_delivery_prs_router(
     def _service() -> Any:
         if holder["service"] is None:
             from ...delivery import DeliveryRegistry
-            from ...delivery.pr_receipts import PrReceiptsService
+            from ...delivery.pr_receipts import PrReceiptsService, default_pr_receipts
 
-            registry = DeliveryRegistry(registry_path, map_path=map_path)
-            holder["service"] = PrReceiptsService(registry, runner=runner)
+            if registry_path is None and map_path is None and runner is None:
+                # Production: the cache the Heartbeat sweep refreshes.
+                holder["service"] = default_pr_receipts()
+            else:
+                registry = DeliveryRegistry(registry_path, map_path=map_path)
+                holder["service"] = PrReceiptsService(registry, runner=runner)
         return holder["service"]
 
     def _attempt_story_ids() -> list[str]:
