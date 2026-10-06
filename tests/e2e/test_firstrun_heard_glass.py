@@ -18,7 +18,8 @@ The flow, at 1440 and 393: before -> running (First words lights when the
 Whisper files land, while the chat model still downloads) -> stopped
 (the connection drops) -> Try again resumes -> ready -> listening ->
 writing -> heard (his words at the display step) -> Keep as note creates
-the note and the Desk opens.
+the note and the face stays (option A "One screen": Calendar and
+Connections are next) -> Continue later opens the Desk.
 
 Shots go to $FIRSTRUN_SHOTS when it is set (the owner's comparison page),
 else to the test's tmp folder.
@@ -380,12 +381,16 @@ def test_first_run_heard_first(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, 
                 assert tops[0] < tops[1] and tops[0] < tops[2], tops
             shot("done-3")
 
-            # ── Keep as note: a real note, then the Desk ──
+            # ── Keep as note: a real note; option A keeps the one screen
+            #    (Calendar and Connections are next), then Continue later ──
             with page.expect_response(lambda r: r.url.endswith("/api/notes") and r.request.method == "POST") as made:
                 words.get_by_role("button", name="Keep as note", exact=True).click()
             assert made.value.ok, made.value.text()
             note = made.value.json()["note"]
             assert note["body_markdown"] == WORDS and note["title"] == "First dictation"
+            expect(page.get_by_role("heading", name="Get ready")).to_be_visible()
+            expect(words.get_by_role("button", name="Keep as note", exact=True)).to_have_count(0)
+            page.get_by_role("button", name="Continue later", exact=True).click()
             page.get_by_test_id("firstrun").wait_for(state="detached", timeout=15_000)
             page.locator(".chair:not(.chair-first-value)").wait_for()
             browser.close()

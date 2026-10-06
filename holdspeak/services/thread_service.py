@@ -37,6 +37,7 @@ from ..kernel.inference_stream import (
     emit_thread_turn_started,
 )
 from ..kernel.prompt_adapter import StreamingPromptAdapter
+from ..inference_locality import least_private, served_route
 from ..principals import Principal, PrincipalKind
 from .errors import ServiceError, ValidationError
 
@@ -625,7 +626,9 @@ class ThreadService:
             parent_id=user_msg.id,
             operation_id=invocation_id,
             invocation_id=invocation_id,
-            egress_scope=egress_scope,
+            # No lamp before a receipt: the admitted plan is not where bytes
+            # went (Article III).  The receipt route lands at turn end.
+            egress_scope="",
             model_id=model_id,
             route_plan_id=str(route_plan.get("id", "")),
         )
@@ -638,7 +641,7 @@ class ThreadService:
             message_id=assistant_msg.id,
             user_message_id=user_msg.id,
             model_id=model_id,
-            egress=egress_scope,
+            egress="",
         )
 
         # HS-154-03: if the thread is in call mode, emit THINKING transition.
@@ -1042,6 +1045,10 @@ class ThreadService:
         outcome = "succeeded"
         receipt_id = ""
         error_code = ""
+        # Each pass's route execution, in order, and the receipt it returned:
+        # the turn's route is read from these (inference_locality).
+        pass_executions: list[str] = [str(admitted["execution"]["id"])]
+        pass_receipts: dict[str, Any] = {}
 
         # D3 hook: sensitive text accumulator across passes (counsel M1).
         sensitive_texts: list[str] = list(payload.get("_sensitive_texts", []))
@@ -1223,6 +1230,8 @@ class ThreadService:
                 tool_calls_this_pass.clear()
 
                 # -- Stream this pass --
+                if current_execution_id not in pass_executions:
+                    pass_executions.append(str(current_execution_id))
                 routed = self._broker.inference_adoption_service.execute_stream(
                     principal,
                     execution_id=current_execution_id,
@@ -1232,6 +1241,7 @@ class ThreadService:
                     payload_redactor=self._m1_redactor,
                     **({"parent_context": outer_run.context, "planned_node": "interview-model"} if outer_run else {}),
                 )
+                pass_receipts[str(current_execution_id)] = routed.get("receipt")
 
                 # -- No tool calls: text answer, done --
                 if not tool_calls_this_pass:
@@ -1708,6 +1718,19 @@ class ThreadService:
                 outcome = "indeterminate"
                 stats["error"] = f"Interview settlement requires reconciliation: {exc}"
 
+        # -- The turn's route (Article III): the least private attempt that
+        #    was SENT in any pass, with that pass's receipt id.  No sent
+        #    attempt, or no route receipt: no lamp, no route.
+        route = least_private([
+            r for r in (self._served(eid, pass_receipts.get(eid)) for eid in pass_executions) if r
+        ]) or {}
+        done_egress, done_host, done_model = route.get("lamp", ""), route.get("host", ""), route.get("model", "")
+        route_receipt, fallback = str(route.get("receipt", "")), bool(route.get("fallback"))
+        self._threads.set_message_route(
+            assistant_msg_id, egress_scope=done_egress, egress_host=done_host,
+            model_id=done_model, egress_receipt_id=route_receipt, egress_fallback=fallback,
+        )
+
         # -- Flush any remaining buffered text --
         if part_id is not None and cadence.finish():
             pending = cadence.pending
@@ -1717,9 +1740,10 @@ class ThreadService:
         # -- Complete the message --
         stats_json = json.dumps(stats, separators=(",", ":"), sort_keys=True) if stats else ""
         if cancel_event.is_set():
-            self._threads.abort_message(assistant_msg_id)
+            # The real receipt id, never a placeholder (Astra, #875).
+            receipt_id = receipt_id or route_receipt
+            self._threads.abort_message(assistant_msg_id, receipt_id=receipt_id)
             outcome = "aborted"
-            receipt_id = "indeterminate"
         else:
             error_json_str = ""
             if outcome in ("failed", "indeterminate") and (stats.get("error") or error_code):
@@ -1770,8 +1794,12 @@ class ThreadService:
             message_id=assistant_msg_id,
             receipt_id=receipt_id,
             outcome=outcome,
-            egress=egress_scope,
+            egress=done_egress,
             stats=done_stats,
+            host=done_host,
+            model=done_model,
+            route_receipt_id=route_receipt,
+            fallback=fallback,
         )
 
         # HS-154-03: if the thread is still in call mode, transition back to LISTENING.
@@ -1787,6 +1815,22 @@ class ThreadService:
         if tool_executor is not None:
             ThreadService._tool_executor.unregister(assistant_msg_id)
         self._active_turns.pop(assistant_msg_id, None)
+
+    def _served(self, execution_id: str, returned: Any) -> dict[str, Any] | None:
+        """One pass's route: the controller's durable receipt for the
+        execution (it holds every attempt, even when the pass raised or was
+        cancelled), else the receipt the pass returned."""
+        receipt = returned
+        try:
+            from .inference_fallback_controller import INFERENCE_FALLBACK_AUTHORITY
+
+            receipt = self._broker.inference_adoption_service.controller.get_route_execution_receipt(
+                INFERENCE_FALLBACK_AUTHORITY, execution_id=execution_id,
+            )
+        except Exception:
+            pass
+        with self._db._connection() as conn:
+            return served_route(conn, receipt)
 
     # ── Abort ───────────────────────────────────────────────────────
 
@@ -2619,6 +2663,9 @@ class ThreadService:
             "streaming": msg.streaming,
             "receipt_id": msg.receipt_id,
             "egress_scope": msg.egress_scope,
+            "egress_host": msg.egress_host,
+            "egress_receipt_id": msg.egress_receipt_id,
+            "egress_fallback": msg.egress_fallback,
             "model_id": msg.model_id,
             "error_json": error_json,
             "stats_json": stats_json,

@@ -299,3 +299,28 @@
 .surface-choice-confirm-btn:focus-visible {
   outline: var(--focus-ring);
 }
+
+/* ── Lit: the next step that waits for the owner's press ──
+   First run, option A "One screen" (owner ratified 2026-10-05). One card
+   at a time is lit; the ring fades in once, and not at all when the
+   owner asks for reduced motion. */
+
+.surface-choice-card[data-lit] {
+  border-color: color-mix(in srgb, var(--ok) 70%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ok) 40%, transparent),
+    0 0 24px color-mix(in srgb, var(--ok) 22%, transparent);
+  animation: surface-choice-card-light var(--duration-medium, 320ms) var(--ease-out, ease-out) both;
+}
+
+@keyframes surface-choice-card-light {
+  from {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-choice-card[data-lit] {
+    animation: none;
+  }
+}

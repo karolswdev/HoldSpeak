@@ -60,6 +60,9 @@ export function useFirstTake({
   const [failure, setFailure] = useState<DictationFailure | null>(null);
   const [level, setLevel] = useState(0);
   const [keeping, setKeeping] = useState(false);
+  // The kept note's ref ("note:<id>"); empty until his sentence is kept.
+  const [keptRef, setKeptRef] = useState("");
+  const kept = keptRef !== "";
   const [message, setMessage] = useState("");
   const [playing, setPlaying] = useState(false);
   const session = useRef<StreamSession | null>(null);
@@ -209,28 +212,71 @@ export function useFirstTake({
     void begin();
   }, [begin]);
 
-  /** The heard sentence becomes a real note, then the normal Desk opens on it. */
+  /** Save the heard sentence as a real note (once; the id is stable). */
+  const saveNote = useCallback(async (text: string) => {
+    const noteId = firstValueKeepNoteId();
+    const result = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
+      method: "POST",
+      json: { id: noteId, title: "First dictation", body_markdown: text, tags: ["dictation"] },
+    });
+    return `note:${String(result.note?.id || noteId)}`;
+  }, []);
+
+  /** Option A "One screen" (owner ratified 2026-10-05): the heard sentence
+   * becomes a real note and the face stays, so the Calendar and the
+   * Connections cards are next on the same screen.
+   *
+   * Astra #876 P1: the note id is spent once the note is saved. The stored
+   * id only guards a retry of the SAME save; kept, it is cleared at once, so
+   * a later sentence (after a reload) is a new note and never replaces this
+   * one. The face holds the kept note by its ref. */
+  const keepNote = useCallback(
+    async (text: string) => {
+      const ref = await saveNote(text);
+      clearFirstValueKeepNoteId();
+      setKeptRef(ref);
+      return ref;
+    },
+    [saveNote],
+  );
+
   const keep = useCallback(async () => {
-    if (!take || keeping) return;
+    if (!take || keeping || kept) return;
     setKeeping(true);
     setMessage("");
     void tracker.current?.event("keep_selected");
     try {
-      const noteId = firstValueKeepNoteId();
-      const result = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
-        method: "POST",
-        json: { id: noteId, title: "First dictation", body_markdown: take.text, tags: ["dictation"] },
-      });
-      stageFirstValueNoteOpen(`note:${String(result.note?.id || noteId)}`);
+      await keepNote(take.text);
       await tracker.current?.finish("success").catch(() => undefined);
-      await onHandoff("completed");
-      clearFirstValueKeepNoteId();
     } catch (error) {
       setMessage(readableError(error));
     } finally {
       setKeeping(false);
     }
-  }, [take, keeping, onHandoff]);
+  }, [take, keeping, kept, keepNote]);
+
+  /** A start verb on the ready face: keep an unkept sentence (custody),
+   * hand off to the Desk as completed, then open where the verb goes. */
+  const finish = useCallback(
+    async (then?: () => void | Promise<unknown>) => {
+      if (keeping) return false;
+      setKeeping(true);
+      setMessage("");
+      abandon();
+      try {
+        if (take && !kept) await keepNote(take.text);
+        await onHandoff("completed");
+        await then?.();
+        return true;
+      } catch (error) {
+        setMessage(readableError(error));
+        return false;
+      } finally {
+        setKeeping(false);
+      }
+    },
+    [take, kept, keeping, onHandoff, abandon, keepNote],
+  );
 
   /** Continue later keeps a heard, unkept sentence first (custody). */
   const leave = useCallback(async () => {
@@ -240,22 +286,14 @@ export function useFirstTake({
     void tracker.current?.event("continue_later_selected");
     abandon();
     try {
-      if (take) {
-        const noteId = firstValueKeepNoteId();
-        const result = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
-          method: "POST",
-          json: { id: noteId, title: "First dictation", body_markdown: take.text, tags: ["dictation"] },
-        });
-        stageFirstValueNoteOpen(`note:${String(result.note?.id || noteId)}`);
-      }
+      if (take) stageFirstValueNoteOpen(kept ? keptRef : await keepNote(take.text));
       await onHandoff("dismissed");
-      if (take) clearFirstValueKeepNoteId();
     } catch (error) {
       setMessage(readableError(error));
     } finally {
       setKeeping(false);
     }
-  }, [take, keeping, onHandoff, abandon]);
+  }, [take, kept, keptRef, keeping, onHandoff, abandon, keepNote]);
 
   return {
     leave,
@@ -272,6 +310,8 @@ export function useFirstTake({
     play,
     again,
     keep,
+    kept,
+    finish,
     canPlay: Boolean(take?.audio),
   };
 }

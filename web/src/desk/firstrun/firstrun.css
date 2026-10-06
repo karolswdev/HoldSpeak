@@ -157,25 +157,49 @@
   justify-content: flex-end;
 }
 
-/* The lit card: speech landed, First words is open. */
-.firstrun .firstrun-card[data-lit] {
-  border-color: color-mix(in srgb, var(--ok) 70%, transparent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--ok) 40%, transparent),
-    0 0 24px color-mix(in srgb, var(--ok) 22%, transparent);
-  animation: firstrun-light var(--duration-medium, 320ms) var(--ease-out, ease-out) both;
+/* The lit card is the library's (ChoiceCardShell `lit`, choice-card.css). */
+
+/* Option A "One screen": Calendar and Connections, two halves under the three. */
+.firstrun-cards-two,
+.firstrun[data-heard] .firstrun-cards-two {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
-@keyframes firstrun-light {
-  from {
-    box-shadow: 0 0 0 0 transparent;
-  }
+.firstrun-ready {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .firstrun .firstrun-card[data-lit] {
-    animation: none;
-  }
+.firstrun-owner {
+  font: 600 15px/1.3 Inter, system-ui, sans-serif;
+  color: var(--text);
+}
+
+.firstrun-stretch {
+  align-self: stretch;
+}
+
+.firstrun-urlrow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.firstrun-urlrow .gadget-string {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.firstrun-field .gadget-chip-egress {
+  justify-self: start;
+}
+
+.firstrun-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .firstrun .concierge-found-list .surface-ledger-row[data-wrap] .surface-ledger-primary {
@@ -191,7 +215,9 @@
 
 @container surface (max-width: 720px) {
   .firstrun-cards,
-  .firstrun[data-heard] .firstrun-cards {
+  .firstrun[data-heard] .firstrun-cards,
+  .firstrun-cards-two,
+  .firstrun[data-heard] .firstrun-cards-two {
     grid-template-columns: 1fr;
   }
 
