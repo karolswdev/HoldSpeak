@@ -917,6 +917,9 @@ class LaunchService:
             "gate": gate_state,
             "source_id": source_id,
             "worktree_id": worktree_id,
+            # Conductor K5: the branch this launch made; the tool gate lets a
+            # YOLO agent push this branch only. Empty for an existing worktree.
+            "branch": str((pending_create or {}).get("branch") or ""),
             "story_ref": {"project": project, "story_id": story_id},
             "origin_ref": origin_ref,
             "session": session_name,

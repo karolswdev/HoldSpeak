@@ -1,0 +1,3001 @@
+{
+ "_seat_guard_1440": [
+  "CONDUCTOR CANVAS SEAT GUARD (k): 6 files, 6 seats, every anchor met"
+ ],
+ "K1a-agents-found-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": null,
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": null,
+   "dock": null,
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=firstrun-agents] [aria-label^='Install hooks']": {
+    "found": true,
+    "whole": true,
+    "w": 112,
+    "h": 24,
+    "top": 867
+   },
+   "[data-testid=firstrun-agents] [data-agent=claude]": {
+    "found": true,
+    "whole": true,
+    "w": 407,
+    "h": 18,
+    "top": 665
+   },
+   "[data-testid=firstrun-agents] [data-agent=tmux]": {
+    "found": true,
+    "whole": true,
+    "w": 195,
+    "h": 18,
+    "top": 805
+   }
+  },
+  "submenus": [],
+  "intended_front": null,
+  "windowless": true
+ },
+ "K1b-agents-done-receipt-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": null,
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": null,
+   "dock": null,
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=firstrun-agents] [data-testid=k-agents-receipt]": {
+    "found": true,
+    "whole": true,
+    "w": 426,
+    "h": 18,
+    "top": 717
+   }
+  },
+  "submenus": [],
+  "intended_front": null,
+  "windowless": true
+ },
+ "K1c-agents-not-installed-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": null,
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": null,
+   "dock": null,
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=firstrun-agents] [aria-label^='Copy install: Claude']": {
+    "found": true,
+    "whole": true,
+    "w": 104,
+    "h": 24,
+    "top": 662
+   },
+   "[data-testid=firstrun-agents] [data-testid=k-check-again]": {
+    "found": true,
+    "whole": true,
+    "w": 97,
+    "h": 24,
+    "top": 867
+   }
+  },
+  "submenus": [],
+  "intended_front": null,
+  "windowless": true
+ },
+ "K2a-object-menu-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Object menu",
+    "rows": [
+     "Open",
+     "Get Info",
+     "Ask this project · Select a Project",
+     "Ask AI · Ask unavailable",
+     "Hand to agent",
+     "Continue in thread",
+     "Edit · Not editable",
+     "Rename · Not renameable F2",
+     "Duplicate",
+     "Move to Zone",
+     "Delete Delete"
+    ]
+   }
+  ],
+  "screen_title": "Floor",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "ARTIFACT",
+    "b": "✦ Ask AI",
+    "w": 11,
+    "h": 19,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ARTIFACT",
+    "b": "Clear selection",
+    "w": 25,
+    "h": 19,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ARTIFACT",
+    "b": "✦ Ask AI",
+    "w": 11,
+    "h": 6,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ARTIFACT",
+    "b": "Clear selection",
+    "w": 25,
+    "h": 6,
+    "waiver": "sticky"
+   }
+  ],
+  "submenus": [],
+  "intended_front": null,
+  "windowless": true
+ },
+ "K2b-context-menu-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Freeze the old ledger on Nov 5 menu",
+    "rows": [
+     "Open",
+     "Get Info",
+     "Ask this project · Select a Project",
+     "Ask AI · Ask unavailable",
+     "Hand to agent",
+     "Continue in thread",
+     "Edit · Not editable",
+     "Rename · Not renameable F2",
+     "Duplicate",
+     "Move to Zone",
+     "Delete Delete"
+    ]
+   }
+  ],
+  "screen_title": "Floor",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "KNOWLEDGE",
+    "b": "✦ Ask AI",
+    "w": 11,
+    "h": 24,
+    "waiver": "sticky"
+   },
+   {
+    "a": "KNOWLEDGE",
+    "b": "Clear selection",
+    "w": 25,
+    "h": 24,
+    "waiver": "sticky"
+   }
+  ],
+  "submenus": [],
+  "intended_front": null,
+  "windowless": true
+ },
+ "K2c-command-deck-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Floor",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [
+   {
+    "text": "Freeze the old ledger on Nov 5",
+    "ratio": 3.5,
+    "px": 13,
+    "large": false
+   }
+  ],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "PERSONAL",
+    "b": "VERBS",
+    "w": 76,
+    "h": 16,
+    "waiver": "sticky"
+   },
+   {
+    "a": "PERSONAL",
+    "b": "▸ Hand to agent VERB",
+    "w": 76,
+    "h": 13,
+    "waiver": "sticky"
+   },
+   {
+    "a": "PERSONAL",
+    "b": "Hand to agent",
+    "w": 44,
+    "h": 8,
+    "waiver": "sticky"
+   },
+   {
+    "a": "MEETINGS",
+    "b": "▣ Hiring debrief: staff engi",
+    "w": 76,
+    "h": 41,
+    "waiver": "sticky"
+   },
+   {
+    "a": "MEETINGS",
+    "b": "Hiring debrief: staff engine",
+    "w": 44,
+    "h": 16,
+    "waiver": "sticky"
+   },
+   {
+    "a": "MEETINGS",
+    "b": "Strong system design. Weak o",
+    "w": 44,
+    "h": 19,
+    "waiver": "sticky"
+   },
+   {
+    "a": "REFERENCE",
+    "b": "▣ Hiring debrief: staff engi",
+    "w": 76,
+    "h": 41,
+    "waiver": "sticky"
+   },
+   {
+    "a": "REFERENCE",
+    "b": "Strong system design. Weak o",
+    "w": 44,
+    "h": 36,
+    "waiver": "sticky"
+   },
+   {
+    "a": "REFERENCE",
+    "b": "hand",
+    "w": 33,
+    "h": 16,
+    "waiver": "sticky"
+   },
+   {
+    "a": "INBOX",
+    "b": "◈ Run a second ops interview",
+    "w": 76,
+    "h": 41,
+    "waiver": "sticky"
+   },
+   {
+    "a": "INBOX",
+    "b": "Run a second ops interview",
+    "w": 44,
+    "h": 2,
+    "waiver": "sticky"
+   },
+   {
+    "a": "INBOX",
+    "b": "Agreed in the meeting.",
+    "w": 44,
+    "h": 18,
+    "waiver": "sticky"
+   },
+   {
+    "a": "INBOX",
+    "b": "LINK",
+    "w": 44,
+    "h": 13,
+    "waiver": "sticky"
+   },
+   {
+    "a": "DECISION",
+    "b": "○ Meeting decisions LINK 10-",
+    "w": 230,
+    "h": 18,
+    "waiver": "sticky"
+   },
+   {
+    "a": "DECISION",
+    "b": "LINK",
+    "w": 44,
+    "h": 14,
+    "waiver": "sticky"
+   },
+   {
+    "a": "DECISION",
+    "b": "10-06",
+    "w": 40,
+    "h": 12,
+    "waiver": "sticky"
+   },
+   {
+    "a": "KNOWLEDGE",
+    "b": "✦ Ask AI",
+    "w": 11,
+    "h": 24,
+    "waiver": "sticky"
+   },
+   {
+    "a": "KNOWLEDGE",
+    "b": "Clear selection",
+    "w": 25,
+    "h": 24,
+    "waiver": "sticky"
+   }
+  ],
+  "submenus": [],
+  "intended_front": null,
+  "deck_has_verb": true,
+  "inherited_low_contrast": [
+   {
+    "text": "Freeze the old ledger on Nov 5",
+    "ratio": 3.5,
+    "px": 13,
+    "large": false
+   }
+  ],
+  "windowless": true
+ },
+ "K2d-door-row-verb-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[aria-label='Hand to agent: Write the rollback runbook']": {
+    "found": true,
+    "whole": true,
+    "w": 112,
+    "h": 24,
+    "top": 515
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you"
+ },
+ "K3a-launch-sheet-claude-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Hand to agent",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Hand to agent"
+   ],
+   "front": "Hand to agent",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=k-launch]": {
+    "found": true,
+    "whole": true,
+    "w": 61,
+    "h": 24,
+    "top": 691
+   },
+   ".k-hand-footer .gadget-chip-egress": {
+    "found": true,
+    "whole": true,
+    "w": 157,
+    "h": 18,
+    "top": 694
+   },
+   "[data-testid=k-control]": {
+    "found": true,
+    "whole": true,
+    "w": 119,
+    "h": 24,
+    "top": 609
+   }
+  },
+  "submenus": [],
+  "intended_front": "Hand to agent"
+ },
+ "K3c-control-mode-mapping-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Hand to agent",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Hand to agent"
+   ],
+   "front": "Hand to agent",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=k-control-board]": {
+    "found": true,
+    "whole": true,
+    "w": 524,
+    "h": 214,
+    "top": 458
+   }
+  },
+  "submenus": [],
+  "intended_front": "Hand to agent",
+  "modes": [
+   "SECURE LAUNCH · YOU PRESS LAUNCH BASH · EVERY CALL WAITS QUESTION · TO NEEDS YOU",
+   "NORMAL LAUNCH · ON THE VERB BASH · READ · TEST · GIT READ PASS QUESTION · DRAFT · YOU SEND",
+   "✓ YOLO LAUNCH · ON THE VERB BASH · PASS IN ITS WORKTREE QUESTION · ROUTINE ANSWERED REAL · TO NEEDS YOU"
+  ]
+ },
+ "K2e-room-row-verb-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "SR",
+    "b": "Ask this project",
+    "w": 9,
+    "h": 18,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Sam Rivera",
+    "b": "Ask this project",
+    "w": 81,
+    "h": 21,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Open: Sam Rivera",
+    "b": "Choose",
+    "w": 40,
+    "h": 23,
+    "waiver": "sticky"
+   }
+  ],
+  "whole": {
+   "[aria-label='Hand to agent: #418 Reconciliation job slow on month-end data']": {
+    "found": true,
+    "whole": true,
+    "w": 112,
+    "h": 24,
+    "top": 283
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover"
+ },
+ "K3b-launch-sheet-codex-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Hand to agent",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Hand to agent"
+   ],
+   "front": "Hand to agent",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "#418 Reconciliation job slow o"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "SR",
+    "b": "Ask this project",
+    "w": 9,
+    "h": 18,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Sam Rivera",
+    "b": "Ask this project",
+    "w": 81,
+    "h": 21,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Open: Sam Rivera",
+    "b": "Choose",
+    "w": 40,
+    "h": 23,
+    "waiver": "sticky"
+   }
+  ],
+  "whole": {
+   "[data-testid=k-launch]": {
+    "found": true,
+    "whole": true,
+    "w": 61,
+    "h": 24,
+    "top": 691
+   },
+   ".k-hand-footer .gadget-chip-egress": {
+    "found": true,
+    "whole": true,
+    "w": 132,
+    "h": 18,
+    "top": 694
+   }
+  },
+  "submenus": [],
+  "intended_front": "Hand to agent"
+ },
+ "K4b-room-in-flight-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "AC",
+    "b": "Ask this project",
+    "w": 9,
+    "h": 15,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Avery Chen",
+    "b": "Ask this project",
+    "w": 84,
+    "h": 16,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Open: Avery Chen",
+    "b": "Choose",
+    "w": 40,
+    "h": 12,
+    "waiver": "sticky"
+   },
+   {
+    "a": "JP",
+    "b": "Ask this project",
+    "w": 9,
+    "h": 11,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Jordan Patel",
+    "b": "Ask this project",
+    "w": 90,
+    "h": 13,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Open: Jordan Patel",
+    "b": "Choose",
+    "w": 40,
+    "h": 8,
+    "waiver": "sticky"
+   }
+  ],
+  "submenus": [],
+  "intended_front": "Payments ledger cutover",
+  "chips": [
+   "⚠\nCLAUDE CODE · WAITING",
+   "↻\nCODEX · WORKING",
+   "●\nPR #412 · OPEN"
+  ]
+ },
+ "K4a-door-row-in-flight-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=arrival-needs-you] [data-testid=k-flight]": {
+    "found": true,
+    "whole": true,
+    "w": 202,
+    "h": 18,
+    "top": 488
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you"
+ },
+ "K4c-agents-session-pin-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "The week",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "The week"
+   ],
+   "front": "The week",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=arrival-agents] [data-testid=k-agent-origin]": {
+    "found": true,
+    "whole": true,
+    "w": 222,
+    "h": 18,
+    "top": 654
+   }
+  },
+  "submenus": [],
+  "intended_front": "The week",
+  "origins": [
+   "↳ WRITE THE ROLLBACK RUNBOOK",
+   "↳ ISSUE #418"
+  ]
+ },
+ "K5a-needs-you-coder-row-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=k-coder-question]": {
+    "found": true,
+    "whole": true,
+    "w": 395,
+    "h": 19,
+    "top": 237
+   },
+   "[data-testid=k-speak-answer]": {
+    "found": true,
+    "whole": true,
+    "w": 104,
+    "h": 24,
+    "top": 265
+   },
+   "[data-testid=k-coder-project]": {
+    "found": true,
+    "whole": true,
+    "w": 196,
+    "h": 20,
+    "top": 267
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you",
+  "headline": "13 need you across 3 projects"
+ },
+ "_main_session_window_1440": {
+  "strips": [],
+  "clipped": [],
+  "ellipsis": []
+ },
+ "K5b-speak-answer-recording-1440": {
+  "small_text": [],
+  "raw_buttons": [
+   {
+    "text": "⏎\nENTER",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "▸\nSEND",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "⏻\nARM",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "Keep as note",
+    "cls": "desk-chip",
+    "win": "session"
+   },
+   {
+    "text": "Pin",
+    "cls": "desk-chip quiet",
+    "win": "session"
+   }
+  ],
+  "menus": [],
+  "screen_title": "claude",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "claude"
+   ],
+   "front": "claude",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   ".desk-session-question": {
+    "found": true,
+    "whole": true,
+    "w": 584,
+    "h": 34,
+    "top": 122
+   },
+   "[data-testid=k-answer-well] .desk-mic": {
+    "found": true,
+    "whole": true,
+    "w": 36,
+    "h": 36,
+    "top": 192
+   },
+   "[data-testid=k-answer-well] .desk-steer-input": {
+    "found": true,
+    "whole": true,
+    "w": 374,
+    "h": 52,
+    "top": 176
+   }
+  },
+  "submenus": [],
+  "intended_front": "claude",
+  "inherited_clip": {
+   "strips": [],
+   "clipped": []
+  }
+ },
+ "K5c-enter-sends-1440": {
+  "small_text": [],
+  "raw_buttons": [
+   {
+    "text": "⏎\nENTER",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "▸\nSEND",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "⏻\nARM",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "Keep as note",
+    "cls": "desk-chip",
+    "win": "session"
+   },
+   {
+    "text": "Pin",
+    "cls": "desk-chip quiet",
+    "win": "session"
+   }
+  ],
+  "menus": [],
+  "screen_title": "claude",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "claude"
+   ],
+   "front": "claude",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=k-answer-well] .desk-steer-sent": {
+    "found": true,
+    "whole": true,
+    "w": 584,
+    "h": 18,
+    "top": 277
+   }
+  },
+  "submenus": [],
+  "intended_front": "claude",
+  "steered": {
+   "text": "Jordan owns the rollback. Avery reviews it.",
+   "submit": true
+  },
+  "inherited_clip": {
+   "strips": [],
+   "clipped": []
+  }
+ },
+ "K6-follow-through-receipt-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "JP",
+    "b": "Ask this project",
+    "w": 9,
+    "h": 15,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Jordan Patel",
+    "b": "Ask this project",
+    "w": 90,
+    "h": 16,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Open: Jordan Patel",
+    "b": "Choose",
+    "w": 40,
+    "h": 12,
+    "waiver": "sticky"
+   },
+   {
+    "a": "SR",
+    "b": "Ask this project",
+    "w": 9,
+    "h": 11,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Sam Rivera",
+    "b": "Ask this project",
+    "w": 81,
+    "h": 13,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Open: Sam Rivera",
+    "b": "Choose",
+    "w": 40,
+    "h": 8,
+    "waiver": "sticky"
+   }
+  ],
+  "whole": {
+   "[data-testid=k-closed-receipt]": {
+    "found": true,
+    "whole": true,
+    "w": 459,
+    "h": 18,
+    "top": 643
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover",
+  "open_here": [
+   "GH #418 Reconciliation job slow on month-end data ISSUE · OPEN 2 D ↻ CODEX · WORKING Session Open",
+   "GH #421 Add the ledger freeze flag ISSUE · OPEN 1 D ● PR #412 · OPEN GITHUB.COM Open PR Open"
+  ]
+ },
+ "_browser_errors_1440": [],
+ "_seat_guard_393": [
+  "CONDUCTOR CANVAS SEAT GUARD (k): 6 files, 6 seats, every anchor met"
+ ],
+ "K1a-agents-found-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": null,
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": null,
+   "dock": null,
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": null,
+  "whole": {
+   "[data-testid=firstrun-agents] [aria-label^='Install hooks']": {
+    "found": true,
+    "whole": true,
+    "w": 112,
+    "h": 24,
+    "top": 695
+   },
+   "[data-testid=firstrun-agents] [data-agent=claude]": {
+    "found": true,
+    "whole": true,
+    "w": 260,
+    "h": 42,
+    "top": 442
+   },
+   "[data-testid=firstrun-agents] [data-agent=tmux]": {
+    "found": true,
+    "whole": true,
+    "w": 195,
+    "h": 18,
+    "top": 632
+   }
+  },
+  "submenus": [],
+  "intended_front": null,
+  "windowless": true
+ },
+ "K1b-agents-done-receipt-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": null,
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": null,
+   "dock": null,
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": null,
+  "whole": {
+   "[data-testid=firstrun-agents] [data-testid=k-agents-receipt]": {
+    "found": true,
+    "whole": true,
+    "w": 286,
+    "h": 42,
+    "top": 691
+   }
+  },
+  "submenus": [],
+  "intended_front": null,
+  "windowless": true
+ },
+ "K1c-agents-not-installed-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": null,
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": null,
+   "dock": null,
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": null,
+  "whole": {
+   "[data-testid=firstrun-agents] [aria-label^='Copy install: Claude']": {
+    "found": true,
+    "whole": true,
+    "w": 104,
+    "h": 24,
+    "top": 480
+   },
+   "[data-testid=firstrun-agents] [data-testid=k-check-again]": {
+    "found": true,
+    "whole": true,
+    "w": 97,
+    "h": 24,
+    "top": 762
+   }
+  },
+  "submenus": [],
+  "intended_front": null,
+  "windowless": true
+ },
+ "K2a-object-menu-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [
+   {
+    "label": "Object submenu",
+    "rows": [
+     "◂ Object",
+     "▷ Open",
+     "⊙ Get Info",
+     "✦ Ask this project · Select a Project",
+     "✦ Ask AI · Ask unavailable",
+     "⇥ Hand to agent",
+     "◬ Continue in thread",
+     "✎ Edit · Not editable",
+     "⌶ Rename · Not renameable F2",
+     "⧉ Duplicate",
+     "↦ Move to Zone",
+     "⌫ Delete Delete"
+    ]
+   }
+  ],
+  "screen_title": "Floor",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "MEETINGS",
+    "b": "1 SELECTED",
+    "w": 63,
+    "h": 9,
+    "waiver": "sticky"
+   },
+   {
+    "a": "MEETINGS",
+    "b": "✦ Ask AI",
+    "w": 55,
+    "h": 8,
+    "waiver": "sticky"
+   },
+   {
+    "a": "MEETINGS",
+    "b": "Clear selection",
+    "w": 44,
+    "h": 3,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Select 1:1 Avery",
+    "b": "1 SELECTED",
+    "w": 14,
+    "h": 7,
+    "waiver": "sticky"
+   },
+   {
+    "a": "1:1 Avery",
+    "b": "1 SELECTED",
+    "w": 50,
+    "h": 7,
+    "waiver": "sticky"
+   }
+  ],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "NAME ↑",
+    "w": 48,
+    "h": 24,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "KIND",
+    "w": 44,
+    "h": 24,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "ZONE",
+    "w": 44,
+    "h": 24,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "ATTENTION",
+    "w": 71,
+    "h": 24,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Decisions zone",
+    "w": 90,
+    "h": 38,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Inbox zone, 1 item",
+    "w": 98,
+    "h": 38,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Meetings zone, 1 item",
+    "w": 98,
+    "h": 38,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Personal zone, 2 items",
+    "w": 106,
+    "h": 38,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Reference zone, 1 item",
+    "w": 98,
+    "h": 38,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Select 1:1 Avery",
+    "w": 44,
+    "h": 44,
+    "own": 5,
+    "occ": 0
+   },
+   {
+    "name": "1:1 Avery",
+    "w": 55,
+    "h": 44,
+    "own": 3,
+    "occ": 0
+   }
+  ],
+  "content_px": null,
+  "submenus": [],
+  "intended_front": null,
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ],
+  "windowless": true
+ },
+ "K2b-context-menu-393": {
+  "not_drawn": "393: a row press opens the object; the object menu is Go > Object (K2a-393)"
+ },
+ "K2c-command-deck-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Floor",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [],
+   "front": null,
+   "on_glass": false
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [
+   {
+    "a": "NAME ↑",
+    "b": "▣ Hiring debrief: staff engi",
+    "w": 48,
+    "h": 24,
+    "waiver": "sticky"
+   },
+   {
+    "a": "NAME ↑",
+    "b": "Hiring debrief: staff engine",
+    "w": 48,
+    "h": 12,
+    "waiver": "sticky"
+   },
+   {
+    "a": "NAME ↑",
+    "b": "Strong system design. Weak o",
+    "w": 48,
+    "h": 8,
+    "waiver": "sticky"
+   },
+   {
+    "a": "KIND",
+    "b": "▣ Hiring debrief: staff engi",
+    "w": 44,
+    "h": 24,
+    "waiver": "sticky"
+   },
+   {
+    "a": "KIND",
+    "b": "Hiring debrief: staff engine",
+    "w": 44,
+    "h": 12,
+    "waiver": "sticky"
+   },
+   {
+    "a": "KIND",
+    "b": "Strong system design. Weak o",
+    "w": 44,
+    "h": 8,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ZONE",
+    "b": "▣ Hiring debrief: staff engi",
+    "w": 44,
+    "h": 24,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ZONE",
+    "b": "Hiring debrief: staff engine",
+    "w": 44,
+    "h": 12,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ZONE",
+    "b": "Strong system design. Weak o",
+    "w": 44,
+    "h": 8,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ATTENTION",
+    "b": "▣ Hiring debrief: staff engi",
+    "w": 71,
+    "h": 24,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ATTENTION",
+    "b": "Hiring debrief: staff engine",
+    "w": 71,
+    "h": 12,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ATTENTION",
+    "b": "Strong system design. Weak o",
+    "w": 71,
+    "h": 8,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ZONES",
+    "b": "▣ Hiring debrief: staff engi",
+    "w": 355,
+    "h": 32,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ZONES",
+    "b": "Strong system design. Weak o",
+    "w": 260,
+    "h": 26,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ZONES",
+    "b": "hand",
+    "w": 33,
+    "h": 7,
+    "waiver": "sticky"
+   },
+   {
+    "a": "ZONES",
+    "b": "MEETING",
+    "w": 55,
+    "h": 9,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Decisions zone",
+    "b": "▣ Hiring debrief: staff engi",
+    "w": 90,
+    "h": 3,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Decisions zone",
+    "b": "◈ Run a second ops interview",
+    "w": 90,
+    "h": 35,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Decisions zone",
+    "b": "Run a second ops interview",
+    "w": 90,
+    "h": 16,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Decisions zone",
+    "b": "Agreed in the meeting.",
+    "w": 90,
+    "h": 11,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Inbox zone, 1 item",
+    "b": "○ Meeting decisions LINK 10-",
+    "w": 98,
+    "h": 38,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Inbox zone, 1 item",
+    "b": "Meeting decisions",
+    "w": 98,
+    "h": 14,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Inbox zone, 1 item",
+    "b": "LINK",
+    "w": 14,
+    "h": 19,
+    "waiver": "sticky"
+   },
+   {
+    "a": "Inbox zone, 1 item",
+    "b": "10-06",
+    "w": 40,
+    "h": 16,
+    "waiver": "sticky"
+   }
+  ],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "HoldSpeak",
+    "w": 44,
+    "h": 44,
+    "own": 5,
+    "occ": 0
+   },
+   {
+    "name": "Go",
+    "w": 44,
+    "h": 44,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Windows: Floor",
+    "w": 71,
+    "h": 43,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Privacy and trust: ⌂ This device",
+    "w": 44,
+    "h": 44,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Desk memory: 12 need you",
+    "w": 60,
+    "h": 44,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Search",
+    "w": 44,
+    "h": 44,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "NAME ↑",
+    "w": 48,
+    "h": 24,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "KIND",
+    "w": 44,
+    "h": 24,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "ZONE",
+    "w": 44,
+    "h": 24,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "ATTENTION",
+    "w": 71,
+    "h": 24,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Decisions zone",
+    "w": 90,
+    "h": 38,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Inbox zone, 1 item",
+    "w": 98,
+    "h": 38,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Meetings zone, 1 item",
+    "w": 98,
+    "h": 38,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Personal zone, 2 items",
+    "w": 106,
+    "h": 38,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Reference zone, 1 item",
+    "w": 98,
+    "h": 38,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Work zone, 1 item",
+    "w": 98,
+    "h": 38,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Select 1:1 Avery",
+    "w": 44,
+    "h": 44,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "1:1 Avery",
+    "w": 55,
+    "h": 44,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "✦ Ask AI",
+    "w": 55,
+    "h": 34,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Clear selection",
+    "w": 44,
+    "h": 24,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "Intelligence, 12 need you",
+    "w": 85,
+    "h": 54,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Speak",
+    "w": 85,
+    "h": 54,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Meetings",
+    "w": 85,
+    "h": 54,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "People",
+    "w": 85,
+    "h": 54,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "More AppIcons",
+    "w": 49,
+    "h": 55,
+    "own": 5,
+    "occ": 0
+   },
+   {
+    "name": "Search tools and Desk items",
+    "w": 340,
+    "h": 26,
+    "own": 3,
+    "occ": 0
+   },
+   {
+    "name": "Speak Search tools and Desk item",
+    "w": 20,
+    "h": 20,
+    "own": 1,
+    "occ": 0
+   },
+   {
+    "name": "▸ Hand to agent VERB",
+    "w": 363,
+    "h": 26,
+    "own": 3,
+    "occ": 0
+   }
+  ],
+  "content_px": null,
+  "submenus": [],
+  "intended_front": null,
+  "deck_has_verb": true,
+  "inherited_overlap": [
+   {
+    "a": "39 ITEMS · 6 ZONES · 7 ATTNS",
+    "b": "VERBS",
+    "w": 222,
+    "h": 3
+   },
+   {
+    "a": "39 ITEMS · 6 ZONES · 7 ATTNS",
+    "b": "▸ Hand to agent VERB",
+    "w": 222,
+    "h": 11
+   },
+   {
+    "a": "39 ITEMS · 6 ZONES · 7 ATTNS",
+    "b": "Hand to agent",
+    "w": 204,
+    "h": 6
+   },
+   {
+    "a": "39 SHOWN OF 39",
+    "b": "▸ Hand to agent VERB",
+    "w": 111,
+    "h": 12
+   },
+   {
+    "a": "39 SHOWN OF 39",
+    "b": "Hand to agent",
+    "w": 93,
+    "h": 7
+   }
+  ],
+  "inherited_low_contrast": [],
+  "windowless": true
+ },
+ "K2d-door-row-verb-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[aria-label='Hand to agent: Write the rollback runbook']": {
+    "found": true,
+    "whole": true,
+    "w": 112,
+    "h": 44,
+    "top": 465
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "K3a-launch-sheet-claude-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Hand to agent",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Hand to agent"
+   ],
+   "front": "Hand to agent",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "CLAUDE CODE",
+    "YOLO"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "surface-choice-card-radio",
+    "w": 1,
+    "h": 36,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "surface-choice-card-radio",
+    "w": 1,
+    "h": 36,
+    "own": 0,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=k-launch]": {
+    "found": true,
+    "whole": true,
+    "w": 61,
+    "h": 44,
+    "top": 734
+   },
+   ".k-hand-footer .gadget-chip-egress": {
+    "found": true,
+    "whole": true,
+    "w": 157,
+    "h": 18,
+    "top": 747
+   },
+   "[data-testid=k-control]": {
+    "found": true,
+    "whole": true,
+    "w": 119,
+    "h": 44,
+    "top": 663
+   }
+  },
+  "submenus": [],
+  "intended_front": "Hand to agent",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "K3c-control-mode-mapping-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Hand to agent",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Hand to agent"
+   ],
+   "front": "Hand to agent",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "CLAUDE CODE",
+    "YOLO"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": "Hand to agent",
+  "modes": [
+   "SECURE LAUNCH · YOU PRESS LAUNCH BASH · EVERY CALL WAITS QUESTION · TO NEEDS YOU",
+   "NORMAL LAUNCH · ON THE VERB BASH · READ · TEST · GIT READ PASS QUESTION · DRAFT · YOU SEND",
+   "✓ YOLO LAUNCH · ON THE VERB BASH · PASS IN ITS WORKTREE QUESTION · ROUTINE ANSWERED REAL · TO NEEDS YOU"
+  ],
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "K2e-room-row-verb-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[aria-label='Hand to agent: #418 Reconciliation job slow on month-end data']": {
+    "found": true,
+    "whole": true,
+    "w": 112,
+    "h": 44,
+    "top": 572
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "K3b-launch-sheet-codex-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Hand to agent",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Hand to agent"
+   ],
+   "front": "Hand to agent",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "#418 Reconciliation job slow o",
+    "CODEX",
+    "YOLO"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "surface-choice-card-radio",
+    "w": 1,
+    "h": 36,
+    "own": 0,
+    "occ": 0
+   },
+   {
+    "name": "surface-choice-card-radio",
+    "w": 1,
+    "h": 36,
+    "own": 0,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=k-launch]": {
+    "found": true,
+    "whole": true,
+    "w": 61,
+    "h": 44,
+    "top": 734
+   },
+   ".k-hand-footer .gadget-chip-egress": {
+    "found": true,
+    "whole": true,
+    "w": 132,
+    "h": 18,
+    "top": 747
+   }
+  },
+  "submenus": [],
+  "intended_front": "Hand to agent",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "K4b-room-in-flight-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "submenus": [],
+  "intended_front": "Payments ledger cutover",
+  "chips": [
+   "⚠\nCLAUDE CODE · WAITING",
+   "↻\nCODEX · WORKING",
+   "●\nPR #412 · OPEN"
+  ],
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "K4a-door-row-in-flight-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=arrival-needs-you] [data-testid=k-flight]": {
+    "found": true,
+    "whole": true,
+    "w": 202,
+    "h": 18,
+    "top": 455
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "K4c-agents-session-pin-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "The week",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "The week"
+   ],
+   "front": "The week",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=arrival-agents] [data-testid=k-agent-origin]": {
+    "found": true,
+    "whole": true,
+    "w": 222,
+    "h": 18,
+    "top": 534
+   }
+  },
+  "submenus": [],
+  "intended_front": "The week",
+  "origins": [
+   "↳ WRITE THE ROLLBACK RUNBOOK",
+   "↳ ISSUE #418"
+  ],
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "K5a-needs-you-coder-row-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Needs you",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Needs you"
+   ],
+   "front": "Needs you",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=k-coder-question]": {
+    "found": true,
+    "whole": true,
+    "w": 268,
+    "h": 40,
+    "top": 367
+   },
+   "[data-testid=k-speak-answer]": {
+    "found": true,
+    "whole": true,
+    "w": 104,
+    "h": 44,
+    "top": 528
+   },
+   "[data-testid=k-coder-project]": {
+    "found": true,
+    "whole": true,
+    "w": 196,
+    "h": 44,
+    "top": 452
+   }
+  },
+  "submenus": [],
+  "intended_front": "Needs you",
+  "headline": "13 need you across 3 projects",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "_main_session_window_393": {
+  "strips": [
+   {
+    "cls": "desk-pullout is-session desk-window desk-window-shell is-she",
+    "scroll": 591,
+    "client": 362,
+    "text": "claude ↻ NODE: this Mac node this Mac ✕ "
+   }
+  ],
+  "clipped": [
+   {
+    "text": "Keep as note",
+    "why": "past desk-pullout is-session desk-window desk"
+   }
+  ],
+  "ellipsis": []
+ },
+ "K5b-speak-answer-recording-393": {
+  "small_text": [],
+  "raw_buttons": [
+   {
+    "text": "⏎\nENTER",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "▸\nSEND",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "⏻\nARM",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "Keep as note",
+    "cls": "desk-chip",
+    "win": "session"
+   },
+   {
+    "text": "Pin",
+    "cls": "desk-chip quiet",
+    "win": "session"
+   }
+  ],
+  "menus": [],
+  "screen_title": "claude",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "claude"
+   ],
+   "front": "claude",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "Node",
+    "w": 142,
+    "h": 22,
+    "own": 3,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "whole": {
+   ".desk-session-question": {
+    "found": true,
+    "whole": true,
+    "w": 334,
+    "h": 53,
+    "top": 130
+   },
+   "[data-testid=k-answer-well] .desk-mic": {
+    "found": true,
+    "whole": true,
+    "w": 47,
+    "h": 47,
+    "top": 209
+   },
+   "[data-testid=k-answer-well] .desk-steer-input": {
+    "found": true,
+    "whole": true,
+    "w": 114,
+    "h": 52,
+    "top": 203
+   }
+  },
+  "submenus": [],
+  "intended_front": "claude",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ],
+  "inherited_clip": {
+   "strips": [
+    {
+     "cls": "desk-pullout is-session desk-window desk-window-shell is-she",
+     "scroll": 591,
+     "client": 362,
+     "text": "claude ↻ NODE: this Mac node this Mac Th"
+    }
+   ],
+   "clipped": [
+    {
+     "text": "Keep as note",
+     "why": "past desk-pullout is-session desk-window desk"
+    }
+   ]
+  }
+ },
+ "K5c-enter-sends-393": {
+  "small_text": [],
+  "raw_buttons": [
+   {
+    "text": "⏎\nENTER",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "▸\nSEND",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "⏻\nARM",
+    "cls": "gadget-transport-key",
+    "win": "session"
+   },
+   {
+    "text": "Keep as note",
+    "cls": "desk-chip",
+    "win": "session"
+   },
+   {
+    "text": "Pin",
+    "cls": "desk-chip quiet",
+    "win": "session"
+   }
+  ],
+  "menus": [],
+  "screen_title": "claude",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "claude"
+   ],
+   "front": "claude",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [
+   {
+    "name": "Node",
+    "w": 142,
+    "h": 22,
+    "own": 3,
+    "occ": 0
+   }
+  ],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=k-answer-well] .desk-steer-sent": {
+    "found": true,
+    "whole": true,
+    "w": 334,
+    "h": 18,
+    "top": 305
+   }
+  },
+  "submenus": [],
+  "intended_front": "claude",
+  "steered": {
+   "text": "Jordan owns the rollback. Avery reviews it.",
+   "submit": true
+  },
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ],
+  "inherited_clip": {
+   "strips": [
+    {
+     "cls": "desk-pullout is-session desk-window desk-window-shell is-she",
+     "scroll": 591,
+     "client": 362,
+     "text": "claude ↻ NODE: this Mac node this Mac Th"
+    }
+   ],
+   "clipped": [
+    {
+     "text": "Keep as note",
+     "why": "past desk-pullout is-session desk-window desk"
+    }
+   ]
+  }
+ },
+ "K6-follow-through-receipt-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Payments ledger cutover",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Payments ledger cutover"
+   ],
+   "front": "Payments ledger cutover",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": [
+    "Payments ledger cutover",
+    "DONE ·",
+    "Write the rollback runbook",
+    "· PR #",
+    "413",
+    "MERGED ·",
+    "15:31"
+   ]
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=k-closed-receipt]": {
+    "found": true,
+    "whole": true,
+    "w": 287,
+    "h": 18,
+    "top": 743
+   }
+  },
+  "submenus": [],
+  "intended_front": "Payments ledger cutover",
+  "open_here": [
+   "GH #418 Reconciliation job slow on month-end data ISSUE · OPEN 2 D ↻ CODEX · WORKING Session Open",
+   "GH #421 Add the ledger freeze flag ISSUE · OPEN 1 D ● PR #412 · OPEN GITHUB.COM Open PR Open"
+  ],
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "_browser_errors_393": [],
+ "_fails": []
+}

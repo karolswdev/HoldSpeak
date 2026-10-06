@@ -159,6 +159,9 @@ class FirstMessage:
         return self._svc._ledger.update(
             launch_id,
             instruction_state=state,
+            # Conductor K5: the brief stays on the launch after delivery (the
+            # pending copy is cleared), so a drafted answer can read it.
+            brief_text=text,
             pending_brief={
                 "text": text,
                 "principal": _principal_record(principal),

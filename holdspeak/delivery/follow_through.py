@@ -72,6 +72,12 @@ _WORKTREE_FINAL = frozenset(
 #: Worktree outcomes after which the launch's live Work attempts abandon.
 _WORKTREE_GONE = frozenset({"worktree_removed", "worktree_absent"})
 SECURE_MODE = "safe"
+#: Conductor K5, the wall-clock budget of one launch: a running agent with no
+#: hook activity for this long, or running this long in all, raises one Door
+#: item (Needs you). Nothing is stopped.
+QUIET_LIMIT_SECONDS = 2 * 3600
+TOTAL_LIMIT_SECONDS = 8 * 3600
+_LIVE_STATES = frozenset({"launched", "registered"})
 
 _SWEEP_LOCK = threading.Lock()
 
@@ -154,6 +160,11 @@ class FollowThroughObserver:
         }
         if not launches:
             return receipt
+        try:
+            receipt["budget"] = self._budgets(principal, launches)
+        except Exception as exc:  # the budget never stops the follow-through
+            log.error("launch budget check failed: %s", exc)
+            receipt["budget"] = [{"error": str(exc)}]
         rows_by_source: dict[str, list[dict[str, Any]]] = {}
         for source_id in sorted({str(r.get("source_id") or "") for r in launches}):
             view = self._receipts.refresh(source_id)
@@ -189,6 +200,90 @@ class FollowThroughObserver:
         if not record.get("attempt_id") or not record.get("worktree_id") or not record.get("source_id"):
             return False
         return not (record.get("follow_through") or {}).get("done")
+
+    # ── the wall-clock budget (Conductor K5) ─────────────────────────
+
+    def _budgets(self, principal: Any, launches: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Each running launch past its budget raises ONE Door item per
+        limit: ``quiet`` (no hook activity for :data:`QUIET_LIMIT_SECONDS`)
+        and ``total`` (running for :data:`TOTAL_LIMIT_SECONDS`). The agent is
+        never stopped."""
+        now = self._clock()
+        activity = self._hook_activity()
+        raised: list[dict[str, Any]] = []
+        for launch in launches:
+            if str(launch.get("state") or "") not in _LIVE_STATES:
+                continue
+            started = _parse(launch.get("launched_at"))
+            if started is None or not self._session_alive(str(launch.get("session") or "")):
+                continue
+            last = max(
+                [stamp for stamp in (started, activity.get(str(launch.get("session_key") or ""))) if stamp],
+            )
+            over = []
+            if (now - started).total_seconds() >= TOTAL_LIMIT_SECONDS:
+                over.append("total")
+            if (now - last).total_seconds() >= QUIET_LIMIT_SECONDS:
+                over.append("quiet")
+            for kind in over:
+                if self._budget_raised(launch, kind):
+                    continue
+                self._raise_budget(principal, launch, kind)
+                raised.append({"launch_id": launch.get("launch_id"), "limit": kind})
+        return raised
+
+    @staticmethod
+    def _hook_activity() -> dict[str, datetime]:
+        """Session key -> the time of its last hook event (the registry)."""
+        from .. import agent_context
+
+        path = agent_context.AGENT_CONTEXT_FILE
+        if not path.exists():
+            return {}
+        out: dict[str, datetime] = {}
+        for session in agent_context.list_agent_sessions(state_path=path):
+            stamp = _parse(getattr(session, "updated_at", None))
+            if stamp is not None:
+                out[f"{session.agent}:{session.session_id}"] = stamp
+        return out
+
+    def _session_alive(self, session: str) -> bool:
+        from .. import coder_steering
+
+        if not session:
+            return False
+        run = self._tmux or coder_steering._default_runner
+        try:
+            return run(["tmux", "has-session", "-t", session]).returncode == 0
+        except Exception:
+            return False
+
+    def _budget_raised(self, launch: Mapping[str, Any], kind: str) -> bool:
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT 1 FROM action_items WHERE source_ref = ? LIMIT 1",
+                (f"agent_budget:{launch['launch_id']}:{kind}",),
+            ).fetchone()
+        return row is not None
+
+    def _raise_budget(self, principal: Any, launch: Mapping[str, Any], kind: str) -> None:
+        from ..services.door_service import DoorService
+        from ..services.follow_through_service import FollowThroughService
+
+        origin = launch.get("origin_ref") or {}
+        title = self._origin_title(str(origin.get("kind") or ""), str(origin.get("id") or "")) or str(
+            (launch.get("story_ref") or {}).get("story_id") or launch.get("launch_id")
+        )
+        hours = (QUIET_LIMIT_SECONDS if kind == "quiet" else TOTAL_LIMIT_SECONDS) // 3600
+        task = (
+            f"Agent has no activity for {hours} h: {title}" if kind == "quiet"
+            else f"Agent runs for more than {hours} h: {title}"
+        )
+        door = DoorService(FollowThroughService(self._db), None, None, None, db=self._db)  # type: ignore[arg-type]
+        door.add_item(
+            principal, task, source_type="agent_launch",
+            source_ref=f"agent_budget:{launch['launch_id']}:{kind}",
+        )
 
     # ── one launch ───────────────────────────────────────────────────
 

@@ -16,7 +16,7 @@ POLICY_CONTRACT_VERSION = 2
 POLICY_VERSION = "operation-policy/v2"
 CONTROL_MODES = frozenset({"safe", "neutral", "yolo"})
 INITIAL_FAMILIES = frozenset(
-    {"dictation_commit", "coder_steering", "external_write", "sync_cadence"}
+    {"dictation_commit", "coder_steering", "external_write", "sync_cadence", "tool_gate"}
 )
 HARD_INVARIANTS = (
     "authentication",
@@ -198,8 +198,15 @@ def resolve_policy(
     grant: Optional[Mapping[str, Any]] = None,
     configured_preview: bool = False,
     explicit_authorization: bool = False,
+    tool_call: Optional[Mapping[str, Any]] = None,
 ) -> PolicyDecision:
-    """Resolve one future operation; unknown families always fail closed."""
+    """Resolve one future operation; unknown families always fail closed.
+
+    ``tool_call`` is the hub-checked verdict on one held agent tool call
+    (family ``tool_gate``, Conductor K5): ``launch_id`` (empty when the call
+    is not from the HoldSpeak launch that owns the worktree), ``scope``
+    (``inside`` | ``outside`` | ``unparsed``), ``rule`` and ``read_rule``.
+    """
     selected = normalize_control_mode(mode)
     precedence = (
         "hard_invariants",
@@ -223,6 +230,11 @@ def resolve_policy(
             requires_review=False,
             requires_authorization=False,
             requires_grant=False,
+        )
+
+    if operation.family == "tool_gate":
+        return _resolve_tool_gate(
+            operation, selected, source, precedence, grant, tool_call or {}
         )
 
     if operation.family == "dictation_commit":
@@ -361,6 +373,61 @@ def resolve_policy(
     )
 
 
+#: The Control mode a person reads (the config stores safe/neutral/yolo).
+MODE_LABELS = {"safe": "Secure", "neutral": "Normal", "yolo": "YOLO"}
+
+
+def _resolve_tool_gate(
+    operation: OperationDescriptor,
+    mode: str,
+    source: str,
+    precedence: tuple[str, ...],
+    grant: Optional[Mapping[str, Any]],
+    tool_call: Mapping[str, Any],
+) -> PolicyDecision:
+    """One held agent tool call, by the owner's mapping (2026-10-06):
+    Secure holds every call; Normal passes read and test commands in the
+    launch's worktree; YOLO passes every call in the launch's own worktree.
+    A call that is not from the HoldSpeak launch owning the worktree keeps
+    the owner's recorded hold (``holdspeak gate allow``): it waits. A
+    matching scoped grant still wins."""
+    launch = str(tool_call.get("launch_id") or "")
+    scope = str(tool_call.get("scope") or "unparsed")
+    read_rule = str(tool_call.get("read_rule") or "")
+    if grant_matches(grant, operation, mode=mode):
+        allowed, reason, basis = True, "scoped_grant_active", "scoped_grant"
+    elif not launch:
+        allowed, reason, basis = False, "not_a_holdspeak_launch", "per_action_required"
+    elif mode == "safe":
+        allowed, reason, basis = False, "secure_holds_every_call", "per_action_required"
+    elif mode == "neutral":
+        allowed = scope == "inside" and bool(read_rule)
+        reason = "normal_read_or_test_allowed" if allowed else "normal_holds_this_call"
+        basis = "control_posture" if allowed else "per_action_required"
+    else:
+        allowed = scope == "inside"
+        reason = (
+            "yolo_inside_own_worktree" if allowed
+            else "yolo_unparsed_command" if scope == "unparsed"
+            else "yolo_outside_own_worktree"
+        )
+        basis = "control_posture" if allowed else "per_action_required"
+    return PolicyDecision(
+        mode=mode,
+        source=source,
+        precedence=precedence,
+        outcome="allowed" if allowed else "authorization_required",
+        reason_code=reason,
+        consequence=operation.consequence,
+        authority_basis=basis,
+        next_state="execute_now" if allowed else "awaiting_authorization",
+        eligible=True,
+        requires_review=False,
+        requires_authorization=not allowed,
+        requires_grant=False,
+    )
+
+
 def steering_ttl_for_mode(mode: str, requested_ttl: Any = None) -> int:
     """Apply the mode preset to a future arm without weakening the 1h ceiling."""
     selected = normalize_control_mode(mode)
@@ -418,6 +485,7 @@ __all__ = [
     "CONTROL_MODES",
     "HARD_INVARIANTS",
     "INITIAL_FAMILIES",
+    "MODE_LABELS",
     "OperationDescriptor",
     "POLICY_CONTRACT_VERSION",
     "POLICY_VERSION",
