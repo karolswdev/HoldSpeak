@@ -16,15 +16,17 @@ holdspeak cadence status
 holdspeak cadence loops
 holdspeak cadence run-now
 holdspeak cadence brief
+holdspeak cadence closeout
 ```
 
 `status` reports the engine state.
 `loops` lists unresolved work.
 `run-now` requests one evaluation, including when background Cadence is disabled.
 `brief` shows the current brief.
+`closeout` shows the day closeout.
 
 The Web Cadence surface also provides current work, open loops, review, and history.
-Open it through Studio or the `/cadence` address.
+Open it through **Rhythm** or the `/cadence` address.
 
 ## Understand the records
 
@@ -42,7 +44,7 @@ The optional model can draft wording. Execution still requires the applicable op
 ## Configure background Cadence
 
 The configuration uses the `cadence` object in `~/.config/holdspeak/config.json`.
-These example values keep background work and model drafts disabled:
+These values are the defaults. They keep background work and model drafts disabled:
 
 ```json
 {
@@ -52,7 +54,8 @@ These example values keep background work and model drafts disabled:
     "use_llm": false,
     "quiet_hours_start": 22,
     "quiet_hours_end": 8,
-    "max_nudges_per_day": 12
+    "max_nudges_per_day": 12,
+    "tick_interval_seconds": 300
   }
 }
 ```
@@ -62,6 +65,7 @@ The runtime must be available for background evaluation.
 **Secure** Control mode permits explicit `run-now` but prevents the background loop.
 See [Control modes](AUTHORITY.md) for precedence and effects.
 
+`tick_interval_seconds` sets how often the loop runs. The minimum is 30.
 `pressure` accepts `gentle`, `normal`, or `aggressive` and changes timing.
 It does not add authority.
 `use_llm` permits model-generated draft wording.
@@ -70,11 +74,12 @@ If that draft fails validation, Cadence uses its deterministic next action.
 ## Deliver through Telegram
 
 Telegram delivery has a separate `cadence_telegram` configuration.
-It is disabled by default and requires a bot token plus permitted chat IDs or the pairing flow.
+It is disabled by default and requires a bot token plus `allowed_chat_ids` or a `pairing_code`.
+A chat can pair itself with `/pair <code>`.
 Only configured, permitted chats receive delivery.
 Keep the token in the credential configuration, not in a Note or Thread.
 
-The Telegram controls include `/brief`, `/loops`, and `/status`.
+The Telegram controls include `/brief`, `/loops`, `/closeout`, and `/status`.
 Inline controls can record decisions about the presented work.
 Telegram configuration does not replace authority checks for a proposed external action.
 

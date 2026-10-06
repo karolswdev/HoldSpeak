@@ -1,195 +1,74 @@
-# People integration surfaces
+# People integration
 
-The People ledger is an organizational relationship authority, not a direct-report
-dashboard. Its first vocabulary is deliberately small and extensible:
+The People ledger keeps relationships with the people you work with. It is not a dashboard of direct reports. It never ranks people and never derives relationship health.
+
+A relationship has one kind:
 
 - `direct_report`: an explicit reporting relationship.
-- `peer`: a regular collaborator at a similar organizational level.
+- `peer`: a regular collaborator at a similar level.
 - `extended`: a stakeholder, partner, skip-level, or other farther relationship.
 
-Every kind uses the same continuity loop: encrypted context, notes-only 1:1s,
-requests, explicit commitments, and Follow-through. The UI never ranks people or
-derives relationship health.
+All kinds use the same loop: encrypted context, notes-only 1:1s, requests, explicit commitments, and Follow-through. For the encryption and the access rules, see [People security](PEOPLE_SECURITY.md).
 
-## Shipped seams
+## Where People connects
 
-- **Desk:** one singleton People surface. `people:<relationship-id>` is the stable
-  scope used to open a relationship from another surface.
-- **HTTP service:** authenticated People endpoints own relationships, 1:1s, agenda,
-  grounding notes, requests, and commitments. Callers do not write the sidecar.
-- **MCP:** local-owner `write` capability by default; set
-  `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` or `=off` at process start to reduce or
-  disable it. It exposes only `shared_intent` material and includes
-  `people.grounding.get`, a manual-source bundle with no implicit model call.
-- **Follow-through:** open commitments are hydrated in memory and deep-link back to
-  People. No People content enters `action_items` or Cadence.
-- **Commitment execution:** clicking a commitment opens its inspector. An explicit
-  `Send to Workbench` gesture creates a normal Workbench item, whose status, result,
-  and artifact reference hydrate back into People. Workbench owns execution; People
-  owns whether the relationship promise is satisfied.
-- **Projects:** a relationship can link existing Project IDs. Linked projects open
-  in Project Memory, appear in shared MCP relationship/grounding projections, and
-  contribute project name, description, keywords, context, and resource references
-  when a commitment becomes Workbench work.
-- **Sprite language:** the PixelLab-generated relationship-ledger sprite registers
-  as the People family and as the People dock icon.
+- **Desk:** one People surface. The scope `people:<relationship-id>` opens a relationship from another surface.
+- **HTTP:** the People routes own relationships, 1:1s, agendas, grounding notes, requests, and commitments (`holdspeak/web/routes/people.py`). No other code writes the encrypted store.
+- **MCP:** the `people.*` tools (`holdspeak/mcp/families/people.py`). The default access is `write`. Set `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` or `off` before the process starts to reduce it. MCP clients see only `shared_intent` material. `people.grounding.get` returns a bundle of manual sources and makes no model call.
+- **Follow-through:** open commitments appear in Follow-through and link back to People. People content never enters `action_items` or Cadence.
+- **Commitment execution:** select a commitment to open its inspector. **Send to Workbench** creates a normal Workbench item. The item status, result, and artifact reference show in People. Workbench runs the work. People records whether the promise is kept. A Workbench result never marks a promise as satisfied.
+- **Projects:** a relationship can link existing Projects. Linked Projects open in Project Memory. Their name, description, keywords, context, and resource references go into the Workbench item when a commitment becomes work.
 
-## Deliberate association: the calendar series link (FULFILLED)
+## Deliberate associations
 
-The calendar series link is the first sanctioned deliberate association between a
-People relationship and a HoldSpeak data source. It satisfies rules 1 through 7
-below and is the only shipped association path in this delivery.
+An association links a relationship to other HoldSpeak data. Two exist. Both follow these rules:
 
-**The gesture.** On the relationship detail, the owner chooses **Link calendar
-event** on the Context lens. A picker lists upcoming events from the rail;
-rows whose title contains the person's display name are sorted first and tagged
-**SUGGESTED** (case-insensitive, in-memory only, never logged or persisted). The
-owner's click is the association gesture. The stored evidence is the event's own
-title and UID, selected by the owner.
+1. The owner chooses the link. Nothing links automatically.
+2. A picker proposes candidates from visible text only: an event title or an owner string.
+3. The link lives inside the encrypted People payload. The plaintext database never stores a person reference.
+4. Voice embeddings, speaking time, sentiment, attendance, calendar frequency, and message volume are never identity signals.
+5. Unlinking removes the link from the encrypted payload. It deletes neither the other record nor the relationship.
+6. MCP applies its access mode and `shared_intent` filter before linked material reaches a client.
+7. A locked or missing store returns `{"state": "unavailable"}`, never an empty match.
 
-**The link.** The association is a `calendar_links` entry (`uid`, `source_id`,
-`label`) inside the relationship's encrypted payload. The link is series-level:
-one link covers every past and future occurrence of the recurring event. Invariant
-P1 enforces one person per series; linking a series already held by another
-relationship refuses by naming the holder (`series_already_linked`). Re-linking
-the same person is idempotent (refreshes label and timestamp). Unlinking is a
-two-beat in-world verb on the same surface.
+### Calendar series
 
-**Resolution.** `resolve_relationship_by_series(uid, source_id)` in
-`people_service` queries the encrypted store at read time. It is
-readiness-guarded: a locked or absent sidecar returns `{“state”: “unavailable”}`,
-never an empty match. The plaintext database never stores a person reference (the
-138 law). Resolution projects a `person_label` on linked rail event rows and
-extends the meeting origin line when the sidecar is open.
+1. Open the relationship and select the Context lens.
+2. Select **Link calendar event**.
+3. Choose an upcoming event. Events with the person's display name in the title sort first and show **SUGGESTED**.
 
-**The brief.** `one_on_one_brief(relationship_id)` computes a transient 1:1
-preparation view across the encrypted/plaintext boundary: open commitments
-(encrypted), agenda backlog (encrypted), grounding note count (encrypted), the
-last linked meetings with their open action items (plaintext, by reference), any
-decisions minted from those meetings (plaintext, via the `decision_record_sources`
-chain), and the count of unlinked meetings in the window (manual recordings
-without `calendar_event_id`). The brief never persists a byte to any store.
+The link is a `calendar_links` entry (`uid`, `source_id`, `label`). One link covers every past and future occurrence of the series. One series belongs to one person. A series that another relationship holds fails with `series_already_linked`. Linking the same person again only refreshes the label.
 
-**MCP boundary.** The `people.one_on_one.brief` tool gates on `access_mode() !=
-“off”` via `_require_access` and filters encrypted items to `shared_intent`
-visibility via the `_mcp_readable` path. Leader-private content never crosses to
-an MCP client. The response carries a `policy` block naming the disclosure
-boundary (`visibility: shared_intent_only`, `inference: client_owned`,
-`employment_decisions: prohibited`).
+`resolve_relationship_by_series` in `holdspeak/services/people_service.py` reads the link. Linked calendar events show an opaque `person_label`. MCP tools: `people.calendar.link` and `people.calendar.unlink`.
 
-**Compliance with the integration contract:**
+`one_on_one_brief` builds a 1:1 preparation view and stores nothing. It holds open commitments, agenda backlog, the grounding note count, recent linked meetings with their open action items, decisions from those meetings, and the count of unlinked meetings in the window. MCP tool: `people.one_on_one.brief`. Its `policy` block states `visibility: shared_intent_only`, `inference: client_owned`, and `employment_decisions: prohibited`.
 
-1. The picker proposes candidates from owner-selected textual evidence only (the
-   event title).
-2. The owner's click is the explicit gesture; nothing auto-links.
-3. The link itself (`calendar_links`) lives inside the encrypted People payload.
-4. The Door rail exposes only an opaque person chip (`person_label`); meeting
-   surfaces carry no People reference in the plaintext database.
-5. Voice embeddings, speaking time, sentiment, attendance, calendar frequency,
-   and message volume are never used as identity or relationship signals.
-6. Unlinking is complete and auditable; it removes the link from the encrypted
-   payload without deleting either the calendar event or the relationship.
-7. The MCP adapter applies `_mcp_readable` visibility before any linked material
-   reaches an MCP client.
+### Owner alias
 
-## Deliberate association: the owner alias (FULFILLED)
+An owner alias maps an owner string from Follow-through to a relationship.
 
-The owner alias is the second sanctioned deliberate association between a People
-relationship and a HoldSpeak data source. It satisfies rules 1 through 7 below
-and is the second shipped association path in this delivery.
+1. Open the relationship and select the Context lens.
+2. In **Owner aliases**, type the string and select **Add**.
+3. To remove an alias, select **Remove**, then **Remove?**.
 
-**The gesture.** Two surfaces carry the gesture:
+The alias is an `owner_aliases` entry in the encrypted payload. One alias belongs to one person. Comparison ignores case. Failures:
 
-1. On a Door board card whose owner string is not yet mapped and is not a reserved
-   string, the card shows a **map...** button. Choosing it opens a picker listing
-   relationships; rows whose display name contains the owner string (or the reverse)
-   are sorted first and tagged **(suggested)** (case-insensitive, in-memory only,
-   never logged or persisted). The owner's click is the association gesture.
-2. On the relationship detail, the Context lens shows an **Owner aliases** section
-   (beside the Calendar series section). An inline field and **Add** button let the
-   owner type a string manually. Each existing alias shows with a two-beat
-   **Remove** / **Remove?** verb.
+| Code | Cause |
+| --- | --- |
+| `owner_alias_taken` | Another relationship holds the alias. |
+| `owner_alias_reserved` | The string is `me`, `remote`, or `you`. |
+| `owner_alias_required` | The string is empty. |
 
-**The link.** The association is an `owner_aliases` entry (a string) inside the
-relationship's encrypted payload. The link is string-level: one alias covers every
-past and future occurrence of that owner string on the Door board. Invariant P2
-enforces one person per alias; linking an alias already held by another relationship
-refuses by naming the holder (`owner_alias_taken`). Re-linking the same person is
-idempotent. Unlinking is a first-class verb on both surfaces. Reserved strings
-("me", "remote", "you") are refused by name (`owner_alias_reserved`); empty and
-whitespace-only strings are refused (`owner_alias_required`). The alias is stored
-as given; comparison is casefold in memory, never logged.
+`resolve_relationship_by_owner` reads the alias. The `/api/follow-through/board` route adds `person_label` and `person_relationship_id` to mapped cards (`holdspeak/web/routes/follow_through.py`). `FollowThroughService.board()` stays free of person data. If the store is locked, the board shows no person data. MCP tools: `people.owner_alias.link` and `people.owner_alias.unlink`.
 
-**Resolution.** `resolve_relationship_by_owner(owner_string)` in `people_service`
-queries the encrypted store at read time. It is readiness-guarded: a locked or
-absent sidecar returns `{"state": "unavailable"}`, never an empty match. The
-plaintext database never stores a person reference (the 138 law). Resolution
-projects a `person_label` and `person_relationship_id` on mapped Door board cards
-via the request-scoped owner person index built inside `door_service`.
+`compose_person_overlay` (`holdspeak/services/person_overlay.py`) adds per-person sections to the Monday brief response. It counts what they owe you, what you owe them, the agenda backlog, and the next linked 1:1. The stored brief never holds these sections. When People access is `off`, the `monday_brief.get` tool omits them.
 
-**The board projection.** Mapped cards show a quiet person chip with the person's
-display name. Clicking the chip filters the board to that person. Unmapped and
-reserved-owner cards render exactly as before. A `waiting Nd` staleness label
-computed from `delegated_at` (the timestamp when ownership last changed) or
-`created_at` (the card's birth) appears beside the person chip. The board header
-carries one chip per mapped person present on the board plus an **Everyone** chip
-that clears the filter. `delegated_at` is stamped on action_items only when the
-owner string value actually changes (a SQL CASE guard at both the intel upsert
-and the edit path).
+### Not available: meeting participants
 
-**The follow-through route adapter.** The `/api/follow-through/board` HTTP route
-enriches the service result with `person_label` and `person_relationship_id` for
-mapped owner strings at the route adapter layer (`holdspeak/web/routes/follow_through.py`).
-The `FollowThroughService.board()` method stays person-free for observers and the
-MCP `follow_through.board` tool. When the sidecar is unavailable, enrichment
-degrades to the plain board silently.
-
-**The brief overlay.** `compose_person_overlay` builds per-relationship sections
-at read time. For each relationship with mapped aliases, it counts THEY-OWE cards
-(board cards whose owner matches any alias), YOU-OWE (open encrypted commitments),
-agenda backlog (encrypted), and the next linked 1:1 (from calendar series). These
-sections live only in the adapter response (the HTTP route and MCP tool); the
-persisted `MondayBrief` dataclass never carries a `person_sections` field, and the
-`holdspeak://briefs/latest` MCP resource serves the person-free dataclass by
-construction. When the sidecar is unavailable, the overlay returns the L2 honesty
-line ("People sidecar unavailable"), never silence.
-
-**MCP boundary.** The `monday_brief.get` MCP tool composes `person_sections` at
-its adapter, gated: absent when `access_mode() == "off"`. The overlay sections are
-manager-computed summaries (counts and dates), not encrypted records; the underlying
-encrypted data was already filtered by the people_service layer.
-
-**Compliance with the integration contract:**
-
-1. The picker proposes candidates from owner-selected textual evidence only (the
-   owner string on the card, or the string the owner types manually).
-2. The owner's click is the explicit gesture; nothing auto-maps.
-3. The link itself (`owner_aliases`) lives inside the encrypted People payload.
-4. The Door board exposes only an opaque person chip (`person_label`); the
-   plaintext database never stores a person reference.
-5. Voice embeddings, speaking time, sentiment, attendance, calendar frequency,
-   and message volume are never used as identity or relationship signals.
-6. Unlinking is complete and auditable; it removes the alias from the encrypted
-   payload without deleting either the board card or the relationship.
-7. The MCP adapter applies `access_mode` gating before any linked material
-   reaches an MCP client.
-
-### Deferred: meeting participants
-
-Meeting-participant association (identifying a meeting participant as an existing
-People relationship) remains intentionally unshipped. The seven rules above
-constrain it when it is reviewed. Automatic correlation, voice-based identity,
-attendance frequency analysis, and speaker-to-person inference are forbidden by
-this contract.
+HoldSpeak does not link a meeting participant to a relationship. The rules above apply if this changes. Automatic matching, voice identity, and attendance analysis stay forbidden.
 
 ## Satisfaction history
 
-Commitment history is append-only inside the People authority: accepted, delegated,
-satisfied, dismissed, and reopened events retain their timestamp and source. A
-satisfaction gesture snapshots available Workbench item status, completion time, and
-artifact reference plus an optional human rationale. A Workbench result never marks
-a relationship promise satisfied automatically.
+Commitment history is append-only. Events for accepted, delegated, satisfied, dismissed, and reopened keep their time and source. A satisfaction gesture records the Workbench item status, completion time, and artifact reference. It can also record your reason.
 
-The History lens reports accepted, open, satisfied, and evidence-bearing counts for
-the selected relationship. These are personal follow-through facts, not employee or
-cross-person performance scores.
+The History lens shows counts of accepted, open, satisfied, and evidence-backed commitments for one relationship. These are your follow-through facts. They are not performance scores.

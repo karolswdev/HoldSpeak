@@ -1,86 +1,65 @@
 # Connector Development
 
-> A connector is anything that produces local activity records,
-> annotations, candidates, or planned commands for HoldSpeak.
-> HoldSpeak ships first-party connectors, and the contract is general
-> enough that anyone can author a local one.
+A connector is a local module that produces activity records, annotations,
+meeting candidates or planned commands for HoldSpeak. HoldSpeak ships
+first-party connectors. You can add your own as a user pack, without a fork.
 
-If HoldSpeak does not yet see the part of your world you care about
-(your tracker, your CI, your notes), a connector is how you teach it,
-without forking the runtime. This guide documents the contract you need
-to satisfy and the testing surface you get for free.
+This guide is the contract a connector satisfies. For meeting-intel plugins, see
+[Plugin Authoring](PLUGIN_AUTHORING.md). For connectors that write to outside
+systems, see [Actuator Development](ACTUATOR_DEVELOPMENT.md).
 
----
+## Quick path
 
-## TL;DR
+1. Write a module that exports `MANIFEST`, built with
+   `holdspeak.connector_sdk.validate_manifest`.
+2. If the pack runs commands, add a read-only command policy
+   (`is_command_allowed`) and a `run(db, ...)` entry point.
+3. Drop the file in `~/.holdspeak/connector_packs/`.
+4. Check the preview in the Activity view. Preview never changes data.
+5. Add a fixture under `tests/fixtures/connectors/` for first-party packs.
 
-A connector is a Python module that:
+The cleanest references are
+[`github_cli.py`](../holdspeak/connector_packs/github_cli.py) and
+[`acli_jira.py`](../holdspeak/connector_packs/acli_jira.py).
 
-1. Declares a `ConnectorManifest` (validated at import time via
-   `holdspeak.connector_sdk.validate_manifest`).
-2. Produces a payload through
-   `holdspeak.activity_connector_preview.dry_run()` that
-   matches the canonical shape (commands /
-   proposed_annotations / proposed_candidates / warnings /
-   permission_notes / truncated).
-3. Has at least one fixture under `tests/fixtures/connectors/`
-   to lock its dry-run shape.
+## Lifecycle
 
-Look at `holdspeak/connector_packs/github_cli.py` for the
-canonical example.
-
----
-
-## Connector lifecycle
-
-```
-   ┌─────────────┐    ┌───────────┐    ┌────────────┐    ┌────────────┐
-   │   manifest  │ →  │  preview  │ →  │   enrich   │ →  │   clear    │
-   │  (declare)  │    │ (dry-run) │    │  (mutate)  │    │ (per-cap)  │
-   └─────────────┘    └───────────┘    └────────────┘    └────────────┘
-        always         always           gated by enabled  user-initiated
+```mermaid
+flowchart LR
+    M[Manifest] --> P[Preview]
+    P --> E[Enrich]
+    E --> C[Clear]
 ```
 
-- **Manifest** declares what the connector is, what it can
-  produce, and what permissions it needs. Always loaded; static.
-- **Preview** is a mutation-free dry run. Always available
-  regardless of `enabled`. Surfaces planned commands +
-  proposed-output rows + warnings + permission notes.
-- **Enrich** is the mutating step. The runtime refuses to call
-  it unless the connector's persisted state has
-  `enabled=true`. The connector itself does not own
-  enablement.
-- **Clear** removes the rows the connector authored, scoped by
-  `source_connector_id = self.manifest.id`. One method per
-  capability (annotations / candidates).
-
----
+- **Manifest.** Declares what the connector is, what it produces and which
+  permissions it needs. It is static.
+- **Preview.** A dry run that changes nothing. It works when the connector is
+  disabled. It shows planned commands, proposed rows, warnings and permission
+  notes.
+- **Enrich.** The step that writes rows. The runtime refuses to call it unless
+  the persisted state of the connector has `enabled=true`. The connector does
+  not own enablement.
+- **Clear.** Removes the rows that the connector wrote. The scope is
+  `source_connector_id` equal to the connector id.
 
 ## Manifest reference
 
-Full schema lives in `holdspeak/connector_sdk.py`. Required
-fields:
+The schema is in [`holdspeak/connector_sdk.py`](../holdspeak/connector_sdk.py).
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | string | `^[a-z][a-z0-9_]{0,31}$`. Persisted as `source_connector_id`. |
-| `label` | string | Human-readable name shown on `/activity`. |
-| `version` | string | Semver-ish: `MAJOR.MINOR.PATCH` (with optional `-pre.N`). |
-| `kind` | string | One of `KNOWN_KINDS`: `cli_enrichment`, `candidate_inference`, `extension_events`, `history_import`, `pipeline`. |
-| `capabilities` | list[string] | Subset of `KNOWN_CAPABILITIES`: `records`, `annotations`, `candidates`, `commands`. Cannot be empty. |
-
-Optional:
-
-| Field | Type | Notes |
-|---|---|---|
-| `description` | string | One-line explainer. |
-| `requires_cli` | string\|null | If your connector shells out, name the binary here. *Required when `kind=cli_enrichment`.* |
-| `requires_network` | bool | If true, you must declare at least one network permission (see below). |
-| `permissions` | list[string] | See "Permission model". |
-| `source_boundary` | string | Where data comes from in plain English. |
-| `dry_run` | bool | Always `true` in practice; connectors must support dry-run. |
-
-### Validation
+| `id` | string | Required. `^[a-z][a-z0-9_]{0,31}$`. Stored as `source_connector_id`. |
+| `label` | string | Required. The name shown in the Activity view. |
+| `version` | string | Required. `MAJOR.MINOR.PATCH`, with an optional `-pre.N`. |
+| `kind` | string | Required. One of `cli_enrichment`, `candidate_inference`, `extension_events`, `history_import`, `pipeline`. |
+| `capabilities` | list | Required, not empty. A subset of `records`, `annotations`, `candidates`, `commands`, `snapshots`. |
+| `description` | string | Optional. One line. |
+| `requires_cli` | string | The binary name. Required when `kind` is `cli_enrichment`. |
+| `requires_network` | bool | If true, declare `loopback:http` or `network:outbound`. |
+| `permissions` | list | See [Permissions](#permissions). |
+| `source_boundary` | string | Optional. Plain words on where the data comes from. |
+| `settings_schema` | list | Optional. Settings the owner can change. Unknown keys are rejected. |
+| `consumes`, `pipeline_freshness_seconds` | | Pipeline packs only. See [Pipeline packs](#pipeline-packs). |
 
 ```python
 from holdspeak.connector_sdk import validate_manifest
@@ -92,51 +71,56 @@ MANIFEST = validate_manifest({
     "kind": "cli_enrichment",
     "capabilities": ["annotations", "commands"],
     "requires_cli": "mycli",
-    "requires_network": True,
     "permissions": [
         "read:activity_records",
         "write:activity_annotations",
         "shell:exec",
-        "network:outbound",
     ],
 })
 ```
 
-`validate_manifest` collects **every problem** before raising,
-so authors fix all issues in one pass. Each problem is a
-`ManifestError(field, code, message)` with a stable `code`
-(`id_format`, `version_format`, `unknown_kind`,
-`network_permission_required`, etc) you can switch on.
+`validate_manifest` collects every problem and then raises. Each problem is a
+`ManifestError(field, code, message)` with a stable `code`, for example
+`id_format`, `version_format`, `unknown_kind` and `network_permission_required`.
 
----
+## Permissions
 
-## Permission model
-
-Recognised permissions (from `holdspeak.connector_sdk.KNOWN_PERMISSIONS`):
-
-| Permission | Means |
+| Permission | Meaning |
 |---|---|
-| `read:activity_records` | Connector reads the activity ledger. |
-| `write:activity_records` | Connector writes new activity_records rows (e.g. extension events). |
-| `write:activity_annotations` | Connector writes activity_annotations rows. |
-| `write:activity_meeting_candidates` | Connector writes meeting candidates. |
-| `shell:exec` | Connector invokes a local CLI subprocess. |
-| `fs:read` | Connector reads files outside HoldSpeak's own data dir. |
-| `loopback:http` | Connector accepts loopback POSTs (e.g. browser extension). |
-| `network:outbound` | Connector opens an outbound socket; high-trust. |
+| `read:activity_records` | Reads the activity ledger. |
+| `read:activity_annotations` | Reads annotations. Pipelines use it. |
+| `read:activity_meeting_candidates` | Reads meeting candidates. Pipelines use it. |
+| `write:activity_records` | Writes activity records. |
+| `write:activity_annotations` | Writes annotations. |
+| `write:activity_meeting_candidates` | Writes meeting candidates. |
+| `shell:exec` | Runs a local CLI subprocess. |
+| `fs:read` | Reads files outside the HoldSpeak data directory. |
+| `loopback:http` | Accepts loopback POST requests, for example from a browser extension. |
+| `network:outbound` | Opens an outbound socket. High trust. |
 
-Network rule: if your manifest declares `requires_network: true`,
-you must include at least one of `loopback:http` or
-`network:outbound` in `permissions`. Validation fails with
-`network_permission_required` otherwise.
+Declare the narrowest set that the connector needs. Do not add
+`network:outbound` "just in case".
 
----
+`PermissionGate` in
+[`holdspeak/connector_runtime.py`](../holdspeak/connector_runtime.py) enforces
+four of them at run time:
 
-## Dry-run output shape
+| Gate operation | Permission |
+|---|---|
+| `run_subprocess` | `shell:exec` |
+| `open_outbound_socket` | `network:outbound` |
+| `accept_loopback_event` | `loopback:http` |
+| `read_file` | `fs:read` |
 
-`holdspeak.activity_connector_preview.dry_run(db, connector_id, *, limit)`
-returns a `ConnectorDryRunResult`. Its `to_payload()` returns
-exactly this shape:
+A gate call without the matching permission raises `PermissionDenied`. The
+runtime marks the run as failed and records the error in `connector_runs`. This
+is honest enforcement, not a sandbox: a pack can still import `subprocess`
+directly. The manifest stays the one true list of what a pack needs.
+
+## Preview payload
+
+`holdspeak.activity_connector_preview.dry_run(db, connector_id, limit=...)`
+returns a `ConnectorDryRunResult`. Its `to_payload()` has this shape:
 
 ```python
 {
@@ -145,63 +129,46 @@ exactly this shape:
     "capabilities": ["annotations", "commands"],
     "enabled": False,
     "cli_required": "mycli",
-    "cli_available": True,            # null when requires_cli=None
-    "commands": [                     # only when "commands" in capabilities
-        {"command": ["mycli", "...", "..."], ...},
-    ],
-    "proposed_annotations": [         # only when "annotations" in capabilities
-        {"annotation_type": "...", "title": "...", "activity_record_id": 1},
-    ],
-    "proposed_candidates": [          # only when "candidates" in capabilities
-        {"title": "...", "starts_at": "...", "meeting_url": "..."},
-    ],
+    "cli_available": True,          # null when requires_cli is empty
+    "commands": [...],
+    "proposed_annotations": [...],
+    "proposed_candidates": [...],
     "warnings": ["..."],
     "permission_notes": ["..."],
     "truncated": False,
 }
 ```
 
-Section caps: each list is capped at
-`PAYLOAD_SECTION_CAP = 100`. Exceeding the cap sets
-`truncated: true`.
+Each list holds at most `PAYLOAD_SECTION_CAP` (100) rows. A longer list sets
+`truncated` to true. `permission_notes` carries advice such as "the connector is
+disabled" or "the CLI is not on PATH". `dry_run` does not raise for either case.
 
-`permission_notes` is the right place to surface "the
-connector is currently disabled" / "the CLI binary isn't on
-PATH"; the runtime + UI render them as advisory blocks above
-the planned commands.
+`dry_run` has built-in preview logic for the GitHub, Jira and calendar
+connectors. It reads the descriptor of a connector from the registry. A new
+pack gets the manifest fields, the enabled state and the CLI check. Row
+previews for a new pack need a matching branch in `dry_run`.
 
----
+The preview must never write to the database.
 
 ## Privacy checklist
 
-Before merging a connector:
+Check each item before you merge a connector.
 
-- [ ] Does the manifest's `permissions` list match the
-      narrowest capabilities the connector actually needs? No
-      "just in case" `network:outbound` declarations.
-- [ ] Does `source_boundary` describe in plain English where
-      data comes from and where it doesn't?
-- [ ] If your connector parses external input (extension
-      events, file content), do you reject every field name
-      that implies sensitive content (cookies, body, headers,
-      form data, screenshots, selection text)? See
-      `holdspeak/activity_extension.py:FORBIDDEN_FIELDS` for
-      the canonical list; re-export and *extend* it for any
-      new sensitive surface.
-- [ ] Are non-`http(s)` URLs rejected at the schema layer?
-- [ ] Is `requires_network` honest? (Reading a local file is
-      not network.)
-- [ ] Does your `Enrich` implementation respect the
-      `connector.enabled` flag? The runtime gates it but
-      defense-in-depth doesn't hurt.
-- [ ] Is your `Clear` implementation scoped to
-      `source_connector_id == self.manifest.id`?
-- [ ] Does dry-run mutate the database? (It must not. The
-      fixture harness will catch you.)
+- The permissions match what the connector needs.
+- `source_boundary` says where the data comes from and where it does not.
+- A connector that parses outside input rejects every field that implies
+  sensitive content: cookies, bodies, headers, form data, screenshots and
+  selected text. The list is `FORBIDDEN_FIELDS` in
+  [`holdspeak/activity_extension.py`](../holdspeak/activity_extension.py).
+  Extend it for a new sensitive surface.
+- The schema rejects URLs that are not `http` or `https`.
+- `requires_network` is true only for real network use. Reading a local file is
+  not network use.
+- Enrich checks the `enabled` flag, even though the runtime also checks it.
+- Clear is scoped to `source_connector_id`.
+- Preview writes nothing.
 
----
-
-## Dry-run fixture tutorial
+## Fixtures
 
 Add a JSON file under `tests/fixtures/connectors/`:
 
@@ -233,234 +200,102 @@ Add a JSON file under `tests/fixtures/connectors/`:
 }
 ```
 
-Run the harness:
+Run one fixture:
 
 ```
-$ uv run pytest tests/unit/test_connector_fixture_harness.py -k my-connector
+uv run pytest tests/unit/test_connector_fixture_harness.py -k my-connector
 ```
 
-Fixtures are discovered automatically. No test code to write.
-On failure you get a readable diff naming every drifted field
-+ a payload summary you can paste back as the new
-expectation.
+The harness finds every fixture by itself. It also checks that no rows were
+added to `activity_annotations` or `activity_meeting_candidates`. Every `expect`
+field is optional. Lock only what you need.
 
-Every `expect` field is optional. Lock down only what you care
-about.
+## First-party packs
 
----
+All first-party packs are in
+[`holdspeak/connector_packs/`](../holdspeak/connector_packs/).
 
-## Built-in connector packs
-
-The first-party packs in `holdspeak/connector_packs/` are the
-canonical reference implementations:
-
-| Pack | Source | Manifest | Fixture |
-|---|---|---|---|
-| Firefox companion | [firefox_ext.py](../holdspeak/connector_packs/firefox_ext.py) | `firefox_ext.MANIFEST` | none (coverage via [`tests/unit/test_activity_extension.py`](../tests/unit/test_activity_extension.py) parser-contract tests) |
-| GitHub CLI | [github_cli.py](../holdspeak/connector_packs/github_cli.py) | `github_cli.MANIFEST` | [`gh-happy-path.json`](../tests/fixtures/connectors/gh-happy-path.json), [`gh-empty-ledger.json`](../tests/fixtures/connectors/gh-empty-ledger.json) |
-| Atlassian CLI (Jira) | [acli_jira.py](../holdspeak/connector_packs/acli_jira.py) | `acli_jira.MANIFEST` | none (coverage via [`tests/unit/test_jira_provider.py`](../tests/unit/test_jira_provider.py) recorded-shape tests) |
-| Jira CLI (legacy, parked) | [jira_cli.py](../holdspeak/connector_packs/jira_cli.py) | `jira_cli.MANIFEST` | [`jira-happy-path.json`](../tests/fixtures/connectors/jira-happy-path.json), [`jira-empty-ledger.json`](../tests/fixtures/connectors/jira-empty-ledger.json) |
-| Calendar candidates | [activity_candidates.py](../holdspeak/activity_candidates.py) | (built-in via the descriptor in [`activity_connectors.py`](../holdspeak/activity_connectors.py)) | [`calendar-happy-path.json`](../tests/fixtures/connectors/calendar-happy-path.json), [`calendar-empty-ledger.json`](../tests/fixtures/connectors/calendar-empty-ledger.json) |
-
-The github_cli, acli_jira, and jira_cli packs are the cleanest
-references because they ship a read-only command allowlist + a policy
-validator (`is_command_allowed`) alongside the manifest. The acli_jira
-pack uses 3-tuple allowlist entries `(product, group, verb)` for the
-`acli jira <group> <verb>` command shape; it is read-only and requires
-the `acli` CLI (`requires_cli: "acli"`). Read those before building
-your own.
-
----
-
-## Minimal example
-
-```python
-# holdspeak/connector_packs/example.py
-from ..connector_sdk import ConnectorManifest, validate_manifest
-
-MANIFEST: ConnectorManifest = validate_manifest({
-    "id": "example",
-    "label": "Example Connector",
-    "version": "0.1.0",
-    "kind": "candidate_inference",
-    "capabilities": ["candidates"],
-    "permissions": ["read:activity_records",
-                    "write:activity_meeting_candidates"],
-    "source_boundary": "Reads activity_records; writes "
-                       "activity_meeting_candidates only.",
-})
-
-def preview(db, *, limit: int = 25):
-    """Return the dry-run payload shape for this connector.
-
-    Mutation-free: only reads from db, never writes.
-    """
-    records = db.list_activity_records(limit=limit)
-    return {
-        "connector_id": MANIFEST.id,
-        "kind": MANIFEST.kind,
-        "capabilities": list(MANIFEST.capabilities),
-        "enabled": False,
-        "cli_required": None,
-        "cli_available": None,
-        "commands": [],
-        "proposed_annotations": [],
-        "proposed_candidates": [
-            {"title": r.title, "starts_at": None, "meeting_url": r.url}
-            for r in records[:limit]
-        ],
-        "warnings": [] if records else ["No activity to convert."],
-        "permission_notes": [],
-        "truncated": False,
-    }
-```
-
-That's a complete connector. Drop a fixture and you're done.
-
----
-
-## Runtime gates, pipelines, user packs, and run history
-
-Beyond the base contract, the runtime adds four surfaces. Read
-these before authoring a pack.
-
-### `kind: pipeline`: packs that consume other packs
-
-A pipeline pack reads other packs' rows and writes one of its
-own. The first first-party pipeline is `meeting_context`
-(`holdspeak/connector_packs/meeting_context.py`); read it as
-the canonical example.
-
-Manifest delta vs. a regular pack:
-
-| Field | Required for pipelines | Notes |
+| Pack | Kind | Notes |
 |---|---|---|
-| `kind` | `"pipeline"` | Added to `KNOWN_KINDS`. |
-| `consumes` | yes, at least one entry | List of `{pack_id, output_kind}` upstreams. `output_kind` is one of `records` / `annotations` / `candidates`. |
-| `pipeline_freshness_seconds` | optional | Skip an upstream's re-run if its last successful `connector_runs` row is within this window. |
-| `permissions` | must include the read-permission for every consumed `output_kind` | E.g. consuming `annotations` requires `read:activity_annotations`. The validator enforces this; missing reads fail with `pipeline_missing_read_permission`. |
+| `firefox_ext` | `extension_events` | Receives loopback events from the browser extension. Parser tests: `tests/unit/test_activity_extension.py`. |
+| `github_cli` | `cli_enrichment` | Read-only `gh` allowlist. Fixtures: `gh-*.json`. |
+| `acli_jira` | `cli_enrichment` | Read-only `acli jira <group> <verb>` allowlist. Needs `acli`. |
+| `acli_confluence` | `cli_enrichment` | Read-only `acli confluence <group> <verb>` allowlist. Needs `acli`. |
+| `jira_cli` | `cli_enrichment` | Legacy read-only `jira` allowlist. Fixtures: `jira-*.json`. |
+| `calendar_activity` | `candidate_inference` | Builds meeting candidates from calendar and call activity. Fixtures: `calendar-*.json`. |
+| `meeting_context` | `pipeline` | Consumes other packs. See below. |
 
-`consumes` is rejected on non-pipeline packs and required on
-pipeline packs; the validator emits
-`pipeline_requires_consumes` / `consumes_only_on_pipeline` so
-the failure mode is unambiguous.
+The command packs ship a read-only allowlist and an `is_command_allowed`
+function next to the manifest. The `acli` packs use `(product, group, verb)`
+entries. Read them before you write a command pack.
 
-The `PipelineRunner` (`holdspeak.connector_runtime.PipelineRunner`)
-walks `consumes` into a topological order and executes each
-upstream as either:
+## Pipeline packs
 
-- `skipped_fresh`: last successful `connector_runs` row is
-  within `pipeline_freshness_seconds`,
-- `ran`: runner invoked the pack's module-level `run(db)`
-  callable,
-- `failed`: the runner raised; pipeline aborts,
-- `missing_runner`: pack has no `run(db)` and no fresh row;
-  pipeline aborts.
+A pipeline pack reads the rows of other packs and writes its own. The
+reference is
+[`meeting_context.py`](../holdspeak/connector_packs/meeting_context.py).
 
-Failure of any step aborts the pipeline; there are no retries
-and no parallelism.
-
-### Permission enforcement at runtime gates
-
-`PermissionGate` (`holdspeak.connector_runtime`) is the
-in-process enforcement layer for the four operationally-gated
-permissions:
-
-| Operation | Gated permission |
+| Field | Rule |
 |---|---|
-| `run_subprocess` | `shell:exec` |
-| `open_outbound_socket` | `network:outbound` |
-| `accept_loopback_event` | `loopback:http` |
-| `read_file` | `fs:read` |
+| `kind` | `"pipeline"`. |
+| `consumes` | Required. A list of `{pack_id, output_kind}`. `output_kind` is `records`, `annotations` or `candidates`. |
+| `pipeline_freshness_seconds` | Optional. Default 300. Skips an upstream run if its last good run is newer. |
+| `permissions` | Must include the read permission for each consumed `output_kind`. |
 
-If a pack invokes a gate without the matching permission on
-its manifest, the gate raises `PermissionDenied` carrying the
-connector id, the operation, the missing permission, and the
-manifest's full declared permission set. The runtime catches
-the exception, marks the run failed, and writes a
-`connector_runs` row with the operator-readable error string.
+The validator rejects `consumes` on a non-pipeline pack
+(`consumes_only_on_pipeline`). It also rejects a pipeline pack without
+`consumes` (`pipeline_requires_consumes`) and a missing read permission
+(`pipeline_missing_read_permission`).
 
-This is *honest* enforcement, not a sandbox: a pack can still
-import `subprocess` directly and bypass the gate. The point is
-that an honest pack with mis-declared permissions fails loud
-in tests and at runtime, and the manifest stays a single
-truthful surface for "what does this pack actually need."
+`PipelineRunner` in `holdspeak.connector_runtime` sorts the upstream packs in
+dependency order. It runs each one with the module-level `run(db, ...)` of the
+pack. Each step ends as one of these:
 
-### Local-user pack discovery
+- `skipped_fresh`: the last good `connector_runs` row is inside the freshness
+  window.
+- `ran`: the runner called `run`.
+- `failed`: `run` raised. The pipeline stops.
+- `missing_runner`: the pack has no `run` and no fresh row. The pipeline stops.
 
-User packs drop into `~/.holdspeak/connector_packs/`. The
-discovery rules:
+A failed step stops the pipeline. There are no retries and no parallel steps.
 
-- One `.py` file per pack; the file must export
-  `MANIFEST: ConnectorManifest`. `validate_manifest` is re-run
-  on import so a malformed user pack surfaces a structured
-  `DiscoveryError` instead of crashing the runtime.
-- A user pack id that collides with a first-party pack is
-  rejected (`id_collision_user_pack`); first-party always
-  wins.
-- A user pack id that collides with another user pack is
-  rejected for the duplicate (the first one wins).
-- Tests that exercise discovery override the directory via
-  `HOLDSPEAK_USER_PACKS_DIR` or pass `user_packs_dir=tmp_path`
-  to `discover_user_packs` / `reload_registry`.
+## User packs
 
-Each registered pack carries a `source` field
-(`"first-party"` / `"user"`) that the API and doctor surface
-verbatim. Discovery is *not* sandboxing: code under the
-user's home dir is by definition code the user trusts.
+Put a `.py` file in `~/.holdspeak/connector_packs/`. The file exports
+`MANIFEST`. To use another directory, set `HOLDSPEAK_USER_PACKS_DIR`.
 
-### Pack run history (`connector_runs`)
+- The loader re-validates the manifest on import. A bad pack is reported as a
+  `DiscoveryError` and does not crash the runtime.
+- A user pack id that matches a first-party id is rejected
+  (`id_collision_first_party`). A duplicate user pack id is rejected
+  (`id_collision_user_pack`).
+- Each registered pack has a `source` of `first-party` or `user`. The API and
+  `holdspeak doctor --connectors` show it.
+- Discovery is not a sandbox. Code in your home directory is code you trust.
 
-Every pack invocation (preview is exempt; enrich runs and
-pipeline-step runs are not) writes one row to
-`connector_runs`:
+## Run history
 
-```sql
-CREATE TABLE connector_runs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    connector_id TEXT NOT NULL,
-    started_at TEXT NOT NULL,
-    finished_at TEXT NOT NULL,
-    succeeded INTEGER NOT NULL DEFAULT 0,
-    error TEXT,
-    output_bytes INTEGER NOT NULL DEFAULT 0,
-    annotation_count INTEGER NOT NULL DEFAULT 0,
-    candidate_count INTEGER NOT NULL DEFAULT 0,
-    command_count INTEGER NOT NULL DEFAULT 0
-);
-```
+Every enrich run and pipeline step writes one row to `connector_runs`. Preview
+does not. The columns are `connector_id`, `started_at`, `finished_at`,
+`succeeded`, `error`, `output_bytes`, `annotation_count`, `candidate_count` and
+`command_count`.
 
-The DB API is `MeetingDatabase.record_connector_run(...)`,
-`list_connector_runs(connector_id=..., limit=...)`, and
-`delete_connector_runs(connector_id=...)` (called when a pack
-is removed). The web surface is
-`GET /api/activity/enrichment/connectors/{id}/runs`; the
-dashboard renders the latest row inline next to each
-connector. UI for the full per-pack timeline is deferred to
-a future release.
-
-`connector_runs` is also what `PipelineRunner` consults for
-its freshness skip: the row's `started_at` plus the
-upstream's `pipeline_freshness_seconds` decides whether a
-step short-circuits.
-
----
+The database methods are `record_connector_run`, `list_connector_runs` and
+`delete_connector_runs`. They are in
+[`holdspeak/db/activity/enrichment.py`](../holdspeak/db/activity/enrichment.py).
+The route is `GET /api/activity/enrichment/connectors/{id}/runs`.
+`PipelineRunner` reads these rows to decide on a freshness skip.
 
 ## Out of scope
 
-This story does not cover:
-
-- A remote publishing workflow.
-- A marketplace.
-- A plugin loader for third-party packages from the internet.
-
-HoldSpeak ships the *contract* and the *first-party packs*. Any
-external distribution mechanism is out of scope today.
+HoldSpeak ships the contract and the first-party packs. It has no marketplace,
+no remote publishing and no loader for packages from the internet.
 
 ## See also
 
 - [Firefox Extension Guide](FIREFOX_EXTENSION_GUIDE.md): a first-party
-  `extension_events` connector, end to end.
+  `extension_events` connector.
 - [Plugin Authoring](PLUGIN_AUTHORING.md): the sibling contract for meeting-intel
   plugins.
-- [Security & Privacy](SECURITY.md): the permission model connectors declare against.
+- [Security & Privacy](SECURITY.md): the permission model that connectors
+  declare against.

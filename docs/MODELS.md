@@ -17,27 +17,27 @@ The set can include different engines for different kinds of work.
 
 ## Add or check an engine
 
-Use **Add an engine...** for a keyless compatible endpoint.
-Enter its base URL in the endpoint field.
+Use **Add an engine** for a keyless compatible endpoint.
+Enter its base URL in the **Server address** field.
 Select **Check** to inspect it.
 
 A catalog preset shows **Download** and its file size when the model is absent.
 Selecting **Download** starts acquisition through the Model Library service.
 Dependent assignments remain **WAITING** until the model is ready.
 
-Cloud rows indicate whether a key is set.
-Their **Check** control shows `1 TOKEN · $` before a paid probe.
+Cloud rows show **KEY SET** when a key is set.
+The **Check** control on those rows shows `1 TOKEN · $` before a paid probe.
 The Concierge requires that explicit action for a paid cloud check.
 Normal model work can also incur provider charges.
 
-The current Concierge URL field does not collect a provider key.
+The Concierge URL field does not collect a provider key.
 For a keyed provider, use the owner Model Library API with its separate write-only secret field.
 The [Model Library contract](MCP_SIDECAR.md#model-library) describes the underlying owner operations.
 The [API surface](API_SURFACE.md) lists their HTTP routes.
 
 For headless provisioning, `HOLDSPEAK_PROFILE_<ID>_KEY` remains an environment fallback for the identified model profile.
 Do not place credentials in a Thread, Note, or shared model record.
-A cloud row showing **KEY NOT SET** requires credential setup before a paid check can succeed.
+A cloud row showing **NOT SET** requires credential setup before a paid check can succeed.
 
 ## Understand readiness
 
@@ -46,11 +46,12 @@ A cloud row showing **KEY NOT SET** requires credential setup before a paid chec
 | **READY** | The engine passed the applicable readiness check. |
 | **CHECKING** | A check is in progress. |
 | **WAITING** | A download or prerequisite has not completed. |
-| **KEY NOT SET** | The cloud engine needs a configured key. |
+| **NOT SET** | The cloud engine needs a configured key. |
 | **UNREACHABLE** | The engine did not respond as required. |
 | **OFF** | You explicitly disabled a capability group. |
 
-**Use these** requires every group to be ready or explicitly off.
+**Use these** applies each group that is ready or explicitly off.
+It does not send a group that is **WAITING**.
 A successful check establishes current availability. It does not guarantee future availability or model quality.
 
 ## Test the assigned route
@@ -76,7 +77,7 @@ happens, the capability groups affected, and one control.
 | State | Meaning | Control |
 | --- | --- | --- |
 | **MODEL FILE MISSING** | An assigned local model is not on disk. | **Download** opens the Model Library acquisition. |
-| **ENDPOINT UNREACHABLE** | An assigned endpoint did not answer. | **Check** opens the endpoint field on that address. |
+| **ENDPOINT UNREACHABLE** | An assigned endpoint did not answer. | **Check** opens the **Server address** field on that address. |
 | **TOOL INCOMPATIBLE** | The assigned model cannot serve that capability. | **Choose** opens that group's engine list. |
 | **CREDENTIAL EXPIRED** | A required key or source credential is absent or rejected. | **Connections** opens Settings, Connections. |
 
@@ -112,8 +113,7 @@ It records models, deployment information, and readiness observations.
 An **assignment** selects the compatible model list for a capability or eligible saved item.
 These are separate service contracts beneath the Concierge.
 
-The current **Settings > Models** and assignment entry points open the Concierge.
-Older instructions that begin with separate Library and Assignments screens describe an earlier interface.
+**Settings > Models** and the assignment entry points open the Concierge.
 Use the [MCP reference](MCP_SIDECAR.md) or [API surface](API_SURFACE.md) for programmatic access to those services.
 
 The assignment service supports complete ordered lists of one to four compatible models.
@@ -163,7 +163,7 @@ Use the returned error and Receipt when you diagnose a failed request.
 | An assignment cannot run | Use **Adjust** to select a compatible engine for that capability. |
 | A repair state is shown | Use the control on that row. Each state has one. |
 | **Test** reports UNREACHABLE | Read the Receipt. It names the route and each model that was tried. |
-| **Use these** remains disabled | Resolve each waiting group or explicitly set an unneeded group to off. |
+| **Use these** remains disabled | No group is ready or off. Resolve a waiting group or set an unneeded group to off. |
 | Tool results are unreliable | Review the sources and model output. A readiness check does not evaluate recommendation quality. |
 
 ## See also

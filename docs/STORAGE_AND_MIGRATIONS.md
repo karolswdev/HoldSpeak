@@ -1,172 +1,117 @@
 # Storage and migrations
 
-This is a source reconstruction at snapshot
-`675401a857b85336d4acaa8c65383dfc9636e4c8` (2026-09-19). The checked-out
-source currently has that content; a later branch can drift. The mechanical
-table and column inventory is in [schema-inventory.json](generated/schema-inventory.json).
-That inventory is generated from the declared `SCHEMA_SQL`. It is a useful
-shape index, not proof that every older database has already been reconciled.
+HoldSpeak keeps its records in one SQLite file.
+This page says where the file is, how the schema repairs itself, and how to back up and restore.
+The [schema inventory](generated/schema-inventory.json) lists the declared tables.
+It comes from `SCHEMA_SQL`.
+It does not show the shape of an older database that has not been repaired yet.
 
-## Storage boundaries
+## Back up before you upgrade
 
-The normal runtime uses one SQLite database at
-`~/.local/share/holdspeak/holdspeak.db` (`holdspeak/db/core.py:47-49`). The
-database is opened with foreign keys enabled, WAL journalling and a five-second
-busy timeout (`holdspeak/db/connection.py:7-34`). A connection commits on a
-successful context exit and rolls back on an exception
-(`holdspeak/db/connection.py:45-64`). The default path is user-local, but the
-path can be supplied to `Database`; documentation should not infer a universal
-location for alternate deployments.
+1. Run `holdspeak backup`.
+2. Keep the file path that the command prints.
 
-The database contains several classes of data:
+The file is a timestamped copy next to the database.
+Run `holdspeak restore` with no argument to list the copies.
+Run `holdspeak restore <backup-file>` to put one back.
+Add `--yes` to skip the confirmation.
 
-| Class | Examples | Role | Durable source or projection |
-| --- | --- | --- | --- |
-| Domain objects | `meetings`, `segments`, `action_items`, `projects`, `decisions`, `artifacts` | User records and their provenance | Source of truth for the corresponding domain |
-| Runtime queues and ledgers | `intel_jobs`, `intel_job_attempts`, `activity_records`, `kernel_journal` | Work descriptors, attempts and append-only evidence | Durable operational records |
-| Kernel authority objects | `kernel_operations`, `kernel_receipts`, `kernel_parent_runs`, `kernel_parent_checkpoints`, grants and schedule delegations | Admission, approval, claim, receipt and restart state | Source of truth for runtime authority |
-| Read projections | `segments_fts`, process views, meeting intelligence projections, `kernel_projection_stages` | Search, UI and recovery views derived from canonical records | Rebuildable or receipt-gated according to the owning subsystem |
-| Schema machinery | `schema_version`, indexes, triggers, FTS shadow tables | Shape stamp and SQLite maintenance | Metadata; never a migration ledger |
+Restore refuses to run when `holdspeak web` is open or when the file is not writable.
+Stop the hub first.
+Restore takes a safety copy of the current database before it replaces the file.
+It also removes the old `-wal` and `-shm` files.
+The final file copy is not an atomic rename.
+Do not stop a restore halfway.
 
-The full application also has separate configuration, secret custody and
-browser/native stores. The security boundary and retention claims for those
-stores are in [SECURITY.md](SECURITY.md); this document describes the SQLite
-runtime only.
+Backup and restore cover the database only.
+They do not cover config, audio files, browser storage, or People data.
+[SECURITY.md](SECURITY.md) lists those stores.
+[OPERATIONS.md](OPERATIONS.md) has the doctor and restart steps.
 
-## Declared schema and reconciliation
+## Where the data is
 
-`holdspeak/db/schema.py:1-11` defines `SCHEMA_SQL` and an informational
-`SCHEMA_VERSION` (currently 79). The version is not a gate. On open,
-`reconcile_schema` compares the live shape with the declared SQL and creates
-missing tables, indexes and triggers and adds missing columns. The general
-column/table repair preserves unknown tables, but explicit legacy rebuilds
-replace intelligence-queue, parent-run, action-item and Thread-part tables;
-revised triggers can also be dropped and recreated (`holdspeak/db/reconcile.py:69-606`).
-The module docstring’s blanket no-DROP claim does not describe those exceptions.
-A newer or older informational
-stamp does not by itself prevent opening a database. The reconciliation code
-is the authority for current shape repair; the generated inventory is not.
+The default path is `~/.local/share/holdspeak/holdspeak.db` (`DEFAULT_DB_PATH` in `holdspeak/db/core.py`).
+You can pass another path to `Database`.
+Each connection turns on foreign keys, WAL journaling, and a five-second busy timeout (`holdspeak/db/connection.py`).
+A connection commits when its context exits and rolls back on an error.
 
-The source order is:
+| Class | Examples | Role |
+| --- | --- | --- |
+| Domain objects | `meetings`, `segments`, `action_items`, `projects`, `decisions`, `artifacts` | Your records and their sources |
+| Queues and ledgers | `intel_jobs`, `intel_job_attempts`, `activity_records`, `kernel_journal` | Work descriptors, attempts, evidence |
+| Kernel authority | `kernel_operations`, `kernel_receipts`, `kernel_parent_runs`, `kernel_parent_checkpoints`, grants | Admission, approval, restart state |
+| Derived views | `segments_fts`, `memory_chunks_fts`, `kernel_projection_stages` | Search, display, recovery |
+| Schema machinery | `schema_version`, indexes, triggers | A version stamp and SQLite upkeep |
 
-1. Inspect existing tables and run required legacy table rebuilds.
-2. Add missing columns before running the declared schema/index script.
-3. Refresh revised triggers and run the independent context/watch repair passes.
-4. Check the remaining shape and create the acquisition index.
-5. On a changed existing file, take an automatic backup, then run the grouped
-   data backfills and stamp the informational version.
+## How the schema repairs itself
 
-The automatic backup is **not a guaranteed pre-upgrade snapshot**: schema
-changes and independent repair passes already precede that call. For a missing
-bookmarks table, the table is recreated before the automatic backup is called.
-The [claim registry](../tests/unit/doc_claims/registry.py) binds this example to
-an executable probe. Run `holdspeak backup` before upgrading when an original
-snapshot is needed. The existing backup-call test proves that backup is called,
-not that it contains the original shape.
+`SCHEMA_SQL` in `holdspeak/db/schema.py` declares the schema.
+`SCHEMA_VERSION` is an informational stamp.
+Nothing reads it to block a start.
+A database with a newer or older stamp still opens.
 
-Some legacy shape changes need an explicit table rebuild or data transformation;
-those are code paths in `reconcile.py`, not a promise that arbitrary future
-renames are automatic. Existing objects and rows are preserved by the general
-policy. Read the concrete reconciliation function before describing a change
-as reversible or lossless.
+On open, `reconcile_schema` (`holdspeak/db/reconcile.py`) compares the live file with the declared SQL.
+It runs these steps:
 
-The schema has foreign keys and local triggers. For example, meeting children
-normally cascade with a meeting, transcript FTS is maintained by insert,
-update and delete triggers, and decisions retain source-deleted provenance
-through a trigger (`holdspeak/db/schema.py:24-51,75-85,189-213,381-422`). An
-FTS table is a read projection, not a second transcript authority. Kernel
-receipts and inference attestations are authoritative evidence; the latter
-have database no-update/no-delete triggers (`holdspeak/db/schema.py:2156-2199`).
+1. Rebuild four legacy tables that `ALTER TABLE` cannot fix: the intelligence queue, parent runs, action items, and thread message parts.
+2. Add missing columns to existing tables.
+3. Run `SCHEMA_SQL` in one transaction to create missing tables, indexes, and triggers.
+4. Replace triggers whose text changed, then run the independent repair passes.
+5. If the shape changed on an existing file, back up the database, run the data backfills, and stamp the version.
 
-## What is an object and what is a projection?
+The general repair keeps unknown tables and rows.
+It does not drop columns.
+The legacy rebuilds and the trigger refresh replace objects.
 
-The distinction matters during recovery:
+The automatic backup is not a snapshot of the original shape.
+Schema changes and repair passes run before it.
+For a missing bookmarks table, the table is recreated before the automatic backup is called.
+Run `holdspeak backup` first when you need an original copy.
 
-- `meetings`, `segments`, `action_items`, `artifacts`, `decisions`, and
-  `kernel_operations` are durable objects with identity and lifecycle.
-- `kernel_journal`, attempt ledgers, receipts and checkpoints are durable
-  evidence. They are not UI caches and must not be regenerated from a current
-  process view.
-- `segments_fts` is a derived search projection. It can be repaired from
-  `segments` by the owning FTS procedure; direct edits do not change transcript
-  truth.
-- `kernel_projection_stages` is a durable, receipt-gated staging record. It is
-  neither an arbitrary cache nor permission to publish: a stage becomes
-  `PUBLISHED` only through its registered materializer after the terminal
-  receipt.
-- Process/read views expose current state from canonical rows and journal
-  evidence. A stale process row must not be used to infer a successful effect.
-- `schema_version` is an informational observation. It is not evidence that all
-  shape work ran on a particular database.
+The code has no rollback chain.
+It has additive repair and a few named data repairs.
+A rename does not repair itself unless `reconcile.py` has a function for it.
 
-The generic journal records runtime facts, but kernel-owned storage is not
-uniformly content-free. `kernel_parent_runs.input_json` stores caller input
-snapshots. The recursive key filter rejects named audio/PCM/token fields; it
-does not reject every prompt or transcript string (`holdspeak/kernel/model.py:9-13`;
-`holdspeak/kernel/parent_run.py:105-106`).
+## Rules the schema enforces
 
-## Backups and restore
+- Meeting children usually cascade when you delete the meeting.
+- Triggers keep `segments_fts` current on insert, update, and delete.
+- A decision keeps its source ids and gets `source_state = 'source_deleted'`.
+- Inference attestations have no-update and no-delete triggers.
 
-`backup_database` uses SQLite's backup API and writes a timestamped sibling
-backup (`holdspeak/db/core.py:72-107`). A backup is therefore a snapshot of the
-database, including committed WAL state as observed by SQLite. The code does
-not claim an application-wide snapshot of audio files, config, browser stores
-or People sidecars; those have separate retention and backup boundaries.
+## Objects and derived views
 
-Restore validates the candidate, refuses a live owner or an unwritable or
-locked target, closes the active connection, creates a safety backup, replaces
-the database and removes stale `-wal` and `-shm` sidecars
-(`holdspeak/db/core.py:110-202`). Candidate validation precedes replacement. The final copy is not an atomic
-rename, so this audit does not claim crash-atomic restore. Restore is a data replacement operation and
-must be treated as such by an operator.
+- `meetings`, `segments`, `action_items`, `artifacts`, `decisions`, and `kernel_operations` are durable objects.
+- `kernel_journal`, attempt tables, receipts, and checkpoints are durable evidence. Do not rebuild them from a process view.
+- `segments_fts` is a search index. Rebuild it from `segments`. Editing it does not change the transcript.
+- `kernel_projection_stages` stages a result. It becomes `PUBLISHED` only through its materializer after the terminal receipt.
+- A process view shows current state. A stale row does not prove that an effect succeeded.
 
-The focused backup/restore assertions inspect kept data, a timestamped safety
-backup, caller-close-before-restore, and an invalid candidate
-(`tests/critical/test_journey_backup_restore.py:28-82`). They were inspected
-for this document and were not run in the authoring lane. Despite its name,
-`test_an_interrupted_restore_leaves_the_installation_openable` supplies an
-invalid candidate; it does not interrupt the final copy. Crash-atomic restore
-therefore remains unproved.
+`kernel_parent_runs.input_json` stores caller input snapshots.
+The kernel filter rejects named audio, PCM, and token fields.
+It does not reject every prompt or transcript string.
 
 ## Startup and recovery
 
-`Database` ensures the shape before returning normal access
-(`holdspeak/db/core.py:205-269`). The kernel then opens its journal store,
-reconciles interrupted parents, recovers inference routes, then recovers
-projections (`holdspeak/kernel/runtime.py:173-175`). Projection recovery starts
-with liveness reaping (`projection_stager.py:343-346`); do not infer that reaping
-precedes inference route recovery. A restart can
-therefore change an unfinished operation to a truthful refusal or
-`indeterminate`; it must not silently turn an absent receipt into success.
-See [KERNEL.md](KERNEL.md) for the state and publication rules.
+`Database` repairs the shape before it returns access (`holdspeak/db/core.py`).
+Then the kernel starts, in this order (`holdspeak/kernel/runtime.py`):
 
-Runtime identity records the expected and loaded schema observations and can
-diagnose a stale bundle, two runtimes, or schema ahead/behind conditions
-(`holdspeak/runtime_identity.py:215-354`). This diagnostic does not replace
-shape reconciliation and does not, by itself, refuse startup.
+1. Open the journal store.
+2. Reconcile abandoned parent runs.
+3. Recover inference route executions.
+4. Reap expired claims, then recover projection stages.
 
-## Tests and evidence boundary
+A restart can turn an unfinished operation into a refusal or `indeterminate`.
+It never turns a missing receipt into success.
+[KERNEL.md](KERNEL.md) has the state rules.
 
-The schema-policy assertions establish fresh current stamping, no-op opens,
-opening a newer informational stamp without data loss, missing table/column
-self-healing, preservation of orphan objects/rows and timestamped backup
-siblings (`tests/unit/test_db_schema_policy.py:53-220`). Those are inspected
-assertions, not a run result. No tests were run for this documentation lane.
+`holdspeak/runtime_identity.py` records the expected and loaded schema stamps.
+It can report a stale bundle, two runtimes, or a schema ahead or behind.
+It does not repair the shape and does not refuse a start.
 
-The current source does not provide a general rollback migration chain. It
-provides additive reconciliation plus selected shape/data repairs. Unknowns
-that require a production database inspection include the exact pre-reconcile
-shape, whether all historical backfills have run, and whether external files
-were backed up with a database snapshot. Do not report those as known from
-`SCHEMA_VERSION` alone.
+## See also
 
-## Operator links
-
-- [OPERATIONS.md](OPERATIONS.md) gives the bounded doctor, backup and restart
-  procedures.
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) maps symptoms to evidence and
-  safe next actions.
-- [DATA_MODEL.md](DATA_MODEL.md) describes the data rows represented by this
-  store.
-- [SECURITY_MODEL.md](SECURITY_MODEL.md) links the existing security contract
-  and records storage limits.
+- [OPERATIONS.md](OPERATIONS.md): doctor, backup, and restart steps.
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md): symptoms and safe actions.
+- [DATA_MODEL.md](DATA_MODEL.md): the tables.
+- [SECURITY_MODEL.md](SECURITY_MODEL.md): storage limits.

@@ -76,7 +76,7 @@ An agent can act only through the operations and grants that you give it.
 
 One service layer declares each operation. HTTP, MCP, and the test rig reach the same operation, with the same authority checks and the same Receipts.
 
-- The [MCP sidecar](docs/MCP_SIDECAR.md) exposes 236 tools across 42 families. It is a stdio proxy to the hub's `/api/mcp` endpoint.
+- The [MCP sidecar](docs/MCP_SIDECAR.md) exposes 248 tools across 43 families. It is a stdio proxy to the hub's `/api/mcp` endpoint.
 - A tool name does not grant permission. An agent acts only under the palette and grants that you give it. To let an agent file notes and record decisions, select **Allow filing** on its row in Settings, Remote Access. Select **Stop filing** to end the grant.
 - [Reach](docs/USER_GUIDE.md#reach) lets a remote agent connect with a scoped credential (a palette and a time limit, shown once).
 - [Reach Runner](docs/REACH_RUNNER.md) requests a Heartbeat sweep and steward runs from another machine.

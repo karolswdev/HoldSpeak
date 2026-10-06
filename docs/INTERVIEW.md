@@ -1,191 +1,161 @@
 # Interview
 
-Use Interview to describe your work and develop useful ways to use HoldSpeak.
-You can revisit each topic as your goals, Projects, and working habits change.
+Interview helps you describe your work and find useful ways to use HoldSpeak.
+It runs in a normal Thread. You can return to each topic as your goals and Projects change.
 
-Interview runs inside a normal Thread.
 The model asks questions and proposes ideas. The controller checks tool access and saves structured context.
-The conversation can vary. The state and tool checks follow defined rules.
+The conversation can vary. The state and the tool checks follow fixed rules.
 
 ## Before you start
 
-Configure a suitable model through [Settings > Models](MODELS.md).
-Tool use depends on the model, its assignment, and the current permissions.
-Existing Project records can provide context. You can also start by describing one outcome without a Project.
+Set up a model in [Models](MODELS.md). Tool use depends on the model, its assignment, and the current permissions.
+Existing Projects give Interview context. You can also start with one outcome and no Project.
 
-There are two question-based surfaces in HoldSpeak:
+HoldSpeak has two question-based surfaces:
 
 | Surface | Purpose |
 | --- | --- |
-| **Interview** mode in a Thread | Develop working context and suggestions across repeatable sections. |
-| **Interview** pane in the Thought Workbench | Refine one Note through focused questions. |
-
-This guide describes the Thread mode.
-See [Develop a thought](USER_GUIDE.md#develop-a-thought) for the Note workflow.
+| **Interview** mode in a Thread | Build working context and suggestions across sections. This guide covers it. |
+| **Interview** pane in the Thought Workbench | Refine one Note with focused questions. See [Develop a thought](USER_GUIDE.md#develop-a-thought). |
 
 ## Start a conversation
 
-1. Select **Desk > New Thread**.
-2. Select **Interview** above the composer.
+1. Select **New Thread**.
+2. Select **Interview** in the mode tabs above the composer.
 3. Describe one outcome that would help your work.
 4. Select **Send**.
 
-Example: “I lead an architecture transformation. Help me prepare a decision review from the Projects already recorded here.”
+Example: "I lead an architecture transformation. Help me prepare a decision review from my Projects."
 
-Your prompt appears in the conversation while the request starts.
-The model can inspect permitted records, save context, or ask a question.
-Routine calls remain inside **Actions**. Open that control to inspect them.
-Requests for a decision, tool questions, and failures remain visible.
+The model can read permitted records, save context, or ask a question.
+Routine tool calls stay inside **Actions**. Open **Actions** to see them.
+Decision requests, tool questions, and failures stay visible.
 
 ## Choose a section
 
 Use **Section** to change the topic. You can return to an earlier section in the same Thread.
-Selecting a section changes its available tools. It does not itself send a model request.
+A new section changes the available tools. It does not send a model request.
 
-| Section | What to discuss | Current capability |
+| Section | Topic | What the model can do |
 | --- | --- | --- |
-| **Goals** | Desired outcomes and signs of progress | Read existing Projects and save stated or inferred context. |
-| **Projects** | Project scope, outcomes, and source gaps | Read Projects and use the existing Project setup tools. |
-| **What matters** | Changes that deserve attention | Read Project and decision records to support suggestions. |
-| **Cadences** | Repeated preparation, reviews, and outputs | Read Cadence status and loops. Develop a manual recipe. |
-| **People** | Confidential relationship work | Open the protected People surface. The Thread composer is absent in this section. |
-| **Decision log** | Rationale, open decisions, and review conditions | Read decision records and prepare a manual brief. |
-| **Delegation** | Agent briefs, constraints, and expected results | Read Workbench records and prepare a manual brief. |
-| **Sources & models** | Missing connections or model readiness | Inspect connection and provider records. Continue setup in the existing controls. |
+| **Goals** | Outcomes and signs of progress | Read Projects. Save context. |
+| **Projects** | Scope, outcomes, and source gaps | Read Projects. Use the Project setup tools. |
+| **What matters** | Changes that deserve attention | Read Project and decision records. |
+| **Cadences** | Repeated preparation and reviews | Read Cadence status and loops. |
+| **People** | Confidential relationship work | None. Select **Open People**. This section has no composer. |
+| **Decision log** | Rationale and open decisions | Read decision records. |
+| **Delegation** | Agent briefs and constraints | Read Workbench records. |
+| **Sources & models** | Missing connections and model readiness | Read connections and providers. |
 
-The People handoff does not collect private relationship details in this Thread.
-Enter credentials through the relevant setup control, not in an Interview answer.
+Never enter credentials in an Interview answer. Use the setup control for the connection.
 
 ## Review saved context
 
-1. Open **Context**.
-2. Expand **Known context**.
-3. Read the fact and its basis.
-4. Expand **Source** to inspect the quoted answer.
+1. Select **Context**.
+2. Open **Known context**.
+3. Read the fact. **Your answer** means you stated it. **Inferred** means the model interpreted it.
+4. Open **Source** to see the quoted answer.
 
-**Your answer** identifies context based on a stated answer.
-**Inferred** identifies a model interpretation.
-The source reference helps you check what supports the fact. It does not prove that an inference is correct.
+The source helps you check a fact. It does not prove that an inference is correct.
 
-To correct context, state the correction in the conversation.
-Then check **Known context** for the updated record.
-The model's statement that it remembered something is insufficient without a saved fact.
+To correct a fact, state the correction in the conversation. Then check **Known context**.
+A statement from the model that it remembered something is not proof. Look for the saved fact.
 
-To remove a fact, select its **Remove** control.
-The controller also removes suggestions that depend on that fact.
-A changed fact invalidates dependent ideas so they need reconsideration.
-Removing context does not erase earlier Thread messages, kept outputs, or backups.
+To remove a fact, select **Remove**. The controller also removes suggestions that depend on that fact.
+Removal does not erase earlier Thread messages, kept outputs, or promoted Notes.
 
 ## Review a suggestion
 
-Open **Context** to see suggestions for the current section.
-Use **Reason & prerequisites** to inspect the basis and missing requirements.
-Use **All suggestions** to review ideas from other sections and earlier choices.
+**Context** lists the suggestions for the current section.
+Open **Reason & prerequisites** to see the basis and the missing requirements.
+Select **All suggestions** to see ideas from other sections.
 
 | Label | Meaning |
 | --- | --- |
-| **Manual draft** | You can request a draft through this conversation. |
+| **Manual draft** | The model can prepare a draft in this conversation. |
 | **Needs input** | The idea needs more information. |
 | **Needs connection** | The idea needs a source or service connection. |
-| **Idea · unavailable** | The proposed behavior is unavailable in the current capability set. |
+| **Idea · unavailable** | HoldSpeak cannot do this today. |
 
-These labels describe feasibility. They do not establish that a task ran or an automation exists.
+A label describes feasibility. It does not mean a task ran or an automation exists.
 
 | Control | Result |
 | --- | --- |
-| **Try draft** | Records the choice and immediately sends a model request to prepare a manual draft. |
-| **Keep idea** | Records that you want to retain the idea. |
+| **Try draft** | Records your choice and sends a request for a manual draft. It does not schedule work. |
+| **Keep idea** | Records that you want to keep the idea. |
 | **Later** | Defers the idea. |
 | **Dismiss** | Records that you declined the idea. |
-| **Explore** | Returns from draft preparation to exploration. |
-
-**Try draft** appears for a proposed manual suggestion.
-Its request asks the model to identify gaps and keep configuration changes as proposals.
-It does not schedule work or start a general-purpose worker.
+| **Explore** | Returns from drafting to exploring. |
 
 ## Keep a useful result
 
-1. Read the completed draft in the Thread.
-2. Check source claims and assumptions.
-3. Correct unsupported details through the conversation.
-4. Use the reply's Keep control to save a Note or Artifact.
-5. Open the saved record to verify its contents.
+1. Read the draft in the Thread.
+2. Check the source claims and assumptions.
+3. Correct unsupported details in the conversation.
+4. Use the Keep control on the reply to save a Note or Artifact.
+5. Open the saved record and check it.
 
-**Keep idea** and Keep on a reply have different purposes.
-The first records a suggestion choice. The second creates a separate output record.
-The Thread also retains the conversation itself.
+**Keep idea** records a suggestion choice. Keep on a reply creates a separate output record.
 
-## Promote a fact into a canonical record
+## Promote a fact into a Note
 
-A saved Interview fact belongs to one Thread.
-Promotion copies the fact into a canonical Note so other work can reference it.
+A saved fact belongs to one Thread. Promotion copies the fact into a canonical Note that other work can reference.
 
-This release ships the mechanism without an interface control.
-Promotion runs through the browser API only.
-It is owner only. No model tool can create or revoke a promotion.
+Promotion has no button. It runs through the browser API, for the owner only. No model tool can promote or revoke.
 
-1. `POST` the `promote` control to the Thread interview endpoint with the fact.
-2. Read the returned promotion identifier and target reference.
-3. `GET /api/threads/{thread_id}/interview/promotions` to list what a Thread promoted.
-4. `POST` the `revoke_promotion` control to withdraw one.
+Only a fact marked **Your answer** can be promoted. The **People** section refuses promotion.
 
-The promotion record stores a source locator and a content hash.
-It never stores a second copy of the quoted words.
-Revoking a promotion does not unwrite the Note. The Note keeps the words on purpose.
+1. `POST` to `/api/threads/{thread_id}/interview` with `command_id`, `expected_revision`, and an `event`.
+   The `event` has `kind` set to `promote` and a `fact_id`.
+2. Read the promotion identifier and target reference in the response.
+3. `GET /api/threads/{thread_id}/interview/promotions` to list the promotions of a Thread.
+4. `POST` an `event` with `kind` set to `revoke_promotion` to withdraw one.
 
-**What a promoted record is reachable by.**
-A promoted record is reachable by reference and never by relevance.
-Attach it to a Thought or name it in a Thread, and it reaches the model.
-An automatic relevance search over your notes will not return it.
-This holds for word matching and for related record expansion.
+The promotion record stores a source locator and a content hash. It does not store a second copy of the words.
+Revoking a promotion does not delete the Note.
 
-**One limit to know.**
-A model in an ordinary Thread can still read the Note through the desk listing
-tools, which return note bodies. The relevance boundary does not change that.
-Promote a fact you are willing to have in a Thread you open with a model.
+A promoted record is reachable by reference, not by relevance.
+Attach it to a Thought or name it in a Thread, and the model can read it.
+An automatic relevance search over your Notes does not return it.
 
-## Repeat or resume
+A model in an ordinary Thread can still read the Note through the desk listing tools.
+Promote only facts that you accept in a Thread with a model.
 
-Reopen the same Thread to resume its saved sections, facts, and suggestion choices.
-Start a new Thread when you want separate context for a different purpose.
-Interview context belongs to its Thread. It is not a global personal profile.
+## Resume
 
-Switching between Chair and Floor preserves the open Thread and its current draft.
-An unsent composer draft has no durable-save guarantee across a reload.
-If sending fails, the composer retains the text for correction or retry.
-Review the visible failure before you submit again.
+Reopen the Thread to resume its sections, facts, and suggestion choices.
+Start a new Thread for a different purpose. Interview context belongs to its Thread. It is not a global record about you.
 
-## Project setup and automation limits
+An unsent draft survives a reload. It lives in the browser tab and ends when you close the tab.
+If a send fails, the composer keeps your text. Read the error before you send again.
 
-In **Projects**, Interview can use the existing setup flow to select, test, and finalize the Project scope you choose.
-These operations can change Project configuration under the applicable authority rules.
-Check the resulting Project and its sources after setup.
-A proposal is not proof of a successful configuration change.
+## Project setup limits
 
-The current Interview does not install arbitrary schedules, general agent assignments, or unsupported integrations.
-For available event and scheduled paths, see [Automation](AUTOMATION.md).
-Completing an Interview does not authorize recurring work.
+In **Projects**, Interview can use the Project setup flow to select, test, and finalize the scope you choose.
+Finalizing changes Project configuration under the current [control mode](AUTHORITY.md).
+Check the Project and its sources afterward. A proposal does not prove that a change succeeded.
 
-Model responses still need review.
-Observed limitations include repeated questions, overly broad missing-source claims, and unprovided details that need placeholder labels.
-Successful tool calls establish execution results. They do not establish recommendation quality.
+Interview does not install arbitrary schedules, agent assignments, or unsupported integrations.
+A finished Interview does not authorize recurring work. For scheduled paths, see [Automation](AUTOMATION.md).
+
+Review every model answer. A successful tool call proves that the call ran. It does not prove that the advice is good.
 
 ## Troubleshooting
 
 | Problem | Action |
 | --- | --- |
-| Interview is absent from the mode tabs | Check that your installation includes the repeatable Interview feature. |
-| The model says it saved a fact, but no fact appears | Inspect **Actions** for the write result. Request the missing save after any reported failure is resolved. |
-| A context update fails | Let the Thread reload its current state. Reapply your intended change against the displayed context. |
-| The model asks an answered question again | Refer to the existing answer and request the next unresolved question. |
-| A draft invents a date, owner, or decision ID | Correct the draft. Require an explicit placeholder where the record provides no value. |
-| The composer disappears in People | Select **Open People**, or select another Interview section. |
-| A long conversation cannot fit the model | Use the Thread's compaction control or configure a suitable model and context allowance. |
-| A suggestion needs a missing service | Use **Sources & models** to identify the prerequisite. Configure it through the named setup surface. |
+| **Interview** is not in the mode tabs | Update HoldSpeak. |
+| The model says it saved a fact, but none appears | Check **Actions** for the write result. Ask for the save again. |
+| A context update fails | Let the Thread reload. Apply your change again. |
+| The model repeats an answered question | Point to your earlier answer. Ask for the next open question. |
+| A draft invents a date, owner, or decision ID | Correct it. Ask for a placeholder where the record has no value. |
+| The composer is missing in **People** | Select **Open People**, or select another section. |
+| The conversation is too long for the model | Use the Thread compaction control, or assign a model with more context. |
+| A suggestion needs a missing service | Open **Sources & models**. Set it up in the named control. |
 
 ## See also
 
-- [Architecture work recipes](ARCHITECTURE_WORK.md): decision reviews and manual agent briefs.
-- [Threads](USER_GUIDE.md#threads): references, saved replies, tools, and conversation controls.
-- [Automation](AUTOMATION.md): supported triggers and execution paths.
-- [Control modes](AUTHORITY.md): approval rules and operation boundaries.
+- [Architecture work](ARCHITECTURE_WORK.md)
+- [Threads](USER_GUIDE.md#threads)
+- [Automation](AUTOMATION.md)
+- [Control modes](AUTHORITY.md)

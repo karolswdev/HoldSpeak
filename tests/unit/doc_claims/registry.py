@@ -404,7 +404,7 @@ CLAIMS: list[Claim] = [
     ),
     Claim(
         doc="docs/SECURITY_MODEL.md",
-        anchor="Gate argument previews truncate canonical JSON; they do not remove secrets.",
+        anchor="Gate argument previews truncate canonical JSON. They do not remove secrets.",
         sentence="Gate argument previews truncate canonical JSON; they do not remove secrets.",
         predicate=gate_preview_preserves_short_secret_marker,
         state="holds",
@@ -472,7 +472,7 @@ CLAIMS: list[Claim] = [
     # ── unowned: the remote bind is still decorative ───────────────────
     Claim(
         doc="docs/SECURITY.md",
-        anchor="is stored without a listener or peer-address enforcement path.",
+        anchor="No listener or peer-address check uses it,",
         sentence="The configured bind_host is stored without a listener or peer-address enforcement path.",
         predicate=lambda: bind_host_references() == {"holdspeak/web/routes/mcp_http.py"},
         state="holds",
@@ -556,7 +556,7 @@ CLAIMS: list[Claim] = [
     # ── corrected by this story ───────────────────────────────────────
     Claim(
         doc="docs/USER_GUIDE.md",
-        anchor="`POST /api/mcp` the owner's web token is refused on a non-loopback request",
+        anchor="`POST /api/mcp` refuses the owner's web token on a non-loopback request",
         sentence=(
             "On `POST /api/mcp` the owner's web token is refused on a non-loopback "
             "request; no other route applies that refusal."

@@ -1,155 +1,44 @@
 # HoldSpeak architecture
 
-This is the map a contributor should read first: how HoldSpeak's pieces fit
-and how a single utterance flows through them. It is the runtime view. For
-how the code is laid out into modules, see the two structure docs in
-[`internal/`](internal/): the
+This is the map for a contributor. It shows how the pieces of HoldSpeak fit
+and how one utterance flows through them. It is the runtime view. For the code
+layout, read the
 [web frontend decomposition](internal/ARCHITECTURE_WEB_FRONTEND.md) and the
 [backend runtime decomposition](internal/ARCHITECTURE_BACKEND_RUNTIME.md).
+For a shorter map, read [System architecture](SYSTEM_ARCHITECTURE.md).
 
-The diagrams are Mermaid and render on GitHub. A guard
-(`tests/e2e/test_mermaid_renders.py`) checks that every block in the docs
-still renders, so a broken diagram cannot ship.
-
-## Interview and Thread state
-
-Interview composes the existing Thread conversation, model routing, and MCP services.
-It does not create a separate model runtime or a universal automation engine.
-
-| Component | Responsibility |
-| --- | --- |
-| Thread window and store | Display sent messages, streamed replies, references, and tool activity. |
-| Thread service | Run the model conversation and its tool loop. |
-| Interview section descriptors | Declare each section's purpose, tool set, and handoff. |
-| Interview service | Validate and persist facts, suggestion choices, section changes, and revisions. |
-| MCP family | Expose Interview operations through the common service contract. |
-| Existing Project services | Perform supported setup operations under their own policy. |
-
-The model chooses its question or proposed tool call.
-The controller validates the resulting operation and state change.
-These checks make state transitions predictable. They do not make model recommendations deterministic or necessarily correct.
-
-Interview state belongs to a Thread.
-Each change includes an expected revision and a command identity.
-A stale revision refuses the change. A repeated command cannot substitute a different payload.
-Source references distinguish stated facts from inferred context.
-Changed or removed facts invalidate or remove dependent suggestions.
-
-The initial capability prepares manual drafts and supports the existing Project setup path.
-General scheduled work and agent assignment through Interview remain target requirements.
-See [Interview](INTERVIEW.md) for user behavior and the
-[specification package](internal/architect-assistant/README.md) for requirements and verification limits.
-
-Implementation references:
-
-- [Section descriptors](../holdspeak/services/interview_contracts.py).
-- [Interview service](../holdspeak/services/interview_service.py).
-- [MCP family](../holdspeak/mcp/families/interview.py).
-- [Thread service](../holdspeak/services/thread_service.py).
+The diagrams are Mermaid. A test (`tests/e2e/test_mermaid_renders.py`) renders
+every block in the docs, so a broken diagram fails the test.
 
 ## The shape of it
 
-The Web runtime is the main runtime process.
-`WebRuntime` owns the hardware-facing components and the local FastAPI server
-(`MeetingWebServer`) that serves the Web app and API.
-Supporting processes include the MCP sidecar and the isolated desktop typing executor.
-Dictation and Meetings use the shared runtime components:
+The Web runtime is the main process. `WebRuntime` (`holdspeak/web_runtime.py`
+and `holdspeak/runtime/`) owns the hardware-facing components and the local
+FastAPI server (`MeetingWebServer`). The server serves the Web app and the
+API. Two supporting processes exist: the MCP sidecar and the isolated desktop
+typing executor.
 
-- **Dictation** turns held-key or wake-word speech into typed text. Its
-  always-on pipeline routes it through local stages and uses a model only for
-  configured model-backed stages.
-- **Meetings** turn captured or imported audio into a transcript, typed
-  artifacts, and an aftercare digest, with control-mode-authorized actions out.
+- **Dictation** turns held-key or wake-word speech into typed text. Capture and
+  transcription always run. The pipeline stages follow the `dictation.pipeline`
+  config.
+- **Meetings** turn live or imported audio into a transcript, typed artifacts
+  and an aftercare digest. Actions out are proposals that you approve.
 
-Transcription is local (`Transcriber`, MLX or faster-whisper). Model Library is
-the authority for available model profiles, Assignments owns the ordered
-compatible choices for each registered capability, and the Intelligence Router
-freezes the selected route before a physical attempt. State lives in one SQLite
-database behind a set of repositories. Outbound actions require audited
-authority from the captured control posture, a scoped grant, or a per-action
-decision, and the network crossings are enumerated in the
-[trust boundary](#the-trust-boundary) below and in
-[`SECURITY.md`](SECURITY.md).
+Transcription is local (`Transcriber`, MLX or faster-whisper). The Model
+Library lists the model profiles. Assignments hold the ordered choices for each
+capability. The inference runner freezes the chosen route before each attempt.
+State lives in one SQLite database behind repositories. An outbound action
+needs audited authority: the control posture, a scoped grant or a decision for
+that action. See [The trust boundary](#the-trust-boundary) and
+[Security](SECURITY.md).
 
-The iPad app can join over your own network. It is a typed client of
-the same FastAPI routes the web UI calls, not a second runtime: it reads
-meetings, artifacts, aftercare, and faceted search, decides proposals, and
-sends dictation back to a focused app or a waiting coding agent. The desktop
-stays the hub; the iPad is an authoring port. Its piece of the
-[device path](#the-device-path) is the typed client layer, and the LAN
-crossing it opens is listed in the [trust boundary](#the-trust-boundary).
-
-## Inference admission: one path, one receipt per attempt
-
-This section is the canonical integration contract for model work. Every actual
-provider attempt enters `InferenceRunner.invoke()` at its executing boundary and
-becomes one `inference.invoke@1` operation. The runner admits and claims that
-child before a physical adapter can construct or call a provider. The child
-names one immutable `DeploymentRevision`, captured before admission, and ends in
-exactly one immutable terminal receipt. The reviewed adapters accept a
-single-use, runner-issued `DispatchContext` bound to that child operation,
-revision, destination, attempt ordinal, and authority; no route, service, plugin,
-command, local Whisper backend, or mesh worker is an alternate entrance.
-
-A parent run or session is causation and a finite budget, not a substitute for
-the invocation receipt. Sequence, Workflow, Workbench, Cadence drafting,
-Decision promotion, Delivery review, voice resolution, live meetings, deferred
-meeting intelligence, dictation, and configured wake captures use typed parents.
-Each model-bearing step below them is still its own `inference.invoke@1` child.
-An outer parent receipt says how the run or session ended; each child receipt says
-how that physical attempt ended.
-
-Ad hoc Ask and saved Agents make the definition distinction explicit:
-
-- Ask uses the truthful service contract `holdspeak.ask@1`. The `1` is the
-  service-contract schema revision; Ask does not pretend to be a saved Agent.
-- Agent run and chat use `recipe:<id>` plus that saved Agent's `last_modified`
-  definition revision. Editing the Agent invalidates the old definition revision.
-- Both freeze the destination as a `DeploymentRevision` before dispatch. A mutable
-  **Runs on** edit after admission cannot retarget an in-flight child.
-
-Provider output is staged behind the same terminal election. The receipt carries
-the immutable operation outcome and a result reference, not the prompt or domain
-body; the referenced projection becomes visible only if that child wins
-publication. Cancellation advances the execution fence and rejects late output.
-A compatibility fallback or retry is another physical attempt, therefore another
-child and another receipt with a higher attempt ordinal. If execution may have
-started but no terminal fact can be proved, the outcome is `indeterminate`; the
-runtime never guesses success or blindly retries uncertain work.
-
-Meetings, dictation, and configured wake use one authenticated parent per live
-session: `meeting.session@1`, `dictation.session@1`, or `wake.session@1`. Every
-actual LLM or shared local Whisper call is a causally linked child that rechecks
-parent liveness, revocation, deadline, budget, and exact revision. Pre-session
-Whisper preload/warmup is not exempt: it requires a narrow preload authority that
-names the exact model-config revision and receives its own child receipt. Prompt,
-transcript, dictated text, audio, completion, and token-stream material stays in
-the dispatch path; kernel operation, journal, and receipt fields carry only
-content-free refs, hashes, authority, placement, and outcomes.
-
-Scheduled Workbench execution is not owner impersonation. Deliberately enabling a
-schedule mints one bounded delegation over the exact Workbench, Agent, and
-schedule revisions, effective deployment revision, cadence, and expiry. The owner
-is recorded as delegator; the due tick acts as the rights-limited `scheduler`
-principal. The tick refuses before a model call if terms are missing; the
-schedule is disabled, revoked, or expired; cadence, target, Agent, or Workbench
-has drifted; or the due minute is a duplicate. It reports
-`delegation_missing`, `schedule_disabled`, `delegation_revoked`,
-`delegation_expired`, `delegation_cadence_changed`,
-`delegation_target_changed`, `delegation_stale_work`, or `duplicate_tick` and
-leaves a terminal refusal receipt.
-
-Finally, sync follows code authority in one direction. `SYNC_REGISTRY` in
-`holdspeak/services/sync_service.py` defines the Python/web kind, bucket, schema,
-and merge contract; `/api/sync/*`, the JSON schemas, and required web fields are
-tested against it. Swift is not a contract authority, and this contract adds no
-Swift work or Swift-shaped compatibility requirement. A native client
-may consume the finished Python/web contract later; it does not define it.
+The iPad app joins over your own network. It is a typed client of the same
+FastAPI routes as the web UI. It is not a second runtime. See
+[Companion architecture](COMPANIONS_ARCHITECTURE.md).
 
 ## The components
 
-How the major pieces connect. Boxes are subsystems, not classes; the module
-that owns each is named in the label.
+Boxes are subsystems. The label names the owning module.
 
 ```mermaid
 flowchart TB
@@ -159,33 +48,27 @@ flowchart TB
     DEV["Device bridge<br/>(device_audio_ws.py)"]
   end
 
-  subgraph runtime["WebRuntime — the orchestrator (web_runtime.py + runtime/*)"]
+  subgraph runtime["WebRuntime (web_runtime.py, runtime/*)"]
     VS["Voice session<br/>(voice_typing.py)"]
     TR["Transcriber<br/>(transcribe.py)"]
     DR["Dictation pipeline<br/>(dictation_runner.py)"]
     MS["Meeting session<br/>(meeting_session/)"]
-    PH["Plugin host + router<br/>(plugins/host.py, router.py)"]
+    PH["Plugin host and router<br/>(plugins/host.py, router.py)"]
     RUN["Capability runs<br/>(web/routes/primitives/)"]
-    IR["One admitted inference runner<br/>(kernel/inference_runner.py)"]
+    IR["Inference runner<br/>(kernel/inference_runner.py)"]
     AX["Actuator executor<br/>(plugins/actuator_executor.py)"]
-    SRV["Web server + API<br/>(web_server.py, web/routes/*)"]
+    SRV["Web server and API<br/>(web_server.py, web/routes/*)"]
   end
 
   subgraph out["Outputs"]
     TY["Keyboard inject<br/>(typer.py)"]
-    DESK["The Desk, the operating surface<br/>(web/src/desk/: WebGL stage + windows,<br/>every product surface a window at /)"]
-    UI["The rooms + presence<br/>(web/src/pages/, desktop_presence.py)"]
-    BUS["Runtime bus, the one /ws per page<br/>(web/src/runtime/RuntimeBus.tsx)"]
+    DESK["The Desk<br/>(web/src/desk/)"]
+    BUS["Runtime bus, one /ws per page<br/>(web/src/runtime/RuntimeBus.tsx)"]
     CN["Gated connectors<br/>(plugins/gated_connector.py)"]
   end
 
-  subgraph ipad["iPad app (apple/Sources/Providers/)"]
-    HC["Typed hub client<br/>(Desktop/HTTPDesktopClient*.swift)"]
-    LS[("On-device SQLite<br/>(Storage/SQLiteStorage.swift)")]
-  end
-
   DB[("SQLite<br/>(db/*)")]
-  MODEL(["Model adapters<br/>(Whisper / GGUF / MLX / endpoint / mesh)"])
+  MODEL(["Model adapters<br/>(Whisper, GGUF, MLX, endpoint, mesh)"])
 
   HK --> VS
   WW --> VS
@@ -201,993 +84,446 @@ flowchart TB
   IR --> MODEL
   PH --> AX
   AX --> CN
-  CN -. "approved egress" .-> EXT(["GitHub / Slack / webhooks"])
+  CN -. "approved egress" .-> EXT(["GitHub, Slack, webhooks"])
   SRV --> DESK
-  SRV --> UI
   SRV -. "live frames" .-> BUS
   BUS --> DESK
-  BUS --> UI
   RUN -. "prompt" .-> IR
   RUN --> DB
   runtime <--> DB
-  SRV -. "WebSocket" .-> DEV
-  HC -. "meeting / dictation / proposal routes, LAN, Bearer token" .-> SRV
-  HC <--> LS
 ```
 
-The dictation and meeting flows are detailed in their own sections below.
+## Inference admission: one path, one receipt per attempt
+
+This section is the integration contract for model work.
+
+Every provider attempt enters `InferenceRunner.invoke()` and becomes one
+`inference.invoke@1` operation. The runner admits and claims that child before
+an adapter can call a provider. The child names one immutable
+`DeploymentRevision`, captured before admission. It ends in exactly one
+immutable terminal receipt. The reviewed adapters accept a single-use
+`DispatchContext` from the runner. No route, service, plugin, command, local
+Whisper backend or mesh worker is an alternate entrance.
+
+- A parent run or session is causation and a finite budget. It does not replace
+  the receipt of each attempt.
+- Sequence, Workflow, Workbench, Cadence drafting, Decision promotion,
+  Delivery review, voice resolution, Meetings, dictation and wake captures use
+  typed parents. Each model step under a parent is its own child.
+- A parent receipt says how the run ended. A child receipt says how that
+  attempt ended.
+- Ask uses the service contract `holdspeak.ask` (`services/ask_service.py`).
+  Saved Agents use `recipe:<id>` and the Agent's `last_modified` revision.
+- Both freeze the destination as a `DeploymentRevision` before dispatch. A
+  later **Runs on** edit cannot retarget a child in flight.
+- Provider output waits behind the terminal election. The receipt carries the
+  outcome and a result reference. It does not carry the prompt or the domain
+  body. The result becomes visible only if that child wins publication.
+- Cancel advances the execution fence and rejects late output.
+- A fallback or retry is a new child with a new receipt and a higher attempt
+  number.
+- If the runner cannot prove the end of an attempt that may have started, the
+  outcome is `indeterminate`. The runtime does not guess success and does not
+  retry uncertain work.
+
+A live Meeting, dictation or wake session has one authenticated parent
+(`meeting.session@1`, `dictation.session@1`, `wake.session@1`). Each LLM or
+Whisper call is a linked child. A child checks the parent for liveness,
+revocation, deadline, budget and revision. Whisper preload needs a narrow
+preload authority and its own receipt. Prompt, transcript, text and audio stay
+in the dispatch path. Kernel records carry only refs, hashes, authority,
+placement and outcomes.
+
+A scheduled Workbench run is not owner impersonation. Enabling a schedule
+mints one bounded delegation over the exact Workbench, Agent and schedule
+revisions, the deployment revision, the cadence and an expiry. The owner is the
+delegator. The due tick acts as the `scheduler` principal. The tick refuses
+before any model call and leaves a refusal receipt in these cases:
+`delegation_missing`, `delegation_revoked`, `delegation_expired`,
+`delegation_target_changed` and `duplicate_tick`.
+
+Sync follows code authority in one direction. `SYNC_REGISTRY` in
+`holdspeak/services/sync_service.py` defines the kind, bucket, schema and merge
+contract. `/api/sync/pull` and `/api/sync/push` and the schemas follow it.
+Native clients consume that contract. They do not define it.
+
+For states, receipts and recovery, read [Kernel](KERNEL.md). For model routing,
+read [Model runtime](MODEL_RUNTIME.md).
 
 ## The dictation pipeline
 
-How held-key or wake-word speech becomes typed text. Capture and
-transcription always run; the routing and rewrite stages are opt-in and off
-by default, so the plain path is "speak, and it types what you said."
+Held-key or wake-word speech becomes typed text. Capture and transcription
+always run. The pipeline is on by default with the stages `intent-router` and
+`kb-enricher`. With the pipeline off, you speak and HoldSpeak types what you
+said. [Dictation architecture](DICTATION_ARCHITECTURE.md)
+holds the detail.
 
 ```mermaid
 flowchart TD
-  HK["Hotkey hold then release<br/>(hotkey.py)"] --> CAP
-  WW["Wake word, then the armed window<br/>(wake_word.py)"] --> CAP
-  DEV["Device audio over WebSocket<br/>(device_audio_ws.py)"] --> CAP
-  CAP["Capture"] --> TR["Transcribe, local Whisper<br/>(transcribe.py)"]
+  HK["Hotkey hold then release"] --> CAP
+  WW["Wake word, then the armed window"] --> CAP
+  DEV["Device audio over WebSocket"] --> CAP
+  CAP["Capture"] --> TR["Transcribe, local Whisper"]
   TR --> PUNC["Punctuation and spoken symbols<br/>(text_processor.py)"]
-  PUNC --> VC{"Matches a voice command keyword?"}
-  VC -- yes --> FIRE["Fire the bounded connector<br/>open URL, launch app, run command, type a snippet"]
-  VC -- no --> PIPE{"Dictation pipeline enabled?"}
-  PIPE -- "off, the default" --> FORK
-  PIPE -- "on" --> CORR["Text corrections applied to the transcript<br/>(pipeline.py, before the stage loop)"]
-  CORR --> STAGES["Stages, in order:<br/>intent-router, project-rewriter, kb-enricher<br/>(model stages use admitted invocation children)"]
+  PUNC --> VC{"Voice command match?<br/>needs dictation.macros.enabled"}
+  VC -- yes --> FIRE["Run the bounded command<br/>open URL, launch app, shell command, type text"]
+  VC -- no --> PIPE{"Pipeline enabled?"}
+  PIPE -- "off" --> FORK
+  PIPE -- "on, the default" --> CORR["Apply text corrections<br/>(pipeline.py)"]
+  CORR --> STAGES["Configured stages in order<br/>(default: intent-router, kb-enricher)"]
   STAGES --> FORK{"Preview first?"}
   FORK -- "no, the default for hotkey and device" --> TYPE["Type into the focused app<br/>(typer.py)"]
-  FORK -- "wake word (its default), or the opt-in<br/>dictation.preview_before_type" --> PREVIEW["Preview card, nothing typed yet<br/>(one-shot server token)"]
+  FORK -- "wake word, Secure mode, or dictation.preview_before_type" --> PREVIEW["Preview card, nothing typed yet"]
   PREVIEW -. "you tap Type it" .-> TYPE
-  PREVIEW -. "Discard burns the token" .-> J
+  PREVIEW -. "Discard" .-> J
   TYPE --> J[("Journal the run<br/>db/journal.py")]
 ```
 
+Model stages run as admitted inference children.
+
 ### The learning loop
 
-Every dictation run is journaled, so you can correct one wrong result and
-watch the next matching utterance change. The store holds three kinds of
-correction (`holdspeak/plugins/dictation/corrections.py`).
+The hub journals every dictation run. You correct one wrong result, and the
+next matching utterance changes. The store
+(`holdspeak/plugins/dictation/corrections.py`) holds three kinds of
+correction.
 
-| Kind | Key | Value | How it matches |
+| Kind | Key | Value | Match |
 | --- | --- | --- | --- |
-| `text` | the phrase as heard | the phrase as said | exact phrase, deterministic |
-| `intent` | a gist of the utterance | a block id | Jaccard token overlap at or above 0.5 |
-| `target` | a gist of the utterance | a target profile id | Jaccard token overlap at or above 0.5 |
+| `text` | The phrase as heard | The phrase as said | Exact phrase |
+| `intent` | A gist of the utterance | A block id | Token overlap of 0.5 or more |
+| `target` | A gist of the utterance | A target profile id | Token overlap of 0.5 or more |
 
-**The text matcher.** The key is stored with repeated whitespace collapsed,
-edge punctuation stripped, and the whole key lowercased. Matching is
-case-insensitive, and the stored words are rejoined on `\s+`, so a rule
-taught on one line fires across a line break. The boundary test is not a
-regular-expression word boundary: the characters on each side of the match
-must be non-alphanumeric or the edge of the string, which keeps the rule
-Unicode-honest. When the heard occurrence starts with an uppercase letter,
-the first letter of the replacement is uppercased. Rules apply longest key
-first, recency breaking a tie, and each rule sees the text the previous
-rules left.
+- Text rules apply inside `DictationPipeline.run`, before the stage loop. Every stage
+  reads the corrected words.
+- Rules apply longest key first. Each rule sees the text that earlier rules
+  left.
+- `PipelineRun.corrections_applied` lists the rules that changed the run. The
+  journal row stores it.
+- The recorder sends one `dictation.journal.entry` frame on the runtime
+  WebSocket after it stores a row. Secret filtering runs before the store.
+- `CorrectionStore.record` refuses a correction with the reason `kind`,
+  `empty`, `secret` or `one_word`. The one-word refusal applies only to the
+  routing kinds.
 
-**Where a text correction is applied.** Inside `Pipeline.run`, before the
-stage loop. The corrected transcript is carried by a new frozen `Utterance`
-built with `dataclasses.replace`, and that object is what every stage
-receives, so the intent router and the rewrite passes read the corrected
-words. It is not a stage: it emits no `StageResult`, no `stage_ms` entry and
-no `requires_llm` flag, and it adds nothing to the pipeline's stage list.
-`TextProcessor` would have been the wrong host, because only the runtime
-capture path calls it, so browser and dry-run dictations would never see a
-rule.
-
-**What each run stores.** `PipelineRun.corrections_applied` carries the ids
-of the rules that changed the run, text rules plus the intent nudge. The
-recorder writes that list to the journal row (`corrections_applied`, schema
-76, an additive column with a named INSERT). The older `corrected` column
-keeps its own meaning, "you taught from this row", and only `mark_corrected`
-sets it. The face reads both facts and never a read-time similarity guess.
-The Learned wing's `N APPLIED` is a count of journal rows whose
-`corrections_applied` holds that correction id.
-
-**The live stream.** After the repository returns the stored row, the
-recorder broadcasts one frame, `dictation.journal.entry`, over the runtime
-WebSocket that every other live frame already uses. The frame carries `id`,
-`created_at`, `source`, `transcript`, `final_text`, `total_ms`,
-`corrections_applied`, `taught_from`, `intent_tag`, and `target_profile`.
-It is built from the stored row, and `filter_secret` runs before the
-repository call, so redaction cannot be bypassed. The Journal wing
-subscribes to that frame and prepends new entries, deduplicated by id.
-
-```mermaid
-flowchart LR
-  SPEAK["You speak or type<br/>in the Speak wing"] --> RUN["Pipeline.run<br/>plugins/dictation/pipeline.py"]
-  MEM[("Correction store<br/>db/corrections.py")] -. "text rules rewrite the transcript<br/>before the stage loop" .-> RUN
-  MEM -. "routing rules nudge<br/>the intent router and the target" .-> RUN
-  RUN --> LAND["RESULT row:<br/>final text, plus APPLIED when a rule fired"]
-  LAND --> J[("Dictation journal<br/>db/journal.py<br/>corrections_applied per row")]
-  J --> BUS["dictation.journal.entry<br/>over the runtime WebSocket"]
-  BUS --> STREAM["The Journal wing,<br/>prepended live"]
-  LAND --> JUDGE{"OK or Wrong?"}
-  JUDGE -- "Wrong" --> TEACH["FIELD: TEXT, INTENT or TARGET,<br/>then Teach"]
-  TEACH --> MEM
-  MEM --> LEARNED["The Learned wing:<br/>key, value, N APPLIED, Forget"]
-  J --> REPLAY["Replay one utterance through<br/>the current pipeline, preview only"]
-```
-
-**The routes this loop uses.**
-
-| Route | What it carries |
-| --- | --- |
-| `POST /api/dictation/dry-run`, `POST /api/dictation/remote` | the run response, including `raw_text` (the transcript before the seam) and `corrections_applied` |
-| `POST /api/dictation/journal/{entry_id}/correct` | teach from a journal row. The response carries `recorded`, `correction_id`, `id`, `kind`, `key`, `value`, and `reason` on a refusal. `mark_corrected` runs only when `recorded` is true |
-| `POST /api/dictation/corrections` | teach without a journal row. The response carries `recorded`, `size`, then `id`, `kind`, `key`, `value`, or `reason` |
-| `GET /api/dictation/corrections` | one item per correction, each with `applied`, the count of journal rows the rule fired on |
-| `GET /api/dictation/journal` | `limit`, `source` (any of `dictation`, `dry_run`, `browser`, `hotkey`), and the `before` cursor for older pages |
-| `GET /api/dictation/readiness` | `target.overrides`, six `{id, label}` entries. `auto` is never offered, because it is not a correction a user can mean |
-| `DELETE /api/dictation/corrections/{id}` | Forget one correction |
-
-`CorrectionStore.record` returns a `RecordOutcome` with `stored`, the durable
-`correction_id`, and a `refusal` name (`kind`, `empty`, `secret`, or
-`one_word`). The one-word refusal applies to the routing kinds only, because
-a text rule is exact and a one-word key is legal for it. A refused teach
-writes nothing.
+The routes are under `/api/dictation/`: `dry-run`, `remote`, `journal`,
+`journal/{entry_id}/correct`, `corrections`, `corrections/{id}` (delete) and
+`readiness`. See [API reference](API_REFERENCE.md).
 
 ### The device path
 
-An AIPI-Lite ESP32-S3 board on the same network (home Wi-Fi or a phone
-hotspot) streams audio to the runtime. If a coding agent is waiting on a
-reply, the transcribed text goes straight into that session instead of the
-focused app.
+An AIPI-Lite board on the same network streams 16 kHz audio to the runtime.
+If a Coder session waits for a reply, the transcript goes to that session. If
+not, it goes to the focused app. See [AIPI-Lite](AIPI_LITE.md) and
+[Device protocol](DEVICE_PROTOCOL.md).
 
 ```mermaid
 sequenceDiagram
-  participant D as ESP32-S3 device
+  participant D as Device
   participant WS as Device WebSocket
   participant VT as Voice typing
-  participant AG as Coding agent session
-  D->>WS: 16 kHz audio frames (same LAN)
+  participant AG as Coder session
+  D->>WS: audio frames
   WS->>VT: utterance
   VT->>VT: transcribe, then the pipeline
-  alt an agent is awaiting a reply
+  alt a Coder session awaits a reply
     VT->>AG: type the reply into the selected session
   else
     VT->>VT: type into the focused app
   end
 ```
 
-### The iPad app
-
-The iPad joins the same hub over your own network (LAN or Tailscale, no
-hosted relay). It is a typed client of the FastAPI routes, built around one
-HTTP client (`apple/Sources/Providers/Desktop/HTTPDesktopClient.swift`)
-split into one base client (meeting control, the coder board, remote
-dictation delivery) plus ten focused extensions (aftercare, facets,
-artifacts, proposals, dictation, dictation blocks, voice commands,
-activity, learning, meeting import); the sync transport rides its own
-provider on the same pairing.
-
-The full surface it consumes is generated, not hand-listed: see
-[API_SURFACE.md](API_SURFACE.md), where every route the app serves carries
-its consumers as extracted from the real call sites. As of the last
-generation the iPad consumes 47 routes, spanning meetings (list, facets,
-detail, artifacts, aftercare, file-issue, proposals + decisions, start,
-stop, import), dictation (dry-run, readiness, remote delivery, journal,
-blocks + templates, learning digest, project context), the voice command
-board (settings read and write, test one action), activity (briefing,
-nudges, select, dismiss), capability runs (agents, chains), the coder board
-(`api/coders/*`: which live coding session receives a spoken answer), the
-desk actuator relay (`api/desk/actuators/*`: a desk card becomes a hub
-proposal; the executor still runs on the hub, so the iPad proposes and
-approves but never acts on its own), and sync (`api/sync/pull`, `push`).
-
-Every request carries the desktop's Bearer token, joined at call time and
-never stored in a payload. The hub is the only place state changes; the iPad
-is an authoring port onto it.
-
-The iPad's trust surface uses one egress grammar, defined once in the
-contracts layer (`apple/Sources/Contracts/EgressScope.swift`: on device,
-local plus a named target, or cloud with the target named) and consumed by
-every badge and chip; a desk primitive carries its real posture, and the
-app header's trust chip reads the same `/api/setup/status` posture the web
-header chip does, mapped by the same four-state precedence.
-
-```mermaid
-sequenceDiagram
-  participant IP as iPad app
-  participant HC as Typed hub client
-  participant SRV as Web server + API
-  participant RT as WebRuntime
-  IP->>HC: read meeting, decide proposal, send dictation
-  HC->>SRV: route call over LAN, Bearer token
-  SRV->>RT: dispatch to the runtime
-  RT->>SRV: meetings, artifacts, aftercare, facets, decision result
-  SRV->>HC: typed response
-  HC->>IP: render on the authoring port
-```
-
-The iPad keeps its own SQLite store
-(`apple/Sources/Providers/Storage/SQLiteStorage.swift`) for what it captures
-on device. It runs in WAL mode for crash safety: an integrity check on
-reopen confirms a committed write survives a crash, and an uncommitted write
-is rolled back. The schema carries a `user_version`, and the store reads it
-before it touches anything: a database newer than the build is refused (it
-throws rather than rewrite your data), an older one is backed up to a
-timestamped sibling and then migrated forward, and a current one is a no-op.
-The iPad keeps its own version-gated four-way matrix on the Swift side; the
-desktop store has since moved to the declarative reconcile described below,
-though both share the same safe-by-default posture. A readiness section in the
-iPad's Settings surfaces the matrix as a health readout: a probe on the same
-open path reports the stamped schema version, the integrity check, the count
-of backup siblings, and a refused newer database named with both versions,
-beside the hub's own doctor sections read from the setup-status route.
-
-The desktop schema reconciliation (`holdspeak/db/reconcile.py`):
-
-On every open, `reconcile_schema` brings the database to the canonical shape
-defined in `holdspeak/db/schema.py` (`SCHEMA_SQL`). It applies the DDL
-(creating any missing table, index, or trigger), introspects each table
-against an in-memory reference built from `SCHEMA_SQL`, and `ALTER TABLE
-ADD COLUMN`s anything the live file is missing. If the shape actually
-changed on an existing populated database, it backs the file up first
-(timestamped sibling, same as the manual `holdspeak backup` path), then
-runs the idempotent data backfills. A fresh creation skips the backup
-(nothing to protect yet). It is additive-only: it never DROPs a table or
-column and never DELETEs a row. Orphan tables left by older builds are
-left untouched.
-
-There is no version gate. A database stamped with a version newer than
-the running build opens without error; the reconcile simply adds anything
-the live file is missing and moves on. The `schema_version` table remains
-as an informational stamp (written on every open); nothing branches on it.
-
-Accepted caveats: (1) SQLite cannot widen a CHECK constraint on an
-existing column, so the reconcile does not attempt it. The live database
-already carries the final CHECK values; only a very old backup restored
-from before the constraint existed would differ. (2) The historical
-table renames (e.g. `agents` to `recipes`) are not replayed; a database
-from before those renames would orphan the old-named tables, not lose
-them.
-
-Back up on demand with `holdspeak backup` and put a snapshot back with
-`holdspeak restore`.
-
 ## The meeting pipeline
 
-How captured or imported audio becomes a transcript, typed artifacts, and an
-aftercare digest. Each intelligence attempt enters the admitted runner before it
-reaches the model you configured; actions out are proposals you approve, never
-automatic.
+Live or imported audio becomes a transcript, typed artifacts and an aftercare
+digest. Each intelligence attempt enters the inference runner. Actions out are
+proposals that you approve. See [Meeting architecture](MEETING_ARCHITECTURE.md)
+and [Meeting aftercare](MEETING_AFTERCARE.md).
 
 ```mermaid
 flowchart TD
-  LIVE["Live capture<br/>mic plus system audio"] --> TRW
+  LIVE["Live capture<br/>mic and system audio"] --> TRW
   IMP["Import a recording (meeting_import.py)<br/>or a transcript (transcript_parse.py)"] --> TRW
   TRW["Windowed transcribe<br/>(meeting_session/transcribe_loop.py)"] --> ROUTE
   ROUTE["Intent routing, opt-in<br/>(plugins/router.py)"] --> HOST
   HOST["Plugin host runs the chain<br/>(plugins/host.py)"]
-  HOST -. "intel attempt" .-> IR["Admitted invocation child<br/>(InferenceRunner)"]
-  IR --> LLM(["LLM backend"])
-  HOST --> ART["Typed artifacts:<br/>decisions, action items, ADRs, risk registers, and more"]
-  RUNB["An Agent / chain / workflow run<br/>(web/routes/primitives/)"] -- "run-born artifact,<br/>lineage names the capability" --> ART
-  GRAPH["A Workbench graph, authored on the iPad canvas<br/>or the web desk, synced as graph_json"] -- "linear subset runs;<br/>control flow refused with a warning<br/>(services/sequence_workflow_service.py)" --> RUNB
-  ART --> AFT["Aftercare digest:<br/>open, decided, changed since last time<br/>(meeting_aftercare.py)"]
+  HOST -. "intel attempt" .-> IR["Inference runner"]
+  IR --> LLM(["Model backend"])
+  HOST --> ART["Typed artifacts:<br/>decisions, action items, ADRs, risk registers"]
+  RUNB["An Agent, chain or workflow run<br/>(web/routes/primitives/)"] --> ART
+  ART --> AFT["Aftercare digest<br/>(meeting_aftercare.py)"]
   AFT --> ISSUE["An accepted action becomes<br/>a GitHub issue proposal"]
   AFT --> SLACK["Digest or follow-up document<br/>(slack_export.py)"]
   ISSUE --> APV{"Propose, authorize, execute<br/>(plugins/actuator_executor.py)"}
-  SLACK --> SEND["Preview, prepare, owner sends<br/>(channel.send)"]
-  SEND -. "frozen bytes; owner only" .-> SLEXT(["Slack incoming webhook"])
+  SLACK --> SEND["Preview, prepare, owner sends"]
+  SEND -. "frozen bytes, owner only" .-> SLEXT(["Slack incoming webhook"])
   APV -. "authorized only" .-> EXT(["GitHub"])
 ```
 
-### The loop closes
+After a Meeting ends and its transcript is saved:
 
-After a meeting ends and its transcript is saved, the loop carries extracted
-intelligence through to confirmed decisions and commitments. The trigger,
-extraction, and proposal path are separate steps; nothing commits without
-a human **Confirm**.
+1. The hub links the Meeting to Rooms (`plugins/project_detector.py`).
+2. If auto-intel is on and a Room is linked, the hub enqueues an intel job.
+   The queue deduplicates by transcript hash.
+3. The intel queue conductor drains the queue. It polls every 15 seconds. The
+   **Run summary** verb wakes it at once.
+4. The `decision_capture` and `action_owner_enforcer` plugins run.
+5. The follow-through service turns the artifacts into proposals under
+   **NEEDS YOU**.
+6. Nothing commits until you press **Confirm**. Confirm writes a decision
+   record and a commitment with a receipt. **Dismiss** marks the proposal
+   dismissed with a receipt.
 
-```mermaid
-sequenceDiagram
-  participant MG as meeting_glue.py<br/>(stop capture)
-  participant PS as persistence.py<br/>(session save)
-  participant PD as project_detector.py<br/>(associate Rooms)
-  participant IQ as intel_queue.py<br/>(deferred queue)
-  participant DR as intel_queue_conductor.py<br/>(hub drainer)
-  participant DC as decision_capture<br/>(plugin)
-  participant AO as action_owner_enforcer<br/>(plugin)
-  participant FT as FollowThroughService<br/>(proposal bridge)
-  participant KO as Kernel<br/>(admit + receipt)
-  participant UI as Room NEEDS YOU
-
-  MG->>PS: save meeting
-  PS-->>MG: saved
-  MG->>PD: associate with Rooms
-  PD-->>MG: linked project_ids
-  alt auto-intel enabled AND Room-linked
-    MG->>IQ: enqueue intel job<br/>(transcript_hash dedup)
-    Note over IQ,DR: enqueue is not execution
-    IQ-->>DR: queued row
-    DR->>IQ: claim + drain (poll 15s, or woken)
-    IQ->>DC: run decision_capture
-    DC-->>IQ: decisions[]
-    IQ->>AO: run action_owner_enforcer
-    AO-->>IQ: action_items[]
-    IQ->>FT: bridge: artifacts to proposals
-    FT-->>UI: pending proposals in NEEDS YOU
-  end
-  Note over UI: Owner reviews proposals
-  UI->>KO: Confirm (one proposal)
-  KO-->>UI: decision_record + commitment (receipted)
-  UI->>FT: Dismiss (one proposal)
-  FT-->>UI: proposal marked dismissed (receipted)
-```
-
-The People resolver enriches the 1:1 brief with Watch entity data. It matches
-owner aliases and display names inside the encrypted People boundary at read
-time (`people_service.resolve_relationship_by_watch_identity`). The match
-result never leaves the boundary; only Watch entity data (PR titles, issue
-keys, days waiting) appears in the brief projection.
-
-A suggested source is a post-intel step (not a plugin): it scans the transcript
-for `owner/repo` patterns and Jira-style issue keys, checks them against
-connected providers, and presents rows in the Room's **SOURCES** section.
-**Add** creates a Watch source; **Dismiss** persists the dismissal. A
-suggestion matching an existing Watch source is suppressed.
-
-### The steward's hand
-
-The steward's hand is the path from observed project
-health to a receipted external action. Two flows share the policy gate: the
-drafted update (model rewrite of the deterministic inventory) and the reviewer
-nudge (a proposed `gh pr comment`).
-
-**The drafter path:**
-
-```mermaid
-sequenceDiagram
-  participant INV as Deterministic inventory<br/>(claim schema)
-  participant MDL as Model drafter<br/>(_draft_with_model)
-  participant PRS as Parser<br/>(_parse_model_output)
-  participant VER as Ref verifier
-  participant FB as Fallback<br/>(deterministic body)
-  participant UI as UpdatePosture
-
-  INV->>MDL: claims + refs
-  MDL->>PRS: model output (JSON)
-  PRS->>VER: parsed claims
-  alt all cited_refs in inventory
-    VER-->>UI: verified claims + EgressChip(host)
-  else ref missing or no ref
-    VER-->>UI: claim marked UNVERIFIED
-  end
-  MDL--xFB: _ModelDraftFailed
-  FB-->>UI: deterministic body (no markers, no egress)
-```
-
-**The nudge path (the first external write):**
-
-```mermaid
-sequenceDiagram
-  participant OBS as OBSERVE<br/>(snapshots + gh run list)
-  participant DRV as Health derivation<br/>(reviewer latency, CI, aging)
-  participant BTL as Bottleneck rows<br/>(NEEDS YOU)
-  participant POL as Policy gate<br/>(eligible_effect_kinds)
-  participant NUD as Proposed nudge card
-  participant OWN as Owner (Send)
-  participant KRN as Kernel<br/>(admit + receipt)
-  participant GH as gh pr comment<br/>(gated connector)
-  participant RCP as Receipt row
-
-  OBS->>DRV: entity snapshots
-  DRV->>BTL: per-reviewer median, count
-  BTL->>POL: github_comment effect kind
-  alt not in eligible kinds
-    POL--xBTL: withheld (no Nudge verb)
-  else eligible
-    POL->>NUD: proposed comment + PR + host
-    NUD->>OWN: exact text + GITHUB.COM
-    alt Send
-      OWN->>KRN: admit nudge
-      KRN->>GH: gh pr comment --repo R -n N -b "text"
-      GH-->>RCP: comment URL + receipt
-    else Dismiss
-      OWN-->>NUD: closed, no write
-    end
-  end
-```
-
-The health derivations read existing Watch snapshots (`ProjectService._entities`).
-Review wait computes `now - createdAt` for open PRs with pending review requests,
-grouped by reviewer. Issue aging counts issues older than the threshold
-(default 14 days). Flaky CI uses the last 10 runs per branch
-(`gh run list --limit 10`, collected during the steward's OBSERVE phase).
-Merge-queue depth counts open PRs with passing CI not yet merged. The release
-readiness scorecard composites the four signals: green when all green, amber
-when any amber and none red, red when any red.
-
-The double gate: the policy eligibility gate (`eligible_effect_kinds_json`)
-prevents the steward from proposing a nudge on a project where it is not armed;
-the per-nudge approval gate (the owner pressing Send) prevents any individual
-nudge from firing without review. Either gate alone is sufficient to block.
-
-The 7-day cooldown: after a nudge is sent for a PR and reviewer, the steward
-checks the receipt ledger before proposing again. A recent
-`steward.effect.github_comment` on the same PR and reviewer within the cooldown
-window suppresses the proposal.
-
-### Reach
-
-The hub's Streamable HTTP route (`POST /api/mcp`)
-exposes the same `handle_message` entry point that the stdio sidecar and
-the web runtime's in-process fetcher use. One implementation, three
-transports. The remote path composes on the web runtime's live services
-(the conductor, the wired fetcher, the scheduler), not the sidecar's bare
-instances.
-
-```mermaid
-sequenceDiagram
-  participant C as .43 MCP client
-  participant R as POST /api/mcp<br/>(web_server.py)
-  participant AG as Auth gate<br/>(_web_auth_gate)
-  participant HM as handle_message<br/>(server.py)
-  participant CS as cadence_run_now<br/>(live HeartbeatService)
-  participant ST as project_run_steward<br/>(live ProjectService)
-  participant PO as poll<br/>(project_get_steward_run)
-  participant KO as Kernel<br/>(receipt, origin=remote)
-
-  C->>R: Bearer credential
-  R->>AG: extract token
-  alt owner web token + non-loopback
-    AG--xR: 403 (OWNER refused off-loopback)
-  else agent credential
-    AG->>HM: AGENT principal + palette
-  end
-  HM->>CS: cadence_run_now
-  CS->>KO: sweep receipts (origin=remote)
-  CS-->>HM: sweep result
-  HM-->>C: JSON-RPC response
-  C->>R: project_run_steward(project=gov)
-  R->>HM: dispatch
-  HM->>ST: run steward
-  ST-->>HM: run_id (prompt return)
-  HM-->>C: run_id
-  loop poll until terminal
-    C->>R: project_get_steward_run(run_id)
-    R->>PO: check state
-    PO-->>C: status
-  end
-  ST->>KO: steward receipts (origin=remote)
-```
-
-The Confluence adapter sits beside the Jira adapter.
-Both use the `(site, email)` identity and the switch-and-verify pattern.
-The connector pack (`acli_confluence.py`) names a read-only allowlist:
-`auth status`, `auth switch`, `space list`, `space view`, `page view`,
-`blog list`, `blog view`. No REST call is made; the CLI holds the
-credentials. The `ConfluenceWatchSource` watches blog posts via `blog list`
-and pages by known ID via `page view --id`. Entities follow the same shape
-as Jira (id, title, url, status, timestamps).
-
-### The scheduled recording conductor
-
-The hub can start a recording on its own at a scheduled time. The scheduled
-recording conductor (`scheduled_recording_conductor.py`) is a daemon thread
-modeled on the Workbench Conductor: it ticks every 60 seconds, checking
-enabled schedules for due fires. A due schedule enters a 10-second arming
-countdown (broadcast on the bus, cancellable), then fires through the existing
-`_start_meeting` seam under a `SCHEDULER` principal (it does not reimplement
-capture). Auto-stop runs at the set duration.
-
-Durability uses persisted deadlines. The `deadline_at` and `armed_at` timestamps
-are written before any observable side-effect, so a hub restart can reconcile
-interrupted states: a recording whose deadline passed during downtime is stopped
-with a receipt, an interrupted arming resolves as missed, and a fire whose
-scheduled time passed while the hub was down produces a bounded missed receipt
-(one per missed window, never a burst of catch-up fires). One-shot schedules
-disable after their terminal outcome; recurring schedules advance `next_fire_at`
-strictly forward.
+A suggested source is a step after intel. It scans the transcript for
+`owner/repo` patterns and Jira-style issue keys. It checks them against the
+connected providers. Matches appear in the Room's **SOURCES** section. **Add**
+creates a Watch source. **Dismiss** saves the dismissal.
 
 ## The calendar pipeline
 
-The Door's Upcoming rail projects calendar events from one or more ICS
-sources into a merged chronological timeline. The pipeline is config-driven,
-source-isolated, and bounded.
+Calendar events from one or more ICS sources feed the Door's Upcoming rail,
+event-born recordings, the Room's meeting watch and the weekly brief.
 
-**Config shape.** `CalendarConfig.sources` is a list of `CalendarSource`
-(`holdspeak/config/integrations.py:18`), each carrying an `id` (UUID, minted
-on add), `label`, `url` (a local file path or HTTPS URL), and `enabled` flag.
-A one-shot migration in `Config.load()` (`holdspeak/config/core.py`) converts
-the old single `calendar.subscription` key to a one-element `sources` list;
-the old key is consumed once and dropped on the next save.
+| Part | Behavior | Source |
+| --- | --- | --- |
+| Sources | `CalendarConfig.sources` lists `CalendarSource` entries: `id`, `label`, `url` (file path or HTTPS URL), `enabled` | `holdspeak/config/integrations.py` |
+| Refresh | `CalendarIngestConductor` runs at boot and every 15 minutes. Each source refreshes alone. A failed source keeps its last good rows. | `holdspeak/calendar_ingest_conductor.py` |
+| Fetch | HTTPS has no redirects, no credentials and a 10-second timeout. A file path reads directly. | `CalendarSourceReader` |
+| Parse | Bounds: 5 MiB feed, 14-day horizon, 128 occurrences per master event | `holdspeak/calendar_ingest.py` |
+| Store | `replace_projection` swaps only that source's rows. Removed or disabled sources are cleaned at the next tick. | `holdspeak/db/calendar_events.py` |
+| Door | `DoorService` adds `source_id` and `source_label` to each upcoming item | `holdspeak/services/door_service.py` |
+| Snapshot | A calendar screenshot becomes events through the vision capability `calendar.snapshot_extract`. The result is hostile input. The same parser checks it. The owner confirms the week anchor and the events. | `holdspeak/services/calendar_snapshot_service.py` |
 
-**Per-source revision namespace.** `calendar_source_revision(source_id, url)`
-(`holdspeak/config/integrations.py:122`) hashes the source id and the
-normalized URL together. The source id enters the hash so two sources
-pointing at the same URL get independent projection namespaces, and the
-parser's existing `subscription_revision` parameter carries the per-source
-fingerprint unchanged.
+The `MeetingWatchSource` reads only the local database. It has zero egress.
 
-**Conductor refresh.** `CalendarIngestConductor`
-(`holdspeak/calendar_ingest_conductor.py:137`) ticks at boot and every
-15 minutes. Each tick iterates enabled sources independently:
-`CalendarSourceReader` fetches the URL (HTTPS: no redirects, 10 s timeout,
-no credentials or custom headers; file: direct read); `parse_calendar_bytes`
-(`holdspeak/calendar_ingest.py:66`) parses within hard bounds (5 MiB feed,
-14-day horizon, 128 occurrences per master event);
-`CalendarEventRepository.replace_projection`
-(`holdspeak/db/calendar_events.py:62`) atomically deletes and reinserts only
-that source's rows (`DELETE ... WHERE source_id = ?`). A failed source never
-touches a healthy source's projection (per-source last-good law).
+The Connections view (`ConnectionsService`) gives one readiness shape for
+GitHub, Jira, calendar and models. It stores no state. Routes:
+`GET /api/connections` and `POST /api/connections/{provider}/recheck`.
 
-**Orphan cleanup.** After all enabled sources have refreshed, the conductor
-calls `delete_sources_not_in(enabled_ids)`
-(`holdspeak/db/calendar_events.py:125`), removing rows whose `source_id` is
-no longer enabled. Disabling or removing a source cleans up its events at the
-next tick; re-enabling refetches.
+## Background loops
 
-**Projection columns.** `calendar_events`
-(`holdspeak/db/schema.py:3379`): `id`, `uid`, `title`, `starts_at`,
-`ends_at`, `location`, `meeting_url`, `last_seen_at`,
-`subscription_revision`, `source_id`, `source_label`. Unique index:
-`(source_id, uid, starts_at)`.
+The runtime starts daemon threads. Each has its own failure boundary. An
+exception in one loop does not stop another.
 
-**Door consumption.** `DoorService._calendar_configured`
-(`holdspeak/services/door_service.py:60`) returns true when at least one
-enabled source passes validation. `_calendar_event_item`
-(`holdspeak/services/door_service.py:200`) projects each row including
-`source_id` and `source_label` into the `DoorUpcomingItem` aggregate, so the
-rail can render provenance chips when more than one source is configured.
+| Loop | Thread name | Module | Runs |
+| --- | --- | --- | --- |
+| Plugin queue | `HoldSpeakMirPluginQueue` | `web_runtime.py` | Always |
+| Cadence engine | `HoldSpeakCadenceEngine` | `runtime/cadence.py` | When `config.cadence.enabled` is set |
+| Heartbeat | `HoldSpeakHeartbeat` | `runtime/heartbeat.py` | Always |
+| Transcriber warm-up | `HoldSpeakTranscriptionWarmup` | `runtime/transcriber_state.py` | Once at start |
+| Intel queue | `HoldSpeakIntelQueue` | `intel_queue_conductor.py` | Hub lifespan. Only in the process that owns the database. |
+| Workbench conductor | `workbench-conductor` | `workbench_conductor.py` | Hub lifespan |
+| Scheduled recording | (conductor thread) | `scheduled_recording_conductor.py` | Hub lifespan. Ticks every 60 seconds. |
+| Calendar ingest | (conductor thread) | `calendar_ingest_conductor.py` | Hub lifespan |
+| Memory | `memory-conductor` | `memory_conductor.py` | Hub lifespan. Only in the process that owns the database. |
+| Defaults | `defaults-conductor` | `defaults_conductor.py` | Hub lifespan |
 
-**The snapshot adapter.** `calendar_snapshot_service`
-(`holdspeak/services/calendar_snapshot_service.py`) extracts events from a
-calendar screenshot via the `calendar.snapshot_extract` inference capability
-(vision-required). The extraction result is model output and is treated as
-hostile input: the generated `.ics` passes through the same
-`parse_calendar_bytes` parser used by every other source (the parser is the
-one trust boundary). Confirmed events become a local `.ics` file under
-`~/.local/share/holdspeak/calendar-snapshots/<source_id>.ics`, registered as
-a `CalendarSource` through the settings write path only. The review gate
-(`CalendarSnapshotReviewCore`) requires an explicit week anchor (never
-silently guessed) and lets the owner edit or remove events before confirm.
+The hub lifespan in `web_server.py` stops every conductor it starts.
 
-**The connections readiness projection.** `ConnectionsService`
-(`holdspeak/services/connections_service.py:90`) provides one readiness shape
-over all provider adapters. `list_tools`
-(`holdspeak/services/connections_service.py:111`) returns one entry per known
-tool (GitHub, Jira, calendar, models) with `state`, `account`,
-`next_action`, `recovery_hint`, `error_detail`, `last_checked_at`, and
-`egress_host`. The five display states
-(`holdspeak/services/connections_service.py:36-40`) are mapped from each
-adapter's wire constants. The service stores no new state; it delegates to
-`github_provider`, `jira_provider`, the calendar config, and the inference
-assignment service. Routes (`holdspeak/web/routes/connections.py:24`)
-expose `GET /api/connections` and
-`POST /api/connections/{provider}/recheck`. MCP twins are
-`connection.list` and `connection.recheck`
-(`holdspeak/mcp/families/project.py:774,785`).
+### Scheduled recording
 
-### The clock
-
-The clock connects the calendar pipeline to the desk's temporal
-surfaces: the arrival's WEEK strip, event-born recordings, the Room's
-meeting watch, and the weekly brief.
-
-```mermaid
-sequenceDiagram
-  participant HB as Heartbeat sweep
-  participant CC as CalendarIngestConductor<br/>(refresh)
-  participant SR as CalendarSourceReader<br/>(file or HTTPS fetch)
-  participant PA as parse_calendar_bytes<br/>(pure ICS parser)
-  participant DB as CalendarEventRepository<br/>(replace_projection)
-  participant EM as Event-Room matcher<br/>(title, manual)
-  participant SC as ScheduledRecordingRepository<br/>(create idle)
-  participant CD as ScheduledRecordingConductor<br/>(arms at starts_at - 5 min)
-  participant DI as Door + Arrival<br/>(WEEK strip, upcoming)
-
-  HB->>CC: cadence tick
-  loop each enabled CalendarSource
-    CC->>SR: read source
-    alt HTTPS URL
-      SR-->>CC: ICS bytes (the only egress)
-    else local file path
-      SR-->>CC: ICS bytes (no egress)
-    end
-    CC->>PA: parse bytes
-    PA-->>CC: parsed events
-    CC->>DB: replace projection (atomic per source)
-  end
-  CC->>EM: match events to Rooms
-  EM-->>DB: calendar_event_projects
-  CC->>SC: create idle recordings (consent check)
-  SC-->>CD: idle, armed by conductor at starts_at - 5 min
-  DB-->>DI: projection feeds WEEK strip + upcoming
-```
-
-The `MeetingWatchSource` sits beside `GitHubWatchSource` and
-`JiraWatchSource` in the Watch source dispatch. It reads from the
-local database only (meetings, meeting_projects, segments,
-decision_record_sources, decision_records, decision_commitments,
-intel_job_attempts). Each entity carries title, date, participant
-count, decisions count, commitments count, intel status, and an
-`updated_at` that participates in the Room's SINCE YOU LOOKED delta.
-Zero egress.
-
-The brief's lookback window (`compute_window`) is unchanged: the
-preceding business-day close to now. A separate `compute_lookahead`
-returns now to Sunday 23:59. Two new collectors (calendar events and
-meeting Watch entities) produce items in the `this_week` section
-using a full-week window (Monday 00:00 to Sunday 23:59).
-
-## The conductor loops and the Heartbeat
-
-The runtime starts several daemon threads, each with its own failure
-boundary: an exception in one loop never kills another. The six loops
-and their lifetimes:
-
-| Loop | Thread name | Module | Lifecycle | Failure handling |
-|---|---|---|---|---|
-| Plugin queue | `HoldSpeakMirPluginQueue` | `web_runtime.py` (PluginQueueMixin) | Always on | try/except per dequeue; logs and continues |
-| Cadence engine | `HoldSpeakCadenceEngine` | `runtime/cadence.py` (CadenceMixin) | Conditional on `config.cadence.enabled` | try/except per tick (`cadence.py:61`); logs and continues |
-| Heartbeat | `HoldSpeakHeartbeat` | `runtime/heartbeat.py` (HeartbeatMixin) | Always on | try/except per tick; logs and continues |
-| Recording ticker | (per-meeting thread) | `device_recording_tick.py` via `runtime/meeting_glue.py:346` | Per-meeting lifecycle (start/stop) | Independent; started by `_start_meeting`, stopped by `_stop_active_meeting` |
-| Transcriber warm | (one-shot thread) | `runtime/transcriber_state.py:202` | One-shot at startup | Independent; no restart on failure |
-| Intel queue drainer | `HoldSpeakIntelQueue` | `intel_queue_conductor.py` → `intel_queue.IntelQueueWorker` | Started by the hub lifespan, stopped by it; only in the process that owns the database | try/except per drain iteration; logs and continues. Polls every 15s and is woken immediately by the face's `Run summary` verb |
+A due schedule starts a 10-second arming countdown. The countdown shows on the
+bus and you can cancel it. Then the conductor starts the Meeting through the
+normal `_start_meeting` path as the `SCHEDULER` principal. Auto-stop runs at
+the set duration. The conductor writes `deadline_at` and `armed_at` before any
+side effect. After a restart it stops a recording whose deadline passed. It
+resolves an interrupted arming as missed. It writes one missed receipt for each
+missed window. It does not fire a burst of catch-up recordings.
 
 ### The Heartbeat sweep
 
-The Heartbeat thread (`runtime/heartbeat.py`) ticks every 60 seconds and
-checks whether a sweep is due. When due, it calls
-`HeartbeatService.run_sweep` (`services/heartbeat_service.py`), which
-performs three steps.
+The Heartbeat thread checks every 60 seconds whether a sweep is due. The sweep
+interval is the `sweep_every_minutes` setting. A due sweep runs
+`HeartbeatService.run_sweep`:
 
-The Heartbeat is the **only** scheduler for graduated Watches.
-The workbench conductor used to call `evaluate_due` as well, every 60
-seconds, with no quiet-hours check, and both paths advanced
-`next_evaluation_at` identically, so the conductor always won the race and
-the quiet-hours promise was not kept. That block is deleted; the conductor
-keeps the Steward scheduler only. The Heartbeat evaluates through the
-app-wired `WatchService` (`workbench_conductor.get_scheduler_services`), not
-a bare one, so scheduled evaluation runs the same fully-wired instance the
-app serves.
+1. Evaluate due Watches (`WatchService.evaluate_due`).
+2. Refresh the needs-you aggregate (`needs_you_aggregate.build_aggregate`).
+   `GET /api/desk/needs-you` reads from its cache. The response has
+   `computedAt`, `stale` and `sweepId`.
+3. Write a `heartbeat.sweep` kernel receipt and a `pipeline_events` entry.
 
-**Quiet hours hold the whole sweep**: no watch is evaluated and no
-notification is sent; the first sweep after quiet hours end catches up.
-That is the SCHEDULED sweep. **Run now is the owner's override**: it runs
-inside quiet hours and the receipt records `quiet_overridden: true`
-(`run_sweep(..., owner_hand=True)`). Previously `held` was computed
-unconditionally, so Run now at 23:00 did nothing and reported success,
-contradicting this document and the User Guide both.
+Then the Heartbeat checks the notification edge. The edge is the set of item
+ids, not the count. `ItemSetEdge` (`desktop_notify.py`) remembers which ids
+were notified. It notifies when an unmuted id is new or when an id becomes due
+today or overdue. A held sweep marks no ids as delivered. A restart notifies
+nothing again. The banner uses `osascript` on macOS and libnotify on Linux.
+Each notification writes a `heartbeat.notify` receipt.
 
-**A remote `runs_on` also holds the whole sweep**, evaluation included
-(`runtime/heartbeat.py`). Setting the Rhythm row's runner to anything but
-`local` stops local watch evaluation entirely; the remote host is expected
-to run its own sweep, and nothing verifies that it does. The hold is
-receipted quietly through `HeartbeatService.record_held_remote`.
+Rules of the sweep:
 
-**The sweep is bounded.** `evaluate_due` evaluates at most
-`WATCH_SWEEP_MAX` (10) watches per call, oldest-due first (`ORDER BY
-next_evaluation_at ASC, id ASC`, a total order, since arming puts many
-rows on the same instant), because each watch can cost a serial
-`gh`/`acli` subprocess with a 5-10s timeout on the heartbeat thread with
-the calendar refresh and the receipt queued behind it. Watches that do not
-fit stay due and the next sweep takes them, oldest first, so none can
-starve; the receipt carries `watches_deferred` beside `watches`.
+- The Heartbeat is the only scheduler for graduated Watches. The Workbench
+  conductor keeps only the Steward scheduler.
+- Quiet hours hold the whole scheduled sweep. Nothing is evaluated and nothing
+  is notified. The first sweep after quiet hours catches up.
+- **Run now** is the owner's override. It runs in quiet hours and the receipt
+  records `quiet_overridden: true`. Routes:
+  `POST /api/settings/heartbeat/run-now` and the MCP tool `heartbeat.run_now`.
+- A `runs_on` value other than `local` holds the whole sweep, with a quiet
+  receipt. The remote host must run its own sweep.
+- The scheduled sweep evaluates at most `WATCH_SWEEP_MAX` (10) Watches, oldest
+  due first. The rest wait for the next sweep. The receipt has
+  `watches_deferred`. The owner paths `POST /api/steward/trigger` and the MCP
+  tool `project.steward.trigger` have no limit.
+- A Watch is armed when you create or enable it. The first evaluation of an
+  empty baseline is silent. It saves the snapshot, writes no evaluation row and
+  returns the state `baselined`. The second run is a normal diff.
+- The aggregate ranks rows with `services/attention_ranking.py`: overdue, due
+  today, not run, no due date, waiting. One obligation from several sources is
+  one row.
 
-### The owner's hand
+The Cadence engine tick regenerates the Monday brief once a day after quiet
+hours end. It also clears the needs-you cache.
 
-Four paths are the owner asking explicitly, and they are exempt from both
-bounds above; he is standing there watching it happen:
-`POST /api/steward/trigger`, the MCP `project.steward.trigger` tool (both
-call `evaluate_due(..., limit=None)`), **Run now** on the Rhythm row
-(`POST /api/settings/heartbeat/run-now`) and the MCP `heartbeat.run_now`
-tool (both call `run_sweep(..., owner_hand=True)`, which means unbounded
-*and* not held by quiet hours). Only `runtime/heartbeat.py`'s scheduled
-loop takes the defaults.
+## Memory and the process read model
 
-### The first evaluation of a watch is silent
+Meeting plugins produce typed artifacts. When `PluginRepository.record_artifact`
+stores a `decisions` artifact, it also projects each entry into the `decisions`
+table in the same transaction. The projection is one-way. A decision keeps its
+identity from its normalized text and its source keys. Deleting a Meeting
+keeps the decision row with `source_state=source_deleted`. Superseding a
+decision marks artifacts derived from it as rejected.
 
-A Watch is armed the moment it is created or enabled: `next_evaluation_at`
-is set by the creation path, by `resume`, and by an ungated reconcile
-backfill for rows already on disk (previously the only writer of that
-column lived inside `evaluate_due`, so a Watch the scheduler had never run
-could never be selected by it: 32 Watches on the owner's desk, 2 armed).
+Search uses full-text indexes for decisions, artifacts and notes. Database
+triggers keep them current. `holdspeak memory rebuild-index` rebuilds them.
+Search normalizes BM25 scores within each kind before it merges the kinds.
 
-Because evaluation diffs against `snapshot_json` and `diff_snapshots` emits
-a *discovered* event for every entity absent from the baseline, arming a
-Watch whose baseline is empty would make its first run report the whole
-source as new, measured at 30 entities → 30 transitions, 30 observations,
-1 effect. So `_evaluate_core` makes the first evaluation of an empty
-baseline **silent**: it establishes the snapshot, writes **no evaluation
-row**, and returns `state: "baselined"` with zero transitions, zero
-observations and zero effects. The second run is an ordinary diff against a
-real baseline. The sweep receipt counts these as `watches_baselined`, kept
-out of `watches`, which counts diffed evaluations only.
+The native memory engine (`holdspeak/memory/`) adds chunks, embeddings, facts,
+entities, consolidation and pages. The memory conductor runs it. It needs a
+model assignment for the capabilities `memory.embed`, `memory.extract` and
+`memory.page`. Without an assignment, memory still builds chunks. Recall falls
+back to keyword and relation search. It yields to a live Meeting and to a live
+local model call.
 
-The three steps:
+The grounding hydrator turns a project reference into citable source blocks,
+each with a `[REF: kind:id]` line. The hydration receipt carries
+`matched_count` and `overflow_count`.
 
-1. **Evaluate due watches** via `WatchService.evaluate_due`. Each
-   graduated Watch with `next_evaluation_at <= now` is evaluated against
-   its sources. Outcomes are collected and summarized for the receipt
-   (N2: counts per state plus failing watch IDs, never the full list).
-2. **Refresh the aggregate** via
-   `needs_you_aggregate.build_aggregate`. The `NeedsYouCache`
-   (`services/needs_you_aggregate.py`) wraps the builder in a
-   stale-while-refresh cache whose lifetime matches the sweep interval.
-   The cache invalidates after each sweep; `GET /api/desk/needs-you`
-   reads from the cache (O(1) on hit, rebuilds on miss). The response
-   carries `computedAt`, `stale`, and `sweepId` fields.
-3. **Write the receipt** as a `heartbeat.sweep` kernel operation
-   (Article XI.2) and a `pipeline_events` entry with the duration,
-   watch count, room count, and the bounded outcome summary.
+The **Process** window shows live work. It polls `/api/kernel/events` and
+`/api/kernel/read?view=process` and folds the journal into fixed sections. It
+reads and shows. It admits no operation and has no execution controls.
 
-After the sweep, the Heartbeat evaluates the notification edge. The edge
-is the ITEM SET, not the count: `ItemSetEdge`
-(`desktop_notify.py`) remembers which stable item ids
-(`needs_you_aggregate._item_id`) have been notified, persisted as
-`last_notified_items` in the heartbeat policy row, and fires when any
-current unmuted id is new. A swapped item at an unchanged total still
-notifies, a known id that escalates into due today or overdue notifies
-again (`escalated`), a restart re-notifies nothing, a held (quiet-hours)
-sweep never marks its ids delivered so they go out once after the window,
-a muted Room's ids are neither offered nor forgotten, and an id whose
-Project is known but not fully observed on this pass (a source
-`cant_check`, stale or failed) is never pruned, so a recovered source
-re-announces nothing and an empty result over a gap is receipted
-`held_coverage_incomplete`, never as an all-clear. Ids whose Project no
-longer exists, and projectless ids that left the aggregate, are pruned,
-so the set is bounded by the desk. The policy row is written only when
-the set or the outcome changed. (Quiet hours were
-already decided before step 1: a held sweep evaluates nothing and notifies
-nothing; the notification's own quiet-hours check reads the same injectable
-instant.) The notifier (`desktop_notify.py`) fires a macOS banner via
-`osascript` (the PyObjC `UserNotifications` bridge is not in the venv)
-or a Linux banner via the libnotify seam. Every notification writes a
-`heartbeat.notify` receipt.
+## Interview and Thread state
 
-The aggregate itself (`needs_you_aggregate.build_aggregate`) returns its
-rows deduplicated and ranked by `services/attention_ranking.py`: one
-obligation projected by several sources is one row with `sources`, and
-the order is overdue → due today → not run → no due date → waiting, then
-the observable time within the class, then the stable id. Two projections
-merge only across sources, with agreeing (or absent) issue/PR refs; the
-same source with distinct refs is two obligations. `LastKnownStore` is
-process-local: last-observed items survive a source being down, not a hub
-restart. The browser
-(`web/src/desk/attention.ts`) applies the same rule to what it merges in
-from the Door.
+Interview uses the Thread conversation, the model routing and the MCP
+services. It does not add a model runtime or an automation engine.
 
-The cadence engine's tick also regenerates the Monday brief once per day
-after quiet hours close (`_maybe_regenerate_brief` in
-`runtime/cadence.py`) and invalidates the needs-you cache
-(`_invalidate_needs_you_cache`).
+| Component | Job |
+| --- | --- |
+| Thread window and store | Show messages, streamed replies, references and tool activity |
+| Thread service | Run the conversation and its tool loop |
+| Interview section descriptors | Declare the purpose, tool set and handoff of each section |
+| Interview service | Validate and save facts, suggestion choices, section changes and revisions |
+| MCP family | Expose Interview operations |
+| Project services | Do the supported setup operations under their own policy |
 
-```mermaid
-sequenceDiagram
-  participant HB as Heartbeat thread<br/>(runtime/heartbeat.py)
-  participant HS as HeartbeatService<br/>(services/heartbeat_service.py)
-  participant WS as WatchService<br/>(evaluate_due)
-  participant AGG as NeedsYouCache<br/>(needs_you_aggregate.py)
-  participant DN as desktop_notify<br/>(desktop_notify.py)
-  participant KO as Kernel operations<br/>(SQLite)
+The model chooses its question or tool call. The controller validates the
+operation and the state change. Interview state belongs to a Thread. Each
+change carries an expected revision and a command identity. A stale revision
+is refused. A repeated command cannot carry a different payload. Changed or
+removed facts remove the suggestions that depend on them.
 
-  loop Every 60s tick
-    HB->>HS: is sweep due?
-    alt sweep due and not quiet hours
-      HS->>WS: evaluate_due(principal)
-      WS-->>HS: outcomes[]
-      HS->>AGG: invalidate + rebuild
-      AGG-->>HS: {count, items, computedAt, stale, sweepId}
-      HS->>KO: write heartbeat.sweep receipt
-      HS->>DN: notification edge check
-      alt rising edge
-        DN->>DN: osascript / libnotify banner
-        DN->>KO: write heartbeat.notify receipt
-      end
-    end
-  end
-```
+Code: `holdspeak/services/interview_contracts.py`,
+`holdspeak/services/interview_service.py`,
+`holdspeak/mcp/families/interview.py`,
+`holdspeak/services/thread_service.py`. For user behavior, read
+[Interview](INTERVIEW.md).
 
-## Project memory and the process read model
+## Coder sessions
 
-Meeting plugins still produce ordinary typed artifacts. When the shared
-`PluginRepository.record_artifact` path stores an artifact of type `decisions`,
-it also projects each entry into the `decisions` table in the same transaction.
-The projection is one-way and derived: plugin contracts do not gain a second
-write path. Decision identity is anchored to normalized decision text plus its
-source keys, so a later plugin pass can add a verified transcript moment without
-minting a duplicate. Lifecycle and supersession belong to the projected record,
-not to the plugin output.
-
-A meeting deletion severs that projection instead of cascading through it. The
-decision row remains, with `source_state=source_deleted`; the meeting and its
-transcript moment do not. Promoted ADRs, notes, and decision announcements carry
-both decision and meeting source references. Superseding a decision also marks
-artifacts derived from it rejected, so the old face cannot keep presenting
-itself as current.
-
-Long-horizon retrieval uses three FTS5 indexes, one each for decisions,
-artifacts, and notes. Writes keep them fresh through database triggers, and
-`holdspeak memory rebuild-index` reconstructs them from canonical rows. Search
-normalizes BM25 within each kind before interleaving the kinds, because raw
-scores from different corpora are not comparable.
-
-The shared grounding hydrator expands a project reference into citable source
-blocks. With a query, it selects project sources by memory-search relevance;
-without one, it labels the bounded recency fallback. Each selected source stays
-in its own block with a qualified `[REF: kind:id]` line. The hydration receipt
-carries `matched_count` and `overflow_count`, so an Ask surface can disclose
-exactly how much of the match set reached the prompt.
-
-The **Process** window is the corresponding read model for live work. It polls
-authenticated `/api/kernel/events` and `/api/kernel/read?view=process`, folds the
-journal into fixed sections, and never invents a lifecycle state. It is a pure
-read and presentation consumer under Constitution Article XI clause 5: it owes
-authenticated read authority, but no operation admission or receipt. It does
-not expose execution controls.
-
-## The agent sync loop
-
-A live Claude Code or Codex session becomes an object on the iPad desk, and
-the answer travels back into it. Capture is hook driven; nothing in this loop
-acts on its own. The AI can draft a reply, but only an explicit human send
-delivers anything, and every crossing wears its badge.
+A live Claude Code or Codex session is an object on the desk. Hooks report its
+state. Nothing here acts alone. An AI can draft a reply. Only an explicit human
+send delivers it. See [Coder integration](CODER_INTEGRATION.md).
 
 ```mermaid
 flowchart LR
-  subgraph mac["Your Mac"]
-    CC(["Claude Code / Codex,<br/>HoldSpeak hooks installed"])
-    REG[("Session registry<br/>(lifecycle + question)")]
+  subgraph mac["Your machine"]
+    CC(["Claude Code or Codex<br/>with HoldSpeak hooks"])
+    REG[("Session registry")]
     HUB["HoldSpeak hub"]
-    PANE(["The coder's tmux pane"])
+    PANE(["The Coder's tmux pane"])
   end
-  subgraph ipad["The iPad desk"]
-    PRIM["Coder object<br/>(calm when working,<br/>glares when waiting)"]
-    COMP["Answer composer<br/>(type / speak / drop context /<br/>draft with AI)"]
+  subgraph desk["A desk"]
+    PRIM["Coder object"]
+    COMP["Answer composer"]
   end
-  CC -->|"every hook event"| REG
+  CC -->|"each hook event"| REG
   REG --> HUB
-  HUB -->|"the live session set, polled"| PRIM
-  PRIM -->|"tap Answer"| COMP
-  COMP -->|"explicit send only; badge: local + your desktop"| HUB
+  HUB -->|"live session set"| PRIM
+  PRIM -->|"Answer"| COMP
+  COMP -->|"explicit send only"| HUB
   HUB -->|"selected session's pane"| PANE
   PANE --> CC
 ```
 
-The composer's draft runs on the engine you configured, on device or on your
-endpoint, and shows that as its own badge; where the draft runs is not where
-the answer goes. A failed delivery keeps the question on the desk.
-
 ### The steering chokepoint
 
-The web desk can also steer a live session directly: watch its pane, resolve
-authority, and type into it. Watching is free and read only, a hash-gated peek
-that costs a poll only while a pull-out is open. Every text delivery, by
-contrast, passes one function, `coder_steering.deliver`, and there is no other
-path to the pane. The central operation policy selects the authority invariant:
-Secure and Normal consume an exact, bounded pane grant; YOLO accepts the
-registered pane as posture authority without manufacturing a grant. The pane
-identity captured by the read side rides the request, and the chokepoint
-re-resolves the session target immediately before delivery. It sends only to
-the verified canonical `%N`, so a missing, recycled, or retargeted pane refuses
-before a keystroke. An invalid grant also revokes. The send itself reuses the
-same tmux transport the answer loop uses. Every delivery and every refusal
-writes the operation and policy snapshot plus a bounded text fingerprint to the
-steering audit, never the whole steer, and projects a source-linked Receipt. A
-test greps the codebase to keep the transport's call sites pinned to that one
-chokepoint. The local path does not leave the machine; its authority model lives
-in [SECURITY.md](SECURITY.md).
+Watching a pane is read only. Every text delivery passes one function,
+`coder_steering.deliver`. There is no other path to the pane.
 
-That chokepoint later grew from a reply channel into full manipulation without
-loosening. Real keys (`C-c`, `Escape`, arrows) pass a sibling function,
-`coder_steering.deliver_keys`, with the same policy-selected identity check and
-audit and its own pinned census; a named key is allow-listed or refused by name,
-never handed to `tmux` raw. A `pane:%N` key steers any exact tmux pane on the
-machine, not only a tracked session, and is re-verified the same way. And
-`coder_steering_relay` reaches another machine: it forwards the command and
-expected identity to a configured node whose own copy of this chokepoint
-resolves policy and executes it. The machine that types owns the authority
-decision and audit while the hub only relays and names where the key landed.
-Each addition is more reach over the same spine: watch free, resolve a bounded
-grant or eligible posture, re-verify every target, preserve the key allow-list,
-and audit every attempt.
+- The central operation policy picks the authority rule. Secure and Normal need
+  an exact, bounded pane grant. YOLO accepts the registered pane as posture
+  authority.
+- The read side captures the pane identity. The chokepoint resolves the target
+  again just before delivery. It sends only to the verified `%N` pane. A
+  missing, recycled or retargeted pane is refused before any keystroke.
+- Every delivery and refusal writes the operation, the policy snapshot and a
+  bounded text fingerprint to the steering audit. A source-linked Receipt
+  follows.
+- `coder_steering.deliver_keys` sends real keys (`C-c`, `Escape`, arrows) under
+  the same checks. A named key is on the allow list or it is refused.
+- `coder_steering_relay` sends a command to another machine. That machine's own
+  chokepoint decides and runs it.
+- `coder_factory.py` has `spawn`, `rename` and `kill`. `kill` needs the same
+  grant and the same pane check.
 
-The lifecycle joins it in `coder_factory.py`: `spawn` and `rename` are
-name-validated audited acts (the name is an allow-list, passed as its own
-argument), and `kill` reuses the steer gate outright, requiring the grant and
-re-verifying the pinned pane before it ends anything. Those verbs live behind the
-web desk's session surface, so a person spawns, drives, renames, and ends a
-session from glass, each act its own line in the audit.
+A test pins the call sites of the tmux transport to this chokepoint. Authority
+details are in [Security](SECURITY.md).
 
 ### The tool-call gate
 
-The gate is the same spine pointed the other way: instead of the desk typing
-into an agent, an opted-in Claude Code session stops before a matched tool
-call and asks the desk. Its PreToolUse hook redacts the arguments (sha256 plus
-a 120-character head; the full payload never crosses the wire), posts a
-proposal to the loopback hub, and blocks its own loop, polling for the
-decision. The proposal row is a record, never authority: only the waiting hook
-can let the call proceed. Held proposals surface on the shade as needs-you
-cards with Approve and Deny plus a one-line reason that rides back to the
-agent verbatim. Every state flip passes one census-pinned transition (first
-write wins), expiry is a deny, a hub restart invalidates every held row, and
-armed-plus-any-error denies by name; the unarmed hook is inert. On session
-end, a Stop-hook leg reports the session's token totals (numbers and model
-only) so the receipt line can print reported figures the capability ledger
-(`agent_capabilities.py`) actually vouches for.
+The Gate points the same spine the other way. An opted-in Claude Code session
+stops before a matched tool call and asks the desk. The PreToolUse hook
+redacts the arguments (a SHA-256 and a 120-character head) and posts a
+proposal to the loopback hub. Then it blocks and polls for the decision. The
+proposal row is a record, not authority. Only the waiting hook lets the call
+proceed. Held proposals show as needs-you cards with **Approve**, **Deny** and
+a reason. Expiry is a deny. A hub restart invalidates every held row. An error
+while armed denies. An unarmed hook does nothing. See [Gate](GATE.md).
 
 ```mermaid
 flowchart LR
     A[Claude Code<br/>PreToolUse hook] -- "redacted proposal" --> H[Hub<br/>gate_proposals]
-    H -- "needs you card" --> S[Shade]
-    S -- "Approve / Deny + reason" --> H
+    H -- "needs-you card" --> S[Desk]
+    S -- "Approve or Deny, reason" --> H
     A -- "poll decision" --> H
-    H -- "deny reason verbatim" --> A
+    H -- "deny reason" --> A
 ```
 
-The delivery collector gained a PR pass on the same receipt discipline: one
-batched `gh pr list` per registered source, run by the Refresh verb or an
-explicitly set per-source cadence, mapped to rows carrying state, the CI
-conclusion, the observed-at stamp, and an attribution label that never claims
-more than the match proves (exact worktree identity, a name-match heuristic,
-or unattributed). A failing poll degrades to a named stale row and keeps the
-last good rows; the see-diff verb is local-only, offering an explicit fetch
-when commits are absent.
+### Reach through MCP
 
-### The rails as material
+`POST /api/mcp` exposes the same `handle_message` entry point as the stdio
+sidecar and the in-process fetcher. There is one implementation and three
+transports. The remote path uses the live services of the web runtime. An
+agent credential gets the agent principal and its tool palette. The owner web
+token is refused off loopback. See [MCP sidecar](MCP_SIDECAR.md).
 
-The delivery rails are also material a run can ground on. An open phase, a
-story, an evidence file, or the roadmap can be picked in the same grounding
-picker as a meeting, and the hub hydrates it through the one grounding seam
-that ask and steer share. The content is a receipt: the `dw` command line
-names the exact file for that object, the hub reads that file as opaque text,
-and rail state is never re-derived from the markdown, so a grounded story is
-always the real thing on disk. Alongside grounding, an ambient observer
-(off by default) tails the rails' own event stream through the same command
-line, summarizes each batch of new activity on a local model, and writes a
-journal note. The observer only reads and journals; anything it would do
-rides the existing story-flip proposal, and a remote machine's events reach
-the journal as events alone, named by their origin node. The whole surface
-reads your own `dw` and runs your own model; nothing new leaves the machine.
+## The Desk across surfaces
 
-## The desk across surfaces
+Each desk concept (Meeting, Artifact, Note, recipe, knowledge base, directory,
+chain, workflow, profile) is a primitive under one contract. See
+[Desk object model](DESK_OBJECT_MODEL.md) and [Desk architecture](DESK_ARCHITECTURE.md).
+The hub owns the canonical store. The iPad and the web desk are authoring
+ports.
 
-The desk is one convention rendered three times. Every desk concept
-(meeting, artifact, note, recipe, knowledge base, directory, chain,
-workflow, profile) is a primitive under a single documented contract
-([the Primitive Framework](../pm/roadmap/holdspeak-mobile/contracts/THE_PRIMITIVE_FRAMEWORK.md):
-one canonical table of kinds, wire shapes, and per-surface parity), and
-each surface derives its rendering from that contract rather than keeping
-its own model. The desktop hub owns the canonical store; the iPad and the
-web desk are authoring ports onto it.
+Sync keeps four classes apart:
 
-On the web desk the world layer speaks the Workbench grammar (Phase
-105, law in [DESK_GRAMMAR.md](internal/DESK_GRAMMAR.md)): every
-primitive renders as a working icon in one uniform cell (64px pixel
-art 1:1, a real on-disk state-image set of rest/`_sel`/`_stale`, and
-badges fed only by named live fields) and composes by direct manipulation
-through a declared drop matrix (`web/src/desk/dropMatrix.ts`).
-Directories are drawers that open into remembering windows
-(icons/list views persisted per zone); every object answers one
-contract-derived Info card (`infoContract.ts`, properties only where
-a real update path exists); and desk verbs live in one registry
-(`verbRegistry.ts`) rendered by both the menu bar and the search
-shelf. The verb registry's wire face is deliberately deferred to the
-kernel's userland dispatch
-([PLAN_KERNEL_OPERATION_BROKER.md](internal/PLAN_KERNEL_OPERATION_BROKER.md)).
-
-Not everything on a desk is the same kind of data, and the sync model
-keeps four classes apart:
-
-- **Content** (meetings, artifacts): the canonical record; syncs.
-- **Organization** (directories, knowledge bases, membership): which
-  object lives in which container is shared truth; it syncs, and the hub
-  is canonical.
+- **Content** (Meetings, Artifacts): the canonical record. It syncs.
+- **Organization** (directories, knowledge bases, membership): shared truth.
+  It syncs. The hub is canonical.
 - **Capability** (recipes, chains, workflows, runtime profiles): the
-  definitions are portable and sync, so a workflow authored on the iPad
-  runs on the hub. Models are the exception: only a small **manifest**
-  syncs per node (its id, node, name, capabilities), so every surface can
-  say which model "run it on your desktop" would actually use. The model
-  binary never rides the wire, and the schema, the Swift wire test, and a
-  hub route test each assert that independently.
-- **Layout** (where a card sits, how it is arranged): per-device
-  ergonomics; never syncs.
+  definitions sync. A workflow made on the iPad runs on the hub. For models,
+  only a small manifest syncs. The model binary never moves.
+- **Layout** (where a card sits): per-device. It never syncs.
 
 ```mermaid
 flowchart LR
@@ -1195,45 +531,51 @@ flowchart LR
     DB[("SQLite<br/>(db/*)")]
     SY["Sync routes<br/>(web/routes/sync.py)"]
   end
-  IPAD["iPad desk<br/>(DeskDioramaStage)"]
+  IPAD["iPad desk"]
   WEBD["Web desk<br/>(web/src/desk/)"]
-  IPAD <-->|"content, organization, capability,<br/>model manifests (never binaries)"| SY
-  WEBD <-->|"the same primitive routes"| SY
+  IPAD <-->|"content, organization, capability, model manifests"| SY
+  WEBD <-->|"primitive routes"| SY
   SY <--> DB
-  IPAD -. "layout stays on the iPad" .- IPAD
-  WEBD -. "layout stays in the browser" .- WEBD
 ```
 
-The simplest capability needs no authoring at all. On any desk you can
-rope a few objects together and ask the AI one thing about exactly that
-pile: the run is grounded in the canonical record (the hub or the device
-reads each roped object's real content), nothing is stored unless you
-keep the answer, and a kept answer becomes an artifact whose lineage
-names every object it read plus the exact instruction. Both surfaces
-mint and read one provenance shape, so a card kept on the iPad shows the
-same lineage on the web and the other way round. The printed card's
-badge states where that run went (the model, and the host for an
-endpoint run), resolved per run rather than from the app default.
+A run over a few roped objects is grounded in the canonical record. Nothing is
+stored unless you keep the answer. A kept answer becomes an Artifact whose
+lineage names every object it read and the exact instruction. The badge on the
+card names where the run went.
 
-The desk's mission-control conveyor is a read path with one deliberate
-shape: the hub shells each mapped repository's own `dw` CLI for the
-three documents the Delivery Workbench contract allows a client (state
-feed, session correlation, event log), asks the operator's own `gh` for
-open pull requests and their check rollups, and relays all of it typed
-and byte-honest (`missioncontrol_bridge.py` behind
-`/api/missioncontrol/*`, every belt read GET-only under a fitness
-test). When a read observes a repository's state tree change, the hub
-broadcasts a `scope:"belt"` frame on the one `/ws` bus, so any surface
-can move its belt without private polling. Evidence files open through
-the same CLI-resolved paths, contained to each repository's
-`pm/roadmap` tree.
+The mission-control belt is a read path. The hub runs each mapped repository's
+own `dw` command for the documents the Delivery Workbench contract allows. It
+asks your own `gh` for open pull requests. It relays the result typed
+(`holdspeak/missioncontrol_bridge.py`, routes under `/api/missioncontrol/`).
+When a read sees the state tree change, the hub sends a `scope:"belt"` frame on
+the one `/ws` bus.
+
+## Storage
+
+On every open, `reconcile_schema` (`holdspeak/db/reconcile.py`) brings the
+database to the shape in `SCHEMA_SQL` (`holdspeak/db/schema.py`).
+
+- It creates missing tables, indexes and triggers.
+- It adds missing columns with `ALTER TABLE ADD COLUMN`.
+- If it changes a populated database, it first writes a timestamped backup.
+- It then runs the idempotent data backfills.
+- It is additive. It never drops a table or column and never deletes a row.
+- There is no version gate. A database stamped with a newer version opens
+  normally. The `schema_version` table is informational.
+- SQLite cannot widen a CHECK constraint on an existing column. The reconcile
+  does not try.
+
+Back up with `holdspeak backup`. Restore with `holdspeak restore`. See
+[Storage and migrations](STORAGE_AND_MIGRATIONS.md). The iPad keeps its own
+SQLite store (`apple/Sources/Providers/Storage/SQLiteStorage.swift`). It
+refuses a database newer than the build and backs up an older one before it
+migrates.
 
 ## The trust boundary
 
-Everything inside the box runs on your machine. Every arrow leaving it is a
-crossing you opened, with the gate on it named. This mirrors the egress
-table in [`SECURITY.md`](SECURITY.md); if the two ever disagree, SECURITY is
-the source of truth.
+Everything inside the box runs on your machine. Every arrow that leaves it is a
+crossing you opened. The gate on each crossing is named. This diagram mirrors
+the egress table in [Security](SECURITY.md). If they disagree, Security wins.
 
 ```mermaid
 flowchart LR
@@ -1241,18 +583,18 @@ flowchart LR
     RT["HoldSpeak runtime"]
     WH["Whisper, local"]
     DB[("SQLite")]
-    LL["LLM, when local<br/>(GGUF / MLX)"]
+    LL["LLM, when local<br/>(GGUF, MLX)"]
   end
-  RT -->|"loopback by default; token required off-loopback"| WEB(["Browser and API clients"])
-  RT -->|"admitted attempt when Runs on names an off-machine endpoint; selected model input"| CLOUD(["Remote model endpoint"])
+  RT -->|"loopback by default; token required off loopback"| WEB(["Browser and API clients"])
+  RT -->|"admitted attempt when Runs on names an off-machine endpoint"| CLOUD(["Remote model endpoint"])
   RT -->|"paired node; admitted signed offer; prompt and result"| NODE(["Mesh worker you named"])
   RT -->|"owner channel.send; hooks.slack.com:443"| SK(["Slack webhook"])
-  RT -->|"approved proposal only; to the one configured endpoint"| WHK(["Companion webhook<br/>(Discord, Zapier, any URL you set)"])
-  RT -->|"approved proposal only; via your own gh"| GH(["GitHub issue create"])
+  RT -->|"approved proposal only; the one configured endpoint"| WHK(["Companion webhook"])
+  RT -->|"approved proposal only; your own gh"| GH(["GitHub issue create"])
   RT -->|"opt-in pack; entity IDs via your own CLIs"| CLI(["gh, jira, to their services"])
   RT -->|"opt-in; queue stats only, no transcript"| OPS(["Ops alert webhook"])
-  RT -->|"per-source bounded ICS fetch; no credentials, no redirects"| ICS(["HTTPS calendar sources you configured"])
-  RT -->|"one-time inbound fetch, about 7 MB"| WM(["Wake models, GitHub releases"])
-  DEVCE(["Paired device, same LAN, PSK"]) -->|"audio in, status out"| RT
-  IPAD(["iPad app, same LAN / Tailscale, Bearer token"]) -->|"meeting / dictation / proposal route calls"| RT
+  RT -->|"per-source bounded ICS fetch; no credentials, no redirects"| ICS(["HTTPS calendar sources you set"])
+  RT -->|"one-time inbound fetch"| WM(["Wake models, GitHub releases"])
+  DEVCE(["Paired device, same LAN"]) -->|"audio in, status out"| RT
+  IPAD(["iPad app, LAN or Tailscale, Bearer token"]) -->|"route calls"| RT
 ```

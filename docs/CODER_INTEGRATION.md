@@ -1,118 +1,115 @@
 # Coder integration
 
-Source audit at `675401a857b85336d4acaa8c65383dfc9636e4c8`. “Coder” means a
-live Claude or Codex session exposed through hooks and a tmux-backed pane. It is
-different from an authored Agent Thread. The hub observes session records and
-can send a bounded, audited reply after the owner chooses the target.
+A coder is a live Claude Code or Codex session that reports to HoldSpeak
+through [agent hooks](AGENT_HOOK_INSTALL.md) and runs in a tmux pane. A
+coder is not an Agent. An Agent is a persona that you author.
 
-## Capability inventory
+The hub observes coder sessions. After you choose a target, it can send
+one bounded, audited reply to that pane. For the steps in the Desk, see
+[Steer a session from the Desk](USER_GUIDE.md#steer-a-session-from-the-desk).
 
-| Capability | Concrete surface | State in source |
+## Routes
+
+| Action | Route | Behavior |
 |---|---|---|
-| observe sessions | `GET /api/coders/status`, `GET /api/coders/sessions` (`web.routes.system.coders`) | Returns current sessions, waiting state, age and target identity; no transcript claim beyond bounded peek |
-| select/dismiss/pin a waiting target | `POST /api/coders/select`, `POST /api/coders/dismiss`, `POST /api/coders/pin` | Local companion board state; selection does not itself send input |
-| clear stale sessions | `POST /api/coders/clear-stale` | Removes records past the requested age; route validates a non-negative integer |
-| reply to a coder | `POST /api/coders/{key}/steer`, `POST /api/coders/relay/{node}/steer` | Sends typed text to one verified pane when the delivery posture permits it |
-| draft and keep a reply | `POST /api/coders/{key}/keep-note` | Creates a durable Note containing the draft and session identity; keeping is separate from delivery |
-| inspect pane output | `GET /api/coders/{key}/peek`, `GET /api/coders/relay/{node}/peek` | Returns ANSI-stripped, bounded lines plus a content hash; same hash returns `not_modified` |
-| arm/disarm bounded steering | `POST /api/coders/{key}/arm`, `POST /api/coders/{key}/disarm`, `POST /api/coders/relay/{node}/arm`, `POST /api/coders/relay/{node}/disarm` | Creates or revokes a short-lived scoped grant; pane identity and generation are checked |
-| send control keys | `POST /api/coders/{key}/keys`, `POST /api/coders/relay/{node}/keys` | Uses named keys and the same grant/pane checks |
-| kill a pane/session | `POST /api/coders/{key}/kill` | Explicit control effect; pane/session scope is recorded and grant is dropped |
-| spawn/rename a pane | `POST /api/coders/factory/spawn`, `POST /api/coders/factory/rename` | Validates safe names, runs tmux through the factory audit seam |
-| read steering audit | `GET /api/coders/steering/audit` | Bounded, filterable audit rows; the MCP sidecar exposes read-only `coder.list`, `coder.get`, `coder.audit` |
+| Observe sessions | `GET /api/coders/status`, `GET /api/coders/sessions` | Current sessions, waiting state, age and target |
+| Select, dismiss or pin a waiting session | `POST /api/coders/select`, `POST /api/coders/dismiss`, `POST /api/coders/pin` | Desk state only. Selection sends no input. |
+| Clear stale sessions | `POST /api/coders/clear-stale` | Removes records older than the age you give |
+| Read pane output | `GET /api/coders/{key}/peek`, `GET /api/coders/relay/{node}/peek` | Bounded text without terminal control codes, plus a content hash |
+| Arm or disarm a pane | `POST /api/coders/{key}/arm`, `POST /api/coders/{key}/disarm`, and the same under `/api/coders/relay/{node}/` | Creates or removes a short-lived grant for one pane |
+| Send a reply | `POST /api/coders/{key}/steer`, `POST /api/coders/relay/{node}/steer` | Types text into one verified pane |
+| Send keys | `POST /api/coders/{key}/keys`, `POST /api/coders/relay/{node}/keys` | Sends named keys, such as `C-c`, `Escape` and `Enter` |
+| Keep a draft | `POST /api/coders/{key}/keep-note` | Saves the draft and the session identity as a Note. It sends nothing. |
+| End a session | `POST /api/coders/{key}/kill` | Ends the pane and drops its grant |
+| Start or rename a pane | `POST /api/coders/factory/spawn`, `POST /api/coders/factory/rename` | Checks the name, then runs tmux |
+| List panes, grants and nodes | `GET /api/coders/steering/panes`, `GET /api/coders/steering/grants`, `GET /api/coders/steering/nodes` | Read-only lists |
+| Read the audit | `GET /api/coders/steering/audit` | Bounded, filterable rows |
 
-The route roster and platform consumers are in [`api-surface.json`](api-surface.json).
-The service boundary is `holdspeak/services/coder_service.py::CoderService`
-(lines 14-172); tmux inspection and delivery are in
-`holdspeak/coder_steering.py::peek_pane`, `::arm`, `::deliver`, and
-`::deliver_keys` (lines 136-225, 331-476, 793-836). Factory effects are
-`holdspeak/coder_factory.py::spawn`, `::rename`, and `::kill` (lines 41-182).
+The MCP tools `coder.list`, `coder.get` and `coder.audit` read sessions and
+the audit. The sidecar has no tool that sends input. See the
+[MCP sidecar](MCP_SIDECAR.md). [`api-surface.json`](api-surface.json) lists
+every route.
 
-## Observation, draft, reply
+The code lives in `holdspeak/services/coder_service.py` (`CoderService`),
+`holdspeak/coder_steering.py` (peek, arm, deliver) and
+`holdspeak/coder_factory.py` (spawn, rename, kill).
 
-The observation path reads a session record and, only when asked, takes a
-bounded pane snapshot. `strip_ansi` removes terminal control sequences,
-`content_hash` identifies unchanged content, and `peek_pane` keeps a byte and
-line cap while retaining the tail. A dead pane is a typed `pane_gone` result;
-tmux absence is `tmux_absent`; subprocess timeout is `error`.
+## Observe, draft, reply
 
-The reply path resolves `agent:session` to one pane identity and expected
-generation. `CoderService.reply` calls the steering delivery seam; it does not
-send arbitrary shell commands. A normal reply records the text hash, byte
-count, target pane, submit flag and operation policy. A no-submit draft can be
-kept as a Note and edited again. Only an explicit Send/Steer commits process
-input. A recycled or missing pane returns `pane_mismatch` or
-`pane_identity_required` and types nothing.
+Observation reads the session record. It reads the pane only when you ask.
+A peek removes terminal control codes, keeps the tail within a byte and
+line cap, and returns a content hash. A request that sends the same hash
+gets `not_modified`, so polling stays cheap.
+
+A reply names a session as `agent:session`. The hub resolves it to one
+pane identity and a generation. It never sends a shell command. Each reply
+records the text hash, byte count, target pane, submit flag and operation
+policy. A draft with no submit can be kept as a Note and edited again.
+Only an explicit send puts input in the pane.
+
+A recycled or missing pane returns `pane_mismatch` or
+`pane_identity_required`, and the hub types nothing.
 
 ```mermaid
 sequenceDiagram
     participant C as Claude/Codex hook
     participant H as Hub
-    participant D as Desk/companion
+    participant D as Desk
     participant P as Verified tmux pane
-    C->>H: session start / waiting event
-    H-->>D: coder status and waiting transition
+    C->>H: session start or waiting event
+    H-->>D: status and waiting change
     D->>H: GET peek (optional, hash gated)
     H-->>D: bounded lines or not_modified
-    D->>H: draft reply / keep-note
-    D->>H: arm or direct owner Send
-    H->>H: resolve pane id + generation + authority
+    D->>H: draft reply or keep-note
+    D->>H: arm, then send
+    H->>H: check pane id, generation and authority
     alt target valid
-        H->>P: write text and submit according to operation
+        H->>P: write text, submit as asked
         P-->>H: transport result
-    else stale/offline target
-        H-->>D: typed refusal and audit without keystrokes
+    else stale or offline target
+        H-->>D: typed refusal and audit, no keystrokes
     end
 ```
 
-`tests/unit/test_coder_steering.py` asserts peek hash gating, ANSI removal,
-caps, dead-pane and timeout states. `tests/unit/test_coder_steering_deliver.py`
-asserts unarmed refusal, exact text delivery, no-submit, recycled-pane refusal,
-transport errors, grounding on the audit row and posture changes. The live
-integration test `tests/integration/test_coder_steering_live.py` is evidence of
-a test design that can exercise a real pane, but it was not run for this audit.
+## Authority
 
-## Gate relationship
+Watching is free. Sending needs authority, and every attempt writes an
+audit row.
 
-Coder steering and the Gate solve different problems. Steering is the owner's
-deliberate reply/control of a selected process. Gate is a PreToolUse hold for a
-risky tool call before that process runs it. A coder session may be visible
-without Gate being armed; a waiting Gate proposal may be visible without a
-reply being sent to the coder.
+- A grant covers one pane. Its length is 10 seconds to 1 hour. The default
+  is 15 minutes. The Control posture sets the length that the Desk
+  requests.
+- In YOLO, a registered session needs no arm step. The hub still checks
+  the pane identity before each key.
+- A pane mismatch or a kill revokes the grant. A posture change or a hub
+  restart clears all grants.
+- A relay to another machine uses that machine's own posture, grant and
+  audit.
 
-The agent hook never sends full tool arguments. It posts `args_sha256` and a
-first-120-character canonical JSON head. The hub stores the same redacted
-shape, then the owner decides the held proposal. See [`GATE.md`](GATE.md).
+## Coder steering and the Gate
 
-## GitHub observation and restrictions
+Steering and the Gate solve different problems. Steering is your deliberate
+reply to a selected session. The Gate holds a risky tool call before the
+agent runs it. A session can show on the Desk with the Gate off. A held
+Gate proposal can wait with no reply sent.
 
-The Coder/GitHub path is deliberately observation and proposal oriented:
+The Gate hook never sends full tool arguments. It posts `args_sha256` and a
+canonical head of 120 characters. See [Gate](GATE.md).
 
-- `gh pr view`, `gh pr list`, `gh issue view`, and `gh run list` are the
-  read-only prefixes in `holdspeak/connector_packs/github_cli.py::ALLOWED_SUBCOMMANDS`
-  (lines 27-40). The connector pack rejects writes such as `pr merge`,
-  `issue close`, and `auth login` before the subprocess.
-- A matched PR can be observed, its CI state retained, and a Coder session
-  entered for the matching worktree. A generated GitHub comment is a proposal
-  that needs its own approval and receipt through the actuator path.
-- The actuator packs `github_issue_actuator` and `github_pr_actuator` are
-  opt-in. Their tests explicitly reject non-allowlisted argv. Merge, close and
-  force-push are not exposed by this workflow.
+## Result states
 
-This source audit does not establish that `gh` is installed, authenticated, or
-configured for a repository. It also does not establish a released Coder
-package or owner observation.
+| State | Meaning |
+|---|---|
+| `live` | The peek returned lines and a hash. |
+| `not_modified` | The pane has not changed since your hash. |
+| `pane_gone` | The pane no longer exists. |
+| `tmux_absent` | tmux is not available. |
+| `unarmed` | No live grant covers this pane. |
+| `delivered` | The text reached the pane. |
+| `pane_mismatch` | The pane is not the one that you armed. The hub revoked the grant. |
+| `pane_identity_required` | The request has no pane identity. |
+| `empty_text` | The reply had no text. |
+| `transport_error` | tmux failed to deliver. |
 
-## Failure and recovery
-
-The observable states are `awaiting`, `live`, `not_modified`, `pane_gone`,
-`tmux_absent`, `timeout`, `unarmed`, `delivered`, `pane_mismatch`,
-`transport_error`, `empty_text`, and `pane_identity_required`. Each is data
-for the Desk and steering audit. The steering grant has TTL and is revoked on
-pane mismatch or kill. A Coder record can be stale and explicitly cleared;
-stale data does not become a live target.
-
-No Coder operation writes to the owner's real machine during documentation
-work. A future product walk must prove the waiting card, draft/reply split,
-failure copy and 1440/393 surfaces before the capability can be called
-Tuesday-ready.
+A coder record can go stale. Clear it with `POST /api/coders/clear-stale`.
+A stale record never becomes a live target.

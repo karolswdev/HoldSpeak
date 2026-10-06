@@ -1,123 +1,128 @@
-# Relationship-aware memory
+# Memory
 
-Relationship-aware memory is a **read layer over HoldSpeak's durable work**.
-It is not a second notebook and it does not silently invent facts. A memory is
-created when HoldSpeak creates or updates a canonical object such as a Note,
-Meeting transcript, Decision, Artifact, Thread, Action, Project item,
-Workbench item/result, or Cadence loop.
+HoldSpeak memory is a read layer over your durable work.
+It is an index. It is not a second notebook, and it does not hold facts that its sources do not hold.
+HoldSpeak rebuilds each memory row from a source record, so a deleted source leaves no memory.
 
-## The lifecycle
+## What HoldSpeak remembers
 
-```text
-create or update durable work
-        |
-        +-- Note / Decision / Artifact ------------------+
-        |   SQLite trigger updates its FTS5 index        |
-        |                                                 |
-        +-- Meeting segment / Thread message ------------+--> lexical recall
-        |   content-synced FTS5 trigger updates index     |         |
-        |                                                 |         v
-        +-- Action / Project / Workbench / Cadence -------+   typed one-hop
-            searched in its canonical SQLite table       |   relationship pass
-                                                          |         |
-                                                          +---------+
-                                                                    v
-                                                bounded, hydrated source blocks
-                                                                    |
-                                  +---------------------------------+----------+
-                                  |                                 |          |
-                             Desk search                     model prompt   API/MCP
-```
+You do not save to memory. The normal work is the write path.
+When you keep a Note, record a Meeting, accept a Decision, keep an Artifact, or send a Thread message, that record becomes searchable.
 
-There is no separate “save to relationship memory” button. The existing
-authoring and capture flows are the write path:
+Memory covers these kinds:
 
-| What the user does | Durable source | How it becomes recallable |
+| Group | Kinds |
+| --- | --- |
+| Decisions | `decision`, `decision_record`, `desk_decision` |
+| Records | `artifact`, `meeting`, `note`, `thread` |
+| Work | `action`, `project_item`, `workbench_item`, `cadence` |
+| What you sent or prepared | `send`, `project_update`, `prep_brief`, `calendar_event` |
+| Other | `brief_item`, `dictation`, `steward_run`, `ask_answer` |
+
+A match on a Meeting segment or a Thread message returns the whole Meeting or Thread.
+
+Memory never reads raw People records, credentials, settings, kernel receipts, or unfiltered activity.
+It skips parked Meetings, drafts, and sensitive Thread parts.
+The correction memory of Dictation is a separate store.
+HoldSpeak redacts secrets such as tokens, keys, and card numbers before it indexes a text.
+
+The memory index lives in the HoldSpeak database.
+A sweep keeps it current. A missed sweep loses nothing, because the next sweep reads the source.
+
+## How a search works
+
+Several retrievers run for one query. Each hit carries one `retrieval_origin`: the first retriever that found it.
+
+| Origin | Search token | How it finds a hit |
 | --- | --- | --- |
-| Keeps or edits a Note | `notes` | SQLite triggers keep `notes_memory_fts` synchronized. |
-| Records/imports a Meeting | `meetings`, `segments` | Content-synced `segments_fts` indexes each transcript segment; recall returns the parent Meeting. |
-| Accepts/extracts a Decision | `decisions` | Linked, non-deleted rows are synchronized to `decisions_memory_fts`. |
-| Keeps an Artifact | `artifacts` | SQLite triggers keep `artifacts_memory_fts` synchronized. |
-| Sends a Thread message | `threads`, `thread_messages`, `thread_message_parts` | Content-synced `thread_messages_fts` indexes message text; recall returns the parent Thread. |
-| Creates follow-through or Project work | `action_items`, `project_items` | A bounded canonical-table pass applies the same query terms and ranking contract. |
-| Runs a Workbench or Cadence loop | `workbench_items`, `cadence_loops` | The canonical-table pass searches the durable item, result, title, and summary fields. |
-| Starts HoldSpeak after an older database upgrade | the same canonical rows | Reconciliation rebuilds the three standalone memory indexes idempotently. |
+| `lexical` | KEYWORD | Full-text match on the record text. |
+| `vector` | MEANING | Match by meaning, with embeddings. It needs **Meaning search** on. |
+| `time` | TIME | A time phrase in the question, such as "last week", sets a date range. |
+| `entity` | NAME | A person, project, or other name that HoldSpeak read from your records. |
+| `relationship` | LINK | One step over a saved link, such as Meeting to Decision. |
+| `observation` | none | A belief that HoldSpeak built from facts. See below. |
 
-By default these rows live in
-`~/.local/share/holdspeak/holdspeak.db`. Project membership and provenance
-edges stay in their existing canonical relationship tables; the search index
-does not become a second authority.
+HoldSpeak merges the result lists by rank.
+Each kind of record ranks on its own, so a long transcript cannot bury a short Decision.
+Ties go to the newer record.
 
-Workbench also has an older, deliberately separate private run-memory file at
-`~/.holdspeak/workbenches/<workbench-id>/memory.jsonl`. A completed Workbench
-run may append one short advisory observation there, and the next run reads a
-bounded recent window. That writeback is not the Desk-wide relationship-aware
-index and never authorizes an action.
+The link step starts from at most 32 keyword matches.
+It adds at most 2 neighbors for each match and at most 64 in total.
+It follows only links that HoldSpeak already saved. It never infers a link from similar words.
 
-## How recall works
+A Project search checks every hit against the Project before it returns the hit.
 
-HoldSpeak memory retrieves evidence in two bounded, local passes:
+### Meaning search
 
-1. SQLite FTS recalls lexical matches independently from extracted Decisions,
-   Artifacts, Meeting transcript segments, Notes, and Thread message parts. A
-   bounded canonical-store pass applies the same ranking contract to durable
-   Decision Records, authored Decisions, Actions, Project items, Workbench
-   items/results, and Cadence loops. A child match returns its coherent parent
-   Meeting or Thread instead of an isolated row.
-2. Up to 32 lexical parent objects seed one authoritative one-hop traversal.
-   The traversal follows only relationships HoldSpeak already persisted:
-   Meeting to Artifact, Meeting to Decision, Decision to source, supersession, Decision
-   Record sources and affected work, Action source Meetings/commitments,
-   Workbench grounding/results, Cadence evidence, and frozen Thread references.
-   It can add at most two neighbours per lexical seed and 64 related parents
-   overall, so one highly connected Meeting cannot crowd every other direct
-   match out of a bounded model context.
+Meaning search is off until the owner turns it on.
+Open the **Models** window and use the **Meaning search** row.
+The row shows OFF, DOWNLOADING, INDEXING, or ON.
+**Turn on** downloads a small embedding model. This is the only path that starts the download.
+The hub checks the file against a pinned hash.
+With Meaning search off, search uses keywords, time, names, and links.
+New items can take a short time to become searchable by meaning.
 
-Model prompts are reduced to at most 24 unique lexical terms while retaining
-terms from both the beginning and end of long prompts. This bounds SQLite FTS
-grammar and canonical-store scans without dropping a trailing user question.
+### Facts, beliefs, and pages
 
-There is no model call, embedding request, network access, entity extraction, or
-inferred edge in either pass. Project-scoped search checks every lexical and
-related result against Project membership, Meeting membership, or a Thread's
-frozen references before returning it.
+Background jobs can turn your records into more memory:
 
-Each hit says how it was found:
+- **Facts and names.** The `memory.extract` capability reads admitted text and writes facts and the names in them.
+- **Observations.** The `memory.consolidate` capability folds facts into beliefs. A belief keeps its evidence and its history. A later fact can refine, supersede, or contradict a belief.
+- **Pages.** The `memory.page` capability writes standing answers. A Project has four: what we decided, what is open and who owes it, risks and disputes, and what changed this week. The desk has two: what I owe, and what changed this week.
 
-- `retrieval_origin: lexical` means its own child or body matched the query.
-- `retrieval_origin: relationship` means a lexical seed reached it over a
-  durable edge; `related_to`, `relationship`, and `graph_score` name that edge.
+Every page sentence cites its sources.
+HoldSpeak cuts a sentence that has no source or an unsupported word.
+HoldSpeak checks the sources again on each read.
+When you edit or delete a source, the sentence that cites it disappears at once.
+A page read makes no model call.
 
-FTS5 BM25 scores are comparable only within one corpus, so HoldSpeak
-normalizes and ranks each object kind independently and then interleaves rank
-tiers. A long transcript therefore cannot bury every short Decision merely
-because it contains more matching words. Ties are deterministic and prefer
-newer work before the stable kind/ref ordering.
+These jobs run only when a model is assigned to the capability, or when a local default exists.
+With no model, nothing runs and nothing is written.
+Set the models in the **Models** window.
 
-The relationship pass is intentionally one hop. It examines at most 32
-lexical parents, adds at most two neighbours per seed, and returns at most 64
-related parents. Prompt hydration then admits at most 16 source blocks. These
-are hard context controls, not relevance suggestions from a model.
+## Where you see memory
 
-## How it is recalled, suggested, and plugged in
+| Place | What it shows |
+| --- | --- |
+| **Search** (`⌘K`) | Two-line hits: the matching passage, a token that names the retriever, and the day. |
+| **Desk memory** window (**Go** menu) | A recall over the whole Desk or one Project. See below. |
+| Project Room | Standing pages for that Project. |
+| Brief | Standing pages for the desk. |
+| Model prompts | Source blocks that HoldSpeak adds to a request. See below. |
+| MCP and HTTP | The same data for other clients. |
 
-“Suggested” currently means **query-relevant evidence selected for the work in
-front of the user**. HoldSpeak does not yet run a background recommendation
-engine or display unsolicited “you may want this memory” cards.
+## The Desk memory recall
 
-There are two recall modes:
+A recall returns sections, not one flat list.
+A superseded or disputed Decision never looks current.
 
-1. **Visible recall.** Desk Memory calls `/api/memory/search`; Project Room
-   sends the same call with `project_id`. Results show their object kind, match
-   snippet, and a `Related · …` chip when the second pass supplied the result.
-   `memory.search` exposes the same contract to MCP clients.
-2. **Automatic model grounding.** Immediately before admission, the current
-   input is used as the query. Matching sources are hydrated from their
-   canonical records into blocks with a title and stable `[REF: kind:id]`.
-   The exact bounded blocks and their selection receipt are placed in the
-   admitted payload; providers do not perform retrieval themselves.
+`filter` is `all`, `decisions`, `commitments`, `briefs`, or `meetings`.
+The response has these parts:
 
-An automatic grounding receipt carries:
+- `current`, `superseded`, and `disputed`: Decision records with rationale, source moment, and Project. The newest current Decision comes first.
+- `owed`: open commitments with owner and due date, or a typed unknown such as `OWNER · UNKNOWN`.
+- `meetings`, `briefs`, and `also`: other matches.
+- `beliefs`: observations, under the `all` filter only.
+- `remembered`: one count.
+
+With no query, the window shows the newest memory of the desk.
+The window keeps your query and filter on this device.
+
+These verbs write through the normal services:
+
+- **Carry into brief** calls `POST /api/decision-records/{id}/carry`. It records the current Decision, by reference, for the Project's next preparation. A repeat press has no further effect.
+- **Name an owner**, **Set a date**, and **Mark done** call `POST /api/follow-through/complete` with the verb `delegate`, `due`, or `done`.
+- `POST /api/decision-records/{id}/supersede` and `/dispute` seal a record.
+
+Only **Mark done** and `dismiss` close a commitment. Each leaves a receipt.
+A closed commitment refuses `delegate` and `due` until you reopen it.
+
+## Grounding model requests
+
+Before HoldSpeak sends a request to a model, it can add memory.
+The current input is the query.
+HoldSpeak loads at most 16 source blocks. Each block has a title and a `[REF: kind:id]` tag.
+The request records the receipt:
 
 ```json
 {
@@ -128,36 +133,10 @@ An automatic grounding receipt carries:
 }
 ```
 
-Explicit attachments remain authoritative. A Project attachment performs a
-Project-scoped relevance search and does not add a second global pass. Direct
-Ask/Thread calls with other explicit references hydrate those references; an
-unattached call uses automatic ecosystem recall. Thought refinement is the
-intentional additive case: its already-frozen explicit context is joined with
-automatic memory before reservation, and the coordinator and dispatcher hash
-the same bytes. Threads also exclude their current Thread from automatic
-self-recall and freeze recalled sources onto the user message so later edits to
-the source cannot silently change that admitted turn.
-
-## Ecosystem boundary
-
-The same retrieval and hydration contract is used at each model-context
-boundary, before the request is admitted and frozen:
-
-| Surface | Integration |
-| --- | --- |
-| Ask and Thought refinement | An unattached Ask receives query-relevant memory. Thought refinement additionally joins memory to its already-frozen context; routed Thoughts reserve and dispatch the exact same bytes. |
-| Threads and Agent chat | An unattached turn freezes recalled sources on the user message and excludes current-thread self-recall. Explicitly attached turns freeze the exact selected sources instead. |
-| Agent/Recipe runs | Unattached runs prefix memory to the rendered input and record it in grounding metadata; explicitly grounded chats preserve the selected set. |
-| Sequences and Workflows | Every model-bearing step/node retrieves independently from its current input. |
-| Workbenches | An unattached item retrieves from its title/body. Explicit item grounding remains exact, while private Workbench run memory joins separately. |
-| Coder steering | An ungrounded steer retrieves source blocks; an explicitly grounded steer preserves its selected sources. Previewed and executed bytes remain identical. |
-| HTTP, MCP, and Thread tools | `/api/memory/search` and `memory.search` expose the identical hit contract. |
-| Web Desk and Project Room | The unscoped window searches the whole Desk; a Project scope applies the Project membership fence. |
-
-The injected text is visibly delimited (`[MEMORY]`, `[GROUNDING]`, or
-source-fenced blocks depending on the consumer), and the payload records the
-source refs, selection mode, matched count, and overflow count. This makes
-recall inspectable even when it happened automatically.
+Explicit attachments win. A request with attached records uses those records and adds no automatic recall.
+A Thread leaves out its own messages and freezes the recalled sources on the user message.
+Ask, Thread, Agent, Sequence, Workflow, Workbench, and Coder steering all use this contract.
+A provider never searches memory itself.
 
 ## Search contracts
 
@@ -172,116 +151,34 @@ MCP:
 ```json
 {
   "name": "memory.search",
-  "arguments": {
-    "query": "rollback",
-    "kind": "decision,meeting",
-    "project_id": "orion",
-    "limit": 20
-  }
+  "arguments": { "query": "rollback", "kind": "decision,meeting", "project_id": "orion", "limit": 20 }
 }
 ```
 
-Both accept `query`, optional comma-separated `kind`, `project_id`, ISO-8601
-`time_from`/`time_to`, `limit` (1 to 500), and `offset`. Valid kinds are
-`decision`, `decision_record`, `desk_decision`, `artifact`, `meeting`, `note`,
-`thread`, `action`, `project_item`, `workbench_item`, and `cadence`.
+Both take `query`, a comma-separated `kind`, `project_id`, ISO-8601 `time_from` and `time_to`, `limit` (1 to 500), and `offset`.
+Other routes:
 
-## Recall on the Desk memory face
+| Route or tool | Use |
+| --- | --- |
+| `GET /api/memory/recall` | The Desk memory recall. Takes `query`, `filter`, `limit`, and `recent`. |
+| `GET /api/memory/pages` | Standing pages. Takes `scope` (`desk` or `project`) and `project_id`. |
+| `memory.observations` | Beliefs with evidence and history. |
+| `memory.page` | One standing page. |
+| `GET /api/memory/meaning-search` | Meaning search state. |
 
-The Desk memory window's search is a **recall**: one query over
-the desk comes back as sections, not a flat list, so the current meaning of
-a decision is never confused with an earlier one.
+See [API surface](API_SURFACE.md) and [MCP sidecar](MCP_SIDECAR.md) for exact fields.
 
-```text
-GET /api/memory/recall?query=freeze+window&filter=all
-```
+## What memory does not do
 
-`filter` is one of `all`, `decisions`, `commitments`, `briefs`, `meetings`.
-The response carries `current`, `superseded` and `disputed` decision records
-(each with its rationale, its three axes, its source moment such as
-`MTG 09-07 · 11:31`, its Project, and whether it is already carried),
-`owed` commitments (owner and due date, or `OWNER · UNKNOWN` /
-`DUE · UNKNOWN` typed, and the one lawful next action: `name_owner`,
-`set_date`, or `mark_done` only when both are known), `meetings`, `briefs`,
-`also` (every other memory kind, relationship hits included), and one count,
-`remembered`. A record's section is derived from its lifecycle alone: a
-superseded or disputed record is always discoverable and never presented as
-current. When more than one current decision matches, they are ordered
-newest decided first and the first one is the accented card.
+- It does not call a model to rank results.
+- It does not write a summary back after every Ask or Thread.
+- It does not search People records, secrets, settings, or kernel receipts.
+- It does not notify you about a possibly relevant memory.
+- It does not bypass Project membership, permissions, egress, or receipt rules.
 
-The face's verbs write through the existing seams:
+## Design sources
 
-- `Carry into brief` -> `POST /api/decision-records/{id}/carry` records the
-  decision **by reference** for its Project's next preparation
-  (`preparation_carries`), one mark per current record: only the current
-  decision can be carried, a repeated press replays the mark, and a carried
-  record that is superseded before the brief is built is handed over as its
-  successor, which then reads as carried.
-- `Name an owner` / `Set a date` -> `POST /api/follow-through/complete` with
-  verb `delegate` or `due`; neither changes the commitment's status.
-- `Mark done` -> the same route with verb `done`: `Mark done` or `Dismiss`
-  are the only acts that close a commitment, and each leaves a kernel
-  receipt (`commitment.completed`, `commitment.dismissed`; `reopen` leaves
-  `commitment.reopened`). Assigning an owner or linking a pull request or
-  artifact never completes anything, and a closed commitment refuses
-  `delegate` and `due` (`commitment_closed`) until it is reopened. `due`
-  takes a calendar day (`YYYY-MM-DD`; `YYYYMMDD` is normalised); a past
-  day is lawful and reads as overdue.
-- `POST /api/decision-records/{id}/supersede` and `/dispute` seal a record
-  (`superseded` names its successor; `disputed` carries a reason).
-
-The query and its filter are kept per device and resume after a restart.
-
-## What this feature does not do
-
-- It does not create embeddings or call a model to rank results.
-- It does not infer people, topics, or relationships from matching language.
-- It does not write a synthesized “memory” back after every Ask or Thread.
-- It does not search raw People records, secrets, settings, kernel receipts,
-  unfiltered activity, or Dictation correction memory.
-- It does not proactively notify the user about a possibly relevant memory.
-- It does not bypass Project membership, read permissions, admission, egress,
-  or receipt boundaries.
-
-## Product evidence
-
-The captures below come from the assembled HoldSpeak web runtime with a
-temporary local database. The first proves owner-facing discovery and
-Desk-wide recall; the second proves the same surface under a Project membership
-fence. `Related · …` chips are relationship-pass results rather than lexical
-matches.
-
-![Desk Memory launcher](evidence/relationship-aware-memory/desk-memory-launcher.png)
-
-![Desk Memory relationship-aware results](evidence/relationship-aware-memory/desk-memory-global.png)
-
-![Desk Memory result detail](evidence/relationship-aware-memory/desk-memory-results.png)
-
-![Project-scoped relationship-aware results](evidence/relationship-aware-memory/project-memory-scoped.png)
-
-![Project-scoped result detail](evidence/relationship-aware-memory/project-memory-results.png)
-
-Raw People records, credentials, settings, kernel receipts, and unfiltered
-activity are intentionally not generic memory sources. Dictation's correction
-memory also remains a separate privacy/typing subsystem; Dictation-originated
-Notes, Meetings, Actions, and other durable outputs become searchable through
-their canonical object types. These are security boundaries, not missing
-integration claims.
-
-## Design provenance
-
-This is an original HoldSpeak adaptation of two Apache-2.0 RAGFlow retrieval
-ideas: parent/child recall and the zero-LLM compiled-product expansion that
-searches seeds, follows adjacent graph relations, and loads the neighbours'
-source passages. HoldSpeak uses its canonical object graph in place of
-RAGFlow's compiled entity rows.
-
-No RAGFlow source file was copied or modified, and this work has not been
-submitted to RAGFlow. It is a local HoldSpeak contribution implemented against
-HoldSpeak's own repositories, admission system, UI, and tests.
-
-- RAGFlow repository: <https://github.com/infiniflow/ragflow>
-- Compiled expansion reference inspected at commit
-  `2af732d6072f050ead758edaf23dd4ebfec5526a`:
-  <https://github.com/infiniflow/ragflow/blob/2af732d6072f050ead758edaf23dd4ebfec5526a/rag/advanced_rag/harness/tools/compiled_expansion.py>
-- RAGFlow license: <https://github.com/infiniflow/ragflow/blob/main/LICENSE>
+The link step adapts the parent and child recall of RAGFlow (Apache-2.0).
+The facts, beliefs, and pages adapt ideas from Hindsight (MIT).
+HoldSpeak copies no source code from either project.
+The design is in `docs/internal/MEMORY-DESIGN.md`.

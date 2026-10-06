@@ -1,123 +1,140 @@
 # People security boundary
 
-The People capability holds third-party relationship material. It therefore has a
-different custody contract from HoldSpeak's normal, plaintext local database.
+The People capability holds third-party relationship material. It has a stricter
+custody contract than the normal plaintext HoldSpeak database.
 
-## Shipped boundary
+## What People does
 
-- **Manual and notes-only.** Relationships, 1:1 agenda/private prep, requests, and
-  explicit manager commitments are entered by the local owner. The calendar series
-  link and the owner alias are both deliberate owner gestures (encrypted, inside
-  the relationship payload); resolution is read-time only and the plaintext database
-  never stores a person reference. The 1:1 brief is computed in memory and never
-  persisted. The Monday Brief's per-person sections (`person_sections`) are composed
-  at the HTTP route and MCP adapter layer after the persisted brief service returns;
-  the `MondayBrief` dataclass and its `monday_briefs`/`monday_brief_items` tables
-  never carry person content. The `holdspeak://briefs/latest` MCP resource serves
-  the person-free dataclass by construction. The MCP adapter gates
-  `person_sections` on `access_mode()`: absent when the mode is `off`.
-  There is no People audio, transcript import, speaker identity binding, or
-  automatic extraction.
-- **Encrypted before persistence.** Sensitive values are serialized as canonical
-  UTF-8 JSON and encrypted with AES-256-GCM before SQLite receives them. AAD binds
-  ciphertext to the store format, random record ID, record kind, and key ID; every
-  write uses a fresh random 96-bit nonce.
-- **Native key custody.** The random 256-bit key is stored only in macOS Keychain or
-  Linux Secret Service. A production provider is accepted only when its backend is
-  explicitly allow-listed. Missing, locked, mismatched, or unavailable credentials
-  produce a named locked/unavailable state (never a weaker fallback).
-- **Private sidecar.** The People directory is owner-only. Random IDs, fixed enums,
-  timestamps, nonce, key ID, and ciphertext are the only SQLite-visible record
-  fields. Names, relationship topology, note text, dates, visibility, and source
-  meaning remain inside ciphertext.
-- **In-memory Follow-through projection.** Accepted manager commitments are
-  decrypted only for the authenticated board response. They are not copied to
-  `action_items`, Cadence, the main database, or another lifecycle authority.
+- **Manual and notes-only.** You enter relationships, 1:1 agenda and private prep,
+  requests, and your own manager commitments. HoldSpeak has no People audio,
+  transcript import, speaker identity binding, or automatic extraction.
+- **Aliases and calendar links.** The calendar series link and the owner alias are
+  your own deliberate acts. They are encrypted inside the relationship record.
+  Matching happens at read time. The plaintext database never stores a person
+  reference.
+- **Computed in memory.** The 1:1 brief is built in memory and never saved. The
+  Monday Brief person sections (`person_sections`) are built at the HTTP route and
+  the MCP adapter after the brief service returns. The `MondayBrief` dataclass and
+  its `monday_briefs` and `monday_brief_items` tables never hold person content.
+  The `holdspeak://briefs/latest` MCP resource serves the person-free dataclass.
+- **Follow-through.** HoldSpeak decrypts accepted manager commitments only for the
+  authenticated board response. It does not copy them to `action_items`, Cadence,
+  the main database, or any other lifecycle store.
 
-## MCP disclosure capability
+## How the data is protected
+
+- **Encrypted before it is saved.** HoldSpeak writes sensitive values as canonical
+  UTF-8 JSON and encrypts them with AES-256-GCM before SQLite sees them. The AAD
+  binds the ciphertext to the store format, a random record ID, the record kind,
+  and the key ID. Every write uses a fresh random 96-bit nonce.
+- **Native key custody.** The random 256-bit key lives only in macOS Keychain or
+  Linux Secret Service. HoldSpeak accepts a provider only if its backend is on an
+  allow-list (`holdspeak/people/keys.py`). A missing, locked, mismatched, or
+  unavailable credential gives a named locked or unavailable state. There is no
+  weaker fallback.
+- **Private store.** The People directory is owner-only. SQLite sees only random
+  IDs, fixed enums, timestamps, the nonce, the key ID, and ciphertext. Names,
+  relationship structure, note text, dates, visibility, and source meaning stay
+  inside the ciphertext.
+
+## MCP access
 
 People does not enter generic MCP primitives, Follow-through resources, or
-search. Direct People tools and resources default to `write` for the local
-owner process. Set `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` to reduce that access or
-`=off` to disable it before the stdio sidecar starts. This is a disclosure
-boundary: returned content leaves HoldSpeak process memory over stdio and the
-parent MCP client may retain or forward it.
+search. People tools and resources default to `write` for the local owner
+process. Set `HOLDSPEAK_MCP_PEOPLE_ACCESS` before the stdio sidecar starts:
 
-The adapter exposes relationship metadata plus only records whose
-encrypted visibility is `shared_intent`. Leader-private 1:1s, private prep, agenda,
-grounding notes, requests, and commitments are filtered before serialization; guessed private record
-IDs named-refuse. The `people.one_on_one.brief` tool gates on `_require_access`
-and filters encrypted items through `_mcp_readable`; its response carries a
-`policy` block naming the disclosure boundary. The default write mode can create
-shared-intent records and transition shared commitments, but cannot
-initialize/recover the store, archive/delete relationships, or invoke capture,
-inference, scoring, search, sync, export, or connectors. The repository's default
-`.mcp.json` sets no override and therefore uses the local-owner write default.
+- `read` reduces access.
+- `off` disables People over MCP. The adapter then leaves out `person_sections`.
 
-## Deliberately unavailable
+MCP is a disclosure boundary. Returned content leaves HoldSpeak memory over stdio,
+and the MCP client can keep or forward it.
 
-The first People delivery has no sync, sharing, export, backup/recovery, connector,
-generic primitive MCP access, global search, Ask/Memory grounding, recording, People-owned inference, scheduled brief,
-nudge, scoring, ranking, or employment recommendation path. `shared_intent` records
-an access intention; it does not mean another participant can view the item. The
-MCP adapter is the only shipped disclosure of that class in this delivery.
+The adapter returns relationship metadata and the records whose encrypted
+visibility is `shared_intent`. It filters out leader-private 1:1s, private prep,
+agenda, grounding notes, requests, and commitments before it serializes. A guessed
+private record ID is refused by name. `people.one_on_one.brief` checks access,
+filters encrypted items, and returns a `policy` block that names the disclosure
+boundary.
 
-The policy boundary refuses individual scoring/ranking; performance, pay,
-promotion, discipline, or termination recommendations; productivity/activity or
-presence proxies; sentiment, emotion, personality, health, burnout, loyalty, or
-flight-risk inference; automatic opportunity allocation; and cross-person
-comparison. Refusals expose stable reason codes without echoing content.
+The default `write` mode can create shared-intent records and move shared
+commitments between states. It cannot initialize or recover the store, archive or
+delete relationships, or run capture, inference, scoring, search, sync, export, or
+connectors. The repository `.mcp.json` sets no override, so it uses the default.
 
-## Key loss and recovery
+`people.grounding.get` assembles the shared-intent notes, open requests,
+commitments, and 1:1 evidence for an MCP client that you trust. It runs no
+inference, scoring, save, or model call. It returns its disclosure policy with the
+temporary bundle. If a client then starts an agent, that decision is the client's.
+HoldSpeak never grounds a model on its own.
 
-There is no recovery or automatic backup in this delivery. A copied People database
-remains encrypted and is unusable without its matching OS credential. Losing that
-credential can make People data permanently unreadable. HoldSpeak does not create a
-replacement key, plaintext recovery file, or silent reset. Rotation, encrypted
-backup, recovery preview, and destructive discard require a later independently
-reviewed design.
+`shared_intent` records an access intention. It does not mean that another person
+can see the item.
 
-## Observable surfaces
+## What People does not do
 
-People content must not enter:
+People has no sync, sharing, export, backup or recovery, connector, global search,
+Ask or Memory grounding, recording, People-owned inference, scheduled brief,
+nudge, scoring, ranking, or employment recommendation path.
 
-- `holdspeak.db`, its WAL/SHM files, or automatic migration backups;
-- generic FTS, Memory/Ask, sync inbox/outbox, or primitive serialization;
-- Cadence loops, evidence, next actions, nudges, audits, or Daily Brief storage;
-- kernel operation/receipt text, logs, exception details, or broadcasts;
-- meeting exports, files, Slack/webhook/GitHub connectors, or automatic remote/local
-  model grounding. An explicitly created Workbench item follows normal Workbench
-  placement and egress policy when the owner later runs it.
+The policy refuses these requests:
 
-Authorized `shared_intent` MCP responses are the explicit exception: they exist only
-in the sidecar's response memory/stdout and must never be observed into the plaintext
-main database, logs, receipts, resources outside the People family, or background
-stores. Leader-private content remains categorically excluded.
+- scoring or ranking an individual
+- advice on performance, pay, promotion, discipline, or termination
+- productivity, activity, or presence proxies
+- inference of sentiment, emotion, personality, health, burnout, loyalty, or flight
+  risk
+- automatic opportunity allocation
+- comparison between people.
 
-An explicit `Send to Workbench` owner gesture is a separate, intentional projection:
-the selected commitment wording and linked Project grounding become an ordinary
-Workbench item in the main database so an existing agent workflow can execute it.
-The UI names the destination; there is no background or automatic projection.
-Workbench results remain Workbench data, while People stores only stable execution
-references and satisfaction evidence. This is the sole People-to-main-workflow
-content path in this delivery.
+A refusal gives a stable reason code and does not repeat the content.
 
-Manual grounding notes are encrypted People records, not model-created profiles.
-`people.grounding.get` can assemble the shared-intent notes, open requests,
-commitments, and 1:1 evidence for an explicitly trusted MCP client. It performs no
-inference, scoring, persistence, or model call, and returns its disclosure policy
-with the transient bundle. A client that later invokes an agent owns that separate
-decision boundary; HoldSpeak does not silently ground a model.
+## Where People content must not appear
 
-Readiness and audit metadata are content-free: a fixed state/reason code, storage
-class, native provider type, non-secret key identifier, fixed operation class,
-outcome, and random opaque record ID where required. No name, note, relationship
-label, due date, source text, or ciphertext diagnostic belongs in a log or receipt.
+- `holdspeak.db`, its WAL and SHM files, and automatic migration backups.
+- Global search, Memory, Ask, the sync inbox and outbox, and primitive
+  serialization.
+- Cadence loops, evidence, next actions, nudges, audits, and Daily Brief storage.
+- Kernel operation and receipt text, logs, exception details, and broadcasts.
+- Meeting exports, files, Slack, webhook, and GitHub connectors, and automatic
+  model grounding.
 
-## Release proof
+There are two deliberate exceptions.
 
-A release containing People must prove correct-key restart; wrong/missing/locked-key
-failure; nonce/AAD tamper rejection; owner-only permissions; and absence of sentinel
-names/text across raw People/main database bytes, WAL/SHM, logs, FTS, sync, Cadence,
-receipts, backups, exports, errors, and broadcasts. Production enablement also
-requires a real supported native credential-store walk.
+- **`shared_intent` MCP responses.** They exist only in the sidecar response memory
+  and stdout. They must never reach the plaintext database, logs, receipts,
+  resources outside People, or background stores. Leader-private content is always
+  excluded.
+- **Send to Workbench.** When you press **Send to Workbench**, the chosen
+  commitment wording and linked Project grounding become an ordinary Workbench item
+  in the main database. An existing agent workflow can then run it. The UI names
+  the destination. There is no background projection. Workbench results stay
+  Workbench data. People keeps only stable execution references and satisfaction
+  evidence. This is the only path from People content into the main workflow.
+
+Readiness and audit data hold no content: a fixed state and reason code, a storage
+class, the native provider type, a non-secret key ID, a fixed operation class, the
+outcome, and a random opaque record ID where needed. No name, note, relationship
+label, due date, source text, or ciphertext detail belongs in a log or receipt.
+
+## Lose the key
+
+HoldSpeak has no automatic backup or recovery for People. A copied People database
+stays encrypted. It cannot be read without its OS credential. If you lose that
+credential, the People data can be unreadable for good. HoldSpeak does not make a
+replacement key, a plaintext recovery file, or a silent reset.
+
+## Release checks
+
+A release that includes People must prove these points:
+
+- the correct key works after a restart
+- a wrong, missing, or locked key fails
+- a changed nonce or AAD is rejected
+- file permissions are owner-only
+- sentinel names and text do not appear in the raw People or main database bytes,
+  WAL and SHM files, logs, search, sync, Cadence, receipts, backups, exports,
+  errors, or broadcasts.
+
+Production use also needs a walk through a real supported native credential store.
+
+See also [Security and privacy](SECURITY.md#2-storage-and-at-rest-posture).

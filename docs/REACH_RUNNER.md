@@ -27,8 +27,8 @@ No additional Python packages are required by the script.
 
 ## Store the scoped credential
 
-1. Open **Settings > System** on the hub.
-2. Use **REMOTE ACCESS > Issue credential** with the required scope.
+1. Open **Settings > System** on the hub. Switch the hub row to `REMOTE ON`.
+2. In the `CREDENTIALS` section, select **Issue credential**. Pick the **Palette** that the runner needs, then select **Issue**.
 3. Save the displayed token in a private file on the runner machine.
 4. Restrict the file permissions.
 
@@ -38,7 +38,7 @@ No additional Python packages are required by the script.
 
 The command examples below pass the file path, not the token value.
 The token appears only once when issued.
-The hub stores Reach credentials in memory. A hub restart requires a new credential.
+The hub keeps credentials in memory. A hub restart clears them, so issue a new one.
 
 ## Run once
 

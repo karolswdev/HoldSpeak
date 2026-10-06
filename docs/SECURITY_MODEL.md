@@ -1,34 +1,28 @@
 # Security model
 
-This document reconstructs the security controls visible in the source at
-snapshot `675401a857b85336d4acaa8c65383dfc9636e4c8` (2026-09-19). It is an
-implementation map and an evidence boundary. The existing
-[Security & Privacy Posture](SECURITY.md) remains the product security
-contract; this page links to it and records runtime details without replacing
-its decisions.
+This page maps the security controls in the source. It is for contributors.
+[Security and privacy](SECURITY.md) is the product contract. This page adds
+runtime detail and does not change that contract.
 
-## Security posture and limits
+## Limits
 
-HoldSpeak is local-first, single-user application code with cooperating
-processes. The existing contract says plainly that the kernel is not a general
-OS sandbox: a same-user process can still launch code, open sockets, and read
-installed Python (`SECURITY.md`, “Kernel boundary: cooperating code, not a
-sandbox”). The runtime therefore enforces its own admission, authority,
-destination and receipt boundaries. It does not claim protection from a fully
-compromised user account or arbitrary native code running as that user.
+HoldSpeak is local-first, single-user code with cooperating processes. It is not
+an OS sandbox. A process that runs as you can launch code, open sockets, and read
+the installed Python. HoldSpeak enforces its own admission, authority,
+destination, and receipt boundaries. It does not protect against a fully
+compromised user account or native code that runs as that user.
 
-Normal SQLite and configuration data are plaintext protected by filesystem
-permissions. People records are a separate encrypted sidecar with native key
-custody; the storage decision and exclusions are defined in
-[SECURITY.md](SECURITY.md), section “Storage & at-rest posture”. Do not infer
-that the normal database is encrypted because a People sidecar is.
+The normal SQLite data and the config are plaintext. File permissions protect
+them. The People store is a separate encrypted store with native key custody. Do
+not assume the normal database is encrypted because the People store is. See
+[Security and privacy](SECURITY.md#2-storage-and-at-rest-posture).
 
 ## Trust-boundary map
 
 ```mermaid
 flowchart LR
   OWNER[Owner or authenticated client]
-  EDGE[HTTP/WebSocket/MCP edge]
+  EDGE[HTTP, WebSocket, MCP edge]
   HUB[Hub runtime and kernel broker]
   DB[(SQLite journal and domain store)]
   NODE[Executor node or connector adapter]
@@ -45,142 +39,119 @@ flowchart LR
   RECEIPT --> DB
 ```
 
-The boundary is enforced by several cooperating checks:
-
-| Boundary | Data crossing | Control | Evidence |
+| Boundary | What crosses | Control | Source |
 | --- | --- | --- | --- |
-| Caller → edge | Bearer token or owner token, request envelope | Principal derivation and deny-by-default route rights | `holdspeak/principals.py:275-380`; `tests/integration/test_principal_separation.py` assertions |
-| Edge → kernel | Parsed request and principal | Four authority layers, operation policy and causality | `holdspeak/kernel/broker.py:295-322`; `holdspeak/kernel/admission.py:11-68` |
-| Kernel → executor | Signed warrant, exact envelope, claim identity | Warrant, revocation, deadline, ancestor liveness and one claim | `holdspeak/kernel/executor.py:26-87` |
-| Executor → provider/destination | Frozen target and payload reference | Registered route/adapter and operation family policy | `holdspeak/kernel/inference_invoke.py:65-148`; `holdspeak/operation_policy.py:193-360` |
-| Completion → domain | Result reference and terminal evidence | Durable receipt before publication; publication CAS | `holdspeak/kernel/executor.py:89-156`; `holdspeak/kernel/publication_transition.py:12-50` |
+| Caller to edge | Bearer token or owner token, request | Principal derivation, deny-by-default route rights | `holdspeak/principals.py` |
+| Edge to kernel | Parsed request and principal | Four admission layers, operation policy, causality | `holdspeak/kernel/broker.py`, `holdspeak/kernel/admission.py` |
+| Kernel to executor | Signed warrant, exact envelope, claim identity | Warrant, revocation, deadline, ancestor liveness, one claim | `holdspeak/kernel/executor.py` |
+| Executor to destination | Frozen target, payload reference | Registered route and adapter, operation family policy | `holdspeak/kernel/inference_invoke.py`, `holdspeak/operation_policy.py` |
+| Completion to domain | Result reference, terminal evidence | Durable receipt before publication, publication compare-and-swap | `holdspeak/kernel/executor.py`, `holdspeak/kernel/publication_transition.py` |
 
-These are application controls. They do not make every plugin or subprocess
-safe if it bypasses the kernel.
+These controls apply to code that goes through the kernel. A plugin or subprocess
+that bypasses the kernel is not made safe by them.
 
 ## Identity and credentials
 
-The authenticated runtime has `owner`, `agent`, and `node` principals, plus
-internal `scheduler`, `service`, and unauthenticated kinds
-(`holdspeak/principals.py:20-59`). A caller cannot set its principal in the
-operation payload. The edge derives it from the owner token or an agent/node
-credential; route authorization is centralized and deny-by-default
-(`holdspeak/principals.py:275-380`). An agent can submit and read scoped work,
-use its own receipt paths and revoke itself. It cannot decide, change posture,
-delegate, or become owner. A node can use node delivery/executor paths; an
-owner token does not become a node merely by choosing a node URL.
+`holdspeak/principals.py` defines the principal kinds: `owner`, `agent`, `node`,
+`scheduler`, `service`, and `none`. A caller cannot set its principal in an
+operation payload. The edge derives it from the owner token or from an agent or
+node credential. Route authorization is central and deny by default.
 
-Agent credentials are held in memory as SHA-256 token hashes, compared with a
-constant-time digest, capped at 30 days and wiped on process restart
-(`holdspeak/principals.py:103-209`). The plaintext is returned only from issue
-so an operator must store it at issuance. Revocation removes the credential
-and its bound targets (`holdspeak/principals.py:218-269`). This is a source
-fact, not a claim that a process memory dump is protected.
+- An agent can submit and read scoped work, read usage, and revoke itself. It
+  cannot decide, change posture, delegate, or become owner.
+- A node can use the node link path only. An owner token does not become a node
+  when it names a node URL.
 
-## Kernel security controls
+Agent credentials live in memory as SHA-256 token hashes. HoldSpeak compares them
+in constant time. The TTL has a cap of 30 days. A process restart clears them.
+Only the issue call returns the plaintext. Revocation removes the credential and
+its bound targets. This does not protect against a memory dump.
+
+## Kernel controls
 
 Admission applies four layers in order: authenticated principal, declared
-capability, hard prerequisites, and interruption policy
-(`holdspeak/kernel/broker.py:295-322`). The operation envelope freezes name,
-version, target, placement, policy version and authority basis. Input rejects
-authority-bearing fields supplied by a caller (`holdspeak/kernel/admission.py:11-47`).
-Idempotency is scoped to `(principal_identity, idempotency_key)` and a changed
-envelope under the same key refuses (`holdspeak/kernel/journal.py:127-155`).
+capability, hard prerequisites, and interruption policy. The operation envelope
+freezes name, version, target, placement, policy version, and authority basis.
+Admission rejects authority fields that a caller supplies.
 
-The journal is append-only in normal operation, hash-chained from a genesis
-record, and verified on read (`holdspeak/kernel/journal.py:60-103`). Kernel
-operation state changes, receipts and inference attestations are written in
-one transaction where the path requires it; the inference attestation has
-database no-update/no-delete triggers (`holdspeak/kernel/journal.py:372-493`,
-`holdspeak/db/schema.py:2156-2199`). The recursive filter rejects the named audio, audio-frame, PCM, token and
-token-stream keys (`holdspeak/kernel/model.py:9-13,65-73`). It does not classify
-arbitrary strings as prompt, transcript or completion content.
+Idempotency is scoped to the principal identity and the idempotency key. A changed
+envelope under the same key is refused (`holdspeak/kernel/journal.py`).
 
-The executor checks the warrant signature and exact envelope, revocation,
-expiry, live ancestor and claim identity, then writes one claim witness
-(`holdspeak/kernel/executor.py:26-87`). Receipts are immutable and require a
-valid result reference; inference receipts also require attestation evidence
-(`holdspeak/kernel/executor.py:89-128`). A late executor cannot rewrite an
-`indeterminate` result into success.
+The journal is append-only and hash-chained from a genesis record. HoldSpeak
+verifies it on read. Operation state changes, receipts, and inference
+attestations are written in one transaction where the path needs it. Database
+triggers block updates and deletes on the inference attestation.
 
-## Control modes and effect policy
+The recursive content filter in `holdspeak/kernel/model.py` rejects named audio,
+audio-frame, PCM, token, and token-stream keys. It does not classify arbitrary
+strings as prompt, transcript, or completion text.
 
-The canonical operation policy has `safe`, `neutral` and `yolo` values, with
-hard invariants for authentication, secret custody, destination/payload
-binding, pane identity, audit receipt, configuration integrity and schema
-safety (`holdspeak/operation_policy.py:15-31`). The resolver refuses unknown
-families and evaluates hard invariants before mode. Dictation, coder steering,
-external writes and cadence have separate mode matrices
-(`holdspeak/operation_policy.py:193-360`). The existing
-[authority contract](AUTHORITY.md) defines the user-facing control modes,
-review/authorization/execution separation and reusable grants. This page does
-not create a second mode vocabulary.
+The executor checks the warrant signature, exact envelope, revocation, expiry,
+live ancestor, and claim identity. Then it writes one claim witness. Receipts are
+immutable and need a valid result reference. Inference receipts also need
+attestation evidence. A late executor cannot rewrite `indeterminate` into
+success.
 
-YOLO reduces repeated confirmation only within a configured, fixed authority
-scope. It does not waive authentication, destination binding, the receipt
-ledger, or the People refusal matrix. External egress remains a feature-level
-choice and must be represented by an egress/refusal receipt as described in
-[SECURITY.md](SECURITY.md).
+## Control mode and effect policy
+
+`holdspeak/operation_policy.py` defines the wire modes `safe`, `neutral`, and
+`yolo`, and the hard invariants: authentication, secret custody, destination
+binding, payload binding, pane identity, audit receipt, configuration integrity,
+and schema safety. The resolver refuses unknown families and checks hard
+invariants before mode. Dictation commit, Coder steering, external write, and
+sync or Cadence have separate mode rules.
+
+[Authority](AUTHORITY.md) owns the user-facing mode names, the review,
+authorization, and execution split, and reusable grants. This page adds no second
+vocabulary.
+
+YOLO reduces repeated confirmation only inside a configured, fixed scope. It does
+not waive authentication, destination binding, the receipt ledger, or the People
+refusal rules.
 
 ## Data handling and egress
 
-The normal database can contain transcripts, speaker labels and embeddings,
-meeting intelligence, activity records, operation metadata and receipts. The
-generic inference journal path carries hashes, references and bounded labels.
-Kernel-owned parent snapshots are a separate content-bearing path:
-`kernel_parent_runs.input_json` serializes input mappings, and Sequence supplies
-its request body (`parent_run.py:105-106`; `sequence_workflow_service.py:322-328`).
-Do not treat the word kernel as a content-exclusion boundary.
+The normal database can hold transcripts, speaker labels, embeddings, meeting
+intelligence, activity records, operation metadata, and receipts. The generic
+inference journal path carries hashes, references, and bounded labels.
 
-Inference dispatch binds one physical provider child to a deployment revision,
-target, placement, content-free route descriptor and egress reference
-(`holdspeak/kernel/inference_invoke.py:65-148`). A fallback is another child
-and another receipt, not a hidden retry. The model host and destination should
-be reported from the bound route, not guessed from a caller label.
+A kernel parent run is a separate path that can hold content.
+`kernel_parent_runs.input_json` stores the input snapshot, and Sequence supplies
+its request body there (`holdspeak/kernel/parent_run.py`). The word "kernel" does
+not mean "content-free".
 
-People content has a narrower encrypted boundary and is excluded from normal
-database search, sync, exports, connectors, Cadence and generic MCP surfaces;
-the authoritative details are in [SECURITY.md](SECURITY.md), including the
-People security boundary. This implementation page does not claim that every
-other application file is automatically classified correctly.
+Inference dispatch binds one provider child to a deployment revision, target,
+placement, content-free route descriptor, and egress reference. A fallback is a
+new child with a new receipt, not a hidden retry. Report the model host from the
+bound route. Do not guess it from a caller label.
 
-## Failure, recovery and security evidence
+People content has a narrower encrypted boundary. See
+[People security boundary](PEOPLE_SECURITY.md).
 
-Startup calls parent reconciliation, inference route recovery, then projection
-recovery (`holdspeak/kernel/runtime.py:173-175`). The projection recovery method
-reaps expired operations first; this is not a global reaping-before-route
-guarantee (`holdspeak/kernel/projection_stager.py:343-346`). An awaiting or claimed
-operation that misses its liveness bound becomes a refusal or `indeterminate`
-(`holdspeak/kernel/liveness.py:9-61`). A lost response is therefore resolved
-by reading the receipt and journal, not by repeating the external effect.
+## Failure and recovery
 
-The inspected assertions cover principal separation, agent expiry and
-revocation, node identity, immutable envelopes, warrant expiry, refusal and
-receipt immutability (`tests/unit/test_kernel_broker.py:66-289`,
-`tests/integration/test_principal_separation.py`,
-`tests/integration/test_kernel_real_hub.py:49-234`). They were read for this
-reconstruction and were not run. No claim of a passing security suite is made.
+At startup the kernel runs parent reconciliation, inference route recovery, and
+projection recovery, in that order. The projection recovery step reaps expired
+operations first. This is not a global rule that reaping runs before route
+recovery.
+
+An operation that is awaiting or claimed and misses its liveness bound ends as a
+refusal or as `indeterminate` (`holdspeak/kernel/liveness.py`). To resolve a lost
+response, read the receipt and the journal. Do not repeat the external effect.
 
 ## Open limits
 
-The generated boundary candidate census, `docs/generated/boundary-candidates.json`
-(not in git; run `scripts/gen_docs.sh` to write it),
-is an audit lead assembled from lexical call-site candidates. It can contain
-false positives and miss dynamic paths, so it is not proof of complete
-coverage.
+- `docs/generated/boundary-candidates.json` is a lexical audit lead. It is not in
+  git. Run `scripts/gen_docs.sh` to write it. It can contain false positives and
+  miss dynamic paths. It does not prove full coverage.
+- The source does not prove OS-level isolation for arbitrary plugins, full secret
+  zeroization after a crash, encrypted normal SQLite storage, or identical receipt
+  coverage for every external adapter. Check an adapter's operation registration
+  before you assume coverage.
 
-The snapshot does not prove OS-level isolation for arbitrary plugins, complete
-secret zeroization after process crash, encrypted normal SQLite storage, or
-owner observation of the controls. It also does not establish that every
-external adapter has identical receipt coverage without inspecting that
-adapter's operation registration. Treat these as verification limits and use
-the existing [security contract](SECURITY.md) for product policy.
+## Gate preview limit
 
-## Gate preview limitation
-
-Gate argument previews truncate canonical JSON; they do not remove secrets.
-`holdspeak/coder_gate.py::redact_args` returns a SHA-256 plus the first 120
-characters. A short input, including a credential in it, can remain intact in
-that prefix. Treat the preview as sensitive tool content. The executable claim
-probe uses a synthetic marker to check this behavior; it does not read a real
-credential. See [Gate](GATE.md).
+Gate argument previews truncate canonical JSON. They do not remove secrets.
+`holdspeak/coder_gate.py::redact_args` returns a SHA-256 and the first 120
+characters. A short input can stay whole in that prefix, including a credential.
+Treat the preview as sensitive tool content. See [Gate](GATE.md).
