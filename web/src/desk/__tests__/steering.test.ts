@@ -48,6 +48,9 @@ describe("the steering slice (attach)", () => {
       agent: "claude",
       stale: false,
       awaitingResponse: true,
+      // Conductor F2: the hub's blocked predicate; an older hub without the
+      // field reads as awaiting_response.
+      blocked: true,
       question: "ship it?",
       updatedAt: "2026-07-08T00:00:00Z",
     });

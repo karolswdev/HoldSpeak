@@ -111,6 +111,33 @@ describe("MicButton click-to-toggle (HS-119-01)", () => {
   });
 });
 
+describe("MicButton autoStart (Conductor F2, K5b)", () => {
+  beforeEach(() => {
+    support.supported = true;
+    support.reason = null;
+    mocks.loadPendingVoice.mockResolvedValue(null);
+    mocks.startStreamSession.mockReset();
+  });
+
+  it("starts listening once on mount; a click stops it (click-to-toggle)", async () => {
+    const stopFn = vi.fn().mockResolvedValue("Jordan owns it");
+    mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
+    const onText = vi.fn();
+    const { rerender } = render(<MicButton onText={onText} autoStart />);
+    const mic = await screen.findByRole("button", { name: "Stop listening" });
+    await waitFor(() => expect(mic.className).toContain("is-listening"));
+    rerender(<MicButton onText={onText} autoStart />);
+    expect(mocks.startStreamSession).toHaveBeenCalledTimes(1);
+    fireEvent.click(mic);
+    await waitFor(() => expect(onText).toHaveBeenCalledWith("Jordan owns it"));
+  });
+
+  it("without autoStart nothing listens until a click", () => {
+    render(<MicButton onText={vi.fn()} />);
+    expect(mocks.startStreamSession).not.toHaveBeenCalled();
+  });
+});
+
 describe("MicButton retained audio", () => {
   beforeEach(() => {
     support.supported = false;

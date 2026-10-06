@@ -431,7 +431,7 @@ function FactoryControls() {
 }
 
 /** The voice-first composer (HS-87-03), available under resolved authority. */
-function SteerComposer() {
+function SteerComposer({ listen = false }: { listen?: boolean } = {}) {
   const steerState = useSteering((s) => s.steerState);
   const steerDetail = useSteering((s) => s.steerDetail);
   const openKey = useSteering((s) => s.openKey);
@@ -464,6 +464,7 @@ function SteerComposer() {
       <div className="desk-steer-row">
         <MicButton
           label="Speak"
+          autoStart={listen}
           draftScope={`steer:${openKey || "unattached"}`}
           onText={(t) => setText((prev) => (prev ? `${prev} ${t}` : t))}
         />
@@ -475,6 +476,12 @@ function SteerComposer() {
           placeholder="Steer"
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(event) => {
+            // Conductor F2 (K5c): Enter sends; Shift+Enter is a new line.
+            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              if (text.trim() && steerState !== "sending") void send();
+              return;
+            }
             if (event.key !== "Escape") return;
             event.preventDefault();
             event.stopPropagation();
@@ -530,7 +537,7 @@ function SteerComposer() {
         <span className="desk-arm-refusal"><span aria-hidden="true">{GLYPH_CLOSE}</span> {steerDetail}</span>
       )}
       {steerState === "sent" && (
-        <span className="desk-steer-sent"><span aria-hidden="true">{GLYPH_CHECK}</span> {steerDetail || "sent"}</span>
+        <span className="desk-steer-sent"><span aria-hidden="true">{GLYPH_CHECK}</span> {/* Conductor F2 (K5c): the word is `sent`; the receipt follows it. */}{!steerDetail || steerDetail === "sent" ? "sent" : `sent · ${steerDetail}`}</span>
       )}
     </div>
   );
@@ -662,6 +669,7 @@ export function SessionPullout() {
   const paneChangedAt = useSteering((s) => s.paneChangedAt);
   const armed = useSteering((s) => s.armed);
   const postureAuthorized = useSteering((s) => s.postureAuthorized);
+  const answerOpen = useSteering((s) => s.answerOpen);
   const paneId = useSteering((s) => s.paneId);
   const targetNode = useSteering((s) => s.targetNode);
   const { closeSession } = useSteering.getState();
@@ -737,10 +745,18 @@ export function SessionPullout() {
             state: session?.stale ? "stale" : "",
           }}
         />
-        {session?.awaitingResponse && session.question ? (
+        {(session?.awaitingResponse || session?.blocked) && session.question ? (
           <pre className="desk-pullout-md desk-session-question">
             {session.question}
           </pre>
+        ) : null}
+        {/* Conductor F2 (K5b): Speak answer opens the answer well here, in
+            the body under the question: the steer composer, its mic
+            already recording. The footer does not draw it twice. */}
+        {answerOpen ? (
+          <div className="desk-session-answer" data-testid="session-answer-well">
+            <SteerComposer listen />
+          </div>
         ) : null}
         {/* HS-111-06/11 — the shared PaneWell seam: the raw stream
             renders through xterm; a stripped-only hub falls back to
@@ -770,7 +786,7 @@ export function SessionPullout() {
             <>
               <SteeringPolicyFacts />
               <KeyPalette />
-              <SteerComposer />
+              {answerOpen ? null : <SteerComposer />}
               {armed ? (
                 <FactoryControls />
               ) : (

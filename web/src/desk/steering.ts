@@ -44,6 +44,9 @@ export interface SteeringSession {
   agent: string;
   stale: boolean;
   awaitingResponse: boolean;
+  /** Conductor F2: the hub's one blocked predicate (a permission
+   * Notification's question waits too, with `awaitingResponse` false). */
+  blocked: boolean;
   question: string;
   updatedAt: string;
 }
@@ -53,6 +56,7 @@ export const fromWireSteeringSession = (body: any): SteeringSession => ({
   agent: body.agent || "",
   stale: Boolean(body.stale),
   awaitingResponse: Boolean(body.awaiting_response),
+  blocked: Boolean(body.blocked ?? body.awaiting_response),
   question: body.question || "",
   updatedAt: body.updated_at || "",
 });
@@ -169,7 +173,9 @@ interface SteeringState {
    * persisted to localStorage, re-asserted if the registry changes. */
   manualPins: Record<string, string>;
   classifyState: "idle" | "kept" | "failed";
-  openSession(key: string): void;
+  /** Conductor F2 (K5b): the answer well is open in the body (Speak answer). */
+  answerOpen: boolean;
+  openSession(key: string, opts?: { answer?: boolean }): void;
   closeSession(): void;
   poll(): Promise<void>;
   arm(): Promise<void>;
@@ -305,10 +311,13 @@ export const useSteering = create<SteeringState>((set, get) => ({
   factoryState: "idle",
   factoryDetail: "",
 
-  openSession(key) {
+  answerOpen: false,
+
+  openSession(key, opts) {
     if (timer !== null) clearInterval(timer);
     set({
       openKey: key,
+      answerOpen: Boolean(opts?.answer),
       session: null,
       paneStatus: "idle",
       paneDetail: "",
@@ -340,6 +349,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
     }
     set({
       openKey: null,
+      answerOpen: false,
       session: null,
       paneStatus: "idle",
       paneDetail: "",

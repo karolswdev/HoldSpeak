@@ -76,6 +76,7 @@ export function MicButton({
   onProposalConfirm,
   pipeline,
   onCommand,
+  autoStart = false,
 }: {
   /* HS-176 C1 — the second argument carries the SPOKEN run's own facts
      (`raw_text`, `corrections_applied`, `journal_id`) when the server sent
@@ -102,6 +103,10 @@ export function MicButton({
      server (it fired, once). Nothing is dictated as prose; a surface that
      shows receipts can name the command that ran. */
   onCommand?: (fired: VoiceCommandFired) => void;
+  /* Conductor F2 (K5b): start listening once, when the button mounts (the
+     Speak answer well opens with its mic already recording). A second
+     click stops it, as always (click-to-toggle). */
+  autoStart?: boolean;
 }) {
   const pipelined = pipeline ?? variant === "transport";
   const [state, setState] = useState<MicState>("idle");
@@ -175,6 +180,15 @@ export function MicButton({
       sessionRef.current = null;
     };
   }, []);
+
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (!autoStart || autoStartedRef.current) return;
+    autoStartedRef.current = true;
+    if (!(speakToFillSupported() || micStreamSupported())) return;
+    void startSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
 
   const transport = variant === "transport";
 

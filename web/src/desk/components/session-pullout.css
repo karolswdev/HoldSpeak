@@ -41,6 +41,16 @@
   max-height: 120px;
   overflow-y: auto;
 }
+/* Conductor F2 (K5b): the answer well under the question, in the body. */
+.desk-next .desk-session-answer {
+  margin: 8px 0 12px;
+  flex-shrink: 0;
+}
+/* The question and the answer well keep their height; the pane well below
+   them takes what is left (the body scrolls). */
+.desk-next .desk-pullout.is-session .desk-session-question {
+  flex-shrink: 0;
+}
 .desk-next .desk-session-state {
   color: var(--text-muted);
   font-size: var(--font-size-sm);
