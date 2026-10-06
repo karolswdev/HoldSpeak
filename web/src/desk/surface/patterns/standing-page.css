@@ -1,0 +1,75 @@
+/* StandingPage + RefTokens (memory on the Desk, canvas section 2 option B). */
+
+.memory-ref-tokens {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  vertical-align: middle;
+}
+.memory-ref-token[data-tone="danger"] {
+  color: var(--danger);
+}
+
+.standing-page {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  background: var(--desk-window-well, var(--wash-1));
+}
+.standing-page[data-stale] {
+  border-color: color-mix(in srgb, var(--warn) 60%, var(--border));
+}
+.standing-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+  min-width: 0;
+}
+.standing-page-title {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.35;
+  min-width: 0;
+}
+.standing-page-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.standing-page-sentences {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0 0 0 22px;
+  min-width: 0;
+}
+.standing-page-sentences li {
+  font-size: var(--desk-type-body-size, 13px);
+  line-height: 1.6;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.standing-page-sentence {
+  margin-right: 8px;
+}
+
+/* The pages of one scope: two columns where the window is wide (the
+   board's 2 x 2), one column where it is narrow. */
+.standing-pages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(360px, calc((100% - 12px) / 2))), 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+.standing-pages-section > .surface-section-head {
+  flex-wrap: wrap;
+}
+.standing-pages-section > .surface-section-head h3 {
+  white-space: nowrap;
+}

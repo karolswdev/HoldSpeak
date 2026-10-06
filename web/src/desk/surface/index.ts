@@ -158,6 +158,10 @@ export {
   RESTORE_REFUSED,
   type ParkOutcome,
   type ParkedRow,
+  StandingPage,
+  RefTokens,
+  type MemoryRefToken,
+  type StandingSentence,
 } from "./patterns";
 
 export { MicButton, type MicState } from "./controls/MicButton";

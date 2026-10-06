@@ -11,6 +11,7 @@ import { SurfaceFooter } from "../../surface/SurfaceFooter";
 import { StateChip, countToken } from "../../surface";
 import { BriefSendWells } from "../../documentSendsLazy";
 import { openPerson, refOpener } from "../../openObject";
+import { StandingPagesSection, useStandingPages } from "../../standingPages";
 
 interface BriefItem {
   id: string;
@@ -160,6 +161,9 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [addingAgenda, setAddingAgenda] = useState(false);
   const { attempt, receipt } = useWriteReceipt();
+  // Memory on the Desk (canvas section 2, option B): the desk's standing
+  // pages live in the Brief, under its head.
+  const standingPages = useStandingPages("desk");
 
   const reads = useRef({ started: 0, landed: 0 });
   const load = useCallback(async (quiet = false) => {
@@ -308,14 +312,20 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   ) : error ? (
     <SurfaceState error={error} onRetry={() => void load()} />
   ) : !brief ? (
-    <SurfaceState
-      empty
-      emptyLabel="No brief generated."
-      onAction={() => void generate()}
-      actionLabel={generating ? "Generating..." : "Generate"}
-    />
+    <>
+      <SurfaceState
+        empty
+        emptyLabel="No brief generated."
+        onAction={() => void generate()}
+        actionLabel={generating ? "Generating..." : "Generate"}
+      />
+      <StandingPagesSection pages={standingPages} />
+    </>
   ) : brief.is_empty ? (
-    <SurfaceState empty emptyLabel="No changes" />
+    <>
+      <SurfaceState empty emptyLabel="No changes" />
+      <StandingPagesSection pages={standingPages} />
+    </>
   ) : (
     <>
       {/* ── HEAD: period (display, ONCE) + generated (caption) ──
@@ -337,6 +347,8 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
           </div>
         ) : null;
       })()}
+
+      <StandingPagesSection pages={standingPages} />
 
       {/* ── THIS WEEK (absent when empty per A.8) ──────────────── */}
       {hasThisWeek ? (

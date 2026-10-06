@@ -3780,6 +3780,16 @@
       "consumers": []
     },
     {
+      "path": "/api/memory/pages",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.memory",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/memory/recall",
       "methods": [
         "GET"

@@ -97,6 +97,45 @@ export interface MemoryHitRow {
   brief_id?: string;
 }
 
+/** Memory on the Desk (canvas section 2, option B): a belief, one more kind
+ * of recall card (services/memory_faces.py). */
+export interface BeliefEvidence {
+  ref: string;
+  /** `MTG 10-01 · 14:20` / `DEC 10-01` / `NOTE 09-30` */
+  token: string;
+  opens: boolean;
+  /** The ref contradicts the belief: it reads `AGAINST · <token>`. */
+  against: boolean;
+}
+
+export interface BeliefHistoryRow {
+  /** `10-01` */
+  at: string;
+  /** The old text, drawn struck through. */
+  text: string;
+  /** `SUPERSEDED` / `REFINED` */
+  word: string;
+  reason: string;
+}
+
+export interface BeliefCardData {
+  id: string;
+  kind: "belief";
+  text: string;
+  state: DecisionState;
+  /** The facts that back the belief. */
+  proof_count: number;
+  /** The distinct sources those facts come from: what `N SOURCES` counts. */
+  source_count: number;
+  /** `10-01`: the newest source day. */
+  seen: string;
+  /** `10-01`: the day a superseded belief was replaced. */
+  since: string;
+  project: RecallProject | null;
+  evidence: BeliefEvidence[];
+  history: BeliefHistoryRow[];
+}
+
 export interface RecallResult {
   query: string;
   /** HS-202-02 — this result is the desk's RECENT memory, not a search. */
@@ -111,6 +150,7 @@ export interface RecallResult {
   meetings: MemoryHitRow[];
   briefs: MemoryHitRow[];
   also: MemoryHitRow[];
+  beliefs: BeliefCardData[];
   remembered: number;
 }
 
@@ -173,6 +213,7 @@ export const EMPTY_RESULT: RecallResult = {
   meetings: [],
   briefs: [],
   also: [],
+  beliefs: [],
   remembered: 0,
 };
 
@@ -194,6 +235,9 @@ export function decodeRecall(raw: unknown): RecallResult {
     meetings: list<MemoryHitRow>("meetings"),
     briefs: list<MemoryHitRow>("briefs"),
     also: list<MemoryHitRow>("also"),
+    beliefs: list<BeliefCardData>("beliefs").filter(
+      (b) => b && (b.state === "current" || b.state === "disputed" || b.state === "superseded"),
+    ),
     remembered: Number(r.remembered || 0),
   };
 }

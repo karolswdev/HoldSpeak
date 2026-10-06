@@ -532,6 +532,29 @@ the bar and the rate go to the next line when they do not fit beside it
 (the rate keeps to the right). Only a label wider than the whole row
 ellipsizes. No prop changed.
 
+## StandingPage + RefTokens (memory on the Desk, canvas section 2, option B)
+
+Ratified 2026-10-05 ("Where the work lives"). A standing answer memory
+keeps (MEMORY-DESIGN.md §3.4), drawn where the work lives: the Room shows
+its project's four pages, the Brief the desk's two
+(`web/src/desk/standingPages.tsx`, one read: `GET /api/memory/pages`).
+
+- `title` — the question as the boards name it (`What did we decide`)
+- `sentences` — the served sentences, a numbered list; each carries its
+  `RefTokens`. A withheld sentence is simply not drawn: no gap, no
+  counter, no marker. A page with no sentence renders nothing
+- `built` — `BUILT 09:12` / `BUILT MON 08:02` / `BUILT 09-28`
+- `stale`, `newSources` — the warn border and `STALE · 3 NEW SOURCES`
+  (`STALE` alone at zero: no counter of zero)
+- No verb: no on-demand rewrite exists, so none is drawn
+
+`RefTokens` — the short source tokens (`MTG 10-01 · 14:20`, `DEC 10-01`,
+`CMT 10-01`). A ref the Desk opens is a library `Button` that opens its
+window through `openRef`; a ref with no window is plain text (A.11); a
+ref that contradicts reads `AGAINST · <token>` in the danger ink. The
+belief card (`features/project-room/recall/BeliefCard.tsx`, one more kind
+of the recall card) draws its evidence with the same species.
+
 ## ReadyStrip (first run option A "One screen", 2026-10-05)
 
 Every finished step's success token in one wrapping row. Born on the

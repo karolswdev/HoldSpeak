@@ -48,6 +48,7 @@ import {
 } from "../../desk/ask";
 import { onReturnToTask, rememberTaskFocus } from "../../desk/returnToTask";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
+import { StandingPagesSection, useStandingPages } from "../../desk/standingPages";
 import { apiFetch } from "../../lib/api";
 import type { InferenceTarget } from "../../desk/api";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
@@ -2219,6 +2220,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   // HS-200-41 — one controller, two faces: UNFINISHED sits in the body as a
   // section, the well stays sticky at the foot (F5).
   const askCtrl = useRoomAsk(ctrl.projectId, ctrl.projectName);
+  const standingPages = useStandingPages("project", ctrl.projectId);
 
   // HS-200-11 — the Prepare posture: one manual preparation path over the
   // Room's read sources, its carried decisions and its open commitments.
@@ -2347,6 +2349,13 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>
                 <RoomHead room={ctrl.room} ctrl={ctrl} updateCtrl={updateCtrl} />
               </div>
+              {/* Memory on the Desk (canvas section 2, option B): the
+                  project's standing pages sit under the head, as ratified. */}
+              {standingPages.length ? (
+                <div className="room-section-rise" style={{ animationDelay: "10ms" }}>
+                  <StandingPagesSection pages={standingPages} />
+                </div>
+              ) : null}
               <div className="room-section-rise" style={{ animationDelay: "20ms" }}>
                 <HealthSection room={ctrl.room} onRetry={handleRefresh} />
               </div>
