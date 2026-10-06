@@ -102,6 +102,9 @@ class WorkAttempt:
     started_at: str
     updated_at: str
     ended_at: Optional[str]
+    #: The desk object this attempt works on (``kind:id``), when a launch
+    #: named one (Hand to agent). ``None`` for every other attempt.
+    origin_ref: Optional[str] = None
 
     @property
     def terminal(self) -> bool:
@@ -131,7 +134,15 @@ class WorkAttempt:
             "started_at": self.started_at,
             "updated_at": self.updated_at,
             "ended_at": self.ended_at,
+            "origin_ref": _origin_wire(self.origin_ref),
         }
+
+
+def _origin_wire(origin_ref: Optional[str]) -> Optional[dict[str, str]]:
+    if not origin_ref or ":" not in origin_ref:
+        return None
+    kind, item_id = origin_ref.split(":", 1)
+    return {"kind": kind, "id": item_id}
 
 
 def _require(value: Any, field: str) -> str:
@@ -169,6 +180,7 @@ class WorkAttemptRepository(BaseRepository):
         claimed_at: Optional[str] = None,
         state: str = "starting",
         now: Optional[datetime] = None,
+        origin_ref: Optional[str] = None,
     ) -> WorkAttempt:
         source_id = _require(source_id, "source_id")
         worktree_id = _require(worktree_id, "worktree_id")
@@ -203,6 +215,7 @@ class WorkAttemptRepository(BaseRepository):
             started_at=timestamp,
             updated_at=timestamp,
             ended_at=timestamp if state in TERMINAL_STATES else None,
+            origin_ref=_optional(origin_ref),
         )
         try:
             with self._connection() as conn:
@@ -212,8 +225,8 @@ class WorkAttemptRepository(BaseRepository):
                         (attempt_id, source_id, project, story_id, worktree_id,
                          node_id, session_id, target_id, association_kind,
                          claimed_by, claimed_at, exact, state, started_at,
-                         updated_at, ended_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                         updated_at, ended_at, origin_ref)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         attempt.attempt_id,
@@ -232,6 +245,7 @@ class WorkAttemptRepository(BaseRepository):
                         attempt.started_at,
                         attempt.updated_at,
                         attempt.ended_at,
+                        attempt.origin_ref,
                     ),
                 )
                 conn.execute(
@@ -370,7 +384,7 @@ class WorkAttemptRepository(BaseRepository):
 _COLUMNS = (
     "attempt_id, source_id, project, story_id, worktree_id, node_id, "
     "session_id, target_id, association_kind, claimed_by, claimed_at, "
-    "exact, state, started_at, updated_at, ended_at"
+    "exact, state, started_at, updated_at, ended_at, origin_ref"
 )
 
 
@@ -392,6 +406,7 @@ def _from_row(row: Any) -> WorkAttempt:
         started_at=str(row[13]),
         updated_at=str(row[14]),
         ended_at=row[15],
+        origin_ref=row[16],
     )
 
 

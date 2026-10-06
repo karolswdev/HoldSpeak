@@ -64,6 +64,11 @@ KNOWN_EXECUTABLES = ("claude", "codex")
 #: ``unknown`` / ``failed_to_register`` — never a fake success.
 DEFAULT_REGISTER_TIMEOUT_SECONDS = 120
 
+#: How long a launch waits for its rider to register before it gives up on
+#: typing the first message (the owner may first answer a dialog, such as
+#: Claude Code's folder trust, in the pane).
+REGISTRATION_WAIT_SECONDS = 30 * 60
+
 #: How many launch records the ledger retains (newest kept).
 LAUNCH_LEDGER_MAX_ROWS = 200
 
@@ -77,6 +82,20 @@ _REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 # A branch name: strict allow-list, no traversal, its own argv slot.
 _BRANCH_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._/-]{0,99}$")
 _FLAG_RE = re.compile(r"^--[A-Za-z0-9][A-Za-z0-9-]{0,63}$")
+
+#: The desk objects a launch may name as its origin (Hand to agent): the
+#: item the agent works on. Optional; carried on the launch record and the
+#: Work attempt so a later merge can close the item it came from.
+ORIGIN_KINDS = (
+    "action",
+    "decision",
+    "decision_record",
+    "project_item",
+    "note",
+    "meeting",
+    "artifact",
+)
+_ORIGIN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 
 #: Request fields a browser/native client must NEVER supply — each
 #: refuses by its own name (§9: no executable, argv, or shell string).
@@ -135,6 +154,33 @@ def _parse_ts(text: Any) -> Optional[datetime]:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed
+
+
+def origin_ref_of(request: Mapping[str, Any]) -> Optional[dict[str, str]]:
+    """The optional ``origin_ref`` of a launch request, validated.
+
+    Absent is ``None``. Present, it must be ``{kind, id}`` with a known
+    kind and an opaque id, else it refuses ``origin_ref_invalid``."""
+    raw = request.get("origin_ref")
+    if raw is None:
+        return None
+    if not isinstance(raw, Mapping):
+        raise LaunchRefused("origin_ref_invalid", "origin_ref must be an object")
+    kind = str(raw.get("kind") or "")
+    item_id = str(raw.get("id") or "")
+    if kind not in ORIGIN_KINDS or not _ORIGIN_ID_RE.match(item_id):
+        raise LaunchRefused("origin_ref_invalid", "origin_ref carries invalid tokens")
+    return {"kind": kind, "id": item_id}
+
+
+def derived_story_ref(project: str, kind: str, item_id: str) -> dict[str, str]:
+    """A story ref for work that has no dw story: ``<kind>-<id>`` under the
+    item's Project. It must pass the same token rule as any story ref."""
+    story_id = f"{kind}-{item_id}"
+    project = str(project or "")
+    if not _REF_RE.match(project) or not _REF_RE.match(story_id):
+        raise LaunchRefused("story_ref_invalid", "the derived story ref is not a valid token")
+    return {"project": project, "story_id": story_id}
 
 
 def valid_branch(branch: str) -> bool:
@@ -476,8 +522,15 @@ class LaunchService:
         git_runner: Optional[Callable[..., Any]] = None,
         local_node_id: str = "local",
         wall_now: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
+        which: Optional[Callable[[str], Optional[str]]] = None,
     ) -> None:
         self._profiles = profiles
+        # The executable preflight. Production asks the real PATH; a test
+        # that injects a tmux runner has no real binaries, so the preflight
+        # runs there only when the test passes its own ``which``.
+        self._which = which if which is not None else (
+            shutil.which if runner is None else None
+        )
         self._registry = registry
         self._targets = targets
         self._commands = commands
@@ -526,6 +579,8 @@ class LaunchService:
         self._refuse_client_execution_fields(request)
         profile_id = str(request.get("agent_profile_id") or request.get("profile_id") or "")
         self._profiles.resolve_argv(profile_id, request.get("options"))
+        origin_ref_of(request)
+        self._preflight(self._profiles.get(profile_id) or {})
         _, story_id = self._story_ref(request)
         source_id = str(request.get("source_id") or "")
         source = self._registry.get(source_id)
@@ -551,6 +606,20 @@ class LaunchService:
         assert source is not None
         _, worktree_path, _ = self._resolve_worktree(request, source)
         self._require_process_gate(profile, worktree_path)
+
+    def _preflight(self, profile: Mapping[str, Any]) -> None:
+        """Refuse before any envelope when the agent or tmux is not on
+        this machine: ``executable_absent`` / ``tmux_absent``."""
+        which = self._which
+        if which is None:
+            return
+        if which("tmux") is None:
+            raise LaunchRefused("tmux_absent", "tmux is not installed on this machine")
+        executable = str(profile.get("executable") or "")
+        if executable and which(executable) is None:
+            raise LaunchRefused(
+                "executable_absent", f"{executable} is not installed on this machine"
+            )
 
     @staticmethod
     def _require_process_gate(profile: Mapping[str, Any], worktree_path: str) -> None:
@@ -708,6 +777,9 @@ class LaunchService:
             request.get("agent_profile_id") or request.get("profile_id") or ""
         )
         argv = self._profiles.resolve_argv(profile_id, request.get("options"))
+        origin_ref = origin_ref_of(request)
+        profile = self._profiles.get(profile_id) or {}
+        self._preflight(profile)
         project, story_id = self._story_ref(request)
         source_id = str(request.get("source_id") or "")
         source = self._registry.get(source_id)
@@ -719,19 +791,19 @@ class LaunchService:
         session_name = self._session_name(request, story_id)
         gate_state = "not gated"
         if parent_operation_id:
-            profile = self._profiles.get(profile_id) or {}
             self._require_process_gate(profile, worktree_path)
+        if str(profile.get("executable") or "") == "claude":
+            # Every Claude launch carries HoldSpeak's spawn settings: the
+            # rider hooks (so the launch registers with no manual
+            # ``agent-hook install``) and the gate hooks (inert unless the
+            # gate holds this worktree).
             from .. import coder_gate
 
             settings_path = coder_gate.write_spawn_settings()
-            argv = [
-                *argv,
-                "--settings",
-                str(settings_path),
-                "--allowedTools",
-                "Bash",
-            ]
-            gate_state = "gated"
+            argv = [*argv, "--settings", str(settings_path)]
+            if parent_operation_id:
+                argv = [*argv, "--allowedTools", "Bash"]
+                gate_state = "gated"
 
         launch_id = launch_id or "launch_" + uuid.uuid4().hex[:16]
         record: dict[str, Any] = {
@@ -744,6 +816,7 @@ class LaunchService:
             "source_id": source_id,
             "worktree_id": worktree_id,
             "story_ref": {"project": project, "story_id": story_id},
+            "origin_ref": origin_ref,
             "session": session_name,
             "target": None,
             "attempt_id": None,
@@ -844,6 +917,9 @@ class LaunchService:
                 claimed_by=f"launch:{profile_id}",
                 state="starting",
                 now=self._wall_now(),
+                origin_ref=(
+                    f"{origin_ref['kind']}:{origin_ref['id']}" if origin_ref else None
+                ),
             )
         except Exception as exc:
             # The failed logical transaction leaves NO unaccounted
@@ -867,6 +943,10 @@ class LaunchService:
 
     def submit_process_spawn(
         self, request: Mapping[str, Any], instruction: str, principal: Any,
+        *,
+        after_registration: bool = False,
+        registration_timeout: float = REGISTRATION_WAIT_SECONDS,
+        poll_seconds: float = 1.0,
     ) -> dict[str, Any]:
         """Admit, approve and execute one ``process.spawn`` owner gesture.
 
@@ -885,15 +965,19 @@ class LaunchService:
         from ..principals import Principal, PrincipalKind
 
         launch_id = new_launch_id()
+        subject_refs = [
+            f"delivery-source:{request.get('source_id')}",
+            f"story:{(request.get('story_ref') or {}).get('story_id')}",
+        ]
+        origin = origin_ref_of(request)
+        if origin is not None:
+            subject_refs.append(f"{origin['kind']}:{origin['id']}")
         raw = {
             "request_schema": 1,
             "request_id": str(uuid.uuid4()),
             "idempotency_key": f"process.spawn:{launch_id}",
             "operation": {"name": "process.spawn", "version": 1},
-            "subject_refs": [
-                f"delivery-source:{request.get('source_id')}",
-                f"story:{(request.get('story_ref') or {}).get('story_id')}",
-            ],
+            "subject_refs": subject_refs,
             "target": {"ref": f"launch:{launch_id}"},
             "arguments": {"launch_id": launch_id, **dict(request)},
             "placement": f"node:{self._local_node_id}",
@@ -917,34 +1001,25 @@ class LaunchService:
             if record.get("state") != "launched":
                 self._kernel.receipt(operation_id, "failed", f"launch:{launch_id}", node)
                 return {"operation_id": operation_id, "launch": record}
-            target = record.get("target") or {}
-            from .. import coder_steering
-
-            armed = coder_steering.arm(
-                str(record.get("session") or ""),
-                str(target.get("pane_id") or ""),
-            )
-            if armed.get("status") != "armed":
-                raise LaunchRefused(
-                    str(armed.get("status") or "arm_refused"),
-                    str(armed.get("detail") or "spawned pane could not be armed"),
+            if after_registration:
+                # The agent reads its first message only once it is up: a
+                # dialog (folder trust) or a slow start would eat text typed
+                # now. The rider's SessionStart registers the session; the
+                # brief is typed then (``instruction_state`` says where it is).
+                record = self._ledger.update(launch_id, instruction_state="pending") or record
+                self._deliver_after_registration(
+                    launch_id, record, text, principal, request, operation_id,
+                    timeout=registration_timeout, poll_seconds=poll_seconds,
                 )
-            sent = self._commands.submit_process_input(
-                {
-                    "node_id": self._local_node_id,
-                    "target_id": target.get("target_id"),
-                    "target_generation": target.get("target_generation"),
-                    "operation": {"family": "coder_steering", "verb": "terminal.text"},
-                    "payload": {
-                        "text": text,
-                        "submit": True,
-                        "session_key": record.get("session"),
-                        "agent": str(request.get("agent_profile_id") or request.get("profile_id") or "agent"),
-                    },
-                    "parent_operation_id": operation_id,
-                },
-                principal,
-            )
+                self._monitor_completion(operation_id, launch_id, str(record.get("session") or ""), node)
+                return {
+                    "operation_id": operation_id,
+                    "correlation_id": operation_id,
+                    "launch": record,
+                    "instruction_operation_id": None,
+                    "instruction_receipt": None,
+                }
+            sent = self._send_instruction(record, text, principal, request, operation_id)
             commands = dict(record.get("commands") or {})
             commands["instruction"] = sent.get("command_id")
             record = self._ledger.update(launch_id, commands=commands) or record
@@ -960,6 +1035,94 @@ class LaunchService:
             if self._kernel.store.receipt(operation_id) is None:
                 self._kernel.receipt(operation_id, "failed", f"launch:{launch_id}", node)
             raise
+
+    def _send_instruction(
+        self, record: Mapping[str, Any], text: str, principal: Any,
+        request: Mapping[str, Any], operation_id: str,
+    ) -> dict[str, Any]:
+        """Arm the spawned pane and type ``text`` as a child ``process.input``."""
+        from .. import coder_steering
+
+        target = record.get("target") or {}
+        armed = coder_steering.arm(
+            str(record.get("session") or ""),
+            str(target.get("pane_id") or ""),
+        )
+        if armed.get("status") != "armed":
+            raise LaunchRefused(
+                str(armed.get("status") or "arm_refused"),
+                str(armed.get("detail") or "spawned pane could not be armed"),
+            )
+        return self._commands.submit_process_input(
+            {
+                "node_id": self._local_node_id,
+                "target_id": target.get("target_id"),
+                "target_generation": target.get("target_generation"),
+                "operation": {"family": "coder_steering", "verb": "terminal.text"},
+                "payload": {
+                    "text": text,
+                    "submit": True,
+                    "session_key": record.get("session"),
+                    "agent": str(request.get("agent_profile_id") or request.get("profile_id") or "agent"),
+                },
+                "parent_operation_id": operation_id,
+            },
+            principal,
+        )
+
+    def _deliver_after_registration(
+        self, launch_id: str, record: Mapping[str, Any], text: str, principal: Any,
+        request: Mapping[str, Any], operation_id: str,
+        *, timeout: float, poll_seconds: float,
+    ) -> None:
+        """Type the first message once the rider registers the session.
+
+        ``instruction_state`` on the launch record: ``pending`` → ``sent``,
+        or ``expired`` (no registration in ``timeout``), ``session_gone``
+        (the session ended first) or the refusal reason. The hub process
+        holds the wait: a hub restart before registration leaves it
+        ``pending``, and the owner types the brief himself."""
+        attempt_id = str(record.get("attempt_id") or "")
+        session = str(record.get("session") or "")
+
+        def guarded() -> None:
+            try:
+                wait()
+            except Exception:  # the store went away (shutdown): say so, never raise
+                try:
+                    self._ledger.update(launch_id, instruction_state="error")
+                except Exception:
+                    pass
+
+        def wait() -> None:
+            deadline = time.monotonic() + timeout
+            while True:
+                if not self._session_alive(session):
+                    self._ledger.update(launch_id, instruction_state="session_gone")
+                    return
+                try:
+                    self.bind_rider_claims()
+                except Exception:
+                    pass  # a claims read failure is retried on the next poll
+                attempt = self._attempts.get(attempt_id) if attempt_id else None
+                if attempt is not None and attempt.session_id:
+                    break
+                if time.monotonic() >= deadline:
+                    self._ledger.update(launch_id, instruction_state="expired")
+                    return
+                time.sleep(poll_seconds)
+            try:
+                sent = self._send_instruction(record, text, principal, request, operation_id)
+            except Exception as exc:
+                reason = getattr(exc, "reason", None) or "instruction_failed"
+                self._ledger.update(launch_id, instruction_state=str(reason))
+                return
+            current = self._ledger.get(launch_id) or dict(record)
+            commands = dict(current.get("commands") or {})
+            commands["instruction"] = sent.get("command_id")
+            self._ledger.update(launch_id, commands=commands, instruction_state="sent")
+
+        threading.Thread(target=guarded, name=f"launch-brief-{launch_id}", daemon=True).start()
 
     def _monitor_completion(
         self, operation_id: str, launch_id: str, session_name: str, node: Any,
@@ -1290,8 +1453,11 @@ __all__ = [
     "LaunchLedger",
     "LaunchRefused",
     "LaunchService",
+    "ORIGIN_KINDS",
     "default_launch_service",
     "derive_worktree_path",
+    "derived_story_ref",
+    "origin_ref_of",
     "execute_worktree_create",
     "valid_branch",
 ]

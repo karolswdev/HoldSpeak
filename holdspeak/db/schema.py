@@ -2093,7 +2093,8 @@ CREATE TABLE IF NOT EXISTS work_attempts (
         CHECK (state IN ('starting','working','waiting','idle','ended','abandoned','unknown')),
     started_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
-    ended_at TEXT
+    ended_at TEXT,
+    origin_ref TEXT               -- kind:id of the desk object a launch works on
 );
 CREATE INDEX IF NOT EXISTS idx_work_attempts_story
 ON work_attempts(source_id, project, story_id, started_at DESC);

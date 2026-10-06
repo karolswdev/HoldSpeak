@@ -635,13 +635,37 @@ def write_spawn_settings(
     root = (project_root or Path(__file__).resolve().parents[1]).resolve()
     root_key = hashlib.sha256(str(root).encode("utf-8")).hexdigest()[:16]
     target = path or Path.home() / ".holdspeak" / "gate-spawn-settings" / f"{root_key}.json"
-    command = f"uv run --project {shlex.quote(str(root))} holdspeak gate hook"
+    prefix = f"uv run --project {shlex.quote(str(root))} holdspeak"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(
-        json.dumps(_hook_settings(command), indent=2, sort_keys=True) + "\n",
+        json.dumps(spawn_settings(prefix), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return target
+
+
+def spawn_settings(prefix: str) -> dict[str, Any]:
+    """The gate hooks plus the rider hooks, in one settings document.
+
+    The rider hooks (``agent-hook ingest --agent claude``) report the
+    session, its Story claim and its state to the hub, so a launched agent
+    registers with no manual ``holdspeak agent-hook install``. The gate
+    hooks stay inert unless the gate holds the worktree. ``prefix`` is the
+    command that runs this HoldSpeak checkout (``uv run --project ...
+    holdspeak``)."""
+    import copy
+
+    from .agent_context.hooks import claude_hook_template
+
+    merged = _hook_settings(f"{prefix} gate hook")
+    rider = copy.deepcopy(claude_hook_template())
+    rider_command = f"{prefix} agent-hook ingest --agent claude"
+    for event, entries in (rider.get("hooks") or {}).items():
+        for entry in entries:
+            for hook in entry.get("hooks") or []:
+                hook["command"] = rider_command
+        merged["hooks"].setdefault(event, []).extend(entries)
+    return merged
 
 
 def install_block(executable: str = "holdspeak") -> str:

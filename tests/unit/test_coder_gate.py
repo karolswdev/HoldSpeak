@@ -217,12 +217,17 @@ def test_spawn_settings_pin_full_gate_lifecycle_to_project(tmp_path) -> None:
     project.mkdir()
     target = write_spawn_settings(tmp_path / "spawn-settings.json", project_root=project)
     block = json.loads(target.read_text(encoding="utf-8"))
+    # Conductor K2: the rider hooks ride every spawn too, so the launch
+    # registers with no manual `agent-hook install`.
     assert set(block["hooks"]) == {
         "SessionStart",
         "PreToolUse",
         "PostToolUse",
         "Stop",
         "SessionEnd",
+        "CwdChanged",
+        "UserPromptSubmit",
+        "Notification",
     }
     commands = {
         event["hooks"][0]["command"]
@@ -230,8 +235,12 @@ def test_spawn_settings_pin_full_gate_lifecycle_to_project(tmp_path) -> None:
         for event in rows
     }
     assert commands == {
-        f"uv run --project '{project}' holdspeak gate hook"
+        f"uv run --project '{project}' holdspeak gate hook",
+        f"uv run --project '{project}' holdspeak agent-hook ingest --agent claude",
     }
+    gate = f"uv run --project '{project}' holdspeak gate hook"
+    for event in ("SessionStart", "PreToolUse", "PostToolUse", "Stop", "SessionEnd"):
+        assert block["hooks"][event][0]["hooks"][0]["command"] == gate
     assert block["hooks"]["PreToolUse"][0]["matcher"] == "Bash"
     assert block["hooks"]["PostToolUse"][0]["matcher"] == "Bash"
 
