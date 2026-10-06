@@ -1379,9 +1379,18 @@ def dispatch_for_palette(
     arguments: dict[str, Any] | None,
     principal: Principal,
     palette: frozenset[str],
+    *,
+    call_gate: Any = None,
 ) -> Any:
-    """Dispatch scoped by *palette* -- typed refusal for tools outside it."""
-    if name not in palette:
+    """Dispatch scoped by *palette* -- typed refusal for tools outside it.
+
+    ``call_gate(name, arguments) -> bool`` (Conductor K6) refuses one call of a
+    palette tool on its arguments, the same way (a mixed tool that would
+    schedule or delegate)."""
+    outside = name not in palette
+    if not outside and call_gate is not None and not call_gate(name, arguments):
+        outside = True
+    if outside:
         # PHILO-7-02: the palette refusal of a tool that names an ADMITTED
         # operation leaves a refusal receipt (a read or exempt tool: none).
         error = ToolError(f"Tool {name!r} is not in the configured palette")

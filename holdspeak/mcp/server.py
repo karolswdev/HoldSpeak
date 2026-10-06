@@ -345,12 +345,17 @@ def handle_message_for_principal(
     principal: Principal,
     *,
     palette: frozenset[str] | None = None,
+    call_gate: Any = None,
+    resource_gate: Any = None,
 ) -> dict[str, Any] | None:
     """Handle one MCP JSON-RPC request with an externally-derived principal.
 
     Used by the Streamable HTTP transport (POST /api/mcp) where the principal
     comes from the web-auth middleware, not the stdio environment.  When
     *palette* is non-None, tools outside it are refused with MCP-005.
+    ``call_gate(name, arguments)`` refuses one call of a palette tool on its
+    arguments, the same way; ``resource_gate(uri)`` hides and refuses
+    resources (Conductor K6: the CONDUCTOR palette's People cut).
     """
     request_id = request.get("id")
     method = request.get("method")
@@ -378,11 +383,24 @@ def handle_message_for_principal(
         available_tools = tools_for_palette(palette) if palette else TOOLS
         return _response(request_id, {"tools": available_tools})
     if method == "resources/list":
-        return _response(request_id, list_resources(principal))
+        listed = list_resources(principal)
+        if resource_gate is not None:
+            listed = {
+                "resources": [r for r in listed["resources"] if resource_gate(r["uri"])],
+                "resourceTemplates": [
+                    r for r in listed["resourceTemplates"] if resource_gate(r["uriTemplate"])
+                ],
+            }
+        return _response(request_id, listed)
     if method == "resources/read":
         uri = params.get("uri")
         if not isinstance(uri, str):
             return _error(request_id, -32602, "Invalid params: uri is required")
+        if resource_gate is not None and not resource_gate(uri):
+            return _error(
+                request_id, _MCP_005_CODE, f"Resource {uri!r} is not in the configured palette",
+                data={"code": "MCP-005", "resource": uri},
+            )
         try:
             return _response(request_id, read_resource(uri, principal))
         except ServiceError as exc:
@@ -408,7 +426,7 @@ def handle_message_for_principal(
             return _response(request_id, _tool_result({"error": "Tool arguments must be an object", **kernel}, is_error=True))
         try:
             if palette is not None:
-                value = dispatch_for_palette(name, arguments, principal, palette)
+                value = dispatch_for_palette(name, arguments, principal, palette, call_gate=call_gate)
             else:
                 value = dispatch(name, arguments, principal)
         except ToolError as exc:

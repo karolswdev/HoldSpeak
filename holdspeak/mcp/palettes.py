@@ -42,8 +42,57 @@ def _lazy_desk_tools() -> frozenset[str]:
     return frozenset(t["name"] for t in TOP_TOOLS)
 
 
+# ── CONDUCTOR: what an agent HoldSpeak launched may call ────────────────
+#
+# Conductor K6 (owner 2026-10-06: "the agent we spin up here - do we inject him
+# with our HoldSpeak MCP? We certainly should"). The palette is DERIVED from the
+# one authority table (``mcp/tool_authority.py``, the owner's thread rule of
+# 2026-09-29): every ``work`` tool, so a new tool classifies itself. Two cuts:
+#
+# * egress, authority and config tools stop for the owner's press: not offered;
+# * the People family is not offered at all. Claude Code and Codex run on cloud
+#   models, and People data does not reach a cloud agent (the brief cuts it too,
+#   ``services/agent_brief.py``). The People resources are refused the same way.
+#
+# A mixed tool (``ARGUMENT_AUTHORITY``) is offered, and each call is classed on
+# its arguments: a call that would schedule or delegate is refused.
+
+CONDUCTOR = "CONDUCTOR"
+
+#: The families a launched agent never reaches, whatever their class.
+CONDUCTOR_EXCLUDED_PREFIXES: tuple[str, ...] = ("people.",)
+CONDUCTOR_EXCLUDED_RESOURCE_PREFIXES: tuple[str, ...] = ("holdspeak://people/",)
+
+
+def _lazy_conductor_tools() -> frozenset[str]:
+    from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK
+
+    return frozenset(
+        name
+        for name in _lazy_all_tools()
+        if TOOL_AUTHORITY.get(name) == WORK
+        and not name.startswith(CONDUCTOR_EXCLUDED_PREFIXES)
+    )
+
+
+def conductor_call_allowed(name: str, arguments: Any) -> bool:
+    """One CONDUCTOR call, classed on its arguments (a mixed tool's predicate)."""
+    from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK, call_class
+
+    if name not in TOOL_AUTHORITY or name.startswith(CONDUCTOR_EXCLUDED_PREFIXES):
+        return False
+    return call_class(name, arguments if isinstance(arguments, dict) else {}) == WORK
+
+
+def conductor_resource_allowed(uri: str) -> bool:
+    """A CONDUCTOR resource read: never a People resource."""
+    return not str(uri or "").startswith(CONDUCTOR_EXCLUDED_RESOURCE_PREFIXES)
+
+
 # ── Public API ──────────────────────────────────────────────────────────
 
+#: The names the owner may issue in the Reach credential well. CONDUCTOR is
+#: not one: only a launch issues it (``coder_factory.spawn``).
 PALETTE_NAMES: tuple[str, ...] = ("PROJECT", "SWEEP", "DESK", "ALL")
 
 
@@ -61,4 +110,6 @@ def resolve_palette(name: str) -> frozenset[str]:
         return _lazy_desk_tools()
     if upper == "ALL":
         return _lazy_all_tools()
+    if upper == CONDUCTOR:
+        return _lazy_conductor_tools()
     raise ValueError(f"Unknown palette: {name!r}")

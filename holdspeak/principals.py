@@ -93,6 +93,10 @@ class AgentCredential:
     #: PHILO-9-07 (the DESK = ALL repair): the palette NAME the owner issued,
     #: stored at issue. Never reverse-mapped from the resolved tool set.
     palette_name: Optional[str] = None
+    #: Conductor K6: the agent launch this credential is bound to (None for a
+    #: credential the owner issued by hand). A launch-bound credential reaches
+    #: POST /api/mcp from loopback with the Reach switch off.
+    launch_id: Optional[str] = None
 
 
 # HS-174 max TTL cap (counsel H2: 30 days).
@@ -144,6 +148,7 @@ class AgentCredentialStore:
         ttl_seconds: float = 43_200.0,
         palette: Optional[frozenset[str]] = None,
         palette_name: Optional[str] = None,
+        launch_id: Optional[str] = None,
     ) -> AgentCredential:
         """Mint a new credential.  Returns the credential with the plaintext
         token; the store keeps only the hash (C4)."""
@@ -164,6 +169,7 @@ class AgentCredentialStore:
                 id=cred_id,
                 last_used_at=None,
                 palette_name=palette_name,
+                launch_id=(str(launch_id).strip() or None) if launch_id else None,
             )
             self._by_hash[token_hash] = credential
             self._by_identity[clean] = token_hash
@@ -177,6 +183,7 @@ class AgentCredentialStore:
                 id=credential.id,
                 last_used_at=credential.last_used_at,
                 palette_name=credential.palette_name,
+                launch_id=credential.launch_id,
             )
 
     def derive(self, token: Optional[str]) -> Optional[Principal]:
