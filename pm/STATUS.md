@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-05
+**Last updated:** 2026-10-06
 
 ## Current phase
 
@@ -15,6 +15,8 @@ Now: the fast-lane change (owner ruling 2026-10-03): remove the commit gate; sto
 committing generated docs and line-number test maps; split the tests.
 
 ## Open work
+
+Now: THE CONDUCTOR (owner 2026-10-05: "work with agents, semi-autonomously, as an orchestrator, out of the box"). Plan: `docs/internal/CONDUCTOR.md` (#893). Merged: K0 #894 (steer keeps picked refs; qualified watch events classify as closed; device reply window 30 min), K1 #895 (detect claude/codex/tmux, one-press hook install as owner-only kernel op `agent_hooks.install` with receipts, doctor Coding agents check, Setup keeps `info`), K3 #896 (blocked coders join Needs you as R5 TO ANSWER / TO APPROVE, wait episodes, immediate edge notify, strict registry read). Building: K2 Hand to agent; the faces canvas (DRAFT, for the owner). Waiting on the owner: the Control-mode mapping (K5). Open: the delta `change_class` is dropped before persistence, so the weekly update still does not report merges as closed (moves to K4); MissionControlConveyor's coder-frame refresh listens for an `hs-broadcast` event nothing sends; other agent-question lookups still use 120 s (dictation routes, dictation_runner); K1/K3 live hook delivery and credential validity not observed on a real desk; the Needs you coder row renders generically until the faces land; flake seen once: tests/unit/test_philo5_codex_seams.py restart case.
 
 Done: the README sells the whole product (owner 2026-10-05: "we're still selling it short"): #891 merged, Astra ratified on iteration 2. What's inside table; sections for Ask AI and Threads, cited memory, Send to six destinations, coder steering, Extend everything, MCP. Product bug found in review: Thread `/keep` asks for a Note but `thread_service.py` ignores `as_kind` and always records an Artifact (README says Artifact until fixed).
 
