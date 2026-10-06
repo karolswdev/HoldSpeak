@@ -52,7 +52,7 @@ Record your microphone and system audio, or import a recording or a transcript f
 - **You stay in charge.** Meeting intelligence saves the summary and the extracted action items. Decisions arrive as proposals: select **Confirm** to create the linked decisions and commitments.
 - **Meeting aftercare** shows what is open, what was decided, and what changed since the last meeting.
 - **Actuators** turn a confirmed action into a filed issue or a sent update. They show a preview first and run exactly what you saw.
-- **The clock.** Connect a calendar to see your week and get a weekly brief. **Auto-record** is off by default. Turn it on for calendar events with meeting links: all of them, or only those linked to a Room. A recording arms five minutes before the event, then starts after a countdown.
+- **The clock.** Connect a calendar to see your week and get a weekly brief. **Auto-record** is off by default. Turn it on for calendar events with meeting links: all of them, or only those linked to a Room. A recording arms five minutes before the event by default, then starts after a countdown.
 
 ### A Desk for the work you lead
 
