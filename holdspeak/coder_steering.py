@@ -208,24 +208,28 @@ def awaiting_snapshot(sessions: list[Any]) -> dict[str, bool]:
     """``{key: blocked}`` over the registry — the watcher's per-tick view,
     keyed the way every coder surface keys sessions.
 
-    Blocked is ``awaiting_response`` (a question), or a permission prompt:
-    the latest hook event is a ``Notification`` that carries the ask, which
-    the hook records without ``awaiting_response`` (Conductor K3, R5)."""
-    return {f"{s.agent}:{s.session_id}": _blocked(s) for s in sessions}
+    Blocked is ``agent_context.is_blocked``: the ONE predicate the Needs you
+    membership (R5) reads too (Conductor K3)."""
+    from holdspeak.agent_context.models import is_blocked
+
+    return {f"{s.agent}:{s.session_id}": is_blocked(s) for s in sessions}
 
 
-def _blocked(session: Any) -> bool:
-    if bool(getattr(session, "awaiting_response", False)):
-        return True
-    return (
-        str(getattr(session, "hook_event_name", "") or "") == "Notification"
-        and bool(str(getattr(session, "question", "") or "").strip())
-        and str(getattr(session, "lifecycle", "") or "") != "ended"
-    )
+def wait_snapshot(sessions: list[Any]) -> dict[str, str]:
+    """``{key: wait}`` over the registry: the blocked session's wait episode
+    (``wait_id``), ``""`` when it is not blocked (Conductor K3). A new wait
+    after an answer changes the value, so the watcher sees it even when two
+    reads both found the session blocked."""
+    from holdspeak.agent_context.models import is_blocked
+
+    return {
+        f"{s.agent}:{s.session_id}": (str(getattr(s, "wait_id", "") or "blocked") if is_blocked(s) else "")
+        for s in sessions
+    }
 
 
 def awaiting_transitions(
-    previous: dict[str, bool], current: dict[str, bool]
+    previous: dict[str, Any], current: dict[str, Any]
 ) -> list[str]:
     """Keys whose awaiting-response flag actually moved.
 
@@ -889,6 +893,7 @@ __all__ = [
     "arm",
     "active_grants",
     "awaiting_snapshot",
+    "wait_snapshot",
     "awaiting_transitions",
     "clamp_ttl",
     "clear_grants",

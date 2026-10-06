@@ -85,6 +85,9 @@ export interface NeedsYouCoder {
   repo_root?: string | null;
   updated_at?: string | null;
   hook_event_name?: string | null;
+  notification_type?: string | null;
+  wait_started_at?: string | null;
+  wait_id?: string | null;
   awaiting_response?: boolean | null;
   lifecycle?: string | null;
   question?: string | null;
@@ -280,11 +283,37 @@ function coderExcerpt(text: string): string {
   return `${flat.slice(0, CODER_EXCERPT_CHARS - 1).trimEnd()}\u2026`;
 }
 
+/** The blocked predicate (`agent_context.models.is_blocked`): not ended, a
+ * captured question, and either the agent asked (`awaiting_response`) or its
+ * latest hook event is a blocking `Notification` (not `auth_success`). */
+export function isBlockedCoder(session: NeedsYouCoder): boolean {
+  if (String(session.lifecycle ?? "") === "ended") return false;
+  if (!String(session.question ?? "").trim()) return false;
+  if (session.awaiting_response) return true;
+  return (
+    String(session.hook_event_name ?? "") === "Notification" &&
+    String(session.notification_type ?? "") !== "auth_success"
+  );
+}
+
+/** `approve` for a permission prompt, else `answer` (`wait_kind`). */
+function coderWaitKind(session: NeedsYouCoder): "approve" | "answer" {
+  return String(session.hook_event_name ?? "") === "Notification" &&
+    String(session.notification_type ?? "") === "permission_prompt"
+    ? "approve"
+    : "answer";
+}
+
+function stampMs(value: string): number {
+  return value ? new Date(value).getTime() : Number.NaN;
+}
+
 /** R5: the coder sessions that wait for the owner, as attention rows
- * (`needs_you_membership.coder_items`). A member has a captured question, is
- * not ended, was updated within 30 minutes, and is blocked: `awaiting_response`
- * (reason `TO ANSWER`) or a permission prompt, its latest hook event a
- * `Notification` (reason `TO APPROVE`). */
+ * (`needs_you_membership.coder_items`). A member is blocked
+ * ({@link isBlockedCoder}) and updated within 30 minutes. The reason is
+ * `TO APPROVE` for a permission prompt, `TO ANSWER` for a question or an
+ * input prompt. `since` is the wait's start, so a repeated report does not
+ * move the row; `notifyKey` names the wait episode. */
 export function coderItems(
   coders: readonly NeedsYouCoder[],
   now: Date = new Date(),
@@ -292,31 +321,36 @@ export function coderItems(
 ): NeedsYouRoomItem[] {
   const rows: NeedsYouRoomItem[] = [];
   for (const session of coders) {
-    const permission = String(session?.hook_event_name ?? "") === "Notification";
-    if (!session?.awaiting_response && !permission) continue;
+    if (!session || !isBlockedCoder(session)) continue;
     const question = String(session.question ?? "").trim();
-    if (!question) continue;
-    if (String(session.lifecycle ?? "") === "ended") continue;
     const updated = String(session.updated_at ?? "");
-    const updatedMs = updated ? new Date(updated).getTime() : Number.NaN;
+    const updatedMs = stampMs(updated);
     if (!Number.isFinite(updatedMs)) continue;
-    const age = Math.max(0, Math.floor((now.getTime() - updatedMs) / 1000));
-    if (age > maxAgeSeconds) continue;
+    if (Math.max(0, Math.floor((now.getTime() - updatedMs) / 1000)) > maxAgeSeconds) continue;
     const agent = String(session.agent ?? "");
     const sessionId = String(session.session_id ?? "");
     if (!agent || !sessionId) continue;
     const key = `${agent}:${sessionId}`;
     const ref = `coder:${key}`;
+    const started = String(session.wait_started_at ?? "") || updated;
+    const startedMs = stampMs(started);
+    const age = Math.max(
+      0,
+      Math.floor((now.getTime() - (Number.isFinite(startedMs) ? startedMs : updatedMs)) / 1000),
+    );
+    const waitId = String(session.wait_id ?? "");
+    const approve = coderWaitKind(session) === "approve";
     const excerpt = coderExcerpt(question);
     rows.push({
       id: ref,
       ref,
+      notifyKey: waitId ? `${ref}#${waitId}` : ref,
       projectId: "",
       projectName: String(session.project_name ?? ""),
       title: excerpt,
-      why: permission ? "TO APPROVE" : "TO ANSWER",
-      ageToken: updated,
-      since: updated,
+      why: approve ? "TO APPROVE" : "TO ANSWER",
+      ageToken: started,
+      since: started,
       dueAt: null,
       kind: "coder",
       source: "coder",
@@ -328,6 +362,8 @@ export function coderItems(
       cwd: String(session.cwd ?? ""),
       repoRoot: String(session.repo_root ?? ""),
       question: excerpt,
+      waitKind: approve ? "approve" : "answer",
+      waitStartedAt: started,
       ageSeconds: age,
     });
   }

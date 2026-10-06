@@ -740,7 +740,10 @@ class HeartbeatService:
         complete = bool(agg.get("complete", True))
 
         def _id_of(item: dict[str, Any]) -> str:
-            return str(item.get("id") or _item_id(str(item.get("projectId") or ""), item))
+            # A coder row (R5) names its wait episode: one wait notifies
+            # once, a new wait after an answer notifies again.
+            return str(item.get("notifyKey") or item.get("id")
+                       or _item_id(str(item.get("projectId") or ""), item))
 
         current_ids = {
             _id_of(it): {"project": str(it.get("projectId") or ""),

@@ -186,8 +186,6 @@ TO_ANSWER = "TO ANSWER"
 #: hook event is a ``Notification`` that carries the ask).
 TO_APPROVE = "TO APPROVE"
 
-#: The hook event of a permission prompt ("Claude needs your permission ...").
-PERMISSION_EVENT = "Notification"
 
 #: The longest question excerpt a row carries (the full question stays in
 #: the session registry; the Agents window shows it).
@@ -222,39 +220,40 @@ def coder_items(
     """R5: the coder sessions that wait for the owner, as attention rows.
 
     ``sessions`` holds ``agent_context.AgentSession`` objects or their
-    ``to_dict()`` mappings. A session is a member when it carries a
-    ``question`` (secret-filtered when the hook captured it), is not ended,
-    was updated within ``max_age_seconds`` (default:
-    ``DEFAULT_RECENT_MAX_AGE_SECONDS``, 30 min), and is blocked on the owner:
-    ``awaiting_response`` (a question, reason ``TO ANSWER``) or its latest
-    hook event is a permission prompt (``Notification``, reason
-    ``TO APPROVE``; the hook does not set ``awaiting_response`` for it). An
-    answered session clears ``awaiting_response`` and its question, so it
-    leaves the set. Pinned sessions get no exemption from the 30 min window.
-    """
-    if max_age_seconds is None:
-        from holdspeak.agent_context.models import DEFAULT_RECENT_MAX_AGE_SECONDS
+    ``to_dict()`` mappings. A session is a member when it is blocked
+    (``agent_context.is_blocked``: the ONE predicate the hub's coder watcher
+    reads too) and was updated within ``max_age_seconds`` (default:
+    ``DEFAULT_RECENT_MAX_AGE_SECONDS``, 30 min). Pinned sessions get no
+    exemption. The reason is ``TO APPROVE`` for a permission prompt and
+    ``TO ANSWER`` for a question or an input prompt.
 
+    ``since`` is the wait's start (``wait_started_at``), so a repeated report
+    does not move the row in the oldest-first order; freshness reads
+    ``updated_at``. ``notifyKey`` names the wait EPISODE (the stable row ref
+    plus ``wait_id``): the Heartbeat dedupes notifications on it, so a new
+    wait after an answer notifies again while one wait notifies once.
+    """
+    from holdspeak.agent_context.models import (
+        DEFAULT_RECENT_MAX_AGE_SECONDS,
+        is_blocked,
+        wait_kind,
+    )
+
+    if max_age_seconds is None:
         max_age_seconds = DEFAULT_RECENT_MAX_AGE_SECONDS
     clock = now or local_wall()
     now_s = (clock if clock.tzinfo else clock.astimezone()).timestamp()
     rows: list[dict[str, Any]] = []
     for raw in sessions:
         session = raw.to_dict() if hasattr(raw, "to_dict") else dict(raw or {})
-        permission = str(session.get("hook_event_name") or "") == PERMISSION_EVENT
-        if not session.get("awaiting_response") and not permission:
+        if not is_blocked(session):
             continue
         question = str(session.get("question") or "").strip()
-        if not question:
-            continue
-        if str(session.get("lifecycle") or "") == "ended":
-            continue
         updated = str(session.get("updated_at") or "")
         updated_s = _epoch_seconds(updated)
         if updated_s is None:
             continue
-        age = max(0, int(now_s - updated_s))
-        if age > max_age_seconds:
+        if max(0, int(now_s - updated_s)) > max_age_seconds:
             continue
         agent = str(session.get("agent") or "")
         session_id = str(session.get("session_id") or "")
@@ -262,16 +261,21 @@ def coder_items(
             continue
         key = f"{agent}:{session_id}"
         ref = f"{CODER_SOURCE}:{key}"
-        cwd = str(session.get("cwd") or "")
+        started = str(session.get("wait_started_at") or "") or updated
+        started_s = _epoch_seconds(started)
+        age = max(0, int(now_s - (started_s if started_s is not None else updated_s)))
+        wait_id = str(session.get("wait_id") or "")
+        approve = wait_kind(session) == "approve"
         rows.append({
             "id": ref,
             "ref": ref,
+            "notifyKey": f"{ref}#{wait_id}" if wait_id else ref,
             "projectId": "",
             "projectName": str(session.get("project_name") or ""),
             "title": _excerpt(question),
-            "why": TO_APPROVE if permission else TO_ANSWER,
-            "ageToken": updated,
-            "since": updated,
+            "why": TO_APPROVE if approve else TO_ANSWER,
+            "ageToken": started,
+            "since": started,
             "dueAt": None,
             "kind": CODER_SOURCE,
             "source": CODER_SOURCE,
@@ -280,9 +284,11 @@ def coder_items(
             "severity": "warning",
             "sessionKey": key,
             "agent": agent,
-            "cwd": cwd,
+            "cwd": str(session.get("cwd") or ""),
             "repoRoot": str(session.get("repo_root") or ""),
             "question": _excerpt(question),
+            "waitKind": "approve" if approve else "answer",
+            "waitStartedAt": started,
             "ageSeconds": age,
         })
     return rows
@@ -671,10 +677,14 @@ def _read_decisions(db: Any, principal: Any) -> list[dict[str, Any]]:
 
 
 def _read_coders() -> list[Any]:
-    """The coder sessions the agent hooks recorded (``agent_context``)."""
+    """The coder sessions the agent hooks recorded (``agent_context``).
+
+    Strict: an absent registry (first run) is no sessions; an unreadable or
+    invalid one raises, so the answer names it and is never a false
+    all-clear."""
     from holdspeak import agent_context
 
-    return list(agent_context.list_agent_sessions())
+    return list(agent_context.read_agent_sessions_strict())
 
 
 def _decision_text(text: Any) -> str:

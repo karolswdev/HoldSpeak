@@ -156,7 +156,10 @@ def test_resolve_pane_target_none_when_the_record_never_saw_tmux() -> None:
 
 def test_awaiting_snapshot_keys_sessions_the_board_way() -> None:
     sessions = [
-        _session(agent="claude", session_id="a", awaiting_response=True),
+        # Blocked is the shared predicate (Conductor K3): the flag AND a
+        # captured question.
+        _session(agent="claude", session_id="a", awaiting_response=True,
+                 question="Keep the old migration?"),
         _session(agent="codex", session_id="b", awaiting_response=False),
     ]
     assert awaiting_snapshot(sessions) == {"claude:a": True, "codex:b": False}

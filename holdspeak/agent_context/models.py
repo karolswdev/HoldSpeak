@@ -142,6 +142,14 @@ class AgentSession:
     # question (secret-filtered at ingest) when the coder blocks on the human.
     lifecycle: str = LIFECYCLE_WORKING
     question: Optional[str] = None
+    # Conductor K3: the Notification hook's subtype (``permission_prompt``,
+    # ``idle_prompt``, ...) for the current wait, and the wait EPISODE: when
+    # the session began to block on the owner and a stable id for that
+    # episode. Repeated reports of one wait keep both; a new wait (after the
+    # owner answered or the agent worked) gets new ones.
+    notification_type: Optional[str] = None
+    wait_started_at: Optional[str] = None
+    wait_id: Optional[str] = None
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> "AgentSession":
@@ -173,6 +181,9 @@ class AgentSession:
             pinned=bool(raw.get("pinned")),
             lifecycle=_optional_str(raw.get("lifecycle")) or LIFECYCLE_WORKING,
             question=_optional_str(raw.get("question")),
+            notification_type=_optional_str(raw.get("notification_type")),
+            wait_started_at=_optional_str(raw.get("wait_started_at")),
+            wait_id=_optional_str(raw.get("wait_id")),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -204,4 +215,55 @@ class AgentSession:
             "pinned": self.pinned,
             "lifecycle": self.lifecycle,
             "question": self.question,
+            "notification_type": self.notification_type,
+            "wait_started_at": self.wait_started_at,
+            "wait_id": self.wait_id,
         }
+
+
+#: Notification subtypes that do NOT block on the owner (Claude Code's
+#: ``auth_success``). Every other Notification with a captured ask blocks.
+NON_BLOCKING_NOTIFICATIONS = frozenset({"auth_success"})
+
+#: The Notification subtype of a permission prompt (Claude Code hook input
+#: ``notification_type``).
+PERMISSION_NOTIFICATION = "permission_prompt"
+
+
+def _field(session: Any, name: str) -> Any:
+    if isinstance(session, Mapping):
+        return session.get(name)
+    return getattr(session, name, None)
+
+
+def is_blocked(session: Any) -> bool:
+    """THE blocked predicate (Conductor K3): the session waits on the owner.
+
+    One rule for the Needs you membership (R5) and the hub's coder watcher.
+    Not ended, a non-empty captured question, and either the agent asked
+    (``awaiting_response``) or its latest hook event is a blocking
+    ``Notification`` (a permission or input prompt). A working event clears
+    the question, so a session that resumed is not blocked even when an
+    older ``awaiting_response`` flag survived. Freshness is the reader's
+    rule, not this one.
+    """
+    if str(_field(session, "lifecycle") or "") == LIFECYCLE_ENDED:
+        return False
+    if not str(_field(session, "question") or "").strip():
+        return False
+    if bool(_field(session, "awaiting_response")):
+        return True
+    return (
+        str(_field(session, "hook_event_name") or "") == "Notification"
+        and str(_field(session, "notification_type") or "") not in NON_BLOCKING_NOTIFICATIONS
+    )
+
+
+def wait_kind(session: Any) -> str:
+    """``approve`` for a permission prompt, else ``answer``."""
+    if (
+        str(_field(session, "hook_event_name") or "") == "Notification"
+        and str(_field(session, "notification_type") or "") == PERMISSION_NOTIFICATION
+    ):
+        return "approve"
+    return "answer"
