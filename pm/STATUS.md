@@ -16,7 +16,7 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
-Now: finish it all as one onboarding experience (owner 2026-10-05: "I want you to finish it all up"): five fix lanes + one canvas for every face that needs design.
+Done: finish it all as one onboarding experience (owner 2026-10-05): #866–#872, #875–#877, #882 merged. Open for the owner: the 1440 Dock with five projects; whether Stop should summarise again; person pages (no non-People key).
 
 Done: strong defaults, batteries included (owner direction 2026-10-05): #855, #856 and #859 merged: a fresh install now gets local AI from one first-run press. His desk: assign his LAN server as the default (and memory) when his hub next runs.
 
@@ -42,12 +42,14 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Memory: live meeting analysis and voice resolve read no memory (a lookup is 100–400 ms against a 50 ms bar) | — | — |
 | Memory: the decision-promotion self-recall test passes before the fix; mint through DecisionLifecycleService.promote (Astra, #830) | — | — |
 | Memory: not measured on the owner's real desk; new items take up to 120 s to become searchable by meaning | — | — |
+| ⌘K: after Tab the selected and the focused rows share one plate and read as one block when adjacent (pre-existing) | — | — |
 | The Dock overflows at 1440 with five projects (the ratified shelf scrolls; Places and Record go off the right edge): owner's design call pending — recommendation: pin Places and Record; Calendar cannot tell no-vision-model from a failed model (the hub sends one code); Ask shows "GROUNDED ON 0 OF 0" (a counter of zero); older thread rows and task-resume Ask answers show no route lamp | owner / — | — |
 | Times: a ZoneInfo datetime with fold=1 still loses the fold (timestamps.py:160); about 68 rarer time compares stay textual (one shape per column after the backfill); old rows not rewritten in sync-written columns; a calendar refresh announces every time | — | — |
 | Decisions (housekeeping #867): fold the older ReactionService watch system into WatchService (Workbench automations are its only face); three primitives/decisions routes are unreachable in the hub; six routes have no caller (incl. POST /api/setup/local-ai/cancel); connector_fixtures.py lives in the product package; heartbeat.run_now builds WatchService without the Jira adapter; a test left tmux session hs10605_kill_62847 on the owner's server | owner | — |
 
 ## Last merged (newest first)
 
+- #882 — ⌘K two-line memory hits (owner pick B): the matching passage with the query marked, a FoundBy token (KEYWORD/MEANING/TIME/NAME/LINK) and the day; selected/hovered/focused rows at 5.24:1
 - #877 — Memory where the work lives (owner pick B): beliefs in Desk memory with evidence and history; standing pages in the Room (project) and the Brief (desk); withdrawn evidence hides at once on any desk change; pages bound to their scope; SOURCES counts distinct sources
 - #872 — Backend coherence: one needs-you number on every face (palette re-reads on open and on change); roadmaps read cached (~60 ms warm); every stored stamp aware UTC (census fence), DST-safe, a one-time backfill of old local stamps (sync-written columns excluded) and instant compares on the queues; People text scrubbed from old Brief sends; background writers and MCP announce
 - #876 — Onboarding on one screen (owner pick A): Calendar and Connections cards under the first-run three; Ready on top with his name and three verbs (Record the next meeting, Dictate, Ask about this week); every card lit; macOS prompt only on press
