@@ -531,3 +531,45 @@ step row now wraps: the label keeps its own width (`flex: 1 0 auto`), and
 the bar and the rate go to the next line when they do not fit beside it
 (the rate keeps to the right). Only a label wider than the whole row
 ellipsizes. No prop changed.
+
+## ReadyStrip (first run option A "One screen", 2026-10-05)
+
+Every finished step's success token in one wrapping row. Born on the
+first-run face, option A "One screen" (canvas YDTpkaJqFs3hyrZ4g581Mx §1,
+owner ratified 2026-10-05), where Ready goes to the top when every step is
+done.
+
+- `items: { key, label }[]` — one success `StateChip` (icon `✓`) per item,
+  in order. The label is the step's facts as one token
+  (`CALENDAR · 14 THIS WEEK`). An empty label gives no chip; no chips, no
+  strip (UX-CANON A8: no empty section).
+- `ariaLabel?: string` — the list's name; default `Ready`.
+- Renders a `ul` (each chip in an `li`). A chip wraps its text inside the
+  strip at a narrow width; it is never cut.
+
+## StartVerb / StartVerbs (first run option A "One screen", 2026-10-05)
+
+The "what you can do now" verbs at the top of a finished face, made from
+the owner's own data (`Record Atlas weekly · 10:30`, `Dictate`,
+`Ask about this week`).
+
+- `StartVerb` IS the library `Button` (UX-CANON: every verb the library
+  Button) on a larger plate: 72 px tall, a glyph (`glyph`, one character,
+  `aria-hidden`) over the word. `variant` is `primary` (the one verb the
+  face leads with) or `secondary`. All Button props pass through
+  (`loading`, `disabled`, `onClick`, `aria-*`).
+- `StartVerbs` lays the set out as equal columns (`role="group"`,
+  `ariaLabel` default `Start`); they stack into one column at the narrow
+  container (`@container surface (max-width: 720px)`).
+- A verb the face cannot honour is withheld, never drawn disabled
+  (no dead verbs).
+
+## ChoiceCardShell `lit` (first run option A "One screen", 2026-10-05)
+
+`lit` stamps `data-lit`: the card is the next step that waits for the
+owner's press. The material is the library's (`choice-card.css`): an
+`--ok` ring and glow that fades in once
+(`--duration-medium`); with `prefers-reduced-motion: reduce` it does not
+fade (no animation). A face lights one card at a time. `lit` and
+`selected` may both be set; `lit` draws over `selected`. (Moved from the
+first-run face's own stylesheet into the library.)

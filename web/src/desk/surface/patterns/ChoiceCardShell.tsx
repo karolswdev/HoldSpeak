@@ -43,6 +43,9 @@ type OwnProps = {
   recommended?: boolean;
   /** Whether the card is disabled. */
   disabled?: boolean;
+  /** The lit card: the next step that waits for the owner's press (an
+   *  `--ok` ring and glow that fades in once; no motion when reduced). */
+  lit?: boolean;
   /** Content rendered before the head (e.g. a visually-hidden radio input
    *  whose :focus-visible + .head selector needs DOM adjacency). */
   beforeHead?: ReactNode;
@@ -68,6 +71,7 @@ export function ChoiceCardShell({
   selected,
   recommended,
   disabled,
+  lit,
   beforeHead,
   children,
   className,
@@ -84,6 +88,7 @@ export function ChoiceCardShell({
       data-selected={selected || undefined}
       data-recommended={recommended || undefined}
       data-disabled={disabled || undefined}
+      data-lit={lit || undefined}
       data-tier={tier}
       {...rest}
     >
