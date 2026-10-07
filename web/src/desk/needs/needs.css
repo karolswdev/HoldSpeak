@@ -1,0 +1,63 @@
+/* PHILO-14 A5 — the Needs-you drawer (board A-5). The rows are the
+   library NeedsRow (surface/objects/objects.css); this file holds only the
+   head's place and the in-place well. */
+.needs-drawer {
+  container: surface / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 4px 12px;
+}
+.needs-drawer-head {
+  margin: 0;
+  color: var(--text);
+}
+.needs-drawer-well {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 4px 4px 10px 56px;
+}
+@container surface (max-width: 520px) {
+  .needs-drawer-well {
+    padding-left: 4px;
+  }
+  /* 393: every verb is a 44 px touch target. */
+  .needs-drawer .needs-row-verbs .btn {
+    min-height: 44px;
+  }
+}
+.needs-drawer-headline {
+  display: contents;
+}
+.needs-drawer .needs-row[data-opens="true"] {
+  cursor: pointer;
+}
+.needs-drawer .needs-row[data-opens="true"]:hover {
+  background: var(--surface-hover);
+}
+.needs-drawer-muted {
+  opacity: 0.55;
+}
+.needs-drawer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 4px 4px 0;
+}
+.needs-drawer-next {
+  font: var(--font-size-sm) / 1.4 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+/* A name is never cut in the drawer (HS-172: no text clip): it wraps. */
+.needs-drawer .needs-row-name {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.needs-drawer-receipt {
+  margin: 0;
+}

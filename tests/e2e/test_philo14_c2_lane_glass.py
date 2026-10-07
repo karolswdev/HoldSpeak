@@ -164,16 +164,18 @@ def _http(url: str, method: str, path: str, token: str, body: Any = None) -> tup
 
 def mint_held_call(url: str, worktree: str, command: str = PSQL, proposal_id: str = "toolu_psql") -> dict:
     """A held call through the real gate route, with the agent's own
-    credential (kernel-admitted, as the gate hook sends it)."""
-    import hashlib
+    credential (kernel-admitted), in the body the gate hook builds
+    (`coder_gate.redact_call`: the hash, the 120-char head, the length of the
+    shown command)."""
+    from holdspeak.coder_gate import redact_call
 
     status, issued = _http(url, "POST", "/api/principals/agents", TOKEN, {"identity": KEY})
     assert status == 201, issued
-    args = json.dumps({"command": command}, separators=(",", ":"), sort_keys=True)
-    digest = hashlib.sha256(args.encode()).hexdigest()
+    call = redact_call({"command": command})
+    digest = call.sha256
     status, body = _http(url, "POST", "/api/gate/proposals", issued["credential"], {
-        "id": proposal_id, "tool": "Bash", "args_sha256": digest, "args_head": args[:120],
-        "cwd": worktree, "ttl_seconds": 3600,
+        "id": proposal_id, "tool": "Bash", "args_sha256": digest, "args_head": call.head,
+        "args_len": call.length, "cwd": worktree, "ttl_seconds": 3600,
         "classification": {"scope": "outside", "rule": "path_outside_worktree", "read_rule": "",
                            "push_branch": "", "root": worktree, "proposal_id": proposal_id, "args_sha256": digest},
     })
@@ -306,6 +308,27 @@ def test_the_agents_lane_window_at_1440_and_393(tmp_path: Path, monkeypatch) -> 
                     status, stored = _http(url, "GET", "/api/gate/proposals/toolu_psql", TOKEN)
                     assert stored["state"] == "approved", stored
                     held.locator("[data-testid='lane-approve']").wait_for(state="detached", timeout=10000)
+
+                    # PHILO-14 A5 (Astra r2): a 198-char call the hook cuts.
+                    # The lane shows `<head>… +90 CHARS`, Deny and Raw (the
+                    # pane holds the whole command), never Approve.
+                    base = "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = "
+                    long_cmd = base + "7" * (198 - len(base) - 1) + "'"
+                    mint_held_call(url, seed["worktree"], long_cmd, "toolu_cut")
+                    page.reload(wait_until="load")
+                    _normal_chair(page)
+                    _settle(page)
+                    # The lane window comes back after the reload (B2): read it again.
+                    page.locator(".is-lane [data-testid='lane-rail']").wait_for(timeout=15000)
+                    cut = page.locator(".lane-rail-entry").filter(has_text="+90 CHARS").first
+                    cut.wait_for(timeout=15000)
+                    shown = (cut.text_content() or "")
+                    assert long_cmd[:100] in shown and "… +90 CHARS" in shown, shown
+                    assert cut.locator("[data-testid='lane-approve']").count() == 0
+                    assert cut.locator("[data-testid='lane-deny']").count() == 1
+                    assert cut.locator("[data-testid='lane-raw-cut']").count() == 1
+                    cut.scroll_into_view_if_needed()
+                    page.screenshot(path=str(SHOTS / f"C2-lane-cut-{width}.png"))
                 _assert_clean(page, errors)
                 page.close()
             browser.close()

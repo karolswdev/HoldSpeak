@@ -13,7 +13,8 @@ calendar link route (the sync event to its Room), and POST
 
 J1 (the morning) walked end to end, one gesture per press or tap:
   1. Brief window: the brief row `Review decision: ...` -> that decision's window.
-  2. Needs you window: Priya's commitment row -> People on Priya.
+  2. Needs you window: Priya's commitment row (the drawer row's body,
+     PHILO-14 A5 testid `needs-row`) -> People on Priya.
   3. The week window: `1:1 Priya / Karol` -> People on Priya, on Prep.
 A dead tap is a press after which the object it names is not the front
 window. J3 prep: from a fresh Chair, the 1:1 row alone -> Priya on Prep.
@@ -241,8 +242,10 @@ class TestOneOpenGrammar:
 
                 # 2. Priya's commitment row -> People on Priya
                 self._chair_window(page, width, "Needs you", walk)
-                commitment = page.locator(".desk-window-shell[aria-label='Needs you'] .surface-ledger-line",
-                                          has_text=COMMITMENT).first
+                # PHILO-14 A5: the Needs-you drawer row's body is its open
+                # (`needs-row`; the name is the body, the verbs are apart).
+                commitment = page.locator(".desk-window-shell[aria-label='Needs you'] [data-testid='needs-row']",
+                                          has_text=COMMITMENT).first.locator(".needs-row-name")
                 self._open(page, width, commitment, "People", "Priya Nair", "commitment row -> its person", walk)
                 page.screenshot(path=str(SHOTS / f"B1-02-commitment-person-{width}.png"))
 

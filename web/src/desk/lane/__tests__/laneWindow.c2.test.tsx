@@ -421,6 +421,25 @@ describe("the agent's window", () => {
     );
   });
 
+  it("PHILO-14 A5: a held call the hub cannot show whole: the head + `… +90 CHARS`, Deny and Raw, never Approve", async () => {
+    // The wire as `launch_lane.gated()` builds it from the real 198-char hook
+    // arrival (`db.gate.command_view`; tests/unit/test_philo14_a5_needs_drawer.py).
+    const head = "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777";
+    await openLane(fixture({
+      wait: { question: "Claude needs your permission to use Bash", kind: "TO APPROVE", started: null },
+      gated: [{ id: "toolu_cut", tool: "Bash", args_head: `{"command":"${head}`, args_shown: head, args_cut: true, args_hidden: 90,
+        state: "held", created_at: Date.parse(T("09:55")) / 1000 }],
+    }));
+    const well = screen.getByTestId("lane-approve-well");
+    expect(well.textContent).toContain(`${head}… +90 CHARS`);
+    expect(within(well).getByTestId("lane-deny")).toBeTruthy();
+    expect(within(well).getByTestId("lane-raw-cut")).toBeTruthy();
+    expect(screen.queryByTestId("lane-approve")).toBeNull();
+    expect(within(screen.getByTestId("lane-rail")).getByText(`${head}… +90 CHARS`)).toBeTruthy();
+    fireEvent.click(within(well).getByTestId("lane-raw-cut"));
+    expect(useLane.getState().raw).toBe(true);
+  });
+
   it("DECIDING: one line, no field", async () => {
     await openLane(fixture({ wait: { question: QUESTION, kind: "DECIDING", started: null } }));
     expect(screen.getByTestId("lane-deciding").textContent).toContain(QUESTION);
