@@ -300,7 +300,14 @@ function NeedRow({ face, primary }: { face: NeedFace; primary: boolean }) {
         fact={face.fact || undefined}
         lamp={face.lamp}
         sprite={face.agent ? spriteUrl("agent", face.id, "rest", face.agent) : undefined}
-        verbs={<NeedVerbsView face={face} primary={primary} well={well} onWell={setWell} />}
+        verbs={(
+          <>
+            {face.moreAsks ? (
+              <span className="surface-token" data-testid="needs-more-asks">{`+${face.moreAsks} MORE`}</span>
+            ) : null}
+            <NeedVerbsView face={face} primary={primary} well={well} onWell={setWell} />
+          </>
+        )}
       />
       {well ? <CommitWell face={face} which={well} onDone={() => setWell(null)} /> : null}
     </>

@@ -123,3 +123,15 @@ def test_only_a_live_flight_folds(state, folds) -> None:
     ]
     membership.fold_asks(items, [{"origin_ref": "action:ai-1", "session_key": "claude:s1", "state": state}])
     assert bool(items[1].get("foldedInto")) is folds
+
+
+def test_a_second_ask_of_the_same_session_folds_into_the_same_item() -> None:
+    """Owner ruling 2026-10-07: one object, one row, always. A held call while
+    the agent's question is folded is the same item's too: one member."""
+    items = [
+        {"id": "door:ai-1", "ref": "ai-1", "source": "action_item", "_doorCard": {"target_ref": "action_item:ai-1"}},
+        {"id": "coder:claude:s1", "ref": "coder:claude:s1", "source": "coder", "sessionKey": "claude:s1"},
+        {"id": "gate:p1", "ref": "gate:p1", "source": "gate", "sessionKey": "claude:s1"},
+    ]
+    membership.fold_asks(items, [{"origin_ref": "action:ai-1", "session_key": "claude:s1", "state": "waiting"}])
+    assert [i.get("foldedInto") for i in items] == [None, "ai-1", "ai-1"]

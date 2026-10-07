@@ -448,6 +448,27 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(face(row("Write the rollback runbook")).lamps).toEqual(["ASKS · 6 MIN"]);
     expect(document.querySelector("[data-object-id='coder:claude:s-run']")).toBeNull();
   });
+  it("one object, one row, always: a held call and a question on one item lead with the held call, +1 MORE", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        const question = { ...ITEMS[0], foldedInto: "ai-worked" };
+        const held = { ...ITEMS[1], sessionKey: "claude:s-run", foldedInto: "ai-worked" };
+        return { ...ANSWER, count: 6, items: [question, held, ...ITEMS.slice(2)] } as never;
+      }
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    useAgentFlights.setState({ flights: [], sessions: [] } as never);
+    render(<NeedsDrawer />);
+    await screen.findByText("6 need you");
+    const item = row("Write the rollback runbook");
+    expect(face(item)).toMatchObject({ lamps: ["HELD CALL"], verbs: ["Deny", "Approve"] });
+    expect(within(item).getByTestId("needs-more-asks").textContent).toBe("+1 MORE");
+    expect(document.querySelectorAll("[data-testid='needs-row'][data-counted='true']")).toHaveLength(6);
+    expect(document.querySelectorAll(".needs-row[data-kind='agent']")).toHaveLength(0);
+    // The row body opens the agent's lane, where every ask is answered.
+    fireEvent.click(item.querySelector(".needs-row-name")!);
+    expect(openCoderSession).toHaveBeenCalledWith("claude:s-run");
+  });
 });
 
 async function mount7() {

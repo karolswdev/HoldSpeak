@@ -462,14 +462,11 @@ export function foldAsks(
       if (!owners.has(ref)) owners.set(ref, itemRef(item));
     }
   }
-  const folded = new Set<string>();
   for (const item of items) {
     if (item.source !== "coder" && item.source !== "gate") continue;
     const target = owners.get(bySession.get(String(item.sessionKey ?? "")) ?? "");
-    if (target && !folded.has(target)) {
-      folded.add(target);
-      item.foldedInto = target;
-    }
+    // Every ask on the item is the item's (one object, one row, always).
+    if (target) item.foldedInto = target;
   }
 }
 

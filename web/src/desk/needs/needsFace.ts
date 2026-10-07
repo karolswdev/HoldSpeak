@@ -72,6 +72,8 @@ export interface NeedFace {
   memberRef?: string;
   /** An agent ask the hub folded into an item: that item's member ref. */
   foldedInto?: string;
+  /** The item's other asks (the row shows the most urgent one): `+N MORE`. */
+  moreAsks?: number;
 }
 
 /** `Claude Code` / `Codex`: the agent's name in a sentence. */
@@ -367,25 +369,39 @@ export function needFace(
  *  ask's. The agent's own row is not drawn. An agent with no item keeps its
  *  own row. */
 export function foldAsks(faces: readonly NeedFace[]): NeedFace[] {
-  // The hub's fold first (`foldedInto`: the one count), then the flight's
-  // session for an answer that carries no mark.
-  const byTarget = new Map<string, NeedFace>();
-  for (const face of faces) if (face.foldedInto && !byTarget.has(face.foldedInto)) byTarget.set(face.foldedInto, face);
-  const asks = new Map<string, NeedFace>();
-  for (const face of faces) if (face.askOf && !face.foldedInto && !asks.has(face.askOf)) asks.set(face.askOf, face);
+  // Owner ruling (2026-10-07): one object, one row, always. Every ask on an
+  // item rides on its row: the hub's fold first (`foldedInto`: the one
+  // count), then the flight's session for an answer that carries no mark.
+  const byTarget = new Map<string, NeedFace[]>();
+  const bySession = new Map<string, NeedFace[]>();
+  for (const face of faces) {
+    if (face.foldedInto) byTarget.set(face.foldedInto, [...(byTarget.get(face.foldedInto) ?? []), face]);
+    else if (face.askOf) bySession.set(face.askOf, [...(bySession.get(face.askOf) ?? []), face]);
+  }
   const folded = new Set<string>();
   const out: NeedFace[] = [];
   for (const face of faces) {
-    const ask = (face.memberRef ? byTarget.get(face.memberRef) : undefined)
-      ?? (face.workedBy ? asks.get(face.workedBy) : undefined);
-    if (ask && !folded.has(ask.id)) {
-      folded.add(ask.id);
-      out.push({ ...face, fact: ask.fact, lamp: ask.lamp, verbs: ask.verbs, askOf: ask.askOf, agent: undefined });
-    } else {
-      out.push(face);
-    }
+    if (face.askOf) { out.push(face); continue; }
+    const asks = [
+      ...(face.memberRef ? byTarget.get(face.memberRef) ?? [] : []),
+      ...(face.workedBy ? bySession.get(face.workedBy) ?? [] : []),
+    ].filter((ask) => !folded.has(ask.id));
+    if (!asks.length) { out.push(face); continue; }
+    for (const ask of asks) folded.add(ask.id);
+    // The most urgent ask leads: a held call before a question.
+    const lead = [...asks].sort((a, b) => askRank(a) - askRank(b))[0];
+    out.push({
+      ...face, fact: lead.fact, lamp: lead.lamp, verbs: lead.verbs, askOf: lead.askOf, agent: undefined,
+      moreAsks: asks.length - 1,
+      // The row's Open is the agent's lane, where every ask is answered.
+      openRef: lead.askOf ? `coder:${lead.askOf}` : face.openRef,
+    });
   }
   return out.filter((face) => !(face.askOf && folded.has(face.id)));
+}
+
+function askRank(face: NeedFace): number {
+  return face.verbs.kind === "gate" || face.verbs.kind === "gate-cut" ? 0 : 1;
 }
 
 /** The drawer's rows: the agents first (when any), then the rest in the

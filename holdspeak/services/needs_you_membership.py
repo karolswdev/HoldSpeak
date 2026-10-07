@@ -710,15 +710,14 @@ def fold_asks(items: list[dict[str, Any]], flights: Iterable[dict[str, Any]]) ->
             continue
         for ref in item_origin_refs(item):
             owners.setdefault(ref, _item_ref(item))
-    folded: set[str] = set()
     for item in items:
         if item.get("source") not in (CODER_SOURCE, GATE_SOURCE):
             continue
         origin = by_session.get(str(item.get("sessionKey") or ""))
         target = owners.get(origin or "")
-        # One ask per item: a second ask of the same session stays a row.
-        if target and target not in folded:
-            folded.add(target)
+        # Every ask on the item is the item's (owner ruling 2026-10-07: one
+        # object, one row, always); the desk shows the most urgent one.
+        if target:
             item["foldedInto"] = target
 
 
