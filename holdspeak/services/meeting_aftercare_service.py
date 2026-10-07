@@ -77,6 +77,13 @@ class MeetingAftercareService:
             )
 
         digest["triage"] = triage
+        # PHILO-15 B56: the aftercare card's live count (the same read the
+        # `aftercare_ready` frame takes), so a card leaves once he handled them.
+        try:
+            digest["proposal_total"] = len(
+                self._db.proposals.list_proposals(meeting_id=meeting_id, state="proposed"))
+        except Exception:
+            digest["proposal_total"] = None
         return digest
 
     def get_followup_draft(self, principal: Principal, meeting_id: str) -> dict[str, Any]:

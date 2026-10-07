@@ -51,7 +51,7 @@ export function agentSprite(agent: string): string {
 }
 
 export function HandConfirm({ pending }: { pending: HandPending }) {
-  const { origin, source, agent } = pending;
+  const { origin, source, agent, skipped } = pending;
   const cancel = useDropHand((s) => s.cancel);
   const [preview, setPreview] = useState<HandPreview | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -162,8 +162,15 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
     .join(" · ");
   const tracker = origin.kind === "issue" ? trackerToken(origin, preview, previewError) : null;
 
+  // PHILO-15 B36: why the line is not on Claude Code.
+  const passedOver = skipped && !launched && skipped !== actual ? skipped : null;
   const status = (
     <>
+      {passedOver ? (
+        <span className="surface-token" data-chip data-testid="hand-confirm-skipped">
+          {AGENT_NAME[passedOver].toUpperCase()} · SIGN-IN UNKNOWN
+        </span>
+      ) : null}
       {tracker ? (
         <span className="desk-hand-tokens" data-testid="hand-confirm-tracker" data-state={tracker.state}>
           <EgressChip label={tracker.host ? tracker.host.toUpperCase() : undefined} scope="cloud" />
@@ -198,7 +205,7 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
       ) : null}
     </>
   );
-  const hasStatus = Boolean(tracker || previewError || (refused.length && !launched) || delivery || launchError);
+  const hasStatus = Boolean(passedOver || tracker || previewError || (refused.length && !launched) || delivery || launchError);
 
   return (
     <div

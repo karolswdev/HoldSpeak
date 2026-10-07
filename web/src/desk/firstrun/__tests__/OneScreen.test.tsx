@@ -90,7 +90,7 @@ const MAC_CAL = {
 function gh(over: Record<string, unknown> = {}) {
   return {
     id: "github:github.com:karolswdev", provider: "github", label: "karolswdev", account: "karolswdev",
-    site: "github.com", active: true, connected: false, lamp: "cloud", egress_host: "github.com", verb: "Use it",
+    site: "github.com", active: true, connected: false, lamp: "cloud", egress_host: "github.com", verb: "Use it", state: "signed_in",
     ...over,
   };
 }

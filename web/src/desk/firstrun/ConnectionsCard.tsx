@@ -4,6 +4,7 @@
  * press reaches (GITHUB.COM, the Atlassian site). */
 import { Button } from "../../components/signal/Signal";
 import { EgressChip, StateChip, SurfaceLedgerRow } from "../surface";
+import { stateWords } from "../../pages/cores/connections/ConnectionsPane";
 import { Card } from "./Card";
 import { stateCount } from "./calendarStep";
 import {
@@ -22,12 +23,19 @@ function noVerbToken(row: ConnectionCandidate, step: ConnectionsStep): string {
   return "";
 }
 
+function isSignedIn(row: ConnectionCandidate): boolean {
+  if (row.provider !== "github") return true;
+  return row.connected || row.state === "signed_in" || row.state === "connected";
+}
+
 export function ConnectionsCard({ step, lit }: { step: ConnectionsStep; lit: boolean }) {
   const { rows } = step;
   const connected = step.connected.length;
   const allDone = step.done && connected > 0;
   const connectedLabel = stateCount("CONNECTED", connected);
-  const signedIn = stateCount("SIGNED IN", rows.length);
+  // PHILO-15 B31: a GitHub row counts as signed in only when the one
+  // Connections entry says so (a stored probe, else gh's sign-in file).
+  const signedIn = stateCount("SIGNED IN", rows.filter(isSignedIn).length);
   return (
     <Card
       title="Connections"

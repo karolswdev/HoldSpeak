@@ -265,6 +265,16 @@ def _check_mcp_server() -> DoctorResult:
                 process.wait()
 
 
+def _summary_route_fact() -> dict[str, Any]:
+    try:
+        from .db import get_database
+        from .services.meeting_route_projection import summary_engine_fact
+
+        return summary_engine_fact(get_database())
+    except Exception:
+        return {}
+
+
 def _check_inference(url: str, token: str) -> DoctorResult:
     if not token:
         return DoctorResult("SKIP", "inference", "no token configured")
@@ -275,6 +285,13 @@ def _check_inference(url: str, token: str) -> DoctorResult:
         if status == 200 and ready:
             return DoctorResult("PASS", "inference", f"target: {ready[0].get('id', 'ready')}")
         if status == 200:
+            # PHILO-15 B33: the legacy target list is not the only engine.
+            # The summary route (the default or a pick) is the queue's answer,
+            # the same one "Runtime profiles" names above.
+            route = _summary_route_fact()
+            if route.get("engine_set"):
+                where = route.get("host") or "ready"
+                return DoctorResult("PASS", "inference", f"summary route: {route.get('profile') or where} ({where})")
             return DoctorResult("SKIP", "inference", "no targets configured")
         return DoctorResult("FAIL", "inference", f"unexpected response: {payload!r}")
     except Exception as exc:

@@ -106,6 +106,47 @@ export function dismissAftercare(): void {
   if (aftercare !== null) publish(null);
 }
 
+type AftercareRead = {
+  open_items?: { total?: unknown } | null;
+  decisions?: unknown[] | null;
+  proposal_total?: unknown;
+};
+
+/**
+ * PHILO-15 B56: the card's counts are the hub's, read again (a "2 to review"
+ * card stayed half an hour after both proposals were confirmed). A card that
+ * came with proposals to review leaves when that count reaches zero; an
+ * unread answer keeps the card as it is.
+ */
+export async function refreshAftercare(): Promise<void> {
+  const current = aftercare;
+  if (!current) return;
+  let read: AftercareRead | null = null;
+  try {
+    read = await apiFetch<AftercareRead>(`/api/meetings/${encodeURIComponent(current.meetingId)}/aftercare`);
+  } catch {
+    return;
+  }
+  if (aftercare !== current || !read) return;
+  const proposals = Number(read.proposal_total);
+  if (!Number.isFinite(proposals)) return;
+  if (current.proposalTotal > 0 && proposals <= 0) {
+    publish(null);
+    return;
+  }
+  const next: AftercareSignal = {
+    ...current,
+    proposalTotal: Math.max(0, proposals),
+    openTotal: Number(read.open_items?.total ?? current.openTotal) || 0,
+    decidedTotal: Array.isArray(read.decisions) ? read.decisions.length : current.decidedTotal,
+  };
+  if (
+    next.proposalTotal !== current.proposalTotal ||
+    next.openTotal !== current.openTotal ||
+    next.decidedTotal !== current.decidedTotal
+  ) publish(next);
+}
+
 function aftercareSnapshot(): AftercareSignal | null {
   return aftercare;
 }

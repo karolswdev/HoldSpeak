@@ -38,7 +38,6 @@ import { memberOpens, openMember } from "./open";
 import { drawerWindowId, useDrawers, type OpenDrawer } from "./store";
 import { useDrawerData, type DrawerRead } from "./useDrawerData";
 import { urlHost } from "./members";
-import { DEFAULT_AGENT } from "../agentHand";
 import {
   HandConfirmSlot,
   beginHand,
@@ -145,7 +144,6 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
   const handSelected = () => {
     if (!selected || !selectedHand) return;
     void beginHand(selectedHand, {
-      agent: DEFAULT_AGENT,
       host,
       source: { kind: selected.kind, id: selected.id, sprite: selected.sprite },
     });

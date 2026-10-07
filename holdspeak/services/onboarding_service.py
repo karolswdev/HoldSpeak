@@ -311,11 +311,22 @@ class OnboardingService:
     def connections_detect(self, principal: Principal) -> dict[str, Any]:
         """Signed-in ``gh`` and ``acli`` accounts, from their files (no process, no network)."""
         candidates: list[dict[str, Any]] = []
-        connected = self._connected_refs(principal)
+        tools = self._connection_tools(principal)
+        connected = self._connected_refs(principal, tools)
+        # PHILO-15 B31: the GitHub row's state and time come from the one
+        # Connections entry (a stored probe, else gh's sign-in file), so this
+        # card and Settings › Connections never disagree.
+        github = next((t for t in tools if t.get("provider_id") == "github"), {})
+        github_login = str((github.get("account") or {}).get("login") or "")
         gh_path = gh_hosts_path(self._environ, self._home())
         gh_installed = self._which("gh") is not None
         for row in read_gh_accounts(gh_path):
+            mine = row["active"] and github_login == _gh_account_ref(row["host"], row["login"])
             candidates.append({
+                "state": str(github.get("state") or "") if mine else "",
+                "checked_at": github.get("last_checked_at") if mine else None,
+                "checked_by": github.get("checked_by") or ("probe" if github.get("last_checked_at") else None)
+                if mine else None,
                 "id": f"github:{row['host']}:{row['login']}",
                 "provider": "github",
                 "label": row["login"],
@@ -355,16 +366,23 @@ class OnboardingService:
             },
         }
 
-    def _connected_refs(self, principal: Principal) -> set[tuple[str, str]]:
-        """(provider, ref) pairs the connectors already hold as connected (stored rows only)."""
-        refs: set[tuple[str, str]] = set()
+    def _connection_tools(self, principal: Principal) -> list[dict[str, Any]]:
+        """The Connections entries (stored reads only), or none when unreadable."""
         if self._connections is None:
-            return refs
+            return []
         try:
-            tools = self._connections.list_tools(principal).get("tools", [])
+            return list(self._connections.list_tools(principal).get("tools", []))
         except Exception as exc:
             log.debug("connections read failed: %s", exc)
-            return refs
+            return []
+
+    def _connected_refs(
+        self, principal: Principal, tools: Optional[list[dict[str, Any]]] = None,
+    ) -> set[tuple[str, str]]:
+        """(provider, ref) pairs the connectors already hold as connected (stored rows only)."""
+        refs: set[tuple[str, str]] = set()
+        if tools is None:
+            tools = self._connection_tools(principal)
         for tool in tools:
             provider = str(tool.get("provider_id") or "")
             if provider == "github" and tool.get("state") == "connected":

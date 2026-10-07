@@ -36,6 +36,7 @@ function chipState(state: ConnectionState): ChipState {
     case "degraded": return "unreachable";
     case "not_configured": return "idle";
     case "never_checked": return "idle";
+    case "signed_in": return "success";
   }
 }
 
@@ -51,6 +52,7 @@ export function chipLabel(state: ConnectionState, providerId: string): string {
       if (providerId === "jira" || providerId === "confluence") return "Not set up";
       return "Off";
     case "never_checked": return "Never checked";
+    case "signed_in": return "Signed in";
   }
 }
 
@@ -84,6 +86,8 @@ export function stateWords(
   const label = chipLabel(state, providerId);
   if (state === "never_checked") return label;
   const age = checkedAgo(row.last_checked_at, row.checked_age_seconds);
+  // PHILO-15 B31: a gh-file sign-in names when gh stored it, not a check.
+  if (state === "signed_in") return age ? `${label} · ${age.replace(/^Checked/, "gh")}` : label;
   return age ? `${label} · ${age}` : label;
 }
 
@@ -180,7 +184,7 @@ function GitHubCard({
         <span className="connections-tool-emblem">GH</span>
         <span className="connections-tool-label">GitHub</span>
       </span>
-      {state === "connected" && tool.account?.login ? (
+      {(state === "connected" || state === "signed_in") && tool.account?.login ? (
         <span className="connections-tool-summary">{tool.account.login}</span>
       ) : null}
       <div className="connections-tool-chips">
@@ -490,10 +494,18 @@ function ModelsCard({
 }) {
   const assigned = tool?.account?.assigned ?? 0;
   const total = tool?.account?.total ?? 7;
+  // PHILO-15 B33: summaries that run on the route (the default or a pick)
+  // are in use even when no group row is assigned.
+  const summaryHost = tool?.account?.summary_host ?? null;
   const hasAssigned = assigned > 0;
-  const state: ChipState = hasAssigned ? "active" : "idle";
-  const label = hasAssigned ? "Assigned" : "Unassigned";
-  const summary = hasAssigned ? `${assigned} of ${total} assigned` : "Unassigned";
+  const inUse = hasAssigned || Boolean(summaryHost);
+  const state: ChipState = inUse ? "active" : "idle";
+  const label = hasAssigned ? "Assigned" : summaryHost ? "In use" : "Unassigned";
+  const summary = hasAssigned
+    ? `${assigned} of ${total} assigned`
+    : summaryHost
+      ? `Summaries · ${summaryHost}`
+      : "Unassigned";
 
   return (
     <div className="connections-tool-row" data-testid="connections-models">

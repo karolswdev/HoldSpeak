@@ -126,3 +126,37 @@ def test_a_named_other_person_is_never_claimed_by_the_owner_alias(hub: Hub) -> N
     assert row["_doorCard"].get("person_relationship_id") == other["id"], row
     assert row["why"] == "WAITING ON KAROL" and row["waiting"] is True, row
     assert ref not in [member["ref"] for member in answer["members"]]
+
+
+def _owned_by(hub: Hub, owner: str) -> str:
+    due = (date.today() + timedelta(days=7)).isoformat()
+    is_error, action = hub.mcp("door.add_item", {"task": f"Send the plan ({owner})", "owner": owner, "due": due})
+    assert not is_error, action
+    return str(action["id"])
+
+
+def test_b57_carol_is_karol_when_speech_misheard_his_name(hub: Hub) -> None:
+    """PHILO-15 B57: Whisper heard "Karol" as "Carol"; the action is his."""
+    carol = _owned_by(hub, "Carol")
+    carl = _owned_by(hub, "Carl")  # two edits from Karol: someone else
+    _ok(hub.client.put("/api/settings", json={"owner": {"name": "Karol Sane", "aliases": []}}))
+
+    answer = _ok(hub.client.get("/api/desk/needs-you"))
+    members = [member["ref"] for member in answer["members"]]
+    assert _row(answer, carol)["why"] == "YOURS" and carol in members
+    row = _row(answer, carl)
+    assert row["why"] == "WAITING ON CARL" and row["waiting"] is True and carl not in members
+
+
+def test_b57_sounds_like_owner_rule() -> None:
+    from holdspeak.services.needs_you_membership import sounds_like_owner
+
+    names = ["karol sane", "ks"]
+    assert sounds_like_owner("Carol", names)          # first name, one change
+    assert sounds_like_owner("KAROL", names)          # case-insensitive
+    assert sounds_like_owner("Karl", names)           # one delete
+    assert sounds_like_owner("Carol Sane", names)     # whole name, one change
+    assert not sounds_like_owner("Carl", names)       # two edits
+    assert not sounds_like_owner("Carol Smith", names)  # another surname
+    assert not sounds_like_owner("KT", names)         # short names match exactly only
+    assert not sounds_like_owner("Carol", [])         # no name set: nobody is him

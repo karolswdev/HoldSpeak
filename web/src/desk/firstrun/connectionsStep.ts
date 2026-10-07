@@ -26,6 +26,11 @@ export interface ConnectionCandidate {
   lamp: string;
   egress_host: string;
   verb: string | null;
+  /** PHILO-15 B31: the one Connections entry's state for this login
+   * ("signed_in" from gh's file, "connected" from a probe; "" otherwise). */
+  state?: string;
+  checked_at?: string | null;
+  checked_by?: string | null;
 }
 
 export interface ConnectionsDetect {

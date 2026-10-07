@@ -543,7 +543,61 @@ def _is_me(
         return True
     if _person_identity(row) or str(row.get("id") or "") in set(identified):
         return False
-    return _is_self(owner, personal_names)
+    return _is_self(owner, personal_names) or sounds_like_owner(owner, personal_names)
+
+
+#: The shortest name a one-letter mishearing may match (PHILO-15 B57): a
+#: three-letter name is one edit from too many other names.
+_SOUNDS_LIKE_MIN = 4
+
+
+def _within_one_edit(a: str, b: str) -> bool:
+    """True when ``a`` and ``b`` differ by at most one insert, delete or change."""
+    if a == b:
+        return True
+    if abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) > len(b):
+        a, b = b, a
+    i = j = edits = 0
+    while i < len(a) and j < len(b):
+        if a[i] == b[j]:
+            i += 1
+            j += 1
+            continue
+        edits += 1
+        if edits > 1:
+            return False
+        if len(a) == len(b):
+            i += 1
+        j += 1
+    return edits + (len(b) - j) + (len(a) - i) <= 1
+
+
+def sounds_like_owner(owner: Any, personal_names: Iterable[str]) -> bool:
+    """PHILO-15 B57: a bare owner string one letter from his own name is his.
+
+    Speech recognition heard "Karol" as "Carol", so his own action read
+    "OWNER CAROL" and waited on a person who does not exist. The match is
+    case-insensitive and needs at most one edit: the whole name ("Carol
+    Sane" for "Karol Sane"), or a bare first name against the first word of
+    his name or an alias ("Carol" for "Karol"). Names shorter than four
+    letters match exactly only.
+    """
+    said = " ".join(str(owner or "").split()).casefold()
+    if len(said) < _SOUNDS_LIKE_MIN:
+        return False
+    said_words = said.split(" ")
+    for raw in personal_names:
+        name = " ".join(str(raw or "").split()).casefold()
+        if len(name) < _SOUNDS_LIKE_MIN:
+            continue
+        if _within_one_edit(said, name):
+            return True
+        first = name.split(" ")[0]
+        if len(said_words) == 1 and len(first) >= _SOUNDS_LIKE_MIN and _within_one_edit(said, first):
+            return True
+    return False
 
 
 def waits_on_other(
@@ -1336,6 +1390,7 @@ __all__ = [
     "decision_items",
     "meeting_decision_asks_elsewhere",
     "owner_names",
+    "sounds_like_owner",
     "SELF_OWNER_NAMES",
     "waits_on_other",
     "door_items",

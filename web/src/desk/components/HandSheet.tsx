@@ -6,7 +6,7 @@
  * checks, the text), WHERE (the repository, a new worktree, the branch),
  * the Control mode, and the host the brief goes to on the Launch footer.
  * A refusal is a named token in the sheet, never prose. */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import {
@@ -29,6 +29,7 @@ import {
   HAND_PATH,
   HAND_PREVIEW_PATH,
   HAND_WINDOW_ID,
+  pickDefaultAgent,
   useAgentHand,
   type HandOrigin,
 } from "../agentHand";
@@ -214,7 +215,15 @@ function AgentSummary({ agent, detect }: { agent: AgentId; detect: AgentsDetect 
   const words = !row.installed
     ? "NOT INSTALLED"
     : [row.hooks === "installed" ? "HOOKS IN" : "NO HOOKS", row.version].filter(Boolean).join(" · ");
-  return <span className="surface-token" data-chip>{words}</span>;
+  return (
+    <>
+      <span className="surface-token" data-chip>{words}</span>
+      {/* PHILO-15 B36: the reason the default passed this agent over. */}
+      {row.installed && row.signed_in !== "yes" ? (
+        <span className="surface-token" data-chip data-tone="warn" data-testid="hand-signin-unknown">SIGN-IN UNKNOWN</span>
+      ) : null}
+    </>
+  );
 }
 
 /** The issue-body read as the sheet shows it: the host, and READING (the
@@ -238,6 +247,13 @@ function Sheet({ origin }: { origin: HandOrigin }) {
   const close = useAgentHand((s) => s.close);
   const detect = useDetect();
   const [agent, setAgent] = useState<AgentId>(origin.agent ?? DEFAULT_AGENT);
+  // PHILO-15 B36: opened with no agent named, the sheet takes the default
+  // (the first KNOWN sign-in) once the agents read answers, unless picked.
+  const pickedRef = useRef(Boolean(origin.agent));
+  useEffect(() => {
+    if (pickedRef.current || !detect) return;
+    setAgent(pickDefaultAgent(detect).agent);
+  }, [detect]);
   // Each preview carries the key of the request that produced it (item, Project,
   // profile): Launch arms only when that key is the current request's.
   const [preview, setPreview] = useState<(HandPreview & { requestKey: string }) | null>(null);
@@ -326,7 +342,11 @@ function Sheet({ origin }: { origin: HandOrigin }) {
   const frozen = launching || launched !== null;
   const canLaunch = current && blocked.length === 0 && !launching && launched === null;
   const delivery = launched ? deliveryToken(launched) : null;
-  const pick = (value: string) => { if (!frozen) setAgent(value as AgentId); };
+  const pick = (value: string) => {
+    if (frozen) return;
+    pickedRef.current = true;
+    setAgent(value as AgentId);
+  };
   const tracker = trackerToken(origin, current ? preview : null, previewError);
   return (
     <DeskWindowFrame

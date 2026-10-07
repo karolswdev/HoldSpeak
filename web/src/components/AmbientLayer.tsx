@@ -7,6 +7,7 @@ import {
   dismissAftercare,
   publishAftercare,
   publishAftercareHost,
+  refreshAftercare,
   useAftercare,
   type AftercareHost,
 } from "../desk/intelligenceAttention";
@@ -18,6 +19,7 @@ import { LampGadget } from "../desk/surface/gadgets";
 import { SurfaceState } from "../desk/surface/Surface";
 import { useChairState } from "../desk/chairState";
 import { useCompactViewport } from "../desk/useCompactViewport";
+import { useOnDeskChanged } from "../desk/useDeskChangedRefresh";
 import {
   handleWorkbenchRunStart,
   handleWorkbenchRunComplete,
@@ -189,6 +191,13 @@ function AftercareNote() {
     () => subscribe("aftercare_ready", (frame) => void publishAftercare(frame.data)),
     [subscribe],
   );
+  // PHILO-15 B56: the counts are live. Every write on the desk re-reads them
+  // (a confirmed proposal is a write), and the card shown reads them once.
+  useOnDeskChanged(() => void refreshAftercare());
+  const signalKey = signal ? signal.meetingId : null;
+  useEffect(() => {
+    if (signalKey) void refreshAftercare();
+  }, [signalKey]);
   useEffect(() => {
     if (!signal) {
       scrolledSlot.current = null;
