@@ -116,6 +116,13 @@ export function useUpdateController(
   // ── Enter update posture (fetch list) ──
   const enterUpdates = useCallback(async () => {
     if (!projectId) return;
+    // After a step aside the editor comes back as he left it (its text, its
+    // failure), never a fresh list over unsaved words.
+    if (posture === "off" && current) {
+      setPosture("editor");
+      keepPlace(updatePlaceKey(projectId), `editor:${current.id}`);
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -128,6 +135,17 @@ export function useUpdateController(
     } finally {
       setLoading(false);
     }
+  }, [projectId, posture, current]);
+
+  // ── Step aside (PHILO-14 A5b, Muad'Dib's ruling on Astra r2) ──
+  // A proposal request shows the Room: the posture steps aside and NEVER
+  // writes. The editor's update, its unsaved text (and the kept draft), its
+  // failure and Try again stay as they are; the kept place is cleared so a
+  // just-mounted Room does not restore the posture over the proposal.
+  // `Draft update` brings the editor back as he left it.
+  const stepAside = useCallback(() => {
+    if (projectId) keepPlace(updatePlaceKey(projectId), "");
+    setPosture("off");
   }, [projectId]);
 
   // ── Exit update posture ──
@@ -349,6 +367,9 @@ export function useUpdateController(
     setLoading(true);
     void updateApi.fetchUpdates(projectId).then((list) => {
       if (!live) return;
+      // A5b: the Room left the posture while the list loaded (a proposal
+      // request reveals OPEN HERE): the kept place is gone, so stay out.
+      if (keptPlace(updatePlaceKey(projectId)) !== place) return;
       setUpdates(list);
       const updateId = place.startsWith("editor:") ? place.slice("editor:".length) : "";
       const update = updateId ? list.find((u) => u.id === updateId) : undefined;
@@ -371,6 +392,7 @@ export function useUpdateController(
     posture,
     enterUpdates,
     exitUpdates,
+    stepAside,
     openUpdate,
     backToList,
 

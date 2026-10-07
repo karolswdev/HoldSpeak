@@ -171,7 +171,8 @@ class TestDrawerGlass:
                 browser.close()
 
     @pytest.mark.e2e
-    def test_the_needs_you_project_button_opens_the_drawer(self) -> None:
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_the_needs_you_project_button_opens_the_drawer(self, width: int) -> None:
         """A2b: a Needs you row names its Project (two Projects need him); its
         Project button is a generic open, so it lands on the drawer."""
         from playwright.sync_api import sync_playwright
@@ -194,7 +195,7 @@ class TestDrawerGlass:
             self.db.proposals.create_proposal(meeting_id=mid, project_id=pid, kind="action", text=text,
                                               source_plugin="a2b-glass")
         with sync_playwright() as pw:
-            browser, page, errors = self._page(pw, 1440)
+            browser, page, errors = self._page(pw, width)
             try:
                 page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
                 _normal_chair(page)
@@ -206,12 +207,17 @@ class TestDrawerGlass:
                 button = needs.get_by_role("button", name="Open the Project: Payments ledger cutover").first
                 button.wait_for(timeout=T)
                 _settle(page)
-                button.click()
+                button.scroll_into_view_if_needed()
+                page.screenshot(path=str(SHOTS / f"glass-needs-project-row-{width}.png"))
+                if width < 720:
+                    button.tap()
+                else:
+                    button.click()
                 drawer = page.locator(".drawer-window")
                 drawer.wait_for(timeout=T)
                 drawer.locator("[data-testid=drawer-facts]").wait_for(timeout=T)
                 page.wait_for_timeout(600)
-                page.screenshot(path=str(SHOTS / "glass-needs-project-drawer-1440.png"))
+                page.screenshot(path=str(SHOTS / f"glass-needs-project-drawer-{width}.png"))
                 assert "Payments ledger cutover" in (drawer.first.get_attribute("aria-label") or drawer.first.inner_text())
                 # The Room is not a generic destination: no Room window opened.
                 assert page.locator(".room-head").count() == 0
