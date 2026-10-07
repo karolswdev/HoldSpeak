@@ -92,7 +92,7 @@ _VERBS = [
     ("go.review-meetings", "Meetings", "go", "⌘2"),
     ("go.configure-settings", "Settings", "go", "⌘4"),
     ("go.open-workbenches", "Workbenches", "go", None),
-    ("go.inspect-personas-and-coders", "Agents and coder sessions", "go", "⌘3"),
+    ("go.open-conductor", "Conductor", "go", "⌘3"),
     ("go.configure-runs-on", "Runs on", "go", None),
     ("go.configure-integrations", "Integrations", "go", None),
     ("go.configure-commands", "Commands", "go", None),

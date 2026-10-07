@@ -40,6 +40,8 @@ SPA_ROUTES = (
     "/workbench",
     "/profiles",
     "/companion",
+    # PHILO-14 C4: the Conductor drawer's address.
+    "/conductor",
     "/presence",
     "/docs/dictation-runtime",
     "/design/components",

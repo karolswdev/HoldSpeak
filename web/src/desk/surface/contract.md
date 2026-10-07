@@ -734,7 +734,11 @@ word; then a facts grid.
 
 - `id, kind, name, kindWord?, sprite?`
 - `facts: { where?, from?, made?, due?, owner?, state?: { label, tone },
-  branch? }`: an absent fact is no row (no "None", no zero)
+  branch?, more? }`: an absent fact is no row (no "None", no zero)
+- `facts.more?: { key, word, value }[]` (PHILO-14 C4): the facts a kind has
+  beyond the seven (an agent's VERSION, HOOKS, SIGN-IN; a launch's
+  LAUNCHED, CONTROL). Drawn after the seven, in order, each a
+  `data-fact={key}` row; an empty `value` is no row.
 - `verbs?`: the caller's Buttons, drawn in the window footer
   (`SurfaceFooter`).
 
