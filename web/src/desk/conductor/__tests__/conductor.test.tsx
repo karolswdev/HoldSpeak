@@ -284,6 +284,12 @@ describe("PHILO-14 C4 the Conductor window", () => {
     // The receipt lands on A (pressed), never on B's lane.
     await waitFor(() => expect(useConductor.getState().stops["launch:l-runbook"]?.word).toBe("STOPPED"));
     expect(useLane.getState().receipt).toBeNull();
+    // Rendered: A (still selected) wears STOPPED · BY YOU; B wears none.
+    expect((await screen.findByTestId("conductor-stop-receipt")).textContent).toBe("STOPPED · BY YOU");
+    fireEvent.click(icon(/^Codex: reconciliation job/));
+    expect(screen.queryByTestId("conductor-stop-receipt")).toBeNull();
+    fireEvent.click(icon(/^Claude Code: rollback runbook/));
+    expect(screen.getByTestId("conductor-stop-receipt").textContent).toBe("STOPPED · BY YOU");
   });
 
   it("LIST keeps the asking agent first (the group sort), whatever the name sort", async () => {

@@ -10,7 +10,8 @@ Claude Code session, the session's hook events (spooled, drained by the lane
 read), a held gate proposal, HoldSpeak's drafted answer, and the PR on the
 launch's follow-through. No agent runs; nothing leaves the machine.
 
-The Needs you row's Open opens the lane (not the session window). The test
+The real entry opens the lane (not the session window): Dock -> Conductor ->
+Open on the asking agent (PHILO-14 C4; the Arrival's coder Open is parked). The test
 reads the lane's sections, toggles Raw, and shoots the window at 1440 and 393
 to `.tmp/evidence-shots/p14-c2/`.
 """
@@ -181,9 +182,28 @@ def mint_held_call(url: str, worktree: str, command: str = PSQL, proposal_id: st
 
 
 def _open_lane(page: Any) -> Any:
-    open_verb = page.locator("[data-testid='arrival-coder-open']").first
-    open_verb.wait_for(timeout=20000)
-    open_verb.click()
+    """The real entry (PHILO-14 C4): Dock -> Conductor -> Open on the asking
+    agent. The Arrival's AGENTS section and its coder Open are parked. At a
+    width whose Dock does not carry the Conductor, its address does."""
+    dock = page.locator(".desk-dock [data-app='conductor']")
+    if dock.count() and dock.first.is_visible():
+        dock.first.click()
+    else:
+        from urllib.parse import urlsplit
+
+        origin = "{0.scheme}://{0.netloc}".format(urlsplit(page.url))
+        page.goto(f"{origin}/conductor", wait_until="load")
+        _normal_chair(page)
+        _settle(page)
+    conductor = page.locator(".conductor-window")
+    conductor.wait_for(timeout=15000)
+    agent = conductor.locator("[data-object-id='launch:launch_c2_runbook']")
+    agent.wait_for(timeout=20000)
+    # An icon names its lamp in its label (1440); a list row in its State cell (393).
+    said = (agent.get_attribute("aria-label") or "") + (agent.text_content() or "")
+    assert "ASKS" in said, said
+    agent.click()
+    conductor.get_by_role("button", name="Open", exact=True).click()
     window = page.locator(".is-lane")
     window.wait_for(timeout=15000)
     page.locator("[data-testid='lane-rail']").wait_for(timeout=15000)
