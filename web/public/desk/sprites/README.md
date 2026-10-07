@@ -1,33 +1,15 @@
 # Desk sprites (web)
 
-Pixel-art primitive sprites for the web diorama (`/desk`, Phase 71). These PNGs
-are **copied verbatim from `apple/App/*.png`** — the same art the iPad DeskOS
-diorama bundles. 128×128 RGBA; rendered pixel-crisp (`image-rendering: pixelated`).
+The world sprites for the desk: one 64x64 icon for each kind, in the D1
+"Workbench+" mold (PHILO Phase 14, ruling in
+`docs/internal/philo/phase-14/icons/README.md`). The kind-to-file map is
+`VARIANTS` in `web/src/desk/sprites.ts`. One kind has one silhouette.
 
-The picker (`web/src/scripts/desk/sprites.js`) mirrors
-`apple/App/SpriteStore.swift`: a djb2 stable hash of a primitive's id chooses its
-variant from the kind's pool, so an object always wears the same sprite.
+Each base file has two state images, `<name>_sel.png` and
+`<name>_stale.png`, made by `web/scripts/gen-sprite-states.py`. Run the
+script again after you add a base sprite.
 
-## Kind → pool (copied files)
-
-| Kind | Pool | Files |
-|---|---|---|
-| meeting | `cassette` (17) | `cassette.png`, `cassette2..17.png` |
-| note | `note` (16) | `note.png`, `note2..16.png` |
-| kb | `crystal` (16) | `crystal.png`, `crystal2..16.png` |
-| model / chain / workflow | `cartridge` (1) | `cartridge.png` |
-| agent / coder | `agent_o` (16) | `agent_o0..15.png` |
-| artifact / directory | `paper` (1) | `paper.png` |
-
-## Refresh
-
-Re-copy from `apple/App/` when the iPad art changes:
-
-```
-cp apple/App/{cassette,note,crystal}*.png apple/App/cartridge.png \
-   apple/App/paper.png apple/App/agent_o{0..15}.png \
-   web/public/desk/sprites/
-```
-
-Bump the pool counts in `web/src/scripts/desk/sprites.js` (and
-`apple/App/SpriteStore.swift`) together if more variety art is added.
+- `system/`: the Dock and chrome sprites (32x32), registered in
+  `web/src/desk/systemSprites.ts`.
+- `settings/`: the Settings index sprites.
+- `_parked-2026-10-07/`: the old mold, parked. Nothing references it.

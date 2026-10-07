@@ -6,7 +6,7 @@
 import { useMemo, useState } from "react";
 import { countToken } from "../surface/count";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { spriteUrl } from "../sprites";
+import { refAgent, spriteUrl } from "../sprites";
 import { useDesk, type ZoneViewPref } from "../store";
 import { objectByRef, type WorldObject } from "../world";
 import { spriteVariantKey } from "../../lib/spriteVariants";
@@ -75,7 +75,7 @@ export function ZoneWindow({
         return (
           <img
             className={"desk-sortable-table-sprite" + (cssHint ? ` ${cssHint}` : "")}
-            src={spriteUrl(member.kind, member.id)}
+            src={spriteUrl(member.kind, member.id, "rest", refAgent(member.ref))}
             alt=""
             width={28}
             height={28}
@@ -149,7 +149,7 @@ export function ZoneWindow({
               >
                 <img
                   className={spriteStateCssClass(typeof member.ref.spriteState === "string" ? member.ref.spriteState as string : null)}
-                  src={spriteUrl(member.kind, member.id)}
+                  src={spriteUrl(member.kind, member.id, "rest", refAgent(member.ref))}
                   alt=""
                   width={48}
                   height={48}

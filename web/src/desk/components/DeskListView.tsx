@@ -14,7 +14,7 @@ import { useProjections } from "../projections";
 import { allObjects, objectByRef, worldObjects, worldZones, type WorldObject } from "../world";
 import { KIND_LABEL } from "../tools";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { spriteUrl } from "../sprites";
+import { refAgent, spriteUrl } from "../sprites";
 import { spriteVariantKey } from "../../lib/spriteVariants";
 import { spriteStateCssClass } from "../../lib/spriteStates";
 import { objectMenuEntries } from "../floorMenu";
@@ -250,7 +250,7 @@ export function DeskListView() {
         return (
           <img
             className={"desk-sortable-table-sprite" + (cssHint ? ` ${cssHint}` : "")}
-            src={spriteUrl(kind, row.type === "zone" ? row.id : row.object.id)}
+            src={spriteUrl(kind, row.type === "zone" ? row.id : row.object.id, "rest", row.type === "zone" ? null : refAgent(row.object.ref))}
             alt=""
             width={28}
             height={28}

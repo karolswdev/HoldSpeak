@@ -76,3 +76,9 @@ Not rejects, not picked: the other memory ideas (tome, card index) and alternate
 - The 32 px row is a downscale of the 64, not a drawn 32. D2 holds up best at 32 (by design); D3 holds up least.
 - Not made: state variants (`_sel`, `_stale`, the agents' states). They come from `web/scripts/gen-sprite-states.py` after the pick.
 - Not checked: the owner's screen; a real phone. The page was shot at 1440 and 393 in Chromium (no page-level sideways scroll; the table scrolls inside itself at 393).
+
+## A0b: the install (2026-10-07)
+
+- World sprites: the 17 D1 icons are in `web/public/desk/sprites/<kind>.png`; `VARIANTS` in `web/src/desk/sprites.ts` maps every kind to one file. The old mold is parked in `web/public/desk/sprites/_parked-2026-10-07/`.
+- States: `web/scripts/gen-sprite-states.py` now traces the `_sel` rim one pixel OUTSIDE the alpha edge and lifts brightness by 1.14 (was inside, 1.24). The inside rim erased the dark outline of the four paper kinds. `a0b-shots/states-paper-agents.png` shows rest, sel and stale on both grounds.
+- Dock and chrome: 16 glyphs drawn by PixelLab at 32 px in the D1 stem, one call (review object `cf4c9f3f-a901-44e0-9dc8-50e9d263c4af`, 20 generations). At size 32 the tool returns one 256 px sheet on a 10 x 10 grid, cut into 64 frames on a 32 px pitch; the frames do not hold whole objects. The objects were cut from the reassembled sheet on the 25.6 px pitch and centred in 32 x 32. Picks (sheet cell): dock-speak 8, dock-meetings 18, dock-agents 21, dock-settings 25, dock-people 40, floor-grid 45, menu-mark 50, menu-bell 65, menu-search 60, mic 73, mic-listening 74, mic-recording 76, record-orb 81, cadence-metronome 78, empty-loops 89, empty-nudges 90. The old set is parked in `web/public/desk/sprites/system/_parked-2026-10-07/`. `a0b-shots/dock-glyphs-old-vs-d1.png`: old (top two rows), D1 (bottom two rows).

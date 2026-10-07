@@ -2,7 +2,13 @@
 // picker (per-id stability is what keeps a desk wearing the same art across
 // the React unification) and the wire normalizers.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { spriteName, stableHash, variantIndex } from "../sprites";
+import {
+  agentSpriteName,
+  spriteName,
+  spriteUrl,
+  stableHash,
+  variantIndex,
+} from "../sprites";
 import {
   fromWireDirectory,
   fromWireNote,
@@ -24,13 +30,44 @@ describe("sprite hash parity", () => {
     expect(spriteName("meeting", "m0")).toEqual(spriteName("meeting", "m0"));
     expect(variantIndex("m0", 17)).toBeGreaterThanOrEqual(0);
     expect(variantIndex("m0", 17)).toBeLessThan(17);
-    // Distinct ids spread across the pool (the HS-71-02 acceptance).
+    // PHILO-14 A0b: one kind = one silhouette; the HS-71-02 per-id
+    // spread is retired with the old mold.
     const picks = new Set(
       ["a", "b", "c", "d", "e", "f", "g", "h"].map((id) =>
         spriteName("meeting", id),
       ),
     );
-    expect(picks.size).toBeGreaterThanOrEqual(4);
+    expect([...picks]).toEqual(["meeting"]);
+  });
+});
+
+describe("the D1 mold (PHILO-14 A0b)", () => {
+  it("picks the agent sprite by agent name", () => {
+    expect(agentSpriteName("codex")).toBe("agent-codex");
+    expect(agentSpriteName("Codex")).toBe("agent-codex");
+    expect(agentSpriteName("claude")).toBe("agent-claude-code");
+    expect(agentSpriteName("Claude Code")).toBe("agent-claude-code");
+    expect(agentSpriteName(undefined)).toBe("agent-claude-code");
+    expect(agentSpriteName("gemini")).toBe("agent-claude-code");
+    expect(spriteName("coder", "c1", "codex")).toBe("agent-codex");
+    expect(spriteName("coder", "c1")).toBe("agent-claude-code");
+    expect(spriteUrl("coder", "c1", "sel", "codex")).toMatch(/agent-codex_sel\.png$/);
+    // The agent name changes only the agent kinds.
+    expect(spriteName("note", "n1", "codex")).toBe("note");
+  });
+
+  it("maps the new kinds to their D1 icons", () => {
+    expect(spriteName("action", "x")).toBe("action-item");
+    expect(spriteName("pr", "x")).toBe("pull-request");
+    expect(spriteName("smart", "x")).toBe("smart-drawer");
+    expect(spriteName("conductor", "x")).toBe("conductor-drawer");
+    expect(spriteName("parked", "x")).toBe("parked-drawer");
+    expect(spriteName("project", "x")).toBe("project-drawer");
+    expect(spriteName("people", "x")).toBe("people-ledger");
+    expect(spriteName("thread", "x")).toBe("thread");
+    expect(spriteName("kb", "x")).toBe("artifact");
+    expect(spriteName("story", "x")).toBe("note");
+    expect(spriteName("workflow", "x")).toBe("cartridge");
   });
 });
 

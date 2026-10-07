@@ -8,7 +8,7 @@ vi.mock("./DeskWindow", () => ({ DeskWindowFrame: ({ children }: { children: Rea
 vi.mock("../pullouts", () => ({ PULLOUT_CONTENT: { note: () => null } }));
 vi.mock("../pullouts/NotePullout", () => ({ NotePullout: () => <div>Ordinary Note editor</div> }));
 vi.mock("../thought-workspace/ThoughtWorkspaceWindow", () => ({ ThoughtWorkspaceWindow: ({ thought }: { thought: Thought }) => <section aria-label="Thought Workbench">{thought.working_note.title}</section> }));
-vi.mock("../sprites", () => ({ spriteUrl: () => "note.png" }));
+vi.mock("../sprites", () => ({ spriteUrl: () => "note.png", refAgent: () => undefined }));
 vi.mock("../thoughts", async (importOriginal) => ({ ...(await importOriginal<typeof import("../thoughts")>()), thoughtForNote: vi.fn() }));
 
 const thought: Thought = {
