@@ -182,3 +182,29 @@ export function keepCaptureInRing(): void {
       : { captureInRing: true, closed: { ...s.closed, "chair:capture": false } },
   );
 }
+
+/** PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): an arriving aftercare card
+ * lands in Capture's slot at both widths. At 393 Capture takes the work area
+ * (PHILO-13-17 Q4). At 1440 a closed Capture opens and comes to the front; an
+ * open one already holds the card, so nothing moves. True when it opened. */
+export function openCaptureForCard(): boolean {
+  if (compactNow()) return openCaptureOnPhone();
+  if (!useChairWindows.getState().closed["chair:capture"]) return false;
+  openChairWindow("chair:capture");
+  return true;
+}
+
+/** PHILO-14 A1c: a card already waiting when the Chair mounts. At 393 Capture
+ * joins the ring without the front (Q4b); at 1440 a closed Capture opens in
+ * its seat without the front, so the card has its slot. */
+export function keepCaptureForCard(): void {
+  if (compactNow()) {
+    keepCaptureInRing();
+    return;
+  }
+  useChairWindows.setState((s) =>
+    s.closed["chair:capture"]
+      ? { closed: { ...s.closed, "chair:capture": false } }
+      : s,
+  );
+}

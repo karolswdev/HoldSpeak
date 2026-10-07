@@ -23,17 +23,24 @@ import { GadgetGlyph } from "../components/window/GadgetGlyph";
 import { useCompactViewport } from "../useCompactViewport";
 import { useDesk } from "../store";
 import { answerSurfaceFirst } from "../shell";
+import { workBand } from "../components/window/windowGeometry";
+import type { PanelRect } from "../store/types";
 import {
   CHAIR_WINDOWS,
   CHAIR_WINDOW_IDS,
   closeChairWindow,
-  keepCaptureInRing,
+  keepCaptureForCard,
+  openCaptureForCard,
   openCaptureOnPhone,
   openChairWindow,
   useChairWindows,
   type ChairWindowKey,
   type ChairWindowSpec,
 } from "./chairWindows";
+
+/** PHILO-14 A1c: Capture's height while the aftercare card stands in it
+ * (chair.css: `--chair-capture-h: 300px` under the card's `:has` rule). */
+const CAPTURE_CARD_H = 300;
 
 export type ChairDeskProps = Record<ChairWindowKey, ReactNode> & {
   /** PHILO-14 A1: the screen of objects (board A-1). With it the Chair is
@@ -124,6 +131,9 @@ export function ChairDesk(props: ChairDeskProps) {
   // record in Meetings), the card lands there and nothing moves. A card
   // already waiting when the Chair mounts keeps Capture in the ring (Q4b)
   // without taking the front.
+  // PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): the same at 1440 — the
+  // Chair's windows start closed since A1, so a card with no Capture floated
+  // over The week. Now a closed Capture opens for it; an open one holds it.
   const aftercare = useAftercare();
   const seenCard = useRef<string | null | undefined>(undefined);
   useEffect(() => {
@@ -132,9 +142,36 @@ export function ChairDesk(props: ChairDeskProps) {
     const arrived = key !== null && key !== seenCard.current;
     seenCard.current = key;
     if (!arrived) return;
-    if (first) keepCaptureInRing();
-    else if (!frontWindowAftercareSlot()) openCaptureOnPhone();
+    if (first) keepCaptureForCard();
+    else if (!frontWindowAftercareSlot()) openCaptureForCard();
   }, [aftercare]);
+  // PHILO-14 A1c: at 1440 Capture floats with a seat placed while it held
+  // only the capture bar (100 px). While the card stands in it, Capture
+  // grows UP to the card's height (chair.css: --chair-capture-h 300px), its
+  // foot fixed; when the card leaves, the seat comes back. A Capture he
+  // moved or sized keeps his geometry.
+  const captureRect = useDesk((s) => s.panelRects["chair:capture"]);
+  const captureArranged = useDesk((s) => s.panelSaved.includes("chair:capture"));
+  const cardInCapture = !compact && Boolean(aftercare) && !closed["chair:capture"];
+  const captureSeat = useRef<PanelRect | null>(null);
+  useEffect(() => {
+    if (compact || captureArranged) {
+      captureSeat.current = null;
+      return;
+    }
+    const desk = useDesk.getState();
+    if (cardInCapture && captureRect && !captureSeat.current) {
+      const foot = captureRect.y + captureRect.h;
+      const top = Math.max(workBand().top, foot - CAPTURE_CARD_H);
+      if (top >= captureRect.y) return;
+      captureSeat.current = captureRect;
+      desk.setPanelRect("chair:capture", { ...captureRect, y: top, h: foot - top });
+    } else if (!cardInCapture && captureSeat.current) {
+      const seat = captureSeat.current;
+      captureSeat.current = null;
+      if (captureRect) desk.setPanelRect("chair:capture", seat);
+    }
+  }, [compact, captureArranged, cardInCapture, captureRect]);
   // Parent layout effects run after the windows present themselves.
   useLayoutEffect(() => {
     raiseNeedsAmongChair();

@@ -1614,7 +1614,41 @@
         "kind": "ui",
         "action": "click",
         "selector": "[data-testid=arrival-run-intel]",
-        "adapter": "ui-pointer"
+        "adapter": "ui-pointer",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='Capture'] .ambient-aftercare",
+            "timeout_s": 300,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          }
+        ]
       },
       "expected": {
         "predicate": {
@@ -7509,7 +7543,41 @@
         "kind": "ui",
         "action": "click",
         "selector": "[data-testid=arrival-run-intel]",
-        "adapter": "ui-pointer"
+        "adapter": "ui-pointer",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='Capture'] .ambient-aftercare",
+            "timeout_s": 300,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          }
+        ]
       },
       "expected": {
         "predicate": {

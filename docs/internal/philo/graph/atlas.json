@@ -10445,7 +10445,41 @@
         "kind": "ui",
         "action": "click",
         "selector": "[data-testid=arrival-run-intel]",
-        "adapter": "ui-pointer"
+        "adapter": "ui-pointer",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='Capture'] .ambient-aftercare",
+            "timeout_s": 300,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "adapter": "ui-pointer",
+            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('The week')",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "adapter": "ui-pointer",
+            "selector": ".desk-window-shell.chair-window[aria-label='The week']",
+            "at_width": 393,
+            "why": "PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): when the summary lands, its MEETING READY card opens Capture at both widths and sits in Capture's slot; at 393 Capture takes the work area, so the owner goes back with Go > The week to read the summary."
+          }
+        ]
       },
       "expected": {
         "predicate": {
@@ -12262,7 +12296,7 @@
           "slot_selector": "[data-testid=arrival-aftercare-slot]",
           "scroll_target_selector": "[data-testid=arrival-aftercare-slot]",
           "auto_scroll_calls_by_viewport": {
-            "393": 1,
+            "393": 0,
             "1440": 0
           },
           "no_field_focus": true,
@@ -12287,6 +12321,11 @@
             "393": [
               {
                 "selector": "[data-testid=meeting-summary-text]",
+                "required": false,
+                "require_hit_test": true
+              },
+              {
+                "selector": "[data-testid=arrival-capture-bar]",
                 "required": true,
                 "require_hit_test": true
               },
@@ -12301,7 +12340,7 @@
         "observe_at": ".ambient-aftercare",
         "dismiss_selector": ".ambient-aftercare button:has-text('Dismiss')",
         "dismiss_slot_selector": "[data-testid=arrival-aftercare-slot]",
-        "words": "the real deferred summary reaches intel ready, publishes aftercare_ready, and renders the readable card inside the Arrival slot with no overlap; the 393 slot scrolls once before observation",
+        "words": "the real deferred summary reaches intel ready, publishes aftercare_ready, and renders the readable card inside the Arrival slot with no overlap; the slot does not scroll at either width (Capture's slot is in view when Capture opens; AmbientLayer scrolls the Arrival slot only when the capture bar covers it); PHILO-14 A1c: the card opens a closed Capture at both widths and sits in its slot; at 393 Capture takes the work area (PHILO-13-17 Q4), so The week's summary is not drawn and its clearance is checked only where it has geometry, and the card must stay clear of the capture bar",
         "reads": [
           {
             "method": "GET",
