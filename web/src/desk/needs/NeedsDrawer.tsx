@@ -28,6 +28,7 @@ import { useDesk } from "../store";
 import { EgressChip, StringGadget } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
+import { spriteUrl } from "../sprites";
 import { readCoverage } from "../coverage";
 import {
   CALENDAR_FACE,
@@ -282,6 +283,7 @@ function NeedRow({ face, primary }: { face: NeedFace; primary: boolean }) {
         name={face.name}
         fact={face.fact || undefined}
         lamp={face.lamp}
+        sprite={face.agent ? spriteUrl("agent", face.id, "rest", face.agent) : undefined}
         verbs={<NeedVerbsView face={face} primary={primary} well={well} onWell={setWell} />}
       />
       {well ? <CommitWell face={face} which={well} onDone={() => setWell(null)} /> : null}

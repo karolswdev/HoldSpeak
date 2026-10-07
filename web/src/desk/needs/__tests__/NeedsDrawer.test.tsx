@@ -47,6 +47,7 @@ const FLIGHT: AgentFlight = {
   close: null,
   sessionCleanup: null,
   mergedAt: null,
+  launchId: null,
 };
 const WORKING: AgentFlight = {
   ...FLIGHT,
@@ -191,7 +192,8 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       lamps: ["ASKS · 6 MIN"],
       verbs: ["Open", "Answer"],
     });
-    expect(agent.sprite).toMatch(/automaton/);
+    // The D1 mold: each agent has its own sprite (agentSpriteName).
+    expect(agent.sprite).toMatch(/agent-claude-code\.png$/);
 
     const held = face(row("Codex: reconciliation"));
     expect(held).toMatchObject({
@@ -200,6 +202,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       lamps: ["HELD CALL"],
       verbs: ["Deny", "Approve"],
     });
+    expect(face(row("Codex: reconciliation")).sprite).toMatch(/agent-codex\.png$/);
 
     const pr = face(row("#412 Add the ledger freeze flag"));
     expect(pr).toMatchObject({ kind: "pr", lamps: ["PR OPEN"], verbs: ["Open PR"] });

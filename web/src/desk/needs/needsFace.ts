@@ -63,6 +63,8 @@ export interface NeedFace {
   askOf?: string;
   /** An item an agent works: that agent's session. */
   workedBy?: string;
+  /** An agent row: the agent's name (`claude`, `codex`), for its sprite. */
+  agent?: string;
 }
 
 /** `Claude Code` / `Codex`: the agent's name in a sentence. */
@@ -184,6 +186,7 @@ function attentionFace(
       verbs: { kind: "answer", sessionKey: key },
       openRef: `coder:${key}`,
       askOf: key,
+      agent,
     };
   }
   // Conductor R1: a held tool call of a launched agent.
@@ -201,6 +204,7 @@ function attentionFace(
       verbs: { kind: "gate", proposalId: String(item.ref ?? id).replace(/^gate:/, "") },
       openRef: key ? `coder:${key}` : undefined,
       askOf: key || undefined,
+      agent,
     };
   }
 
@@ -352,7 +356,7 @@ export function foldAsks(faces: readonly NeedFace[]): NeedFace[] {
     const ask = face.workedBy ? asks.get(face.workedBy) : undefined;
     if (ask && !folded.has(ask.id)) {
       folded.add(ask.id);
-      out.push({ ...face, fact: ask.fact, lamp: ask.lamp, verbs: ask.verbs, askOf: ask.askOf });
+      out.push({ ...face, fact: ask.fact, lamp: ask.lamp, verbs: ask.verbs, askOf: ask.askOf, agent: undefined });
     } else {
       out.push(face);
     }
