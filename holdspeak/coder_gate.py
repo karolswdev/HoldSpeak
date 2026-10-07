@@ -58,7 +58,11 @@ HOOK_TIMEOUT_SECONDS = 300
 DEFAULT_HUB_URL = "http://127.0.0.1:8765"
 POLL_INTERVAL_SECONDS = 1.0
 
-ARGS_HEAD_CHARS = 120
+#: The head of the redacted call the hook sends: the hub's own limit
+#: (``db.gate.ARGS_HEAD_CHARS``, the same number; the hook does not import
+#: the db package), so a long but complete command reaches the desk whole and
+#: can be approved there (PHILO-15 15, B44). Was 120.
+ARGS_HEAD_CHARS = 4000
 
 
 # -- config ----------------------------------------------------------------
@@ -225,7 +229,7 @@ def redact_call(tool_input: Mapping[str, Any] | None) -> RedactedCall:
 
 
 def redact_args(tool_input: Mapping[str, Any] | None) -> tuple[str, str]:
-    """(sha256, first-120-chars) over the canonical JSON of the tool
+    """(sha256, the first ARGS_HEAD_CHARS chars) over the canonical JSON of the tool
     input (:func:`redact_call` without the length)."""
     call = redact_call(tool_input)
     return call.sha256, call.head

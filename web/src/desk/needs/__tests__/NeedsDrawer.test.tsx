@@ -402,6 +402,30 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(openCoderSession).toHaveBeenCalledWith("codex:s-recon");
   });
 
+  it("PHILO-15 15 (B44): a long but complete held command is whole, its lines kept, with Approve and the reason", async () => {
+    const body = Array.from({ length: 30 }, (_, n) => `${n + 1}. A line of the contributing file.`).join("\n");
+    const command = `cat > CONTRIBUTING.md <<'EOF'\n${body}\nEOF`;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        const whole = {
+          ...ITEMS[1], id: "gate:prop-long", ref: "gate:prop-long",
+          // The title is the hub's 200-char excerpt; the row reads `command`.
+          title: `Approve: ${command.slice(0, 190)}…`, command, argsCut: false, argsHidden: 0,
+          holdReason: "UNRESOLVED TARGET · $OUT",
+        };
+        return { ...ANSWER, count: 1, items: [whole], failedMeetings: [] } as never;
+      }
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("1 need you");
+    const item = row("Codex: reconciliation");
+    const held = face(item);
+    expect(held.fact).toBe(`UNRESOLVED TARGET · $OUT\n${command}`);
+    expect(item.querySelector(".needs-row-fact")?.classList.contains("is-code")).toBe(true);
+    expect(held.verbs).toEqual(["Deny", "Approve"]);
+  });
+
   it("P1-2: a refused Cancel is named on the row with Retry; a cancel leaves a receipt after the row goes", async () => {
     useDesk.getState().applyScheduledRecordingEvent("scheduled_recording.arming", {
       schedule_id: "sch-9", title: "Ledger cutover sync", countdown_seconds: 30, fire_at: Date.now() / 1000 + 30,

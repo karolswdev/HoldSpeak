@@ -6,8 +6,9 @@ hook waiting on a decision can proceed. Every state transition passes
 through ONE chokepoint (:meth:`GateProposalRepository._transition`),
 and every transition writes a ``gate_audit`` row in the
 ``steering_audit`` shape: who/when/session/tool/hash, decision,
-reason. Arguments are redacted at the edge — sha256 + first 120
-characters, never the full payload (the council's redaction demand).
+reason. Arguments are redacted at the edge — sha256 + the first
+:data:`ARGS_HEAD_CHARS` characters of the redacted call (the council's
+redaction demand: secrets are redacted before the cut).
 
 States: ``held | approved | denied | expired | invalidated``. Held is
 the only non-terminal state. Restart honesty: on hub startup every
@@ -23,7 +24,11 @@ from typing import Any, Callable, Optional
 
 from .base import BaseRepository
 
-ARGS_HEAD_CHARS = 120
+#: PHILO-15 15 (B44): the hub keeps up to this many characters of the
+#: redacted call, so a long but complete command (a 1,200-character
+#: here-document) is whole on the desk and the owner can approve it. Was 120:
+#: every here-document was cut, and a cut call has no Approve.
+ARGS_HEAD_CHARS = 4000
 
 _COMMAND_PREFIX = '{"command":"'
 _ESCAPES = {'"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t"}
@@ -172,8 +177,17 @@ class GateProposal:
         """PHILO-14 A5: what an approval surface shows of this call
         (``args_shown`` / ``args_cut`` / ``args_hidden``; ``command_view``).
         The owner's reads add it; the agent-facing wire contract stays as is."""
+        from ..tool_gate_rules import hold_reason
+
         view = command_view(self.args_head, (self.operation or {}).get("args_len"))
-        return {"args_shown": view["command"], "args_cut": view["args_cut"], "args_hidden": view["args_hidden"]}
+        verdict = (self.operation or {}).get("tool_call") or {}
+        return {
+            "args_shown": view["command"], "args_cut": view["args_cut"], "args_hidden": view["args_hidden"],
+            # PHILO-15 15: why the call waits, with the word that decided it.
+            "hold_reason": hold_reason(
+                str(verdict.get("scope") or ""), str(verdict.get("rule") or ""), str(verdict.get("target") or ""),
+            ) if verdict else "",
+        }
 
 
 class GateProposalRepository(BaseRepository):

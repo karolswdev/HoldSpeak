@@ -175,9 +175,11 @@ class GateService:
             # from another call (another id or another args hash) waits.
             return {"launch_id": "", "scope": UNPARSED, "rule": "verdict_not_bound", "read_rule": ""}
         scope, rule = raw["scope"], raw["rule"]
+        # PHILO-15 15: the word that decided a hold (the hold says why).
+        target = raw.get("target", "")
         found = self._own_launch(principal)
         if found is None:
-            return {"launch_id": "", "scope": scope, "rule": rule, "read_rule": raw["read_rule"]}
+            return {"launch_id": "", "scope": scope, "rule": rule, "read_rule": raw["read_rule"], "target": target}
         launch_id, worktree, branch = found
         if scope == INSIDE:
             cwd = os.path.realpath(str(payload.get("cwd") or "/"))
@@ -185,12 +187,13 @@ class GateService:
             if not worktree or root != worktree or not (
                 cwd == worktree or cwd.startswith(worktree.rstrip(os.sep) + os.sep)
             ):
-                scope, rule = OUTSIDE, "not_own_worktree"
+                scope, rule, target = OUTSIDE, "not_own_worktree", str(payload.get("cwd") or "")
             elif raw["push_branch"] and raw["push_branch"] != branch:
-                scope, rule = OUTSIDE, "git_push_other_branch"
+                scope, rule, target = OUTSIDE, "git_push_other_branch", raw["push_branch"]
         return {
             "launch_id": launch_id, "scope": scope, "rule": rule,
             "read_rule": raw["read_rule"] if scope == INSIDE else "",
+            "target": target if scope != INSIDE else "",
         }
 
     def _launch_records(self) -> tuple[Any, list[dict[str, Any]]]:

@@ -50,4 +50,4 @@ def test_a_deciding_wait_reads_deciding_and_an_answered_wait_is_gone(launched, t
     assert _members(launched, tmp_path) == []
     assert [a["outcome"] for a in lane["answers"] if a["outcome"] == "auto_answered"] == ["auto_answered"]
     [answer] = [a for a in lane["answers"] if a["outcome"] == "auto_answered"]
-    assert answer["text_head"].startswith("Yes. Run the tests")
+    assert answer["text_head"].startswith("The desk: Yes. Run the tests")  # PHILO-15 15

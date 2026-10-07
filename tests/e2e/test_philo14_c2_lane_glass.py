@@ -254,7 +254,7 @@ def test_the_agents_lane_window_at_1440_and_393(tmp_path: Path, monkeypatch) -> 
                 track_text = track.text_content() or ""
                 for word in ("BRIEF", "WORK", "COMMIT", "PR", "HELD", "ASKS", "MERGE"):
                     assert word in track_text, track_text
-                assert "#413" in track_text and "1 call" in track_text and "now" in track_text
+                assert "#413" in track_text and "1 HELD · 1 WAITING" in track_text and "now" in track_text
                 assert page.locator("[data-testid='lane-ask'] .ask-well-question").text_content() == QUESTION
                 assert "Jordan owns it. Avery reviews." in (page.locator("[data-testid='lane-ask'] .ask-well-draft").text_content() or "")
                 rail = page.locator("[data-testid='lane-rail']").text_content() or ""

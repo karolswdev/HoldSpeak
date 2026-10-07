@@ -151,10 +151,43 @@ describe("the station track (C-4's borrow)", () => {
       ["WORK", "6 calls", "reached"],
       ["COMMIT", "1", "reached"],
       ["PR", "#413", "reached"],
-      ["HELD", "1 call", "current"],
+      ["HELD", "1 HELD · 1 WAITING", "current"],
       ["ASKS", "now", "current"],
       ["MERGE", "yours", "ahead"],
     ]);
+  });
+
+  it("PHILO-15 15 (B45): counts every held call and its outcome; a call the mode passed is not a hold", () => {
+    const call = (id: string, state: string, extra: Record<string, unknown> = {}) => ({
+      id, tool: "Bash", args_head: `{"command":"echo ${id}"}`, state, created_at: Date.parse(T("09:55")) / 1000,
+      was_held: true, ...extra,
+    });
+    const gated = [
+      ...["a1", "a2", "a3"].map((id) => call(id, "approved", { decided_by: "owner" })),
+      ...["d1", "d2", "d3", "d4", "d5"].map((id) => call(id, "denied", { decided_by: "owner" })),
+      call("e1", "expired"),
+      // Passed at once by the Control mode (YOLO, in the worktree): a run.
+      call("p1", "approved", { decided_by: "control-mode", was_held: false }),
+      call("p2", "approved", { decided_by: "control-mode", was_held: false }),
+    ];
+    const lane = fixture({ gated });
+    const by = Object.fromEntries(laneStations(lane, lane.events as never).map((s) => [s.word, s]));
+    expect(by.HELD).toMatchObject({ sub: "9 HELD · 3 APPROVED · 5 DENIED · 1 EXPIRED", state: "reached" });
+    const rail = laneEntries(lane, lane.events as never).filter((e) => e.word === "HELD");
+    expect(rail).toHaveLength(9);
+  });
+
+  it("PHILO-15 15 (B43): a held call's rail entry says why it waits", () => {
+    const lane = fixture({
+      gated: [{
+        id: "toolu_tmp", tool: "Bash", args_head: '{"command":"echo x > /tmp/hs_write_probe.txt"}', state: "held",
+        created_at: Date.parse(T("09:55")) / 1000, was_held: true,
+        hold_reason: "OUTSIDE THE WORKTREE · /tmp/hs_write_probe.txt",
+      }],
+    });
+    const held = laneEntries(lane, lane.events as never).find((e) => e.word === "HELD");
+    expect(held?.text).toBe("OUTSIDE THE WORKTREE · /tmp/hs_write_probe.txt");
+    expect(held?.code).toBe("echo x > /tmp/hs_write_probe.txt");
   });
 
   it("says no zero: an empty station is hollow and reads —; an unread worktree says so", () => {

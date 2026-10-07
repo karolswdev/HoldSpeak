@@ -426,9 +426,12 @@ function LaneReceipts({ lane }: { lane: LaneWire }) {
   const receipt = useLane((s) => s.receipt);
   const stopped = lane.launch.stopped;
   const answers = Array.isArray(lane.answers) ? lane.answers : [];
-  const last = [...answers].reverse().find((a) => a.outcome === "delivered" && a.text_head);
+  // PHILO-15 15 (B47): an answer the desk typed is its own receipt, named
+  // as the desk's (never the owner's SENT).
+  const last = [...answers].reverse().find((a) => (a.outcome === "delivered" || a.outcome === "auto_answered") && a.text_head);
   const lastAt = last ? wireDate(last.ts)?.getTime() : undefined;
-  const shown = receipt ?? (last ? { word: "SENT", at: lastAt, text: String(last.text_head), tone: "ok" as const } : null);
+  const word = last?.outcome === "auto_answered" ? "THE DESK ANSWERED" : "SENT";
+  const shown = receipt ?? (last ? { word, at: lastAt, text: String(last.text_head), tone: "ok" as const } : null);
   return (
     <>
       {stopped ? <ReceiptTokens testId="lane-stopped" tokens={["STOPPED", wireClock(stopped.at), "BY YOU"]} /> : null}

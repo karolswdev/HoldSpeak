@@ -446,11 +446,12 @@ def test_no_secret_reaches_the_lane(tmp_path, db, worktree, monkeypatch) -> None
 
 
 def test_the_stored_heads_are_redacted_before_the_cut() -> None:
-    from holdspeak.coder_gate import redact_args
+    from holdspeak.coder_gate import ARGS_HEAD_CHARS, redact_args
 
-    command = {"command": "x" * 90 + f" {SECRET} " + "y" * 200}
+    # The secret straddles the cut (PHILO-15 15: the head is ARGS_HEAD_CHARS).
+    command = {"command": "x" * (ARGS_HEAD_CHARS - 30) + f" {SECRET} " + "y" * 200}
     digest, head = redact_args(command)
-    assert SECRET[:8] not in head and len(head) <= 120
+    assert SECRET[:8] not in head and len(head) <= ARGS_HEAD_CHARS
     import hashlib
 
     canonical = json.dumps(command, separators=(",", ":"), sort_keys=True, ensure_ascii=False)
