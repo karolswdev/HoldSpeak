@@ -169,8 +169,10 @@ it("a reload during a run recovers its timed receipt from the real producer rows
   deskQueryClient.clear();
   render(<HistoryCore />);
   await screen.findByTestId(`meeting-row-${id}`);
-  // The remount adopts the active run from the durable row.
-  await screen.findByText(/^QUEUED \d/);
+  // The remount adopts the active run from the durable row, beside the count.
+  const queued = await screen.findByTestId("meetings-run-receipt");
+  expect(queued.textContent).toMatch(/^QUEUED \d/);
+  expect(queued.closest("[role=status]")?.textContent).toMatch(/^1 RECORD · QUEUED/);
   phase = "success";
   await act(async () => {
     window.dispatchEvent(new Event("focus"));
@@ -178,15 +180,35 @@ it("a reload during a run recovers its timed receipt from the real producer rows
   await screen.findByText(/^RAN · \d/, undefined, { timeout: 6000 });
 }, 12000);
 
-it("a reload after the run ended shows the durable receipt's time", async () => {
-  const id = String(wires.success.detail.id);
+function successRowAt(at: string): Record<string, unknown> {
+  const list = wires.success.list;
+  return { ...list, intel_job: { ...(list.intel_job as Record<string, unknown>), updated_at: at } };
+}
+
+function mountWithOnly(rowWire: Record<string, unknown>) {
+  const id = String(rowWire.id);
   vi.mocked(apiFetch).mockImplementation(async (path: string) => {
-    if (path.startsWith("/api/meetings?")) return { meetings: [wires.success.list] } as never;
+    if (path.startsWith("/api/meetings?")) return { meetings: [rowWire] } as never;
     if (path === `/api/meetings/${id}`) return wires.success.detail as never;
     return {} as never;
   });
   render(<HistoryCore />);
+  return id;
+}
+
+it("a reload after today's run shows the record count first and the RAN receipt beside it", async () => {
+  const id = mountWithOnly(successRowAt(new Date().toISOString()));
   await screen.findByTestId(`meeting-row-${id}`);
-  await screen.findByText(/^RAN · \d/);
+  const receipt = await screen.findByTestId("meetings-run-receipt");
+  expect(receipt.textContent).toMatch(/^RAN · \d/);
+  const line = receipt.closest("[role=status]");
+  expect(line?.textContent).toMatch(/^1 RECORD · RAN · \d/);
 });
 
+it("a reload with only an old run shows the record count alone", async () => {
+  const id = mountWithOnly(successRowAt("2020-01-01T09:00:00"));
+  await screen.findByTestId(`meeting-row-${id}`);
+  await screen.findByText("1 RECORD");
+  expect(screen.queryByTestId("meetings-run-receipt")).toBeNull();
+  expect(screen.queryByText(/^RAN · /)).toBeNull();
+});

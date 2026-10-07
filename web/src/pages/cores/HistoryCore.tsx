@@ -804,7 +804,15 @@ export function HistoryCore({ hero, scope }: CoreProps) {
               data-tone={receipt?.tone}
               role="status"
             >
-              {receipt
+              {receipt?.run ? (
+                // PHILO-15-07 (coordinator ruling): the record count stays;
+                // a fresh run receipt shows BESIDE it, count first.
+                <>
+                  {countToken(meetingRows.length, "RECORD") ?? "RECORDS"}
+                  <span className="meetings-stream-dot" aria-hidden="true">{" · "}</span>
+                  <span data-testid="meetings-run-receipt">{receipt.text}</span>
+                </>
+              ) : receipt
                 ? receipt.text
                 : countToken(meetingRows.length, "RECORD") ?? "RECORDS"}
             </span>

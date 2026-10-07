@@ -194,7 +194,15 @@ export const FINAL_RUN_STATES = new Set(["ready", "complete", "error", "failed"]
  *  first read of the rows, from durable state only. An active run (the row's
  *  intel state, or its job's status) gives a bound `QUEUED hh:mm`; otherwise
  *  the newest stored run receipt gives `RAN · hh:mm` / `FAILED · hh:mm` at the
- *  time its job was last written. Null when no run is on record. */
+ *  time its job was last written, but only when that was TODAY (a receipt
+ *  from another day is not footer material; it lives on the meeting record).
+ *  Null when no fresh run is on record. */
+function isToday(value: string): boolean {
+  const at = new Date(value);
+  if (Number.isNaN(at.getTime())) return false;
+  return at.toDateString() === new Date().toDateString();
+}
+
 export function adoptDurableRunReceipt(
   rows: Record<string, unknown>[],
 ): { receipt: Receipt; active: boolean } | null {
@@ -222,7 +230,7 @@ export function adoptDurableRunReceipt(
     if (!receipt || typeof receipt !== "object" || typeof at !== "string") continue;
     if (!newest || at > newest.at) newest = { row, at };
   }
-  if (!newest) return null;
+  if (!newest || !isToday(newest.at)) return null;
   const stored = newest.row.run_receipt as Record<string, unknown>;
   const state = stored.outcome === "succeeded" ? "ready" : "failed";
   return {
