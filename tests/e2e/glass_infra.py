@@ -669,9 +669,9 @@ def engine_profile(profile_id: str = ENGINE_PROFILE) -> None:
 def assign_engine(capability: str, ordinal: int, *, profile_id: str = ENGINE_PROFILE) -> None:
     """Assign that engine to ONE capability, the product's way.
 
-    The real InferenceAssignmentService at `capability:` scope — the only
-    scope the meeting queue's service route policy may read
-    (`inference_service_route_policy.py:43`, `:93`).
+    The real InferenceAssignmentService at `capability:` scope. The meeting
+    queue's route policy (meeting-intel-queue@2) also reads the group and
+    global heads; this helper pins the exact head (PHILO-15 01).
     """
     from holdspeak.db import get_database
     from holdspeak.principals import Principal, PrincipalKind

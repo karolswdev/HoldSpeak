@@ -7338,7 +7338,8 @@
       "state_id": "state.briefs.reload_persisted",
       "applicability": "applicable",
       "preconditions": [
-        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its no-untriaged branch with the headline (ChairHome.tsx:1321-1352) -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)"
+        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its no-untriaged branch with the headline (ChairHome.tsx:1321-1352) -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
+        "PHILO-15 01: a default engine is assigned (global) by the setup steps, so the brief carries no true 'No engine for summaries' item"
       ],
       "setup": [
         {
@@ -7353,6 +7354,73 @@
           "adapter": "ui-pointer",
           "role": "button",
           "name": "Continue later",
+          "optional": true
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded loopback provider for the default engine",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "PHILO-15 01 ruling: on a fresh HOME with no engine the Brief's 'No engine for summaries' row is TRUE and stays; this case claims an empty brief / ALL HANDLED, so it makes its own precondition: a default engine, as 'Set up local AI' leaves it"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "j10-arrival_reload-reload_persisted-default-model",
+              "profile_id": "philo15-default-engine",
+              "expected_profile_revision": 0,
+              "label": "Default engine",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "default_profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the default engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "j10-arrival_reload-reload_persisted-default",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "global"
+            },
+            "entries": [
+              {
+                "profile_id": "{default_profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign it as the Default for AI work (global); the meeting-intel queue reads it (meeting-intel-queue@2). Optional: the loopback engine is local, so HoldSpeak's batteries-included default (services/inference_default_service.py) may assign it first and this press then answers 409; either way the global head holds this engine before the brief is generated",
           "optional": true
         },
         {
@@ -8225,7 +8293,8 @@
           },
           "observe_at": "[data-testid=arrival-brief-headline]",
           "why": "RETAINED: after the reload the first brief's own headline is on the face (ChairHome.tsx:1163), read back from GET /api/brief/latest, before the second POST"
-        }
+        },
+        "PHILO-15 01: a default engine is assigned (global) by the setup steps, so the brief carries no true 'No engine for summaries' item"
       ],
       "setup": [
         {
@@ -8241,6 +8310,73 @@
           "name": "Continue later",
           "optional": true,
           "adapter": "ui-pointer"
+        },
+        {
+          "kind": "boundary",
+          "label": "recorded loopback provider for the default engine",
+          "substitute": "engine_reply",
+          "reply": "tests/fixtures/philo11_documents/meeting_summary_reply.json",
+          "adapter": "hub-engine-boundary",
+          "why": "PHILO-15 01 ruling: on a fresh HOME with no engine the Brief's 'No engine for summaries' row is TRUE and stays; this case claims an empty brief / ALL HANDLED, so it makes its own precondition: a default engine, as 'Set up local AI' leaves it"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/setup/discover-models",
+          "body": {
+            "base_url": "{replay_provider_url}"
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "engine_model",
+          "capture_path": "models.0",
+          "why": "discover the recorded model at the rig loopback provider edge"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/model-library/define-endpoint",
+          "body": {
+            "draft": {
+              "request_id": "j10-route_generate_again-retained_after_reload-default-model",
+              "profile_id": "philo15-default-engine",
+              "expected_profile_revision": 0,
+              "label": "Default engine",
+              "provider_family": "openai_compatible",
+              "model": "{engine_model}",
+              "endpoint": "{replay_provider_url}",
+              "requires_key": false
+            },
+            "secret": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "capture_as": "default_profile_id",
+          "capture_path": "provider.profile_id",
+          "why": "define the default engine profile"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/inference/assignments/set",
+          "body": {
+            "command_id": "j10-route_generate_again-retained_after_reload-default",
+            "expected_revision": 0,
+            "scope": {
+              "kind": "global"
+            },
+            "entries": [
+              {
+                "profile_id": "{default_profile_id}",
+                "profile_revision": 1
+              }
+            ],
+            "retry_policy_id": null
+          },
+          "expect_status": 200,
+          "adapter": "http-route",
+          "why": "assign it as the Default for AI work (global); the meeting-intel queue reads it (meeting-intel-queue@2). Optional: the loopback engine is local, so HoldSpeak's batteries-included default (services/inference_default_service.py) may assign it first and this press then answers 409; either way the global head holds this engine before the brief is generated",
+          "optional": true
         },
         {
           "kind": "ui",
@@ -15027,8 +15163,8 @@
       "sources": [
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",
-          "symbol": "!(analysis!.has_override && analysis!.effective?.status === \"assigned\");",
-          "claim": "an exact head whose effective status is assigned clears the summary row"
+          "symbol": "Boolean(analysis) && summaryStatus !== \"assigned\" && summaryStatus !== \"off\";",
+          "claim": "the meeting-intel queue's own answer (task_overrides[].queue, resolved through meeting-intel-queue@2: capability, group or global head) clears the summary row when assigned (PHILO-15 01)"
         },
         {
           "path": "web/src/desk/chair/meetingPathBlocker.ts",

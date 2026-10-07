@@ -153,6 +153,8 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(screen.getByTestId("meeting-summary-topics")).toHaveTextContent("BUDGET");
     expect(screen.getByTestId("arrival-attempts")).toHaveTextContent("THIS DEVICE");
     expect(screen.queryByTestId("arrival-summary-status")).toBeNull();
+    expect(screen.getAllByTestId("meeting-summary-text")).toHaveLength(1);
+    expect(screen.getAllByText("The team reviewed the budget.")).toHaveLength(1);
     expect(screen.getByTestId("arrival-meeting-row")).toHaveTextContent("16 WORDS");
     const transcriptFold = screen.getByRole("button", { name: /TRANSCRIPT.*16 WORDS/ });
     expect(transcriptFold).toHaveAttribute("aria-expanded", "false");
@@ -214,6 +216,13 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(screen.getByTestId("arrival-summary-status")).toHaveTextContent("FAILED");
     expectProducerCause(mixed);
     expect(screen.getByTestId("summary-record-attempts")).toHaveTextContent("THIS DEVICE");
+    // PHILO-15-03: the slab owns the summary; the Chair draws it once, the
+    // run's facts inside the same well.
+    expect(screen.getAllByTestId("meeting-summary-text")).toHaveLength(1);
+    expect(screen.getAllByText("The team reviewed the budget.")).toHaveLength(1);
+    expect(screen.getAllByTestId("summary-record-attempts")).toHaveLength(1);
+    expect(screen.getByTestId("meeting-summary-text").closest(".surface-well"))
+      .toContainElement(screen.getByTestId("arrival-summary-status"));
   });
 
   it("reads only the top three visible meeting details per desk refresh", async () => {

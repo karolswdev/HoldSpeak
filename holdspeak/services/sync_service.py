@@ -360,9 +360,12 @@ def meeting_state_from_sync_value(value: dict[str, Any]) -> Any:
         intel_requested_at = None
         intel_completed_at = None
 
-    if value.get("transcription_status") == "record_only":
+    # PHILO-15-03: the final states travel too. `complete` and `failed` (a
+    # failed import, meeting_service._fail_import) are final; turning them
+    # back into `active` made a peer wait on work that had ended.
+    if value.get("transcription_status") in {"record_only", "complete", "failed"}:
         raw_detail = value.get("transcription_status_detail")
-        transcription_status = "record_only"
+        transcription_status = str(value["transcription_status"])
         transcription_status_detail = (
             dict(raw_detail)
             if isinstance(raw_detail, dict)

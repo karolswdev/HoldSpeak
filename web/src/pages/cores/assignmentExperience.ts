@@ -58,6 +58,9 @@ export type AssignmentSummary = {
     has_override: boolean;
     effective: AssignmentEffective;
     issues: AssignmentIssue[];
+    /** PHILO-15 01: would the meeting-intel queue run this capability now?
+     *  Its route policy's answer; absent when no queue policy names it. */
+    queue?: { policy_id: string; status: string; inherited_from: string | null } | null;
   }>;
   issue_count: number;
 };

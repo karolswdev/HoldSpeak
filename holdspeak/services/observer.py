@@ -85,6 +85,20 @@ def _summarize_args(fn: Any, args: tuple[Any, ...], kwargs: dict[str, Any]) -> s
         return "<args-unavailable>"
 
 
+def _failure(exc: BaseException) -> tuple[str | None, str | None, str]:
+    """``(error, error_code, result_summary)`` for an exception.
+
+    An exception that carries ``observed_outcome`` is an owner setting that
+    refused the call (PHILO-15 01: summaries OFF), not a fault: it is recorded
+    as that outcome with no error, so nothing reads it as breakage.
+    """
+    code = exc.code if hasattr(exc, "code") else None
+    outcome = getattr(exc, "observed_outcome", None)
+    if outcome:
+        return None, None, _truncate({"outcome": str(outcome), "code": code})
+    return repr(exc), code, ""
+
+
 def observed(fn: Any) -> Any:
     is_async = asyncio.iscoroutinefunction(fn)
 
@@ -151,8 +165,7 @@ def observed(fn: Any) -> Any:
                 result_summary = _truncate(result)
                 return result
             except BaseException as exc:
-                error = repr(exc)
-                error_code = exc.code if hasattr(exc, "code") else None
+                error, error_code, result_summary = _failure(exc)
                 raise
             finally:
                 _emit(self, args, kwargs, correlation_id, t0, result_summary, error, error_code)
@@ -178,8 +191,7 @@ def observed(fn: Any) -> Any:
             result_summary = _truncate(result)
             return result
         except BaseException as exc:
-            error = repr(exc)
-            error_code = exc.code if hasattr(exc, "code") else None
+            error, error_code, result_summary = _failure(exc)
             raise
         finally:
             _emit(self, args, kwargs, correlation_id, t0, result_summary, error, error_code)
