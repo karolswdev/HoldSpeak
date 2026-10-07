@@ -26,6 +26,8 @@ export interface ScreenObject {
   sprite: string;
   spriteSelected: string;
   lamp?: { tone: ObjectTone; count?: number; label?: string };
+  /** The count notch alone (no lamp): what runs and asks nothing. */
+  count?: number;
   badge?: string;
   ariaExtra?: string;
   target: ScreenTarget;
@@ -148,7 +150,10 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
     name: "Conductor",
     ...sprites("conductor", "conductor"),
     badge: spriteUrl("coder", "conductor-badge"),
-    lamp: asking || launched > 0 ? { tone: asking ? "ask" : "info", count: launched } : undefined,
+    // A lamp is for what needs him: the ask/held lamp only when an agent
+    // asks or a call is held; while they work, the count notch alone.
+    lamp: asking ? { tone: "ask", count: launched } : undefined,
+    count: asking ? undefined : launched,
     ariaExtra: [launched > 0 ? `${launched} launched` : "", asking ? "an agent asks" : ""].filter(Boolean).join(", ") || undefined,
     target: { type: "conductor" },
   });

@@ -11,6 +11,7 @@ import { useChairWindows } from "../../chair/chairWindows";
 import { useDesk } from "../../store";
 import { composeScreen, layoutScreen, shortItemName, normalizeRef, type ScreenInputs } from "..";
 import { Screen } from "../Screen";
+import { DeskIcon } from "../../surface/objects";
 
 const shell = vi.hoisted(() => ({
   openProjectRoom: vi.fn(),
@@ -279,6 +280,22 @@ describe("PHILO-14 A1 — the pure parts", () => {
     expect(at["project:p6"]).toEqual({ x: 20, y: 684 });
     expect(at["project:p7"]).toEqual({ x: 140, y: 12 });
     expect(at["people:a"]).toEqual({ x: 330, y: 24 });
+  });
+
+  it("the Conductor wears the count notch alone while its agents only work", () => {
+    const working = fromWireSessionRow(SESSIONS[1]);
+    const objects = composeScreen({
+      items: { ...EMPTY_ITEMS } as never, projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0,
+      sessions: [working], flights: [{ ...working.flight!, state: "working" }], filed: new Set(), persons: [],
+      membersLoaded: true,
+    });
+    const conductor = objects.find((o) => o.key === "drawer:conductor")!;
+    expect(conductor.lamp).toBeUndefined();
+    expect(conductor.count).toBe(1);
+    render(<DeskIcon id="drawer:conductor" kind="conductor" name="Conductor" count={1} />);
+    const drawn = screen.getByRole("button", { name: /^Conductor/ });
+    expect(drawn.querySelector(".desk-icon-lamp")).toBeNull();
+    expect(within(drawn).getByText("1", { selector: ".desk-icon-count" })).toBeTruthy();
   });
 
   it("a held call lights the Conductor even when no agent asks", () => {

@@ -116,6 +116,7 @@ export function Screen() {
               spriteSelected={o.spriteSelected}
               badge={o.badge}
               lamp={o.lamp}
+              count={o.count}
               ariaExtra={o.ariaExtra}
               selected={selected.has(o.key)}
               className={at ? "desk-screen-placed" : undefined}

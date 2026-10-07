@@ -306,8 +306,12 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       )
         s.setPanelRect(id, kept, s.panelSaved.includes(id));
     } else {
+      // PHILO-14 A1: back to front (the stacking order), so the cascade
+      // steps off the window placed last.
+      const plane = (wid: string) => s.panelOrder.indexOf(wid);
       const others = registrySnapshot
         .filter((w) => w.id !== id && !s.panelMin.includes(w.id))
+        .sort((a, b) => plane(a.id) - plane(b.id))
         .map((w) => s.panelRects[w.id])
         .filter((r): r is PanelRect => Boolean(r));
       const seed = measure();
