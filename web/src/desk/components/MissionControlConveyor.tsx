@@ -27,7 +27,8 @@ import {
   sessionsByStory,
   useMissionControl,
 } from "../missioncontrol";
-import { isCoderFrame, useSteering } from "../steering";
+import { useSteering } from "../steering";
+import { useBusSubscribe, useOnCoderFrame } from "../useDeskChangedRefresh";
 import { useProjections } from "../projections";
 import {
   ConfirmVerb,
@@ -557,6 +558,13 @@ function EventLedger({ events }: { events: McEvent[] }) {
   );
 }
 
+/** One conveyor heartbeat: the belt, the pins' armed rings, the ambient count. */
+function conveyorTick(): void {
+  void useMissionControl.getState().refresh();
+  void useSteering.getState().refreshGrants(); // the pins' armed rings
+  void useProjections.getState().refreshAmbient();
+}
+
 export function MissionControlConveyor() {
   const repos = useMissionControl((s) => s.repos);
   const sessions = useMissionControl((s) => s.sessions);
@@ -565,35 +573,33 @@ export function MissionControlConveyor() {
   const open = useMissionControl((s) => s.open);
   const pinMap = useSteering((s) => s.manualPins);
   const attentionCount = useProjections((s) => s.ambientTotal);
-  const { refresh, toggle } = useMissionControl.getState();
+  const { toggle } = useMissionControl.getState();
   const [picked, setPicked] = useState<PickTarget | null>(null);
   const [flipStatus, setFlipStatus] = useState("");
 
   useEffect(() => {
-    const tick = () => {
-      void refresh();
-      void useSteering.getState().refreshGrants(); // the pins' armed rings
-      void useProjections.getState().refreshAmbient();
-    };
-    tick();
-    const timer = setInterval(tick, POLL_MS);
-    // A `scope:"belt"` frame on the one bus moves the belt now; a
-    // `scope:"coder"` frame moves the pins (HS-87-01/02). The poll
-    // stays as the fallback heartbeat (HS-86-04).
-    const onFrame = (e: Event) => {
-      const frame = (e as CustomEvent).detail;
-      if (isBeltFrame(frame)) void refresh();
-      if (isCoderFrame(frame)) {
-        tick();
-        void useProjections.getState().refresh(true);
-      }
-    };
-    document.addEventListener("hs-broadcast", onFrame);
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener("hs-broadcast", onFrame);
-    };
+    conveyorTick();
+    const timer = setInterval(conveyorTick, POLL_MS);
+    return () => clearInterval(timer);
   }, []);
+  // A `scope:"belt"` frame on the one runtime bus moves the belt now; a
+  // `scope:"coder"` frame moves the pins (HS-87-01/02). The poll stays as
+  // the fallback heartbeat (HS-86-04). Conductor R5: these listened for a
+  // DOM event nothing sends; they now read the bus.
+  const subscribe = useBusSubscribe();
+  useEffect(() => {
+    if (!subscribe) return;
+    const unsubscribe = subscribe("intel_status", (frame) => {
+      if (isBeltFrame(frame)) void useMissionControl.getState().refresh();
+    });
+    return () => {
+      if (typeof unsubscribe === "function") unsubscribe();
+    };
+  }, [subscribe]);
+  useOnCoderFrame(() => {
+    conveyorTick();
+    void useProjections.getState().refresh(true);
+  });
 
   if (updatedAt === null || repos.length === 0) return null; // no rails on this desk
 
