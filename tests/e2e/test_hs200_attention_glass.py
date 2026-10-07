@@ -1,20 +1,24 @@
-"""HS-200-15 -- actionable attention, on glass.
+"""HS-200-15 -- actionable attention, on glass; re-faced by PHILO-14 A5.
 
-The four ratified boards (`assets/mockups/P2Arrival`, `P2ArrivalOne`,
-`P2ArrivalPhone`, `P2ArrivalQuiet`) against a REAL booted hub on an
-isolated HOME, at 1440 and 393:
+The Needs-you window body is the smart drawer (board A-5, RATIFIED A),
+against a REAL booted hub on an isolated HOME, at 1440 and 393:
 
-  one-project     -- his desk: ONE Project, `3 need you`, the Project
-                     button withheld, one unreadable source above the
-                     answer with its reason, token, observation and verb.
-  three-projects  -- `17 need you across 3 projects`, `COVERAGE n OF m`,
-                     `NEEDS YOU 5 OF 17`, five ranked rows (overdue first),
-                     the Project button on every row, a `2 SOURCES` dedup
-                     disclosure, `12 MORE · Show all` revealing in place,
-                     the ranking strip as a filter -- and at 393 the strip
-                     wraps inside its container (no horizontal scroll).
-  quiet-all-clear -- `Nothing needs you` over COMPLETE coverage, with the
-                     `N OF N AVAILABLE` chip in the head.
+  one-project     -- his desk: ONE Project, `3 need you`, no Project
+                     button, one unreadable source as a source row above
+                     every member with its reason, token, observation and
+                     verb.
+  three-projects  -- `17 need you`, one source row per unread source (with
+                     Reconnect and Retry), seventeen member rows in rank
+                     order (overdue first), a merged row drawn once.
+  long-row        -- nothing past the viewport; at 393 the verb sits under
+                     the name; the drawer's last row clears the window body.
+  quiet-all-clear -- `Nothing needs you` over COMPLETE coverage; no member
+                     row; the no-calendar offer as one source row.
+
+Retired by the board (PR #935): the five-row cap, the ranking strip, the
+sources disclosure, the Project button, the coverage chip and the `across
+N projects` clause. Stable testids: `needs-drawer`, `needs-list`,
+`needs-row` (a member), `needs-source-row`, `needs-row-verb` (`data-verb`).
 
 Projects are created through `POST /api/projects`; Watch snapshots are the
 one thing no route can seed (they are what a Watch READS), so they are
@@ -305,6 +309,11 @@ def _seed_quiet(page: Any) -> str:
 
 # ── glass helpers ────────────────────────────────────────────────────
 
+#: The drawer's member rows (not the source rows, not the waiting or muted lists).
+MEMBERS = "[data-testid='needs-list'] > ul > [data-testid='needs-row']"
+#: The drawer's source rows (a source not read, no calendar).
+SOURCES = "[data-testid='needs-source-row']"
+
 
 def _arrive(page: Any, url: str) -> None:
     # HS-201-01: the meeting path is pinned before every arrival in this
@@ -446,38 +455,32 @@ def _run_one_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
             ], [(r["title"], r["rankClass"]) for r in wire["items"]]
             page.reload(wait_until="load")
             _normal_chair(page)
-            page.get_by_test_id("arrival-needs-you").wait_for(timeout=15000)
+            page.locator(MEMBERS).first.wait_for(timeout=15000)
             _settle(page)
 
-            # The display line: the TRUE total, the Project clause withheld.
+            # The display line: the TRUE total; no Project button.
             headline = (page.get_by_test_id("arrival-display").text_content() or "").strip()
             assert headline == "3 need you", headline
-            assert page.get_by_role("group", name="Project").count() == 0, \
-                "the Project button is withheld over one Project"
+            assert page.get_by_role("group", name="Project").count() == 0
 
-            # Coverage ABOVE the answer, with the source's own reason.
-            coverage = page.get_by_test_id("arrival-coverage")
+            # The unread source is a source row ABOVE every member, with its
+            # own reason, token, observation and verb.
+            coverage = page.locator(SOURCES).filter(has_text="Jira rejected the query")
             assert coverage.count() == 1
-            assert coverage.locator("[data-testid='arrival-coverage-reason']").first.text_content() == "JIRA REJECTED THE QUERY"
-            assert "CANT CHECK" in (coverage.locator("[data-testid='arrival-coverage-token']").first.text_content() or "")
-            observed = coverage.locator("[data-testid='arrival-coverage-observed']").first.text_content() or ""
-            assert observed.startswith("OBSERVED "), observed
-            assert (coverage.locator("[data-testid='arrival-coverage-verb']").first.text_content() or "").strip() == "Reconnect"
-            boxes = page.evaluate("""() => ({
-                coverage: document.querySelector('[data-testid="arrival-coverage"]').getBoundingClientRect().top,
-                needs: document.querySelector('[data-testid="arrival-needs-you"]').getBoundingClientRect().top,
-            })""")
-            assert boxes["coverage"] < boxes["needs"], boxes
+            fact = coverage.locator(".needs-row-fact").first.text_content() or ""
+            assert fact.startswith("Jira rejected the query · observed "), fact
+            assert "CANT CHECK" in (coverage.locator(".needs-row-lamp").first.text_content() or "")
+            assert (coverage.locator("[data-verb='repair']").first.text_content() or "").strip() == "Reconnect"
+            above = page.evaluate("""() => {
+                const src = document.querySelector('[data-testid="needs-source-row"]').getBoundingClientRect().top;
+                const row = document.querySelector('[data-testid="needs-row"]').getBoundingClientRect().top;
+                return src < row;
+            }""")
+            assert above
 
-            section = page.get_by_test_id("arrival-needs-you")
-            # PHILO-13-03: the list is narrower than "needs you": ACTIONS.
-            assert "ACTIONS 3" in (section.text_content() or "")
-            rows = section.locator("[data-testid='arrival-needs-you-row']")
+            rows = page.locator(MEMBERS)
             assert rows.count() == 3
-            assert page.get_by_test_id("arrival-needs-you-remainder").count() == 0, \
-                "no remainder under three rows (A.8)"
-            assert page.get_by_role("group", name="Ranking").count() == 1
-            # The first row's verb is the one filled primary on the face.
+            # The first member's verb is the one filled primary on the face.
             assert len(_primaries(page)) == 1, _primaries(page)
             assert _raw_buttons(page) == [], _raw_buttons(page)
             _no_horizontal_scroll(page, width)
@@ -518,73 +521,34 @@ def _run_three_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
             assert wire["items"][1]["rankClass"] == "overdue"
             page.reload(wait_until="load")
             _normal_chair(page)
-            page.get_by_test_id("arrival-needs-you").wait_for(timeout=15000)
+            page.locator(MEMBERS).first.wait_for(timeout=15000)
             _settle(page)
 
             headline = (page.get_by_test_id("arrival-display").text_content() or "").strip()
-            assert headline == "17 need you across 3 projects", headline
+            assert headline == "17 need you", headline
 
-            coverage = page.get_by_test_id("arrival-coverage")
-            assert f"COVERAGE · {available} OF {expected}" in (coverage.text_content() or "")
-            assert coverage.locator("[data-testid='arrival-coverage-row']").count() == len(gaps)
+            # One source row per unread source, each with its owning verb.
+            sources = page.locator(SOURCES).filter(has_not_text="No calendar")
+            assert sources.count() == len(gaps), sources.all_inner_texts()
             verbs = {(v.text_content() or "").strip()
-                     for v in coverage.locator("[data-testid='arrival-coverage-verb']").all()}
+                     for v in page.locator("[data-testid='needs-source-row'] [data-verb='repair']").all()}
             assert verbs >= {"Reconnect", "Retry"}, verbs
 
-            section = page.get_by_test_id("arrival-needs-you")
-            assert "ACTIONS 5 OF 17" in (section.text_content() or "")
-            rows = section.locator("[data-testid='arrival-needs-you-row'], [data-testid='arrival-proposal-row']")
-            assert rows.count() == 5, _row_texts(page, "arrival-needs-you-row")
+            # Every member is a row, in rank order: the overdue rows first.
+            rows = page.locator(MEMBERS)
+            assert rows.count() == 17, rows.all_inner_texts()
             first_row = rows.nth(0)
             assert "KAN-7 Payments cut-over runbook" in (first_row.text_content() or "")
-            assert (first_row.locator("[data-testid='arrival-why']").text_content() or "").startswith("OVERDUE · 2 DAY")
-            assert rows.nth(1).locator("[data-testid='arrival-why']").text_content().startswith("OVERDUE")
-            # The Project on every row, as a Button in a group.
-            assert page.locator("[data-testid='arrival-needs-you-row'] [role='group'][aria-label='Project'] .btn").count() == 5
-            # The dedup disclosure names both sources.
-            # exact: the row line is a role=button whose name is computed
-            # from its content, so a substring match would hit it too.
-            trigger = page.get_by_role(
-                "button", name="Sources: KAN-7 Payments cut-over runbook", exact=True,
-            )
-            assert trigger.count() == 1
-            assert "2 SOURCES" in (trigger.text_content() or "")
-            trigger.click()
-            _settle(page)
-            assert page.get_by_test_id("arrival-source").count() == 2
-            assert page.get_by_test_id("arrival-source-open").count() == 2
-            trigger.click()
-            _settle(page)
+            assert (first_row.locator(".needs-row-lamp").text_content() or "").startswith("OVERDUE · 2 DAY")
+            assert (rows.nth(1).locator(".needs-row-lamp").text_content() or "").startswith("OVERDUE")
+            # The merged row (jira + proposal) is ONE row.
+            assert rows.filter(has_text="KAN-7 Payments cut-over runbook").count() == 1
             # One filled primary on the WHOLE face: the top row's verb.
             assert len(_primaries(page)) == 1, _primaries(page)
             assert _raw_buttons(page) == [], _raw_buttons(page)
             _no_horizontal_scroll(page, width)
 
             _shot(page, "three-projects", width)
-
-            # The remainder: a real count, a real verb, revealed in place.
-            assert (page.get_by_test_id("arrival-needs-you-remainder-count").text_content() or "").strip() == "12 MORE"
-            page.get_by_role("button", name="Show all: the remaining 12").click()
-            _settle(page)
-            assert rows.count() == 17
-            assert "ACTIONS 17" in (section.text_content() or "")
-            _no_horizontal_scroll(page, width)
-            _shot(page, "three-projects-all", width)
-            page.get_by_role("button", name="Show fewer: hide the remaining 12").click()
-            _settle(page)
-            assert rows.count() == 5
-
-            # The strip filters by class, and RANKED restores the key.
-            _rank(page, "OVERDUE")
-            _settle(page)
-            assert rows.count() == 2, _row_texts(page, "arrival-needs-you-row")
-            assert len(_primaries(page)) == 1, _primaries(page)
-            _rank(page, "NOT RUN")
-            _settle(page)
-            assert (page.get_by_test_id("arrival-needs-you-none").text_content() or "").strip() == "NOTHING NOT RUN"
-            _rank(page, "RANKED")
-            _settle(page)
-            assert rows.count() == 5
 
             _assert_clean(page, errors)
             browser.close()
@@ -612,55 +576,30 @@ def _run_long_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
             assert first["title"].startswith("KAN-7") and first["dedupCount"] == 2, first
             page.reload(wait_until="load")
             _normal_chair(page)
-            page.get_by_test_id("arrival-needs-you").wait_for(timeout=15000)
+            page.locator(MEMBERS).first.wait_for(timeout=15000)
             _settle(page)
             page.mouse.move(2, 2)
 
-            row = page.locator("[data-testid='arrival-needs-you-row']").first
+            row = page.locator(MEMBERS).first
             assert LONG_TITLE in (row.text_content() or "")
-            project = row.locator(".surface-project-button")
-            assert project.count() == 1
-            assert (project.get_attribute("aria-label") or "") == f"Open the Project: {LONG_PROJECT}"
+            assert page.locator(MEMBERS).filter(has_text=LONG_TITLE).count() == 1
             _no_horizontal_scroll(page, width)
-            # The verb sits on the SAME line as the meta, at its right.
             boxes = page.evaluate("""() => {
-                const row = document.querySelector('[data-testid="arrival-needs-you-row"]');
-                const meta = row.querySelector('.arrival-needs-you-meta').getBoundingClientRect();
-                const verb = row.querySelector('.surface-ledger-trailing .btn').getBoundingClientRect();
-                const name = row.querySelector('.surface-ledger-primary').getBoundingClientRect();
-                return {metaTop: meta.top, metaBottom: meta.bottom, verbTop: verb.top, verbBottom: verb.bottom,
-                        verbRight: verb.right, nameBottom: name.bottom, rowRight: row.getBoundingClientRect().right};
+                const row = document.querySelector('[data-testid="needs-row"]');
+                const verb = row.querySelector('.needs-row-verbs .btn').getBoundingClientRect();
+                const name = row.querySelector('.needs-row-name').getBoundingClientRect();
+                return {verbTop: verb.top, verbRight: verb.right, nameBottom: name.bottom};
             }""")
             assert boxes["verbRight"] <= width + 0.5, boxes
             if width <= 480:
                 assert boxes["verbTop"] >= boxes["nameBottom"] - 1, f"the verb is under the name at 393: {boxes}"
-                assert boxes["verbTop"] < boxes["metaBottom"] and boxes["verbBottom"] > boxes["metaTop"], \
-                    f"the verb shares the meta line at 393: {boxes}"
             assert len(_primaries(page)) == 1, _primaries(page)
 
             _shot(page, "long-row", width)
 
-            trigger = row.locator(".surface-disclosure-trigger").first
-            trigger.click()
-            _settle(page)
-            opens = page.get_by_test_id("arrival-source-open")
-            assert opens.count() == 2, "every projection keeps its own Open"
-            titles = [t.text_content() for t in page.locator(".arrival-source-title").all()]
-            assert titles == [f"KAN-7 {LONG_TITLE}", LONG_TITLE], titles
-            _no_horizontal_scroll(page, width)
-            assert len(_primaries(page)) == 1, _primaries(page)
-            _shot(page, "long-row-sources", width)
-
-            # The selected filter token is never the filled primary.
-            _rank(page, "OVERDUE")
-            _settle(page)
-            assert len(_primaries(page)) == 1, _primaries(page)
-
             if width <= 480:
-                # Counsel P1-8: scrolled to the end, the last section clears the
-                # capture bar. PHILO-13-11 (slice two, R2): at 393 the capture bar
-                # is its own window (on demand from Speak); the boundary the last
-                # section must clear is the Needs-you window body's lower edge.
+                # Counsel P1-8: scrolled to the end, the drawer's last part
+                # clears the Needs-you window body's lower edge.
                 page.evaluate("""() => { const b = document.querySelector('.chair-window--needs .chair-window-body');
                     b.scrollTop = b.scrollHeight; }""")
                 page.wait_for_timeout(200)
@@ -668,10 +607,10 @@ def _run_long_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
                 clear = page.evaluate("""() => {
                     const body = document.querySelector('.chair-window--needs .chair-window-body');
                     const bar = body.getBoundingClientRect();
-                    const sections = [...body.querySelectorAll(':scope > [data-testid^="arrival-"]')]
+                    const parts = [...body.querySelectorAll('[data-testid="needs-drawer"] > *')]
                         .filter(el => el.getBoundingClientRect().height > 0);
-                    const last = sections[sections.length - 1].getBoundingClientRect();
-                    return {barTop: bar.bottom, lastBottom: last.bottom, lastId: sections[sections.length - 1].getAttribute('data-testid')};
+                    const last = parts[parts.length - 1].getBoundingClientRect();
+                    return {barTop: bar.bottom, lastBottom: last.bottom};
                 }""")
                 assert clear["lastBottom"] <= clear["barTop"] + 0.5, clear
                 _shot(page, "bar-clear", width)
@@ -706,14 +645,12 @@ def _run_quiet_all_clear(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width:
 
             headline = (page.get_by_test_id("arrival-display").text_content() or "").strip()
             assert headline == "Nothing needs you", headline
-            chip = page.get_by_test_id("arrival-coverage-complete")
-            assert chip.count() == 1
-            assert f"{expected} OF {expected} AVAILABLE" in (chip.text_content() or "")
-            assert (page.get_by_test_id("arrival-checked").text_content() or "").startswith("CHECKED")
-            assert page.get_by_test_id("arrival-coverage").count() == 0
-            assert page.get_by_test_id("arrival-needs-you").count() == 0
+            assert page.get_by_text("Nothing needs you").count() == 1
+            assert page.locator("[data-testid='needs-row']").count() == 0
+            # Coverage is complete: the only source row is the calendar offer.
+            assert page.locator(SOURCES).count() == 1
+            assert page.locator("[data-testid='needs-source-row'][data-object-id='source:calendar']").count() == 1
             assert page.get_by_role("group", name="Ranking").count() == 0
-            assert page.get_by_test_id("arrival-no-calendar").count() == 1
             assert len(_primaries(page)) == 0, _primaries(page)
             assert _raw_buttons(page) == [], _raw_buttons(page)
             _no_horizontal_scroll(page, width)

@@ -89,7 +89,7 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     const row = gapRows()[0];
     expect(row.querySelector(".gadget-lamp")?.textContent).toContain("READ FAILED");
     // The owning verb, as the library Button.
-    const verb = within(row).getByTestId("needs-repair");
+    const verb = (row.querySelector('[data-verb="repair"]') as HTMLElement);
     expect(verb.textContent).toBe("Retry");
     expect(verb.className).toContain("btn");
   });

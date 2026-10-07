@@ -14,7 +14,7 @@
  *  (ruling in the PR body): the object's own window and the Object menu
  *  carry it.
  */
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { useAgentFlights } from "../agentFlights";
@@ -29,7 +29,17 @@ import { EgressChip, StringGadget } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { readCoverage } from "../coverage";
-import { coverageFace, needFaces, needsHead, urlHost, type NeedFace } from "./needsFace";
+import {
+  CALENDAR_FACE,
+  armingFace,
+  coverageFace,
+  needFace,
+  needFaces,
+  needsHead,
+  nextWord,
+  urlHost,
+  type NeedFace,
+} from "./needsFace";
 import "./needs.css";
 
 /** Answer: the agent's window with the answer field focused. Lane C2 builds
@@ -70,9 +80,9 @@ function NeedVerbsView({ face, primary, onWell, well }: {
     case "answer":
       return (
         <>
-          <Button dense variant="ghost" aria-label={named("Open")} data-testid="needs-open"
+          <Button dense variant="ghost" aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
             onClick={() => openCoderSession(v.sessionKey)}>Open</Button>
-          <Button dense variant={lead} aria-label={named("Answer")} data-testid="needs-answer"
+          <Button dense variant={lead} aria-label={named("Answer")} data-testid="needs-row-verb" data-verb="answer"
             onClick={() => openAgentAnswer(v.sessionKey)}>Answer</Button>
         </>
       );
@@ -84,9 +94,9 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       const approve = () => void decide("approved");
       return (
         <>
-          <Button dense variant="ghost" disabled={busy} aria-label={named("Deny")} data-testid="needs-deny"
+          <Button dense variant="ghost" disabled={busy} aria-label={named("Deny")} data-testid="needs-row-verb" data-verb="deny"
             onClick={deny}>Deny</Button>
-          <Button dense variant={lead} disabled={busy} aria-label={named("Approve")} data-testid="needs-approve"
+          <Button dense variant={lead} disabled={busy} aria-label={named("Approve")} data-testid="needs-row-verb" data-verb="approve"
             onClick={approve}>Approve</Button>
         </>
       );
@@ -95,24 +105,24 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       return (
         <>
           <EgressChip label={urlHost(v.url) || "GITHUB.COM"} scope="cloud" />
-          <Button dense variant={lead} aria-label={named(`Open PR #${v.number ?? ""}`)} data-testid="needs-open-pr"
+          <Button dense variant={lead} aria-label={named(`Open PR #${v.number ?? ""}`)} data-testid="needs-row-verb" data-verb="open-pr"
             onClick={() => window.open(v.url, "_blank", "noopener")}>Open PR</Button>
         </>
       );
     case "session":
       return (
-        <Button dense variant={lead} aria-label={named("Open the agent")} data-testid="needs-open"
+        <Button dense variant={lead} aria-label={named("Open the agent")} data-testid="needs-row-verb" data-verb="open"
           onClick={() => openCoderSession(v.sessionKey)}>Open</Button>
       );
     case "review":
       return (
-        <Button dense variant={lead} aria-label={named("Review")} data-testid="needs-review"
+        <Button dense variant={lead} aria-label={named("Review")} data-testid="needs-row-verb" data-verb="review"
           onClick={() => refOpener(v.ref)?.()}>Review</Button>
       );
     case "commitment": {
       if (v.next === "mark_done") {
         return (
-          <Button dense variant={lead} disabled={busy} aria-label={named("Done")} data-testid="needs-done"
+          <Button dense variant={lead} disabled={busy} aria-label={named("Done")} data-testid="needs-row-verb" data-verb="done"
             onClick={() => void act("Done", () => apiFetch("/api/follow-through/complete", {
               method: "POST", json: { card_id: v.cardId, verb: "done", payload: {} },
             }), `action-item:${v.cardId}`)}>Done</Button>
@@ -122,7 +132,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       const label = which === "owner" ? "Name an owner" : "Set a date";
       return (
         <Button dense variant={lead} aria-label={named(label)} aria-expanded={well === which}
-          data-testid={which === "owner" ? "needs-name-owner" : "needs-set-date"}
+          data-testid="needs-row-verb" data-verb={which === "owner" ? "name-owner" : "set-date"}
           onClick={() => onWell(well ? null : which)}>{label}</Button>
       );
     }
@@ -130,7 +140,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       if (!v.cardId && !v.openRef) return null;
       return (
         <Button dense variant={lead} aria-label={named("Name an owner")}
-          aria-expanded={v.cardId ? well === "owner" : undefined} data-testid="needs-name-owner"
+          aria-expanded={v.cardId ? well === "owner" : undefined} data-testid="needs-row-verb" data-verb="name-owner"
           onClick={() => {
             if (v.cardId) onWell(well ? null : "owner");
             else if (v.openRef) useDesk.getState().openPullout(v.openRef);
@@ -138,7 +148,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       );
     case "confirm":
       return (
-        <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")} data-testid="needs-confirm"
+        <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")} data-testid="needs-row-verb" data-verb="confirm"
           onClick={() => void act("Confirm", () => apiFetch(
             `/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST" },
           ), `proposal:${v.proposalId}`)}>Confirm</Button>
@@ -149,7 +159,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       if (!verb || !cmd) return null;
       const label = labelFor(verb);
       return (
-        <Button dense variant={lead} disabled={busy} aria-label={named(label)} data-testid="needs-door-verb"
+        <Button dense variant={lead} disabled={busy} aria-label={named(label)} data-testid="needs-row-verb" data-verb="door-verb"
           onClick={() => void act(label, () => apiFetch(cmd.endpoint, { method: "POST", json: cmd.body }),
             `door:${cmd.endpoint}`)}>{label}</Button>
       );
@@ -158,7 +168,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       return (
         <>
           <EgressChip label={urlHost(v.url) || "NOT SET"} scope="cloud" />
-          <Button dense variant={lead} aria-label={named("Open")} data-testid="needs-open"
+          <Button dense variant={lead} aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
             onClick={() => window.open(v.url, "_blank", "noopener")}>Open</Button>
         </>
       );
@@ -166,30 +176,44 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       // The summary route (where the text goes) is disclosed on the meeting,
       // before the run: Summarize opens it there.
       return (
-        <Button dense variant={lead} aria-label={named("Summarize")} data-testid="needs-summarize"
+        <Button dense variant={lead} aria-label={named("Summarize")} data-testid="needs-row-verb" data-verb="summarize"
           onClick={() => openSourceRef(`meeting:${v.meetingId}`)}>Summarize</Button>
       );
     case "setup":
       return (
-        <Button dense variant={lead} aria-label={named(v.verb)} data-testid="needs-setup"
+        <Button dense variant={lead} aria-label={named(v.verb)} data-testid="needs-row-verb" data-verb="setup"
           onClick={() => (v.key === "unknown"
             ? void refreshNeedsYou(true)
             : openSurfaceOr("open-concierge", "/models"))}>{v.verb}</Button>
       );
     case "repair":
       return (
-        <Button dense variant="secondary" aria-label={named(v.verb)} data-testid="needs-repair"
+        <Button dense variant="secondary" aria-label={named(v.verb)} data-testid="needs-row-verb" data-verb="repair"
           onClick={() => {
             if (v.verb === "Retry") void refreshNeedsYou(true);
             else if (v.href.startsWith("/settings")) openSurfaceOr("configure-settings", "/settings", "connections");
             else openProjectRoom(v.projectId);
           }}>{v.verb}</Button>
       );
+    case "arming":
+      return (
+        <>
+          <Button dense variant="danger" aria-label={named("Cancel")} data-testid="needs-row-verb" data-verb="cancel"
+            onClick={() => void useDesk.getState().cancelArmedSchedule(v.scheduleId)}>Cancel</Button>
+          <Button dense variant="ghost" aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
+            onClick={() => openSurfaceOr("review-meetings", "/history")}>Open</Button>
+        </>
+      );
+    case "calendar":
+      return (
+        <Button dense variant="secondary" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
+          onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>Connect calendar</Button>
+      );
     case "open": {
       const open = refOpener(v.ref);
       if (!open) return null;
       return (
-        <Button dense variant={lead} aria-label={named("Open")} data-testid="needs-open"
+        <Button dense variant={lead} aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
           onClick={() => open()}>Open</Button>
       );
     }
@@ -265,25 +289,104 @@ function NeedRow({ face, primary }: { face: NeedFace; primary: boolean }) {
   );
 }
 
+interface DoorRead {
+  upcoming?: Array<{ title?: string; starts_at?: string; source?: string }>;
+  calendar_configured?: boolean;
+}
+
+/** Stamp the stable testids and the row-open mark on the species' rows
+ *  (NeedsRow takes no testid prop; B1 owns it): `needs-row` on a member,
+ *  `needs-source-row` on a source row, `data-opens` where the body opens. */
+function useRowMarks(ref: React.RefObject<HTMLDivElement | null>, faces: readonly NeedFace[]) {
+  useLayoutEffect(() => {
+    const byId = new Map(faces.map((f) => [f.id, f]));
+    for (const li of ref.current?.querySelectorAll<HTMLElement>("li.needs-row") ?? []) {
+      const face = byId.get(li.getAttribute("data-object-id") ?? "");
+      if (!face) continue;
+      li.setAttribute("data-testid", face.source ? "needs-source-row" : "needs-row");
+      if (face.openRef && refOpener(face.openRef)) li.setAttribute("data-opens", "true");
+      else li.removeAttribute("data-opens");
+    }
+  });
+}
+
 /** The Needs-you window body. */
 export function NeedsDrawer() {
   const needs = useNeedsYou();
   const flights = useAgentFlights((s) => s.flights);
   const sessions = useAgentFlights((s) => s.sessions);
+  const arming = useDesk((s) => s.scheduledArming);
+  const [, tick] = useState(0);
+  const [door, setDoor] = useState<DoorRead | null>(null);
+  const [showMuted, setShowMuted] = useState(false);
+  const [showWaiting, setShowWaiting] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // The countdown ticks while a recording arms.
+  const live = Boolean(arming && !arming.outcome);
+  useEffect(() => {
+    if (!live) return;
+    const t = window.setInterval(() => tick((n) => n + 1), 250);
+    return () => window.clearInterval(t);
+  }, [live]);
+  // The Door read: the next event and whether a calendar is connected.
+  const computedAt = needs.room?.computedAt ?? null;
+  useEffect(() => {
+    let alive = true;
+    void apiFetch<DoorRead>("/api/door")
+      .then((body) => { if (alive) setDoor(body ?? null); })
+      .catch(() => undefined);
+    return () => { alive = false; };
+  }, [computedAt, needs.count]);
+
   const now = new Date();
+  const ctx = { flights, sessions, now };
   const coverage = readCoverage(
     needs.room?.coverage, needs.room?.complete ?? undefined, Boolean(needs.errors.room),
   );
-  const gaps = coverage.gaps.map(coverageFace);
-  // Board A-5: one list, no group heads. A source the hub could not read
-  // leads (HS-200-15: coverage above the answer), then the agents, then the
-  // rest in the hub's rank order.
-  const faces = [...gaps, ...needFaces(needs.members, { flights, sessions, now })];
+  const sources = [
+    ...coverage.gaps.map(coverageFace),
+    ...(door && door.calendar_configured === false ? [CALENDAR_FACE] : []),
+  ];
+  const armed = arming && !arming.outcome
+    ? [armingFace(arming, (arming.fireAt - now.getTime()) / 1000)]
+    : [];
+  // Board A-5: one list, no group heads. The sources lead (HS-200-15:
+  // coverage above the answer), then a recording that arms, then the agents
+  // (one object, one row), then the rest in the hub's rank order.
+  const faces = [...sources, ...armed, ...needFaces(needs.members, ctx)];
+  const asFace = (item: (typeof needs.mutedItems)[number]) =>
+    needFace({ ref: String(item.id ?? item.ref ?? ""), kind: "attention", item }, ctx);
+  // Listed, never counted: what he waits on someone else for, and the muted.
+  const waiting = needs.waitingItems.map(asFace);
+  const muted = needs.mutedItems.map(asFace);
   const head = needsHead(needs.count, needs.complete && coverage.complete);
-  // One filled primary on a face with work; a SETUP or repair verb is never
-  // filled (the quiet face has none: HS-201-01 ruling 2).
-  const primaryId = faces
-    .find((f) => f.verbs.kind !== "setup" && f.verbs.kind !== "repair")?.id ?? null;
+  // One filled primary on a face with work; a SETUP, repair or offer verb is
+  // never filled (the quiet face has none: HS-201-01 ruling 2).
+  const primaryId = faces.find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null;
+  const all = [...faces, ...(showWaiting ? waiting : []), ...(showMuted ? muted : [])];
+  useRowMarks(listRef, all);
+
+  const upcoming = door?.upcoming?.[0];
+  const next = nextWord(upcoming
+    ? { label: upcoming.title, at: upcoming.starts_at }
+    : (needs.room?.next as { label?: string; at?: string } | null | undefined));
+
+  // The footer tokens are drawn only over a list that holds rows (A.8).
+  const waitingRows = waiting.length;
+  const mutedRows = muted.length;
+  const waitingWord = waitingRows > 0 ? `Waiting · ${waitingRows}` : null;
+  const mutedWord = mutedRows > 0 ? `Muted · ${mutedRows}` : null;
+
+  // The row body is the Open (the verb Open stays for the keyboard and 393).
+  const onRowPress = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest("button, a, input, textarea, select, .needs-drawer-well")) return;
+    const id = target.closest("li.needs-row")?.getAttribute("data-object-id");
+    const face = all.find((f) => f.id === id);
+    if (face?.openRef) refOpener(face.openRef)?.();
+  };
+
   return (
     <div className="needs-drawer" data-testid="needs-drawer">
       {/* The Chair's head keeps its testids (the Chair-ready signal of the
@@ -291,12 +394,48 @@ export function NeedsDrawer() {
       <div className="needs-drawer-headline" data-testid="arrival-headline">
         <h2 className="surface-display needs-drawer-head" data-testid="arrival-display">{head}</h2>
       </div>
-      {faces.length > 0 ? (
-        <NeedsList label="Needs you">
-          {faces.map((face) => (
-            <NeedRow key={face.id} face={face} primary={face.id === primaryId} />
-          ))}
-        </NeedsList>
+      {/* A press on a row body opens it; each row's verbs carry the keyboard. */}
+      <div ref={listRef} onClick={onRowPress} data-testid="needs-list">
+        {faces.length > 0 ? (
+          <NeedsList label="Needs you">
+            {faces.map((face) => (
+              <NeedRow key={face.id} face={face} primary={face.id === primaryId} />
+            ))}
+          </NeedsList>
+        ) : null}
+        {showWaiting && waiting.length > 0 ? (
+          <div className="needs-drawer-muted" data-testid="needs-waiting">
+            <NeedsList label="Waiting">
+              {waiting.map((face) => <NeedRow key={face.id} face={face} primary={false} />)}
+            </NeedsList>
+          </div>
+        ) : null}
+        {showMuted && muted.length > 0 ? (
+          <div className="needs-drawer-muted" data-testid="needs-muted">
+            <NeedsList label="Muted">
+              {muted.map((face) => <NeedRow key={face.id} face={face} primary={false} />)}
+            </NeedsList>
+          </div>
+        ) : null}
+      </div>
+      {next || muted.length > 0 || waiting.length > 0 ? (
+        <div className="needs-drawer-foot">
+          {next ? <span className="needs-drawer-next" data-testid="needs-next">{next}</span> : <span />}
+          <span className="object-verbs">
+          {waiting.length > 0 ? (
+            <Button dense variant="ghost" aria-expanded={showWaiting} data-testid="needs-waiting-toggle"
+              onClick={() => setShowWaiting((open) => !open)}>
+              {waitingWord}
+            </Button>
+          ) : null}
+          {muted.length > 0 ? (
+            <Button dense variant="ghost" aria-expanded={showMuted} data-testid="needs-muted-toggle"
+              onClick={() => setShowMuted((open) => !open)}>
+              {mutedWord}
+            </Button>
+          ) : null}
+          </span>
+        </div>
       ) : null}
     </div>
   );

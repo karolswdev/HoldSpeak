@@ -33,6 +33,8 @@ export type NeedVerbs =
   | { kind: "setup"; key: string; verb: string }
   | { kind: "open"; ref: string }
   | { kind: "repair"; verb: string; href: string; projectId: string }
+  | { kind: "arming"; scheduleId: string }
+  | { kind: "calendar" }
   | { kind: "none" };
 
 type DoorCardLike = {
@@ -52,6 +54,15 @@ export interface NeedFace {
   /** `agents` rows lead the drawer; the rest keep the hub's rank order. */
   group: "agents" | "rest";
   verbs: NeedVerbs;
+  /** What a press on the row body opens (the one open grammar,
+   *  `openObject.refOpener`); absent = the row body opens nothing. */
+  openRef?: string;
+  /** A source row (a source not read, no calendar), not a member. */
+  source?: boolean;
+  /** An agent's ask or held call: the session it belongs to. */
+  askOf?: string;
+  /** An item an agent works: that agent's session. */
+  workedBy?: string;
 }
 
 /** `Claude Code` / `Codex`: the agent's name in a sentence. */
@@ -171,6 +182,8 @@ function attentionFace(
       lamp: { label: `${approve ? "TO APPROVE" : "ASKS"} · ${waitAgeWord(item, ctx.now)}`, tone: "ask" },
       group: "agents",
       verbs: { kind: "answer", sessionKey: key },
+      openRef: `coder:${key}`,
+      askOf: key,
     };
   }
   // Conductor R1: a held tool call of a launched agent.
@@ -186,10 +199,13 @@ function attentionFace(
       lamp: { label: "HELD CALL", tone: "ask" },
       group: "agents",
       verbs: { kind: "gate", proposalId: String(item.ref ?? id).replace(/^gate:/, "") },
+      openRef: key ? `coder:${key}` : undefined,
+      askOf: key || undefined,
     };
   }
 
   const card = doorCardOf(item);
+  const openRef = openRefOf(item, card) || undefined;
   const flight = flightForItem(ctx.flights, { ...item, _doorCard: card ?? null });
   // An item an agent works is that agent's: its row is the flight.
   if (isInFlight(flight)) {
@@ -206,6 +222,8 @@ function attentionFace(
           : { label: "PR OPEN", tone: "ok" },
         group: "agents",
         verbs: { kind: "pr", url: flight.pr.url, number },
+        openRef,
+        workedBy: flight.sessionKey ?? undefined,
       };
     }
     const state = flight.state === "waiting" ? "WAITING" : flight.state === "starting" ? "STARTING" : "WORKING";
@@ -218,6 +236,8 @@ function attentionFace(
       lamp: { label: state, tone: flight.state === "waiting" ? "ask" : "info" },
       group: "agents",
       verbs: flight.sessionKey ? { kind: "session", sessionKey: flight.sessionKey } : { kind: "none" },
+      openRef,
+      workedBy: flight.sessionKey ?? undefined,
     };
   }
 
@@ -230,7 +250,7 @@ function attentionFace(
   // R4: a decision that waits for the owner's review.
   if (source === "decision" && item.openRef) {
     return { id, kind: "decision", name: title, fact: project, lamp, group: "rest",
-      verbs: { kind: "review", ref: String(item.openRef) } };
+      verbs: { kind: "review", ref: String(item.openRef) }, openRef: String(item.openRef) };
   }
   // A proposal from a meeting: Confirm.
   if (item.proposalId) {
@@ -238,10 +258,16 @@ function attentionFace(
       id,
       kind: item.proposalKind === "decision" ? "decision" : "action",
       name: title,
-      fact: [item.meetingTitle ? `from ${item.meetingTitle}` : "", project].filter(Boolean).join(" · "),
-      lamp: { label: why || "TO CONFIRM", tone: "warn" },
+      fact: [
+        item.meetingTitle ? `from ${item.meetingTitle}` : "from a meeting",
+        item.proposalDue ? `by ${item.proposalDue}` : "",
+        project,
+      ].filter(Boolean).join(" · "),
+      // The act the proposal asks for: decide it, or confirm it.
+      lamp: { label: item.proposalKind === "decision" ? "TO DECIDE" : "TO CONFIRM", tone: "warn" },
       group: "rest",
       verbs: { kind: "confirm", proposalId: String(item.proposalId), projectId: String(item.projectId ?? "") },
+      openRef: item.projectId ? `project:${String(item.projectId)}` : undefined,
     };
   }
   // A Room commitment: ONE lawful next act.
@@ -250,28 +276,31 @@ function attentionFace(
       ?? (item.unknowns?.includes("owner") ? "name_owner"
         : item.unknowns?.includes("due") ? "set_date" : "mark_done");
     return { id, kind: "action", name: title, fact, lamp, group: "rest",
-      verbs: { kind: "commitment", next, cardId: String(item.actionItemId) } };
+      verbs: { kind: "commitment", next, cardId: String(item.actionItemId) },
+      openRef: openRef ?? `action_item:${String(item.actionItemId)}` };
   }
   const ext = item as { _isUnassigned?: boolean; _toReview?: boolean };
   if (ext._toReview && card) {
     const ref = String(card.open_ref || card.target_ref || "");
     return { id, kind: "action", name: title, fact, lamp, group: "rest",
-      verbs: ref ? { kind: "review", ref } : { kind: "none" } };
+      verbs: ref ? { kind: "review", ref } : { kind: "none" }, openRef };
   }
   if (ext._isUnassigned && !rawOwner) {
     return { id, kind: "action", name: title, fact: project, lamp, group: "rest",
-      verbs: { kind: "name-owner", cardId: doorDelegateCardId(card), openRef: card?.open_ref ? String(card.open_ref) : null } };
+      verbs: { kind: "name-owner", cardId: doorDelegateCardId(card), openRef: card?.open_ref ? String(card.open_ref) : null },
+      openRef };
   }
   if (card && doorCommand(card)) {
-    return { id, kind: "action", name: title, fact, lamp, group: "rest", verbs: { kind: "door", card } };
+    return { id, kind: "action", name: title, fact, lamp, group: "rest", verbs: { kind: "door", card }, openRef };
   }
   if (item.verbHref) {
     return { id, kind: item.kind === "decision" ? "decision" : "action", name: title, fact, lamp, group: "rest",
-      verbs: { kind: "link", url: String(item.verbHref) } };
+      verbs: { kind: "link", url: String(item.verbHref) },
+      openRef: openRef ?? (item.projectId ? `project:${String(item.projectId)}` : undefined) };
   }
   const ref = openRefOf(item, card);
   return { id, kind: item.kind === "decision" ? "decision" : "action", name: title, fact, lamp, group: "rest",
-    verbs: ref ? { kind: "open", ref } : { kind: "none" } };
+    verbs: ref ? { kind: "open", ref } : { kind: "none" }, openRef: ref || undefined };
 }
 
 /** One hub member as its object face. */
@@ -303,19 +332,47 @@ export function needFace(
       lamp: retrying ? { label: "RETRYING", tone: "warn" } : { label: "NO SUMMARY", tone: "fail" },
       group: "rest",
       verbs: { kind: "summarize", meetingId: meeting.id },
+      openRef: `meeting:${meeting.id}`,
     };
   }
   return attentionFace(member.item ?? ({} as NeedsYouRoomItem), ctx);
 }
 
+/** One object, one row (UX-CANON D): when an agent works an item and that
+ *  agent asks (a question or a held call), the ITEM row carries the ask: its
+ *  icon and name stay the item's; the fact, the lamp and the verbs are the
+ *  ask's. The agent's own row is not drawn. An agent with no item keeps its
+ *  own row. */
+export function foldAsks(faces: readonly NeedFace[]): NeedFace[] {
+  const asks = new Map<string, NeedFace>();
+  for (const face of faces) if (face.askOf && !asks.has(face.askOf)) asks.set(face.askOf, face);
+  const folded = new Set<string>();
+  const out: NeedFace[] = [];
+  for (const face of faces) {
+    const ask = face.workedBy ? asks.get(face.workedBy) : undefined;
+    if (ask && !folded.has(ask.id)) {
+      folded.add(ask.id);
+      out.push({ ...face, fact: ask.fact, lamp: ask.lamp, verbs: ask.verbs, askOf: ask.askOf });
+    } else {
+      out.push(face);
+    }
+  }
+  return out.filter((face) => !(face.askOf && folded.has(face.id)));
+}
+
 /** The drawer's rows: the agents first (when any), then the rest in the
- *  hub's rank order. */
+ *  hub's rank order. One object, one row. */
 export function needFaces(
   members: readonly NeedsYouMember[],
   ctx: { flights: readonly AgentFlight[]; sessions: readonly CoderSessionRow[]; now: Date },
 ): NeedFace[] {
-  const faces = members.map((m) => needFace(m, ctx));
+  const faces = foldAsks(members.map((m) => needFace(m, ctx)));
   return [...faces.filter((f) => f.group === "agents"), ...faces.filter((f) => f.group === "rest")];
+}
+
+function observedAt(at: string | null | undefined): string {
+  const d = at ? wireDate(at) : null;
+  return d ? `observed ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}` : "";
 }
 
 /** A source the hub could not read, as a row after the members (UX-CANON
@@ -326,13 +383,56 @@ export function coverageFace(gap: CoverageRecord): NeedFace {
     id: `coverage:${gap.source_id}`,
     kind: gap.kind === "project" ? "project" : "artifact",
     name: sourceLabel(gap),
-    fact: String(gap.reason || gap.state),
+    fact: [String(gap.reason || gap.state), observedAt(gap.observed_at)].filter(Boolean).join(" · "),
     lamp: { label: repair?.token || gap.state.toUpperCase(), tone: gap.state === "stale" ? "warn" : "fail" },
     group: "rest",
     verbs: repair
       ? { kind: "repair", verb: repair.verb, href: repair.href, projectId: String(gap.project_id ?? "") }
       : { kind: "none" },
+    source: true,
   };
+}
+
+/** `0:45` under a minute, else `<n> MIN`. */
+export function armsWord(seconds: number): string {
+  const s = Math.max(0, Math.ceil(seconds));
+  if (s < 60) return `0:${String(s).padStart(2, "0")}`;
+  return `${Math.ceil(s / 60)} MIN`;
+}
+
+/** A scheduled recording about to start: first while it is live. */
+export function armingFace(arming: { scheduleId: string; title: string }, secondsLeft: number): NeedFace {
+  const word = armsWord(secondsLeft);
+  return {
+    id: `arming:${arming.scheduleId}`,
+    kind: "meeting",
+    name: arming.title || "Scheduled recording",
+    fact: `Arms in ${word.toLowerCase()}`,
+    lamp: { label: `ARMS · ${word}`, tone: "ask" },
+    group: "agents",
+    verbs: { kind: "arming", scheduleId: arming.scheduleId },
+  };
+}
+
+/** No calendar is connected: one source row (an offer, never counted). */
+export const CALENDAR_FACE: NeedFace = {
+  id: "source:calendar",
+  kind: "artifact",
+  name: "Calendar",
+  fact: "No calendar",
+  lamp: { label: "NOT CONNECTED", tone: "info" },
+  group: "rest",
+  verbs: { kind: "calendar" },
+  source: true,
+};
+
+/** The quiet footer line: `NEXT · 14:00 · Ledger cutover sync`. */
+export function nextWord(next: { label?: string | null; at?: string | null } | null | undefined): string | null {
+  if (!next || !next.label) return null;
+  const at = next.at ? wireDate(next.at) : null;
+  const time = at ? `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}` : "";
+  // The Room is named on the week's own row, not on this quiet line.
+  return ["NEXT", time, next.label].filter(Boolean).join(" · ");
 }
 
 /** The head: `N need you`, `Nothing needs you`, or an unknown said as one. */

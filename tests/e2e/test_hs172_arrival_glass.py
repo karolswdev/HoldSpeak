@@ -11,6 +11,13 @@ meetings with intel_status=complete. Assert at 1440 + 393:
   - shots to story-03-shots/
 
 Companion to test_hs170_arrival_glass.py (not edited).
+
+PHILO-14 A5: the Needs-you window body is the smart drawer. A proposal is
+a `needs-row` (`data-object-id` `proposal:<id>`): its fact names the
+meeting it came from, its lamp the act (`TO DECIDE` / `TO CONFIRM`), its
+verb `Confirm` (`needs-row-verb`, `data-verb="confirm"`); the row body opens
+it (`data-opens`). Testids: `needs-drawer`, `needs-list`, `needs-row`,
+`needs-source-row`, `needs-row-verb`.
 """
 from __future__ import annotations
 
@@ -206,45 +213,22 @@ class TestArrivalProposals:
                 f"Headline at {width}: {headline_text}"
             )
 
-            # Check for MTG emblem on proposal rows
-            emblems = page.locator("[data-testid='arrival-source-emblem']")
-            emblem_texts = emblems.all_text_contents()
-            assert "MTG" in emblem_texts, (
-                f"MTG emblem missing at {width}: {emblem_texts}"
+            # A proposal row is its object: it names the meeting it came
+            # from, the act it asks for, its verb, and its body opens it.
+            proposal_rows = page.locator("[data-testid='needs-row'][data-object-id^='proposal:']")
+            assert proposal_rows.count() >= 1, f"No proposal rows at {width}"
+            facts = proposal_rows.locator(".needs-row-fact").all_text_contents()
+            assert all(f.startswith("from ") for f in facts), f"proposal facts at {width}: {facts}"
+            confirm_btns = proposal_rows.locator("[data-verb='confirm']")
+            assert confirm_btns.count() == proposal_rows.count(), (
+                f"Confirm on every proposal row at {width}, got {confirm_btns.count()}"
             )
-
-            # Confirm on the row; Open behind the row's MORE disclosure.
-            # HS-200-15 (settled design D1, "one verb per row; its
-            # secondaries live in the row's MORE disclosure"): a proposal
-            # row carries ONE verb, `Confirm`; `Open` is reachable inside
-            # `MORE`, at both widths.
-            confirm_btns = page.locator("[data-testid='arrival-proposal-confirm']")
-            assert confirm_btns.count() >= 1, (
-                f"No Confirm buttons at {width}, got {confirm_btns.count()}"
+            assert proposal_rows.first.get_attribute("data-opens") == "true", (
+                f"the proposal row body opens it at {width}"
             )
-            assert page.locator("[data-testid='arrival-proposal-open']").count() == 0, (
-                f"Open must sit behind MORE, not on the row, at {width}"
-            )
-            more = page.locator("[data-testid='arrival-proposal-row']").first.locator(
-                ".surface-disclosure-trigger"
-            )
-            assert more.count() >= 1, f"No MORE disclosure on a proposal row at {width}"
-            more.first.click()
-            page.wait_for_timeout(150)
-            open_btns = page.locator("[data-testid='arrival-proposal-open']")
-            assert open_btns.count() >= 1, (
-                f"No Open buttons inside MORE at {width}, got {open_btns.count()}"
-            )
-            more.first.click()
-            page.wait_for_timeout(150)
-
-            # Decide: and Confirm: prefixes
-            prefix_els = page.locator("[data-testid='arrival-proposal-prefix']")
-            prefix_texts = prefix_els.all_text_contents()
-            has_decide = any("Decide:" in t for t in prefix_texts)
-            has_confirm = any("Confirm:" in t for t in prefix_texts)
-            assert has_decide, f"Missing 'Decide:' prefix at {width}: {prefix_texts}"
-            assert has_confirm, f"Missing 'Confirm:' prefix at {width}: {prefix_texts}"
+            lamps = proposal_rows.locator(".needs-row-lamp").all_text_contents()
+            assert any("TO DECIDE" in t for t in lamps), f"Missing TO DECIDE at {width}: {lamps}"
+            assert any("TO CONFIRM" in t for t in lamps), f"Missing TO CONFIRM at {width}: {lamps}"
 
             # No raw <button> outside the surface kit
             raw_buttons = page.evaluate("""() => {
@@ -285,7 +269,7 @@ class TestArrivalProposals:
 
             # No text clip on proposal primaries
             proposals_clipped = page.evaluate("""() => {
-                const texts = document.querySelectorAll('[data-testid="arrival-proposal-text"]');
+                const texts = document.querySelectorAll('[data-testid="needs-row"][data-object-id^="proposal:"] .needs-row-name');
                 const clipped = [];
                 for (const t of texts) {
                     if (t.scrollWidth > t.clientWidth + 2) {
@@ -342,7 +326,7 @@ class TestArrivalProposals:
             headline.wait_for(timeout=10_000)
             _settle(page)
 
-            confirm_btns = page.locator("[data-testid='arrival-proposal-confirm']")
+            confirm_btns = page.locator("[data-testid='needs-row'][data-object-id^='proposal:'] [data-verb='confirm']")
             assert confirm_btns.count() >= 2, "The seed gives an action and a decision proposal"
 
             # The proposal is chosen by its kind, never by its place in the

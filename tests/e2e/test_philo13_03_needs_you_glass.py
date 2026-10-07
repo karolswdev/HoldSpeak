@@ -11,8 +11,12 @@ that database, as the Dock atlas case does.
   * No visible "need(s) you" text on the glass carries another number.
   * Done on A1 (the Chair row's own Done) -> all three read 5 within 1 s,
     with no reload. The measured latency is written beside the shots.
-  * The narrower counts name what they count: the Chair list ``ACTIONS``,
-    Meetings never "needs you", the Room ``n open here`` / ``Clear here``.
+  * The narrower counts name what they count: the Chair's drawer draws one
+    row per member (PHILO-14 A5), Meetings never "needs you", the Room
+    ``n open here`` / ``Clear here``.
+
+PHILO-14 A5 testids: ``needs-drawer``, ``needs-list``, ``needs-row`` (a
+member), ``needs-source-row``, ``needs-row-verb`` (``data-verb``).
 """
 from __future__ import annotations
 
@@ -175,16 +179,15 @@ class TestOneNeedsYou:
                 said = _numbers_said(before["said"])
                 assert said and all(n == 6 for n in said), before["said"]
 
-                # ── the narrower list names what it counts ──
-                section = page.locator("[data-testid='arrival-needs-you']")
-                caption = section.locator(".surface-caption, .surface-section-label, h2, h3").first.inner_text().strip()
-                record["chair_caption"] = caption
-                assert re.fullmatch(r"ACTIONS \d+( OF \d+)?", caption), caption
-                assert not re.search(r"needs? you", section.inner_text(), re.IGNORECASE)
+                # ── the drawer's rows are the members the head counts ──
+                rows = page.locator("[data-testid='needs-list'] > ul > [data-testid='needs-row']")
+                record["chair_rows"] = rows.count()
+                assert rows.count() == 6, rows.all_inner_texts()
+                assert not re.search(r"needs? you", page.locator("[data-testid='needs-list']").inner_text(), re.IGNORECASE)
                 self._shot(page, "a2w-chair-6", width)
 
                 # ── Done on A1 -> all three read 5 within 1 s, no reload ──
-                row = page.locator("[data-testid='arrival-needs-you-row']", has_text=A1_TASK).first
+                row = page.locator("[data-testid='needs-row']", has_text=A1_TASK).first
                 done = row.get_by_role("button", name=re.compile(r"^Done: "))
                 nav = []
                 page.on("framenavigated", lambda frame: nav.append(frame.url))

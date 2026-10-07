@@ -9,6 +9,11 @@ on the meeting with words; the capture bar is at the foot; no raw
 nothing overflows at 393. Also the QUIET state (empty hub): only the
 headline + capture bar.
 
+PHILO-14 A5: the Needs-you window body is the smart drawer. Its stable
+testids: `needs-drawer`, `needs-list`, `needs-row` (a member),
+`needs-source-row`, `needs-row-verb` (`data-verb`), `needs-next` (the
+footer NEXT line), `needs-muted-toggle` / `needs-muted`.
+
 Shots to phase-170-the-great-pass/assets/story-04-shots/.
 """
 from __future__ import annotations
@@ -369,20 +374,19 @@ def _run_needs_you_rig(
             # The count should be a digit
             assert headline_text[0].isdigit(), \
                 f"Headline should start with a count: {headline_text}"
-            # Should mention projects
-            assert "project" in headline_text.lower(), \
-                f"Headline should mention projects: {headline_text}"
+            # PHILO-14 A5 (board A-5): the head is `N need you`, once; the
+            # Project clause left with the old section.
 
             # ── NEXT line present ──
-            next_line = page.get_by_test_id("arrival-next")
+            next_line = page.get_by_test_id("needs-next")
             assert next_line.count() == 1, "NEXT line should be present with a scheduled recording"
             next_text = next_line.text_content() or ""
             assert "NEXT" in next_text.upper(), f"NEXT line should start with NEXT: {next_text}"
             assert "STANDUP" in next_text.upper(), f"NEXT line should contain the title: {next_text}"
 
-            # ── NEEDS YOU section present ──
-            needs_you_section = page.get_by_test_id("arrival-needs-you")
-            assert needs_you_section.count() == 1, "NEEDS YOU section should be present"
+            # ── NEEDS YOU: the drawer, with its member rows ──
+            assert page.get_by_test_id("needs-drawer").count() == 1, "the Needs-you drawer should be present"
+            assert page.locator("[data-testid='needs-row']").count() > 0, "the drawer should hold rows"
 
             # ── THOUGHTS section present ──
             # PHILO-13-11 (slice two, R2): at 393 one Chair window at a time;
@@ -441,7 +445,7 @@ def _run_needs_you_rig(
                     if (text.length > 60) {
                         // Allow inside content rows (ledger primary, thought titles)
                         const parent = walker.currentNode.parentElement;
-                        const inRow = parent?.closest('.surface-ledger-primary, .surface-ledger-line');
+                        const inRow = parent?.closest('.surface-ledger-primary, .surface-ledger-line, .needs-row-name, .needs-row-fact');
                         if (!inRow) long.push(text.slice(0, 80));
                     }
                 }
@@ -656,12 +660,16 @@ def _run_muted_rig(
                 f"Headline should start with 1 (muted excluded): {headline_text}"
 
             # ── NEEDS YOU has 1 unmuted row ──
-            needs_you = page.get_by_test_id("arrival-needs-you")
-            assert needs_you.count() == 1, "NEEDS YOU should be present"
+            members = page.locator("[data-testid='needs-list'] > ul > [data-testid='needs-row']")
+            assert members.count() == 1, members.all_inner_texts()
 
-            # ── MUTED section has dimmed rows ──
-            muted_section = page.get_by_test_id("arrival-muted")
-            assert muted_section.count() == 1, "MUTED section should be present"
+            # ── MUTED: `Muted · 2` opens the dimmed rows (PHILO-14 A5) ──
+            toggle = page.get_by_test_id("needs-muted-toggle")
+            assert (toggle.text_content() or "").strip() == "Muted · 2", toggle.text_content()
+            toggle.click()
+            muted_section = page.get_by_test_id("needs-muted")
+            muted_section.wait_for(timeout=5000)
+            assert muted_section.locator("[data-testid='needs-row']").count() == 2
 
             # Dimmed (opacity ~.55)
             muted_opacity = muted_section.evaluate(

@@ -119,7 +119,7 @@ describe("PHILO-13-03 A2-W — the Chair reads the one needs-you number", () => 
     );
     expect(screen.getByTestId("other-reader").textContent).toBe("6");
     // PHILO-14 A5: the drawer's rows ARE the members: six rows under `6 need you`.
-    expect(document.querySelectorAll("[data-testid='needs-drawer'] .needs-row")).toHaveLength(6);
+    expect(document.querySelectorAll("[data-testid='needs-drawer'] [data-testid='needs-row']")).toHaveLength(6);
     // No "need(s) you" on the face carries a number other than the one.
     const said = (document.body.textContent ?? "").match(/\d+ needs? you/gi) ?? [];
     expect(said.every((token) => token.startsWith("6 "))).toBe(true);

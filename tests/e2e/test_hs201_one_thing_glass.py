@@ -198,16 +198,16 @@ class TestOneThing:
 
             # ── neither engine is one state: ONE row, ONE filled Button
             #    (counsel fix round, second pass, ruling 2) ──
-            section = page.locator("[data-testid='arrival-blocker']")
+            section = page.locator("[data-testid='needs-row'][data-object-id^='blocker:']")
             section.wait_for(timeout=10_000)
             page.wait_for_function(
                 """() => {
-                  const el = document.querySelector("[data-testid='arrival-blocker']");
+                  const el = document.querySelector("[data-testid='needs-row'][data-object-id^='blocker:']");
                   return el && el.textContent.includes("No engine yet");
                 }""",
                 timeout=10_000,
             )
-            rows = page.locator("[data-testid='arrival-blocker-row']")
+            rows = page.locator("[data-testid='needs-row'][data-object-id^='blocker:']")
             assert rows.count() == 1, f"{rows.count()} blocker rows at {width}"
             said = section.text_content() or ""
             assert "No engine yet" in said, said
@@ -232,7 +232,7 @@ class TestOneThing:
             page.screenshot(path=str(SHOTS / f"chair-blocker-{suffix}.png"), full_page=True)
 
             # ── the Button opens Models ──
-            page.locator("[data-testid='arrival-blocker-verb-engines']").click()
+            page.locator("[data-object-id='blocker:engines'] [data-verb='setup']").click()
             page.locator("[data-testid='concierge-root']").wait_for(timeout=15_000)
             # Close it again so the "row is gone" shot is the Chair itself.
             page.locator("[data-testid='concierge-cancel']").click()
@@ -262,7 +262,7 @@ class TestOneThing:
             _settings_updated(page)
             page.wait_for_function(
                 """() => {
-                  const el = document.querySelector("[data-testid='arrival-blocker']");
+                  const el = document.querySelector("[data-testid='needs-row'][data-object-id^='blocker:']");
                   return el && el.textContent.includes("No engine for speech");
                 }""",
                 timeout=15_000,
@@ -270,7 +270,7 @@ class TestOneThing:
             # With exactly one half missing, the row names that half.
             said = section.text_content() or ""
             assert "No engine yet" not in said, said
-            assert page.locator("[data-testid='arrival-blocker-row']").count() == 1
+            assert page.locator("[data-testid='needs-row'][data-object-id^='blocker:']").count() == 1
             _settle(page)
             section.screenshot(path=str(SHOTS / f"chair-speech-row-{suffix}.png"))
 
@@ -285,10 +285,10 @@ class TestOneThing:
 
             _settings_updated(page)
             page.wait_for_function(
-                """() => !document.querySelector("[data-testid='arrival-blocker']")""",
+                """() => !document.querySelector("[data-testid='needs-row'][data-object-id^='blocker:']")""",
                 timeout=15_000,
             )
-            assert page.locator("[data-testid='arrival-blocker']").count() == 0, (
+            assert page.locator("[data-testid='needs-row'][data-object-id^='blocker:']").count() == 0, (
                 f"blocker row survived the assignment on the OPEN desk at {width}"
             )
             headline = page.locator("[data-testid='arrival-display']").text_content() or ""
@@ -414,16 +414,16 @@ class TestOneThing:
             # is not a clear desk.
             _arrive(page, self.base)
 
-            section = page.locator("[data-testid='arrival-blocker']")
+            section = page.locator("[data-testid='needs-row'][data-object-id^='blocker:']")
             section.wait_for(timeout=15_000)
             page.wait_for_function(
                 """() => {
-                  const el = document.querySelector("[data-testid='arrival-blocker']");
+                  const el = document.querySelector("[data-testid='needs-row'][data-object-id^='blocker:']");
                   return el && el.textContent.includes("Could not read setup");
                 }""",
                 timeout=15_000,
             )
-            rows = page.locator("[data-testid='arrival-blocker-row']")
+            rows = page.locator("[data-testid='needs-row'][data-object-id^='blocker:']")
             assert rows.count() == 1, f"{rows.count()} rows at {width}"
             verbs = section.locator("button")
             assert verbs.count() == 1, f"{verbs.count()} verbs at {width}"
@@ -686,16 +686,16 @@ class TestQuietDesk:
             door = _api(page, "GET", "/api/door", token=TOKEN)
             assert door["calendar_configured"] is False, door.get("calendar_configured")
 
-            section = page.locator("[data-testid='arrival-blocker']")
+            section = page.locator("[data-testid='needs-row'][data-object-id^='blocker:']")
             section.wait_for(timeout=15_000)
-            calendar = page.locator("[data-testid='arrival-connect-calendar']")
+            calendar = page.locator("[data-verb='connect-calendar']")
             calendar.wait_for(timeout=15_000)
             assert "Connect calendar" in (calendar.text_content() or "")
 
             # ONE row asks (SETUP). The calendar row is an OFFER beside it
             # and never moves the count (owner's ruling: a desk with no
             # calendar must not say `1 need you` for ever, tenet 3).
-            assert page.locator("[data-testid='arrival-blocker-row']").count() == 1
+            assert page.locator("[data-testid='needs-row'][data-object-id^='blocker:']").count() == 1
             page.wait_for_function(
                 """() => {
                   const el = document.querySelector("[data-testid='arrival-display']");

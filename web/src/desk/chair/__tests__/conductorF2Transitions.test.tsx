@@ -87,7 +87,10 @@ function wire() {
       return { schema: "InferenceAssignmentSummary@1", rows: [], task_overrides: [], issue_count: 0 };
     if (url.startsWith("/api/coders/sessions")) return sessions;
     if (url.startsWith("/api/desk/needs-you"))
-      return { count: 2, projects: ["p-ledger"], items: [CODER_ROW, RUNBOOK_ROW], next: null, coverage: [], complete: true };
+      // The hub lists the agent's question only while it asks.
+      return sessions === SESSIONS
+        ? { count: 2, projects: ["p-ledger"], items: [CODER_ROW, RUNBOOK_ROW], next: null, coverage: [], complete: true }
+        : { count: 1, projects: ["p-ledger"], items: [RUNBOOK_ROW], next: null, coverage: [], complete: true };
     if (url.startsWith("/api/door")) return { board: {}, counts: {}, upcoming: [], calendar_configured: false };
     return null;
   }));
@@ -117,7 +120,8 @@ describe("Conductor F2: transitions land on a mounted Chair", () => {
 
     sessions = SESSIONS;   // the agent asked: waiting
     act(() => emit("intel_status", { state: "ready", scope: "coder" }));
-    await waitFor(() => expect(lamp()).toBe("WAITING"));
+    // One object, one row: the item carries its agent's question.
+    await waitFor(() => expect(lamp()).toBe("ASKS · 2 MIN"));
 
     // The PR merged; the close waits for the owner (Secure): the session stays.
     const merged = { ...FLIGHT_RUNBOOK, state: "merged", close: "awaiting_confirm", pr: { number: 413, url: "u", state: "merged" } };

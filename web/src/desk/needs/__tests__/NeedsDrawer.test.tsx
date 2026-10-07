@@ -1,6 +1,13 @@
 // PHILO-14 A5 — Needs you as a smart drawer (board A-5). The drawer reads the
 // hub's one answer (`/api/desk/needs-you`) and draws each member as its
 // object: icon by kind, name, one fact line, ONE lamp + word, its own verbs.
+//
+// Stable testids: `needs-drawer` (the body), `needs-row` (a member's row),
+// `needs-source-row` (a source not read, no calendar), `needs-row-verb`
+// (every row verb; `data-verb` names it: answer, open, deny, approve,
+// open-pr, review, done, name-owner, set-date, confirm, door-verb,
+// summarize, setup, repair, cancel, connect-calendar), `needs-well`,
+// `needs-next` (the footer line), `needs-muted-toggle`, `needs-muted`.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -8,7 +15,8 @@ import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../lib/api";
 import { useAgentFlights, type AgentFlight } from "../../agentFlights";
-import { openCoderSession } from "../../shell";
+import { openCoderSession, openSurfaceOr } from "../../shell";
+import { useDesk } from "../../store";
 import { NeedsDrawer } from "../NeedsDrawer";
 
 vi.mock("../../../lib/api", async (original) => ({
@@ -117,9 +125,12 @@ const ANSWER = {
 };
 
 let gateCalls: Array<{ path: string; json: unknown }> = [];
+let DOOR: Record<string, unknown> = { upcoming: [], calendar_configured: true };
 
 beforeEach(() => {
   gateCalls = [];
+  DOOR = { upcoming: [], calendar_configured: true };
+  useDesk.setState({ scheduledArming: null } as never);
   (globalThis as { __resetNeedsYou?: () => void }).__resetNeedsYou?.();
   useAgentFlights.setState({ flights: [FLIGHT, WORKING], sessions: [] } as never);
   vi.mocked(openCoderSession).mockClear();
@@ -131,6 +142,7 @@ beforeEach(() => {
       return { ok: true } as never;
     }
     if (value.startsWith("/api/gate/proposals")) return { proposals: [] } as never;
+    if (value === "/api/door") return DOOR as never;
     return {} as never;
   });
 });
@@ -282,5 +294,85 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     render(<NeedsDrawer />);
     await screen.findByText("Nothing needs you");
     expect(document.querySelectorAll(".needs-row").length).toBe(0);
+  });
+
+  it("one object, one row: the item an agent works carries its agent's question", async () => {
+    const asking: AgentFlight = { ...WORKING, state: "waiting", sessionKey: "claude:s-run" };
+    useAgentFlights.setState({ flights: [FLIGHT, asking], sessions: [] } as never);
+    await mount();
+    const item = row("Write the rollback runbook");
+    expect(face(item)).toMatchObject({
+      kind: "action",
+      fact: "The runbook needs a rollback owner. Jordan or Avery?",
+      lamps: ["ASKS · 6 MIN"],
+      verbs: ["Open", "Answer"],
+    });
+    expect(document.querySelector(".needs-row[data-object-id='coder:claude:s-run']")).toBeNull();
+    expect([...document.querySelectorAll(".needs-row-name")].filter((n) => n.textContent?.includes("rollback runbook"))).toHaveLength(1);
+  });
+
+  it("a recording that arms is the first row; the countdown ticks; Cancel cancels it", async () => {
+    const cancel = vi.fn(async () => ({ ok: true }));
+    useDesk.setState({
+      scheduledArming: { scheduleId: "sch-1", title: "Ledger cutover sync", countdownSeconds: 10, fireAt: Date.now() + 8_000, outcome: null },
+      cancelArmedSchedule: cancel,
+    } as never);
+    await mount();
+    const rows = document.querySelectorAll<HTMLElement>("[data-testid='needs-row']");
+    expect(rows[0].getAttribute("data-object-id")).toBe("arming:sch-1");
+    expect(rows[0].getAttribute("data-kind")).toBe("meeting");
+    const first = rows[0].querySelector(".gadget-lamp")?.textContent ?? "";
+    expect(first).toMatch(/^ARMS · 0:0[78]$/);
+    expect(face(rows[0]).verbs).toEqual(["Cancel", "Open"]);
+    await waitFor(() => expect(rows[0].querySelector(".gadget-lamp")?.textContent).not.toBe(first), { timeout: 2500 });
+    fireEvent.click(rows[0].querySelector("[data-verb='cancel']")!);
+    expect(cancel).toHaveBeenCalledWith("sch-1");
+  });
+
+  it("NEXT is a quiet footer line; no calendar is one source row with Connect calendar", async () => {
+    const at = new Date();
+    at.setHours(14, 0, 0, 0);
+    DOOR = { upcoming: [{ title: "Ledger cutover sync", starts_at: at.toISOString(), source: "calendar_event" }], calendar_configured: false };
+    await mount();
+    await waitFor(() => expect(screen.getByTestId("needs-next").textContent).toBe("NEXT · 14:00 · Ledger cutover sync"));
+    const offer = await screen.findByTestId("needs-source-row");
+    expect(offer.querySelector(".needs-row-fact")?.textContent).toBe("No calendar");
+    fireEvent.click(offer.querySelector("[data-verb='connect-calendar']")!);
+    expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
+    // The offer is not counted.
+    expect(screen.getByTestId("arrival-display").textContent).toBe("8 need you");
+  });
+
+  it("muted rows are not drawn; Muted · N opens them", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, items: [...ITEMS, { ...ITEMS[4], id: "decision:d-muted", ref: "decision:d-muted", openRef: "decision:d-muted", title: "A muted decision", muted: true }] } as never;
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    await mount();
+    expect(screen.queryByText("A muted decision")).toBeNull();
+    const toggle = screen.getByTestId("needs-muted-toggle");
+    expect(toggle.textContent).toBe("Muted · 1");
+    fireEvent.click(toggle);
+    expect(within(screen.getByTestId("needs-muted")).getByText("A muted decision")).toBeTruthy();
+  });
+
+  it("a press on the row body opens the item; a press on a verb does only the verb", async () => {
+    await mount();
+    const agent = row("Claude Code: rollback runbook");
+    fireEvent.click(agent.querySelector(".needs-row-name")!);
+    expect(openCoderSession).toHaveBeenCalledWith("claude:s-run");
+    vi.mocked(openCoderSession).mockClear();
+    fireEvent.click(within(agent).getByText("Answer"));
+    expect(openCoderSession).toHaveBeenCalledTimes(1);
+    expect(openCoderSession).toHaveBeenCalledWith("claude:s-run", { answer: true });
+    expect(agent.getAttribute("data-opens")).toBe("true");
+  });
+
+  it("the row body opens inside a window region too (the Chair window is role=region)", async () => {
+    render(<div role="region" aria-label="Needs you"><NeedsDrawer /></div>);
+    await screen.findByText("8 need you");
+    fireEvent.click(row("Claude Code: rollback runbook").querySelector(".needs-row-fact")!);
+    expect(openCoderSession).toHaveBeenCalledWith("claude:s-run");
   });
 });

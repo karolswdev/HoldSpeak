@@ -6,9 +6,14 @@ Through the real hub on an isolated HOME, at 1440x900 (mouse) and 393x852
 and is due later; one Desk decision waits for review.
 
   * The Chair head, the bell and the Dock say 6. A3 is not in that number.
-  * RANKED does not list A3; its caption is the head less SETUP and failed
-    summaries.
-  * The WAITING filter lists A3 (``WAITING ON PRIYA``); the head still says 6.
+  * The drawer's rows are the members: one row per member, and no row for A3.
+  * ``Waiting · N`` lists A3 (``WAITING ON PRIYA``); the head still says 6.
+
+PHILO-14 A5: the Needs-you window body is the smart drawer. Its stable
+testids: ``needs-drawer``, ``needs-list`` (the rows), ``needs-row`` (a
+member), ``needs-source-row``, ``needs-row-verb`` (``data-verb`` names it),
+``needs-waiting-toggle`` / ``needs-waiting``, ``needs-muted-toggle`` /
+``needs-muted``, ``needs-next``.
   * The decision row has a Review verb; Review opens the decision's window.
   * Name an owner on A4 (the Door card's delegate verb): the head says 5 and
     WAITING lists A3 and A4.
@@ -87,29 +92,20 @@ class TestNeedsYouMeansYou:
 
     @staticmethod
     def _filter(page: Any, label: str) -> None:
-        """Pick one class of the ranking strip (a strip, or its one menu at 393)."""
-        group = page.locator("[data-testid='arrival-head-tokens'] [aria-label='Ranking']")
-        group.wait_for(timeout=15_000)
-        menu = group.locator(".surface-strip-menu, .surface-filter-menu")
-        if menu.count():
-            menu.first.click()
-            page.get_by_role("menuitemcheckbox", name=label, exact=True).click()
-        else:
-            group.get_by_role("button", name=label, exact=True).click()
+        """WAITING opens the drawer's `Waiting · N` list; RANKED closes it."""
+        toggle = page.locator("[data-testid='needs-waiting-toggle']")
+        toggle.wait_for(timeout=15_000)
+        want = "true" if label == "WAITING" else "false"
+        if toggle.get_attribute("aria-expanded") != want:
+            toggle.click()
         _settle(page)
 
     @staticmethod
     def _rows(page: Any) -> list[str]:
-        ledger = page.locator("[data-testid='arrival-needs-you-ledger']")
-        show_all = page.get_by_role("button", name=re.compile(r"Show all"))
-        if show_all.count():
-            show_all.first.click()
-        return [
-            " ".join(text.split())
-            for text in ledger.locator(
-                "[data-testid='arrival-needs-you-row'], [data-testid='arrival-proposal-row']"
-            ).all_inner_texts()
-        ]
+        """The rows on view: the waiting list when it is open, else the members."""
+        waiting = page.locator("[data-testid='needs-waiting']")
+        scope = waiting if waiting.count() else page.locator("[data-testid='needs-list'] > ul")
+        return [" ".join(text.split()) for text in scope.locator("[data-testid='needs-row']").all_inner_texts()]
 
     @pytest.mark.parametrize("width", list(SIZES))
     def test_the_head_counts_what_needs_him_and_waiting_lists_the_rest(self, width: int) -> None:
@@ -131,19 +127,12 @@ class TestNeedsYouMeansYou:
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"chair-headline-{width}.png"))
 
-                # ── RANKED lists what the head counts: no waiting row, and the
-                #    caption is the head less the SETUP rows and failed summaries ──
-                section = page.locator("[data-testid='arrival-needs-you']")
-                caption = section.locator(".surface-caption, .surface-section-label, h2, h3").first.inner_text().strip()
-                record["ranked_caption"] = caption
-                listed = int(re.fullmatch(r"ACTIONS (\d+)(?: OF (\d+))?", caption).group(2) or
-                             re.fullmatch(r"ACTIONS (\d+)(?: OF (\d+))?", caption).group(1))
-                beside = len(wire["blockers"]) + len(wire["failedMeetings"])
-                assert listed + beside == record["before"]["head"] == 6, (caption, beside)
-                assert listed == sum(1 for m in wire["members"] if m["kind"] == "attention"), caption
+                # ── the drawer lists what the head counts: one row per member
+                #    (the attention rows, the SETUP rows, the failed summaries),
+                #    and no waiting row ──
                 ranked = self._rows(page)
                 record["ranked_rows"] = ranked
-                assert len(ranked) == listed, ranked
+                assert len(ranked) == len(wire["members"]) == record["before"]["head"] == 6, ranked
                 assert not any(A3_TASK in row or "WAITING ON" in row for row in ranked), ranked
 
                 # ── the WAITING filter lists A3; the head does not move ──
@@ -170,10 +159,8 @@ class TestNeedsYouMeansYou:
                 self._filter(page, "RANKED")
 
                 # ── the decision row: Review opens the decision ──
-                row = page.locator("[data-testid='arrival-needs-you-row']",
+                row = page.locator("[data-testid='needs-row']",
                                    has_text="R1 adopt the release checklist").first
-                if not row.count():
-                    page.get_by_role("button", name=re.compile(r"Show all")).first.click()
                 row.scroll_into_view_if_needed()
                 review = row.get_by_role("button", name="Review: R1 adopt the release checklist")
                 assert review.count() == 1

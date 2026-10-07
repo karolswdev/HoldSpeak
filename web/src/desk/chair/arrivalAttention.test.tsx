@@ -78,7 +78,11 @@ const SEVENTEEN = Array.from({ length: 17 }, (_, i) => {
   });
 });
 
-const needsRows = () => [...document.querySelectorAll<HTMLElement>('[data-testid="needs-drawer"] .needs-row')];
+// The drawer's stable testids: `needs-drawer`, `needs-row` (a member),
+// `needs-source-row` (a source not read, no calendar), `needs-row-verb`
+// (with `data-verb`).
+const needsRows = () => [...document.querySelectorAll<HTMLElement>('[data-testid="needs-drawer"] [data-testid="needs-row"]')];
+const sourceRows = () => [...document.querySelectorAll<HTMLElement>('[data-testid="needs-drawer"] [data-testid="needs-source-row"]')];
 const rowNamed = (text: string) => needsRows().find((r) => r.querySelector(".needs-row-name")?.textContent === text)!;
 const lampOf = (r: HTMLElement) => r.querySelector(".gadget-lamp")?.textContent ?? "";
 const factOf = (r: HTMLElement) => r.querySelector(".needs-row-fact")?.textContent ?? "";
@@ -99,12 +103,14 @@ describe("Arrival attention (HS-200-15)", () => {
            coverage: [AVAILABLE("p1", "Q4 Platform"), AVAILABLE("p2", "Governance"), AVAILABLE("p3", "Payments"), FAILED_WATCH],
            complete: false });
     render(<ChairHome />);
-    await waitFor(() => expect(needsRows().length).toBe(18), { timeout: 5000 });
+    await waitFor(() => expect(needsRows().length).toBe(17), { timeout: 5000 });
 
     expect(screen.getByTestId("arrival-display").textContent).toBe("17 need you");
-    // The unread source leads, then the members in rank order.
-    const rows = needsRows();
-    expect(rows[0].getAttribute("data-object-id")).toBe("coverage:watch:w-kan");
+    // The unread source leads (above every member), then the members in rank order.
+    const gap = sourceRows()[0];
+    expect(gap.getAttribute("data-object-id")).toBe("coverage:watch:w-kan");
+    expect(gap.compareDocumentPosition(needsRows()[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const rows = [gap, ...needsRows()];
     expect(rows[1].textContent).toContain("KAN-7 Payments cut-over runbook");
     expect(lampOf(rows[1])).toBe("OVERDUE · 2 DAYS");
     expect(lampOf(rows[2])).toBe("DUE TODAY");
@@ -143,11 +149,12 @@ describe("Arrival attention (HS-200-15)", () => {
     wire({ count: 3, projects: ["p1"], items: SEVENTEEN.slice(0, 3), next: null,
            coverage: [AVAILABLE("p1", "Q4 Platform"), FAILED_WATCH], complete: false });
     render(<ChairHome />);
-    await waitFor(() => expect(needsRows().length).toBe(4), { timeout: 5000 });
+    await waitFor(() => expect(needsRows().length).toBe(3), { timeout: 5000 });
     expect(screen.getByTestId("arrival-display").textContent).toBe("3 need you");
-    const gap = needsRows()[0];
+    const gap = sourceRows()[0];
+    expect(gap.compareDocumentPosition(needsRows()[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(gap.querySelector(".needs-row-name")?.textContent).toBe("jira KAN");
-    expect(factOf(gap)).toBe("Jira rejected the query");
+    expect(factOf(gap)).toBe("Jira rejected the query · observed 08:41");
     expect(lampOf(gap)).toBe("CANT CHECK");
     const verb = within(gap).getByRole("button", { name: "Reconnect: jira KAN" });
     expect(verb.className).toContain("btn");
@@ -260,7 +267,7 @@ describe("Arrival attention (HS-200-15)", () => {
     await waitFor(() => expect(rowNamed("Pilot OTel in billing")).toBeTruthy());
     const line = rowNamed("Pilot OTel in billing");
     expect(lampOf(line)).toBe("UNASSIGNED");
-    const verb = within(line).getByTestId("needs-name-owner");
+    const verb = (line.querySelector('[data-verb="name-owner"]') as HTMLElement);
     expect(verb.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(verb);
     const well = await screen.findByTestId("needs-well");
@@ -339,12 +346,12 @@ describe("Arrival attention (HS-200-15)", () => {
       expect(lampOf(owned)).toBe("TO REVIEW");
       expect(factOf(owned)).toContain("Dana");
       expect(owned.textContent).not.toContain("UNASSIGNED");
-      expect(within(owned).queryByTestId("needs-name-owner")).toBeNull();
+      expect(owned.querySelector('[data-verb="name-owner"]')).toBeNull();
       expect(lampOf(bare)).toBe("UNASSIGNED");
-      expect(within(bare).getByTestId("needs-name-owner").textContent).toBe("Name an owner");
-      expect(within(bare).queryByTestId("needs-review")).toBeNull();
+      expect((bare.querySelector('[data-verb="name-owner"]') as HTMLElement).textContent).toBe("Name an owner");
+      expect(bare.querySelector('[data-verb="review"]')).toBeNull();
 
-      const review = within(owned).getByTestId("needs-review");
+      const review = (owned.querySelector('[data-verb="review"]') as HTMLElement);
       expect(review.textContent).toBe("Review");
       fireEvent.click(review);
       expect(openPullout).toHaveBeenCalledWith("intelligence:desk");
@@ -375,7 +382,7 @@ describe("Arrival attention (HS-200-15)", () => {
     }));
     render(<ChairHome />);
     await waitFor(() => expect(rowNamed("Priya confirms the freeze window")).toBeTruthy());
-    const verb = within(rowNamed("Priya confirms the freeze window")).getByTestId("needs-done");
+    const verb = (rowNamed("Priya confirms the freeze window").querySelector('[data-verb="done"]') as HTMLElement);
     expect(verb.textContent).toBe("Done");
     fireEvent.click(verb);
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", {

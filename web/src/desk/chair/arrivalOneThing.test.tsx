@@ -250,6 +250,6 @@ describe("HS-201-01 a microphone action never opens Models", () => {
       expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
     );
     expect(setupRow()).toBeNull();
-    expect(document.querySelector("[data-testid='needs-setup']")).toBeNull();
+    expect(document.querySelector("[data-verb='setup']")).toBeNull();
   });
 });

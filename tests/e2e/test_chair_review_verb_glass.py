@@ -54,7 +54,7 @@ def test_review_opens_the_card_in_follow_through(
             page.goto(f"{base}/?token={TOKEN}", wait_until="load")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
             _normal_chair(page)
-            rows = page.locator("[data-testid='arrival-needs-you-row']")
+            rows = page.locator("[data-testid='needs-row']")
             rows.first.wait_for(timeout=20_000)
             _settle(page)
 
@@ -66,11 +66,11 @@ def test_review_opens_the_card_in_follow_through(
             assert not card.get("open_ref")
 
             owned = rows.filter(has_text=OWNED)
-            why = owned.locator("[data-testid='arrival-why']").inner_text()
+            why = owned.locator(".needs-row-lamp").inner_text()
             assert "TO REVIEW" in why and "UNASSIGNED" not in why, why
             assert page.locator(".follow-through-view").count() == 0
 
-            owned.locator("[data-testid='arrival-to-review']").click()
+            owned.locator("[data-verb='review']").click()
 
             # The press changes the Desk: Follow-through opens ON this card
             # (its verbs are showing: the card is the open one).

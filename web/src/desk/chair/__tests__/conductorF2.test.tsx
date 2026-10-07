@@ -91,28 +91,41 @@ describe("Conductor F2 on the Chair", () => {
     [...document.querySelectorAll<HTMLElement>(".needs-row")]
       .find((r) => r.querySelector(".needs-row-name")?.textContent === name);
 
-  it("K5a: the coder row: the agent, the question, ASKS · age, Answer as the one primary, Open", async () => {
+  it("K5a + UX-CANON D: one object, one row: the item carries its agent's question, ASKS · age, Answer, Open", async () => {
     render(<ChairHome />);
-    await waitFor(() => expect(needsRow("Claude Code: Write the rollback runbook")).toBeTruthy());
-    const row = needsRow("Claude Code: Write the rollback runbook")!;
-    expect(row.getAttribute("data-kind")).toBe("agent");
+    await waitFor(() => expect(needsRow("Write the rollback runbook")?.querySelector(".gadget-lamp")?.textContent)
+      .toBe("ASKS · 2 MIN"));
+    const row = needsRow("Write the rollback runbook")!;
+    // The item's icon and name; no separate agent row.
+    expect(row.getAttribute("data-kind")).toBe("action");
+    expect(document.querySelectorAll(".needs-row[data-kind='agent']")).toHaveLength(0);
+    expect([...document.querySelectorAll(".needs-row-name")].filter((n) => n.textContent?.includes("Write the rollback runbook"))).toHaveLength(1);
     expect(row.querySelector(".needs-row-fact")?.textContent).toBe(QUESTION);
-    expect(row.querySelector(".gadget-lamp")?.textContent).toBe("ASKS · 2 MIN");
-    const answer = within(row).getByRole("button", { name: "Answer: Claude Code: Write the rollback runbook" });
+    const answer = within(row).getByRole("button", { name: "Answer: Write the rollback runbook" });
     expect(answer.className).toMatch(/primary/);
     fireEvent.click(answer);
     expect(openCoderSession).toHaveBeenCalledWith("claude:c1", { answer: true });
-    fireEvent.click(within(row).getByRole("button", { name: "Open: Claude Code: Write the rollback runbook" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Open: Write the rollback runbook" }));
     expect(openCoderSession).toHaveBeenLastCalledWith("claude:c1");
+    expect(row.querySelector("[data-testid='flight-chip']")).toBeNull();
   });
 
-  it("K4a: the item an agent works names the agent: CLAUDE CODE · WAITING and Open", async () => {
+  it("K4a: an item an agent works and no question: the agent on the fact line, its state on the lamp, Open", async () => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
+      const url = String(path);
+      if (url === "/api/inference/assignments")
+        return { schema: "InferenceAssignmentSummary@1", rows: [], task_overrides: [], issue_count: 0 };
+      if (url.startsWith("/api/coders/sessions")) return SESSIONS;
+      if (url.startsWith("/api/desk/needs-you"))
+        return { count: 1, projects: ["p-ledger"], items: [RUNBOOK_ROW], next: null, coverage: [], complete: true };
+      if (url.startsWith("/api/door")) return { board: {}, counts: {}, upcoming: [], calendar_configured: false };
+      return null;
+    }));
     render(<ChairHome />);
     await waitFor(() => expect(needsRow("Write the rollback runbook")?.querySelector(".gadget-lamp")?.textContent)
       .toBe("WAITING"));
     const row = needsRow("Write the rollback runbook")!;
     expect(row.querySelector(".needs-row-fact")?.textContent).toBe("Claude Code · Payments ledger cutover");
-    expect(row.querySelector("[data-testid='flight-chip']")).toBeNull();
     fireEvent.click(within(row).getByRole("button", { name: "Open the agent: Write the rollback runbook" }));
     expect(openCoderSession).toHaveBeenCalledWith("claude:c1");
   });
@@ -120,7 +133,7 @@ describe("Conductor F2 on the Chair", () => {
   it("F1 x F2: an in-flight row is the agent's: no Hand to agent, no owner to name", async () => {
     render(<ChairHome />);
     await waitFor(() => expect(needsRow("Write the rollback runbook")?.querySelector(".gadget-lamp")?.textContent)
-      .toBe("WAITING"));
+      .toBe("ASKS · 2 MIN"));
     const row = needsRow("Write the rollback runbook")!;
     expect(within(row).queryByRole("button", { name: /^Hand to agent/ })).toBeNull();
     expect(within(row).queryByRole("button", { name: /^Name an owner/ })).toBeNull();
