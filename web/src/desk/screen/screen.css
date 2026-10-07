@@ -1,0 +1,65 @@
+/* PHILO-14 A1 — the screen (board A-1): the desk well between the screen
+   bar and the Dock. The dithered Workbench backdrop (the canvas's p14.css);
+   no chips, only lamps and count notches. It sits under the window band
+   (z 0): windows are its siblings, never its children. */
+.desk-screen {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--wb-screen-h, 28px);
+  bottom: var(--desk-dock-h, 76px);
+  z-index: 0;
+  background-color: var(--wb-backdrop);
+  background-image: conic-gradient(var(--wb-dither) 25%, transparent 0 50%, var(--wb-dither) 0 75%, transparent 0);
+  background-size: 4px 4px;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  font-family: var(--font-sans);
+  color: var(--wb-paper);
+}
+/* 1440: the icons stand where layout.ts puts them (A-1). */
+.desk-screen[data-layout="free"] > .desk-icon-grid {
+  display: block;
+  position: relative;
+  min-height: 100%;
+}
+.desk-screen .desk-icon {
+  color: var(--wb-paper);
+}
+.desk-screen .desk-screen-placed {
+  position: absolute;
+}
+/* 393: one 4-column grid in DOM order (A-1-393). */
+.desk-screen[data-layout="grid"] > .desk-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 0;
+  padding: 12px 8px;
+  justify-items: center;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+.desk-screen[data-layout="grid"] .desk-icon {
+  width: 88px;
+  max-width: 100%;
+}
+.desk-screen[data-layout="grid"] .desk-icon-name {
+  max-width: 86px;
+}
+/* The one true line of an empty desk (UX-CANON A.3 exception). */
+.desk-screen-empty {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font: 700 var(--font-size-xs) / 1.4 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--wb-paper);
+  pointer-events: none;
+}
+/* 393: a Chair window fills the work area; the screen leaves the glass
+   (ChairDesk sets data-phone-shown only at the narrow desk). */
+.chair-desk[data-phone-shown="true"] .desk-screen {
+  visibility: hidden;
+}

@@ -14,6 +14,10 @@ import { ApiError, apiFetch } from "../../../lib/api";
 import { ChairHome } from "../ChairHome";
 import headlineFixture from "../../../../../docs/internal/philo/phase-4/headline/fixture.json";
 import { asHub } from "../../../test/hubNeedsYou";
+import { openChairWindows } from "./fixtures/openChairWindows";
+
+// PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
+beforeEach(() => openChairWindows());
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),

@@ -42,6 +42,10 @@ import { DeskToolShelf } from "../components/DeskToolShelf";
 import { SystemShade } from "../components/SystemShade";
 import { resetNeedsYou } from "../needsYou";
 import { useDesk } from "../store";
+import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
+
+// PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
+beforeEach(() => openChairWindows());
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const PYTHON = resolve(REPO_ROOT, ".venv/bin/python");

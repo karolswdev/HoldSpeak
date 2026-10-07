@@ -14,6 +14,10 @@ import { ChairHome } from "../chair/ChairHome";
 import { BriefView } from "../pullouts/views/BriefView";
 import { __resetOwnerCache } from "../openObject";
 import { asHub } from "../../test/hubNeedsYou";
+import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
+
+// PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
+beforeEach(() => openChairWindows());
 
 vi.mock("../../lib/api", async (original) => ({
   ...(await original<typeof import("../../lib/api")>()),

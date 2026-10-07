@@ -26,6 +26,10 @@ import { EMPTY_ITEMS, fromWireMeeting } from "../../api";
 import { useDesk } from "../../store";
 import { ChairHome } from "../ChairHome";
 import { intelBadge } from "../intelBadge";
+import { openChairWindows } from "./fixtures/openChairWindows";
+
+// PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
+beforeEach(() => openChairWindows());
 
 const MEETING_ID = wire.list_row.id;
 
