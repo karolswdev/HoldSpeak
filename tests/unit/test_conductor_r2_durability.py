@@ -675,3 +675,69 @@ def test_an_rc_file_that_exits_is_no_launch_on_real_tmux(tmp_path: Path, monkeyp
     finally:
         _kill_tmux()
         coder_factory.revoke_launch("launch_r2exit0001")
+
+
+# ── 6. A held call survives a hub restart (R1's real walk) ───────────
+
+
+def test_a_held_call_survives_a_hub_restart(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, hub: Hub) -> None:
+    """The hub restarts while the agent's hook waits on a held Bash call.
+    The hook keeps waiting while the hub is down; the restart invalidates
+    the held proposal (HS-104-02: never resume); the hook proposes the same
+    call again under a new id with the same (persisted) credential; the
+    owner approves that one and the waiting hook gets the decision."""
+    from holdspeak.coder_gate import GateConfig, run_hook
+    from holdspeak.services.gate_service import GateService
+    from holdspeak.web.routes.system.gate_routes import invalidate_held_on_startup
+
+    work = tmp_path / "work"
+    work.mkdir()
+    config = GateConfig(armed=True, repos={str(work.resolve()): ["Bash"]})
+    credential = agent_credentials.issue("claude:r2-gate")
+    live = {"hub": hub, "down": False}
+    seen: dict[str, Any] = {"ids": [], "sleeps": 0}
+
+    def client() -> Any:
+        if live["down"]:
+            raise ConnectionRefusedError("hub down")
+        return _client(live["hub"], credential.token)
+
+    def post(url: str, body: dict, _timeout: float):
+        seen["ids"].append(body["id"])
+        answer = client().post("/api/gate/proposals", json=body)
+        return answer.status_code, answer.json()
+
+    def get(url: str, _timeout: float):
+        answer = client().get("/api/gate/proposals/" + url.rsplit("/", 1)[-1])
+        return answer.status_code, answer.json()
+
+    def sleep(_seconds: float) -> None:
+        seen["sleeps"] += 1
+        if seen["sleeps"] == 1:
+            live["down"] = True  # the hub process ends
+        elif seen["sleeps"] == 3:  # two polls failed while it was down
+            live["hub"] = _restart(tmp_path, monkeypatch)
+            assert invalidate_held_on_startup(GateService(live["hub"].db)) == 1
+            live["down"] = False
+        elif len(seen["ids"]) == 2 and "decided" not in seen:
+            seen["decided"] = live["hub"].client.post(
+                f"/api/gate/proposals/{seen['ids'][1]}/decide", json={"decision": "approved"})
+
+    clock = {"t": 0.0}
+
+    def now() -> float:
+        clock["t"] += 1.0
+        return clock["t"]
+
+    decision = run_hook(
+        {"hook_event_name": "PreToolUse", "session_id": "r2-gate", "tool_name": "Bash",
+         "tool_use_id": "toolu_r2gate", "tool_input": {"command": "rm -rf build", "description": "x"},
+         "cwd": str(work)},
+        config=config, http_post=post, http_get=get, sleep=sleep, now=now, ttl_seconds=60.0,
+        agent_credential=credential.token,
+    )
+    assert seen["ids"] == ["toolu_r2gate", "toolu_r2gate~r1"], seen
+    assert seen["decided"].status_code == 200, seen["decided"].text
+    assert decision.deny is None, decision.deny
+    first = live["hub"].db.gate.get("toolu_r2gate")
+    assert first.state == "invalidated", "the pre-restart hold is never resumed"
