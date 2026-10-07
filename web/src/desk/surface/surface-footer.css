@@ -44,6 +44,20 @@
   align-items: center;
   min-width: 0;
 }
+/* PHILO-15 lane 12 (B27): the receipt never runs under a verb. Its cell
+   clips; a plain receipt (one span) truncates with an ellipsis on one line,
+   and wraps onto a second line in a narrow window (below). The full text is
+   the span's title. Park and write receipts keep their own wrap rules. */
+.desk-next .surface-footer-receipt {
+  overflow: hidden;
+}
+.desk-next .surface-footer-receipt > span:not(.park-receipt):not(.write-receipt) {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .desk-next .surface-footer-verbs {
   grid-area: verbs;
   display: flex;
@@ -130,6 +144,12 @@
   .desk-next .surface-footer-egress { grid-area: egress; }
   .desk-next .surface-footer-verbs { grid-area: verbs; flex-wrap: wrap; }
   .desk-next .surface-footer-receipt { grid-area: receipt; min-height: 27px; justify-content: flex-start; }
+  /* B27: narrow, a plain receipt wraps at its word gaps instead of hiding. */
+  .desk-next .surface-footer-receipt > span:not(.park-receipt):not(.write-receipt) {
+    white-space: normal;
+    overflow-wrap: normal;
+    line-height: 1.3;
+  }
   .desk-next .surface-footer-receipt:empty { display: none; }
 }
 

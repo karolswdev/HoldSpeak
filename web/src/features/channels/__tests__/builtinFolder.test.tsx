@@ -1,7 +1,6 @@
 // The built-in "HoldSpeak folder" (owner ruling 2026-10-05, "strong defaults,
 // batteries included"): every desk has it with no setup. In the SEND well it
-// is one destination row; when it is the only destination it is picked, so
-// the preview and Send are open. In Settings -> Connections it has Check but
+// is one destination row, closed until he presses it (PHILO-15 lane 12, B23). In Settings -> Connections it has Check but
 // no Edit and no Remove. The hub side is tests/unit/test_builtin_send_folder.py;
 // the glass is tests/e2e/test_builtin_send_folder_glass.py.
 
@@ -21,6 +20,7 @@ vi.mock("../../../pages/cores/connections/api", async () => {
 
 import { SendWell, resetSendStore, useSends } from "../../../desk/surface/send";
 import { Destinations } from "../../../pages/cores/connections/Destinations";
+import { keepPlace } from "../../../desk/deskMemory";
 
 const SENT = "/home/karol/Documents/HoldSpeak/Sent"; // a Linux HOME: the hub's display token is the row's text
 const builtin = (): Destination => ({
@@ -59,16 +59,28 @@ function Well() {
 }
 
 describe("the built-in HoldSpeak folder in the SEND well", () => {
-  it("alone, it is one row, picked: the preview and Send are open with no click", async () => {
+  // PHILO-15 lane 12 (B23): the well waits. The folder is still the one row
+  // with no setup, but nothing opens until he presses it; it reads by its
+  // name (HoldSpeak/Sent), never a path; the `~` token is on hover.
+  it("alone, it is one row, closed until he presses it; it reads by its name", async () => {
     render(<Well />);
     const row = await screen.findByTestId("destination-row");
     expect(screen.getAllByTestId("destination-row")).toHaveLength(1);
     expect(row.textContent).toContain("HoldSpeak folder");
-    expect(row.textContent).toContain("~/Documents/HoldSpeak/Sent");
+    expect(row.textContent).toContain("HoldSpeak/Sent");
+    expect(row.textContent).not.toContain("~/Documents");
+    expect(row.textContent).not.toContain(SENT);
+    expect(row.querySelector(".send-target")?.getAttribute("title")).toBe("~/Documents/HoldSpeak/Sent");
     expect(row.textContent).toContain("THIS DEVICE");
     expect(screen.queryByTestId("send-none")).toBeNull();
+    // Closed: no preview read, no preview, no Send.
+    await new Promise((r) => setTimeout(r, 30));
+    expect(screen.queryByTestId("send-preview")).toBeNull();
+    expect(previews).toEqual([]);
+    fireEvent.click(within(row).getByText("HoldSpeak folder"));
     const preview = await screen.findByTestId("send-preview");
-    expect(preview.textContent).toContain(SENT);
+    expect(preview.textContent).toContain("HoldSpeak/Sent");
+    expect(preview.textContent).not.toContain(SENT);
     await waitFor(() => expect((screen.getByTestId("send-verb") as HTMLButtonElement).disabled).toBe(false));
     expect(previews).toEqual(["holdspeak-folder"]);
   });
@@ -81,9 +93,10 @@ describe("the built-in HoldSpeak folder in the SEND well", () => {
     expect(previews).toEqual([]);
   });
 
-  it("a click on the picked row closes it, and it stays closed", async () => {
+  it("a press opens the row, a second press closes it, and it stays closed", async () => {
     render(<Well />);
     const row = await screen.findByTestId("destination-row");
+    fireEvent.click(within(row).getByText("HoldSpeak folder"));
     await screen.findByTestId("send-preview");
     fireEvent.click(within(row).getByText("HoldSpeak folder"));
     await waitFor(() => expect(screen.queryByTestId("send-preview")).toBeNull());
@@ -126,13 +139,17 @@ describe("the built-in HoldSpeak folder in an iCloud Drive Documents folder", ()
       return Promise.reject(new Error(`unrouted ${method} ${path}`));
     });
     const { unmount } = render(<Well />);
+    // B23: the well waits; he opens the row to read its receipt.
+    fireEvent.click(within(await screen.findByTestId("destination-row")).getByText("HoldSpeak folder"));
     const receipt = await screen.findByTestId("send-sent");
     expect(receipt.textContent).toContain("SAVED");
     expect(receipt.textContent).toContain("ICLOUD");
     unmount();
     resetSendStore();
+    keepPlace(`send/pick/${DOC.ref}`, ""); // B2's kept pick would reopen it; this desk starts closed
     stored = [sent()];
     render(<Well />);
+    fireEvent.click(within(await screen.findByTestId("destination-row")).getByText("HoldSpeak folder"));
     const plain = await screen.findByTestId("send-sent");
     expect(plain.textContent).not.toContain("ICLOUD");
   });

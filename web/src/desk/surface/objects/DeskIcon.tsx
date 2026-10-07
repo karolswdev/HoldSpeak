@@ -7,7 +7,7 @@
  *
  *  Keyboard: a press or Space SELECTS; Enter or a double press OPENS.
  */
-import type { CSSProperties, DragEvent, KeyboardEvent } from "react";
+import { Fragment, type CSSProperties, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { listSprite } from "../../sprites";
 import { objectKindWord, objectSprite, type ObjectTone } from "./kinds";
@@ -154,7 +154,23 @@ export function DeskIcon({
           </span>
         ) : null}
       </span>
-      <span className="desk-icon-name">{name}</span>
+      <span className="desk-icon-name" title={name}>{nameBreaks(name)}</span>
     </Button>
   );
+}
+
+/** PHILO-15 lane 12 (B30): a desk label breaks only between words. A
+ *  file-name title (`philo3_architect_meeting`) has its words joined by
+ *  `_`, `-`, `.` or `/`: each one is a break point (a `<wbr>` after it),
+ *  never the middle of a word. A single word longer than the line is cut
+ *  with an ellipsis (objects.css); the whole name is the title. */
+export function nameBreaks(name: string): ReactNode {
+  const parts = name.split(/(?<=[_\-./])(?=\S)/);
+  if (parts.length < 2) return name;
+  return parts.map((part, i) => (
+    <Fragment key={i}>
+      {i > 0 ? <wbr /> : null}
+      {part}
+    </Fragment>
+  ));
 }

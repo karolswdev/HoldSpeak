@@ -45,13 +45,16 @@
   height: 32px;
   image-rendering: pixelated;
 }
-/* The name: two lines, then an ellipsis. */
+/* The name: two lines, then an ellipsis. PHILO-15 lane 12 (B30): it
+   breaks between words only (DeskIcon puts a <wbr> after `_ - . /`); a
+   word longer than the line is cut with an ellipsis, never split. */
 .desk-icon-name {
   max-width: 108px;
   padding: 1px 4px;
   font: 700 var(--font-size-xs) / 1.25 var(--font-mono);
   text-align: center;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
   color: inherit;
   display: -webkit-box;
   -webkit-line-clamp: 2;

@@ -38,4 +38,7 @@
   display: block;
   -webkit-line-clamp: unset;
   overflow: visible;
+  /* B30: words break at their joins first (<wbr>); only a word longer than
+     the whole line breaks inside, since a drawer never clips a name. */
+  overflow-wrap: break-word;
 }

@@ -8,7 +8,7 @@ isolated HOME's Documents only): the chip and the receipt say ICLOUD.
 
 A fresh desk has no saved destination. The brief on the Chair (a real
 ``POST /api/brief/generate``) shows ONE destination row, the built-in
-HoldSpeak folder, picked: the preview and Send are open with no click; the
+HoldSpeak folder, closed until he presses it (PHILO-15 lane 12, B23); the
 egress chip says THIS DEVICE. Send writes the file into the isolated HOME's
 Documents/HoldSpeak/Sent (made by this send) and the row shows SAVED. The
 shots go to ``$HOLDSPEAK_BUILTIN_SHOTS`` when it is set (the owner's look),
@@ -114,15 +114,20 @@ class TestBuiltinSendFolderGlass:
                 page.wait_for_timeout(600)
                 _settle(page)
 
-                # One row, picked with no click: the preview and Send are open.
+                # One row. PHILO-15 lane 12 (B23): the well waits, closed until he
+                # presses the row; the folder reads by its name, the ~ token on hover.
                 page.locator(ROW).wait_for(timeout=T)
                 assert page.locator(f"{CH} [data-testid=destination-row]").count() == 1
                 assert page.locator(f"{CH} [data-testid=send-none]").count() == 0
-                page.locator(f"{OPEN} [data-testid=send-preview]").wait_for(timeout=T)
+                page.wait_for_timeout(600)
+                assert page.locator(f"{CH} [data-testid=send-open]").count() == 0, "the well opened by itself"
                 line = " ".join(page.locator(ROW).first.inner_text().split())
                 assert NAME in line and "FILE" in line and chip in line, line
                 assert ("THIS DEVICE" in line) == (docs == "plain") and ("ICLOUD" in line) == (docs == "icloud"), line
-                assert "~/Documents/HoldSpeak/Sent" in line, line
+                assert "HoldSpeak/Sent" in line and "~/" not in line, line
+                assert page.locator(f"{ROW} .send-target").first.get_attribute("title") == "~/Documents/HoldSpeak/Sent"
+                page.locator(ROW).first.locator(f"[data-destination='{NAME}']").first.click()
+                page.locator(f"{OPEN} [data-testid=send-preview]").wait_for(timeout=T)
                 assert not sent.exists(), "the folder is made by the first send, never before"
                 page.locator(ROW).first.scroll_into_view_if_needed()
                 page.wait_for_timeout(400)

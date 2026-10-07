@@ -41,7 +41,7 @@ import { fetchConnections, type ConnectionsResponse, type ConnectionState } from
 import { chipLabel } from "../../../pages/cores/connections/ConnectionsPane";
 import {
   CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide, previewOf,
-  refusalSize, refusedWord, requestDestinationsFocus, sentWord, stamp, targetToken, unknownWord, wire, Refusal,
+  refusalSize, refusedWord, requestDestinationsFocus, sentWord, stamp, targetName, targetToken, unknownWord, wire, Refusal,
   type Channel, type Destination, type Preview, type Send, type WirePreview,
 } from "../../../features/channels/channels";
 import "../../../features/channels/channels.css";
@@ -493,11 +493,11 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
   const dests = useDestinations();
   const conns = useConnections();
   const ref = doc.ref;
-  // B2: the kept pick returns, onto a listed destination only. With no kept pick
-  // and no destination but the built-in HoldSpeak folder (a fresh desk), the folder is picked.
-  const onlyBuiltin = dests.data?.length === 1 && dests.data[0].builtin ? dests.data[0].id : null;
+  // B2: the kept pick returns, onto a listed destination only.
+  // PHILO-15 lane 12 (B23): with no pick the well stays closed. The built-in
+  // folder is no longer picked for him: a closed row until he presses it.
   const picked = store.picked.has(ref) ? store.picked.get(ref) ?? null
-    : ((k) => (k && dests.data?.some((d) => d.id === k) ? k : onlyBuiltin))(keptPlace(`send/pick/${ref}`));
+    : ((k) => (k && dests.data?.some((d) => d.id === k) ? k : null))(keptPlace(`send/pick/${ref}`));
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [previewTry, setPreviewTry] = useState(0);
   useEffect(() => {
@@ -615,7 +615,7 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
                     primary={<span className="surface-primary" data-destination={d.name}>{d.name}</span>}
                     cells={<span className="send-cells">
                       <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
-                      <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetToken(d.channel, d.target)}</span>
+                      <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetName(d.channel, d.target)}</span>
                       {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
                       {open ? <LastChip s={last} /> : <ClosedReceipt o={o} last={last} />}
                       <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dock Sprites B19</title>
+<style>
+  :root {
+    --bg: #1b1f27; --fg: #e6e9ef; --faint: #9aa3b2; --line: #333a47;
+    --steel: #9ea4b0; --desk: #3c4454; --ember: #e8772e;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) { --bg: #f2f3f6; --fg: #1b1f27; --faint: #59606d; --line: #cfd3db; }
+  }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 14px/1.45 ui-monospace, Menlo, monospace; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p { margin: 4px 0 12px; color: var(--faint); max-width: 70ch; }
+  .wrap { overflow-x: auto; }
+  table { border-collapse: collapse; }
+  th, td { border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: center; vertical-align: middle; }
+  th { font-weight: 600; color: var(--faint); font-size: 12px; text-transform: uppercase; }
+  td.kind { text-align: left; white-space: nowrap; }
+  .g { display: inline-flex; gap: 0; }
+  .g span { display: inline-grid; place-items: center; width: 72px; height: 72px; }
+  .g span.steel { background: var(--steel); }
+  .g span.desk { background: var(--desk); }
+  img { image-rendering: pixelated; }
+  img.x1 { width: 32px; height: 32px; }
+  img.x2 { width: 64px; height: 64px; }
+  .glyph { font-size: 22px; }
+  .pick { outline: 2px solid var(--ember); outline-offset: -2px; }
+  .tag { display: block; font-size: 11px; color: var(--ember); margin-top: 4px; }
+  .dock { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 12px; background: var(--steel); margin: 8px 0 16px; max-width: 100%; box-sizing: border-box; }
+  .dock figure { margin: 0; display: grid; justify-items: center; gap: 2px; font-size: 11px; color: #1b1f27; }
+</style>
+</head>
+<body>
+<h1>B19: four Dock sprites</h1>
+<p>Phase 15, lane 12. Four Dock items had a text glyph and no sprite. Each kind has two candidates, drawn by PixelLab in the D1 Workbench+ mold at 32 x 32 (create_object_pro_flash, view side, style reference dock-people.png). The pick has the ember outline. Ground: the Dock steel (#9ea4b0) and the desk (#3c4454), at 1x and 2x.</p>
+
+<h2 style="font-size:14px">The Dock after the pick (1x)</h2>
+<div class="dock">
+  <figure><img class="x1" src="dockset/dock-intelligence.png" alt=""><figcaption>Intelligence</figcaption></figure>
+  <figure><img class="x1" src="dockset/dock-speak.png" alt=""><figcaption>Speak</figcaption></figure>
+  <figure><img class="x1" src="dockset/dock-meetings.png" alt=""><figcaption>Meetings</figcaption></figure>
+  <figure><img class="x1" src="dockset/dock-people.png" alt=""><figcaption>People</figcaption></figure>
+  <figure><img class="x1" src="dockset/dock-agents.png" alt=""><figcaption>Conductor</figcaption></figure>
+  <figure><img class="x1" src="dockset/dock-settings.png" alt=""><figcaption>Settings</figcaption></figure>
+  <figure><img class="x1" src="dockset/floor-grid.png" alt=""><figcaption>Floor</figcaption></figure>
+  <figure><img class="x1" src="dockset/dock-desk-memory.png" alt=""><figcaption>Desk memory</figcaption></figure>
+  <figure><img class="x1" src="dockset/dock-delivery.png" alt=""><figcaption>Delivery</figcaption></figure>
+  <figure><img class="x1" src="dockset/dock-panes.png" alt=""><figcaption>Panes</figcaption></figure>
+</div>
+
+<div class="wrap">
+<table>
+  <thead><tr><th>Item</th><th>Before</th><th>A</th><th>B</th><th>Why the pick</th></tr></thead>
+  <tbody>
+  <tr>
+    <td class="kind">Intelligence</td>
+    <td class="glyph">◈</td>
+    <td class="pick"><div class="g"><span class="steel"><img class="x1" src="candidates/intelligence-a.png" alt="clipboard"></span><span class="desk"><img class="x2" src="candidates/intelligence-a.png" alt=""></span></div><span class="tag">PICK: clipboard</span></td>
+    <td><div class="g"><span class="steel"><img class="x1" src="candidates/intelligence-b.png" alt="bulb"></span><span class="desk"><img class="x2" src="candidates/intelligence-b.png" alt=""></span></div></td>
+    <td style="text-align:left;max-width:32ch">The brief and follow-through read as a page with a check. One ember accent (the check). The bulb is mostly ember glow, so it is louder than the rest of the Dock.</td>
+  </tr>
+  <tr>
+    <td class="kind">Desk memory</td>
+    <td class="glyph">◎</td>
+    <td><div class="g"><span class="steel"><img class="x1" src="candidates/deskmemory-a.png" alt="card index"></span><span class="desk"><img class="x2" src="candidates/deskmemory-a.png" alt=""></span></div></td>
+    <td class="pick"><div class="g"><span class="steel"><img class="x1" src="candidates/deskmemory-b.png" alt="chip"></span><span class="desk"><img class="x2" src="candidates/deskmemory-b.png" alt=""></span></div><span class="tag">PICK: chip</span></td>
+    <td style="text-align:left;max-width:32ch">One kind, one silhouette: the world memory sprite is a chip (A0 ruling). The card index is a cabinet, the same silhouette as Parked and Needs you.</td>
+  </tr>
+  <tr>
+    <td class="kind">Delivery</td>
+    <td class="glyph">▤</td>
+    <td class="pick"><div class="g"><span class="steel"><img class="x1" src="candidates/delivery-a.png" alt="outbox"></span><span class="desk"><img class="x2" src="candidates/delivery-a.png" alt=""></span></div><span class="tag">PICK: outbox</span></td>
+    <td><div class="g"><span class="steel"><img class="x1" src="candidates/delivery-b.png" alt="mailbox"></span><span class="desk"><img class="x2" src="candidates/delivery-b.png" alt=""></span></div></td>
+    <td style="text-align:left;max-width:32ch">An envelope that goes out of the tray: the board of sends. The mailbox reads as a letter that comes in.</td>
+  </tr>
+  <tr>
+    <td class="kind">Panes</td>
+    <td class="glyph">⧉</td>
+    <td class="pick"><div class="g"><span class="steel"><img class="x1" src="candidates/panes-a.png" alt="two windows"></span><span class="desk"><img class="x2" src="candidates/panes-a.png" alt=""></span></div><span class="tag">PICK: two windows</span></td>
+    <td><div class="g"><span class="steel"><img class="x1" src="candidates/panes-b.png" alt="monitor"></span><span class="desk"><img class="x2" src="candidates/panes-b.png" alt=""></span></div></td>
+    <td style="text-align:left;max-width:32ch">The old glyph drawn in steel: two windows, one in front. The monitor competes with Floor (a grid).</td>
+  </tr>
+  </tbody>
+</table>
+</div>
+<p>Spend: 8 calls, 40 generations (get_balance before: 290 used of 2000; credits $0.00). PixelLab object ids are in README.md.</p>
+</body>
+</html>
