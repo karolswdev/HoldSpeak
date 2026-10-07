@@ -282,11 +282,18 @@ class FollowThroughObserver:
     def _sweep_merged(self, principal: Any) -> dict[str, Any]:
         """Per repository: drain merged PRs from its completed-through
         watermark to now, in merged-date windows of at most
-        :data:`MERGED_LIMIT` results. A full window is halved (never
-        skipped); the watermark advances only past a window read whole, and
-        is stored, so a later sweep (or a hub that was off for weeks)
-        continues where this one stopped. At most
-        :data:`MERGED_QUERIES_PER_REPO` reads per repository per sweep."""
+        :data:`MERGED_LIMIT` results.
+
+        - The first lower bound (8 days back) is stored before the first
+          read and kept until that interval is drained (Astra #912 r2).
+        - A full window is halved; a full window of
+          :data:`MERGED_MIN_WINDOW_SECONDS` or less is paged instead: sorted
+          by creation (``sort:created-asc``) with a ``created:>=<cursor>``
+          continuation, so no merge in it is skipped.
+        - The watermark moves only past a window whose last read returned
+          fewer than the limit. Window end and cursor are stored, so a later
+          sweep (or a hub off for weeks) continues where this one stopped.
+        - At most :data:`MERGED_QUERIES_PER_REPO` reads per repository per sweep."""
         from datetime import timedelta
 
         from ..services.errors import ServiceError
@@ -297,20 +304,29 @@ class FollowThroughObserver:
         if not repos:
             return receipt
         now = self._clock().astimezone(timezone.utc).replace(microsecond=0)
-        marks, untils = self._merged_marks()
+        marks, untils, cursors = self._merged_marks()
         source = GitHubWatchSource(runner=self._gh_runner)
         for repo, projects in sorted(repos.items()):
-            through = _parse(marks.get(repo)) or (now - timedelta(days=MERGED_LOOKBACK_DAYS))
+            if _parse(marks.get(repo)) is None:
+                # The first lower bound, stored once: a retry never moves it.
+                marks[repo] = (now - timedelta(days=MERGED_LOOKBACK_DAYS)).isoformat()
+                self._save_merged_marks(marks, untils, cursors)
+            through = _parse(marks[repo])
             # The continuation: the narrowed window a full read left for the
-            # next sweep (else the window runs to now).
+            # next sweep (else the window runs to now), and its page cursor.
             resume = _parse(untils.get(repo))
-            target = resume if resume is not None and through < resume < now else now
+            target = resume if resume is not None and through < resume <= now else now
+            if resume is None or target != resume:
+                cursors.pop(repo, None)
             reads, merged, recorded, state = 0, 0, 0, "live"
             while through < now and reads < MERGED_QUERIES_PER_REPO:
-                window = f"merged:{_gh_stamp(through)}..{_gh_stamp(target)}"
+                search = f"merged:{_gh_stamp(through)}..{_gh_stamp(target)}"
+                cursor = cursors.get(repo)
+                if cursor is not None:
+                    search += (f" created:>={cursor}" if cursor else "") + " sort:created-asc"
                 try:
                     rows = source.snapshot(principal, query_kind="pull_requests", query={
-                        "repository": repo, "state": "merged", "limit": MERGED_LIMIT, "search": window,
+                        "repository": repo, "state": "merged", "limit": MERGED_LIMIT, "search": search,
                     })
                 except ServiceError as exc:
                     state = exc.code
@@ -324,16 +340,31 @@ class FollowThroughObserver:
                     1 for row in rows for project_id in sorted(projects)
                     if self._record_merge(project_id, repo, row)
                 )
-                if len(rows) < MERGED_LIMIT or (target - through).total_seconds() <= MERGED_MIN_WINDOW_SECONDS:
-                    # The window is read whole: the watermark moves past it.
+                if len(rows) < MERGED_LIMIT:
+                    # The window (or its last page) is read whole: the
+                    # watermark moves past it.
                     through, target = target, now
                     marks[repo] = through.isoformat()
                     untils.pop(repo, None)
+                    cursors.pop(repo, None)
+                elif cursor is not None or (target - through).total_seconds() <= MERGED_MIN_WINDOW_SECONDS:
+                    # Too narrow to halve: page it by creation time.
+                    created = sorted(str(r.get("createdAt") or "") for r in rows if r.get("createdAt"))
+                    last = created[-1] if created else ""
+                    if cursor is not None and (not last or last <= cursor):
+                        # 30 or more created in one second: never skip them.
+                        state = "window_dense"
+                        untils[repo] = target.isoformat()
+                        self._save_merged_marks(marks, untils, cursors)
+                        break
+                    cursors[repo] = last if cursor is not None else ""
+                    untils[repo] = target.isoformat()
                 else:
                     # Full: more may sit in it. Halve it; nothing is skipped.
                     target = through + (target - through) / 2
                     untils[repo] = target.isoformat()
-                self._save_merged_marks(marks, untils)
+                    cursors.pop(repo, None)
+                self._save_merged_marks(marks, untils, cursors)
             receipt["recorded"] += recorded
             entry = {"repository": repo, "state": state, "merged": merged, "recorded": recorded,
                      "through": marks.get(repo) or "", "drained": through >= now}
@@ -342,27 +373,27 @@ class FollowThroughObserver:
 
     _MERGED_POLICY = "conductor.merged_prs"
 
-    def _merged_marks(self) -> tuple[dict[str, str], dict[str, str]]:
+    def _merged_marks(self) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
         """Per ``owner/name``: the instant through which every merge was read
-        (the watermark), and the end of the next window to read (the
-        continuation, set while a window is too full to read whole)."""
+        (the watermark), the end of the window being read (the
+        continuation), and that window's page cursor ("" = first page)."""
         try:
             policy = self._db.cadence.get_policy(self._MERGED_POLICY)
         except Exception:
-            return {}, {}
+            return {}, {}, {}
         config = getattr(policy, "config", None) or {}
 
         def read(key: str) -> dict[str, str]:
             return {str(k): str(v) for k, v in dict(config.get(key) or {}).items()}
 
-        return read("through"), read("until")
+        return read("through"), read("until"), read("cursor")
 
-    def _save_merged_marks(self, marks: dict[str, str], untils: dict[str, str]) -> None:
+    def _save_merged_marks(self, marks: dict[str, str], untils: dict[str, str], cursors: dict[str, str]) -> None:
         from ..cadence.models import CadencePolicy
 
         self._db.cadence.upsert_policy(CadencePolicy(
             id=self._MERGED_POLICY, name=self._MERGED_POLICY, enabled=True,
-            config={"through": dict(marks), "until": dict(untils)},
+            config={"through": dict(marks), "until": dict(untils), "cursor": dict(cursors)},
         ))
 
     def _record_merge(self, project_id: str, repo: str, row: Mapping[str, Any]) -> bool:

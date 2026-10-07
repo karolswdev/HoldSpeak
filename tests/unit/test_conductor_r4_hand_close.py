@@ -743,22 +743,36 @@ def test_the_same_item_can_be_handed_again_after_cleanup(tmp_path, db, monkeypat
 # ── Astra round 1 on #912 ────────────────────────────────────────────
 
 class WindowedGh(FakeGh):
-    """``gh pr list --state merged --search merged:A..B --limit N`` as GitHub
-    answers it: the merges in the window, newest first, at most N."""
+    """``gh pr list --state merged --search ... --limit N`` as GitHub answers
+    it: the merges in the ``merged:A..B`` window, newest merge first, or, with
+    ``sort:created-asc``, oldest creation first after ``created:>=X``; at
+    most N."""
 
     def __init__(self, merges: list[datetime]) -> None:
         super().__init__()
         self.merges = merges
 
+    def _created(self, n: int) -> datetime:
+        return self.merges[n] - timedelta(days=1) + timedelta(seconds=n)
+
     def __call__(self, argv, cwd=None):
         self.calls.append(list(argv))
-        window = argv[argv.index("--search") + 1].split(":", 1)[1]
-        start, end = (datetime.fromisoformat(x) for x in window.split(".."))
+        tokens = argv[argv.index("--search") + 1].split()
+        start, end = (datetime.fromisoformat(x) for x in tokens[0].split(":", 1)[1].split(".."))
         limit = int(argv[argv.index("--limit") + 1])
-        inside = sorted((m for m in self.merges if start <= m <= end), reverse=True)[:limit]
-        rows = [dict(_pr(f"f-{m:%j%H%M}", "c" * 40), number=1000 + self.merges.index(m), title=f"Merge {self.merges.index(m)}",
-                     url=f"https://github.com/acme/railsproj/pull/{1000 + self.merges.index(m)}",
-                     mergedAt=m.isoformat()) for m in inside]
+        inside = [n for n, m in enumerate(self.merges) if start <= m <= end]
+        created_from = next((datetime.fromisoformat(t.split(":>=", 1)[1].replace("Z", "+00:00"))
+                             for t in tokens if t.startswith("created:>=")), None)
+        if created_from is not None:
+            inside = [n for n in inside if self._created(n) >= created_from]
+        if "sort:created-asc" in tokens:
+            inside.sort(key=lambda n: (self._created(n), n))
+        else:
+            inside.sort(key=lambda n: (self.merges[n], n), reverse=True)
+        rows = [dict(_pr(f"f-{n}", "c" * 40), number=1000 + n, title=f"Merge {n}",
+                     url=f"https://github.com/acme/railsproj/pull/{1000 + n}",
+                     mergedAt=self.merges[n].isoformat(), createdAt=self._created(n).isoformat())
+                for n in inside[:limit]]
         return SimpleNamespace(returncode=0, stdout=json.dumps(rows), stderr="")
 
 
@@ -865,3 +879,37 @@ def test_finding5_the_preview_names_the_tracker_host(tmp_path, db, monkeypatch) 
     answer = preview_hand(rig.hand, OWNER, "issue", GH_ISSUE_ID)
     assert answer["tracker"] == {"host": "github.com", "state": "read"}
     assert answer["sources"][0]["kind"] == "issue"
+
+
+# ── Astra round 2 on #912: no merge is lost at the bound or in one minute ──
+
+
+def _sweeps(rig, start: datetime, count: int, step: timedelta) -> None:
+    for n in range(count):
+        moment = start + step * n
+        rig.observer._clock = lambda moment=moment: moment
+        HeartbeatService(
+            rig.db, follow_through=rig.observer, notifier=lambda *_a, **_k: True,
+            clock=lambda moment=moment: moment, local_zone=timezone.utc,
+        ).run_sweep(SWEEPER, owner_hand=True)
+
+
+def test_round2a_merges_near_the_first_bound_survive_a_later_retry(tmp_path, db) -> None:
+    bound = NOON - timedelta(days=8)
+    merges = [bound + timedelta(seconds=30 * (k + 1)) for k in range(31)]
+    rig = _windowed_rig(tmp_path, db, merges, lambda: NOON)
+    _sweeps(rig, NOON, 1, timedelta(hours=1))
+    assert len(_observations(db, "conductor.pr_merged")) < 31, "precondition: one sweep cannot drain it"
+    _sweeps(rig, NOON + timedelta(hours=1), 12, timedelta(hours=1))  # retries, the clock moving on
+    assert len(_observations(db, "conductor.pr_merged")) == 31
+
+
+def test_round2b_31_merges_inside_one_minute_are_all_recorded(tmp_path, db) -> None:
+    rig = _windowed_rig(tmp_path, db, [], lambda: NOON)
+    _sweeps(rig, NOON, 1, timedelta(minutes=1))  # the watermark is established at NOON
+    # 31 PRs merged in the same second (a merge queue): no window split separates them.
+    rig.gh.merges = [NOON + timedelta(minutes=10)] * 31
+    _sweeps(rig, NOON + timedelta(hours=1), 12, timedelta(minutes=30))
+    assert len(_observations(db, "conductor.pr_merged")) == 31
+    paged = [c for c in rig.gh.calls if "sort:created-asc" in c[c.index("--search") + 1]]
+    assert paged, "the full one-minute window was paged, not skipped"
