@@ -349,6 +349,9 @@ export function useUpdateController(
     setLoading(true);
     void updateApi.fetchUpdates(projectId).then((list) => {
       if (!live) return;
+      // A5b: the Room left the posture while the list loaded (a proposal
+      // request reveals OPEN HERE): the kept place is gone, so stay out.
+      if (keptPlace(updatePlaceKey(projectId)) !== place) return;
       setUpdates(list);
       const updateId = place.startsWith("editor:") ? place.slice("editor:".length) : "";
       const update = updateId ? list.find((u) => u.id === updateId) : undefined;

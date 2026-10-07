@@ -115,6 +115,72 @@ class TestA2bPathsGlass:
                 browser.close()
 
     @pytest.mark.e2e
+    @pytest.mark.parametrize("away", ["history", "update"])
+    @pytest.mark.parametrize("via", ["row", "room-verb"])
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_a_proposal_reopened_over_history_is_revealed(self, width: int, via: str, away: str) -> None:
+        """A5b (Astra r1 on #965): the proposal's Room is already open on its
+        History wing (or in its Update posture); the same proposal pressed
+        again in Needs you (its row body, or its Room verb) brings the Room
+        back to its ROOM wing with THAT proposal selected and on screen."""
+        from playwright.sync_api import sync_playwright
+
+        self.db.proposals.create_proposal(meeting_id="m-sync", project_id=PROJECT, kind="action", text=PROPOSAL,
+                                          source_plugin="a2b-glass")
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _normal_chair(page)
+                needs_icon = page.locator(".desk-screen [data-object-id='drawer:needs']")
+
+                def raise_needs() -> Any:
+                    if width < 720 and not needs_icon.is_visible():
+                        # At 393 the Room covers the screen: Go ▸ Needs you.
+                        page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                        page.locator(".desk-verbbar-menu").wait_for(timeout=T)
+                        page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')").first.click()
+                    else:
+                        needs_icon.wait_for(timeout=T)
+                        needs_icon.focus()
+                        page.keyboard.press("Enter")
+                    needs = page.locator(".desk-window-shell.chair-window[aria-label='Needs you']")
+                    row = needs.locator("li.needs-row[data-opens=true]").filter(has_text=PROPOSAL).first
+                    row.wait_for(timeout=T)
+                    _settle(page)
+                    return row
+
+                def press_proposal(row: Any) -> None:
+                    target = (row.locator(".needs-row-name").first if via == "row"
+                              else row.get_by_role("button", name=f"Room: {PROPOSAL}"))
+                    self._press(page, target, width)
+
+                selected = page.locator(".surface-ledger-row[data-selected]:has([data-testid=proposal-row])")
+                press_proposal(raise_needs())
+                selected.wait_for(timeout=T)
+                # The Room goes to History (or Update): the proposal is not drawn there.
+                if away == "history":
+                    self._press(page, page.get_by_role("tab", name="History").first, width)
+                else:
+                    self._press(page, page.get_by_role("button", name="Draft update").first, width)
+                    page.locator("[data-testid=update-posture]").first.wait_for(timeout=T)
+                selected.wait_for(state="detached", timeout=T)
+                _settle(page)
+                # Needs you again, the same proposal again.
+                press_proposal(raise_needs())
+                selected.wait_for(state="visible", timeout=T)
+                page.wait_for_timeout(400)
+                assert PROPOSAL in selected.inner_text()
+                assert page.get_by_role("tab", name="Room").first.get_attribute("aria-selected") == "true"
+                box = selected.bounding_box()
+                assert box and 0 <= box["y"] and box["y"] + box["height"] <= SIZES[width], box
+                assert page.locator(".drawer-window").count() == 0
+                page.screenshot(path=str(SHOTS / f"glass-proposal-over-{away}-{via}-{width}.png"))
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
     @pytest.mark.parametrize("width", [1440, 393])
     def test_a_degraded_decisions_read_is_named_and_retried(self, width: int) -> None:
         from playwright.sync_api import sync_playwright

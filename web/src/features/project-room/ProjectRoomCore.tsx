@@ -2231,19 +2231,10 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     return () => window.removeEventListener(ROOM_UPDATES_EVENT, take);
   }, [ctrl.projectId, enterUpdates]);
   // PHILO-14 A2b: a proposal row elsewhere (Needs you) opens this Room with
-  // that proposal selected in OPEN HERE.
-  const [selectedProposalId, setSelectedProposalId] = useState("");
-  useEffect(() => {
-    const projectId = ctrl.projectId;
-    if (!projectId) return;
-    const take = () => {
-      const proposal = takeRoomProposalRequest(projectId);
-      if (proposal) setSelectedProposalId(proposal);
-    };
-    take();
-    window.addEventListener(ROOM_PROPOSAL_EVENT, take);
-    return () => window.removeEventListener(ROOM_PROPOSAL_EVENT, take);
-  }, [ctrl.projectId]);
+  // that proposal selected in OPEN HERE. `seq` counts the requests, so the
+  // same proposal asked for again is revealed again (A5b, Astra r1).
+  const [proposalRequest, setProposalRequest] = useState({ id: "", seq: 0 });
+  const selectedProposalId = proposalRequest.id;
   const sendFailure = sendFailed && ctrl.projectId ? (
     <div data-send="well" data-testid="send-well" data-doc={`project:${ctrl.projectId}`} role="group"
       aria-label="Send the latest update">
@@ -2262,6 +2253,49 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   // HS-200-11 — the Prepare posture: one manual preparation path over the
   // Room's read sources, its carried decisions and its open commitments.
   const prepareCtrl = usePrepareController(ctrl.projectId, () => void ctrl.load());
+
+  // PHILO-14 A5b (Astra r1 on #965): a proposal request REVEALS the
+  // proposal, whatever the Room shows. Every posture (Review, Update,
+  // Steward, Prepare) closes the way its own Close does (an unsaved update
+  // draft is saved first; a kept Update place is not restored over it), the Room goes to its ROOM wing (not History),
+  // and the selected row scrolls into view.
+  const revealProposal = useRef<(id: string) => Promise<void>>(async () => undefined);
+  revealProposal.current = async (id: string) => {
+    if (reviewCtrl.posture !== "off") reviewCtrl.exitReview();
+    if (updateCtrl.posture !== "off" && updateCtrl.dirty) await updateCtrl.save();
+    // Always: it also forgets a kept Update place that a just-mounted Room
+    // is still restoring (393 opens a fresh Room window).
+    updateCtrl.exitUpdates();
+    if (stewardCtrl.posture !== "off") stewardCtrl.exitSteward();
+    if (prepareCtrl.posture !== "off") prepareCtrl.exit();
+    if (ctrl.view !== "room") ctrl.setView("room");
+    setProposalRequest((prev) => ({ id, seq: prev.seq + 1 }));
+  };
+  useEffect(() => {
+    const projectId = ctrl.projectId;
+    if (!projectId) return;
+    const take = () => {
+      const proposal = takeRoomProposalRequest(projectId);
+      if (proposal) void revealProposal.current(proposal);
+    };
+    take();
+    window.addEventListener(ROOM_PROPOSAL_EVENT, take);
+    return () => window.removeEventListener(ROOM_PROPOSAL_EVENT, take);
+  }, [ctrl.projectId]);
+  const roomBodyRef = useRef<HTMLDivElement>(null);
+  const revealedSeq = useRef(0);
+  // Once per request: when the row is drawn (the wing switch and a posture's
+  // close render first), it scrolls into view; a later re-read never pulls
+  // the owner back to it.
+  useEffect(() => {
+    if (!proposalRequest.seq || revealedSeq.current === proposalRequest.seq) return;
+    const row = roomBodyRef.current?.querySelector<HTMLElement>(
+      "[data-testid=proposal-row][data-selected]",
+    );
+    if (!row) return;
+    revealedSeq.current = proposalRequest.seq;
+    row.scrollIntoView?.({ block: "center" });
+  });
 
   const runtimeTitle =
     ctrl.loadStatus === "ready" && ctrl.projectName !== "Project"
@@ -2386,7 +2420,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     <>
       {hero ? hero(<Button dense variant="ghost" onClick={handleRefresh}>Refresh</Button>) : null}
       {ctrl.room ? (
-        <div className="room-body" data-testid="room-body">
+        <div className="room-body" data-testid="room-body" ref={roomBodyRef}>
           {sendFailure}
           {ctrl.view === "room" ? (
             <>
