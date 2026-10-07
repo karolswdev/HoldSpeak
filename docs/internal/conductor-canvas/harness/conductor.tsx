@@ -28,6 +28,10 @@
  *   Q6 Follow-through: on merge the commitment closes with the PR as evidence: it leaves
  *      OPEN HERE and the Room's receipt line names it.
  *   QC The Control-mode mapping (CONDUCTOR.md), as tokens, for the owner's ruling.
+ *   Q7 (R7, DRAFT) Settings > People: People MCP access as one FilterTokens strip OFF / READ /
+ *      WRITE, the tokens AGENTS · READ (or AGENTS · NONE) and the source (DEFAULT / SETTING /
+ *      ENV); a People row on the Settings hub (MCP · WRITE, AGENTS · READ). The read and the
+ *      press are the REAL routes (GET / PUT /api/settings/people-access on this branch).
  *
  * STAND-INS (named, so no board claims more than it shows):
  *   S1 agent detection (claude / codex / tmux, versions, sign-in, hooks) is answered here;
@@ -40,6 +44,8 @@
  *   S5 the steer POST is answered `delivered` here: no text reaches an agent.
  *   S6 the steer mic draws its listening state; no audio is captured.
  *   S7 the session -> item link (origin_ref, K2) is held here by title.
+ *   S8 (Q7) Settings has no People module on main: this shim adds the module and its hub row
+ *      (PREF_MODULES and the hub ledger, seats.mjs). The control itself calls the real route.
  */
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "@w/components/signal/Signal";
@@ -64,6 +70,7 @@ import { openCoderSession, openProjectRoom } from "@w/desk/shell";
 import { authenticatedHeaders } from "@w/lib/auth";
 import { refreshNeedsYou } from "@w/desk/needsYou";
 import { useSteering } from "@w/desk/steering";
+import { FilterTokens, GadgetGroup, GadgetRow } from "@w/desk/surface";
 
 type AnyRec = Record<string, any>;
 const G = globalThis as any;
@@ -546,6 +553,76 @@ css.textContent = `
 .k-brief-text { white-space: pre-wrap; font-size: 12px; }
 `;
 document.head.appendChild(css);
+
+/* ── Q7 (R7, DRAFT): Settings > People, the People MCP access ──────────── */
+
+type PeopleAccess = { mode: string; effective: string; source: string; agents: string };
+const ACCESS: { value: PeopleAccess | null } = { value: null };
+
+async function readAccess(): Promise<void> {
+  try {
+    const res = await realFetch("/api/settings/people-access", { headers: Object.fromEntries(new Headers(authenticatedHeaders() as HeadersInit).entries()) });
+    if (res.ok) { ACCESS.value = (await res.json()) as PeopleAccess; bump(); }
+  } catch { /* the rig reads again */ }
+}
+
+async function setAccess(mode: string): Promise<void> {
+  const headers = { ...Object.fromEntries(new Headers(authenticatedHeaders() as HeadersInit).entries()), "Content-Type": "application/json" };
+  const res = await realFetch("/api/settings/people-access", { method: "PUT", headers, body: JSON.stringify({ mode }) });
+  if (res.ok) { ACCESS.value = (await res.json()) as PeopleAccess; bump(); }
+}
+
+const SOURCE_TOKEN: Record<string, string> = { default: "DEFAULT", config: "SETTING", env: "ENV" };
+
+function PeopleAccessModule() {
+  useK();
+  useEffect(() => { void readAccess(); }, []);
+  const a = ACCESS.value;
+  return (
+    <GadgetGroup label="MCP access">
+      <GadgetRow label="Access">
+        <span data-testid="k-people-access">
+          <FilterTokens
+            label="People MCP access"
+            value={a?.mode ?? "write"}
+            options={[{ value: "off", label: "OFF" }, { value: "read", label: "READ" }, { value: "write", label: "WRITE" }]}
+            onChange={(mode) => void setAccess(mode)}
+          />
+        </span>
+      </GadgetRow>
+      <GadgetRow label="Agents">
+        <span className="surface-token" data-chip data-testid="k-people-agents">
+          {`AGENTS · ${(a?.agents ?? "read").toUpperCase()}`}
+        </span>
+        <span className="surface-token" data-chip data-muted data-testid="k-people-source">
+          {SOURCE_TOKEN[a?.source ?? "default"] ?? "DEFAULT"}
+        </span>
+      </GadgetRow>
+    </GadgetGroup>
+  );
+}
+
+function PeopleHubRow({ onOpen }: { onOpen(id: string): void }) {
+  useK();
+  useEffect(() => { if (!ACCESS.value) void readAccess(); }, []);
+  const a = ACCESS.value;
+  return (
+    <SurfaceLedgerRow
+      primary="People"
+      expands={false}
+      onToggle={() => onOpen("people")}
+      trailing={<Button variant="ghost" dense onClick={() => onOpen("people")}>Open</Button>}
+      cells={<>
+        <span className="surface-token" data-chip>{`MCP · ${(a?.effective ?? "write").toUpperCase()}`}</span>
+        <span className="surface-token" data-chip>{`AGENTS · ${(a?.agents ?? "read").toUpperCase()}`}</span>
+      </>}
+    />
+  );
+}
+
+G.__kPrefModules = () => [{ id: "people", label: "People", glyph: "people", sprite: "system", keys: [] }];
+G.__kHubRow = (onOpen: (id: string) => void) => <PeopleHubRow onOpen={onOpen} />;
+G.__kSettingsModule = (id: string) => (id === "people" ? <PeopleAccessModule /> : null);
 
 /* ── the rig's hands (the canvas's own state; never a product write) ── */
 G.__k = {

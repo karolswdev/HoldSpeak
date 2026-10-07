@@ -1,0 +1,161 @@
+{
+ "_seat_guard_1440": [
+  "CONDUCTOR CANVAS SEAT GUARD (k): 2 files, 2 seats, every anchor met"
+ ],
+ "K7a-people-access-1440": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Settings · People",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 28
+   },
+   "dock": {
+    "top": 824,
+    "h": 76
+   },
+   "capture": {
+    "top": 747,
+    "h": 48
+   }
+  },
+  "front_state": {
+   "blue": [
+    "Settings · People"
+   ],
+   "front": "Settings · People",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "whole": {
+   "[data-testid=k-people-access]": {
+    "found": true,
+    "whole": true,
+    "w": 171,
+    "h": 26,
+    "top": 162
+   },
+   "[data-testid=k-people-agents]": {
+    "found": true,
+    "whole": true,
+    "w": 117,
+    "h": 18,
+    "top": 194
+   }
+  },
+  "submenus": [],
+  "intended_front": "Settings · People",
+  "tokens": [
+   [
+    "OFF",
+    "false"
+   ],
+   [
+    "READ",
+    "false"
+   ],
+   [
+    "WRITE",
+    "true"
+   ]
+  ],
+  "agents": "AGENTS · READ"
+ },
+ "_browser_errors_1440": [],
+ "_seat_guard_393": [
+  "CONDUCTOR CANVAS SEAT GUARD (k): 2 files, 2 seats, every anchor met"
+ ],
+ "K7a-people-access-393": {
+  "small_text": [],
+  "raw_buttons": [],
+  "menus": [],
+  "screen_title": "Settings · People",
+  "modal": false,
+  "h_overflow": false,
+  "scratch_path": false,
+  "frame": {
+   "menubar": {
+    "top": 0,
+    "h": 44
+   },
+   "dock": {
+    "top": 796,
+    "h": 56
+   },
+   "capture": null
+  },
+  "front_state": {
+   "blue": [
+    "Settings · People"
+   ],
+   "front": "Settings · People",
+   "on_glass": true
+  },
+  "low_contrast": [],
+  "clip": {
+   "strips": [],
+   "clipped": [],
+   "ellipsis": []
+  },
+  "overlap": [],
+  "overlap_waived": [],
+  "targets_under_44": [],
+  "inherited_under_44": [],
+  "content_px": 704,
+  "whole": {
+   "[data-testid=k-people-access]": {
+    "found": true,
+    "whole": true,
+    "w": 171,
+    "h": 72,
+    "top": 174
+   },
+   "[data-testid=k-people-agents]": {
+    "found": true,
+    "whole": true,
+    "w": 117,
+    "h": 18,
+    "top": 274
+   }
+  },
+  "submenus": [],
+  "intended_front": "Settings · People",
+  "tokens": [
+   [
+    "OFF",
+    "false"
+   ],
+   [
+    "READ",
+    "false"
+   ],
+   [
+    "WRITE",
+    "true"
+   ]
+  ],
+  "agents": "AGENTS · READ",
+  "inherited_overlap": [
+   {
+    "a": "Payments ledger cutover, 1 o",
+    "b": "More AppIcons",
+    "w": 49,
+    "h": 54
+   }
+  ]
+ },
+ "_browser_errors_393": [],
+ "_fails": []
+}

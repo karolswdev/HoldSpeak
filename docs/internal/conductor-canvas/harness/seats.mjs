@@ -62,3 +62,19 @@ export default [
       `  const [state, setState] = useState<MicState>(() => (${G}.__kMicStart?.(draftScope) ? "listening" : "idle"));\n`],
   ]],
 ];
+
+// Q7 (R7, DRAFT), its own leg (CANVAS_SEATS=k7, shoot_k7.py): the K boards' seats above were drawn
+// on main 8f958800e and are built since (F1, F2), so their anchors are history; this leg seats only Q7.
+export const K7 = [
+  // Q7 (R7, DRAFT): Settings > People: the module (PREF_MODULES), its hub row, and its face.
+  ["src/pages/cores/settingsPrefs.tsx", null, [
+    ['  { id: "system", label: "System", glyph: "system", sprite: "system", keys: ["device", "mesh"] },\n];',
+      `  { id: "system", label: "System", glyph: "system", sprite: "system", keys: ["device", "mesh"] },\n  ...((${G}.__kPrefModules?.() ?? []) as PrefModule[]),\n];`],
+    ["        {/* System: THIS DEVICE + MESH OFF|ON + REMOTE OFF|ON */}\n",
+      `        {${G}.__kHubRow?.(onOpen)}\n        {/* System: THIS DEVICE + MESH OFF|ON + REMOTE OFF|ON */}\n`],
+  ]],
+  ["src/pages/cores/SettingsCore.tsx", null, [
+    ["      default:\n        return null;\n    }\n  };\n",
+      `      default:\n        return ${G}.__kSettingsModule?.(id) ?? null;\n    }\n  };\n`],
+  ]],
+];

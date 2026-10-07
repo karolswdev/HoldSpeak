@@ -34,6 +34,26 @@ Source: `docs/internal/CONDUCTOR.md` (the loop, "F faces", "The Control-mode map
 | K5c enter-sends | Q5 | Enter sends; the composer empties; `sent` |
 | K6 follow-through-receipt | Q6 | On merge the runbook leaves OPEN HERE (`2 open here`); the Room receipt line: `DONE · Write the rollback runbook · PR #413 MERGED · <time>`; its session leaves AGENTS |
 
+## K7a: People MCP access (Conductor R7). **DRAFT, for the owner's ratification.** Not built in product code.
+
+The owner, 2026-10-06: "the default should be on, for HOLDSPEAK_MCP_PEOPLE_ACCESS, and I guess there's an affordance to set it somewhere, right?"
+
+| Board | Proposes |
+|---|---|
+| K7a people-access | Settings › **People** (a new module: main has no People module; stand-in S8). Group `MCP ACCESS`. Row **Access**: one `FilterTokens` strip `OFF` / `READ` / `WRITE`, with the current mode pressed (default `WRITE`). Row **Agents**: `AGENTS · READ` (`AGENTS · NONE` when off) and the source token: `DEFAULT`, `SETTING` or `ENV`. The Settings hub gets a **People** row with `MCP · WRITE` and `AGENTS · READ`. The strip reads and presses the REAL route `GET` and `PUT /api/settings/people-access` (an admitted owner-only kernel operation with a receipt). |
+
+- **Shots:** `shots/K7a-people-access-1440.png` and `shots/K7a-people-access-393.png`.
+- **Facts:** `shots/K7-facts.json`.
+- **Fences:** `ALL FENCES HELD` at both widths.
+  - The front window is `Settings · People`, with one blue title bar.
+  - Contrast, clipping and text size: 0 findings.
+  - This board's own controls: 0 targets under 44 px at 393.
+  - At 393, main's Dock chip under `More` is recorded as main's, not as a failure.
+- **Run:** `PLAYWRIGHT_BROWSERS_PATH=$HOME/Library/Caches/ms-playwright .venv/bin/python docs/internal/conductor-canvas/harness/shoot_k7.py`. It seats only the Q7 anchors (`seats.mjs` `K7`, `CANVAS_SEATS=k7`). The K boards' seats were drawn on `8f958800e`, and their faces are built since then.
+- **Owner questions:**
+  1. Is a new **People** module in Settings correct, or should the control live in the People window?
+  2. When the env var overrides the setting, should the strip be disabled under the `ENV` token? (This state is not drawn.)
+
 ## Fence results (`shots/facts.json`, run of 2026-10-06 on `8f958800e`: `ALL FENCES HELD`, exit 0)
 
 | Measure | Value |
