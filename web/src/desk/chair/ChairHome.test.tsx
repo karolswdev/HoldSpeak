@@ -1,8 +1,12 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { clearWriteFailure, useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { ChairHome } from "./ChairHome";
+import { openChairWindows } from "./__tests__/fixtures/openChairWindows";
+
+// PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
+beforeEach(() => openChairWindows());
 
 vi.mock("../../lib/api", async (original) => ({
   ...await original<typeof import("../../lib/api")>(),
@@ -46,7 +50,9 @@ describe("Chair write recovery", () => {
        and there is no Retry: the enabled Generate is the recovery. */
     expect(await screen.findByText("BRIEF DID NOT GENERATE · NO ANSWER")).toBeVisible();
     expect(screen.queryByText(/GENERATE BRIEF FAILED/)).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /retry/i })).not.toBeInTheDocument();
+    // PHILO-14 A1 (#939): the screen behind may wear its own NOT READ Retry
+    // (this spec's hub answers null); the Brief has none.
+    expect(within(screen.getByTestId("chair-window-body-brief")).queryByRole("button", { name: /retry/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Generate" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Generate" }));
     await waitFor(() => expect(attempts).toBe(2));

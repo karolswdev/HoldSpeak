@@ -41,6 +41,9 @@ from .glass_infra import (
 from tests._evidence import evidence_dir
 from .chair_windows import open_chair_window
 
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
+
 pytest.importorskip("playwright.sync_api", reason="Arrival glass needs Playwright")
 
 SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/story-03-shots")
@@ -243,6 +246,9 @@ class TestArrivalProposals:
                 // test_philo13_11_frame_glass.py F2. The body law is unchanged.
                 return Array.from(body.querySelectorAll('button'))
                     .filter(b => !b.closest('.desk-pullout-head'))
+                    // PHILO-14 A1: the screen's objects are the library DeskIcon
+                    // (the chrome Button, B1's species), not raw buttons.
+                    .filter(b => !b.closest('.desk-screen'))
                     .filter(b => !allowed.some(c => b.classList.contains(c)))
                     .map(b => (b.textContent || '').trim().slice(0, 40));
             }""")

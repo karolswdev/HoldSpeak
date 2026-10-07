@@ -29,9 +29,12 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, _room_through_drawer
 from .chair_windows import open_chair_window
 from tests._evidence import evidence_dir
+
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
 
 pytest.importorskip("playwright.sync_api", reason="the faces glass needs Playwright")
 
@@ -307,6 +310,7 @@ class TestFacesDoNotLie:
                 _normal_chair(page)
                 page.wait_for_timeout(1200)
                 self._palette(page, "Ledger", f"project.open.{pid}", width)
+                _room_through_drawer(page, lambda loc: self._press(page, loc, width))
                 room = page.locator("#surface-project-memory")
                 self._press(page, room.get_by_test_id("updates-verb"), width)
                 self._press(page, room.get_by_test_id("update-verb-draft-deterministic"), width)

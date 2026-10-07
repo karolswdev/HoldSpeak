@@ -33,6 +33,9 @@ from .chair_windows import go_group
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
+
 pytest.importorskip("playwright.sync_api", reason="the New verbs glass needs Playwright")
 
 TOKEN = "new-verbs-open"

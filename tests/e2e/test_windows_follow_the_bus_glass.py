@@ -27,7 +27,8 @@ from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api", reason="the glass proof needs Playwright")
 
-pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting, pytest.mark.chair_windows_open]
 
 TOKEN = "windows-follow-the-bus"
 TASK = "Send the cut-over plan"

@@ -5,7 +5,7 @@
 // data renders as absence. No kind hand-builds its Info.
 import { useState } from "react";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { spriteUrl } from "../sprites";
+import { refAgent, spriteUrl } from "../sprites";
 import { spriteStateCssClass } from "../../lib/spriteStates";
 import { spriteVariantKey } from "../../lib/spriteVariants";
 import { useDesk } from "../store";
@@ -21,18 +21,23 @@ import { DeskWindowFrame } from "./DeskWindow";
  * `name`). A decision renamed with `name` answered 200 and kept its title. */
 const TITLE_KINDS = new Set(["note", "meeting", "decision", "thread"]);
 
-function IdentityName({ o }: { o: WorldObject }) {
+/** Rename a desk object through its own update path (the one rule both Get
+ * Info faces use: the Floor's card and a drawer's Info window). */
+export function renameDeskObject(o: WorldObject, name: string): Promise<unknown> {
   const { updatePrimitive, renameZone } = useDesk.getState();
+  if (o.kind === "directory") return Promise.resolve(renameZone(o.id, name));
+  if (TITLE_KINDS.has(o.kind)) return Promise.resolve(updatePrimitive(o.kind, o.id, { title: name }, "RENAME"));
+  return Promise.resolve(updatePrimitive(o.kind, o.id, { name }, "RENAME"));
+}
+
+function IdentityName({ o }: { o: WorldObject }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(o.title);
   const commit = () => {
     const name = draft.trim();
     setEditing(false);
     if (!name || name === o.title) return;
-    if (o.kind === "directory") void renameZone(o.id, name);
-    else if (TITLE_KINDS.has(o.kind))
-      void updatePrimitive(o.kind, o.id, { title: name }, "RENAME");
-    else void updatePrimitive(o.kind, o.id, { name }, "RENAME");
+    void renameDeskObject(o, name);
   };
   // HS-132-07 — Rename appears only where a real path takes it. A kind
   // without one keeps its name presented and names who owns it, instead of
@@ -133,7 +138,7 @@ export function InfoWindow({
       icon={
         <img
           className={spriteStateCssClass(typeof o.ref.spriteState === "string" ? o.ref.spriteState as string : null)}
-          src={spriteUrl(o.kind, o.id)}
+          src={spriteUrl(o.kind, o.id, "rest", refAgent(o.ref))}
           alt=""
           width={26}
           height={26}

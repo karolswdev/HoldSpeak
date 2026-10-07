@@ -10,6 +10,10 @@ import { useDesk } from "../store";
 import { DeskChangedRefresh } from "../useDeskChangedRefresh";
 import { ChairHome } from "./ChairHome";
 import { asHub } from "../../test/hubNeedsYou";
+import { openChairWindows } from "./__tests__/fixtures/openChairWindows";
+
+// PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
+beforeEach(() => openChairWindows());
 
 const runtime = vi.hoisted(() => ({
   handlers: {} as Record<string, Array<() => void>>,

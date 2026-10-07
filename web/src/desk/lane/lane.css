@@ -1,0 +1,89 @@
+/* PHILO-14 C2 — the agent's lane window: lane layout only. The parts
+ * (TimelineRail, StationTrack, AskWell, PRCard, FilesChanged) are the
+ * library species (web/src/desk/surface/objects/, objects.css) since C2b;
+ * their old local copies are parked in lane/_parked/species.tsx. What stays
+ * here: the body, the two columns, the lane's own wells (approve, re-brief,
+ * deciding), the brief, the receipts, the ARM, Raw and the footer branch. */
+
+.is-lane .desk-pullout-body.lw-body {
+  container: surface / inline-size;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* The pullout chrome resets every `section` in its body (window-chrome.css:
+ * `.desk-next .desk-pullout-body section`); the AskWell plate is a section,
+ * so the lane gives it back its plate. */
+.desk-next .is-lane .desk-pullout-body section.ask-well {
+  display: flex;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--wb-ink);
+}
+
+.lw-caption { font: 600 12px/1.2 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin: 0; }
+.lw-fact { font: 12px/1.3 var(--font-mono); color: var(--text-muted); letter-spacing: 0.04em; }
+.lw-fact b { color: var(--text); font-weight: 600; }
+.lw-verbs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+/* An honest line: a part that could not be read, said once. */
+.lw-notread { margin: 0; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.lw-word { font: 700 12px/18px var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; flex: none; }
+.lw-ev-text { font: 13px/18px var(--font-sans); color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+.lw-ev-code { font: 12px/18px var(--font-mono); color: var(--text); overflow-wrap: anywhere; min-width: 0; }
+.lw-more { align-self: flex-start; }
+
+/* the lane's own wells: approve, re-brief */
+.lw-ask,
+.desk-next .is-lane .desk-pullout-body section.lw-ask { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface-2); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised); }
+.lw-ask-q { font: 600 15px/1.35 var(--font-sans); color: var(--text); margin: 0; overflow-wrap: anywhere; }
+.lw-ask-row { display: flex; gap: 8px; align-items: center; }
+.lw-ask-row > .gadget-string { flex: 1 1 auto; min-width: 0; }
+.lw-deciding { margin: 0; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.lw-deciding .lw-ev-text { font-size: 13px; }
+
+/* the brief, unfolded under its rail entry */
+.lw-brief { margin: 0; padding: 10px 12px; background: var(--surface-1); box-shadow: var(--wb-sunken); border: 1px solid var(--wb-ink); font: 12px/1.5 var(--font-mono); color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow-y: auto; }
+
+/* the two columns (C-4): the rail, then the PR and its files */
+.lw-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.lw-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+/* Raw: the terminal pane behind the title-bar gadget */
+.lw-raw { display: flex; flex-direction: column; gap: 10px; min-height: 0; flex: 1 1 auto; }
+
+.lw-footer-branch { font: 12px/1.4 var(--font-mono); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+@container surface (max-width: 520px) {
+  .lw-cols { grid-template-columns: 1fr; }
+  .lw-word { font-size: var(--font-size-xs); letter-spacing: 0.03em; }
+  .lw-ask-row { flex-wrap: wrap; }
+  .lw-ask-row > .gadget-string { flex-basis: 60%; }
+}
+
+/* receipts and ARM, kept on the face */
+.lw-receipt { margin: 0; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.04em; color: var(--text-muted); overflow-wrap: anywhere; }
+.lw-receipt[data-tone="fail"] { color: var(--danger); }
+/* NOT CONFIRMED: the hub may have delivered; not a failure, not a send. */
+.lw-receipt[data-tone="warn"] { color: var(--warn); }
+.lw-arm { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* The footer at 393: the egress chip and the branch on one row, the verbs
+ * (Re-brief, the mode's ARM, Stop, Open PR) on their own row below, and they
+ * wrap, so no verb leaves the frame. The footer is its own `surface`
+ * container (UX-CANON D); the body's `surface` container does not hold it. */
+.desk-next .is-lane .surface-footer { container: surface / inline-size; }
+@container surface (max-width: 520px) {
+  .desk-next .surface-footer-layout.lw-footer {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "egress" "verbs";
+    row-gap: 4px;
+    padding: 4px 0;
+  }
+  .desk-next .lw-footer .surface-footer-receipt { display: none; }
+  .desk-next .lw-footer .surface-footer-verbs { flex-wrap: wrap; justify-content: flex-end; row-gap: 4px; }
+}

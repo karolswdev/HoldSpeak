@@ -395,6 +395,9 @@ def build_aggregate(
     clock_now = now or local_wall()
     memory = last_known if last_known is not None else _LAST_KNOWN
     items: list[dict[str, Any]] = []
+    # PHILO-14 A1: each Room's own NEEDS YOU count (its head's "N open
+    # here"), so a Project shows one number on every face.
+    room_counts: dict[str, int] = {}
     project_ids: set[str] = set()
     coverage: list[dict[str, Any]] = []
     carried: list[dict[str, Any]] = []
@@ -452,6 +455,7 @@ def build_aggregate(
             ))
             continue
 
+        room_counts[pid] = int(needs.get("count") or len(needs.get("items") or []))
         observed_at = str(rm.get("observed_at") or utc_iso(clock_now))
         fresh: list[dict[str, Any]] = []
         for item in needs.get("items") or []:
@@ -582,6 +586,7 @@ def build_aggregate(
         "sweepId": None,
         "coverage": coverage,
         "complete": all(row["state"] == "available" for row in coverage),
+        "roomCounts": room_counts,
     }
 
 

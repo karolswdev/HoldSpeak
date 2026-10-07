@@ -190,8 +190,11 @@ def _band_law(page, when: str, failures: list[str]) -> None:
       // (Needs you first; the capture bar is the Capture window, on demand
       // from Speak): the shown Chair window is the surface that must end
       // above the dock.
+      // PHILO-14 A1: with no Chair window open, the screen of objects is
+      // that surface.
       const bar = document.querySelector('[data-testid="arrival-capture-bar"]')
-        || document.querySelector('.desk-window.chair-window.is-sheet');
+        || document.querySelector('.desk-window.chair-window.is-sheet')
+        || document.querySelector('.desk-screen');
       const dock = document.querySelector('.desk-dock');
       const style = getComputedStyle(document.documentElement);
       return { chairBottom: chair.getBoundingClientRect().bottom,

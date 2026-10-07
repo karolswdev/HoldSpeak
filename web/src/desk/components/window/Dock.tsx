@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openIntelligence } from "../../intelligenceNavigation";
-import { refreshNeedsYou, useNeedsYou } from "../../needsYou";
+import { projectOpenHere, refreshNeedsYou, useNeedsYou } from "../../needsYou";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { DOCK_SPRITES, SYSTEM } from "../../systemSprites";
 import { spriteUrl } from "../../sprites";
@@ -21,6 +21,7 @@ import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS, applicationForAction } from "../../applications";
+import { drawerWindowId, openDrawer } from "../../drawer/store";
 import { RoomActions } from "./RoomActions";
 import {
   dockStateLabel,
@@ -29,7 +30,6 @@ import {
   formatDockTime,
   latestSendSettle,
   nextOneOnOneLabel,
-  projectNeedsYouCounts,
   reduceDockFrame,
   type DockRelationshipRead,
   type DockSendOutcome,
@@ -176,6 +176,8 @@ function useDockLiveReads(): {
   lastSuccessfulAt: number | null;
   needsYouCount: number;
   needsYouItems: ReturnType<typeof useNeedsYou>["unmutedItems"];
+  /** PHILO-14 A1: each Project's Room count (its head's number). */
+  projectOpen: Record<string, number>;
 } {
   const runtime = useOptionalRuntimeBus();
   const runtimeState = runtime?.state ?? "offline";
@@ -290,6 +292,7 @@ function useDockLiveReads(): {
     needsYouCount: needs.count,
     // A row the owner waits on someone else for is not counted on a badge.
     needsYouItems: needs.unmutedItems.filter((item) => !item.waiting),
+    projectOpen: projectOpenHere(needs),
   };
 }
 
@@ -318,7 +321,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // PHILO-13-03 / C3: every Desk face reads the same membership snapshot.
   // The Dock opts out of the hook's minute poll; RuntimeBus invalidations
   // call the explicit refresh path in useDockLiveReads.
-  const { live, reads, offline, lastSuccessfulAt, needsYouCount, needsYouItems } = useDockLiveReads();
+  const { live, reads, offline, lastSuccessfulAt, needsYouCount, projectOpen } = useDockLiveReads();
   const intelligenceBadge = !offline && needsYouCount > 0
     ? String(needsYouCount)
     : null;
@@ -437,7 +440,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // it only renders as a launcher while its surface is closed.
   const shown = launchers.filter((l) => !windows.some((w) => w.id === l.id));
   const activeProjects = useDesk((s) => s.projects).filter((project) => !project.is_archived);
-  const projectCounts = projectNeedsYouCounts(needsYouItems);
+  // PHILO-14 A1: one Project, one number: the Room's own count.
+  const projectCounts = projectOpen;
   const readyMeetingIds = new Set([...live.readyMeetingIds, ...reads.readyMeetingIds]);
   const readyMeetingBadge = !offline && readyMeetingIds.size > 0
     ? `READY ${readyMeetingIds.size}`
@@ -467,8 +471,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       .filter((project) => windowsById["surface-project-memory"]?.scope === `project:${project.id}`)
       .map((project) => `project:${project.id}`),
   );
+  // PHILO-14 A2: an open drawer is its Project's launcher running (no second chip).
+  const activeDrawerIds = new Set(activeProjects.map((project) => drawerWindowId(project.id)));
   const visibleWindowChips = windows.filter((window) =>
     !DOCK_APP_IDS.has(window.id) &&
+      !activeDrawerIds.has(window.id) &&
       !hiddenProjectWindowIds.has(windowsById[window.id]?.scope || ""),
   );
   return (
@@ -586,8 +593,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       })}
       {activeProjects.map((project) => {
         const projectWindow = windows.find(
-          (window) => window.id === "surface-project-memory" &&
-            windowsById["surface-project-memory"]?.scope === `project:${project.id}`,
+          (window) => window.id === drawerWindowId(project.id) || (window.id === "surface-project-memory" &&
+            windowsById["surface-project-memory"]?.scope === `project:${project.id}`),
         );
         const count = !offline ? projectCounts[project.id] || 0 : 0;
         return (
@@ -597,16 +604,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             data-app="project"
             className={`desk-dock-launch desk-dock-project${projectWindow ? " is-run" : ""}`}
             aria-label={count > 0 ? `${project.name}, ${count} open here` : project.name}
-            onClick={() => {
-              void import("../../shell").then((m) =>
-                m.openSurfaceOr(
-                  "open-project-memory",
-                  "/project-memory",
-                  `project:${project.id}`,
-                  { origin: "dock" },
-                ),
-              );
-            }}
+            // PHILO-14 A2: the Dock opens a Project as its drawer.
+            onClick={() => openDrawer(project.id)}
           >
             {/* C1: a project is a drawer (the Workbench silhouette rule). */}
             <img src={spriteUrl("directory", project.id)} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />

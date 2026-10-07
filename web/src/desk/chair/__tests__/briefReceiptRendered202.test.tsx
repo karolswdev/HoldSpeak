@@ -13,6 +13,10 @@ import { briefReceipt, type GeneratedBrief } from "../briefEgress";
 import latestPayload from "./fixtures/philo504/latest-run4.json";
 import generatedPayload from "./fixtures/philo504/generate-run5.json";
 import emptyPayload from "./fixtures/philo504/empty-s3.json";
+import { openChairWindows } from "./fixtures/openChairWindows";
+
+// PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
+beforeEach(() => openChairWindows());
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),

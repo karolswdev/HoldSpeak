@@ -42,6 +42,7 @@ import { readProjectCounts } from "../needsYou";
 import { useOnDeskChanged } from "../useDeskChangedRefresh";
 import { Button } from "../../components/signal/Signal";
 import { PaletteHitLine, snippetParts, snippetText, type PaletteHit } from "./paletteHit";
+import { openDrawer } from "../drawer/store";
 
 // Re-exported so existing imports keep one source (the data moved to
 // desk/tools.ts so the registry never imports a component).
@@ -485,7 +486,7 @@ export function DeskToolShelf() {
         kind: "PROJECT",
         badge,
         terms: `project room ${project.name}`.toLocaleLowerCase(),
-        run: () => openSurface("open-project-memory", `project:${project.id}`),
+        run: () => openDrawer(project.id), // PHILO-14 A2: a Project opens as its drawer
       });
     }
 

@@ -34,7 +34,7 @@
  */
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { openProjectRoom, openSurfaceOr } from "../../../desk/shell";
+import { openSurfaceOr } from "../../../desk/shell";
 import {
   FilterTokens,
   SurfaceFooter,
@@ -64,6 +64,7 @@ import { useRecallController, type RecallController } from "./useRecallControlle
 import { BeliefCard } from "./BeliefCard";
 import { useMemoryChanges } from "../../../desk/memoryChanges";
 import "./recall.css";
+import { openDrawer } from "../../../desk/drawer/store";
 
 /** Render the trusted FTS marker grammar without injecting result HTML. */
 export function MemorySnippet({ value }: { value: string }) {
@@ -84,7 +85,7 @@ export function MemorySnippet({ value }: { value: string }) {
 }
 
 function openProject(projectId: string) {
-  openProjectRoom(projectId);
+  openDrawer(projectId); // PHILO-14 A2: a Project opens as its drawer
 }
 
 function Chip({ label, tone, testid }: { label: string; tone?: string; testid?: string }) {

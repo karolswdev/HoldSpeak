@@ -29,9 +29,12 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import _boot, _ensure_build, _normal_chair, _settle, _room_through_drawer
 from .test_philo13_06_open_glass import COMMITMENT, _seed
 from tests._evidence import evidence_dir
+
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
 
 pytest.importorskip("playwright.sync_api", reason="the remembers glass needs Playwright")
 
@@ -102,14 +105,14 @@ class _Rig:
         self._press(page, opt, width)
 
     def _chair_window(self, page: Any, width: int, name: str) -> None:
-        """At 393, Go > Chair > <name>; at 1440 the window stands."""
+        """At 393, Go > <name>; at 1440 the window stands."""
         shell = page.locator(f".desk-window-shell[aria-label='{name}']")
         if width > 720 or (shell.count() and shell.first.is_visible() and
                            shell.first.evaluate("e => e.classList.contains('is-front')")):
             return
+        # PHILO-14 A1 (#939): the Chair's windows are Go's first rows at 393.
         for loc in (
             page.locator(".desk-verbbar-item[data-menu-id='go'] button"),
-            page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')"),
             page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')"),
         ):
             loc.first.wait_for()
@@ -167,6 +170,7 @@ class TestTheDeskRemembers(_Rig):
 
                 # 2. the Room: Updates -> Draft -> typed words, not saved
                 self._palette(page, "Payments", "project.open.p-ledger", width)
+                _room_through_drawer(page, lambda loc: self._press(page, loc, width))
                 room = page.locator("#surface-project-memory")
                 self._press(page, room.get_by_test_id("updates-verb"), width)
                 self._press(page, room.get_by_test_id("update-verb-draft-deterministic"), width)
@@ -232,7 +236,22 @@ class TestTheDeskRemembers(_Rig):
                 assert not before["writes"], "nothing was saved or sent before the reload"
                 assert not any("Intelligence" in t for t in titles), "the closed Intelligence window came back"
                 if width >= 720:
+                    # PHILO-14 A1 (#939, Astra's P2): saved positions are restored;
+                    # unsaved ones are placed again (C1-1 seat / cascade). The
+                    # moved Room comes back exactly; the untouched People window
+                    # was never saved and lands whole in the band, hiding no
+                    # other window's title bar.
                     assert room_after == room_rect, (room_rect, room_after)
+                    people_id = next(w["id"] for w in after_windows if w["title"] == "People")
+                    assert people_id not in before["workspace"]["panel"]["rects"], before["workspace"]["panel"]
+                    pr = next(w["rect"] for w in after_windows if w["id"] == people_id)
+                    assert pr[0] >= 0 and pr[1] >= 0 and pr[0] + pr[2] <= 1440 and pr[1] + pr[3] <= 900, pr
+                    for other in after_windows:
+                        if other["id"] == people_id:
+                            continue
+                        x, y, w, h = other["rect"]
+                        hides = pr[0] <= x and pr[0] + pr[2] >= x + w and pr[1] <= y and pr[1] + pr[3] >= y + 44
+                        assert not hides, (people_id, pr, other)
                     assert not decision_drawn, "the iconified decision came back drawn"
                     assert "pullout:decision:d-freeze" in self._workspace(page)["panel"]["min"]
                     assert any(DECISION in c for c in chips), chips
@@ -400,6 +419,7 @@ class TestSliceTwoReturns(_Rig):
             page.on("request", lambda r: puts.append(r.method) if r.method == "PUT" and "/api/updates/" in r.url else None)
             try:
                 self._palette(page, "Payments", "project.open.p-ledger", width)
+                _room_through_drawer(page, lambda loc: self._press(page, loc, width))
                 room = page.locator("#surface-project-memory")
                 self._press(page, room.get_by_test_id("updates-verb"), width)
                 self._press(page, room.get_by_test_id("update-verb-draft-deterministic"), width)
@@ -429,6 +449,7 @@ class TestSliceTwoReturns(_Rig):
                 self._press(page, page.locator("#surface-project-memory [aria-label^='Close']").first, width)
                 page.locator("#surface-project-memory").wait_for(state="detached")
                 self._palette(page, "Payments", "project.open.p-ledger", width)
+                _room_through_drawer(page, lambda loc: self._press(page, loc, width))
                 after_reopen = state()
                 page.screenshot(path=str(SHOTS / f"B2-09-empty-draft-after-reopen-{width}.png"))
                 self._press(page, page.locator("#surface-project-memory").get_by_role("button", name="Save", exact=True), width)

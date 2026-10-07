@@ -24,6 +24,8 @@ open menu, which portals outside the list), the same nine-point pointer pass.
 """
 from __future__ import annotations
 
+import re
+
 import json
 from pathlib import Path
 from typing import Any
@@ -100,12 +102,12 @@ FACTS = r"""() => {
       styles[key].count++;
     }
   }
-  const heads = [...document.querySelectorAll('.desk-listmode thead th')].filter(th => th.getBoundingClientRect().width > 0)
+  const heads = [...document.querySelectorAll('.desk-listmode [role=columnheader]')].filter(th => th.getBoundingClientRect().width > 0)
     .map(th => { const r = th.getBoundingClientRect(); return {text: th.innerText.replace(/\s+/g, ' ').trim(), right: Math.round(r.right), in_view: r.right <= vw + 0.5}; });
-  const sortVerbs = [...document.querySelectorAll('.desk-listmode thead button')].map(b => ({
-    text: b.innerText.replace(/\s+/g, ' ').trim(), library: b.classList.contains('btn'),
+  const sortVerbs = [...document.querySelectorAll('.desk-listmode [role=columnheader] button')].map(b => ({
+    text: b.innerText.replace(/\s+/g, ' ').trim(), library: b.classList.contains('btn') || b.classList.contains('btn--chrome'),
     visible: b.getBoundingClientRect().width > 0, pressed: b.getAttribute('aria-pressed')}));
-  const cellsOut = [...document.querySelectorAll('.desk-listmode tbody td')].filter(td => {
+  const cellsOut = [...document.querySelectorAll('.desk-listmode [role=gridcell]')].filter(td => {
     const r = td.getBoundingClientRect(); return r.width > 0 && td.innerText.trim() && r.right > vw + 0.5; }).length;
   const items = [...document.querySelectorAll('[role=menu] [role=menuitem]')].filter(e => e.getBoundingClientRect().height > 0);
   const last = items.at(-1);
@@ -113,9 +115,9 @@ FACTS = r"""() => {
     return {text: e.innerText.replace(/\s+/g, ' ').trim().slice(0, 30), top: Math.round(r.top), bottom: Math.round(r.bottom), vh}; };
   // Each visible object row's Kind and Zone words, read where the owner can
   // see them: a visible cell or the visible fold line, inside the viewport.
-  const rowWords = [...document.querySelectorAll('.desk-listmode tbody tr.desk-sortable-table-row')]
-    .filter(tr => tr.querySelector('.desk-list-mark') && tr.getBoundingClientRect().height > 0).map(tr => {
-      const seen = [...tr.querySelectorAll('td, .desk-list-fold-token')].filter(e => {
+  const rowWords = [...document.querySelectorAll('.desk-listmode .object-list-row')]
+    .filter(tr => !(tr.dataset.objectId || '').startsWith('zone:') && tr.getBoundingClientRect().height > 0).map(tr => {
+      const seen = [...tr.querySelectorAll('[role=gridcell][data-col=kind], [role=gridcell][data-col=when], .object-list-fold-token')].filter(e => {
         const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.left >= -0.5 && r.right <= vw + 0.5
           && getComputedStyle(e).display !== 'none'; }).map(e => e.innerText.replace(/\s+/g, ' ').trim()).join(' | ');
       return seen;
@@ -126,7 +128,10 @@ FACTS = r"""() => {
     small_text_count: small.length, small_text: small.slice(0, 20),
     menu_rows: items.map(e => { const r = e.getBoundingClientRect(); return {text: e.innerText.replace(/\s+/g, ' ').trim().slice(0, 30), h: +r.height.toFixed(1), top: Math.round(r.top), bottom: Math.round(r.bottom)}; }),
     scroll_width: document.documentElement.scrollWidth,
-    attention_tokens: [...document.querySelectorAll('.desk-list-attention')].filter(e => e.getBoundingClientRect().width > 0)
+    // PHILO-14 A2: ATTN is the State cell's lamp word; read the element that holds the text.
+    attention_tokens: [...document.querySelectorAll('.desk-listmode [data-col=state]')].filter(e => e.getBoundingClientRect().width > 0)
+      .flatMap(cell => { const w = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT); const out = [];
+        for (let n = w.nextNode(); n; n = w.nextNode()) if (/ATTN/.test(n.textContent)) out.push(n.parentElement); return out; })
       .map(e => { const cs = getComputedStyle(e); const bg = C.ground(e); const ink = C.over(C.parse(cs.color), bg);
         return {text: e.innerText.trim(), px: parseFloat(cs.fontSize), ratio: C.ratio(ink, bg)}; }),
     raw_buttons_in_list: list ? [...list.querySelectorAll('button')].filter(b => !b.classList.contains('btn') && !b.classList.contains('btn--chrome')).map(b => String(b.className).slice(0, 50)) : null,
@@ -158,8 +163,8 @@ SELECTION = r"""(sel) => {
 # a real pointermove both land inside the control.
 POINTS = r"""([width, kinds]) => {
   document.querySelectorAll('[data-probe]').forEach(e => e.removeAttribute('data-probe'));
-  const pick = {sort: '.desk-listmode thead .btn', menu: '[role=menu] [role=menuitem]', census: '.desk-list-census .btn',
-                name: '.desk-listmode tbody .desk-sortable-table-open',
+  const pick = {sort: '.desk-listmode [role=columnheader] button', menu: '[role=menu] [role=menuitem]', census: '.desk-list-census .btn',
+                name: '.desk-listmode .object-list-open',
                 submenu: "[role=menu][aria-label='Launch submenu'] [role=menuitem]"};
   // The name Buttons (the fold line rides inside them at 393): the first six
   // wholly in the upper band of the viewport, clear of the fixed dock.
@@ -257,7 +262,7 @@ class TestDeskDebtsGlass:
             self._palette(page, "List view")
             page.locator("[id='desk-palette-option-desk.toggle-view']").click()
         page.locator(".desk-listmode").wait_for(timeout=T)
-        page.locator(".desk-listmode tbody tr", has_text="Ledger cutover plan").first.wait_for(timeout=T)
+        page.locator(".desk-listmode .object-list-row", has_text="Ledger cutover plan").first.wait_for(timeout=T)
         page.wait_for_timeout(1200)
         return browser, page, errors
 
@@ -310,7 +315,7 @@ class TestDeskDebtsGlass:
         lowest free band (above the dock at 393, near the edge at 1440), then
         the row menu by a right-click on it."""
         height = SIZES[width]
-        row = page.locator(".desk-listmode tbody tr.desk-sortable-table-row:has(.desk-list-mark)").nth(3)
+        row = page.locator(".desk-listmode .object-list-row:not([data-object-id^='zone:'])").nth(3)
         row.scroll_into_view_if_needed()
         target = height - (150 if width < 720 else 60)
         box = row.bounding_box()
@@ -372,13 +377,13 @@ class TestDeskDebtsGlass:
         with sync_playwright() as pw:
             browser, page, errors = self._open(pw, width)
             try:
-                page.locator(".desk-listmode tbody tr", has_text="Ledger cutover plan").first.evaluate(
+                page.locator(".desk-listmode .object-list-row", has_text="Ledger cutover plan").first.evaluate(
                     "e => e.scrollIntoView({block: 'center'})")
                 page.wait_for_timeout(400)
                 many = self._facts(page)
                 page.screenshot(path=str(SHOTS / f"list-{width}.png"))
                 page.evaluate("window.scrollTo(0, 0)")
-                page.get_by_role("button", name="Payments zone").first.click()
+                page.get_by_role("button", name=re.compile(r"^Payments, ZONE")).first.click()
                 page.locator(".desk-list-census .btn", has_text="ALL").wait_for(timeout=T)
                 page.wait_for_timeout(1200)
                 one = self._facts(page)
@@ -403,7 +408,7 @@ class TestDeskDebtsGlass:
             browser, page, errors = self._open(pw, width)
             try:
                 many = self._facts(page)["status"]
-                page.get_by_role("button", name="Payments zone").first.click()
+                page.get_by_role("button", name=re.compile(r"^Payments, ZONE")).first.click()
                 page.locator(".desk-list-census .btn", has_text="ALL").wait_for(timeout=T)
                 page.wait_for_timeout(1200)
                 one = self._facts(page)["status"]
@@ -431,13 +436,15 @@ class TestDeskDebtsGlass:
                 f = self._facts(page)
                 shot = page.screenshot(path=str(SHOTS / f"columns-{width}.png"))
                 assert shot
-                page.get_by_role("button", name="Payments zone").first.click()
+                page.get_by_role("button", name=re.compile(r"^Payments, ZONE")).first.click()
                 page.locator(".desk-list-census .btn", has_text="ALL").wait_for(timeout=T)
                 page.wait_for_timeout(1200)
                 dived = self._facts(page)
                 _record("columns", width, {"list": f, "dived": dived})
                 heads = " ".join(h["text"] for h in f["headers"])
-                for word in ("NAME", "KIND", "ZONE", "ATTENTION"):
+                # PHILO-14 A2: the ObjectList species' four columns; the zone
+                # rides the Kind cell (`NOTE · PAYMENTS`), attention the State.
+                for word in ("NAME", "KIND", "WHEN", "STATE"):
                     assert word in heads.upper(), f["headers"]
                 assert all(h["in_view"] for h in f["headers"]), f["headers"]
                 assert f["cells_past_right_edge"] == 0, f["cells_past_right_edge"]
@@ -466,14 +473,14 @@ class TestDeskDebtsGlass:
                 f = self._facts(page)
                 assert f["sort_verbs"] and all(v["library"] for v in f["sort_verbs"]), f["sort_verbs"]
                 assert f["raw_buttons_in_list"] == [], f["raw_buttons_in_list"]
-                page.locator(".desk-listmode thead button:visible", has_text="Zone").first.click()
+                page.locator(".desk-listmode [role=columnheader] button:visible", has_text="Kind").first.click()
                 page.wait_for_timeout(500)
                 pressed = self._facts(page)["sort_verbs"]
                 page.screenshot(path=str(SHOTS / f"sorted-by-zone-{width}.png"))
-                zone = [v for v in pressed if v["visible"] and v["text"].upper().startswith("ZONE")]
-                assert zone and zone[0]["pressed"] == "true" and "↑" in zone[0]["text"], pressed
+                zone = [v for v in pressed if v["visible"] and v["text"].upper().startswith("KIND")]
+                assert zone and zone[0]["pressed"] == "true" and "▲" in zone[0]["text"], pressed
                 owned = self._pointer(page, width, ["sort", "name"])
-                page.get_by_role("button", name="Payments zone").first.click()
+                page.get_by_role("button", name=re.compile(r"^Payments, ZONE")).first.click()
                 page.locator(".desk-list-census .btn", has_text="ALL").wait_for(timeout=T)
                 page.wait_for_timeout(1200)
                 owned += self._pointer(page, width, ["census"])
@@ -534,7 +541,7 @@ class TestDeskDebtsGlass:
     # ── round two (Codex Astra r1, checks/story-04-built-astra-r1.md) ──────
 
     def _open_note_editor(self, page: Any) -> Any:
-        row = page.locator(".desk-listmode tbody tr", has_text="Ledger cutover plan").first
+        row = page.locator(".desk-listmode .object-list-row", has_text="Ledger cutover plan").first
         row.scroll_into_view_if_needed()
         row.click(button="right")
         page.get_by_role("menuitem", name="Edit", exact=True).click()
@@ -589,7 +596,7 @@ class TestDeskDebtsGlass:
         with sync_playwright() as pw:
             browser, page, errors = self._open(pw, width)
             try:
-                row = page.locator(".desk-listmode tbody tr", has_text="Ledger cutover plan").first
+                row = page.locator(".desk-listmode .object-list-row", has_text="Ledger cutover plan").first
                 row.scroll_into_view_if_needed()
                 row.click(button="right")
                 page.get_by_role("menuitem", name="Continue in thread", exact=True).click()

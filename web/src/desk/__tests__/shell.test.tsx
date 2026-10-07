@@ -202,9 +202,14 @@ describe("placeWindow (HS-97-02, the open-placement engine)", () => {
     for (let y = TOP; y <= VH - BOTTOM; y += 32)
       rows.push({ x: 10, y, w: VW - 20, h: 44 });
     const r = placeWindow({ x: 24, y: 72, w: 640, h: 480 }, rows, VW, VH);
-    expect(r.x).toBe(24 + 26 * 8);
-    expect(r.y).toBe(72 + 26 * 8);
+    // PHILO-14 A1 (Muad'Dib's ruling on #939): the cascade steps 24/24 off
+    // the window placed last (was: 26 x n off the home seat), clamped into
+    // the band, and no title bar is hidden whole.
+    const last = rows[rows.length - 1];
+    expect(r.x).toBe(last.x + 24);
     expect(r.y + r.h).toBeLessThanOrEqual(VH - BOTTOM);
+    for (const row of rows)
+      expect(r.x <= row.x && r.x + r.w >= row.x + row.w && r.y <= row.y && r.y + r.h >= row.y + 44).toBe(false);
   });
 });
 

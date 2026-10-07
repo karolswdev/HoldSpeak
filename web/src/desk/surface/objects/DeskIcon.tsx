@@ -48,6 +48,10 @@ export interface DeskIconProps {
   selected?: boolean;
   /** The lamp, with the word it stands for (the accessible name says it). */
   lamp?: IconLampProps & { label?: string };
+  /** The count notch alone, with no lamp (a drawer whose things run and
+   *  ask nothing: the Conductor while its agents work). PHILO-14 A1. Ignored
+   *  when `lamp` is given (the lamp carries its own count). */
+  count?: number;
   /** A small badge sprite at the bottom right (the Conductor's automaton). */
   badge?: string;
   /** DropTarget state: the icon is lit as the target of a drag. */
@@ -73,6 +77,7 @@ export function DeskIcon({
   spriteSelected,
   selected,
   lamp,
+  count,
   badge,
   drop,
   ghost,
@@ -125,7 +130,13 @@ export function DeskIcon({
       <span className="desk-icon-art">
         <img src={src} alt="" draggable={false} />
         {badge ? <img className="desk-icon-badge" src={badge} alt="" draggable={false} /> : null}
-        {lamp ? <IconLamp tone={lamp.tone} count={lamp.count} /> : null}
+        {lamp ? (
+          <IconLamp tone={lamp.tone} count={lamp.count} />
+        ) : count && count > 0 ? (
+          <span className="desk-icon-count" aria-hidden="true">
+            {count}
+          </span>
+        ) : null}
       </span>
       <span className="desk-icon-name">{name}</span>
     </Button>

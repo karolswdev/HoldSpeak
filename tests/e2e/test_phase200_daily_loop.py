@@ -155,7 +155,8 @@ ACTIONS_JSON = json.dumps({
     ],
 })
 
-pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting, pytest.mark.chair_windows_open]
 
 
 # ── the one composition root (R16-6) ─────────────────────────────────

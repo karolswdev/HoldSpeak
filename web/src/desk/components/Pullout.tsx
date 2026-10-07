@@ -2,7 +2,7 @@
 // delegates body + footer to the kind-keyed content registry.
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import "./pullout.css";
-import { spriteUrl } from "../sprites";
+import { refAgent, spriteUrl } from "../sprites";
 import { spriteVariantKey } from "../../lib/spriteVariants";
 import { spriteStateCssClass } from "../../lib/spriteStates";
 import { Button } from "../../components/signal/Signal";
@@ -77,7 +77,7 @@ function PulloutFrame({
       fitContent
       origin={origin}
       rootStyle={{ "--k": objGlow(o.kind) } as React.CSSProperties}
-      icon={<img src={spriteUrl(o.kind, o.id)} alt="" width={30} height={30} className={spriteStateCssClass((o as { spriteState?: string }).spriteState ?? null) || undefined} data-sprite-variant={spriteVariantKey(o.kind, (o as { spriteState?: string }).spriteState ?? null)} />}
+      icon={<img src={spriteUrl(o.kind, o.id, "rest", refAgent(o.ref))} alt="" width={30} height={30} className={spriteStateCssClass((o as { spriteState?: string }).spriteState ?? null) || undefined} data-sprite-variant={spriteVariantKey(o.kind, (o as { spriteState?: string }).spriteState ?? null)} />}
       title={name}
       open
       onClose={() => closePullout(pulloutId)}

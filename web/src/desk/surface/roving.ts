@@ -190,11 +190,10 @@ export function useRovingRows(
 
 /** PHILO-14 B1 — the 2-D sibling of useRovingRows, for a wrapping icon grid.
  *
- *  One Tab stop. Left/Right move within the visual row; Up/Down move by the
- *  column count; Home/End jump to the first/last stop. The column count is
- *  READ from the rendered layout on each keypress (the stops whose top edge
- *  equals the first stop's), so it follows the container as it reflows. No
- *  wrap, like the rows. */
+ *  One Tab stop. The arrows move to the nearest stop that way in the
+ *  RENDERED layout (spatialNeighbour; PHILO-14 A1); Home/End jump to the
+ *  first/last stop. No wrap, like the rows. `visualColumns` stays for
+ *  callers that read the column count. */
 export function visualColumns(stops: HTMLElement[]): number {
   if (!stops.length) return 1;
   const top = stops[0].getBoundingClientRect().top;
@@ -204,6 +203,37 @@ export function visualColumns(stops: HTMLElement[]): number {
     columns += 1;
   }
   return Math.max(1, columns);
+}
+
+/** PHILO-14 A1 (Astra's finding on #939) — the neighbour of `stops[from]`
+ *  in the direction of `key`, read from the RENDERED boxes (not a column
+ *  count): the nearest stop whose centre lies in a 45-degree cone that way,
+ *  the off-axis distance weighing double. A free layout (the Chair's screen:
+ *  drawers in a column, the field beside them) and a wrapping grid both
+ *  move where the eye expects. No stop that way: null (no wrap). */
+export function spatialNeighbour(stops: HTMLElement[], from: number, key: string): number | null {
+  const centre = (el: HTMLElement) => {
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  };
+  const at = centre(stops[from]);
+  let best: number | null = null;
+  let bestScore = Infinity;
+  stops.forEach((stop, i) => {
+    if (i === from) return;
+    const c = centre(stop);
+    const dx = c.x - at.x;
+    const dy = c.y - at.y;
+    const [main, off] =
+      key === "ArrowRight" ? [dx, dy] : key === "ArrowLeft" ? [-dx, dy] : key === "ArrowDown" ? [dy, dx] : [-dy, dx];
+    if (main <= 2 || Math.abs(off) > main) return;
+    const score = main + 2 * Math.abs(off);
+    if (score < bestScore) {
+      bestScore = score;
+      best = i;
+    }
+  });
+  return best;
 }
 
 export function useRovingGrid(
@@ -244,21 +274,13 @@ export function useRovingGrid(
       const stops = query();
       if (!stops.length) return;
       const from = Math.min(current.current, stops.length - 1);
-      const columns = visualColumns(stops);
-      const column = from % columns;
       let to: number | null = null;
       switch (event.key) {
         case "ArrowRight":
-          if (column < columns - 1 && from + 1 < stops.length) to = from + 1;
-          break;
         case "ArrowLeft":
-          if (column > 0) to = from - 1;
-          break;
         case "ArrowDown":
-          if (from + columns < stops.length) to = from + columns;
-          break;
         case "ArrowUp":
-          if (from - columns >= 0) to = from - columns;
+          to = spatialNeighbour(stops, from, event.key);
           break;
         case "Home":
           to = 0;

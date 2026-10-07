@@ -7,8 +7,9 @@
 //      with no Dock chip; Needs you is the front Chair window.
 //   2. The work first (R3): the Needs-you window leads with the headline and
 //      the actions; SETUP is below the actions.
-//   3. R1: Close closes; the closed window leaves a reopen Button in its
-//      place; Window ▸ Chair lists the four with a check on the open ones.
+//   3. R1: Close closes; Window ▸ Chair lists the four with a check on the
+//      open ones. PHILO-14 A1 (board A-1): the Chair is the screen of
+//      objects, so a closed window leaves the screen, not a reopen Button.
 //   4. R2 (393): one window at a time, Needs you first; the Speak AppIcon's
 //      key ("dictate") opens Capture on demand.
 //   5. The A3-W ledger: no `Run summary` beside SUMMARY STORED.
@@ -148,13 +149,14 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     expect(action.compareDocumentPosition(setup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("Close closes; a reopen Button stands in its place; Window ▸ Chair checks the open ones", async () => {
+  it("Close closes; the screen stands where it was; Window ▸ Chair checks the open ones", async () => {
     render(<><DeskMenuBar /><ChairHome /></>);
     fireEvent.click(within(region("Brief")!).getByRole("button", { name: "Close Brief" }));
     await waitFor(() => expect(region("Brief")).toBeNull());
     expect(registrySnapshot.map((w) => w.id)).not.toContain("chair:brief");
-    const reopen = screen.getByTestId("chair-reopen-brief");
-    expect(within(reopen).getByRole("button", { name: "Open Brief" })).toBeTruthy();
+    // PHILO-14 A1: no reopen Button; the screen of objects is the Chair.
+    expect(screen.queryByTestId("chair-reopen-brief")).toBeNull();
+    expect(screen.getByTestId("desk-screen")).toBeTruthy();
 
     // the verbs behind Window ▸ Chair
     expect(verbById("chair.window.brief")!.checked!({ selectedRef: null })).toBe(false);
@@ -171,11 +173,12 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     expect(frontWindowId()).toBe("chair:brief");
     expect(screen.queryByTestId("chair-reopen-brief")).toBeNull();
 
-    // the reopen Button reopens too
-    fireEvent.click(within(region("The week")!).getByRole("button", { name: "Close The week" }));
-    await waitFor(() => expect(region("The week")).toBeNull());
-    fireEvent.click(within(screen.getByTestId("chair-reopen-week")).getByRole("button", { name: "Open The week" }));
-    await waitFor(() => expect(region("The week")).toBeTruthy());
+    // PHILO-14 A1: the screen's Needs you drawer opens the Needs you window
+    fireEvent.click(within(region("Needs you")!).getByRole("button", { name: "Close Needs you" }));
+    await waitFor(() => expect(region("Needs you")).toBeNull());
+    const drawer = screen.getByRole("button", { name: /^Needs you, SMART DRAWER/ });
+    fireEvent.keyDown(drawer, { key: "Enter" });
+    await waitFor(() => expect(region("Needs you")).toBeTruthy());
   });
 
   it("Iconify falls to a Dock chip; Window ▸ Chair brings it back", async () => {
@@ -224,14 +227,16 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     await waitFor(() => expect(region("Needs you")).toBeTruthy());
     // Window ▸ Chair at 393 has no Capture row (Speak opens it)
     expect(verbById("chair.window.capture")!.wide).toBe(true);
-    // with every Chair window closed, a reopen Button for each
+    // with every Chair window closed, the screen of objects (PHILO-14 A1;
+    // board A-1-393), not a reopen list
     fireEvent.click(within(region("Needs you")!).getByRole("button", { name: "Close Needs you" }));
     await waitFor(() => expect(region("Brief")).toBeTruthy());
     fireEvent.click(within(region("Brief")!).getByRole("button", { name: "Close Brief" }));
     await waitFor(() => expect(region("The week")).toBeTruthy());
     fireEvent.click(within(region("The week")!).getByRole("button", { name: "Close The week" }));
-    const list = await screen.findByTestId("chair-reopen-list");
-    expect(within(list).getAllByRole("button").map((b) => b.textContent)).toEqual(["Needs you", "Brief", "The week"]);
+    await waitFor(() => expect(screen.getByTestId("chair-desk").getAttribute("data-phone-shown")).toBeNull());
+    expect(screen.queryByTestId("chair-reopen-list")).toBeNull();
+    expect(screen.getByTestId("desk-screen").getAttribute("data-layout")).toBe("grid");
   });
 
   it("no Run summary beside SUMMARY STORED (the stored fact drives the verb)", async () => {

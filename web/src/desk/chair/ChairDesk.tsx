@@ -8,6 +8,12 @@
 //     library Button in its place; Window ▸ Chair reopens it too.
 //   - 393 (R2): one window at a time fills the work area; Needs you first;
 //     Capture opens on demand from the Speak AppIcon (no permanent strip).
+//
+// PHILO-14 A1 (board A-1, RATIFIED 2026-10-07): the Chair is the SCREEN of
+// objects (desk/screen/). The four windows open from it, the Dock and
+// Window ▸ Chair, and float like every desk window; a closed one leaves the
+// screen, not a reopen Button. The tiles above are PARKED behind
+// `data-layout="tiles"` (no `screen` prop; ChairHome always passes one).
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { useAftercare } from "../intelligenceAttention";
 import { frontWindowAftercareSlot } from "../../components/AmbientLayer";
@@ -30,15 +36,23 @@ import {
   type ChairWindowSpec,
 } from "./chairWindows";
 
-export type ChairDeskProps = Record<ChairWindowKey, ReactNode>;
+export type ChairDeskProps = Record<ChairWindowKey, ReactNode> & {
+  /** PHILO-14 A1: the screen of objects (board A-1). With it the Chair is
+   * the screen and the four windows open from it, the Dock and Window ▸
+   * Chair; they float like every desk window. Without it the PARKED
+   * Phase-13 tiles return (`data-layout="tiles"`; ChairHome never sets it). */
+  screen?: ReactNode;
+};
 
 function ChairWindow({
   spec,
   open,
+  tiled,
   children,
 }: {
   spec: ChairWindowSpec;
   open: boolean;
+  tiled: boolean;
   children: ReactNode;
 }) {
   return (
@@ -49,7 +63,10 @@ function ChairWindow({
       className={`chair-window chair-window--${spec.key}`}
       open={open}
       onClose={() => closeChairWindow(spec.id)}
-      tiled
+      tiled={tiled}
+      // PHILO-14 A1: a floating Chair window keeps its C1-1 seat's CSS height
+      // until he arranges it (no max-height seed inflation over its neighbour).
+      fitContent={!tiled}
       dockChip="iconified"
       escapeCloses={false}
       entrance={false}
@@ -125,11 +142,19 @@ export function ChairDesk(props: ChairDeskProps) {
   }, []);
 
   const phoneShown = compact && Boolean(phone) && !closed[phone];
+  const tiles = props.screen === undefined;
 
   return (
-    <div className="chair-desk" data-testid="chair-desk">
+    <div
+      className="chair-desk"
+      data-testid="chair-desk"
+      data-layout={tiles ? "tiles" : "screen"}
+      data-phone-shown={phoneShown ? "true" : undefined}
+    >
+      {tiles ? null : props.screen}
       {CHAIR_WINDOWS.map((spec) => {
         const isOpen = !closed[spec.id];
+        if (!isOpen && !tiles) return null;
         if (!isOpen && !compact) {
           // R1: the closed window's place holds its reopen Button.
           return (
@@ -148,12 +173,12 @@ export function ChairDesk(props: ChairDeskProps) {
         const shown = compact ? isOpen && phone === spec.id : isOpen;
         const Body = CHAIR_WINDOW_BODY[spec.key];
         return (
-          <ChairWindow key={spec.id} spec={spec} open={shown}>
+          <ChairWindow key={spec.id} spec={spec} open={shown} tiled={tiles}>
             {Body ? <Body /> : props[spec.key]}
           </ChairWindow>
         );
       })}
-      {compact && !phoneShown ? (
+      {tiles && compact && !phoneShown ? (
         <div className="chair-reopen-list" data-testid="chair-reopen-list">
           {CHAIR_WINDOWS.filter((w) => w.phone).map((w) => (
             <Button key={w.id} onClick={() => openChairWindow(w.id)} aria-label={`Open ${w.title}`}>

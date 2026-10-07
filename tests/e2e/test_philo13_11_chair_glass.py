@@ -17,7 +17,8 @@ The fences (each records its findings in ``chair-facts-<width>.json``):
   C2 one blue window, and the screen title bar names it (slice one's F1);
      the screen title names each Chair window when it is in front (a press
      on each at 1440; each one shown at 393).
-  C3 the lifecycle (R1): Close closes; a compact reopen Button stands in the
+  C3 the lifecycle (R1): Close closes (PHILO-14 A1: the screen of objects
+     stands where it was; no reopen Button); was: a compact reopen Button stands in the
      closed window's place; Window ▸ Chair checks the open ones; picking one
      reopens it in front; the reopen Button reopens too.
   C4 393 (R2): one Chair window at a time, Needs you first; >= 700 px of
@@ -50,6 +51,9 @@ import pytest
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 from .test_philo13_11_frame_glass import FRAME_JS
 from tests._evidence import evidence_dir
+
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
 
 pytest.importorskip("playwright.sync_api", reason="the Chair glass needs Playwright")
 
@@ -371,13 +375,14 @@ class TestTheChairAsWindows:
                         failures["chair-windows"]["C2 the screen title names each front Chair window"] = named
                     shell("Needs you").locator(".desk-pullout-title").click()
 
-                    # C1-4c: Close closes; the reopen Button stands in its place
+                    # C1-4c: Close closes. PHILO-14 A1 (board A-1): the Chair is
+                    # the screen of objects, so no reopen Button stands in its place.
                     shell("Brief").get_by_role("button", name="Close Brief").click()
                     shell("Brief").wait_for(state="detached")
                     frame, chair = self._measure(page, width, "chair-window-closed", facts)
                     failures["chair-window-closed"] = self._fails(frame, chair, width)
-                    if "Brief" in chair["windows"] or chair["reopen"] != ["Open Brief"]:
-                        failures["chair-window-closed"]["C3 close closes; one reopen Button"] = {
+                    if "Brief" in chair["windows"] or chair["reopen"]:
+                        failures["chair-window-closed"]["C3 close closes; the screen stands"] = {
                             "windows": chair["windows"], "reopen": chair["reopen"]}
                     page.screenshot(path=str(SHOTS / f"build-C1-4c-chair-window-closed-{tag}.png"))
 
@@ -402,11 +407,11 @@ class TestTheChairAsWindows:
                     if frame["screen"] != "Brief" or chair["reopen"]:
                         failures["chair-window-reopened"]["C3 reopened in front"] = {
                             "screen": frame["screen"], "reopen": chair["reopen"]}
-                    # the reopen Button reopens too
-                    shell("The week").get_by_role("button", name="Close The week").click()
-                    shell("The week").wait_for(state="detached")
-                    page.get_by_role("button", name="Open The week").click()
-                    shell("The week").wait_for()
+                    # PHILO-14 A1: the screen's Needs you drawer reopens its window
+                    shell("Needs you").get_by_role("button", name="Close Needs you").click()
+                    shell("Needs you").wait_for(state="detached")
+                    page.locator(".desk-screen [data-object-id='drawer:needs']").press("Enter")
+                    shell("Needs you").wait_for()
                     # a press on a window brings it to the front (one blue)
                     shell("Needs you").locator(".desk-pullout-title").click()
                     frame, chair = self._measure(page, width, "needs-front", facts)
@@ -425,18 +430,16 @@ class TestTheChairAsWindows:
                     # C2b (393): the screen title names the one Chair window
                     named = {"Needs you": page.get_by_test_id("desk-screen-title").inner_text().strip()}
 
-                    # C1-4a (393): Go ▸ Chair ▸ Brief
+                    # C1-4a (393): Go ▸ Brief (PHILO-14 A1 #939: the Chair's
+                    # windows are Go's first rows, two taps)
                     self._press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
                     page.locator(".desk-verbbar-menu").wait_for()
-                    sub = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')")
-                    sub.scroll_into_view_if_needed()
-                    self._press(page, sub, width)
                     page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')").wait_for()
                     rows = page.evaluate("""() => [...document.querySelectorAll('.desk-menu-list [role="menuitemcheckbox"]')]
                         .map((e) => [e.textContent.trim(), e.getAttribute('aria-checked')])""")
                     facts["go-chair"] = rows
                     if [t.replace("✓", "").strip() for t, _ in rows] != ["Needs you", "Brief", "The week"]:
-                        failures["phone-desk"]["C4 Go ▸ Chair has no Capture row"] = rows
+                        failures["phone-desk"]["C4 Go has the Chair rows, no Capture row"] = rows
                     self._press(page, page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')"), width)
                     shell("Brief").wait_for()
                     frame, chair = self._measure(page, width, "chair-windows", facts)
@@ -447,18 +450,12 @@ class TestTheChairAsWindows:
                     named["Brief"] = page.get_by_test_id("desk-screen-title").inner_text().strip()
                     self._press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
                     page.locator(".desk-verbbar-menu").wait_for()
-                    go_chair = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')")
-                    go_chair.scroll_into_view_if_needed()
-                    self._press(page, go_chair, width)
                     self._press(page, page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('The week')"), width)
                     shell("The week").wait_for()
                     page.wait_for_timeout(250)
                     named["The week"] = page.get_by_test_id("desk-screen-title").inner_text().strip()
                     self._press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
                     page.locator(".desk-verbbar-menu").wait_for()
-                    go_chair = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')")
-                    go_chair.scroll_into_view_if_needed()
-                    self._press(page, go_chair, width)
                     self._press(page, page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')"), width)
                     shell("Brief").wait_for()
 

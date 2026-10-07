@@ -50,7 +50,8 @@ from .glass_infra import (
 )
 from tests._evidence import evidence_dir
 
-pytestmark = pytest.mark.timeout(600, method="thread")
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = [pytest.mark.timeout(600, method="thread"), pytest.mark.chair_windows_open]
 
 SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-201-one-meeting-result/assets/story-04-shots")
 TOKEN = "hs201-04-face"

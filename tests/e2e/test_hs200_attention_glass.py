@@ -57,7 +57,8 @@ WRITE_SHOTS = os.environ.get("HOLDSPEAK_WRITE_SHOTS") == "1"
 TOKEN = "hs200-attention"
 OWNER_LOGIN = "karolswdev"
 
-pytestmark = [pytest.mark.e2e]
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = [pytest.mark.e2e, pytest.mark.chair_windows_open]
 
 
 # ── seeds ────────────────────────────────────────────────────────────

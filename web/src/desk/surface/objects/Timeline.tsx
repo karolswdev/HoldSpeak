@@ -49,9 +49,18 @@ export interface TimelineEntry {
   pending?: boolean;
 }
 
-export function TimelineRail({ label, entries }: { label: string; entries: TimelineEntry[] }) {
+export function TimelineRail({
+  label,
+  entries,
+  "data-testid": testId,
+}: {
+  label: string;
+  entries: TimelineEntry[];
+  /** Pass-through data-testid for the root `ol`. */
+  "data-testid"?: string;
+}) {
   return (
-    <ol className="lane-rail" aria-label={label}>
+    <ol className="lane-rail" aria-label={label} data-testid={testId}>
       {entries.map((entry, index) => (
         <li
           key={entry.id ?? `${entry.word}-${index}`}
@@ -88,9 +97,18 @@ export interface Station {
   tone?: ObjectTone;
 }
 
-export function StationTrack({ label, stations }: { label: string; stations: Station[] }) {
+export function StationTrack({
+  label,
+  stations,
+  "data-testid": testId,
+}: {
+  label: string;
+  stations: Station[];
+  /** Pass-through data-testid for the root `ol`. */
+  "data-testid"?: string;
+}) {
   return (
-    <ol className="lane-track" aria-label={label}>
+    <ol className="lane-track" aria-label={label} data-testid={testId}>
       {stations.map((station) => (
         <li
           key={station.word}

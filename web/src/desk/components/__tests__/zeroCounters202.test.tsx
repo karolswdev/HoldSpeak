@@ -81,14 +81,16 @@ describe("an empty zone never counts to a screen reader (A.8)", () => {
     const names = [...document.querySelectorAll("[aria-label]")].map(
       (element) => element.getAttribute("aria-label") ?? "",
     );
-    expect(names).toContain("Launch zone");
-    expect(names.filter((name) => /\b0 items?\b/.test(name))).toEqual([]);
+    // PHILO-14 A2: the zone is an ObjectList row (`<name>, ZONE, <count>`);
+    // an empty one says EMPTY, never a zero.
+    expect(names).toContain("Launch, ZONE, EMPTY");
+    expect(names.filter((name) => /\b0 items?\b/i.test(name))).toEqual([]);
   });
 
   /* The shot walk caught this one: `countToken`'s default plural appends
    * an S to the token as given, so a lowercase noun announced "2 itemS".
    * A screen reader reads the case. */
-  it("announces a filled zone in plain lowercase words", () => {
+  it("announces a filled zone in plain words (no itemS)", () => {
     useDesk.setState({
       items: {
         ...items,
@@ -106,7 +108,7 @@ describe("an empty zone never counts to a screen reader (A.8)", () => {
     const names = [...document.querySelectorAll("[aria-label]")].map(
       (element) => element.getAttribute("aria-label") ?? "",
     );
-    expect(names).toContain("Launch zone, 1 item");
+    expect(names).toContain("Launch, ZONE, 1 ITEM");
     expect(names.some((name) => /itemS/.test(name))).toBe(false);
   });
 
@@ -116,7 +118,7 @@ describe("an empty zone never counts to a screen reader (A.8)", () => {
         <DeskListView />
       </MemoryRouter>,
     );
-    const cells = [...document.querySelectorAll("td")].map(
+    const cells = [...document.querySelectorAll("[role=gridcell]")].map(
       (cell) => cell.textContent ?? "",
     );
     expect(cells.some((cell) => cell.includes("Launch"))).toBe(true);

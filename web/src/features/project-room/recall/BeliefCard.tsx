@@ -13,11 +13,11 @@
  *
  * A belief has no verb of its own: it is read, and its sources open.
  */
-import { openProjectRoom } from "../../../desk/shell";
 import { openRef } from "../../../desk/openObject";
 import { Disclosure, RefTokens, countLabel, countToken } from "../../../desk/surface";
 import { ProjectButton } from "../../../desk/surface/patterns";
 import type { BeliefCardData } from "./model";
+import { openDrawer } from "../../../desk/drawer/store";
 
 const STATE_TONE: Record<string, "ok" | "danger" | "warn"> = {
   current: "ok",
@@ -64,7 +64,7 @@ export function BeliefCard({
         {belief.project ? (
           <ProjectButton
             name={belief.project.name}
-            onOpen={() => openProjectRoom(belief.project!.id)}
+            onOpen={() => openDrawer(belief.project!.id)}
             data-testid="recall-project"
           />
         ) : null}

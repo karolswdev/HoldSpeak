@@ -34,6 +34,9 @@ from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 from .test_philo13_11_chair_glass import _seed
 from tests._evidence import evidence_dir
 
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
+
 pytest.importorskip("playwright.sync_api", reason="the title bar glass needs Playwright")
 
 TOKEN = "philo13-11-titlebar"

@@ -686,3 +686,21 @@ def seed_meeting_engines() -> None:
     engine_profile()
     assign_engine(SUMMARY_CAPABILITY, 1)
     assign_engine(SPEECH_CAPABILITY, 2)
+
+
+# ── PHILO-14 A2: a Project opens as its drawer; the Room is one press away ──
+
+def _room_through_drawer(page: Any, press: Any = None) -> None:
+    """A generic open of a Project lands in its drawer (the ruling: the
+    drawer is the Project's face; the Room is its intelligence, one press
+    away). Press the drawer's Room verb; ``press`` is the rig's own press
+    (a tap at 393), default a click."""
+    drawer = page.locator(".drawer-window").last
+    drawer.wait_for(timeout=30_000)
+    room = drawer.get_by_role("button", name="Room", exact=True)
+    room.wait_for(timeout=30_000)
+    if press:
+        press(room)
+    else:
+        room.click()
+    page.locator("#surface-project-memory").wait_for(timeout=30_000)

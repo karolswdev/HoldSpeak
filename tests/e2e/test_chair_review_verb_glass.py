@@ -16,6 +16,9 @@ import pytest
 
 from .glass_infra import _api, _boot, _normal_chair, _settle
 
+# PHILO-14 A1: the Chair is the screen of objects; these specs read its windows (tests/conftest.py).
+pytestmark = pytest.mark.chair_windows_open
+
 pytest.importorskip("playwright.sync_api", reason="Chair glass needs Playwright")
 
 TOKEN = "chair-review-verb"

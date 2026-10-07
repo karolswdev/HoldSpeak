@@ -9,6 +9,7 @@ import { wireDate } from "../surface/format";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chair } from "./Chair";
 import { ChairDesk } from "./ChairDesk";
+import { Screen } from "../screen";
 import { FirstRun } from "../firstrun/FirstRun";
 import { useDesk } from "../store";
 import { openNewThought } from "../newThought";
@@ -87,6 +88,7 @@ import {
   type PlannedRoute,
   type SummaryRefusal,
 } from "../../meetings/summaryRoute";
+import { openDrawer } from "../drawer/store";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -1009,9 +1011,13 @@ function Arrival() {
      §5, boards C1-1, C1-4a–e, C1-6a): the Arrival's sections move,
      unchanged, into four DeskWindowFrame windows. The work first (R3): the
      Needs-you window leads with the number, the ranking strip and the
-     actions; SETUP drops below the actions. */
+     actions; SETUP drops below the actions.
+     PHILO-14 A1 (board A-1, RATIFIED 2026-10-07): the Chair IS the screen
+     of objects; the four windows open from it, the Dock and Window ▸ Chair.
+     The Phase-13 tiles are PARKED in ChairDesk (`data-layout="tiles"`). */
   return (
     <ChairDesk
+      screen={<Screen />}
       needs={
         <>
           {/* ── Headline ── */}
@@ -2640,7 +2646,7 @@ function CoderNeedsYouRow({ item, now, primary }: { item: NeedsYouItem; now: Dat
           {projectId && projectName ? (
             <ProjectButton
               name={projectName}
-              onOpen={() => openProjectRoom(projectId)}
+              onOpen={() => openDrawer(projectId)}
               data-testid="arrival-project"
             />
           ) : null}

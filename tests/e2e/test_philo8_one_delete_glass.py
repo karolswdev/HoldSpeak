@@ -105,7 +105,7 @@ def _to_face(page: Any, face: str, width: int) -> None:
 
 
 def _name_button(page: Any, title: str) -> Any:
-    return page.locator(".desk-list-name-cell", has_text=title).first
+    return page.locator(".object-list-open", has_text=title).first
 
 
 def _select(page: Any, face: str, decision_id: str, title: str) -> None:
@@ -115,7 +115,7 @@ def _select(page: Any, face: str, decision_id: str, title: str) -> None:
     if face == "list":
         _name_button(page, title).wait_for(timeout=15_000)
         page.evaluate(
-            "(t) => [...document.querySelectorAll('.desk-list-name-cell')]"
+            "(t) => [...document.querySelectorAll('.object-list-open')]"
             ".find((el) => el.innerText.includes(t)).focus()",
             title,
         )
@@ -156,7 +156,7 @@ _OPTION_PROBE_JS = """(el) => {
 
 
 _ROW_MENU_DELETE_JS = """async (title) => {
-  const row = [...document.querySelectorAll('.desk-list-name-cell')].find((e) => e.innerText.includes(title));
+  const row = [...document.querySelectorAll('.object-list-open')].find((e) => e.innerText.includes(title));
   if (!row) return 'no row';
   const r = row.getBoundingClientRect();
   row.dispatchEvent(new MouseEvent('contextmenu', {bubbles: true, cancelable: true,
@@ -551,7 +551,7 @@ class TestOneDelete:
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 _to_face(page, "list", 1440)
-                _name_button(page, "WB Probe").click()
+                _name_button(page, "WB Probe").dblclick()  # PHILO-14 A2: a press selects; a double press opens
                 window = page.locator(".desk-workbench-window")
                 window.wait_for(timeout=10_000)
                 window.get_by_text("Repeat WB item", exact=True).click()
@@ -643,7 +643,7 @@ class TestOneDelete:
                 page.wait_for_timeout(300)
                 probe = page.evaluate("""() => {
                   const foot = document.querySelector('.desk-listmode > .desk-world-foot').getBoundingClientRect();
-                  const rows = [...document.querySelectorAll('.desk-list-name-cell')]
+                  const rows = [...document.querySelectorAll('.object-list-open')]
                     .filter((e) => e.innerText.includes('Last row')).slice(-3).map((e) => {
                       const r = e.getBoundingClientRect();
                       const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
@@ -732,7 +732,7 @@ class TestOneDelete:
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 _to_face(page, "list", width)
-                _name_button(page, "Refused WB").click()
+                _name_button(page, "Refused WB").dblclick()  # PHILO-14 A2: a press selects; a double press opens
                 window = page.locator(".desk-workbench-window")
                 window.wait_for(timeout=10_000)
                 window.get_by_text("Refused item", exact=True).click()
@@ -786,7 +786,7 @@ class TestOneDelete:
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 _to_face(page, "list", width)
-                _name_button(page, "Undo WB").click()
+                _name_button(page, "Undo WB").dblclick()  # PHILO-14 A2: a press selects; a double press opens
                 window = page.locator(".desk-workbench-window")
                 window.wait_for(timeout=10_000)
                 window.get_by_text("Undo item", exact=True).click()
@@ -836,7 +836,7 @@ class TestOneDelete:
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 _to_face(page, "list", width)
-                _name_button(page, "Two items WB").click()
+                _name_button(page, "Two items WB").dblclick()  # PHILO-14 A2: a press selects; a double press opens
                 window = page.locator(".desk-workbench-window")
                 window.wait_for(timeout=10_000)
                 url = f"**/api/workbenches/{wb}/items/{a}"

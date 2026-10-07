@@ -65,16 +65,19 @@ interface ChairWindowsState {
 // the phone's window (C7's ring is derived from that, not stored twice).
 const storedChair = loadDeskWorkspace().chair;
 
+// PHILO-14 A1: the Chair is the screen of objects (board A-1); a desk that
+// remembers nothing opens with every Chair window closed and no phone window,
+// so the owner arrives at his objects. A window he opened stays open (B2).
 export const useChairWindows = create<ChairWindowsState>(() => ({
   closed: Object.fromEntries(
-    (storedChair?.closed ?? [])
+    (storedChair ? storedChair.closed : CHAIR_WINDOW_IDS)
       .filter((id) => CHAIR_WINDOW_IDS.includes(id))
       .map((id) => [id, true]),
   ),
   phone:
     storedChair && (storedChair.phone === "" || CHAIR_WINDOW_IDS.includes(storedChair.phone))
       ? storedChair.phone
-      : "chair:needs",
+      : "",
   captureInRing: storedChair?.phone === "chair:capture",
 }));
 

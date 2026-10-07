@@ -13,6 +13,8 @@ closed is silent; F2 on a zone row does nothing.
 """
 from __future__ import annotations
 
+import re
+
 from pathlib import Path
 from typing import Any
 
@@ -47,7 +49,7 @@ _FIELD_JS = """() => {
     value: input.value,
     focused: document.activeElement === input,
     selStart: input.selectionStart, selEnd: input.selectionEnd,
-    inListRow: !!input.closest('.desk-sortable-table-row'),
+    inListRow: !!input.closest('.object-list-row'),  // PHILO-14 A2: the ObjectList row
     chip: chip ? chip.innerText.replace(/\\s+/g, ' ').trim() : null,
     code: row.querySelector('[data-code]')?.dataset.code ?? null,
     small,
@@ -56,7 +58,7 @@ _FIELD_JS = """() => {
 }"""
 
 _KIND_X_JS = """() => {
-  const th = [...document.querySelectorAll('.desk-listmode th')].find(t => /^KIND/i.test((t.innerText || '').trim()));
+  const th = [...document.querySelectorAll('.desk-listmode [role=columnheader]')].find(t => /^KIND/i.test((t.innerText || '').trim()));
   return th ? Math.round(th.getBoundingClientRect().left) : null;
 }"""
 
@@ -175,7 +177,7 @@ class TestListRenameGlass:
                 page.locator("input.desk-zone-rename").wait_for(state="detached", timeout=T)
                 assert puts and puts[-1][1] == 200, puts
                 assert "Platform team" in _names(page)
-                page.get_by_role("button", name="Platform team zone", exact=True).wait_for(timeout=T)
+                page.get_by_role("button", name=re.compile(r"^Platform team, ZONE")).wait_for(timeout=T)
                 page.screenshot(path=str(SHOTS / f"list-enter-written-{width}.png"))
                 # Escape keeps the default name; no PUT.
                 n_puts = len(puts)
@@ -315,7 +317,7 @@ class TestListRenameGlass:
         with sync_playwright() as pw:
             browser, page, puts = self._open(pw, width, "list")
             try:
-                page.get_by_role("button", name="Inbox zone", exact=False).first.focus()
+                page.get_by_role("button", name=re.compile(r"^Inbox, ZONE")).first.focus()
                 page.keyboard.press("F2")
                 f = _field(page, timeout=T)
                 assert f["inListRow"] and f["value"] == "Inbox" and f["focused"], f
