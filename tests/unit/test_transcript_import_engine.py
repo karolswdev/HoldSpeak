@@ -64,7 +64,7 @@ def test_vtt_imports_with_real_timestamps_and_file_speakers(tmp_path, db):
 
     state = db.meetings.get_meeting(result.state.id)
     assert state is not None
-    assert state.title == "weekly sync"
+    assert state.title == "Weekly sync"  # PHILO-15-07: humanised
     assert state.tags == ["roadmap"]
     # Real cue timestamps, straight from the file.
     assert [s.start_time for s in state.segments] == [1.0, 4.5, 9.5]

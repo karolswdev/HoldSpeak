@@ -21,9 +21,9 @@ import {
   type SummaryRefusal,
 } from "../../../meetings/summaryRoute";
 import { rowId } from "../../pageSupport";
-import { countToken } from "../../../desk/surface";
+import { countToken, StateChip } from "../../../desk/surface";
 import {
-  durationToken, ledgerDate, wordsToken, needsIntelligence,
+  durationToken, ledgerDate, wordsToken, needsIntelligence, unclearLampLabel,
   meetingRowState, stateToken,
 } from "./helpers";
 import type { ReactNode } from "react";
@@ -155,6 +155,12 @@ function MeetingStreamRow({
   );
   if (words) tokenParts.push(
     <span className="meetings-stream-fact">{words}</span>
+  );
+  // PHILO-15-07 (B01): a transcript with honest gaps never shows a bare
+  // word count.
+  const unclear = unclearLampLabel(row);
+  if (unclear) tokenParts.push(
+    <StateChip state="warning" label={unclear} data-testid="unclear-lamp" />
   );
   // The state token or NO TRANSCRIPT
   if (noTranscript && token.label === "OFF") {

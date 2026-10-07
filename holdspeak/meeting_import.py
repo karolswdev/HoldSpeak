@@ -29,6 +29,7 @@ search, exports, intel, aftercare) treats it identically.
 from __future__ import annotations
 
 import logging
+import re
 import shutil
 import subprocess
 import uuid
@@ -44,6 +45,7 @@ import numpy as np
 from .errors import HoldSpeakError
 from .audio import _linear_resample_mono
 from .meeting_session import MeetingState, TranscriptSegment
+from .transcript_guard import is_degenerate, mark_degenerate
 from .transcript_parse import (
     TRANSCRIPT_SUFFIXES,
     TranscriptParseError,
@@ -57,7 +59,14 @@ TARGET_SAMPLE_RATE = 16000
 # Window-level timing is the honest timestamp story: one transcribe() call
 # returns one text blob, so each ~30 s window becomes one segment stamped
 # with the window's real start/end.
+#
+# PHILO-15-07 (B01): with the real Transcriber the window is no longer a hard
+# cut. The import reads Whisper's own segment timestamps; a segment that runs
+# into the window's end is dropped and the next window starts at that
+# segment's start, so a sentence is decoded whole in one window.
 DEFAULT_WINDOW_SECONDS = 30.0
+# A segment that ends this close to a window's cut ran into it.
+BOUNDARY_GUARD_SECONDS = 1.0
 # Formats ffmpeg can decode for us. WAV is handled natively first.
 FFMPEG_SUFFIXES = {".mp3", ".m4a", ".aac", ".ogg", ".oga", ".opus", ".flac", ".webm", ".mp4"}
 DEFAULT_SPEAKER_LABEL = "Recording"
@@ -238,6 +247,35 @@ def load_audio(path: Path) -> tuple[np.ndarray, int]:
     )
 
 
+# PHILO-15-07 (B30): a token that is an id, not a word. A long hex run with
+# both letters and digits (a uuid part, a hash) or a long digit run that is
+# not a date.
+_UUID_TOKEN = re.compile(r"^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$", re.I)
+_DATE_TOKEN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_ID_TOKEN = re.compile(r"^(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{8,}$|^\d{9,}$", re.I)
+
+
+def humanize_title(filename: str) -> str:
+    """A meeting title from a file name: no extension, no underscores, no ids.
+
+    ``philo3_architect_meeting.wav`` -> ``Philo3 architect meeting``. A
+    name made only of ids falls back to ``Imported recording``.
+    """
+    stem = Path(str(filename or "")).stem
+    words: list[str] = []
+    for token in re.split(r"[\s_.]+", stem):
+        # A date keeps its hyphens; any other hyphen joins words.
+        if _UUID_TOKEN.match(token):
+            continue
+        words.extend([token] if _DATE_TOKEN.match(token) else token.split("-"))
+    words = [w for w in words if w]
+    words = [w for w in words if not _ID_TOKEN.match(w)]
+    title = " ".join(words).strip()
+    if not title:
+        return "Imported recording"
+    return title[0].upper() + title[1:]
+
+
 def import_meeting(
     path: Path | str,
     *,
@@ -294,8 +332,11 @@ def import_meeting(
         insertion_aim="recording-import",
         config_snapshot=config,
         registry_snapshot=db,
-        deadline_seconds=max(300.0, 60.0 * windows_total),
-        child_budget=2 * windows_total + 4,
+        # PHILO-15-07: a window that drops its last segment repeats that
+        # stretch in the next window (at most twice the nominal count), and a
+        # degenerate window is decoded once more.
+        deadline_seconds=max(300.0, 120.0 * windows_total),
+        child_budget=4 * windows_total + 4,
     )
     admission = session.transcription()
     try:
@@ -324,7 +365,7 @@ def import_meeting(
         segments=segments,
         duration=duration,
         started_at=started_at,
-        title=(title or path.stem).strip() or path.stem,
+        title=(title or "").strip() or humanize_title(path.name),
         tags=tags,
         meeting_id=meeting_id,
         source_name=path.name,
@@ -345,25 +386,155 @@ def _transcribe_import_windows(
     speaker_label: str,
     progress: Any = None,
 ) -> tuple[list[TranscriptSegment], int]:
-    """One admitted transcription child per import window."""
+    """One admitted transcription child per import window.
+
+    PHILO-15-07: a transcriber that returns Whisper's own segments
+    (``supports_segments``, the real :class:`~holdspeak.transcribe.Transcriber`)
+    goes through :func:`_transcribe_segmented`, where no window cuts a
+    sentence. A plain text transcriber keeps fixed windows. Both paths put an
+    honest mark on a degenerate span instead of the loop.
+    """
+    if getattr(transcriber, "supports_segments", False) is True:
+        return _transcribe_segmented(
+            transcriber, audio, admission,
+            windows_total=windows_total, window_samples=window_samples,
+            duration=duration, speaker_label=speaker_label, progress=progress,
+        )
     segments: list[TranscriptSegment] = []
     windows_empty = 0
     for index in range(windows_total):
         chunk = audio[index * window_samples : (index + 1) * window_samples]
         text = (transcriber.transcribe(chunk, admission=admission) or "").strip()
+        start = index * window_seconds
+        end = min((index + 1) * window_seconds, duration)
+        if text and is_degenerate(text):
+            text = mark_degenerate(text, start, end)
         if text:
             segments.append(
                 TranscriptSegment(
                     text=text,
                     speaker=speaker_label,
-                    start_time=index * window_seconds,
-                    end_time=min((index + 1) * window_seconds, duration),
+                    start_time=start,
+                    end_time=end,
                 )
             )
         else:
             windows_empty += 1
         if progress is not None:
             progress(index + 1, windows_total)
+    return segments, windows_empty
+
+
+def _boundary_split(
+    decoded: Sequence[dict], *, window_len: float, final: bool, min_advance: float
+) -> tuple[list[dict], Optional[float]]:
+    """Keep the segments a window decoded whole; name where the next window starts.
+
+    A segment whose end reaches the window's cut (within
+    ``BOUNDARY_GUARD_SECONDS``) was cut mid-sentence: it is dropped, and the
+    next window starts at its start (window-relative seconds). ``None`` means
+    the next window starts at the cut: the last window, no segment at the
+    cut, or a drop that would not move the import forward by ``min_advance``.
+    """
+    kept = [dict(seg) for seg in decoded if str(seg.get("text") or "").strip()]
+    if final or not kept:
+        return kept, None
+    cut = window_len - BOUNDARY_GUARD_SECONDS
+    index = len(kept)
+    while index > 0 and float(kept[index - 1].get("end", 0.0)) >= cut:
+        index -= 1
+    if index == len(kept):
+        return kept, None
+    resume = float(kept[index].get("start", 0.0))
+    if resume < min_advance:
+        return kept, None
+    return kept[:index], resume
+
+
+def _transcribe_segmented(
+    transcriber: Any,
+    audio: Any,
+    admission: Any,
+    *,
+    windows_total: int,
+    window_samples: int,
+    duration: float,
+    speaker_label: str,
+    progress: Any = None,
+) -> tuple[list[TranscriptSegment], int]:
+    """PHILO-15-07: decode on Whisper's segment timestamps, guard every window.
+
+    1. Each window is decoded with Whisper's guards (compression ratio and
+       no-speech thresholds, no conditioning on the previous text).
+    2. A segment at the cut is dropped and decoded again at the start of the
+       next window, so a sentence is never split across two windows.
+    3. A window with a degenerate segment (a repeat loop) is decoded once
+       more with a warm temperature; the decode with fewer bad segments wins.
+    4. A segment that is still degenerate keeps its words before the loop and
+       carries ``[unclear m:ss–m:ss]`` for the rest.
+    """
+    from .transcribe import WHISPER_RETRY_TEMPERATURES
+
+    segments: list[TranscriptSegment] = []
+    windows_empty = 0
+    total = len(audio)
+    position = 0
+    min_advance = (window_samples / 2) / TARGET_SAMPLE_RATE
+    while position < total:
+        end = min(position + window_samples, total)
+        chunk = audio[position:end]
+        offset = position / TARGET_SAMPLE_RATE
+        window_len = (end - position) / TARGET_SAMPLE_RATE
+        final = end >= total
+
+        def _decode(temperature: Any = None) -> tuple[list[dict], Optional[float]]:
+            options: dict[str, Any] = {"segments": True}
+            if temperature is not None:
+                options["temperature"] = temperature
+            decoded = transcriber.transcribe(chunk, admission=admission, **options) or []
+            return _boundary_split(
+                decoded, window_len=window_len, final=final, min_advance=min_advance
+            )
+
+        kept, resume = _decode()
+        bad = sum(1 for seg in kept if is_degenerate(str(seg["text"])))
+        if bad:
+            log.info(
+                f"Import window at {offset:.1f}s decoded {bad} degenerate segment(s); "
+                "decoding it again"
+            )
+            retry, retry_resume = _decode(WHISPER_RETRY_TEMPERATURES)
+            retry_bad = sum(1 for seg in retry if is_degenerate(str(seg["text"])))
+            if retry_bad < bad:
+                kept, resume = retry, retry_resume
+
+        window_had_text = False
+        for seg in kept:
+            start = offset + float(seg.get("start", 0.0))
+            stop = min(offset + float(seg.get("end", 0.0)), duration)
+            text = str(seg["text"]).strip()
+            if is_degenerate(text):
+                text = mark_degenerate(text, start, stop)
+            if not text:
+                continue
+            window_had_text = True
+            segments.append(
+                TranscriptSegment(
+                    text=text,
+                    speaker=speaker_label,
+                    start_time=start,
+                    end_time=max(start, stop),
+                )
+            )
+        if not window_had_text:
+            windows_empty += 1
+
+        position = end if resume is None else position + int(resume * TARGET_SAMPLE_RATE)
+        if progress is not None:
+            done = windows_total if position >= total else min(
+                windows_total, int(np.ceil(position / window_samples))
+            )
+            progress(done, windows_total)
     return segments, windows_empty
 
 
@@ -496,7 +667,7 @@ def import_transcript(
         segments=segments,
         duration=duration,
         started_at=started_at,
-        title=(title or path.stem).strip() or path.stem,
+        title=(title or "").strip() or humanize_title(path.name),
         tags=tags,
         meeting_id=meeting_id,
         source_name=path.name,

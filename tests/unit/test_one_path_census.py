@@ -510,6 +510,7 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
 ADMITTED_SEAM_CALLERS: dict[tuple[str, str], str] = {
     ("holdspeak/main.py", "_run_meeting_mode"): "Transcriber.transcribe (admitted per HS-131-09)",
     ("holdspeak/meeting_import.py", "_transcribe_import_windows"): "Transcriber.transcribe",
+    ("holdspeak/meeting_import.py", "_transcribe_segmented._decode"): "Transcriber.transcribe (PHILO-15-07: Whisper segments for one import window)",
     ("holdspeak/meeting_session/transcribe_loop.py", "TranscribeLoopMixin._transcribe_audio"): "Transcriber.transcribe",
     ("holdspeak/runtime/dictation_capture.py", "DictationCaptureMixin._transcribe_and_type"): "Transcriber.transcribe",
     ("holdspeak/runtime/dictation_capture.py", "DictationCaptureMixin.transcribe_audio_admitted"): "Transcriber.transcribe under the session's admitted transcription child",
@@ -724,7 +725,8 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # _attempt_stream (1); line shifts do not change count.
     # HS-151-04: +1 StreamingPromptAdapter.dispatch run_prompt fallback
     # Memory slice 1: +3 leaf sites inside the memory.embed adapter's dispatch.
-    assert len(sites) == 112
+    # PHILO-15-07: +1 admitted import caller (_transcribe_segmented._decode).
+    assert len(sites) == 113
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
     assert counts["finding"] == 0

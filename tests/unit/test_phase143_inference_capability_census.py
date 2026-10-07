@@ -151,6 +151,7 @@ holdspeak/kernel/prompt_adapter.py|StreamingPromptAdapter.dispatch|run_prompt|ca
 holdspeak/main.py|_run_meeting_mode|transcribe|call
 holdspeak/main.py|_run_meeting_mode|transcribe|call#2
 holdspeak/meeting_import.py|_transcribe_import_windows|transcribe|call
+holdspeak/meeting_import.py|_transcribe_segmented._decode|transcribe|call
 holdspeak/memory/engine.py|EmbeddingAdapter._local_model|Llama|call
 holdspeak/memory/engine.py|EmbeddingAdapter._endpoint_vectors|_ensure_openai_client_loaded|call
 holdspeak/memory/engine.py|EmbeddingAdapter._endpoint_vectors|_remote_completion|call
@@ -679,6 +680,7 @@ holdspeak/memory/engine.py|EmbeddingAdapter._endpoint_vectors|_remote_completion
 holdspeak/main.py|_run_meeting_mode|transcribe|call
 holdspeak/main.py|_run_meeting_mode|transcribe|call#2
 holdspeak/meeting_import.py|_transcribe_import_windows|transcribe|call
+holdspeak/meeting_import.py|_transcribe_segmented._decode|transcribe|call
 holdspeak/meeting_session/transcribe_loop.py|TranscribeLoopMixin._transcribe_audio|transcribe|call
 holdspeak/runtime/dictation_capture.py|DictationCaptureMixin._transcribe_and_type|transcribe|call
 holdspeak/runtime/dictation_capture.py|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
@@ -727,7 +729,7 @@ def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
     # HS-151-04: +1 StreamingPromptAdapter.dispatch run_prompt fallback, +1 line shift
     # Memory slice 1: +3, the memory.embed adapter's local load, its endpoint
     # client and the engine's egress-warranted remote call.
-    assert len(live) == 112
+    assert len(live) == 113  # PHILO-15-07: +1 admitted import caller
 
 
 def test_phase143_every_product_runner_entrance_has_one_owner() -> None:

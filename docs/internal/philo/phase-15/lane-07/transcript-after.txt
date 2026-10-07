@@ -1,0 +1,16 @@
+[0.0-2.7] Hold Speaksynthetic Architect Meeting.
+[2.7-3.7] Decision 1.
+[3.7-5.9] Use SQ like for the local meeting ledger.
+[5.9-7.3] Owner, Mayyachan.
+[7.3-8.3] Action.
+[8.3-11.7] Mayyachan will write the Migration Plan by Friday.
+[11.7-12.7] Decision 2.
+[12.7-16.1] Keep summary retrieval on the local desk after a hub restart.
+[16.1-18.0] Owner, Leo Martinez.
+[18.0-19.0] Action.
+[19.0-22.4] Leo Martinez will test restart retrieval on Tuesday.
+[22.4-23.4] Decision 3.
+[23.4-26.8] Use a recorded provider reply for isolated rig tests.
+[26.8-28.2] Owner, Priya Shah.
+[28.2-33.7] Action Priya Shah will add the name failure fence before ship, Marker, hold speaks synthetic
+[33.7-34.6] arquitect 3

@@ -824,6 +824,8 @@ class MeetingRepository(BaseRepository):
                     (SELECT GROUP_CONCAT(tag) FROM meeting_tags WHERE meeting_id = m.id) as tags,
                     (SELECT COALESCE(SUM(LENGTH(TRIM(text)) - LENGTH(REPLACE(TRIM(text), ' ', '')) + 1), 0)
                      FROM segments WHERE meeting_id = m.id AND TRIM(text) != '') as transcript_words,
+                    (SELECT COUNT(*) FROM segments
+                     WHERE meeting_id = m.id AND text LIKE '%[unclear %') as unclear_spans,
                     (SELECT COUNT(*) FROM follow_through_proposals
                      WHERE meeting_id = m.id AND state = 'proposed') as needs_you_count,
                     COALESCE((
@@ -895,6 +897,7 @@ class MeetingRepository(BaseRepository):
                     calendar_event_id=r["calendar_event_id"] if r["calendar_event_id"] else None,
                     attendees=attendees_by_meeting.get(str(r["id"]), []),
                     transcript_words=int(r["transcript_words"]) if r["segment_count"] and r["transcript_words"] else None,
+                    unclear_spans=int(r["unclear_spans"] or 0),
                     needs_you_count=int(r["needs_you_count"]) if r["needs_you_count"] else 0,
                     intel_requested_at=parse_wall(r["intel_requested_at"]) if r["intel_requested_at"] else None,
                     intel_completed_at=parse_wall(r["intel_completed_at"]) if r["intel_completed_at"] else None,

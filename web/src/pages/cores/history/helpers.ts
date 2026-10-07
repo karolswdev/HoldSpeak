@@ -4,6 +4,7 @@
 // the typed artifacts are wings; speakers/projects/queues plumbing
 // stacks behind the one gear door.
 import { wireClock } from "../../../desk/surface/format";
+import { countToken } from "../../../desk/surface/count";
 import type { ReactNode } from "react";
 
 export const WINGS = [
@@ -184,6 +185,16 @@ export function download(blob: Blob, name: string) {
 /** The one receipt channel: what the machine just did, on the footer. */
 export type Receipt = { text: string; tone?: "danger" };
 
+/** PHILO-15-07 (B15) — the footer receipt once a queued summary run ends:
+ *  `RAN · 11:02` or `FAILED · 11:02`; another final state says its own word. */
+export function finishedRunReceipt(state: string, at: string): Receipt {
+  const s = String(state || "").toLowerCase();
+  const clock = clockTime(at);
+  if (s === "ready" || s === "complete") return { text: `RAN · ${clock}` };
+  if (s === "error" || s === "failed") return { text: `FAILED · ${clock}`, tone: "danger" };
+  return { text: `${(s || "done").toUpperCase().replace(/_/g, " ")} · ${clock}` };
+}
+
 /** Needs-you table row shape shared between useMeetingData and NeedsYouTable. */
 export type NeedsRow = { cells: ReactNode[]; verbs: ReactNode };
 
@@ -194,6 +205,16 @@ export function wordsToken(transcriptWords: unknown): string | null {
   const n = Number(transcriptWords);
   if (!Number.isFinite(n) || n <= 0) return null;
   return `${n.toLocaleString()} WORDS`;
+}
+
+/** PHILO-15-07 (B01) — the lamp a transcript with honest gaps carries:
+ *  `WARN · 1 UNCLEAR SPAN`. Null at zero (no counters of zero). Reads the
+ *  list row's `unclearSpans`, the detail's `unclearSpans`, or the desk
+ *  model's field of the same name. */
+export function unclearLampLabel(row: Record<string, unknown> | null | undefined): string | null {
+  const raw = row?.unclearSpans ?? row?.unclear_spans;
+  const token = countToken(Number(raw ?? 0) || 0, "UNCLEAR SPAN");
+  return token ? `WARN · ${token}` : null;
 }
 
 /** HS-170-04 — true when the meeting is OFF (intel disabled) AND has a
