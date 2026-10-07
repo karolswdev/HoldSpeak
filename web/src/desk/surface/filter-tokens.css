@@ -1,7 +1,8 @@
 /* HS-176-03 — FilterTokens: the one-tap filter strip.
 
-   Canon D: "Filters are flat tokens; wings are the beveled strip; the two
-   never look alike." PHILO-14 B2 (the material pass): a token is pressed,
+   Canon D (PHILO-14 B2, #958): "Filters are lightly raised tokens (the
+   soft bevel, no plate); wings keep the full Steel bevel; the two never
+   look alike." PHILO-14 B2 (the material pass): a token is pressed,
    so it LOOKS pressable (UX-CANON D): the LIGHT bevel of the grammar
    (`--bevel-raised-soft`), no plate (no fill, no border at rest), and the
    active token sinks (`--bevel-sunken-soft`) on its accent tint. A wing is

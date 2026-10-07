@@ -136,8 +136,8 @@ replace the earlier 11 px caption allowance.
   already fetched; sections rise in; idle never moves; reduced motion
   = instant. Four named motion moments per face at most.
 - Empty slots never move their neighbours (the footer's egress slot).
-- Filters are flat tokens; wings are the beveled strip; the two never
-  look alike.
+- Filters are lightly raised tokens (the soft bevel, no plate); wings
+  keep the full Steel bevel; the two never look alike (PHILO-14 B2, #958).
 - One word, one meaning per face (176): the wing is the noun (LEARNED),
   the receipt is the act (TAUGHT), the chip is the fact (APPLIED); a
   chip renders only from a stored per-run fact, never a read-time

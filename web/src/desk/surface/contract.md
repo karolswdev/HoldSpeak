@@ -90,7 +90,7 @@ A ChoiceCard is an OBJECT, not a list. Beyond label/description/facts/cost:
 
 ## FilterTokens (HS-176-03)
 
-The flat one-tap filter strip: `role="group"` over library `Button` species,
+The one-tap filter strip (lightly raised tokens, PHILO-14 B2): `role="group"` over library `Button` species,
 one active at a time. Promoted from the composition ratified on the Project
 Room's history wing (`ProjectRoomCore.tsx:1550-1566`) per canon B — a
 recurring element the library lacked.
@@ -123,8 +123,9 @@ Presence rules (they are the species, not the caller's business):
   `null` below `SPARSE_THRESHOLD` (`LedgerFilter.tsx:104`, `sparse.ts:4`).
 - **It carries no count.** `matchCount/total` would be a second count on a
   face that says its one count elsewhere (UX-CANON A.7/A.8).
-- Not to be confused with `SurfaceWings`: filters are flat tokens, wings are
-  the beveled strip, and the two never look alike (canon D).
+- Not to be confused with `SurfaceWings`: filters are lightly raised tokens
+  (the soft bevel, no plate), wings keep the full Steel bevel, and the two
+  never look alike (canon D, PHILO-14 B2 #958).
 
 ### The strip menu form (PHILO-13-11, C1 §3a)
 
