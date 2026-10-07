@@ -54,6 +54,18 @@ TRUST_YES = "Yes, I trust this folder"
 TRUST_FOOTER = "Enter to confirm"
 _CURSOR = "❯"  # the ❯ that marks the selected choice
 
+#: Codex 0.159 reports SessionStart only with its first prompt, so a Codex
+#: launch never registers before its brief is typed (Conductor R1). Its
+#: readiness is read from the screen instead: the idle composer's footer is on
+#: the last lines and no startup screen asks anything.
+CODEX_READY_FOOTER = "? for shortcuts"
+CODEX_STARTUP_SCREENS = ("Trust this folder?", "Hooks need review")
+#: How long a Codex launch keeps binding its rider after the brief is typed.
+CODEX_BIND_SECONDS = 120.0
+#: ``pending_brief["ready"]``: what says the agent is up.
+READY_REGISTERED = "registered"
+READY_CODEX_SCREEN = "codex_screen"
+
 #: The states after which nothing is typed again.
 DELIVERED = "sent"
 UNDELIVERED_END = "ended_undelivered"
@@ -101,6 +113,15 @@ def parse_trust_prompt(lines: list[str]) -> Optional[dict[str, Any]]:
         return None
     cursor = "yes" if _CURSOR in yes_row else ("no" if _CURSOR in no_row else None)
     return {"paths": paths, "cursor": cursor}
+
+
+def codex_screen_ready(lines: list[str]) -> bool:
+    """Codex's idle composer footer is on the last lines of the screen and no
+    startup screen (folder trust, hook review) is shown anywhere on it."""
+    rows = [str(line).rstrip() for line in lines if str(line).strip()]
+    if not rows or any(screen in row for row in rows for screen in CODEX_STARTUP_SCREENS):
+        return False
+    return any(CODEX_READY_FOOTER in row for row in rows[-3:])
 
 
 def trust_prompt_for(lines: list[str], worktree_path: str) -> Optional[dict[str, Any]]:
@@ -153,7 +174,7 @@ class FirstMessage:
     def hold(
         self, launch_id: str, text: str, principal: Any, *,
         operation_id: str = "", agent: str = "agent", trust: bool = False,
-        state: str = "pending",
+        state: str = "pending", ready: str = READY_REGISTERED,
     ) -> dict[str, Any]:
         """Store the brief as this launch's pending first message."""
         return self._svc._ledger.update(
@@ -168,6 +189,7 @@ class FirstMessage:
                 "operation_id": operation_id,
                 "agent": agent,
                 "trust": bool(trust),
+                "ready": str(ready or READY_REGISTERED),
             },
         ) or {}
 
@@ -350,6 +372,7 @@ class FirstMessage:
         session = str(record.get("session") or "")
         trust = _Trust(self, record, principal, held) if held.get("trust") else None
         deadline = time.monotonic() + REGISTRATION_WAIT_SECONDS
+        codex_ready_polls = 0
         while True:
             if self._stop.is_set():
                 return  # this service is shutting down; the launch stays pending
@@ -370,6 +393,12 @@ class FirstMessage:
                 if trust is not None:
                     trust.registered()
                 break
+            if held.get("ready") == READY_CODEX_SCREEN and self._codex_ready(launch_id):
+                codex_ready_polls += 1
+                if codex_ready_polls >= 2:  # two calm frames: the composer is up
+                    break
+            else:
+                codex_ready_polls = 0
             if time.monotonic() >= deadline:
                 svc._ledger.update(launch_id, instruction_state="expired")
                 return
@@ -399,12 +428,41 @@ class FirstMessage:
             svc._ledger.update(
                 launch_id, commands=commands, instruction_state=DELIVERED, pending_brief=None,
             )
+            if held.get("ready") == READY_CODEX_SCREEN:
+                self._bind_after_send(attempt_id, session)
         else:
             # The receipt decides: a refused or failed send keeps the brief
             # held, so the owner can resume it on this launch.
             svc._ledger.update(
                 launch_id, commands=commands, instruction_state=outcome or "not_delivered",
             )
+
+    def _codex_ready(self, launch_id: str) -> bool:
+        """Codex's idle composer is on the launch's own pane, no startup
+        screen asks anything (Conductor R1)."""
+        record = self.retarget(launch_id)
+        if record is None:
+            return False
+        pane = str((record.get("target") or {}).get("pane_id") or "")
+        peek = coder_steering.peek_pane(pane, lines=60, runner=self._svc._runner)
+        if peek.get("status") != "live":
+            return False
+        return codex_screen_ready(list(peek.get("lines") or []))
+
+    def _bind_after_send(self, attempt_id: str, session: str) -> None:
+        """A Codex rider reports with the first prompt: bind it now, so the
+        gate, Needs you and the follow-through know the session at once."""
+        svc = self._svc
+        deadline = time.monotonic() + CODEX_BIND_SECONDS
+        while time.monotonic() < deadline and not self._stop.is_set():
+            try:
+                svc.bind_rider_claims()
+            except Exception:
+                pass
+            attempt = svc._attempts.get(attempt_id) if attempt_id else None
+            if attempt is None or attempt.session_id or not svc._session_alive(session):
+                return
+            time.sleep(LAUNCH_POLL_SECONDS)
 
     def send_keys(
         self, record: Mapping[str, Any], keys: list[str], principal: Any, held: Mapping[str, Any],
@@ -526,6 +584,7 @@ __all__ = [
     "LAUNCH_POLL_SECONDS",
     "REGISTRATION_WAIT_SECONDS",
     "TRUST_WAIT_SECONDS",
+    "codex_screen_ready",
     "parse_trust_prompt",
     "trust_prompt_for",
 ]

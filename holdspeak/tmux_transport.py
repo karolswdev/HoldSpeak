@@ -4,9 +4,15 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import uuid
 from dataclasses import dataclass
 
 from .errors import HoldSpeakError
+
+
+#: Text longer than this, or with a newline, is pasted as one bracketed paste
+#: instead of typed (Conductor R1, ``send_text_to_pane``).
+PASTE_ABOVE_CHARS = 200
 
 
 class TmuxTransportError(HoldSpeakError):
@@ -39,7 +45,22 @@ def send_text_to_pane(
     if shutil.which("tmux") is None:
         raise TmuxTransportError("tmux executable not found")
 
-    _run_tmux(["tmux", "send-keys", "-t", target, "-l", message], timeout_s=timeout_s)
+    if "\n" in message or len(message) > PASTE_ABOVE_CHARS:
+        # One bracketed paste (Conductor R1). Typed fast with ``send-keys -l``,
+        # a long or multi-line text reaches Claude Code 2.1.x as several
+        # guessed paste chunks plus typed characters, and on a real launch
+        # the chunks were lost: the agent got only the brief's last lines.
+        # ``paste-buffer -p`` brackets the text when the agent asked for
+        # bracketed paste (Claude Code and Codex do), so it arrives whole;
+        # ``-r`` keeps each newline as it is; ``-d`` deletes the buffer.
+        buffer = f"hs-{uuid.uuid4().hex[:12]}"
+        _run_tmux(["tmux", "load-buffer", "-b", buffer, "-"], timeout_s=timeout_s, stdin=message)
+        _run_tmux(
+            ["tmux", "paste-buffer", "-p", "-r", "-d", "-b", buffer, "-t", target],
+            timeout_s=timeout_s,
+        )
+    else:
+        _run_tmux(["tmux", "send-keys", "-t", target, "-l", message], timeout_s=timeout_s)
     if submit:
         # A LITERAL carriage return, not the named `Enter` key: current Claude
         # Code TUIs (observed on 2.1.x) drop a lone named-Enter send-keys but
@@ -86,10 +107,11 @@ def send_keys_to_pane(
     return TmuxDelivery(pane=target, submitted=False)
 
 
-def _run_tmux(cmd: list[str], *, timeout_s: float) -> None:
+def _run_tmux(cmd: list[str], *, timeout_s: float, stdin: str | None = None) -> None:
     try:
         completed = subprocess.run(
             cmd,
+            input=stdin,
             capture_output=True,
             text=True,
             timeout=timeout_s,

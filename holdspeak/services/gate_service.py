@@ -19,6 +19,27 @@ _LIVE_LAUNCH_STATES = frozenset({"launched", "registered"})
 CONTROL_MODE_IDENTITY = "control-mode"
 
 
+def _is_launch_caller(record: Mapping[str, Any], identity: str) -> bool:
+    """True when ``identity`` is this launch's agent.
+
+    Two credentials reach the gate from a launched agent: the session's own
+    (``claude:<session_id>``, the rider's registered ``session_key``) and,
+    since K6, the launch-bound one the spawn put in the pane's environment
+    (``agent:launch:<launch_id>``). The gate hook sends the inherited one
+    first (``coder_gate.issue_agent_credential``), so a launched agent's calls
+    carry the launch identity (Conductor R1: every call held as
+    ``not_a_holdspeak_launch``). Either one names the launch, and either
+    needs the rider's registration first: before it, no call is the
+    launch's."""
+    from ..coder_factory import launch_identity
+
+    session_key = str(record.get("session_key") or "")
+    if not session_key or not identity:
+        return False
+    launch = str(record.get("launch_id") or "")
+    return identity == session_key or bool(launch and identity == launch_identity(launch))
+
+
 @observe_service
 class GateService:
     def __init__(
@@ -179,7 +200,7 @@ class GateService:
         except Exception:
             return None
         live = [r for r in reversed(records) if str(r.get("state") or "") in _LIVE_LAUNCH_STATES]
-        record = next((r for r in live if r.get("session_key") == principal.identity), None)
+        record = next((r for r in live if _is_launch_caller(r, principal.identity)), None)
         if record is None:
             return None
         path = service._worktree_path(record)

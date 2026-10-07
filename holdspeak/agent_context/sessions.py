@@ -219,6 +219,14 @@ def ingest_agent_hook_event(
             normalized_agent,
             Path(str(payload.get("transcript_path") or "")).expanduser(),
         )
+    # Conductor R1: Claude Code 2.1.x and Codex 0.159 put the turn's last
+    # assistant message in the Stop payload itself. A question read from it
+    # needs no transcript read, so a launched agent (whose rider hooks do not
+    # opt in to message capture) still reaches Needs you when it asks. Only
+    # the question is kept from it (secret-filtered), never the message.
+    stop_text: str | None = None
+    if hook_event_name == "Stop" and not assistant_text:
+        stop_text = _optional_str(payload.get("last_assistant_message"))
     tmux_context = detect_tmux_context(payload, env=env)
     detected_claim = detect_story_claim(payload, env=env)
     identity = _event_identity(hook_event_name, payload, detected_claim, tmux_context)
@@ -256,6 +264,8 @@ def ingest_agent_hook_event(
             last_assistant_text_at = timestamp
             summary = None
             awaiting_response = looks_like_agent_question(assistant_text)
+        elif stop_text:
+            awaiting_response = looks_like_agent_question(stop_text)
 
         # HSM-17-02: the raw lifecycle + the pending question. A `Notification`
         # carries the blocking ask in `message` (permission prompts, "waiting
@@ -292,8 +302,8 @@ def ingest_agent_hook_event(
             # question the agent already asked: the question is the ask.
             if not (notification_type == "idle_prompt" and question):
                 question = _filter_question(message) or question
-        elif hook_event_name == "Stop" and assistant_text and awaiting_response:
-            question = _filter_question(assistant_text)
+        elif hook_event_name == "Stop" and (assistant_text or stop_text) and awaiting_response:
+            question = _filter_question(assistant_text or stop_text or "")
             notification_type = None
 
         session = AgentSession(

@@ -404,6 +404,8 @@ def test_a_codex_launch_gets_the_mcp_flags(tmp_path, db, monkeypatch) -> None:
         "-c", f'mcp_servers.holdspeak.url="{hub_url}/api/mcp"',
         "-c", 'mcp_servers.holdspeak.bearer_token_env_var="HOLDSPEAK_AGENT_CREDENTIAL"',
         "-c", 'mcp_servers.holdspeak.default_tools_approval_mode="approve"',
+        # Conductor R1: no startup screen in the way (folder trust, hook review).
+        *agent_mcp.codex_launch_args(str(rig.worktree)),
     ]
     assert token not in command
     # No --mcp-config file for Codex.

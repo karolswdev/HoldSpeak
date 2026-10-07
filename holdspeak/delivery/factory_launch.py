@@ -908,6 +908,11 @@ class LaunchService:
             from ..principals import agent_credentials
 
             argv = [*argv, *agent_mcp.codex_args(agent_credentials.hub_url, mode)]
+            # Conductor R1: Codex 0.159 opens on two screens before its
+            # composer, and its hooks (the rider) run only after both: the
+            # folder trust and, for new or changed hooks, a hook review. The
+            # owner's press on the verb is the consent for this worktree.
+            argv = [*argv, *agent_mcp.codex_launch_args(str(worktree_path))]
         record: dict[str, Any] = {
             "launch_schema": LAUNCHES_SCHEMA,
             "launch_id": launch_id,

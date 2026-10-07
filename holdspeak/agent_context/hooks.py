@@ -47,14 +47,16 @@ def agent_settings_path(
 
 
 def holdspeak_executable() -> str | None:
-    """The ``holdspeak`` the hook command runs: on PATH, else beside this interpreter (a venv)."""
-    found = shutil.which("holdspeak")
-    if found:
-        return found
+    """The ``holdspeak`` the hook command runs: beside this interpreter (the
+    hub's own checkout), else on PATH.
+
+    The hub's own command first (Conductor R1): a ``holdspeak`` on PATH can
+    be another checkout (``~/.local/bin/holdspeak`` wrapping an older venv),
+    and its hook ingest would then run other code than the hub reads with."""
     beside = Path(sys.executable).parent / "holdspeak"
     if beside.is_file() and os.access(beside, os.X_OK):
         return str(beside)
-    return None
+    return shutil.which("holdspeak")
 
 
 def hook_command_runs(command: str, *, which: Any = shutil.which) -> bool:
@@ -183,6 +185,13 @@ def detect_story_claim(
     return {}
 
 
+#: The rider hook's timeout. One ``holdspeak agent-hook ingest`` imports the
+#: whole CLI: 1 to 2 s on a calm machine, 4 to 7 s under load (Conductor R1:
+#: Codex killed it at 5 s, "hook timed out after 5s", and the event was lost).
+#: Codex clamps ``SessionEnd`` to 3 s whatever is set.
+HOOK_INGEST_TIMEOUT_SECONDS = 30
+
+
 def claude_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
     command = _agent_hook_command("claude", capture_messages=capture_messages)
     return {
@@ -190,33 +199,33 @@ def claude_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
             "SessionStart": [
                 {
                     "matcher": "startup|resume|clear|compact",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
+                    "hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}],
                 }
             ],
             "CwdChanged": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
             ],
             "UserPromptSubmit": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
             ],
             # HSM-17-02: the live lifecycle. Notification carries the blocking
             # ask (permission prompts, "waiting for your input") -> waiting;
             # PostToolUse is the working heartbeat (bounded matcher so a spawn
             # happens per meaningful tool, not per read); SessionEnd tombstones.
             "Notification": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
             ],
             "PostToolUse": [
                 {
                     "matcher": "Bash|Edit|Write|Task",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
+                    "hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}],
                 }
             ],
             "Stop": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
             ],
             "SessionEnd": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
             ],
         }
     }
@@ -229,32 +238,32 @@ def codex_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
             "SessionStart": [
                 {
                     "matcher": "startup|resume|clear",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
+                    "hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}],
                 }
             ],
             "UserPromptSubmit": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
             ],
             "PreToolUse": [
                 {
                     "matcher": "Bash|apply_patch|Edit|Write",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
+                    "hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}],
                 }
             ],
             "PostToolUse": [
                 {
                     "matcher": "Bash|apply_patch|Edit|Write",
-                    "hooks": [{"type": "command", "command": command, "timeout": 5}],
+                    "hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}],
                 }
             ],
             "Notification": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
             ],
             "Stop": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
             ],
             "SessionEnd": [
-                {"hooks": [{"type": "command", "command": command, "timeout": 5}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
             ],
         }
     }

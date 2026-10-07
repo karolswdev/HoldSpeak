@@ -130,6 +130,28 @@ def codex_args(hub_url: str, mode: Any) -> list[str]:
     return args
 
 
+#: Codex 0.159: run the enabled hooks of ``$CODEX_HOME/hooks.json`` with no
+#: persisted hook trust, for this one process (nothing is written).
+CODEX_HOOK_TRUST_FLAG = "--dangerously-bypass-hook-trust"
+
+
+def codex_launch_args(worktree_path: str) -> list[str]:
+    """The Codex flags that let a launch start with no screen in the way.
+
+    * ``-c projects={"<worktree>"={trust_level="trusted"}}``: the launch's own
+      worktree is trusted for this process, so Codex does not ask "Trust this
+      folder?" (an inline table: Codex 0.159 does not read the dotted
+      ``projects."<path>".trust_level`` form from ``-c``). Nothing is written
+      to the owner's ``config.toml``.
+    * :data:`CODEX_HOOK_TRUST_FLAG`: Codex runs a new or changed hook only
+      after the owner reviews it in the TUI ("Hooks need review"); the K1
+      install changes the hook file, so a launch would stop there and its
+      rider hooks would never report. The flag holds for this process only.
+    """
+    path = json.dumps(os.path.realpath(str(worktree_path)))
+    return ["-c", f'projects={{{path}={{trust_level="trusted"}}}}', CODEX_HOOK_TRUST_FLAG]
+
+
 def config_control_mode() -> str:
     from ..config import Config
 
@@ -141,12 +163,14 @@ def config_control_mode() -> str:
 
 __all__ = [
     "CLAUDE_ALLOW_RULE",
+    "CODEX_HOOK_TRUST_FLAG",
     "CREDENTIAL_ENV",
     "HUB_URL_ENV",
     "SERVER_NAME",
     "claude_args",
     "claude_mcp_document",
     "codex_args",
+    "codex_launch_args",
     "config_control_mode",
     "mcp_config_path",
     "pre_approved",

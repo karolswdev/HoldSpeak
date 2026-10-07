@@ -425,21 +425,27 @@ class AgentHandService:
     def _launch_ungated(
         self, launcher: Any, request: dict[str, Any], text: str, principal: Any,
     ) -> dict[str, Any]:
-        """Codex: the ungated launch. The brief is held and typed only when
-        Codex's rider hooks register the session (its readiness); with no
-        hooks installed it stays held as ``hooks_missing`` (K1's one-press
-        install, then resume on the same launch)."""
+        """Codex: the ungated launch. The brief is held and typed when
+        Codex's idle composer is on the screen (Codex reports SessionStart
+        only with its first prompt); with no rider hooks installed it stays
+        held as ``hooks_missing`` (K1's one-press install, then resume on the
+        same launch)."""
         try:
             record = launcher.launch(request, principal=principal)
         except LaunchRefused as exc:
             raise AgentHandRefused(exc.reason, str(exc)) from exc
         if record.get("state") != "launched":
             return {"launch": record}
+        from ..delivery.first_message import READY_CODEX_SCREEN
+
         ready = codex_hooks_installed()
         record = launcher.first_message.hold(
             str(record["launch_id"]), text, principal,
             agent=str(request.get("agent_profile_id") or "codex-default"),
             trust=False, state="pending" if ready else "hooks_missing",
+            # Codex reports SessionStart only with its first prompt: its
+            # composer on the screen says it is up (Conductor R1).
+            ready=READY_CODEX_SCREEN,
         ) or record
         if ready:
             launcher.first_message.start(str(record["launch_id"]))
@@ -496,10 +502,15 @@ def live_launches(launcher: Any) -> list[dict[str, Any]]:
 
 
 def codex_hooks_installed(path: Optional[Path] = None) -> bool:
-    """Whether Codex's hook file carries HoldSpeak's rider hooks."""
-    from ..agent_context.hooks import AGENT_HOOK_COMMAND_MARKER
+    """Whether Codex's hook file carries HoldSpeak's rider hooks.
 
-    target = path or Path.home() / ".codex" / "hooks.json"
+    The file Codex reads: ``$CODEX_HOME/hooks.json`` when ``CODEX_HOME`` is
+    set, the same resolver the one-press install writes through (Conductor
+    R1: this read ``~/.codex`` only, so a launch read hooks as missing right
+    after the install had written them)."""
+    from ..agent_context.hooks import AGENT_HOOK_COMMAND_MARKER, agent_settings_path
+
+    target = path or agent_settings_path("codex")
     try:
         return AGENT_HOOK_COMMAND_MARKER in target.read_text(encoding="utf-8")
     except OSError:
