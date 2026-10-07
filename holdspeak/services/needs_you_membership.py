@@ -307,6 +307,101 @@ def coder_items(
     return rows
 
 
+#: The source of a held tool call of a HoldSpeak launch (Conductor R1).
+GATE_SOURCE = "gate"
+
+
+def gate_items(holds: Iterable[dict[str, Any]], now: datetime | None = None) -> list[dict[str, Any]]:
+    """R5, held tool calls: each Bash call the tool gate holds for a
+    HoldSpeak-launched agent is one ``TO APPROVE`` row (Conductor R1: the
+    agent waited up to 240 s and nothing on the Desk said so).
+
+    ``holds`` are :func:`_read_gate_holds` records. The row's ref and its
+    Open name the gate proposal (``gate:<proposal_id>``); ``notifyKey`` is
+    the same ref, so one hold notifies once."""
+    clock = now or local_wall()
+    now_s = (clock if clock.tzinfo else clock.astimezone()).timestamp()
+    rows: list[dict[str, Any]] = []
+    for hold in holds:
+        proposal_id = str(hold.get("proposal_id") or "")
+        if not proposal_id:
+            continue
+        created = float(hold.get("created_at") or now_s)
+        since = datetime.fromtimestamp(created, timezone.utc).isoformat().replace("+00:00", "Z")
+        ref = f"{GATE_SOURCE}:{proposal_id}"
+        title = _excerpt(f"Approve: {hold.get('command') or hold.get('tool') or 'a tool call'}")
+        rows.append({
+            "id": ref,
+            "ref": ref,
+            "notifyKey": ref,
+            "projectId": "",
+            "projectName": "",
+            "title": title,
+            "why": TO_APPROVE,
+            "ageToken": since,
+            "since": since,
+            "dueAt": None,
+            "kind": GATE_SOURCE,
+            "source": GATE_SOURCE,
+            "verbHref": None,
+            "openRef": ref,
+            "severity": "warning",
+            "sessionKey": str(hold.get("session_key") or ""),
+            "launchId": str(hold.get("launch_id") or ""),
+            "question": title,
+            "waitKind": "approve",
+            "waitStartedAt": since,
+            "ageSeconds": max(0, int(now_s - created)),
+        })
+    return rows
+
+
+def _gate_command(args_head: str) -> str:
+    """The command of a held call from its (redacted, maybe cut) head."""
+    import json
+
+    try:
+        parsed = json.loads(args_head)
+    except ValueError:
+        return args_head
+    if isinstance(parsed, dict) and parsed.get("command"):
+        return str(parsed["command"])
+    return args_head
+
+
+def _read_gate_holds(db: Any, *, ledger: Any = None, now: float | None = None) -> list[dict[str, Any]]:
+    """The held, unexpired gate proposals of live HoldSpeak launches."""
+    import time
+
+    from holdspeak.db.gate import HELD
+    from holdspeak.services.gate_service import _LIVE_LAUNCH_STATES, _is_launch_caller
+
+    if ledger is None:
+        from holdspeak.delivery.factory_launch import LaunchLedger
+
+        ledger = LaunchLedger()
+    moment = time.time() if now is None else now
+    launches = [r for r in ledger.list() if str(r.get("state") or "") in _LIVE_LAUNCH_STATES]
+    if not launches:
+        return []
+    holds: list[dict[str, Any]] = []
+    for proposal in db.gate.list_state(HELD):
+        if proposal.expires_at and proposal.expires_at <= moment:
+            continue
+        launch = next((r for r in launches if _is_launch_caller(r, proposal.session_key)), None)
+        if launch is None:
+            continue
+        holds.append({
+            "proposal_id": proposal.id,
+            "launch_id": str(launch.get("launch_id") or ""),
+            "session_key": str(launch.get("session_key") or ""),
+            "tool": proposal.tool,
+            "command": _gate_command(proposal.args_head),
+            "created_at": proposal.created_at,
+        })
+    return holds
+
+
 #: The names that mean the owner himself. The People store reserves ``me``
 #: and ``you`` (no person can take them, ``people_service._RESERVED_OWNER_ALIASES``)
 #: and its follow-through projection names the owner ``you`` / ``manager``.
@@ -484,6 +579,7 @@ def compute_needs_you(
     meetings: Iterable[dict[str, Any]] = (),
     decisions: Iterable[dict[str, Any]] = (),
     coders: Iterable[Any] = (),
+    gate_holds: Iterable[dict[str, Any]] = (),
     self_names: Iterable[str] = SELF_OWNER_NAMES,
     personal_names: Iterable[str] = (),
     now: datetime | None = None,
@@ -543,7 +639,10 @@ def compute_needs_you(
             row["why"] = YOURS if _waiting_on(his) else (his.get("why") or row.get("why"))
             row["severity"] = his.get("severity") or row.get("severity")
     # A coder row (R5) keeps its own row and its own ref (``coder:<key>``).
-    singles = people + decision_items(decisions) + coder_items(coders, clock)
+    singles = (
+        people + decision_items(decisions) + coder_items(coders, clock)
+        + gate_items(gate_holds, clock)  # Conductor R1: held calls of launches
+    )
     for row in singles:
         row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)
@@ -845,6 +944,14 @@ def compose(
             "repair": {"token": "READ FAILED", "verb": "Retry", "href": "/"},
         })
 
+    # Conductor R1: the tool calls the gate holds for HoldSpeak launches.
+    gate_holds: list[dict[str, Any]] = []
+    try:
+        gate_holds = _read_gate_holds(db)
+    except Exception as exc:
+        log.warning("needs-you: the gate read failed: %s", exc)
+        errors["gate"] = _reason(exc)
+
     # The names that mean the owner: the reserved ones, his speaker label,
     # and the name and aliases he gave on first run (``config.owner``).
     speaker: list[Any] = []
@@ -868,6 +975,7 @@ def compose(
         meetings=meetings,
         decisions=decisions,
         coders=coders,
+        gate_holds=gate_holds,
         self_names=names,
         personal_names=personal,
         now=now,

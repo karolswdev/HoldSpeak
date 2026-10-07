@@ -48,12 +48,17 @@ class GateService:
         *,
         observer: PipelineObserver | None = None,
         launches: Callable[[], Any] | None = None,
+        on_launch_hold: Callable[[str], Any] | None = None,
     ) -> None:
         self._db = db
         self._observer = observer or NullObserver()
         # Conductor K5: the launch driver whose ledger names each agent's own
         # worktree and branch (``default_launch_service`` in production).
         self._launches = launches
+        # Conductor R1: a held call of a HoldSpeak launch is a Needs you row
+        # (``needs_you_membership.gate_items``); this is the K3 immediate
+        # edge for it (the web composition passes the coder awaiting edge).
+        self._on_launch_hold = on_launch_hold
 
     def propose(self, principal: Principal, payload: dict[str, Any]) -> dict[str, Any]:
         from .. import kernel
@@ -114,6 +119,15 @@ class GateService:
             raise ServiceError("proposal_not_admitted", "proposal was not admitted", context={"handle": handle, "status": 409})
         if proposal.state == HELD and (proposal.policy_snapshot or {}).get("outcome") == "allowed":
             proposal = self._decide_by_mode(proposal)
+        if (
+            proposal.state == HELD
+            and verdict.get("launch_id")
+            and self._on_launch_hold is not None
+        ):
+            try:
+                self._on_launch_hold(f"gate:{proposal.id}")
+            except Exception:  # the edge never stops the hold
+                pass
         return proposal.to_dict()
 
     # ── Conductor K5: the Control-mode decision ──────────────────────

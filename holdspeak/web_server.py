@@ -1155,7 +1155,11 @@ class MeetingWebServer:
             door_service=door_service,
             people_service=people_service,
             sync_service=SyncService(get_database(), observer=obs),
-            gate_service=GateService(get_database(), observer=obs),
+            gate_service=GateService(
+                get_database(), observer=obs,
+                # Conductor R1: a held call of a launch notifies at once.
+                on_launch_hold=lambda key: _coder_awaiting_edge([key]),
+            ),
             setup_service=SetupService(get_database(), observer=obs),
             inference_setup_service=inference_setup_service,
             local_ai_setup_service=local_ai_setup_service,

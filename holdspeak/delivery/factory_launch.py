@@ -901,6 +901,8 @@ class LaunchService:
             # Conductor K6: the HoldSpeak MCP, from the launch's credential.
             mcp_config = agent_mcp.write_mcp_config(launch_id, self._mcp_config_dir)
             allowed: tuple[str, ...] = ("Bash",) if parent_operation_id else ()
+            # Conductor R1: Normal and YOLO accept edits in the worktree.
+            argv = [*argv, *agent_mcp.claude_permission_args(mode, argv)]
             argv = [*argv, *agent_mcp.claude_args(mcp_config, mode, allowed=allowed)]
             if parent_operation_id:
                 gate_state = "gated"

@@ -156,7 +156,9 @@ class CoderService:
             expand,
             qualified_refs=qualified_refs or None,
             query=query,
-            include_memory=True,
+            # Conductor R1: only the attached refs (the query still orders a
+            # picked container's members); memory never adds its own picks.
+            include_memory=False,
         )
 
     def process_input_commands(self, targets: Any) -> Any:
