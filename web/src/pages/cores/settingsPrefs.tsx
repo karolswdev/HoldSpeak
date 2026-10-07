@@ -1,4 +1,5 @@
 import { wireClock } from "../../desk/surface/format";
+import { PeopleHubCells } from "./settingsPeople";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-111-01 — the Prefs program's face (audit §3.1-§3.4): a drawer of
 // pref modules, authored — never wire-derived. The module registry is a
@@ -58,6 +59,8 @@ export const PREF_MODULES: PrefModule[] = [
   { id: "integrations", label: "Connections", glyph: "secret", sprite: "integrations", keys: [] },
   // System: device name, desk reset, devices RAW.
   { id: "system", label: "System", glyph: "system", sprite: "system", keys: ["device", "mesh"] },
+  // Conductor R7 (canvas K7a, ratified 2026-10-07): People MCP access.
+  { id: "people", label: "People", glyph: "system", sprite: "system", keys: ["people"] },
 ];
 
 /** Stable id aliases: deep links and scope params from retired modules
@@ -578,6 +581,14 @@ export function PrefsFace({
           onToggle={() => onOpen("wallpaper")}
           trailing={openVerb("wallpaper")}
           cells={<span className="surface-token" data-chip>{resolveAtmosphere(atmosphereId).name}</span>}
+        />
+        {/* People: MCP · <effective> · AGENTS · <mode> (Conductor R7, K7a). */}
+        <SurfaceLedgerRow
+          primary="People"
+          expands={false}
+          onToggle={() => onOpen("people")}
+          trailing={openVerb("people")}
+          cells={<PeopleHubCells />}
         />
         {/* System: THIS DEVICE + MESH OFF|ON + REMOTE OFF|ON */}
         <SurfaceLedgerRow

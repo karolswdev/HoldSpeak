@@ -68,7 +68,7 @@ def test_the_owner_sets_it_with_a_receipt_and_agents_follow(hub, config_file) ->
     put = hub.client.put("/api/settings/people-access", json={"mode": "off"})
     assert put.status_code == 200, put.text
     body = put.json()
-    assert body["mode"] == "off" and body["agents"] == "none"
+    assert body["mode"] == "off" and body["agents"] == "off"
     assert body["receipt"]["outcome"] == "succeeded" and body["operation_id"]
     assert json.loads(config_file.read_text(encoding="utf-8"))["people"]["mcp_access"] == "off"
     assert _people_tools(agent) == set()
@@ -106,4 +106,23 @@ def test_doctor_names_the_effective_value_and_its_source(config_file) -> None:
     config_file.write_text(json.dumps({"people": {"mcp_access": "read"}}), encoding="utf-8")
     assert _check_people_mcp_access({}).detail == "read (from people.mcp_access); agents: read"
     assert _check_people_mcp_access({"HOLDSPEAK_MCP_PEOPLE_ACCESS": "off"}).detail == (
-        "off (from HOLDSPEAK_MCP_PEOPLE_ACCESS); agents: none")
+        "off (from HOLDSPEAK_MCP_PEOPLE_ACCESS); agents: off")
+
+
+def test_the_variable_holds_the_setting_server_side(hub, config_file, monkeypatch) -> None:
+    """Ratified 2026-10-07 ("Of course it should, buddy!"): while the variable is set, the PUT
+    is refused by name, with a receipt, and the setting does not change."""
+    monkeypatch.setenv("HOLDSPEAK_MCP_PEOPLE_ACCESS", "off")
+    shown = hub.client.get("/api/settings/people-access").json()
+    assert shown["source"] == "env" and shown["env_var"] == "HOLDSPEAK_MCP_PEOPLE_ACCESS"
+    assert shown["effective"] == "off" and shown["agents"] == "off"
+    before = config_file.read_text(encoding="utf-8") if config_file.exists() else ""
+    put = hub.client.put("/api/settings/people-access", json={"mode": "read"})
+    assert put.status_code == 409, put.text
+    body = put.json()
+    assert body["code"] == "people_access_env_override", body
+    assert body.get("operation_id") or body.get("receipt"), body
+    after = config_file.read_text(encoding="utf-8") if config_file.exists() else ""
+    assert before == after
+    is_error, answer = hub.mcp("people.access.set", {"mode": "read"})
+    assert is_error is True and answer.get("code") == "people_access_env_override", answer

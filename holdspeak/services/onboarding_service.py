@@ -431,12 +431,16 @@ class OnboardingService:
 
         _require_owner(principal)
         config = Config.load()
+        from ..mcp.families.people import ACCESS_ENV
+
         effective, source = access_source(self._env() if environ is None else environ)
         return {
             "mode": str(config.people.mcp_access),
             "effective": effective,
             "source": source,
-            "agents": "none" if effective == "off" else "read",
+            # The variable that overrides the setting, named when it does.
+            "env_var": ACCESS_ENV if source == "env" else None,
+            "agents": "off" if effective == "off" else "read",
         }
 
     def people_access_set(self, principal: Principal, mode: str) -> dict[str, Any]:
@@ -452,6 +456,13 @@ class OnboardingService:
         value = str(mode or "").strip().lower()
         if value not in ACCESS_MODES:
             raise ValidationError("mode is off, read or write.", code="people_access_mode_unknown")
+        from ..mcp.families.people import ACCESS_ENV, access_source
+
+        if access_source(self._env())[1] == "env":
+            # Owner ratification 2026-10-07 ("Of course it should, buddy!"): while
+            # the variable overrides it, the setting does not change.
+            raise ConflictError(f"{ACCESS_ENV} is set and overrides this setting.",
+                                code="people_access_env_override", context={"env_var": ACCESS_ENV})
         config = Config.load()
         config.people.mcp_access = value
         config.save()

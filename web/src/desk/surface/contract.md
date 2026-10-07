@@ -105,6 +105,10 @@ recurring element the library lacked.
 - `options[].ariaLabel?: string` — HS-200-13: a per-token accessible name
   richer than its visible label (`Filter — Decisions` over `Decisions`),
   when the design names it; the visible word stays the caption-step token
+- `disabled?: boolean` — Conductor R7: the whole strip (or its phone-width
+  menu Button) takes the library `Button`'s disabled state; the pressed token
+  still shows the held value. No prose explains it: a token beside the strip
+  names what holds it (Settings › People: `SOURCE · HOLDSPEAK_MCP_PEOPLE_ACCESS`)
 
 Presence rules (they are the species, not the caller's business):
 

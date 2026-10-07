@@ -34,7 +34,23 @@ Source: `docs/internal/CONDUCTOR.md` (the loop, "F faces", "The Control-mode map
 | K5c enter-sends | Q5 | Enter sends; the composer empties; `sent` |
 | K6 follow-through-receipt | Q6 | On merge the runbook leaves OPEN HERE (`2 open here`); the Room receipt line: `DONE · Write the rollback runbook · PR #413 MERGED · <time>`; its session leaves AGENTS |
 
-## K7a: People MCP access (Conductor R7). **DRAFT, for the owner's ratification.** Not built in product code.
+## K7a: People MCP access (Conductor R7). **RATIFIED by the owner 2026-10-07. Built.**
+
+The answers to the two questions below:
+1. "Yes": the new Settings › People panel, as drawn.
+2. "Of course it should, buddy!": when `HOLDSPEAK_MCP_PEOPLE_ACCESS` overrides the setting, the strip is disabled. The hub also refuses the PUT by name (`people_access_env_override`).
+
+**Built face beside the board** (`harness/shoot_built_k7.py`, the product as built on a real hub; facts in `shots/K7-built-facts.json`). Result: `ALL FENCES HELD` at 1440 and 393.
+
+| State | 1440 | 393 |
+|---|---|---|
+| The setting (`SOURCE · SETTING`, `AGENTS · READ`) | `shots/K7a-built-setting-1440.png` | `shots/K7a-built-setting-393.png` |
+| After a press on OFF (`AGENTS · OFF`, receipt `SUCCEEDED · ACCESS · OFF · BY OWNER`) | `shots/K7a-built-off-1440.png` | `shots/K7a-built-off-393.png` |
+| The variable set (`HOLDSPEAK_MCP_PEOPLE_ACCESS=off`): the strip disabled, `SOURCE · HOLDSPEAK_MCP_PEOPLE_ACCESS` | `shots/K7a-built-env-1440.png` | `shots/K7a-built-env-393.png` |
+
+One change from the board: the source token reads `SOURCE · …` as ruled, and a long one wraps inside its row at 393 (the new library chip modifier `data-wrap`).
+
+The board as it was presented:
 
 The owner, 2026-10-06: "the default should be on, for HOLDSPEAK_MCP_PEOPLE_ACCESS, and I guess there's an affordance to set it somewhere, right?"
 

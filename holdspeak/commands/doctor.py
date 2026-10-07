@@ -1123,7 +1123,7 @@ def _check_people_mcp_access(environ: dict | None = None) -> DoctorCheck:
             detail="HOLDSPEAK_MCP_PEOPLE_ACCESS has an unknown value",
             fix="Set HOLDSPEAK_MCP_PEOPLE_ACCESS to off, read or write, or unset it",
         )
-    agents = "none" if mode == "off" else "read"
+    agents = "off" if mode == "off" else "read"
     origin = {"env": "HOLDSPEAK_MCP_PEOPLE_ACCESS", "config": "people.mcp_access", "default": "default"}[source]
     return DoctorCheck(
         name="People MCP access", status="INFO",

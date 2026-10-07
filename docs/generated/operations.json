@@ -5691,13 +5691,14 @@
       },
       "principal": "derived by the transport; owner only",
       "effect": "write",
-      "result": "{mode, source, effective, agents} and the receipt",
+      "result": "{mode, source, effective, env_var, agents} and the receipt",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
         "authority_in_arguments",
         "owner_required",
-        "people_access_mode_unknown"
+        "people_access_mode_unknown",
+        "people_access_env_override"
       ],
       "completion": "synchronous; GET /api/settings/people-access shows the new mode",
       "exposure": [

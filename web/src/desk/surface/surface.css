@@ -625,6 +625,17 @@
 .surface-token[data-chip][data-tone="warn"] { color: var(--warn); }
 .surface-token[data-chip][data-tone="danger"] { color: var(--danger); }
 .surface-token[data-chip][data-tone="ok"] { color: var(--ok); }
+/* Conductor R7: a chip that carries a literal name longer than a phone row
+   (SOURCE · HOLDSPEAK_MCP_PEOPLE_ACCESS) wraps inside its row; it never clips. */
+.surface-token[data-chip][data-wrap] {
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 18px;
+  padding-block: 2px;
+}
 
 /* A quiet in-flow verb cluster (result ratings, recovery actions). */
 .surface-actions {

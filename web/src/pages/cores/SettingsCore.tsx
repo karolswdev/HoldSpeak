@@ -57,6 +57,7 @@ import { TtsSettingsBlock } from "./settingsTts";
 // PARKED (HS-170-03): CapabilityAssignmentsCore — reached via Concierge Adjust.
 // import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
 import { WallpaperModule } from "./settingsWallpaper";
+import { PeopleAccessModule } from "./settingsPeople";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
@@ -2367,6 +2368,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
           ) : null}
         />;
       }
+      /* ── People: People MCP access (Conductor R7, canvas K7a) ── */
+      case "people":
+        return <PeopleAccessModule />;
       default:
         return null;
     }
