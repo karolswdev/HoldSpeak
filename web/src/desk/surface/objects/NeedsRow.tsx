@@ -75,6 +75,7 @@ export function DragGhost({
   sprite,
   x,
   y,
+  from,
 }: {
   kind: string;
   id: string;
@@ -82,8 +83,11 @@ export function DragGhost({
   /** Viewport coordinates of the sprite's top-left corner. */
   x: number;
   y: number;
+  /** PHILO-14 C3: where the drag began (viewport). Given, a dotted path is
+   *  drawn from it to the ghost's centre (board A-3). */
+  from?: { x: number; y: number };
 }) {
-  return (
+  const ghost = (
     <img
       className="drag-ghost"
       src={sprite ?? objectSprite(kind, id)}
@@ -92,5 +96,14 @@ export function DragGhost({
       draggable={false}
       style={{ left: x, top: y }}
     />
+  );
+  if (!from) return ghost;
+  return (
+    <>
+      <svg className="drag-path" aria-hidden="true" data-testid="drag-path">
+        <line x1={from.x} y1={from.y} x2={x + 32} y2={y + 32} />
+      </svg>
+      {ghost}
+    </>
   );
 }

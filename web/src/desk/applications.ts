@@ -122,6 +122,26 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
         })),
     },
   },
+  // PHILO-14 C4: the Conductor drawer is where agents live. The Dock's
+  // Agents entry became Conductor (the D1 `dock-agents` glyph is drawn as
+  // the Conductor); it opens the Conductor window (conductor/), not a
+  // hosted surface.
+  {
+    action: "open-conductor",
+    windowId: "conductor",
+    label: "Conductor",
+    toolLabel: "Conductor",
+    description: "Your coding agents: who works, who asks, what they opened.",
+    glyph: "◉",
+    href: "/conductor",
+    group: "tool",
+    dock: { order: 3, launch: "surface" },
+    shortcut: "⌘3",
+    mark: true,
+  },
+  // PARKED (PHILO-14 C4): the old Agents application. It folded into the
+  // Conductor drawer; its route `/companion` stays alive, but it is in no
+  // Dock, Go list, shortcut or mark menu. Nothing links to it.
   {
     action: "inspect-personas-and-coders",
     windowId: "surface-companion",
@@ -130,10 +150,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Use saved behavior and inspect live sessions.",
     glyph: "◉",
     href: "/companion",
-    group: "tool",
-    dock: { order: 3, launch: "surface" },
-    shortcut: "⌘3",
-    mark: true,
     surface: {
       eyebrow: "Companion",
       minW: 560,

@@ -38,7 +38,8 @@ describe("DeskOS application manifest", () => {
       "Intelligence",
       "Speak",
       "Meetings",
-      "Agents",
+      // PHILO-14 C4: the Agents entry became the Conductor drawer.
+      "Conductor",
       "Settings",
     ]);
     expect(
@@ -48,12 +49,24 @@ describe("DeskOS application manifest", () => {
     ).toEqual(["⌘⇧P", "⌘1", "⌘2", "⌘3", "⌘4"]);
   });
 
+  it("PHILO-14 C4: the old Agents application is parked: route alive, in no Dock, Go list, shortcut or mark", () => {
+    const parked = DESK_APPLICATIONS.find((application) => application.action === "inspect-personas-and-coders");
+    expect(parked?.surface).toBeDefined();
+    expect(parked?.dock).toBeUndefined();
+    expect(parked?.shortcut).toBeUndefined();
+    expect(parked?.mark).toBeFalsy();
+    expect(parked?.group).toBeUndefined();
+    expect(DOCK_APPLICATIONS.some((application) => application.windowId === "surface-companion")).toBe(false);
+    const conductor = DOCK_APPLICATIONS.find((application) => application.action === "open-conductor");
+    expect(conductor).toMatchObject({ windowId: "conductor", label: "Conductor", href: "/conductor", shortcut: "⌘3" });
+  });
+
   it("derives mark-menu application commands", () => {
     expect(MARK_APPLICATION_COMMANDS).toEqual([
       "desk.open-intelligence",
       "go.dictate",
       "go.review-meetings",
-      "go.inspect-personas-and-coders",
+      "go.open-conductor",
       "go.configure-settings",
       "desk.open-people",
     ]);

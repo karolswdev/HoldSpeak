@@ -1,6 +1,6 @@
 // Conductor F2 (ratified boards K4a, K4c, K5a): on the Chair, the Door row
-// wears the agent working on it; the AGENTS section lists every live session
-// from `/api/coders/sessions` and names its item; the Needs you coder row
+// wears the agent working on it; (PHILO-14 C4: the AGENTS section folded into
+// the Conductor drawer); the Needs you coder row
 // carries the question, `CLAUDE CODE · WAITING · <age>`, the Project, and
 // `Speak answer` (the face's one primary) and `Open`.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -162,21 +162,13 @@ describe("Conductor F2 on the Chair", () => {
     expect(within(row).queryByRole("button", { name: /^Hand to agent/ })).toBeNull();
   });
 
-  it("K4c: AGENTS lists every live session; a handed one names its item", async () => {
+  // PHILO-14 C4: the AGENTS section is PARKED; every live session (a handed
+  // one named by its item, the asking one with Answer) is proved on the
+  // Conductor drawer (`conductor/__tests__/conductor.test.tsx`).
+  it("K4c (C4): the Arrival no longer lists AGENTS; the store stays live for the screen and the Conductor", async () => {
     render(<ChairHome />);
-    const section = await screen.findByTestId("arrival-agents");
-    const rows = within(section).getAllByTestId("arrival-agent-row");
-    expect(rows.map((r) => r.querySelector(".surface-ledger-primary")?.textContent)).toEqual([
-      "payments-ledger-runbook", "payments-ledger-recon", "scratch",
-    ]);
-    expect(within(rows[0]).getByTestId("arrival-agent-origin").textContent).toBe("↳ Write the rollback runbook");
-    expect(within(rows[0]).getByRole("status").textContent).toContain("WAITING");
-    expect(within(rows[1]).getByTestId("arrival-agent-origin").textContent).toBe("↳ Shard the reconciliation job");
-    expect(within(rows[1]).getByRole("status").textContent).toContain("CODEX · WORKING");
-    // A session no one handed an item keeps its plain badge.
-    expect(within(rows[2]).queryByTestId("arrival-agent-origin")).toBeNull();
-    expect(rows[2].textContent).toContain("RUNNING");
-    fireEvent.click(within(rows[0]).getByRole("button", { name: "Answer" }));
-    expect(openCoderSession).toHaveBeenCalledWith("claude:c1", { answer: true });
+    await waitFor(() => expect(useAgentFlights.getState().sessions).toHaveLength(3));
+    expect(screen.queryByTestId("arrival-agents")).toBeNull();
+    expect(screen.queryByTestId("arrival-agent-row")).toBeNull();
   });
 });

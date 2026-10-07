@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../lib/api";
 import { ChairHome } from "../ChairHome";
 import { asHub } from "../../../test/hubNeedsYou";
-import { useAgentFlights } from "../../agentFlights";
+import { liveAgentSessions, useAgentFlights } from "../../agentFlights";
 import { openChairWindows } from "./fixtures/openChairWindows";
 
 // PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
@@ -109,7 +109,9 @@ describe("Conductor F2: transitions land on a mounted Chair", () => {
     useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
   });
 
-  it("WORKING becomes WAITING on a coder frame; on merge + cleanup the session leaves AGENTS", async () => {
+  // PHILO-14 C4: the AGENTS section is parked; the live set it showed is the
+  // Conductor drawer's, read here from the store both read.
+  it("WORKING becomes WAITING on a coder frame; on merge + cleanup the session leaves the live set", async () => {
     const [runbook, recon, solo] = (SESSIONS.sessions as Array<Record<string, unknown>>);
     sessions = { sessions: [working(runbook), recon, solo], flights: [{ ...FLIGHT_RUNBOOK, state: "working" }, FLIGHT_RECON] };
     wire();
@@ -132,13 +134,14 @@ describe("Conductor F2: transitions land on a mounted Chair", () => {
     sessions = { sessions: [{ ...runbook, flight: merged }, recon, solo], flights: [merged, FLIGHT_RECON] };
     act(() => emit("desk_changed"));
     await waitFor(() => expect(lamp()).toBe("MERGED · TO SECURE"));
-    expect(within(screen.getByTestId("arrival-agents")).getAllByTestId("arrival-agent-row")).toHaveLength(3);
+    expect(liveAgentSessions(useAgentFlights.getState().sessions)).toHaveLength(3);
 
     // Confirmed, closed and cleaned up: the session leaves AGENTS.
     const done = { ...merged, close: "closed", session_cleanup: "killed" };
     sessions = { sessions: [{ ...runbook, flight: done }, recon, solo], flights: [done, FLIGHT_RECON] };
     act(() => emit("desk_changed"));
-    await waitFor(() => expect(within(screen.getByTestId("arrival-agents")).getAllByTestId("arrival-agent-row")).toHaveLength(2));
-    expect(screen.getByTestId("arrival-agents").textContent).not.toContain("payments-ledger-runbook");
+    await waitFor(() => expect(liveAgentSessions(useAgentFlights.getState().sessions)).toHaveLength(2));
+    expect(liveAgentSessions(useAgentFlights.getState().sessions).map((r) => r.name)).not.toContain("payments-ledger-runbook");
+    expect(screen.queryByTestId("arrival-agents")).toBeNull();
   });
 });

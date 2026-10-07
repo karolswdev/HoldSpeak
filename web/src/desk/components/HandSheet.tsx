@@ -237,7 +237,7 @@ export function trackerToken(
 function Sheet({ origin }: { origin: HandOrigin }) {
   const close = useAgentHand((s) => s.close);
   const detect = useDetect();
-  const [agent, setAgent] = useState<AgentId>(DEFAULT_AGENT);
+  const [agent, setAgent] = useState<AgentId>(origin.agent ?? DEFAULT_AGENT);
   // Each preview carries the key of the request that produced it (item, Project,
   // profile): Launch arms only when that key is the current request's.
   const [preview, setPreview] = useState<(HandPreview & { requestKey: string }) | null>(null);
@@ -489,5 +489,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
 export function HandSheet() {
   const origin = useAgentHand((s) => s.origin);
   if (!origin) return null;
-  return <Sheet key={`${origin.kind}:${origin.id}`} origin={origin} />;
+  // PHILO-14 C3 (Astra P2 on #946): a drop on another agent retargets an
+  // open sheet: the key carries the agent the drop named.
+  return <Sheet key={`${origin.kind}:${origin.id}:${origin.agent ?? ""}`} origin={origin} />;
 }

@@ -292,7 +292,7 @@ describe("bound-key-set byte-identical proof (HS-148-02)", () => {
       "go.ask": "⌘I",
       "go.dictate": "⌘1",
       "go.review-meetings": "⌘2",
-      "go.inspect-personas-and-coders": "⌘3",
+      "go.open-conductor": "⌘3",
       "go.configure-settings": "⌘4",
       "window.close": "⌘W",
       "window.minimize": "⌘M",

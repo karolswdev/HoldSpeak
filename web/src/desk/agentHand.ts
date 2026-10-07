@@ -29,6 +29,9 @@ export interface HandOrigin {
   /** An issue's tracker host (from its row's URL): the brief reads its body
    * there, and the sheet names it before the preview answers. */
   trackerHost?: string | null;
+  /** PHILO-14 C3: the agent the sheet opens on (a drop on that agent's
+   *  icon); absent, the default agent. */
+  agent?: AgentId;
 }
 
 /** The launch profile of each agent (factory_launch `_DEFAULT_PROFILES`). */
