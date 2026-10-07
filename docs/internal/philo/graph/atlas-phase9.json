@@ -2119,8 +2119,8 @@
       "sources": [
         {
           "path": "web/src/desk/components/DeskListView.tsx",
-          "symbol": "function FoldLine",
-          "claim": "the fold: Kind, Zone and Attention ride the name Button in a surface of 720 px or less"
+          "symbol": "<ObjectList",
+          "claim": "PHILO-14 A2: the list face is the ObjectList species; in a surface of 520 px or less Kind and When fold under the name, the zone rides Kind and the attention rides State"
         },
         {
           "path": "web/src/desk/components/DeskListView.tsx",
@@ -2128,9 +2128,9 @@
           "claim": "the status says SHOWN for any count"
         },
         {
-          "path": "web/src/desk/components/DeskSortableTable.tsx",
-          "symbol": "function SortButton",
-          "claim": "the one sort verb is the library Button, aria-pressed on the sorted column"
+          "path": "web/src/desk/components/DeskListView.tsx",
+          "symbol": "onSort={(key) =>",
+          "claim": "PHILO-14 A2: the sort verbs are ObjectList's header Buttons (library Button, aria-pressed and aria-sort on the sorted column); a press on the sorted header flips it"
         },
         {
           "path": "web/src/desk/components/DeskMenu.tsx",
