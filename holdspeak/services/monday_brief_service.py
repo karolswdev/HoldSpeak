@@ -467,7 +467,7 @@ class MondayBriefService:
 
     def generate(
         self, principal: Any, *, now: datetime.datetime | None = None,
-        regenerate: bool = True,
+        regenerate: bool = True, people_reads: bool = True,
     ) -> MondayBrief:
         """Make the brief for the current local date from the desk as it is now.
 
@@ -477,10 +477,29 @@ class MondayBriefService:
         An item that is the same as before (same section, source and text)
         keeps its id, so its shelf state (acknowledged, deferred) stays.
 
+        ``people_reads=False`` (the scheduled job) reads nothing from the
+        People store (see below).
         ``regenerate=False`` (the scheduled job) returns the day's brief when
         one exists: the schedule makes one brief a day, the owner's Generate
         makes it again.
         """
+        # PHILO-15-09 (Astra r1, P1): the scheduled Brief (``people_reads=False``)
+        # never reads the People store: no key request with nobody at the desk.
+        # Its WAITING count then leaves out People commitments (their lanes
+        # are encrypted). The owner's own Generate (his press, at the desk)
+        # reads them, so the Brief says the bell's one number. People added
+        # are counted from plain metadata on both paths (``_people_added``);
+        # no People content is written into a brief on either path.
+        if people_reads:
+            return self._generate(principal, now=now, regenerate=regenerate)
+        from holdspeak.people.key_free import no_people_reads
+
+        with no_people_reads():
+            return self._generate(principal, now=now, regenerate=regenerate)
+
+    def _generate(
+        self, principal: Any, *, now: datetime.datetime | None, regenerate: bool,
+    ) -> MondayBrief:
         # PHILO-3-03: the producer's day comes from its one clock.
         period_start, period_end = self.compute_window(now or self._clock())
         date_key = period_end.date().isoformat()

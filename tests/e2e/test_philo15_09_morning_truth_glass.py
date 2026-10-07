@@ -136,6 +136,9 @@ class TestTheMorningTellsTheTruth:
                 assert latest["headline"] != "No changes"
                 assert latest["title"].startswith("Brief · ") and "Monday Brief" not in latest["title"]
                 assert latest["period_label"] in brief.get_by_test_id("arrival-brief-date").inner_text()
+                # The RENDERED window title is the dated title (Astra r1, P2).
+                shown_title = brief.locator(".desk-window-title").first.inner_text().strip()
+                assert shown_title == latest["title"], (shown_title, latest["title"])
                 _settle(page)
                 page.screenshot(path=str(SHOTS / f"after-brief-{width}.png"))
 

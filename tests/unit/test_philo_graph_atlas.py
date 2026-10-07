@@ -1444,14 +1444,17 @@ def _without_chair_doors(steps: list) -> list:
 
 
 def test_same_day_generate_again_binds_returned_displayed_and_retained(atlas: dict) -> None:
-    """Finding 3: the returned brief must BE the displayed one, and the face the
-    trigger acts on must be the brief the store gave back after a reload."""
+    """PHILO-15-09 (B04): Generate on the same day makes the brief AGAIN from the
+    current desk. The case makes the first brief on an empty desk, reloads (the
+    brief is retained), captures its id and GENERATED time, adds one decision
+    through the real route, presses Generate again, and reads the new work on
+    the face. The smoke fence reads the press's own answer for the same id and
+    a newer generated_at (tests/e2e/test_graph_walk_smoke.py)."""
     case = _case(atlas, SAME_DAY)
     predicate = case["expected"]["predicate"]
-    assert predicate["kind"] == "unchanged"
-    spec = _rig().identity_spec(predicate)
-    assert spec and spec["from"] == "trigger", spec
-    assert spec.get("display") == BRIEF_HEADLINE == case["expected"]["observe_at"], spec
+    assert predicate == {"kind": "text_contains",
+                         "value": "Decision made: Adopt the j10 regenerate check"}
+    assert case["expected"]["observe_at"] == "[data-testid=arrival-brief]"
 
     setup = _without_chair_doors(case["setup"])
     first_click = next(i for i, s in enumerate(setup)
@@ -1460,28 +1463,21 @@ def test_same_day_generate_again_binds_returned_displayed_and_retained(atlas: di
     assert first_click < reload, "the reload must come after the first brief is made"
     waits = [s for s in setup[reload + 1:] if s.get("action") == "wait_for"]
     assert waits and waits[0]["selector"] == BRIEF_HEADLINE, "no retention wait after the reload"
-    captured = [s for s in setup[reload + 1:] if s.get("capture_as") == "first_brief_id"]
-    assert captured and captured[0]["path"] == "/api/brief/latest", (
-        "the retained brief id is not captured after the reload")
+    captured = [i for i, s in enumerate(setup) if s.get("capture_as") == "first_brief_id"]
+    stamped = [i for i, s in enumerate(setup) if s.get("capture_as") == "first_generated_at"]
+    work = [i for i, s in enumerate(setup) if _mints_brief_material(s)]
+    assert captured and stamped and work, (captured, stamped, work)
+    assert reload < captured[0] < work[0] and stamped[0] < work[0], \
+        "the first brief is read back before the new work is added"
     assert case["trigger"].get("selector") == GENERATE
 
-    # The rig's own verdict on this predicate.
+    # The rig's own verdict: the new work on the face passes; the morning's
+    # "No changes" (the old same-day answer) fails.
     check = _rig().check_predicate
-    shown = "No changes"
-    before = {"text": shown, "attrs": {}}
-
-    def after(returned: str | None, displayed: str | None) -> dict:
-        snap = {"text": shown, "attrs": {}, "identity_display": {"value": displayed}}
-        if returned is not None:
-            snap["trigger_response"] = {"status": 200, "body": {
-                "id": "brief-second", "headline": returned}}
-        return snap
-
-    assert check(predicate, before, after(shown, shown))[0]
-    ok, why = check(predicate, before, after("2 things changed.", shown))
-    assert not ok, f"a stale face beside a different returned brief passed: {why}"
-    assert not check(predicate, before, after(None, shown))[0], "passed with no response"
-    assert not check(predicate, before, after(shown, None))[0], "passed with nothing displayed"
+    before = {"text": "No changes", "attrs": {}}
+    assert check(predicate, before, {"text": "BRIEF Decision made: Adopt the j10 regenerate check",
+                                     "attrs": {}})[0]
+    assert not check(predicate, before, {"text": "No changes", "attrs": {}})[0]
 
 
 def _populated_brief_cases(atlas: dict) -> list[dict]:
@@ -1516,14 +1512,9 @@ def _advances_the_producer_day(step: dict) -> bool:
 def _brief_recipe_problem(case: dict) -> str | None:
     """A populated recipe's brief under observation must hold its material.
 
-    Same-day generation returns the ORIGINAL brief (monday_brief_service.py
-    same-day idempotency), so a brief generated before the material exists
-    stays empty all that producer-day. The brief under observation is the
-    LAST generation. Astra's counsel on A3: an earlier empty generation is
-    permitted only when a valid producer-day advance sits between it and the
-    observed one. Stated as: in the observed generation's producer-day (the
-    acts after the last valid advance before it), the FIRST generation comes
-    after the material, and so does the observed one.
+    PHILO-15-09 (B04): a same-day Generate makes the brief again from the
+    current desk, so the brief under observation (the LAST generation) holds
+    every material minted before it, whatever came earlier that day.
     """
     acts = _acts(case)
     mint = next((i for i, s in enumerate(acts) if _mints_brief_material(s)), None)
@@ -1535,12 +1526,6 @@ def _brief_recipe_problem(case: dict) -> str | None:
     observed = gens[-1]
     if observed < mint:
         return "the brief is made before its material exists"
-    advances = [i for i, s in enumerate(acts[:observed]) if _advances_the_producer_day(s)]
-    day_start = advances[-1] if advances else -1
-    first_that_day = next(g for g in gens if g > day_start)
-    if first_that_day < mint:
-        return ("the brief is made before its material exists, and no producer-day "
-                "advance separates that generation from the observed one")
     return None
 
 
@@ -1569,61 +1554,32 @@ PHASE3_NEXT_DAY = ("case.a3.brief_next_day.decision_on_the_face",
 
 
 def test_the_brief_recipe_fence_refuses_its_mutations(atlas: dict) -> None:
-    """Astra's counsel on A3: the fence must FAIL each false acceptance she
-    reproduced, on in-memory copies of the actual recipes, and pass the real ones."""
+    """Astra's counsel on A3, under PHILO-15-09 (B04): a same-day Generate makes
+    the brief again, so an earlier empty generation no longer hides material;
+    the fence refuses the one false acceptance left: material minted AFTER the
+    observed generation. The real recipes pass."""
     import copy
 
     phase3 = json.loads((REPO / "docs/internal/philo/graph/atlas-phase3.json").read_text())
     next_day = _case(atlas, NEXT_DAY)
     populated = _case(atlas, POPULATED)
-    for case in [next_day, populated] + [_case(phase3, cid) for cid in PHASE3_NEXT_DAY]:
+    same_day = _case(atlas, SAME_DAY)
+    for case in [next_day, populated, same_day] + [_case(phase3, cid) for cid in PHASE3_NEXT_DAY]:
         assert _brief_recipe_problem(case) is None, case["id"]
 
-    def advance_index(case: dict) -> int:
-        found = [i for i, s in enumerate(case["setup"]) if _advances_the_producer_day(s)]
-        assert len(found) == 1, case["id"]
-        return found[0]
-
-    for case in [next_day] + [_case(phase3, cid) for cid in PHASE3_NEXT_DAY]:
-        # 1. the advance removed
-        removed = copy.deepcopy(case)
-        del removed["setup"][advance_index(removed)]
-        assert _brief_recipe_problem(removed), f"{case['id']}: passed without its advance"
-        # 2. the advance moved AFTER the observed generation (the trigger)
-        moved = copy.deepcopy(case)
-        step = moved["setup"].pop(advance_index(moved))
-        moved["setup"].append(moved.pop("trigger"))
-        moved["trigger"] = step
-        assert _brief_recipe_problem(moved), f"{case['id']}: passed with the advance after it"
-        # 3. an invalid advance (zero days, or another adapter) is no advance
-        for bad in ({"advance_days": 0}, {"adapter": "scheduler-wait"}):
-            weak = copy.deepcopy(case)
-            weak["setup"][advance_index(case)].update(bad)
-            assert _brief_recipe_problem(weak), f"{case['id']}: passed with {bad}"
-
-    # 4. an empty Generate inserted before the material in the ordinary recipe
-    early = copy.deepcopy(populated)
-    mint = next(i for i, s in enumerate(early["setup"]) if _mints_brief_material(s))
-    early["setup"].insert(mint, {"kind": "ui", "action": "click", "selector": GENERATE,
-                                 "adapter": "ui-pointer"})
-    assert _brief_recipe_problem(early), "an empty Generate before the material passed"
-    # 5. the same through the route, not the face
-    early_api = copy.deepcopy(populated)
-    early_api["setup"].insert(mint, {"kind": "api", "method": "POST",
-                                     "path": "/api/brief/generate", "body": None})
-    assert _brief_recipe_problem(early_api), "an empty route generate before the material passed"
-    # 6. an empty generation on the OBSERVED day, before the material, is not
-    #    rescued by an earlier advance (same-day id: the observed brief is empty)
-    late2 = copy.deepcopy(next_day)
-    mint2 = next(k for k, s in enumerate(late2["setup"]) if _mints_brief_material(s))
-    material = late2["setup"].pop(mint2)
-    j = advance_index(late2)
-    late2["setup"].insert(j + 1, {"kind": "api", "method": "POST",
-                                  "path": "/api/brief/generate", "body": None})
-    late2["setup"].insert(j + 2, material)
-    # day two: generate (empty) THEN material THEN observed -> same-day id, empty
-    assert _brief_recipe_problem(late2), "an empty generation on the observed day passed"
-
+    for case in [next_day, populated, same_day]:
+        # the material moved after the observed generation (the trigger)
+        late = copy.deepcopy(case)
+        mint = next(i for i, s in enumerate(late["setup"]) if _mints_brief_material(s))
+        material = late["setup"].pop(mint)
+        late["setup"].append(late.pop("trigger"))
+        late["trigger"] = material
+        assert _brief_recipe_problem(late), f"{case['id']}: passed with the material after it"
+        # no generation at all
+        none = copy.deepcopy(case)
+        none["setup"] = [s for s in none["setup"] if not _generates_a_brief(s)]
+        none["trigger"] = {"kind": "ui", "action": "wait_for", "selector": BRIEF_HEADLINE}
+        assert _brief_recipe_problem(none), f"{case['id']}: passed with no generation"
 
 def test_the_populated_brief_predicate_needs_the_minted_row(atlas: dict) -> None:
     case = _case(atlas, POPULATED)

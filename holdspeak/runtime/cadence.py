@@ -127,7 +127,9 @@ class CadenceMixin:
             system_principal = Principal(PrincipalKind.SERVICE, "heartbeat")
             # PHILO-15-09: the schedule makes one brief a day; only the
             # owner's Generate makes the day's brief again.
-            brief = brief_svc.generate(system_principal, now=now, regenerate=False)
+            # PHILO-15-09 (Astra r1, P1): nobody is at the desk: no People
+            # key request (people_reads=False).
+            brief = brief_svc.generate(system_principal, now=now, regenerate=False, people_reads=False)
 
             db.cadence.upsert_policy(CadencePolicy(
                 name="brief_regeneration",

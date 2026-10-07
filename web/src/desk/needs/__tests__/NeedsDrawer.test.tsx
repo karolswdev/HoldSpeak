@@ -305,7 +305,10 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
   it("one object, one row: the item an agent works carries its agent's question", async () => {
     const asking: AgentFlight = { ...WORKING, state: "waiting", sessionKey: "claude:s-run" };
     useAgentFlights.setState({ flights: [FLIGHT, asking], sessions: [] } as never);
-    await mount();
+    // PHILO-15-09 (B11): the ask rides on its item's row, so the head says
+    // the rows: one object, one row, one count.
+    render(<NeedsDrawer />);
+    await screen.findByText("7 need you");
     const item = row("Write the rollback runbook");
     expect(face(item)).toMatchObject({
       kind: "action",
@@ -323,7 +326,9 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       scheduledArming: { scheduleId: "sch-1", title: "Ledger cutover sync", countdownSeconds: 10, fireAt: Date.now() + 8_000, outcome: null },
       cancelArmedSchedule: cancel,
     } as never);
-    await mount();
+    // PHILO-15-09 (B11): the arming row is a row, and it counts.
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
     const rows = document.querySelectorAll<HTMLElement>("[data-testid='needs-row']");
     expect(rows[0].getAttribute("data-object-id")).toBe("arming:sch-1");
     expect(rows[0].getAttribute("data-kind")).toBe("meeting");
@@ -420,7 +425,9 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       if (value.startsWith("/api/scheduled-recordings")) return { items: [] } as never;
       return { upcoming: [], calendar_configured: true } as never;
     });
-    await mount();
+    // PHILO-15-09 (B11): the arming row counts.
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
     const armed = () => document.querySelector<HTMLElement>("[data-object-id='arming:sch-9']");
     fireEvent.click(armed()!.querySelector("[data-verb='cancel']")!);
     await waitFor(() => expect(armed()!.querySelector(".needs-row-fact")?.textContent)
@@ -504,5 +511,32 @@ describe("NeedsDrawer one count and kind words (PHILO-15-09)", () => {
     render(<NeedsDrawer />);
     await screen.findByText("1 needs you");
     expect(document.querySelectorAll("[data-testid='needs-list'] li.needs-row")).toHaveLength(1);
+  });
+});
+
+
+describe("NeedsDrawer every row counts (PHILO-15-09 B11, Astra r1)", () => {
+  it("a source not read and a recording that arms are rows, and the head counts them", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return {
+          ...ANSWER,
+          complete: false,
+          coverage: [
+            { source_id: "gh:ledger", kind: "project", state: "failed", observed_at: null, label: "CI red on main", project_id: "p1", reason: "gh not signed in" },
+            { source_id: "jira:ops", kind: "project", state: "available", observed_at: null, label: "Ops", project_id: "p2" },
+          ],
+        } as never;
+      return { upcoming: [], calendar_configured: false } as never;
+    });
+    useDesk.setState({
+      scheduledArming: { scheduleId: "sch-2", title: "Standup", countdownSeconds: 60, fireAt: Date.now() + 60_000, outcome: null },
+    } as never);
+    render(<NeedsDrawer />);
+    await screen.findByText("10 need you");
+    const rows = document.querySelectorAll<HTMLElement>("[data-testid='needs-list'] li.needs-row");
+    expect(rows).toHaveLength(10);
+    expect(screen.getAllByTestId("needs-source-row")).toHaveLength(1);
+    for (const row of rows) expect(row.getAttribute("data-counted")).toBe("true");
   });
 });

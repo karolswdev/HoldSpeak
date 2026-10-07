@@ -363,3 +363,25 @@ describe("PHILO-15-09 B07 — The week is never empty", () => {
     expect(within(week).getByTestId("week-no-calendar")).toBeTruthy();
   });
 });
+
+// PHILO-15-09 (B04, Astra r1): the Brief window wears the brief's own dated
+// title; its name (aria, Window ▸ Chair) stays "Brief".
+describe("PHILO-15-09 B04 — the Brief window title is dated", () => {
+  it("renders `Brief · Wednesday 7 Oct 2026` in the title bar", async () => {
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
+      const p = String(path);
+      if (p.startsWith("/api/desk/needs-you")) return NEEDS;
+      if (p.startsWith("/api/door")) return { board: {}, counts: {}, upcoming: [], calendar_configured: false };
+      if (p === "/api/brief/latest") return {
+        id: "brief-1", headline: "No changes", sections: {}, is_empty: true,
+        generated_at: "2026-10-07T10:50:00-06:00", period_label: "OCT 06-07",
+        title: "Brief · Wednesday 7 Oct 2026",
+      };
+      return null;
+    }));
+    render(<ChairHome />);
+    const win = await screen.findByRole("region", { name: "Brief" });
+    await waitFor(() =>
+      expect(win.querySelector(".desk-window-title")?.textContent).toBe("Brief · Wednesday 7 Oct 2026"));
+  });
+});

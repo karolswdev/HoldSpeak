@@ -50,7 +50,9 @@ import "./send-well.css"; import { keepPlace, keptPlace } from "../../deskMemory
 /** The one document a well sends: `ref` is `<kind>:<id>` (the wire's
  *  `document_ref`), `title` its name, `label` the short token a prepared row
  *  shows (REV 4, BRIEF SEP 29, D-1a2b3c). */
-export type DocRef = { ref: string; title: string; label: string };
+/** `version`: what changes when the document's text does under the same ref
+ *  (PHILO-15-09: a regenerated Brief keeps its id); the preview reads again. */
+export type DocRef = { ref: string; title: string; label: string; version?: string };
 
 /* ── the per-document store (survives Back and another document) ──────── */
 
@@ -513,7 +515,7 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
           : { ref, id: picked, failed: true });
       });
     return () => { live = false; };
-  }, [ref, picked, previewTry]);
+  }, [ref, picked, previewTry, doc.version]);
   // T2: a PREVIEW CHANGED refusal reads the preview again (same document, same destination).
   const pickedOutcome = picked ? store.outcomes.get(`${ref}|${picked}`) : undefined;
   const changedAt = pickedOutcome?.kind === "refused"

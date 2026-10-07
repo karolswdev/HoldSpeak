@@ -460,8 +460,9 @@ def _run_one_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
             _settle(page)
 
             # The display line: the TRUE total; no Project button.
+            # PHILO-15-09 (B11): the head IS the rows: 3 members + the unread source.
             headline = (page.get_by_test_id("arrival-display").text_content() or "").strip()
-            assert headline == "3 need you", headline
+            assert headline == "4 need you", headline
             assert page.get_by_role("group", name="Project").count() == 0
 
             # The unread source is a source row ABOVE every member, with its
@@ -525,8 +526,9 @@ def _run_three_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
             page.locator(MEMBERS).first.wait_for(timeout=15000)
             _settle(page)
 
+            # PHILO-15-09 (B11): the head IS the rows: 17 members + the unread sources.
             headline = (page.get_by_test_id("arrival-display").text_content() or "").strip()
-            assert headline == "17 need you", headline
+            assert headline == f"{17 + len(gaps)} need you", headline
 
             # One source row per unread source, each with its owning verb.
             sources = page.locator(SOURCES).filter(has_not_text="No calendar")
@@ -648,9 +650,10 @@ def _run_quiet_all_clear(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width:
             assert headline == "Nothing needs you", headline
             assert page.get_by_text("Nothing needs you").count() == 1
             assert page.locator("[data-testid='needs-row']").count() == 0
-            # Coverage is complete: the only source row is the calendar offer.
-            assert page.locator(SOURCES).count() == 1
-            assert page.locator("[data-testid='needs-source-row'][data-object-id='source:calendar']").count() == 1
+            # Coverage is complete: no source row; the calendar offer is in
+            # the foot, never a row (PHILO-15-09 B11).
+            assert page.locator(SOURCES).count() == 0
+            assert page.get_by_test_id("needs-no-calendar").count() == 1
             assert page.get_by_role("group", name="Ranking").count() == 0
             assert len(_primaries(page)) == 0, _primaries(page)
             assert _raw_buttons(page) == [], _raw_buttons(page)

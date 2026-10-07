@@ -148,3 +148,104 @@ def test_the_schedule_keeps_one_brief_a_day(tmp_path):
     scheduled = service.generate(None, regenerate=False)
     assert scheduled.id == morning.id and scheduled.generated_at == morning.generated_at
     assert scheduled.headline == "No changes"
+
+
+# ── Astra r1 (P1): the Brief never asks for the People key ────────────
+
+
+class _SpyKeys(MemoryKeyStore):
+    """A key store that counts every key request and can be locked."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.gets = 0
+        self.locked = False
+
+    def get(self, key_id: str) -> bytes:
+        self.gets += 1
+        if self.locked:
+            from holdspeak.people.keys import PeopleKeyError
+
+            raise PeopleKeyError("people_key_missing")
+        return super().get(key_id)
+
+
+def _hub_door(db: Database, people: EncryptedPeopleStore):
+    """The Door as the hub composes it (web_server.py: People projection on)."""
+    from holdspeak.services.door_service import DoorService
+    from holdspeak.services.follow_through_service import FollowThroughService
+    from holdspeak.services.refinement_thought_service import RefinementThoughtService
+
+    people_service = PeopleService(people)
+    return DoorService(
+        FollowThroughService(db, people_projection=people_service), RefinementThoughtService(db),
+        db.scheduled_recordings, db.calendar_events, db=db, people_service=people_service,
+    )
+
+
+def _keyed_desk(tmp_path, monkeypatch):
+    from holdspeak.services import needs_you_membership
+
+    db = Database(tmp_path / "hub.db")
+    keys = _SpyKeys()
+    people = EncryptedPeopleStore(tmp_path / "people.sqlite3", keys)
+    people.initialize()
+    _the_rehearsal_day(db, people)
+    service = PeopleService(people)
+    rel = service.create_relationship(OWNER, {"display_name": "Sam Rivera"})
+    request = service.create_request(OWNER, rel["id"], {"body": "Sam: send the status by Thursday"})
+    service.accept_request(OWNER, request["id"])
+    door = _hub_door(db, people)
+    monkeypatch.setattr(
+        needs_you_membership, "_hub_service",
+        lambda name, build: door if name == "door_service" else build(),
+    )
+    return db, people, keys
+
+
+def test_the_scheduled_brief_asks_for_no_key(tmp_path, monkeypatch):
+    db, people, keys = _keyed_desk(tmp_path, monkeypatch)
+    # Control: the hub's own Needs read (the owner's face) asks for the key.
+    from holdspeak.services.project_service import ProjectService
+
+    keys.gets = 0
+    ProjectService(db).needs_you(OWNER)
+    assert keys.gets > 0, "the control must reach the People store"
+
+    keys.gets = 0
+    # The scheduled path (runtime/cadence.py), with an OWNER principal as #975
+    # composes it.
+    brief = MondayBriefService(db, people_store=people).generate(
+        OWNER, regenerate=False, people_reads=False)
+    assert keys.gets == 0, "the scheduled Brief asked for the People key"
+    texts = _texts(brief)
+    assert "Person added" not in texts  # two people: the plural line
+    assert "2 people added" in texts
+    assert not [t for t in texts if "Sam" in t or "Priya" in t]
+    # The guard is what holds: the owner's own Generate (people_reads) reaches it.
+    keys.gets = 0
+    MondayBriefService(db, people_store=people).generate(OWNER)
+    assert keys.gets > 0
+
+
+def test_a_locked_people_store_makes_the_same_brief(tmp_path, monkeypatch):
+    db, people, keys = _keyed_desk(tmp_path, monkeypatch)
+    service = MondayBriefService(db, people_store=people)
+    open_store = service.generate(OWNER, people_reads=False)
+    keys.locked = True
+    keys.gets = 0
+    locked = service.generate(OWNER, people_reads=False)
+    assert keys.gets == 0
+    assert locked.id == open_store.id
+    assert sorted(_texts(locked)) == sorted(_texts(open_store))
+    assert locked.headline == open_store.headline
+
+
+def test_the_cadence_job_makes_the_brief_key_free():
+    """The scheduled job's own call (runtime/cadence.py) passes both flags."""
+    import inspect
+
+    from holdspeak.runtime import cadence
+
+    source = inspect.getsource(cadence)
+    assert "regenerate=False, people_reads=False" in source

@@ -7571,7 +7571,7 @@
       "state_id": "state.briefs.same_day_idempotent",
       "applicability": "applicable",
       "preconditions": [
-        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its own 'Generate again' verb (ChairHome.tsx:1136-1157). With untriaged items the Chair draws NO second verb at all (:1114) and this recipe cannot run.",
+        "a fresh isolated HOME with NOTHING material in the window, so the first brief is empty; the case then adds one decision through the real route and presses Generate again (PHILO-15-09: the press regenerates).",
         {
           "kind": "check",
           "predicate": {
@@ -7745,6 +7745,28 @@
           "capture_path": "id",
           "adapter": "http-route",
           "why": "the RETAINED brief's id, read after the reload and before the second POST, so the observation carries it beside the id the second POST returns"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_generated_at",
+          "capture_path": "generated_at",
+          "adapter": "http-route",
+          "why": "PHILO-15-09: the first brief's GENERATED time, read before the new work and the second press"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Adopt the j10 regenerate check",
+            "status": "accepted"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "PHILO-15-09: new work after the morning brief, through the real route (the owner decides)"
         }
       ],
       "trigger": {
@@ -7759,12 +7781,11 @@
       },
       "expected": {
         "predicate": {
-          "kind": "unchanged",
-          "replay_identity": "trigger:headline",
-          "identity_display": "[data-testid=arrival-brief-headline]"
+          "kind": "text_contains",
+          "value": "Decision made: Adopt the j10 regenerate check"
         },
-        "observe_at": "[data-testid=arrival-brief-headline]",
-        "words": "same-day generation keeps the brief identity and makes its body again from the current desk (PHILO-15-09: same id, newer generated_at, fresh items)",
+        "observe_at": "[data-testid=arrival-brief]",
+        "words": "same-day Generate makes the brief again from the current desk: the work added after the first brief is on the face (PHILO-15-09); the smoke fence reads the press's own answer for the same id and a newer generated_at",
         "reads": [
           {
             "method": "GET",
@@ -7787,7 +7808,7 @@
       "state_id": "state.briefs.same_day_idempotent",
       "applicability": "applicable",
       "preconditions": [
-        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its own 'Generate again' verb (ChairHome.tsx:1136-1157). With untriaged items the Chair draws NO second verb at all (:1114) and this recipe cannot run.",
+        "a fresh isolated HOME with NOTHING material in the window, so the first brief is empty; the case then adds one decision through the real route and presses Generate again (PHILO-15-09: the press regenerates).",
         {
           "kind": "check",
           "predicate": {
@@ -7961,6 +7982,28 @@
           "capture_path": "id",
           "adapter": "http-route",
           "why": "the RETAINED brief's id, read after the reload and before the second POST, so the observation carries it beside the id the second POST returns"
+        },
+        {
+          "kind": "api",
+          "method": "GET",
+          "path": "/api/brief/latest",
+          "body": null,
+          "capture_as": "first_generated_at",
+          "capture_path": "generated_at",
+          "adapter": "http-route",
+          "why": "PHILO-15-09: the first brief's GENERATED time, read before the new work and the second press"
+        },
+        {
+          "kind": "api",
+          "method": "POST",
+          "path": "/api/decisions",
+          "body": {
+            "title": "Adopt the j10 regenerate check",
+            "status": "accepted"
+          },
+          "expect_status": 201,
+          "adapter": "http-route",
+          "why": "PHILO-15-09: new work after the morning brief, through the real route (the owner decides)"
         }
       ],
       "trigger": {
@@ -11760,6 +11803,17 @@
           "kind": "op",
           "name": "brief.latest",
           "args": {},
+          "adapter": "mcp-http",
+          "capture_as": "first_generated_at",
+          "capture_path": "generated_at"
+        },
+        {
+          "kind": "op",
+          "name": "decision.create",
+          "args": {
+            "title": "Adopt the j10 regenerate check",
+            "status": "accepted"
+          },
           "adapter": "mcp-http"
         }
       ],
@@ -11768,13 +11822,30 @@
         "name": "brief.generate",
         "args": {},
         "adapter": "mcp-http",
-        "why": "repeat the same producer-day brief operation"
+        "why": "Generate again after new work on the same producer day"
       },
       "expected": {
         "predicate": {
-          "kind": "op_field",
-          "path": "id",
-          "value": "{first_brief_id}"
+          "kind": "op_facts",
+          "facts": [
+            {
+              "source": "trigger",
+              "path": "id",
+              "value": "{first_brief_id}"
+            },
+            {
+              "source": "trigger",
+              "path": "generated_at",
+              "differs": "{first_generated_at}"
+            },
+            {
+              "source": "trigger",
+              "path": "sections.changed",
+              "contains": {
+                "text": "Decision made: Adopt the j10 regenerate check"
+              }
+            }
+          ]
         },
         "observe_at": {
           "kind": "op",
@@ -11788,7 +11859,7 @@
             "args": {}
           }
         ],
-        "words": "same-day generation keeps the brief identity and makes its body again from the current desk (PHILO-15-09: same id, newer generated_at, fresh items)"
+        "words": "same-day generation keeps the brief identity, takes a newer generated_at and lists the work added after the first brief (PHILO-15-09)"
       },
       "completion_bound_s": 180.0,
       "viewports": []

@@ -177,6 +177,8 @@ interface MondayBrief {
   /* PHILO-3-03: the route's own date labels (holdspeak/web/routes/monday_brief.py). */
   period_label?: string | null;
   generated_label?: string | null;
+  /** PHILO-15-09 (B04): `Brief · Wednesday 7 Oct 2026` (the route's). */
+  title?: string | null;
 }
 
 /** PHILO-3-03: why the brief read failed — the status, or no answer at all. */
@@ -1026,6 +1028,7 @@ function Arrival() {
   return (
     <ChairDesk
       screen={<Screen />}
+      titles={{ brief: brief?.title ?? undefined }}
       needs={
         <>
           {/* ── Headline ── */}

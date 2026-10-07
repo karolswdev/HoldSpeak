@@ -27,7 +27,12 @@ type BriefLike = { id: string; generated_at?: string | null; period_end?: string
 
 export const briefDoc = (b: BriefLike): DocRef => {
   const d = day(b.generated_at ?? b.period_end);
-  return { ref: `monday_brief:${b.id}`, title: d ? `Brief ${d}` : "Brief", label: d ? `BRIEF ${d}` : "BRIEF" };
+  // PHILO-15-09: a same-day Generate keeps the id and makes a new body; the
+  // generated time is the version the Send preview reads again on.
+  return {
+    ref: `monday_brief:${b.id}`, title: d ? `Brief ${d}` : "Brief", label: d ? `BRIEF ${d}` : "BRIEF",
+    version: b.generated_at ?? undefined,
+  };
 };
 
 export const deskDecisionDoc = (id: string, title?: string | null): DocRef => ({

@@ -431,12 +431,15 @@ export function NeedsDrawer() {
   // Listed, never counted: what he waits on someone else for, and the muted.
   const waiting = needs.waitingItems.map(asFace);
   const muted = needs.mutedItems.map(asFace);
-  const head = needsHead(needs.count, needs.complete && coverage.complete);
+  // PHILO-15-09 (B11, ruling): the head IS the number of rows under it.
+  // Every row counts: a member, a source the hub could not read (he must
+  // see it), a recording that arms. The calendar offer is in the foot.
+  const head = needsHead(faces.length, needs.complete && coverage.complete);
   // One filled primary on a face with work; a SETUP, repair or offer verb is
   // never filled (the quiet face has none: HS-201-01 ruling 2).
   const primaryId = faces.find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null;
   const all = [...faces, ...(showWaiting ? waiting : []), ...(showMuted ? muted : [])];
-  const memberRefs = new Set(needs.members.map((m) => m.ref));
+  const memberRefs = new Set(faces.map((f) => f.memberRef ?? f.id));
   useRowMarks(listRef, all, memberRefs);
 
   const upcoming = door?.upcoming?.[0];
