@@ -14,8 +14,7 @@ catches: the Conductor's face "stinks", the Desk went "Windows 1.0", features ar
 Three movements: A objects (drawers, icons from the mold, drag as composition, apps become
 views), B material (bevels back, chips become lamps, the Chair as a screen not tiles),
 C the Conductor as objects (agent icon, drop to hand, the agent's window as its lane).
-Now: lane 00 canvas (three alternatives + control, one page, he names a letter) and lane
-C0 lane backend (events appended, commits/files read, launch route) in parallel.
+Merged: C0 lane backend #925 (the hub keeps the agent's timeline: `agent_session_events`, spooled by the hook with no DB wait and drained on lane/coder reads; worktree commits/files read on request; PR `ci`+`checks` kept; `control_mode` on the launch; `GET /api/agent/launches/{id}/lane` owner-only, every served text secret-redacted before the cut, `not_read` on failed reads; Astra r1 DNR → r2 RWC; FAST green after two fence corrections). Open from #925 (Astra's condition): the spool drains only on a lane or `/api/coders/sessions` read, no hub timer, so events collect on disk while nothing reads (≤5000 files per drain); Codex `apply_patch` input shape unverified; no MCP tool for the lane. Now: lane 00 canvas (three alternatives + control, one page, he names a letter).
 
 PHILO Phase 13, The Desk, is complete (18/18 stories, closed 2026-10-03).
 Record: `pm/roadmap/holdspeak-philo/phase-13-the-desk/current-phase-status.md`.
@@ -67,6 +66,9 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Decisions (housekeeping #867): fold the older ReactionService watch system into WatchService (Workbench automations are its only face); three primitives/decisions routes are unreachable in the hub; six routes have no caller (incl. POST /api/setup/local-ai/cancel); connector_fixtures.py lives in the product package; heartbeat.run_now builds WatchService without the Jira adapter; a test left tmux session hs10605_kill_62847 on the owner's server | owner | — |
 
 ## Last merged (newest first)
+
+- #925 — Phase 14 C0: the launch lane backend (events, worktree facts, lane route; secrets redacted before the cut)
+- #924 — Phase 14 charter: The Desk Is Objects
 
 - #882 — ⌘K two-line memory hits (owner pick B): the matching passage with the query marked, a FoundBy token (KEYWORD/MEANING/TIME/NAME/LINK) and the day; selected/hovered/focused rows at 5.24:1
 - #877 — Memory where the work lives (owner pick B): beliefs in Desk memory with evidence and history; standing pages in the Room (project) and the Brief (desk); withdrawn evidence hides at once on any desk change; pages bound to their scope; SOURCES counts distinct sources
