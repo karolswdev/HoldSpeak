@@ -14,8 +14,9 @@ mascot.
   centered, two-line label beneath at the label type size. No kind
   gets a bigger picture; importance is expressed by state, never by
   scale.
-- Distinct **silhouette per kind** (cassette, page, crystal, drawer,
-  cartridge, avatar…). Color supports the silhouette; it never
+- Distinct **silhouette per kind** (the D1 mold, PHILO-14: reel-to-reel,
+  pinned note, sealed page, ticket, drawer, robot head, cartridge…). One
+  kind has one silhouette; the map is `VARIANTS` in `src/desk/sprites.ts`. Color supports the silhouette; it never
   substitutes for it — forty objects must sort by shape at a glance.
   A directory is a drawer.
 

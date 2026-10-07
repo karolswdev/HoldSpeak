@@ -21,7 +21,7 @@ import {
 } from "../world";
 import { resolveRef } from "../lineage";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { spriteUrl, variantIndex } from "../sprites";
+import { refAgent, spriteUrl, variantIndex } from "../sprites";
 import type { WorldRect } from "./coords";
 import { ZONE_TINT_POOL } from "../../lib/tokens.gen";
 
@@ -190,6 +190,7 @@ export function buildScene(input: SceneInputs): WorldScene {
           : stale
             ? "stale"
             : "rest",
+        refAgent(o.ref),
       ),
       small: o.kind === "note" || o.kind === "artifact",
       selected:

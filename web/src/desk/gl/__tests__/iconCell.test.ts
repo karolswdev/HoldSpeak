@@ -47,8 +47,15 @@ describe("the cell contract (HS-105-01)", () => {
 
   it("a directory is a drawer, never paper", () => {
     expect((VARIANTS as Record<string, string[]>).directory).toEqual([
-      "drawer",
+      "project-drawer",
     ]);
+  });
+
+  it("one kind = one silhouette (PHILO-14 A0b, the D1 mold)", () => {
+    for (const [kind, pool] of Object.entries(
+      VARIANTS as Record<string, string[]>,
+    ))
+      expect(pool.length, `${kind} pool`).toBe(1);
   });
 });
 

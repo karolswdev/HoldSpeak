@@ -1,7 +1,7 @@
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Knowledge pullout content (HS-117-15). */
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { spriteUrl } from "../sprites";
+import { refAgent, spriteUrl } from "../sprites";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
@@ -51,7 +51,7 @@ export function KbPullout({ object: o }: PulloutContentProps) {
                   key={ref}
                   glyph={
                     <img
-                      src={spriteUrl(member!.kind, member!.id)}
+                      src={spriteUrl(member!.kind, member!.id, "rest", refAgent(member!.ref))}
                       width={22}
                       height={22}
                       alt=""

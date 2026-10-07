@@ -9,50 +9,69 @@ export function stableHash(value: string): bigint {
   return signed < 0n ? -signed : signed;
 }
 
-function numbered(base: string, count: number): string[] {
-  return Array.from({ length: count }, (_, index) =>
-    index ? `${base}${index + 1}` : base,
-  );
-}
-// HS-104-08 (the owner's sitting rider): the family reforged in one
-// Workbench-2.0-modern language. The crystal is gone — knowledge is a
-// bound TOME. The avatar bitmoji is gone — an agent is a mechanical
-// AUTOMATON head, a machine handle, not a mascot. Pool sizes are the
-// candidate picks that survived ICON-DISCIPLINE review.
-const automatons = numbered("automaton", 14);
+// PHILO-14 A0b (ruling 2026-10-07, docs/internal/philo/phase-14/icons/
+// README.md): the D1 "Workbench+" mold. One kind = one silhouette — every
+// pool has length 1, so the per-id variety of the old mold is retired (the
+// old pools are parked in public/desk/sprites/_parked-2026-10-07/). The
+// variantIndex hash stays for any future pool.
+//
+// Honest gaps: kb and roadmap wear `artifact` and story wears `note` until
+// they get their own icon. The capability kinds (model, recipe, chain,
+// workflow, workbench, intelligence) wear the old `cartridge`, carried
+// forward un-parked. memory stays the chip until it is redrawn.
 export const VARIANTS: Record<string, string[]> = {
-  meeting: numbered("cassette", 16),
-  note: numbered("note", 12),
+  meeting: ["meeting"],
+  note: ["note"],
+  decision: ["decision"],
+  artifact: ["artifact"],
   people: ["people-ledger"],
-  // ADRs are material records; reuse the note family until a dedicated plate lands.
-  decision: numbered("note", 12),
-  kb: numbered("tome", 13),
-  // HS-109-05: Project reuses the closest existing dual-state memory
-  // silhouette (bound tome); no unreviewed sprite art is introduced here.
-  project: numbered("tome", 13),
-  roadmap: numbered("tome", 13),
-  story: numbered("note", 12),
+  person: ["person"],
+  project: ["project-drawer"],
+  // HS-105-01: a directory is a DRAWER (the Workbench silhouette rule).
+  directory: ["project-drawer"],
+  repository: ["repository"],
+  kb: ["artifact"],
+  roadmap: ["artifact"],
+  story: ["note"],
+  thread: ["thread"],
+  memory: ["memory"],
+  // The coder and agent kinds pick by agent name (agentSpriteName); the
+  // pool is the fallback when no agent name rides along.
+  coder: ["agent-claude-code"],
+  agent: ["agent-claude-code"],
+  // New kinds for the A1/A2 lanes: action items, pull requests, drawers.
+  action: ["action-item"],
+  pr: ["pull-request"],
+  smart: ["smart-drawer"],
+  conductor: ["conductor-drawer"],
+  parked: ["parked-drawer"],
+  // Capability kinds: one neutral object until they get their own icon.
   model: ["cartridge"],
-  agent: automatons,
-  recipe: automatons,
-  coder: automatons,
-  artifact: ["paper"],
+  recipe: ["cartridge"],
   chain: ["cartridge"],
   workflow: ["cartridge"],
-  // HS-105-01: a directory is a DRAWER (the Workbench silhouette rule) —
-  // never paper. The owner's diagnosis: "no real idea of directories".
-  directory: ["drawer"],
-  // A repository opens as the same physical drawer primitive; git status
-  // and branches live in its window, not in a second sprite language.
-  repository: ["drawer"],
   workbench: ["cartridge"],
   intelligence: ["cartridge"],
 };
+
+/** The agent sprite for an agent name: Codex wears `agent-codex`; Claude
+ * Code and any unknown agent wear `agent-claude-code`. */
+export function agentSpriteName(
+  agent: string | null | undefined,
+): "agent-claude-code" | "agent-codex" {
+  return /codex/i.test(String(agent ?? "")) ? "agent-codex" : "agent-claude-code";
+}
 export const SPRITE_BASE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/`;
 export function variantIndex(id: string, poolLength: number): number {
   return poolLength <= 1 ? 0 : Number(stableHash(id) % BigInt(poolLength));
 }
-export function spriteName(kind: string, id: string): string {
+export function spriteName(
+  kind: string,
+  id: string,
+  agent?: string | null,
+): string {
+  if ((kind === "coder" || kind === "agent") && agent)
+    return agentSpriteName(agent);
   const pool = VARIANTS[kind] ?? VARIANTS.note;
   return pool[variantIndex(id, pool.length)];
 }
@@ -64,7 +83,15 @@ export function spriteUrl(
   kind: string,
   id: string,
   state: SpriteState = "rest",
+  /** The agent name of a coder/agent object ("claude", "codex"). */
+  agent?: string | null,
 ): string {
   const suffix = state === "rest" ? "" : `_${state}`;
-  return `${SPRITE_BASE}${spriteName(kind, id)}${suffix}.png`;
+  return `${SPRITE_BASE}${spriteName(kind, id, agent)}${suffix}.png`;
+}
+
+/** The agent name a world object's ref carries, if any. */
+export function refAgent(ref: unknown): string | undefined {
+  const agent = (ref as { agent?: unknown } | null | undefined)?.agent;
+  return typeof agent === "string" ? agent : undefined;
 }
