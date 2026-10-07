@@ -20,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _boot, _ensure_build, _normal_chair, _settle
+from .glass_infra import _boot, _ensure_build, _images_loaded, _normal_chair, _settle
 from .test_philo13_11_chair_glass import _seed
 from tests._evidence import evidence_dir
 
@@ -88,6 +88,11 @@ class TestFreshArrival:
                 page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
                 _normal_chair(page)
                 page.locator("[data-testid=desk-screen]").wait_for()
+                # A1d: the loose objects arrive after the drawers, and a sprite
+                # decodes after its name draws. Wait for the seeded loose note and
+                # for every sprite on the screen before the shot.
+                page.locator(".desk-screen [data-object-id='note:n-1']").wait_for()
+                _images_loaded(page)
                 _settle(page)
                 # the default desk: no Chair window open
                 assert page.locator(".desk-window-shell.chair-window").count() == 0
