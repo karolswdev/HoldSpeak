@@ -4,9 +4,9 @@ The orchestrator's rulings on PR #903 (the owner wants the agent to do
 meaningful work; egress, authority and config stay at his press):
 
 1. **Memory recall.** A launch-bound credential reads ``memory.*`` while it
-   is live (``principals.launch_reader``). What it reads passes the brief's
-   People cut (``agent_brief._PeopleClassifier``): a hit, observation or page
-   sentence whose source carries People content is left out.
+   is live (``principals.launch_reader``). People content is readable (owner
+   ruling 2026-10-06, Conductor R7: "agents should totally be able to look it
+   up via mcp"); secrets stay redacted where they always are.
 2. **Decision proposals.** At launch the owner's press on Hand to agent
    grants the launch identity a desk delegation for ``decision.create`` only.
    The CONDUCTOR call gate admits only a ``proposed`` decision
@@ -229,80 +229,6 @@ def record_own(principal: Any, ref: str) -> None:
         agent_credentials.scope_add(launch, ref)
 
 
-# ── 1. the People cut on memory reads ────────────────────────────────────
-
-
-def _classifier(db: Any) -> Any:
-    from .agent_brief import _PeopleClassifier
-
-    return _PeopleClassifier(db)
-
-
-def _people_kind(kind: Any) -> bool:
-    from .agent_brief import PEOPLE_KINDS
-
-    return str(kind or "") in PEOPLE_KINDS
-
-
-def cut_memory(db: Any, method: str, result: Any) -> Any:
-    """The People cut over one memory read's result (a launch reader's)."""
-    if not isinstance(result, Mapping):
-        return result
-    people = _classifier(db)
-    out = dict(result)
-    if method == "search":
-        kept = []
-        for hit in result.get("hits") or []:
-            refs = [str(hit.get("source_ref") or "")] + [str(r) for r in hit.get("evidence") or []]
-            if _people_kind(hit.get("kind")) or any(people.carries_people(ref) for ref in refs if ref):
-                continue
-            kept.append(hit)
-        cut = len(result.get("hits") or []) - len(kept)
-        out["hits"] = kept
-        page = dict(out.get("page") or {})
-        if page:
-            page["count"] = len(kept)
-            page["total"] = max(0, int(page.get("total") or 0) - cut)
-            out["page"] = page
-        out["people_cut"] = cut
-        return out
-    if method == "observations":
-        kept = [
-            row for row in result.get("observations") or []
-            if not any(
-                people.carries_people(str((ev or {}).get("ref") or ""))
-                for ev in row.get("evidence") or [] if (ev or {}).get("ref")
-            )
-        ]
-        out["observations"] = kept
-        out["count"] = len(kept)
-        return out
-    if method == "page":
-        out["page"] = _cut_page(people, result.get("page"))
-        return out
-    if method == "standing_pages":
-        pages = [_cut_page(people, page) for page in result.get("pages") or []]
-        out["pages"] = [page for page in pages if page]
-        return out
-    return out
-
-
-def _cut_page(people: Any, page: Any) -> Any:
-    if not isinstance(page, Mapping):
-        return page
-    sentences = [s for s in page.get("sentences") or [] if people.sentence(s)]
-    if not sentences:
-        return None
-    cut = dict(page)
-    cut["sentences"] = sentences
-    if "answer" in cut:
-        cut["answer"] = "\n".join(f"- {s.get('text')}" for s in sentences)
-    if "sources" in cut:
-        refs = list(dict.fromkeys(r.get("ref") for s in sentences for r in s.get("refs") or []))
-        cut["sources"] = [src for src in cut.get("sources") or [] if src.get("ref") in refs]
-    return cut
-
-
 # ── 3. every mutating tool's launch scope (the audit; Astra round 1 #7) ──
 #
 # Each tool of the CONDUCTOR palette that is not a read (``tools.is_read_tool``)
@@ -324,12 +250,15 @@ def _cut_page(people: Any, page: Any) -> Any:
 # * ``composer``-- a model answer composed over desk records: the People cut
 #   cannot see a paraphrase, so it is not offered to a cloud agent.
 
-CREATE, DESK, OWN, ITEM, PROJECT, NEVER, COMPOSER = (
-    "create", "desk", "own", "item", "project", "never", "composer",
+CREATE, DESK, OWN, ITEM, PROJECT, NEVER, COMPOSER, READ = (
+    "create", "desk", "own", "item", "project", "never", "composer", "read",
 )
 
 #: tool -> (rule, ref kind, argument naming the target / the created id).
 LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
+    # read: a People read whose verb the shared read classifier does not name
+    # (Conductor R7, owner ruling 2026-10-06: agents read People)
+    "people.one_on_one.brief": (READ, "", ""),
     # create
     "door.add_item": (CREATE, "action", "id"),
     "thought.create": (CREATE, "thought", "id"),
@@ -521,6 +450,8 @@ def gate_call(name: str, arguments: Any, principal: Any) -> Any:
         # Held in PrimitiveService too; named here first, so the answer is
         # the launch rule, never a later kernel code.
         require_own(principal, *_desk_targets(name, args))
+    if rule[0] == READ:
+        return args
     kind, key = rule[1], rule[2]
     for idem in _IDEMPOTENCY_KEYS:
         if args.get(idem):
@@ -565,102 +496,14 @@ def after_call(name: str, arguments: Any, result: Any, principal: Any) -> None:
                     return
 
 
-# ── 4. the People cut on every read a launch reaches ─────────────────────
-
-
-def _people_text(text: str) -> str:
-    from .agent_brief import _people_section_cut
-
-    return _people_section_cut(text)
-
-
-def cut_people_everywhere(value: Any) -> Any:
-    """The brief's People classification over ANY read payload: a People
-    record is dropped, a People-marked line or a Brief People section is cut
-    from every string (JSON carried inside a string included)."""
-    from .agent_brief import PEOPLE_KINDS, _PEOPLE_MARKERS
-
-    if isinstance(value, str):
-        stripped = value.lstrip()
-        if stripped[:1] in ("{", "["):
-            import json
-
-            try:
-                parsed = json.loads(value)
-            except ValueError:
-                return _people_text(value)
-            return json.dumps(cut_people_everywhere(parsed), default=str)
-        return _people_text(value)
-    if isinstance(value, Mapping):
-        kind = str(value.get("kind") or "")
-        refs = [str(value.get(k) or "") for k in ("ref", "source_ref", "uri", "resource_ref")]
-        source = str(value.get("source") or "")
-        refs.append(str(value.get("target_ref") or ""))
-        if (
-            kind in PEOPLE_KINDS or source in PEOPLE_KINDS
-            or value.get("relationship_id")  # a projection of one person (name and id)
-            or any(r.startswith(_PEOPLE_MARKERS) or r.startswith("holdspeak://people/") for r in refs if r)
-        ):
-            return _DROP
-        out = {}
-        for key, item in value.items():
-            if _people_key(key):
-                continue
-            kept = cut_people_everywhere(item)
-            if kept is not _DROP:
-                out[key] = kept
-        return out
-    if isinstance(value, (list, tuple)):
-        return [kept for kept in (cut_people_everywhere(v) for v in value) if kept is not _DROP]
-    return value
-
-
-#: The People fields a projection may stamp on a non-People record (Astra
-#: round 2 on #903; grepped over holdspeak/): ``person_label``,
-#: ``person_relationship_id``, ``person_sections``, ``owner_aliases``,
-#: ``relationship_kind``, a ``people``/``person`` section, and every other
-#: ``person_*``/``people_*`` field. ``people_cut`` is the cut's own count.
-_PEOPLE_KEY = re.compile(
-    r"^(person|people)(_.*)?$|^relationship_(id|kind)$|^owner_alias(es)?$|^display_names?$"
-)
-
-
-def _people_key(key: Any) -> bool:
-    text = str(key)
-    return text != "people_cut" and bool(_PEOPLE_KEY.match(text))
-
-
-def cut_value(value: Any) -> Any:
-    """The People cut of one payload; a payload that is a People record is None."""
-    kept = cut_people_everywhere(value)
-    return None if kept is _DROP else kept
-
-
-def cut_for(principal: Any, value: Any) -> Any:
-    """What a launch principal reads, after the People cut; others: as is."""
-    if launch_id_of(principal) is None:
-        return value
-    return cut_value(value)
-
-
-class _Drop:
-    def __repr__(self) -> str:  # pragma: no cover
-        return "<dropped People record>"
-
-
-_DROP = _Drop()
-
-
 __all__ = [
     "LAUNCH_RULES",
     "NOT_OFFERED",
     "after_call",
-    "cut_people_everywhere",
     "gate_call",
     "NOT_THIS_LAUNCH",
     "PROPOSAL_OPERATIONS",
     "SCOPED_ITEM_TOOLS",
-    "cut_memory",
     "grant_decision_proposals",
     "install_revoke_hook",
     "reconcile_launch_grants",

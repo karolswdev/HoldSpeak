@@ -221,6 +221,18 @@ TOOLS: list[dict[str, Any]] = [
 ]
 
 
+#: The family's reads: the tools ``dispatch`` answers before its write gate
+#: (``_require_access(write=False)``). Conductor R7 (owner ruling 2026-10-06):
+#: a HoldSpeak-launched agent may call these, never the writes.
+READ_TOOLS: frozenset[str] = frozenset({
+    "people.readiness",
+    "people.relationship.list",
+    "people.relationship.get",
+    "people.grounding.get",
+    "people.one_on_one.brief",
+})
+
+
 def access_mode(environ: Mapping[str, str] | None = None) -> str:
     """Return the process-boundary capability, refusing unknown values.
 

@@ -122,7 +122,7 @@ def _refused_by_palette(body: dict[str, Any]) -> bool:
 # ── 1. The palette, from the authority table ─────────────────────────
 
 
-def test_conductor_palette_is_every_work_tool_except_people() -> None:
+def test_conductor_palette_is_every_work_tool_and_the_people_reads() -> None:
     from holdspeak.mcp.tools import TOOLS
 
     registered = {t["name"] for t in TOOLS}
@@ -130,14 +130,18 @@ def test_conductor_palette_is_every_work_tool_except_people() -> None:
     from holdspeak.mcp.palettes import CONDUCTOR_OWNER_CONFIRM
     from holdspeak.services.conductor_launch import NOT_OFFERED
 
+    from holdspeak.mcp.families.people import READ_TOOLS as PEOPLE_READS
+
     expected = {
         name for name in registered
-        if TOOL_AUTHORITY.get(name) == WORK and not name.startswith("people.")
+        if TOOL_AUTHORITY.get(name) == WORK
+        and (not name.startswith("people.") or name in PEOPLE_READS)
         and name not in CONDUCTOR_OWNER_CONFIRM and name not in NOT_OFFERED
     }
     assert palette == expected
     assert not any(TOOL_AUTHORITY[name] != WORK for name in palette)
-    assert not any(name.startswith("people.") for name in palette)
+    # Conductor R7 (owner ruling 2026-10-06): the People reads, never a People write.
+    assert {n for n in palette if n.startswith("people.")} == set(PEOPLE_READS)
     # The brief's named effects are offered; egress, authority and config are not.
     assert {"desk.create", "door.add_item", "follow_through.complete", "project.list",
             "memory.search", "desk.snapshot", "decision_record.search"} <= palette
@@ -253,16 +257,18 @@ def test_egress_authority_config_and_people_are_refused(hub: Hub) -> None:
     assert _refused_by_palette(_call(agent, "agent.hand", {"kind": "action", "id": "ai_1"}))
     assert _refused_by_palette(_call(agent, "settings.update", {}))
     assert _refused_by_palette(_call(agent, "project.archive", {"project_id": "p"}))
-    assert _refused_by_palette(_call(agent, "people.relationship.list", {}))
+    # People writes stay the owner's (Conductor R7: agents READ People).
+    assert _refused_by_palette(_call(agent, "people.relationship.create", {"display_name": "X"}))
+    assert _refused_by_palette(_call(agent, "people.owner_alias.link", {"relationship_id": "r", "alias": "a"}))
     # A mixed tool is classed on its arguments: a schedule is authority.
     assert _refused_by_palette(_call(agent, "workbench.create", {"fields": {"name": "w", "schedule_enabled": True}}))
     assert not _refused_by_palette(_call(agent, "workbench.create", {"fields": {"name": "w"}}))
-    # The People resources: hidden and refused.
+    # The People resources are listed and readable (Conductor R7).
     resources = _rpc(agent, "resources/list").json()["result"]
     uris = [r["uri"] for r in resources["resources"]] + [r["uriTemplate"] for r in resources["resourceTemplates"]]
-    assert uris and not any(uri.startswith("holdspeak://people/") for uri in uris)
+    assert any(uri.startswith("holdspeak://people/") for uri in uris)
     read = _rpc(agent, "resources/read", {"uri": "holdspeak://people/relationships"}).json()
-    assert read["error"]["code"] == -32005
+    assert (read.get("error") or {}).get("code") != -32005, read
 
 
 def test_the_kernel_receipt_of_an_agent_call_names_the_agent(hub: Hub) -> None:
@@ -365,8 +371,8 @@ def test_the_brief_names_the_mcp_tools(tmp_path, db, monkeypatch) -> None:
     _wait_for(lambda: rig.launches.get(result["launch_id"]), "instruction_state", "sent")
     typed = "\n".join(text for _pane, text in rig.typed)
     assert (
-        "- The holdspeak MCP tools are yours for this launch. Use them to read the desk "
-        "and memory (People data is cut), file notes, propose decisions (the owner "
+        "- The holdspeak MCP tools are yours for this launch. Use them to read the desk, "
+        "memory and People (read only), file notes, propose decisions (the owner "
         "confirms them), update the status of this item or of items you add, and ask "
         "the owner with a Door item. You cannot send anything out or change settings."
     ) in typed
@@ -535,7 +541,8 @@ def _owner_note(hub: Hub, title: str, body: str) -> str:
     return note["id"]
 
 
-def test_a_launch_reads_memory_with_the_people_cut(hub: Hub) -> None:
+def test_a_launch_reads_memory_with_people(hub: Hub) -> None:
+    """Conductor R7 (owner ruling 2026-10-06): a launch reads memory whole."""
     _reach(hub, False)
     plain = _owner_note(hub, "Rollout plan", "We use blue-green for the zebra rollout.")
     people = _owner_note(hub, "Zebra 1:1 prep", "zebra notes\npeople:rel_42 wants more ownership")
@@ -547,8 +554,8 @@ def test_a_launch_reads_memory_with_the_people_cut(hub: Hub) -> None:
     agent = _client(hub, credential.token)
     is_error, found = _result(_call(agent, "memory.search", {"query": "zebra"}))
     assert is_error is False, found
-    assert [h["source_ref"] for h in found["hits"]] == [f"note:{plain}"]
-    assert found["people_cut"] == 1 and found["page"]["total"] == 1
+    assert {h["source_ref"] for h in found["hits"]} == {f"note:{plain}", f"note:{people}"}
+    assert "people_cut" not in found
     for name, args in (("memory.observations", {}), ("memory.page", {"slug": "what-i-owe", "scope": "desk"})):
         is_error, read = _result(_call(agent, name, args))
         assert is_error is False, (name, read)
@@ -884,9 +891,10 @@ def test_r2_ownership_is_kind_qualified(hub: Hub) -> None:
 PEOPLE_LINE = "people:rel_42 wants more ownership"
 
 
-def test_r3_the_people_cut_holds_on_every_reader(hub: Hub) -> None:
-    """Finding 3: the same People-bearing Note through every reader a launch
-    reaches: none answers the People line; the owner still reads it."""
+def test_r3_people_reach_every_reader(hub: Hub) -> None:
+    """Conductor R7 (owner ruling 2026-10-06), flipped from K6's cut: the
+    same People-bearing Note through every reader a launch reaches answers
+    its People line, as the owner reads it."""
     _reach(hub, False)
     note = hub.root.primitive_service.create_note(
         _owner_press(), title="Zebra 1:1 prep", body_markdown=f"zebra agenda\n{PEOPLE_LINE}",
@@ -906,11 +914,11 @@ def test_r3_the_people_cut_holds_on_every_reader(hub: Hub) -> None:
     listed = _rpc(agent, "resources/list").json()["result"]
     for row in listed["resources"]:
         readers[f"resource {row['uri']}"] = _rpc(agent, "resources/read", {"uri": row["uri"]}).json()
-    for reader, answer in readers.items():
-        assert PEOPLE_LINE not in json.dumps(answer) and "rel_42" not in json.dumps(answer), reader
-    # The rest of the Note still reads.
+    for reader in ("desk.get", "desk.list", "resource notes"):
+        assert "rel_42 wants more ownership" in json.dumps(readers[reader]), reader
+    assert f"note:{note}" in json.dumps(readers["memory.search"])  # the People note is a hit
     assert "zebra agenda" in json.dumps(readers["desk.get"])
-    # The model composers are not offered: a paraphrase is past the cut.
+    # The model composers stay out of the launch palette (K6's audit).
     for name in ("ask.run", "recipe.run", "monday_brief.generate", "workflow.run"):
         assert _refused_by_palette(_call(agent, name, {})), name
 
@@ -1178,52 +1186,93 @@ def _people_rig(hub: Hub):
     return person
 
 
-def test_r9_people_projections_stay_out_of_every_launch_reader(hub: Hub) -> None:
+def test_r9_people_projections_reach_every_launch_reader(hub: Hub) -> None:
+    """Conductor R7 (owner ruling 2026-10-06), flipped from K6's cut: the
+    real People producers through the Needs you projection and the People
+    read tools, as the owner reads them."""
     _reach(hub, False)
     person = _people_rig(hub)
-    # The owner's Door shows the person.
-    _err, owner_door = hub.mcp("door.get", {})
-    assert "SECRET_PERSON_SENTINEL" in json.dumps(owner_door)
     agent = _client(hub, _launch_credential().token)
-    readers = {
-        "desk.needs_you": _call(agent, "desk.needs_you", {}),
-        "door.get": _call(agent, "door.get", {}),
-        "desk.snapshot": _call(agent, "desk.snapshot", {}),
-        "follow_through.board": _call(agent, "follow_through.board", {}),
-    }
-    for name, answer in readers.items():
-        text = json.dumps(answer)
-        assert "SECRET_PERSON_SENTINEL" not in text and person["id"] not in text, name
-        assert "person_label" not in text and "person_relationship_id" not in text, name
-    # The Public task is still there for the agent (door.get needs the owner
-    # for its Thought lane, so the board is the agent's read).
-    assert "Public task" in json.dumps(readers["follow_through.board"])
-    assert "Public task" in json.dumps(readers["desk.needs_you"])
+    needs_you = json.dumps(_call(agent, "desk.needs_you", {}))
+    assert "SECRET_PERSON_SENTINEL" in needs_you and "person_label" in needs_you, needs_you
+    assert "Public task" in needs_you
+    board = json.dumps(_call(agent, "follow_through.board", {}))
+    assert "Public task" in board
+    for name, args in (
+        ("people.relationship.list", {}),
+        ("people.relationship.get", {"relationship_id": person["id"]}),
+        ("people.one_on_one.brief", {"relationship_id": person["id"]}),
+    ):
+        is_error, answer = _result(_call(agent, name, args))
+        assert is_error is False, (name, answer)
+        if name != "people.one_on_one.brief":
+            assert "SECRET_PERSON_SENTINEL" in json.dumps(answer), (name, answer)
+    is_error, ready = _result(_call(agent, "people.readiness", {}))
+    assert is_error is False and ready["access"] in ("read", "write"), ready
 
 
-def test_r9_the_output_boundary_drops_people_fields() -> None:
-    from holdspeak.services.conductor_launch import cut_value
+def test_r9_people_writes_stay_the_owners_over_mcp_and_http(hub: Hub) -> None:
+    """Agents read People; they never write it: refused over MCP (out of the
+    palette, and by the launch rule past it) and over HTTP (owner routes)."""
+    from holdspeak.mcp.tools import dispatch
+    from holdspeak.services.errors import ServiceError
 
-    card = {"id": "ai_1", "task": "Public", "person_label": "Ana", "person_relationship_id": "rel_1",
-            "owner_aliases": ["a"], "people": [{"x": 1}], "people_cut": 2}
-    assert cut_value(card) == {"id": "ai_1", "task": "Public", "people_cut": 2}
-    assert cut_value({"items": [{"relationship_id": "rel_1", "title": "Ana", "kind": "review_bottleneck"}, {"a": 1}]}) == {
-        "items": [{"a": 1}]}
+    _reach(hub, False)
+    person = _people_rig(hub)
+    cred = _launch_credential()
+    agent = _client(hub, cred.token)
+    for name, args in (
+        ("people.relationship.create", {"display_name": "Agent made"}),
+        ("people.note.create", {"relationship_id": person["id"], "body": "agent note"}),
+        ("people.agenda.add", {"session_id": "s", "body": "x"}),
+        ("people.owner_alias.link", {"relationship_id": person["id"], "alias": "agent-alias"}),
+        ("people.resolve", {"identity": "opaque-owner-42"}),
+    ):
+        assert _refused_by_palette(_call(agent, name, args)), name
+        with pytest.raises(ServiceError) as refused:
+            dispatch(name, args, agent_credentials.derive(cred.token))
+        assert refused.value.code == "not_this_launch", name
+    for method, path, body in (
+        ("POST", "/api/people/relationships", {"display_name": "Agent made"}),
+        ("POST", f"/api/people/relationships/{person['id']}/notes", {"body": "agent note"}),
+        ("POST", f"/api/people/relationships/{person['id']}/owner-aliases", {"alias": "agent-alias"}),
+        ("POST", f"/api/people/relationships/{person['id']}/archive", {}),
+    ):
+        answer = agent.request(method, path, json=body)
+        assert answer.status_code == 403, (path, answer.status_code, answer.text)
+    names = json.dumps(hub.root.web_context.people_service.list_relationships(_owner_press()))
+    assert "Agent made" not in names
 
 
-def test_r10_the_people_cut_covers_http_answers(hub: Hub) -> None:
+def test_r9_people_off_takes_the_reads_away(hub: Hub, monkeypatch) -> None:
+    """The owner's HOLDSPEAK_MCP_PEOPLE_ACCESS=off: no People tool, no People
+    resource for an agent."""
+    monkeypatch.setenv("HOLDSPEAK_MCP_PEOPLE_ACCESS", "off")
     _reach(hub, False)
     agent = _client(hub, _launch_credential().token)
-    secret = "people:rel_42 PRIVATE_REVIEW_MARKER"
-    err, kept = hub.mcp("ask.keep", {"output": "Public agenda\n" + secret, "sources": [], "lens": "Prep"})
+    names = {t["name"] for t in _rpc(agent, "tools/list").json()["result"]["tools"]}
+    assert not any(n.startswith("people.") for n in names)
+    assert _refused_by_palette(_call(agent, "people.relationship.list", {}))
+    read = _rpc(agent, "resources/read", {"uri": "holdspeak://people/relationships"}).json()
+    assert read["error"]["code"] == -32005
+    monkeypatch.setenv("HOLDSPEAK_MCP_PEOPLE_ACCESS", "read")
+    names = {t["name"] for t in _rpc(agent, "tools/list").json()["result"]["tools"]}
+    from holdspeak.mcp.families.people import READ_TOOLS
+
+    assert {n for n in names if n.startswith("people.")} == set(READ_TOOLS)
+
+
+def test_r10_people_reach_http_answers(hub: Hub) -> None:
+    """Conductor R7, flipped: the launch's HTTP prepare answers the People
+    line, as MCP does and as the owner's does."""
+    _reach(hub, False)
+    agent = _client(hub, _launch_credential().token)
+    line = "people:rel_42 PRIVATE_REVIEW_MARKER"
+    err, kept = hub.mcp("ask.keep", {"output": "Public agenda\n" + line, "sources": [], "lens": "Prep"})
     assert not err
     args = {"document_ref": "artifact:" + kept["artifact_id"], "destination_id": "holdspeak-folder"}
     err, mcp = _result(_call(agent, "channel.prepare", args))
-    assert not err and secret not in json.dumps(mcp)
+    assert not err and "PRIVATE_REVIEW_MARKER" in json.dumps(mcp)
     http = agent.post("/api/channels/sends", json=args)
     assert http.status_code == 200, http.text
-    assert secret not in http.text and "PRIVATE_REVIEW_MARKER" not in http.text, http.json()
-    assert "Public agenda" in http.text
-    # The owner's own HTTP answer is untouched.
-    owner = hub.client.post("/api/channels/sends", json=args)
-    assert "PRIVATE_REVIEW_MARKER" in owner.text
+    assert "PRIVATE_REVIEW_MARKER" in http.text and "Public agenda" in http.text

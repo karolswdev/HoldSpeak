@@ -69,7 +69,8 @@ def _project(db: Database, name: str) -> str:
 # ── 1. People content never escapes through memory ──────────────────
 
 
-def test_people_section_of_a_recalled_note_is_cut_before_flattening(db) -> None:
+def test_people_section_of_a_recalled_note_reaches_the_brief(db) -> None:
+    """Conductor R7 (owner ruling 2026-10-06): the People section is kept."""
     pid = _project(db, "Payments")
     notes = PrimitiveService(db)
     a = notes.create_note(OWNER, title="Login plan", body_markdown=(
@@ -80,15 +81,14 @@ def test_people_section_of_a_recalled_note_is_cut_before_flattening(db) -> None:
 
     recalled = compose_agent_brief(db, f"note:{b['id']}", control_mode="yolo")
     assert "Sessions move to Redis." in recalled["text"]  # note A came back through memory
-    assert "Alice" not in recalled["text"] and "1:1" not in recalled["text"]
-    assert recalled["people_cut"] >= 1
+    assert recalled["people_cut"] == 0
 
     direct = compose_agent_brief(db, f"note:{a['id']}", control_mode="yolo")
     assert "Sessions move to Redis." in direct["text"]
-    assert "Alice" not in direct["text"] and direct["people_cut"] >= 1
+    assert "Alice is on leave" in direct["text"] and direct["people_cut"] == 0
 
 
-def test_a_memory_page_sentence_citing_a_people_source_is_left_out(db) -> None:
+def test_a_memory_page_sentence_citing_a_people_source_is_kept(db) -> None:
     from holdspeak.memory.pages import spec_for, write_page
     from holdspeak.memory.retain import sweep
     from tests.unit.test_memory_slice5_pages import Pages
@@ -107,7 +107,8 @@ def test_a_memory_page_sentence_citing_a_people_source_is_left_out(db) -> None:
     assert written["sentences"] == 1  # the page holds the People text
 
     brief = compose_agent_brief(db, f"note:{note['id']}", control_mode="yolo")
-    assert "Alice" not in brief["text"] and "Thursday" not in brief["text"]
+    assert brief["people_cut"] == 0
+    assert "Use Redis for sessions." in brief["text"]
 
 
 # ── 2. every composed field is redacted ──────────────────────────────

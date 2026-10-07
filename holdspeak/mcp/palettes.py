@@ -47,21 +47,38 @@ def _lazy_desk_tools() -> frozenset[str]:
 # Conductor K6 (owner 2026-10-06: "the agent we spin up here - do we inject him
 # with our HoldSpeak MCP? We certainly should"). The palette is DERIVED from the
 # one authority table (``mcp/tool_authority.py``, the owner's thread rule of
-# 2026-09-29): every ``work`` tool, so a new tool classifies itself. Two cuts:
+# 2026-09-29): every ``work`` tool, so a new tool classifies itself.
 #
 # * egress, authority and config tools stop for the owner's press: not offered;
-# * the People family is not offered at all. Claude Code and Codex run on cloud
-#   models, and People data does not reach a cloud agent (the brief cuts it too,
-#   ``services/agent_brief.py``). The People resources are refused the same way.
+# * People (owner ruling 2026-10-06, "agents should totally be able to look it
+#   up via mcp"): the family's READS are offered (``people.READ_TOOLS``) and the
+#   People resources are readable; every People WRITE stays out. The owner's
+#   ``HOLDSPEAK_MCP_PEOPLE_ACCESS=off`` takes the reads away from agents too.
 #
 # A mixed tool (``ARGUMENT_AUTHORITY``) is offered, and each call is classed on
 # its arguments: a call that would schedule or delegate is refused.
 
 CONDUCTOR = "CONDUCTOR"
 
-#: The families a launched agent never reaches, whatever their class.
-CONDUCTOR_EXCLUDED_PREFIXES: tuple[str, ...] = ("people.",)
-CONDUCTOR_EXCLUDED_RESOURCE_PREFIXES: tuple[str, ...] = ("holdspeak://people/",)
+#: The People family and resources: reads only, and none when the owner set
+#: People MCP access to ``off``.
+PEOPLE_PREFIX = "people."
+PEOPLE_RESOURCE_PREFIX = "holdspeak://people/"
+
+
+def _people_reads() -> frozenset[str]:
+    from holdspeak.mcp.families import people
+
+    try:
+        mode = people.access_mode()
+    except Exception:  # an unknown value is refused by the family: no reads
+        return frozenset()
+    return frozenset() if mode == "off" else people.READ_TOOLS
+
+
+def _people_allowed(name: str) -> bool:
+    """A People tool is offered only as a read, and only while access is on."""
+    return not name.startswith(PEOPLE_PREFIX) or name in _people_reads()
 
 #: The owner's Confirm: tools that confirm a decision or a proposal on his
 #: behalf (mint a decision record, confirm or drop a proposal, accept a
@@ -83,7 +100,7 @@ def _lazy_conductor_tools() -> frozenset[str]:
         name
         for name in _lazy_all_tools()
         if TOOL_AUTHORITY.get(name) == WORK
-        and not name.startswith(CONDUCTOR_EXCLUDED_PREFIXES)
+        and _people_allowed(name)
         and name not in CONDUCTOR_OWNER_CONFIRM
         and name not in _not_offered()
     )
@@ -111,7 +128,7 @@ def conductor_call_allowed(name: str, arguments: Any) -> bool:
     """One CONDUCTOR call, classed on its arguments (a mixed tool's predicate)."""
     from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK, call_class
 
-    if name not in TOOL_AUTHORITY or name.startswith(CONDUCTOR_EXCLUDED_PREFIXES):
+    if name not in TOOL_AUTHORITY or not _people_allowed(name):
         return False
     if name in CONDUCTOR_OWNER_CONFIRM or name in _not_offered():
         return False
@@ -122,8 +139,8 @@ def conductor_call_allowed(name: str, arguments: Any) -> bool:
 
 
 def conductor_resource_allowed(uri: str) -> bool:
-    """A CONDUCTOR resource read: never a People resource."""
-    return not str(uri or "").startswith(CONDUCTOR_EXCLUDED_RESOURCE_PREFIXES)
+    """A CONDUCTOR resource read: People resources while People access is on."""
+    return not str(uri or "").startswith(PEOPLE_RESOURCE_PREFIX) or bool(_people_reads())
 
 
 # ── Public API ──────────────────────────────────────────────────────────

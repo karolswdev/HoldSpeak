@@ -402,9 +402,7 @@ def handle_message_for_principal(
                 data={"code": "MCP-005", "resource": uri},
             )
         try:
-            from holdspeak.services.conductor_launch import cut_for
-
-            return _response(request_id, cut_for(principal, read_resource(uri, principal)))
+            return _response(request_id, read_resource(uri, principal))
         except ServiceError as exc:
             return _error(
                 request_id, -32002, exc.detail,
