@@ -40,7 +40,7 @@ describe("the session footer never squeezes the policy facts (Conductor F2)", ()
     expect(tokens).toEqual([expect.stringMatching(/^AUTHORITY · .+ POSTURE$/), "RECEIPT · EVERY ATTEMPT"]);
     // The pane is said once: in the body's facts, never again in the footer.
     expect(policy.textContent).not.toMatch(/%0|pane/i);
-    expect(document.body.textContent!.match(/%0/g)?.length).toBe(2); // the body fact and the Arm pane verb
+    expect(document.body.textContent!.match(/%0/g)?.length).toBe(2); // the body fact and the arm verb's pane token
   });
 
   it("the CSS: a token never wraps inside; the footer row flows and wraps; the controls scroll in a narrow window", () => {
