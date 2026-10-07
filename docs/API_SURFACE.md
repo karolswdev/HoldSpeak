@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 743 (plus static mounts). iOS-consumed: 89. Web-consumed: 572.
+Routes: 745 (plus static mounts). iOS-consumed: 89. Web-consumed: 575.
 
 ## device_audio_ws
 
@@ -341,6 +341,12 @@ Routes: 743 (plus static mounts). iOS-consumed: 89. Web-consumed: 572.
 | POST | `/api/desk/actuators/webhook/propose` | ios, web |
 | POST | `/api/desk/actuators/webhook/{proposal_id}/decision` | ios, web |
 
+## web.routes.desk_parked
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/desk/parked` | web |
+
 ## web.routes.desk_seed
 
 | Method | Path | Consumers |
@@ -625,6 +631,7 @@ Routes: 743 (plus static mounts). iOS-consumed: 89. Web-consumed: 572.
 | GET | `/api/onboarding/calendar` | web |
 | POST | `/api/onboarding/calendar/check` | web |
 | POST | `/api/onboarding/calendar/macos/access` | web |
+| POST | `/api/onboarding/calendar/macos/settings` | web |
 | POST | `/api/onboarding/calendar/use` | web |
 | GET | `/api/onboarding/connections` | web |
 | POST | `/api/onboarding/connections/use` | web |
@@ -972,7 +979,7 @@ Routes: 743 (plus static mounts). iOS-consumed: 89. Web-consumed: 572.
 | GET | `/api/projects/{project_id}/resources` | web |
 | DELETE | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
 | PUT | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
-| POST | `/api/projects/{project_id}/restore` | server only |
+| POST | `/api/projects/{project_id}/restore` | web |
 | GET | `/api/projects/{project_id}/room` | web |
 | POST | `/api/projects/{project_id}/room/read` | web |
 | GET | `/api/projects/{project_id}/since-last-meeting` | web |
