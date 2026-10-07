@@ -14,6 +14,7 @@
  */
 import type { ReactNode } from "react";
 import { LampGadget } from "../gadgets";
+import { ProjectButton } from "../patterns/ProjectButton";
 import { listSprite } from "../../sprites";
 import { lampGadgetTone, objectSprite, type ObjectTone } from "./kinds";
 import "./objects.css";
@@ -28,15 +29,28 @@ export interface NeedsRowProps {
   /** The object's verbs (library Buttons; one primary at most). */
   verbs?: ReactNode;
   sprite?: string;
+  /** PHILO-14 A5b: the Project the object belongs to, as the library
+   *  ProjectButton at the end of the fact line (`Open the Project: <name>`; a generic
+   *  open, so the caller opens the Project's drawer). The caller leaves it
+   *  out when the desk holds one Project (UX-CANON A.7). */
+  project?: { name: string; onOpen: () => void };
 }
 
-export function NeedsRow({ id, kind, name, fact, lamp, verbs, sprite }: NeedsRowProps) {
+export function NeedsRow({ id, kind, name, fact, lamp, verbs, sprite, project }: NeedsRowProps) {
   return (
     <li className="needs-row" data-object-id={id} data-kind={kind}>
       <img src={listSprite(sprite ?? objectSprite(kind, id))} alt="" draggable={false} />
       <span className="needs-row-what">
         <span className="needs-row-name">{name}</span>
-        {fact ? <span className="needs-row-fact">{fact}</span> : null}
+        {project ? (
+          // The canvas names the Project on the fact line (README, Phase 14):
+          // here it is the Project's own Button at the line's end.
+          <span className="needs-row-factline">
+            {fact ? <span className="needs-row-fact">{fact}</span> : null}
+            <ProjectButton name={project.name} onOpen={project.onOpen}
+              className="needs-row-project" data-testid="needs-row-project" />
+          </span>
+        ) : fact ? <span className="needs-row-fact">{fact}</span> : null}
       </span>
       <span className="needs-row-lamp">
         <LampGadget label={lamp.label} on tone={lampGadgetTone(lamp.tone)} />

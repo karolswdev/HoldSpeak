@@ -1255,7 +1255,10 @@ def test_a_project_carries_work_across_two_working_days(
                 # ── S4: attention (15) ─────────────────────────────────
                 walk.begin("day1-attention", 1, "the commitment is a real attention row")
                 _reload_arrival(page)
-                page.get_by_test_id("arrival-needs-you").wait_for(timeout=15000)
+                # PHILO-14 A5: the Needs-you window body is the smart drawer;
+                # the commitment is its own member row there.
+                page.locator("[data-testid=needs-drawer] [data-testid=needs-row]").filter(
+                    has_text=COMMITMENT_TEXT).first.wait_for(timeout=15000)
                 _settle(page)
                 wire = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
                 rows = [i for i in wire["items"]

@@ -331,40 +331,41 @@ def test_hs144_door_populated_glass_action_refusal_and_shots(
             page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
             page.wait_for_timeout(500)
 
-            # ── NEEDS YOU section present ──
-            needs_you = page.get_by_test_id("arrival-needs-you")
-            assert needs_you.count() == 1, "NEEDS YOU section should be present"
+            # ── NEEDS YOU drawer present (PHILO-14 A5: the Needs-you window
+            #    body is the smart drawer; its member rows are `needs-row`) ──
+            needs_you = page.get_by_test_id("needs-drawer")
+            assert needs_you.count() == 1, "NEEDS YOU drawer should be present"
 
             # ── Rows: overdue, now, waiting, unassigned; active is ABSENT ──
-            rows = page.get_by_test_id("arrival-needs-you-row")
+            rows = needs_you.get_by_test_id("needs-row")
+            rows.first.wait_for(timeout=15000)
             # Door items: overdue(danger) + now(warning) + unassigned(warning) +
             # waiting(info) = 4 items (active excluded, the thought is "active")
             assert rows.count() >= 3, f"Expected at least 3 NEEDS YOU rows, got {rows.count()}"
 
-            # Overdue item: severity danger, appears first
-            overdue_text = rows.nth(0).locator(".surface-ledger-primary").text_content() or ""
-            assert "overdue" in overdue_text.lower() or "Unblock" in overdue_text, \
-                f"First row should be the overdue item: {overdue_text}"
+            # Overdue item: severity danger, appears first among the Door rows
+            names = [rows.nth(i).locator(".needs-row-name").text_content() or "" for i in range(rows.count())]
+            assert "overdue" in names[0].lower() or "Unblock" in names[0], \
+                f"First row should be the overdue item: {names}"
 
-            # WHY tokens
-            why_tokens = page.get_by_test_id("arrival-why")
-            token_texts = [why_tokens.nth(i).text_content() or "" for i in range(why_tokens.count())]
+            # WHY tokens: each row's ONE lamp word
+            lamps = needs_you.locator("[data-testid=needs-row] .gadget-lamp")
+            token_texts = [lamps.nth(i).text_content() or "" for i in range(lamps.count())]
             assert any("OVERDUE" in t for t in token_texts), f"Expected OVERDUE token: {token_texts}"
 
             # "Name an owner" verb on the unassigned item
-            name_owner = page.get_by_test_id("arrival-name-owner")
+            name_owner = needs_you.locator("[data-testid=needs-row-verb][data-verb=name-owner]")
             assert name_owner.count() >= 1, "Unassigned item should have 'Name an owner' verb"
 
-            # NEXT line from the seeded scheduled recording
-            next_line = page.get_by_test_id("arrival-next")
+            # NEXT line from the seeded scheduled recording (the drawer's foot)
+            next_line = page.get_by_test_id("needs-next")
             assert next_line.count() == 1, "NEXT line should be present"
             next_text = next_line.text_content() or ""
             assert "DOOR GLASS RECORDING" in next_text.upper(), \
                 f"NEXT should name the schedule: {next_text}"
 
             # Active thought does NOT appear in NEEDS YOU
-            all_primaries = [rows.nth(i).locator(".surface-ledger-primary").text_content() or ""
-                             for i in range(rows.count())]
+            all_primaries = names
             assert not any("active thought" in p.lower() for p in all_primaries), \
                 f"Active items should not appear: {all_primaries}"
 
@@ -409,7 +410,8 @@ def test_hs144_door_empty_and_error_shots(
             # HS-170-04: empty door = NEEDS YOU absent on the arrival
             page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
             page.wait_for_timeout(500)
-            assert page.get_by_test_id("arrival-needs-you").count() == 0, \
+            # PHILO-14 A5: the drawer draws no member row (`needs-row`).
+            assert page.locator("[data-testid=needs-drawer] [data-testid=needs-row]").count() == 0, \
                 "NEEDS YOU section should be absent when door is empty"
             _assert_clean(page, errors)
             page.screenshot(path=str(DOOR_ASSETS / f"door-empty-{width}.png"), full_page=False)
@@ -459,8 +461,12 @@ def test_upcoming_rail_real_hub_states_and_dimensions(
             # Empty hub with no calendar: NO CALENDAR + Connect calendar
             page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
             page.wait_for_timeout(500)
-            no_cal = page.get_by_test_id("arrival-no-calendar")
-            connect_btn = page.get_by_test_id("arrival-connect-calendar")
+            # PHILO-14 A5: no calendar is the drawer's `source:calendar` row
+            # (NOT CONNECTED) with its Connect calendar verb.
+            no_cal = page.locator("[data-testid=needs-source-row][data-object-id='source:calendar']")
+            no_cal.first.wait_for(timeout=15000)
+            assert "NOT CONNECTED" in (no_cal.first.locator(".gadget-lamp").text_content() or "")
+            connect_btn = no_cal.locator("[data-testid=needs-row-verb][data-verb=connect-calendar]")
             assert no_cal.count() == 1, "NO CALENDAR should show when unconfigured"
             assert connect_btn.count() == 1, "Connect calendar should be present"
             _assert_clean(page, errors)
@@ -472,7 +478,8 @@ def test_upcoming_rail_real_hub_states_and_dimensions(
             _normal_chair(page)
             page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
             page.wait_for_timeout(500)
-            next_line = page.get_by_test_id("arrival-next")
+            next_line = page.get_by_test_id("needs-next")
+            next_line.first.wait_for(timeout=15000)
             assert next_line.count() == 1, "NEXT line should appear after schedule seed"
             next_text = next_line.text_content() or ""
             assert "RAIL-ONLY RECORDING" in next_text.upper(), \

@@ -74,6 +74,21 @@ export interface NeedFace {
   foldedInto?: string;
   /** The item's other asks (the row shows the most urgent one): `+N MORE`. */
   moreAsks?: number;
+  /** The Project the row names (PHILO-14 A5b): the row draws its Project
+   *  button, a generic open, which opens the Project's drawer (A2b). */
+  project?: { id: string; name: string };
+  /** A proposal is an object in the Room (A2b): the row opens the Room with
+   *  THIS proposal selected, never the drawer (the drawer holds no proposals). */
+  proposal?: { projectId: string; proposalId: string };
+}
+
+/** What the face builder knows of the desk. `multipleProjects`: the rows
+ *  draw their Project button, so the fact line does not repeat the name. */
+export interface NeedCtx {
+  flights: readonly AgentFlight[];
+  sessions: readonly CoderSessionRow[];
+  now: Date;
+  multipleProjects?: boolean;
 }
 
 /** `Claude Code` / `Codex`: the agent's name in a sentence. */
@@ -169,10 +184,7 @@ function openRefOf(item: NeedsYouRoomItem, card: DoorCardLike): string {
   return String(person || card?.open_ref || card?.target_ref || item.openRef || "");
 }
 
-function attentionFace(
-  item: NeedsYouRoomItem,
-  ctx: { flights: readonly AgentFlight[]; sessions: readonly CoderSessionRow[]; now: Date },
-): NeedFace {
+function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   const id = String(item.id ?? item.ref ?? "");
   const title = String(item.title || "Untitled");
   const why = String(item.why ?? "").toUpperCase();
@@ -227,6 +239,12 @@ function attentionFace(
 
   const card = doorCardOf(item);
   const openRef = openRefOf(item, card) || undefined;
+  // A row that names only its Project opens the Project's drawer (A2b).
+  const projectRef = item.projectId ? `project:${String(item.projectId)}` : "";
+  // The Project button names the Project (desk with two or more Projects):
+  // the fact line does not say it again (UX-CANON A.7).
+  const named = Boolean(ctx.multipleProjects && item.projectId && project);
+  const factProject = named ? "" : project;
   const flight = flightForItem(ctx.flights, { ...item, _doorCard: card ?? null });
   // An item an agent works is that agent's: its row is the flight.
   if (isInFlight(flight)) {
@@ -237,7 +255,7 @@ function attentionFace(
         id,
         kind: "pr",
         name: number != null ? `#${number} ${title}` : title,
-        fact: [who, flight.projectName || project].filter(Boolean).join(" · "),
+        fact: [who, named ? "" : flight.projectName || project].filter(Boolean).join(" · "),
         lamp: flight.state === "merged"
           ? { label: "MERGED · TO SECURE", tone: "warn" }
           : { label: "PR OPEN", tone: "ok" },
@@ -252,7 +270,7 @@ function attentionFace(
       id,
       kind: item.source === "decision" ? "decision" : "action",
       name: title,
-      fact: [who, flight.projectName || project].filter(Boolean).join(" · "),
+      fact: [who, named ? "" : flight.projectName || project].filter(Boolean).join(" · "),
       // The fact line names the agent; the lamp says what it does (one word).
       lamp: { label: state, tone: flight.state === "waiting" ? "ask" : "info" },
       group: "agents",
@@ -265,12 +283,12 @@ function attentionFace(
   const rawOwner = String(item.owner ?? "").trim();
   // The owner himself is not named on his own row.
   const owner = SELF_OWNER_NAMES.includes(rawOwner.toLowerCase()) ? "" : rawOwner;
-  const fact = [owner, project, observedWord(item)].filter(Boolean).join(" · ");
+  const fact = [owner, factProject, observedWord(item)].filter(Boolean).join(" · ");
   const lamp = { label: why || "NEEDS YOU", tone: toneOf(item.severity, why) };
 
   // R4: a decision that waits for the owner's review.
   if (source === "decision" && item.openRef) {
-    return { id, kind: "decision", name: title, fact: project, lamp, group: "rest",
+    return { id, kind: "decision", name: title, fact: factProject, lamp, group: "rest",
       verbs: { kind: "review", ref: String(item.openRef) }, openRef: String(item.openRef) };
   }
   // A proposal from a meeting: Confirm.
@@ -282,13 +300,16 @@ function attentionFace(
       fact: [
         item.meetingTitle ? `from ${item.meetingTitle}` : "from a meeting",
         item.proposalDue ? `by ${item.proposalDue}` : "",
-        project,
+        factProject,
       ].filter(Boolean).join(" · "),
       // The act the proposal asks for: decide it, or confirm it.
       lamp: { label: item.proposalKind === "decision" ? "TO DECIDE" : "TO CONFIRM", tone: "warn" },
       group: "rest",
       verbs: { kind: "confirm", proposalId: String(item.proposalId), projectId: String(item.projectId ?? "") },
-      openRef: item.projectId ? `project:${String(item.projectId)}` : undefined,
+      // The row opens the Room with this proposal selected (A2b), not the drawer.
+      proposal: item.projectId
+        ? { projectId: String(item.projectId), proposalId: String(item.proposalId) }
+        : undefined,
     };
   }
   // A Room commitment: ONE lawful next act.
@@ -307,7 +328,7 @@ function attentionFace(
       verbs: ref ? { kind: "review", ref } : { kind: "none" }, openRef };
   }
   if (ext._isUnassigned && !rawOwner) {
-    return { id, kind: "action", name: title, fact: project, lamp, group: "rest",
+    return { id, kind: "action", name: title, fact: factProject, lamp, group: "rest",
       verbs: { kind: "name-owner", cardId: doorDelegateCardId(card), openRef: card?.open_ref ? String(card.open_ref) : null },
       openRef };
   }
@@ -317,18 +338,15 @@ function attentionFace(
   if (item.verbHref) {
     return { id, kind: item.kind === "decision" ? "decision" : "action", name: title, fact, lamp, group: "rest",
       verbs: { kind: "link", url: String(item.verbHref) },
-      openRef: openRef ?? (item.projectId ? `project:${String(item.projectId)}` : undefined) };
+      openRef: openRef ?? (projectRef || undefined) };
   }
-  const ref = openRefOf(item, card);
+  const ref = openRefOf(item, card) || projectRef;
   return { id, kind: item.kind === "decision" ? "decision" : "action", name: title, fact, lamp, group: "rest",
     verbs: ref ? { kind: "open", ref } : { kind: "none" }, openRef: ref || undefined };
 }
 
 /** One hub member as its object face. */
-export function needFace(
-  member: NeedsYouMember,
-  ctx: { flights: readonly AgentFlight[]; sessions: readonly CoderSessionRow[]; now: Date },
-): NeedFace {
+export function needFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
   if (member.kind === "blocker" && member.blocker) {
     return {
       id: member.ref,
@@ -358,6 +376,10 @@ export function needFace(
   }
   const item = member.item ?? ({} as NeedsYouRoomItem);
   const face = attentionFace(item, ctx);
+  // Every row of a Project names it (an agent's ask names its session instead).
+  if (!face.askOf && item.projectId && item.projectName) {
+    face.project = { id: String(item.projectId), name: String(item.projectName) };
+  }
   face.memberRef = String(item.ref ?? item.id ?? "");
   if (item.foldedInto) face.foldedInto = String(item.foldedInto);
   return face;
@@ -395,6 +417,7 @@ export function foldAsks(faces: readonly NeedFace[]): NeedFace[] {
       moreAsks: asks.length - 1,
       // The row's Open is the agent's lane, where every ask is answered.
       openRef: lead.askOf ? `coder:${lead.askOf}` : face.openRef,
+      proposal: lead.askOf ? undefined : face.proposal,
     });
   }
   return out.filter((face) => !(face.askOf && folded.has(face.id)));
@@ -406,10 +429,7 @@ function askRank(face: NeedFace): number {
 
 /** The drawer's rows: the agents first (when any), then the rest in the
  *  hub's rank order. One object, one row. */
-export function needFaces(
-  members: readonly NeedsYouMember[],
-  ctx: { flights: readonly AgentFlight[]; sessions: readonly CoderSessionRow[]; now: Date },
-): NeedFace[] {
+export function needFaces(members: readonly NeedsYouMember[], ctx: NeedCtx): NeedFace[] {
   const faces = foldAsks(members.map((m) => needFace(m, ctx)));
   return [...faces.filter((f) => f.group === "agents"), ...faces.filter((f) => f.group === "rest")];
 }

@@ -242,27 +242,31 @@ describe("PHILO-14 A2b: every generic open of a Project opens its drawer", () =>
     };
     useDrawers.setState({ drawers: [], infos: [] });
     render(<ChairHome />);
-    const row = (await screen.findByText("Run the dry run")).closest(".surface-ledger-line") as HTMLElement;
-    await waitFor(() => expect(row.getAttribute("role")).toBe("button"));
-    fireEvent.click(row);
+    // PHILO-14 A5b: the row is the Needs-you drawer's object row; its body
+    // press is the row's open (`data-opens`), the row is not a button (A5).
+    const name = await screen.findByText("Run the dry run");
+    const row = name.closest(".needs-row") as HTMLElement;
+    await waitFor(() => expect(row.getAttribute("data-opens")).toBe("true"));
+    fireEvent.click(name);
     expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
     expect(takeRoomProposalRequest("proj-ledger")).toBe("prop-7");
     expect(useDrawers.getState().drawers).toEqual([]);
-    // The shortcut inside MORE is the explicit Room path, with the proposal.
+    // The row's Room verb is the explicit Room path, with the proposal.
     vi.mocked(openProjectRoom).mockClear();
-    fireEvent.click(within(row.closest("li") as HTMLElement).getByRole("button", { name: "More: Run the dry run" }));
-    fireEvent.click(screen.getByRole("button", { name: "Room: Run the dry run" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Room: Run the dry run" }));
     expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
     expect(takeRoomProposalRequest("proj-ledger")).toBe("prop-7");
+    expect(useDrawers.getState().drawers).toEqual([]);
   });
 
   it("a row that names only its Project opens the drawer, never the Room", async () => {
     chairNeeds = twoProjects;
     useDrawers.setState({ drawers: [], infos: [] });
     render(<ChairHome />);
-    const row = (await screen.findByText("Budget watch is stale")).closest(".surface-ledger-line") as HTMLElement;
-    await waitFor(() => expect(row.getAttribute("role")).toBe("button"));
-    fireEvent.click(row);
+    const name = await screen.findByText("Budget watch is stale");
+    const row = name.closest(".needs-row") as HTMLElement;
+    await waitFor(() => expect(row.getAttribute("data-opens")).toBe("true"));
+    fireEvent.click(name);
     expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["proj-infra"]);
     expect(openProjectRoom).not.toHaveBeenCalled();
   });
