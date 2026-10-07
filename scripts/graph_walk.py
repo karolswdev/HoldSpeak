@@ -4380,6 +4380,9 @@ UI_ACTIONS = frozenset({
     "focus",
     # PHILO-10-05: scroll a control or section into view before pressing or reading; nothing is clicked.
     "scroll_into_view",
+    # PHILO-15 11: a DOM element's context door -- a native touch long press at
+    # 393, a right click at 1440 (the window menu, DeskWindow.tsx).
+    "long_press",
 })
 
 
@@ -4573,6 +4576,8 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
     _validate_ui_button(action, button, step, adapter)
     if action == "world_context_menu":
         return _world_context_menu(page, step, adapter, timeout, record)
+    if action == "long_press":
+        return _long_press(page, step, adapter, timeout, record)
     elif button == "right":
         record["button"] = "right"
     try:
@@ -5398,7 +5403,7 @@ def _ui_viewport_adapter(page: Any, step: dict[str, Any]) -> tuple[str, bool]:
     requested = step.get("adapter", "ui-pointer")
     if requested != "ui-by-viewport":
         return str(requested), False
-    if step.get("action") not in ("click", "click_role", "set_input_files", "world_context_menu"):
+    if step.get("action") not in ("click", "click_role", "set_input_files", "world_context_menu", "long_press"):
         raise Blocked(
             "ui-by-viewport is only implemented for click, click_role, "
             "file-chooser and world_context_menu steps; "
@@ -5448,6 +5453,47 @@ def _native_ui_click(target: Any, adapter: str, timeout: float, button: str) -> 
         target.tap(timeout=timeout)
     else:
         target.click(timeout=timeout, button=button)
+
+
+def _long_press(page: Any, step: dict[str, Any], adapter: str,
+                timeout: float, record: dict[str, Any]) -> dict[str, Any]:
+    """PHILO-15 11: open a DOM element's context menu the way the owner does.
+
+    393 (``ui-touch``): Chromium CDP touchStart, a hold at least as long as
+    the product's 500 ms long press, touchEnd, at the element's centre.
+    1440 (``ui-pointer``): a native right click at the same point.
+    """
+    selector = step.get("selector")
+    if not isinstance(selector, str) or not selector.strip():
+        raise Blocked("long_press needs a selector; nothing was fired")
+    hold_ms = int(step.get("hold_ms", 650))
+    if adapter == "ui-touch" and hold_ms < 500:
+        raise Blocked(f"long_press touch hold_ms {hold_ms} is below the 500 ms long press; nothing was fired")
+    locator = page.locator(selector).first
+    locator.wait_for(state="visible", timeout=timeout)
+    box = locator.bounding_box()
+    if not box or box["width"] <= 0 or box["height"] <= 0:
+        raise Blocked(f"long_press target {selector!r} has no visible bounds")
+    x, y = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+    if adapter == "ui-touch":
+        cdp = page.context.new_cdp_session(page)
+        try:
+            cdp.send("Input.dispatchTouchEvent", {
+                "type": "touchStart",
+                "touchPoints": [{"x": x, "y": y, "radiusX": 1, "radiusY": 1, "id": 1}],
+            })
+            page.wait_for_timeout(hold_ms)
+            cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+        finally:
+            cdp.detach()
+        record.update(gesture="touch-long-press", hold_ms=hold_ms)
+    elif adapter == "ui-pointer":
+        page.mouse.click(x, y, button="right")
+        record["gesture"] = "mouse-right-click"
+    else:
+        raise Blocked(f"long_press has no delivery for adapter {adapter!r}")
+    record.update(selector=selector, done=True)
+    return record
 
 
 def _world_context_menu(page: Any, step: dict[str, Any], adapter: str,

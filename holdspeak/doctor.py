@@ -41,6 +41,38 @@ ROW_LABELS = {
     "observer": "Event log",
 }
 
+def is_starter_model(path: str) -> bool:
+    """True only for the starter model that Set up local AI downloads.
+
+    The identity is the content-addressed artifact folder plus the file name
+    of ``DEFAULT_INTEL_MODEL_PATH`` (the signed starter preset), never a path
+    substring: a custom model under ``models/artifacts`` is not the starter
+    (Astra r1 on #986).
+    """
+    from pathlib import PurePosixPath
+
+    from .intel.models import DEFAULT_INTEL_MODEL_PATH
+
+    starter = PurePosixPath(DEFAULT_INTEL_MODEL_PATH)
+    given = PurePosixPath(str(path).strip().rstrip("."))
+    return given.name == starter.name and given.parent.name == starter.parent.name
+
+
+#: PHILO-15 11 (Astra r1 on #986): engine ids as a person reads them, on
+#: the printed line only (the check data keeps the wire ids).
+PLAIN_WORDS = (
+    ("openai_compatible", "OpenAI-compatible server"),
+    ("llama_cpp", "llama.cpp"),
+)
+
+
+def plain(text: str) -> str:
+    """The printed words for one doctor detail or fix line."""
+    for wire, words in PLAIN_WORDS:
+        text = text.replace(wire, words)
+    return text
+
+
 #: The local AI card on the first-run page downloads the product's model.
 SET_UP_LOCAL_AI = "Start HoldSpeak (`holdspeak`) and push Set up local AI on the Local AI card."
 
@@ -58,7 +90,7 @@ class DoctorResult:
         return ROW_LABELS.get(self.name, self.name)
 
     def line(self) -> str:
-        return f"{self.status:<5} {self.label:<14} {self.detail}"
+        return f"{self.status:<5} {self.label:<14} {plain(self.detail)}"
 
 
 def _base_url(url: str) -> str:
@@ -174,13 +206,17 @@ def _check_runtime_preflight(url: str, token: str) -> DoctorResult:
         detail = str(payload.get("detail") or payload.get("error") or "no detail")
         if status == 200 and payload.get("ok") is True:
             return DoctorResult("PASS", "runtime-preflight", detail)
-        if detail.startswith("Model not found at") and "/models/artifacts/" in detail:
-            # PHILO-15 11 (B08): the product's own model, not downloaded yet.
-            # That is a step still to do, not a failure.
-            name = detail.rstrip(".").rsplit("/", 1)[-1]
-            return DoctorResult(
-                "SKIP", "runtime-preflight", f"the local AI model {name} is not downloaded yet. {SET_UP_LOCAL_AI}"
-            )
+        if detail.startswith("Model not found at"):
+            path = detail.removeprefix("Model not found at").strip().rstrip(".")
+            name = path.rsplit("/", 1)[-1]
+            if is_starter_model(path):
+                # PHILO-15 11 (B08): the starter model, not downloaded yet.
+                # That is a step still to do, not a failure.
+                return DoctorResult(
+                    "SKIP", "runtime-preflight", f"the local AI model {name} is not downloaded yet. {SET_UP_LOCAL_AI}"
+                )
+            # A model the owner chose, and its file is gone: a real fault.
+            return DoctorResult("FAIL", "runtime-preflight", f"model file missing: {name} ({path})")
         return DoctorResult("FAIL", "runtime-preflight", detail)
     except Exception as exc:
         return DoctorResult("FAIL", "runtime-preflight", _failure(exc))
@@ -330,7 +366,7 @@ def _check_database() -> DoctorResult:
         from .services.primitive_service import PrimitiveService
 
         PrimitiveService(get_database()).list_notes(Principal(PrincipalKind.OWNER, "doctor"))
-        return DoctorResult("PASS", "database", "primitives readable")
+        return DoctorResult("PASS", "database", "notes readable")
     except Exception as exc:
         return DoctorResult("FAIL", "database", _failure(exc))
 

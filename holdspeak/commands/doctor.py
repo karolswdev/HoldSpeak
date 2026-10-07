@@ -20,7 +20,7 @@ from ..hotkey import HotkeyListener
 from ..profile_key_store import ProfileKeyStoreError, resolve_profile_key
 from ..transcribe import TranscriberError, _resolve_backend
 from ..typer import TextTyper
-from ..doctor import SET_UP_LOCAL_AI
+from ..doctor import SET_UP_LOCAL_AI, plain
 
 
 @dataclass(frozen=True)
@@ -448,7 +448,7 @@ def _check_meeting_intel_cloud_preflight(
     # HS-201: no legacy cloud probe belongs to ordinary Web Record. This
     # remains a named check so setup and doctor keep their stable shape.
     return DoctorCheck(
-        name="Cloud intel preflight",
+        name="Cloud AI check",
         status="PASS",
         detail="Live analysis is off for Record.",
     )
@@ -1344,7 +1344,7 @@ def run_doctor_command(args) -> int:
     print("HoldSpeak Doctor")
     print("=" * 15)
     for check in checks:
-        print(f"[{check.status}] {check.name}: {check.detail}")
+        print(f"[{check.status}] {check.name}: {plain(check.detail)}")
 
     passed, warned, failed = _summarize(checks)
     print()
@@ -1354,7 +1354,7 @@ def run_doctor_command(args) -> int:
     if issues:
         print("\nSuggested fixes:")
         for check in issues:
-            print(f"- {check.name}: {check.fix}")
+            print(f"- {check.name}: {plain(check.fix)}")
 
     strict = bool(getattr(args, "strict", False))
     if failed > 0:

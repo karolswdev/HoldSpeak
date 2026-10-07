@@ -139,6 +139,25 @@ def test_fresh_desk_carries_at_most_five_day_one_notes(db) -> None:
         assert title in parked
 
 
+def test_guard_notes_fresh_desk_loads_none_existing_desk_keeps_them(db) -> None:
+    """PHILO-15 11 (B20; ruling: intended for day one). A fresh desk has no
+    guard notes, so the Desk and Chase modes load no guardrail (``[]``); a desk
+    seeded before keeps its notes, and a later seed never removes them."""
+    from holdspeak.services.thread_modes import guardrails_for_thread, seed_guardrails
+
+    apply_seed(db)
+    chase = db.threads.create_thread(title="chase", recipe_id="hs-seed-mode-chase")
+    assert guardrails_for_thread(db, chase.id) == []
+
+    seed_guardrails(db)  # what the seed did before this change
+    apply_seed(db)
+    assert db.notes.get("hs-seed-guardrail-effect-guard") is not None
+    assert db.notes.get("hs-seed-guardrail-egress-guard") is not None
+    assert {g["id"] for g in guardrails_for_thread(db, chase.id)} == {
+        "hs-seed-guardrail-effect-guard", "hs-seed-guardrail-egress-guard",
+    }
+
+
 def test_mode_recipe_census_matches_its_authoritative_source() -> None:
     """HS-200-03: the census above is regenerated, never hand-maintained.
 

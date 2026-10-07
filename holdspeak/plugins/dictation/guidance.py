@@ -217,13 +217,13 @@ def doctor_model_fix(backend: str, target: Path) -> str:
     product downloads its own model.  The hint names the missing file and the
     product's way to get it.
     """
-    from ...doctor import SET_UP_LOCAL_AI
+    from ...doctor import SET_UP_LOCAL_AI, is_starter_model
 
     expanded = target.expanduser()
-    if "artifacts" in expanded.parts:
-        # The product's own model (models/artifacts/artifact_<sha>/<file>).
+    if is_starter_model(str(expanded)):
+        # The starter model Set up local AI downloads (its signed artifact).
         return f"{SET_UP_LOCAL_AI} It downloads {expanded.name}."
     return (
-        f"Put the model file {expanded.name} in {expanded.parent} "
+        f"model file missing: {expanded.name}. Put it in {expanded.parent} "
         f"(a {backend} model), or choose another model in Settings > Models."
     )

@@ -405,7 +405,8 @@
                 "wait_for",
                 "focus",
                 "scroll_into_view",
-                "world_context_menu"
+                "world_context_menu",
+                "long_press"
               ],
               "description": "One of the actions scripts/graph_walk.py::_ui_step implements."
             },
@@ -486,7 +487,7 @@
             "hold_ms": {
               "type": "integer",
               "minimum": 500,
-              "description": "world_context_menu touch hold duration; WorldEngine's real long-press boundary is 500 ms."
+              "description": "world_context_menu / long_press touch hold duration; the product's real long-press boundary is 500 ms."
             },
             "trigger_route": {
               "type": "object",
@@ -582,7 +583,8 @@
                       "wait_for",
                       "focus",
                       "scroll_into_view",
-                      "world_context_menu"
+                      "world_context_menu",
+                      "long_press"
                     ]
                   }
                 },

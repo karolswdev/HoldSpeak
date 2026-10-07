@@ -1,8 +1,8 @@
 HoldSpeak Doctor
 ===============
 [PASS] Runtime: HoldSpeak 0.4.0 on Darwin 25.2.0 (arm64), Python 3.13.14
-[PASS] Config: Loaded /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.hyYj3Sf30p/.config/holdspeak/config.json (config version 1)
-[PASS] Database: No database yet at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.hyYj3Sf30p/.local/share/holdspeak/holdspeak.db; it is created on first use.
+[PASS] Config: Loaded /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.A2NyVwkEd0/.config/holdspeak/config.json (config version 1)
+[PASS] Database: No database yet at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.A2NyVwkEd0/.local/share/holdspeak/holdspeak.db; it is created on first use.
 [PASS] Microphone: Default input: MacBook Pro Microphone (index 2)
 [PASS] Transcription backend: `auto` resolves to `mlx`
 [PASS] Web runtime: fastapi, uvicorn, and websockets are importable
@@ -14,9 +14,9 @@ HoldSpeak Doctor
 [PASS] Runtime profiles: Meeting summary: unavailable (no assignment); Live analysis is off for Record.; dictation: hub default (no profile assigned)
 [WARN] Where AI runs: This device · not set up yet
 [PASS] Other devices: no other device runs AI for this desk (to add one: `holdspeak mesh serve` on that device)
-[PASS] Cloud intel preflight: Live analysis is off for Record.
+[PASS] Cloud AI check: Live analysis is off for Record.
 [PASS] Project context: found holdspeak at /Users/karol/dev/tools/HoldSpeak/wt-p15-11 (marker: holdspeak) with a knowledge base
-[WARN] Dictation AI model: the model file Qwen3.5-4B-Q4_K_M.gguf is not on this device yet (llama_cpp; auto: fallback to llama_cpp)
+[WARN] Dictation AI model: the model file Qwen3.5-4B-Q4_K_M.gguf is not on this device yet (llama.cpp; auto: fallback to llama.cpp)
 [PASS] Dictation blocks: no dictation blocks yet; nothing to check
 [PASS] Dictation AI use: 0 model loads, 0 calls, 0 failures, 0 retries
 [PASS] Meeting plugins: off (optional; meeting.intent_router_enabled turns it on)
@@ -43,4 +43,4 @@ Suggested fixes:
 
 Running hub
 ===========
-HUB · NOT RUNNING · start it with `holdspeak`
+HUB · NOT RUNNING · nothing answers at http://127.0.0.1:9

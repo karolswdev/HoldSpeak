@@ -75,7 +75,9 @@ def test_doctor_model_fix_names_the_missing_file(tmp_path: Path) -> None:
 
 
 def test_doctor_model_fix_for_the_products_model_points_at_set_up_local_ai(tmp_path: Path) -> None:
-    target = tmp_path / "models" / "artifacts" / "artifact_8eee" / "Qwen3.5-4B-Q4_K_M.gguf"
+    from holdspeak.intel.models import DEFAULT_INTEL_MODEL_PATH
+
+    target = tmp_path / Path(DEFAULT_INTEL_MODEL_PATH).relative_to("~")
 
     fix = doctor_model_fix("llama_cpp", target)
 
