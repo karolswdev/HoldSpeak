@@ -1,0 +1,440 @@
+/* PHILO-14 canvas: the proposed species, drawn on the Workbench Steel tokens (tokens.css --wb-*,
+ * --bevel-*). Every class here is a PROPOSED species named in ../README.md "New species"; the
+ * build moves each into web/src/desk/surface (contract.md) before a face uses it. */
+
+/* ── the screen (every alternative): the dithered Workbench backdrop between the screen bar and
+   the Dock. It sits under the window band (z 0); windows are its siblings, not its children. ── */
+.p14-screen {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--wb-screen-h);
+  bottom: var(--desk-dock-h, 76px);
+  z-index: 0;
+  background-color: var(--wb-backdrop);
+  background-image: conic-gradient(var(--wb-dither) 25%, transparent 0 50%, var(--wb-dither) 0 75%, transparent 0);
+  background-size: 4px 4px;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  color: var(--wb-paper);
+}
+@media (max-width: 720px) {
+  .p14-screen { overflow-y: auto; overscroll-behavior: contain; }
+}
+
+/* ── DeskIcon: the object on the glass. A chrome Button: the sprite over its name. No plate at
+   rest; selected = the sprite's _sel image + the name inverted (ink on paper), as Workbench. ── */
+.p14-icon {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 112px;
+  min-height: 96px;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+.p14-icon:focus-visible { outline: 2px dashed var(--wb-paper); outline-offset: -2px; }
+.p14-icon-art { position: relative; width: 64px; height: 64px; flex: none; }
+.p14-icon-art img { width: 64px; height: 64px; image-rendering: pixelated; display: block; }
+.p14-icon-badge {
+  position: absolute;
+  right: -6px;
+  bottom: -2px;
+  width: 32px !important;
+  height: 32px !important;
+}
+.p14-icon-name {
+  max-width: 108px;
+  padding: 1px 4px;
+  font: 700 12px/1.25 var(--font-mono);
+  text-align: center;
+  overflow-wrap: anywhere;
+  color: var(--wb-paper);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.p14-icon[data-sel="true"] .p14-icon-name { background: var(--wb-paper); color: var(--wb-ink); }
+.p14-icon[data-drop="true"] .p14-icon-art { outline: 2px dashed var(--wb-paper); outline-offset: 4px; }
+.p14-icon[data-drop="true"] .p14-icon-name { background: var(--wb-blue); color: var(--wb-ink); }
+.p14-icon[data-ghost="true"] { opacity: 0.45; }
+/* Inside a window body (the dark Signal well) the name reads --text. */
+.p14-win .p14-icon-name { color: var(--text); }
+.p14-win .p14-icon[data-sel="true"] .p14-icon-name { background: var(--wb-paper); color: var(--wb-ink); }
+
+/* IconLamp: the one lamp on an icon (top-right of the sprite): a 12 px square LED with the
+   raised bevel. Tones: ask (ember: it asks you), work (blue: it works), ok (green: done or
+   checks pass), held (amber: a held call). Never a word on the icon; the word is the row's. */
+.p14-lamp {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  box-shadow: var(--wb-raised), 0 0 0 1px var(--wb-ink);
+}
+.p14-lamp[data-tone="ask"] { background: #f08a4b; }
+.p14-lamp[data-tone="work"] { background: #6aa8ff; }
+.p14-lamp[data-tone="ok"] { background: var(--ok); }
+.p14-lamp[data-tone="held"] { background: #f2c94c; }
+.p14-lamp[data-tone="due"] { background: #f2c94c; }
+/* the count notch (the Dock's grammar): ember ink plate, never a zero */
+.p14-count {
+  position: absolute;
+  top: -6px;
+  left: -8px;
+  min-width: 20px;
+  padding: 0 4px;
+  background: var(--accent-ink);
+  color: #fff;
+  font: 700 12px/18px var(--font-mono);
+  text-align: center;
+  box-shadow: var(--wb-raised), 0 0 0 1px var(--wb-ink);
+}
+
+/* The drag ghost: the sprite only (no text, no target), under the pointer. */
+.p14-ghost {
+  position: fixed;
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  pointer-events: none;
+  opacity: 0.8;
+  z-index: 2147483000;
+  filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.45));
+}
+.p14-drag-path { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+
+/* ── the window bodies ── */
+.p14-win .desk-pullout-body { padding: 0; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.p14-body { container: surface / inline-size; flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 12px; }
+.p14-winicon { width: 20px; height: 20px; image-rendering: pixelated; display: block; }
+
+/* DrawerHead: the drawer's own head (a Room's intelligence, as one line of facts + the view). */
+.p14-drawer-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.p14-drawer-head .p14-facts { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; flex: 1 1 auto; min-width: 0; }
+.p14-fact { font: 12px/1.3 var(--font-mono); color: var(--text-muted); letter-spacing: 0.04em; }
+.p14-fact b { color: var(--text); font-weight: 600; }
+.p14-display { font: 650 26px/1.15 var(--font-display); color: var(--text); margin: 0; }
+.p14-caption { font: 600 12px/1.2 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin: 0; }
+.p14-primary { font: 600 15px/1.3 var(--font-sans); color: var(--text); }
+.p14-text { font: 13px/1.45 var(--font-sans); color: var(--text); }
+.p14-mono { font: 12px/1.4 var(--font-mono); color: var(--text-muted); }
+
+/* IconGrid: a drawer's contents as icons, in reading order. */
+.p14-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 6px 4px; align-content: start; justify-items: center; }
+/* IconShelf (B): one labelled row per kind. */
+.p14-shelfrow { display: grid; grid-template-columns: 116px 1fr; gap: 8px; align-items: start; padding: 6px 0; border-top: 1px solid var(--border-subtle, rgba(255,255,255,.08)); }
+.p14-shelfrow > .p14-caption { padding-top: 26px; }
+.p14-shelfrow .p14-grid { grid-template-columns: repeat(auto-fill, 112px); justify-content: start; }
+
+/* ObjectList: the drawer's list view. A header of sort gadgets (beveled: you press them), rows of
+   facts (flat: you read them). A row is one chrome Button (a press selects; Return opens). */
+.p14-list { display: flex; flex-direction: column; border: 1px solid var(--wb-ink); background: var(--surface-1); }
+.p14-list-head, .p14-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 128px 104px 150px; align-items: center; column-gap: 10px; }
+.p14-list-head { background: var(--wb-steel); box-shadow: var(--wb-raised); padding: 0 10px 0 6px; }
+.p14-sort {
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--wb-ink);
+  font: 700 12px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 0 6px;
+  cursor: pointer;
+  box-shadow: inset -1px 0 0 var(--wb-rule);
+}
+.p14-sort[aria-pressed="true"] { box-shadow: var(--wb-sunken); background: var(--wb-steel-2); }
+.p14-row {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  padding: 4px 10px 4px 6px;
+  min-height: 44px;
+  cursor: pointer;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font: inherit;
+}
+.p14-row img { width: 32px; height: 32px; image-rendering: pixelated; display: block; }
+.p14-row[data-sel="true"] { background: var(--wb-blue); color: var(--wb-ink); }
+.p14-row[data-sel="true"] .p14-cell { color: var(--wb-ink); }
+.p14-row-name { font: 600 13px/1.3 var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.p14-cell { font: 12px/1.3 var(--font-mono); color: var(--text-muted); letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p14-row .gadget-lamp { font-size: 12px; }
+.p14-row[data-sel="true"] .gadget-lamp { color: var(--wb-ink); }
+
+/* GetInfo: an object's identity and facts (Workbench's Information window). */
+.p14-info-head { display: flex; gap: 12px; align-items: center; }
+.p14-info-head img { width: 64px; height: 64px; image-rendering: pixelated; flex: none; }
+.p14-facts-table { display: grid; grid-template-columns: 96px 1fr; gap: 6px 10px; margin: 0; }
+.p14-facts-table dt { font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; }
+.p14-facts-table dd { margin: 0; font: 13px/1.4 var(--font-sans); color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+.p14-verbs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ConfirmLine: the YOLO hand in one line: the item, the agent, the mode, the brief one press away. */
+.p14-confirm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  box-shadow: var(--wb-sunken);
+  border: 1px solid var(--wb-ink);
+}
+.p14-confirm img { width: 32px; height: 32px; image-rendering: pixelated; }
+.p14-confirm .p14-arrow { font: 700 13px/1 var(--font-mono); color: var(--text-muted); }
+.p14-confirm .p14-what { display: flex; flex-direction: column; min-width: 0; flex: 1 1 200px; }
+.p14-confirm .p14-what .p14-primary { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* TimelineRail: a lane's life, one node per event, on a rail. */
+.p14-rail { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.p14-ev { display: grid; grid-template-columns: 46px 18px minmax(0, 1fr); column-gap: 8px; position: relative; padding: 0 0 10px; }
+.p14-ev-time { font: 12px/18px var(--font-mono); color: var(--text-muted); text-align: right; }
+.p14-ev-node { position: relative; display: flex; justify-content: center; }
+.p14-ev-node::before { content: ""; position: absolute; top: 0; bottom: -10px; width: 2px; background: var(--wb-steel); opacity: 0.45; }
+.p14-ev:last-child .p14-ev-node::before { display: none; }
+.p14-ev-dot { position: relative; width: 12px; height: 12px; margin-top: 3px; background: var(--wb-steel); box-shadow: var(--wb-raised), 0 0 0 1px var(--wb-ink); }
+.p14-ev[data-tone="ask"] .p14-ev-dot { background: #f08a4b; }
+.p14-ev[data-tone="held"] .p14-ev-dot { background: #f2c94c; }
+.p14-ev[data-tone="ok"] .p14-ev-dot { background: var(--ok); }
+.p14-ev[data-tone="work"] .p14-ev-dot { background: #6aa8ff; }
+.p14-ev[data-tone="next"] .p14-ev-dot { background: transparent; box-shadow: 0 0 0 1px var(--wb-steel); }
+.p14-ev-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.p14-ev-line { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; min-width: 0; }
+.p14-ev-kind { font: 700 12px/18px var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; flex: none; }
+.p14-ev-text { font: 13px/18px var(--font-sans); color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+.p14-ev-code { font: 12px/18px var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
+.p14-ev-words { font: 13px/1.45 var(--font-sans); color: var(--text); border-left: 2px solid var(--wb-steel); padding-left: 8px; }
+.p14-ev[data-tone="next"] .p14-ev-kind, .p14-ev[data-tone="next"] .p14-ev-text { color: var(--text-muted); }
+
+/* TimelineTrack (C): the same events as stations on one horizontal track. */
+.p14-track { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0; padding: 4px 0 0; }
+.p14-station { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 0 4px; }
+.p14-station::before { content: ""; position: absolute; top: 9px; left: 0; right: 0; height: 2px; background: var(--wb-steel); opacity: 0.45; }
+.p14-station:first-child::before { left: 50%; }
+.p14-station:last-child::before { right: 50%; }
+.p14-station .p14-ev-dot { margin-top: 3px; }
+.p14-station[data-tone="ask"] .p14-ev-dot { background: #f08a4b; }
+.p14-station[data-tone="held"] .p14-ev-dot { background: #f2c94c; }
+.p14-station[data-tone="ok"] .p14-ev-dot { background: var(--ok); }
+.p14-station[data-tone="next"] .p14-ev-dot { background: var(--surface-1); box-shadow: 0 0 0 1px var(--wb-steel); }
+.p14-station[data-on="true"] .p14-ev-kind { color: var(--text); }
+
+/* AskWell: the question at the top of the lane; the answer field under it. */
+.p14-ask { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface-2); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised); }
+.p14-ask-q { font: 600 15px/1.35 var(--font-sans); color: var(--text); margin: 0; }
+.p14-ask-row { display: flex; gap: 8px; align-items: center; }
+.p14-ask-row > :first-child { flex: 1 1 auto; min-width: 0; }
+.p14-draft { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* PRCard: the PR inline. */
+.p14-pr { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--wb-ink); background: var(--surface-1); box-shadow: var(--wb-raised); }
+.p14-pr-line { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.p14-files { display: flex; flex-direction: column; }
+.p14-file { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 4px 0; border-top: 1px solid rgba(255,255,255,.06); }
+.p14-file code { font: 12px/1.4 var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
+.p14-file span { font: 12px/1.4 var(--font-mono); color: var(--ok); }
+.p14-lane-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.p14-lane-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+/* NeedsRow: a Needs-you row is the object: its sprite, its name, the one fact, one lamp, its verbs. */
+.p14-needs { display: flex; flex-direction: column; }
+.p14-nrow { display: grid; grid-template-columns: 44px minmax(0, 1fr) 150px auto; align-items: center; column-gap: 12px; padding: 8px 4px; border-top: 1px solid rgba(255,255,255,.07); }
+.p14-nrow img { width: 40px; height: 40px; image-rendering: pixelated; display: block; }
+.p14-nrow-what { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.p14-nrow-name { font: 600 15px/1.3 var(--font-sans); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p14-nrow-fact { font: 13px/1.35 var(--font-sans); color: var(--text-muted); overflow-wrap: anywhere; }
+.p14-nrow .gadget-lamp { font-size: 12px; }
+.p14-nrow .p14-verbs { justify-content: flex-end; flex-wrap: nowrap; }
+
+/* ── A "Workbench": icons free on the screen ── */
+.p14-a-icon { position: absolute; }
+.p14-a-grid { display: none; }
+@media (max-width: 720px) {
+  .p14-a-icon { position: static; }
+  .p14-a-free { display: none; }
+  .p14-a-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 0; padding: 12px 8px; justify-items: center; }
+  .p14-a-grid .p14-icon { width: 88px; }
+  .p14-a-grid .p14-icon-name { max-width: 86px; }
+}
+
+/* ── B "Bench": the Shelf (left), the Bench (windows stack), the Pit (the Conductor, bottom) ── */
+.p14-shelf {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 232px;
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised), 1px 0 0 var(--wb-ink);
+  color: var(--wb-ink);
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+.p14-shelf-cap { font: 700 12px/1 var(--font-mono); letter-spacing: 0.06em; color: var(--wb-ink-dim); padding: 10px 12px 4px; text-transform: uppercase; }
+.p14-shelf-item {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 2px 10px 2px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--wb-ink);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.p14-shelf-item img { width: 36px; height: 36px; image-rendering: pixelated; }
+.p14-shelf-item .p14-shelf-name { font: 600 13px/1.25 var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p14-shelf-item[aria-pressed="true"] { box-shadow: var(--wb-sunken); background: var(--wb-steel-2); }
+.p14-shelf-item .p14-shelf-n { font: 700 12px/18px var(--font-mono); min-width: 22px; padding: 0 4px; text-align: center; background: var(--accent-ink); color: #fff; box-shadow: var(--wb-raised); }
+.p14-shelf-item .p14-shelf-lamp { position: static; display: inline-block; }
+.p14-pit {
+  position: absolute;
+  left: 232px;
+  right: 0;
+  bottom: 0;
+  height: 132px;
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised), 0 -1px 0 var(--wb-ink);
+  color: var(--wb-ink);
+  display: grid;
+  grid-template-columns: 120px repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px 10px;
+}
+.p14-pit-name { display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.p14-pit-name strong { font: 700 13px/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.p14-bay {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
+  column-gap: 8px;
+  align-items: start;
+  padding: 6px 8px;
+  background: var(--surface-1);
+  box-shadow: var(--wb-sunken);
+  border: 1px solid var(--wb-ink);
+  color: var(--text);
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  min-width: 0;
+}
+.p14-bay > .p14-icon-art { grid-row: 1 / span 3; width: 56px; height: 56px; }
+.p14-bay > .p14-icon-art img { width: 56px; height: 56px; }
+.p14-bay-agent { font: 700 12px/1.3 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.p14-bay-item { font: 600 13px/1.3 var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.p14-bay .gadget-lamp { font-size: 12px; align-self: end; }
+.p14-bay[aria-pressed="true"] { outline: 2px solid var(--wb-blue); outline-offset: -2px; }
+.p14-bay[data-free="true"] { background: transparent; border-style: dashed; border-color: var(--wb-ink-dim); box-shadow: none; color: var(--wb-ink); }
+.p14-bay[data-free="true"] .p14-bay-agent { color: var(--wb-ink-dim); }
+.p14-bay[data-drop="true"] { background: var(--wb-blue); border: 2px dashed var(--wb-ink); color: var(--wb-ink); }
+.p14-bay[data-drop="true"] .p14-bay-agent { color: var(--wb-ink); }
+.p14-bench { position: absolute; left: 232px; right: 0; top: 0; bottom: 132px; }
+.p14-pit-confirm { grid-column: 2 / -1; }
+@media (max-width: 720px) {
+  .p14-shelf { position: static; width: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 4px; box-shadow: var(--wb-raised); overflow: visible; }
+  .p14-shelf-cap { grid-column: 1 / -1; padding: 8px 8px 2px; }
+  .p14-pit { position: static; height: auto; display: flex; flex-direction: column; padding: 8px; }
+  .p14-pit-name { flex-direction: row; justify-content: space-between; align-items: center; }
+  .p14-bench { position: static; }
+  .p14-bay { min-height: 64px; }
+}
+
+/* ── C "Stage": places on a floor; agents stand where they work ── */
+.p14-stage { position: absolute; inset: 0; }
+.p14-zone {
+  position: absolute;
+  background: #171b23;
+  border: 1px solid var(--wb-ink);
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,.10), inset -1px -1px 0 rgba(0,0,0,.5), 4px 4px 0 rgba(0,0,0,.28);
+  padding: 40px 10px 10px;
+}
+.p14-zone-sign {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 20px);
+  padding: 2px 8px 2px 4px;
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+  box-shadow: var(--wb-raised), 0 0 0 1px var(--wb-ink);
+  font: 700 12px/20px var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.p14-zone-sign img { width: 20px; height: 20px; image-rendering: pixelated; }
+.p14-zone-sign span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p14-zone-sign .p14-fact { color: var(--wb-ink); }
+.p14-zone .p14-icon { position: absolute; }
+.p14-zone[data-garage="true"] { background: #252b37; }
+.p14-trail { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.p14-trail path { fill: none; stroke: var(--wb-paper); stroke-width: 2; stroke-dasharray: 2 6; opacity: 0.55; }
+.p14-zone-inline { position: absolute; }
+@media (max-width: 720px) {
+  .p14-stage { position: static; display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+  .p14-zone { position: relative; inset: auto !important; width: auto !important; height: auto !important; padding: 40px 6px 8px; }
+  .p14-zone .p14-icon { position: static; width: 84px; }
+  .p14-zone .p14-icon-name { max-width: 82px; }
+  .p14-zone-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); justify-items: center; gap: 4px 0; }
+  .p14-trail { display: none; }
+  .p14-zone-inline { position: static; }
+}
+
+/* ── 393: window bodies stack; rows reflow (container query on the desk's `surface`). ── */
+@container surface (max-width: 520px) {
+  .p14-row { grid-template-columns: 36px minmax(0, 1fr) auto; }
+  .p14-list-head { display: flex; padding: 0; }
+  .p14-list-head > span[aria-hidden], .p14-list-head .p14-sort[data-col="state"], .p14-row .p14-cell { display: none; }
+  .p14-list-head .p14-sort { flex: 1 1 0; }
+  .p14-row-sub { display: block !important; }
+  .p14-sort { height: 44px; }
+  .p14-lane-cols { grid-template-columns: 1fr; }
+  .p14-nrow { grid-template-columns: 40px minmax(0, 1fr); row-gap: 6px; }
+  .p14-nrow .gadget-lamp { grid-column: 2; }
+  .p14-nrow .p14-verbs { grid-column: 1 / -1; justify-content: flex-start; flex-wrap: wrap; }
+  .p14-station .p14-mono { display: none; }
+  .p14-station { padding: 0; }
+  .p14-facts-table { grid-template-columns: 84px 1fr; }
+}
+.p14-row-sub { display: none; font: 12px/1.3 var(--font-mono); color: var(--text-muted); letter-spacing: 0.04em; }
+.p14-row[data-sel="true"] .p14-row-sub { color: var(--wb-ink); }
+
+/* B: the tray and its inspector column (Info lives in the tray, not in a window of its own). */
+.p14-tray { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; min-height: 0; }
+.p14-tray-main { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.p14-tray-info { display: flex; flex-direction: column; gap: 12px; padding: 12px; background: var(--surface-2); border: 1px solid var(--wb-ink); box-shadow: var(--wb-raised); align-self: start; position: sticky; top: 0; }
+.p14-pit-above { position: absolute; left: 244px; right: 12px; bottom: 140px; }
+.p14-station[data-tone="work"] .p14-ev-dot { background: #6aa8ff; }
+.p14-zone-cap { position: absolute; }
+@media (max-width: 720px) { .p14-zone-cap { display: none; } }
+
+/* 393: one window fills the work area; the screen behind it is covered whole (C7), so it leaves
+   the glass instead of standing under the window. */
+@media (max-width: 720px) { .p14-screen[data-covered="true"] { visibility: hidden; } }
+.p14-list { flex: 1 1 auto; min-height: 120px; }
+.p14-list-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
