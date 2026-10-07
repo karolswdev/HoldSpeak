@@ -769,6 +769,59 @@ describe("Add an engine: the optional Key", () => {
     expect(key).toBe("");
   });
 
+  it("names both wells on screen, once for the screen reader", async () => {
+    await open();
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    const row = await screen.findByTestId("concierge-add-engine-row");
+    const captions = Array.from(row.querySelectorAll(".gadget-string-caption")).map(
+      (el) => el.textContent,
+    );
+    expect(captions).toEqual(["Server address", "Key"]);
+    expect(row.querySelectorAll(".gadget-string-caption[aria-hidden='true']")).toHaveLength(2);
+    expect(screen.getAllByLabelText("Key")).toHaveLength(1);
+  });
+
+  it("reads KEY REQUIRED, a word and no sentence, on a 401", async () => {
+    mocks.checkEndpoint.mockResolvedValue({
+      ok: false,
+      models: [],
+      detail: "Key required",
+      reason: "key_required",
+    });
+    await open();
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    fireEvent.change(await screen.findByLabelText("Server address"), {
+      target: { value: LAN_URL },
+    });
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    const answer = await screen.findByTestId("concierge-add-key-answer");
+    expect(answer.textContent).toContain("KEY REQUIRED");
+    expect(screen.queryByTestId("concierge-add-reason")).toBeNull();
+    expect(screen.getByTestId("concierge-add-submit")).toBeDisabled();
+  });
+
+  it("reads KEY INVALID with the compact reason on a refused key", async () => {
+    mocks.checkEndpoint.mockResolvedValue({
+      ok: false,
+      models: [],
+      detail: "Key has characters a header cannot carry.",
+      reason: "key_invalid",
+    });
+    await open();
+    fireEvent.click(screen.getByTestId("concierge-add-engine"));
+    fireEvent.change(await screen.findByLabelText("Server address"), {
+      target: { value: LAN_URL },
+    });
+    fireEvent.change(screen.getByLabelText("Key"), { target: { value: "a b" } });
+    fireEvent.click(screen.getByTestId("concierge-add-check"));
+    const answer = await screen.findByTestId("concierge-add-key-answer");
+    expect(answer.textContent).toContain("KEY INVALID");
+    expect(screen.getByTestId("concierge-add-reason").textContent).toBe(
+      "Key has characters a header cannot carry.",
+    );
+    expect(answer.textContent).not.toContain("a b");
+  });
+
   it("drops READY when the key changes after a check", async () => {
     await typeAndCheck("wrong");
     fireEvent.change(screen.getByLabelText("Key"), { target: { value: "local" } });

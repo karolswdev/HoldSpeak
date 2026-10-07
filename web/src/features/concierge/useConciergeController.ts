@@ -177,7 +177,15 @@ export function summaryRowFromAssignment(
 }
 
 /** HS-201-09 — the Add-an-engine well's own state machine. */
-export type AddEngineState = "IDLE" | "CHECKING" | "READY" | "UNREACHABLE";
+export type AddEngineState =
+  | "IDLE"
+  | "CHECKING"
+  | "READY"
+  | "UNREACHABLE"
+  /** PHILO-15 02: the server answered 401/403. */
+  | "KEY_REQUIRED"
+  /** PHILO-15 02: the typed key cannot ride in a header. */
+  | "KEY_INVALID";
 
 export interface AdjustRow {
   capabilityId: string;
@@ -688,6 +696,16 @@ export function useConciergeController(): ConciergeController {
           setAddEngineState("READY");
           setAddEngineModel(result.models[0]);
           setAddEngineReason("");
+          return;
+        }
+        if (result.reason === "key_required") {
+          setAddEngineState("KEY_REQUIRED");
+          setAddEngineReason("");
+          return;
+        }
+        if (result.reason === "key_invalid") {
+          setAddEngineState("KEY_INVALID");
+          setAddEngineReason(result.detail);
           return;
         }
         setAddEngineState("UNREACHABLE");

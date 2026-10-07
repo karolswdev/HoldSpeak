@@ -345,6 +345,8 @@ export interface EndpointCheck {
   ok: boolean;
   models: string[];
   detail: string;
+  /** PHILO-15 02: `key_required` (401/403) or `key_invalid` (400). */
+  reason?: string;
 }
 
 export async function checkEndpoint(baseUrl: string, apiKey = ""): Promise<EndpointCheck> {
@@ -373,6 +375,7 @@ export async function checkEndpoint(baseUrl: string, apiKey = ""): Promise<Endpo
     ok: raw.ok === true,
     models: Array.isArray(raw.models) ? raw.models.map(String) : [],
     detail: String(raw.detail ?? "Could not reach the model server."),
+    reason: typeof raw.reason === "string" ? raw.reason : undefined,
   };
 }
 

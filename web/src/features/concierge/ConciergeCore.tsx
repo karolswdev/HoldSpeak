@@ -520,6 +520,7 @@ export function ConciergeCore({ scope }: CoreProps) {
           <div className="concierge-add-engine-row" data-testid="concierge-add-engine-row">
             <StringGadget
               label="Server address"
+              caption
               value={ctrl.addEngineUrl}
               onChange={ctrl.setAddEngineUrl}
               /* HS-202-02 — the shipped placeholder was the owner's own
@@ -535,6 +536,7 @@ export function ConciergeCore({ scope }: CoreProps) {
             <span className="concierge-add-key" data-testid="concierge-add-key">
               <StringGadget
                 label="Key"
+                caption
                 type="password"
                 mic={false}
                 value={ctrl.addEngineKey}
@@ -566,6 +568,20 @@ export function ConciergeCore({ scope }: CoreProps) {
                 <StateChip state="success" label="READY" icon="●" />
                 <span className="concierge-token" data-testid="concierge-add-model">
                   {ctrl.addEngineModel}
+                </span>
+              </span>
+            ) : null}
+            {/* PHILO-15 02: a key answer is a word, not an instruction. */}
+            {ctrl.addEngineState === "KEY_REQUIRED" ? (
+              <span className="concierge-add-engine-answer" data-testid="concierge-add-key-answer" role="alert">
+                <StateChip state="failure" label="KEY REQUIRED" />
+              </span>
+            ) : null}
+            {ctrl.addEngineState === "KEY_INVALID" ? (
+              <span className="concierge-add-engine-answer" data-testid="concierge-add-key-answer">
+                <StateChip state="failure" label="KEY INVALID" />
+                <span className="concierge-add-engine-reason" data-testid="concierge-add-reason" role="alert">
+                  {ctrl.addEngineReason}
                 </span>
               </span>
             ) : null}

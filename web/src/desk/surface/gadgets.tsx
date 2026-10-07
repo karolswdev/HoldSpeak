@@ -249,8 +249,13 @@ export function StringGadget({
   inputProps,
   micStartSignal,
   micDraftScope,
+  caption,
 }: {
   label: string;
+  /** PHILO-15 02: show `label` as a visible caption above the well (the
+   *  name a sighted owner reads). Off by default: most wells sit in a
+   *  GadgetRow whose label column already names them. */
+  caption?: boolean;
   value: string;
   onChange(next: string): void;
   placeholder?: string;
@@ -286,7 +291,7 @@ export function StringGadget({
     return () => window.clearTimeout(t);
   }, [autoFocus]);
 
-  return (
+  const well = (
     <span className="gadget-string">
       <input
         {...inputProps}
@@ -313,6 +318,17 @@ export function StringGadget({
           draftScope={micDraftScope}
         />
       ) : null}
+    </span>
+  );
+  if (!caption) return well;
+  // The caption is what the eye reads; the input keeps its aria-label, so
+  // the accessible name is said once (aria-hidden caption).
+  return (
+    <span className="gadget-string-captioned">
+      <span className="gadget-string-caption" aria-hidden="true">
+        {label}
+      </span>
+      {well}
     </span>
   );
 }

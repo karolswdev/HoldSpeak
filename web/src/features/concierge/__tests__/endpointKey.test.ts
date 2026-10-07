@@ -41,6 +41,21 @@ describe("checkEndpoint", () => {
   });
 });
 
+describe("checkEndpoint reasons", () => {
+  it("carries the key reason from a refusal", async () => {
+    const { ApiError } = await import("../../../lib/api");
+    apiFetch.mockRejectedValue(
+      Object.assign(Object.create(ApiError.prototype), {
+        message: "400",
+        payload: { ok: false, models: [], detail: "Key has characters a header cannot carry.", reason: "key_invalid" },
+      }),
+    );
+    const result = await checkEndpoint(URL_, "a b");
+    expect(result.reason).toBe("key_invalid");
+    expect(result.ok).toBe(false);
+  });
+});
+
 describe("defineEndpoint", () => {
   const draft = (requiresKey: boolean) =>
     endpointDraft({ url: URL_, model: "m", requestId: "r", requiresKey });
