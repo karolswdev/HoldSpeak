@@ -245,13 +245,14 @@ def _mic_tag_text(content: str, start: int, limit: int = 4000) -> str:
                 continue
             if ch == quote:
                 quote = None
-        elif ch == "/" and depth > 0 and content.startswith("/*", i):
-            # A JSX comment (`{/* the owner's ... */}`): its apostrophe is
-            # prose, not a quote. Skip it whole.
+        elif ch == "/" and content.startswith("/*", i):
+            # A comment, in an attribute position (`/* the owner's ... */`)
+            # or inside `{...}`: its apostrophe is prose, not a quote. Skip it
+            # whole, or the tag scan runs on into the NEXT element.
             close = content.find("*/", i + 2, end)
             i = end if close < 0 else close + 2
             continue
-        elif ch == "/" and depth > 0 and content.startswith("//", i):
+        elif ch == "/" and content.startswith("//", i):
             newline = content.find("\n", i, end)
             i = end if newline < 0 else newline + 1
             continue

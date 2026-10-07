@@ -800,7 +800,7 @@ describe("Add an engine: the optional Key", () => {
     expect(screen.getByTestId("concierge-add-submit")).toBeDisabled();
   });
 
-  it("reads KEY INVALID with the compact reason on a refused key", async () => {
+  it("reads KEY INVALID and a token, no sentence, on a refused key", async () => {
     mocks.checkEndpoint.mockResolvedValue({
       ok: false,
       models: [],
@@ -816,9 +816,8 @@ describe("Add an engine: the optional Key", () => {
     fireEvent.click(screen.getByTestId("concierge-add-check"));
     const answer = await screen.findByTestId("concierge-add-key-answer");
     expect(answer.textContent).toContain("KEY INVALID");
-    expect(screen.getByTestId("concierge-add-reason").textContent).toBe(
-      "Key has characters a header cannot carry.",
-    );
+    expect(screen.getByTestId("concierge-add-reason").textContent).toBe("BAD CHARACTERS");
+    expect(answer.textContent).not.toContain("header");
     expect(answer.textContent).not.toContain("a b");
   });
 

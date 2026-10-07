@@ -580,8 +580,9 @@ export function ConciergeCore({ scope }: CoreProps) {
             {ctrl.addEngineState === "KEY_INVALID" ? (
               <span className="concierge-add-engine-answer" data-testid="concierge-add-key-answer">
                 <StateChip state="failure" label="KEY INVALID" />
-                <span className="concierge-add-engine-reason" data-testid="concierge-add-reason" role="alert">
-                  {ctrl.addEngineReason}
+                {/* UX-CANON A3: a token, never the server's sentence. */}
+                <span className="concierge-token" data-testid="concierge-add-reason" role="alert">
+                  BAD CHARACTERS
                 </span>
               </span>
             ) : null}
