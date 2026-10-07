@@ -222,7 +222,7 @@ def _receipt_then_close(page: Any) -> None:
     receipt (`USING · <model> ...`); the owner closes the window."""
     page.wait_for_function(
         """() => (document.querySelector("[data-testid='concierge-receipt']")?.textContent || "")
-                   .match(/^USING|\bOFF\b|FAILED/)""",
+                   .match(/^USING|\\bOFF\\b|FAILED/)""",
         timeout=60_000,
     )
     page.locator("[data-testid='concierge-cancel']").click()
