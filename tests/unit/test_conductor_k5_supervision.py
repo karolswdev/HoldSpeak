@@ -1080,3 +1080,83 @@ def test_r2_a_failed_old_worker_never_overwrites_a_newer_wait(launched, tmp_path
     responder._decide_guarded(KEY)  # the worker thread's entry: it fails
     stored = launched.store.wait(KEY)
     assert stored["state"] == "deciding"  # the newer wait's record stands
+
+
+# ── Conductor R5: `source <venv>/bin/activate` in YOLO ──────────────────
+
+
+def _venv(at: Path) -> Path:
+    (at / "bin").mkdir(parents=True)
+    (at / "pyvenv.cfg").write_text("home = /usr/bin\n", encoding="utf-8")
+    activate = at / "bin" / "activate"
+    activate.write_text("# activate\n", encoding="utf-8")
+    return activate
+
+
+@pytest.mark.parametrize("command", [
+    "source .venv/bin/activate",
+    ". .venv/bin/activate",
+    "source ./.venv/bin/activate;",
+])
+def test_r5_a_worktree_venv_activate_is_inside(tmp_path, command) -> None:
+    root = tmp_path / "wt"
+    _venv(root / ".venv")
+    verdict = classify_bash(command, cwd=str(root), root=str(root))
+    assert (verdict.scope, verdict.rule, verdict.read_rule) == ("inside", "venv_activate", "")
+
+
+def test_r5_venv_activate_from_a_subfolder_and_by_absolute_path(tmp_path) -> None:
+    root = tmp_path / "wt"
+    activate = _venv(root / "env")
+    (root / "src").mkdir()
+    for command in ("source ../env/bin/activate", f"source {activate}"):
+        verdict = classify_bash(command, cwd=str(root / "src"), root=str(root))
+        assert verdict.rule == "venv_activate", command
+
+
+def test_r5_escapes_stay_held(tmp_path) -> None:
+    root = tmp_path / "wt"
+    _venv(root / ".venv")
+    outside = _venv(tmp_path / "evil")  # a crafted venv outside the worktree
+    (root / "linked" / "bin").mkdir(parents=True)
+    (root / "linked" / "pyvenv.cfg").write_text("home = /usr/bin\n", encoding="utf-8")
+    (root / "linked" / "bin" / "activate").symlink_to(outside)  # points outside
+    (root / "nocfg" / "bin").mkdir(parents=True)
+    (root / "nocfg" / "bin" / "activate").write_text("# no pyvenv.cfg\n", encoding="utf-8")
+    (root / ".venv" / "bin" / "activate.fish").write_text("# fish\n", encoding="utf-8")
+    (root / "bin").mkdir()
+    (root / "bin" / "activate").write_text("# a bin/ with no venv\n", encoding="utf-8")
+    for command in (
+        "source linked/bin/activate",               # symlink to outside
+        "source ../evil/bin/activate",               # crafted, outside
+        f"source {outside}",                         # crafted, absolute
+        "source nocfg/bin/activate",                 # no pyvenv.cfg
+        "source bin/activate",                       # pyvenv.cfg would be outside
+        "source .venv/bin/activate.fish",            # not `activate`
+        "source .venv/bin/activate && rm -rf build", # chained
+        "source .venv/bin/activate; ls",             # chained
+        "source .venv/bin/activate | cat",           # piped
+        "source .venv/bin/activate > /dev/null",     # redirected
+        "source .venv/bin/activate extra",           # an argument
+        "VIRTUAL=1 source .venv/bin/activate",       # an assignment
+        "source ~/.venv/bin/activate",               # home
+        "source .venv/bin",                          # a folder
+        "source .venv/bin/missing",                  # no file
+    ):
+        verdict = classify_bash(command, cwd=str(root), root=str(root))
+        assert verdict.rule != "venv_activate", command
+        assert verdict.scope != "inside", command
+
+
+@pytest.mark.parametrize("mode, allowed, reason", [
+    ("yolo", True, "yolo_inside_own_worktree"),
+    ("neutral", False, "normal_holds_this_call"),
+    ("safe", False, "secure_holds_every_call"),
+])
+def test_r5_venv_activate_passes_in_yolo_only(launched, tmp_path, monkeypatch, mode, allowed, reason) -> None:
+    _mode(tmp_path, monkeypatch, mode)
+    _venv(launched.worktree / ".venv")
+    call = _call(launched, "source .venv/bin/activate")
+    assert call.proposal.policy_snapshot["reason_code"] == reason
+    assert (call.proposal.state == APPROVED) is allowed
+    assert (call.decision.deny is None) is allowed

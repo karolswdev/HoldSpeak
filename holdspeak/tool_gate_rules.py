@@ -166,6 +166,9 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
             return BashCall(OUTSIDE, "cwd_outside_worktree")
         reader = _Reader(real_root, real_cwd)
         segments = _segments(_tokens(command, cat_is_system=reader.identity("cat") == SYSTEM))
+        activate = _venv_activate(segments, cwd=real_cwd, root=real_root)
+        if activate is not None:
+            return activate
         return reader.read(segments)
     except _Unparsed as exc:
         return BashCall(UNPARSED, exc.rule)
@@ -173,6 +176,36 @@ def classify_bash(command: str, *, cwd: str, root: str) -> BashCall:
         return BashCall(OUTSIDE, exc.rule)
     except ValueError:  # shlex: an unclosed quote
         return BashCall(UNPARSED, "unbalanced_quotes")
+
+
+def _venv_activate(
+    segments: list[tuple[str, list[str], list[tuple[str, str]]]], *, cwd: str, root: str,
+) -> Optional[BashCall]:
+    """Conductor R5: ``source <path>`` or ``. <path>`` alone, where <path>
+    resolves (symlinks followed) inside the worktree to a file named
+    ``activate`` in a ``bin/`` folder of a Python venv (``pyvenv.cfg`` two
+    levels up). Such a call is ``inside`` with no read rule, so YOLO passes it
+    and Normal and Secure hold it. Anything else (a chain, a redirect, an
+    assignment, a second argument, another file) is left to the reader, which
+    keeps ``source`` and ``.`` unparsed."""
+    if len(segments) != 1:
+        return None
+    _joined, words, redirects = segments[0]
+    if redirects or len(words) != 2 or words[0] not in ("source", "."):
+        return None
+    target = words[1]
+    if not target or target.startswith(("~", "-")):
+        return None
+    real = os.path.realpath(os.path.join(cwd, target))
+    if not _inside(real, root) or not os.path.isfile(real):
+        return None
+    bin_dir = os.path.dirname(real)
+    venv = os.path.dirname(bin_dir)
+    if os.path.basename(real) != "activate" or os.path.basename(bin_dir) != "bin":
+        return None
+    if not _inside(venv, root) or not os.path.isfile(os.path.join(venv, "pyvenv.cfg")):
+        return None
+    return BashCall(INSIDE, "venv_activate")
 
 
 # ── lexing ─────────────────────────────────────────────────────────────
