@@ -197,6 +197,30 @@ def _coder_awaiting_edge(keys: list[str]) -> Optional[dict]:
         return None
 
 
+def _agent_spool_timer(web_ctx: Any = None, *, spool_dir: Optional[Path] = None) -> Any:
+    """The hub's spool timer (PHILO-14 C0b), built on the launch reads the
+    routes use (``web_ctx.agent_hand_reads``, else ``LaunchReads()``)."""
+    from .agent_context import event_log
+    from .db import get_database
+
+    def reads() -> Any:
+        from .services.agent_hand_preview import LaunchReads
+
+        return getattr(web_ctx, "agent_hand_reads", None) or LaunchReads()
+
+    def live() -> Optional[bool]:
+        from .services.agent_hand_service import launch_liveness
+
+        return launch_liveness(reads().launcher())
+
+    return event_log.SpoolTimer(
+        lambda: get_database()._connection(),
+        live=live,
+        ledger_path=lambda: Path(reads().ledger_path),
+        spool_dir=spool_dir,
+    )
+
+
 def _coder_answer_triage(keys: list[str]) -> list[str]:
     """Conductor K5: the waits that began, split by Control mode. Returns
     the keys to notify now; a HoldSpeak-launched agent's wait in YOLO is
@@ -1889,23 +1913,8 @@ class MeetingWebServer:
         here: the coder watcher reads questions from the session registry and
         the gate notifies a held call at once (``on_launch_hold``)."""
         from .agent_context import event_log
-        from .db import get_database
 
-        def reads() -> Any:
-            from .services.agent_hand_preview import LaunchReads
-
-            return getattr(web_ctx, "agent_hand_reads", None) or LaunchReads()
-
-        def live() -> bool:
-            from .services.agent_hand_service import live_launches
-
-            return bool(live_launches(reads().launcher()))
-
-        timer = event_log.SpoolTimer(
-            lambda: get_database()._connection(),
-            live=live,
-            ledger_path=lambda: Path(reads().ledger_path),
-        )
+        timer = _agent_spool_timer(web_ctx)
         while True:
             await asyncio.to_thread(timer.tick)
             await asyncio.sleep(event_log.SpoolTimer.INTERVAL)

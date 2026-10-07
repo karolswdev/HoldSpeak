@@ -114,15 +114,20 @@ class LaunchReads:
     def launcher(self) -> Any:
         """What ``live_launches`` and ``_launch_for_origin`` read: the ledger, a session check."""
         ledger = LaunchLedger(Path(self.ledger_path))  # reads only; an absent file is empty
+        # A probe that failed (no tmux, a timeout) reads "not alive" here, as
+        # before; it is also named, so a caller can tell "dead" from "not
+        # known" (PHILO-14 C0b: ``launch_liveness``).
+        probe_failed: list[str] = []
 
         def alive(session: str) -> bool:
             run = self.runner or (lambda argv: subprocess.run(argv, capture_output=True, text=True, timeout=5))
             try:
                 return run(["tmux", "has-session", "-t", session]).returncode == 0
             except (OSError, subprocess.TimeoutExpired):
+                probe_failed.append(session)
                 return False
 
-        return SimpleNamespace(_ledger=ledger, _session_alive=alive)
+        return SimpleNamespace(_ledger=ledger, _session_alive=alive, _probe_failed=probe_failed)
 
 
 class _ReadOnlyRegistry:

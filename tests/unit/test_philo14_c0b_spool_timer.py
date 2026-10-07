@@ -196,3 +196,107 @@ def test_the_hub_starts_the_timer_with_the_app_and_stops_it_on_shutdown(tmp_path
         assert task.done()
     finally:
         reset_database()
+
+
+# ── Astra r1 on #953: the production liveness path, the tail, the replay ──
+
+
+class TmuxRunner:
+    """tmux as ``LaunchReads.runner`` sees it: ``plan`` is a list of
+    ``"alive" | "dead" | "timeout"``, one per probe; the last one repeats."""
+
+    def __init__(self, *plan: str) -> None:
+        self.plan = list(plan)
+        self.calls = 0
+
+    def __call__(self, argv):
+        import subprocess
+        from types import SimpleNamespace
+
+        assert argv[:2] == ["tmux", "has-session"]
+        step = self.plan[min(self.calls, len(self.plan) - 1)]
+        self.calls += 1
+        if step == "timeout":
+            raise subprocess.TimeoutExpired(argv, 5)
+        return SimpleNamespace(returncode=0 if step == "alive" else 1)
+
+
+@pytest.fixture
+def hub_timer(tmp_path):
+    """The hub's own timer (``web_server._agent_spool_timer``) on the
+    production ``LaunchReads`` (its tmux catch included), a ledger written by
+    the production ``LaunchLedger``, a fake clock and a fake tmux."""
+    from types import SimpleNamespace
+
+    from holdspeak.db import get_database, reset_database
+    from holdspeak.delivery.factory_launch import LaunchLedger
+    from holdspeak.services.agent_hand_preview import LaunchReads
+    from holdspeak.web_server import _agent_spool_timer
+
+    reset_database()
+    database = get_database(tmp_path / "holdspeak.db")
+    ledger_path = tmp_path / "agent_launches.json"
+    LaunchLedger(ledger_path).record({"launch_id": "launch-1", "state": "launched", "session": "hs-c0b"})
+
+    def build(runner: TmuxRunner):
+        reads = LaunchReads(ledger_path=ledger_path, runner=runner)
+        timer = _agent_spool_timer(SimpleNamespace(agent_hand_reads=reads), spool_dir=tmp_path / "agent-events")
+        clock = Clock()
+        timer._clock = clock
+        return timer, clock
+
+    yield build, database
+    reset_database()
+
+
+def test_a_probe_that_times_out_is_unknown_never_none_live(tmp_path, hub_timer) -> None:
+    build, database = hub_timer
+    tmux = TmuxRunner("timeout", "alive")
+    timer, clock = build(tmux)
+    folder = _spool(tmp_path, 1)
+    assert timer.tick() == 1          # unknown: drain this tick
+    assert tmux.calls == 1 and timer.failures == 1
+    _spool(tmp_path, 1)
+    clock.now += event_log.SpoolTimer.LIVE_RECHECK
+    assert timer.tick() == 1          # probed again within 30 s, and live
+    assert tmux.calls == 2 and timer.is_live
+    assert _files(folder) == []
+
+
+def test_when_the_last_agent_dies_the_recheck_drains_once_more_then_idles(tmp_path, hub_timer) -> None:
+    build, database = hub_timer
+    tmux = TmuxRunner("alive", "dead")
+    timer, clock = build(tmux)
+    folder = _spool(tmp_path, 1)
+    assert timer.tick() == 1 and timer.is_live
+    _spool(tmp_path, 1)                # the agent's last event
+    clock.now += event_log.SpoolTimer.LIVE_RECHECK
+    assert timer.tick() == 1           # the tail drain
+    assert not timer.is_live and _files(folder) == []
+    _spool(tmp_path, 1)
+    for _ in range(50):
+        clock.now += event_log.SpoolTimer.LIVE_RECHECK
+        assert timer.tick() == 0       # idle: no probe, no drain
+    assert tmux.calls == 2
+
+
+def test_a_committed_file_whose_unlink_failed_is_never_replayed(tmp_path, db, monkeypatch) -> None:
+    folder = _spool(tmp_path, 10)
+    real_unlink = event_log.os.unlink
+
+    def failing(path, *a, **k):
+        if str(path).endswith(".json"):
+            raise PermissionError("unlink refused")
+        return real_unlink(path, *a, **k)
+
+    monkeypatch.setattr(event_log.os, "unlink", failing)
+    assert event_log.drain_spool(db._connection, spool_dir=folder, keep=4) == 10
+    assert len(_files(folder)) == 10
+    monkeypatch.setattr(event_log.os, "unlink", real_unlink)
+    event_log.drain_spool(db._connection, spool_dir=folder, keep=4)   # the retry
+    with db._connection() as conn:
+        heads = [r[0] for r in conn.execute("SELECT head FROM agent_session_events ORDER BY id")]
+    assert heads == ["echo 6", "echo 7", "echo 8", "echo 9"]   # the newest kept, once each
+    assert _files(folder) == []
+    _spool(tmp_path, 1)
+    assert event_log.drain_spool(db._connection, spool_dir=folder, keep=4) == 1
