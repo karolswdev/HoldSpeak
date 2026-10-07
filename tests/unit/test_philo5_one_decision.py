@@ -257,6 +257,8 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "channel.save_email_key", "channel.save_slack_webhook",
         # The Conductor K1: the one-press hook install (HTTP only, owner only).
         "agent_hooks.install",
+        # Conductor R7: the owner's People MCP access (config).
+        "people_access.set",
         # Conductor K2: Hand to agent.
         "agent.hand",
     ]

@@ -41,5 +41,29 @@ AGENT_HOOKS_INSTALL = OperationDescriptor(
                                     "(HTTP only, in no palette). The agent and the file are bound at admission."),
 )
 
-#: The Conductor K1's rows, in export order.
-ONBOARDING_OPERATIONS: tuple[OperationDescriptor, ...] = (AGENT_HOOKS_INSTALL,)
+PEOPLE_ACCESS_SET = OperationDescriptor(
+    name="people_access.set",
+    version=1,
+    description="Set People MCP access: off, read or write. MCP clients of the owner get it; an agent HoldSpeak "
+                "launched gets read unless it is off. HOLDSPEAK_MCP_PEOPLE_ACCESS, when set, overrides it.",
+    args_schema={
+        "type": "object",
+        "properties": {"mode": {"enum": ["off", "read", "write"]}},
+        "required": ["mode"],
+        "additionalProperties": False,
+    },
+    principal="derived by the transport; owner only",
+    effect="write",
+    result="{mode, source, effective, agents} and the receipt",
+    refusals=_CONTRACT_REFUSALS + ("owner_required", "people_access_mode_unknown"),
+    completion="synchronous; GET /api/settings/people-access shows the new mode",
+    exposure=("http:PUT /api/settings/people-access", "mcp:people.access.set"),
+    service="onboarding_service",
+    method="people_access_set",
+    owner_only=True,
+    owner_press=True,
+    admission=Admission("admitted", "Config (Conductor R7): the owner's press sets who reads People over MCP."),
+)
+
+#: The Conductor K1's rows (and R7's People access), in export order.
+ONBOARDING_OPERATIONS: tuple[OperationDescriptor, ...] = (AGENT_HOOKS_INSTALL, PEOPLE_ACCESS_SET)

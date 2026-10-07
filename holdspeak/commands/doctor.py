@@ -1106,7 +1106,29 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         _check_agent_capabilities(),
         _check_tool_call_gate(),
         _check_coding_agents(),
+        _check_people_mcp_access(),
     ]
+
+
+def _check_people_mcp_access(environ: dict | None = None) -> DoctorCheck:
+    """Conductor R7: the effective People MCP access, and where it comes from
+    (the env var overrides the persisted setting; the default is on)."""
+    from ..mcp.families.people import access_source
+
+    try:
+        mode, source = access_source(environ)
+    except Exception:
+        return DoctorCheck(
+            name="People MCP access", status="WARN",
+            detail="HOLDSPEAK_MCP_PEOPLE_ACCESS has an unknown value",
+            fix="Set HOLDSPEAK_MCP_PEOPLE_ACCESS to off, read or write, or unset it",
+        )
+    agents = "none" if mode == "off" else "read"
+    origin = {"env": "HOLDSPEAK_MCP_PEOPLE_ACCESS", "config": "people.mcp_access", "default": "default"}[source]
+    return DoctorCheck(
+        name="People MCP access", status="INFO",
+        detail=f"{mode} (from {origin}); agents: {agents}",
+    )
 
 
 def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:

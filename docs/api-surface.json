@@ -5659,6 +5659,26 @@
       ]
     },
     {
+      "path": "/api/settings/people-access",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/people-access",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/settings/remote",
       "methods": [
         "GET"

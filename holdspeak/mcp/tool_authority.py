@@ -145,6 +145,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "people.owner_alias.link": AUTHORITY,  # who the owner is in the People store
     "people.owner_alias.unlink": AUTHORITY,  # who the owner is in the People store
     "people.resolve": WORK,
+    "people.access.set": CONFIG,  # who reads People over MCP (Conductor R7)
     "plugin_job.list": WORK,
     "plugin_job.summary": WORK,
     "plugin_job.retry": WORK,

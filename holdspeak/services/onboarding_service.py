@@ -419,6 +419,44 @@ class OnboardingService:
     def _env(self) -> dict[str, str]:
         return dict(os.environ if self._environ is None else self._environ)
 
+    # ── Conductor R7: the People MCP access (config) ─────────────────
+
+    def people_access(self, principal: Principal, environ: Optional[dict[str, str]] = None) -> dict[str, Any]:
+        """The effective People MCP access: ``{mode, source, effective, agents}``.
+
+        ``mode`` is the persisted setting; ``effective`` what applies (the env
+        var overrides); ``agents`` what a launched agent gets (read unless off)."""
+        from ..config import Config
+        from ..mcp.families.people import access_source
+
+        _require_owner(principal)
+        config = Config.load()
+        effective, source = access_source(self._env() if environ is None else environ)
+        return {
+            "mode": str(config.people.mcp_access),
+            "effective": effective,
+            "source": source,
+            "agents": "none" if effective == "off" else "read",
+        }
+
+    def people_access_set(self, principal: Principal, mode: str) -> dict[str, Any]:
+        """``people_access.set``: the owner's press writes ``people.mcp_access``
+        (admitted kernel operation, one receipt)."""
+        from ..config import Config
+        from ..config.people import ACCESS_MODES
+        from . import project_kernel
+
+        if project_kernel.current() is None:
+            raise RuntimeError("people_access.set runs only as an admitted kernel operation")
+        _require_owner(principal)
+        value = str(mode or "").strip().lower()
+        if value not in ACCESS_MODES:
+            raise ValidationError("mode is off, read or write.", code="people_access_mode_unknown")
+        config = Config.load()
+        config.people.mcp_access = value
+        config.save()
+        return self.people_access(principal)
+
     def agents_use(self, principal: Principal, agent: str, settings_path: str) -> dict[str, Any]:
         """The owner's "Use it" (``agent_hooks.install``): install the HoldSpeak hooks for one agent.
 
@@ -449,6 +487,14 @@ class OnboardingService:
             ) from exc
         log.info("agent hooks installed for %s at %s (%s)", agent, path, ", ".join(result["installed_events"]))
         return {**self.agents_detect(principal), "used": {"agent": agent, **result}}
+
+
+def _require_owner(principal: Any) -> None:
+    from ..principals import PrincipalKind
+
+    if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+        raise ServiceError("owner_required", "Only the owner reads or sets People MCP access.",
+                           context={"status": 403})
 
 
 #: The coding agents the Conductor launches, by command name.

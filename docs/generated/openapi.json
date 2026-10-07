@@ -24887,6 +24887,46 @@
         "summary": "Api Settings Hub"
       }
     },
+    "/api/settings/people-access": {
+      "get": {
+        "operationId": "people_access_api_settings_people_access_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response People Access Api Settings People Access Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "People Access",
+        "tags": [
+          "onboarding"
+        ]
+      },
+      "put": {
+        "operationId": "people_access_set_api_settings_people_access_put",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response People Access Set Api Settings People Access Put"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "People Access Set",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
     "/api/settings/remote": {
       "get": {
         "operationId": "get_remote_settings_api_settings_remote_get",

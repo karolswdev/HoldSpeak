@@ -5670,6 +5670,52 @@
       }
     },
     {
+      "name": "people_access.set",
+      "version": 1,
+      "description": "Set People MCP access: off, read or write. MCP clients of the owner get it; an agent HoldSpeak launched gets read unless it is off. HOLDSPEAK_MCP_PEOPLE_ACCESS, when set, overrides it.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "off",
+              "read",
+              "write"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport; owner only",
+      "effect": "write",
+      "result": "{mode, source, effective, agents} and the receipt",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "owner_required",
+        "people_access_mode_unknown"
+      ],
+      "completion": "synchronous; GET /api/settings/people-access shows the new mode",
+      "exposure": [
+        "http:PUT /api/settings/people-access",
+        "mcp:people.access.set"
+      ],
+      "held": [],
+      "owner_only": true,
+      "blocking_io": false,
+      "owner_press": true,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Config (Conductor R7): the owner's press sets who reads People over MCP.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
       "name": "agent.hand",
       "version": 1,
       "description": "Hand one desk item to a coding agent. HoldSpeak writes a brief from the item, its meeting, the Project's decisions and open commitments, memory and the repository's .hs/ facts (no People data), makes a new git worktree hs-<kind>-<id> in the Project repository and starts Claude Code (profile claude-default) or Codex (codex-default) there. Only the owner hands; an agent is refused.",

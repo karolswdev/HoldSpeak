@@ -695,6 +695,11 @@
       "story": "CONDUCTOR-K2",
       "tool": "agent.hand",
       "operation": "agent.hand"
+    },
+    {
+      "story": "CONDUCTOR-R7",
+      "tool": "people.access.set",
+      "operation": "people_access.set"
     }
   ],
   "moved": [

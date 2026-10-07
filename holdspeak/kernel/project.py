@@ -37,7 +37,7 @@ STEWARD_AND_CONNECTORS_ADMITTED: frozenset[str] = frozenset({
     "connection.recheck", "project.mark_update_delivered",
 })
 #: The Conductor K1: the owner's one-press agent hook install (config, his press, HTTP only).
-ONBOARDING_ADMITTED: frozenset[str] = frozenset({"agent_hooks.install"})
+ONBOARDING_ADMITTED: frozenset[str] = frozenset({"agent_hooks.install", "people_access.set"})
 #: PHILO-10-01: the Send's rows live beside their settle (``kernel/channel_send.py``).
 from .channel_send import AGENT_PREPARE_OPERATIONS, CHANNEL_ADMITTED, SETTLED_ROW_REPLAY, STEWARD_SEND_CHILDREN, owner_press_operations  # noqa: E402,F401,E501
 #: PHILO-9-07: the project delegation grant lives in its own concern module

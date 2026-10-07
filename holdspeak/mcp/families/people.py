@@ -233,18 +233,57 @@ READ_TOOLS: frozenset[str] = frozenset({
 })
 
 
-def access_mode(environ: Mapping[str, str] | None = None) -> str:
-    """Return the process-boundary capability, refusing unknown values.
+#: Conductor R7: the owner's MCP press on People access (CONFIG; never offered
+#: to an agent or a thread).
+ACCESS_SET_TOOL = _tool(
+    "people.access.set",
+    _BOUNDARY + "Set People MCP access: off, read or write. Owner only. An agent HoldSpeak launched "
+    "reads People unless it is off; it never writes People. The env var, when set, overrides this setting.",
+    {"mode": {"type": "string", "enum": ["off", "read", "write"]}},
+    ["mode"],
+)
+TOOLS.append(ACCESS_SET_TOOL)
 
-    HS-139-08: default is "write" (was "off"). The owner ruling (ledger-not-gate)
-    opens the MCP People capability for the local owner process. The env var
-    overrides when set explicitly.
-    """
+
+def access_source(environ: Mapping[str, str] | None = None, *, config: Any = None) -> tuple[str, str]:
+    """The effective People MCP access and where it came from.
+
+    Precedence (Conductor R7): the ``HOLDSPEAK_MCP_PEOPLE_ACCESS`` environment
+    variable when set (``"env"``), else the persisted ``people.mcp_access``
+    setting (``"config"``), else the default ``write`` (``"default"``). An
+    unknown env value is refused, as before."""
     env = os.environ if environ is None else environ
-    value = str(env.get(ACCESS_ENV) or "write").strip().lower()
-    if value not in _ACCESS_MODES:
-        raise PeopleServiceError("people_mcp_access_invalid")
-    return value
+    raw = str(env.get(ACCESS_ENV) or "").strip().lower()
+    if raw:
+        if raw not in _ACCESS_MODES:
+            raise PeopleServiceError("people_mcp_access_invalid")
+        return raw, "env"
+    try:
+        if config is not None:
+            value = str(config.people.mcp_access or "").strip().lower()
+        else:
+            # A read of the persisted file only: never creates or rewrites it.
+            import json
+
+            from holdspeak.config.core import _active_config_file
+
+            path = _active_config_file()
+            data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+            people = data.get("people") if isinstance(data, dict) else None
+            value = str((people or {}).get("mcp_access") or "").strip().lower() if isinstance(people, dict) else ""
+        if value in _ACCESS_MODES:
+            return value, "config"
+    except Exception:
+        pass
+    return "write", "default"
+
+
+def access_mode(environ: Mapping[str, str] | None = None) -> str:
+    """Return the effective capability (``access_source``), refusing unknown values.
+
+    HS-139-08: default is "write" (was "off"); Conductor R7 adds the persisted
+    setting under the env override."""
+    return access_source(environ)[0]
 
 
 def build_people_service() -> PeopleService:
@@ -285,6 +324,13 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Route People tools through one capability gate and the People service."""
     if not any(tool["name"] == name for tool in TOOLS):
         raise LookupError(name)
+    if name == "people.access.set":
+        from holdspeak import operations
+
+        result, kernel = operations.for_runtime().invoke_receipted(
+            principal, "people_access.set", {"mode": arguments.get("mode")},
+        )
+        return {**result, **{k: v for k, v in dict(kernel or {}).items() if k in ("operation_id", "receipt")}}
     if name == "people.readiness":
         return readiness(principal)
     if name == "people.relationship.list":
