@@ -293,7 +293,7 @@ describe("the triaged Arrival headline", () => {
     });
     expect(
       await screen.findByTestId("arrival-brief-receipt"),
-    ).toHaveTextContent("Brief ready · 6 items");
+    ).toHaveTextContent(/^GENERATED · \d\d:\d\d$/);
     expectHandledOrder(section, 6);
   });
 });

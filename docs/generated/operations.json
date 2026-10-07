@@ -476,7 +476,7 @@
     {
       "name": "brief.generate",
       "version": 1,
-      "description": "Make today's brief from durable sources on the producer's clock. A second call on the same producer day returns that day's brief.",
+      "description": "Make today's brief from durable sources on the producer's clock. A second call on the same producer day makes that day's brief again from the current desk (same id, new body; an unchanged item keeps its shelf state).",
       "args_schema": {
         "type": "object",
         "properties": {},

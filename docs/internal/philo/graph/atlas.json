@@ -7764,7 +7764,7 @@
           "identity_display": "[data-testid=arrival-brief-headline]"
         },
         "observe_at": "[data-testid=arrival-brief-headline]",
-        "words": "ASTRA round 3 (finding 3): the proof chain is RETURNED == DISPLAYED == RETAINED. Retained: setup generates, reloads, and waits for the headline, so the before-capture is the brief the store gave back (GET /api/brief/latest). Returned: the second POST /api/brief/generate the click fires answers a brief (the producer returns the existing brief for the current local date, monday_brief_service.py:185-202); its `headline` is the identity. Displayed: that headline must BE the text at [data-testid=arrival-brief-headline]; a stale face beside a different returned headline FAILS (graph_walk.py `unchanged`, the trigger branch). The face draws no brief id (ChairHome.tsx:1144-1177), so the id is a protocol claim: the retained id is captured as {first_brief_id} and the returned id travels in the trigger response; a DIFFERENT id beside unchanged content is a FAIL by contract (the producer is idempotent per day), which the council reads from those two recorded values -- the one predicate does not compare them. An unchanged face with no second POST and no receipt is a finding [the audit's stated observation location: protocol: the two POSTs and their brief ids; face: [data-testid=arrival-brief-headline] before and after the reload]",
+        "words": "same-day generation keeps the brief identity and makes its body again from the current desk (PHILO-15-09: same id, newer generated_at, fresh items)",
         "reads": [
           {
             "method": "GET",
@@ -7980,7 +7980,7 @@
           "body_contains": "{first_brief_id}"
         },
         "observe_at": "protocol: GET /api/brief/latest",
-        "words": "a different id beside unchanged content is a FAIL. The sibling of case.j10.arrival_generate_again.same_day_idempotent, which proves returned == displayed == retained on the face by headline; the face draws no brief id, so this case proves the id by machine. Setup is the same chain (gate, generate, wait for the receipt, reload, capture the RETAINED id as {first_brief_id} from GET /api/brief/latest); the trigger is a second POST /api/brief/generate. The producer returns the existing brief for the current local date (holdspeak/services/monday_brief_service.py:194-202), so the second response must answer 200 and carry {first_brief_id}; a new id is a FAIL [the audit's stated observation location: protocol: the second POST's own response]",
+        "words": "same-day generation keeps the brief identity and makes its body again from the current desk (PHILO-15-09: same id, newer generated_at, fresh items)",
         "reads": [
           {
             "method": "GET",
@@ -11788,7 +11788,7 @@
             "args": {}
           }
         ],
-        "words": "same-day generation returns and retains the original brief identity"
+        "words": "same-day generation keeps the brief identity and makes its body again from the current desk (PHILO-15-09: same id, newer generated_at, fresh items)"
       },
       "completion_bound_s": 180.0,
       "viewports": []
@@ -11843,7 +11843,7 @@
             "args": {}
           }
         ],
-        "words": "same-day generation returns and retains the original brief identity"
+        "words": "same-day generation keeps the brief identity and makes its body again from the current desk (PHILO-15-09: same id, newer generated_at, fresh items)"
       },
       "completion_bound_s": 60.0,
       "viewports": []
@@ -14410,7 +14410,7 @@
       "id": "state.briefs.same_day_idempotent",
       "family": "briefs",
       "values": {
-        "second_generate": "returns the existing row"
+        "second_generate": "makes the same row again: same id, new body and generated_at (PHILO-15-09)"
       },
       "phase1_refs": [],
       "sources": [
@@ -14421,8 +14421,8 @@
         },
         {
           "path": "holdspeak/services/monday_brief_service.py",
-          "symbol": "if row is not None: return self._load_brief(conn, row)",
-          "claim": "a second generate on the same date returns the existing brief"
+          "symbol": "kept = self._keep_unchanged_items(conn, brief_id, items)",
+          "claim": "a second generate on the same date makes the existing brief again; an unchanged item keeps its id and shelf state"
         }
       ],
       "reachable_by": [
@@ -16477,19 +16477,19 @@
       "id": "state.time.week_boundary",
       "family": "time",
       "values": {
-        "period_label": "spans two months or a new Monday"
+        "period_label": "spans two months (the brief's own window, PHILO-15-09)"
       },
       "phase1_refs": [],
       "sources": [
         {
           "path": "holdspeak/web/routes/monday_brief.py",
           "symbol": "def _period_label(brief_dict: dict[str, Any]) -> str | None:",
-          "claim": "the period label is derived from generated_at's weekday"
+          "claim": "the period label is the brief's stored window"
         },
         {
-          "path": "holdspeak/web/routes/monday_brief.py",
-          "symbol": "days_since_monday = gen_dt.weekday()",
-          "claim": "Monday is the boundary it measures from"
+          "path": "holdspeak/services/monday_brief_service.py",
+          "symbol": "def brief_period_label(period_start: Any, period_end: Any) -> str | None:",
+          "claim": "one range from period_start to period_end; across a month it names both months"
         }
       ],
       "reachable_by": [

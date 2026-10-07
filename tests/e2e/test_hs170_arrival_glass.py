@@ -658,7 +658,7 @@ def _run_muted_rig(
             headline = page.get_by_test_id("arrival-display")
             headline_text = headline.text_content() or ""
             # proj-alpha has 1 item, proj-beta has 2 items (muted)
-            # headline should say "1 need you" (not 3)
+            # headline should say "1 needs you" (not 3)
             assert headline_text[0] == "1", \
                 f"Headline should start with 1 (muted excluded): {headline_text}"
 

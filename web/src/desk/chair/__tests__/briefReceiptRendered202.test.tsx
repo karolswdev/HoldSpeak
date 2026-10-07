@@ -49,8 +49,8 @@ function wire() {
   });
 }
 
-const LATEST_RECEIPT = "Brief ready · 5 items · SEP 25 18:08";
-const GENERATED_RECEIPT = "Brief ready · 6 items · SEP 25 18:19";
+const LATEST_RECEIPT = "GENERATED · 18:08";
+const GENERATED_RECEIPT = "GENERATED · 18:19";
 const receiptFor = (payload: Record<string, unknown>) =>
   briefReceipt(payload as unknown as GeneratedBrief);
 
@@ -109,7 +109,7 @@ describe("Generate receipt transition (PHILO-5-04 / HS-202-02)", () => {
 
     await waitFor(() =>
       expect(screen.getByTestId("arrival-brief-receipt").textContent).toBe(
-        "Brief ready · SEP 24 16:42",
+        "GENERATED · 16:42",
       ),
     );
   });

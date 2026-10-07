@@ -332,7 +332,10 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
           HS-175 counsel C8: both formatted HERE from generated_at in the
           viewer's local time; the hub's labels are the fallback. */}
       {(() => {
-        const period = periodLabelLocal(brief.generated_at) ?? brief.period_label;
+        // PHILO-15-09 (B04, ruling 3): the brief's ONE range is the hub's,
+        // computed from its window; the week-based local label is a
+        // fallback for a payload that carries none.
+        const period = brief.period_label ?? periodLabelLocal(brief.generated_at);
         return period ? (
           <div className="intelligence-brief-period" data-testid="brief-period-label" role="heading" aria-level={2}>
             {period}

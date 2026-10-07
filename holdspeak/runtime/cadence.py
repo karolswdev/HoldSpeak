@@ -125,7 +125,9 @@ class CadenceMixin:
 
             brief_svc = MondayBriefService(db)
             system_principal = Principal(PrincipalKind.SERVICE, "heartbeat")
-            brief = brief_svc.generate(system_principal, now=now)
+            # PHILO-15-09: the schedule makes one brief a day; only the
+            # owner's Generate makes the day's brief again.
+            brief = brief_svc.generate(system_principal, now=now, regenerate=False)
 
             db.cadence.upsert_policy(CadencePolicy(
                 name="brief_regeneration",

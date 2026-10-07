@@ -13,7 +13,7 @@
  * names THIS DEVICE because that is true, not because it is the default.
  */
 import { EgressChip } from "../surface";
-import { generatedStampLocal } from "../pullouts/views/BriefView";
+import { parseLocal } from "../pullouts/views/BriefView";
 
 export function BriefEgress() {
   return (
@@ -34,25 +34,15 @@ export type GeneratedBrief = {
 
 /** The receipt after the press: what was built, and when.
  *
- * HS-202-02 (Astra's counsel finding 2 on PR #595) — the first round
- * counted `brief.items`, a field `MondayBrief` does not have
- * (`ChairHome.tsx:136-142`), so every receipt silently dropped its count.
- * The helper-only test could not see it; the rendered fence did.
+ * PHILO-15-09 (B04, ruling 1): `GENERATED · 11:08`. A second Generate on
+ * the same day makes the same brief again, so the receipt names the time it
+ * was made (the producer's `generated_at`, in the viewer's zone). The count
+ * is not repeated here: the headline above says what the brief holds.
  */
 export function briefReceipt(brief: GeneratedBrief | null): string | null {
   if (!brief) return null;
-  const count = Object.values(brief.sections ?? {}).reduce(
-    (total, rows) => total + (Array.isArray(rows) ? rows.length : 0),
-    0,
-  );
-  // PHILO-6-02 (a): one clock. The receipt tells the producer's time in the
-  // viewer's zone through the same stamp as the caption above it
-  // (`GENERATED SEP 25 18:19`), never a second format.
-  const time = generatedStampLocal(brief.generated_at) ?? "";
-  // UX-CANON A.8 — no counter of zero: an empty brief says it is ready
-  // and says nothing about a count.
-  const parts = ["Brief ready"];
-  if (count > 0) parts.push(`${count} item${count === 1 ? "" : "s"}`);
-  if (time) parts.push(time);
-  return parts.join(" · ");
+  const at = parseLocal(brief.generated_at);
+  if (!at) return "GENERATED";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `GENERATED · ${pad(at.getHours())}:${pad(at.getMinutes())}`;
 }

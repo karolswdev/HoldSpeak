@@ -489,7 +489,7 @@ TOOLS.extend([
     ),
     _mcp_tool(
         "monday_brief.generate",
-        "Generate the current Monday Brief from durable sources. Repeated calls return the day's existing brief.",
+        "Generate today's Brief from durable sources. A repeated call on the same day makes the day's brief again from the current desk (same id, new body).",
         {},
     ),
     # PHILO-5-02: the brief triage shelf (brief.shelf.write / brief.shelf.read).

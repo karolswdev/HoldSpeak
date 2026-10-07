@@ -192,7 +192,7 @@ describe("H-C3 Dock rendering", () => {
 
     expect(screen.getByRole("button", { name: "Alpha, 1 open here" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Quiet" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Intelligence, 1 need you" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Intelligence, 1 needs you" })).toBeTruthy();
     expect(screen.queryByText("0")).toBeNull();
 
     await waitFor(() => expect(screen.getByTestId("desk-dock-send-state")).toHaveTextContent("SEND FAILED"));

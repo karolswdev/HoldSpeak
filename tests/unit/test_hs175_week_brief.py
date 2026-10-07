@@ -711,11 +711,13 @@ class TestShadeReadOfSeededBrief:
 
         # The hub's cadence regenerates with a naive local `now` (runtime/cadence.py:112-121).
         generated = MondayBriefService(db).generate(None, now=datetime.datetime.now())
-        assert generated.id == brief_id, "same local day: generate() returns the seed, writes no row"
+        # PHILO-15-09 (B04, ruling 1): the same local day keeps the brief's id
+        # and makes its body again from the current desk (here: nothing).
+        assert generated.id == brief_id, "same local day: generate() keeps the brief id"
 
         again = client.get("/api/brief/latest")
         assert again.status_code == 200
-        assert shade_sees(again.json()) == (brief_id, False, 4, 0)
+        assert shade_sees(again.json()) == (brief_id, True, 0, 0)
         assert client.post("/api/brief/generate").status_code == 200
 
 

@@ -73,7 +73,10 @@ export async function decideFromMeeting(input: {
   const project = await meetingProject(input.meetingId);
   const body: DecisionInput = {
     title,
-    status: "proposed",
+    // PHILO-15-09 (B12): a decision he makes himself is DECIDED, never one
+    // he must review (an agent's launch still proposes; the hub refuses it
+    // any other status).
+    status: "accepted",
     context_markdown: meetingContext({
       title: input.meetingTitle,
       startedAt: input.startedAt,

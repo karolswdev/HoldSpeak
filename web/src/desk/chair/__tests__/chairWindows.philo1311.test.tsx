@@ -287,3 +287,79 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     expect(within(row).getByRole("button", { name: "Open" })).toBeTruthy();
   });
 });
+
+// PHILO-15-09 (B16): Window ▸ Chair ▸ Brief opened the Brief BEHIND the
+// Models and Settings windows ("Nothing happened"). A window the owner's
+// gesture opens comes to the front, also when the Chair mounts after it.
+describe("PHILO-15-09 B16 — a window he opens comes to the front", () => {
+  it("Window ▸ Chair ▸ Brief stays in front when the Chair mounts after the pick", async () => {
+    const { openChairWindow } = await import("../chairWindows");
+    useChairWindows.setState({
+      closed: { "chair:brief": true, "chair:week": true, "chair:capture": true },
+      phone: "chair:needs",
+    });
+    useDesk.setState({ panelOrder: ["chair:needs", "settings", "models"] });
+    openChairWindow("chair:brief");
+    render(<ChairHome />);
+    await screen.findByRole("region", { name: "Brief" });
+    await waitFor(() => expect(useDesk.getState().panelOrder.at(-1)).toBe("chair:brief"));
+    expect(frontWindowId()).toBe("chair:brief");
+  });
+
+  it("an open Brief behind other windows comes to the front from the menu", async () => {
+    const { openChairWindow } = await import("../chairWindows");
+    render(<ChairHome />);
+    await screen.findByRole("region", { name: "Brief" });
+    act(() => {
+      useDesk.getState().focusPanel("settings");
+      useDesk.getState().focusPanel("models");
+    });
+    act(() => openChairWindow("chair:brief"));
+    expect(useDesk.getState().panelOrder.at(-1)).toBe("chair:brief");
+  });
+});
+
+// PHILO-15-09 (B07): The week is never an empty window. With no calendar it
+// shows what the desk knows for this week and one row that offers Connect.
+describe("PHILO-15-09 B07 — The week is never empty", () => {
+  it("a fresh desk with no calendar: one NO CALENDAR row with Connect", async () => {
+    render(<ChairHome />);
+    const week = await screen.findByRole("region", { name: "The week" });
+    const row = await within(week).findByTestId("week-no-calendar");
+    expect(row.textContent).toContain("NO CALENDAR");
+    expect(within(row).getByRole("button", { name: "Connect calendar" }).textContent).toBe("Connect");
+    expect(within(week).getByTestId("chair-window-body-week").children.length).toBeGreaterThan(0);
+  });
+
+  it("lists this week's decisions and the action items due by its end", async () => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    useDesk.setState({
+      items: {
+        meeting: [],
+        decision: [{
+          kind: "decision", id: "decision_sqlite", title: "Use SQLite for the local meeting ledger",
+          status: "accepted", deciders: [], contextMarkdown: "", decisionMarkdown: "", alternatives: [],
+          consequencesMarkdown: "", tags: [], createdAt: now.toISOString(),
+        }],
+      } as never,
+    });
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
+      const p = String(path);
+      if (p.startsWith("/api/desk/needs-you")) return NEEDS;
+      if (p.startsWith("/api/door")) return {
+        board: { now: [{ id: "ai-plan", source: "action_item", target_ref: "action_item:ai-plan", title: "Write the migration plan", due: today }] },
+        counts: {}, upcoming: [], calendar_configured: false,
+      };
+      return null;
+    }));
+    render(<ChairHome />);
+    const week = await screen.findByRole("region", { name: "The week" });
+    const decision = await within(week).findByTestId("week-decision-row");
+    expect(decision.textContent).toContain("Use SQLite for the local meeting ledger");
+    expect(decision.textContent).toContain("DECIDED");
+    const due = await within(week).findByTestId("week-due-row");
+    expect(due.textContent).toContain("Write the migration plan");
+    expect(within(week).getByTestId("week-no-calendar")).toBeTruthy();
+  });
+});

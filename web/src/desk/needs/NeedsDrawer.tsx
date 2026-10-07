@@ -32,7 +32,6 @@ import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
 import { readCoverage } from "../coverage";
 import {
-  CALENDAR_FACE,
   armingFace,
   coverageFace,
   needFace,
@@ -325,6 +324,7 @@ function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean
         fact={face.fact || undefined}
         lamp={face.lamp}
         sprite={needsRowSprite(face)}
+        kindWord={face.kindWord}
         // A2b: the Project button is a generic open: the Project's drawer.
         project={project ? { name: project.name, onOpen: () => openDrawer(project.id) } : undefined}
         verbs={(
@@ -406,10 +406,10 @@ export function NeedsDrawer() {
   const coverage = readCoverage(
     needs.room?.coverage, needs.room?.complete ?? undefined, Boolean(needs.errors.room),
   );
-  const sources = [
-    ...coverage.gaps.map(coverageFace),
-    ...(door && door.calendar_configured === false ? [CALENDAR_FACE] : []),
-  ];
+  // PHILO-15-09 (B11): the calendar is an offer, never a row: the head's
+  // number is the number of rows below it. The offer is in the foot.
+  const sources = coverage.gaps.map(coverageFace);
+  const noCalendar = Boolean(door && door.calendar_configured === false);
   const outcome = useArmingOutcome();
   const armed = arming && !arming.outcome
     ? [armingFace(
@@ -495,9 +495,18 @@ export function NeedsDrawer() {
           </div>
         ) : null}
       </div>
-      {next || muted.length > 0 || waiting.length > 0 ? (
+      {next || noCalendar || muted.length > 0 || waiting.length > 0 ? (
         <div className="needs-drawer-foot">
-          {next ? <span className="needs-drawer-next" data-testid="needs-next">{next}</span> : <span />}
+          <span className="needs-drawer-offer">
+            {next ? <span className="needs-drawer-next" data-testid="needs-next">{next}</span> : null}
+            {noCalendar ? (
+              <span className="needs-drawer-next needs-drawer-offer" data-testid="needs-no-calendar">
+                <span className="surface-token">NO CALENDAR</span>
+                <Button dense variant="ghost" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
+                  onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>Connect calendar</Button>
+              </span>
+            ) : null}
+          </span>
           <span className="object-verbs">
           {waiting.length > 0 ? (
             <Button dense variant="ghost" aria-expanded={showWaiting} data-testid="needs-waiting-toggle"

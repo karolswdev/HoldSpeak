@@ -1,5 +1,6 @@
 // Dock — the application launcher + running window toolbar.
 // Extracted from DeskWindow.tsx (HS-117-04).
+import { needYouWords } from "../../surface/count";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
@@ -515,7 +516,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               (running && application.windowId === front && !minimized ? " is-front" : "") +
               (needsYouBadge ? " is-attention" : "")
             }
-            aria-label={badge ? `${application.label}, ${needsYouBadge ? `${badge} need you` : "brief ready"}` : application.label}
+            aria-label={badge ? `${application.label}, ${needsYouBadge ? needYouWords(badge) : "brief ready"}` : application.label}
             aria-describedby={application.windowId === "intelligence:desk" && sendLabel === "SEND FAILED"
               ? "desk-dock-send-failed-desc"
               : undefined}

@@ -335,18 +335,21 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(cancel).toHaveBeenCalledWith("sch-1");
   });
 
-  it("NEXT is a quiet footer line; no calendar is one source row with Connect calendar", async () => {
+  it("NEXT is a quiet footer line; no calendar is an offer in the foot, never a row (PHILO-15-09 B11)", async () => {
     const at = new Date();
     at.setHours(14, 0, 0, 0);
     DOOR = { upcoming: [{ title: "Ledger cutover sync", starts_at: at.toISOString(), source: "calendar_event" }], calendar_configured: false };
     await mount();
     await waitFor(() => expect(screen.getByTestId("needs-next").textContent).toBe("NEXT · 14:00 · Ledger cutover sync"));
-    const offer = await screen.findByTestId("needs-source-row");
-    expect(offer.querySelector(".needs-row-fact")?.textContent).toBe("No calendar");
+    const offer = await screen.findByTestId("needs-no-calendar");
+    expect(offer.textContent).toContain("NO CALENDAR");
+    expect(screen.queryByTestId("needs-source-row")).toBeNull();
     fireEvent.click(offer.querySelector("[data-verb='connect-calendar']")!);
     expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
-    // The offer is not counted.
-    expect(screen.getByTestId("arrival-display").textContent).toBe("8 need you");
+    // One count: the head says the number of rows under it.
+    const rows = document.querySelectorAll("[data-testid='needs-list'] li.needs-row");
+    expect(screen.getByTestId("arrival-display").textContent).toBe(`${rows.length} need you`);
+    expect(rows.length).toBe(8);
   });
 
   it("muted rows are not drawn; Muted · N opens them", async () => {
@@ -393,7 +396,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       return { upcoming: [], calendar_configured: true } as never;
     });
     render(<NeedsDrawer />);
-    await screen.findByText("1 need you");
+    await screen.findByText("1 needs you");
     const held = face(row("Codex: reconciliation"));
     expect(held.fact).toBe("psql -h staging-ledger -c 'select… +78 CHARS");
     expect(held.verbs).toEqual(["Deny", "Open"]);
@@ -475,3 +478,31 @@ async function mount7() {
   render(<NeedsDrawer />);
   await screen.findByText("7 need you");
 }
+
+// PHILO-15-09 (B11, B12): one count, and every row says what it is.
+describe("NeedsDrawer one count and kind words (PHILO-15-09)", () => {
+  it("the head is the number of rows, and each member row names its kind", async () => {
+    DOOR = { upcoming: [], calendar_configured: false };
+    await mount();
+    const rows = Array.from(document.querySelectorAll<HTMLElement>("[data-testid='needs-list'] li.needs-row"));
+    expect(screen.getByTestId("arrival-display").textContent).toBe(`${rows.length} need you`);
+    const word = (title: string) =>
+      rows.find((r) => r.textContent?.includes(title))?.querySelector("[data-testid='needs-row-kind']")?.textContent;
+    expect(word("Run a second ops interview")).toBe("DECISION");
+    expect(word("Pick the vendor")).toBe("ACTION");
+    expect(word("Vendor call")).toBe("MEETING");
+    expect(word("Jordan or Avery")).toBe("AGENT");
+    for (const row of rows) expect(row.querySelector("[data-testid='needs-row-kind']")).not.toBeNull();
+  });
+
+  it("one thing says `1 needs you`", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, count: 1, items: [ITEMS[4]], failedMeetings: [] } as never;
+      return { upcoming: [], calendar_configured: false } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("1 needs you");
+    expect(document.querySelectorAll("[data-testid='needs-list'] li.needs-row")).toHaveLength(1);
+  });
+});

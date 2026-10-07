@@ -93,6 +93,15 @@ function ChairWindow({
 /** The Needs-you window is the front Chair window when the Chair opens:
  * among the Chair's own planes only (a desk window above keeps its plane). */
 function raiseNeedsAmongChair() {
+  // PHILO-15-09 (B16): a Chair window the owner just opened (Window ▸ Chair,
+  // Go ▸, a reopen) is the front window, also when the Chair mounts after
+  // his gesture. The Needs-you raise never puts it behind another window.
+  const opened = useChairWindows.getState().opened;
+  if (opened) useChairWindows.setState({ opened: "" });
+  if (opened && opened !== "chair:needs") {
+    if (!useChairWindows.getState().closed[opened]) useDesk.getState().focusPanel(opened);
+    return;
+  }
   const s = useDesk.getState();
   const order = s.panelOrder;
   const chairAt = order
