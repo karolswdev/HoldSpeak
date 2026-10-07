@@ -403,7 +403,8 @@ class TestBriefAndDecisionSendGlass(_Rig):
                 a2 = shots.shoot(page, "A2-brief-picked-folder", IB,
                                  [row(IB, "Team folder"), f"{opened(IB, 'Team folder')} [data-testid=send-verb]"])
                 assert a2["wells"] == [ref], a2["wells"]
-                assert a2["preview_fields"] == [f"FOLDER {team_dir}"], a2["preview_fields"]
+                # PHILO-15 lane 12 (B23): the Folder field is the folder's name, never the raw path.
+                assert a2["preview_fields"] == [f"FOLDER {'/'.join(Path(team_dir).parts[-2:])}"], a2["preview_fields"]
                 # One pick with the Chair's seat of the same brief (the species' store).
                 shared_pick = page.locator(opened(CH, "Team folder")).count()
                 a2["chair_row_open"] = shared_pick

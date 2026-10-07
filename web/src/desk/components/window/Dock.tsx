@@ -655,7 +655,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             }
             onClick={launcher.activate}
           >
-            <span aria-hidden="true">{launcher.glyph}</span>
+            {DOCK_SPRITES[launcher.id] ? (
+              <img src={DOCK_SPRITES[launcher.id]} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
+            ) : (
+              <span aria-hidden="true">{launcher.glyph}</span>
+            )}
             <span className="desk-dock-label">{launcher.label}</span>
             {launcher.badge ? (
               <span
