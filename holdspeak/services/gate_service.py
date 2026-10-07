@@ -20,24 +20,17 @@ CONTROL_MODE_IDENTITY = "control-mode"
 
 
 def _is_launch_caller(record: Mapping[str, Any], identity: str) -> bool:
-    """True when ``identity`` is this launch's agent.
-
-    Two credentials reach the gate from a launched agent: the session's own
-    (``claude:<session_id>``, the rider's registered ``session_key``) and,
-    since K6, the launch-bound one the spawn put in the pane's environment
-    (``agent:launch:<launch_id>``). The gate hook sends the inherited one
-    first (``coder_gate.issue_agent_credential``), so a launched agent's calls
-    carry the launch identity (Conductor R1: every call held as
-    ``not_a_holdspeak_launch``). Either one names the launch, and either
-    needs the rider's registration first: before it, no call is the
-    launch's."""
+    """True when ``identity`` is this launch's agent: its registered session
+    key, or the launch-bound credential (``agent:launch:<launch_id>``) the
+    spawn put in its tmux session only. The same rule as
+    :meth:`GateService._own_launch` (Conductor R3), for the readers of held
+    calls (Needs you, ``needs_you_membership._read_gate_holds``)."""
     from ..coder_factory import launch_identity
 
-    session_key = str(record.get("session_key") or "")
-    if not session_key or not identity:
+    if not identity:
         return False
     launch = str(record.get("launch_id") or "")
-    return identity == session_key or bool(launch and identity == launch_identity(launch))
+    return record.get("session_key") == identity or bool(launch and launch_identity(launch) == identity)
 
 
 @observe_service
@@ -204,9 +197,11 @@ class GateService:
 
     def _own_launch(self, principal: Principal) -> Optional[tuple[str, str, str]]:
         """``(launch_id, worktree_path, branch)`` of the live launch whose
-        registered session IS this principal, ``None`` otherwise. Before the
-        rider registers the session, no call is the launch's: the parent
-        operation id the hook names is a claim any session could copy."""
+        registered session IS this principal, or whose launch-bound credential
+        (``agent:launch:<id>``) the principal holds; ``None`` otherwise. A
+        session credential is the launch's only once the rider registers the
+        session: the parent operation id the hook names is a claim any session
+        could copy."""
         if principal.kind is not PrincipalKind.AGENT:
             return None
         try:
@@ -214,7 +209,20 @@ class GateService:
         except Exception:
             return None
         live = [r for r in reversed(records) if str(r.get("state") or "") in _LIVE_LAUNCH_STATES]
-        record = next((r for r in live if _is_launch_caller(r, principal.identity)), None)
+        # Conductor R3: inside a launch the hook authenticates with the
+        # launch-bound credential its tmux session carries (K6,
+        # ``agent:launch:<launch_id>``), not a ``<agent>:<session>`` one: that
+        # credential IS the launch's (issued into its session only).
+        from ..coder_factory import launch_identity
+
+        record = next(
+            (
+                r for r in live
+                if r.get("session_key") == principal.identity
+                or (r.get("launch_id") and launch_identity(str(r["launch_id"])) == principal.identity)
+            ),
+            None,
+        )
         if record is None:
             return None
         path = service._worktree_path(record)
@@ -326,9 +334,9 @@ class GateService:
         """Expire proposals a process restart can no longer honestly resume."""
         from ..kernel.runtime import _service
 
-        flipped = self._db.gate.invalidate_all_held(
-            reason="hub restarted while the proposal was held"
-        )
+        from ..coder_gate import RESTART_INVALIDATION_REASON
+
+        flipped = self._db.gate.invalidate_all_held(reason=RESTART_INVALIDATION_REASON)
         recovered = _service().recover_invalidated(flipped) if flipped else 0
         return flipped, recovered
 

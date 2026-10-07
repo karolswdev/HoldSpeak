@@ -177,6 +177,16 @@ _CALL_RULES = (
 # independent so harmless edits above a call do not create false drift.
 _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
     (
+        "holdspeak/principals.py",
+        "current_boot_id",
+        "run",
+        1,
+    ): (
+        "Conductor R2: `sysctl -n kern.bootsessionuuid`, a read of this machine "
+        "boot's id (macOS) so a stored monotonic credential deadline is compared "
+        "only within one boot; it changes nothing and runs once per process"
+    ),
+    (
         "holdspeak/services/agent_hand_preview.py",
         "LaunchReads.launcher.alive",
         "run",
@@ -353,6 +363,17 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         "urlopen",
         1,
     ): "loopback gate protocol transport outside census egress scope",
+    (
+        "holdspeak/agent_context/codex_trust.py",
+        "_AppServer.__init__",
+        "Popen",
+        1,
+    ): (
+        "Conductor R3: a short local `codex app-server` (JSON-RPC on stdio, no "
+        "network call) that lists Codex's hooks; its one write (the hook trust in "
+        "Codex's config) runs only inside the owner-only admitted "
+        "`agent_hooks.install` operation, whose receipt covers it"
+    ),
     # HS-171-02/05: local desktop notification dispatch (osascript).
     # Not an effect — a local-only notification, never egress.
     (

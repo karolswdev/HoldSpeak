@@ -212,14 +212,27 @@ def _owner_token() -> str:
     return str(Config.load().meeting.web_auth_token or "").strip()
 
 
+#: The coding agents whose hooks reach the gate; a session's identity is
+#: ``<agent>:<session_id>`` (the agent registry's session key).
+GATE_AGENTS = ("claude", "codex")
+
+
+def agent_identity(session_id: str, agent: str = "claude") -> str:
+    """The principal identity of one agent session: ``claude:<id>`` or ``codex:<id>``."""
+    name = str(agent or "claude").strip().lower()
+    if name not in GATE_AGENTS:
+        raise ValueError(f"agent must be one of: {', '.join(GATE_AGENTS)}")
+    return f"{name}:{str(session_id).strip()}"
+
+
 def issue_agent_credential(
-    session_id: str, hub_url: str, *, force: bool = False
+    session_id: str, hub_url: str, *, force: bool = False, agent: str = "claude",
 ) -> str:
-    """Mint or recover the hub-issued credential for one Claude session."""
+    """Mint or recover the hub-issued credential for one agent session."""
     inherited = str(os.environ.get("HOLDSPEAK_AGENT_CREDENTIAL") or "").strip()
     if inherited:
         return inherited
-    identity = f"claude:{str(session_id).strip()}"
+    identity = agent_identity(session_id, agent)
     path = _credential_path(hub_url, identity)
     try:
         cached = path.read_text(encoding="utf-8").strip()
@@ -253,9 +266,9 @@ def issue_agent_credential(
     return credential
 
 
-def revoke_agent_credential(session_id: str, hub_url: str) -> bool:
+def revoke_agent_credential(session_id: str, hub_url: str, *, agent: str = "claude") -> bool:
     """Revoke one session credential and remove its process-local cache."""
-    identity = f"claude:{str(session_id).strip()}"
+    identity = agent_identity(session_id, agent)
     path = _credential_path(hub_url, identity)
     token = str(os.environ.get("HOLDSPEAK_AGENT_CREDENTIAL") or "").strip()
     if not token:
@@ -281,33 +294,42 @@ def revoke_agent_credential(session_id: str, hub_url: str) -> bool:
     return status == 200 and bool(payload.get("revoked"))
 
 
-def run_session_start(payload: Mapping[str, Any], *, hub_url: str | None = None) -> bool:
+def run_session_start(
+    payload: Mapping[str, Any], *, hub_url: str | None = None, agent: str = "claude",
+) -> bool:
     session_id = str(payload.get("session_id") or "").strip()
     if not session_id:
         return False
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
     try:
-        return bool(issue_agent_credential(session_id, base, force=True))
+        return bool(issue_agent_credential(session_id, base, force=True, agent=agent))
     except Exception:
         return False
 
 
 #: SessionEnd reasons after which the process keeps running: ``/clear`` and
-#: ``/resume`` end the conversation, not the agent, so the credential stays.
-#: Claude Code 2.1.288 sends one of clear, resume, logout, prompt_input_exit,
-#: other; the last three end the process and revoke.
+#: ``/resume`` end the conversation, not the agent, so the process credential
+#: (the one the spawn put in the environment) stays. Claude Code 2.1.288 sends
+#: one of clear, resume, logout, prompt_input_exit, other; the last three end
+#: the process and revoke.
 SESSION_END_KEEPS_CREDENTIAL = frozenset({"clear", "resume"})
 
 
-def run_session_end(payload: Mapping[str, Any], *, hub_url: str | None = None) -> bool:
+def run_session_end(
+    payload: Mapping[str, Any], *, hub_url: str | None = None, agent: str = "claude",
+) -> bool:
     session_id = str(payload.get("session_id") or "").strip()
     if not session_id:
         return False
-    if str(payload.get("reason") or "").strip().lower() in SESSION_END_KEEPS_CREDENTIAL:
+    inherited = bool(str(os.environ.get("HOLDSPEAK_AGENT_CREDENTIAL") or "").strip())
+    if inherited and str(payload.get("reason") or "").strip().lower() in SESSION_END_KEEPS_CREDENTIAL:
         # Conductor K6: a /clear or /resume must not cut the agent off its MCP.
         return False
+    # Conductor R2: a credential the hub minted for this one session
+    # (``claude:<session_id>``) ends with the session on every reason: after
+    # /clear or /resume the next session mints its own.
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
-    return revoke_agent_credential(session_id, base)
+    return revoke_agent_credential(session_id, base, agent=agent)
 
 
 # -- the hook runner -------------------------------------------------------
@@ -344,6 +366,7 @@ def run_hook(
     now: Callable[[], float] = time.monotonic,
     ttl_seconds: float = DEFAULT_TTL_SECONDS,
     agent_credential: str | None = None,
+    agent: str = "claude",
 ) -> HookDecision:
     """One PreToolUse arrival, start to verdict.
 
@@ -388,7 +411,9 @@ def run_hook(
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
     if http_post is None or http_get is None:
         try:
-            credential = str(agent_credential or issue_agent_credential(session_id, base))
+            credential = str(
+                agent_credential or issue_agent_credential(session_id, base, agent=agent)
+            )
         except Exception:
             return HookDecision(
                 deny="gate armed but the agent principal could not authenticate; the call was not run"
@@ -432,13 +457,41 @@ def run_hook(
     if state in ("denied", "expired", "invalidated"):
         return HookDecision(deny=_deny_reason(response))
 
+    # Conductor R2: a hub restart mid-hold. While the hub is down the hook
+    # keeps waiting, for at most HUB_RESTART_GRACE_SECONDS in a row (then it
+    # denies, as before: a dead hub never allows). The restart invalidates the
+    # held proposal (HS-104-02: never resume a pre-restart hold), so the
+    # hook proposes the same call again under a new id, and the new hold is
+    # decided afresh by the Control mode or the owner. Fail-closed at the
+    # deadline, as before.
     deadline = now() + ttl_seconds
+    current_id = proposal_id
+    reproposals = 0
+    unreachable = False
+    down_since: Optional[float] = None
+    stopped = HookDecision(deny="gate armed but the hub stopped answering mid-hold; the call was not run")
+
+    def _down() -> bool:
+        """Note one failed contact; True when the grace is spent."""
+        nonlocal down_since, unreachable
+        unreachable = True
+        moment = now()
+        down_since = moment if down_since is None else down_since
+        return moment - down_since >= HUB_RESTART_GRACE_SECONDS
+
     while now() < deadline:
         sleep(POLL_INTERVAL_SECONDS)
         try:
-            status, response = get(f"{base}/api/gate/proposals/{proposal_id}", 5.0)
+            status, response = get(f"{base}/api/gate/proposals/{current_id}", 5.0)
         except Exception:
-            return HookDecision(deny="gate armed but the hub stopped answering mid-hold; the call was not run")
+            if _down():
+                return stopped
+            continue
+        if status >= 500 or status == 0:
+            if _down():
+                return stopped
+            continue
+        unreachable, down_since = False, None
         if status != 200:
             return HookDecision(
                 deny=f"gate armed but the decision read failed (HTTP {status}); the call was not run"
@@ -446,11 +499,57 @@ def run_hook(
         state = str(response.get("state") or "")
         if state == "approved":
             return HookDecision(deny=None)
+        if state == "invalidated" and _restart_invalidated(response) and reproposals < MAX_REPROPOSALS:
+            reproposals += 1
+            current_id = f"{proposal_id}~r{reproposals}"
+            again = dict(body, id=current_id)
+            again["classification"] = dict(verdict, proposal_id=current_id)
+            while now() < deadline:
+                try:
+                    status, response = post(f"{base}/api/gate/proposals", again, 5.0)
+                except Exception:
+                    if _down():
+                        return stopped
+                    sleep(POLL_INTERVAL_SECONDS)
+                    continue
+                if status >= 500 or status == 0:
+                    if _down():
+                        return stopped
+                    sleep(POLL_INTERVAL_SECONDS)
+                    continue
+                unreachable, down_since = False, None
+                break
+            else:
+                break
+            if status != 200:
+                return HookDecision(
+                    deny=f"gate armed but the hub refused the proposal (HTTP {status}); the call was not run"
+                )
+            state = str(response.get("state") or "")
+            if state == "approved":
+                return HookDecision(deny=None)
         if state in ("denied", "expired", "invalidated"):
             return HookDecision(deny=_deny_reason(response))
+    if unreachable:
+        return stopped
     return HookDecision(
         deny="gate hold expired with no decision; the call was not run"
     )
+
+
+#: How long a held call waits for a hub that stopped answering (a restart)
+#: before it denies.
+HUB_RESTART_GRACE_SECONDS = 20.0
+
+#: How many times one call is proposed again after hub restarts.
+MAX_REPROPOSALS = 3
+
+#: The reason a startup invalidation writes (``GateService.invalidate_held_on_startup``).
+RESTART_INVALIDATION_REASON = "hub restarted while the proposal was held"
+
+
+def _restart_invalidated(response: Mapping[str, Any]) -> bool:
+    return RESTART_INVALIDATION_REASON in str(response.get("reason") or "")
 
 
 def _classify(
@@ -570,6 +669,7 @@ def run_stop_hook(
     config: GateConfig | None = None,
     hub_url: str | None = None,
     http_post: Callable[[str, dict[str, Any], float], tuple[int, dict[str, Any]]] | None = None,
+    agent: str = "claude",
 ) -> bool:
     """The Stop-event leg: report the session's usage totals to the
     hub, for sessions in a gate-held repo only (the same double
@@ -597,7 +697,7 @@ def run_stop_hook(
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
     if http_post is None:
         try:
-            credential = issue_agent_credential(session_id, base)
+            credential = issue_agent_credential(session_id, base, agent=agent)
         except Exception:
             return False
         post = lambda url, body, timeout: _default_post(
@@ -621,6 +721,7 @@ def run_post_tool_hook(
     *,
     config: GateConfig | None = None,
     hub_url: str | None = None,
+    agent: str = "claude",
 ) -> bool:
     """Report that an approved, claimed tool call actually completed."""
     cfg = config if config is not None else load_gate_config()
@@ -632,7 +733,7 @@ def run_post_tool_hook(
         return False
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
     try:
-        credential = issue_agent_credential(session_id, base)
+        credential = issue_agent_credential(session_id, base, agent=agent)
         status, _ = _default_post(
             f"{base}/api/gate/proposals/{proposal_id}/receipt",
             {"outcome": "succeeded"},
@@ -760,6 +861,78 @@ def spawn_settings(prefix: str) -> dict[str, Any]:
                 hook["command"] = rider_command
         merged["hooks"].setdefault(event, []).extend(entries)
     return merged
+
+
+def spawn_prefix(project_root: Path | None = None) -> str:
+    """The command that runs this HoldSpeak checkout from a hook."""
+    import shlex
+
+    root = (project_root or Path(__file__).resolve().parents[1]).resolve()
+    return f"uv run --project {shlex.quote(str(root))} holdspeak"
+
+
+def codex_spawn_hooks(prefix: str) -> dict[str, Any]:
+    """The hooks of one Codex launch: the gate (``gate hook --agent codex``,
+    PreToolUse held up to 300 s) and the rider (``agent-hook ingest --agent
+    codex``), both run by ``prefix`` (this HoldSpeak checkout)."""
+    import copy
+
+    from .agent_context.hooks import codex_hook_template
+
+    template = copy.deepcopy(
+        codex_hook_template(gate_command=f"{prefix} gate hook --agent codex")
+    )
+    rider_command = f"{prefix} agent-hook ingest --agent codex"
+    for entries in template["hooks"].values():
+        for entry in entries:
+            for hook in entry.get("hooks") or []:
+                if GATE_HOOK_MARKER not in hook["command"]:
+                    hook["command"] = rider_command
+    return template
+
+
+#: Marker of a gate hook command (``... gate hook --agent codex``).
+GATE_HOOK_MARKER = " gate hook"
+
+
+def _toml_value(value: Any) -> str:
+    """One TOML inline value (tables, arrays, strings, integers): what
+    ``codex -c key=<value>`` parses. JSON string escapes are valid TOML."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, str):
+        return json.dumps(value)
+    if isinstance(value, Mapping):
+        return "{" + ",".join(f"{key}={_toml_value(item)}" for key, item in value.items()) + "}"
+    if isinstance(value, (list, tuple)):
+        return "[" + ",".join(_toml_value(item) for item in value) + "]"
+    raise TypeError(f"no TOML form for {type(value).__name__}")
+
+
+def codex_hook_flags(prefix: str) -> list[str]:
+    """``-c hooks.<Event>=[...]`` for each event of :func:`codex_spawn_hooks`.
+
+    Codex runs a session-flag hook only when the user config trusts its hash
+    (``hooks.state."/<session-flags>/config.toml:<event>:<group>:<handler>"
+    .trusted_hash``): the owner-only ``agent_hooks.install`` writes that trust
+    (``agent_context.codex_trust``) and every Codex launch checks it first."""
+    flags: list[str] = []
+    for event, entries in codex_spawn_hooks(prefix)["hooks"].items():
+        flags += ["-c", f"hooks.{event}={_toml_value(entries)}"]
+    return flags
+
+
+def codex_spawn_args(prefix: str | None = None) -> list[str]:
+    """The Codex arguments of every launch: its own process (``--no-daemon``)
+    and its hooks.
+
+    ``--no-daemon``: an interactive Codex 0.159 otherwise joins the shared
+    app-server daemon of ``CODEX_HOME``, and its hooks then run in the
+    daemon's environment, without this launch's story claim, parent operation,
+    credential or tmux pane."""
+    return ["--no-daemon", *codex_hook_flags(prefix or spawn_prefix())]
 
 
 def install_block(executable: str = "holdspeak") -> str:

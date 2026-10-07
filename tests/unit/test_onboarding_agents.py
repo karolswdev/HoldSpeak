@@ -260,19 +260,41 @@ def test_use_it_refuses_when_holdspeak_cannot_be_found(hub, tmp_path, monkeypatc
     assert not (tmp_path / "home" / ".claude").exists()
 
 
-def test_install_follows_codex_home_and_reads_back_ready(hub, tmp_path) -> None:
-    """Astra r1 finding 2: with CODEX_HOME set, the install writes there, never ~/.codex."""
+def test_install_follows_codex_home_and_reads_back_ready(hub, tmp_path, monkeypatch) -> None:
+    """Astra r1 finding 2: with CODEX_HOME set, the install writes there, never ~/.codex.
+    Conductor R3: the press also trusts the hooks in Codex (a fake ``codex``
+    app-server at the process boundary); only then is Codex ready."""
+    from tests.unit.test_conductor_r3_codex import make_fake_codex
+
+    fake = make_fake_codex(tmp_path, monkeypatch)
     home = tmp_path / "home"
     env = {"CODEX_HOME": str(tmp_path / "codex-home")}
-    _seat(hub, home, "codex", env=env)
+    service = _seat(hub, home, "codex", env=env)
+    service._which = lambda name: fake.exe if name == "codex" else None
     answer = hub.client.post("/api/onboarding/agents/use", json={"agent": "codex"})
     assert answer.status_code == 200, answer.text
     assert answer.json()["used"]["path"] == str(tmp_path / "codex-home" / "hooks.json")
+    assert answer.json()["used"]["trust"]["state"] == "trusted"
     assert (tmp_path / "codex-home" / "hooks.json").is_file()
     assert not (home / ".codex").exists()
     assert _rows(answer.json())["codex"]["ready"] is True
     readback = hub.client.get("/api/onboarding/agents").json()
     assert _rows(readback)["codex"]["hooks"] == "installed"
+    # The fake ran with the service's CODEX_HOME.
+    assert fake.read()["runs"]
+
+
+def test_codex_hooks_codex_does_not_trust_are_not_ready(hub, tmp_path) -> None:
+    """Conductor R3: Codex runs no hook its config does not trust; a failed
+    trust step leaves the file written and Codex not ready."""
+    home = tmp_path / "home"
+    env = {"CODEX_HOME": str(tmp_path / "codex-home")}
+    _seat(hub, home, "codex", env=env)  # /opt/bin/codex does not exist: no trust
+    answer = hub.client.post("/api/onboarding/agents/use", json={"agent": "codex"})
+    assert answer.status_code == 200, answer.text
+    assert answer.json()["used"]["trust"] == {"state": "failed", "reason": "codex_unavailable"}
+    row = _rows(answer.json())["codex"]
+    assert row["hooks"] == "untrusted" and row["ready"] is False
 
 
 def test_the_service_never_writes_off_the_kernel_path(tmp_path) -> None:

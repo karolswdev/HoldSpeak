@@ -5,9 +5,10 @@ HoldSpeak MCP? We certainly should, because it could do a lot of very
 meaningful things for us with those tools at its disposal."
 
 The launch spawn issues a launch-bound agent credential (CONDUCTOR palette,
-``coder_factory.spawn``) into the tmux session's environment as
-``HOLDSPEAK_AGENT_CREDENTIAL``, beside ``HOLDSPEAK_HUB_URL``. This module
-turns that into the agent's MCP server ``holdspeak``:
+``coder_factory.spawn``) into the session's first shell as
+``HOLDSPEAK_AGENT_CREDENTIAL`` (Conductor R2: from a one-shot 0600 file the
+shell reads and deletes, never argv), beside ``HOLDSPEAK_HUB_URL``. This
+module turns that into the agent's MCP server ``holdspeak``:
 
 * Claude Code: ``--mcp-config <file>``. The file names the two environment
   variables (Claude Code expands ``${VAR}`` in ``url`` and ``headers``), so no
@@ -148,28 +149,6 @@ def claude_permission_args(mode: Any, argv: list[str]) -> list[str]:
     return ["--permission-mode", CLAUDE_EDIT_MODE]
 
 
-#: Codex 0.159: run the enabled hooks of ``$CODEX_HOME/hooks.json`` with no
-#: persisted hook trust, for this one process (nothing is written).
-CODEX_HOOK_TRUST_FLAG = "--dangerously-bypass-hook-trust"
-
-
-def codex_launch_args(worktree_path: str) -> list[str]:
-    """The Codex flags that let a launch start with no screen in the way.
-
-    * ``-c projects={"<worktree>"={trust_level="trusted"}}``: the launch's own
-      worktree is trusted for this process, so Codex does not ask "Trust this
-      folder?" (an inline table: Codex 0.159 does not read the dotted
-      ``projects."<path>".trust_level`` form from ``-c``). Nothing is written
-      to the owner's ``config.toml``.
-    * :data:`CODEX_HOOK_TRUST_FLAG`: Codex runs a new or changed hook only
-      after the owner reviews it in the TUI ("Hooks need review"); the K1
-      install changes the hook file, so a launch would stop there and its
-      rider hooks would never report. The flag holds for this process only.
-    """
-    path = json.dumps(os.path.realpath(str(worktree_path)))
-    return ["-c", f'projects={{{path}={{trust_level="trusted"}}}}', CODEX_HOOK_TRUST_FLAG]
-
-
 def config_control_mode() -> str:
     from ..config import Config
 
@@ -182,7 +161,6 @@ def config_control_mode() -> str:
 __all__ = [
     "CLAUDE_ALLOW_RULE",
     "CLAUDE_EDIT_MODE",
-    "CODEX_HOOK_TRUST_FLAG",
     "CREDENTIAL_ENV",
     "HUB_URL_ENV",
     "SERVER_NAME",
@@ -190,7 +168,6 @@ __all__ = [
     "claude_mcp_document",
     "claude_permission_args",
     "codex_args",
-    "codex_launch_args",
     "config_control_mode",
     "mcp_config_path",
     "pre_approved",

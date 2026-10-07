@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Optional
 
 from ._common import _optional_str
 
@@ -85,7 +85,7 @@ def our_hook_commands(settings: Mapping[str, Any]) -> list[str]:
             if not _is_our_hook_entry(entry):
                 continue
             for hook in entry.get("hooks") or []:
-                if isinstance(hook, Mapping) and AGENT_HOOK_COMMAND_MARKER in str(hook.get("command") or ""):
+                if isinstance(hook, Mapping) and is_our_hook_command(hook.get("command")):
                     commands.append(str(hook.get("command")))
     return commands
 
@@ -185,11 +185,10 @@ def detect_story_claim(
     return {}
 
 
-#: The rider hook's timeout. One ``holdspeak agent-hook ingest`` imports the
-#: whole CLI: 1 to 2 s on a calm machine, 4 to 7 s under load (Conductor R1:
-#: Codex killed it at 5 s, "hook timed out after 5s", and the event was lost).
-#: Codex clamps ``SessionEnd`` to 3 s whatever is set.
-HOOK_INGEST_TIMEOUT_SECONDS = 30
+#: The rider hook's timeout (Conductor R3). A rider event that passes its
+#: timeout is lost; ``holdspeak agent-hook ingest`` starts in about 0.1 s
+#: (``cli_entry``), but under load or on a cold ``uv run`` it took over 5 s.
+RIDER_HOOK_TIMEOUT_SECONDS = 30
 
 
 def claude_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
@@ -199,74 +198,81 @@ def claude_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
             "SessionStart": [
                 {
                     "matcher": "startup|resume|clear|compact",
-                    "hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}],
+                    "hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}],
                 }
             ],
             "CwdChanged": [
-                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}]}
             ],
             "UserPromptSubmit": [
-                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}]}
             ],
             # HSM-17-02: the live lifecycle. Notification carries the blocking
             # ask (permission prompts, "waiting for your input") -> waiting;
             # PostToolUse is the working heartbeat (bounded matcher so a spawn
             # happens per meaningful tool, not per read); SessionEnd tombstones.
             "Notification": [
-                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}]}
             ],
             "PostToolUse": [
                 {
                     "matcher": "Bash|Edit|Write|Task",
-                    "hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}],
+                    "hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}],
                 }
             ],
             "Stop": [
-                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}]}
             ],
             "SessionEnd": [
-                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
+                {"hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}]}
             ],
         }
     }
 
 
-def codex_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
+#: Codex CLI's hook events (0.159, observed): Codex has no ``Notification``
+#: event. Its approval prompt fires ``PermissionRequest``; the end of a turn
+#: (the agent waits for input) fires ``Stop`` with ``last_assistant_message``.
+#: SessionEnd timeouts are clamped to 3 s by Codex.
+CODEX_SESSION_END_TIMEOUT_SECONDS = 3
+
+
+def codex_hook_template(
+    *, capture_messages: bool = False, gate_command: Optional[str] = None,
+) -> dict[str, Any]:
+    """Codex's hooks: the rider events, and the tool gate when ``gate_command`` is given.
+
+    ``gate_command`` (``holdspeak gate hook --agent codex``) puts the gate on
+    ``PreToolUse`` for ``Bash`` with Claude Code's hold timeout (300 s), so a
+    call can wait for the owner; the same command reports the receipt
+    (``PostToolUse``) and revokes the session credential (``SessionEnd``).
+    A Codex launch passes this template per session (``-c hooks.*``,
+    ``coder_gate.codex_spawn_args``); ``agent-hook install`` writes the rider
+    template without the gate."""
+    from ..coder_gate import HOOK_TIMEOUT_SECONDS
+
     command = _agent_hook_command("codex", capture_messages=capture_messages)
-    return {
-        "hooks": {
-            "SessionStart": [
-                {
-                    "matcher": "startup|resume|clear",
-                    "hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}],
-                }
-            ],
-            "UserPromptSubmit": [
-                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
-            ],
-            "PreToolUse": [
-                {
-                    "matcher": "Bash|apply_patch|Edit|Write",
-                    "hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}],
-                }
-            ],
-            "PostToolUse": [
-                {
-                    "matcher": "Bash|apply_patch|Edit|Write",
-                    "hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}],
-                }
-            ],
-            "Notification": [
-                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
-            ],
-            "Stop": [
-                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
-            ],
-            "SessionEnd": [
-                {"hooks": [{"type": "command", "command": command, "timeout": HOOK_INGEST_TIMEOUT_SECONDS}]}
-            ],
-        }
+
+    def rider(timeout: int = RIDER_HOOK_TIMEOUT_SECONDS) -> dict[str, Any]:
+        return {"type": "command", "command": command, "timeout": timeout}
+
+    hooks: dict[str, list[dict[str, Any]]] = {
+        "SessionStart": [{"matcher": "startup|resume|clear", "hooks": [rider()]}],
+        "UserPromptSubmit": [{"hooks": [rider()]}],
+        "PreToolUse": [{"matcher": "Bash|apply_patch|Edit|Write", "hooks": [rider()]}],
+        "PermissionRequest": [{"hooks": [rider()]}],
+        "PostToolUse": [{"matcher": "Bash|apply_patch|Edit|Write", "hooks": [rider()]}],
+        "Stop": [{"hooks": [rider()]}],
+        "SessionEnd": [{"hooks": [rider(CODEX_SESSION_END_TIMEOUT_SECONDS)]}],
     }
+    if gate_command:
+        def gate(timeout: int) -> dict[str, Any]:
+            return {"type": "command", "command": gate_command, "timeout": timeout}
+
+        hooks["PreToolUse"].insert(0, {"matcher": "^Bash$", "hooks": [gate(HOOK_TIMEOUT_SECONDS)]})
+        hooks["PostToolUse"].insert(0, {"matcher": "^Bash$", "hooks": [gate(15)]})
+        hooks["SessionEnd"].insert(0, {"hooks": [gate(CODEX_SESSION_END_TIMEOUT_SECONDS)]})
+    return {"hooks": hooks}
 
 
 #: Substring identifying OUR hook entries inside a user's settings, so the
@@ -298,7 +304,7 @@ def install_agent_hooks(
         for event, our_entries in template_hooks.items():
             existing = hooks.get(event)
             existing_list = existing if isinstance(existing, list) else []
-            foreign = [e for e in existing_list if not _is_our_hook_entry(e)]
+            foreign, _removed = _without_our_handlers(existing_list)
             hooks[event] = foreign + [dict(entry) for entry in our_entries]
             installed_events.append(str(event))
 
@@ -327,8 +333,8 @@ def uninstall_agent_hooks(settings_path: "Path") -> dict[str, Any]:
             entries = hooks.get(event)
             if not isinstance(entries, list):
                 continue
-            kept = [e for e in entries if not _is_our_hook_entry(e)]
-            if len(kept) != len(entries):
+            kept, removed = _without_our_handlers(entries)
+            if removed:
                 removed_events.append(str(event))
             if kept:
                 hooks[event] = kept
@@ -344,16 +350,51 @@ def uninstall_agent_hooks(settings_path: "Path") -> dict[str, Any]:
     }
 
 
+def is_our_hook_command(command: Any) -> bool:
+    """True only for a command ``_agent_hook_command`` writes, exactly:
+    ``<holdspeak> agent-hook ingest --agent <claude|codex> [--capture-messages]``.
+    A wrapper, an appended command or a comment that carries the words is
+    someone else's hook (Astra round 1 on #914)."""
+    try:
+        parts = shlex.split(str(command or ""))
+    except ValueError:
+        return False
+    if len(parts) not in (5, 6) or os.path.basename(parts[0]) != "holdspeak":
+        return False
+    if parts[1:4] != ["agent-hook", "ingest", "--agent"] or parts[4] not in AGENT_HOOK_SETTINGS_PATHS:
+        return False
+    return parts[5:] in ([], ["--capture-messages"]) and shlex.join(parts) == str(command)
+
+
+def _without_our_handlers(entries: list[Any]) -> tuple[list[Any], int]:
+    """The groups with HoldSpeak's own handlers taken out, one handler at a
+    time: a foreign sibling in the same group stays, with the group's
+    matcher; a group is dropped only when nothing of it is left. Returns
+    ``(kept, removed_count)`` (Astra round 2 on #914)."""
+    kept: list[Any] = []
+    removed = 0
+    for entry in entries:
+        inner = entry.get("hooks") if isinstance(entry, Mapping) else None
+        if not isinstance(inner, list):
+            kept.append(entry)
+            continue
+        others = [h for h in inner if not (isinstance(h, Mapping) and is_our_hook_command(h.get("command")))]
+        if len(others) == len(inner):
+            kept.append(entry)
+            continue
+        removed += len(inner) - len(others)
+        if others:
+            kept.append({**dict(entry), "hooks": others})
+    return kept, removed
+
+
 def _is_our_hook_entry(entry: Any) -> bool:
     if not isinstance(entry, Mapping):
         return False
     inner = entry.get("hooks")
     if not isinstance(inner, list):
         return False
-    for hook in inner:
-        if isinstance(hook, Mapping) and AGENT_HOOK_COMMAND_MARKER in str(hook.get("command") or ""):
-            return True
-    return False
+    return any(isinstance(hook, Mapping) and is_our_hook_command(hook.get("command")) for hook in inner)
 
 
 def _read_settings(settings_path: "Path") -> tuple[dict[str, Any], bool]:

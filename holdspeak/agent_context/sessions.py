@@ -23,11 +23,13 @@ from .models import (
     DEFAULT_PROMPT_CAPTURE_MAX_CHARS,
     DEFAULT_RECENT_MAX_AGE_SECONDS,
     DEFAULT_STALE_AGENT_SESSION_SECONDS,
+    IDLE_NOTIFICATION,
     LIFECYCLE_ENDED,
     LIFECYCLE_IDLE,
     LIFECYCLE_WAITING,
     LIFECYCLE_WORKING,
     MAX_SESSIONS,
+    PERMISSION_NOTIFICATION,
     STATE_VERSION,
     SUPPORTED_AGENTS,
     is_blocked,
@@ -49,7 +51,8 @@ _WORKING_EVENTS = {
     "PreCompact",
     "SubagentStop",
 }
-_WAITING_EVENTS = {"Notification", "Stop"}
+# Codex has no Notification: its approval prompt is ``PermissionRequest``.
+_WAITING_EVENTS = {"Notification", "Stop", "PermissionRequest"}
 _ENDED_EVENTS = {"SessionEnd"}
 
 #: Conductor K2: a Hand-to-agent launch carries the rider hooks in its
@@ -135,13 +138,30 @@ def _notification_type(payload: Mapping[str, Any], message: str | None) -> str |
     return None
 
 
+def _codex_permission_question(payload: Mapping[str, Any]) -> str | None:
+    """The ask of a Codex ``PermissionRequest`` (observed on 0.159:
+    ``tool_name`` plus ``tool_input.command`` and ``tool_input.description``;
+    no message): its reason, else the command."""
+    tool_input = payload.get("tool_input")
+    raw = tool_input if isinstance(tool_input, Mapping) else {}
+    tool = _optional_str(payload.get("tool_name")) or "a tool"
+    reason = _optional_str(raw.get("description"))
+    command = _optional_str(raw.get("command"))
+    if reason:
+        return f"Codex asks to use {tool}: {reason}"
+    if command:
+        return f"Codex asks to run: {command}"
+    return f"Codex asks to use {tool}"
+
+
 def _filter_question(text: str | None) -> str | None:
     """Secret-filter a captured question (HSM-17-02 acceptance: reuse the
     dictation journal's whole-field redaction so a synced question can never
     carry a token/key)."""
     if not text:
         return None
-    from holdspeak.plugins.dictation.journal import filter_secret
+    # The light home of the journal's check: no plugin host on the hook path.
+    from holdspeak.project_doc_suggestions import filter_secret
 
     filtered = filter_secret(str(text).strip())
     return filtered or None
@@ -219,14 +239,18 @@ def ingest_agent_hook_event(
             normalized_agent,
             Path(str(payload.get("transcript_path") or "")).expanduser(),
         )
-    # Conductor R1: Claude Code 2.1.x and Codex 0.159 put the turn's last
-    # assistant message in the Stop payload itself. A question read from it
-    # needs no transcript read, so a launched agent (whose rider hooks do not
-    # opt in to message capture) still reaches Needs you when it asks. Only
-    # the question is kept from it (secret-filtered), never the message.
+    # Conductor R1: Claude Code 2.1.x puts the turn's last assistant message
+    # in the Stop payload itself. A question read from it needs no transcript
+    # read, so a launched agent (whose rider hooks do not opt in to message
+    # capture) still reaches Needs you when it asks. Only the question is kept
+    # (secret-filtered), never the message. Codex's Stop is read below (R3).
     stop_text: str | None = None
-    if hook_event_name == "Stop" and not assistant_text:
+    if normalized_agent != "codex" and hook_event_name == "Stop" and not assistant_text:
         stop_text = _optional_str(payload.get("last_assistant_message"))
+    codex_last_message: str | None = None
+    if normalized_agent == "codex" and hook_event_name == "Stop":
+        text = " ".join(str(payload.get("last_assistant_message") or "").split())
+        codex_last_message = text[-DEFAULT_ASSISTANT_CAPTURE_MAX_CHARS:] or None
     tmux_context = detect_tmux_context(payload, env=env)
     detected_claim = detect_story_claim(payload, env=env)
     identity = _event_identity(hook_event_name, payload, detected_claim, tmux_context)
@@ -302,6 +326,17 @@ def ingest_agent_hook_event(
             # question the agent already asked: the question is the ask.
             if not (notification_type == "idle_prompt" and question):
                 question = _filter_question(message) or question
+        elif hook_event_name == "PermissionRequest":
+            # Codex's approval prompt: a permission wait, never answered for the owner.
+            notification_type = PERMISSION_NOTIFICATION
+            question = _filter_question(_codex_permission_question(payload)) or question
+        elif hook_event_name == "Stop" and codex_last_message:
+            # Codex: the end of a turn is its wait for input (Claude Code says
+            # so with an idle_prompt Notification; Codex sends no such event).
+            # The ask is the agent's last message, which the Stop payload carries.
+            question = _filter_question(codex_last_message)
+            notification_type = IDLE_NOTIFICATION
+            awaiting_response = bool(question)
         elif hook_event_name == "Stop" and (assistant_text or stop_text) and awaiting_response:
             question = _filter_question(assistant_text or stop_text or "")
             notification_type = None

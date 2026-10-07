@@ -478,6 +478,15 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
                                 status_code=int(exc.context.get("status") or 409))
         revoked = cred_store.revoke_by_id(credential_id)
+        if not revoked and cred_store.revoke_pending(credential_id):
+            # Conductor R2: refused at once, but the revoke is not written
+            # yet; the same DELETE retries it.
+            return JSONResponse(
+                {"error": "credential_revoke_not_persisted", "retry": True,
+                 "grant_revoked": grant is not None, **(grant or {}),
+                 "project_grants_revoked": project_grants},
+                status_code=503,
+            )
         if not revoked:
             return JSONResponse(
                 {"error": "credential_not_found", "grant_revoked": grant is not None, **(grant or {}),

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import time
 import uuid
 from dataclasses import dataclass
 
@@ -19,6 +20,13 @@ class TmuxTransportError(HoldSpeakError):
     """Raised when a tmux reply cannot be delivered."""
 
     code: str = "TMUX_TRANSPORT_ERROR"
+
+
+#: The pause between the text and its submit. Codex CLI 0.159 reads text
+#: typed this fast as a paste and swallows a carriage return that follows it
+#: at once (the text stays in its composer); after 0.1 s it submits
+#: (observed, Conductor R3). Claude Code submits either way.
+SUBMIT_PAUSE_SECONDS = 0.3
 
 
 @dataclass(frozen=True)
@@ -62,6 +70,7 @@ def send_text_to_pane(
     else:
         _run_tmux(["tmux", "send-keys", "-t", target, "-l", message], timeout_s=timeout_s)
     if submit:
+        time.sleep(SUBMIT_PAUSE_SECONDS)
         # A LITERAL carriage return, not the named `Enter` key: current Claude
         # Code TUIs (observed on 2.1.x) drop a lone named-Enter send-keys but
         # submit on the raw \r byte. Found live by the HSM-17-04 inject proof --

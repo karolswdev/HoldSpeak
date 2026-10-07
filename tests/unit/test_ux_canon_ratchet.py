@@ -113,9 +113,13 @@ def test_ratchet():
 # a raw `<button>` is a species bug.  This number may only shrink; raising it
 # requires changing A1_RATCHET_REASON in the same commit to name the debt
 # being admitted (the HS-200-03 / HS-200-46 shape).
-A1_RATCHET = 90
-A1_RATCHET_DATE = "2026-10-02"
+A1_RATCHET = 81
+A1_RATCHET_DATE = "2026-10-06"
 A1_RATCHET_REASON = (
+    "Conductor R6, 2026-10-06: 90 -> 81 (87 live on main db4893900): the "
+    "six raw buttons of the session window (the rename/kill arm verb, Keep "
+    "as note, Flip, PINNED, Pin, the pane picker rows) are the library "
+    "Button. Earlier, "
     "PHILO-13-18 (C8), 2026-10-02: 102 -> 90 (95 live on main 5912fcb9): "
     "the five inherited Workbench raw buttons the C1 canvas README assigns "
     "to C8 (Run, Add, the priority cycle, the configuration strip, the item "
