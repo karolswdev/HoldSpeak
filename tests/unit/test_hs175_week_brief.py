@@ -717,7 +717,13 @@ class TestShadeReadOfSeededBrief:
 
         again = client.get("/api/brief/latest")
         assert again.status_code == 200
-        assert shade_sees(again.json()) == (brief_id, True, 0, 0)
+        body = again.json()
+        assert body["id"] == brief_id
+        # The seed's rows are gone: the body is the current desk's (here at
+        # most the NOT READ rows of a read made with no principal, PHILO-15 05).
+        texts = [i["text"] for items in body["sections"].values() for i in items]
+        assert not [t for t in texts if t.startswith("Item ")], texts
+        assert all(t.startswith("NOT READ") for t in texts), texts
         assert client.post("/api/brief/generate").status_code == 200
 
 

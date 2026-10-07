@@ -68,15 +68,16 @@ def _the_rehearsal_day(db: Database, people: EncryptedPeopleStore) -> None:
 def test_the_rehearsal_day_is_listed_and_generate_regenerates(tmp_path):
     db, people, service = _desk(tmp_path)
 
-    morning = service.generate(None)
-    assert morning.headline == "No changes" and morning.is_empty
+    morning = service.generate(OWNER)
+    # A cold desk: at most the setup row (no summary engine), none of the day.
+    assert not [t for t in _texts(morning) if t.startswith(("Meeting recorded", "Decision made", "Project added"))]
 
     _the_rehearsal_day(db, people)
-    again = service.generate(None)
+    again = service.generate(OWNER)
 
     assert again.id == morning.id, "the same day keeps the brief's id"
     assert again.generated_at > morning.generated_at, "a newer GENERATED time"
-    assert again.headline != "No changes"
+    assert again.headline != morning.headline
     texts = _texts(again)
     for wanted in (
         "Meeting recorded: Architect sync",
@@ -97,13 +98,13 @@ def test_the_rehearsal_day_is_listed_and_generate_regenerates(tmp_path):
 def test_an_unchanged_item_keeps_its_shelf_state_and_a_gone_one_leaves(tmp_path):
     db, people, service = _desk(tmp_path)
     _the_rehearsal_day(db, people)
-    first = service.generate(None)
+    first = service.generate(OWNER)
     project = _item(first, "Project added: Local ledger")
     service.shelve(None, project.id, "acknowledged")
 
     db.projects.create_project(project_id="project-two", name="Second Project")
     db.desk_decisions.delete("decision-sqlite")
-    second = service.generate(None)
+    second = service.generate(OWNER)
 
     kept = _item(second, "Project added: Local ledger")
     assert kept.id == project.id
@@ -115,7 +116,7 @@ def test_an_unchanged_item_keeps_its_shelf_state_and_a_gone_one_leaves(tmp_path)
 def test_a_proposed_decision_is_reviewed_not_made(tmp_path):
     db, _people, service = _desk(tmp_path)
     db.desk_decisions.upsert(decision_id="decision-agent", title="Adopt the queue", status="proposed")
-    texts = _texts(service.generate(None))
+    texts = _texts(service.generate(OWNER))
     assert "Review decision: Adopt the queue" in texts
     assert "Decision made: Adopt the queue" not in texts
 
@@ -132,7 +133,7 @@ def test_the_title_is_the_briefs_own_day_and_the_range_is_one():
 def test_the_sent_document_says_the_same_title_and_range(tmp_path):
     db, people, service = _desk(tmp_path)
     _the_rehearsal_day(db, people)
-    brief = service.generate(None)
+    brief = service.generate(OWNER)
     document = render_document(db, f"monday_brief:{brief.id}")
     title = brief_title(brief.period_end)
     label = brief_period_label(brief.period_start, brief.period_end)
@@ -143,11 +144,12 @@ def test_the_sent_document_says_the_same_title_and_range(tmp_path):
 
 def test_the_schedule_keeps_one_brief_a_day(tmp_path):
     db, people, service = _desk(tmp_path)
-    morning = service.generate(None, regenerate=False)
+    morning = service.generate(OWNER, regenerate=False)
     _the_rehearsal_day(db, people)
-    scheduled = service.generate(None, regenerate=False)
+    scheduled = service.generate(OWNER, regenerate=False)
     assert scheduled.id == morning.id and scheduled.generated_at == morning.generated_at
-    assert scheduled.headline == "No changes"
+    assert scheduled.headline == morning.headline
+    assert _texts(scheduled) == _texts(morning)
 
 
 # ── Astra r1 (P1): the Brief never asks for the People key ────────────
@@ -266,5 +268,5 @@ def test_no_people_store_means_nothing_skipped(tmp_path):
     absent = EncryptedPeopleStore(tmp_path / "none.sqlite3", MemoryKeyStore())
     from holdspeak.services.monday_brief_service import PEOPLE_NOT_READ_TEXT
 
-    brief = MondayBriefService(db, people_store=absent).generate(None, people_reads=False)
+    brief = MondayBriefService(db, people_store=absent).generate(OWNER, people_reads=False)
     assert PEOPLE_NOT_READ_TEXT not in _texts(brief)
