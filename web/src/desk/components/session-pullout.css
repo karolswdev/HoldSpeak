@@ -387,3 +387,12 @@
     justify-content: flex-start;
   }
 }
+
+/* Conductor R6: the session-control arm verb is a library Button beside
+   the pane token; the pair never breaks across a wrap. */
+.desk-next .desk-session-arm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
