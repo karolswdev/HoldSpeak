@@ -100,13 +100,14 @@ function decisionRead(url: string): unknown {
 }
 
 let chairBrief: unknown = BRIEF;
+let chairNeeds: unknown = NEEDS_YOU;
 
 function wireChair() {
   vi.mocked(apiFetch).mockImplementation(asHub(async (path: string, init?: unknown) => {
     const url = String(path);
     const body = (init as { json?: { identity?: string } } | undefined)?.json;
     if (url === "/api/inference/assignments") return { schema: "InferenceAssignmentSummary@1", rows: [], task_overrides: [], issue_count: 0 } as never;
-    if (url.startsWith("/api/desk/needs-you")) return NEEDS_YOU as never;
+    if (url.startsWith("/api/desk/needs-you")) return chairNeeds as never;
     if (url === "/api/door") return DOOR as never;
     if (url.startsWith("/api/brief/latest")) return chairBrief as never;
     if (url === "/api/people/resolve") return { relationship_id: body?.identity === "Priya" ? "rel-priya" : null } as never;
@@ -121,6 +122,7 @@ beforeEach(() => {
   vi.mocked(openProjectRoom).mockReset();
   __resetOwnerCache();
   chairBrief = BRIEF;
+  chairNeeds = NEEDS_YOU;
 });
 
 describe("PHILO-13-06: the Chair rows open their objects", () => {
@@ -202,6 +204,44 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
     fireEvent.click(own);
     expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:rel-priya");
     expect(vi.mocked(apiFetch).mock.calls.some(([p]) => p === "/api/people/resolve")).toBe(true);
+  });
+});
+
+describe("PHILO-14 A2b: every generic open of a Project opens its drawer", () => {
+  beforeEach(wireChair);
+
+  // Two Projects, so the row names its Project (ProjectButton); a watch row
+  // names only its Project, so the row itself opens the Project.
+  const twoProjects = {
+    ...NEEDS_YOU,
+    count: 2,
+    items: [
+      ...NEEDS_YOU.items,
+      { id: "w1", projectId: "proj-infra", projectName: "Infra budget", ref: "Budget watch is stale", title: "Budget watch is stale",
+        why: "STALE", ageToken: "", source: "watch", verbHref: null, severity: "info" },
+    ],
+    projects: ["proj-ledger", "proj-infra"],
+  };
+
+  it("the Needs you row's Project button opens the drawer, never the Room", async () => {
+    chairNeeds = twoProjects;
+    useDrawers.setState({ drawers: [], infos: [] });
+    render(<ChairHome />);
+    const button = await screen.findByRole("button", { name: "Open the Project: Payments ledger cutover" });
+    fireEvent.click(button);
+    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["proj-ledger"]);
+    expect(openProjectRoom).not.toHaveBeenCalled();
+  });
+
+  it("a row that names only its Project opens the drawer, never the Room", async () => {
+    chairNeeds = twoProjects;
+    useDrawers.setState({ drawers: [], infos: [] });
+    render(<ChairHome />);
+    const row = (await screen.findByText("Budget watch is stale")).closest(".surface-ledger-line") as HTMLElement;
+    await waitFor(() => expect(row.getAttribute("role")).toBe("button"));
+    fireEvent.click(row);
+    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["proj-infra"]);
+    expect(openProjectRoom).not.toHaveBeenCalled();
   });
 });
 

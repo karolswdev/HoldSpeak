@@ -11,6 +11,7 @@ import { DrawerWindow, drawerReceipt } from "../DrawerWindow";
 import { DrawerInfoWindow } from "../InfoWindow";
 import { drawerHead, drawerMembers, type DrawerMember } from "../members";
 import { openDrawer, useDrawers } from "../store";
+import { memberOpens, openMember } from "../open";
 import { refOpener, calendarOpener } from "../../openObject";
 
 const apiFetch = vi.fn();
@@ -279,6 +280,31 @@ describe("PHILO-14 A2 the drawer", () => {
 });
 
 describe("PHILO-14 A2 drawer members (pure)", () => {
+  it("A2b: a flight on a decision record is its decision, with an Open and the agent's state", () => {
+    const flight = {
+      originRef: "decision_record:record-77", kind: "decision_record", id: "record-77", title: "Freeze the old ledger",
+      projectId: "p", projectName: "P", agent: "claude", state: "working", sessionKey: null, pr: null,
+      close: null, sessionCleanup: null, mergedAt: null, launchId: "l-1",
+    };
+    const room = { needsYou: { state: "absent", reason: "x" }, commitments: { state: "ok", items: [] },
+      decisions: { state: "ok", items: [
+        { id: "record-77", text: "Freeze the old ledger", at: "", url: null, kind: "decision", sourceType: "meeting", sourceId: "dec-9" },
+      ] } };
+    const members = drawerMembers({
+      projectId: "p", projectName: "P", room: room as never, meetings: [], decisions: [], artifacts: [], people: [],
+      resources: [], flights: [flight] as never, sessions: [], items: EMPTY_ITEMS,
+    });
+    // One object, named by the record's source (never the record's id).
+    expect(members.map((m) => m.ref)).toEqual(["decision:dec-9"]);
+    const record = members[0];
+    expect(record.kind).toBe("decision");
+    expect(record.state?.label).toMatch(/^CLAUDE CODE /);
+    expect(memberOpens(record)).toBe(true);
+    opened.refs.length = 0;
+    openMember(record);
+    expect(opened.refs).toEqual(["decision:dec-9"]);
+  });
+
   it("head omits what the Room did not read", () => {
     expect(drawerHead(null)).toEqual({ needsYou: 0, target: null, targetPassed: false, status: null, statusTone: "ok" });
   });

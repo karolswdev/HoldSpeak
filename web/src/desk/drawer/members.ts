@@ -103,12 +103,15 @@ export function memberKind(kind: string | undefined, fallback: string): string {
   return k;
 }
 
-/** A launch's origin ref in the open grammar (`action_item:` → `action:`). */
-function flightRef(originRef: string): string {
+/** A launch's origin ref in the open grammar (`action_item:` → `action:`).
+ *  PHILO-14 A2b: a decision record is named by its source, as the drawer's
+ *  decision members are (`records`: record id → `decision:` /
+ *  `desk_decision:` ref), so it opens its decision's own window. */
+function flightRef(originRef: string, records: ReadonlyMap<string, string> = new Map()): string {
   const [kind, ...rest] = originRef.split(":");
   const id = rest.join(":");
   if (kind === "action_item") return `action:${id}`;
-  if (kind === "decision_record") return `decision_record:${id}`;
+  if (kind === "decision_record") return records.get(id) ?? `decision_record:${id}`;
   return `${kind}:${id}`;
 }
 
@@ -181,6 +184,20 @@ export function drawerHead(room: RoomSnapshot | null): DrawerHead {
   };
 }
 
+/** The agent's word on its item (`CLAUDE CODE ASKS`); once a PR exists
+ *  the PR is the fact (`PR #412 OPEN`), as flightLabel says it. */
+function flightState(flight: AgentFlight | null): { label: string; tone: ObjectTone } | undefined {
+  const word = flight ? flightWord(flight) : null;
+  if (!word || !flight) return undefined;
+  return flight.pr?.number
+    ? { label: `PR #${flight.pr.number} ${word.label === "MERGED" ? "MERGED" : "OPEN"}`, tone: word.tone }
+    : { label: `${agentWord(flight.agent)} ${word.label}`, tone: word.tone };
+}
+
+function flightOwner(flight: AgentFlight | null): string | undefined {
+  return flight ? `${agentName(flight.agent)} (agent)` : undefined;
+}
+
 /** Every object filed in the Project, once each. */
 export function drawerMembers(reads: DrawerReads): DrawerMember[] {
   const now = reads.now ?? new Date();
@@ -223,14 +240,19 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
   const commitmentIds = new Set(
     reads.room?.commitments.state === "ok" ? reads.room.commitments.items.map((c) => c.id) : [],
   );
+  const records = new Map<string, string>();
   if (reads.room?.decisions.state === "ok") {
     for (const d of reads.room.decisions.items) {
       const ref = recordRef(d.sourceType, d.sourceId);
+      if (ref && d.id) records.set(d.id, ref);
       if (!ref || (d.commitmentId && commitmentIds.has(d.commitmentId))) continue;
+      // An agent on the record: the decision wears its state.
+      const state = flightState(flightFor(`decision_record:${d.id}`));
       add({
         id: ref, ref, kind: memberKind(d.kind, "decision"), name: d.text || "Decision",
         when: whenWord(d.at, now), whenSort: epoch(d.at),
-        facts: { where, from: d.meetingTitle || undefined, made: madeWord(d.at, now) },
+        state, lamp: state,
+        facts: { where, from: d.meetingTitle || undefined, made: madeWord(d.at, now), owner: flightOwner(flightFor(`decision_record:${d.id}`)), state },
         renameRef: ref.startsWith("desk_decision:") ? deskRef(`decision:${ref.slice("desk_decision:".length)}`) : undefined,
       });
     }
@@ -249,16 +271,9 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
 
   // Action items: what needs you, the Room's commitments, an agent's item.
   // Follow-through keys its card by the action item: `action:<action item id>`.
-  const action = (ref: string, kind: string, name: string, extra: { at?: unknown; due?: unknown; owner?: string | null; meetingId?: string; meetingTitle?: string }) => {
-    const flight = flightFor(ref);
-    const word = flight ? flightWord(flight) : null;
-    // The agent's word on its item (`CLAUDE CODE ASKS`); once a PR exists
-    // the PR is the fact (`PR #412 OPEN`), as flightLabel says it.
-    const state = word && flight
-      ? flight.pr?.number
-        ? { label: `PR #${flight.pr.number} ${word.label === "MERGED" ? "MERGED" : "OPEN"}`, tone: word.tone }
-        : { label: `${agentWord(flight.agent)} ${word.label}`, tone: word.tone }
-      : undefined;
+  const action = (ref: string, kind: string, name: string, extra: { at?: unknown; due?: unknown; owner?: string | null; meetingId?: string; meetingTitle?: string }, originRef = ref) => {
+    const flight = flightFor(originRef);
+    const state = flightState(flight);
     add({
       id: ref, ref, kind, name,
       when: whenWord(extra.at, now), whenSort: epoch(extra.at),
@@ -269,7 +284,7 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
         from: extra.meetingTitle || (extra.meetingId ? meetingTitle.get(extra.meetingId) : undefined),
         made: madeWord(extra.at, now),
         due: dayWord(extra.due) || undefined,
-        owner: flight ? `${agentName(flight.agent)} (agent)` : extra.owner || undefined,
+        owner: flightOwner(flight) ?? (extra.owner || undefined),
         state,
       },
     });
@@ -297,7 +312,7 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
     }
   }
   for (const f of flights) {
-    if (f.originRef.includes(":") && f.id) action(flightRef(f.originRef), memberKind(f.kind, "action"), f.title, {});
+    if (f.originRef.includes(":") && f.id) action(flightRef(f.originRef, records), memberKind(f.kind, "action"), f.title, {}, f.originRef);
   }
 
   for (const a of reads.artifacts) {
