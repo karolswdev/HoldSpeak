@@ -189,6 +189,13 @@ export function routeReady(route: PlannedRoute | null | undefined): boolean {
 /** The refusal reason as a token, in the hub's own plain words
  *  (`meeting_route_projection.unavailable` already de-underscores them).
  *  UX-CANON A.10: an honest state with a plain reason, never a stack. */
+/** PHILO-15 01 ruling: the owner turned summaries OFF. The hub says so in
+ *  the route's reason (`meeting_route_projection.project_route`), so a face
+ *  reads OFF, never "no engine". */
+export function routeOff(route: PlannedRoute | null | undefined): boolean {
+  return String(route?.reason_code ?? "").trim() === "summaries off";
+}
+
 export function routeReasonToken(route: PlannedRoute | null | undefined): string {
   const reason = String(route?.reason_code ?? "").trim();
   return (reason || "route unavailable").toUpperCase();

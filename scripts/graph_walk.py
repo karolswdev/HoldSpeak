@@ -2735,6 +2735,18 @@ def _wait_field(value: Any, wanted: Any) -> bool:
     return value == wanted
 
 
+# Final values a polled field can reach that will never become the wanted one.
+_WAIT_TERMINAL: dict[str, Any] = {"/transcription_status": "failed"}
+
+
+def _terminal_note(wait: dict[str, Any]) -> str:
+    """Name the final status a wait stopped on, with the product's cause."""
+    if not wait.get("terminal"):
+        return ""
+    payload = wait.get("payload") if isinstance(wait.get("payload"), dict) else {}
+    return f"; stopped at final {wait['terminal']} ({payload.get('intel_status')})"
+
+
 def wait_for_fixture_completion(
     hub: Hub, wait_for: dict[str, Any], variables: dict[str, str],
 ) -> dict[str, Any]:
@@ -2779,6 +2791,30 @@ def wait_for_fixture_completion(
                 "payload": last_payload,
                 "field_matches": last_matches,
             }
+        # PHILO-15-03: a worker that reached a FINAL status other than the
+        # wanted one will not change again; stop and record it, never wait out
+        # the bound (an import that failed writes transcription_status
+        # `failed`, meeting_service._fail_import).
+        terminal = {**_WAIT_TERMINAL, **(wait_for.get("terminal") or {})}
+        if payload_is_object:
+            for name, final in terminal.items():
+                if name not in fields or fields[name] == final:
+                    continue
+                found, value = _json_path(last_payload, name)
+                if found and value == final:
+                    return {
+                        "method": method,
+                        "path": path,
+                        "fields": fields,
+                        "status": last_status,
+                        "matched": False,
+                        "terminal": {name: final},
+                        "polls": polls + 1,
+                        "elapsed_s": round(time.monotonic() - started, 3),
+                        "payload": last_payload,
+                        "field_matches": last_matches,
+                        "timeout_s": timeout_s,
+                    }
         polls += 1
         time.sleep(poll_s)
     return {
@@ -6453,6 +6489,7 @@ def exercise(
                 raise Blocked(
                     f"fixture completion did not reach its declared fields in "
                     f"{wait.get('elapsed_s')}s: {wait.get('field_matches')}"
+                    + _terminal_note(wait)
                 )
         except Blocked as exc:
             recorder.set(setup=steps, setup_error={
@@ -6558,6 +6595,7 @@ def exercise(
             raise Blocked(
                 f"fixture completion did not reach its declared fields in "
                 f"{wait.get('elapsed_s')}s: {wait.get('field_matches')}"
+                + _terminal_note(wait)
             )
     except Blocked as exc:
         # A trigger placeholder that is unresolved before the request is

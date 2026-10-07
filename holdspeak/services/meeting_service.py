@@ -22,6 +22,7 @@ from ..meeting_import import (
     DEFAULT_SPEAKER_LABEL,
     DEFAULT_TRANSCRIPT_SPEAKER_LABEL,
     MeetingImportError,
+    TRANSCRIPTION_FAILED,
     import_meeting as run_meeting_import,
     import_transcript,
     is_transcript_filename,
@@ -208,28 +209,36 @@ class MeetingService:
             if is_transcript_filename(filename)
             else "Preparing transcription…"
         )
-        self._db.meetings.save_meeting(placeholder)
-        worker = threading.Thread(
-            target=self._run_import_job,
-            kwargs={
-                # HS-131-09: the import transcribes with local Whisper under its own
-                # admitted session, so the AUTHENTICATED route principal must reach
-                # it. Dropping it here would let a remote import run under the
-                # synthesized local-owner hold identity — authority elevation.
-                "principal": principal,
-                "config": config,
-                "meeting_id": meeting_id,
-                "tmp_path": tmp_path,
-                "title": resolved_title,
-                "speaker": speaker,
-                "tags": tags,
-                "started_at": started_at,
-                "transcriber_factory": transcriber_factory,
-            },
-            daemon=True,
-            name=f"meeting-import-{meeting_id}",
-        )
-        worker.start()
+        # PHILO-15-03: the placeholder save and the thread start are guarded
+        # too; a row that exists must reach a final status.
+        try:
+            self._db.meetings.save_meeting(placeholder)
+            worker = threading.Thread(
+                target=self._run_import_job,
+                kwargs={
+                    # HS-131-09: the import transcribes with local Whisper under its own
+                    # admitted session, so the AUTHENTICATED route principal must reach
+                    # it. Dropping it here would let a remote import run under the
+                    # synthesized local-owner hold identity — authority elevation.
+                    "principal": principal,
+                    "config": config,
+                    "meeting_id": meeting_id,
+                    "tmp_path": tmp_path,
+                    "title": resolved_title,
+                    "speaker": speaker,
+                    "tags": tags,
+                    "started_at": started_at,
+                    "transcriber_factory": transcriber_factory,
+                },
+                daemon=True,
+                name=f"meeting-import-{meeting_id}",
+            )
+            worker.start()
+        except BaseException:
+            _LOG.warning("meeting import %s did not start", meeting_id, exc_info=True)
+            self._fail_import(meeting_id, "IMPORT DID NOT START")
+            tmp_path.unlink(missing_ok=True)
+            raise
         return {"meeting_id": meeting_id, "status": "importing"}
 
     def import_held_file(
@@ -324,10 +333,16 @@ class MeetingService:
         # or a sentence. The actionable message goes to the log.
         except MeetingImportError as exc:
             _LOG.warning("meeting import %s failed: %s", meeting_id, exc)
-            self._set_import_status(meeting_id, "import_failed", exc.cause)
+            self._fail_import(meeting_id, exc.cause)
         except Exception as exc:  # noqa: BLE001 — preserve the durable failure state.
             _LOG.warning("meeting import %s failed", meeting_id, exc_info=True)
-            self._set_import_status(meeting_id, "import_failed", "UNEXPECTED ERROR")
+            self._fail_import(meeting_id, "UNEXPECTED ERROR")
+        except BaseException:
+            # PHILO-15-03: a cancellation (CancelledError, SystemExit, ...)
+            # still leaves a final row; the cancellation itself goes on.
+            _LOG.warning("meeting import %s cancelled", meeting_id, exc_info=True)
+            self._fail_import(meeting_id, "CANCELLED")
+            raise
         finally:
             tmp_path.unlink(missing_ok=True)
             # HS-202-02 (coordinator item 9): the import worker finished in
@@ -338,6 +353,46 @@ class MeetingService:
             # already subscribes to. Success and failure both change the
             # row the owner is looking at.
             notify_desk_changed("meeting", meeting_id, "update")
+
+    def recover_interrupted_imports(self) -> int:
+        """PHILO-15-03: at hub start no import worker is alive, so a row still
+        ``importing / active`` was interrupted (kill, crash, restart). It ends
+        ``import_failed`` + ``failed``; the owner can import the file again."""
+        recovered = 0
+        for meeting_id in self._db.meetings.list_interrupted_import_ids():
+            if self._fail_import(meeting_id, "INTERRUPTED BY A RESTART"):
+                recovered += 1
+        return recovered
+
+    def _fail_import(self, meeting_id: str, cause: str) -> bool:
+        """PHILO-15-03: a failed import reaches a FINAL status on both faces.
+
+        The placeholder row is born with the model's default
+        ``transcription_status = "active"``; only the success tail
+        (meeting_import.py, ``TRANSCRIPTION_COMPLETE``) ever moved it. A
+        failure wrote ``intel_status = import_failed`` alone, so the row said
+        ``active`` forever and every reader that waits on the transcription
+        (the J4/J5 atlas cases) waited out its whole bound.
+        """
+        # The one limit: when this write itself fails the row stays `active`
+        # until the next hub start recovers it; say so in the log.
+        try:
+            state = self._db.meetings.get_meeting(meeting_id)
+            if state is None:
+                return False
+            state.intel_status = "import_failed"
+            state.intel_status_detail = cause
+            state.transcription_status = TRANSCRIPTION_FAILED
+            state.transcription_status_detail = {"reason_code": "import_failed", "cause": cause}
+            self._db.meetings.save_meeting(state)
+            return True
+        except Exception:  # noqa: BLE001 — log the one case that stays active.
+            _LOG.error(
+                "meeting import %s: could not write its failed status (%s); "
+                "the row stays active until the next hub start", meeting_id, cause,
+                exc_info=True,
+            )
+            return False
 
     def _set_import_status(self, meeting_id: str, status: str, detail: str) -> None:
         state = self._db.meetings.get_meeting(meeting_id)

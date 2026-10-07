@@ -1585,6 +1585,15 @@ class MeetingWebServer:
                 recover_inference_on_startup()
             except Exception as e:
                 log.error(f"inference startup recovery failed: {e}")
+            # PHILO-15-03: no import worker survives a restart; a row still
+            # importing/active ends import_failed + failed (import it again).
+            try:
+                if web_ctx.meeting_service is not None:
+                    recovered_imports = web_ctx.meeting_service.recover_interrupted_imports()
+                    if recovered_imports:
+                        log.info(f"meetings: {recovered_imports} interrupted import(s) ended failed")
+            except Exception as e:
+                log.error(f"meeting import startup recovery failed: {e}")
             # PHILO-7-02 (T6): a desk write left admitting/awaiting_decision by a
             # dead process ends indeterminate with its receipt (never resumed).
             try:

@@ -250,8 +250,13 @@ function counted(n: number, one: string, many: string): string {
 export function meetingsHeadline(
   meetingRows: Record<string, unknown>[],
   loading: boolean,
-  /** The face read a summary route and it cannot run (no engine). */
+  /** The face read a summary route and it cannot run (no engine). The
+   *  route is the hub's `planned_route`, resolved through the meeting-intel
+   *  queue's route policy, so a Default for AI work makes it ready
+   *  (PHILO-15 01). */
   routeMissing = false,
+  /** The owner turned summaries OFF (PHILO-15 01 ruling): OFF, not "no engine". */
+  routeOff = false,
 ): { text: string; accent: boolean } {
   if (loading) return { text: "", accent: false };
   if (meetingRows.length === 0) return { text: "No meetings yet", accent: false };
@@ -267,6 +272,9 @@ export function meetingsHeadline(
   if (queued > 0) {
     return { text: counted(queued, "summary queued", "summaries queued"), accent: true };
   }
+  // PHILO-15 01 ruling: OFF wins over the unsummarised count. The owner
+  // turned summaries off, so a meeting without one is not an ask.
+  if (routeOff) return { text: "Summaries off", accent: false };
   const missing = meetingRows.filter(summaryMissing).length;
   if (missing > 0) {
     // HS-201-04 (tenet 4): the headline names the same thing its verb does.

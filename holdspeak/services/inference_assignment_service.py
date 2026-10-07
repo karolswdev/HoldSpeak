@@ -58,6 +58,8 @@ _CANONICAL_GROUPS = (
     ("agents_tools", "Agents & tools"),
     ("background", "Background"),
 )
+#: The SERVICE principal that writes meeting summaries.
+_MEETING_QUEUE = "meeting-intel-queue"
 _CANONICAL_GROUP_IDS = frozenset(group_id for group_id, _label in _CANONICAL_GROUPS)
 #: Who made an assignment revision (the ``made_by`` column).
 MADE_BY = frozenset({"owner", "holdspeak_default"})
@@ -106,6 +108,7 @@ class InferenceAssignmentService:
         # This is composition, not a caller flag: absent registration means a
         # qualified offline manifest remains non-executable by design.
         self._tool_capability_foundation = tool_capability_foundation
+        self._service_route_policies: Any = None
 
     def bind_tool_capability_foundation(
         self, foundation: ToolCapabilityFoundation
@@ -263,6 +266,7 @@ class InferenceAssignmentService:
                         "has_override": exact is not None,
                         "effective": effective,
                         "issues": issues,
+                        "queue": self._queue_projection(conn, capability),
                     }
                 )
         return {
@@ -271,6 +275,120 @@ class InferenceAssignmentService:
             "task_overrides": task_overrides,
             "issue_count": sum(1 for row in rows if row["repair"] is not None),
         }
+
+    def _queue_projection(
+        self, conn: Any, capability: InferenceCapabilityDefinition,
+    ) -> dict[str, Any] | None:
+        """Would the meeting-intel queue run this capability now?
+
+        The queue is a SERVICE principal: its sealed route policy names the
+        assignment sources it may read (``meeting-intel-queue@2`` reads the
+        exact capability, group and global heads).  The roster resolves
+        through those sources, so the Desk's "No engine for summaries" row
+        asks the same question the queue answers (PHILO-15 01).  ``None``
+        when the queue policy does not name the capability.
+        """
+        resolved = self._queue_resolution(conn, capability)
+        if resolved is None:
+            return None
+        return {
+            "policy_id": resolved["policy_id"],
+            "status": resolved["status"],
+            "inherited_from": resolved["inherited_from"],
+        }
+
+    def resolve_for_queue(
+        self, principal: Principal, *, capability_id: str,
+    ) -> dict[str, Any] | None:
+        """The assignment the meeting-intel queue would use for one capability.
+
+        The full resolution (``status``, ``inherited_from``, ``assignment``)
+        through the queue policy's assignment sources, plus ``policy_id``.
+        ``None`` when the queue policy does not name the capability.
+        """
+        self._require_owner(principal)
+        definition = self._require_assignable(capability_id)
+        with self._db._connection() as conn:
+            return self._queue_resolution(conn, definition)
+
+    def set_capability_off(self, principal: Principal, *, capability_id: str) -> None:
+        """The owner turns one capability OFF (PHILO-15 01 ruling).
+
+        OFF holds: the meeting-intel queue resolves it before the group and
+        global heads, so the Default for AI work does not run it.  An exact
+        assignment of the capability (``set_assignment``) turns it on again.
+        """
+        self._require_owner(principal)
+        definition = self._require_assignable(capability_id)
+        with self._db._connection() as conn:
+            conn.execute(
+                "INSERT INTO inference_capability_off(capability_id,set_at) VALUES (?,?) "
+                "ON CONFLICT(capability_id) DO NOTHING",
+                (definition.id, _now()),
+            )
+
+    @staticmethod
+    def _rejoin_summaries_off(conn: Any) -> None:
+        """OFF cleared: the meetings OFF skipped rejoin the summary backlog.
+
+        Every meeting whose summary ended ``skipped`` with the OFF receipt and
+        that has no summary is marked like a meeting saved with no engine, so
+        the next backlog drain runs it (services/meeting_backlog_service.py).
+        Same transaction as the assignment that turned summaries on.
+        """
+        from ..db.intel import SUMMARIES_OFF_DETAIL
+        from .meeting_backlog_service import MARK_REASON
+
+        conn.execute(
+            """INSERT OR IGNORE INTO meeting_summary_backlog (meeting_id, reason, marked_at)
+               SELECT m.id, ?, ? FROM meetings m
+                WHERE m.intel_status='skipped' AND m.intel_status_detail=?
+                  AND NOT EXISTS (SELECT 1 FROM intel_snapshots s WHERE s.meeting_id=m.id)""",
+            (MARK_REASON, _now(), SUMMARIES_OFF_DETAIL),
+        )
+
+    @staticmethod
+    def capability_off(conn: Any, capability_id: str) -> bool:
+        """True when the owner turned this capability OFF."""
+        return conn.execute(
+            "SELECT 1 FROM inference_capability_off WHERE capability_id=?",
+            (capability_id,),
+        ).fetchone() is not None
+
+    def _queue_resolution(
+        self, conn: Any, capability: InferenceCapabilityDefinition,
+    ) -> dict[str, Any] | None:
+        policies = self._service_route_policies
+        if policies is None:
+            from .inference_service_route_policy import (
+                builtin_service_route_policy_registry,
+            )
+
+            try:
+                policies = builtin_service_route_policy_registry(
+                    capability_registry=self._registry
+                )
+            except ValueError:
+                # A registry without the meeting capabilities has no queue.
+                policies = False
+            self._service_route_policies = policies
+        if policies is False:
+            return None
+        found = policies.assignment_sources(_MEETING_QUEUE, capability.id)
+        if found is None:
+            return None
+        policy_id, sources = found
+        if self.capability_off(conn, capability.id):
+            # The owner's OFF short-circuits before the group and global heads.
+            return {
+                "policy_id": policy_id,
+                "status": "off",
+                "capability_id": capability.id,
+                "inherited_from": None,
+                "assignment": None,
+                "repair": None,
+            }
+        return {"policy_id": policy_id, **self._resolve(conn, capability, sources=sources)}
 
     def assignment_editor_projection(
         self, principal: Principal, body: Mapping[str, Any]
@@ -476,6 +594,14 @@ class InferenceAssignmentService:
                         made_by,
                     ),
                 )
+                if request["scope"].get("kind") == "capability":
+                    # An exact engine for the capability turns OFF back on.
+                    turned_on = conn.execute(
+                        "DELETE FROM inference_capability_off WHERE capability_id=?",
+                        (request["scope"].get("capability_id", ""),),
+                    ).rowcount
+                    if turned_on and request["scope"].get("capability_id") == "meeting.deferred_analysis":
+                        self._rejoin_summaries_off(conn)
                 conn.execute(
                     """INSERT INTO inference_assignment_heads(assignment_key,assignment_id,revision,cleared,updated_at)
                        VALUES (?,?,?,?,?) ON CONFLICT(assignment_key) DO UPDATE SET
@@ -1918,6 +2044,7 @@ class InferenceAssignmentService:
         subject_kind: Any = None,
         subject_id: Any = None,
         excluded_key: str | None = None,
+        sources: Iterable[str] | None = None,
     ) -> dict[str, Any]:
         keys: list[tuple[str, str]] = []
         if invocation_id:
@@ -1945,8 +2072,11 @@ class InferenceAssignmentService:
                 ("global", "global"),
             )
         )
+        permitted = None if sources is None else set(sources)
         for key, inherited_from in keys:
             if key == excluded_key:
+                continue
+            if permitted is not None and inherited_from not in permitted:
                 continue
             row = self._head(conn, key)
             if row is None:

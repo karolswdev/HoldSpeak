@@ -38,8 +38,11 @@
     "tags": [],
     "title": "Architecture boundary review \u2014 empty transcript",
     "transcriptWords": null,
-    "transcription_status": "active",
-    "transcription_status_detail": null,
+    "transcription_status": "failed",
+    "transcription_status_detail": {
+      "cause": "NO TRANSCRIPT LINES",
+      "reason_code": "import_failed"
+    },
     "web_url": null
   },
   "list_row": {

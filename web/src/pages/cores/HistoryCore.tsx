@@ -28,6 +28,7 @@ import { StateChip } from "../../desk/surface/patterns/StateChip";
 import {
   postSummaryRun,
   readPlannedRoute,
+  routeOff,
   routeReady,
   routeReasonToken,
   type PlannedRoute,
@@ -454,7 +455,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       return (
         <StateChip
           state="warning"
-          label={`NO SUMMARY ROUTE · ${routeReasonToken(faceRoute)}`}
+          label={routeOff(faceRoute) ? "SUMMARIES OFF" : `NO SUMMARY ROUTE · ${routeReasonToken(faceRoute)}`}
         />
       );
     }
@@ -470,7 +471,9 @@ export function HistoryCore({ hero, scope }: CoreProps) {
 
   // The headline
   const headline = meetingsHeadline(
-    meetingRows, meetings.loading, Boolean(faceRoute) && !routeReady(faceRoute),
+    meetingRows, meetings.loading,
+    Boolean(faceRoute) && !routeReady(faceRoute) && !routeOff(faceRoute),
+    routeOff(faceRoute),
   );
 
   // Verbs in the head
