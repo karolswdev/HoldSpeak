@@ -34,6 +34,13 @@ def _is_launch_caller(record: Mapping[str, Any], identity: str) -> bool:
 
 
 @observe_service
+
+def _args_len(value: Any) -> int:
+    try:
+        return max(0, int(value or 0))
+    except (TypeError, ValueError):
+        return 0
+
 class GateService:
     def __init__(
         self,
@@ -98,6 +105,9 @@ class GateService:
                 "arguments": {
                     "proposal_id": proposal_id, "tool": tool, "args_sha256": args_sha256,
                     "args_head": str(payload.get("args_head") or ""), "cwd": str(payload.get("cwd") or ""),
+                    # PHILO-14 A5: how long the whole redacted call is (the
+                    # head is its first 120 chars); 0 = an older hook.
+                    "args_len": _args_len(payload.get("args_len")),
                     "ttl_seconds": ttl if ttl > 0.0 else DEFAULT_TTL_SECONDS,
                     "classification": verdict,
                 }, "placement": "node:local",

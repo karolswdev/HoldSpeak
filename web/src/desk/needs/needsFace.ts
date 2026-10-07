@@ -21,6 +21,9 @@ import { commandForDoorVerb, supportsDoorVerb, type DoorVerb } from "../chair/do
 export type NeedVerbs =
   | { kind: "answer"; sessionKey: string }
   | { kind: "gate"; proposalId: string }
+  /** A held call whose command the hub cannot show whole: Deny, and Open on
+   *  the agent's lane (Raw shows the whole command there); never Approve. */
+  | { kind: "gate-cut"; proposalId: string; sessionKey: string }
   | { kind: "pr"; url: string; number: number | null }
   | { kind: "session"; sessionKey: string }
   | { kind: "review"; ref: string }
@@ -33,7 +36,7 @@ export type NeedVerbs =
   | { kind: "setup"; key: string; verb: string }
   | { kind: "open"; ref: string }
   | { kind: "repair"; verb: string; href: string; projectId: string }
-  | { kind: "arming"; scheduleId: string }
+  | { kind: "arming"; scheduleId: string; refused: boolean }
   | { kind: "calendar" }
   | { kind: "none" };
 
@@ -65,6 +68,10 @@ export interface NeedFace {
   workedBy?: string;
   /** An agent row: the agent's name (`claude`, `codex`), for its sprite. */
   agent?: string;
+  /** The hub's member ref of the row (`ref`, else `id`). */
+  memberRef?: string;
+  /** An agent ask the hub folded into an item: that item's member ref. */
+  foldedInto?: string;
 }
 
 /** `Claude Code` / `Codex`: the agent's name in a sentence. */
@@ -193,7 +200,13 @@ function attentionFace(
   if (source === "gate") {
     const key = String(item.sessionKey ?? "");
     const agent = key.split(":", 1)[0] || "agent";
-    const command = title.replace(/^Approve:\s*/, "");
+    const head = title.replace(/^Approve:\s*/, "");
+    const cut = Boolean(item.argsCut);
+    const hidden = Number(item.argsHidden ?? 0);
+    // The hub keeps the first 120 chars of the call (a design limit): a cut
+    // command says so, and how much is missing.
+    const command = cut ? `${head}… ${hidden > 0 ? `+${hidden} CHARS` : "CUT"}` : head;
+    const proposalId = String(item.ref ?? id).replace(/^gate:/, "");
     return {
       id,
       kind: "agent",
@@ -201,7 +214,9 @@ function attentionFace(
       fact: command,
       lamp: { label: "HELD CALL", tone: "ask" },
       group: "agents",
-      verbs: { kind: "gate", proposalId: String(item.ref ?? id).replace(/^gate:/, "") },
+      verbs: cut
+        ? { kind: "gate-cut", proposalId, sessionKey: key }
+        : { kind: "gate", proposalId },
       openRef: key ? `coder:${key}` : undefined,
       askOf: key || undefined,
       agent,
@@ -339,7 +354,11 @@ export function needFace(
       openRef: `meeting:${meeting.id}`,
     };
   }
-  return attentionFace(member.item ?? ({} as NeedsYouRoomItem), ctx);
+  const item = member.item ?? ({} as NeedsYouRoomItem);
+  const face = attentionFace(item, ctx);
+  face.memberRef = String(item.ref ?? item.id ?? "");
+  if (item.foldedInto) face.foldedInto = String(item.foldedInto);
+  return face;
 }
 
 /** One object, one row (UX-CANON D): when an agent works an item and that
@@ -348,12 +367,17 @@ export function needFace(
  *  ask's. The agent's own row is not drawn. An agent with no item keeps its
  *  own row. */
 export function foldAsks(faces: readonly NeedFace[]): NeedFace[] {
+  // The hub's fold first (`foldedInto`: the one count), then the flight's
+  // session for an answer that carries no mark.
+  const byTarget = new Map<string, NeedFace>();
+  for (const face of faces) if (face.foldedInto && !byTarget.has(face.foldedInto)) byTarget.set(face.foldedInto, face);
   const asks = new Map<string, NeedFace>();
-  for (const face of faces) if (face.askOf && !asks.has(face.askOf)) asks.set(face.askOf, face);
+  for (const face of faces) if (face.askOf && !face.foldedInto && !asks.has(face.askOf)) asks.set(face.askOf, face);
   const folded = new Set<string>();
   const out: NeedFace[] = [];
   for (const face of faces) {
-    const ask = face.workedBy ? asks.get(face.workedBy) : undefined;
+    const ask = (face.memberRef ? byTarget.get(face.memberRef) : undefined)
+      ?? (face.workedBy ? asks.get(face.workedBy) : undefined);
     if (ask && !folded.has(ask.id)) {
       folded.add(ask.id);
       out.push({ ...face, fact: ask.fact, lamp: ask.lamp, verbs: ask.verbs, askOf: ask.askOf, agent: undefined });
@@ -405,16 +429,21 @@ export function armsWord(seconds: number): string {
 }
 
 /** A scheduled recording about to start: first while it is live. */
-export function armingFace(arming: { scheduleId: string; title: string }, secondsLeft: number): NeedFace {
+export function armingFace(
+  arming: { scheduleId: string; title: string },
+  secondsLeft: number,
+  refusal?: string | null,
+): NeedFace {
   const word = armsWord(secondsLeft);
   return {
     id: `arming:${arming.scheduleId}`,
     kind: "meeting",
     name: arming.title || "Scheduled recording",
-    fact: `Arms in ${word.toLowerCase()}`,
-    lamp: { label: `ARMS · ${word}`, tone: "ask" },
+    // A refused Cancel is named here, by the hub's own reason.
+    fact: refusal ? `NOT CANCELLED · ${refusal}` : `Arms in ${word.toLowerCase()}`,
+    lamp: { label: `ARMS · ${word}`, tone: refusal ? "fail" : "ask" },
     group: "agents",
-    verbs: { kind: "arming", scheduleId: arming.scheduleId },
+    verbs: { kind: "arming", scheduleId: arming.scheduleId, refused: Boolean(refusal) },
   };
 }
 

@@ -4,6 +4,11 @@ proposes a call outside the worktree through the real gate route, and the
 YOLO mode holds it. On the Chair the Needs you row "Approve: <command>"
 opens the system shade; Approve there decides the real proposal, and the
 row leaves. A second hold is denied the same way.
+
+PHILO-14 A5: the Needs-you window body is the smart drawer. The held call is
+a `needs-row` whose fact is the whole command and whose lamp is HELD CALL;
+its own verbs Approve and Deny (`needs-row-verb`, `data-verb`) decide the
+real proposal from the row (the shade still lists it).
 """
 from __future__ import annotations
 
@@ -52,8 +57,19 @@ def _hold(url: str, credential: str, proposal_id: str, command: str, worktree: s
     return body
 
 
+def _open_needs(page: Any) -> None:
+    """PHILO-14 A1: the default desk is the screen; Enter on its Needs you
+    drawer opens the Needs-you window (the drawer)."""
+    if page.locator("[data-testid='needs-drawer']").count():
+        return
+    icon = page.locator(".desk-screen [data-object-id='drawer:needs']")
+    icon.focus()
+    page.keyboard.press("Enter")
+    page.locator("[data-testid='needs-drawer']").wait_for(timeout=10000)
+
+
 def _row(page: Any, command: str) -> Any:
-    return page.locator("[data-testid='arrival-needs-you'] .surface-ledger-row", has_text=f"Approve: {command}")
+    return page.locator("[data-testid='needs-drawer'] [data-testid='needs-row']", has_text=command)
 
 
 @pytest.mark.timeout(240)
@@ -91,17 +107,14 @@ def test_a_held_call_row_opens_the_shade_and_approve_and_deny_decide_it(tmp_path
             page.reload(wait_until="load")
             _normal_chair(page)
             _settle(page)
+            _open_needs(page)
 
-            # The row, then its Open: the shade with the held call.
+            # The row: the whole command, HELD CALL, and its own Approve.
             row = _row(page, "ls /etc")
             row.wait_for(timeout=15000)
-            assert "TO APPROVE" in (row.text_content() or "")
-            row.locator("[role=button]").first.click()
-            shade = page.locator(".desk-shade")
-            shade.wait_for(timeout=5000)
-            item = shade.locator(".desk-gate-item").first
-            item.wait_for(timeout=10000)
-            item.get_by_role("button", name="Approve").click()
+            assert (row.locator(".needs-row-fact").text_content() or "") == "ls /etc"
+            assert "HELD CALL" in (row.locator(".needs-row-lamp").text_content() or "")
+            row.locator("[data-verb='approve']").click()
             deadline = time.monotonic() + 10
             state = ""
             while time.monotonic() < deadline:
@@ -120,14 +133,11 @@ def test_a_held_call_row_opens_the_shade_and_approve_and_deny_decide_it(tmp_path
             page.reload(wait_until="load")
             _normal_chair(page)
             _settle(page)
+            _open_needs(page)
             assert _row(page, "ls /etc").count() == 0  # the approved call left
             row = _row(page, "cat /etc/hosts")
             row.wait_for(timeout=15000)
-            row.locator("[role=button]").first.click()
-            item = page.locator(".desk-shade .desk-gate-item").first
-            item.wait_for(timeout=10000)
-            item.get_by_role("button", name="Deny").click()
-            item.get_by_role("button", name="Send deny").click()
+            row.locator("[data-verb='deny']").click()
             deadline = time.monotonic() + 10
             while time.monotonic() < deadline:
                 _status, read = _http(url, "GET", "/api/gate/proposals/toolu_glass_deny", TOKEN)

@@ -444,7 +444,7 @@
         "literals": [
           "Approve"
         ],
-        "reason": "Approve sits on a held-call row whose fact line shows the exact command; the press lets that agent run that one command in its own session, and Deny beside it refuses it."
+        "reason": "Approve appears only on a held-call row whose fact line shows the WHOLE command: the hub stores the first 120 chars of the redacted call and its whole length, and a call longer than its head is drawn as the head plus '… +N CHARS' with Deny and Open (the agent's lane, where the whole command is read) and no Approve. The press lets that agent run that one command in its own session; Deny beside it refuses it."
       }
     ]
   },

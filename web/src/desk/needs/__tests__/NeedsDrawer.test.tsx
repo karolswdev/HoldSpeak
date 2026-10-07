@@ -8,16 +8,17 @@
 // open-pr, review, done, name-owner, set-date, confirm, door-verb,
 // summarize, setup, repair, cancel, connect-calendar), `needs-well`,
 // `needs-next` (the footer line), `needs-muted-toggle`, `needs-muted`.
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { apiFetch } from "../../../lib/api";
+import { ApiError, apiFetch } from "../../../lib/api";
 import { useAgentFlights, type AgentFlight } from "../../agentFlights";
 import { openCoderSession, openSurfaceOr } from "../../shell";
 import { useDesk } from "../../store";
 import { NeedsDrawer } from "../NeedsDrawer";
+import { useArmingOutcome } from "../arming";
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -126,12 +127,14 @@ const ANSWER = {
 };
 
 let gateCalls: Array<{ path: string; json: unknown }> = [];
+const REAL_CANCEL = useDesk.getState().cancelArmedSchedule;
 let DOOR: Record<string, unknown> = { upcoming: [], calendar_configured: true };
 
 beforeEach(() => {
   gateCalls = [];
   DOOR = { upcoming: [], calendar_configured: true };
-  useDesk.setState({ scheduledArming: null } as never);
+  useDesk.setState({ scheduledArming: null, cancelArmedSchedule: REAL_CANCEL } as never);
+  useArmingOutcome.setState({ refusal: null, receipt: null, busy: false });
   (globalThis as { __resetNeedsYou?: () => void }).__resetNeedsYou?.();
   useAgentFlights.setState({ flights: [FLIGHT, WORKING], sessions: [] } as never);
   vi.mocked(openCoderSession).mockClear();
@@ -378,4 +381,76 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     fireEvent.click(row("Claude Code: rollback runbook").querySelector(".needs-row-fact")!);
     expect(openCoderSession).toHaveBeenCalledWith("claude:s-run");
   });
+
+  // ── Astra r1 on #935 ──────────────────────────────────────────────
+
+  it("P1-1: a held call the hub cannot show whole offers Deny and Open, never Approve", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        const cut = { ...ITEMS[1], id: "gate:prop-cut", ref: "gate:prop-cut", title: "Approve: psql -h staging-ledger -c 'select", argsCut: true, argsHidden: 78 };
+        return { ...ANSWER, count: 1, items: [cut], failedMeetings: [] } as never;
+      }
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("1 need you");
+    const held = face(row("Codex: reconciliation"));
+    expect(held.fact).toBe("psql -h staging-ledger -c 'select… +78 CHARS");
+    expect(held.verbs).toEqual(["Deny", "Open"]);
+    expect(screen.queryByRole("button", { name: /^Approve/ })).toBeNull();
+    fireEvent.click(within(row("Codex: reconciliation")).getByText("Open"));
+    expect(openCoderSession).toHaveBeenCalledWith("codex:s-recon");
+  });
+
+  it("P1-2: a refused Cancel is named on the row with Retry; a cancel leaves a receipt after the row goes", async () => {
+    useDesk.getState().applyScheduledRecordingEvent("scheduled_recording.arming", {
+      schedule_id: "sch-9", title: "Ledger cutover sync", countdown_seconds: 30, fire_at: Date.now() / 1000 + 30,
+    });
+    let refuse = true;
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const value = String(path);
+      if (value === "/api/scheduled-recordings/sch-9/cancel") {
+        if (refuse) throw new ApiError(409, "conflict", { error: "the recording already started", code: "already_started" });
+        return { ok: true } as never;
+      }
+      if (value.startsWith("/api/desk/needs-you")) return ANSWER as never;
+      if (value.startsWith("/api/scheduled-recordings")) return { items: [] } as never;
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    await mount();
+    const armed = () => document.querySelector<HTMLElement>("[data-object-id='arming:sch-9']");
+    fireEvent.click(armed()!.querySelector("[data-verb='cancel']")!);
+    await waitFor(() => expect(armed()!.querySelector(".needs-row-fact")?.textContent)
+      .toBe("NOT CANCELLED · the recording already started"));
+    expect(armed()!.querySelector("[data-verb='retry']")?.textContent).toBe("Retry");
+    refuse = false;
+    fireEvent.click(armed()!.querySelector("[data-verb='retry']")!);
+    await waitFor(() => expect(armed()!.querySelector("[data-verb='cancel']")).toBeTruthy());
+    // The hub's event: the row goes, the receipt stays.
+    act(() => useDesk.getState().applyScheduledRecordingEvent("scheduled_recording.cancelled", { schedule_id: "sch-9" }));
+    expect(armed()).toBeNull();
+    expect(screen.getByTestId("needs-receipt").textContent).toMatch(/^CANCELLED · Ledger cutover sync · \d\d:\d\d$/);
+  });
+
+  it("P1-3: one object, one count: an ask the hub folded into its item is its item's row, not a member", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        const ask = { ...ITEMS[0], foldedInto: "ai-worked" };
+        return { ...ANSWER, count: 7, items: [ask, ...ITEMS.slice(1)] } as never;
+      }
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    useAgentFlights.setState({ flights: [], sessions: [] } as never);
+    await mount7();
+    const members = document.querySelectorAll("[data-testid='needs-row'][data-counted='true']");
+    expect(screen.getByTestId("arrival-display").textContent).toBe(`${members.length} need you`);
+    expect(members).toHaveLength(7);
+    expect(face(row("Write the rollback runbook")).lamps).toEqual(["ASKS · 6 MIN"]);
+    expect(document.querySelector("[data-object-id='coder:claude:s-run']")).toBeNull();
+  });
 });
+
+async function mount7() {
+  render(<NeedsDrawer />);
+  await screen.findByText("7 need you");
+}

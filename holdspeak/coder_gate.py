@@ -201,6 +201,18 @@ def redact_args(tool_input: Mapping[str, Any] | None) -> tuple[str, str]:
     return digest, redact(canonical)[:ARGS_HEAD_CHARS]
 
 
+def redacted_args_len(tool_input: Mapping[str, Any] | None) -> int:
+    """The length of the whole redacted call, of which the hub stores only
+    the first :data:`ARGS_HEAD_CHARS` (PHILO-14 A5: the desk says how much
+    of the command it cannot show, and never offers Approve on a cut one)."""
+    canonical = json.dumps(
+        dict(tool_input or {}), separators=(",", ":"), sort_keys=True, ensure_ascii=False
+    )
+    from .memory.defense import redact
+
+    return len(redact(canonical))
+
+
 # -- supervised principal lifecycle ----------------------------------------
 
 
@@ -442,6 +454,7 @@ def run_hook(
         "tool": tool,
         "args_sha256": args_sha256,
         "args_head": args_head,
+        "args_len": redacted_args_len(payload.get("tool_input")),
         "cwd": cwd,
         "ttl_seconds": ttl_seconds,
         "classification": verdict,

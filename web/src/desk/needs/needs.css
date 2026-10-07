@@ -58,3 +58,6 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
+.needs-drawer-receipt {
+  margin: 0;
+}

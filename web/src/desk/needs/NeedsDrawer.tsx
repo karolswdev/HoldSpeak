@@ -41,6 +41,7 @@ import {
   urlHost,
   type NeedFace,
 } from "./needsFace";
+import { cancelArming, useArmingOutcome } from "./arming";
 import "./needs.css";
 
 /** Answer: the agent's window with the answer field focused. Lane C2 builds
@@ -99,6 +100,20 @@ function NeedVerbsView({ face, primary, onWell, well }: {
             onClick={deny}>Deny</Button>
           <Button dense variant={lead} disabled={busy} aria-label={named("Approve")} data-testid="needs-row-verb" data-verb="approve"
             onClick={approve}>Approve</Button>
+        </>
+      );
+    }
+    case "gate-cut": {
+      const deny = () => void act("Deny",
+        () => useGate.getState().decide(v.proposalId, "denied"), `gate:${v.proposalId}`);
+      return (
+        <>
+          <Button dense variant="ghost" disabled={busy} aria-label={named("Deny")} data-testid="needs-row-verb" data-verb="deny"
+            onClick={deny}>Deny</Button>
+          {v.sessionKey ? (
+            <Button dense variant={lead} aria-label={named("Open the agent's lane")} data-testid="needs-row-verb" data-verb="open"
+              onClick={() => openCoderSession(v.sessionKey)}>Open</Button>
+          ) : null}
         </>
       );
     }
@@ -199,8 +214,9 @@ function NeedVerbsView({ face, primary, onWell, well }: {
     case "arming":
       return (
         <>
-          <Button dense variant="danger" aria-label={named("Cancel")} data-testid="needs-row-verb" data-verb="cancel"
-            onClick={() => void useDesk.getState().cancelArmedSchedule(v.scheduleId)}>Cancel</Button>
+          <Button dense variant="danger" aria-label={named(v.refused ? "Retry cancel" : "Cancel")}
+            data-testid="needs-row-verb" data-verb={v.refused ? "retry" : "cancel"}
+            onClick={() => void cancelArming(v.scheduleId)}>{v.refused ? "Retry" : "Cancel"}</Button>
           <Button dense variant="ghost" aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
             onClick={() => openSurfaceOr("review-meetings", "/history")}>Open</Button>
         </>
@@ -299,13 +315,20 @@ interface DoorRead {
 /** Stamp the stable testids and the row-open mark on the species' rows
  *  (NeedsRow takes no testid prop; B1 owns it): `needs-row` on a member,
  *  `needs-source-row` on a source row, `data-opens` where the body opens. */
-function useRowMarks(ref: React.RefObject<HTMLDivElement | null>, faces: readonly NeedFace[]) {
+function useRowMarks(
+  ref: React.RefObject<HTMLDivElement | null>,
+  faces: readonly NeedFace[],
+  members: ReadonlySet<string>,
+) {
   useLayoutEffect(() => {
     const byId = new Map(faces.map((f) => [f.id, f]));
     for (const li of ref.current?.querySelectorAll<HTMLElement>("li.needs-row") ?? []) {
       const face = byId.get(li.getAttribute("data-object-id") ?? "");
       if (!face) continue;
       li.setAttribute("data-testid", face.source ? "needs-source-row" : "needs-row");
+      // A row the hub counts (one member): the head, the Dock and the notch
+      // say the number of these rows.
+      li.setAttribute("data-counted", members.has(face.memberRef ?? face.id) ? "true" : "false");
       if (face.openRef && refOpener(face.openRef)) li.setAttribute("data-opens", "true");
       else li.removeAttribute("data-opens");
     }
@@ -350,13 +373,22 @@ export function NeedsDrawer() {
     ...coverage.gaps.map(coverageFace),
     ...(door && door.calendar_configured === false ? [CALENDAR_FACE] : []),
   ];
+  const outcome = useArmingOutcome();
   const armed = arming && !arming.outcome
-    ? [armingFace(arming, (arming.fireAt - now.getTime()) / 1000)]
+    ? [armingFace(
+      arming, (arming.fireAt - now.getTime()) / 1000,
+      outcome.refusal?.scheduleId === arming.scheduleId ? outcome.refusal.reason : null,
+    )]
     : [];
   // Board A-5: one list, no group heads. The sources lead (HS-200-15:
   // coverage above the answer), then a recording that arms, then the agents
   // (one object, one row), then the rest in the hub's rank order.
-  const faces = [...sources, ...armed, ...needFaces(needs.members, ctx)];
+  // The asks the hub folded into an item are listed, not members: they ride
+  // in so their item's row carries them (one object, one row, one count).
+  const foldedAsks = needs.unmutedItems
+    .filter((item) => item.foldedInto && !item.waiting)
+    .map((item) => ({ ref: String(item.ref ?? item.id ?? ""), kind: "attention" as const, item }));
+  const faces = [...sources, ...armed, ...needFaces([...needs.members, ...foldedAsks], ctx)];
   const asFace = (item: (typeof needs.mutedItems)[number]) =>
     needFace({ ref: String(item.id ?? item.ref ?? ""), kind: "attention", item }, ctx);
   // Listed, never counted: what he waits on someone else for, and the muted.
@@ -367,7 +399,8 @@ export function NeedsDrawer() {
   // never filled (the quiet face has none: HS-201-01 ruling 2).
   const primaryId = faces.find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null;
   const all = [...faces, ...(showWaiting ? waiting : []), ...(showMuted ? muted : [])];
-  useRowMarks(listRef, all);
+  const memberRefs = new Set(needs.members.map((m) => m.ref));
+  useRowMarks(listRef, all, memberRefs);
 
   const upcoming = door?.upcoming?.[0];
   const next = nextWord(upcoming
@@ -396,6 +429,11 @@ export function NeedsDrawer() {
       <div className="needs-drawer-headline" data-testid="arrival-headline">
         <h2 className="surface-display needs-drawer-head" data-testid="arrival-display">{head}</h2>
       </div>
+      {outcome.receipt ? (
+        <p className="surface-receipt-line needs-drawer-receipt" role="status" data-testid="needs-receipt">
+          {outcome.receipt}
+        </p>
+      ) : null}
       {/* A press on a row body opens it; each row's verbs carry the keyboard. */}
       <div ref={listRef} onClick={onRowPress} data-testid="needs-list">
         {faces.length > 0 ? (
