@@ -9,6 +9,7 @@
 import type { GetInfoFacts, ObjectListRow, ObjectTone } from "../surface";
 import type { AgentFlight, CoderSessionRow } from "../agentFlights";
 import { agentWord } from "../agentFlights";
+import { objectSprite } from "../surface/objects/kinds";
 import type { Items } from "../api";
 import { objectByRef } from "../world";
 import { decisionRecordSourceRef } from "../openObject";
@@ -29,6 +30,8 @@ export interface DrawerMember extends ObjectListRow {
   renameRef?: string;
   /** The object parks through a real park path (PHILO-13-02: meetings). */
   parks?: boolean;
+  /** The selected sprite, when `sprite` is given (an agent's own `_sel`). */
+  spriteSelected?: string;
 }
 
 /** The drawer's head: the Room's intelligence line. */
@@ -370,6 +373,9 @@ export function drawerMembers(reads: DrawerReads): DrawerMember[] {
       const state = { label: word.label, tone: word.tone };
       add({
         id: ref, ref, kind: "agent", name: `${agentName(f.agent)}: ${f.title}`,
+        // The agent's own sprite (Codex keeps its face; PHILO-14 A0c r2).
+        sprite: objectSprite("agent", ref, "rest", 64, f.agent),
+        spriteSelected: objectSprite("agent", ref, "sel", 64, f.agent),
         when: ageWord(at, now), whenSort: epoch(at),
         state, lamp: state,
         facts: { where, from: f.title, owner: `${agentName(f.agent)} (agent)`, state },

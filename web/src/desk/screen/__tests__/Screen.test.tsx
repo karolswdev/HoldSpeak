@@ -208,6 +208,9 @@ describe("PHILO-14 A1 — the screen of objects", () => {
       "project:p-ledger", "project:p-obs", "drawer:people", "drawer:conductor", "drawer:needs", "drawer:parked",
     ]);
     expect(order.at(-1)).toBe("coder:codex:x1");
+    // PHILO-14 A0c: the People drawer wears the ledger (one person wears the badge).
+    const people = document.querySelector('[data-object-id="drawer:people"] img');
+    expect(people?.getAttribute("src")).toMatch(/\/people-ledger\.png$/);
     for (const el of document.querySelectorAll<HTMLElement>(".desk-screen-cell")) expect(el.style.left).toBe("");
     // TALK lives in the Capture window at 393 (Speak opens it on demand)
     expect(screen.queryByTestId("desk-screen-talk")).toBeNull();

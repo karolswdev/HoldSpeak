@@ -9,6 +9,7 @@
  */
 import type { CSSProperties, DragEvent, KeyboardEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
+import { listSprite } from "../../sprites";
 import { objectKindWord, objectSprite, type ObjectTone } from "./kinds";
 import "./objects.css";
 
@@ -144,7 +145,7 @@ export function DeskIcon({
     >
       <span className="desk-icon-art">
         <img src={src} alt="" draggable={false} />
-        {badge ? <img className="desk-icon-badge" src={badge} alt="" draggable={false} /> : null}
+        {badge ? <img className="desk-icon-badge" src={listSprite(badge)} alt="" draggable={false} /> : null}
         {lamp ? (
           <IconLamp tone={lamp.tone} count={lamp.count} />
         ) : count && count > 0 ? (
