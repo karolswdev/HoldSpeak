@@ -26,9 +26,6 @@
 .desk-screen .desk-icon {
   color: var(--wb-paper);
 }
-.desk-screen .desk-screen-placed {
-  position: absolute;
-}
 /* 393: one 4-column grid in DOM order (A-1-393). */
 .desk-screen[data-layout="grid"] > .desk-icon-grid {
   display: grid;
@@ -39,6 +36,7 @@
   min-height: 100%;
   box-sizing: border-box;
 }
+.desk-screen[data-layout="grid"] .desk-screen-cell,
 .desk-screen[data-layout="grid"] .desk-icon {
   width: 88px;
   max-width: 100%;
@@ -68,4 +66,32 @@
    (write-receipt.css), so the row's verbs stay pressable. */
 .desk-next:has(> .desk-receipt-row) .desk-screen {
   top: calc(var(--desk-work-top) + var(--desk-receipt-row-h, 0px) + var(--space-2));
+}
+/* A screen cell: the icon, and under a drawer whose read failed, its NOT
+   READ fact and Retry (Astra's P1 on #939). */
+.desk-screen-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.desk-screen-cell.desk-screen-placed {
+  position: absolute;
+}
+.desk-screen-notread {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.desk-screen-fact {
+  font: 700 var(--font-size-xs) / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--wb-paper);
+}
+/* TALK, one press on the Chair (1440): the Capture window's own control. */
+.desk-screen-talk {
+  position: fixed;
+  left: 20px;
+  bottom: calc(var(--desk-dock-h, 76px) + 14px);
+  z-index: 1;
 }

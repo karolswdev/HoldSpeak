@@ -185,6 +185,43 @@ describe("IconGrid", () => {
     expect(seen.at(-1)).toBeNull();
   });
 
+  it("PHILO-14 A1: the arrows follow an irregular layout (a drawer column beside a field)", () => {
+    render(
+      <IconGrid label="Desk">
+        {["p1", "p2", "p3", "m1", "m2", "m3", "needs"].map((id) => (
+          <DeskIcon key={id} id={id} kind="note" name={id} />
+        ))}
+      </IconGrid>,
+    );
+    const icons = within(screen.getByRole("group", { name: "Desk" })).getAllByRole("button");
+    // A-1: drawers down the left (DOM first), the field beside them, Needs you far right.
+    const at = [[20, 12], [20, 124], [20, 236], [210, 24], [330, 24], [210, 140], [1300, 12]];
+    icons.forEach((icon, i) => {
+      const [left, top] = at[i];
+      icon.getBoundingClientRect = () =>
+        ({ top, left, width: 112, height: 96, right: left + 112, bottom: top + 96, x: left, y: top, toJSON: () => ({}) }) as DOMRect;
+    });
+    const focused = () => icons.indexOf(document.activeElement as HTMLElement);
+    const press = (key: string) => fireEvent.keyDown(document.activeElement as HTMLElement, { key });
+    icons[0].focus();
+    press("ArrowRight"); // the drawer -> the first loose object beside it
+    expect(focused()).toBe(3);
+    press("ArrowRight");
+    expect(focused()).toBe(4);
+    press("ArrowRight"); // far across the field -> Needs you
+    expect(focused()).toBe(6);
+    press("ArrowLeft");
+    expect(focused()).toBe(4);
+    press("ArrowLeft");
+    expect(focused()).toBe(3);
+    press("ArrowDown");
+    expect(focused()).toBe(5);
+    press("ArrowLeft"); // back to the drawer column, the nearest one
+    expect(focused()).toBe(1);
+    press("ArrowDown");
+    expect(focused()).toBe(2);
+  });
+
   it("2-D navigation by the RENDERED columns: Left/Right in the row, Up/Down by the column count, Home/End", () => {
     render(
       <IconGrid label="Drawer">

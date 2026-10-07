@@ -771,10 +771,7 @@ class TestSendToGlass:
             if not self.phone:
                 page.locator("[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Chair')").first.hover()
                 self._wait(600)
-            else:
-                sub = page.locator("[role=menu] [role=menuitem][aria-haspopup=menu]:has-text('Chair')")
-                if sub.count():
-                    self._tap(sub, 600)
+            # PHILO-14 A1 (#939): at 393 the Chair's windows are Go's first rows.
             self._tap(page.locator("[role=menu] [role^=menuitem]:has-text('Brief')").last, 1200)
         brief_win.first.wait_for(state="visible", timeout=T)
         page.locator(f"[id='{BRIEF}'] [data-testid=send-well][data-doc='monday_brief:{self.seed['brief']}']").wait_for(timeout=T)

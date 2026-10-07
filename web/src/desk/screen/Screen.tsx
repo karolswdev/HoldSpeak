@@ -11,13 +11,15 @@
  *  (screen/open.ts). The screen keeps no state beyond the selection. */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useAgentFlights } from "../agentFlights";
-import { projectCountsOf, useNeedsYou } from "../needsYou";
+import { projectOpenHere, useNeedsYou } from "../needsYou";
+import { Button } from "../../components/signal/Signal";
+import { MicButton } from "../components/MicButton";
 import { useDesk } from "../store";
-import { DeskIcon, IconGrid, iconsInRect, type GridRect } from "../surface/objects";
+import { DeskIcon, IconGrid, iconsInRect, type GridRect } from "../surface";
 import { useCompactViewport } from "../useCompactViewport";
 import { composeScreen, screenIsBare } from "./compose";
 import { layoutScreen } from "./layout";
-import { useScreenMembers } from "./members";
+import { retryPeople, retryProject, useScreenMembers } from "./members";
 import { openTarget } from "./open";
 import "./screen.css";
 
@@ -41,15 +43,17 @@ function useSize(ref: React.RefObject<HTMLElement | null>) {
 
 export function Screen() {
   const items = useDesk((s) => s.items);
-  const updatedAt = useDesk((s) => s.updatedAt);
   const needs = useNeedsYou();
   // The agents: the one store the Arrival keeps live (useAgentFlightsLive in ChairHome).
   const sessions = useAgentFlights((s) => s.sessions);
   const flights = useAgentFlights((s) => s.flights);
   const compact = useCompactViewport();
 
-  const projectIds = useMemo(() => (items.project ?? []).map((p) => p.id), [items.project]);
-  const members = useScreenMembers(projectIds, updatedAt);
+  const projects = useMemo(
+    () => (items.project ?? []).map((p) => ({ id: p.id, updatedAt: p.updatedAt })),
+    [items.project],
+  );
+  const members = useScreenMembers(projects);
 
   const objects = useMemo(() => {
     const needsRefs = new Set<string>();
@@ -61,7 +65,7 @@ export function Screen() {
     for (const meeting of needs.failedMeetings) needsRefs.add(`meeting:${meeting.id}`);
     return composeScreen({
       items,
-      projectCounts: projectCountsOf(needs.unmutedItems),
+      projectCounts: projectOpenHere(needs),
       needsCount: needs.count,
       needsRefs,
       heldCalls,
@@ -70,8 +74,12 @@ export function Screen() {
       filed: members.filed,
       persons: members.persons,
       membersLoaded: members.loaded,
+      notRead: members.notRead,
+      unknownAll: members.unknownAll,
+      unknownMeetings: members.unknownMeetings,
+      peopleNotRead: members.peopleNotRead,
     });
-  }, [items, needs.unmutedItems, needs.failedMeetings, needs.count, sessions, flights, members]);
+  }, [items, needs, sessions, flights, members]);
 
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [marquee, setMarquee] = useState<GridRect | null>(null);
@@ -106,27 +114,54 @@ export function Screen() {
         {objects.map((o) => {
           const at = placed?.[o.key];
           return (
-            <DeskIcon
+            <div
               key={o.key}
-              id={o.key}
-              kind={o.kind}
-              kindWord={o.kindWord}
-              name={o.name}
-              sprite={o.sprite}
-              spriteSelected={o.spriteSelected}
-              badge={o.badge}
-              lamp={o.lamp}
-              count={o.count}
-              ariaExtra={o.ariaExtra}
-              selected={selected.has(o.key)}
-              className={at ? "desk-screen-placed" : undefined}
+              className={`desk-screen-cell${at ? " desk-screen-placed" : ""}`}
               style={at ? { left: at.x, top: at.y } : undefined}
-              onSelect={() => setSelected(new Set([o.key]))}
-              onOpen={() => openTarget(o.target)}
-            />
+            >
+              <DeskIcon
+                id={o.key}
+                kind={o.kind}
+                kindWord={o.kindWord}
+                name={o.name}
+                sprite={o.sprite}
+                spriteSelected={o.spriteSelected}
+                badge={o.badge}
+                lamp={o.lamp}
+                count={o.count}
+                ariaExtra={o.ariaExtra}
+                selected={selected.has(o.key)}
+                onSelect={() => setSelected(new Set([o.key]))}
+                onOpen={() => openTarget(o.target)}
+              />
+              {o.notRead ? (
+                <span className="desk-screen-notread" data-testid={`desk-screen-notread-${o.key}`}>
+                  <span className="desk-screen-fact">NOT READ</span>
+                  <Button
+                    dense
+                    variant="ghost"
+                    aria-label={`Retry ${o.name}`}
+                    onClick={() => {
+                      const r = o.notRead!.retry;
+                      if (r.type === "project") retryProject(r.id);
+                      else retryPeople();
+                    }}
+                  >
+                    Retry
+                  </Button>
+                </span>
+              ) : null}
+            </div>
           );
         })}
       </IconGrid>
+      {compact ? null : (
+        // Astra's P3 on #939 (ruling): TALK is one press on the Chair. The
+        // Capture window's own control, at the screen's foot-left.
+        <span className="desk-screen-talk arrival-capture-talk" data-testid="desk-screen-talk">
+          <MicButton onText={() => undefined} label="Talk" variant="transport" />
+        </span>
+      )}
       {bare ? (
         <p className="desk-screen-empty" data-testid="desk-screen-empty">
           The desk is empty. Press Speak to start.

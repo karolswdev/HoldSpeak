@@ -479,7 +479,8 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "no assignment for speech.transcribe and none for meeting.deferred_analysis"
+        "no assignment for speech.transcribe and none for meeting.deferred_analysis",
+        "PHILO-14 A1 (#939): the Chair is the screen of objects; the Needs you window opens from its drawer (Enter), as the owner opens it"
       ],
       "setup": [
         {
@@ -501,13 +502,20 @@
           "method": "GET",
           "path": "/api/inference/assignments",
           "body": null
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "adapter": "ui-navigation",
+          "selector": ".desk-screen [data-object-id='drawer:needs']"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "adapter": "ui-navigation",
-        "action": "goto",
-        "url": "/"
+        "adapter": "ui-keyboard",
+        "action": "press",
+        "selector": ".desk-screen [data-object-id='drawer:needs']",
+        "key": "Enter"
       },
       "expected": {
         "predicate": {

@@ -8,7 +8,7 @@
 import type { Items } from "../api";
 import { qualifiedRef } from "../api";
 import { isInFlight, liveAgentSessions, type AgentFlight, type CoderSessionRow } from "../agentFlights";
-import { objectSprite, type ObjectTone } from "../surface/objects";
+import { objectSprite, type ObjectTone } from "../surface";
 import { spriteUrl } from "../sprites";
 import { allObjects } from "../world";
 import type { ScreenTarget } from "./open";
@@ -30,6 +30,8 @@ export interface ScreenObject {
   count?: number;
   badge?: string;
   ariaExtra?: string;
+  /** A read for this drawer failed: it wears NOT READ and a Retry. */
+  notRead?: { retry: { type: "project"; id: string } | { type: "people" } };
   target: ScreenTarget;
 }
 
@@ -56,7 +58,17 @@ export interface ScreenInputs {
   persons: readonly ScreenPerson[];
   /** False until the membership read answered: loose objects wait for it. */
   membersLoaded: boolean;
+  /** Astra's P1 on #939: the Projects whose membership read failed. */
+  notRead?: Readonly<Record<string, unknown>>;
+  /** A resources read failed: no object's filing is known; nothing is loose. */
+  unknownAll?: boolean;
+  /** A meetings read failed: no meeting's filing is known. */
+  unknownMeetings?: boolean;
+  /** People could not be read. */
+  peopleNotRead?: boolean;
 }
+
+const NOT_READ = { tone: "fail" as const, label: "NOT READ" };
 
 /** The kinds that lie loose on the screen (the brief's list). */
 const LOOSE_KINDS = new Set(["meeting", "note", "decision", "artifact", "repository", "thread"]);
@@ -118,16 +130,18 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
   // ── drawers: the Projects, People, the Conductor ──
   for (const project of input.items.project ?? []) {
     const n = input.projectCounts[project.id] ?? 0;
+    const failed = Boolean(input.notRead?.[project.id]);
     out.push({
       key: `project:${project.id}`,
       role: "drawer",
       kind: "project",
       name: project.name || "Project",
       ...sprites("project", project.id),
-      lamp: n > 0 ? { tone: "ask", count: n } : undefined,
-      // The Dock's words for a Project's share (Dock.tsx): "need you" is the
-      // desk's ONE number, on Needs you alone.
+      // The Room's own count and words (its head's "N open here"): one
+      // Project, one number. A failed membership read wears NOT READ.
+      lamp: failed ? { ...NOT_READ, count: n || undefined } : n > 0 ? { tone: "ask", count: n } : undefined,
       ariaExtra: n > 0 ? `${n} open here` : undefined,
+      notRead: failed ? { retry: { type: "project", id: project.id } } : undefined,
       target: { type: "project", id: project.id },
     });
   }
@@ -138,6 +152,8 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
     kindWord: "DRAWER",
     name: "People",
     ...sprites("person", "people"),
+    lamp: input.peopleNotRead ? NOT_READ : undefined,
+    notRead: input.peopleNotRead ? { retry: { type: "people" } } : undefined,
     target: { type: "people" },
   });
   const live = liveAgentSessions(input.sessions);
@@ -179,9 +195,12 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
   });
 
   // ── loose objects: what no Project holds ──
-  if (input.membersLoaded) {
+  // Unknown stays unknown (Astra's P1 on #939): an object whose filing a
+  // failed read would decide is not drawn loose.
+  if (input.membersLoaded && !input.unknownAll) {
     for (const o of allObjects(input.items)) {
       if (!LOOSE_KINDS.has(o.kind)) continue;
+      if (o.kind === "meeting" && input.unknownMeetings) continue;
       const ref = qualifiedRef(o.kind, o.id);
       if (input.filed.has(normalizeRef(ref))) continue;
       const needs = input.needsRefs.has(ref);

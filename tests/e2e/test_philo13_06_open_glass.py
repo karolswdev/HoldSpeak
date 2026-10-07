@@ -150,7 +150,7 @@ class TestOneOpenGrammar:
             loc.click(timeout=8_000)
 
     def _chair_window(self, page: Any, width: int, name: str, walk: dict[str, Any]) -> None:
-        """At 393, Go > Chair > <name> (three frame taps); at 1440 a press on its title bar."""
+        """At 393, Go > <name> (two frame taps); at 1440 a press on any part that shows."""
         shell = page.locator(f".desk-window-shell[aria-label='{name}']")
         if shell.count() and shell.first.is_visible() and shell.first.evaluate("e => e.classList.contains('is-front')"):
             return
@@ -171,11 +171,13 @@ class TestOneOpenGrammar:
                 _settle(page)
                 return
         menu = "go" if width <= 720 else "window"
-        for loc in (
-            page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button"),
-            page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')"),
-            page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')"),
-        ):
+        # PHILO-14 A1 (#939): at 393 the Chair's windows are Go's first rows
+        # (two taps); at 1440 Window > Chair > <name>.
+        steps = [page.locator(f".desk-verbbar-item[data-menu-id='{menu}'] button")]
+        if menu == "window":
+            steps.append(page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')"))
+        steps.append(page.locator(f".desk-menu-list [role='menuitemcheckbox']:has-text('{name}')"))
+        for loc in steps:
             loc.first.wait_for()
             self._press(page, loc.first, width)
             page.wait_for_timeout(250)

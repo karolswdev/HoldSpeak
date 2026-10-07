@@ -122,10 +122,14 @@ function wire() {
 }
 
 function expectHandledOrder(
-  section: HTMLElement,
+  staleSection: HTMLElement,
   count: number,
   expectedHeadline = DAY_ONE_HEADLINE,
 ) {
+  // PHILO-14 A1 (#939): the section is read again here: the one found before
+  // the brief's read settled can be replaced by the time the brief lands.
+  void staleSection;
+  const section = screen.getByTestId("arrival-brief");
   const headline = screen.getByTestId("arrival-brief-headline");
   const date = screen.getByTestId("arrival-brief-date");
   const handled = screen.getByTestId("arrival-brief-handled");

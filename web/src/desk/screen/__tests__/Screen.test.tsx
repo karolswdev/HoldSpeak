@@ -11,7 +11,8 @@ import { useChairWindows } from "../../chair/chairWindows";
 import { useDesk } from "../../store";
 import { composeScreen, layoutScreen, shortItemName, normalizeRef, type ScreenInputs } from "..";
 import { Screen } from "../Screen";
-import { DeskIcon } from "../../surface/objects";
+import { resetScreenMembers } from "../members";
+import { DeskIcon } from "../../surface";
 
 const shell = vi.hoisted(() => ({
   openProjectRoom: vi.fn(),
@@ -100,6 +101,8 @@ function wire() {
         members: NEEDS_ITEMS.map((i) => ({ ref: i.ref, kind: "attention" })),
         items: NEEDS_ITEMS,
         projectCounts: { "p-ledger": 2, "p-obs": 1 },
+        // The Room's own counts (its head's "N open here"): one number.
+        roomCounts: { "p-ledger": 2, "p-obs": 1 },
       };
     }
     return null;
@@ -124,6 +127,7 @@ const icon = (name: RegExp) => screen.getByRole("button", { name });
 const keys = () => [...document.querySelectorAll<HTMLElement>(".desk-screen [data-object-id]")].map((el) => el.dataset.objectId);
 
 beforeEach(() => {
+  resetScreenMembers();
   setCompact(false);
   localStorage.clear();
   vi.mocked(apiFetch).mockReset();
@@ -179,7 +183,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
     expect(screen.getByTestId("desk-screen").getAttribute("data-layout")).toBe("free");
     const at = (name: RegExp) => {
-      const el = icon(name);
+      const el = icon(name).closest<HTMLElement>(".desk-screen-cell")!;
       return { x: parseFloat(el.style.left), y: parseFloat(el.style.top) };
     };
     expect(at(/^Payments ledger cutover/)).toEqual({ x: 20, y: 12 });
@@ -202,7 +206,9 @@ describe("PHILO-14 A1 — the screen of objects", () => {
       "project:p-ledger", "project:p-obs", "drawer:people", "drawer:conductor", "drawer:needs", "drawer:parked",
     ]);
     expect(order.at(-1)).toBe("coder:codex:x1");
-    for (const el of document.querySelectorAll<HTMLElement>(".desk-screen .desk-icon")) expect(el.style.left).toBe("");
+    for (const el of document.querySelectorAll<HTMLElement>(".desk-screen-cell")) expect(el.style.left).toBe("");
+    // TALK lives in the Capture window at 393 (Speak opens it on demand)
+    expect(screen.queryByTestId("desk-screen-talk")).toBeNull();
   });
 
   it("a press selects, a press on empty glass clears, the rubber band selects many", async () => {
@@ -246,6 +252,76 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(shell.openCoderSession).toHaveBeenCalledWith("claude:c1");
   });
 
+  it("Astra's P1: a failed membership read keeps a filed object off the screen; Retry rereads only it", async () => {
+    let resourcesFail = true;
+    const calls: string[] = [];
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      const p = String(path);
+      calls.push(p);
+      if (p === "/api/projects/p-ledger/resources") {
+        if (resourcesFail) throw new Error("503 Service Unavailable");
+        return { resources: [{ resource_ref: "desk_decision:d-freeze" }] };
+      }
+      if (/\/resources$/.test(p)) return { resources: [] };
+      if (/\/meetings$/.test(p)) return { meetings: [] };
+      if (p === "/api/people/readiness") return { state: "ready" };
+      if (p === "/api/people/relationships") return { relationships: [] };
+      return null;
+    });
+    render(<Screen />);
+    await waitFor(() => expect(screen.getByTestId("desk-screen-notread-project:p-ledger")).toBeTruthy());
+    const ledger = icon(/^Payments ledger cutover, PROJECT/);
+    expect(ledger.getAttribute("aria-label")).toContain("NOT READ");
+    expect(ledger.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("fail");
+    // unknown stays unknown: the filed decision (and every loose object) is not drawn loose
+    expect(keys()).not.toContain("decision:d-freeze");
+    expect(keys().some((k) => k?.startsWith("note:") || k?.startsWith("meeting:"))).toBe(false);
+    // Retry rereads exactly the failed read
+    resourcesFail = false;
+    const before = calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "Retry Payments ledger cutover" }));
+    await waitFor(() => expect(screen.queryByTestId("desk-screen-notread-project:p-ledger")).toBeNull());
+    expect(calls.slice(before)).toEqual(["/api/projects/p-ledger/resources"]);
+    // the read answered: the filed decision stays filed, the loose ones return
+    await waitFor(() => expect(keys()).toContain("decision:d-otel"));
+    expect(keys()).not.toContain("decision:d-freeze");
+  });
+
+  it("Astra's P1: one read per Project, shared across faces and renders", async () => {
+    const calls: string[] = [];
+    const base = vi.mocked(apiFetch).getMockImplementation()!;
+    vi.mocked(apiFetch).mockImplementation(async (path: string, ...rest: unknown[]) => {
+      calls.push(String(path));
+      return (base as (p: string, ...r: unknown[]) => Promise<unknown>)(path, ...rest);
+    });
+    const view = render(<><Screen /><Screen /></>);
+    await waitFor(() => expect(document.querySelectorAll('[data-object-id="meeting:m-vendor"]').length).toBe(2));
+    act(() => useDesk.setState({ updatedAt: 99 })); // a store refresh is not a reason to read again
+    view.rerender(<><Screen /><Screen /></>);
+    const reads = calls.filter((c) => /^\/api\/projects\/.+\/(resources|meetings)$/.test(c));
+    expect(reads.sort()).toEqual([
+      "/api/projects/p-ledger/meetings", "/api/projects/p-ledger/resources",
+      "/api/projects/p-obs/meetings", "/api/projects/p-obs/resources",
+    ]);
+  });
+
+  it("Astra's P1: a People read that fails wears NOT READ on People and draws no person", async () => {
+    const base = vi.mocked(apiFetch).getMockImplementation()!;
+    vi.mocked(apiFetch).mockImplementation(async (path: string, ...rest: unknown[]) => {
+      if (String(path) === "/api/people/relationships") throw new Error("503");
+      return (base as (p: string, ...r: unknown[]) => Promise<unknown>)(path, ...rest);
+    });
+    render(<Screen />);
+    await waitFor(() => expect(screen.getByTestId("desk-screen-notread-drawer:people")).toBeTruthy());
+    expect(keys().some((k) => k?.startsWith("people:"))).toBe(false);
+  });
+
+  it("Astra's P3 (ruling): TALK is one press on the Chair at 1440", async () => {
+    render(<Screen />);
+    const talk = screen.getByTestId("desk-screen-talk");
+    expect(within(talk).getByRole("button", { name: /talk/i })).toBeTruthy();
+  });
+
   it("no Projects: the drawers that always exist stand; one line only when nothing else exists", async () => {
     useDesk.setState({ items: { ...EMPTY_ITEMS } as never });
     useAgentFlights.setState({ sessions: [], flights: [] });
@@ -277,8 +353,9 @@ describe("PHILO-14 A1 — the pure parts", () => {
     };
     const objects = composeScreen(base);
     const at = layoutScreen(objects, 1440, 796);
-    expect(at["project:p6"]).toEqual({ x: 20, y: 684 });
-    expect(at["project:p7"]).toEqual({ x: 140, y: 12 });
+    // the column stops above TALK at the foot (Astra's P3 on #939)
+    expect(at["project:p5"]).toEqual({ x: 20, y: 572 });
+    expect(at["project:p6"]).toEqual({ x: 140, y: 12 });
     expect(at["people:a"]).toEqual({ x: 330, y: 24 });
   });
 

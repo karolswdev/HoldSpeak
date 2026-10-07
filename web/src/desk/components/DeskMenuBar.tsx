@@ -40,9 +40,9 @@ const MENUS: { id: MenuId; label: string }[] = [
   { id: "window", label: "Window" },
 ];
 
-/** PHILO-13-17 (C7, Q3; ratified 2026-10-03) — Go at 393: `Chair ▸`
- * (lifted out of Window), `Desk ▸`, `Object ▸`, `Window ▸`, then Go's own
- * rows. The Desk, Object and Window menus stay menus, one tap each. Pure:
+/** PHILO-13-17 (C7, Q3; ratified 2026-10-03) — Go at 393: the Chair's
+ * windows as first rows (PHILO-14 A1; was `Chair ▸`, lifted out of
+ * Window), `Desk ▸`, `Object ▸`, `Window ▸`, then Go's own rows. The Desk, Object and Window menus stay menus, one tap each. Pure:
  * `group(id)` is the menu bar's own builder over the one verb registry. */
 export function groupGoForPhone(
   goRows: WorkMenuEntry[],
@@ -56,8 +56,13 @@ export function groupGoForPhone(
     while (rows.length && rows[rows.length - 1].type === "sep") rows.pop();
     return rows;
   };
+  // PHILO-14 A1 (Astra's P3 on #939, ruling): the Chair is the screen of
+  // objects now, so its windows are Go's first rows at 393 (Needs you,
+  // Brief, The week: two taps), no longer a `Chair ▸` group.
+  const chairRows = chair && chair.type === "sub" ? chair.entries : [];
   const heads: WorkMenuEntry[] = [
-    ...(chair ? [chair] : []),
+    ...chairRows,
+    ...(chairRows.length ? [{ type: "sep", id: "go-chair-sep" } as WorkMenuEntry] : []),
     { type: "sub", id: "go-desk", label: "Desk", entries: trim(group("desk")) },
     { type: "sub", id: "go-object", label: "Object", entries: trim(group("object")) },
     { type: "sub", id: "go-window", label: "Window", entries: trim(win) },

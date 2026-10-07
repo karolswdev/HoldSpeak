@@ -429,18 +429,16 @@ class TestTheChairAsWindows:
                     # C2b (393): the screen title names the one Chair window
                     named = {"Needs you": page.get_by_test_id("desk-screen-title").inner_text().strip()}
 
-                    # C1-4a (393): Go ▸ Chair ▸ Brief
+                    # C1-4a (393): Go ▸ Brief (PHILO-14 A1 #939: the Chair's
+                    # windows are Go's first rows, two taps)
                     self._press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
                     page.locator(".desk-verbbar-menu").wait_for()
-                    sub = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')")
-                    sub.scroll_into_view_if_needed()
-                    self._press(page, sub, width)
                     page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')").wait_for()
                     rows = page.evaluate("""() => [...document.querySelectorAll('.desk-menu-list [role="menuitemcheckbox"]')]
                         .map((e) => [e.textContent.trim(), e.getAttribute('aria-checked')])""")
                     facts["go-chair"] = rows
                     if [t.replace("✓", "").strip() for t, _ in rows] != ["Needs you", "Brief", "The week"]:
-                        failures["phone-desk"]["C4 Go ▸ Chair has no Capture row"] = rows
+                        failures["phone-desk"]["C4 Go has the Chair rows, no Capture row"] = rows
                     self._press(page, page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')"), width)
                     shell("Brief").wait_for()
                     frame, chair = self._measure(page, width, "chair-windows", facts)
@@ -451,18 +449,12 @@ class TestTheChairAsWindows:
                     named["Brief"] = page.get_by_test_id("desk-screen-title").inner_text().strip()
                     self._press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
                     page.locator(".desk-verbbar-menu").wait_for()
-                    go_chair = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')")
-                    go_chair.scroll_into_view_if_needed()
-                    self._press(page, go_chair, width)
                     self._press(page, page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('The week')"), width)
                     shell("The week").wait_for()
                     page.wait_for_timeout(250)
                     named["The week"] = page.get_by_test_id("desk-screen-title").inner_text().strip()
                     self._press(page, page.locator(".desk-verbbar-item[data-menu-id='go'] button"), width)
                     page.locator(".desk-verbbar-menu").wait_for()
-                    go_chair = page.locator(".desk-verbbar-menu [role='menuitem']:has-text('Chair')")
-                    go_chair.scroll_into_view_if_needed()
-                    self._press(page, go_chair, width)
                     self._press(page, page.locator(".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')"), width)
                     shell("Brief").wait_for()
 
