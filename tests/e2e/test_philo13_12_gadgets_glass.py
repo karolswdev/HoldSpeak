@@ -26,6 +26,7 @@ from typing import Any
 
 import pytest
 
+from .chair_windows import open_chair_window
 from .glass_infra import _boot, _ensure_build, _normal_chair, _settle
 from .test_philo13_11_frame_glass import ROOM, _seed, _stage
 from tests._evidence import evidence_dir
@@ -192,6 +193,10 @@ class TestTheGadgets:
             browser, page, errors = self._page(pw, width)
             try:
                 # G1 on the Chair: Needs you to back, another Chair window is front.
+                # PHILO-14 A1 (#939): the Chair's windows start closed; he opens
+                # the Brief, then Needs you, from Window > Chair.
+                open_chair_window(page, "Brief")
+                open_chair_window(page, "Needs you")
                 needs = page.get_by_role("button", name="To back Needs you")
                 needs.click()
                 st = self._stack(page)
@@ -421,7 +426,11 @@ class TestTheGadgets:
             browser, page, errors = self._page(pw, width)
             try:
                 # G1 on the Chair: one window at a time; depth gives the work
-                # area to the next Chair window.
+                # area to the next Chair window. PHILO-14 A1 (#939): the
+                # Chair's windows start closed; he opens the Brief, then Needs
+                # you, from Go.
+                open_chair_window(page, "Brief")
+                open_chair_window(page, "Needs you")
                 self._tap(page, page.get_by_role("button", name="To back Needs you"))
                 st = self._stack(page)
                 facts["chair-after-depth"] = st

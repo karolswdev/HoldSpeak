@@ -278,7 +278,9 @@ def _run_recall(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> 
             t0 = time.monotonic()
             page.reload(wait_until="load")
             _normal_chair(page)
-            page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
+            # PHILO-14 A1 (#939): the arrival is the screen of objects; the
+            # Chair's windows start closed, so the screen is the ready signal.
+            page.get_by_test_id("desk-screen").wait_for(timeout=15000)
             _open_desk_memory(page)
             # HS-202-02 (03-interaction-walk.md finding 7): Desk memory no
             # longer opens on a blank field. With no query it reads the
