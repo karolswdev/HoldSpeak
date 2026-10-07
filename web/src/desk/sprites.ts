@@ -90,15 +90,38 @@ export function spriteName(
  * web/scripts/gen-sprite-states.py), never runtime filters: the Workbench
  * dual-image rule. `rest` is the base file. */
 export type SpriteState = "rest" | "sel" | "stale";
+/** PHILO-14 A0c: the two drawn sizes. 64 is the icon on the screen and in a
+ * drawer; 32 is the list row (ObjectList, Needs you, the confirm line, the
+ * badge). The 32 set is drawn at 32, not scaled: it lives in `32/` beside
+ * the 64 set, one file per base name and state. */
+export type SpriteSize = 64 | 32;
+export const SPRITE_SIZES: readonly SpriteSize[] = [64, 32];
+function sizeDir(size: SpriteSize): string {
+  return size === 32 ? "32/" : "";
+}
 export function spriteUrl(
   kind: string,
   id: string,
   state: SpriteState = "rest",
   /** The agent name of a coder/agent object ("claude", "codex"). */
   agent?: string | null,
+  size: SpriteSize = 64,
 ): string {
   const suffix = state === "rest" ? "" : `_${state}`;
-  return `${SPRITE_BASE}${spriteName(kind, id, agent)}${suffix}.png`;
+  return `${SPRITE_BASE}${sizeDir(size)}${spriteName(kind, id, agent)}${suffix}.png`;
+}
+
+const WORLD_FILE = /^([a-z0-9-]+?)(_sel|_stale)?\.png$/;
+/** The 32 px sibling of a 64 px world-sprite URL. A list species gets its
+ * sprite as a URL (the row's `sprite`, minted for the icon view), so it
+ * maps the URL here instead of every caller minting two. Any other URL
+ * (a system glyph, an outside image, a 32 px URL) comes back unchanged. */
+export function listSprite(url: string): string {
+  if (!url.startsWith(SPRITE_BASE)) return url;
+  const file = url.slice(SPRITE_BASE.length);
+  const m = WORLD_FILE.exec(file);
+  if (!m || !allSpriteNames().includes(m[1])) return url;
+  return `${SPRITE_BASE}32/${file}`;
 }
 
 /** The agent name a world object's ref carries, if any. */

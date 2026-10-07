@@ -146,7 +146,7 @@ function LaneFrame({ launchId }: { launchId: string }) {
       defaultH={720}
       icon={
         <img
-          src={spriteUrl("agent", sessionKey ?? launchId)}
+          src={spriteUrl("agent", sessionKey ?? launchId, "rest", undefined, 32)}
           alt=""
           width={16}
           height={16}

@@ -15,6 +15,10 @@ image on disk, never a runtime filter):
 Deterministic pixel math (no models, no randomness): running it twice
 produces byte-identical files, so the guard can assert freshness by
 regenerating and comparing. Skips derived files as inputs.
+
+It walks two sets: the 64 px world sprites (the folder root) and the 32 px
+list set (`32/`, PHILO-14 A0c: drawn at 32, not scaled). Both use the same
+rim (1 px outside the alpha edge) and the same lift.
 """
 
 from __future__ import annotations
@@ -64,18 +68,22 @@ def derive(base: Path) -> None:
     stale.save(base.with_name(f"{base.stem}_stale.png"))
 
 
+SETS = (SPRITES, SPRITES / "32")
+
+
 def main() -> int:
-    bases = [
-        p
-        for p in sorted(SPRITES.glob("*.png"))
-        if not p.stem.endswith(("_sel", "_stale"))
-    ]
-    if not bases:
-        print(f"no sprites found under {SPRITES}", file=sys.stderr)
-        return 1
-    for p in bases:
-        derive(p)
-    print(f"derived sel+stale for {len(bases)} sprites in {SPRITES}")
+    for folder in SETS:
+        bases = [
+            p
+            for p in sorted(folder.glob("*.png"))
+            if not p.stem.endswith(("_sel", "_stale"))
+        ]
+        if not bases:
+            print(f"no sprites found under {folder}", file=sys.stderr)
+            return 1
+        for p in bases:
+            derive(p)
+        print(f"derived sel+stale for {len(bases)} sprites in {folder}")
     return 0
 
 

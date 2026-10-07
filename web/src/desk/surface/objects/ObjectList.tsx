@@ -15,6 +15,7 @@ import { useMemo, useRef, type KeyboardEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { LampGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
+import { listSprite } from "../../sprites";
 import { lampGadgetTone, objectKindWord, objectSprite, type ObjectTone } from "./kinds";
 import "./objects.css";
 
@@ -178,7 +179,7 @@ export function ObjectList({
                   onKeyDown={keyDown(row.id)}
                 >
                   <img
-                    src={row.sprite ?? objectSprite(row.kind, row.id)}
+                    src={listSprite(row.sprite ?? objectSprite(row.kind, row.id))}
                     alt=""
                     draggable={false}
                   />

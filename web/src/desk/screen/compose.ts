@@ -151,7 +151,8 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
     kind: "person",
     kindWord: "DRAWER",
     name: "People",
-    ...sprites("person", "people"),
+    // The People drawer is the ledger; one person (loose, below) is the badge.
+    ...sprites("people", "people"),
     lamp: input.peopleNotRead ? NOT_READ : undefined,
     notRead: input.peopleNotRead ? { retry: { type: "people" } } : undefined,
     target: { type: "people" },
