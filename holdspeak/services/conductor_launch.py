@@ -130,6 +130,34 @@ def revoke_decision_grant(launch_id: str, identity: str, *, database: Any = None
     return revoked
 
 
+def reconcile_launch_grants(database: Any = None) -> list[str]:
+    """Conductor R2: at hub start, end every LIVE launch grant (desk or
+    project) whose launch has no live credential: the credential expired
+    while the hub was down, or the hub stopped between the credential's
+    revoke and its grants'. Through the kernel, with receipts. Returns the
+    identities whose grants ended."""
+    from ..principals import agent_credentials
+
+    database = database or _hub_database()
+    if database is None:
+        return []
+    with database._connection() as conn:
+        identities = {
+            str(row[0]) for row in conn.execute(
+                "SELECT agent_identity FROM kernel_desk_delegations WHERE state = 'LIVE'")
+        } | {
+            str(row[0]) for row in conn.execute(
+                "SELECT agent_identity FROM kernel_project_delegations WHERE state = 'LIVE'")
+        }
+    ended = []
+    for identity in sorted(i for i in identities if i.startswith(LAUNCH_IDENTITY_PREFIX)):
+        if agent_credentials.launch_credential(identity) is not None:
+            continue
+        if revoke_decision_grant(identity[len(LAUNCH_IDENTITY_PREFIX):], identity, database=database):
+            ended.append(identity)
+    return ended
+
+
 def install_revoke_hook() -> None:
     """Every revoke of a launch-bound credential also ends its grant."""
     global _HOOK_INSTALLED
@@ -635,5 +663,6 @@ __all__ = [
     "cut_memory",
     "grant_decision_proposals",
     "install_revoke_hook",
+    "reconcile_launch_grants",
     "revoke_decision_grant",
 ]

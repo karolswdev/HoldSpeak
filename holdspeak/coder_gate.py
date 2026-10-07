@@ -308,9 +308,10 @@ def run_session_start(
 
 
 #: SessionEnd reasons after which the process keeps running: ``/clear`` and
-#: ``/resume`` end the conversation, not the agent, so the credential stays.
-#: Claude Code 2.1.288 sends one of clear, resume, logout, prompt_input_exit,
-#: other; the last three end the process and revoke.
+#: ``/resume`` end the conversation, not the agent, so the process credential
+#: (the one the spawn put in the environment) stays. Claude Code 2.1.288 sends
+#: one of clear, resume, logout, prompt_input_exit, other; the last three end
+#: the process and revoke.
 SESSION_END_KEEPS_CREDENTIAL = frozenset({"clear", "resume"})
 
 
@@ -320,9 +321,13 @@ def run_session_end(
     session_id = str(payload.get("session_id") or "").strip()
     if not session_id:
         return False
-    if str(payload.get("reason") or "").strip().lower() in SESSION_END_KEEPS_CREDENTIAL:
+    inherited = bool(str(os.environ.get("HOLDSPEAK_AGENT_CREDENTIAL") or "").strip())
+    if inherited and str(payload.get("reason") or "").strip().lower() in SESSION_END_KEEPS_CREDENTIAL:
         # Conductor K6: a /clear or /resume must not cut the agent off its MCP.
         return False
+    # Conductor R2: a credential the hub minted for this one session
+    # (``claude:<session_id>``) ends with the session on every reason: after
+    # /clear or /resume the next session mints its own.
     base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
     return revoke_agent_credential(session_id, base, agent=agent)
 
@@ -452,13 +457,41 @@ def run_hook(
     if state in ("denied", "expired", "invalidated"):
         return HookDecision(deny=_deny_reason(response))
 
+    # Conductor R2: a hub restart mid-hold. While the hub is down the hook
+    # keeps waiting, for at most HUB_RESTART_GRACE_SECONDS in a row (then it
+    # denies, as before: a dead hub never allows). The restart invalidates the
+    # held proposal (HS-104-02: never resume a pre-restart hold), so the
+    # hook proposes the same call again under a new id, and the new hold is
+    # decided afresh by the Control mode or the owner. Fail-closed at the
+    # deadline, as before.
     deadline = now() + ttl_seconds
+    current_id = proposal_id
+    reproposals = 0
+    unreachable = False
+    down_since: Optional[float] = None
+    stopped = HookDecision(deny="gate armed but the hub stopped answering mid-hold; the call was not run")
+
+    def _down() -> bool:
+        """Note one failed contact; True when the grace is spent."""
+        nonlocal down_since, unreachable
+        unreachable = True
+        moment = now()
+        down_since = moment if down_since is None else down_since
+        return moment - down_since >= HUB_RESTART_GRACE_SECONDS
+
     while now() < deadline:
         sleep(POLL_INTERVAL_SECONDS)
         try:
-            status, response = get(f"{base}/api/gate/proposals/{proposal_id}", 5.0)
+            status, response = get(f"{base}/api/gate/proposals/{current_id}", 5.0)
         except Exception:
-            return HookDecision(deny="gate armed but the hub stopped answering mid-hold; the call was not run")
+            if _down():
+                return stopped
+            continue
+        if status >= 500 or status == 0:
+            if _down():
+                return stopped
+            continue
+        unreachable, down_since = False, None
         if status != 200:
             return HookDecision(
                 deny=f"gate armed but the decision read failed (HTTP {status}); the call was not run"
@@ -466,11 +499,57 @@ def run_hook(
         state = str(response.get("state") or "")
         if state == "approved":
             return HookDecision(deny=None)
+        if state == "invalidated" and _restart_invalidated(response) and reproposals < MAX_REPROPOSALS:
+            reproposals += 1
+            current_id = f"{proposal_id}~r{reproposals}"
+            again = dict(body, id=current_id)
+            again["classification"] = dict(verdict, proposal_id=current_id)
+            while now() < deadline:
+                try:
+                    status, response = post(f"{base}/api/gate/proposals", again, 5.0)
+                except Exception:
+                    if _down():
+                        return stopped
+                    sleep(POLL_INTERVAL_SECONDS)
+                    continue
+                if status >= 500 or status == 0:
+                    if _down():
+                        return stopped
+                    sleep(POLL_INTERVAL_SECONDS)
+                    continue
+                unreachable, down_since = False, None
+                break
+            else:
+                break
+            if status != 200:
+                return HookDecision(
+                    deny=f"gate armed but the hub refused the proposal (HTTP {status}); the call was not run"
+                )
+            state = str(response.get("state") or "")
+            if state == "approved":
+                return HookDecision(deny=None)
         if state in ("denied", "expired", "invalidated"):
             return HookDecision(deny=_deny_reason(response))
+    if unreachable:
+        return stopped
     return HookDecision(
         deny="gate hold expired with no decision; the call was not run"
     )
+
+
+#: How long a held call waits for a hub that stopped answering (a restart)
+#: before it denies.
+HUB_RESTART_GRACE_SECONDS = 20.0
+
+#: How many times one call is proposed again after hub restarts.
+MAX_REPROPOSALS = 3
+
+#: The reason a startup invalidation writes (``GateService.invalidate_held_on_startup``).
+RESTART_INVALIDATION_REASON = "hub restarted while the proposal was held"
+
+
+def _restart_invalidated(response: Mapping[str, Any]) -> bool:
+    return RESTART_INVALIDATION_REASON in str(response.get("reason") or "")
 
 
 def _classify(

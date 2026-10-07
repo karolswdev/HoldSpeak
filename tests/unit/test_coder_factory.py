@@ -62,6 +62,9 @@ def test_spawn_creates_and_returns_the_pane() -> None:
     rec = _Rec()
     def script(argv):
         if argv[:2] == ["tmux", "new-session"]:
+            from tests.unit._spawn_env import consume
+
+            consume(argv)  # the session's bootstrap reads its credential
             return ("", 0, "")
         if argv[:2] == ["tmux", "list-panes"]:
             return ("%7\n", 0, "")

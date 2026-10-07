@@ -306,9 +306,9 @@ class GateService:
         """Expire proposals a process restart can no longer honestly resume."""
         from ..kernel.runtime import _service
 
-        flipped = self._db.gate.invalidate_all_held(
-            reason="hub restarted while the proposal was held"
-        )
+        from ..coder_gate import RESTART_INVALIDATION_REASON
+
+        flipped = self._db.gate.invalidate_all_held(reason=RESTART_INVALIDATION_REASON)
         recovered = _service().recover_invalidated(flipped) if flipped else 0
         return flipped, recovered
 

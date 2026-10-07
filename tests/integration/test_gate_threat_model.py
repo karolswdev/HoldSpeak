@@ -21,6 +21,7 @@ from pathlib import Path
 
 import pytest
 
+from holdspeak import coder_gate
 from holdspeak.coder_gate import GateConfig, HookDecision, run_hook
 
 REPO = Path(__file__).resolve().parents[2]
@@ -44,7 +45,7 @@ class RealHub:
         self.owner_token = ""
         self.agent_token = ""
 
-    def start(self, timeout: float = 60.0) -> None:
+    def start(self, timeout: float = 60.0, *, issue_agent: bool = True) -> None:
         env = dict(os.environ)
         env["HOME"] = str(self.home)
         env["HOLDSPEAK_WEB_PORT"] = str(self.port)
@@ -63,6 +64,8 @@ class RealHub:
                         (self.home / ".config" / "holdspeak" / "config.json").read_text()
                     )
                     self.owner_token = config["meeting"]["web_auth_token"]
+                    if not issue_agent:  # Conductor R2: the agent keeps its credential
+                        return
                     status, issued = self._post_with_token(
                         "/api/principals/agents",
                         {"identity": "claude:threat-session"},
@@ -138,9 +141,11 @@ def _armed(cwd: str) -> GateConfig:
 @pytest.mark.integration
 def test_item1_and_6_restart_mid_hold_and_fail_closed_two_process(tmp_path) -> None:
     """Checklist 1 + 6, one continuous two-process run: the hub dies
-    with a proposal held (SIGKILL, a real crash) — the polling hook
-    DENIES; on restart the proposal is invalidated with an audit row
-    and no longer renders as held."""
+    with a proposal held (SIGKILL, a real crash) and stays down — the
+    polling hook DENIES once its restart grace is spent (Conductor R2: it
+    waits HUB_RESTART_GRACE_SECONDS for a restart, never allows); on
+    restart the proposal is invalidated with an audit row and no longer
+    renders as held."""
     hub = RealHub(tmp_path)
     hub.start()
     try:
@@ -168,7 +173,7 @@ def test_item1_and_6_restart_mid_hold_and_fail_closed_two_process(tmp_path) -> N
 
         hub.kill_hard()  # the crash, mid-hold
 
-        thread.join(timeout=30)
+        thread.join(timeout=coder_gate.HUB_RESTART_GRACE_SECONDS + 30)
         assert not thread.is_alive()
         decision: HookDecision = result["decision"]
         # Item 6: no code path allows on error.
@@ -190,6 +195,53 @@ def test_item1_and_6_restart_mid_hold_and_fail_closed_two_process(tmp_path) -> N
             "/api/gate/proposals/threat-1/decide", {"decision": "approved"}
         )
         assert status == 409  # nothing held pre-restart is decidable post-restart
+    finally:
+        hub.stop()
+
+
+@pytest.mark.integration
+def test_a_hub_restart_mid_hold_is_survived_two_process(tmp_path) -> None:
+    """Conductor R2 (R1's real walk): the hub dies with a call held and
+    comes back within the grace. The agent's credential survived the
+    restart; the old hold is invalidated (never resumed); the hook proposes
+    the same call again as ``<id>~r1``; the owner approves it and the
+    waiting hook runs the call."""
+    hub = RealHub(tmp_path)
+    hub.start()
+    try:
+        result: dict = {}
+
+        def agent_side() -> None:
+            result["decision"] = run_hook(
+                _payload(str(tmp_path), key="restart-1"),
+                config=_armed(str(tmp_path)),
+                hub_url=hub.base,
+                ttl_seconds=120.0,
+                agent_credential=hub.agent_token,
+            )
+
+        thread = threading.Thread(target=agent_side)
+        thread.start()
+
+        def wait_held(proposal_id: str) -> None:
+            deadline = time.monotonic() + 40
+            while time.monotonic() < deadline:
+                held = hub.get("/api/gate/proposals?state=held")["proposals"]
+                if [p["id"] for p in held] == [proposal_id]:
+                    return
+                time.sleep(0.3)
+            raise AssertionError(f"{proposal_id} was never held")
+
+        wait_held("restart-1")
+        hub.kill_hard()
+        hub.start(issue_agent=False)
+        wait_held("restart-1~r1")
+        assert hub.get("/api/gate/proposals/restart-1")["state"] == "invalidated"
+        status, decided = hub.post("/api/gate/proposals/restart-1~r1/decide", {"decision": "approved"})
+        assert status == 200, decided
+        thread.join(timeout=30)
+        assert not thread.is_alive()
+        assert result["decision"].deny is None, result["decision"].deny
     finally:
         hub.stop()
 
