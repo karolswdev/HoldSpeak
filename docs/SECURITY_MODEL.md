@@ -151,7 +151,9 @@ response, read the receipt and the journal. Do not repeat the external effect.
 
 ## Gate preview limit
 
-Gate argument previews truncate canonical JSON. They do not remove secrets.
-`holdspeak/coder_gate.py::redact_args` returns a SHA-256 and the first 120
-characters. A short input can stay whole in that prefix, including a credential.
-Treat the preview as sensitive tool content. See [Gate](GATE.md).
+Gate argument previews redact secrets, then truncate canonical JSON.
+`holdspeak/coder_gate.py::redact_args` returns a SHA-256 of the real input and
+the first 120 characters of the redacted text. The redactor finds known secret
+shapes (tokens, keys, `NAME=value` credentials); a secret it does not know
+stays in the preview. Treat the preview as sensitive tool content. See
+[Gate](GATE.md).

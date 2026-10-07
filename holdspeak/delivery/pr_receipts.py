@@ -112,6 +112,34 @@ def rollup_conclusion(status_check_rollup: Any) -> str:
     return "none"
 
 
+#: Checks kept per PR row (PHILO-14 C0: the lane shows each check).
+MAX_CHECKS_PER_PR = 50
+
+
+def check_details(status_check_rollup: Any) -> list[dict[str, str]]:
+    """Each check of the rollup: ``{name, state, url}``. ``state`` is the
+    conclusion when the check finished, else its status (a CheckRun) or its
+    state (a StatusContext), lower case."""
+    if not isinstance(status_check_rollup, list):
+        return []
+    # PHILO-14 C0: a check name or link is shown; it never carries a secret.
+    from ..memory.defense import redact
+
+    out: list[dict[str, str]] = []
+    for check in status_check_rollup[:MAX_CHECKS_PER_PR]:
+        if not isinstance(check, dict):
+            continue
+        name = str(check.get("name") or check.get("context") or "")
+        workflow = str(check.get("workflowName") or "")
+        state = str(check.get("conclusion") or check.get("status") or check.get("state") or "")
+        out.append({
+            "name": redact(f"{workflow} / {name}" if workflow and name and workflow != name else name or workflow),
+            "state": state.lower(),
+            "url": redact(str(check.get("detailsUrl") or check.get("targetUrl") or "")),
+        })
+    return out
+
+
 def pr_state(raw_state: Any, is_draft: Any) -> str:
     state = str(raw_state or "").lower()
     if state == "open" and bool(is_draft):
@@ -368,6 +396,7 @@ class PrReceiptsService:
                     "base_sha": str(pr.get("baseRefOid") or ""),
                     "state": pr_state(pr.get("state"), pr.get("isDraft")),
                     "ci": rollup_conclusion(pr.get("statusCheckRollup")),
+                    "checks": check_details(pr.get("statusCheckRollup")),
                     "author": str((pr.get("author") or {}).get("login") or ""),
                     "review_decision": str(pr.get("reviewDecision") or "").lower(),
                     "merged_at": str(pr.get("mergedAt") or ""),

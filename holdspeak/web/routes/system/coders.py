@@ -7,6 +7,7 @@ The steering surface (attach/arm/steer/audit) is a sibling concern in
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from copy import deepcopy
@@ -308,7 +309,9 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
         window fall out of the live set entirely; `include_ended=false` also
         drops fresh tombstones. `flights` lists each item an agent was
         handed (Conductor F2, `services.agent_flights`); a session that
-        works on one carries it as `flight`.
+        works on one carries it as `flight`. A launched agent's drafted
+        answer, its events and its worktree facts are on its lane
+        (`GET /api/agent/launches/{id}/lane`, PHILO-14 C0), not here.
         """
         try:
             items = _service().list_sessions(
@@ -329,6 +332,15 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
             annotate_sessions(items, flights)
         except Exception as e:
             log.warning(f"agent flights unread: {e}")
+        # PHILO-14 C0: the coder frame drains the hook's event spool into
+        # the event log (the hook never writes the database itself).
+        try:
+            from ....agent_context import event_log
+            from ....db import get_database
+
+            await asyncio.to_thread(event_log.drain_spool, get_database()._connection)
+        except Exception as e:
+            log.warning(f"agent event spool not drained: {e}")
         try:
             return JSONResponse({"sessions": items, "count": len(items), "flights": flights})
         except Exception as e:

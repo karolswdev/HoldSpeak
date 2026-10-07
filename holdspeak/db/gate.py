@@ -136,7 +136,11 @@ class GateProposalRepository(BaseRepository):
           Phase-87 refuse-and-revoke reflex, so a human's Approve can
           never land on a payload the human never saw.
         """
-        args_head = args_head[:ARGS_HEAD_CHARS]
+        # PHILO-14 C0: the stored head never carries a secret shape (the
+        # agent side redacts before it cuts; this catches any other caller).
+        from ..memory.defense import redact
+
+        args_head = redact(str(args_head or ""))[:ARGS_HEAD_CHARS]
         existing = self.get(proposal_id)
         if existing is not None:
             if existing.args_sha256 != args_sha256:

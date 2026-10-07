@@ -208,8 +208,16 @@ def ingest_agent_hook_event(
     now: datetime | None = None,
     capture_messages: bool = False,
     env: Mapping[str, str] | None = None,
+    events_spool_dir: Path | None = None,
 ) -> AgentSession:
-    """Record one Claude/Codex hook event and return the normalized session."""
+    """Record one Claude/Codex hook event and return the normalized session.
+
+    PHILO-14 C0: the event is also spooled for the session's event log
+    (``event_log.spool_event``: one file, no lock, the hub drains it), once
+    per event (a duplicate from a second hook source is not spooled again).
+    ``events_spool_dir`` names the spool; ``None`` uses the hub's spool when
+    ``state_path`` is not given (a test or debug registry does not write
+    the hub's log)."""
 
     normalized_agent = agent.strip().lower()
     if normalized_agent not in SUPPORTED_AGENTS:
@@ -413,6 +421,19 @@ def ingest_agent_hook_event(
         state["version"] = STATE_VERSION
         _prune_sessions(state, max_sessions=MAX_SESSIONS)
         _write_state(state_file, state)
+
+    if not duplicate and (events_spool_dir is not None or state_path is None):
+        from . import event_log
+
+        try:
+            row = event_log.event_row(
+                payload,
+                notification_type=_notification_type(payload, message)
+                if hook_event_name == "Notification" else None,
+            )
+            event_log.spool_event(key, timestamp, row, spool_dir=events_spool_dir)
+        except Exception:  # the log never fails the hook
+            pass
 
     return session
 

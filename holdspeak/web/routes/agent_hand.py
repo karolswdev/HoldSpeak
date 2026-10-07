@@ -2,7 +2,8 @@
 
 ``POST /api/agent/hand {kind, id, instruction?, profile?, project_id?}``
 (``POST /api/agent/hand/preview``, the same body: the launch sheet's preview,
-no side effect; ``GET /api/agent/launches/{launch_id}``: one launch's delivery)
+no side effect; ``GET /api/agent/launches/{launch_id}``: one launch's delivery;
+``GET /api/agent/launches/{launch_id}/lane``: the launch lane, PHILO-14 C0)
 invokes the declared ``agent.hand`` operation (``holdspeak/agent_operations.py``):
 one coding agent on one desk item: a grounded brief, a new
 worktree, the launch, ``origin_ref`` on the launch and the attempt. The
@@ -137,6 +138,35 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             key: record.get(key)
             for key in ("launch_id", "state", "instruction_state", "trust_state", "failure", "profile_id")
         } | {"profile": record.get("profile_id")})
+
+    @router.get("/api/agent/launches/{launch_id}/lane")
+    async def api_agent_launch_lane(launch_id: str, after: int = 0, limit: int = 200) -> Any:
+        """One launch's lane (PHILO-14 C0): the launch with its brief, the
+        follow-through with the PR checks, the current wait with its draft,
+        the session's events (paged: ``?after=<event id>&limit=``), the gated
+        calls, the answers typed, the attempt's state changes, the worktree's
+        commits and files, and the usage. Owner only (the edge default).
+        Reads only (``services.launch_lane``)."""
+        from ...db import get_database
+        from ...services.agent_hand_preview import LaunchReads
+        from ...services.launch_lane import launch_lane
+
+        reads = getattr(ctx, "agent_hand_reads", None) or LaunchReads()
+
+        def run() -> Any:
+            return launch_lane(
+                launch_id, db=get_database(), reads=reads,
+                after=max(0, int(after)), limit=max(1, min(int(limit), 1000)),
+            )
+
+        try:
+            lane = await asyncio.to_thread(run)
+        except Exception as exc:
+            log.error(f"launch lane failed: {exc}")
+            return JSONResponse({"error": "launch_lane_failed"}, status_code=500)
+        if lane is None:
+            return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
+        return JSONResponse(lane)
 
     @router.post("/api/agent/launches/{launch_id}/deliver")
     async def api_agent_deliver(launch_id: str, request: Request) -> Any:

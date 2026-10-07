@@ -4,7 +4,7 @@ This reference supplements [API surface](API_SURFACE.md). The existing real-app
 generator owns the route roster; this census adds static handler evidence.
 It does not invent request/response schemas for raw `Request` handlers.
 
-Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **739 method/route entries**.
+Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **742 method/route entries**.
 
 **Verification boundary:** inspect the full endpoint ledger, `docs/generated/api-reference.json` (not in git; run `scripts/gen_docs.sh` to write it),
 and the [declared OpenAPI schemas](generated/openapi.json) for transport models.
@@ -39,7 +39,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.activity.nudges` | 4 |
 | `web.routes.activity.plugin_jobs` | 5 |
 | `web.routes.activity.rules` | 6 |
-| `web.routes.agent_hand` | 4 |
+| `web.routes.agent_hand` | 5 |
 | `web.routes.authority` | 7 |
 | `web.routes.automations` | 22 |
 | `web.routes.cadence` | 13 |
@@ -87,7 +87,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.missioncontrol` | 10 |
 | `web.routes.model_library` | 7 |
 | `web.routes.monday_brief` | 5 |
-| `web.routes.onboarding` | 8 |
+| `web.routes.onboarding` | 10 |
 | `web.routes.pages` | 19 |
 | `web.routes.people` | 26 |
 | `web.routes.primitives.ask` | 5 |

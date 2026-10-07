@@ -187,6 +187,17 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         "only within one boot; it changes nothing and runs once per process"
     ),
     (
+        "holdspeak/services/launch_lane.py",
+        "_default_runner",
+        "run",
+        1,
+    ): (
+        "PHILO-14 C0: the launch lane's worktree facts, `git -C <worktree> "
+        "log|diff --name-status|status --porcelain|rev-parse|symbolic-ref`: "
+        "reads of the launch's own worktree that change nothing (read on "
+        "request, cached 5 s, refused outside a worktree top)"
+    ),
+    (
         "holdspeak/services/agent_hand_preview.py",
         "LaunchReads.launcher.alive",
         "run",
