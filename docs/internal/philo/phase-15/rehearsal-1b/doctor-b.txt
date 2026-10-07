@@ -1,0 +1,59 @@
+HoldSpeak Doctor
+===============
+[PASS] Runtime: HoldSpeak 0.4.0 on Darwin 25.2.0 (arm64), Python 3.13.14
+[PASS] Config: Loaded /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-dayone-b.WfTrtLIvdG/.config/holdspeak/config.json (config version 1)
+[PASS] Database: Schema OK at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-dayone-b.WfTrtLIvdG/.local/share/holdspeak/holdspeak.db (283 tables).
+[PASS] Microphone: Default input: MacBook Pro Microphone (index 2)
+[PASS] Transcription backend: `auto` resolves to `mlx`
+[PASS] Web runtime: fastapi, uvicorn, and websockets are importable
+[PASS] Web runtime auth: Web runtime binds loopback (open to this machine). Auth token is set — required automatically if a non-loopback bind is ever configured.
+[PASS] Meeting intelligence runtime: Live analysis is off for Record.
+[PASS] Meeting intelligence egress: Live analysis is off for Record.
+[PASS] Endpoint health: no endpoint calls recorded yet
+[WARN] Trust destinations: Enabled external destinations: Meeting summary.
+[PASS] Runtime profiles: Meeting summary: profile '192.168.1.43:8080' (192.168.1.43); Live analysis is off for Record.; dictation: hub default (no profile assigned)
+[WARN] Runs on destinations: This device: this device · unavailable (not set up: Set up local AI downloads this model); 192.168.1.43:8080: private endpoint · private network · ready
+[PASS] Mesh edges: no node has ever served this mesh (start one: holdspeak mesh serve)
+[PASS] Cloud intel preflight: Live analysis is off for Record.
+[PASS] Project context: detected holdspeak (anchor=holdspeak) at /Users/karol/dev/tools/HoldSpeak/wt-p15-rehearsal-b + KB
+[WARN] LLM runtime: resolved=llama_cpp (auto: fallback to llama_cpp); model missing at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-dayone-b.WfTrtLIvdG/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf
+[PASS] Structured-output compilation: no blocks loaded; nothing to compile
+[PASS] LLM runtime counters: model_loads=0 classify_calls=0 classify_failures=0 constrained_retries=0 llm_disabled_for_session=False
+[PASS] MIR routing: enabled; profile=balanced, window=90s/step=30s, threshold=0.6, hysteresis_windows=1
+[PASS] MIR telemetry: router_counters=[dropped_windows, routed_windows]; host_metrics=[blocked, deduped, error, proposed, queued, runs_total, success, timeout]
+[PASS] Global hotkey: Hotkey listener initialized for `alt_r`
+[PASS] Text injection: Keyboard injection backend initialized
+[PASS] Clipboard backend: Platform default clipboard backend
+[PASS] ffmpeg: Detected in PATH
+[PASS] pactl: Not required on this platform
+[PASS] System audio capture: Detected: BlackHole 2ch
+[PASS] Connector packs: first-party: acli_confluence, acli_jira, calendar_activity, firefox_ext, gh, jira, meeting_context
+[WARN] People keystore: DEV FILE keystore at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-dayone-b.WfTrtLIvdG/people.key -- not for real use
+[PASS] Agent capabilities: 5 adapters declared, 4 consumers, all backed by the ledger
+[PASS] Tool-call gate: off (default); `holdspeak gate install` + arm + allow to hold agent calls
+[PASS] Coding agents: Claude Code hooks installed; Codex hooks installed
+[INFO] People MCP access: write (from people.mcp_access); agents: read
+
+Summary: 28 passed, 4 warnings, 0 failed
+
+Suggested fixes:
+- Trust destinations: Open Privacy & Trust to review boundaries, authority, and revoke actions.
+- Runs on destinations: Choose another Runs on destination, or repair the named key, node, endpoint, or manifest.
+- LLM runtime: Create the model directory and download a model (e.g. Qwen3.5-4B-Instruct-Q4_K_M.gguf): mkdir -p /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-dayone-b.WfTrtLIvdG/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-dayone-b.WfTrtLIvdG/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False
+- People keystore: Unset HOLDSPEAK_PEOPLE_KEYSTORE_FILE for production use. The file keystore is for development and testing only.
+
+Running hub
+===========
+PASS  hub-health        /health → ok
+PASS  runtime-status    ready
+FAIL  runtime-preflight Model not found at /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs-dayone-b.WfTrtLIvdG/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf.
+PASS  websocket         pong received in 1ms
+PASS  desk-bootstrap    / → 200
+PASS  auth              principal: authenticated
+PASS  mcp-server        initialization received
+SKIP  inference         no targets configured
+PASS  database          primitives readable
+PASS  observer          healthy: 24h events: 1816
+
+8 PASS · 1 SKIP · 1 FAIL
+uv run holdspeak doctor  1.63s user 0.33s system 71% cpu 2.726 total
