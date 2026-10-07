@@ -126,7 +126,18 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             home = setup_svc._home_provider() if setup_svc is not None else Path.home()
 
             detection = detect(db=db, home=home, scan_loopback=_live_hub())
-            result = propose(engines=detection["engines"])
+            # PHILO-15 10 (B05): READY only where the assignment authority
+            # serves the whole group; the same check a write runs.
+            fit = None
+            if ctx.inference_assignment_service is not None:
+                from ...services.concierge_service import authority_fit
+
+                fit = authority_fit(
+                    ctx.inference_assignment_service,
+                    getattr(request.state, "principal", None),
+                    db,
+                )
+            result = propose(engines=detection["engines"], fit=fit)
             return JSONResponse(result)
         except ServiceError as exc:
             return _safe_error(exc)

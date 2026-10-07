@@ -51,6 +51,7 @@ import { useCalendarStep } from "./calendarStep";
 import { useConnectionsStep } from "./connectionsStep";
 import { useAgentsStep } from "./agentsStep";
 import { Ready } from "./Ready";
+import { LanServerRow, type LanUsed } from "./LanServer";
 import "../../features/concierge/concierge.css";
 import "./firstrun.css";
 
@@ -97,7 +98,22 @@ function ModelRows({ groups, ready }: { groups: LocalAiGroup[]; ready: boolean }
   );
 }
 
-function LocalAiCard({ ai, folded }: { ai: ReturnType<typeof useLocalAi>; folded: boolean }) {
+function LocalAiCard({
+  ai,
+  folded,
+  lanOpen,
+  onLan,
+  lanUsed,
+  onLanUsed,
+}: {
+  ai: ReturnType<typeof useLocalAi>;
+  folded: boolean;
+  /** PHILO-15 10 (B09): the add-engine row is open on this card. */
+  lanOpen: boolean;
+  onLan: () => void;
+  lanUsed: LanUsed | null;
+  onLanUsed: (used: LanUsed) => void;
+}) {
   const status = ai.read.kind === "ok" ? ai.read.status : null;
   const groups = groupsOf(status);
   const state = status?.state;
@@ -107,12 +123,18 @@ function LocalAiCard({ ai, folded }: { ai: ReturnType<typeof useLocalAi>; folded
   const host = ai.host || sourceHost(status);
   const total = groups.reduce((sum, group) => sum + group.bytes, 0);
   const missing = missingBytes(status);
+  // A server on his network answers for the chat work: the card is done.
+  const lanHost = lanUsed?.host ? lanUsed.host.split(":")[0].toUpperCase() : "";
   return (
     <Card
       title="Local AI"
       testId="firstrun-local-ai"
-      selected={ready}
-      state={ready ? <LampGadget label="ON DEVICE" on /> : null}
+      selected={ready || Boolean(lanUsed)}
+      state={
+        ready ? <LampGadget label="ON DEVICE" on />
+        : lanUsed ? <StateChip state="success" label={`LAN · ${lanHost}`} icon="●" />
+        : null
+      }
     >
       {ai.read.kind === "unread" ? (
         <div className="firstrun-fail" role="alert">
@@ -154,12 +176,24 @@ function LocalAiCard({ ai, folded }: { ai: ReturnType<typeof useLocalAi>; folded
                 .join(" · ")}
               timestamp={ai.finishedAt ?? undefined}
             />
-          ) : host && (missing > 0 || running) ? (
+          ) : host && (missing > 0 || running) && !(lanUsed && !running) ? (
             <EgressChip label={host} scope="cloud" />
           ) : null}
-          {state === "not_started" ? (
-            <Button variant="primary" loading={ai.busy} disabled={ai.busy} onClick={() => void ai.start()}>
+          {state === "not_started" && !lanUsed ? (
+            <Button
+              variant={lanOpen ? "secondary" : "primary"}
+              loading={ai.busy}
+              disabled={ai.busy}
+              onClick={() => void ai.start()}
+            >
               {missing > 0 ? `Set up local AI · ${formatBytes(missing)}` : "Set up local AI"}
+            </Button>
+          ) : null}
+          {/* PHILO-15 10 (B09): the other choice — the model server he
+              already runs on his network, with no download. */}
+          {state === "not_started" && !lanOpen && !lanUsed ? (
+            <Button variant="secondary" onClick={onLan} data-testid="firstrun-lan-verb">
+              Use a server on my network
             </Button>
           ) : null}
           {running ? (
@@ -169,6 +203,7 @@ function LocalAiCard({ ai, folded }: { ai: ReturnType<typeof useLocalAi>; folded
           ) : null}
         </div>
       ) : null}
+      {lanOpen || lanUsed ? <LanServerRow onUsed={onLanUsed} /> : null}
     </Card>
   );
 }
@@ -379,7 +414,13 @@ export function FirstRun() {
   // Speech on this device lights First words. A read that failed leaves it
   // open: the dictation path names its own failure (honest, never stuck).
   const speech = ai.read.kind === "unread" || (ai.read.kind === "ok" && speechReady(ai.read.status));
-  const aiReady = ai.read.kind === "ok" && ai.read.status.state === "ready";
+  // PHILO-15 10 (B09): the LAN box is the other way to finish this card:
+  // its server does the chat work, and Whisper here does speech.
+  const [lanOpen, setLanOpen] = useState(false);
+  const [lanUsed, setLanUsed] = useState<LanUsed | null>(null);
+  const onLanUsed = useCallback((used: LanUsed) => setLanUsed(used), []);
+  const aiReady =
+    (ai.read.kind === "ok" && ai.read.status.state === "ready") || (Boolean(lanUsed) && speech);
   const handoff = useCallback(async (disposition: "completed" | "dismissed") => {
     await apiFetch("/api/desk/seed", { method: "POST" });
     await apiFetch("/api/setup/onboarding", { method: "PUT", json: { disposition } });
@@ -432,7 +473,14 @@ export function FirstRun() {
         </h1>
       )}
       <div className="firstrun-cards">
-        <LocalAiCard ai={ai} folded={c1Done} />
+        <LocalAiCard
+          ai={ai}
+          folded={c1Done}
+          lanOpen={lanOpen}
+          onLan={() => setLanOpen(true)}
+          lanUsed={lanUsed}
+          onLanUsed={onLanUsed}
+        />
         <YouCard owner={owner} folded={c1Done} />
         <FirstWordsCard ready={speech} take={take} />
       </div>

@@ -166,9 +166,18 @@ def discover_endpoint_models(
         },
         key=str.casefold,
     )
+    # PHILO-15 10: an Ollama-style row names its capabilities ("tools").
+    listed = payload.get("models") if isinstance(payload, dict) else None
+    tools_claimed = any(
+        isinstance(row, dict)
+        and isinstance(row.get("capabilities"), list)
+        and "tools" in {str(c).lower() for c in row["capabilities"]}
+        for row in listed or []
+    )
     return {
         "ok": True,
         "models": models,
+        **({"toolsClaimed": True} if tools_claimed else {}),
         "detail": (
             f"Found {len(models)} model{'s' if len(models) != 1 else ''}."
             if models
@@ -176,6 +185,95 @@ def discover_endpoint_models(
         ),
         "status": int(code),
     }
+
+
+def _default_http_post_json(
+    url: str, *, headers: dict[str, str], body: bytes, timeout: float
+) -> tuple[int, bytes]:
+    from .loopback_http import _LOOPBACK_OPENER, is_loopback_url, pin_loopback_url
+
+    loopback = is_loopback_url(url)
+    req = Request(pin_loopback_url(url) if loopback else url, headers=headers, data=body, method="POST")
+    opener = _LOOPBACK_OPENER.open if loopback else urlopen
+    try:
+        with opener(req, timeout=timeout) as resp:  # noqa: S310 - the owner's Check
+            return int(getattr(resp, "status", 200) or 200), resp.read()
+    except HTTPError as exc:
+        return int(exc.code), exc.read() if hasattr(exc, "read") else b""
+
+
+def endpoint_tool_support(
+    base_url: str,
+    *,
+    model: str,
+    api_key: str | None = None,
+    lan: bool = True,
+    tools_claimed: bool = False,
+    timeout_seconds: float = 8.0,
+    http_get: Optional[Callable[..., tuple[int, bytes]]] = None,
+    http_post: Optional[Callable[..., tuple[int, bytes]]] = None,
+) -> str:
+    """Can this server take tool (function) calls?  ``yes`` / ``no`` / ``unknown``.
+
+    PHILO-15 10 (B05): the Check asks the server once.  In order:
+
+    1. ``/models`` named ``tools`` among a model's capabilities -> yes.
+    2. llama.cpp ``/props`` -> ``chat_template_caps.supports_tools``.
+    3. On this network only (never a paid cloud call): a 1-token chat
+       request that carries one tool.  2xx -> yes; 400 -> no.
+
+    Anything else is ``unknown``.  This is the SERVER's answer; whether
+    HoldSpeak can run a work on it is the assignment authority's answer.
+    """
+    if tools_claimed:
+        return "yes"
+    base = str(base_url or "").strip().rstrip("/")
+    root = base[: -len("/v1")] if base.endswith("/v1") else base
+    headers = {"Accept": "application/json"}
+    key = str(api_key or "").strip()
+    if key and key_is_header_safe(key):
+        headers["Authorization"] = f"Bearer {key}"
+    getter = http_get or _default_http_json
+    try:
+        code, raw = getter(f"{root}/props", headers=headers, timeout=timeout_seconds)
+        if 200 <= int(code) < 300:
+            props = json.loads(raw.decode("utf-8", errors="replace"))
+            caps = props.get("chat_template_caps") if isinstance(props, dict) else None
+            if isinstance(caps, dict) and isinstance(caps.get("supports_tools"), bool):
+                return "yes" if caps["supports_tools"] else "no"
+    except Exception:
+        pass  # no /props: not llama.cpp, or an older one
+    if not lan:
+        return "unknown"
+    poster = http_post or _default_http_post_json
+    body = json.dumps({
+        "model": model,
+        "max_tokens": 1,
+        "messages": [{"role": "user", "content": "ok"}],
+        "tools": [{
+            "type": "function",
+            "function": {
+                "name": "noop",
+                "description": "Does nothing.",
+                "parameters": {"type": "object", "properties": {}},
+            },
+        }],
+        "tool_choice": "none",
+    }).encode("utf-8")
+    try:
+        code, _raw = poster(
+            f"{base}/chat/completions",
+            headers={**headers, "Content-Type": "application/json"},
+            body=body,
+            timeout=timeout_seconds,
+        )
+    except Exception:
+        return "unknown"
+    if 200 <= int(code) < 300:
+        return "yes"
+    if int(code) == 400:
+        return "no"
+    return "unknown"
 
 
 def discover_local_models(home: Path | None = None) -> dict[str, Any]:

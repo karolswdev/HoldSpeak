@@ -255,3 +255,12 @@
     margin-left: 0;
   }
 }
+
+/* PHILO-15 10 (B09): the Concierge's add-engine row on the Local AI card.
+   The card has no lead column, so the row starts at the card's edge. */
+.firstrun-lan {
+  align-self: stretch;
+}
+.firstrun-lan .concierge-add-engine-row {
+  padding-left: 0;
+}

@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
 import type { PlanStep } from "../surface";
+import { humanSize } from "../../features/concierge/useConciergeController";
 
 export type LocalAiState =
   | "not_started"
@@ -63,10 +64,12 @@ export interface LocalAiGroup {
   onDevice: boolean;
 }
 
-/** `142 MB`, `2.7 GB` (decimal units, as the download sizes are stated). */
+/** `142 MB`, `2.7 GB` (decimal units, as the download sizes are stated).
+ *  PHILO-15 10 (B18): one size rule for every face — the Concierge's
+ *  `humanSize`; below 1 MB this face still says `1 MB`. */
 export function formatBytes(bytes: number): string {
-  if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(1)} GB`;
-  return `${Math.max(1, Math.round(bytes / 1e6))} MB`;
+  if (bytes < 1e6) return "1 MB";
+  return humanSize(bytes) ?? "1 MB";
 }
 
 /** The groups the face shows: one row per key, every file of it summed. */

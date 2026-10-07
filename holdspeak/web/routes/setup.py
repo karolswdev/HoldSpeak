@@ -255,6 +255,22 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
                 str(body.get("base_url") or ""),
                 api_key=api_key,
             )
+            # PHILO-15 10 (B05): the Check asks the server once whether it
+            # takes tool calls. Only the face's Check asks (`check_tools`).
+            if result.get("ok") and result.get("models") and body.get("check_tools") is True:
+                from urllib.parse import urlparse as _urlparse
+
+                from ...services.concierge_service import _is_lan_host
+                from ...setup_runtime import endpoint_tool_support
+
+                base_url = str(body.get("base_url") or "")
+                result["tools"] = endpoint_tool_support(
+                    base_url,
+                    model=str(result["models"][0]),
+                    api_key=api_key,
+                    lan=_is_lan_host(_urlparse(base_url).hostname or ""),
+                    tools_claimed=bool(result.get("toolsClaimed")),
+                )
             return JSONResponse(result, status_code=200 if result.get("ok") else 422)
         except Exception as exc:
             return error_500(exc, log, "Failed to discover endpoint models")

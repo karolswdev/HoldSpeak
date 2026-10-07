@@ -22,8 +22,9 @@ import {
   type Repair,
   type SummaryAssignment,
   type TaskProbeResponse,
+  type ApplyResponse,
 } from "./api";
-import { endpointDraft } from "./endpointDraft";
+import { endpointDraft, endpointHostPort } from "./endpointDraft";
 
 /* ── Group glyphs — the seven user-visible groups ── */
 
@@ -51,11 +52,15 @@ export function kindEmblem(kind: string): string {
 
 /* ── Human-readable size ── */
 
+/* PHILO-15 10 (B18): ONE size rule for every face. The catalogue states
+   download sizes in decimal units (2 740 937 888 bytes = 2.7 GB); first run
+   said 2.7 GB and this face said 2.6 GB for the same file. First run's
+   `formatBytes` is this function. */
 export function humanSize(bytes: number | null | undefined): string | null {
   if (bytes == null || bytes <= 0) return null;
-  if (bytes >= 1_073_741_824) return `${(bytes / 1_073_741_824).toFixed(1)} GB`;
-  if (bytes >= 1_048_576) return `${Math.round(bytes / 1_048_576)} MB`;
-  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+  if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(1)} GB`;
+  if (bytes >= 1e6) return `${Math.round(bytes / 1e6)} MB`;
+  if (bytes >= 1e3) return `${Math.round(bytes / 1e3)} KB`;
   return `${bytes} B`;
 }
 
@@ -116,17 +121,60 @@ export interface SetRow {
   applied?: boolean;
   /** The applied engine's own label when detection no longer lists it. */
   appliedLabel?: string;
+  /** PHILO-15 10 (B05): the work this engine cannot do in this group. */
+  blocked?: string[];
+  plainReason?: string;
+}
+
+/** PHILO-15 10 (B10): what the last press did, said on this face. */
+export interface ApplyReceipt {
+  /** `set` = Use these; `summaries` = Use this for summaries. */
+  kind: "set" | "summaries";
+  engine: string;
+  host: string;
+  ready: number;
+  limited: number;
+  failed: number;
+  off: number;
+  defaultSet: boolean;
+  failures: Array<{ group: string; plainReason: string }>;
+}
+
+/** The receipt line: `USING · Qwen3.8 27B · 6 GROUPS · 4 LIMITED`. */
+export function receiptLine(receipt: ApplyReceipt): string {
+  const parts: string[] = [];
+  if (receipt.engine) parts.push(`USING · ${receipt.engine.toUpperCase()}`);
+  if (receipt.kind === "summaries") {
+    parts.push("SUMMARIES");
+  } else {
+    const set = receipt.ready + receipt.limited;
+    if (set > 0) parts.push(`${set} ${set === 1 ? "GROUP" : "GROUPS"}`);
+    if (receipt.limited > 0) parts.push(`${receipt.limited} LIMITED`);
+    if (receipt.off > 0) parts.push(`${receipt.off} OFF`);
+  }
+  if (receipt.failed > 0) parts.push(`${receipt.failed} FAILED`);
+  if (receipt.defaultSet) parts.push("DEFAULT SET");
+  return parts.join(" · ");
 }
 
 /** The one group whose row IS the exact `meeting.deferred_analysis` choice. */
 export const SUMMARY_GROUP = "meetings";
 
 /** HS-201-09 — the rows one `Use these` may write: READY, or explicitly OFF.
- *  A WAITING group is left alone; it never blocks the groups beside it. */
+ *  A WAITING group is left alone; it never blocks the groups beside it.
+ *  PHILO-15 10: a LIMITED group is written (most of its work runs, and the
+ *  receipt says what does not); UNKNOWN is written so the owner can try it;
+ *  INCOMPATIBLE is never written. */
 export function applicableSetRows<
   T extends { state: string; engineId: string | null },
 >(rows: readonly T[]): T[] {
-  return rows.filter((r) => r.state === "READY" || r.engineId === "OFF");
+  return rows.filter(
+    (r) =>
+      r.state === "READY" ||
+      r.state === "LIMITED" ||
+      r.state === "UNKNOWN" ||
+      r.engineId === "OFF",
+  );
 }
 
 /* HS-201-09 (rehearsal defect 4) — the Meetings row reads the APPLIED
@@ -153,8 +201,15 @@ export function summaryRowFromAssignment(
   if (assignment.status !== "assigned" && assignment.status !== "attention") {
     return row;
   }
+  // PHILO-15 10 (B05): the applied engine still serves only part of the
+  // group; the proposal's LIMITED stands over the applied truth.
   const state: EngineState =
-    assignment.status === "attention" ? "NOT_SET" : "READY";
+    assignment.status === "attention"
+      ? "NOT_SET"
+      : row.state === "LIMITED" &&
+          engines.find((e) => e.profileId === assignment.profileId)?.id === row.engineId
+        ? "LIMITED"
+        : "READY";
   const engine = engines.find((e) => e.profileId === assignment.profileId);
   if (engine) {
     return {
@@ -208,7 +263,7 @@ export interface ConciergeController {
   foundRows: FoundRow[];
   // Proposal
   setRows: SetRow[];
-  receipt: { groups: number; engines: number; waiting: number };
+  receipt: ProposeResponse["receipt"];
   // Adjust
   adjustOpen: boolean;
   adjustRows: AdjustRow[];
@@ -221,6 +276,8 @@ export interface ConciergeController {
   // State
   applying: boolean;
   applied: boolean;
+  /** PHILO-15 10 (B10): the receipt of the last press, on this face. */
+  applyReceipt: ApplyReceipt | null;
   canApply: boolean;
   applyFailures: Array<{ group: string; plainReason: string }>;
   // Add engine inline
@@ -231,6 +288,8 @@ export interface ConciergeController {
   addEngineState: AddEngineState;
   addEngineReason: string;
   addEngineModel: string;
+  /** PHILO-15 10: the server's answer to "do you take tool calls?". */
+  addEngineTools: "yes" | "no" | "unknown" | null;
   setAddEngineUrl: (v: string) => void;
   /** PHILO-15 02: the optional key for the endpoint (never stored here). */
   addEngineKey: string;
@@ -260,6 +319,7 @@ export function useConciergeController(): ConciergeController {
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [applyReceipt, setApplyReceipt] = useState<ApplyReceipt | null>(null);
   const [applyFailures, setApplyFailures] = useState<
     Array<{ group: string; plainReason: string }>
   >([]);
@@ -287,8 +347,8 @@ export function useConciergeController(): ConciergeController {
 
   /* ── Load detection + proposal ── */
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (quiet = false) => {
+    if (!quiet) setLoading(true);
     setError("");
     try {
       const det = await conciergeDetect();
@@ -309,6 +369,8 @@ export function useConciergeController(): ConciergeController {
             state: r.state as EngineState,
             pickerOpen: false,
             alternatives: alts,
+            blocked: r.blocked,
+            plainReason: r.plainReason,
           };
           return r.group === SUMMARY_GROUP
             ? summaryRowFromAssignment(row, det.summaryAssignment, det.engines)
@@ -341,8 +403,12 @@ export function useConciergeController(): ConciergeController {
       );
     }
     // All engines: ready engines first, then presets, then cloud
+    // PHILO-15 10: the device's Whisper is a speech engine only.
     const ready = engines.filter(
-      (e) => e.state === "READY" && e.kind !== "preset",
+      (e) =>
+        e.state === "READY" &&
+        e.kind !== "preset" &&
+        !(e.kind === "local" && e.name.toLowerCase().includes("whisper")),
     );
     const presets = engines.filter((e) => e.kind === "preset");
     const cloud = engines.filter(
@@ -560,20 +626,35 @@ export function useConciergeController(): ConciergeController {
         setApplying(false);
         // Read per-group results: update row states and collect failures
         const failures: Array<{ group: string; plainReason: string }> = [];
-        if (resp.results) {
+        const results = resp.results ?? [];
+        for (const result of results) {
+          if (result.state === "FAILED" || result.state === "SKIPPED") {
+            failures.push({
+              group: result.group,
+              plainReason: result.plainReason ?? "Apply failed",
+            });
+          }
+        }
+        if (results.length) {
           setSetRows((prev) =>
             prev.map((r) => {
-              const result = resp.results.find((res) => res.group === r.group);
+              const result = results.find((res) => res.group === r.group);
               if (!result) return r;
-              if (result.state === "FAILED") {
-                failures.push({
-                  group: r.group,
-                  plainReason: result.plainReason ?? "Apply failed",
-                });
-                return { ...r, state: "UNREACHABLE" as EngineState };
+              if (result.state === "FAILED" || result.state === "SKIPPED") {
+                return { ...r, state: "UNREACHABLE" as EngineState, plainReason: result.plainReason };
               }
-              if (result.state === "READY") {
-                return { ...r, state: "READY" as EngineState };
+              if (
+                result.state === "READY" ||
+                result.state === "LIMITED" ||
+                result.state === "INCOMPATIBLE" ||
+                result.state === "UNKNOWN"
+              ) {
+                return {
+                  ...r,
+                  state: result.state as EngineState,
+                  blocked: result.blocked,
+                  plainReason: result.plainReason,
+                };
               }
               return r;
             }),
@@ -581,23 +662,29 @@ export function useConciergeController(): ConciergeController {
         }
         setApplyFailures(failures);
         setApplied(failures.length === 0);
+        // PHILO-15 10 (B10): the window STAYS and says what happened —
+        // the engine, the groups, what is limited, what failed. It used to
+        // close itself with no receipt.
+        const summary = resp.summary ?? ({} as ApplyResponse["summary"]);
+        setApplyReceipt({
+          kind: "set",
+          engine: summary.engine ?? "",
+          host: summary.host ?? "",
+          ready: summary.ready ?? 0,
+          limited: summary.limited ?? 0,
+          failed: summary.failed ?? failures.length,
+          off: summary.off ?? 0,
+          defaultSet: Boolean(summary.default),
+          failures,
+        });
         if (failures.length === 0) {
           // The one existing readiness signal (SettingsCore dispatches the
           // same event after a save). Faces holding an unfinished task
-          // recheck on it instead of reloading and losing their draft —
-          // and now focus goes back to the verb the owner left, which is
-          // the second half of the ratified behaviour (design D2(a)).
-          //
-          // The window closes first, because D2(a) says it does: leaving
-          // the Concierge open over the Room while focus jumps behind it
-          // is the bug, not the fix.
-          void import("../../desk/store").then(({ useDesk }) => {
-            useDesk.getState().closeSurfaceWindow("surface-concierge");
-          }).catch(() => {
-            // A page without the desk store still applied the set.
-          });
+          // recheck on it instead of reloading and losing their draft.
           announceTaskReturn(from);
         }
+        // The repairs and the set, read again without a LOADING flash.
+        void load(true);
       });
     } catch (err) {
       safe(() => {
@@ -605,7 +692,7 @@ export function useConciergeController(): ConciergeController {
         setError(readableError(err));
       });
     }
-  }, [canApply, setRows]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [canApply, setRows, load]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Cancel ── */
 
@@ -624,6 +711,7 @@ export function useConciergeController(): ConciergeController {
     useState<AddEngineState>("IDLE");
   const [addEngineReason, setAddEngineReason] = useState("");
   const [addEngineModel, setAddEngineModel] = useState("");
+  const [addEngineTools, setAddEngineTools] = useState<"yes" | "no" | "unknown" | null>(null);
   const [addEngineKey, setAddEngineKeyState] = useState("");
   const addEngineKeyRef = useRef("");
   // HS-201-09 (counsel finding 3): the address a check ANSWERED for. A
@@ -680,6 +768,7 @@ export function useConciergeController(): ConciergeController {
     setAddEngineState("CHECKING");
     setAddEngineReason("");
     setAddEngineModel("");
+    setAddEngineTools(null);
     try {
       const result = await checkEndpoint(url, key);
       // The field moved on while this was in flight: the answer is about
@@ -695,6 +784,7 @@ export function useConciergeController(): ConciergeController {
         if (result.ok && result.models.length > 0) {
           setAddEngineState("READY");
           setAddEngineModel(result.models[0]);
+          setAddEngineTools(result.tools ?? "unknown");
           setAddEngineReason("");
           return;
         }
@@ -783,16 +873,22 @@ export function useConciergeController(): ConciergeController {
         addEngineKeyRef.current = "";
         setAddEngineState("IDLE");
         setAddEngineModel("");
+        setAddEngineTools(null);
         setAddEngineReason("");
         setApplied(true);
-        void load(); // Re-detect, for the moment before the window goes.
-        void import("../../desk/store")
-          .then(({ useDesk }) => {
-            useDesk.getState().closeSurfaceWindow("surface-concierge");
-          })
-          .catch(() => {
-            // A page without the desk store still assigned the engine.
-          });
+        // PHILO-15 10 (B10): the window stays and says what was set.
+        setApplyReceipt({
+          kind: "summaries",
+          engine: addEngineModel || selection.summaryAssignment?.label || "",
+          host: endpointHostPort(url),
+          ready: 1,
+          limited: 0,
+          failed: 0,
+          off: 0,
+          defaultSet: false,
+          failures: [],
+        });
+        void load(true); // The set now proposes this engine.
         announceTaskReturn(from);
       });
     } catch (err) {
@@ -876,6 +972,7 @@ export function useConciergeController(): ConciergeController {
     runTaskProbe,
     applying,
     applied,
+    applyReceipt,
     canApply,
     openPicker,
     closePicker,
@@ -893,6 +990,7 @@ export function useConciergeController(): ConciergeController {
     addEngineState,
     addEngineReason,
     addEngineModel,
+    addEngineTools,
     setAddEngineUrl: editAddEngineUrl,
     addEngineKey,
     setAddEngineKey: editAddEngineKey,

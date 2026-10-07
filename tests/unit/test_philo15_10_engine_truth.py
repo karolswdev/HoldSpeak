@@ -1,0 +1,224 @@
+"""PHILO-15 10 — the engine setup tells the truth.
+
+B05: READY only for a group the assignment authority serves in full; the
+     receipt of "Use these" names LIMITED groups; "Use these" sets the
+     Default for AI work once, when none ever existed.
+B06: Speech recognition is proposed only from a speech engine.
+The WAITING refusal is the server's, read from its own engine list.
+The Check asks the server once whether it takes tool calls.
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from holdspeak.db import Database
+from holdspeak.services import concierge_service as cs
+from holdspeak.services.errors import ConflictError
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+from holdspeak.setup_runtime import endpoint_tool_support
+from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
+
+SUMMARY = "meeting.deferred_analysis"
+
+
+@pytest.fixture
+def db(tmp_path: Path) -> Database:
+    return Database(tmp_path / "engine-truth.db")
+
+
+def _lan(db: Database) -> dict:
+    """A LAN chat engine with the claims the Model Library gives it."""
+    _profile(db, "lan-qwen", claims=("language", _result_claim(SUMMARY)), boundary="private_network")
+    return {
+        "id": "lan:lan-qwen", "kind": "lan", "name": "Qwen3.8 27B", "host": "192.168.1.43",
+        "state": "READY", "profileId": "lan-qwen", "profileRevision": 1,
+    }
+
+
+def _heads(db: Database) -> list[str]:
+    with db._connection() as conn:
+        return [r["assignment_key"] for r in conn.execute("SELECT assignment_key FROM inference_assignment_heads")]
+
+
+# ── the authority's read-only fit ────────────────────────────────────────
+
+
+def test_fit_names_served_and_blocked_work_and_writes_nothing(db: Database) -> None:
+    _lan(db)
+    svc = InferenceAssignmentService(db)
+    answer = svc.fit(OWNER, scope={"kind": "group", "group_id": "thoughts_notes"}, profile_id="lan-qwen")
+    assert "chat.turn" in answer["served"] and "ask.answer" in answer["served"]
+    assert answer["blocked"] == [
+        {"capability_id": "thought.interview", "code": "structured_output_unsupported"}
+    ]
+    assert answer["saveable"] is True
+    assert _heads(db) == []
+
+
+def test_fit_reads_a_group_with_no_owner_work(db: Database) -> None:
+    """Chat (compaction, guardrail) is never written; the fit still answers."""
+    _lan(db)
+    answer = InferenceAssignmentService(db).fit(
+        OWNER, scope={"kind": "group", "group_id": "chat_practice"}, profile_id="lan-qwen",
+    )
+    assert answer["served"] == []
+    assert {b["capability_id"] for b in answer["blocked"]} == {"chat.compact", "chat.guardrail"}
+
+
+# ── propose: READY means ready; speech is speech ─────────────────────────
+
+
+def test_propose_says_limited_where_the_authority_blocks_work(db: Database) -> None:
+    lan = _lan(db)
+    svc = InferenceAssignmentService(db)
+    result = cs.propose(engines=[lan], fit=cs.authority_fit(svc, OWNER, db))
+    rows = {r["group"]: r for r in result["rows"]}
+    assert rows["thoughts_notes"]["state"] == "LIMITED"
+    assert rows["thoughts_notes"]["blocked"] == ["Thought development"]
+    assert rows["thoughts_notes"]["plainReason"] == "This engine cannot give a structured result."
+    assert rows["chat_practice"]["state"] == "INCOMPATIBLE"
+    assert all(r["state"] != "READY" for g, r in rows.items() if g != "speech_recognition")
+    assert result["receipt"]["limited"] >= 4
+
+
+def test_propose_reads_unknown_when_the_engine_has_no_record(db: Database) -> None:
+    engine = {"id": "local:loopback", "kind": "local", "name": "Qwen", "host": "THIS DEVICE", "state": "READY"}
+    result = cs.propose(engines=[engine], fit=cs.authority_fit(InferenceAssignmentService(db), OWNER, db))
+    rows = {r["group"]: r for r in result["rows"]}
+    assert rows["thoughts_notes"]["state"] == "UNKNOWN"
+
+
+def test_speech_is_never_proposed_from_a_chat_preset() -> None:
+    preset = {"id": "preset:qwen", "kind": "preset", "name": "Quick local Qwen", "host": "THIS DEVICE",
+              "state": "WAITING", "presetId": "preset_local_qwen35_4b_gguf_q4km"}
+    rows = {r["group"]: r for r in cs.propose(engines=[preset])["rows"]}
+    assert rows["speech_recognition"]["state"] == "WAITING"
+    assert rows["speech_recognition"]["engineId"] is None
+    assert "presetId" not in rows["speech_recognition"]
+
+
+def test_speech_takes_the_device_whisper_and_text_groups_never_do() -> None:
+    whisper = {"id": "local:whisper:mlx:base", "kind": "local", "name": "Whisper base", "host": "THIS DEVICE",
+               "state": "READY", "audioCapable": True, "supportedModalities": ["audio"]}
+    rows = {r["group"]: r for r in cs.propose(engines=[whisper])["rows"]}
+    assert rows["speech_recognition"]["engineId"] == "local:whisper:mlx:base"
+    assert rows["speech_recognition"]["state"] == "READY"
+    assert rows["writing_dictation"]["engineId"] != "local:whisper:mlx:base"
+    assert rows["thoughts_notes"]["engineId"] != "local:whisper:mlx:base"
+
+
+def test_detect_lists_the_device_whisper(db: Database, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import holdspeak.whisper_models as wm
+
+    monkeypatch.setattr(wm, "whisper_on_disk", lambda name, backend, home=None: True)
+    row = cs._device_whisper(db, tmp_path)
+    assert row is not None
+    assert row["name"].startswith("Whisper ")
+    assert row["supportedModalities"] == ["audio"]
+
+
+# ── apply: the server refuses WAITING; the receipt tells LIMITED ─────────
+
+
+def test_apply_refuses_a_row_that_calls_a_preset_ready(db: Database) -> None:
+    preset = {"id": "preset:qwen", "kind": "preset", "state": "WAITING", "presetId": "p"}
+    with pytest.raises(ConflictError) as caught:
+        cs.apply(
+            rows=[{"group": "speech_recognition", "engineId": "preset:qwen", "state": "READY"}],
+            engines=[preset], assignment_service=InferenceAssignmentService(db), principal=OWNER, db=db,
+        )
+    assert caught.value.code == "concierge_waiting_group"
+    assert caught.value.detail == "Speech recognition waits for a download."
+
+
+def test_apply_still_refuses_a_waiting_row(db: Database) -> None:
+    with pytest.raises(ConflictError) as caught:
+        cs.apply(
+            rows=[{"group": "speech_recognition", "engineId": None, "state": "WAITING"}],
+            engines=[], assignment_service=InferenceAssignmentService(db), principal=OWNER, db=db,
+        )
+    assert caught.value.code == "concierge_waiting_group"
+
+
+def test_apply_reports_limited_and_sets_the_default_once(db: Database) -> None:
+    lan = _lan(db)
+    svc = InferenceAssignmentService(db)
+    result = cs.apply(
+        rows=[
+            {"group": "thoughts_notes", "engineId": lan["id"], "state": "LIMITED"},
+            {"group": "agents_tools", "engineId": lan["id"], "state": "LIMITED"},
+        ],
+        engines=[lan], assignment_service=svc, principal=OWNER, db=db,
+    )
+    by_group = {r["group"]: r for r in result["results"]}
+    assert by_group["thoughts_notes"]["state"] == "LIMITED"
+    assert by_group["thoughts_notes"]["blocked"] == ["Thought development"]
+    assert result["summary"]["limited"] == 2
+    assert result["summary"]["engine"] == "Qwen3.8 27B"
+    assert result["summary"]["default"]["engineId"] == lan["id"]
+    assert "global" in _heads(db)
+    # A second press never changes the default it set.
+    again = cs.apply(
+        rows=[{"group": "thoughts_notes", "engineId": lan["id"], "state": "LIMITED"}],
+        engines=[lan], assignment_service=svc, principal=OWNER, db=db,
+    )
+    assert again["summary"]["default"] is None
+
+
+def test_partial_limits_are_not_repair_rows(db: Database) -> None:
+    lan = _lan(db)
+    svc = InferenceAssignmentService(db)
+    cs.apply(
+        rows=[{"group": "thoughts_notes", "engineId": lan["id"], "state": "LIMITED"}],
+        engines=[lan], assignment_service=svc, principal=OWNER, db=db,
+    )
+    rows = cs.repairs(db=db, assignment_service=svc, principal=OWNER)
+    # The set row says LIMITED; no repair row says it again. (Speech, with
+    # no Whisper on this desk, inherits the text default and IS a repair.)
+    assert not [
+        r for r in rows
+        if r["token"] == "TOOL INCOMPATIBLE" and "thoughts_notes" in r["groups"]
+    ], rows
+
+
+# ── the Check asks the server about tool calls ───────────────────────────
+
+
+def _props(supports: bool):
+    body = json.dumps({"chat_template_caps": {"supports_tools": supports}}).encode()
+    return lambda url, headers, timeout: (200, body)
+
+
+def _no_props(url, headers, timeout):
+    return 404, b""
+
+
+def test_tools_from_llama_cpp_props() -> None:
+    assert endpoint_tool_support("http://10.0.0.2:8080/v1", model="m", http_get=_props(True)) == "yes"
+    assert endpoint_tool_support("http://10.0.0.2:8080/v1", model="m", http_get=_props(False)) == "no"
+
+
+def test_tools_from_a_one_token_probe_on_the_lan() -> None:
+    sent: list[dict] = []
+
+    def post(url, headers, body, timeout):
+        sent.append(json.loads(body))
+        return 400, b"tools param requires --jinja flag"
+
+    assert endpoint_tool_support("http://10.0.0.2:8080/v1", model="m", http_get=_no_props, http_post=post) == "no"
+    assert sent[0]["max_tokens"] == 1 and sent[0]["tools"]
+
+
+def test_a_cloud_check_never_spends_a_token() -> None:
+    def post(*_a, **_k):  # pragma: no cover - must not be called
+        raise AssertionError("cloud probe spent a token")
+
+    assert endpoint_tool_support("https://api.example.com/v1", model="m", lan=False,
+                                 http_get=_no_props, http_post=post) == "unknown"
+
+
+def test_models_capabilities_claim_tools() -> None:
+    assert endpoint_tool_support("http://10.0.0.2/v1", model="m", tools_claimed=True) == "yes"

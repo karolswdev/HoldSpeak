@@ -7,7 +7,18 @@ import type { EndpointDraft } from "./endpointDraft";
 /* ── Wire types ── */
 
 export type EngineKind = "lan" | "local" | "cloud" | "preset";
-export type EngineState = "READY" | "WAITING" | "NOT_SET" | "UNREACHABLE" | "CHECKING";
+export type EngineState =
+  | "READY"
+  | "WAITING"
+  | "NOT_SET"
+  | "UNREACHABLE"
+  | "CHECKING"
+  /** PHILO-15 10 (B05): the engine serves some of the group's work. */
+  | "LIMITED"
+  /** The engine serves none of the group's work. */
+  | "INCOMPATIBLE"
+  /** The hub cannot say yet: never READY. */
+  | "UNKNOWN";
 
 export interface Engine {
   id: string;
@@ -101,6 +112,9 @@ export interface ProposalRow {
   state: EngineState;
   presetId?: string;
   alternatives?: Engine[];
+  /** PHILO-15 10: the work this engine cannot do in this group. */
+  blocked?: string[];
+  plainReason?: string;
 }
 
 export interface ProposeResponse {
@@ -109,6 +123,8 @@ export interface ProposeResponse {
     groups: number;
     engines: number;
     waiting: number;
+    limited?: number;
+    unknown?: number;
   };
 }
 
@@ -128,11 +144,18 @@ export interface ApplyResponse {
     engines: number;
     ready: number;
     off: number;
+    /** PHILO-15 10 (B10): the receipt's facts. */
+    limited?: number;
+    failed?: number;
+    engine?: string | null;
+    host?: string | null;
+    default?: { engineId: string; name?: string; host?: string } | null;
   };
   results: Array<{
     group: string;
     state: string;
     plainReason?: string;
+    blocked?: string[];
   }>;
 }
 
@@ -264,6 +287,8 @@ function decodeProposal(raw: Record<string, unknown>): ProposeResponse {
         host: String(r.host ?? ""),
         state: (r.state ?? "WAITING") as EngineState,
         presetId: typeof r.presetId === "string" ? r.presetId : undefined,
+        blocked: Array.isArray(r.blocked) ? r.blocked.map(String) : undefined,
+        plainReason: typeof r.plainReason === "string" ? r.plainReason : undefined,
       }))
     : [];
   const receipt = (raw.receipt ?? {}) as Record<string, unknown>;
@@ -273,6 +298,8 @@ function decodeProposal(raw: Record<string, unknown>): ProposeResponse {
       groups: typeof receipt.groups === "number" ? receipt.groups : 0,
       engines: typeof receipt.engines === "number" ? receipt.engines : 0,
       waiting: typeof receipt.waiting === "number" ? receipt.waiting : 0,
+      limited: typeof receipt.limited === "number" ? receipt.limited : 0,
+      unknown: typeof receipt.unknown === "number" ? receipt.unknown : 0,
     },
   };
 }
@@ -347,6 +374,8 @@ export interface EndpointCheck {
   detail: string;
   /** PHILO-15 02: `key_required` (401/403) or `key_invalid` (400). */
   reason?: string;
+  /** PHILO-15 10: the server's own answer: does it take tool calls? */
+  tools?: "yes" | "no" | "unknown";
 }
 
 export async function checkEndpoint(baseUrl: string, apiKey = ""): Promise<EndpointCheck> {
@@ -358,7 +387,10 @@ export async function checkEndpoint(baseUrl: string, apiKey = ""): Promise<Endpo
     raw = await apiFetch<Record<string, unknown>>("/api/setup/discover-models", {
       method: "POST",
       // PHILO-15 02: a typed key goes with this one Check; empty sends none.
-      json: apiKey.trim() ? { base_url: baseUrl, api_key: apiKey.trim() } : { base_url: baseUrl },
+      // PHILO-15 10: the Check asks the server once about tool calls.
+      json: apiKey.trim()
+        ? { base_url: baseUrl, api_key: apiKey.trim(), check_tools: true }
+        : { base_url: baseUrl, check_tools: true },
     });
   } catch (err) {
     if (err instanceof ApiError && err.payload && typeof err.payload === "object") {
@@ -376,6 +408,10 @@ export async function checkEndpoint(baseUrl: string, apiKey = ""): Promise<Endpo
     models: Array.isArray(raw.models) ? raw.models.map(String) : [],
     detail: String(raw.detail ?? "Could not reach the model server."),
     reason: typeof raw.reason === "string" ? raw.reason : undefined,
+    tools:
+      raw.tools === "yes" || raw.tools === "no" || raw.tools === "unknown"
+        ? raw.tools
+        : undefined,
   };
 }
 

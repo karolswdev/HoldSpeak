@@ -22,3 +22,13 @@ describe("meetingsHeadline", () => {
     expect(meetingsHeadline([RAN], true)).toEqual({ text: "", accent: false });
   });
 });
+
+// PHILO-15 10 (B14): the headline flashed "All summaries done" while an
+// import was still transcribing. An importing row now reads IMPORTING.
+describe("meetingsHeadline — an import still running", () => {
+  const IMPORTING = { id: "m5", intel_status: "importing" };
+  it("never says the all-clear while a meeting imports", () => {
+    expect(meetingsHeadline([IMPORTING], false)).toEqual({ text: "1 meeting importing", accent: true });
+    expect(meetingsHeadline([RAN, IMPORTING], false).text).toBe("1 meeting importing");
+  });
+});

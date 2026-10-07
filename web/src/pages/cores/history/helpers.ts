@@ -98,11 +98,14 @@ export function stateToken(row: Record<string, unknown>): StateToken {
     error: { axis, label: "FAILED", tone: "danger" },
     failed: { axis, label: "FAILED", tone: "danger" },
     import_failed: { label: "IMPORT FAILED", tone: "danger" },
+    // PHILO-15 10 (B14): an import still transcribing. It read SAVED, and
+    // the headline said "All summaries done" before a word was heard.
+    importing: { label: "IMPORTING", tone: "warn" },
   };
   if (row.status === "failed") return { label: "FAILED", tone: "danger" };
   // PHILO-13-04 A3-W (coordinator ruling): an ACTIVE run is the live fact,
   // so RUNNING, QUEUED and FAILED (with its Retry) show first.
-  if (["running", "queued", "pending", "error", "failed"].includes(state)) {
+  if (["running", "queued", "pending", "error", "failed", "importing"].includes(state)) {
     return known[state];
   }
   // Then the list row's `has_summary` (H-A3, #729): the STORED fact, read
@@ -264,6 +267,11 @@ export function meetingsHeadline(
   if (failed > 0) {
     return { text: counted(failed, "meeting failed", "meetings failed"), accent: true };
   }
+  // PHILO-15 10 (B14): no all-clear while a meeting is still importing.
+  const importing = meetingRows.filter((row) => stateToken(row).label === "IMPORTING").length;
+  if (importing > 0) {
+    return { text: counted(importing, "meeting importing", "meetings importing"), accent: true };
+  }
   const running = meetingRows.filter(summaryRunning).length;
   if (running > 0) {
     return { text: counted(running, "summary running", "summaries running"), accent: true };
@@ -333,6 +341,10 @@ export function meetingRowState(row: Record<string, unknown>): MeetingRowState {
   // OFF without transcript => no Run verb, just Open
   if (token.label === "OFF" && !hasTranscript) {
     return { label: "OFF", verb: "Open", verbVariant: "ghost" };
+  }
+  // IMPORTING (PHILO-15 10): the transcript is not here yet; no verb.
+  if (token.label === "IMPORTING") {
+    return { label: "IMPORTING", tone: "warn", verb: null, verbVariant: "ghost" };
   }
   // REC (live capture — no verb, the meeting is in the live room)
   if (token.label === "REC") {

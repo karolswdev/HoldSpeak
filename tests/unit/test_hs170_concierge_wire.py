@@ -471,9 +471,11 @@ def test_apply_meetings_uses_exact_summary_capability_and_selected_profile_revis
             "state": "READY",
             "profileId": "summary-profile",
             "profileRevision": 2,
+            # PHILO-15 10: the receipt names the engine it used.
+            "engineId": "lan:summary",
         }
     ]
-    body = mock_svc.set_assignment.call_args.args[1]
+    body = mock_svc.set_assignment.call_args_list[0].args[1]
     assert body["scope"] == {
         "kind": "capability",
         "capability_id": "meeting.deferred_analysis",
