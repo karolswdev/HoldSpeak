@@ -8,6 +8,10 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+PHILO Phase 15, The First Day, is ACTIVE (chartered 2026-10-07 by Muad'Dib under the owner's autonomy grant; charter `docs/internal/philo/phase-15/PROPOSAL.md` #964; inventory `DAY-ONE-INVENTORY.md`, 18 ranked gaps). No new face: the owner's first real day rehearsed end to end on real metal with isolated credentials, every bounce paid in a lane, then `DAY-ONE.md` as the runbook. In flight: 01 the summaries blocker asks the route policy #967 (five empty-brief atlas cases set up an engine first; RULING: an explicit OFF holds against the default); 02 the LAN model's key on the Concierge + doctor runs the whole list #966 (Astra r1 DNR → r2 RWC, conditions paid; FAST running); 03 the summary draws once + a WAV import always reaches a final status #968 (Astra r1 RWC, conditions paid incl. startup recovery of interrupted imports; FAST queued). Queued from the inventory: the Anthropic key does nothing (no execution adapter); YOLO answers nothing routine without a Cadence-drafts model; launch → PR → merge has no glass/atlas proof; the Brief does not generate itself (cadence loop off by default); the 393 Concierge footer overlap; `test_hs201_09` waits for the removed `arrival-display`; the j5 route_disclosed/planned_host cases block at the old `concierge-add-engine` setup step.
+
+PHILO Phase 14, The Desk Is Objects, is CLOSED 2026-10-07 (chartered, canvassed, built and closed in one day; 21 product/docs PRs; handover `docs/internal/HANDOVER-MUADDIB-XXXIV.md`; built shots https://claude.ai/artifact/FgdD7jmm9YXv3Y7xcBf8hf; canvas https://claude.ai/artifact/E7E4JwVzSD9ieY6hpDQFjY). Record of every merge and every open condition follows.
+
 **PHILO Phase 14 — The Desk Is Objects** (chartered 2026-10-07 on the owner's three
 catches: the Conductor's face "stinks", the Desk went "Windows 1.0", features are
 "apps" and the explorer shows `[ ]`). Proposal: `docs/internal/philo/phase-14/PROPOSAL.md`.
