@@ -4,11 +4,11 @@
 // (getUserMedia, AudioContext, AudioWorkletNode, WebSocket).
 import { act, render, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { SessionPullout } from "../SessionPullout";
-import { useSteering } from "../../steering";
-import { closeMicSession, drainHold, micPhase } from "../../../lib/micSession";
+import { SessionPullout } from "../../desk/components/SessionPullout";
+import { useSteering } from "../../desk/steering";
+import { closeMicSession, drainHold, micPhase } from "../micSession";
 
-vi.mock("../../../lib/pendingVoice", () => ({
+vi.mock("../pendingVoice", () => ({
   loadPendingVoice: async () => null, savePendingVoice: async () => {}, clearPendingVoice: async () => {},
 }));
 
