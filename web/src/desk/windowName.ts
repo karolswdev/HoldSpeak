@@ -27,7 +27,9 @@ export type WindowSubject =
   | { kind: "lane"; agent?: string | null; item?: string | null }
   | { kind: "settings"; section?: string | null }
   | { kind: "calendar"; name?: string | null }
-  | { kind: "dossier"; title?: string | null };
+  | { kind: "dossier"; title?: string | null }
+  // PHILO-14 A2: Get Info on an object is a window of its own (board A-2).
+  | { kind: "info"; name?: string | null };
 
 const text = (value: unknown): string => (typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "");
 
@@ -94,6 +96,8 @@ export function windowName(subject: WindowSubject, id?: string | null): string {
       return named(subject.name) ? `Calendar snapshot · ${named(subject.name)}` : "Calendar snapshot";
     case "dossier":
       return named(subject.title) || "Dossier";
+    case "info":
+      return named(subject.name) ? `Info: ${named(subject.name)}` : "Info";
   }
 }
 

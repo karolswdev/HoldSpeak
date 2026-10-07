@@ -36,6 +36,9 @@ export interface ObjectListRow {
   /** One lamp + its word; omitted = an empty State cell. */
   state?: { label: string; tone: ObjectTone };
   sprite?: string;
+  /** PHILO-14 A2: rows sort within their group first (a lower group draws
+   *  above): the Floor keeps its zones (folders) above its objects. */
+  group?: number;
 }
 
 const COLUMNS: { key: ObjectSortKey; word: string }[] = [
@@ -60,6 +63,8 @@ function sortRows(rows: ObjectListRow[], sort: ObjectSort): ObjectListRow[] {
   };
   const sign = sort.dir === "asc" ? 1 : -1;
   return [...rows].sort((a, b) => {
+    const grouped = (a.group ?? 0) - (b.group ?? 0);
+    if (grouped) return grouped;
     const va = value(a);
     const vb = value(b);
     const order =
@@ -78,6 +83,11 @@ export interface ObjectListProps {
   /** A press on a header: the caller flips or moves the sort. */
   onSort?(key: ObjectSortKey): void;
   selectedId?: string | null;
+  /** PHILO-14 A2: a set selection (the Floor's Ask context). When given it
+   *  wins over `selectedId`: every row in it is a selected row. */
+  selectedIds?: readonly string[];
+  /** Words a selected row adds to its accessible name (`in Ask context`). */
+  selectedLabel?: string;
   onSelect?(id: string): void;
   onOpen?(id: string): void;
   className?: string;
@@ -89,6 +99,8 @@ export function ObjectList({
   sort,
   onSort,
   selectedId,
+  selectedIds,
+  selectedLabel,
   onSelect,
   onOpen,
   className,
@@ -143,7 +155,7 @@ export function ObjectList({
       </div>
       <div className="object-list-rows" role="rowgroup" ref={bodyRef}>
         {sorted.map((row) => {
-          const selected = row.id === selectedId;
+          const selected = selectedIds ? selectedIds.includes(row.id) : row.id === selectedId;
           const kindWord = row.kindWord ?? objectKindWord(row.kind);
           return (
             <div
@@ -158,7 +170,9 @@ export function ObjectList({
                 <Button
                   variant="chrome"
                   className="object-list-open"
-                  aria-label={[row.name, kindWord, row.when, row.state?.label].filter(Boolean).join(", ")}
+                  aria-label={[row.name, kindWord, row.when, row.state?.label, selected ? selectedLabel : undefined]
+                    .filter(Boolean)
+                    .join(", ")}
                   onClick={() => onSelect?.(row.id)}
                   onDoubleClick={onOpen ? () => onOpen(row.id) : undefined}
                   onKeyDown={keyDown(row.id)}

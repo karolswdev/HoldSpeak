@@ -2,9 +2,10 @@
 
 Inventory 2026-10-03 (defect 8) and Astra's review of PR #794.
 
-- The mark is the row's one selection control. Real pointer presses at its
-  centre and at its top and bottom edges select and do not open; a press on
-  the title or on the kind label opens and does not select.
+- PHILO-14 A2: the list is the ObjectList species. A real pointer press on
+  the row (its name, its kind cell, its edges) selects it into the Ask
+  context and does not open; a second press clears it; a double press or
+  Enter opens. There is no `[ ]` / `[x]` mark: the selection is the row.
 - Get Info opens for a decision and a thread; Rename persists on the hub
   (decision by `title` over PUT, thread by `title` over PATCH).
 - A Filed zone in Get Info dives into that zone (the list has no zone windows).
@@ -20,22 +21,23 @@ from .glass_infra import _api, _boot, _normal_chair, _settle
 pytest.importorskip("playwright.sync_api", reason="Floor list glass needs Playwright")
 
 TOKEN = "floor-list-glass"
-ROW = ".desk-list-sortable tr.desk-sortable-table-row"
+ROW = ".desk-list-sortable .object-list-row"
+NAME = ".object-list-open"
 
 
 def _row(page, title: str):
-    return page.locator(ROW).filter(has=page.locator(".desk-list-name-cell", has_text=title)).first
+    return page.locator(ROW).filter(has=page.locator(".object-list-name-word", has_text=title)).first
 
 
 def _selected(page) -> list[str]:
-    return page.locator(f"{ROW} [data-testid='desk-list-mark'][data-selected]").evaluate_all(
-        "els => els.map(e => e.getAttribute('aria-label'))")
+    return page.locator(f"{ROW}[aria-selected='true'] .object-list-name-word").evaluate_all(
+        "els => els.map(e => e.textContent)")
 
 
 def _info_for(page, title: str):
     row = _row(page, title)
     row.evaluate("e => e.scrollIntoView({block: 'center'})")
-    row.locator(".desk-list-name-cell").click(button="right")
+    row.locator(NAME).click(button="right")
     page.get_by_role("menuitem", name="Get Info").click()
     info = page.locator(".desk-info-window").last
     info.wait_for(timeout=5_000)
@@ -84,56 +86,47 @@ def test_select_get_info_rename_and_filed(
             row = _row(page, "Freeze the old ledger")
             centre = "e => e.scrollIntoView({block: 'center'})"  # clear of the bars at the foot
             row.evaluate(centre)
-            mark = row.locator("[data-testid='desk-list-mark']")
-            box = mark.bounding_box()
-            assert box and box["width"] >= 44, box
-            if phone:
-                assert box["height"] >= 44, box
+            box = row.bounding_box()
+            assert box and box["height"] >= 44, box
+            assert "[x]" not in page.locator(".desk-listmode").inner_text()
+            assert "[ ]" not in page.locator(".desk-listmode").inner_text()
+            kind = row.locator("[data-col='kind']")
+            kb = kind.bounding_box() if kind.is_visible() else None
             points = [
-                (box["x"] + box["width"] / 2, box["y"] + box["height"] / 2),
-                (box["x"] + box["width"] / 2, box["y"] + 2),
-                (box["x"] + box["width"] / 2, box["y"] + box["height"] - 2),
-                (box["x"] + 2, box["y"] + box["height"] / 2),
-                (box["x"] + box["width"] - 2, box["y"] + box["height"] / 2),
-            ]
+                (box["x"] + 60, box["y"] + box["height"] / 2),
+                (box["x"] + box["width"] / 2, box["y"] + 3),
+                (box["x"] + box["width"] / 2, box["y"] + box["height"] - 3),
+            ] + ([(kb["x"] + min(12, kb["width"] / 2), kb["y"] + kb["height"] / 2)] if kb else [])
             press = page.touchscreen.tap if phone else page.mouse.click
             want = True
             for x, y in points:
                 press(x, y)
-                page.wait_for_timeout(150)
-                assert (_selected(page) == ["Select Freeze the old ledger"]) is want, (x, y, _selected(page))
-                assert page.locator(".desk-pullout").count() == 0, f"a press on the mark at {(x, y)} opened the row"
+                page.wait_for_timeout(350)  # past the double-press window
+                assert (_selected(page) == ["Freeze the old ledger"]) is want, (x, y, _selected(page))
+                assert page.locator(".desk-pullout").count() == 0, f"a press on the row at {(x, y)} opened it"
                 want = not want
-            assert _selected(page) == ["Select Freeze the old ledger"]  # five presses: selected
+            if _selected(page):
+                press(*points[0])
+                page.wait_for_timeout(350)
+            assert _selected(page) == []
 
-            # Everything else on the row opens it and does not select.
-            others = [row.locator(".desk-list-name-cell")]
-            kind = row.locator(".desk-list-fold").first if phone else row.locator("td", has_text="DECISION").last
-            others.append(kind)
-            for target in others:
-                row.evaluate(centre)
-                page.wait_for_timeout(150)
-                tb = target.bounding_box()
-                assert tb, "the open target is not on the glass"
-                # the kind label sits at the left of its box; press on its text
-                press(tb["x"] + min(12, tb["width"] / 2), tb["y"] + tb["height"] / 2)
-                page.locator(".desk-pullout").first.wait_for(timeout=5_000)
-                assert _selected(page) == ["Select Freeze the old ledger"], "a press that opens changed the selection"
-                page.keyboard.press("Escape")
+            # Enter (and a double press) opens the row.
+            row.locator(NAME).focus()
+            page.keyboard.press("Enter")
+            page.locator(".desk-pullout").first.wait_for(timeout=5_000)
+            for _ in range(3):
+                if page.locator(".desk-pullout").count() == 0:
+                    break
+                close = page.locator(".desk-pullout").first.get_by_role("button", name="Close").first
+                close.click() if close.count() else page.keyboard.press("Escape")
                 page.wait_for_timeout(300)
-                for _ in range(3):
-                    if page.locator(".desk-pullout").count() == 0:
-                        break
-                    close = page.locator(".desk-pullout").first.get_by_role("button", name="Close").first
-                    close.click() if close.count() else page.keyboard.press("Escape")
-                    page.wait_for_timeout(300)
-                assert page.locator(".desk-pullout").count() == 0, "the opened window did not close"
+            assert page.locator(".desk-pullout").count() == 0, "the opened window did not close"
 
             # ── 2. Get Info + Rename, persisted on the hub ───────────
             info = _info_for(page, "Freeze the old ledger")
             _rename(page, info, "Freeze on Nov 6")
             page.wait_for_function(
-                "(t) => [...document.querySelectorAll('.desk-list-name-cell')].some(e => e.textContent.includes(t))",
+                "(t) => [...document.querySelectorAll('.object-list-name-word')].some(e => e.textContent.includes(t))",
                 arg="Freeze on Nov 6", timeout=5_000)
             page.wait_for_timeout(500)
             got = _api(page, "GET", f"/api/decisions/{decision['id']}", token=TOKEN)
@@ -155,7 +148,7 @@ def test_select_get_info_rename_and_filed(
             info.get_by_role("button", name="Launch").click()
             page.wait_for_timeout(600)
             assert page.locator(".desk-info-window").count() == 0
-            titles = page.locator(f"{ROW} .desk-list-name-cell").all_inner_texts()
+            titles = page.locator(f"{ROW} .object-list-name-word").all_inner_texts()
             assert len(titles) == 1 and "Rollout risks" in titles[0], titles
             assert not errors, errors
             browser.close()

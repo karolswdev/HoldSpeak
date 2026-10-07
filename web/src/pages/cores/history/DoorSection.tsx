@@ -1,5 +1,4 @@
 // HS-117-09 — extracted from HistoryCore (lines 1100-1205).
-import { openSurfaceOr } from "../../../desk/shell";
 import { Button } from "../../../components/signal/Signal";
 import {
   SurfaceRow,
@@ -18,6 +17,7 @@ import { asRows, rowId } from "../../pageSupport";
 import { DOOR_SECTIONS, displayState } from "./helpers";
 import { apiFetch } from "../../../lib/api";
 import { MeetingsConfig } from "./MeetingsConfig";
+import { openDrawer } from "../../../desk/drawer/store";
 
 export function DoorSection({
   actions,
@@ -102,12 +102,7 @@ export function DoorSection({
                   }
                   onOpen={
                     section === "projects"
-                      ? () =>
-                          openSurfaceOr(
-                            "open-project-memory",
-                            "/history",
-                            `project:${String(row.id)}`,
-                          )
+                      ? () => openDrawer(String(row.id)) // PHILO-14 A2
                       : undefined
                   }
                   verbs={

@@ -7,6 +7,7 @@ import { registerSurface } from "../shell";
 import { useDesk } from "../store";
 import { DeskToolShelf, DESK_TOOLS } from "./DeskToolShelf";
 import { EmptyDesk } from "./EmptyDesk";
+import { useDrawers } from "../drawer/store";
 
 describe("Phase 93 Desk arrival", () => {
   beforeEach(() => {
@@ -117,10 +118,11 @@ describe("Phase 93 Desk arrival", () => {
 
   it("discovers Project, Integration, and Runs on resources without Studio", () => {
     const openToolInspector = vi.fn();
-    const openProject = vi.fn();
+    useDrawers.setState({ drawers: [], infos: [] });
+    const openRoom = vi.fn();
     const unregisterProject = registerSurface(
       "open-project-memory",
-      openProject,
+      openRoom,
     );
     useDesk.setState({
       projects: [
@@ -195,7 +197,9 @@ describe("Phase 93 Desk arrival", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /Project Orion/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("option", { name: /Project Orion/ }));
-    expect(openProject).toHaveBeenCalledWith("project:orion", undefined);
+    // PHILO-14 A2: the palette opens a Project as its drawer, never the Room.
+    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["orion"]);
+    expect(openRoom).not.toHaveBeenCalled();
     expect(openToolInspector).not.toHaveBeenCalledWith("project", "orion");
 
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));

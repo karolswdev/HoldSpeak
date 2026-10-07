@@ -140,6 +140,7 @@ vi.mock("../../applications", () => {
 vi.mock("./RoomActions", () => ({ RoomActions: () => null }));
 
 import { Dock } from "./Dock";
+import { useDrawers } from "../../drawer/store";
 import { __resetSurfaces, registerSurface } from "../../shell";
 
 function makeRecordingProducer() {
@@ -198,16 +199,13 @@ describe("H-C3 Dock rendering", () => {
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/people/relationships/r1/brief");
   });
 
-  it("passes the explicit Dock origin when an active project opens", async () => {
-    const opened = vi.fn();
-    const off = registerSurface("open-project-memory", (_scope, options) => {
-      opened(options?.origin);
-    });
+  // PHILO-14 A2: the Dock opens a Project as its drawer.
+  it("opens an active project as its drawer", async () => {
+    useDrawers.setState({ drawers: [], infos: [] });
     render(<Dock />);
 
     fireEvent.click(screen.getByRole("button", { name: "Alpha, 1 open here" }));
-    await waitFor(() => expect(opened).toHaveBeenCalledWith("dock"));
-    off();
+    expect(useDrawers.getState().drawers.map((d) => d.projectId)).toEqual(["p1"]);
   });
 
   it("keeps a successful Send snapshot when the People projection fails", async () => {
