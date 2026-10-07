@@ -161,7 +161,7 @@ def test_f13_the_grant_survives_a_real_restart_and_f11_recovers_a_waiting_write(
         assert _rows(home, "SELECT o.state, r.outcome FROM kernel_operations o JOIN kernel_receipts r "
                            "ON r.operation_id=o.operation_id WHERE o.operation_id=?", waiting) == [
             ("indeterminate", "hub_restart_during_decision")]
-        # The old token died with the old process; a new credential for the same identity.
+        # Conductor R2: the old credential survives the restart; a reissue for the same identity replaces it.
         token = second.credential()
         status, zone = second.call("POST", "/api/directories", {"name": "After restart"})
         status, note = second.call("POST", "/api/notes", {"title": "filed after restart"})
