@@ -448,7 +448,7 @@ export function CadenceCore({ hero }: CoreProps) {
       <div className="rhythm-section">
       <SurfaceLedger count="" cols="hub">
         <SurfaceLedgerRow
-          primary={calendarConfigured ? "Weekly brief" : "Monday brief"}
+          primary={calendarConfigured ? "Weekly brief" : "Daily brief"}
           expands={false}
           data-testid="rhythm-brief-row"
           trailing={
