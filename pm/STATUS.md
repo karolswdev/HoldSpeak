@@ -14,7 +14,7 @@ catches: the Conductor's face "stinks", the Desk went "Windows 1.0", features ar
 Three movements: A objects (drawers, icons from the mold, drag as composition, apps become
 views), B material (bevels back, chips become lamps, the Chair as a screen not tiles),
 C the Conductor as objects (agent icon, drop to hand, the agent's window as its lane).
-Merged: C0 lane backend #925 (the hub keeps the agent's timeline: `agent_session_events`, spooled by the hook with no DB wait and drained on lane/coder reads; worktree commits/files read on request; PR `ci`+`checks` kept; `control_mode` on the launch; `GET /api/agent/launches/{id}/lane` owner-only, every served text secret-redacted before the cut, `not_read` on failed reads; Astra r1 DNR → r2 RWC; FAST green after two fence corrections). Open from #925 (Astra's condition): the spool drains only on a lane or `/api/coders/sessions` read, no hub timer, so events collect on disk while nothing reads (≤5000 files per drain); Codex `apply_patch` input shape unverified; no MCP tool for the lane. Now: lane 00 canvas (three alternatives + control, one page, he names a letter).
+Merged: C0 lane backend #925 (the hub keeps the agent's timeline: `agent_session_events`, spooled by the hook with no DB wait and drained on lane/coder reads; worktree commits/files read on request; PR `ci`+`checks` kept; `control_mode` on the launch; `GET /api/agent/launches/{id}/lane` owner-only, every served text secret-redacted before the cut, `not_read` on failed reads; Astra r1 DNR → r2 RWC; FAST green after two fence corrections). Open from #925 (Astra's condition): the spool drains only on a lane or `/api/coders/sessions` read, no hub timer, so events collect on disk while nothing reads (≤5000 files per drain); Codex `apply_patch` input shape unverified; no MCP tool for the lane. Merged: lane 00 canvas #927 (`docs/internal/philo/phase-14/canvas/`, 45 shots, ALL FENCES HELD; page https://claude.ai/artifact/E7E4JwVzSD9ieY6hpDQFjY). WAITING ON THE OWNER'S LETTER (A Workbench / B Bench / C Stage); nothing is built until he names one.
 
 PHILO Phase 13, The Desk, is complete (18/18 stories, closed 2026-10-03).
 Record: `pm/roadmap/holdspeak-philo/phase-13-the-desk/current-phase-status.md`.
@@ -67,6 +67,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- #927 — Phase 14 canvas: The Desk Is Objects, three alternatives + control (harness and shots only)
 - #925 — Phase 14 C0: the launch lane backend (events, worktree facts, lane route; secrets redacted before the cut)
 - #924 — Phase 14 charter: The Desk Is Objects
 
