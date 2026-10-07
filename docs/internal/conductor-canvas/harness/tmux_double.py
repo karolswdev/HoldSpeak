@@ -73,7 +73,11 @@ def tmux(argv: list[str]) -> int:
             pane = {"id": f"%{doc['next']}", "path": path}
             doc["next"] += 1
             env = {**os.environ, "PATH": f"{STATE / 'bin'}:{os.environ.get('PATH', '')}", "TMUX_PANE": pane["id"]}
-            proc = subprocess.Popen(["/bin/bash", "-c", command], env=env, stdout=subprocess.DEVNULL,
+            # R2 (#911): the launch hands its credential through a file the
+            # pane's own `/bin/sh -c <reader> holdspeak-agent <file> <cmd>`
+            # reads and removes; run that whole form, as tmux would.
+            run = argv[argv.index("/bin/sh"):] if "holdspeak-agent" in argv and "/bin/sh" in argv else ["/bin/bash", "-c", command]
+            proc = subprocess.Popen(run, env={**env, "SHELL": "/bin/bash"}, stdout=subprocess.DEVNULL,
                                     stderr=subprocess.DEVNULL, start_new_session=True)
             pane["pid"] = proc.pid
             doc["sessions"][name] = pane

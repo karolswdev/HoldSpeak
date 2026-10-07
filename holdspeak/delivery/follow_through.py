@@ -90,7 +90,12 @@ _WORKTREE_GONE = frozenset({"worktree_removed", "worktree_absent"})
 #: Conductor R4: the Heartbeat's merged-only read per Room repository.
 MERGED_OBSERVATION = "conductor.pr_merged"
 MERGED_LIMIT = 30
+#: The first read of a repository goes back this far; later reads continue
+#: from the stored watermark, however long the hub was off.
 MERGED_LOOKBACK_DAYS = 8
+MERGED_QUERIES_PER_REPO = 4
+#: A full window this narrow is taken as read (it cannot be split usefully).
+MERGED_MIN_WINDOW_SECONDS = 60
 #: Registry outcomes that end the cleanup of a removed worktree (R4).
 _REGISTRY_FINAL = frozenset({"unregistered", "not_registered", "primary_kept"})
 SECURE_MODE = "safe"
@@ -275,6 +280,13 @@ class FollowThroughObserver:
         return repos
 
     def _sweep_merged(self, principal: Any) -> dict[str, Any]:
+        """Per repository: drain merged PRs from its completed-through
+        watermark to now, in merged-date windows of at most
+        :data:`MERGED_LIMIT` results. A full window is halved (never
+        skipped); the watermark advances only past a window read whole, and
+        is stored, so a later sweep (or a hub that was off for weeks)
+        continues where this one stopped. At most
+        :data:`MERGED_QUERIES_PER_REPO` reads per repository per sweep."""
         from datetime import timedelta
 
         from ..services.errors import ServiceError
@@ -284,31 +296,74 @@ class FollowThroughObserver:
         repos = self._room_repositories()
         if not repos:
             return receipt
-        since = (self._clock() - timedelta(days=MERGED_LOOKBACK_DAYS)).date().isoformat()
+        now = self._clock().astimezone(timezone.utc).replace(microsecond=0)
+        marks, untils = self._merged_marks()
         source = GitHubWatchSource(runner=self._gh_runner)
         for repo, projects in sorted(repos.items()):
-            try:
-                rows = source.snapshot(principal, query_kind="pull_requests", query={
-                    "repository": repo, "state": "merged", "limit": MERGED_LIMIT,
-                    "search": f"merged:>={since}",
-                })
-            except ServiceError as exc:
-                receipt["repositories"].append({"repository": repo, "state": exc.code})
-                continue
-            except Exception as exc:  # a refused or failed CLI never stops the sweep
-                receipt["repositories"].append(
-                    {"repository": repo, "state": str(getattr(exc, "code", "") or "gh_failed")}
+            through = _parse(marks.get(repo)) or (now - timedelta(days=MERGED_LOOKBACK_DAYS))
+            # The continuation: the narrowed window a full read left for the
+            # next sweep (else the window runs to now).
+            resume = _parse(untils.get(repo))
+            target = resume if resume is not None and through < resume < now else now
+            reads, merged, recorded, state = 0, 0, 0, "live"
+            while through < now and reads < MERGED_QUERIES_PER_REPO:
+                window = f"merged:{_gh_stamp(through)}..{_gh_stamp(target)}"
+                try:
+                    rows = source.snapshot(principal, query_kind="pull_requests", query={
+                        "repository": repo, "state": "merged", "limit": MERGED_LIMIT, "search": window,
+                    })
+                except ServiceError as exc:
+                    state = exc.code
+                    break
+                except Exception as exc:  # a refused or failed CLI never stops the sweep
+                    state = str(getattr(exc, "code", "") or "gh_failed")
+                    break
+                reads += 1
+                merged += len(rows)
+                recorded += sum(
+                    1 for row in rows for project_id in sorted(projects)
+                    if self._record_merge(project_id, repo, row)
                 )
-                continue
-            recorded = sum(
-                1 for row in rows for project_id in sorted(projects)
-                if self._record_merge(project_id, repo, row)
-            )
+                if len(rows) < MERGED_LIMIT or (target - through).total_seconds() <= MERGED_MIN_WINDOW_SECONDS:
+                    # The window is read whole: the watermark moves past it.
+                    through, target = target, now
+                    marks[repo] = through.isoformat()
+                    untils.pop(repo, None)
+                else:
+                    # Full: more may sit in it. Halve it; nothing is skipped.
+                    target = through + (target - through) / 2
+                    untils[repo] = target.isoformat()
+                self._save_merged_marks(marks, untils)
             receipt["recorded"] += recorded
-            receipt["repositories"].append(
-                {"repository": repo, "state": "live", "merged": len(rows), "recorded": recorded}
-            )
+            entry = {"repository": repo, "state": state, "merged": merged, "recorded": recorded,
+                     "through": marks.get(repo) or "", "drained": through >= now}
+            receipt["repositories"].append(entry)
         return receipt
+
+    _MERGED_POLICY = "conductor.merged_prs"
+
+    def _merged_marks(self) -> tuple[dict[str, str], dict[str, str]]:
+        """Per ``owner/name``: the instant through which every merge was read
+        (the watermark), and the end of the next window to read (the
+        continuation, set while a window is too full to read whole)."""
+        try:
+            policy = self._db.cadence.get_policy(self._MERGED_POLICY)
+        except Exception:
+            return {}, {}
+        config = getattr(policy, "config", None) or {}
+
+        def read(key: str) -> dict[str, str]:
+            return {str(k): str(v) for k, v in dict(config.get(key) or {}).items()}
+
+        return read("through"), read("until")
+
+    def _save_merged_marks(self, marks: dict[str, str], untils: dict[str, str]) -> None:
+        from ..cadence.models import CadencePolicy
+
+        self._db.cadence.upsert_policy(CadencePolicy(
+            id=self._MERGED_POLICY, name=self._MERGED_POLICY, enabled=True,
+            config={"through": dict(marks), "until": dict(untils)},
+        ))
 
     def _record_merge(self, project_id: str, repo: str, row: Mapping[str, Any]) -> bool:
         """One merged PR in one Room; a repeat read records nothing."""
@@ -705,8 +760,11 @@ class FollowThroughObserver:
         fact_str = json.dumps(fact, sort_keys=True, separators=(",", ":"))
         content_hash = hashlib.sha256(fact_str.encode("utf-8")).hexdigest()[:32]
         source_id = f"conductor:{fact['launch_id'] or origin}"
+        # Identity from immutable ids only (the Room, the origin, the PR):
+        # a retry after an interrupted save, with a renamed origin, is the
+        # same observation and the same link (Astra #912).
         obs_id = generate_pobs_id(
-            adapter="conductor", source_id=source_id, source_version=url, fact_key=content_hash,
+            adapter="conductor", source_id=f"{project_id}|{origin}", source_version=url, fact_key=url,
         )
         repo = self._db.project_observations
         repo.insert_observation(
@@ -715,7 +773,7 @@ class FollowThroughObserver:
             observed_at=fact["merged_at"] or self._clock().isoformat(timespec="seconds"),
             fact_json=fact_str, content_hash=content_hash,
         )
-        link_id = "plink_" + hashlib.sha256(f"{obs_id}|{origin}|{url}".encode()).hexdigest()[:24]
+        link_id = "plink_" + hashlib.sha256(f"{project_id}|{origin}|{url}".encode()).hexdigest()[:24]
         if repo.get_evidence_link(link_id) is None:
             repo.insert_evidence_link(
                 link_id=link_id, project_id=project_id, target_ref=origin,
@@ -964,6 +1022,11 @@ class FollowThroughObserver:
         except Exception as exc:  # the audit row never blocks the release
             log.warning("gate release audit not written (%s)", exc)
         return "released"
+
+
+def _gh_stamp(moment: datetime) -> str:
+    """A GitHub search instant: ``2026-10-06T11:00:00+00:00``."""
+    return moment.astimezone(timezone.utc).replace(microsecond=0).isoformat()
 
 
 def _git_runner(argv: list[str]) -> Any:

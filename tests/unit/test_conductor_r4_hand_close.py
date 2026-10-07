@@ -73,6 +73,8 @@ class FakeAcli:
     def __init__(self) -> None:
         self.calls: list[list[str]] = []
         self.resolved = False
+        self.summary = "Reconciliation job slow on month-end data"
+        self.active_email = "me@acme.dev"
         self.description: Any = {
             "type": "doc", "version": 1,
             "content": [{"type": "paragraph", "content": [{"type": "text", "text": BODY}]}],
@@ -86,7 +88,7 @@ class FakeAcli:
         if verb == ["jira", "auth", "status"]:
             return SimpleNamespace(
                 returncode=0, stderr="",
-                stdout="✓ Authenticated\n  Site: acme.atlassian.net\n  Email: me@acme.dev\n",
+                stdout=f"✓ Authenticated\n  Site: acme.atlassian.net\n  Email: {self.active_email}\n",
             )
         if verb == ["jira", "workitem", "search"]:
             if self.resolved:
@@ -94,7 +96,7 @@ class FakeAcli:
             issues = [{
                 "key": "PAY-418", "id": "10418",
                 "fields": {
-                    "summary": "Reconciliation job slow on month-end data",
+                    "summary": self.summary,
                     "labels": ["ledger", "performance"],
                     "status": {"name": "To Do", "statusCategory": {"key": "new"}},
                     "issuetype": {"name": "Bug"},
@@ -480,11 +482,13 @@ def test_merge_no_agent_made_is_in_the_weekly_update(tmp_path, db) -> None:
     receipt = _sweep(rig)
 
     assert receipt["merged_prs"]["repositories"] == [
-        {"repository": "acme/railsproj", "state": "live", "merged": 1, "recorded": 1},
+        {"repository": "acme/railsproj", "state": "live", "merged": 1, "recorded": 1,
+         "through": "2026-10-06T12:00:00+00:00", "drained": True},
     ]
     call = rig.gh.calls[0]
     assert call[:3] == ["gh", "pr", "list"] and call[call.index("--state") + 1] == "merged"
-    assert call[call.index("--search") + 1] == "merged:>=2026-09-28", "bounded to the last 8 days"
+    assert call[call.index("--search") + 1] == "merged:2026-09-28T12:00:00+00:00..2026-10-06T12:00:00+00:00", \
+        "a first read goes back 8 days"
     assert int(call[call.index("--limit") + 1]) == 30
     _delta, updates = _updates(db)
     draft = updates.draft_update(OWNER, PROJECT)
@@ -702,7 +706,9 @@ def test_the_merged_read_without_a_runner_never_runs_the_real_gh(tmp_path, db, m
         attempts=WorkAttemptService(db.work_attempts), clock=lambda: NOON,
     )
     receipt = observer.sweep_merged(SWEEPER)
-    assert receipt["repositories"] == [{"repository": "acme/railsproj", "state": "real_cli_refused_in_tests"}]
+    assert [(r["repository"], r["state"], r["drained"]) for r in receipt["repositories"]] == [
+        ("acme/railsproj", "real_cli_refused_in_tests", False),
+    ]
     assert ran == []
 
 
@@ -732,3 +738,130 @@ def test_the_same_item_can_be_handed_again_after_cleanup(tmp_path, db, monkeypat
     assert (rig.repo.parent / name / ".git").exists(), "a real new worktree"
     assert _git(rig.repo.parent / name, "rev-parse", "--abbrev-ref", "HEAD") == branch
     rig.tmux.ended = True
+
+
+# ── Astra round 1 on #912 ────────────────────────────────────────────
+
+class WindowedGh(FakeGh):
+    """``gh pr list --state merged --search merged:A..B --limit N`` as GitHub
+    answers it: the merges in the window, newest first, at most N."""
+
+    def __init__(self, merges: list[datetime]) -> None:
+        super().__init__()
+        self.merges = merges
+
+    def __call__(self, argv, cwd=None):
+        self.calls.append(list(argv))
+        window = argv[argv.index("--search") + 1].split(":", 1)[1]
+        start, end = (datetime.fromisoformat(x) for x in window.split(".."))
+        limit = int(argv[argv.index("--limit") + 1])
+        inside = sorted((m for m in self.merges if start <= m <= end), reverse=True)[:limit]
+        rows = [dict(_pr(f"f-{m:%j%H%M}", "c" * 40), number=1000 + self.merges.index(m), title=f"Merge {self.merges.index(m)}",
+                     url=f"https://github.com/acme/railsproj/pull/{1000 + self.merges.index(m)}",
+                     mergedAt=m.isoformat()) for m in inside]
+        return SimpleNamespace(returncode=0, stdout=json.dumps(rows), stderr="")
+
+
+def _windowed_rig(tmp_path, db, merges, clock):
+    rig = _merged_only_rig(tmp_path, db)
+    rig.gh = WindowedGh(merges)
+    rig.observer._gh_runner = lambda argv, **_kw: rig.gh(argv)
+    rig.observer._clock = clock
+    return rig
+
+
+def test_finding2_more_merges_than_one_read_are_all_reported(tmp_path, db) -> None:
+    merges = [NOON - timedelta(hours=2 + n) for n in range(31)]  # 31 > the 30-result read
+    rig = _windowed_rig(tmp_path, db, merges, lambda: NOON)
+    for _ in range(4):
+        _sweep(rig)
+    obs = _observations(db, "conductor.pr_merged")
+    assert len(obs) == 31, f"{len(obs)} of 31 merges recorded"
+    body = _updates(db)[1].draft_update(OWNER, PROJECT)["body_md"]
+    assert all(f"Merge {n} (PR #{1000 + n})" in body for n in range(31))
+    assert all(int(c[c.index("--limit") + 1]) == 30 for c in rig.gh.calls), "bounded reads"
+
+
+def test_finding2_a_hub_off_for_weeks_still_reports_every_merge(tmp_path, db) -> None:
+    old = NOON - timedelta(days=20)
+    rig = _windowed_rig(tmp_path, db, [], lambda: old)
+    _sweep(rig)  # the watermark is now 20 days back
+    rig.gh.merges = [NOON - timedelta(days=15), NOON - timedelta(days=1)]
+    rig.observer._clock = lambda: NOON
+
+    _sweep(rig)
+
+    titles = sorted(json.loads(o["fact_json"])["title"] for o in _observations(db, "conductor.pr_merged"))
+    assert titles == ["Merge 0", "Merge 1"], "the merge 15 days back is read (no 8-day cut)"
+
+
+def test_finding3_an_interrupted_close_with_a_renamed_issue_links_once(tmp_path, db, monkeypatch) -> None:
+    from holdspeak.services.watch_service import WatchService
+    from holdspeak.services.watch_sources import fetch_watch_snapshot
+
+    acli = _jira_watch(db)
+    rig = _launch(tmp_path, db, monkeypatch, ("issue", ISSUE_ID), acli=acli)
+    rig.gh.prs = [_pr(rig.branch, rig.head)]
+    save = rig.observer._save
+    interrupted = []
+
+    def flaky(launch_id, state):
+        if state.get("close") == "linked" and not interrupted:
+            interrupted.append(launch_id)
+            raise RuntimeError("the hub stopped before the ledger write")
+        return save(launch_id, state)
+
+    rig.observer._save = flaky
+    _sweep(rig)
+    assert interrupted and len(_links(db)) == 1
+    acli.summary = "Reconciliation job slow at month end (renamed)"
+    adapter = JiraProviderAdapter(db=db, runner=acli)
+    WatchService(
+        db, snapshot_fetcher=lambda principal, **kw: fetch_watch_snapshot(principal, jira_adapter=adapter, **kw),
+    ).evaluate_once(OWNER, WATCH)
+
+    _sweep(rig)
+
+    assert rig.launches.get(rig.result["launch_id"])["follow_through"]["close"] == "linked"
+    assert len(_observations(db, "conductor.pr_linked")) == 1, "one observation"
+    assert _links(db) == [(f"issue:{ISSUE_ID}", PR_URL, "merged_pr")], "one link"
+
+
+def test_finding4_reading_a_jira_body_never_switches_the_acli_account(db) -> None:
+    acli = _jira_watch(db)
+    before = len(acli.calls)
+    brief = compose_agent_brief(
+        db, {"kind": "issue", "id": ISSUE_ID}, control_mode="yolo",
+        principal=OWNER, issue_reads={"jira_adapter": JiraProviderAdapter(db=db, runner=acli)},
+    )
+    calls = acli.calls[before:]
+    assert BODY in brief["text"]
+    assert not any(c[1:4] == ["jira", "auth", "switch"] for c in calls), calls
+    assert [c[1:4] for c in calls] == [["jira", "auth", "status"], ["jira", "workitem", "view"]]
+    assert brief["tracker"] == {"host": "acme.atlassian.net", "state": "read"}
+
+
+def test_finding4_another_active_account_is_not_read_and_not_switched(db) -> None:
+    acli = _jira_watch(db)
+    acli.active_email = "someone.else@acme.dev"
+    before = len(acli.calls)
+    brief = compose_agent_brief(
+        db, {"kind": "issue", "id": ISSUE_ID}, control_mode="yolo",
+        principal=OWNER, issue_reads={"jira_adapter": JiraProviderAdapter(db=db, runner=acli)},
+    )
+    calls = acli.calls[before:]
+    assert [c[1:4] for c in calls] == [["jira", "auth", "status"]], calls
+    assert "Body: not read" in brief["text"] and BODY not in brief["text"]
+    assert brief["tracker"] == {"host": "acme.atlassian.net", "state": "not_read"}
+
+
+def test_finding5_the_preview_names_the_tracker_host(tmp_path, db, monkeypatch) -> None:
+    from holdspeak.services.agent_hand_preview import preview_hand
+
+    gh, _watches = _gh_issue_watch(db)
+    rig = _rig(tmp_path, db, monkeypatch, item=("issue", GH_ISSUE_ID))
+    rig.hand.issue_reads = {"gh_runner": gh}
+    _git(rig.repo, "remote", "add", "origin", "https://github.com/acme/railsproj.git")
+    answer = preview_hand(rig.hand, OWNER, "issue", GH_ISSUE_ID)
+    assert answer["tracker"] == {"host": "github.com", "state": "read"}
+    assert answer["sources"][0]["kind"] == "issue"

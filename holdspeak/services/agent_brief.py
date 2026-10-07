@@ -288,10 +288,10 @@ def _hs_block(repo_path: Optional[str]) -> Optional[GroundingBlock]:
 
 def _issue_block(
     db: Any, item_id: str, principal: Any, reads: Mapping[str, Any],
-) -> GroundingBlock:
+) -> tuple[GroundingBlock, dict[str, str]]:
     """The issue as the brief's item part: the snapshot's title, labels,
     status and URL, and its body read once from the tracker."""
-    from .agent_issue import issue_body, issue_label, issue_text, read_issue
+    from .agent_issue import issue_body, issue_label, issue_text, read_issue, tracker_host
 
     issue = read_issue(db, item_id)
     if issue is None:
@@ -303,9 +303,11 @@ def _issue_block(
     body, state = issue_body(
         principal, issue, gh_runner=reads.get("gh_runner"), jira_adapter=reads.get("jira_adapter"),
     )
-    return GroundingBlock(
+    block = GroundingBlock(
         "issue", item_id, issue_label(issue), issue.get("url") or "", issue_text(issue, body, state),
     )
+    # The read left the machine: the launch sheet names where (R4, Astra #912).
+    return block, {"host": tracker_host(issue), "state": "read" if state == "read" else "not_read"}
 
 
 def acceptance_checks(kind: str, item_id: str, control_mode: str) -> list[str]:
@@ -357,8 +359,10 @@ def compose_agent_brief(
     name."""
     kind, item_id = parse_item_ref(item_ref)
     own_ref = f"{kind}:{item_id}"
+    tracker: Optional[dict[str, str]] = None
     if kind == "issue":
-        item_blocks = [_issue_block(db, item_id, principal, issue_reads or {})]
+        issue_block, tracker = _issue_block(db, item_id, principal, issue_reads or {})
+        item_blocks = [issue_block]
     else:
         hydrated = hydrate_refs_detailed(db, [], [], "summary", [own_ref])
         if hydrated.unknown or not hydrated.blocks:
@@ -446,6 +450,8 @@ def compose_agent_brief(
         "people_cut": people_cut,
         "sources": sources,
         "acceptance": acceptance_checks(kind, item_id, control_mode),
+        # An issue's body was read from its tracker: the host and the outcome.
+        "tracker": tracker,
     }
 
 

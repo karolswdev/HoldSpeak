@@ -26,6 +26,9 @@ export interface HandOrigin {
   id: string;
   title: string;
   projectId?: string | null;
+  /** An issue's tracker host (from its row's URL): the brief reads its body
+   * there, and the sheet names it before the preview answers. */
+  trackerHost?: string | null;
 }
 
 /** The launch profile of each agent (factory_launch `_DEFAULT_PROFILES`). */
@@ -72,6 +75,14 @@ export function openHand(origin: HandOrigin): void {
   useAgentHand.getState().open(origin);
 }
 
+function hostOf(url: string | null | undefined): string | null {
+  try {
+    return url ? new URL(url).hostname.toLowerCase() : null;
+  } catch {
+    return null;
+  }
+}
+
 /** The fields a Door or Room row carries that name its item. */
 export interface HandRowItem {
   title?: string | null;
@@ -83,6 +94,7 @@ export interface HandRowItem {
   kind?: string | null;
   watchId?: string | null;
   entityId?: string | null;
+  url?: string | null;
   _doorCard?: { lawful_verbs?: Array<{ name: string; arguments: Record<string, unknown> }> } | null;
 }
 
@@ -100,7 +112,7 @@ export function handOriginOfRow(item: HandRowItem): HandOrigin | null {
   }
   if (item.actionItemId) return { kind: "action", id: String(item.actionItemId), title, projectId };
   const issue = issueOriginId(item);
-  if (issue) return { kind: "issue", id: issue, title, projectId };
+  if (issue) return { kind: "issue", id: issue, title, projectId, trackerHost: hostOf(item.url) };
   if (item.source === "decision") {
     const ref = handRefOf(item.openRef);
     if (ref?.kind === "decision") return { ...ref, title, projectId };

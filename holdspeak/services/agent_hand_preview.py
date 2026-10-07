@@ -260,6 +260,7 @@ def preview_hand(
         "people_cut": brief["people_cut"],
         "sources": brief["sources"],
         "acceptance": brief["acceptance"],
+        "tracker": brief.get("tracker"),
         "repo": repo,
         "repo_label": _home_as_tilde(repo),
         "branch": spec["branch"],

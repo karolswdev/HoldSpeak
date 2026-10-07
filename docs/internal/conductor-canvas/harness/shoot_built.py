@@ -262,6 +262,7 @@ def boards(r: board.Runner) -> None:
     r.shoot("K3a-launch-sheet-claude", "Hand to agent",
             whole=["[data-testid=hand-launch]", ".desk-hand-footer .gadget-chip-egress", "[data-testid=hand-control]"],
             checks={"the egress chip names Anthropic": "API.ANTHROPIC.COM" in ev(footer),
+                    "no tracker read for an action item (R4)": not ev("() => !!document.querySelector('[data-testid=hand-tracker]')"),
                     "the brief composed (sources listed)": ev("() => document.querySelectorAll('[data-testid=hand-sheet] li.surface-ledger-row').length") > 0,
                     "WHERE names the repository": "PAYMENTS-LEDGER" in ev("() => (document.querySelector('[data-testid=hand-where]') || {}).innerText || ''").upper()},
             extra={"sheet": ev("() => (document.querySelector('[data-testid=hand-sheet]') || {}).innerText || ''")[:1200]})
@@ -296,7 +297,9 @@ def boards(r: board.Runner) -> None:
     r.tap(page.locator("[data-testid=hand-sheet] label.surface-choice-card:has-text('Codex')").first, 2000)
     r.shoot("K3b-launch-sheet-codex", "Hand to agent", whole=["[data-testid=hand-launch]", ".desk-hand-footer .gadget-chip-egress"],
             checks={"the egress chip follows the pick": "API.OPENAI.COM" in ev(footer),
-                    "the sheet carries the issue (R4)": "PAY-418" in ev("() => (document.querySelector('[data-testid=hand-sheet]') || {}).innerText || ''")},
+                    "the sheet carries the issue (R4)": "PAY-418" in ev("() => (document.querySelector('[data-testid=hand-sheet]') || {}).innerText || ''"),
+                    "the issue-body read names its host and an outcome (R4, Astra #912)": ev(
+                        "() => { const t = document.querySelector('[data-testid=hand-tracker]'); return !!t && t.innerText.includes('ACME.ATLASSIAN.NET') && ['success','failure'].includes(t.dataset.state); }")},
             extra={"sheet": ev("() => (document.querySelector('[data-testid=hand-sheet]') || {}).innerText || ''")[:1200]})
     close_sheet(r)
 

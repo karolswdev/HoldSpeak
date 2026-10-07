@@ -110,8 +110,18 @@ def issue_label(issue: Mapping[str, Any]) -> str:
     return f"{marker} {issue.get('title') or ''}".strip()
 
 
-# ── the body, read once at brief time ────────────────────────────────
+def tracker_host(issue: Mapping[str, Any]) -> str:
+    """The host an issue's body is read from: the Jira site, or github.com."""
+    if issue.get("connector") == "jira":
+        site = str(issue.get("connection_ref") or "").split("|", 1)[0].strip().lower()
+        if site:
+            return site
+    from urllib.parse import urlsplit
 
+    return (urlsplit(str(issue.get("url") or "")).hostname or "github.com").lower()
+
+
+# ── the body, read once at brief time ────────────────────────────────
 
 def _adf_text(node: Any) -> str:
     """Plain text of an Atlassian document (``description`` in ADF), or
@@ -176,6 +186,8 @@ def _jira_body(principal: Any, issue: Mapping[str, Any], adapter: Any) -> tuple[
         return "", "body_not_read"
     if not isinstance(result, Mapping) or result.get("state") != "ready":
         return "", "body_not_read"
+    # No People cut here: launched agents may read People information
+    # (owner ruling 2026-10-06; lane R7 owns the brief's People handling).
     return _adf_text(result.get("description")).strip(), "read"
 
 
@@ -228,4 +240,5 @@ __all__ = [
     "issue_text",
     "read_issue",
     "split_issue_id",
+    "tracker_host",
 ]
