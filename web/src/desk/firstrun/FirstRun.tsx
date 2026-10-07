@@ -52,6 +52,7 @@ import { useConnectionsStep } from "./connectionsStep";
 import { useAgentsStep } from "./agentsStep";
 import { Ready } from "./Ready";
 import { LanServerRow, type LanUsed } from "./LanServer";
+import { isLanAddress } from "../../features/concierge/endpointDraft";
 import "../../features/concierge/concierge.css";
 import "./firstrun.css";
 
@@ -124,7 +125,18 @@ function LocalAiCard({
   const total = groups.reduce((sum, group) => sum + group.bytes, 0);
   const missing = missingBytes(status);
   // A server on his network answers for the chat work: the card is done.
+  // Astra r1 (finding 4): "LAN" only for a private address; else the host.
   const lanHost = lanUsed?.host ? lanUsed.host.split(":")[0].toUpperCase() : "";
+  const loopback = /^127\./.test(lanHost) || lanHost === "LOCALHOST";
+  const lanLabel = loopback
+    ? "THIS DEVICE"
+    : lanHost && isLanAddress(`http://${lanHost.toLowerCase()}`) && /^[\d.]+$/.test(lanHost)
+      ? `LAN · ${lanHost}`
+      : lanHost;
+  // The speech model is not on this device: with a server for the rest he
+  // still needs Whisper, and the card keeps that one download.
+  const whisper = groups.find((g) => g.key === "whisper");
+  const speechMissing = Boolean(whisper && !whisper.onDevice);
   return (
     <Card
       title="Local AI"
@@ -132,7 +144,7 @@ function LocalAiCard({
       selected={ready || Boolean(lanUsed)}
       state={
         ready ? <LampGadget label="ON DEVICE" on />
-        : lanUsed ? <StateChip state="success" label={`LAN · ${lanHost}`} icon="●" />
+        : lanUsed ? <StateChip state="success" label={lanLabel} icon="●" />
         : null
       }
     >
@@ -146,7 +158,7 @@ function LocalAiCard({
         </div>
       ) : null}
       {status && (running || state === "failed") ? (
-        <ProgressPlan compact steps={planSteps(status, ai.rate)} ariaLabel="Local AI download" />
+        <ProgressPlan compact steps={planSteps(status, ai.rate, ai.only)} ariaLabel="Local AI download" />
       ) : status && !(folded && ready) ? (
         <ModelRows groups={groups} ready={ready} />
       ) : null}
@@ -176,10 +188,10 @@ function LocalAiCard({
                 .join(" · ")}
               timestamp={ai.finishedAt ?? undefined}
             />
-          ) : host && (missing > 0 || running) && !(lanUsed && !running) ? (
+          ) : host && (missing > 0 || running) && (!lanUsed || speechMissing || running) ? (
             <EgressChip label={host} scope="cloud" />
           ) : null}
-          {state === "not_started" && !lanUsed ? (
+          {state === "not_started" && !lanUsed && !(lanOpen && speechMissing) ? (
             <Button
               variant={lanOpen ? "secondary" : "primary"}
               loading={ai.busy}
@@ -194,6 +206,19 @@ function LocalAiCard({
           {state === "not_started" && !lanOpen && !lanUsed ? (
             <Button variant="secondary" onClick={onLan} data-testid="firstrun-lan-verb">
               Use a server on my network
+            </Button>
+          ) : null}
+          {/* Astra r1 (finding 2): beside the server choice, the speech
+              model alone, named and sized, when it is not on this device. */}
+          {state === "not_started" && (lanOpen || lanUsed) && speechMissing && whisper ? (
+            <Button
+              variant={lanUsed ? "primary" : "secondary"}
+              loading={ai.busy}
+              disabled={ai.busy}
+              onClick={() => void ai.startSpeech()}
+              data-testid="firstrun-speech-verb"
+            >
+              {`Set up speech · ${formatBytes(whisper.bytes)}`}
             </Button>
           ) : null}
           {running ? (

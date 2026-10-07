@@ -253,7 +253,9 @@ def test_propose_whisper_on_speech_recognition_only_and_waiting():
 
     result = propose(engines=engines)
     rows = result["rows"]
-    assert len(rows) == 7  # all seven groups
+    # PHILO-15 10 (Astra r1): six owner groups; the internal Chat group is
+    # not a row the owner sees.
+    assert len(rows) == 6
 
     # Speech recognition -> whisper (local only)
     speech_row = [r for r in rows if r["group"] == "speech_recognition"][0]
@@ -269,13 +271,13 @@ def test_propose_whisper_on_speech_recognition_only_and_waiting():
         # The important thing: speech_recognition is ALWAYS local whisper only
 
 
-def test_propose_chat_label_is_chat():
-    """S-1: the wire's chat_practice label becomes Chat."""
+def test_propose_has_no_internal_chat_row():
+    """PHILO-15 10 (Astra r1, finding 5): "Chat" held only chat compaction and
+    the chat guardrail, internal works; desk chat (chat.turn) is in Thoughts &
+    notes. The internal group is no longer an owner row."""
     from holdspeak.services.concierge_service import ASSIGNMENT_GROUPS
 
-    chat_group = [g for g in ASSIGNMENT_GROUPS if g[0] == "chat_practice"]
-    assert len(chat_group) == 1
-    assert chat_group[0][1] == "Chat"
+    assert [g for g in ASSIGNMENT_GROUPS if g[0] == "chat_practice"] == []
 
 
 def test_propose_does_not_offer_a_text_only_whisper_profile_to_speech():

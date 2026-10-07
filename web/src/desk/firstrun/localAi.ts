@@ -68,8 +68,7 @@ export interface LocalAiGroup {
  *  PHILO-15 10 (B18): one size rule for every face — the Concierge's
  *  `humanSize`; below 1 MB this face still says `1 MB`. */
 export function formatBytes(bytes: number): string {
-  if (bytes < 1e6) return "1 MB";
-  return humanSize(bytes) ?? "1 MB";
+  return humanSize(bytes) ?? "0 MB";
 }
 
 /** The groups the face shows: one row per key, every file of it summed. */
@@ -128,8 +127,8 @@ export function sourceHost(status: LocalAiStatus | null): string {
  * `bytes_done` counts every byte this run fetched, the finished files too.
  * The finished files are `on_device` now, so the bytes of the file in
  * progress are `bytes_done` less what already landed in this run. */
-export function planSteps(status: LocalAiStatus, rate: string | null): PlanStep[] {
-  const groups = groupsOf(status);
+export function planSteps(status: LocalAiStatus, rate: string | null, only?: string[] | null): PlanStep[] {
+  const groups = groupsOf(status).filter((g) => !only || only.includes(g.key));
   const remaining = groups.filter((g) => !g.onDevice).reduce((s, g) => s + g.bytes, 0);
   const landed = Math.max(0, (status.bytes_total || 0) - remaining);
   const current = Math.max(0, (status.bytes_done || 0) - landed);
@@ -218,11 +217,14 @@ export function useLocalAi() {
     }
   }, [accept]);
 
+  // PHILO-15 10 (Astra r1): which groups the running download fetches;
+  // `["whisper"]` when he chose a server on his network for the rest.
+  const [only, setOnly] = useState<string[] | null>(null);
   const act = useCallback(
-    async (path: string) => {
+    async (path: string, json?: Record<string, unknown>) => {
       setBusy(true);
       try {
-        accept(await apiFetch<LocalAiStatus>(path, { method: "POST" }));
+        accept(await apiFetch<LocalAiStatus>(path, { method: "POST", ...(json ? { json } : {}) }));
       } catch {
         // A refusal (no runtime, no disk) is stored on the hub: the next
         // read names it on the card.
@@ -256,7 +258,16 @@ export function useLocalAi() {
     finishedAt,
     host: host.current,
     refresh,
-    start: () => act(LOCAL_AI_PATH),
+    only,
+    start: () => {
+      setOnly(null);
+      return act(LOCAL_AI_PATH);
+    },
+    /** Download the speech model alone (Astra r1, finding 2). */
+    startSpeech: () => {
+      setOnly(["whisper"]);
+      return act(LOCAL_AI_PATH, { only: ["whisper"] });
+    },
     cancel: () => act(`${LOCAL_AI_PATH}/cancel`),
   };
 }

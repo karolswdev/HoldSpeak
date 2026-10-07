@@ -10,6 +10,7 @@ import {
   EgressChip,
   ChoiceCardShell,
   StringGadget,
+  CheckGadget,
   countToken,
 } from "../../desk/surface";
 import { Button } from "../../components/signal/Signal";
@@ -201,20 +202,20 @@ function SetGroupRow({
             {!isOff && latency ? <span className="concierge-token">{latency}</span> : null}
             {!isOff && hostLabel ? <EgressChip label={hostLabel} scope={engine ? engineHostScope(engine) : "local"} /> : null}
           </span>
-          {/* The work it cannot do, and the plain reason, on the row. */}
-          {!isOff && row.state !== "READY" && (row.plainReason || row.blocked?.length) ? (
+          {/* The work it cannot do, in the owner's names, as tokens
+              (Astra r1, finding 5: no sentence, no internal labels). */}
+          {!isOff && (row.state === "LIMITED" || row.state === "INCOMPATIBLE") && row.blocked?.length ? (
             <span className="concierge-set-line2 concierge-set-limit" data-testid={`concierge-set-limit-${row.group}`}>
-              {row.blocked?.slice(0, 2).map((label) => (
-                <span className="concierge-token" key={label}>{`NO ${label.toUpperCase()}`}</span>
+              <span className="concierge-limit-caption">WITHOUT</span>
+              {row.blocked.map((name) => (
+                <span className="concierge-token" key={name}>{name.toUpperCase()}</span>
               ))}
-              {row.blocked && row.blocked.length > 2 ? (
-                <span className="concierge-token" title={row.blocked.slice(2).join(", ")}>
-                  {`+${row.blocked.length - 2} MORE`}
-                </span>
-              ) : null}
-              {row.plainReason ? (
-                <span className="concierge-repair-reason">{row.plainReason}</span>
-              ) : null}
+            </span>
+          ) : null}
+          {/* A failed group keeps its reason token until the next press. */}
+          {row.state === "UNREACHABLE" && row.failToken ? (
+            <span className="concierge-set-line2" data-testid={`concierge-set-fail-${row.group}`}>
+              <span className="concierge-token" data-tone="danger">{row.failToken}</span>
             </span>
           ) : null}
         </span>
@@ -459,6 +460,17 @@ export function AddEngineRow({ ctrl, lead }: { ctrl: ConciergeController; lead: 
             placeholder="optional"
           />
         </span>
+        {/* Astra r1 (finding 4): MY SERVER is the owner's word that this
+            address is his own server; only then does the Check send its
+            1-token request to an address with a key or a name. */}
+        <span data-testid="concierge-add-my-server">
+          <CheckGadget
+            variant="token"
+            label="MY SERVER"
+            checked={ctrl.addEngineMyServer}
+            onChange={ctrl.setAddEngineMyServer}
+          />
+        </span>
         {/* Article III / UX-CANON A9: the host is named ON the row that
             leaves the machine, BEFORE the verb that leaves it. */}
         {checkHost ? (
@@ -573,11 +585,9 @@ export function ConciergeCore({ scope }: CoreProps) {
   // After apply: `3 GROUPS SET · 1 FAILED · <plainReason>`
   const receiptParts: string[] = [];
   if (ctrl.applyReceipt) {
-    // PHILO-15 10 (B10): the press's own receipt, on this face.
+    // PHILO-15 10 (B10): the press's own receipt, on this face; every
+    // failed group as `<GROUP> · <REASON TOKEN>` (Astra r1, finding 3).
     receiptParts.push(receiptLine(ctrl.applyReceipt));
-    if (ctrl.applyReceipt.failures[0]?.plainReason) {
-      receiptParts.push(ctrl.applyReceipt.failures[0].plainReason);
-    }
   } else if (ctrl.applyFailures.length > 0) {
     const setCount = ctrl.setRows.length - ctrl.applyFailures.length;
     const setToken = countToken(setCount, "GROUP SET", "GROUPS SET");

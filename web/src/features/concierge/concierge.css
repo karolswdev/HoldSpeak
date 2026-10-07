@@ -597,3 +597,10 @@
 .concierge-probe-spacer {
   flex: 1 1 auto;
 }
+
+/* PHILO-15 10 (Astra r1): the caption before a LIMITED group's work names. */
+.concierge-limit-caption {
+  font: 600 12px/1 "JetBrains Mono", monospace;
+  letter-spacing: 0.06em;
+  color: var(--text-faint, #8b93a3);
+}

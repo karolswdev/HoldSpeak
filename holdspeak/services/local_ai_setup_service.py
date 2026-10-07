@@ -31,7 +31,7 @@ import shutil
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Iterable
 from urllib.request import urlopen
 
 from ..deployment_revisions import DeploymentRevision
@@ -126,24 +126,14 @@ def starter_model_path(home: Path, preset: Optional[dict[str, Any]] = None) -> P
 def starter_claims() -> list[str]:
     """The honest capability claims of the starter on llama.cpp.
 
-    * ``language``: a chat model (the same base claim the Models library
-      gives a connected provider).
-    * ``result_schema:<meeting intel schema>``: meeting analysis
-      (``meeting.deferred_analysis`` and ``meeting.live_analysis`` share it).
-      The same-device engine (``inference_targets._local_pinned_engine`` ->
-      ``MeetingIntel(provider="local")``) sends that schema to llama.cpp as a
-      JSON-schema grammar, so the output is constrained to it.
-
-    Not claimed, because no executor on this path enforces their schema:
-    the meeting plugins (``meeting_plugin`` class + their own schemas),
-    ``thought.interview``, ``chat.compact``/``chat.guardrail``,
-    ``agent.plan``/``agent.tool_turn``, ``calendar.snapshot_extract`` (image)
-    and the speech classifiers.  No profile in the product claims those today.
+    ``language`` (a chat model), plus the result schemas of every structured
+    work whose executor path checks the typed result before it succeeds
+    (``model_library_service.enforced_result_claims``, PHILO-15 10): the
+    same rule as a connected engine, one list for both.
     """
-    from ..inference_capabilities import process_inference_capability_registry
+    from .model_library_service import enforced_result_claims
 
-    schema = process_inference_capability_registry().require("meeting.deferred_analysis")
-    return ["language", f"result_schema:{schema.output_schema_sha256}"]
+    return ["language", *enforced_result_claims()]
 
 
 def file_ref(model: PinnedModel) -> str:
@@ -365,22 +355,35 @@ class LocalAISetupService:
 
     # ── commands ─────────────────────────────────────────────────────
 
-    def start(self, principal: Principal) -> dict[str, Any]:
-        """The owner's call.  Check the runtime, then download, then set up."""
+    def start(self, principal: Principal, *, only: Optional[Iterable[str]] = None) -> dict[str, Any]:
+        """The owner's call.  Check the runtime, then download, then set up.
+
+        PHILO-15 10 (Astra r1, finding 2): ``only=("whisper",)`` downloads the
+        speech model alone, for an owner whose chat runs on a server on his
+        network. Nothing is set up after it: Whisper needs no record.
+        """
         self._require_owner(principal)
+        keys = None if only is None else {str(k) for k in only}
+        if keys is not None and not keys <= {"whisper", "embed", "starter"}:
+            raise ServiceError("local_ai_invalid", "Unknown model group.", context={"status": 400})
+        speech_only = keys == {"whisper"}
         with self._lock:
             if self._downloading():
                 return self.status(principal)
             self._error = ""
             # Runtime FIRST: no request leaves this device without it.
-            if not self._runtime()["ready"]:
+            # (The speech model runs on its own runtime, not llama.cpp.)
+            if not speech_only and not self._runtime()["ready"]:
                 self._error = "runtime"
                 raise ServiceError(
                     "local_ai_runtime_unavailable", _ERRORS["runtime"],
                     context={"status": 409, "runtime": self._runtime()},
                 )
             plan = self._plan()
-            missing = [item for item in plan if not item["on_device"]]
+            missing = [
+                item for item in plan
+                if not item["on_device"] and (keys is None or item["key"] in keys)
+            ]
             if missing:
                 need = sum(item["model"].size for item in missing)
                 root = self._home()
@@ -392,13 +395,14 @@ class LocalAISetupService:
                 self._bytes = 0
                 self._bytes_total = need
                 self._thread = threading.Thread(
-                    target=self._download_then_set_up, args=(principal, plan, missing),
+                    target=self._download_then_set_up, args=(principal, plan, missing, not speech_only),
                     name="local-ai-setup", daemon=True,
                 )
                 self._thread.start()
                 return self.status(principal)
         # Every file is on this device: no download, only the setup records.
-        self._set_up(principal, plan)
+        if not speech_only:
+            self._set_up(principal, plan)
         return self.status(principal)
 
     def cancel(self, principal: Principal) -> dict[str, Any]:
@@ -449,6 +453,7 @@ class LocalAISetupService:
 
     def _download_then_set_up(
         self, principal: Principal, plan: list[dict[str, Any]], missing: list[dict[str, Any]],
+        set_up: bool = True,
     ) -> None:
         from ..kernel.external_egress import EgressOperationRefused, run_external_egress
 
@@ -492,7 +497,8 @@ class LocalAISetupService:
             return
         if self._cancel.is_set():
             return
-        self._set_up(principal, plan)
+        if set_up:
+            self._set_up(principal, plan)
 
     # ── setup records ────────────────────────────────────────────────
 
@@ -525,7 +531,7 @@ class LocalAISetupService:
         source = preset["source"]
         artifact_id = starter_artifact_id(preset)
         artifact_manifest = {"files": [{"path": model.filename, "sha256": source["file_sha256"], "size": model.size}]}
-        claims = {"revision": "local-ai-starter-v2", "claims": starter_claims()}
+        claims = {"revision": "local-ai-starter-v3", "claims": starter_claims()}
         capability_manifest = {**claims, "sha256": _sha(claims)}
         revision = DeploymentRevision.from_artifact(
             destination_id="this_machine", engine="configured_local_engine",

@@ -736,7 +736,7 @@ describe("Add an engine: the optional Key", () => {
       summaryAssignment: assigned(),
     });
     await typeAndCheck("local");
-    expect(mocks.checkEndpoint).toHaveBeenCalledWith(LAN_URL, "local");
+    expect(mocks.checkEndpoint).toHaveBeenCalledWith(LAN_URL, "local", false);
     fireEvent.click(screen.getByTestId("concierge-add-submit"));
     await waitFor(() => expect(mocks.summarySelection).toHaveBeenCalled());
     const [draft, key] = mocks.defineEndpoint.mock.calls[0] as [
@@ -762,7 +762,7 @@ describe("Add an engine: the optional Key", () => {
       summaryAssignment: assigned(),
     });
     await typeAndCheck("");
-    expect(mocks.checkEndpoint).toHaveBeenCalledWith(LAN_URL, "");
+    expect(mocks.checkEndpoint).toHaveBeenCalledWith(LAN_URL, "", false);
     fireEvent.click(screen.getByTestId("concierge-add-submit"));
     await waitFor(() => expect(mocks.summarySelection).toHaveBeenCalled());
     const [draft, key] = mocks.defineEndpoint.mock.calls[0] as [

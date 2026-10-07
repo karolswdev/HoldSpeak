@@ -2,7 +2,7 @@
 // One screen: detect engines, propose a set, pick per group, apply.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { readableError } from "../../lib/api";
+import { ApiError, readableError } from "../../lib/api";
 import { announceTaskReturn } from "../../desk/returnToTask";
 import {
   conciergeDetect,
@@ -23,8 +23,9 @@ import {
   type SummaryAssignment,
   type TaskProbeResponse,
   type ApplyResponse,
+  type GroupFit,
 } from "./api";
-import { endpointDraft, endpointHostPort } from "./endpointDraft";
+import { endpointDraft, endpointHostPort, endpointProfileId } from "./endpointDraft";
 
 /* ── Group glyphs — the seven user-visible groups ── */
 
@@ -124,6 +125,10 @@ export interface SetRow {
   /** PHILO-15 10 (B05): the work this engine cannot do in this group. */
   blocked?: string[];
   plainReason?: string;
+  /** The authority's answer for every engine the picker offers. */
+  fits?: Record<string, GroupFit>;
+  /** A failed group's reason token from the last press (kept on reload). */
+  failToken?: string;
 }
 
 /** PHILO-15 10 (B10): what the last press did, said on this face. */
@@ -137,7 +142,8 @@ export interface ApplyReceipt {
   failed: number;
   off: number;
   defaultSet: boolean;
-  failures: Array<{ group: string; plainReason: string }>;
+  /** Every failed group, each with its reason token (Astra r1, finding 3). */
+  failures: Array<{ group: string; label: string; token: string }>;
 }
 
 /** The receipt line: `USING · Qwen3.8 27B · 6 GROUPS · 4 LIMITED`. */
@@ -152,9 +158,17 @@ export function receiptLine(receipt: ApplyReceipt): string {
     if (receipt.limited > 0) parts.push(`${receipt.limited} LIMITED`);
     if (receipt.off > 0) parts.push(`${receipt.off} OFF`);
   }
-  if (receipt.failed > 0) parts.push(`${receipt.failed} FAILED`);
   if (receipt.defaultSet) parts.push("DEFAULT SET");
+  for (const failure of receipt.failures) {
+    parts.push(`${failure.label.toUpperCase()} · ${failure.token}`);
+  }
   return parts.join(" · ");
+}
+
+/** The group's short name in a refusal: `WAITS · SPEECH DOWNLOAD`. */
+export function waitsToken(group: string, label: string): string {
+  const short = group === "speech_recognition" ? "SPEECH" : label.toUpperCase();
+  return `WAITS · ${short} DOWNLOAD`;
 }
 
 /** The one group whose row IS the exact `meeting.deferred_analysis` choice. */
@@ -203,19 +217,18 @@ export function summaryRowFromAssignment(
   }
   // PHILO-15 10 (B05): the applied engine still serves only part of the
   // group; the proposal's LIMITED stands over the applied truth.
-  const state: EngineState =
-    assignment.status === "attention"
-      ? "NOT_SET"
-      : row.state === "LIMITED" &&
-          engines.find((e) => e.profileId === assignment.profileId)?.id === row.engineId
-        ? "LIMITED"
-        : "READY";
+  // PHILO-15 10 (Astra r1, finding 1): the applied engine's state is the
+  // authority's answer for it (`fits`); with no answer it is UNKNOWN.
   const engine = engines.find((e) => e.profileId === assignment.profileId);
+  const fit = engine ? row.fits?.[engine.id] : undefined;
+  const state: EngineState =
+    assignment.status === "attention" ? "NOT_SET" : fit?.state ?? "UNKNOWN";
   if (engine) {
     return {
       ...row,
       engineId: engine.id,
       state,
+      blocked: fit?.blocked,
       host: engineHostLabel(engine),
       applied: true,
       appliedLabel: undefined,
@@ -290,6 +303,9 @@ export interface ConciergeController {
   addEngineModel: string;
   /** PHILO-15 10: the server's answer to "do you take tool calls?". */
   addEngineTools: "yes" | "no" | "unknown" | null;
+  /** Astra r1: MY SERVER, the owner's word that the address is his own. */
+  addEngineMyServer: boolean;
+  setAddEngineMyServer: (v: boolean) => void;
   setAddEngineUrl: (v: string) => void;
   /** PHILO-15 02: the optional key for the endpoint (never stored here). */
   addEngineKey: string;
@@ -330,6 +346,9 @@ export function useConciergeController(): ConciergeController {
   const [probeResult, setProbeResult] = useState<TaskProbeResponse | null>(null);
   const [probing, setProbing] = useState(false);
   const mountedRef = useRef(true);
+  // Astra r1 (finding 3): the groups the last press failed, with their
+  // tokens; a re-read of the proposal keeps them FAILED until the next press.
+  const failedRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
     return () => {
@@ -371,10 +390,15 @@ export function useConciergeController(): ConciergeController {
             alternatives: alts,
             blocked: r.blocked,
             plainReason: r.plainReason,
+            fits: r.fits,
           };
-          return r.group === SUMMARY_GROUP
+          const shown = r.group === SUMMARY_GROUP
             ? summaryRowFromAssignment(row, det.summaryAssignment, det.engines)
             : row;
+          const failed = failedRef.current[r.group];
+          return failed
+            ? { ...shown, state: "UNREACHABLE" as EngineState, failToken: failed }
+            : shown;
         });
         setSetRows(rows);
         setLoading(false);
@@ -506,16 +530,20 @@ export function useConciergeController(): ConciergeController {
             };
           }
           const engine = engines.find((e) => e.id === engineId);
+          // PHILO-15 10 (Astra r1, finding 1): the state of a pick is the
+          // authority's answer for THIS engine in THIS group (`fits`), never
+          // the engine's reachability. No answer -> UNKNOWN, never READY.
+          const fit = r.fits?.[engineId];
           const newState: EngineState =
-            engine?.state === "READY"
-              ? "READY"
-              : engine?.kind === "preset"
-                ? "WAITING"
-                : "CHECKING";
+            engine?.kind === "preset"
+              ? "WAITING"
+              : fit?.state ?? "UNKNOWN";
           return {
             ...r,
             engineId,
             state: newState,
+            blocked: fit?.blocked,
+            plainReason: undefined,
             host: engine ? engineHostLabel(engine) : r.host,
             pickerOpen: false,
           };
@@ -526,12 +554,15 @@ export function useConciergeController(): ConciergeController {
       if (engineId && engineId !== "OFF") {
         const engine = engines.find((e) => e.id === engineId);
         if (engine && engine.kind !== "preset") {
+          // The probe can only say the engine is NOT there; it never makes
+          // a group READY (Astra r1, finding 1).
           void conciergeProbe(engineId).then((result) => {
+            if (result.state === "READY") return;
             safe(() => {
               setSetRows((prev) =>
                 prev.map((r) =>
-                  r.group === group
-                    ? { ...r, state: result.state as EngineState }
+                  r.group === group && r.engineId === engineId
+                    ? { ...r, state: "UNREACHABLE" as EngineState }
                     : r,
                 ),
               );
@@ -624,24 +655,26 @@ export function useConciergeController(): ConciergeController {
       const resp = await conciergeApply(rows);
       safe(() => {
         setApplying(false);
-        // Read per-group results: update row states and collect failures
-        const failures: Array<{ group: string; plainReason: string }> = [];
+        // Read per-group results. Every failed group is kept, with its
+        // reason token (Astra r1, finding 3), and survives the re-read.
+        const labelOf = (group: string) =>
+          setRows.find((r) => r.group === group)?.label ?? group;
         const results = resp.results ?? [];
-        for (const result of results) {
-          if (result.state === "FAILED" || result.state === "SKIPPED") {
-            failures.push({
-              group: result.group,
-              plainReason: result.plainReason ?? "Apply failed",
-            });
-          }
-        }
+        const failures = results
+          .filter((result) => result.state === "FAILED" || result.state === "SKIPPED")
+          .map((result) => ({
+            group: result.group,
+            label: labelOf(result.group),
+            token: result.token || "FAILED",
+          }));
+        failedRef.current = Object.fromEntries(failures.map((f) => [f.group, f.token]));
         if (results.length) {
           setSetRows((prev) =>
             prev.map((r) => {
               const result = results.find((res) => res.group === r.group);
               if (!result) return r;
               if (result.state === "FAILED" || result.state === "SKIPPED") {
-                return { ...r, state: "UNREACHABLE" as EngineState, plainReason: result.plainReason };
+                return { ...r, state: "UNREACHABLE" as EngineState, failToken: result.token || "FAILED" };
               }
               if (
                 result.state === "READY" ||
@@ -653,14 +686,14 @@ export function useConciergeController(): ConciergeController {
                   ...r,
                   state: result.state as EngineState,
                   blocked: result.blocked,
-                  plainReason: result.plainReason,
+                  failToken: undefined,
                 };
               }
               return r;
             }),
           );
         }
-        setApplyFailures(failures);
+        setApplyFailures(failures.map((f) => ({ group: f.group, plainReason: f.token })));
         setApplied(failures.length === 0);
         // PHILO-15 10 (B10): the window STAYS and says what happened —
         // the engine, the groups, what is limited, what failed. It used to
@@ -672,7 +705,7 @@ export function useConciergeController(): ConciergeController {
           host: summary.host ?? "",
           ready: summary.ready ?? 0,
           limited: summary.limited ?? 0,
-          failed: summary.failed ?? failures.length,
+          failed: failures.length,
           off: summary.off ?? 0,
           defaultSet: Boolean(summary.default),
           failures,
@@ -689,6 +722,28 @@ export function useConciergeController(): ConciergeController {
     } catch (err) {
       safe(() => {
         setApplying(false);
+        // Astra r1, finding 3: the server's refusal of a waiting group is a
+        // token in the receipt, not its sentence in an alert.
+        const payload =
+          err instanceof ApiError && err.payload && typeof err.payload === "object"
+            ? (err.payload as Record<string, unknown>)
+            : null;
+        if (payload?.code === "concierge_waiting_group") {
+          const group = String(payload.group ?? "");
+          const label = setRows.find((r) => r.group === group)?.label ?? group;
+          setApplyReceipt({
+            kind: "set",
+            engine: "",
+            host: "",
+            ready: 0,
+            limited: 0,
+            failed: 1,
+            off: 0,
+            defaultSet: false,
+            failures: [{ group, label, token: waitsToken(group, label) }],
+          });
+          return;
+        }
         setError(readableError(err));
       });
     }
@@ -712,6 +767,10 @@ export function useConciergeController(): ConciergeController {
   const [addEngineReason, setAddEngineReason] = useState("");
   const [addEngineModel, setAddEngineModel] = useState("");
   const [addEngineTools, setAddEngineTools] = useState<"yes" | "no" | "unknown" | null>(null);
+  // Astra r1 (finding 4): the owner says this address is his own server.
+  // Only then may the Check send its 1-token request to a keyed or named
+  // address.
+  const [addEngineMyServer, setAddEngineMyServer] = useState(false);
   const [addEngineKey, setAddEngineKeyState] = useState("");
   const addEngineKeyRef = useRef("");
   // HS-201-09 (counsel finding 3): the address a check ANSWERED for. A
@@ -770,7 +829,7 @@ export function useConciergeController(): ConciergeController {
     setAddEngineModel("");
     setAddEngineTools(null);
     try {
-      const result = await checkEndpoint(url, key);
+      const result = await checkEndpoint(url, key, addEngineMyServer);
       // The field moved on while this was in flight: the answer is about
       // an address the owner is no longer looking at. Drop the ANSWER —
       // but end the flight, or `Check` stays disabled for ever and the
@@ -812,7 +871,7 @@ export function useConciergeController(): ConciergeController {
         setAddEngineReason(readableError(err));
       });
     }
-  }, [addEngineUrl, addEngineKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [addEngineUrl, addEngineKey, addEngineMyServer]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* HS-201-09 — the one gesture that finishes setup from the face:
      define the endpoint through the Model Library command (which never
@@ -840,6 +899,10 @@ export function useConciergeController(): ConciergeController {
           model: addEngineModel,
           requestId: `concierge-${Date.now()}`,
           requiresKey: Boolean(key),
+          // An engine already saved for this address re-saves at its own
+          // revision (a changed record mints the next one).
+          expectedProfileRevision:
+            engines.find((e) => e.profileId === endpointProfileId(url))?.profileRevision ?? 0,
         }),
         key,
       );
@@ -852,6 +915,9 @@ export function useConciergeController(): ConciergeController {
           detection?.summaryAssignment?.assignmentRevision ?? 0,
         profileId: defined.profileId,
         profileRevision: defined.profileRevision,
+        // Astra r1 (finding 2): the engine he chose also answers the rest
+        // of his AI work, once, when no default ever existed.
+        setDefault: true,
       });
       // HTTP 200 is not the answer; the result's own state is.
       if (selection.state !== "READY") {
@@ -885,7 +951,7 @@ export function useConciergeController(): ConciergeController {
           limited: 0,
           failed: 0,
           off: 0,
-          defaultSet: false,
+          defaultSet: Boolean(selection.defaultSet),
           failures: [],
         });
         void load(true); // The set now proposes this engine.
@@ -898,7 +964,7 @@ export function useConciergeController(): ConciergeController {
         setAddEngineReason(readableError(err));
       });
     }
-  }, [addEngineUrl, addEngineModel, addEngineKey, detection]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [addEngineUrl, addEngineModel, addEngineKey, detection, engines]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── HS-200-04: one verb per repair state, each opening an existing control ── */
 
@@ -991,6 +1057,8 @@ export function useConciergeController(): ConciergeController {
     addEngineReason,
     addEngineModel,
     addEngineTools,
+    addEngineMyServer,
+    setAddEngineMyServer,
     setAddEngineUrl: editAddEngineUrl,
     addEngineKey,
     setAddEngineKey: editAddEngineKey,

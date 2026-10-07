@@ -29,9 +29,12 @@ def db(tmp_path: Path) -> Database:
     return Database(tmp_path / "engine-truth.db")
 
 
-def _lan(db: Database) -> dict:
+def _lan(db: Database, *, enforced: bool = True) -> dict:
     """A LAN chat engine with the claims the Model Library gives it."""
-    _profile(db, "lan-qwen", claims=("language", _result_claim(SUMMARY)), boundary="private_network")
+    from holdspeak.services.model_library_service import enforced_result_claims
+
+    claims = ("language", *enforced_result_claims()) if enforced else ("language", _result_claim(SUMMARY))
+    _profile(db, "lan-qwen", claims=claims, boundary="private_network")
     return {
         "id": "lan:lan-qwen", "kind": "lan", "name": "Qwen3.8 27B", "host": "192.168.1.43",
         "state": "READY", "profileId": "lan-qwen", "profileRevision": 1,
@@ -47,7 +50,7 @@ def _heads(db: Database) -> list[str]:
 
 
 def test_fit_names_served_and_blocked_work_and_writes_nothing(db: Database) -> None:
-    _lan(db)
+    _lan(db, enforced=False)
     svc = InferenceAssignmentService(db)
     answer = svc.fit(OWNER, scope={"kind": "group", "group_id": "thoughts_notes"}, profile_id="lan-qwen")
     assert "chat.turn" in answer["served"] and "ask.answer" in answer["served"]
@@ -60,7 +63,7 @@ def test_fit_names_served_and_blocked_work_and_writes_nothing(db: Database) -> N
 
 def test_fit_reads_a_group_with_no_owner_work(db: Database) -> None:
     """Chat (compaction, guardrail) is never written; the fit still answers."""
-    _lan(db)
+    _lan(db, enforced=False)
     answer = InferenceAssignmentService(db).fit(
         OWNER, scope={"kind": "group", "group_id": "chat_practice"}, profile_id="lan-qwen",
     )
@@ -71,17 +74,48 @@ def test_fit_reads_a_group_with_no_owner_work(db: Database) -> None:
 # ── propose: READY means ready; speech is speech ─────────────────────────
 
 
-def test_propose_says_limited_where_the_authority_blocks_work(db: Database) -> None:
+def test_propose_reads_ready_where_the_executor_enforces_and_limited_elsewhere(db: Database) -> None:
+    """Astra r1 (finding 5): the library engine claims every result schema an
+    executor checks, so only works nothing enforces keep a group LIMITED."""
     lan = _lan(db)
     svc = InferenceAssignmentService(db)
     result = cs.propose(engines=[lan], fit=cs.authority_fit(svc, OWNER, db))
     rows = {r["group"]: r for r in result["rows"]}
-    assert rows["thoughts_notes"]["state"] == "LIMITED"
-    assert rows["thoughts_notes"]["blocked"] == ["Thought development"]
-    assert rows["thoughts_notes"]["plainReason"] == "This engine cannot give a structured result."
-    assert rows["chat_practice"]["state"] == "INCOMPATIBLE"
-    assert all(r["state"] != "READY" for g, r in rows.items() if g != "speech_recognition")
-    assert result["receipt"]["limited"] >= 4
+    assert "chat_practice" not in rows  # internal works are not an owner row
+    assert rows["thoughts_notes"]["state"] == "READY"
+    assert rows["writing_dictation"]["state"] == "READY"
+    assert rows["meetings"]["state"] == "READY"
+    assert rows["agents_tools"]["state"] == "LIMITED"
+    assert rows["agents_tools"]["blocked"] == ["Agents"]
+    assert rows["background"]["state"] == "LIMITED"
+    assert rows["background"]["blocked"] == ["Calendar", "Memory"]
+    # Every engine the picker offers carries its own answer.
+    assert rows["agents_tools"]["fits"][lan["id"]]["state"] == "LIMITED"
+
+
+def test_a_work_with_its_own_engine_is_not_a_limit(db: Database) -> None:
+    lan = _lan(db)
+    _profile(db, "embedder", claims=("language", "embedding"), modalities=("language",))
+    svc = InferenceAssignmentService(db)
+    svc.set_assignment(OWNER, {
+        "command_id": "embed-own", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "memory.embed"},
+        "entries": [{"profile_id": "embedder", "profile_revision": 1}],
+    })
+    rows = {r["group"]: r for r in cs.propose(engines=[lan], fit=cs.authority_fit(svc, OWNER, db))["rows"]}
+    assert rows["background"]["blocked"] == ["Calendar"]
+
+
+def test_the_library_profile_claims_what_executors_enforce() -> None:
+    from holdspeak.services.model_library_service import enforced_result_claims
+
+    claims = set(enforced_result_claims())
+    for capability in ("thought.interview", "speech.intent_classify", "meeting.plugin.decision_capture"):
+        assert _result_claim(capability) in claims
+    for capability in ("agent.plan", "agent.tool_turn"):
+        assert _result_claim(capability) not in claims
+    # calendar.snapshot_extract shares a result schema with an enforced work;
+    # it stays blocked by its vision requirement (the background fit above).
 
 
 def test_propose_reads_unknown_when_the_engine_has_no_record(db: Database) -> None:
@@ -154,9 +188,10 @@ def test_apply_reports_limited_and_sets_the_default_once(db: Database) -> None:
         engines=[lan], assignment_service=svc, principal=OWNER, db=db,
     )
     by_group = {r["group"]: r for r in result["results"]}
-    assert by_group["thoughts_notes"]["state"] == "LIMITED"
-    assert by_group["thoughts_notes"]["blocked"] == ["Thought development"]
-    assert result["summary"]["limited"] == 2
+    assert by_group["thoughts_notes"]["state"] == "READY"
+    assert by_group["agents_tools"]["state"] == "LIMITED"
+    assert by_group["agents_tools"]["blocked"] == ["Agents"]
+    assert result["summary"]["limited"] == 1
     assert result["summary"]["engine"] == "Qwen3.8 27B"
     assert result["summary"]["default"]["engineId"] == lan["id"]
     assert "global" in _heads(db)
@@ -169,7 +204,7 @@ def test_apply_reports_limited_and_sets_the_default_once(db: Database) -> None:
 
 
 def test_partial_limits_are_not_repair_rows(db: Database) -> None:
-    lan = _lan(db)
+    lan = _lan(db, enforced=False)
     svc = InferenceAssignmentService(db)
     cs.apply(
         rows=[{"group": "thoughts_notes", "engineId": lan["id"], "state": "LIMITED"}],
@@ -222,3 +257,42 @@ def test_a_cloud_check_never_spends_a_token() -> None:
 
 def test_models_capabilities_claim_tools() -> None:
     assert endpoint_tool_support("http://10.0.0.2/v1", model="m", tools_claimed=True) == "yes"
+
+
+def test_a_written_limited_group_is_an_applied_receipt(db: Database) -> None:
+    """Astra r1 (finding 3): LIMITED was written, so the durable outcome is
+    succeeded; only a group not written fails it."""
+    lan = _lan(db)
+    result = cs.apply(
+        rows=[{"group": "agents_tools", "engineId": lan["id"], "state": "LIMITED"}],
+        engines=[lan], assignment_service=InferenceAssignmentService(db), principal=OWNER, db=db,
+    )
+    with db._connection() as conn:
+        row = conn.execute("SELECT state, outcome FROM kernel_receipts WHERE receipt_id=?", (result["receipt"],)).fetchone()
+    assert row["state"] == "succeeded", dict(row)
+    assert row["outcome"] == "Applied 1 group(s)"
+
+
+def test_a_failed_group_carries_its_token(db: Database) -> None:
+    engine = {"id": "lan:bare", "kind": "lan", "name": "Bare", "host": "10.0.0.9", "state": "READY"}
+    result = cs.apply(
+        rows=[{"group": "thoughts_notes", "engineId": "lan:bare", "state": "UNKNOWN"},
+              {"group": "background", "engineId": "lan:bare", "state": "UNKNOWN"}],
+        engines=[engine], assignment_service=InferenceAssignmentService(db), principal=OWNER, db=db,
+    )
+    assert [(r["group"], r["token"]) for r in result["results"]] == [
+        ("thoughts_notes", "NO MODEL RECORD"), ("background", "NO MODEL RECORD"),
+    ]
+    with db._connection() as conn:
+        row = conn.execute("SELECT state FROM kernel_receipts WHERE receipt_id=?", (result["receipt"],)).fetchone()
+    assert row["state"] == "failed"
+
+
+def test_the_speech_model_downloads_alone(tmp_path: Path) -> None:
+    """Astra r1 (finding 2): `only=["whisper"]` fetches Whisper and nothing else."""
+    from holdspeak.services.errors import ServiceError
+    from holdspeak.services.local_ai_setup_service import LocalAISetupService
+
+    svc = LocalAISetupService.__new__(LocalAISetupService)
+    with pytest.raises(ServiceError):
+        LocalAISetupService.start(svc, OWNER, only=["everything"])

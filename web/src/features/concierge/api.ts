@@ -34,6 +34,8 @@ export interface Engine {
   legacyLabel?: string;
   keySet?: boolean;
   profileId?: string;
+  /** The immutable model-record revision detection names (PHILO-15 10). */
+  profileRevision?: number;
   presetId?: string;
   installed?: boolean;
   path?: string;
@@ -115,6 +117,14 @@ export interface ProposalRow {
   /** PHILO-15 10: the work this engine cannot do in this group. */
   blocked?: string[];
   plainReason?: string;
+  /** PHILO-15 10 (Astra r1): the authority's answer for EVERY engine the
+   *  picker offers; a pick reads its state here, never from reachability. */
+  fits?: Record<string, GroupFit>;
+}
+
+export interface GroupFit {
+  state: EngineState;
+  blocked?: string[];
 }
 
 export interface ProposeResponse {
@@ -156,6 +166,8 @@ export interface ApplyResponse {
     state: string;
     plainReason?: string;
     blocked?: string[];
+    /** PHILO-15 10 (Astra r1): a failed group's reason as a token. */
+    token?: string;
   }>;
 }
 
@@ -207,6 +219,7 @@ function decodeEngine(raw: Record<string, unknown>): Engine {
     visionToken: typeof raw.visionToken === "string" ? raw.visionToken : null,
     keySet: typeof raw.keySet === "boolean" ? raw.keySet : undefined,
     profileId: typeof raw.profileId === "string" ? raw.profileId : undefined,
+    profileRevision: typeof raw.profileRevision === "number" ? raw.profileRevision : undefined,
     legacyLabel: typeof raw.legacyLabel === "string" ? raw.legacyLabel : undefined,
     presetId: typeof raw.presetId === "string" ? raw.presetId : undefined,
     installed: typeof raw.installed === "boolean" ? raw.installed : undefined,
@@ -278,6 +291,19 @@ function decodeDetect(raw: Record<string, unknown>): DetectResponse {
   };
 }
 
+function decodeFits(raw: unknown): Record<string, GroupFit> | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const out: Record<string, GroupFit> = {};
+  for (const [id, value] of Object.entries(raw as Record<string, unknown>)) {
+    const fit = (value ?? {}) as Record<string, unknown>;
+    out[id] = {
+      state: String(fit.state ?? "UNKNOWN") as EngineState,
+      blocked: Array.isArray(fit.blocked) ? fit.blocked.map(String) : undefined,
+    };
+  }
+  return out;
+}
+
 function decodeProposal(raw: Record<string, unknown>): ProposeResponse {
   const rows = Array.isArray(raw.rows)
     ? (raw.rows as Record<string, unknown>[]).map((r) => ({
@@ -289,6 +315,7 @@ function decodeProposal(raw: Record<string, unknown>): ProposeResponse {
         presetId: typeof r.presetId === "string" ? r.presetId : undefined,
         blocked: Array.isArray(r.blocked) ? r.blocked.map(String) : undefined,
         plainReason: typeof r.plainReason === "string" ? r.plainReason : undefined,
+        fits: decodeFits(r.fits),
       }))
     : [];
   const receipt = (raw.receipt ?? {}) as Record<string, unknown>;
@@ -378,7 +405,12 @@ export interface EndpointCheck {
   tools?: "yes" | "no" | "unknown";
 }
 
-export async function checkEndpoint(baseUrl: string, apiKey = ""): Promise<EndpointCheck> {
+export async function checkEndpoint(
+  baseUrl: string,
+  apiKey = "",
+  /** PHILO-15 10 (Astra r1): the owner says this is his own server. */
+  myServer = false,
+): Promise<EndpointCheck> {
   const { apiFetch, ApiError } = await import("../../lib/api");
   // An unreachable endpoint answers 422 carrying the SAME body as a reachable
   // one; the plain reason is in it, so the refusal is read, not re-worded.
@@ -388,9 +420,12 @@ export async function checkEndpoint(baseUrl: string, apiKey = ""): Promise<Endpo
       method: "POST",
       // PHILO-15 02: a typed key goes with this one Check; empty sends none.
       // PHILO-15 10: the Check asks the server once about tool calls.
-      json: apiKey.trim()
-        ? { base_url: baseUrl, api_key: apiKey.trim(), check_tools: true }
-        : { base_url: baseUrl, check_tools: true },
+      json: {
+        base_url: baseUrl,
+        ...(apiKey.trim() ? { api_key: apiKey.trim() } : {}),
+        check_tools: true,
+        ...(myServer ? { my_server: true } : {}),
+      },
     });
   } catch (err) {
     if (err instanceof ApiError && err.payload && typeof err.payload === "object") {
@@ -453,6 +488,8 @@ export interface SummarySelectionResult {
   state: string;
   plainReason: string;
   summaryAssignment: SummaryAssignment | null;
+  /** PHILO-15 10: the press also set the Default for AI work. */
+  defaultSet?: boolean;
 }
 
 export async function conciergeSummarySelection(body: {
@@ -460,6 +497,8 @@ export async function conciergeSummarySelection(body: {
   expectedAssignmentRevision: number;
   profileId: string;
   profileRevision: number;
+  /** PHILO-15 10 (Astra r1): also set the Default for AI work, once. */
+  setDefault?: boolean;
 }): Promise<SummarySelectionResult> {
   const { apiFetch } = await import("../../lib/api");
   const raw = await apiFetch<Record<string, unknown>>(
@@ -472,6 +511,7 @@ export async function conciergeSummarySelection(body: {
     state: String(result.state ?? ""),
     plainReason: String(result.plainReason ?? ""),
     summaryAssignment: decodeSummaryAssignment(raw.summaryAssignment),
+    defaultSet: raw.defaultSet === true,
   };
 }
 

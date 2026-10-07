@@ -54,7 +54,10 @@ STATE_UNKNOWN = "UNKNOWN"
 
 ASSIGNMENT_GROUPS: tuple[tuple[str, str], ...] = (
     ("thoughts_notes", "Thoughts & notes"),
-    ("chat_practice", "Chat"),           # S-1: rename Chat practice -> Chat
+    # PHILO-15 10 (Astra r1, finding 5): "Chat" held only chat compaction and
+    # the chat guardrail, internal works an owner never calls chat (desk chat,
+    # chat.turn, is in Thoughts & notes). An internal group is not a row the
+    # owner sees; its works follow the Default for AI work.
     ("writing_dictation", "Writing & dictation"),
     ("speech_recognition", "Speech recognition"),
     ("meetings", "Meetings"),
@@ -930,13 +933,22 @@ def propose(
 
     if fit is not None:
         engine_by_id = {e["id"]: e for e in engines}
+        # PHILO-15 10 (Astra r1, finding 1): every READY the face can show
+        # comes from this answer, also after the owner picks another engine.
+        candidates = [
+            e for e in engines
+            if e["kind"] in (KIND_LAN, KIND_LOCAL, KIND_CLOUD)
+            and e["state"] == STATE_READY and _text_capable(e)
+        ]
         for row in rows:
-            if row["state"] != STATE_READY or row["group"] == "speech_recognition":
+            pool = whisper_engines if row["group"] == "speech_recognition" else candidates
+            row["fits"] = {e["id"]: group_fit_state(e, row["group"], fit) for e in pool}
+            if row["state"] != STATE_READY:
                 continue
             engine = engine_by_id.get(row.get("engineId") or "")
             if engine is None:
                 continue
-            row.update(group_fit_state(engine, row["group"], fit))
+            row.update(row["fits"].get(engine["id"]) or group_fit_state(engine, row["group"], fit))
 
     waiting_count = sum(1 for r in rows if r["state"] == STATE_WAITING)
     limited_count = sum(1 for r in rows if r["state"] == STATE_LIMITED)
@@ -974,7 +986,7 @@ def group_fit_state(
     blocked = [b for b in (answer.get("blocked") or []) if isinstance(b, dict)]
     if not blocked:
         return {"state": STATE_READY}
-    labels = [_capability_label(str(b.get("capability_id") or "")) for b in blocked]
+    labels = owner_work_names([str(b.get("capability_id") or "") for b in blocked])
     reason = _incompatibility_reason([str(b.get("code") or "") for b in blocked])
     served = list(answer.get("served") or [])
     return {
@@ -984,6 +996,34 @@ def group_fit_state(
         "totalCount": len(served) + len(blocked),
         "plainReason": reason,
     }
+
+
+#: PHILO-15 10 (Astra r1): the owner's names for the works a group holds.
+#: A LIMITED row lists these, never the registry's internal labels.
+_OWNER_WORK_NAMES: tuple[tuple[str, str], ...] = (
+    ("thought.", "Thoughts"),
+    ("speech.intent_classify", "Dictation"),
+    ("speech.target_classify", "Dictation"),
+    ("speech.", "Speech"),
+    ("agent.", "Agents"),
+    ("calendar.", "Calendar"),
+    ("meeting.plugin.", "Meeting plugins"),
+    ("meeting.", "Summaries"),
+    ("memory.", "Memory"),
+    ("chat.", "Chat"),
+)
+
+
+def owner_work_names(capability_ids: list[str]) -> list[str]:
+    names: list[str] = []
+    for capability_id in capability_ids:
+        name = next(
+            (owner for prefix, owner in _OWNER_WORK_NAMES if capability_id.startswith(prefix)),
+            _capability_label(capability_id),
+        )
+        if name not in names:
+            names.append(name)
+    return names
 
 
 def _capability_label(capability_id: str) -> str:
@@ -1014,14 +1054,36 @@ def authority_fit(
             if resolved_id and resolved_revision > 0:
                 profile_id, revision = resolved_id, resolved_revision
         scope: dict[str, Any] = {"kind": "group", "group_id": group_id}
-        return assignment_service.fit(
+        answer = assignment_service.fit(
             principal,
             scope=scope,
             profile_id=profile_id,
             profile_revision=revision if type(revision) is int and revision > 0 else None,
         )
+        # A work with its OWN engine (meaning search's memory.embed, the
+        # device's speech.transcribe) runs there, whatever the group holds.
+        own = _capabilities_with_own_engine(db)
+        if isinstance(answer, dict) and own:
+            kept = [b for b in answer.get("blocked") or [] if str(b.get("capability_id")) not in own]
+            moved = [str(b.get("capability_id")) for b in answer.get("blocked") or [] if str(b.get("capability_id")) in own]
+            answer = {**answer, "blocked": kept, "served": [*answer.get("served", []), *moved]}
+        return answer
 
     return _fit
+
+
+def _capabilities_with_own_engine(db: Any) -> set[str]:
+    if db is None:
+        return set()
+    try:
+        with db._connection() as conn:
+            rows = conn.execute(
+                "SELECT assignment_key FROM inference_assignment_heads"
+                " WHERE assignment_key LIKE 'capability:%' AND cleared=0"
+            ).fetchall()
+    except Exception:
+        return set()
+    return {str(r["assignment_key"]).removeprefix("capability:") for r in rows}
 
 
 # ---- Probe ------------------------------------------------------------------
@@ -1909,6 +1971,7 @@ def apply(
             results.append({
                 "group": group_id,
                 "state": "SKIPPED",
+                "token": "NO MODEL RECORD",
                 "plainReason": "No profile for engine",
             })
             continue
@@ -1925,6 +1988,7 @@ def apply(
                         "capabilityId": SUMMARY_CAPABILITY_ID,
                         "state": "FAILED",
                         "code": "concierge_summary_profile_revision_missing",
+                        "token": "NO MODEL RECORD",
                         "plainReason": "This engine has no immutable model profile revision.",
                     }
                 )
@@ -1964,6 +2028,7 @@ def apply(
                             "profileId": selected_profile_id,
                             "profileRevision": selected_revision,
                             "code": failed.get("code"),
+                            "token": _failure_token(failed.get("code")),
                             "plainReason": failed.get("plainReason", "Summary selection failed."),
                         }
                     )
@@ -2035,6 +2100,7 @@ def apply(
             results.append({
                 "group": group_id,
                 "state": "FAILED",
+                "token": _failure_token(getattr(exc, "code", "")),
                 "plainReason": getattr(exc, "detail", None) or str(exc),
             })
 
@@ -2055,6 +2121,7 @@ def apply(
             result.update(fitted)
         else:
             result["state"] = "SKIPPED"
+            result["token"] = "NO DEFAULT"
             result["plainReason"] = "This group uses the Default for AI work. No default is set."
 
     # Emit a kernel receipt
@@ -2102,6 +2169,22 @@ def _after_write_state(
     return {} if fitted.get("state") == STATE_UNKNOWN else fitted
 
 
+#: PHILO-15 10 (Astra r1, finding 3): a failed group's reason as a token.
+_FAILURE_TOKENS: dict[str, str] = {
+    "inference_assignment_incompatible": "INCOMPATIBLE",
+    "inference_assignment_revision_conflict": "CHANGED · OPEN AGAIN",
+    "inference_assignment_profile_missing": "NO MODEL RECORD",
+    "inference_assignment_binding_missing": "NO MODEL RECORD",
+    "inference_assignment_chain_invalid": "NO MODEL RECORD",
+    "unknown_inference_capability_group": "NOT ASSIGNABLE",
+    "concierge_summary_profile_revision_missing": "NO MODEL RECORD",
+}
+
+
+def _failure_token(code: Any) -> str:
+    return _FAILURE_TOKENS.get(str(code or ""), "FAILED")
+
+
 def _has_global_default(assignment_service: Any, principal: Any) -> bool:
     try:
         assignment_service.get_assignment(principal, {"kind": "global"})
@@ -2121,6 +2204,31 @@ def _main_engine(used: list[dict[str, Any]]) -> dict[str, Any] | None:
     if not counts:
         return used[0] if used else None
     return by_id[max(counts, key=lambda key: counts[key])]
+
+
+def set_default_once(
+    *, assignment_service: Any, principal: Any, profile_id: str, profile_revision: int,
+) -> bool:
+    """The Default for AI work, written only when none ever existed.
+
+    The write expects revision 0, so a default that exists, or one the owner
+    cleared, is never changed. It is the owner's press: ``made_by`` owner.
+    """
+    from .errors import ConflictError
+
+    try:
+        assignment_service.set_assignment(principal, {
+            "command_id": f"concierge-default-{uuid.uuid4().hex}",
+            "expected_revision": 0,
+            "scope": {"kind": "global"},
+            "entries": [{"profile_id": profile_id, "profile_revision": int(profile_revision)}],
+        })
+    except ConflictError:
+        return False
+    except Exception as exc:
+        log.info(f"concierge: default not set ({exc})")
+        return False
+    return True
 
 
 def _default_from_set(
@@ -2152,18 +2260,11 @@ def _default_from_set(
     profile_id, revision = _engine_assignment_reference(db, main)
     if not profile_id or revision < 1:
         return None
-    try:
-        assignment_service.set_assignment(principal, {
-            "command_id": f"concierge-default-{uuid.uuid4().hex}",
-            "expected_revision": 0,
-            "scope": {"kind": "global"},
-            "entries": [{"profile_id": profile_id, "profile_revision": revision}],
-        })
-    except ConflictError:
+    if not set_default_once(
+        assignment_service=assignment_service, principal=principal,
+        profile_id=profile_id, profile_revision=revision,
+    ):
         return None  # a default exists (or was cleared): never changed here
-    except Exception as exc:
-        log.info(f"concierge: default not set ({exc})")
-        return None
     return {"engineId": main["id"], "name": main.get("name"), "host": main.get("host")}
 
 
@@ -2180,9 +2281,16 @@ def _write_kernel_receipt(
     idempotency_key = f"concierge:{receipt_id}"
     now = datetime.now(timezone.utc).timestamp()
 
-    all_ready = all(r["state"] in (STATE_READY, "OFF", "SKIPPED") for r in results)
-    state = "succeeded" if all_ready else "failed"
-    outcome = f"Applied {sum(1 for r in results if r['state'] == STATE_READY)} group(s)"
+    # PHILO-15 10 (Astra r1, finding 3): a group whose assignment was
+    # WRITTEN is applied, LIMITED included; only a group not written fails.
+    applied_states = (STATE_READY, STATE_LIMITED, STATE_INCOMPATIBLE, STATE_UNKNOWN)
+    failed = [r for r in results if r["state"] in ("FAILED", "SKIPPED")]
+    state = "failed" if failed else "succeeded"
+    outcome = f"Applied {sum(1 for r in results if r['state'] in applied_states)} group(s)"
+    if failed:
+        outcome += "; not applied: " + ", ".join(
+            f"{r.get('group')} ({r.get('token') or 'FAILED'})" for r in failed
+        )
 
     try:
         with db._connection() as conn:
