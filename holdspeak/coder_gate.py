@@ -392,8 +392,12 @@ def run_hook(
     # launched under the gate (its spawn sets the parent operation) is held
     # for the gate's tools wherever its working folder is, so a working
     # folder outside its worktree cannot make a call inert.
-    root = gate_match_root(cfg, cwd=cwd, tool=tool)
-    if root is None and not (parent_operation_id and tool in DEFAULT_TOOLS):
+    from .tool_gate_rules import EDIT_TOOLS
+
+    # Conductor R1: a launch's file writes are read against the worktree its
+    # Bash is held for (the per-launch settings put them on the gate).
+    root = gate_match_root(cfg, cwd=cwd, tool="Bash" if tool in EDIT_TOOLS else tool)
+    if root is None and not (parent_operation_id and (tool in DEFAULT_TOOLS or tool in EDIT_TOOLS)):
         return HookDecision(deny=None)
 
     session_id = str(payload.get("session_id") or "").strip() or "unknown-session"
@@ -853,6 +857,16 @@ def spawn_settings(prefix: str) -> dict[str, Any]:
     from .agent_context.hooks import claude_hook_template
 
     merged = _hook_settings(f"{prefix} gate hook")
+    # Conductor R1: in a launch, Claude's file writes go through the gate too:
+    # ``acceptEdits`` (Normal and YOLO) also accepts edits in Claude's other
+    # allowed folders; the gate passes writes inside the launch's worktree
+    # and holds the rest in every mode.
+    from .tool_gate_rules import EDIT_TOOLS
+
+    merged["hooks"]["PreToolUse"].append({
+        "matcher": "|".join(sorted(EDIT_TOOLS)),
+        "hooks": [{"type": "command", "command": f"{prefix} gate hook", "timeout": HOOK_TIMEOUT_SECONDS}],
+    })
     rider = copy.deepcopy(claude_hook_template())
     rider_command = f"{prefix} agent-hook ingest --agent claude"
     for event, entries in (rider.get("hooks") or {}).items():

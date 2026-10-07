@@ -149,4 +149,248 @@ def test_an_expired_hold_is_not_a_row(launched, tmp_path, monkeypatch) -> None: 
     _mode(tmp_path, monkeypatch, "yolo")
     held = _call(launched, "ls /etc")
     holds = _read_gate_holds(launched.db, ledger=launched.launches, now=held.proposal.expires_at + 1)
-    assert holds == []
+    assert [h["held"] for h in holds] == [False]  # kept only to correlate a wait
+    assert [r for r in compute_needs_you(gate_holds=holds)["unmutedItems"] if r["kind"] == "gate"] == []
+
+
+# ── Astra round 1 on #916 ─────────────────────────────────────────────
+
+import json  # noqa: E402
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+import tempfile  # noqa: E402
+import time  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
+from pathlib import Path  # noqa: E402
+from types import SimpleNamespace  # noqa: E402
+from unittest.mock import patch  # noqa: E402
+
+import holdspeak.tmux_transport as tmux_transport  # noqa: E402
+from holdspeak import coder_gate  # noqa: E402
+from holdspeak.agent_context import list_agent_sessions  # noqa: E402
+from holdspeak.agent_context.sessions import ingest_agent_hook_event  # noqa: E402
+from holdspeak.coder_gate import load_gate_config, run_hook  # noqa: E402
+from holdspeak.tool_gate_rules import EDIT_TOOLS, INSIDE, OUTSIDE, classify_edit  # noqa: E402
+
+
+# 1. [P1] file writes are kept to the worktree by the gate
+
+
+def test_a_write_is_read_against_the_resolved_worktree(tmp_path) -> None:
+    worktree = tmp_path / "wt"
+    (worktree / "src").mkdir(parents=True)
+    extra = tmp_path / "additional-dir"  # a folder Claude's settings also allow
+    extra.mkdir()
+    (worktree / "escape").symlink_to(extra)  # an escaping folder link
+    (worktree / "leaf.txt").symlink_to(extra / "secret.txt")  # an escaping (dangling) file link
+    root = str(worktree)
+    inside = {
+        str(worktree / "RUNBOOK.md"): "absolute, existing folder",
+        "src/new/deep/file.py": "relative, folders not yet made",
+    }
+    for path in inside:
+        assert classify_edit({"file_path": path}, cwd=root, root=root).scope == INSIDE, path
+    outside = [
+        str(extra / "notes.md"),            # an additional directory
+        "escape/notes.md",                  # through a folder symlink
+        "escape/new/dir/x.md",              # through it, target not yet there
+        "leaf.txt",                         # a file symlink out
+        "../additional-dir/notes.md",       # dot-dot
+    ]
+    for path in outside:
+        assert classify_edit({"file_path": path}, cwd=root, root=root).scope == OUTSIDE, path
+    assert classify_edit({"notebook_path": str(extra / "n.ipynb")}, cwd=root, root=root).scope == OUTSIDE
+    assert classify_edit({}, cwd=root, root=root).scope == "unparsed"
+
+
+def test_the_launch_settings_put_file_writes_on_the_gate() -> None:
+    settings = coder_gate.spawn_settings("holdspeak")
+    matchers = {entry.get("matcher") for entry in settings["hooks"]["PreToolUse"]}
+    assert "Bash" in matchers
+    edit = next(m for m in matchers if m and "Edit" in m)
+    assert set(edit.split("|")) == EDIT_TOOLS
+
+
+def _write(rig, tool: str, path: str, principal=AGENT):  # noqa: F811
+    """One file-write PreToolUse arrival through the real hook runner and
+    the real GateService (the K5 rig's _call, for a write)."""
+    tool_input = {"notebook_path": path} if tool == "NotebookEdit" else {"file_path": path, "content": "x"}
+    payload = {
+        "hook_event_name": "PreToolUse", "session_id": principal.identity.split(":", 1)[-1],
+        "tool_name": tool, "tool_use_id": f"toolu_w{time.monotonic_ns()}",
+        "tool_input": tool_input, "cwd": str(rig.worktree),
+    }
+    clock = {"t": 0.0}
+
+    def sleep(_s: float) -> None:
+        clock["t"] += 10_000.0
+
+    decision = run_hook(
+        payload, config=load_gate_config(rig.gate_path),
+        http_post=lambda url, body, timeout: (200, rig.gate.propose(principal, body)),
+        http_get=lambda url, timeout: (200, rig.gate.get_proposal(principal, url.rsplit("/", 1)[-1])),
+        sleep=sleep, now=lambda: clock["t"], ttl_seconds=1.0,
+    )
+    return SimpleNamespace(decision=decision, proposal=rig.gate._db.gate.get(payload["tool_use_id"]))
+
+
+@pytest.mark.parametrize("mode, inside_passes", [("yolo", True), ("neutral", True), ("safe", False)])
+def test_a_launchs_write_outside_its_worktree_is_held_in_every_mode(launched, tmp_path, monkeypatch, mode, inside_passes) -> None:  # noqa: F811
+    """Astra on #916: acceptEdits also accepts edits in Claude's additional
+    directories, and the gate read Bash only: an outside Write raised no
+    gate request at all."""
+    _mode(tmp_path, monkeypatch, mode)
+    extra = tmp_path / "additional-dir"
+    extra.mkdir()
+    (launched.worktree / "escape").symlink_to(extra)
+    for tool, path in (("Write", str(extra / "x.md")), ("Edit", "escape/x.md"), ("NotebookEdit", str(extra / "n.ipynb"))):
+        call = _write(launched, tool, path)
+        assert call.proposal is not None and call.proposal.state == HELD, (tool, path)
+        assert call.decision.deny is not None
+    inside = _write(launched, "Edit", str(launched.worktree / "RUNBOOK.md"))
+    assert inside.proposal is not None
+    if inside_passes:
+        assert inside.proposal.state == APPROVED and inside.decision.deny is None
+        assert inside.proposal.operation["tool_call"]["rule"] == "edit_in_worktree"
+    else:
+        assert inside.proposal.state == HELD
+
+
+# 4. [P2] the equals form of the permission flag is a named mode
+
+
+def test_an_equals_form_permission_mode_is_kept(tmp_path, db, monkeypatch) -> None:  # noqa: F811
+    """A stored profile ["--permission-mode=plan"] got an extra
+    --permission-mode acceptEdits."""
+    from holdspeak.delivery.factory_launch import AGENT_PROFILES_SCHEMA
+
+    rig_dir = tmp_path / "rig"
+    rig_dir.mkdir()
+    (rig_dir / "profiles.json").write_text(json.dumps({
+        "agent_profiles_schema": AGENT_PROFILES_SCHEMA,
+        "profiles": [{"profile_id": "claude-default", "label": "Claude Code", "executable": "claude",
+                      "args": ["--permission-mode=plan"], "option_slots": {}}],
+    }), encoding="utf-8")
+    rig = _rig(rig_dir, db, monkeypatch)
+    rig.service._control_mode = lambda: "yolo"
+    result = rig.hand.hand(OWNER, "action", "ai_1")
+    assert result["status"] == "launched", result
+    _argv, command = _spawn(rig)
+    agent_argv = shlex.split(command.split(" exec ", 1)[1])
+    modes = [t for t in agent_argv if t == "--permission-mode" or t.startswith("--permission-mode=")]
+    assert modes == ["--permission-mode=plan"]
+    _wait_for(lambda: rig.launches.get(result["launch_id"]), "instruction_state", "sent")
+    rig.tmux.ended = True
+    assert agent_mcp.claude_permission_args("yolo", ["claude", "--permission-mode=default"]) == []
+
+
+# 2. [P1] typed text carries no terminal control: the bytes a real pane gets
+
+
+@pytest.fixture
+def real_pane(monkeypatch):
+    if shutil.which("tmux") is None:
+        pytest.skip("tmux is not installed")
+    sock = tempfile.mkdtemp(prefix="r1t", dir="/tmp")
+    monkeypatch.setenv("TMUX_TMPDIR", sock)
+    monkeypatch.delenv("TMUX", raising=False)
+    out = Path(sock) / "out.bin"
+    subprocess.run(["tmux", "new-session", "-d", "-s", "r1t", "-x", "200", "-y", "50",
+                    f"stty raw -echo; exec cat > {out}"], check=True)
+    pane = subprocess.run(["tmux", "list-panes", "-t", "r1t", "-F", "#{pane_id}"],
+                          capture_output=True, text=True, check=True).stdout.strip()
+    time.sleep(0.5)  # stty has run
+    yield SimpleNamespace(pane=pane, out=out)
+    subprocess.run(["tmux", "kill-server"], check=False)
+    shutil.rmtree(sock, ignore_errors=True)
+
+
+def _received(out: Path, want: bytes, *, wait: float = 3.0) -> bytes:
+    end = time.monotonic() + wait
+    data = b""
+    while time.monotonic() < end:
+        data = out.read_bytes() if out.exists() else b""
+        if data == want:
+            break
+        time.sleep(0.05)
+    return data
+
+
+def test_a_real_pane_gets_exactly_the_plain_text(real_pane) -> None:
+    text = "Line one\r\nLine\ttwo ü — 你好\nlast"
+    tmux_transport.send_text_to_pane(pane=real_pane.pane, text=text, submit=False)
+    want = "Line one\nLine\ttwo ü — 你好\nlast".encode()
+    assert _received(real_pane.out, want) == want
+
+
+@pytest.mark.parametrize("text", [
+    "brief\x1b[201~\x03rm -rf ~\r",   # an embedded paste terminator, Ctrl-C and CR
+    "one line\x1b[200~",              # the opening bracket
+    "two\nlines\x03",                 # Ctrl-C in a pasted text
+    "c\rd",                           # a lone CR
+    "x\x7fy",                         # DEL
+    "x\u009by",                       # C1 CSI
+])
+def test_a_control_in_the_text_is_refused_and_nothing_reaches_the_pane(real_pane, text) -> None:
+    with pytest.raises(tmux_transport.TmuxTransportError, match="terminal control"):
+        tmux_transport.send_text_to_pane(pane=real_pane.pane, text=text, submit=True)
+    with pytest.raises(tmux_transport.TmuxTransportError, match="terminal control"):
+        tmux_transport.send_keys_to_pane(pane=real_pane.pane, keys=[("named", "Down"), ("literal", text)])
+    time.sleep(0.5)
+    assert real_pane.out.read_bytes() == b""
+
+
+# 3. [P2] a held call and the same session's permission wait are one ask
+
+
+def test_a_held_call_and_its_permission_wait_are_one_row_one_notification(launched, tmp_path, monkeypatch) -> None:  # noqa: F811
+    _mode(tmp_path, monkeypatch, "yolo")
+    state = tmp_path / "sessions.json"
+    session = AGENT.identity.split(":", 1)[1]
+    base = {"session_id": session, "cwd": str(launched.worktree)}
+    held = _call(launched, "ls /etc")  # the real gate producer
+    ingest_agent_hook_event(  # the real hook producer: the same session's permission wait
+        agent="claude", state_path=state,
+        payload={**base, "hook_event_name": "Notification", "notification_type": "permission_prompt",
+                 "message": "Claude needs your permission to use Bash"},
+    )
+    pid = held.proposal.id
+
+    def rows():
+        holds = _read_gate_holds(launched.db, ledger=launched.launches)
+        result = compute_needs_you(coders=list_agent_sessions(state_path=state), gate_holds=holds)
+        return [r for r in result["unmutedItems"] if r["kind"] in ("gate", "coder")], result
+
+    from tests.unit.test_conductor_k3_coder_needs_you import _Clock, _service
+
+    calls: list = []
+    noon = datetime.now(timezone.utc).replace(hour=12, minute=0, second=0, microsecond=0)
+    svc = _service(launched.db, calls, _Clock(noon))
+
+    def edge() -> dict:
+        def build(principal=None):
+            current, result = rows()
+            return {"count": result["count"], "projects": [], "items": result["unmutedItems"],
+                    "members": result["members"], "coverage": [], "complete": True}
+        with patch.object(svc, "_build_aggregate_via_canonical", side_effect=build):
+            return svc.notify_coder_edge(OWNER, session_key=AGENT.identity)
+
+    current, _ = rows()
+    assert [(r["id"], r["why"], r["notifyKey"]) for r in current] == [(f"gate:{pid}", TO_APPROVE, f"gate:{pid}")]
+    assert edge()["outcome"] == "sent"
+    assert edge()["outcome"] == "held_no_edge"
+
+    # Decided: the permission wait that began during the hold keeps its identity.
+    launched.gate.decide(Principal(PrincipalKind.OWNER, "owner"), pid, {"decision": "approved"})
+    current, _ = rows()
+    assert [(r["kind"], r["notifyKey"]) for r in current] == [("coder", f"gate:{pid}")]
+    assert edge()["outcome"] == "held_no_edge"
+    assert len(calls) == 1
+
+    # An independent question stays its own row and notifies.
+    ingest_agent_hook_event(agent="claude", state_path=state, payload={**base, "hook_event_name": "UserPromptSubmit", "prompt": "go"})
+    ingest_agent_hook_event(agent="claude", state_path=state, payload={
+        **base, "hook_event_name": "Stop", "last_assistant_message": "Restart or reboot?"})
+    current, _ = rows()
+    assert [r["why"] for r in current] == ["TO ANSWER"] and current[0]["notifyKey"] != f"gate:{pid}"
+    assert edge()["outcome"] == "sent" and len(calls) == 2

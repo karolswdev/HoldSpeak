@@ -167,12 +167,66 @@ class _Outside(Exception):
         self.rule = rule
 
 
+#: Claude Code's file-writing tools (Conductor R1). A launch's per-launch
+#: settings put them on the gate: ``acceptEdits`` also accepts edits in
+#: Claude's other allowed folders, so the gate keeps them to the worktree.
+EDIT_TOOLS = frozenset({"Edit", "Write", "MultiEdit", "NotebookEdit"})
+#: The rule of a file write inside the launch's own worktree.
+EDIT_INSIDE_RULE = "edit_in_worktree"
+
+
+def _real_target(path: str) -> str:
+    """The path a write lands on: every symlink resolved, also for a target
+    that does not exist yet (its nearest existing folder is resolved and
+    the rest of the path joined to it)."""
+    absolute = os.path.abspath(path)
+    tail: list[str] = []
+    probe = absolute
+    while not os.path.lexists(probe):
+        parent = os.path.dirname(probe)
+        if parent == probe:
+            break
+        tail.append(os.path.basename(probe))
+        probe = parent
+    resolved = os.path.realpath(probe)
+    for part in reversed(tail):
+        if part in ("", ".", ".."):
+            raise _Outside("edit_path_not_plain")
+        resolved = os.path.join(resolved, part)
+    return resolved
+
+
+def classify_edit(tool_input: Optional[Mapping[str, Any]], *, cwd: str, root: str) -> BashCall:
+    """Read one file write against the worktree ``root``: inside only when
+    the resolved target is in the resolved worktree."""
+    raw = tool_input or {}
+    target = raw.get("file_path") or raw.get("notebook_path")
+    if not isinstance(target, str) or not target.strip():
+        return BashCall(UNPARSED, "no_file_path")
+    try:
+        real_root = os.path.realpath(root)
+        joined = target if os.path.isabs(target) else os.path.join(cwd or root, target)
+        real = _real_target(joined)
+    except _Outside as exc:
+        return BashCall(OUTSIDE, exc.rule)
+    except (OSError, ValueError):
+        return BashCall(UNPARSED, "edit_path_unreadable")
+    if not _inside(real, real_root):
+        return BashCall(OUTSIDE, "edit_outside_worktree")
+    return BashCall(INSIDE, EDIT_INSIDE_RULE)
+
+
 def classify_tool_call(
     tool: str, tool_input: Optional[Mapping[str, Any]], *, cwd: str, root: Optional[str],
 ) -> BashCall:
-    """The verdict for one held tool call. Only Bash is read; any other tool
-    is ``unparsed`` (it waits). ``root`` is the armed worktree the call's
-    working folder is in (``None``: in no armed path)."""
+    """The verdict for one held tool call. Bash and the file-writing tools
+    are read; any other tool is ``unparsed`` (it waits). ``root`` is the
+    armed worktree the call's working folder is in (``None``: in no armed
+    path)."""
+    if tool in EDIT_TOOLS:
+        if not root:
+            return BashCall(OUTSIDE, "cwd_outside_armed_path")
+        return classify_edit(tool_input, cwd=cwd, root=root)
     if tool != "Bash":
         return BashCall(UNPARSED, "tool_not_bash")
     command = (tool_input or {}).get("command")
@@ -867,11 +921,14 @@ def classification_from_wire(raw: Any) -> Optional[dict[str, str]]:
 
 __all__ = [
     "BashCall",
+    "EDIT_INSIDE_RULE",
+    "EDIT_TOOLS",
     "INSIDE",
     "OUTSIDE",
     "SCOPES",
     "UNPARSED",
     "classification_from_wire",
     "classify_bash",
+    "classify_edit",
     "classify_tool_call",
 ]

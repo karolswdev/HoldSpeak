@@ -808,7 +808,9 @@ def test_the_normal_read_and_test_list(tmp_path, monkeypatch, command, read_rule
 
 
 def test_only_bash_is_read_and_no_root_is_outside() -> None:
-    assert classify_tool_call("Write", {"file_path": "/x"}, cwd="/", root="/").scope == "unparsed"
+    # Conductor R1: the file-writing tools are read too (against the root).
+    assert classify_tool_call("WebFetch", {"url": "https://x"}, cwd="/", root="/").scope == "unparsed"
+    assert classify_tool_call("Write", {"file_path": "/x"}, cwd="/", root=None).scope == "outside"
     assert classify_tool_call("Bash", {"command": "ls"}, cwd="/x", root=None).rule == "cwd_outside_armed_path"
 
 

@@ -143,8 +143,13 @@ def claude_permission_args(mode: Any, argv: list[str]) -> list[str]:
     APPROVE row for each file change, whatever the Control mode. Edits stay
     inside the worktree (Claude Code accepts edits in its working folder
     only); Bash stays with the tool gate. Secure gets nothing: each edit
-    asks. A permission mode the launch already names is kept."""
-    if not pre_approved(mode) or "--permission-mode" in argv:
+    asks. A permission mode the launch already names is kept, in either
+    form (``--permission-mode plan`` or ``--permission-mode=plan``)."""
+    named = any(
+        str(token) == "--permission-mode" or str(token).startswith("--permission-mode=")
+        for token in argv
+    )
+    if not pre_approved(mode) or named:
         return []
     return ["--permission-mode", CLAUDE_EDIT_MODE]
 

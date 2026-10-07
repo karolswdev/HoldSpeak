@@ -35,6 +35,26 @@ class TmuxDelivery:
     submitted: bool
 
 
+#: The control characters a typed text may carry: tab and newline only.
+_ALLOWED_CONTROLS = frozenset({"\t", "\n"})
+
+
+def plain_text(text: str) -> str:
+    """The text as the pane gets it: CRLF (and a lone CR's pair) normalized
+    to LF; refused when it carries any other C0 or C1 control or DEL
+    (Conductor R1, Astra on #916: an embedded ESC[201~ ends a bracketed
+    paste early, a Ctrl-C or a CR acts in the agent's TUI). Ordinary
+    Unicode is kept."""
+    normalized = text.replace("\r\n", "\n")
+    for char in normalized:
+        code = ord(char)
+        if (code < 0x20 and char not in _ALLOWED_CONTROLS) or 0x7F <= code <= 0x9F:
+            raise TmuxTransportError(
+                f"the text carries a terminal control (U+{code:04X}); nothing was typed"
+            )
+    return normalized
+
+
 def send_text_to_pane(
     *,
     pane: str,
@@ -45,7 +65,7 @@ def send_text_to_pane(
     """Send literal text to a tmux pane, optionally followed by Enter."""
 
     target = str(pane or "").strip()
-    message = str(text or "")
+    message = plain_text(str(text or ""))
     if not target:
         raise TmuxTransportError("tmux pane target is required")
     if not message.strip():
@@ -105,6 +125,12 @@ def send_keys_to_pane(
     if shutil.which("tmux") is None:
         raise TmuxTransportError("tmux executable not found")
 
+    # A literal run is typed text: no terminal control rides in it (a
+    # control is a named key, from the allow-list). Read all first: a refused
+    # run sends nothing, not the keys before it.
+    for kind, value in keys:
+        if kind == "literal":
+            plain_text(value)
     for kind, value in keys:
         if kind == "literal":
             _run_tmux(["tmux", "send-keys", "-t", target, "-l", value], timeout_s=timeout_s)
@@ -139,5 +165,6 @@ __all__ = [
     "TmuxDelivery",
     "TmuxTransportError",
     "send_keys_to_pane",
+    "plain_text",
     "send_text_to_pane",
 ]

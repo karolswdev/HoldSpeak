@@ -324,7 +324,7 @@ def gate_items(holds: Iterable[dict[str, Any]], now: datetime | None = None) -> 
     rows: list[dict[str, Any]] = []
     for hold in holds:
         proposal_id = str(hold.get("proposal_id") or "")
-        if not proposal_id:
+        if not proposal_id or not hold.get("held", True):
             continue
         created = float(hold.get("created_at") or now_s)
         since = datetime.fromtimestamp(created, timezone.utc).isoformat().replace("+00:00", "Z")
@@ -369,11 +369,21 @@ def _gate_command(args_head: str) -> str:
     return args_head
 
 
+#: How far back a decided or expired hold still names its session's
+#: permission wait (one notification identity through decision or expiry).
+GATE_RECENT_SECONDS = 30 * 60
+#: Clock slack between the gate hold and the hook's permission Notification.
+GATE_WAIT_SLACK_SECONDS = 2.0
+
+
 def _read_gate_holds(db: Any, *, ledger: Any = None, now: float | None = None) -> list[dict[str, Any]]:
-    """The held, unexpired gate proposals of live HoldSpeak launches."""
+    """The gate proposals of live HoldSpeak launches: each held, unexpired
+    one (``held: True``, a row of its own) and each decided or expired in
+    the last :data:`GATE_RECENT_SECONDS` (``held: False``, read only to
+    correlate a permission wait, :func:`correlate_gate_waits`)."""
     import time
 
-    from holdspeak.db.gate import HELD
+    from holdspeak.db.gate import ALL_STATES, HELD
     from holdspeak.services.gate_service import _LIVE_LAUNCH_STATES, _is_launch_caller
 
     if ledger is None:
@@ -385,21 +395,72 @@ def _read_gate_holds(db: Any, *, ledger: Any = None, now: float | None = None) -
     if not launches:
         return []
     holds: list[dict[str, Any]] = []
-    for proposal in db.gate.list_state(HELD):
-        if proposal.expires_at and proposal.expires_at <= moment:
-            continue
-        launch = next((r for r in launches if _is_launch_caller(r, proposal.session_key)), None)
-        if launch is None:
-            continue
-        holds.append({
-            "proposal_id": proposal.id,
-            "launch_id": str(launch.get("launch_id") or ""),
-            "session_key": str(launch.get("session_key") or ""),
-            "tool": proposal.tool,
-            "command": _gate_command(proposal.args_head),
-            "created_at": proposal.created_at,
-        })
+    for state in sorted(ALL_STATES):
+        for proposal in db.gate.list_state(state, limit=200):
+            expired = bool(proposal.expires_at and proposal.expires_at <= moment)
+            held = state == HELD and not expired
+            ended = proposal.decided_at or proposal.expires_at or moment
+            if not held and moment - float(ended) > GATE_RECENT_SECONDS:
+                continue
+            launch = next((r for r in launches if _is_launch_caller(r, proposal.session_key)), None)
+            if launch is None:
+                continue
+            holds.append({
+                "proposal_id": proposal.id,
+                "launch_id": str(launch.get("launch_id") or ""),
+                "session_key": str(launch.get("session_key") or ""),
+                "tool": proposal.tool,
+                "command": _gate_command(proposal.args_head),
+                "created_at": proposal.created_at,
+                "held": held,
+                "ended_at": None if held else float(ended),
+            })
     return holds
+
+
+def correlate_gate_waits(
+    coder_rows: list[dict[str, Any]], gate_rows: list[dict[str, Any]],
+    holds: Iterable[dict[str, Any]], now: datetime | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """One ask, one row, one notification (Astra on #916): a held tool call
+    and a permission wait of the SAME session that began while that call
+    was held are one ask. The gate row stays (it names the command and opens
+    the proposal); the coder row goes; the row's notification identity is
+    the one of whichever began first. After the hold is decided or expired,
+    a permission wait that began during it keeps the hold's identity, so the
+    ask never notifies twice. Questions (TO ANSWER) are never joined."""
+    clock = now or local_wall()
+    now_s = (clock if clock.tzinfo else clock.astimezone()).timestamp()
+    by_ref = {row["id"]: row for row in gate_rows}
+    records = [h for h in holds if h.get("proposal_id") and h.get("session_key")]
+    kept: list[dict[str, Any]] = []
+    for row in coder_rows:
+        start = _epoch_seconds(row.get("waitStartedAt"))
+        if row.get("waitKind") != "approve" or start is None:
+            kept.append(row)
+            continue
+        match = None
+        for hold in records:
+            if hold["session_key"] != row.get("sessionKey"):
+                continue
+            begun = float(hold.get("created_at") or 0.0)
+            end = now_s if hold.get("held", True) else float(hold.get("ended_at") or now_s)
+            if begun - GATE_WAIT_SLACK_SECONDS <= start <= end + GATE_WAIT_SLACK_SECONDS:
+                match = hold
+                break
+        if match is None:
+            kept.append(row)
+            continue
+        ref = f"{GATE_SOURCE}:{match['proposal_id']}"
+        first = row["notifyKey"] if start < float(match.get("created_at") or 0.0) else ref
+        gate_row = by_ref.get(ref)
+        if gate_row is not None:
+            gate_row["notifyKey"] = first
+            gate_row["joined"] = row["id"]
+            continue  # one row: the gate's
+        row["notifyKey"] = first
+        kept.append(row)
+    return kept, gate_rows
 
 
 #: The names that mean the owner himself. The People store reserves ``me``
@@ -639,10 +700,13 @@ def compute_needs_you(
             row["why"] = YOURS if _waiting_on(his) else (his.get("why") or row.get("why"))
             row["severity"] = his.get("severity") or row.get("severity")
     # A coder row (R5) keeps its own row and its own ref (``coder:<key>``).
-    singles = (
-        people + decision_items(decisions) + coder_items(coders, clock)
-        + gate_items(gate_holds, clock)  # Conductor R1: held calls of launches
+    # Conductor R1: held calls of launches; a held call and the same
+    # session's permission wait are one row with one notification identity.
+    holds = list(gate_holds)
+    coder_rows, gate_rows = correlate_gate_waits(
+        coder_items(coders, clock), gate_items(holds, clock), holds, clock,
     )
+    singles = people + decision_items(decisions) + coder_rows + gate_rows
     for row in singles:
         row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)

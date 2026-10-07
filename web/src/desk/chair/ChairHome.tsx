@@ -1793,6 +1793,9 @@ function useNeedsYouOpener(item: NeedsYouItem, card?: DoorCard): Opener | null {
   if (isCommitment) return ownerPerson ? refOpener(`people:${ownerPerson}`) : null;
   // A decision that waits for review opens its own window.
   if (item.source === "decision") return refOpener(item.openRef);
+  // Conductor R1: a held tool call of a launch opens the system shade, where
+  // the held call is listed with Approve and Deny.
+  if (item.source === "gate") return refOpener(item.openRef);
   return item.projectId ? () => openProjectRoom(item.projectId) : null;
 }
 
