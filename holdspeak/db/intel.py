@@ -444,6 +444,10 @@ def _plugin_assignment_reachable(capability_id: str) -> bool:
         raise
 
 
+#: The skipped receipt when the owner turned summaries OFF (PHILO-15 01).
+SUMMARIES_OFF_DETAIL = "Summaries off."
+
+
 class IntelRepository(BaseRepository):
     table = "intel"
 
@@ -1957,6 +1961,10 @@ class IntelRepository(BaseRepository):
         raw_detail = str(getattr(error, "detail", "") or str(error)).strip()
         detail = raw_detail or "Meeting intelligence could not prepare its route. Try again."
         terminal = isinstance(error, (ServiceError, KernelRefused))
+        # PHILO-15 01 ruling: the owner turned summaries OFF. That is a
+        # deliberate state, never a failure: the job ends as a skipped
+        # receipt, with no error, no Retry and no Needs-you row.
+        summaries_off = bool((getattr(error, "context", None) or {}).get("off"))
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             row = conn.execute(
@@ -1967,6 +1975,29 @@ class IntelRepository(BaseRepository):
                 conn.rollback()
                 return False
             admission_attempt = int(row["attempts"]) + 1
+            if summaries_off:
+                changed = conn.execute(
+                    """UPDATE intel_jobs SET status='skipped',lifecycle_posture='terminal',
+                       attempts=?,updated_at=?,last_error=?
+                       WHERE job_id=? AND status='queued'""",
+                    (admission_attempt, utc_iso(now), SUMMARIES_OFF_DETAIL, job_id),
+                ).rowcount
+                if changed:
+                    conn.execute(
+                        """UPDATE meetings SET intel_status='skipped',intel_status_detail=?,
+                           intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now')
+                           WHERE id=?""",
+                        (SUMMARIES_OFF_DETAIL, utc_iso(now), str(row["meeting_id"])),
+                    )
+                    conn.execute(
+                        """INSERT INTO intel_job_attempts (
+                            meeting_id,job_id,event_kind,attempt,outcome,error,retry_at,created_at
+                        ) VALUES (?,?, 'refusal', ?, 'skipped', ?, NULL, ?)""",
+                        (str(row["meeting_id"]), job_id, admission_attempt,
+                         SUMMARIES_OFF_DETAIL, utc_iso(now)),
+                    )
+                conn.commit()
+                return bool(changed)
             if not terminal and admission_attempt >= 3:
                 terminal = True
                 detail += " Admission infrastructure retry budget exhausted."

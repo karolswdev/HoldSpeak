@@ -272,6 +272,9 @@ export function meetingsHeadline(
   if (queued > 0) {
     return { text: counted(queued, "summary queued", "summaries queued"), accent: true };
   }
+  // PHILO-15 01 ruling: OFF wins over the unsummarised count. The owner
+  // turned summaries off, so a meeting without one is not an ask.
+  if (routeOff) return { text: "Summaries off", accent: false };
   const missing = meetingRows.filter(summaryMissing).length;
   if (missing > 0) {
     // HS-201-04 (tenet 4): the headline names the same thing its verb does.
@@ -282,7 +285,6 @@ export function meetingsHeadline(
   // Inventory 2026-10-03 (UX-CANON A.10): the all-clear stood over the
   // footer's "NO SUMMARY ROUTE". With no engine the next meeting gets no
   // summary; the headline says so in the Chair's words, not "all done".
-  if (routeOff) return { text: "Summaries off", accent: false };
   if (routeMissing) return { text: "No engine for summaries", accent: true };
   return { text: "All summaries done", accent: false };
 }

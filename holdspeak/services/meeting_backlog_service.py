@@ -66,12 +66,22 @@ def mark_if_no_engine(db: Any, meeting_id: str, *, route_for: Optional[RouteFor]
     route = (route_for or _project_route)(db, str(meeting_id))
     if route.get("status") == "ready":
         return False
+    if _is_off(db, route):
+        # PHILO-15 01 ruling: OFF is the owner's choice, not a missing
+        # engine. Nothing is marked, so nothing waits for an engine.
+        return False
     with db._connection() as conn:
         conn.execute(
             "INSERT OR IGNORE INTO meeting_summary_backlog (meeting_id, reason, marked_at) VALUES (?,?,?)",
             (str(meeting_id), MARK_REASON, datetime.now(timezone.utc).isoformat()),
         )
     return True
+
+
+def _is_off(db: Any, route: Optional[dict[str, Any]]) -> bool:
+    from .meeting_route_projection import route_is_off, summaries_off
+
+    return route_is_off(route) or summaries_off(db)
 
 
 def clear_mark(db: Any, meeting_id: str) -> None:
@@ -139,6 +149,11 @@ def drain_backlog(
 ) -> dict[str, Any]:
     """Queue up to ``limit`` marked meetings; marks stay whenever a job is not queued."""
     route_for = route_for or _project_route
+    if _is_off(db, None):
+        # PHILO-15 01 ruling: under OFF the backlog queues nothing and waits
+        # for nothing. Marks made before OFF stay; when OFF clears, they
+        # drain as before.
+        return {"status": "summaries_off", "queued": []}
     candidates = marked_meeting_ids(db, auto_mode=auto_mode, limit=limit)
     if not candidates:
         return {"status": "idle", "queued": []}
