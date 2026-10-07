@@ -38,6 +38,16 @@ import { memberOpens, openMember } from "./open";
 import { drawerWindowId, useDrawers, type OpenDrawer } from "./store";
 import { useDrawerData, type DrawerRead } from "./useDrawerData";
 import { urlHost } from "./members";
+import { DEFAULT_AGENT } from "../agentHand";
+import {
+  HandConfirmSlot,
+  beginHand,
+  drawerHost,
+  handOriginOfRef,
+  handSourceProps,
+  handTargetProps,
+  useDropHand,
+} from "../hand";
 import type { DrawerHead, DrawerMember } from "./members";
 import "./drawer.css";
 
@@ -123,6 +133,22 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
   const info = (member: DrawerMember | null) => {
     if (member) useDrawers.getState().openInfo(member, projectId);
   };
+  // PHILO-14 C3: drop to hand. A work item drags out of the icons; an agent
+  // here takes it; the selection's Hand to agent is the same hand by press
+  // (the keyboard path, and the only one at 393).
+  const host = drawerHost(projectId);
+  const drag = useDropHand((s) => s.drag);
+  const handOf = (member: DrawerMember | null) =>
+    member ? handOriginOfRef(member.ref, member.name, projectId) : null;
+  const selectedHand = handOf(selected);
+  const handSelected = () => {
+    if (!selected || !selectedHand) return;
+    void beginHand(selectedHand, {
+      agent: DEFAULT_AGENT,
+      host,
+      source: { kind: selected.kind, id: selected.id, sprite: selected.sprite },
+    });
+  };
   const onSort = (key: ObjectSortKey) =>
     setSort((now) => (now.key === key ? { key, dir: now.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
 
@@ -168,26 +194,34 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
               </Button>
             </span>
           </div>
+          <HandConfirmSlot host={host} />
           {data.loading ? (
             <SurfaceState loading />
           ) : !members.length && data.failed.length ? null : !members.length ? (
             <SurfaceState empty emptyLabel="Nothing filed here" />
           ) : view === "icons" ? (
             <IconGrid label={name} onClear={() => setSelectedId(null)}>
-              {members.map((m) => (
-                <DeskIcon
-                  key={m.id}
-                  id={m.id}
-                  kind={m.kind}
-                  name={m.name}
-                  kindWord={m.kindWord}
-                  sprite={m.sprite}
-                  selected={m.id === selectedId}
-                  lamp={m.lamp ? { tone: m.lamp.tone, label: m.lamp.label } : undefined}
-                  onSelect={() => setSelectedId(m.id)}
-                  onOpen={() => open(m)}
-                />
-              ))}
+              {members.map((m) => {
+                const hand = handOf(m);
+                return (
+                  <DeskIcon
+                    key={m.id}
+                    id={m.id}
+                    kind={m.kind}
+                    name={m.name}
+                    kindWord={m.kindWord}
+                    sprite={m.sprite}
+                    selected={m.id === selectedId}
+                    lamp={m.lamp ? { tone: m.lamp.tone, label: m.lamp.label } : undefined}
+                    onSelect={() => setSelectedId(m.id)}
+                    onOpen={() => open(m)}
+                    drop={drag?.over === m.ref}
+                    ghost={drag?.host === host && drag.source.id === m.id}
+                    {...(hand ? handSourceProps({ origin: hand, source: { kind: m.kind, id: m.id, sprite: m.sprite }, host }) : {})}
+                    {...handTargetProps(m.ref)}
+                  />
+                );
+              })}
             </IconGrid>
           ) : (
             <ObjectList
@@ -216,6 +250,11 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
             <Button dense variant="ghost" disabled={!selected} onClick={() => info(selected)}>
               Get Info
             </Button>
+            {selectedHand ? (
+              <Button dense variant="ghost" onClick={handSelected} data-testid="drawer-hand">
+                Hand to agent
+              </Button>
+            ) : null}
             <Button dense variant="secondary" disabled={!selected || !memberOpens(selected)} onClick={() => open(selected)}>
               Open
             </Button>

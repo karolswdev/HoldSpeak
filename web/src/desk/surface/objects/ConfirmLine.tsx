@@ -6,6 +6,7 @@
  *  **Cancel**, **Hand** (primary). A sunken well: it sits in the drawer, at
  *  the top, while the drop waits for the press.
  */
+import type { ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { objectSprite } from "./kinds";
 import "./objects.css";
@@ -30,6 +31,14 @@ export interface ConfirmLineProps {
   /** The primary verb's word; default `Hand`. */
   handLabel?: string;
   busy?: boolean;
+  /** PHILO-14 C3: Hand cannot be pressed (the preview refused, or is out). */
+  disabled?: boolean;
+  /** The egress chip of the hand, on the Hand side (where the brief goes). */
+  egress?: ReactNode;
+  /** A token line under the fact: a refusal, the tracker read, the receipt. */
+  status?: ReactNode;
+  /** The verbs after the press (Close, Send again): they replace the three. */
+  verbs?: ReactNode;
 }
 
 export function ConfirmLine({
@@ -43,6 +52,10 @@ export function ConfirmLine({
   onHand,
   handLabel = "Hand",
   busy,
+  disabled,
+  egress,
+  status,
+  verbs,
 }: ConfirmLineProps) {
   return (
     <div className="confirm-line" role="group" aria-label={`Hand: ${title}`}>
@@ -54,19 +67,25 @@ export function ConfirmLine({
       <span className="confirm-line-what">
         <span className="confirm-line-title">{title}</span>
         <span className="confirm-line-fact">{fact}</span>
+        {status ? <span className="confirm-line-status">{status}</span> : null}
       </span>
+      {egress ? <span className="confirm-line-egress">{egress}</span> : null}
       <span className="object-verbs confirm-line-verbs">
-        {onBrief ? (
-          <Button dense variant="ghost" aria-expanded={briefOpen ? "true" : "false"} onClick={onBrief}>
-            Brief ▸
-          </Button>
-        ) : null}
-        <Button dense variant="ghost" onClick={onCancel} disabled={busy}>
-          Cancel
-        </Button>
-        <Button dense variant="primary" onClick={onHand} loading={busy}>
-          {handLabel}
-        </Button>
+        {verbs ?? (
+          <>
+            {onBrief ? (
+              <Button dense variant="ghost" aria-expanded={briefOpen ? "true" : "false"} onClick={onBrief}>
+                Brief ▸
+              </Button>
+            ) : null}
+            <Button dense variant="ghost" onClick={onCancel} disabled={busy}>
+              Cancel
+            </Button>
+            <Button dense variant="primary" onClick={onHand} loading={busy} disabled={disabled || busy}>
+              {handLabel}
+            </Button>
+          </>
+        )}
       </span>
     </div>
   );

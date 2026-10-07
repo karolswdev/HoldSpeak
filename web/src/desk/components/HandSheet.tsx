@@ -237,7 +237,7 @@ export function trackerToken(
 function Sheet({ origin }: { origin: HandOrigin }) {
   const close = useAgentHand((s) => s.close);
   const detect = useDetect();
-  const [agent, setAgent] = useState<AgentId>(DEFAULT_AGENT);
+  const [agent, setAgent] = useState<AgentId>(origin.agent ?? DEFAULT_AGENT);
   // Each preview carries the key of the request that produced it (item, Project,
   // profile): Launch arms only when that key is the current request's.
   const [preview, setPreview] = useState<(HandPreview & { requestKey: string }) | null>(null);
