@@ -568,3 +568,54 @@ def test_the_real_codex_trusts_exactly_the_holdspeak_hooks(tmp_path, monkeypatch
         codex_trust.is_holdspeak_hook(next(h for h in listed if h["key"] == key))
         for key in config["hooks"]["state"]
     )
+
+
+# ── 8. Codex's approval and sandbox by the Control mode (ruling 2026-10-06) ──
+
+
+def _codex_argv(tmp_path, db, monkeypatch, mode: str) -> tuple[Any, list[str]]:
+    import shlex
+
+    rig = _rig(tmp_path / mode, db, monkeypatch, agent="codex")
+    rig.service._control_mode = lambda: mode
+    result = rig.hand.hand(OWNER, "action", "ai_1", profile="codex-default")
+    assert result["status"] == "launched", result
+    spawn = next(c for c in rig.tmux.calls if c[1] == "new-session")
+    command = spawn[spawn.index("-s") + 2]
+    rig.tmux.ended = True
+    return rig, shlex.split(command.split(" exec ", 1)[1])
+
+
+def _after_hooks(argv: list[str]) -> list[str]:
+    rest = argv[1 + len(coder_gate.codex_spawn_args()):]
+    return rest[:rest.index("-c")]
+
+
+def test_yolo_codex_asks_nothing_and_writes_in_the_worktree_and_its_git_folder(tmp_path, db, monkeypatch) -> None:  # noqa: F811
+    rig, argv = _codex_argv(tmp_path, db, monkeypatch, "yolo")
+    common = os.path.realpath(rig.repo / ".git")
+    git_dir = f"{common}/worktrees/{rig.worktree.name}"
+    # The worktree's .git file names its own git folder: a commit writes there.
+    assert (rig.worktree / ".git").read_text().strip() == f"gitdir: {git_dir}"
+    assert _after_hooks(argv) == [
+        "--ask-for-approval", "never", "--sandbox", "workspace-write",
+        "--add-dir", git_dir, "--add-dir", f"{common}/objects",
+        "--add-dir", f"{common}/refs", "--add-dir", f"{common}/logs",
+    ]
+
+
+@pytest.mark.parametrize("mode", ["neutral", "safe"])
+def test_normal_and_secure_codex_keep_its_own_approvals(tmp_path, db, monkeypatch, mode) -> None:  # noqa: F811
+    _rig_, argv = _codex_argv(tmp_path, db, monkeypatch, mode)
+    assert _after_hooks(argv) == ["--ask-for-approval", "on-request"]
+    assert "--sandbox" not in argv and "--add-dir" not in argv
+
+
+def test_codex_sessions_have_their_own_receipt_adapter() -> None:
+    from holdspeak.agent_capabilities import Capability, Standing, standing_for
+    from holdspeak.session_receipts import _adapter_for
+
+    assert _adapter_for(f"codex:{SID}") == "codex-hooks"
+    assert _adapter_for("claude:x") == "claude-code-hooks" and _adapter_for("coder:p") == "tmux-pane"
+    assert standing_for("codex-hooks", Capability.BLOCKING) is Standing.AUTHORITATIVE
+    assert standing_for("codex-hooks", Capability.USAGE_TOKENS) is Standing.UNAVAILABLE

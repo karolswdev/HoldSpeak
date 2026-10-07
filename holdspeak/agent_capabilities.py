@@ -48,7 +48,7 @@ class Standing(str, Enum):
     UNAVAILABLE = "unavailable"
 
 
-ADAPTERS = ("tmux-pane", "delivery-node", "mesh-node", "claude-code-hooks")
+ADAPTERS = ("tmux-pane", "delivery-node", "mesh-node", "claude-code-hooks", "codex-hooks")
 
 # The declaration table. Every cell is a reviewed claim:
 #
@@ -69,6 +69,11 @@ ADAPTERS = ("tmux-pane", "delivery-node", "mesh-node", "claude-code-hooks")
 #   in the same commit as the gate itself. The hook's session_id is
 #   self-reported by the agent process (inferred). Usage and repo
 #   head stay unavailable until a story implements them.
+# - codex-hooks (Conductor R3: coder_gate.py ``gate hook --agent codex``):
+#   Codex 0.159's PreToolUse fires before the call and blocks on the
+#   decision (a deny stops the call, observed), so tool_hooks and blocking
+#   are authoritative. The session_id is self-reported (inferred). Codex's
+#   transcript carries no usage HoldSpeak reads, so usage is unavailable.
 LEDGER: MappingProxyType[str, MappingProxyType[Capability, Standing]] = MappingProxyType({
     "tmux-pane": MappingProxyType({
         Capability.TOOL_HOOKS: Standing.UNAVAILABLE,
@@ -97,6 +102,13 @@ LEDGER: MappingProxyType[str, MappingProxyType[Capability, Standing]] = MappingP
         # HS-104-05: the Stop hook reports session totals read from
         # the agent's own transcript — the adapter's own record.
         Capability.USAGE_TOKENS: Standing.AUTHORITATIVE,
+        Capability.REPO_HEAD: Standing.UNAVAILABLE,
+        Capability.BLOCKING: Standing.AUTHORITATIVE,
+    }),
+    "codex-hooks": MappingProxyType({
+        Capability.TOOL_HOOKS: Standing.AUTHORITATIVE,
+        Capability.SESSION_IDENTITY: Standing.INFERRED,
+        Capability.USAGE_TOKENS: Standing.UNAVAILABLE,
         Capability.REPO_HEAD: Standing.UNAVAILABLE,
         Capability.BLOCKING: Standing.AUTHORITATIVE,
     }),

@@ -404,6 +404,7 @@ def test_a_codex_launch_gets_the_mcp_flags(tmp_path, db, monkeypatch) -> None:
 
     assert agent_argv == [
         "codex", *coder_gate.codex_spawn_args(),
+        "--ask-for-approval", "on-request",  # R3: Normal keeps Codex's approvals
         "-c", f'mcp_servers.holdspeak.url="{hub_url}/api/mcp"',
         "-c", 'mcp_servers.holdspeak.bearer_token_env_var="HOLDSPEAK_AGENT_CREDENTIAL"',
         "-c", 'mcp_servers.holdspeak.default_tools_approval_mode="approve"',

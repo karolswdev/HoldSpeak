@@ -35,6 +35,7 @@ Every wire projection here is path-free (§13).
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
 import shutil
@@ -757,6 +758,50 @@ class LaunchService:
         ):
             raise LaunchRefused("process_spawn_not_gated", "not gated")
 
+    def _codex_mode_args(self, argv: list[str], mode: Any, worktree_path: str) -> list[str]:
+        """Codex's approval and sandbox by the Control mode at launch (R3,
+        coordinator ruling 2026-10-06).
+
+        YOLO: no approval prompts (``-a never``); HoldSpeak's gate holds a
+        Bash call outside the worktree, and Codex's ``workspace-write``
+        sandbox keeps writes in the worktree plus the git folders a commit
+        writes. Codex 0.159 keeps a writable root's git folder read-only (for
+        a worktree, the ``.git/worktrees/<name>`` its ``.git`` file names) and
+        a parent ``--add-dir`` does not lift it; the exact folders do
+        (observed): the worktree's own git folder and, when shared, the
+        repository's ``objects``, ``refs`` and ``logs``.
+        Secure and Normal: Codex's own approvals (``on-request``); its
+        prompts reach Needs you as TO APPROVE. A profile ``--sandbox`` choice
+        is kept."""
+        from . import agent_mcp
+
+        if agent_mcp.normalized_mode(mode) != "yolo":
+            return ["--ask-for-approval", "on-request"]
+        args = ["--ask-for-approval", "never"]
+        if "--sandbox" not in argv:
+            args += ["--sandbox", "workspace-write"]
+        git_dir = self._git_path(worktree_path, "--absolute-git-dir")
+        common = self._git_path(worktree_path, "--git-common-dir")
+        if git_dir:
+            args += ["--add-dir", git_dir]
+        if common and common != git_dir:
+            for part in ("objects", "refs", "logs"):
+                args += ["--add-dir", os.path.join(common, part)]
+        return args
+
+    def _git_path(self, worktree: str, flag: str) -> str:
+        """One git folder of ``worktree`` (absolute, real), or ``""``."""
+        try:
+            completed = self._git(
+                ["git", "-C", str(worktree), "rev-parse", "--path-format=absolute", flag]
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return ""
+        if completed.returncode != 0:
+            return ""
+        path = (completed.stdout or "").strip()
+        return os.path.realpath(path) if path else ""
+
     # request validation ---------------------------------------------------
 
     def _refuse_client_execution_fields(self, request: Mapping[str, Any]) -> None:
@@ -945,7 +990,9 @@ class LaunchService:
             # Conductor R3: every Codex launch runs in its own process with the
             # rider and gate hooks (inert unless the gate holds this worktree).
             argv = [*argv, *coder_gate.codex_spawn_args()]
-            argv = [*argv, *agent_mcp.codex_args(agent_credentials.hub_url, mode)]
+            # The approval and sandbox flags need the worktree's git folder:
+            # added once the worktree exists (before the spawn below).
+            codex_tail = agent_mcp.codex_args(agent_credentials.hub_url, mode)
             if parent_operation_id:
                 gate_state = "gated"
         record: dict[str, Any] = {
@@ -1001,6 +1048,8 @@ class LaunchService:
             worktree_id = record["worktree_id"] = registered.worktree_id
 
         # 2. spawn through the envelope: the node launch receipt.
+        if executable == "codex":
+            argv = [*argv, *self._codex_mode_args(argv, mode, worktree_path), *codex_tail]
         command = self.compose_command(
             argv, worktree_path, f"{project}/{story_id}",
             parent_operation_id=parent_operation_id,
