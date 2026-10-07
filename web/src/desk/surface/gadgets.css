@@ -333,6 +333,24 @@
 .gadget-string:focus-within {
   border-color: var(--accent);
 }
+/* PHILO-15 02: StringGadget `caption` — the visible name above the well,
+   the caption step (12 px mono uppercase, UX-CANON C). */
+.gadget-string-captioned {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+.gadget-string-caption {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--text));
+}
 .gadget-string input {
   flex: 1;
   min-width: 0;

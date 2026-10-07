@@ -525,3 +525,67 @@ class TestMicAllowlist:
         mod = _load_scanner()
         assert len(mod.MIC_ALLOWLIST) == 24
         assert len({(p, n) for p, n, _ in mod.MIC_ALLOWLIST}) == 24
+
+
+# PHILO-15 02 (ruling 2026-10-07): a secret is never dictated aloud.
+# Astra r2: the comments sit in ATTRIBUTE position (depth 0), as on the real
+# Concierge address field, and each carries an apostrophe.
+_SECRET_FACE = """import React from "react";
+export function Row() {
+  return (
+    <div>
+      <StringGadget
+        label="Name"
+        /* the owner's own name: an apostrophe in a comment */
+        mic={false}
+        value={n}
+        onChange={setN}
+      />
+      <StringGadget
+        label="Server address"
+        // the owner's address, a line comment
+        value={a}
+        onChange={setA}
+      />
+      <StringGadget label="Key" type="password" mic={false} value={k} onChange={setK} />
+    </div>
+  );
+}
+"""
+
+
+def _mic_lines(scanner, content: str) -> list[str]:
+    found = scanner.scan_mic("features/x/Row.tsx", content, content.splitlines())
+    return [content.splitlines()[v.line - 1].strip() for v in found]
+
+
+def test_mic_exempts_a_password_well_but_not_a_text_well() -> None:
+    scanner = _load_scanner()
+    # Exactly one hole: the text well that refuses its mic. The apostrophe
+    # in its comment must not carry the scan into the password well (whose
+    # type would then excuse the text well), and the password well itself
+    # is lawful.
+    assert _mic_lines(scanner, _SECRET_FACE) == ['<StringGadget']
+    found = scanner.scan_mic("features/x/Row.tsx", _SECRET_FACE, _SECRET_FACE.splitlines())
+    assert _SECRET_FACE.splitlines()[found[0].line].strip() == 'label="Name"'
+
+
+def test_password_exemption_belongs_to_its_own_element_only() -> None:
+    scanner = _load_scanner()
+    # The address well keeps its mic: no hole. Opt it out and the scanner
+    # must see it, even with a password well right after its comment.
+    opted_out = _SECRET_FACE.replace('label="Server address"', 'label="Server address"\n        mic={false}')
+    found = scanner.scan_mic("features/x/Row.tsx", opted_out, opted_out.splitlines())
+    labels = [opted_out.splitlines()[v.line].strip() for v in found]
+    assert labels == ['label="Name"', 'label="Server address"']
+
+
+def test_the_real_concierge_address_well_is_not_blind() -> None:
+    """Astra's in-memory check: opt the real address well out of its mic."""
+    scanner = _load_scanner()
+    path = Path(__file__).resolve().parents[2] / "web/src/features/concierge/ConciergeCore.tsx"
+    content = path.read_text()
+    rel = "features/concierge/ConciergeCore.tsx"
+    assert scanner.scan_mic(rel, content, content.splitlines()) == []
+    hole = content.replace('label="Server address"', 'label="Server address"\n              mic={false}', 1)
+    assert len(scanner.scan_mic(rel, hole, hole.splitlines())) == 1

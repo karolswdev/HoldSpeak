@@ -3,8 +3,8 @@
 // one fact line, ONE lamp + word, its own verbs), in the hub's rank order; a
 // source the hub could not read leads as a row of its own; the head is the
 // number once; never an all-clear over a partial result. Retired by the
-// board: the five-row cap, the ranking strip, the dedup disclosure, the
-// Project button and the coverage chip.
+// board: the five-row cap, the ranking strip, the dedup disclosure and the
+// coverage chip. The Project button stays on the fact line (A5b, A2b ruling).
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
@@ -126,9 +126,18 @@ describe("Arrival attention (HS-200-15)", () => {
     // One filled primary per face: the top member's verb.
     expect(within(rows[1]).getByRole("button", { name: /^Open: / }).className).toContain("btn--primary");
     expect(within(rows[2]).getByRole("button", { name: /^Open: / }).className).toContain("btn--secondary");
-    // No cap, no filter strip, no Project button.
+    // No cap, no filter strip.
     expect(screen.queryByRole("group", { name: "Ranking" })).toBeNull();
-    expect(screen.queryByRole("group", { name: "Project" })).toBeNull();
+    // PHILO-14 A5b (A2b ruling): over several Projects each row names its
+    // Project ONCE, as the Project's Button on the fact line (a generic open:
+    // the drawer); the fact text does not repeat the name.
+    for (const r of needsRows()) {
+      const name = r.querySelector(".needs-row-name")?.textContent ?? "";
+      const project = SEVENTEEN.find((x) => x.title === name)!.projectName;
+      expect(within(r).getAllByRole("group", { name: "Project" })).toHaveLength(1);
+      expect(within(r).getByRole("button", { name: `Open the Project: ${project}` })).toBeTruthy();
+      expect(factOf(r)).not.toContain(project);
+    }
     expect(screen.queryByTestId("arrival-needs-you-remainder")).toBeNull();
   });
 

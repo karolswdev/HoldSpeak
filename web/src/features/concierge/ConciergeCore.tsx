@@ -520,6 +520,7 @@ export function ConciergeCore({ scope }: CoreProps) {
           <div className="concierge-add-engine-row" data-testid="concierge-add-engine-row">
             <StringGadget
               label="Server address"
+              caption
               value={ctrl.addEngineUrl}
               onChange={ctrl.setAddEngineUrl}
               /* HS-202-02 — the shipped placeholder was the owner's own
@@ -528,6 +529,21 @@ export function ConciergeCore({ scope }: CoreProps) {
               placeholder="http://<host>:<port>/v1"
               autoFocus
             />
+            {/* PHILO-15 02: the optional key (llama.cpp --api-key, a vLLM
+                or LM Studio token). Secret: no mic, never echoed; Check
+                uses it, and Use this for summaries stores it in the
+                profile key store, never in the config file. */}
+            <span className="concierge-add-key" data-testid="concierge-add-key">
+              <StringGadget
+                label="Key"
+                caption
+                type="password"
+                mic={false}
+                value={ctrl.addEngineKey}
+                onChange={ctrl.setAddEngineKey}
+                placeholder="optional"
+              />
+            </span>
             {/* Article III / UX-CANON A9: the host is named ON the row that
                 leaves the machine, BEFORE the verb that leaves it. */}
             {checkHost ? (
@@ -552,6 +568,21 @@ export function ConciergeCore({ scope }: CoreProps) {
                 <StateChip state="success" label="READY" icon="●" />
                 <span className="concierge-token" data-testid="concierge-add-model">
                   {ctrl.addEngineModel}
+                </span>
+              </span>
+            ) : null}
+            {/* PHILO-15 02: a key answer is a word, not an instruction. */}
+            {ctrl.addEngineState === "KEY_REQUIRED" ? (
+              <span className="concierge-add-engine-answer" data-testid="concierge-add-key-answer" role="alert">
+                <StateChip state="failure" label="KEY REQUIRED" />
+              </span>
+            ) : null}
+            {ctrl.addEngineState === "KEY_INVALID" ? (
+              <span className="concierge-add-engine-answer" data-testid="concierge-add-key-answer">
+                <StateChip state="failure" label="KEY INVALID" />
+                {/* UX-CANON A3: a token, never the server's sentence. */}
+                <span className="concierge-token" data-testid="concierge-add-reason" role="alert">
+                  BAD CHARACTERS
                 </span>
               </span>
             ) : null}

@@ -245,6 +245,17 @@ def _mic_tag_text(content: str, start: int, limit: int = 4000) -> str:
                 continue
             if ch == quote:
                 quote = None
+        elif ch == "/" and content.startswith("/*", i):
+            # A comment, in an attribute position (`/* the owner's ... */`)
+            # or inside `{...}`: its apostrophe is prose, not a quote. Skip it
+            # whole, or the tag scan runs on into the NEXT element.
+            close = content.find("*/", i + 2, end)
+            i = end if close < 0 else close + 2
+            continue
+        elif ch == "/" and content.startswith("//", i):
+            newline = content.find("\n", i, end)
+            i = end if newline < 0 else newline + 1
+            continue
         elif ch in "\"'`":
             quote = ch
         elif ch == "{":
@@ -356,6 +367,10 @@ def scan_mic(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
     for m in re.finditer(r'<(%s)\b' % "|".join(MIC_SPECIES), content):
         tag = _mic_tag_text(content, m.start())
         if re.search(r'\bmic\s*=\s*\{\s*false\s*\}', tag):
+            # A secret is never dictated aloud (ruling 2026-10-07, PHILO-15 02):
+            # a password well without a mic is lawful, as a raw password input is.
+            if re.search(r'\btype\s*=\s*(?:"password"|\'password\'|\{\s*["\']password["\']\s*\})', tag):
+                continue
             candidates.append((m.start(), "optout", f"<{m.group(1)} mic={{false}}>", tag))
 
     violations: list[Violation] = []

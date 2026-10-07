@@ -345,9 +345,11 @@ export interface EndpointCheck {
   ok: boolean;
   models: string[];
   detail: string;
+  /** PHILO-15 02: `key_required` (401/403) or `key_invalid` (400). */
+  reason?: string;
 }
 
-export async function checkEndpoint(baseUrl: string): Promise<EndpointCheck> {
+export async function checkEndpoint(baseUrl: string, apiKey = ""): Promise<EndpointCheck> {
   const { apiFetch, ApiError } = await import("../../lib/api");
   // An unreachable endpoint answers 422 carrying the SAME body as a reachable
   // one; the plain reason is in it, so the refusal is read, not re-worded.
@@ -355,7 +357,8 @@ export async function checkEndpoint(baseUrl: string): Promise<EndpointCheck> {
   try {
     raw = await apiFetch<Record<string, unknown>>("/api/setup/discover-models", {
       method: "POST",
-      json: { base_url: baseUrl },
+      // PHILO-15 02: a typed key goes with this one Check; empty sends none.
+      json: apiKey.trim() ? { base_url: baseUrl, api_key: apiKey.trim() } : { base_url: baseUrl },
     });
   } catch (err) {
     if (err instanceof ApiError && err.payload && typeof err.payload === "object") {
@@ -372,6 +375,7 @@ export async function checkEndpoint(baseUrl: string): Promise<EndpointCheck> {
     ok: raw.ok === true,
     models: Array.isArray(raw.models) ? raw.models.map(String) : [],
     detail: String(raw.detail ?? "Could not reach the model server."),
+    reason: typeof raw.reason === "string" ? raw.reason : undefined,
   };
 }
 
@@ -386,11 +390,15 @@ export interface DefinedEndpoint {
 
 export async function defineEndpoint(
   draft: EndpointDraft,
+  apiKey = "",
 ): Promise<DefinedEndpoint> {
   const { apiFetch } = await import("../../lib/api");
+  // PHILO-15 02: the key travels as the write-only secret; the Model Library
+  // hands it to the profile key store, never to the config file.
+  const key = apiKey.trim();
   const raw = await apiFetch<Record<string, unknown>>(
     "/api/inference/model-library/define-endpoint",
-    { method: "POST", json: { draft, secret: null } },
+    { method: "POST", json: { draft, secret: key ? { value: key } : null } },
   );
   const provider = (raw.provider ?? {}) as Record<string, unknown>;
   return {

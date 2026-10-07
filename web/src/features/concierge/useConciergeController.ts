@@ -177,7 +177,15 @@ export function summaryRowFromAssignment(
 }
 
 /** HS-201-09 — the Add-an-engine well's own state machine. */
-export type AddEngineState = "IDLE" | "CHECKING" | "READY" | "UNREACHABLE";
+export type AddEngineState =
+  | "IDLE"
+  | "CHECKING"
+  | "READY"
+  | "UNREACHABLE"
+  /** PHILO-15 02: the server answered 401/403. */
+  | "KEY_REQUIRED"
+  /** PHILO-15 02: the typed key cannot ride in a header. */
+  | "KEY_INVALID";
 
 export interface AdjustRow {
   capabilityId: string;
@@ -224,6 +232,9 @@ export interface ConciergeController {
   addEngineReason: string;
   addEngineModel: string;
   setAddEngineUrl: (v: string) => void;
+  /** PHILO-15 02: the optional key for the endpoint (never stored here). */
+  addEngineKey: string;
+  setAddEngineKey: (v: string) => void;
   checkNewEngine: () => void;
   useNewEngineForSummaries: () => void;
   // Actions
@@ -613,6 +624,8 @@ export function useConciergeController(): ConciergeController {
     useState<AddEngineState>("IDLE");
   const [addEngineReason, setAddEngineReason] = useState("");
   const [addEngineModel, setAddEngineModel] = useState("");
+  const [addEngineKey, setAddEngineKeyState] = useState("");
+  const addEngineKeyRef = useRef("");
   // HS-201-09 (counsel finding 3): the address a check ANSWERED for. A
   // check is a statement about one address; the moment the owner edits the
   // field that statement is no longer about what he is looking at, so
@@ -632,8 +645,24 @@ export function useConciergeController(): ConciergeController {
     });
   }, []);
 
+  // PHILO-15 02: a check is a statement about one address AND one key; a
+  // changed key drops the old answer the same way a changed address does.
+  const editAddEngineKey = useCallback((value: string) => {
+    addEngineKeyRef.current = value;
+    setAddEngineKeyState((previous) => {
+      if (previous.trim() !== value.trim()) {
+        setAddEngineState("IDLE");
+        setAddEngineModel("");
+        setAddEngineReason("");
+      }
+      return value;
+    });
+  }, []);
+
   const addEngine = useCallback(() => {
     setAddEngineOpen(true);
+    setAddEngineKeyState("");
+    addEngineKeyRef.current = "";
     setAddEngineState("IDLE");
     setAddEngineReason("");
     setAddEngineModel("");
@@ -646,17 +675,18 @@ export function useConciergeController(): ConciergeController {
   const checkNewEngine = useCallback(async () => {
     const url = addEngineUrl.trim();
     if (!url) return;
+    const key = addEngineKey.trim();
     setAddEngineChecking(true);
     setAddEngineState("CHECKING");
     setAddEngineReason("");
     setAddEngineModel("");
     try {
-      const result = await checkEndpoint(url);
+      const result = await checkEndpoint(url, key);
       // The field moved on while this was in flight: the answer is about
       // an address the owner is no longer looking at. Drop the ANSWER —
       // but end the flight, or `Check` stays disabled for ever and the
       // corrected address can never be checked at all (round 2 residual).
-      if (addEngineUrlRef.current.trim() !== url) {
+      if (addEngineUrlRef.current.trim() !== url || addEngineKeyRef.current.trim() !== key) {
         safe(() => setAddEngineChecking(false));
         return;
       }
@@ -668,11 +698,21 @@ export function useConciergeController(): ConciergeController {
           setAddEngineReason("");
           return;
         }
+        if (result.reason === "key_required") {
+          setAddEngineState("KEY_REQUIRED");
+          setAddEngineReason("");
+          return;
+        }
+        if (result.reason === "key_invalid") {
+          setAddEngineState("KEY_INVALID");
+          setAddEngineReason(result.detail);
+          return;
+        }
         setAddEngineState("UNREACHABLE");
         setAddEngineReason(result.detail);
       });
     } catch (err) {
-      if (addEngineUrlRef.current.trim() !== url) {
+      if (addEngineUrlRef.current.trim() !== url || addEngineKeyRef.current.trim() !== key) {
         safe(() => setAddEngineChecking(false));
         return;
       }
@@ -682,7 +722,7 @@ export function useConciergeController(): ConciergeController {
         setAddEngineReason(readableError(err));
       });
     }
-  }, [addEngineUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [addEngineUrl, addEngineKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* HS-201-09 — the one gesture that finishes setup from the face:
      define the endpoint through the Model Library command (which never
@@ -691,6 +731,7 @@ export function useConciergeController(): ConciergeController {
   const useNewEngineForSummaries = useCallback(async () => {
     const url = addEngineUrl.trim();
     if (!url || !addEngineModel) return;
+    const key = addEngineKey.trim();
     // HS-201-09 (counsel finding 1): this IS the setup gesture, so it ends
     // the way ordinary Apply ends (the block at `apply` above) — the
     // window closes, the one readiness signal fires so the arrival drops
@@ -708,7 +749,9 @@ export function useConciergeController(): ConciergeController {
           url,
           model: addEngineModel,
           requestId: `concierge-${Date.now()}`,
+          requiresKey: Boolean(key),
         }),
+        key,
       );
       if (!defined.profileId || defined.profileRevision < 1) {
         throw new Error("The engine was saved without a model record.");
@@ -736,6 +779,8 @@ export function useConciergeController(): ConciergeController {
         setAddEngineOpen(false);
         setAddEngineUrl("");
         addEngineUrlRef.current = "";
+        setAddEngineKeyState("");
+        addEngineKeyRef.current = "";
         setAddEngineState("IDLE");
         setAddEngineModel("");
         setAddEngineReason("");
@@ -757,7 +802,7 @@ export function useConciergeController(): ConciergeController {
         setAddEngineReason(readableError(err));
       });
     }
-  }, [addEngineUrl, addEngineModel, detection]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [addEngineUrl, addEngineModel, addEngineKey, detection]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── HS-200-04: one verb per repair state, each opening an existing control ── */
 
@@ -849,6 +894,8 @@ export function useConciergeController(): ConciergeController {
     addEngineReason,
     addEngineModel,
     setAddEngineUrl: editAddEngineUrl,
+    addEngineKey,
+    setAddEngineKey: editAddEngineKey,
     checkNewEngine,
     useNewEngineForSummaries,
   };

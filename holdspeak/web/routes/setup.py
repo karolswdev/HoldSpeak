@@ -226,16 +226,34 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
         try:
             from ...intel.providers import profile_key_env
             from ...profile_key_store import ProfileKeyStoreError, resolve_profile_key
-            from ...setup_runtime import discover_endpoint_models
+            from ...setup_runtime import KEY_NOT_HEADER_SAFE, discover_endpoint_models, key_is_header_safe
             profile_id = str(body.get("profile_id") or "").strip()
             try:
                 key = resolve_profile_key(profile_key_env(profile_id)) if profile_id else ""
             except ProfileKeyStoreError:
                 key = ""
             fallback_key = os.environ.get("OPENAI_API_KEY") or None
+            # PHILO-15 02: the Concierge's optional Key field. A key typed on
+            # the face is the one Check uses; it is used for this one call
+            # and never stored or echoed (the saved key goes through the
+            # Model Library's secret store on Use this for summaries).
+            typed = body.get("api_key")
+            typed_key = typed.strip() if isinstance(typed, str) else ""
+            if typed_key and not key_is_header_safe(typed_key):
+                # Refused at the boundary, before any header exists; never echoed.
+                return JSONResponse(
+                    {"ok": False, "models": [], "detail": KEY_NOT_HEADER_SAFE, "reason": "key_invalid"},
+                    status_code=400,
+                )
+            if typed_key:
+                api_key: str | None = typed_key
+            elif profile_id:
+                api_key = key
+            else:
+                api_key = fallback_key
             result = discover_endpoint_models(
                 str(body.get("base_url") or ""),
-                api_key=key if profile_id else fallback_key,
+                api_key=api_key,
             )
             return JSONResponse(result, status_code=200 if result.get("ok") else 422)
         except Exception as exc:

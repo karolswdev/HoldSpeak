@@ -29,6 +29,11 @@ The doctor checks these areas:
 - dictation and MIR telemetry
 - connector packs
 - People key custody, agent capabilities, the tool-call gate
+- coding agents (Claude Code, Codex, their hooks, `tmux`), People MCP access
+- then the running hub: health, runtime, websocket, Desk, auth, MCP server,
+  inference, database, observer
+
+Setup status shows the same list of local checks.
 
 Some checks contact configured endpoints. The doctor reports what it finds.
 It does not prove that a provider will complete a future request.
