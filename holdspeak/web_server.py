@@ -984,6 +984,7 @@ class MeetingWebServer:
             build_people_router,
             build_desk_actuators_router,
             build_desk_seed_router,
+            build_desk_parked_router,
             build_meeting_import_router,
             build_meetings_router,
             build_memory_router,
@@ -1475,6 +1476,7 @@ class MeetingWebServer:
         mount_router(app, build_meetings_router(web_ctx))
         mount_router(app, build_desk_actuators_router(web_ctx))
         mount_router(app, build_desk_seed_router(web_ctx))
+        mount_router(app, build_desk_parked_router(web_ctx))
         mount_router(app, build_meeting_import_router(web_ctx))
         mount_router(app, build_mesh_router(web_ctx))
         mount_router(app, build_missioncontrol_router(web_ctx))

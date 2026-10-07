@@ -5717,6 +5717,40 @@
       }
     },
     {
+      "name": "calendar.open_settings",
+      "version": 1,
+      "description": "Open System Settings at Privacy & Security > Calendars on this Mac, so the owner can allow calendar access after he denied it. It changes no setting.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (the HTTP auth middleware); owner only",
+      "effect": "write",
+      "result": "{opened, pane} and the receipt",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "owner_required",
+        "system_settings_not_opened"
+      ],
+      "completion": "synchronous; GET /api/onboarding/calendar shows the access state after he changes it",
+      "exposure": [
+        "http:POST /api/onboarding/calendar/macos/settings"
+      ],
+      "held": [],
+      "owner_only": true,
+      "blocking_io": false,
+      "owner_press": true,
+      "admission": {
+        "rule": "admitted",
+        "condition": "A system open (PHILO-15 04): the owner's press opens the macOS Calendars privacy pane on this device (HTTP only, in no palette).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
       "name": "agent.hand",
       "version": 1,
       "description": "Hand one desk item to a coding agent. HoldSpeak writes a brief from the item, its meeting, the Project's decisions and open commitments, memory and the repository's .hs/ facts (no People data), makes a new git worktree hs-<kind>-<id> in the Project repository and starts Claude Code (profile claude-default) or Codex (codex-default) there. Only the owner hands; an agent is refused.",

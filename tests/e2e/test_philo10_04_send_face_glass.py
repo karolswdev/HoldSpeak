@@ -769,6 +769,8 @@ class TestSendFaceGlass(_Rig):
                 ):
                     select.select_option(value)
                     page.wait_for_timeout(200)
+                    if value == "email":  # PHILO-15 04: Resend is the default; this board is SendGrid's
+                        page.locator("[data-testid=dest-form]").get_by_label("Provider").select_option("sendgrid")
                     for sel, text in fill:
                         page.locator(sel).fill(text)
                     page.wait_for_timeout(200)
@@ -1433,10 +1435,11 @@ class TestSendEmailGlass(_Rig):
 
     def _email_dest(self, page: Any, name: str = "Email lena@acme.io") -> str:
         status, saved = _api_allow_error(page, "PUT", f"/api/channels/email-keys/{self._key_ref()}",
-                                         {"api_key": KEY}, token=TOKEN)
+                                         {"api_key": KEY, "provider": "sendgrid"}, token=TOKEN)
         assert status == 200, saved
+        # PHILO-15 04: Resend is the default now; these boards name SendGrid.
         status, dest = _api_allow_error(page, "POST", "/api/channels/destinations", {
-            "name": name, "channel": "email", "from_email": FROM, "from_name": "Karol", "key_ref": self._key_ref(),
+            "name": name, "channel": "email", "provider": "sendgrid", "from_email": FROM, "from_name": "Karol", "key_ref": self._key_ref(),
             "to": TO, "cc": CC}, token=TOKEN)
         assert status == 200, dest
         return dest["destination"]["id"]
@@ -1536,6 +1539,8 @@ class TestSendEmailGlass(_Rig):
                 page.locator("[data-testid=dest-form]").wait_for(timeout=T)
                 page.wait_for_timeout(900)
                 page.locator("[data-testid=dest-form] select").first.select_option("email")
+                # PHILO-15 04: Resend is the default; these boards are SendGrid's.
+                page.locator("[data-testid=dest-form]").get_by_label("Provider").select_option("sendgrid")
                 page.locator("[data-testid=dest-from]").fill(FROM)
                 page.locator("[data-testid=dest-to]").fill(", ".join(TO))
                 key_row = "[data-testid=dest-key-row]"
@@ -1609,7 +1614,7 @@ class TestSendEmailGlass(_Rig):
                 assert api_send()["outcome"] == "sent"
                 self.monkeypatch.setattr(_cs, "datetime", datetime)
                 assert _api_allow_error(page, "PUT", f"/api/channels/email-keys/{self._key_ref()}",
-                                        {"api_key": KEY + "B"}, token=TOKEN)[0] == 200
+                                        {"api_key": KEY + "B", "provider": "sendgrid"}, token=TOKEN)[0] == 200
                 changed = check("key_changed")
                 shots.shoot(page, "b11b-email-check-key-changed", [result], seat=f"CENTER:{result}")
                 assert changed == "⚠ NOT CHECKED SINCE KEY CHANGE", changed

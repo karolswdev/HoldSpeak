@@ -141,13 +141,14 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, store: Any, wire: Wire)
     composition.install(composition.bare(label="pytest"))
 
 
-def save_key(hub: Hub, key: str = KEY, key_ref: str = "sendgrid", provider: Optional[str] = None) -> Any:
+def save_key(hub: Hub, key: str = KEY, key_ref: str = "sendgrid", provider: Optional[str] = "sendgrid") -> Any:
+    # PHILO-15 04: Resend is the default now; these fixtures name SendGrid.
     return hub.client.put(f"/api/channels/email-keys/{key_ref}",
                           json={"api_key": key, **({"provider": provider} if provider else {})})
 
 
 def email_destination(hub: Hub, **extra: Any) -> str:
-    fields = {"name": "Priya by email", "channel": "email", "from_email": "karol@example.com",
+    fields = {"name": "Priya by email", "channel": "email", "provider": "sendgrid", "from_email": "karol@example.com",
               "from_name": "Karol", "key_ref": "sendgrid", "to": ["Priya Raman <priya@example.com>"],
               "cc": ["lead@example.com"], **extra}
     resp = hub.client.post("/api/channels/destinations", json=fields)
@@ -701,8 +702,8 @@ def test_the_destination_freezes_the_sender_and_refuses_bad_addresses_by_name(hu
                         ({"cc": ["priya@example.com"]}, "email_recipient_duplicate"),
                         ({"key_ref": "has space"}, "email_key_ref_invalid")]:
         resp = hub.client.post("/api/channels/destinations", json={
-            "name": "x", "channel": "email", "from_email": "karol@example.com", "to": ["priya@example.com"],
-            **extra})
+            "name": "x", "channel": "email", "provider": "sendgrid", "from_email": "karol@example.com",
+            "to": ["priya@example.com"], **extra})
         assert resp.json()["code"] == code, (extra, resp.text)
 
 
@@ -710,8 +711,8 @@ def test_an_edited_sender_parks_the_destination_and_refuses_the_prepared_send(hu
     update, dest = ready(hub)
     prepared = prepare(hub, update, dest)["send"]
     edited = hub.client.post("/api/channels/destinations", json={
-        "name": "Priya by email", "channel": "email", "from_email": "other@example.com", "to": ["priya@example.com"],
-        "replaces": dest})
+        "name": "Priya by email", "channel": "email", "provider": "sendgrid", "from_email": "other@example.com",
+        "to": ["priya@example.com"], "replaces": dest})
     assert edited.status_code == 200
     refused = send(hub, {"send_id": prepared["id"]})
     assert refused.json()["code"] == "destination_parked" and wire.requests == []
@@ -968,6 +969,24 @@ def test_c7_each_provider_has_its_own_key_slot_and_one_key_never_reaches_the_oth
     assert hub.client.post(f"/api/channels/destinations/{stray}/check").json()["check"]["state"] == "email_key_missing"
     refused = send(hub, press(hub, "inline", update, stray, "c7-slot-c"))
     assert refused.json()["code"] == "email_key_missing" and len(wire.requests) == 2
+
+
+def test_philo15_resend_is_the_default_provider_and_sendgrid_stays_selectable(hub: Hub, store: Any) -> None:
+    """PHILO-15 04 (gap 13): a key save and a destination that name no provider take Resend."""
+    saved = hub.client.put("/api/channels/email-keys/resend", json={"api_key": RESEND_KEY})
+    assert saved.status_code == 200 and saved.json()["provider"] == "resend"
+    assert store.values == {"resend:resend": RESEND_KEY}
+    resp = hub.client.post("/api/channels/destinations", json={
+        "name": "Priya by email", "channel": "email", "from_email": "karol@example.com",
+        "to": ["priya@example.com"]})
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["destination"]["account"]["provider"] == "resend"
+    assert resp.json()["destination"]["account"]["key_ref"] == "resend"
+    # SendGrid is still one name away.
+    assert save_key(hub, KEY, key_ref="sg", provider="sendgrid").json()["provider"] == "sendgrid"
+    picked = email_destination(hub, key_ref="sg", name="By SendGrid")
+    [view] = [d for d in hub.client.get("/api/channels/destinations").json()["destinations"] if d["id"] == picked]
+    assert view["account"]["provider"] == "sendgrid"
 
 
 def test_c7_the_check_reads_the_answer_of_its_own_provider_only(hub: Hub, wire: Wire) -> None:
@@ -1255,13 +1274,13 @@ def test_c2_r3_a_restart_during_an_email_send_ends_unknown_once_and_never_sends_
     home.mkdir()
     first = _EmailHub(home, hold, wire_log)
     try:
-        assert first.call("PUT", "/api/channels/email-keys/sendgrid", {"api_key": KEY})[0] == 200
+        assert first.call("PUT", "/api/channels/email-keys/sendgrid", {"api_key": KEY, "provider": "sendgrid"})[0] == 200
         _s, made = first.call("POST", "/api/projects", {"name": "Payments ledger cutover"})
         _s, drafted = first.call("POST", f"/api/projects/{made['project']['id']}/updates/draft", {})
         update = drafted["update"]["id"]
         assert first.call("POST", f"/api/updates/{update}/publish", {})[0] == 200
         status, saved = first.call("POST", "/api/channels/destinations", {
-            "name": "Priya by email", "channel": "email", "from_email": "karol@example.com",
+            "name": "Priya by email", "channel": "email", "provider": "sendgrid", "from_email": "karol@example.com",
             "to": ["priya@example.com"]})
         assert status == 200, saved
         _s, preview = first.call("POST", "/api/channels/preview", {"document_ref": f"project_update:{update}",
@@ -1313,12 +1332,12 @@ def test_r3_the_hub_answers_a_read_during_a_slow_email_send(tmp_path: Path, tran
     home.mkdir()
     hub = _EmailHub(home, "slow", wire_log)
     try:
-        assert hub.call("PUT", "/api/channels/email-keys/sendgrid", {"api_key": KEY})[0] == 200
+        assert hub.call("PUT", "/api/channels/email-keys/sendgrid", {"api_key": KEY, "provider": "sendgrid"})[0] == 200
         _s, made = hub.call("POST", "/api/projects", {"name": "Payments ledger cutover"})
         update = hub.call("POST", f"/api/projects/{made['project']['id']}/updates/draft", {})[1]["update"]["id"]
         assert hub.call("POST", f"/api/updates/{update}/publish", {})[0] == 200
         status, saved = hub.call("POST", "/api/channels/destinations", {
-            "name": "Priya by email", "channel": "email", "from_email": "karol@example.com",
+            "name": "Priya by email", "channel": "email", "provider": "sendgrid", "from_email": "karol@example.com",
             "to": ["priya@example.com"]})
         assert status == 200, saved
         _s, prepared = hub.call("POST", "/api/channels/sends", {"document_ref": f"project_update:{update}",
@@ -1360,7 +1379,7 @@ def test_r4_a_slow_keychain_read_in_the_destination_check_never_blocks_the_hub(t
     hub = _EmailHub(home, "slowkey", log)
     try:
         status, saved = hub.call("POST", "/api/channels/destinations", {
-            "name": "Review email", "channel": "email", "from_email": "karol@example.com",
+            "name": "Review email", "channel": "email", "provider": "sendgrid", "from_email": "karol@example.com",
             "to": ["review@example.com"]})
         assert status == 200, saved
         dest = saved["destination"]["id"]
