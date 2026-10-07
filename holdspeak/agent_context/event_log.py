@@ -1,36 +1,45 @@
 """The agent session's event log (PHILO-14 C0).
 
 The session record in ``agent_sessions.json`` is overwritten on each hook
-event: it holds the last event only. This module appends EVERY ingested hook
-event to the ``agent_session_events`` table (``db/schema.py``), so the
-Conductor lane can show a launched agent's timeline.
+event: it holds the last event only. This module keeps EVERY ingested hook
+event, so the Conductor lane can show a launched agent's timeline.
 
-The rider hook writes here. The hook must stay fast (Conductor R3), so this
-module does not import ``holdspeak.db`` (about 0.9 s): it opens the hub's
-database file with plain ``sqlite3`` in ``mode=rw``. A missing file or a
-missing table (the hub has not reconciled the schema yet) skips the write;
-the hook never creates a database and never fails on the log.
+Two legs, so the hook never waits on the hub (Conductor R3):
+
+1. The rider hook SPOOLS the event: one small JSON file per event under
+   ``~/.holdspeak/agent-events/`` (folder 0700, file 0600), written to a
+   hidden name and renamed into place. No lock, no database, O(1).
+2. The hub DRAINS the spool into ``agent_session_events`` (``db/schema.py``)
+   on each lane read and each ``/api/coders/sessions`` read
+   (:func:`drain_spool`). A drain is idempotent (``spool_id`` is unique), and
+   a file goes only after its row is committed. When the table does not
+   exist yet, the files stay until the schema reconciles.
 
 What a row keeps (every text is secret-redacted with ``memory.defense.redact``
 on the WHOLE text before it is cut):
 
 - ``tool`` and ``head``: for Edit/Write/MultiEdit/NotebookEdit/Read the file
   path; for Bash the first 120 characters of the command; for Codex's
-  ``apply_patch`` the files the patch names; for Task the description.
+  ``apply_patch`` the files a ``*** Update File:`` patch names (any other
+  input shape: no head; the shape is not verified on a real Codex);
+  for Task the description.
 - ``text``: Stop's ``last_assistant_message`` (whole, cut at 8 KB), the
   prompt of ``UserPromptSubmit`` (cut at 8 KB), a Notification's message.
 - ``detail_json``: ``tool_use_id`` (the gate proposal id for a gated call),
-  ``notification_type``, SessionStart's ``source``, SessionEnd's ``reason``.
+  ``notification_type``, SessionStart's ``source``, SessionEnd's ``reason``,
+  ``interrupted``.
 
 The newest :data:`EVENT_LOG_KEEP` rows per session are kept.
 """
 from __future__ import annotations
 
 import json
+import os
 import re
-import sqlite3
+import time
+import uuid
 from pathlib import Path
-from typing import Any, Mapping, Optional
+from typing import Any, Callable, Mapping, Optional
 
 #: Rows kept per session (the oldest go first).
 EVENT_LOG_KEEP = 2000
@@ -40,18 +49,19 @@ COMMAND_HEAD_CHARS = 120
 PATH_HEAD_CHARS = 300
 #: Bytes kept of Stop's last assistant message and of a prompt.
 TEXT_MAX_BYTES = 8 * 1024
-#: The hook waits at most this long for a write lock.
-WRITE_BUSY_TIMEOUT_MS = 2000
+#: Files one drain takes (the rest wait for the next drain).
+DRAIN_MAX_FILES = 5000
+_SPOOL_SUFFIX = ".json"
+_LOCK_NAME = ".drain.lock"
 
 _PATH_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit", "Read"}
 _COMMAND_TOOLS = {"Bash", "shell", "exec_command", "local_shell"}
 _PATCH_FILE_RE = re.compile(r"^\*\*\* (?:Add|Update|Delete) File: (.+)$", re.MULTILINE)
 
 
-def default_db_path() -> Path:
-    """The hub's database file (``holdspeak.db.core.DEFAULT_DB_PATH``),
-    resolved without importing ``holdspeak.db``."""
-    return Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
+def default_spool_dir() -> Path:
+    """Where the rider hook spools events for the hub to drain."""
+    return Path.home() / ".holdspeak" / "agent-events"
 
 
 def _redact(text: str) -> str:
@@ -92,9 +102,9 @@ def tool_head(tool: str, tool_input: Any) -> Optional[str]:
         return folded[:COMMAND_HEAD_CHARS] or None
     if tool == "apply_patch":
         patch = _command_text(data.get("command") or data.get("patch") or data.get("input"))
-        files = _PATCH_FILE_RE.findall(patch)
-        text = ", ".join(f.strip() for f in files) if files else " ".join(patch.split())
-        return _redact(text)[:PATH_HEAD_CHARS] or None
+        files = _PATCH_FILE_RE.findall(_redact(patch))
+        # An unknown input shape claims no file: the row names the tool only.
+        return ", ".join(f.strip() for f in files)[:PATH_HEAD_CHARS] or None
     if tool in {"Task", "Agent"}:
         description = data.get("description") or data.get("subagent_type")
         return (_redact(str(description))[:COMMAND_HEAD_CHARS] or None) if description else None
@@ -126,45 +136,114 @@ def event_row(payload: Mapping[str, Any], *, notification_type: Optional[str] = 
     response = payload.get("tool_response")
     if isinstance(response, Mapping) and isinstance(response.get("interrupted"), bool):
         detail["interrupted"] = response["interrupted"]
+    detail = {k: _redact(v) if isinstance(v, str) else v for k, v in detail.items()}
     return {"event": event, "tool": tool, "head": head, "text": text, "detail": detail}
 
 
-def append_event(
-    session_key: str, ts: str, row: Mapping[str, Any], *,
-    db_path: Optional[Path] = None, keep: int = EVENT_LOG_KEEP,
+def spool_event(
+    session_key: str, ts: str, row: Mapping[str, Any], *, spool_dir: Optional[Path] = None,
 ) -> bool:
-    """Append one row and trim the session to ``keep`` rows. Returns whether
-    it was written. Never raises: the hook must not fail on its log."""
-    path = Path(db_path) if db_path else default_db_path()
-    if not path.exists():
-        return False
+    """Write one event to the spool: one file, no lock, no database.
+    Returns whether it was written. Never raises: the hook must not fail
+    on its log."""
+    folder = Path(spool_dir) if spool_dir else default_spool_dir()
+    spool_id = f"{time.time_ns():020d}-{os.getpid()}-{uuid.uuid4().hex[:8]}"
+    body = json.dumps(
+        {"spool_id": spool_id, "session_key": session_key, "ts": ts, "row": dict(row)},
+        sort_keys=True, default=str,
+    ).encode("utf-8")
+    hidden = folder / f".{spool_id}.tmp"
     try:
-        conn = sqlite3.connect(f"file:{path}?mode=rw", uri=True, timeout=WRITE_BUSY_TIMEOUT_MS / 1000)
-    except sqlite3.Error:
-        return False
-    try:
-        conn.execute(f"PRAGMA busy_timeout = {int(WRITE_BUSY_TIMEOUT_MS)}")
-        with conn:
-            conn.execute(
-                "INSERT INTO agent_session_events (session_key, ts, event, tool, head, text, detail_json) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (
-                    session_key, ts, str(row.get("event") or "unknown"), row.get("tool"),
-                    row.get("head"), row.get("text"),
-                    json.dumps(dict(row.get("detail") or {}), sort_keys=True),
-                ),
-            )
-            conn.execute(
-                "DELETE FROM agent_session_events WHERE session_key = ? AND id <= ("
-                "SELECT id FROM agent_session_events WHERE session_key = ? "
-                "ORDER BY id DESC LIMIT 1 OFFSET ?)",
-                (session_key, session_key, int(keep)),
-            )
+        folder.mkdir(mode=0o700, parents=True, exist_ok=True)
+        fd = os.open(hidden, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        try:
+            os.write(fd, body)
+        finally:
+            os.close(fd)
+        os.replace(hidden, folder / f"{spool_id}{_SPOOL_SUFFIX}")
         return True
-    except sqlite3.Error:
+    except OSError:
         return False
+
+
+def drain_spool(
+    connection: Callable[[], Any], *, spool_dir: Optional[Path] = None,
+    keep: int = EVENT_LOG_KEEP, max_files: int = DRAIN_MAX_FILES,
+) -> int:
+    """Move spooled events into ``agent_session_events``; returns the files
+    drained. ``connection`` is a context-manager factory that commits on a
+    clean exit (``Database._connection``). One drainer at a time (a busy
+    lock returns 0); a file goes only after the commit; a re-drain of the
+    same file is ignored (``spool_id`` is unique). A missing table raises
+    nothing and keeps every file. A file that is not an event is parked as
+    ``.bad-<name>``, never read again."""
+    import fcntl
+    import sqlite3
+
+    folder = Path(spool_dir) if spool_dir else default_spool_dir()
+    if not folder.is_dir():
+        return 0
+    try:
+        lock = open(folder / _LOCK_NAME, "a+")
+    except OSError:
+        return 0
+    try:
+        try:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            return 0
+        names = sorted(
+            n for n in os.listdir(folder) if n.endswith(_SPOOL_SUFFIX) and not n.startswith(".")
+        )[: max(1, int(max_files))]
+        if not names:
+            return 0
+        entries: list[tuple[str, dict[str, Any]]] = []
+        for name in names:
+            try:
+                doc = json.loads((folder / name).read_text(encoding="utf-8"))
+                if not isinstance(doc, dict) or not doc.get("session_key") or not isinstance(doc.get("row"), dict):
+                    raise ValueError("not an event")
+            except (OSError, ValueError):
+                try:
+                    os.replace(folder / name, folder / f".bad-{name}")
+                except OSError:
+                    pass
+                continue
+            entries.append((name, doc))
+        try:
+            with connection() as conn:
+                sessions: set[str] = set()
+                for _, doc in entries:
+                    row = doc["row"]
+                    key = str(doc["session_key"])
+                    sessions.add(key)
+                    conn.execute(
+                        "INSERT OR IGNORE INTO agent_session_events "
+                        "(spool_id, session_key, ts, event, tool, head, text, detail_json) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            str(doc.get("spool_id") or ""), key, str(doc.get("ts") or ""),
+                            str(row.get("event") or "unknown"), row.get("tool"), row.get("head"),
+                            row.get("text"), json.dumps(dict(row.get("detail") or {}), sort_keys=True),
+                        ),
+                    )
+                for key in sessions:
+                    conn.execute(
+                        "DELETE FROM agent_session_events WHERE session_key = ? AND id <= ("
+                        "SELECT id FROM agent_session_events WHERE session_key = ? "
+                        "ORDER BY id DESC LIMIT 1 OFFSET ?)",
+                        (key, key, int(keep)),
+                    )
+        except sqlite3.OperationalError:
+            return 0   # no table yet (the schema has not reconciled): keep the files
+        for name, _ in entries:
+            try:
+                os.unlink(folder / name)
+            except OSError:
+                pass
+        return len(entries)
     finally:
-        conn.close()
+        lock.close()
 
 
 def list_events(
@@ -193,9 +272,10 @@ def list_events(
 
 __all__ = [
     "EVENT_LOG_KEEP",
-    "append_event",
-    "default_db_path",
+    "default_spool_dir",
+    "drain_spool",
     "event_row",
     "list_events",
+    "spool_event",
     "tool_head",
 ]

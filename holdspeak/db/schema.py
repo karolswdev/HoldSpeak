@@ -2051,11 +2051,13 @@ CREATE INDEX IF NOT EXISTS idx_steering_audit_ts ON steering_audit(ts);
 CREATE INDEX IF NOT EXISTS idx_steering_audit_key ON steering_audit(session_key);
 
 -- PHILO-14 C0: the agent session's event log, one row per hook event (the
--- session record in agent_sessions.json keeps only the last). Written by the
--- rider hook (agent_context/event_log.py), read by the launch lane route.
+-- session record in agent_sessions.json keeps only the last). The rider hook
+-- spools each event to a file; the hub drains the spool into this table
+-- (agent_context/event_log.py); the launch lane route reads it.
 -- Heads are secret-redacted; the newest 2000 rows per session are kept.
 CREATE TABLE IF NOT EXISTS agent_session_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    spool_id TEXT,
     session_key TEXT NOT NULL,
     ts TEXT NOT NULL,
     event TEXT NOT NULL,
@@ -2065,6 +2067,7 @@ CREATE TABLE IF NOT EXISTS agent_session_events (
     detail_json TEXT NOT NULL DEFAULT '{}'
 );
 CREATE INDEX IF NOT EXISTS idx_agent_session_events_key ON agent_session_events(session_key, id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_session_events_spool ON agent_session_events(spool_id);
 
 -- HS-104-02: the tool-call gate. A proposal is a RECORD, never authority --
 -- nothing in this table can cause execution; only a live hook waiting on a

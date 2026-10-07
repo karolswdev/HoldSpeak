@@ -194,7 +194,11 @@ def redact_args(tool_input: Mapping[str, Any] | None) -> tuple[str, str]:
         dict(tool_input or {}), separators=(",", ":"), sort_keys=True, ensure_ascii=False
     )
     digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-    return digest, canonical[:ARGS_HEAD_CHARS]
+    # PHILO-14 C0: the hash is over the real call; the stored head is
+    # secret-redacted on the WHOLE text before it is cut.
+    from .memory.defense import redact
+
+    return digest, redact(canonical)[:ARGS_HEAD_CHARS]
 
 
 # -- supervised principal lifecycle ----------------------------------------

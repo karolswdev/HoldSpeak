@@ -82,7 +82,12 @@ class SteeringAuditRepository(BaseRepository):
     ) -> int:
         """One audit row per steer attempt; returns the row id."""
         digest = hashlib.sha256(str(text).encode("utf-8", "replace")).hexdigest()
-        head = str(text)[:TEXT_HEAD_CHARS]
+        # PHILO-14 C0: the hash is over the real text; the stored head and
+        # detail are secret-redacted on the whole text before the cut.
+        from ..memory.defense import redact
+
+        head = redact(str(text))[:TEXT_HEAD_CHARS]
+        detail = redact(detail) if detail else detail
         with self._connection() as conn:
             cursor = conn.execute(
                 """

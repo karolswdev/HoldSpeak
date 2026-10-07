@@ -7,6 +7,7 @@ The steering surface (attach/arm/steer/audit) is a sibling concern in
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from copy import deepcopy
@@ -331,6 +332,15 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
             annotate_sessions(items, flights)
         except Exception as e:
             log.warning(f"agent flights unread: {e}")
+        # PHILO-14 C0: the coder frame drains the hook's event spool into
+        # the event log (the hook never writes the database itself).
+        try:
+            from ....agent_context import event_log
+            from ....db import get_database
+
+            await asyncio.to_thread(event_log.drain_spool, get_database()._connection)
+        except Exception as e:
+            log.warning(f"agent event spool not drained: {e}")
         try:
             return JSONResponse({"sessions": items, "count": len(items), "flights": flights})
         except Exception as e:

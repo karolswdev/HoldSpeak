@@ -122,6 +122,9 @@ def check_details(status_check_rollup: Any) -> list[dict[str, str]]:
     state (a StatusContext), lower case."""
     if not isinstance(status_check_rollup, list):
         return []
+    # PHILO-14 C0: a check name or link is shown; it never carries a secret.
+    from ..memory.defense import redact
+
     out: list[dict[str, str]] = []
     for check in status_check_rollup[:MAX_CHECKS_PER_PR]:
         if not isinstance(check, dict):
@@ -130,9 +133,9 @@ def check_details(status_check_rollup: Any) -> list[dict[str, str]]:
         workflow = str(check.get("workflowName") or "")
         state = str(check.get("conclusion") or check.get("status") or check.get("state") or "")
         out.append({
-            "name": f"{workflow} / {name}" if workflow and name and workflow != name else name or workflow,
+            "name": redact(f"{workflow} / {name}" if workflow and name and workflow != name else name or workflow),
             "state": state.lower(),
-            "url": str(check.get("detailsUrl") or check.get("targetUrl") or ""),
+            "url": redact(str(check.get("detailsUrl") or check.get("targetUrl") or "")),
         })
     return out
 

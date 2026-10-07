@@ -19,8 +19,10 @@ One read join, nothing written. Its parts and where each comes from:
   worktree on request, cached for :data:`FACTS_TTL_SECONDS`.
 - ``usage``: ``session_usage`` (filled only for a repository the gate holds).
 
-A part that cannot be read says so (``{"not_read": "<reason>"}`` or
-``None``); it never fails the whole lane.
+A part that cannot be read says so (``{"not_read": "<reason>"}``); it never
+fails the whole lane, and a failed read is never served as an empty list.
+Every text the lane serves is secret-redacted (``_scrub``). The events are
+drained from the hook's spool before they are read (``event_log``).
 """
 from __future__ import annotations
 
@@ -219,14 +221,26 @@ def _find_session(sessions: Any, key: str) -> Optional[dict[str, Any]]:
 
 
 def _wait(session: Optional[Mapping[str, Any]], answers: Any) -> Optional[dict[str, Any]]:
+    """The session's current wait as the owner sees it, or ``None``.
+
+    It honors the responder's record of the wait (``annotate_sessions``),
+    as Needs you does: a wait HoldSpeak answered is not a wait (the answer
+    is in ``answers``); a wait HoldSpeak is still deciding (fresh) reads
+    ``DECIDING``, not TO ANSWER; a stale decision goes to the owner."""
     from ..agent_context.models import is_blocked, wait_kind
-    from .agent_responder import annotate_sessions
+    from .agent_responder import ANSWERED, DECIDING, annotate_sessions
     from .needs_you_membership import TO_ANSWER, TO_APPROVE
 
     if session is None or not is_blocked(session):
         return None
     annotated = annotate_sessions([session], store=answers)[0]
     answer = annotated.get("answer") if isinstance(annotated.get("answer"), dict) else {}
+    state = answer.get("state")
+    if state == ANSWERED:
+        return None
+    deciding = state == DECIDING and bool(answer.get("hidden"))
+    if answer.get("hidden") and not deciding:
+        return None
     approve = wait_kind(session) == "approve"
     draft = None
     if answer.get("state") in ("escalated", "drafted") and (answer.get("draft") or answer.get("reason")):
@@ -237,13 +251,17 @@ def _wait(session: Optional[Mapping[str, Any]], answers: Any) -> Optional[dict[s
         }
     return {
         "question": session.get("question"),
-        "kind": TO_APPROVE if approve else TO_ANSWER,
-        "wait_kind": "approve" if approve else "answer",
+        "kind": DECIDING_KIND if deciding else (TO_APPROVE if approve else TO_ANSWER),
+        "wait_kind": "deciding" if deciding else ("approve" if approve else "answer"),
         "started": session.get("wait_started_at") or session.get("updated_at"),
         "wait_id": session.get("wait_id"),
-        "answer_state": answer.get("state"),
+        "answer_state": state,
         "draft": draft,
     }
+
+
+#: The kind of a wait HoldSpeak is still deciding (YOLO): not the owner's yet.
+DECIDING_KIND = "DECIDING"
 
 
 def _session_view(session: Optional[Mapping[str, Any]]) -> Optional[dict[str, Any]]:
@@ -266,12 +284,34 @@ def _session_view(session: Optional[Mapping[str, Any]]) -> Optional[dict[str, An
     }
 
 
-def _part(name: str, read: Callable[[], Any], fallback: Any) -> Any:
+def _not_read(name: str, exc: BaseException) -> dict[str, str]:
+    log.warning(f"launch lane: {name} unread: {exc}")
+    return {"not_read": f"{name}: {type(exc).__name__}: {str(exc)[:200]}"}
+
+
+def _part(name: str, read: Callable[[], Any]) -> Any:
+    """A part of the lane, or ``{"not_read": reason}`` when its read failed
+    (never an empty list in place of a failed read)."""
     try:
         return read()
     except Exception as exc:
-        log.warning(f"launch lane: {name} unread: {exc}")
-        return fallback
+        return _not_read(name, exc)
+
+
+def _scrub(value: Any) -> Any:
+    """Every text the lane serves, secret-redacted (``memory.defense``).
+
+    Rows written before the redaction at the source, and texts no source
+    redacts (commit subjects, file names, the brief, a draft), pass here."""
+    from ..memory.defense import redact
+
+    if isinstance(value, str):
+        return redact(value)
+    if isinstance(value, Mapping):
+        return {k: _scrub(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_scrub(v) for v in value]
+    return value
 
 
 def launch_lane(
@@ -284,8 +324,13 @@ def launch_lane(
     after: int = 0,
     limit: int = 200,
     runner: Optional[Runner] = None,
+    spool_dir: Optional[Path] = None,
 ) -> Optional[dict[str, Any]]:
-    """One launch's lane, or ``None`` for an unknown launch."""
+    """One launch's lane, or ``None`` for an unknown launch.
+
+    Each collection is a list, or ``{"not_read": reason}`` when its read
+    failed. An empty list means the read worked and found nothing (or no
+    session is bound to the launch yet: ``launch.session_key`` is null)."""
     from ..agent_context import event_log
 
     if reads is None:
@@ -298,10 +343,11 @@ def launch_lane(
     if sessions is None:
         from ..agent_context import list_agent_sessions
 
-        sessions = _part("sessions", list_agent_sessions, [])
+        sessions = _part("sessions", list_agent_sessions)
+    sessions_failed = isinstance(sessions, Mapping) and "not_read" in sessions
     path = _worktree_path(reads, record)
     key = _session_key(db, record)
-    session = _find_session(sessions, key) if key else None
+    session = _find_session(sessions, key) if key and not sessions_failed else None
     follow = dict(record.get("follow_through") or {})
     pr = follow.get("pr") or None
     origin = record.get("origin_ref") or None
@@ -309,6 +355,11 @@ def launch_lane(
     limit = max(1, min(int(limit), 1000))
 
     def events() -> list[dict[str, Any]]:
+        # The hook spools; the lane read drains the spool first.
+        try:
+            event_log.drain_spool(db._connection, spool_dir=spool_dir)
+        except Exception as exc:
+            log.warning(f"launch lane: spool not drained: {exc}")
         with db._connection() as conn:
             return event_log.list_events(conn, key, after=after, limit=limit)
 
@@ -335,8 +386,14 @@ def launch_lane(
             for _, e in sorted(rows.items())
         ]
 
-    event_rows = _part("events", events, []) if key else []
-    return {
+    event_rows = _part("events", events) if key else []
+    if sessions_failed:
+        session_part: Any = sessions
+        wait_part: Any = sessions
+    else:
+        session_part = _part("session", lambda: _session_view(session))
+        wait_part = _part("wait", lambda: _wait(session, answers))
+    lane = {
         "launch": {
             "launch_id": record.get("launch_id"),
             "state": record.get("state"),
@@ -356,7 +413,7 @@ def launch_lane(
             "tmux_session": record.get("session"),
             "attempt_id": record.get("attempt_id"),
         },
-        "session": _session_view(session),
+        "session": session_part,
         "follow_through": {
             "pr": {
                 "number": pr.get("number"), "url": pr.get("url"), "state": pr.get("state"),
@@ -369,17 +426,20 @@ def launch_lane(
             "cleanup": follow.get("cleanup"),
             "done": bool(follow.get("done")),
         },
-        "wait": _part("wait", lambda: _wait(session, answers), None),
+        "wait": wait_part,
         "events": event_rows,
-        "events_next_after": event_rows[-1]["id"] if len(event_rows) == limit else None,
-        "gated": _part("gated", gated, []) if key else [],
-        "answers": _part("answers", answers_typed, []),
+        "events_next_after": (
+            event_rows[-1]["id"] if isinstance(event_rows, list) and len(event_rows) == limit else None
+        ),
+        "gated": _part("gated", gated) if key else [],
+        "answers": _part("answers", answers_typed),
         "attempt_events": _part(
-            "attempt events", lambda: db.work_attempts.events(str(record.get("attempt_id"))), []
+            "attempt events", lambda: db.work_attempts.events(str(record.get("attempt_id")))
         ) if record.get("attempt_id") else [],
         "worktree": worktree_facts(launch_id, path, runner=runner),
-        "usage": _part("usage", lambda: db.gate.usage_for(key), None) if key else None,
+        "usage": _part("usage", lambda: db.gate.usage_for(key)) if key else None,
     }
+    return _scrub(lane)
 
 
-__all__ = ["FACTS_TTL_SECONDS", "clear_facts_cache", "launch_lane", "worktree_facts"]
+__all__ = ["DECIDING_KIND", "FACTS_TTL_SECONDS", "clear_facts_cache", "launch_lane", "worktree_facts"]
