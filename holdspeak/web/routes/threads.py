@@ -299,7 +299,7 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
                 _principal(request),
                 thread_id,
                 str(body.get("message_id") or ""),
-                as_kind=str(body.get("as") or "artifact"),
+                as_kind=str(body.get("as") or "note"),
             )
             return JSONResponse(result, status_code=201)
         except ValidationError as exc:

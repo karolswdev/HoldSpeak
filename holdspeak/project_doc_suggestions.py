@@ -293,6 +293,21 @@ def looks_like_secret(text: str) -> bool:
     return _looks_secret(text)
 
 
+#: What a field that trips the secret check becomes (whole-field redaction).
+REDACTED_SECRET = "[redacted: possible secret]"
+
+
+def filter_secret(text: str) -> str:
+    """Redact the whole field if it trips the shared secret check.
+
+    Whole-field redaction (rather than substring scrubbing) is the safe posture
+    for a private journal: a known secret can never partially survive. Lives
+    here (a light module) so the agent hook can use it without loading the
+    plugin host (Conductor R3)."""
+    text = str(text or "")
+    return REDACTED_SECRET if looks_like_secret(text) else text
+
+
 # --- HS-39-04: suggestion quality gate -------------------------------------
 
 _WORD_RE = re.compile(r"[a-z0-9]+")

@@ -75,7 +75,7 @@ Every piece of your work is something you can talk to.
   - Type `@` to attach Meetings, Notes, Artifacts, and decisions. Select **Continue in thread** on a Desk object to start from it.
   - Pick a mode: **Desk**, **Chase**, **Draft**, **Plan**, **Project**, or **Interview**. Each one gives the model its own instructions and tools.
   - **The Thread has hands.** The model can call real tools. A held call asks you: **Allow once**, **Allow always**, or **Deny**.
-  - Slash commands: `/todo` creates an action item, `/keep` saves the reply as an Artifact, `/fork` branches, `/compact` summarizes, `/prompt` inserts a saved prompt.
+  - Slash commands: `/todo` creates an action item, `/keep` saves the reply as a Note, `/fork` branches, `/compact` summarizes, `/prompt` inserts a saved prompt.
   - Edit or regenerate a message to branch the conversation. Saved prompts and guardrails are Notes with a tag.
   - **The Call** turns a Thread into a voice conversation: you speak, and it answers aloud.
 - **Interview mode** asks about your goals, Projects, cadences, and decisions, and saves the answers as context.

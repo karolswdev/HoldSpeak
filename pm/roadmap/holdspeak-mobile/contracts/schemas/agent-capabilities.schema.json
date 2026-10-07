@@ -17,7 +17,7 @@
         "required": ["adapter", "capabilities"],
         "properties": {
           "adapter": {
-            "enum": ["tmux-pane", "delivery-node", "mesh-node", "claude-code-hooks"]
+            "enum": ["tmux-pane", "delivery-node", "mesh-node", "claude-code-hooks", "codex-hooks"]
           },
           "capabilities": {
             "type": "object",

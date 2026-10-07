@@ -57,6 +57,15 @@ EXPECTED = {
         Capability.REPO_HEAD: Standing.UNAVAILABLE,
         Capability.BLOCKING: Standing.AUTHORITATIVE,
     },
+    # Conductor R3: Codex's PreToolUse blocks on the decision (observed on
+    # 0.159); no usage HoldSpeak reads from its transcript.
+    "codex-hooks": {
+        Capability.TOOL_HOOKS: Standing.AUTHORITATIVE,
+        Capability.SESSION_IDENTITY: Standing.INFERRED,
+        Capability.USAGE_TOKENS: Standing.UNAVAILABLE,
+        Capability.REPO_HEAD: Standing.UNAVAILABLE,
+        Capability.BLOCKING: Standing.AUTHORITATIVE,
+    },
 }
 
 

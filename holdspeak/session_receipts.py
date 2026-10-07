@@ -54,7 +54,11 @@ def load_pricing(path: Path | None = None) -> dict[str, Any]:
 
 
 def _adapter_for(session_key: str) -> str:
-    return "claude-code-hooks" if session_key.startswith("claude:") else "tmux-pane"
+    if session_key.startswith("claude:"):
+        return "claude-code-hooks"
+    if session_key.startswith("codex:"):
+        return "codex-hooks"  # Conductor R3: Codex carries the gate hooks
+    return "tmux-pane"
 
 
 def _percentile(sorted_values: list[float], q: float) -> float:

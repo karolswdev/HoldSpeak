@@ -10,6 +10,7 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 // to the gadget grammar — transport keys, lamps, LedMeters, facts tokens.
 import "./session-pullout.css";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { MicButton } from "./MicButton";
 import { GroundingSection } from "./GroundingSection";
 import { ReceiptLine } from "./ReceiptLine";
@@ -306,9 +307,9 @@ export function PanePicker() {
             <span className="desk-panepicker-empty">no tmux panes</span>
           )}
           {panes.map((p) => (
-            <button
+            <Button
               key={p.paneId}
-              type="button"
+              variant="chrome"
               className={
                 "desk-panepicker-item" + (p.active ? " is-active" : "")
               }
@@ -323,7 +324,7 @@ export function PanePicker() {
                 {p.session}
                 {p.command ? ` · ${p.command}` : ""}
               </span>
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -585,20 +586,22 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
     <div className="desk-classify">
       <span className="desk-classify-label">Classify</span>
       <div className="desk-classify-row">
-        <button
-          type="button"
+        <Button
+          dense
+          variant="ghost"
           className="desk-chip"
           onClick={() => void useSteering.getState().keepAsNote()}
         >
           {classifyState === "kept"
             ? "KEPT"
             : classifyState === "failed"
-              ? "retry keep"
+              ? "Retry keep"
               : "Keep as note"}
-        </button>
+        </Button>
         {flipTarget && (
-          <button
-            type="button"
+          <Button
+            dense
+            variant="ghost"
             className="desk-chip"
             title={`propose a status flip for ${flipTarget.story}`}
             onClick={() =>
@@ -613,19 +616,20 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
             }
           >
             Flip {flipTarget.story} →
-          </button>
+          </Button>
         )}
       </div>
       <div className="desk-classify-row">
         {pinned ? (
-          <button
-            type="button"
+          <Button
+            dense
+            variant="ghost"
             className="desk-chip quiet"
             title="clear the manual pin"
             onClick={() => useSteering.getState().clearPin(sessionKey)}
           >
             PINNED {pinned}
-          </button>
+          </Button>
         ) : (
           <>
             <MicButton
@@ -639,8 +643,9 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
               placeholder="e.g. HS-87-05"
               onChange={setPinInput}
             />
-            <button
-              type="button"
+            <Button
+              dense
+              variant="ghost"
               className="desk-chip quiet"
               disabled={!pinInput.trim()}
               onClick={() => {
@@ -649,7 +654,7 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
               }}
             >
               Pin
-            </button>
+            </Button>
           </>
         )}
       </div>
@@ -800,13 +805,24 @@ export function SessionPullout() {
                   {armed ? (
                     <FactoryControls />
                   ) : (
-                    <button
-                      type="button"
-                      className="desk-chip quiet"
-                      onClick={() => void useSteering.getState().arm()}
-                    >
-                      Arm pane {paneId || "unresolved"} for rename and kill
-                    </button>
+                    // Conductor R6: the session-control grant (rename,
+                    // kill) is a library verb plus the pane as a token,
+                    // never a sentence (UX-CANON A.1, A.3).
+                    <span className="desk-session-arm" data-testid="session-arm-control">
+                      <span className="surface-token" data-testid="session-arm-pane">
+                        {`PANE · ${paneId || "UNRESOLVED"}`}
+                      </span>
+                      <Button
+                        dense
+                        variant="ghost"
+                        className="desk-chip quiet"
+                        aria-label={`Arm rename/kill: pane ${paneId || "unresolved"}`}
+                        data-testid="session-arm-verb"
+                        onClick={() => void useSteering.getState().arm()}
+                      >
+                        Arm rename/kill
+                      </Button>
+                    </span>
                   )}
                 </>
               )}

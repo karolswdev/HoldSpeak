@@ -21,7 +21,13 @@ from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
 
 OWNER = Principal(PrincipalKind.OWNER, "owner")
-RACE_TIMEOUT = 10.0
+#: The bound on every event wait and thread join in this file. A wait returns
+#: the moment its event is set, so the bound only matters when the machine
+#: starves a thread. The old 2 s bound tripped under FAST load (load average
+#: about 48 on 12 cores, Conductor R5): an adapter's ``release.wait(2)`` ran
+#: out while the test thread was still descheduled, and the dispatch failed
+#: for a reason the test was not about.
+RACE_TIMEOUT = 30.0
 
 
 class Adapter:
@@ -225,7 +231,9 @@ def test_cancellation_reaches_adapter_and_blocks_late_publication(rig):
     class Slow(Adapter):
         def dispatch(self, engine, payload, cancellation):
             started.set()
-            release.wait(2)
+            # The runner's cancel signal releases the dispatch, as a real
+            # provider's cancel does (R5: no hidden wait on a timeout).
+            assert cancellation.wait(RACE_TIMEOUT)
             return "late output"
 
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
@@ -234,10 +242,10 @@ def test_cancellation_reaches_adapter_and_blocks_late_publication(rig):
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "caller_cancel"}), Slow(), publish=lambda value: published.append(value) or "answer:late"
     )))
     thread.start()
-    assert started.wait(2)
+    assert started.wait(RACE_TIMEOUT)
     assert runner.cancel("caller_cancel") == "cancelled"
     release.set()
-    thread.join(2)
+    thread.join(RACE_TIMEOUT)
     assert result[0].outcome == "cancelled"
     assert published == []
     assert broker.store.receipt(result[0].operation_id)["outcome"] == "cancelled"
@@ -332,7 +340,7 @@ def test_deadline_cancels_a_blocked_dispatch_through_cancel_operation(rig):
 
     class Blocked(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            stopped.wait(2)
+            stopped.wait(RACE_TIMEOUT)
             return "late"
 
         def cancel(self):
@@ -385,7 +393,7 @@ def test_unknown_cancel_disposition_closes_indeterminate(rig):
 
     class Unknown(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            release.wait(2)
+            release.wait(RACE_TIMEOUT)
             return "late"
 
         def cancel(self):
@@ -400,7 +408,7 @@ def test_unknown_cancel_disposition_closes_indeterminate(rig):
     thread.start()
     time.sleep(.05)
     assert runner.cancel("unknown_cancel") in {"pending", "unknown"}
-    thread.join(2)
+    thread.join(RACE_TIMEOUT)
     assert results[0].outcome == "indeterminate"
 
 
@@ -410,7 +418,7 @@ def test_completed_cancel_disposition_allows_completed_result(rig):
 
     class Completed(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            release.wait(2)
+            release.wait(RACE_TIMEOUT)
             return "completed"
 
         def cancel(self):
@@ -425,7 +433,7 @@ def test_completed_cancel_disposition_allows_completed_result(rig):
     thread.start()
     time.sleep(.05)
     assert runner.cancel("completed_cancel") in {"pending", "completed"}
-    thread.join(2)
+    thread.join(RACE_TIMEOUT)
     assert results[0].outcome == "succeeded"
 
 
@@ -489,15 +497,15 @@ def test_canceller_wins_before_publisher_transition(rig):
 
     class Choreographed(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            dispatch_ready.set(); assert release.wait(2); return "late"
+            dispatch_ready.set(); assert cancellation.wait(RACE_TIMEOUT); return "late"
 
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "canceller_wins"}),
         Choreographed(), publish=lambda value: published.append(value) or "answer:late")))
-    worker.start(); assert dispatch_ready.wait(2)
+    worker.start(); assert dispatch_ready.wait(RACE_TIMEOUT)
     assert runner.cancel("canceller_wins") == "cancelled"
-    release.set(); worker.join(2)
+    release.set(); worker.join(RACE_TIMEOUT)
     assert not worker.is_alive() and results[0].outcome == "cancelled" and published == []
 
 
@@ -507,13 +515,13 @@ def test_publisher_wins_before_cancel_request(rig):
     class Immediate(Adapter):
         pass
     def publish(value):
-        publishing.set(); assert release.wait(2); return "answer:published"
+        publishing.set(); assert release.wait(RACE_TIMEOUT); return "answer:published"
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: returned.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "publisher_wins"}), Immediate(), publish=publish)))
-    worker.start(); assert publishing.wait(2)
+    worker.start(); assert publishing.wait(RACE_TIMEOUT)
     assert runner.cancel("publisher_wins") == "completed"
-    release.set(); worker.join(2)
+    release.set(); worker.join(RACE_TIMEOUT)
     assert not worker.is_alive() and returned[0].outcome == "succeeded"
     assert broker.store.receipt(returned[0].operation_id)["outcome"] == "succeeded"
     assert not any(broker.store.operation(event["operation_id"])["name"] == "inference.cancel" for event in broker.events(0, {}, OWNER)["events"])
@@ -525,14 +533,14 @@ def test_refused_cancellation_restores_running_and_publishes(rig):
     current = [OWNER]
     class Waiting(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            entered.set(); assert release.wait(2); return "normal"
+            entered.set(); assert release.wait(RACE_TIMEOUT); return "normal"
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: current[0])
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "refused_cancel"}), Waiting())))
-    worker.start(); assert entered.wait(2)
+    worker.start(); assert entered.wait(RACE_TIMEOUT)
     current[0] = Principal(PrincipalKind.AGENT, "untrusted-canceller")
     assert runner.cancel("refused_cancel") == "refused"
-    current[0] = OWNER; release.set(); worker.join(2)
+    current[0] = OWNER; release.set(); worker.join(RACE_TIMEOUT)
     assert not worker.is_alive() and results[0].outcome == "succeeded"
     cancel_ops = [op for op in (broker.store.operation(event["operation_id"]) for event in broker.events(0, {}, OWNER)["events"]) if op["name"] == "inference.cancel"]
     assert cancel_ops and broker.store.receipt(cancel_ops[-1]["operation_id"])["state"] == "refused"
@@ -556,20 +564,20 @@ def test_terminal_receipts_gate_both_invoke_and_cancel_returns(rig):
     original_receipt = broker.receipt
     def gated_receipt(operation_id, outcome, result_ref, node, **kwargs):
         if outcome in {"cancelled", "succeeded"}:
-            entered.set(); assert release.wait(2)
+            entered.set(); assert release.wait(RACE_TIMEOUT)
         return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = gated_receipt
     class Waiting(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            started.set(); assert release.wait(2); return "late"
+            started.set(); assert release.wait(RACE_TIMEOUT); return "late"
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invoke_thread = threading.Thread(target=lambda: finished.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "receipt_order"}), Waiting())))
-    invoke_thread.start(); assert started.wait(2)
+    invoke_thread.start(); assert started.wait(RACE_TIMEOUT)
     cancel_thread = threading.Thread(target=lambda: runner.cancel("receipt_order"))
-    cancel_thread.start(); assert entered.wait(2)
+    cancel_thread.start(); assert entered.wait(RACE_TIMEOUT)
     assert invoke_thread.is_alive() and cancel_thread.is_alive()
-    release.set(); cancel_thread.join(2); invoke_thread.join(2)
+    release.set(); cancel_thread.join(RACE_TIMEOUT); invoke_thread.join(RACE_TIMEOUT)
     assert not cancel_thread.is_alive() and not invoke_thread.is_alive() and finished[0].outcome == "cancelled"
 
 
@@ -583,13 +591,13 @@ def test_cancel_submit_failure_restores_running_and_notifies_waiters(rig):
     broker.submit = submit
     class Waiting(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            entered.set(); assert release.wait(2); return "normal"
+            entered.set(); assert release.wait(RACE_TIMEOUT); return "normal"
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "submit_raises"}), Waiting())))
-    worker.start(); assert entered.wait(2)
+    worker.start(); assert entered.wait(RACE_TIMEOUT)
     assert runner.cancel("submit_raises") == "refused"
-    release.set(); worker.join(2)
+    release.set(); worker.join(RACE_TIMEOUT)
     assert not worker.is_alive() and results[0].outcome == "succeeded"
 
 
@@ -603,16 +611,16 @@ def test_receipt_failure_after_acknowledgement_never_publishes_late_result(rig):
     broker.receipt = failing_receipt
     class Waiting(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            entered.set(); assert release.wait(2); return "late"
+            entered.set(); assert cancellation.wait(RACE_TIMEOUT); return "late"
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     def run():
         try: results.append(runner.invoke(InvocationRequest(**{**request(revision).__dict__, "invocation_id": "receipt_failure"}), Waiting(), publish=lambda _: (_ for _ in ()).throw(AssertionError("late result published"))))
         except ClosurePersistenceError as exc: errors.append(exc)
     worker = threading.Thread(target=run)
-    worker.start(); assert entered.wait(2)
+    worker.start(); assert entered.wait(RACE_TIMEOUT)
     with pytest.raises(ClosurePersistenceError): runner.cancel("receipt_failure")
     assert runner._active["receipt_failure"].state == "CLOSURE_FAILED"
-    release.set(); worker.join(2)
+    release.set(); worker.join(RACE_TIMEOUT)
     assert not worker.is_alive() and results == [] and len(errors) == 1
 
 
@@ -621,15 +629,15 @@ def test_hung_adapter_cancel_closes_indeterminate_with_bounded_timeout(rig):
     entered, release, never, results = threading.Event(), threading.Event(), threading.Event(), []
     class HungCancel(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            entered.set(); assert release.wait(2); return "late"
+            entered.set(); assert release.wait(RACE_TIMEOUT); return "late"
         def cancel(self):
             never.wait(); return "cancelled"
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER, cancel_timeout=.01)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "hung_cancel"}), HungCancel())))
-    worker.start(); assert entered.wait(2)
+    worker.start(); assert entered.wait(RACE_TIMEOUT)
     assert runner.cancel("hung_cancel") == "unknown"
-    release.set(); worker.join(2)
+    release.set(); worker.join(RACE_TIMEOUT)
     assert not worker.is_alive() and results[0].outcome == "indeterminate"
 
 
@@ -642,29 +650,29 @@ def test_only_elected_performer_returns_after_durable_cancellation(rig):
 
     class Interleaved(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            dispatch_ready.set(); assert release_dispatch.wait(2); return "late"
+            dispatch_ready.set(); assert release_dispatch.wait(RACE_TIMEOUT); return "late"
         def cancel(self):
-            cancel_entered.set(); assert release_cancel.wait(2); return "cancelled"
+            cancel_entered.set(); assert release_cancel.wait(RACE_TIMEOUT); return "cancelled"
 
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     original_perform = runner._perform_cancel
     def delayed_public_perform(iid, active, principal):
         if threading.current_thread().name == "public-canceller":
-            public_entered.set(); assert release_public.wait(2)
+            public_entered.set(); assert release_public.wait(RACE_TIMEOUT)
         return original_perform(iid, active, principal)
     runner._perform_cancel = delayed_public_perform
     invoke_thread = threading.Thread(target=lambda: invocation.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "one_performer"}), Interleaved())))
-    invoke_thread.start(); assert dispatch_ready.wait(2)
+    invoke_thread.start(); assert dispatch_ready.wait(RACE_TIMEOUT)
     public_thread = threading.Thread(target=lambda: public_result.append(runner.cancel("one_performer")), name="public-canceller")
-    public_thread.start(); assert public_entered.wait(2)
-    release_public.set(); assert cancel_entered.wait(2)
+    public_thread.start(); assert public_entered.wait(RACE_TIMEOUT)
+    release_public.set(); assert cancel_entered.wait(RACE_TIMEOUT)
     release_dispatch.set()
     operation = broker.store.operation_for_native("one_performer")
     assert operation and broker.store.receipt(operation["operation_id"]) is None
     release_public.set()
     assert public_thread.is_alive() and broker.store.receipt(operation["operation_id"]) is None
-    release_cancel.set(); public_thread.join(2); invoke_thread.join(2)
+    release_cancel.set(); public_thread.join(RACE_TIMEOUT); invoke_thread.join(RACE_TIMEOUT)
     assert not public_thread.is_alive() and not invoke_thread.is_alive()
     assert public_result == ["cancelled"]
     assert broker.store.receipt(operation["operation_id"])["outcome"] == "cancelled"
@@ -677,19 +685,19 @@ def test_dispatch_failure_racing_acknowledged_cancel_has_one_winner(rig):
     invoke_result, cancel_result = [], []
     class Race(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            dispatch_ready.set(); assert fail_dispatch.wait(2); raise RuntimeError("provider failed")
+            dispatch_ready.set(); assert fail_dispatch.wait(RACE_TIMEOUT); raise RuntimeError("provider failed")
         def cancel(self):
             cancellation_acknowledged.set(); return "cancelled"
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invoke_thread = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "terminal_winner"}), Race())))
-    invoke_thread.start(); assert dispatch_ready.wait(2)
+    invoke_thread.start(); assert dispatch_ready.wait(RACE_TIMEOUT)
     cancel_thread = threading.Thread(target=lambda: cancel_result.append(runner.cancel("terminal_winner")))
-    cancel_thread.start(); assert cancellation_acknowledged.wait(2)
+    cancel_thread.start(); assert cancellation_acknowledged.wait(RACE_TIMEOUT)
     active = runner._active["terminal_winner"]
     fail_dispatch.set()
     assert invoke_thread.is_alive()
-    cancel_thread.join(2); invoke_thread.join(2)
+    cancel_thread.join(RACE_TIMEOUT); invoke_thread.join(RACE_TIMEOUT)
     receipt = broker.store.receipt(invoke_result[0].operation_id)
     assert not cancel_thread.is_alive() and not invoke_thread.is_alive()
     assert invoke_result[0].outcome == receipt["outcome"] == "cancelled"
@@ -704,26 +712,26 @@ def test_timeout_receipt_is_durable_before_waiting_canceller_observes_unknown(ri
     original_receipt = broker.receipt
     def gated_receipt(operation_id, outcome, result_ref, node, **kwargs):
         if outcome == "indeterminate":
-            receipt_entered.set(); assert release_receipt.wait(2)
+            receipt_entered.set(); assert release_receipt.wait(RACE_TIMEOUT)
         return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = gated_receipt
     class Hung(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            dispatch_ready.set(); assert release_dispatch.wait(2); return "late"
+            dispatch_ready.set(); assert release_dispatch.wait(RACE_TIMEOUT); return "late"
         def cancel(self):
             never.wait(); return "cancelled"
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER, cancel_timeout=.01)
     invoke_thread = threading.Thread(target=lambda: invocation.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "timeout_durable"}), Hung())))
-    invoke_thread.start(); assert dispatch_ready.wait(2)
+    invoke_thread.start(); assert dispatch_ready.wait(RACE_TIMEOUT)
     first_thread = threading.Thread(target=lambda: first.append(runner.cancel("timeout_durable")))
-    first_thread.start(); assert receipt_entered.wait(2)
+    first_thread.start(); assert receipt_entered.wait(RACE_TIMEOUT)
     operation = broker.store.operation_for_native("timeout_durable")
     second_thread = threading.Thread(target=lambda: second.append(runner.cancel("timeout_durable")))
     second_thread.start()
     assert second_thread.is_alive() and broker.store.receipt(operation["operation_id"]) is None
-    release_receipt.set(); first_thread.join(2); second_thread.join(2)
-    release_dispatch.set(); invoke_thread.join(2)
+    release_receipt.set(); first_thread.join(RACE_TIMEOUT); second_thread.join(RACE_TIMEOUT)
+    release_dispatch.set(); invoke_thread.join(RACE_TIMEOUT)
     assert first == second == ["unknown"]
     assert broker.store.receipt(operation["operation_id"])["outcome"] == "indeterminate"
 
@@ -735,18 +743,18 @@ def test_failure_receipt_is_durable_before_concurrent_cancel_observes_terminal(r
     original_receipt = broker.receipt
     def gated_receipt(operation_id, outcome, result_ref, node, **kwargs):
         if outcome == "failed":
-            receipt_entered.set(); assert release_receipt.wait(2)
+            receipt_entered.set(); assert release_receipt.wait(RACE_TIMEOUT)
         return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = gated_receipt
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invoke_thread = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "failure_durable"}), Adapter(error=RuntimeError()))))
-    invoke_thread.start(); assert receipt_entered.wait(2)
+    invoke_thread.start(); assert receipt_entered.wait(RACE_TIMEOUT)
     operation = broker.store.operation_for_native("failure_durable")
     cancel_thread = threading.Thread(target=lambda: cancel_result.append(runner.cancel("failure_durable")))
     cancel_thread.start()
     assert cancel_thread.is_alive() and broker.store.receipt(operation["operation_id"]) is None
-    release_receipt.set(); invoke_thread.join(2); cancel_thread.join(2)
+    release_receipt.set(); invoke_thread.join(RACE_TIMEOUT); cancel_thread.join(RACE_TIMEOUT)
     assert invoke_result[0].outcome == "failed" and cancel_result == ["failed"]
     assert broker.store.receipt(operation["operation_id"])["outcome"] == "failed"
 
@@ -769,18 +777,18 @@ def test_failed_closure_retries_before_a_waiter_observes_durable_outcome(rig):
         if outcome == "failed":
             attempts.append(outcome)
             if len(attempts) < 3: raise RuntimeError("transient receipt failure")
-            third_attempt.set(); assert release_receipt.wait(2)
+            third_attempt.set(); assert release_receipt.wait(RACE_TIMEOUT)
         return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = flaky_receipt
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     invoke_thread = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "retry_durable"}), Adapter(error=RuntimeError()))))
-    invoke_thread.start(); assert third_attempt.wait(2)
+    invoke_thread.start(); assert third_attempt.wait(RACE_TIMEOUT)
     operation = broker.store.operation_for_native("retry_durable")
     cancel_thread = threading.Thread(target=lambda: cancel_result.append(runner.cancel("retry_durable")))
     cancel_thread.start()
     assert cancel_thread.is_alive() and broker.store.receipt(operation["operation_id"]) is None
-    release_receipt.set(); invoke_thread.join(2); cancel_thread.join(2)
+    release_receipt.set(); invoke_thread.join(RACE_TIMEOUT); cancel_thread.join(RACE_TIMEOUT)
     assert attempts == ["failed", "failed", "failed"]
     assert invoke_result[0].outcome == "failed" and cancel_result == ["failed"]
 
@@ -802,7 +810,7 @@ def test_permanently_failed_closure_returns_same_error_to_waiter(rig):
         try: runner.invoke(InvocationRequest(**{**request(revision).__dict__, "invocation_id": "closure_error"}), Adapter(error=RuntimeError()))
         except ClosurePersistenceError as exc: invoke_errors.append(exc)
     invoke_thread = threading.Thread(target=run)
-    invoke_thread.start(); assert exhausted.wait(2); invoke_thread.join(2)
+    invoke_thread.start(); assert exhausted.wait(RACE_TIMEOUT); invoke_thread.join(RACE_TIMEOUT)
     with pytest.raises(ClosurePersistenceError) as waiter_error: runner.cancel("closure_error")
     assert len(invoke_errors) == 1 and str(waiter_error.value) == str(invoke_errors[0])
     assert broker.store.receipt(broker.store.operation_for_native("closure_error")["operation_id"]) is None
@@ -818,7 +826,7 @@ def test_closure_failure_during_engine_build_never_dispatches_provider(rig):
         return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
     broker.receipt = failing_receipt
     def build_engine(value, **_kw):
-        engine_started.set(); assert release_engine.wait(2); return object()
+        engine_started.set(); assert release_engine.wait(RACE_TIMEOUT); return object()
     class NeverDispatch(Adapter):
         def dispatch(self, engine, payload, cancellation):
             dispatched.append(True); return "impossible"
@@ -827,9 +835,9 @@ def test_closure_failure_during_engine_build_never_dispatches_provider(rig):
         try: runner.invoke(InvocationRequest(**{**request(revision).__dict__, "invocation_id": "failed_during_engine"}), NeverDispatch())
         except ClosurePersistenceError as exc: invoke_errors.append(exc)
     invoke_thread = threading.Thread(target=run)
-    invoke_thread.start(); assert engine_started.wait(2)
+    invoke_thread.start(); assert engine_started.wait(RACE_TIMEOUT)
     with pytest.raises(ClosurePersistenceError) as cancel_error: runner.cancel("failed_during_engine")
-    release_engine.set(); invoke_thread.join(2)
+    release_engine.set(); invoke_thread.join(RACE_TIMEOUT)
     assert dispatched == [] and len(invoke_errors) == 1
     assert str(invoke_errors[0]) == str(cancel_error.value)
 
@@ -839,7 +847,7 @@ def test_dispatch_admission_is_atomic_against_pre_dispatch_cancel(rig):
     engine_started, release_engine = threading.Event(), threading.Event()
     dispatched, cancel_calls, results = [], [], []
     def build_engine(value, **_kw):
-        engine_started.set(); assert release_engine.wait(2); return object()
+        engine_started.set(); assert release_engine.wait(RACE_TIMEOUT); return object()
     class Never(Adapter):
         def dispatch(self, engine, payload, cancellation):
             dispatched.append(True); return "impossible"
@@ -848,9 +856,9 @@ def test_dispatch_admission_is_atomic_against_pre_dispatch_cancel(rig):
     runner = InferenceRunner(broker, db, engine_factory=build_engine, principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "atomic_pre_dispatch"}), Never())))
-    worker.start(); assert engine_started.wait(2)
+    worker.start(); assert engine_started.wait(RACE_TIMEOUT)
     assert runner.cancel("atomic_pre_dispatch") == "cancelled"
-    release_engine.set(); worker.join(2)
+    release_engine.set(); worker.join(RACE_TIMEOUT)
     assert not worker.is_alive() and dispatched == [] and results[0].outcome == "cancelled" and cancel_calls == [True]
     children = [broker.store.operation(event["operation_id"]) for event in broker.events(0, {}, OWNER)["events"] if broker.store.operation(event["operation_id"])["name"] == "inference.cancel" and broker.store.operation(event["operation_id"])["parent_operation_id"] == results[0].operation_id]
     assert len({child["operation_id"] for child in children}) == 1 and children[0]["claimed_by"]
@@ -863,18 +871,18 @@ def test_cancel_during_dispatch_is_cooperative_and_closes_after_return(rig):
     cancel_calls, invoke_result, cancel_result = [], [], []
     class Cooperative(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            dispatch_started.set(); assert release_dispatch.wait(2); return "late"
+            dispatch_started.set(); assert release_dispatch.wait(RACE_TIMEOUT); return "late"
         def cancel(self):
             cancel_calls.append(True); cancel_called.set(); return "cancelled"
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "cooperative_dispatch"}), Cooperative())))
-    worker.start(); assert dispatch_started.wait(2)
+    worker.start(); assert dispatch_started.wait(RACE_TIMEOUT)
     canceller = threading.Thread(target=lambda: cancel_result.append(runner.cancel("cooperative_dispatch")))
-    canceller.start(); assert cancel_called.wait(2)
+    canceller.start(); assert cancel_called.wait(RACE_TIMEOUT)
     operation = broker.store.operation_for_native("cooperative_dispatch")
     assert canceller.is_alive() and broker.store.receipt(operation["operation_id"]) is None
-    release_dispatch.set(); canceller.join(2); worker.join(2)
+    release_dispatch.set(); canceller.join(RACE_TIMEOUT); worker.join(RACE_TIMEOUT)
     assert cancel_result == ["cancelled"] and invoke_result[0].outcome == "cancelled"
     assert broker.store.receipt(operation["operation_id"])["outcome"] == "cancelled"
     children = [broker.store.operation(event["operation_id"]) for event in broker.events(0, {}, OWNER)["events"] if broker.store.operation(event["operation_id"])["name"] == "inference.cancel" and broker.store.operation(event["operation_id"])["parent_operation_id"] == operation["operation_id"]]
@@ -895,16 +903,16 @@ def test_dispatching_wedge_cannot_close_cancelled_before_provider_call(rig):
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     original_dispatch = runner._dispatch
     def gated_dispatch(*args, **kwargs):
-        at_boundary.set(); assert release_boundary.wait(2); return original_dispatch(*args, **kwargs)
+        at_boundary.set(); assert release_boundary.wait(RACE_TIMEOUT); return original_dispatch(*args, **kwargs)
     runner._dispatch = gated_dispatch
     worker = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "dispatch_wedge"}), Provider())))
-    worker.start(); assert at_boundary.wait(2)
+    worker.start(); assert at_boundary.wait(RACE_TIMEOUT)
     operation = broker.store.operation_for_native("dispatch_wedge")
     canceller = threading.Thread(target=lambda: cancel_result.append(runner.cancel("dispatch_wedge")))
     canceller.start()
     assert canceller.is_alive() and adapter_called == [] and broker.store.receipt(operation["operation_id"]) is None
-    release_boundary.set(); canceller.join(2); worker.join(2)
+    release_boundary.set(); canceller.join(RACE_TIMEOUT); worker.join(RACE_TIMEOUT)
     assert cancel_result == ["cancelled"] and invoke_result[0].outcome == "cancelled"
     assert adapter_called == [True] and broker.store.receipt(operation["operation_id"])["outcome"] == "cancelled"
 
@@ -925,18 +933,18 @@ def test_dispatch_ack_receipt_retries_irreversibly_before_cancelled_closure(rig)
     broker.receipt = flaky_receipt
     class Provider(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            dispatch_started.set(); assert release_dispatch.wait(2); return "late"
+            dispatch_started.set(); assert release_dispatch.wait(RACE_TIMEOUT); return "late"
         def cancel(self): return "cancelled"
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: invoke_result.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "dispatch_ack_retry"}), Provider(), publish=lambda value: published.append(value) or "answer:late")))
-    worker.start(); assert dispatch_started.wait(2)
+    worker.start(); assert dispatch_started.wait(RACE_TIMEOUT)
     outer[0] = broker.store.operation_for_native("dispatch_ack_retry")["operation_id"]
     canceller = threading.Thread(target=lambda: cancel_result.append(runner.cancel("dispatch_ack_retry")))
     canceller.start()
-    assert third_attempt.wait(2)
+    assert third_attempt.wait(RACE_TIMEOUT)
     assert len(attempts) == 3 and runner._active["dispatch_ack_retry"].state == "DISPATCHING"
-    release_dispatch.set(); canceller.join(2); worker.join(2)
+    release_dispatch.set(); canceller.join(RACE_TIMEOUT); worker.join(RACE_TIMEOUT)
     assert cancel_result == ["cancelled"] and invoke_result[0].outcome == "cancelled" and published == []
 
 
@@ -952,18 +960,18 @@ def test_dispatch_ack_persistent_receipt_failure_stays_irreversible(rig):
     broker.receipt = failing_receipt
     class Provider(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            dispatch_started.set(); assert release_dispatch.wait(2); return "late"
+            dispatch_started.set(); assert release_dispatch.wait(RACE_TIMEOUT); return "late"
         def cancel(self): return "cancelled"
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER, receipt_attempts=1)
     def run():
         try: runner.invoke(InvocationRequest(**{**request(revision).__dict__, "invocation_id": "dispatch_ack_failed"}), Provider(), publish=lambda value: published.append(value) or "answer:late")
         except ClosurePersistenceError as exc: invoke_errors.append(exc)
     worker = threading.Thread(target=run)
-    worker.start(); assert dispatch_started.wait(2)
+    worker.start(); assert dispatch_started.wait(RACE_TIMEOUT)
     outer[0] = broker.store.operation_for_native("dispatch_ack_failed")["operation_id"]
     with pytest.raises(ClosurePersistenceError): runner.cancel("dispatch_ack_failed")
     assert runner._active["dispatch_ack_failed"].state == "CLOSURE_FAILED"
-    release_dispatch.set(); worker.join(2)
+    release_dispatch.set(); worker.join(RACE_TIMEOUT)
     assert len(invoke_errors) == 1 and published == []
 
 
@@ -972,16 +980,16 @@ def test_cancel_child_completed_is_refused_then_invocation_publishes(rig):
     engine_started, release_engine = threading.Event(), threading.Event()
     class Completed(Adapter):
         def cancel(self): return "completed"
-    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: (engine_started.set(), release_engine.wait(2), object())[-1], principal_provider=lambda: OWNER)
+    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: (engine_started.set(), release_engine.wait(RACE_TIMEOUT), object())[-1], principal_provider=lambda: OWNER)
     results = []
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "completed_child"}), Completed())))
-    worker.start(); assert engine_started.wait(2)
+    worker.start(); assert engine_started.wait(RACE_TIMEOUT)
     assert runner.cancel("completed_child") == "completed"
     child = next(broker.store.operation(event["operation_id"]) for event in broker.events(0, {}, OWNER)["events"] if broker.store.operation(event["operation_id"])["name"] == "inference.cancel")
     receipt = broker.store.receipt(child["operation_id"])
     assert receipt["state"] == "refused" and receipt["result_ref"] == "cancel-disposition:completed"
-    release_engine.set(); worker.join(2)
+    release_engine.set(); worker.join(RACE_TIMEOUT)
     assert results[0].outcome == "succeeded"
 
 
@@ -990,16 +998,16 @@ def test_cancel_child_adapter_error_is_failed_before_running_recovers(rig):
     entered, release, results = threading.Event(), threading.Event(), []
     class Broken(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            entered.set(); assert release.wait(2); return "normal"
+            entered.set(); assert release.wait(RACE_TIMEOUT); return "normal"
         def cancel(self): raise RuntimeError("provider cancel failed")
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "failed_child"}), Broken())))
-    worker.start(); assert entered.wait(2)
+    worker.start(); assert entered.wait(RACE_TIMEOUT)
     assert runner.cancel("failed_child") == "refused"
     child = next(broker.store.operation(event["operation_id"]) for event in broker.events(0, {}, OWNER)["events"] if broker.store.operation(event["operation_id"])["name"] == "inference.cancel")
     assert broker.store.receipt(child["operation_id"])["outcome"] == "failed"
-    release.set(); worker.join(2)
+    release.set(); worker.join(RACE_TIMEOUT)
     assert results[0].outcome == "succeeded"
 
 
@@ -1009,17 +1017,17 @@ def test_base_exception_cancel_error_closes_child_then_reraises(rig):
     class AdapterAbort(BaseException): pass
     class Aborting(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            entered.set(); assert release.wait(2); return "normal"
+            entered.set(); assert release.wait(RACE_TIMEOUT); return "normal"
         def cancel(self): raise AdapterAbort("abort")
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "base_exception_child"}), Aborting())))
-    worker.start(); assert entered.wait(2)
+    worker.start(); assert entered.wait(RACE_TIMEOUT)
     with pytest.raises(AdapterAbort): runner.cancel("base_exception_child")
     child = next(broker.store.operation(event["operation_id"]) for event in broker.events(0, {}, OWNER)["events"] if broker.store.operation(event["operation_id"])["name"] == "inference.cancel")
     assert broker.store.receipt(child["operation_id"])["outcome"] == "failed"
     assert runner._active["base_exception_child"].state == "RUNNING"
-    release.set(); worker.join(2)
+    release.set(); worker.join(RACE_TIMEOUT)
     assert results[0].outcome == "succeeded"
 
 
@@ -1028,16 +1036,16 @@ def test_unknown_and_timeout_cancel_children_are_indeterminate(rig):
     entered, release, results = threading.Event(), threading.Event(), []
     class Unknown(Adapter):
         def dispatch(self, engine, payload, cancellation):
-            entered.set(); assert release.wait(2); return "late"
+            entered.set(); assert release.wait(RACE_TIMEOUT); return "late"
         def cancel(self): return "unknown"
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     worker = threading.Thread(target=lambda: results.append(runner.invoke(
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": "unknown_child"}), Unknown())))
-    worker.start(); assert entered.wait(2)
+    worker.start(); assert entered.wait(RACE_TIMEOUT)
     assert runner.cancel("unknown_child") == "unknown"
     child = next(broker.store.operation(event["operation_id"]) for event in broker.events(0, {}, OWNER)["events"] if broker.store.operation(event["operation_id"])["name"] == "inference.cancel")
     assert broker.store.receipt(child["operation_id"])["outcome"] == "indeterminate"
-    release.set(); worker.join(2)
+    release.set(); worker.join(RACE_TIMEOUT)
     assert results[0].outcome == "indeterminate"
 
 
@@ -1075,13 +1083,17 @@ def test_each_cancel_child_disposition_waits_for_its_own_durable_receipt(
     class Controlled(Adapter):
         def dispatch(self, engine, payload, cancellation):
             dispatch_started.set()
-            assert release_dispatch.wait(2)
+            assert release_dispatch.wait(RACE_TIMEOUT)
             return "normal"
 
         def cancel(self):
             cancel_calls.append(True)
             if disposition == "failed":
                 raise RuntimeError("cancel failed")
+            if disposition == "completed":
+                # The provider says it finished: its dispatch returns now
+                # (R5: the cancel no longer waits on a timeout to see it).
+                release_dispatch.set()
             return disposition
 
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
@@ -1126,7 +1138,7 @@ def test_cancel_child_receipt_transient_retries_once_adapter_call_and_shared_dis
             if len(attempts) < 3:
                 raise RuntimeError("transient child receipt failure")
             third_attempt.set()
-            assert release_third_attempt.wait(2)
+            assert release_third_attempt.wait(RACE_TIMEOUT)
         return original_receipt(operation_id, outcome, result_ref, node, **kwargs)
 
     broker.receipt = flaky_receipt
@@ -1134,7 +1146,7 @@ def test_cancel_child_receipt_transient_retries_once_adapter_call_and_shared_dis
     class Controlled(Adapter):
         def dispatch(self, engine, payload, cancellation):
             dispatch_started.set()
-            assert release_dispatch.wait(2)
+            assert release_dispatch.wait(RACE_TIMEOUT)
             return "late"
 
         def cancel(self):
@@ -1149,20 +1161,20 @@ def test_cancel_child_receipt_transient_retries_once_adapter_call_and_shared_dis
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": invocation_id}), Controlled()
     )))
     worker.start()
-    assert dispatch_started.wait(2)
+    assert dispatch_started.wait(RACE_TIMEOUT)
     first_thread = threading.Thread(target=lambda: first.append(runner.cancel(invocation_id)))
     first_thread.start()
-    assert third_attempt.wait(2)
+    assert third_attempt.wait(RACE_TIMEOUT)
     second_thread = threading.Thread(target=lambda: second.append(runner.cancel(invocation_id)))
     second_thread.start()
     assert first_thread.is_alive() and second_thread.is_alive() and len(attempts) == 3
     release_third_attempt.set()
-    first_thread.join(2)
-    second_thread.join(2)
+    first_thread.join(RACE_TIMEOUT)
+    second_thread.join(RACE_TIMEOUT)
     assert attempts and len(set(attempts)) == 1 and len(attempts) == 3 and cancel_calls == [True]
     assert first == second == [public_result]
     release_dispatch.set()
-    worker.join(2)
+    worker.join(RACE_TIMEOUT)
     assert not worker.is_alive()
 
 
@@ -1192,7 +1204,7 @@ def test_cancel_child_receipt_exhaustion_retains_one_error_for_all_cancellers(
     class Controlled(Adapter):
         def dispatch(self, engine, payload, cancellation):
             dispatch_started.set()
-            assert release_dispatch.wait(2)
+            assert release_dispatch.wait(RACE_TIMEOUT)
             return "late"
 
         def cancel(self):
@@ -1210,7 +1222,7 @@ def test_cancel_child_receipt_exhaustion_retains_one_error_for_all_cancellers(
             invocation_errors.append(exc)
     worker = threading.Thread(target=invoke)
     worker.start()
-    assert dispatch_started.wait(2)
+    assert dispatch_started.wait(RACE_TIMEOUT)
     def cancel():
         try:
             runner.cancel(invocation_id)
@@ -1219,17 +1231,17 @@ def test_cancel_child_receipt_exhaustion_retains_one_error_for_all_cancellers(
     first = threading.Thread(target=cancel)
     second = threading.Thread(target=cancel)
     first.start()
-    assert exhausted.wait(2)
+    assert exhausted.wait(RACE_TIMEOUT)
     second.start()
-    first.join(2)
-    second.join(2)
+    first.join(RACE_TIMEOUT)
+    second.join(RACE_TIMEOUT)
     operation = broker.store.operation_for_native(invocation_id)
     children = _cancel_children(broker, operation["operation_id"])
     assert len(attempts) == 3 and len(set(attempts)) == 1 and cancel_calls == [True]
     assert len(errors) == 2 and str(errors[0]) == str(errors[1])
     assert len(children) == 1 and broker.store.receipt(children[0]["operation_id"]) is None
     release_dispatch.set()
-    worker.join(2)
+    worker.join(RACE_TIMEOUT)
     assert len(invocation_errors) == 1 and str(invocation_errors[0]) == str(errors[0])
 
 
@@ -1241,7 +1253,7 @@ def test_completed_dispatch_cancel_has_refused_child_one_receipt_and_publication
     class Completed(Adapter):
         def dispatch(self, engine, payload, cancellation_event):
             dispatch_started.set()
-            assert release_dispatch.wait(2)
+            assert release_dispatch.wait(RACE_TIMEOUT)
             return "published result"
 
         def cancel(self):
@@ -1255,12 +1267,12 @@ def test_completed_dispatch_cancel_has_refused_child_one_receipt_and_publication
         Completed(), publish=lambda value: published.append(value) or "answer:completed",
     )))
     worker.start()
-    assert dispatch_started.wait(2)
+    assert dispatch_started.wait(RACE_TIMEOUT)
     canceller = threading.Thread(target=lambda: cancellation.append(runner.cancel(invocation_id)))
     canceller.start()
     release_dispatch.set()
-    canceller.join(2)
-    worker.join(2)
+    canceller.join(RACE_TIMEOUT)
+    worker.join(RACE_TIMEOUT)
     operation = broker.store.operation_for_native(invocation_id)
     children = _cancel_children(broker, operation["operation_id"])
     assert cancellation == ["completed"] and cancel_calls == [True] and published == ["published result"]
@@ -1277,7 +1289,7 @@ def test_unknown_child_is_terminal_before_late_dispatch_release_and_never_publis
     class Unknown(Adapter):
         def dispatch(self, engine, payload, cancellation):
             dispatch_started.set()
-            assert release_dispatch.wait(2)
+            assert release_dispatch.wait(RACE_TIMEOUT)
             return "late"
 
         def cancel(self):
@@ -1290,14 +1302,14 @@ def test_unknown_child_is_terminal_before_late_dispatch_release_and_never_publis
         Unknown(), publish=lambda value: published.append(value) or "answer:late",
     )))
     worker.start()
-    assert dispatch_started.wait(2)
+    assert dispatch_started.wait(RACE_TIMEOUT)
     assert runner.cancel(invocation_id) == "unknown"
     operation = broker.store.operation_for_native(invocation_id)
     children = _cancel_children(broker, operation["operation_id"])
     assert len(children) == 1 and children[0]["claimed_by"]
     assert broker.store.receipt(children[0]["operation_id"])["outcome"] == "indeterminate"
     release_dispatch.set()
-    worker.join(2)
+    worker.join(RACE_TIMEOUT)
     assert invocation[0].outcome == "indeterminate" and published == []
 
 
@@ -1309,11 +1321,11 @@ def test_timeout_late_cancel_daemon_cannot_mutate_durable_closure_or_publish(rig
     class HungCancel(Adapter):
         def dispatch(self, engine, payload, cancellation):
             dispatch_started.set()
-            assert release_dispatch.wait(2)
+            assert release_dispatch.wait(RACE_TIMEOUT)
             return "late"
 
         def cancel(self):
-            assert release_cancel.wait(2)
+            assert release_cancel.wait(RACE_TIMEOUT)
             return "cancelled"
 
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER, cancel_timeout=.01)
@@ -1323,7 +1335,7 @@ def test_timeout_late_cancel_daemon_cannot_mutate_durable_closure_or_publish(rig
         HungCancel(), publish=lambda value: published.append(value) or "answer:late",
     )))
     worker.start()
-    assert dispatch_started.wait(2)
+    assert dispatch_started.wait(RACE_TIMEOUT)
     assert runner.cancel(invocation_id) == "unknown"
     operation = broker.store.operation_for_native(invocation_id)
     children = _cancel_children(broker, operation["operation_id"])
@@ -1332,7 +1344,7 @@ def test_timeout_late_cancel_daemon_cannot_mutate_durable_closure_or_publish(rig
     assert child_receipt["outcome"] == invocation_receipt["outcome"] == "indeterminate"
     release_cancel.set()
     release_dispatch.set()
-    worker.join(2)
+    worker.join(RACE_TIMEOUT)
     assert invocation[0].outcome == "indeterminate" and published == []
     assert broker.store.receipt(children[0]["operation_id"]) == child_receipt
     assert broker.store.receipt(operation["operation_id"]) == invocation_receipt
@@ -1349,7 +1361,7 @@ def test_dispatch_cancel_child_can_close_before_independently_gated_invocation_r
         operation = broker.store.operation(operation_id)
         if operation["name"] == "inference.invoke" and outcome == "cancelled":
             invocation_receipt_entered.set()
-            assert release_invocation_receipt.wait(2)
+            assert release_invocation_receipt.wait(RACE_TIMEOUT)
         receipt = original_receipt(operation_id, outcome, result_ref, node, **kwargs)
         if operation["name"] == "inference.cancel" and outcome == "succeeded":
             child_terminal.set()
@@ -1360,7 +1372,7 @@ def test_dispatch_cancel_child_can_close_before_independently_gated_invocation_r
     class Cooperative(Adapter):
         def dispatch(self, engine, payload, cancellation_event):
             dispatch_started.set()
-            assert release_dispatch.wait(2)
+            assert release_dispatch.wait(RACE_TIMEOUT)
             return "late"
 
         def cancel(self):
@@ -1372,19 +1384,19 @@ def test_dispatch_cancel_child_can_close_before_independently_gated_invocation_r
         InvocationRequest(**{**request(revision).__dict__, "invocation_id": invocation_id}), Cooperative()
     )))
     worker.start()
-    assert dispatch_started.wait(2)
+    assert dispatch_started.wait(RACE_TIMEOUT)
     canceller = threading.Thread(target=lambda: cancellation.append(runner.cancel(invocation_id)))
     canceller.start()
     operation = broker.store.operation_for_native(invocation_id)
     # The child gate is independent: it is terminal before dispatch releases.
-    assert child_terminal.wait(2)
+    assert child_terminal.wait(RACE_TIMEOUT)
     child = _cancel_children(broker, operation["operation_id"])[0]
     assert broker.store.receipt(child["operation_id"])["outcome"] == "succeeded"
     assert broker.store.receipt(operation["operation_id"]) is None
     release_dispatch.set()
-    assert invocation_receipt_entered.wait(2)
+    assert invocation_receipt_entered.wait(RACE_TIMEOUT)
     assert canceller.is_alive() and broker.store.receipt(operation["operation_id"]) is None
     release_invocation_receipt.set()
-    canceller.join(2)
-    worker.join(2)
+    canceller.join(RACE_TIMEOUT)
+    worker.join(RACE_TIMEOUT)
     assert cancellation == ["cancelled"] and invocation[0].outcome == "cancelled"
