@@ -83,7 +83,7 @@ def _bind_listen_socket(host: str, preferred: int) -> socket.socket:
     return sock
 
 
-def _bind_host_sockets(host: str) -> list[socket.socket]:
+def _listen_sockets_for_host(host: str) -> list[socket.socket]:
     """Bind a free port on EVERY address the host resolves to (Conductor R5).
 
     One socket per resolved address (``localhost``: 127.0.0.1 and ::1), all
@@ -575,7 +575,7 @@ class MeetingWebServer:
             # Picking a port, closing it and letting uvicorn bind it after
             # lifespan startup left a window in which another process could
             # take the port (a check-then-bind race).
-            self._listen_sockets = _bind_host_sockets(self.host)
+            self._listen_sockets = _listen_sockets_for_host(self.host)
             self.port = int(self._listen_sockets[0].getsockname()[1])
         from .principals import agent_credentials
 

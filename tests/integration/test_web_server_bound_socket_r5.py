@@ -45,14 +45,14 @@ def _health(url: str) -> int:
 @pytest.mark.integration
 def test_the_port_is_held_during_startup_and_served_on_the_picked_socket(isolated_db, monkeypatch) -> None:
     picked: list[socket.socket] = []
-    real_bind = web_server_module._bind_host_sockets
+    real_bind = web_server_module._listen_sockets_for_host
 
     def recording_bind(host: str) -> list[socket.socket]:
         socks = real_bind(host)
         picked.extend(socks)
         return socks
 
-    monkeypatch.setattr(web_server_module, "_bind_host_sockets", recording_bind)
+    monkeypatch.setattr(web_server_module, "_listen_sockets_for_host", recording_bind)
     server = _server()
     taken_during_startup: list[bool] = []
 
@@ -178,7 +178,7 @@ def test_an_unavailable_address_is_skipped_wherever_it_sits(monkeypatch, order) 
     in any position; the usable one is held and serves."""
     answers = [_UNAVAILABLE_V6, _LOOPBACK_V4] if order == "v6-first" else [_LOOPBACK_V4, _UNAVAILABLE_V6]
     _fixture_resolver(monkeypatch, answers)
-    socks = web_server_module._bind_host_sockets("fixture-host")
+    socks = web_server_module._listen_sockets_for_host("fixture-host")
     try:
         assert [(s.family, s.getsockname()[0]) for s in socks] == [(socket.AF_INET, "127.0.0.1")]
         [listener] = socks
@@ -194,14 +194,14 @@ def test_an_unavailable_address_is_skipped_wherever_it_sits(monkeypatch, order) 
 def test_no_usable_address_raises(monkeypatch) -> None:
     _fixture_resolver(monkeypatch, [_UNAVAILABLE_V6])
     with pytest.raises(OSError):
-        web_server_module._bind_host_sockets("fixture-host")
+        web_server_module._listen_sockets_for_host("fixture-host")
 
 
 @pytest.mark.integration
 def test_a_hub_serves_ipv4_when_the_first_address_is_unavailable(isolated_db, monkeypatch) -> None:
     _fixture_resolver(monkeypatch, [_UNAVAILABLE_V6, _LOOPBACK_V4])
-    real_bind = web_server_module._bind_host_sockets
-    monkeypatch.setattr(web_server_module, "_bind_host_sockets", lambda host: real_bind("fixture-host"))
+    real_bind = web_server_module._listen_sockets_for_host
+    monkeypatch.setattr(web_server_module, "_listen_sockets_for_host", lambda host: real_bind("fixture-host"))
     server = _localhost_server()
     server.start()
     try:
