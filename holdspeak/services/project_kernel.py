@@ -195,6 +195,8 @@ def target_for(name: str, args: Mapping[str, Any]) -> str:
         return target_ref("project", "door")
     if name == "people_access.set":
         return target_ref("config", "people.mcp_access")
+    if name == "calendar.open_settings":
+        return target_ref("system_settings", "privacy_calendars")
     if name == "agent_hooks.install":
         # The agent and the file it binds at admission (a path the ref cannot carry is named by its hash).
         return target_ref("agent_hooks", f"{args.get('agent')}:{args.get('settings_path')}")

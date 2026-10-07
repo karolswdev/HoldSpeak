@@ -75,8 +75,29 @@ export function CalendarCard({ step, lit }: { step: CalendarStep; lit: boolean }
         <div className="firstrun-fail" role="alert" data-testid="firstrun-calendar-denied">
           <StateChip state="failure" label="CALENDAR · NOT ALLOWED" />
           {macos?.state === "write_only" ? <span className="surface-token">WRITE ONLY</span> : null}
-          {/* No verb: the desk cannot open System Settings (the no-exit
-              law; no hub route opens the Calendars pane). Withheld, never dead. */}
+          {/* PHILO-15 04 (gap 12): the way forward. His press opens System
+              Settings > Privacy & Security > Calendars; Check again reads
+              the access state after he changes it there. */}
+          <Button
+            variant="primary"
+            loading={busy === "settings"}
+            disabled={busy !== null}
+            onClick={() => void step.openSettings()}
+            data-testid="firstrun-calendar-settings"
+          >
+            Open System Settings
+          </Button>
+          <Button
+            variant="secondary"
+            loading={busy === "check"}
+            disabled={busy !== null}
+            onClick={() => void step.checkAgain()}
+            data-testid="firstrun-calendar-check"
+          >
+            Check again
+          </Button>
+          <EgressChip label="THIS DEVICE" scope="local" />
+          {step.settingsFailed ? <StateChip state="failure" label="SETTINGS · NOT OPENED" /> : null}
         </div>
       ) : null}
       {rows.length ? (

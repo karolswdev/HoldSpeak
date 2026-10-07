@@ -157,6 +157,27 @@ def request_access(timeout: float = 120.0) -> str:
     return access_state()
 
 
+#: PHILO-15 04 (gap 12): System Settings > Privacy & Security > Calendars.
+PRIVACY_CALENDARS_URL = "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars"
+
+
+def open_privacy_settings() -> bool:
+    """Open System Settings at Privacy & Security > Calendars (the owner's press only).
+
+    Returns ``False`` off macOS or when ``open`` fails; it never raises.
+    """
+    if sys.platform != "darwin":
+        return False
+    import subprocess
+
+    try:
+        done = subprocess.run(["/usr/bin/open", PRIVACY_CALENDARS_URL], capture_output=True, timeout=10)
+    except Exception as exc:  # pragma: no cover - environment-dependent
+        log.info("open System Settings failed: %s", exc)
+        return False
+    return done.returncode == 0
+
+
 def list_calendars() -> list[dict[str, Any]]:
     """Every event calendar Calendar.app shows (needs full access)."""
     if access_state() != "full_access":
