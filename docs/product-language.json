@@ -403,6 +403,15 @@
         "reason": "Open reveals the selected Desk item's local inspector and does not execute or queue an effect."
       },
       {
+        "id": "web-object-species-gallery-v1",
+        "path": "web/src/pages/cores/ObjectSpeciesGallery.tsx",
+        "literals": [
+          "Approve",
+          "Open"
+        ],
+        "reason": "The component gallery draws the ratified PHILO-14 A boards' verbs as species specimens; no press runs an effect, and each face that uses them names its own consequence."
+      },
+      {
         "id": "swift-runs-on-readiness-v1",
         "path": "apple/App/MeetingCapture/RunsOnPicker.swift",
         "literals": [

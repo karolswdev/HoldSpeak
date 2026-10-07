@@ -4323,3 +4323,22 @@ button.surface-edit-in-place:hover {
     padding-left: 40px;
   }
 }
+
+/* ── PHILO-14 B1: the bevel grammar (contract.md "The bevel grammar").
+   A control that must be clicked LOOKS clickable (UX-CANON D): raised.
+   A well you type or drop into, and a pressed gadget: sunken. A fact you
+   read: flat. On the Steel plate (the window frame, a header strip) the
+   same grammar rides --wb-raised / --wb-sunken. ── */
+.bevel-raised {
+  box-shadow: var(--bevel-raised);
+}
+.bevel-raised:where(button, [role="button"]):active,
+.bevel-raised[aria-pressed="true"] {
+  box-shadow: var(--bevel-sunken);
+}
+.bevel-sunken {
+  box-shadow: var(--bevel-sunken);
+}
+.bevel-flat {
+  box-shadow: none;
+}

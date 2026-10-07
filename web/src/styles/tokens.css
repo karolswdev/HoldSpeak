@@ -359,6 +359,14 @@
   --wb-ink-dim: #2a2e36; /* PHILO-13-11 title bar B (owner pick 2026-10-03): an inactive window's title (5.44:1 on steel) */
   --wb-rule: rgba(11, 12, 16, 0.45); /* PHILO-13-11 title bar B (owner pick 2026-10-03): the hairline between gadget cells */
   --wb-raised-soft: inset 1px 1px 0 rgba(255, 255, 255, 0.36), inset -1px -1px 0 rgba(0, 0, 0, 0.25); /* PHILO-13-11 title bar B (owner pick 2026-10-03): a gadget cell, the raised bevel at half strength */
+  --bevel-raised: inset 1px 1px 0 var(--bevel-light-strong), inset -1px -1px 0 var(--bevel-dark); /* PHILO-14 B1 (the object species): the bevel grammar: a control you click (a gadget, a sort header, a plate) LOOKS raised */
+  --bevel-sunken: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light-strong); /* PHILO-14 B1 (the object species): the bevel grammar: a well you type or drop into, and a pressed gadget, sits sunken */
+  --lamp-ok: var(--ok); /* PHILO-14 B1 (the object species): IconLamp tone ok: done, checks pass */
+  --lamp-warn: var(--warn-signal); /* PHILO-14 B1 (the object species): IconLamp tone warn: a held call, due, to review */
+  --lamp-fail: var(--danger); /* PHILO-14 B1 (the object species): IconLamp tone fail: a failed check, a stopped agent */
+  --lamp-info: var(--accent-cool); /* PHILO-14 B1 (the object species): IconLamp tone info: in progress (an agent at work, a PR open) */
+  --lamp-ask: var(--p-color-orange-300); /* PHILO-14 B1 (the object species): IconLamp tone ask: it asks you (an agent's question); the ember of the A boards */
+  --desk-ghost-shadow: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.45)); /* PHILO-14 B1 (the object species): the DragGhost's hard offset shadow (no blur, the Workbench drop) */
 }
 
 @media (prefers-reduced-motion: reduce) {

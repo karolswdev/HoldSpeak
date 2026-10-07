@@ -626,3 +626,172 @@ owner's press. The material is the library's (`choice-card.css`): an
 fade (no animation). A face lights one card at a time. `lit` and
 `selected` may both be set; `lit` draws over `selected`. (Moved from the
 first-run face's own stylesheet into the library.)
+
+## The object species (PHILO-14 B1)
+
+The species the ratified A boards are drawn from
+(`docs/internal/philo/phase-14/canvas`, alternative **A Workbench** plus C's
+station track; `harness/p14.tsx` / `p14.css` are the drawing, these are the
+library). Faces compose them; none draws its own icon, list, rail or well.
+Import from the barrel (`desk/surface`); `surface/objects` is a private path
+(fenced by `scripts/guard-architecture.mjs`). Previewed in the Components
+window (`/design/components`, section "Object species (PHILO-14 B1)",
+`pages/cores/ObjectSpeciesGallery.tsx`). Fenced by
+`surface/__tests__/objects.test.tsx`.
+
+Shared vocabulary (`objects/kinds.ts`):
+
+- `ObjectKind`: project, meeting, decision, action, note, artifact,
+  repository, agent, pr, person, conductor, smart, parked.
+  `objectKindWord(kind)` is the KIND word (`ACTION ITEM`).
+- `objectSprite(kind, id, state?)`: the one sprite from the mold (the A
+  boards' mapping; a project/repository/drawer is the drawer, an agent the
+  automaton). Every species also takes `sprite` (a URL) so lane A0's new
+  mold lands without a species change.
+- `ObjectTone`: ok · warn · fail · info · ask. Lamp colours are the
+  `--lamp-*` tokens (ask = the ember of the boards). A lamp is never colour
+  alone: the word sits beside it or is in the accessible name. Row lamps are
+  `LampGadget` (`lampGadgetTone` maps info→ok, ask→warn).
+
+### DeskIcon / IconLamp
+
+The object on the glass: the 64 px sprite over its name; no plate at rest.
+The library `Button` (`variant="chrome"`).
+
+- `id`, `kind`, `name`; `kindWord?`; `sprite?` / `spriteSelected?`
+- `selected?`: the `_sel` sprite and the inverted label plate (ink on
+  paper); `aria-pressed`
+- `lamp?: { tone, count?, label? }`: the 12 px raised square at the top
+  right; `count` is the notch at the top left (the Dock's ember plate),
+  never drawn at zero; `label` joins the accessible name
+- `badge?`: a 32 px sprite at the bottom right (the Conductor's automaton)
+- `drop?` (lit as a drop target: dashed paper ring, label on blue),
+  `ghost?` (dimmed: the object being dragged, or parked)
+- `onSelect?` (a press, Space), `onOpen?` (Enter, a double press),
+  `ariaExtra?`, `draggable?`, `onDragStart?`, `className?`, `style?`
+- The name wraps to two lines, then ellipsizes.
+
+### IconGrid
+
+A drawer's or the Floor's objects as icons: 112 px columns, 6 px rows,
+4 px gutters; four columns in a `surface` of 520 px or less.
+
+- `label` (the group's name), `children` (DeskIcons)
+- Selection is the caller's: `marquee?: GridRect | null` draws the rubber
+  band; `onMarquee?(rect | null, grid)` reports it while the pointer drags
+  on empty glass (null at the end); `iconsInRect(grid, rect)` returns the
+  ids under it; `onClear?()` on a press on empty glass
+- One Tab stop; arrows walk the icons (`useRovingRows`).
+
+### ObjectList
+
+The drawer's list view (A-2L): a `grid` with Name (sprite + name), Kind,
+When, State (one lamp + word).
+
+- `label`, `rows: ObjectListRow[]` (`id, kind, name, kindWord?, when?,
+  whenSort?, state?: { label, tone }, sprite?`)
+- `sort: { key: "name"|"kind"|"when"|"state", dir }`, `onSort?(key)`: the
+  header is a strip of chrome Buttons on the Steel plate (raised; the
+  active one sunken, `aria-sort` on its `columnheader`); the species sorts
+  by `sort` (When by `whenSort` when given)
+- `selectedId?`, `onSelect?(id)`, `onOpen?(id)`: the selection IS the row
+  (the blue plate). No `[ ]` / `[x]` mark, ever. The row's one verb is the
+  name Button, stretched over the row.
+- One Tab stop; arrows walk rows; Space selects; Enter opens.
+- Rows are at least 44 px. In a `surface` of 520 px or less Kind and When
+  fold under the name (`KIND · WHEN`, the FoldLine of DeskListView without
+  its marks), the State header hides, the sort gadgets grow to 44 px.
+
+### GetInfo
+
+The Get Info window body (A-2): sprite at 64 px, name (primary step), KIND
+word; then a facts grid.
+
+- `id, kind, name, kindWord?, sprite?`
+- `facts: { where?, from?, made?, due?, owner?, state?: { label, tone },
+  branch? }`: an absent fact is no row (no "None", no zero)
+- `verbs?`: the caller's Buttons, drawn in the window footer
+  (`SurfaceFooter`).
+
+### TimelineRail / StationTrack
+
+TimelineRail (A-4): an `ol` of entries `{ time?, word, tone?, text?, code?,
+quote?, verbs?, pending? }`. `word` is BRIEF · READ · SAYS · WRITE · RUN ·
+COMMIT · PR · HELD · ASKS · MERGE. `quote` is the agent's words (a `q`
+with the steel bar). `verbs` are the entry's own (Brief; Deny / Approve).
+`pending` is the step that waits (MERGE · Your press in GitHub): a hollow
+square, muted words. Props: `label`, `entries`.
+
+StationTrack (C-4 on the A lane): an `ol` of `{ word, sub?, state:
+"reached"|"current"|"ahead", tone? }`. Reached: filled with its tone
+(default ok); current: lit (a paper ring), `aria-current="step"`; ahead:
+hollow. The sub-lines fold away in a `surface` of 520 px or less. Props:
+`label`, `stations`.
+
+### AskWell
+
+The question well (A-4), a raised plate: `<AGENT> ASKS · <AGE>`, the
+question at the primary step, a StringGadget (with its mic) and the
+**Answer** Button (primary; Enter in the field answers; an empty answer is
+never sent, the press focuses the field), then the DRAFT line: the draft,
+**Use draft**, the EgressChip of where it was made.
+
+- `agent, age?, question, value, onChange, onAnswer(answer)`, `draft?`,
+  `onUseDraft?(draft)`, `draftEgress?: { label, scope? }`, `busy?`
+
+### PRCard / FilesChanged
+
+PRCard, a raised plate: sprite, `#N title`, `CHECKS n OF m` (a lamp; fail
+when `failed` > 0), `N FAILED`, `N RUNNING` (each only above zero),
+`REVIEW <WORD>`, `branch → base`. Props: `number, title, checks?: {
+passed, total, failed?, running? }, review?, branch?, base?, sprite?`.
+The verb that opens the PR is the face's (Open PR, by its egress chip).
+
+FilesChanged: a SurfaceSection `Files changed · N` of `{ path, added?,
+removed? }`, the counts `+a −r` with zeros not drawn; no files = nothing.
+Props: `files`, `label?`.
+
+### ConfirmLine
+
+The YOLO hand in one line (A-3), a sunken well: from-sprite → to-sprite,
+the title (primary step), the fact line (`CLAUDE CODE · YOLO · hs/...`),
+**Brief ▸** (ghost, `aria-expanded`), **Cancel** (ghost), **Hand**
+(primary). Props: `from, to: { kind, id, sprite? }, title, fact, onBrief?,
+briefOpen?, onCancel, onHand, handLabel?, busy?`.
+
+### NeedsRow / NeedsList / DropTarget / DragGhost
+
+NeedsRow (A-5): an `li`: sprite (40 px), name, one fact line, ONE lamp and
+its word, the object's verbs at the right. In a `surface` of 520 px or less
+the lamp falls under the name and the verbs under the row. Props: `id,
+kind, name, fact?, lamp: { label, tone }, verbs?, sprite?`. NeedsList is
+the named `ul` (`label`, `children`).
+
+DropTarget (`lit`, `children`, `className?`) lights any target with the
+dashed paper ring. DragGhost (`kind, id, sprite?, x, y`) is the dragged
+sprite at viewport `x, y`: fixed, `aria-hidden`, no pointer events, the
+hard `--desk-ghost-shadow`. Both are presentation only; the drag logic is
+lane C3's.
+
+## The bevel grammar (PHILO-14 B1)
+
+**A control that must be clicked LOOKS clickable** (UX-CANON D). Three
+classes in `surface.css`, from the tokens `--bevel-raised` /
+`--bevel-sunken` (built on `--bevel-light-strong` / `--bevel-dark`):
+
+- `.bevel-raised`: a control you press, a plate you act on (the AskWell,
+  the PRCard, the IconLamp, the rail squares). Pressed (`:active` on a
+  button, `aria-pressed="true"`) it sinks.
+- `.bevel-sunken`: a well you type or drop into, a pressed gadget (the
+  ConfirmLine).
+- `.bevel-flat`: a fact you read. Facts are never beveled.
+
+On the Steel plate (the window frame, the ObjectList header) the same
+grammar rides `--wb-raised` / `--wb-sunken`.
+
+Not done in this lane (for the material pass, Movement B): the existing
+species still draw flat where the grammar says raised: the plated
+`Button` variants (`global.css .btn`), `StateChip`, `surface-token[data-chip]`
+(the six-chip rows the PROPOSAL names), `SurfaceLedgerRow`, the
+`SurfaceVerbs` strip and `FilterTokens`; and the window body
+(`desk-pullout-body`) has no well. Move each onto `.bevel-*` there.
