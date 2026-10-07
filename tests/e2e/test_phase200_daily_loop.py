@@ -1039,16 +1039,18 @@ def test_a_project_carries_work_across_two_working_days(
                 detail = _api(page, "GET", f"/api/meetings/{meeting_id}", token=TOKEN)
                 assert detail["intel"]["summary"] == engine.result.summary, detail["intel"]
                 _open_review_wing(page, meeting_id)
-                not_run = page.get_by_test_id("review-not-run")
-                not_run.wait_for(timeout=15000)
-                assert (not_run.text_content() or "").strip() == "PROPOSALS · NOT RUN"
+                # PHILO-15 08 (B02 ruling 3): this summary carried no items, so
+                # Review says the summary RAN and left none; never NOT RUN.
+                ran = page.get_by_test_id("review-extractor").first
+                ran.wait_for(timeout=15000)
+                assert (ran.text_content() or "").strip() == "SUMMARY · RAN · NONE"
+                assert page.get_by_test_id("review-not-run").count() == 0
                 review_words = page.locator(".desk-surface-window").first.inner_text()
                 assert "EXTRACTED" not in review_words.upper(), review_words
-                assert "Nothing to review" not in review_words, review_words
                 walk.fact(
                     "day1-review-not-run", "proposal_origin",
                     "HISTORICAL FIXTURE only",
-                    "summary route: no proposals; Review: PROPOSALS · NOT RUN",
+                    "summary route: no items in this summary; Review: SUMMARY · RAN · NONE",
                     "MATCH",
                     "the current analysis-only route does not create proposals",
                 )

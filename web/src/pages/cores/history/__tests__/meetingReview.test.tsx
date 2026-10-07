@@ -178,7 +178,7 @@ describe("MeetingReview (HS-200-12)", () => {
     const rows = screen.getAllByTestId("review-prior-row");
     expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toContain("ACCEPTED");
-    expect(rows[1].textContent).toContain("DISMISSED");
+    expect(rows[1].textContent).toContain("DECLINED");
     // The ledgers hold the CURRENT revision only: 1 decision, 1 commitment.
     expect(screen.getByText("DECISIONS 1")).toBeInTheDocument();
     expect(screen.getByText("COMMITMENTS 1")).toBeInTheDocument();
@@ -211,13 +211,15 @@ describe("MeetingReview (HS-200-12)", () => {
     expect(within(row).queryByTestId("review-confirm")).toBeNull();
   });
 
-  it("Enter on a focused row fires Confirm; MORE holds Edit, Dismiss and Open evidence", async () => {
+  it("Enter on a focused row fires Confirm; the row says Defer and Decline; MORE holds Edit and Open evidence", async () => {
     const { onOpenEvidence } = mount();
     await screen.findByText("5 to review");
     const row = screen.getAllByTestId("review-row-decision")[1];
     fireEvent.click(within(row).getByTestId("review-more"));
     expect(screen.getByRole("button", { name: "Edit: Freeze window moves to Sunday 02:00" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Dismiss: Freeze window moves to Sunday 02:00" })).toBeInTheDocument();
+    // PHILO-15 08 (B03): Confirm / Defer / Decline are row verbs with words.
+    expect(within(row).getByRole("button", { name: "Defer: Freeze window moves to Sunday 02:00" }).textContent).toBe("Defer");
+    expect(within(row).getByRole("button", { name: "Decline: Freeze window moves to Sunday 02:00" }).textContent).toBe("Decline");
     fireEvent.click(screen.getByRole("button", { name: "Open evidence: Freeze window moves to Sunday 02:00" }));
     expect(onOpenEvidence).toHaveBeenCalledWith(2);
     // Escape closes MORE.
@@ -230,7 +232,7 @@ describe("MeetingReview (HS-200-12)", () => {
     });
     fireEvent.keyDown(row, { key: "Enter" });
     await waitFor(() => expect(row.getAttribute("data-state")).toBe("confirmed"));
-    // Backspace never dismisses.
+    // Backspace never declines.
     const other = screen.getAllByTestId("review-row-action")[0];
     fireEvent.keyDown(other, { key: "Backspace" });
     expect(apiFetch).not.toHaveBeenCalledWith("/api/proposals/p3/dismiss", expect.anything());
@@ -268,12 +270,11 @@ describe("MeetingReview (HS-200-12)", () => {
     expect(within(row).getByTestId("review-was").textContent).toBe("WAS · Cut-over runs on the read replica first");
   });
 
-  it("Dismiss (two-step, in world) removes the row and moves focus to its successor", async () => {
+  it("Decline (two-step, in world) removes the row and moves focus to its successor", async () => {
     mount();
     await screen.findByText("5 to review");
     const rows = screen.getAllByTestId("review-row-action");
-    fireEvent.click(within(rows[0]).getByTestId("review-more"));
-    const dismiss = screen.getByRole("button", { name: "Dismiss: Confirm the freeze window with the payments team" });
+    const dismiss = within(rows[0]).getByRole("button", { name: "Decline: Confirm the freeze window with the payments team" });
     fireEvent.click(dismiss);            // arms
     apiFetch.mockImplementationOnce(async (path: string) => {
       expect(path).toBe("/api/proposals/p3/dismiss");
@@ -282,7 +283,7 @@ describe("MeetingReview (HS-200-12)", () => {
     fireEvent.click(dismiss);            // fires
     await waitFor(() => expect(screen.getAllByTestId("review-row-action")).toHaveLength(2));
     expect(screen.getByText("COMMITMENTS 2")).toBeInTheDocument();
-    expect(screen.getByText("DISMISSED 1")).toBeInTheDocument();
+    expect(screen.getByText("DECLINED 1")).toBeInTheDocument();
     await act(async () => { await new Promise((r) => window.requestAnimationFrame(() => r(null))); });
     expect(document.activeElement?.getAttribute("data-proposal-id")).toBe("p4");
   });
@@ -364,5 +365,33 @@ describe("MeetingReview (HS-200-12)", () => {
     await screen.findByText("Reviewed");
     expect(screen.getByText(/EXTRACTED/)).toBeInTheDocument();
     expect(screen.queryByTestId("review-not-run")).toBeNull();
+  });
+  it("Defer posts the canonical route and marks the row DEFERRED (PHILO-15 08)", async () => {
+    mount();
+    await screen.findByText("5 to review");
+    const row = screen.getAllByTestId("review-row-action")[0];
+    apiFetch.mockImplementationOnce(async (path: string, init: { method?: string }) => {
+      expect(path).toBe("/api/proposals/p3/defer");
+      expect(init.method).toBe("POST");
+      return { success: true, state: "proposed", proposal: proposal({ id: "p3", kind: "action", text: "Confirm the freeze window with the payments team", deferred_until: "2999-01-01T00:00:00+00:00" }) };
+    });
+    fireEvent.click(within(row).getByTestId("review-defer"));
+    await waitFor(() => expect(within(row).getByTestId("review-deferred")).toBeInTheDocument());
+    expect(screen.getByTestId("review-receipt").textContent).toMatch(/^DEFERRED \d\d:\d\d · UNTIL TOMORROW$/);
+  });
+
+  it("names what each extractor did, and never says NOT RUN under RAN (PHILO-15 08)", async () => {
+    mount(review({
+      proposals: [],
+      extractors: [
+        { id: "meeting_summary", label: "Summary", state: "ran", count: 0, reason: null },
+        { id: "decision_capture", label: "Decision capture", state: "skipped", count: null, reason: "no assignment" },
+      ],
+    }));
+    await screen.findByText("Nothing to review");
+    const tokens = screen.getAllByTestId("review-extractor").map((t) => t.textContent);
+    expect(tokens).toEqual(["SUMMARY · RAN · NONE", "DECISION CAPTURE · SKIPPED · NO ASSIGNMENT"]);
+    expect(screen.queryByTestId("review-not-run")).toBeNull();
+    expect(screen.queryByText("Not run")).toBeNull();
   });
 });

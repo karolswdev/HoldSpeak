@@ -92,7 +92,10 @@ class MeetingConfig:
     # at MeetingSession.stop() finalization (HS-2-06) when enabled. Defaults
     # are conservative (off + matching the in-code defaults of
     # build_intent_windows / DEFAULT_INTENT_THRESHOLD / DEFAULT_HYSTERESIS).
-    intent_router_enabled: bool = False  # off by default -- opt-in
+    # PHILO-15 08 (B02, strong defaults): ON. The extractor chain runs on
+    # every summary when an engine is assigned; the summary itself carries the
+    # meeting's decisions and action items (intel/parsing.py INTEL_SCHEMA).
+    intent_router_enabled: bool = True
     intent_window_seconds: int = 90      # rolling-window length
     intent_step_seconds: int = 30        # rolling-window step
     intent_score_threshold: float = 0.6  # gate above which an intent is "active"

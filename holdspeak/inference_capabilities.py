@@ -910,8 +910,16 @@ def _result_schema(operation: str, kind: str, contract: str) -> dict[str, Any]:
                 "topics": {"type": "array", "items": scalar},
                 "summary": scalar,
                 "action_items": {"type": "array", "items": action_item},
+                # PHILO-15 08 (B02): the summary carries its decisions.
+                "decisions": {"type": "array", "items": _closed_object_schema(
+                    properties={
+                        "decision": scalar,
+                        "rationale": {"type": "string", "nullable": True},
+                    },
+                    required=("decision", "rationale"),
+                )},
             },
-            required=("topics", "summary", "action_items"),
+            required=("topics", "summary", "action_items", "decisions"),
         ),
         "bookmark_label": _closed_object_schema(
             properties={"label": scalar}, required=("label",)

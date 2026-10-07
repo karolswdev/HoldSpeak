@@ -565,6 +565,72 @@ class ProjectService:
 
     # ── the desk's NEEDS YOU (PHILO-9-01, F13) ────────────────────────
 
+    def proposal_needs(self, *, project_id: str | None) -> list[dict[str, Any]]:
+        """The open proposals as NEEDS YOU rows: one Project's, or (``None``)
+        those from meetings in no Project (PHILO-15 08, B03).
+
+        A deferred row stays out until its stamp passes (PHILO-15 08).
+        """
+        from .proposal_bridge_service import is_deferred
+
+        if project_id is not None:
+            proposals = self._db.proposals.list_proposals(
+                project_id=project_id, state="proposed",
+            )
+        else:
+            proposals = [
+                prop for prop in self._db.proposals.list_proposals(state="proposed")
+                if not prop.project_id
+                and not self._db.projects.get_meeting_projects(prop.meeting_id)
+            ]
+        needs: list[dict[str, Any]] = []
+        for prop in proposals:
+            if is_deferred(prop):
+                continue
+            # Resolve meeting title AND its start for provenance.
+            # HS-200-16: the caption reads `from <meeting> <MM-DD>`; that
+            # date is the MEETING's, never the proposal row's write time.
+            # On a same-day desk the two agree, so the difference was
+            # invisible until a two-working-day walk: a meeting read the
+            # next morning was captioned with today's date while the
+            # review wing and recall both said yesterday's.
+            meeting_title = ""
+            meeting_started_at = ""
+            try:
+                mtg = self._db.meetings.get_meeting(prop.meeting_id)
+                meeting_title = (mtg.title or "") if mtg else ""
+                if mtg is not None and getattr(mtg, "started_at", None) is not None:
+                    meeting_started_at = mtg.started_at.isoformat()
+            except Exception:
+                pass
+            why_parts = ["PROPOSED"]
+            if meeting_title:
+                why_parts.append(meeting_title)
+            needs.append({
+                "source": "proposal",
+                "kind": "proposal",
+                "title": prop.text,
+                "why": " · ".join(why_parts),
+                "since": prop.created_at,
+                "url": None,
+                "verb": "confirm",
+                "verbHref": f"/api/proposals/{prop.id}/confirm",
+                "severity": "info",
+                "proposal_id": prop.id,
+                "proposal_kind": prop.kind,
+                "host": prop.model_host,
+                "speaker_label": prop.speaker_label,
+                "due_hint": prop.due_hint,
+                "owner_hint": prop.owner_hint,
+                "original_text": prop.original_text,
+                "meeting_id": prop.meeting_id,
+                "action_item_id": prop.action_item_id,
+                "meeting_title": meeting_title,
+                "meeting_started_at": meeting_started_at,
+                "created_at": prop.created_at,
+            })
+        return needs
+
     def needs_you(self, principal: Principal, *, door_upcoming: Any = None) -> dict[str, Any]:
         """What needs the owner: ONE rule, ONE count, every face.
 
@@ -589,6 +655,7 @@ class ProjectService:
             principal=principal,
             door_upcoming=door_upcoming,
             last_known=shared_last_known(lambda: self._db),
+            unfiled_proposals=lambda: self.proposal_needs(project_id=None),
         )
         # The one rule (needs_you_membership): the Door's asking columns, the
         # Room rows, the meeting-path blockers and the failed summaries. The
@@ -1111,50 +1178,7 @@ class ProjectService:
 
         # HS-172-03: follow-through proposals (intel-extracted decisions/actions).
         try:
-            proposals = self._db.proposals.list_proposals(
-                project_id=project_id, state="proposed",
-            )
-            for prop in proposals:
-                # Resolve meeting title AND its start for provenance.
-                # HS-200-16: the caption reads `from <meeting> <MM-DD>`; that
-                # date is the MEETING's, never the proposal row's write time.
-                # On a same-day desk the two agree, so the difference was
-                # invisible until a two-working-day walk: a meeting read the
-                # next morning was captioned with today's date while the
-                # review wing and recall both said yesterday's.
-                meeting_title = ""
-                meeting_started_at = ""
-                try:
-                    mtg = self._db.meetings.get_meeting(prop.meeting_id)
-                    meeting_title = (mtg.title or "") if mtg else ""
-                    if mtg is not None and getattr(mtg, "started_at", None) is not None:
-                        meeting_started_at = mtg.started_at.isoformat()
-                except Exception:
-                    pass
-                why_parts = ["PROPOSED"]
-                if meeting_title:
-                    why_parts.append(meeting_title)
-                needs.append({
-                    "source": "proposal",
-                    "kind": "proposal",
-                    "title": prop.text,
-                    "why": " · ".join(why_parts),
-                    "since": prop.created_at,
-                    "url": None,
-                    "verb": "confirm",
-                    "verbHref": f"/api/proposals/{prop.id}/confirm",
-                    "severity": "info",
-                    "proposal_id": prop.id,
-                    "proposal_kind": prop.kind,
-                    "host": prop.model_host,
-                    "speaker_label": prop.speaker_label,
-                    "due_hint": prop.due_hint,
-                    "owner_hint": prop.owner_hint,
-                    "original_text": prop.original_text,
-                    "meeting_title": meeting_title,
-                    "meeting_started_at": meeting_started_at,
-                    "created_at": prop.created_at,
-                })
+            needs.extend(self.proposal_needs(project_id=project_id))
         except Exception:
             pass
 

@@ -4521,7 +4521,12 @@ CREATE TABLE IF NOT EXISTS follow_through_proposals (
     -- HS-200-13 (AC1): the rationale the extractor read beside the decision.
     -- Without it a confirmed record carried `rationale ''` and recall could
     -- return the decision but never WHY (the plugin has said why all along).
-    rationale TEXT
+    rationale TEXT,
+    -- PHILO-15 08: the action_items row a summary action proposal stands for.
+    -- Confirm accepts THAT row (no second copy); Decline dismisses it.
+    action_item_id TEXT,
+    -- PHILO-15 08: Defer hides a proposed row from Needs until this stamp.
+    deferred_until TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_ftp_meeting
     ON follow_through_proposals(meeting_id, state);

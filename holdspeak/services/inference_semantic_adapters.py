@@ -139,20 +139,30 @@ def _nullable_text(value: Any) -> str | None:
     return value
 
 
+_ANALYSIS_FIELDS = frozenset({"summary", "topics", "action_items"})
+
+
 def normalize_meeting_analysis(raw: Any) -> Mapping[str, Any]:
     if isinstance(raw, Mapping):
-        source = _exact_mapping(raw, frozenset({"summary", "topics", "action_items"}))
+        # PHILO-15 08: ``decisions`` is the summary's fourth field; a result
+        # written before it existed has three and reads as no decisions.
+        if set(raw) == _ANALYSIS_FIELDS:
+            source = raw
+        else:
+            source = _exact_mapping(raw, _ANALYSIS_FIELDS | {"decisions"})
         summary, topics, action_items = (
             source["summary"],
             source["topics"],
             source["action_items"],
         )
+        decisions = source.get("decisions", [])
     else:
         if str(getattr(raw, "error", "") or ""):
             raise ValueError("provider result error")
         summary = getattr(raw, "summary")
         topics = getattr(raw, "topics")
         action_items = getattr(raw, "action_items")
+        decisions = getattr(raw, "decisions", None) or []
     if not isinstance(summary, str) or not isinstance(topics, list) or not isinstance(action_items, list):
         raise ValueError("meeting analysis fields")
     normalized_items: list[dict[str, Any]] = []
@@ -173,7 +183,22 @@ def normalize_meeting_analysis(raw: Any) -> Mapping[str, Any]:
         )
     if any(not isinstance(topic, str) for topic in topics):
         raise ValueError("topic")
-    return {"summary": summary, "topics": list(topics), "action_items": normalized_items}
+    if not isinstance(decisions, list):
+        raise ValueError("meeting analysis decisions")
+    normalized_decisions: list[dict[str, Any]] = []
+    for item in decisions:
+        value = _exact_mapping(item, frozenset({"decision", "rationale"}))
+        if not isinstance(value["decision"], str):
+            raise ValueError("decision text")
+        normalized_decisions.append(
+            {"decision": value["decision"], "rationale": _nullable_text(value["rationale"])}
+        )
+    return {
+        "summary": summary,
+        "topics": list(topics),
+        "action_items": normalized_items,
+        "decisions": normalized_decisions,
+    }
 
 
 def normalize_bookmark_label(raw: Any) -> Mapping[str, Any]:

@@ -33,7 +33,7 @@
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:6d07a33f9861ad5dacfbd0e811c9178abf2bb0b6d4d79376b7a3df8f45895d19",
+          "selection_hash": "sha256:2cecf10cbdff051da7d392fa8d74af9f66f76a9902bcc0e8213c599171c8a9d6",
           "legs": [
             {
               "ordinal": 1,
@@ -41,7 +41,7 @@
               "boundary": "local",
               "profile_id": "deferred-queue-model",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+              "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca"
             }
           ]
         },
@@ -100,12 +100,12 @@
         "provenance": "desktop",
         "calendar_event_id": null,
         "transcriptWords": 16,
-        "sync_modified_at": "2026-10-03T21:32:55.696286",
+        "sync_modified_at": "2026-10-07T11:39:54.789354",
         "devices": [],
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:6d07a33f9861ad5dacfbd0e811c9178abf2bb0b6d4d79376b7a3df8f45895d19",
+          "selection_hash": "sha256:2cecf10cbdff051da7d392fa8d74af9f66f76a9902bcc0e8213c599171c8a9d6",
           "legs": [
             {
               "ordinal": 1,
@@ -113,7 +113,7 @@
               "boundary": "local",
               "profile_id": "deferred-queue-model",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+              "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca"
             }
           ]
         },
@@ -140,7 +140,7 @@
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:6d07a33f9861ad5dacfbd0e811c9178abf2bb0b6d4d79376b7a3df8f45895d19",
+          "selection_hash": "sha256:2cecf10cbdff051da7d392fa8d74af9f66f76a9902bcc0e8213c599171c8a9d6",
           "legs": [
             {
               "ordinal": 1,
@@ -148,7 +148,7 @@
               "boundary": "local",
               "profile_id": "deferred-queue-model",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+              "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca"
             }
           ]
         },
@@ -197,7 +197,7 @@
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:8dc60115c9b97d0e124f9674bfe30879dbafb75d970f95e74f503e164a37bb36",
+          "selection_hash": "sha256:dd3651b113bb6eedb9b4d600820a76f4c6a948fbd8319621a6f1aee6164aa312",
           "legs": [
             {
               "ordinal": 1,
@@ -205,7 +205,7 @@
               "boundary": "local",
               "profile_id": "deferred-queue-model",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+              "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca"
             }
           ]
         },
@@ -214,8 +214,8 @@
         "intel_job": {
           "status": "running",
           "attempts": 1,
-          "requested_at": "2026-10-03T21:32:56.177598",
-          "updated_at": "2026-10-03T21:32:56.177598",
+          "requested_at": "2026-10-07T11:39:55.497552",
+          "updated_at": "2026-10-07T11:39:55.497552",
           "last_error": null,
           "retry_scheduled": false,
           "next_retry_at": null
@@ -257,7 +257,7 @@
         "intel_status": {
           "state": "running",
           "detail": "Claimed deferred meeting intelligence.",
-          "requested_at": "2026-10-03T21:32:56.174459",
+          "requested_at": "2026-10-07T11:39:55.494880",
           "completed_at": null
         },
         "mic_label": "Me",
@@ -272,12 +272,12 @@
         "provenance": "desktop",
         "calendar_event_id": null,
         "transcriptWords": 16,
-        "sync_modified_at": "2026-10-03T21:32:56.177598",
+        "sync_modified_at": "2026-10-07T11:39:55.497552",
         "devices": [],
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:8dc60115c9b97d0e124f9674bfe30879dbafb75d970f95e74f503e164a37bb36",
+          "selection_hash": "sha256:dd3651b113bb6eedb9b4d600820a76f4c6a948fbd8319621a6f1aee6164aa312",
           "legs": [
             {
               "ordinal": 1,
@@ -285,7 +285,7 @@
               "boundary": "local",
               "profile_id": "deferred-queue-model",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+              "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca"
             }
           ]
         },
@@ -294,8 +294,8 @@
         "intel_job": {
           "status": "running",
           "attempts": 1,
-          "requested_at": "2026-10-03T21:32:56.177598",
-          "updated_at": "2026-10-03T21:32:56.177598",
+          "requested_at": "2026-10-07T11:39:55.497552",
+          "updated_at": "2026-10-07T11:39:55.497552",
           "last_error": null,
           "retry_scheduled": false,
           "next_retry_at": null
@@ -320,7 +320,7 @@
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:8dc60115c9b97d0e124f9674bfe30879dbafb75d970f95e74f503e164a37bb36",
+          "selection_hash": "sha256:dd3651b113bb6eedb9b4d600820a76f4c6a948fbd8319621a6f1aee6164aa312",
           "legs": [
             {
               "ordinal": 1,
@@ -328,7 +328,7 @@
               "boundary": "local",
               "profile_id": "deferred-queue-model",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+              "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca"
             }
           ]
         },
@@ -341,8 +341,8 @@
         "job": {
           "status": "running",
           "attempts": 1,
-          "requested_at": "2026-10-03T21:32:56.177598",
-          "updated_at": "2026-10-03T21:32:56.177598",
+          "requested_at": "2026-10-07T11:39:55.497552",
+          "updated_at": "2026-10-07T11:39:55.497552",
           "last_error": null,
           "retry_scheduled": false,
           "next_retry_at": null,
@@ -350,7 +350,7 @@
             "legs": [
               {
                 "boundary": "local",
-                "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6",
+                "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca",
                 "host": "same_device",
                 "ordinal": 1,
                 "profile_id": "deferred-queue-model",
@@ -358,7 +358,7 @@
               }
             ],
             "reason_code": null,
-            "selection_hash": "sha256:8dc60115c9b97d0e124f9674bfe30879dbafb75d970f95e74f503e164a37bb36",
+            "selection_hash": "sha256:dd3651b113bb6eedb9b4d600820a76f4c6a948fbd8319621a6f1aee6164aa312",
             "status": "ready"
           },
           "run_receipt": null
@@ -385,7 +385,7 @@
         "intel_status": "ready",
         "intel_status_detail": "Meeting intelligence ready.",
         "intel_model_host": "same_device",
-        "intel_duration_s": 0,
+        "intel_duration_s": 1,
         "capture_status": "finalized",
         "capture_failure": null,
         "capture_checkpoint_seconds": 0.0,
@@ -396,12 +396,12 @@
         ],
         "parked": false,
         "transcriptWords": 16,
-        "needs_you_count": 0,
+        "needs_you_count": 1,
         "has_summary": true,
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:3d7ecca4bf6e4f64516b8d31748be9869c2b927cf4d5c6f74832e8193cbafac2",
+          "selection_hash": "sha256:82012eb45fae1dddd22694a20229d454d710bf26d74d623f0c3aab50c9bbbeb8",
           "legs": [
             {
               "ordinal": 1,
@@ -409,7 +409,7 @@
               "boundary": "cloud",
               "profile_id": "summary-cloud-after-run",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_719ef294a45f2c58578eb28ce4cadafaad7e05bf9a8c76d3f01a113b5df2c556"
+              "deployment_revision_id": "dep2_502971daf7aa0e33046c7d8c744657f04af15825c762863f008e5fbc53a6a067"
             }
           ]
         },
@@ -418,22 +418,22 @@
             {
               "host": "same_device",
               "leg_ordinal": 1,
-              "operation_id": "op_0cdb08d86e204956b2f9e87f42746625",
+              "operation_id": "op_247534d051c8486fa4f00bd781b3e091",
               "outcome": "succeeded"
             }
           ],
-          "job_id": "ij_07339df54a96c4679d917b608f129f093ba56aa6cb6f5a076022be72716a59d5",
+          "job_id": "ij_4f965693e5b968d55c7db1878c7c0d90cac10b85ee3d2d5c98534f38382bdb2e",
           "meeting_id": "m-philo3-summary",
           "outcome": "succeeded",
-          "receipt_id": "rr_c53cc99ddb7add9244525c331975e148",
-          "selection_hash": "sha256:953917da4273c12a650e45434a8c048acb110f12eff40a89fcfc6dac48a9b39a"
+          "receipt_id": "rr_da902354f43e3ca33675a2b6a36f9d9c",
+          "selection_hash": "sha256:36aec38a9b1255b8d3c4d0a26bae8170b7c384888ff2e3c0d544b9bbcc52c954"
         },
         "last_refusal": null,
         "intel_job": {
           "status": "succeeded",
           "attempts": 1,
-          "requested_at": "2026-10-03T21:32:56.738213",
-          "updated_at": "2026-10-03T21:32:57.381998",
+          "requested_at": "2026-10-07T11:39:56.834035",
+          "updated_at": "2026-10-07T11:39:58.084858",
           "last_error": null,
           "retry_scheduled": false,
           "next_retry_at": null
@@ -478,7 +478,7 @@
           ],
           "action_items": [
             {
-              "id": "action_b2ffce083172fefff752a7ac",
+              "id": "action_4d61a8927e831f95d45a2d90",
               "task": "Send the deck",
               "owner": "Me",
               "due": null,
@@ -486,7 +486,7 @@
               "review_state": "pending",
               "reviewed_at": null,
               "source_timestamp": null,
-              "created_at": "2026-10-03T21:32:57",
+              "created_at": "2026-10-07T17:39:58Z",
               "completed_at": null,
               "delegated_at": null
             }
@@ -496,8 +496,8 @@
         "intel_status": {
           "state": "ready",
           "detail": "Meeting intelligence ready.",
-          "requested_at": "2026-10-03T21:32:56.731750",
-          "completed_at": "2026-10-03T21:32:57.381998"
+          "requested_at": "2026-10-07T11:39:56.785458",
+          "completed_at": "2026-10-07T11:39:58.084858"
         },
         "mic_label": "Me",
         "remote_label": "Remote",
@@ -511,12 +511,12 @@
         "provenance": "desktop",
         "calendar_event_id": null,
         "transcriptWords": 16,
-        "sync_modified_at": "2026-10-03T21:32:57.381998",
+        "sync_modified_at": "2026-10-07T11:39:58.084858",
         "devices": [],
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:3d7ecca4bf6e4f64516b8d31748be9869c2b927cf4d5c6f74832e8193cbafac2",
+          "selection_hash": "sha256:82012eb45fae1dddd22694a20229d454d710bf26d74d623f0c3aab50c9bbbeb8",
           "legs": [
             {
               "ordinal": 1,
@@ -524,7 +524,7 @@
               "boundary": "cloud",
               "profile_id": "summary-cloud-after-run",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_719ef294a45f2c58578eb28ce4cadafaad7e05bf9a8c76d3f01a113b5df2c556"
+              "deployment_revision_id": "dep2_502971daf7aa0e33046c7d8c744657f04af15825c762863f008e5fbc53a6a067"
             }
           ]
         },
@@ -533,28 +533,28 @@
             {
               "host": "same_device",
               "leg_ordinal": 1,
-              "operation_id": "op_0cdb08d86e204956b2f9e87f42746625",
+              "operation_id": "op_247534d051c8486fa4f00bd781b3e091",
               "outcome": "succeeded"
             }
           ],
-          "job_id": "ij_07339df54a96c4679d917b608f129f093ba56aa6cb6f5a076022be72716a59d5",
+          "job_id": "ij_4f965693e5b968d55c7db1878c7c0d90cac10b85ee3d2d5c98534f38382bdb2e",
           "meeting_id": "m-philo3-summary",
           "outcome": "succeeded",
-          "receipt_id": "rr_c53cc99ddb7add9244525c331975e148",
-          "selection_hash": "sha256:953917da4273c12a650e45434a8c048acb110f12eff40a89fcfc6dac48a9b39a"
+          "receipt_id": "rr_da902354f43e3ca33675a2b6a36f9d9c",
+          "selection_hash": "sha256:36aec38a9b1255b8d3c4d0a26bae8170b7c384888ff2e3c0d544b9bbcc52c954"
         },
         "last_refusal": null,
         "intel_job": {
           "status": "succeeded",
           "attempts": 1,
-          "requested_at": "2026-10-03T21:32:56.738213",
-          "updated_at": "2026-10-03T21:32:57.381998",
+          "requested_at": "2026-10-07T11:39:56.834035",
+          "updated_at": "2026-10-07T11:39:58.084858",
           "last_error": null,
           "retry_scheduled": false,
           "next_retry_at": null
         },
         "intel_model_host": "same_device",
-        "intel_duration_s": 0
+        "intel_duration_s": 1
       },
       "recovery": {
         "meeting_id": "m-philo3-summary",
@@ -573,12 +573,16 @@
           {
             "label": "Meeting analysis",
             "detail": "Summary, topics, and action items saved"
+          },
+          {
+            "label": "Artifacts",
+            "detail": "1 saved artifact"
           }
         ],
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:3d7ecca4bf6e4f64516b8d31748be9869c2b927cf4d5c6f74832e8193cbafac2",
+          "selection_hash": "sha256:82012eb45fae1dddd22694a20229d454d710bf26d74d623f0c3aab50c9bbbeb8",
           "legs": [
             {
               "ordinal": 1,
@@ -586,7 +590,7 @@
               "boundary": "cloud",
               "profile_id": "summary-cloud-after-run",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_719ef294a45f2c58578eb28ce4cadafaad7e05bf9a8c76d3f01a113b5df2c556"
+              "deployment_revision_id": "dep2_502971daf7aa0e33046c7d8c744657f04af15825c762863f008e5fbc53a6a067"
             }
           ]
         },
@@ -595,15 +599,15 @@
             {
               "host": "same_device",
               "leg_ordinal": 1,
-              "operation_id": "op_0cdb08d86e204956b2f9e87f42746625",
+              "operation_id": "op_247534d051c8486fa4f00bd781b3e091",
               "outcome": "succeeded"
             }
           ],
-          "job_id": "ij_07339df54a96c4679d917b608f129f093ba56aa6cb6f5a076022be72716a59d5",
+          "job_id": "ij_4f965693e5b968d55c7db1878c7c0d90cac10b85ee3d2d5c98534f38382bdb2e",
           "meeting_id": "m-philo3-summary",
           "outcome": "succeeded",
-          "receipt_id": "rr_c53cc99ddb7add9244525c331975e148",
-          "selection_hash": "sha256:953917da4273c12a650e45434a8c048acb110f12eff40a89fcfc6dac48a9b39a"
+          "receipt_id": "rr_da902354f43e3ca33675a2b6a36f9d9c",
+          "selection_hash": "sha256:36aec38a9b1255b8d3c4d0a26bae8170b7c384888ff2e3c0d544b9bbcc52c954"
         },
         "last_refusal": null,
         "remaining": {
@@ -613,8 +617,8 @@
         "job": {
           "status": "succeeded",
           "attempts": 1,
-          "requested_at": "2026-10-03T21:32:56.738213",
-          "updated_at": "2026-10-03T21:32:57.381998",
+          "requested_at": "2026-10-07T11:39:56.834035",
+          "updated_at": "2026-10-07T11:39:58.084858",
           "last_error": null,
           "retry_scheduled": false,
           "next_retry_at": null,
@@ -622,7 +626,7 @@
             "legs": [
               {
                 "boundary": "local",
-                "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6",
+                "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca",
                 "host": "same_device",
                 "ordinal": 1,
                 "profile_id": "deferred-queue-model",
@@ -630,7 +634,7 @@
               }
             ],
             "reason_code": null,
-            "selection_hash": "sha256:953917da4273c12a650e45434a8c048acb110f12eff40a89fcfc6dac48a9b39a",
+            "selection_hash": "sha256:36aec38a9b1255b8d3c4d0a26bae8170b7c384888ff2e3c0d544b9bbcc52c954",
             "status": "ready"
           },
           "run_receipt": {
@@ -638,15 +642,15 @@
               {
                 "host": "same_device",
                 "leg_ordinal": 1,
-                "operation_id": "op_0cdb08d86e204956b2f9e87f42746625",
+                "operation_id": "op_247534d051c8486fa4f00bd781b3e091",
                 "outcome": "succeeded"
               }
             ],
-            "job_id": "ij_07339df54a96c4679d917b608f129f093ba56aa6cb6f5a076022be72716a59d5",
+            "job_id": "ij_4f965693e5b968d55c7db1878c7c0d90cac10b85ee3d2d5c98534f38382bdb2e",
             "meeting_id": "m-philo3-summary",
             "outcome": "succeeded",
-            "receipt_id": "rr_c53cc99ddb7add9244525c331975e148",
-            "selection_hash": "sha256:953917da4273c12a650e45434a8c048acb110f12eff40a89fcfc6dac48a9b39a"
+            "receipt_id": "rr_da902354f43e3ca33675a2b6a36f9d9c",
+            "selection_hash": "sha256:36aec38a9b1255b8d3c4d0a26bae8170b7c384888ff2e3c0d544b9bbcc52c954"
           }
         },
         "actions": {
@@ -687,7 +691,7 @@
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:3b13fc71a698419257a61d59a2d7286160d6e313e215b564eb1fa1c219ee74c5",
+          "selection_hash": "sha256:e49da57c9bc770132353e11bb6363d2931b5433944c9b5b56667867f25a5c60f",
           "legs": [
             {
               "ordinal": 1,
@@ -695,7 +699,7 @@
               "boundary": "local",
               "profile_id": "deferred-queue-model",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+              "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca"
             }
           ]
         },
@@ -704,22 +708,22 @@
             {
               "host": "same_device",
               "leg_ordinal": 1,
-              "operation_id": "op_c783e474fe3345debf4c7dd4626ada72",
+              "operation_id": "op_8f8442fd2de04179953d874ee37909a0",
               "outcome": "failed"
             }
           ],
-          "job_id": "ij_95842bd53ef20269cddb60aa5491c091160f9cc5e2da1194a18ecb96b74534ee",
+          "job_id": "ij_7e09f4710d629fcb0952c0ca869a991fac27374f1ea4c8613721aaf5dbf6ffc3",
           "meeting_id": "m-philo3-summary",
           "outcome": "failed",
-          "receipt_id": "rr_6c77c28fc99fa8f93bb337e31d2aeece",
-          "selection_hash": "sha256:3b13fc71a698419257a61d59a2d7286160d6e313e215b564eb1fa1c219ee74c5"
+          "receipt_id": "rr_4917a39e76bea3c0f9d1ead72cbe62b0",
+          "selection_hash": "sha256:e49da57c9bc770132353e11bb6363d2931b5433944c9b5b56667867f25a5c60f"
         },
         "last_refusal": null,
         "intel_job": {
           "status": "retrying",
           "attempts": 1,
           "requested_at": "2020-01-01T00:00:00",
-          "updated_at": "2026-10-03T21:32:58.293541",
+          "updated_at": "2026-10-07T11:39:59.421424",
           "last_error": "PROVIDER FAILED",
           "retry_scheduled": true,
           "next_retry_at": "2020-01-01T00:00:00"
@@ -761,7 +765,7 @@
         "intel_status": {
           "state": "queued",
           "detail": "PROVIDER FAILED",
-          "requested_at": "2026-10-03T21:32:57.775757",
+          "requested_at": "2026-10-07T11:39:58.548058",
           "completed_at": null
         },
         "mic_label": "Me",
@@ -776,12 +780,12 @@
         "provenance": "desktop",
         "calendar_event_id": null,
         "transcriptWords": 16,
-        "sync_modified_at": "2026-10-03T21:32:58.292525",
+        "sync_modified_at": "2026-10-07T11:39:59.419905",
         "devices": [],
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:3b13fc71a698419257a61d59a2d7286160d6e313e215b564eb1fa1c219ee74c5",
+          "selection_hash": "sha256:e49da57c9bc770132353e11bb6363d2931b5433944c9b5b56667867f25a5c60f",
           "legs": [
             {
               "ordinal": 1,
@@ -789,7 +793,7 @@
               "boundary": "local",
               "profile_id": "deferred-queue-model",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+              "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca"
             }
           ]
         },
@@ -798,22 +802,22 @@
             {
               "host": "same_device",
               "leg_ordinal": 1,
-              "operation_id": "op_c783e474fe3345debf4c7dd4626ada72",
+              "operation_id": "op_8f8442fd2de04179953d874ee37909a0",
               "outcome": "failed"
             }
           ],
-          "job_id": "ij_95842bd53ef20269cddb60aa5491c091160f9cc5e2da1194a18ecb96b74534ee",
+          "job_id": "ij_7e09f4710d629fcb0952c0ca869a991fac27374f1ea4c8613721aaf5dbf6ffc3",
           "meeting_id": "m-philo3-summary",
           "outcome": "failed",
-          "receipt_id": "rr_6c77c28fc99fa8f93bb337e31d2aeece",
-          "selection_hash": "sha256:3b13fc71a698419257a61d59a2d7286160d6e313e215b564eb1fa1c219ee74c5"
+          "receipt_id": "rr_4917a39e76bea3c0f9d1ead72cbe62b0",
+          "selection_hash": "sha256:e49da57c9bc770132353e11bb6363d2931b5433944c9b5b56667867f25a5c60f"
         },
         "last_refusal": null,
         "intel_job": {
           "status": "retrying",
           "attempts": 1,
           "requested_at": "2020-01-01T00:00:00",
-          "updated_at": "2026-10-03T21:32:58.293541",
+          "updated_at": "2026-10-07T11:39:59.421424",
           "last_error": "PROVIDER FAILED",
           "retry_scheduled": true,
           "next_retry_at": "2020-01-01T00:00:00"
@@ -838,7 +842,7 @@
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:3b13fc71a698419257a61d59a2d7286160d6e313e215b564eb1fa1c219ee74c5",
+          "selection_hash": "sha256:e49da57c9bc770132353e11bb6363d2931b5433944c9b5b56667867f25a5c60f",
           "legs": [
             {
               "ordinal": 1,
@@ -846,7 +850,7 @@
               "boundary": "local",
               "profile_id": "deferred-queue-model",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+              "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca"
             }
           ]
         },
@@ -855,15 +859,15 @@
             {
               "host": "same_device",
               "leg_ordinal": 1,
-              "operation_id": "op_c783e474fe3345debf4c7dd4626ada72",
+              "operation_id": "op_8f8442fd2de04179953d874ee37909a0",
               "outcome": "failed"
             }
           ],
-          "job_id": "ij_95842bd53ef20269cddb60aa5491c091160f9cc5e2da1194a18ecb96b74534ee",
+          "job_id": "ij_7e09f4710d629fcb0952c0ca869a991fac27374f1ea4c8613721aaf5dbf6ffc3",
           "meeting_id": "m-philo3-summary",
           "outcome": "failed",
-          "receipt_id": "rr_6c77c28fc99fa8f93bb337e31d2aeece",
-          "selection_hash": "sha256:3b13fc71a698419257a61d59a2d7286160d6e313e215b564eb1fa1c219ee74c5"
+          "receipt_id": "rr_4917a39e76bea3c0f9d1ead72cbe62b0",
+          "selection_hash": "sha256:e49da57c9bc770132353e11bb6363d2931b5433944c9b5b56667867f25a5c60f"
         },
         "last_refusal": null,
         "remaining": {
@@ -874,7 +878,7 @@
           "status": "retrying",
           "attempts": 1,
           "requested_at": "2020-01-01T00:00:00",
-          "updated_at": "2026-10-03T21:32:58.293541",
+          "updated_at": "2026-10-07T11:39:59.421424",
           "last_error": "PROVIDER FAILED",
           "retry_scheduled": true,
           "next_retry_at": "2020-01-01T00:00:00",
@@ -882,7 +886,7 @@
             "legs": [
               {
                 "boundary": "local",
-                "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6",
+                "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca",
                 "host": "same_device",
                 "ordinal": 1,
                 "profile_id": "deferred-queue-model",
@@ -890,7 +894,7 @@
               }
             ],
             "reason_code": null,
-            "selection_hash": "sha256:3b13fc71a698419257a61d59a2d7286160d6e313e215b564eb1fa1c219ee74c5",
+            "selection_hash": "sha256:e49da57c9bc770132353e11bb6363d2931b5433944c9b5b56667867f25a5c60f",
             "status": "ready"
           },
           "run_receipt": null
@@ -933,7 +937,7 @@
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:35703148af184090038eda7adf541c91e8c067f0ad477eca5a41746ca5d464f1",
+          "selection_hash": "sha256:b96e9f660788bdc81d3c2ce0eb3c7a6f667b43b3238636b55373776e8e81b7df",
           "legs": [
             {
               "ordinal": 1,
@@ -941,7 +945,7 @@
               "boundary": "local",
               "profile_id": "deferred-queue-model",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+              "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca"
             }
           ]
         },
@@ -950,22 +954,22 @@
             {
               "host": "same_device",
               "leg_ordinal": 1,
-              "operation_id": "op_c98eb271cc4546038fb7a075a42f08bf",
+              "operation_id": "op_f0ee6d4d55d14a25b3b20e18a80d4da2",
               "outcome": "failed"
             }
           ],
-          "job_id": "ij_55cd4c8181a80a56908a804ef9546445331f3bc669f5af9d031ae4ec21b8bf8d",
+          "job_id": "ij_6367c4fa6a8a8404e1ddcb9ff0fc1fb151096853a9520119599bc1b732902788",
           "meeting_id": "m-philo3-summary",
           "outcome": "failed",
-          "receipt_id": "rr_b1fffe14711724ea979a2b47063d919f",
-          "selection_hash": "sha256:35703148af184090038eda7adf541c91e8c067f0ad477eca5a41746ca5d464f1"
+          "receipt_id": "rr_67a0e6e12b30a8ad844b277c1eb19a3f",
+          "selection_hash": "sha256:b96e9f660788bdc81d3c2ce0eb3c7a6f667b43b3238636b55373776e8e81b7df"
         },
         "last_refusal": null,
         "intel_job": {
           "status": "failed",
           "attempts": 1,
-          "requested_at": "2026-10-03T21:32:58.641797",
-          "updated_at": "2026-10-03T21:32:59.653537",
+          "requested_at": "2026-10-07T11:39:59.792522",
+          "updated_at": "2026-10-07T11:40:00.484164",
           "last_error": "PROVIDER FAILED",
           "retry_scheduled": false,
           "next_retry_at": null
@@ -1007,7 +1011,7 @@
         "intel_status": {
           "state": "error",
           "detail": "PROVIDER FAILED",
-          "requested_at": "2026-10-03T21:32:58.639728",
+          "requested_at": "2026-10-07T11:39:59.791611",
           "completed_at": null
         },
         "mic_label": "Me",
@@ -1022,12 +1026,12 @@
         "provenance": "desktop",
         "calendar_event_id": null,
         "transcriptWords": 16,
-        "sync_modified_at": "2026-10-03T21:32:59.653537",
+        "sync_modified_at": "2026-10-07T11:40:00.484164",
         "devices": [],
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:35703148af184090038eda7adf541c91e8c067f0ad477eca5a41746ca5d464f1",
+          "selection_hash": "sha256:b96e9f660788bdc81d3c2ce0eb3c7a6f667b43b3238636b55373776e8e81b7df",
           "legs": [
             {
               "ordinal": 1,
@@ -1035,7 +1039,7 @@
               "boundary": "local",
               "profile_id": "deferred-queue-model",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+              "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca"
             }
           ]
         },
@@ -1044,22 +1048,22 @@
             {
               "host": "same_device",
               "leg_ordinal": 1,
-              "operation_id": "op_c98eb271cc4546038fb7a075a42f08bf",
+              "operation_id": "op_f0ee6d4d55d14a25b3b20e18a80d4da2",
               "outcome": "failed"
             }
           ],
-          "job_id": "ij_55cd4c8181a80a56908a804ef9546445331f3bc669f5af9d031ae4ec21b8bf8d",
+          "job_id": "ij_6367c4fa6a8a8404e1ddcb9ff0fc1fb151096853a9520119599bc1b732902788",
           "meeting_id": "m-philo3-summary",
           "outcome": "failed",
-          "receipt_id": "rr_b1fffe14711724ea979a2b47063d919f",
-          "selection_hash": "sha256:35703148af184090038eda7adf541c91e8c067f0ad477eca5a41746ca5d464f1"
+          "receipt_id": "rr_67a0e6e12b30a8ad844b277c1eb19a3f",
+          "selection_hash": "sha256:b96e9f660788bdc81d3c2ce0eb3c7a6f667b43b3238636b55373776e8e81b7df"
         },
         "last_refusal": null,
         "intel_job": {
           "status": "failed",
           "attempts": 1,
-          "requested_at": "2026-10-03T21:32:58.641797",
-          "updated_at": "2026-10-03T21:32:59.653537",
+          "requested_at": "2026-10-07T11:39:59.792522",
+          "updated_at": "2026-10-07T11:40:00.484164",
           "last_error": "PROVIDER FAILED",
           "retry_scheduled": false,
           "next_retry_at": null
@@ -1084,7 +1088,7 @@
         "planned_route": {
           "status": "ready",
           "reason_code": null,
-          "selection_hash": "sha256:35703148af184090038eda7adf541c91e8c067f0ad477eca5a41746ca5d464f1",
+          "selection_hash": "sha256:b96e9f660788bdc81d3c2ce0eb3c7a6f667b43b3238636b55373776e8e81b7df",
           "legs": [
             {
               "ordinal": 1,
@@ -1092,7 +1096,7 @@
               "boundary": "local",
               "profile_id": "deferred-queue-model",
               "profile_revision": 1,
-              "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6"
+              "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca"
             }
           ]
         },
@@ -1101,15 +1105,15 @@
             {
               "host": "same_device",
               "leg_ordinal": 1,
-              "operation_id": "op_c98eb271cc4546038fb7a075a42f08bf",
+              "operation_id": "op_f0ee6d4d55d14a25b3b20e18a80d4da2",
               "outcome": "failed"
             }
           ],
-          "job_id": "ij_55cd4c8181a80a56908a804ef9546445331f3bc669f5af9d031ae4ec21b8bf8d",
+          "job_id": "ij_6367c4fa6a8a8404e1ddcb9ff0fc1fb151096853a9520119599bc1b732902788",
           "meeting_id": "m-philo3-summary",
           "outcome": "failed",
-          "receipt_id": "rr_b1fffe14711724ea979a2b47063d919f",
-          "selection_hash": "sha256:35703148af184090038eda7adf541c91e8c067f0ad477eca5a41746ca5d464f1"
+          "receipt_id": "rr_67a0e6e12b30a8ad844b277c1eb19a3f",
+          "selection_hash": "sha256:b96e9f660788bdc81d3c2ce0eb3c7a6f667b43b3238636b55373776e8e81b7df"
         },
         "last_refusal": null,
         "remaining": {
@@ -1119,8 +1123,8 @@
         "job": {
           "status": "failed",
           "attempts": 1,
-          "requested_at": "2026-10-03T21:32:58.641797",
-          "updated_at": "2026-10-03T21:32:59.653537",
+          "requested_at": "2026-10-07T11:39:59.792522",
+          "updated_at": "2026-10-07T11:40:00.484164",
           "last_error": "PROVIDER FAILED",
           "retry_scheduled": false,
           "next_retry_at": null,
@@ -1128,7 +1132,7 @@
             "legs": [
               {
                 "boundary": "local",
-                "deployment_revision_id": "dep2_aede136c27e1823893958de827bcc0268b57cc413702d6bcbc16d0059e094fc6",
+                "deployment_revision_id": "dep2_dcfbe72a4e2ba58e4ade918616167c1b41da9e4f6b72552cf11ebf759ed1c9ca",
                 "host": "same_device",
                 "ordinal": 1,
                 "profile_id": "deferred-queue-model",
@@ -1136,7 +1140,7 @@
               }
             ],
             "reason_code": null,
-            "selection_hash": "sha256:35703148af184090038eda7adf541c91e8c067f0ad477eca5a41746ca5d464f1",
+            "selection_hash": "sha256:b96e9f660788bdc81d3c2ce0eb3c7a6f667b43b3238636b55373776e8e81b7df",
             "status": "ready"
           },
           "run_receipt": {
@@ -1144,15 +1148,15 @@
               {
                 "host": "same_device",
                 "leg_ordinal": 1,
-                "operation_id": "op_c98eb271cc4546038fb7a075a42f08bf",
+                "operation_id": "op_f0ee6d4d55d14a25b3b20e18a80d4da2",
                 "outcome": "failed"
               }
             ],
-            "job_id": "ij_55cd4c8181a80a56908a804ef9546445331f3bc669f5af9d031ae4ec21b8bf8d",
+            "job_id": "ij_6367c4fa6a8a8404e1ddcb9ff0fc1fb151096853a9520119599bc1b732902788",
             "meeting_id": "m-philo3-summary",
             "outcome": "failed",
-            "receipt_id": "rr_b1fffe14711724ea979a2b47063d919f",
-            "selection_hash": "sha256:35703148af184090038eda7adf541c91e8c067f0ad477eca5a41746ca5d464f1"
+            "receipt_id": "rr_67a0e6e12b30a8ad844b277c1eb19a3f",
+            "selection_hash": "sha256:b96e9f660788bdc81d3c2ce0eb3c7a6f667b43b3238636b55373776e8e81b7df"
           }
         },
         "actions": {

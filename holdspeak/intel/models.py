@@ -99,6 +99,8 @@ class IntelResult:
     summary: str
     raw_response: str
     error: Optional[str] = None
+    # PHILO-15 08: the decisions the meeting made, ``{decision, rationale}``.
+    decisions: list[dict] = field(default_factory=list)
 
 
 SELF_HOSTED_CLOUD_API_KEY_PLACEHOLDER = "sk-no-key-required"

@@ -30,6 +30,7 @@ from .models import (
 )
 from .parsing import (
     _coerce_action_items,
+    _coerce_decisions,
     _coerce_str_list,
     _describe_cloud_exception,
     _extract_status_code,
@@ -930,6 +931,7 @@ class MeetingIntel:
             ),
             summary=str(data.get("summary", "")).strip(),
             raw_response=raw_text,
+            decisions=_coerce_decisions(data.get("decisions", [])),
         )
 
     def analyze(
@@ -1018,6 +1020,7 @@ class MeetingIntel:
             action_items=_coerce_action_items(data.get("action_items", [])),
             summary=str(data.get("summary", "")).strip(),
             raw_response=raw_text,
+            decisions=_coerce_decisions(data.get("decisions", [])),
         )
 
     def generate_title(self, transcript: str, max_words: int = 8) -> Optional[str]:

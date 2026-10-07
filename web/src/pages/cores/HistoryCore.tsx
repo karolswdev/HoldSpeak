@@ -57,6 +57,10 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const requestedMomentSegment = requestedMeetingQuery
     ? Number(new URLSearchParams(requestedMeetingQuery).get("segment"))
     : null;
+  // PHILO-15 08 (B13): `meeting:<id>?view=review` opens the meeting on its
+  // Review wing, where its proposals are.
+  const requestedView: DetailView =
+    new URLSearchParams(requestedMeetingQuery ?? "").get("view") === "review" ? "review" : "outcomes";
   const wings = useCoreWings(WINGS, "outcomes", "Meeting plumbing");
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
   const markReadyRead = useCallback((meetingId: string) => {
@@ -202,13 +206,15 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   useEffect(() => {
     if (
       !requestedMeetingId ||
-      openedRequestedMeetingId === requestedMeetingId ||
+      openedRequestedMeetingId === requestedMeetingScope ||
       meetings.loading
     )
       return;
-    setOpenedRequestedMeetingId(requestedMeetingId);
+    // The whole scope (id and view) is the request: asking again for the
+    // open meeting's Review wing still lands there.
+    setOpenedRequestedMeetingId(requestedMeetingScope);
     setRequestedMeetingError("");
-    wings.setView("outcomes");
+    wings.setView(requestedView);
     if (requestedMeeting) {
       setSelected(requestedMeeting);
       markReadyRead(requestedMeetingId);
@@ -228,6 +234,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     requestedMeeting,
     markReadyRead,
     requestedMeetingId,
+    requestedMeetingScope,
+    requestedView,
   ]);
 
   /* ── the face re-reads itself (HS-202-02 job 2) ──
