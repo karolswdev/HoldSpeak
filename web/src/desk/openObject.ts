@@ -57,6 +57,30 @@ export function openProjectUpdates(projectId: string): void {
   }
 }
 
+/** PHILO-14 A2b (Astra r1 on #945) — a proposal is an object: its row opens
+ *  the destination that contains it, the Room with that proposal selected.
+ *  The Room takes the request once (a reload does not replay it). */
+export const ROOM_PROPOSAL_EVENT = "holdspeak:room-proposal";
+const roomProposals = new Map<string, string>();
+
+export function openProjectProposal(projectId: string, proposalId: string): void {
+  const id = projectId.trim();
+  if (!id) return;
+  if (proposalId.trim()) roomProposals.set(id, proposalId.trim());
+  openProjectRoom(id);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent<string>(ROOM_PROPOSAL_EVENT, { detail: id }));
+  }
+}
+
+/** The proposal to select in `projectId`'s Room, once per request. */
+export function takeRoomProposalRequest(projectId: string | null | undefined): string | null {
+  if (!projectId) return null;
+  const proposal = roomProposals.get(projectId) ?? null;
+  roomProposals.delete(projectId);
+  return proposal;
+}
+
 /** True once for each request to open `projectId`'s Room in its Update posture. */
 export function takeRoomUpdatesRequest(projectId: string | null | undefined): boolean {
   return !!projectId && roomUpdates.delete(projectId);
@@ -144,6 +168,33 @@ function openDecision(ref: string): void {
       openSourceRef(meeting ? `meeting:${meeting}` : ref);
     })
     .catch(() => openSourceRef(ref));
+}
+
+/** PHILO-14 A2b (Astra r1 on #945) — a decision record (`decision_record:
+ *  <record id>`, `record-<hex>`) is not a `decisions` row: it opens the
+ *  decision it was made from (its source), read from the record's own route.
+ *  Not in `refOpener`: memory leaves record refs out (memoryRefsOpen). */
+export function decisionRecordSourceRef(sourceType: unknown, sourceId: unknown): string | null {
+  const id = String(sourceId ?? "").trim();
+  if (!id) return null;
+  if (sourceType === "desk") return `desk_decision:${id}`;
+  if (sourceType === "meeting" || sourceType === "decision") return `decision:${id}`;
+  return null;
+}
+
+export function openDecisionRecord(recordId: string): void {
+  const id = recordId.trim();
+  if (!id) return;
+  void apiFetch<{ source_type?: string; source_id?: string; sources?: { source_type?: string; source_ref?: string }[] }>(
+    `/api/decision-records/${encodeURIComponent(id)}`,
+  )
+    .then((record) => {
+      const ref = decisionRecordSourceRef(record?.source_type, record?.source_id);
+      if (ref) return openRef(ref);
+      const meeting = (record?.sources ?? []).find((s) => s.source_type === "meeting" && s.source_ref);
+      if (meeting) openSourceRef(`meeting:${String(meeting.source_ref).replace(/^meeting:/, "")}`);
+    })
+    .catch(() => undefined);
 }
 
 /** A calendar row: its person at Prep when the event is linked to one, else

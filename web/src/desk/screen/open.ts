@@ -6,7 +6,8 @@
  *  `coder:` ref in `openObject.ts`). The screen calls `openTarget` only. */
 import { openChairWindow } from "../chair/chairWindows";
 import { refOpener } from "../openObject";
-import { openProjectRoom, openSurfaceOr } from "../shell";
+import { openDrawer as openProjectDrawer } from "../drawer/store";
+import { openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 
 export type ScreenTarget =
@@ -18,9 +19,10 @@ export type ScreenTarget =
   | { type: "ref"; ref: string }
   | { type: "agent"; key: string };
 
-/** A Project drawer. TODAY its Room window; lane A2 owns this call after A1. */
+/** A Project drawer (PHILO-14 A2b: the drawer is the Project's face; the
+ *  Room is one press away, in the drawer's head). */
 export function openDrawer(projectId: string): void {
-  openProjectRoom(projectId);
+  openProjectDrawer(projectId);
 }
 
 /** The Needs you smart drawer: the Phase-13 Needs you window. */

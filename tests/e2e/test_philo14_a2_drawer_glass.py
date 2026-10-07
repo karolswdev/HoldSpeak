@@ -11,7 +11,8 @@ a note filed in the Project), and every Open is followed to its real window:
   in the drawer, never in the Room; the drawer's Room verb opens the Room;
 - the drawer, its view and its place come back after a reload (B2);
 - Park on a meeting leaves `PARKED · <name>` with Restore on the drawer, also
-  when the drawer is left empty; Restore brings the member back.
+  when the drawer is left empty; Restore brings the member back;
+- A2b: the Needs you row's Project button opens the drawer, never the Room.
 """
 from __future__ import annotations
 
@@ -165,6 +166,55 @@ class TestDrawerGlass:
                 drawer.locator(".drawer-head").click(position={"x": 4, "y": 4})
                 drawer.get_by_role("button", name="Room", exact=True).click()
                 page.locator(".room-head").first.wait_for(timeout=T)
+                assert not errors, errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    def test_the_needs_you_project_button_opens_the_drawer(self) -> None:
+        """A2b: a Needs you row names its Project (two Projects need him); its
+        Project button is a generic open, so it lands on the drawer."""
+        from playwright.sync_api import sync_playwright
+
+        from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+        # A second Project; a pending proposal in each Project is a Room row
+        # that names its Project, so every row draws its Project button.
+        start = datetime.now().replace(microsecond=0) - timedelta(hours=1)
+        self.db.projects.create_project(project_id="p-infra", name="Infra budget", description="Q4.",
+                                        keywords=["infra"])
+        self.db.meetings.save_meeting(MeetingState(
+            id="m-infra", started_at=start, ended_at=start + timedelta(minutes=20), title="Budget sync",
+            segments=[TranscriptSegment(text="Cut the budget.", speaker="Me", start_time=1.0, end_time=3.0)],
+            intel=IntelSnapshot(timestamp=1.0, topics=["budget"], summary="Cut it.", action_items=[]),
+            intel_status="completed"))
+        self.db.projects.associate_meeting_project(meeting_id="m-infra", project_id="p-infra", source="manual",
+                                                   confidence=1.0)
+        for mid, pid, text in (("m-sync", PROJECT, "Run the dry run on Nov 3"), ("m-infra", "p-infra", "Cut the budget")):
+            self.db.proposals.create_proposal(meeting_id=mid, project_id=pid, kind="action", text=text,
+                                              source_plugin="a2b-glass")
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, 1440)
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _normal_chair(page)
+                screen = page.locator(".desk-screen [data-object-id='drawer:needs']")
+                screen.wait_for(timeout=T)
+                screen.focus()
+                page.keyboard.press("Enter")
+                needs = page.locator(".desk-window-shell.chair-window[aria-label='Needs you']")
+                button = needs.get_by_role("button", name="Open the Project: Payments ledger cutover").first
+                button.wait_for(timeout=T)
+                _settle(page)
+                button.click()
+                drawer = page.locator(".drawer-window")
+                drawer.wait_for(timeout=T)
+                drawer.locator("[data-testid=drawer-facts]").wait_for(timeout=T)
+                page.wait_for_timeout(600)
+                page.screenshot(path=str(SHOTS / "glass-needs-project-drawer-1440.png"))
+                assert "Payments ledger cutover" in (drawer.first.get_attribute("aria-label") or drawer.first.inner_text())
+                # The Room is not a generic destination: no Room window opened.
+                assert page.locator(".room-head").count() == 0
                 assert not errors, errors
             finally:
                 browser.close()

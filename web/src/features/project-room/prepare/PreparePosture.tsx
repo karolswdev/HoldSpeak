@@ -38,6 +38,7 @@ import {
 import { CycleGadget, PadGadget } from "../../../desk/surface/gadgets";
 import { egressFor } from "../../../desk/surface/egress";
 import { openSurfaceOr } from "../../../desk/shell";
+import { openDecisionRecord } from "../../../desk/openObject";
 import { rememberTaskFocus } from "../../../desk/returnToTask";
 import type { UpdateClaim } from "../update/model";
 import type { PrepareController } from "./usePrepareController";
@@ -469,8 +470,10 @@ function BriefBody({ brief, ctrl, onOpenRef }: { brief: Brief; ctrl: PrepareCont
       ctrl.setSourcesOpen(true);
       return;
     }
+    // PHILO-14 A2b: a record id is not a `decisions` row id; the record
+    // opens the decision it was made from.
     if (ref.startsWith("decision_record:")) {
-      onOpenRef(`decision:${ref.slice("decision_record:".length)}`);
+      openDecisionRecord(ref.slice("decision_record:".length));
       return;
     }
     onOpenRef(ref);
