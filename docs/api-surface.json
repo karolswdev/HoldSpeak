@@ -7005,6 +7005,14 @@
       "consumers": []
     },
     {
+      "path": "/conductor",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.pages",
+      "consumers": []
+    },
+    {
       "path": "/design/components",
       "methods": [
         "GET"
