@@ -25,6 +25,7 @@ from typing import Any
 
 import pytest
 
+from .chair_windows import open_chair_window
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
 
@@ -192,7 +193,20 @@ class TestDecideGlass:
     def _switch_to(self, page: Any, meeting_id: str) -> None:
         """Select another meeting in the SAME Meetings record."""
         if not self.touch:
-            self._press(page.get_by_test_id(f"meeting-row-{meeting_id}").locator(".meetings-stream-row-body"))
+            # A Meetings reload draws the list's loading line in place of the
+            # rows (SurfaceState, Surface.tsx:232), so a row can detach under
+            # the press right after a decision lands. He presses the row once
+            # it is drawn again.
+            row = page.get_by_test_id(f"meeting-row-{meeting_id}").locator(".meetings-stream-row-body")
+            for attempt in range(3):
+                try:
+                    row.wait_for(timeout=T)
+                    self._press(row)
+                    return
+                except Exception as error:  # noqa: BLE001 - only a detach is retried
+                    if "not attached" not in str(error) or attempt == 2:
+                        raise
+                    page.wait_for_timeout(300)
             return
         # 393: one window at a time, and the record folds its list. He sends
         # Meetings to the back (it stays open, the same record), steps to the
@@ -201,6 +215,9 @@ class TestDecideGlass:
         title = MEETING_B_TITLE if meeting_id == MEETING_B else MEETING_TITLE
         self._press(page.get_by_role("button", name="To back Meetings", exact=True))
         page.wait_for_timeout(400)
+        # PHILO-14 A1 (#939): the Chair's windows start closed; he opens The
+        # week from Go (a no-op when it is already shown).
+        open_chair_window(page, "The week")
         opener = page.locator("li, .surface-row", has_text=title).get_by_test_id("arrival-meeting-open").first
         for _ in range(6):
             if opener.count() and opener.is_visible():

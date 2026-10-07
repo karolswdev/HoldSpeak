@@ -184,7 +184,10 @@ def test_generate_replacement_row_is_owned_above_the_real_capture_bar(
             # time and the capture bar is its own window (on demand from Speak).
             # The Brief window's lower edge is the boundary the old sticky bar
             # was: the replacement row must still be owned inside it.
-            page.locator(".chair .desk-window-shell.chair-window").first.wait_for(timeout=10_000)
+            # PHILO-14 A1 (#939): the Chair is the screen of objects and its
+            # windows start closed; he opens the Brief from Window > Chair
+            # (Go at 393).
+            page.get_by_test_id("desk-screen").wait_for(timeout=10_000)
             open_chair_window(page, "Brief")
             page.get_by_test_id("arrival-brief-row").wait_for()
             generate = page.get_by_test_id("arrival-brief-generate")
