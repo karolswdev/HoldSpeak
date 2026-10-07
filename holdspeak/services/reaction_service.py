@@ -25,7 +25,7 @@ from holdspeak.services.workbench_service import WorkbenchService
 
 
 SUPPORTED_QUERIES = {
-    "gh": {"pull_requests"},
+    "gh": {"pull_requests", "issues"},
     "jira": {"issues"},
 }
 DEFAULT_WATCH_REFRESH_MINUTES = 35
@@ -69,6 +69,11 @@ def _normalize_entity(connector_id: str, entity: Any) -> dict[str, Any]:
             # branch an agent launch worked on.
             "head_ref": str(entity.get("head_ref") or entity.get("headRefName") or ""),
         })
+        if isinstance(entity.get("labels"), list):
+            # Conductor R4: a GitHub issue's labels and age (issue Watches only;
+            # a PR entity carries no labels key, so its shape is unchanged).
+            common["labels"] = sorted(str(label) for label in entity["labels"])
+            common["created_at"] = str(entity.get("created_at") or entity.get("createdAt") or "")
     elif connector_id == "jira":
         common.update({
             "status": str(entity.get("status") or "").lower(),
@@ -138,11 +143,23 @@ def _event(event_type: str, before: dict[str, Any],
 
 
 def diff_snapshots(connector_id: str, before: dict[str, Any],
-                   after: dict[str, Any], *, discovery_event: str = "") -> list[dict[str, Any]]:
+                   after: dict[str, Any], *, discovery_event: str = "",
+                   query_kind: str = "") -> list[dict[str, Any]]:
     """Produce semantic transitions. Missing rows are not treated as deletion."""
     old = before.get("entities", {}) if isinstance(before, dict) else {}
     new = after.get("entities", {})
     events: list[dict[str, Any]] = []
+    if connector_id == "gh" and query_kind == "issues":
+        # Conductor R4: a GitHub issues Watch speaks of issues, never PRs.
+        for entity_id, current in new.items():
+            previous = old.get(entity_id)
+            if previous is None:
+                events.append(_event(discovery_event or "github.issue.opened", {}, current, {"entity": "new"}))
+            elif previous.get("state") != current.get("state"):
+                state = current.get("state")
+                kind = "github.issue.closed" if state == "closed" else "github.issue.reopened"
+                events.append(_event(kind, previous, current, {"state": [previous.get("state"), state]}))
+        return events
     for entity_id, current in new.items():
         previous = old.get(entity_id)
         if previous is None:
@@ -228,7 +245,7 @@ class ReactionService:
             connector_id = "gh"
         query_kind = query_kind.strip().lower()
         if query_kind not in SUPPORTED_QUERIES.get(connector_id, set()):
-            raise ValidationError("Supported Watches are gh/pull_requests and jira/issues")
+            raise ValidationError("Supported Watches are gh/pull_requests, gh/issues and jira/issues")
         return self._repo.create_watch(
             watch_id=watch_id or _id("watch"), connector_id=connector_id,
             query_kind=query_kind, name=name.strip(), query=query or {}, enabled=enabled,

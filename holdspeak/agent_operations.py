@@ -30,8 +30,8 @@ AGENT_HAND = OperationDescriptor(
         "properties": {
             "kind": {
                 "type": "string",
-                "enum": ["action", "decision", "decision_record", "project_item", "note", "meeting", "artifact"],
-                "description": "The item kind.",
+                "enum": ["action", "decision", "decision_record", "project_item", "note", "meeting", "artifact", "issue"],
+                "description": "The item kind. An issue is a Room issue: id <watch_id>.<entity_id>.",
             },
             "id": {"type": "string", "minLength": 1, "maxLength": 128, "description": "The item id."},
             "instruction": {"type": ["string", "null"], "maxLength": 4000,

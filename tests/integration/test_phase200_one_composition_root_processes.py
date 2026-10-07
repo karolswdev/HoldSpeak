@@ -228,7 +228,15 @@ def test_sidecar_with_a_hub_writes_through_the_one_writer(
         # browser rather than a sidecar. What is proven here is that the frame
         # is produced for an out-of-process MCP write; `tests/e2e` covers the
         # socket carrying frames to a browser.
-        changed = [f for f in frames if f[0] == "desk_changed"]
+        # Count only the frames that name this note. The hub's own background
+        # conductors (the Workbench and Cadence ticks) also announce with
+        # ``desk_changed``; their first tick races the spy installed above,
+        # so under load it can land inside this window (R5, 4 of 24 runs).
+        changed = [
+            f for f in frames
+            if f[0] == "desk_changed"
+            and any(c.get("id") == note_id for c in (f[1].get("changes") or [f[1]]))
+        ]
         assert len(changed) == 1, f"expected ONE desk_changed frame, saw {frames!r}"
         assert changed[0][1]["id"] == note_id
         assert changed[0][1]["op"] == "create"

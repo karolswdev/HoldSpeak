@@ -31,7 +31,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "heartbeat.set",
-        "description": "Update heartbeat sweep settings. Accepts sweep_every_minutes, quiet_hours ({start, end}), notify (off|edge|every_sweep), and muted_projects.",
+        "description": "Update heartbeat sweep settings. Accepts sweep_every_minutes, quiet_hours ({start, end}), notify (off|edge|every_sweep), muted_projects, and report_merged_prs.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -58,6 +58,10 @@ TOOLS: list[dict[str, Any]] = [
                     "type": "array",
                     "items": {"type": "string"},
                     "description": "Project IDs to exclude from notification aggregates.",
+                },
+                "report_merged_prs": {
+                    "type": "boolean",
+                    "description": "Read each Room repository's merged PRs on every sweep, so the weekly update reports every merge (default true).",
                 },
             },
             "additionalProperties": False,

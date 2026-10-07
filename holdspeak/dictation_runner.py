@@ -411,6 +411,7 @@ def run_pipeline_corrections_only(
             # Hotkey path: full target detection, activity context, agent session.
             from holdspeak.activity_context import build_activity_context
             from holdspeak.agent_context import get_recent_agent_session
+            from holdspeak.agent_context.models import DEFAULT_RECENT_MAX_AGE_SECONDS
             from holdspeak.agent_device import target_profile_override_for_agent
             from holdspeak.target_profile import (
                 apply_model_assisted_target,
@@ -443,7 +444,9 @@ def run_pipeline_corrections_only(
                 below_confidence=float(getattr(pipeline_cfg, "target_detect_llm_below", 0.8)),
             )
             activity["target"] = target_profile.to_dict()
-            recent_agent = agent_reply_session or get_recent_agent_session(max_age_seconds=120)
+            # A waiting-question lookup (used only when awaiting_response):
+            # the shared reply window, as the device reply path uses.
+            recent_agent = agent_reply_session or get_recent_agent_session(max_age_seconds=DEFAULT_RECENT_MAX_AGE_SECONDS)
             if recent_agent is not None and bool(getattr(recent_agent, "awaiting_response", False)):
                 agent_project_root = getattr(recent_agent, "repo_root", None)
                 if not project_root or not agent_project_root or str(project_root) == str(agent_project_root):
@@ -557,6 +560,7 @@ def run_dictation_pipeline(
     try:
         from holdspeak.activity_context import build_activity_context
         from holdspeak.agent_context import get_recent_agent_session
+        from holdspeak.agent_context.models import DEFAULT_RECENT_MAX_AGE_SECONDS
         from holdspeak.agent_device import target_profile_override_for_agent
         from holdspeak.plugins.dictation.assembly import build_pipeline
         from holdspeak.plugins.dictation.contracts import Utterance
@@ -630,7 +634,7 @@ def run_dictation_pipeline(
             below_confidence=float(getattr(pipeline_cfg, "target_detect_llm_below", 0.8)),
         )
         activity["target"] = target_profile.to_dict()
-        recent_agent = agent_reply_session or get_recent_agent_session(max_age_seconds=120)
+        recent_agent = agent_reply_session or get_recent_agent_session(max_age_seconds=DEFAULT_RECENT_MAX_AGE_SECONDS)
         if recent_agent is not None and bool(getattr(recent_agent, "awaiting_response", False)):
             agent_project_root = getattr(recent_agent, "repo_root", None)
             if not project_root or not agent_project_root or str(project_root) == str(agent_project_root):

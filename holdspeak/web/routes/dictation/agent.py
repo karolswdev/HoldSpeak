@@ -13,6 +13,7 @@ from typing import Any, Optional
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
+from ....agent_context.models import DEFAULT_RECENT_MAX_AGE_SECONDS
 from ....logging_config import get_logger
 from ...context import WebContext
 from ._helpers import _resolve_project_context
@@ -56,7 +57,7 @@ def build_agent_router(ctx: WebContext) -> APIRouter:
             project_error = str(exc)
 
         session = (
-            get_recent_awaiting_agent_session(project_root=project["root"], max_age_seconds=120)
+            get_recent_awaiting_agent_session(project_root=project["root"], max_age_seconds=DEFAULT_RECENT_MAX_AGE_SECONDS)
             if project
             else None
         )
@@ -66,7 +67,7 @@ def build_agent_router(ctx: WebContext) -> APIRouter:
                 "project_error": project_error,
                 "session": session.to_dict() if session else None,
                 "awaiting_response": bool(session and session.awaiting_response),
-                "max_age_seconds": 120,
+                "max_age_seconds": DEFAULT_RECENT_MAX_AGE_SECONDS,
             }
         )
 
@@ -128,7 +129,7 @@ def build_agent_router(ctx: WebContext) -> APIRouter:
             agent=body.get("agent") if isinstance(body.get("agent"), str) else None,
             session_id=body.get("session_id") if isinstance(body.get("session_id"), str) else None,
             project_root=project["root"] if project else None,
-            max_age_seconds=120,
+            max_age_seconds=DEFAULT_RECENT_MAX_AGE_SECONDS,
         )
         return JSONResponse(
             {
@@ -168,7 +169,7 @@ def build_agent_router(ctx: WebContext) -> APIRouter:
         session = get_recent_awaiting_agent_session(
             project_root=project["root"] if project else None,
             agent=body.get("agent") if isinstance(body.get("agent"), str) else None,
-            max_age_seconds=120,
+            max_age_seconds=DEFAULT_RECENT_MAX_AGE_SECONDS,
         )
         if session is None:
             return JSONResponse(

@@ -72,6 +72,9 @@ Runner = Callable[..., "subprocess.CompletedProcess[str]"]
 
 
 def _default_runner(argv: list[str], cwd: Optional[str] = None):
+    from ..cli_guard import refuse_real_cli_in_tests
+
+    refuse_real_cli_in_tests(argv)
     return subprocess.run(
         argv,
         cwd=cwd,

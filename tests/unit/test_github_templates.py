@@ -176,14 +176,16 @@ class TestTemplateTruthTable:
     """All five templates compile to valid WatchSpec@1 drafts."""
 
     def test_six_templates_exist(self) -> None:
-        """HS-169-04: branch_ci added as the 6th template."""
-        assert len(GITHUB_TEMPLATES) == 6
+        """HS-169-04: branch_ci added as the 6th template; Conductor R4:
+        open_issues as the 7th."""
+        assert len(GITHUB_TEMPLATES) == 7
         assert TEMPLATE_IDS == {
             "watch.github.review_queue",
             "watch.github.ci_health",
             "watch.github.merge_flow",
             "watch.github.delivery_drift",
             "watch.github.release_readiness",
+            "watch.github.open_issues",
             "watch.github.branch_ci",
         }
 
@@ -194,7 +196,7 @@ class TestTemplateTruthTable:
         assert spec["schema"] == "WatchSpec@1"
         assert spec["provider"]["id"] == "github"
         # HS-169-04: branch_ci has its own subject kind
-        assert spec["subject"]["kind"] in ("pull_request", "branch_ci")
+        assert spec["subject"]["kind"] in ("pull_request", "branch_ci", "issue")
         assert "acme/platform" in spec["subject"]["scope"]["repositories"]
         assert spec["trigger"]["kind"] == "poll"
 

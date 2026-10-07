@@ -789,8 +789,21 @@ def test_a_symlink_out_of_the_worktree_is_outside(tmp_path) -> None:
     ("git branch -D x", ""), ("git commit -m x", ""), ("rm x", ""), ("echo x > f", ""),
     ("find . -delete", ""), ("npm install", ""), ("FOO=1 pytest", ""),
 ])
-def test_the_normal_read_and_test_list(tmp_path, command, read_rule) -> None:
-    verdict = classify_bash(command, cwd=str(tmp_path), root=str(tmp_path))
+def test_the_normal_read_and_test_list(tmp_path, monkeypatch, command, read_rule) -> None:
+    # The read rule needs each program to resolve on the PATH OUTSIDE the
+    # worktree (a system program). A runner without rg, uv, npm or npx held
+    # those calls (R5: `rg foo src` failed in CI), so every program word this
+    # list names resolves to a stand-in in a folder beside the worktree.
+    system = tmp_path / "system-bin"
+    system.mkdir()
+    for program in ("git", "ls", "cat", "rg", "grep", "pytest", "uv", "npm", "npx", "rm", "find"):
+        stand_in = system / program
+        stand_in.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        stand_in.chmod(0o755)
+    monkeypatch.setenv("PATH", str(system) + os.pathsep + os.environ.get("PATH", ""))
+    root = tmp_path / "worktree"
+    root.mkdir()
+    verdict = classify_bash(command, cwd=str(root), root=str(root))
     assert verdict.read_rule == read_rule, (command, verdict)
 
 
@@ -1081,3 +1094,191 @@ def test_r2_a_failed_old_worker_never_overwrites_a_newer_wait(launched, tmp_path
     responder._decide_guarded(KEY)  # the worker thread's entry: it fails
     stored = launched.store.wait(KEY)
     assert stored["state"] == "deciding"  # the newer wait's record stands
+
+
+# ── Conductor R5: `source <venv>/bin/activate` in YOLO ──────────────────
+
+
+def _venv(at: Path) -> Path:
+    (at / "bin").mkdir(parents=True)
+    (at / "pyvenv.cfg").write_text("home = /usr/bin\n", encoding="utf-8")
+    activate = at / "bin" / "activate"
+    activate.write_text("# activate\n", encoding="utf-8")
+    return activate
+
+
+@pytest.mark.parametrize("command", [
+    "source .venv/bin/activate",
+    ". .venv/bin/activate",
+    "source ./.venv/bin/activate;",
+])
+def test_r5_a_worktree_venv_activate_is_inside(tmp_path, command) -> None:
+    root = tmp_path / "wt"
+    _venv(root / ".venv")
+    verdict = classify_bash(command, cwd=str(root), root=str(root))
+    assert (verdict.scope, verdict.rule, verdict.read_rule) == ("inside", "venv_activate", "")
+
+
+def test_r5_venv_activate_from_a_subfolder_and_by_absolute_path(tmp_path) -> None:
+    root = tmp_path / "wt"
+    activate = _venv(root / "env")
+    (root / "src").mkdir()
+    for command in ("source ../env/bin/activate", f"source {activate}"):
+        verdict = classify_bash(command, cwd=str(root / "src"), root=str(root))
+        assert verdict.rule == "venv_activate", command
+
+
+def test_r5_escapes_stay_held(tmp_path) -> None:
+    root = tmp_path / "wt"
+    _venv(root / ".venv")
+    outside = _venv(tmp_path / "evil")  # a crafted venv outside the worktree
+    (root / "linked" / "bin").mkdir(parents=True)
+    (root / "linked" / "pyvenv.cfg").write_text("home = /usr/bin\n", encoding="utf-8")
+    (root / "linked" / "bin" / "activate").symlink_to(outside)  # points outside
+    (root / "nocfg" / "bin").mkdir(parents=True)
+    (root / "nocfg" / "bin" / "activate").write_text("# no pyvenv.cfg\n", encoding="utf-8")
+    (root / ".venv" / "bin" / "activate.fish").write_text("# fish\n", encoding="utf-8")
+    (root / "bin").mkdir()
+    (root / "bin" / "activate").write_text("# a bin/ with no venv\n", encoding="utf-8")
+    for command in (
+        "source linked/bin/activate",               # symlink to outside
+        "source ../evil/bin/activate",               # crafted, outside
+        f"source {outside}",                         # crafted, absolute
+        "source nocfg/bin/activate",                 # no pyvenv.cfg
+        "source bin/activate",                       # pyvenv.cfg would be outside
+        "source .venv/bin/activate.fish",            # not `activate`
+        "source .venv/bin/activate && rm -rf build", # chained
+        "source .venv/bin/activate; ls",             # chained
+        "source .venv/bin/activate | cat",           # piped
+        "source .venv/bin/activate > /dev/null",     # redirected
+        "source .venv/bin/activate extra",           # an argument
+        "VIRTUAL=1 source .venv/bin/activate",       # an assignment
+        "source ~/.venv/bin/activate",               # home
+        "source .venv/bin",                          # a folder
+        "source .venv/bin/missing",                  # no file
+    ):
+        verdict = classify_bash(command, cwd=str(root), root=str(root))
+        assert verdict.rule != "venv_activate", command
+        assert verdict.scope != "inside", command
+
+
+@pytest.mark.parametrize("mode, allowed, reason", [
+    ("yolo", True, "yolo_inside_own_worktree"),
+    ("neutral", False, "normal_holds_this_call"),
+    ("safe", False, "secure_holds_every_call"),
+])
+def test_r5_venv_activate_passes_in_yolo_only(launched, tmp_path, monkeypatch, mode, allowed, reason) -> None:
+    _mode(tmp_path, monkeypatch, mode)
+    _venv(launched.worktree / ".venv")
+    call = _call(launched, "source .venv/bin/activate")
+    assert call.proposal.policy_snapshot["reason_code"] == reason
+    assert (call.proposal.state == APPROVED) is allowed
+    assert (call.decision.deny is None) is allowed
+
+
+# ── Conductor R5, Astra round 1 on #915: the activate escapes, by real bash ──
+
+
+def _real_venv(at: Path) -> Path:
+    """A real venv (``python -m venv``), its own activate."""
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(at)], check=True)
+    return at / "bin" / "activate"
+
+
+def _outside_activate(folder: Path, marker: Path) -> Path:
+    """An outside venv whose ``activate`` leaves a marker when it runs."""
+    (folder / "bin").mkdir(parents=True)
+    (folder / "pyvenv.cfg").write_text("home = /usr/bin\n", encoding="utf-8")
+    script = folder / "bin" / "activate"
+    script.write_text(f"echo RAN > {marker}\n", encoding="utf-8")
+    script.chmod(0o755)
+    return script
+
+
+def _hook_then_bash(command: str, *, cwd: Path, root: Path, path_env: str) -> str:
+    """What the YOLO hook does: run the call only when it is ``inside``."""
+    import subprocess
+
+    verdict = classify_bash(command, cwd=str(cwd), root=str(root))
+    if verdict.scope == "inside":
+        subprocess.run(["/bin/bash", "-c", command], cwd=cwd, env={"PATH": path_env}, check=False)
+    return verdict.scope
+
+
+def _bash(command: str, *, cwd: Path, path_env: str) -> None:
+    import subprocess
+
+    subprocess.run(["/bin/bash", "-c", command], cwd=cwd, env={"PATH": path_env}, check=False)
+
+
+@pytest.fixture()
+def escape_rig(tmp_path):
+    root = tmp_path / "wt"
+    root.mkdir()
+    inside = _real_venv(root / ".venv")
+    marker = tmp_path / "OUTSIDE_RAN"
+    outside_dir = tmp_path / "outside"
+    outside = _outside_activate(outside_dir, marker)
+    return SimpleNamespace(root=root, inside=inside, marker=marker, outside=outside,
+                           outside_dir=outside_dir, tmp=tmp_path)
+
+
+def test_r5b_a_bare_name_is_searched_on_the_path_and_is_held(escape_rig) -> None:
+    rig = escape_rig
+    cwd = rig.root / ".venv" / "bin"
+    path_env = f"{rig.outside.parent}{os.pathsep}/usr/bin{os.pathsep}/bin"
+    for command in ("source activate", ". activate"):
+        _bash(command, cwd=cwd, path_env=path_env)  # the escape is real
+        assert rig.marker.exists(), command
+        rig.marker.unlink()
+        assert _hook_then_bash(command, cwd=cwd, root=rig.root, path_env=path_env) != "inside"
+        assert not rig.marker.exists(), command
+    # With a slash, bash reads the named file, and the worktree's own venv passes.
+    assert _hook_then_bash("source ./activate", cwd=cwd, root=rig.root, path_env=path_env) == "inside"
+    assert not rig.marker.exists()
+
+
+def test_r5b_a_glob_is_held_even_when_its_literal_name_is_a_venv(escape_rig) -> None:
+    rig = escape_rig
+    _real_venv(rig.root / "env[x]")              # the literal name: a real venv inside
+    (rig.root / "envx").symlink_to(rig.outside_dir)  # what bash globs it to: outside
+    path_env = f"/usr/bin{os.pathsep}/bin"
+    command = "source env[x]/bin/activate"
+    _bash(command, cwd=rig.root, path_env=path_env)  # the escape is real
+    assert rig.marker.exists()
+    rig.marker.unlink()
+    assert _hook_then_bash(command, cwd=rig.root, root=rig.root, path_env=path_env) != "inside"
+    assert not rig.marker.exists()
+    for variant in ("source env?/bin/activate", "source env*/bin/activate",
+                    "source {envx,.venv}/bin/activate", "source ~/bin/activate"):
+        assert _hook_then_bash(variant, cwd=rig.root, root=rig.root, path_env=path_env) != "inside", variant
+        assert not rig.marker.exists(), variant
+
+
+def test_r5b_a_heredoc_substitution_is_held(escape_rig) -> None:
+    rig = escape_rig
+    # An inside name equal to the old placeholder, pointing at the real activate.
+    (rig.root / "HEREDOC_TEXT").symlink_to(rig.inside)
+    path_env = f"/usr/bin{os.pathsep}/bin"
+    command = f"source \"$(cat <<'EOF'\n{rig.outside}\nEOF\n)\""
+    _bash(command, cwd=rig.root, path_env=path_env)  # the escape is real
+    assert rig.marker.exists()
+    rig.marker.unlink()
+    assert _hook_then_bash(command, cwd=rig.root, root=rig.root, path_env=path_env) != "inside"
+    assert not rig.marker.exists()
+    for variant in (f"source $(echo {rig.outside})", f"source `echo {rig.outside}`",
+                    "V=x source .venv/bin/activate", "source $V/bin/activate",
+                    "source '.venv/bin/activate'", "source \".venv/bin/activate\"",
+                    "source .venv/bin/activ\\ate", f"source .venv/bin/activate\nsource {rig.outside}"):
+        assert _hook_then_bash(variant, cwd=rig.root, root=rig.root, path_env=path_env) != "inside", variant
+        assert not rig.marker.exists(), variant
+
+
+def test_r5b_the_real_venv_still_passes(escape_rig) -> None:
+    rig = escape_rig
+    for command in ("source .venv/bin/activate", ". ./.venv/bin/activate", f"source {rig.inside}"):
+        verdict = classify_bash(command, cwd=str(rig.root), root=str(rig.root))
+        assert (verdict.scope, verdict.rule) == ("inside", "venv_activate"), command

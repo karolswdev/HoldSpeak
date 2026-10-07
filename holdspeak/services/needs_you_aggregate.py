@@ -455,6 +455,11 @@ def build_aggregate(
         observed_at = str(rm.get("observed_at") or utc_iso(clock_now))
         fresh: list[dict[str, Any]] = []
         for item in needs.get("items") or []:
+            if item.get("kind") == "issue" and item.get("source") == "github":
+                # Conductor R4: a repository's open issues are the Room's
+                # OPEN HERE list (Hand to agent takes them), not the owner's
+                # asks: a busy repository would flood Needs you.
+                continue
             if item.get("kind") == "action_item":
                 # A meeting's open action is the Room's own "open here" row.
                 # The Desk already reads it through the follow-through board;

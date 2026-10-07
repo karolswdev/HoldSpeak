@@ -104,8 +104,12 @@ def test_preview_refuses_an_item_by_name_and_an_agent_principal(tmp_path, db, mo
         preview_hand(rig.hand, OWNER, "action", "nope")
     assert exc.value.reason == "item_unknown"
     with pytest.raises(AgentHandRefused) as exc:
-        preview_hand(rig.hand, OWNER, "issue", "418")
+        preview_hand(rig.hand, OWNER, "thought", "t1")
     assert exc.value.reason == "item_kind_unsupported"
+    # Conductor R4: an issue is a kind; one no Room Watch holds is unknown.
+    with pytest.raises(AgentHandRefused) as exc:
+        preview_hand(rig.hand, OWNER, "issue", "418")
+    assert exc.value.reason == "item_unknown"
     with pytest.raises(ServiceError) as exc:
         preview_hand(rig.hand, Principal(PrincipalKind.AGENT, "agent:tmux:x"), "action", "ai_1")
     assert exc.value.code == "owner_required"

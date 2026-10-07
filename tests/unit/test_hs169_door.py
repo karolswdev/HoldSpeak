@@ -167,7 +167,8 @@ class TestCreateWatches:
 
         assert len(captured) == 1
         proposals = captured[0]["proposals"]
-        assert len(proposals) == 4
+        # Conductor R4: open_prs also arms the repository's open issues.
+        assert len(proposals) == 5
 
         for p in proposals:
             spec = p["spec"]
@@ -277,4 +278,5 @@ class TestFailingCount:
 
         assert result["projectId"] == "proj_ok"
         assert len(captured) == 1
-        assert len(captured[0]["proposals"]) == 1
+        # Conductor R4: the PR queue and the open issues.
+        assert len(captured[0]["proposals"]) == 2

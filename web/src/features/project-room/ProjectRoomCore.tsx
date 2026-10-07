@@ -990,7 +990,7 @@ function NeedsYouSection({
                       agent holds, before the row's Open, as drawn. */}
                   {isInFlight(flight)
                     ? <FlightVerbs flight={flight} title={item.title} />
-                    : <HandRowVerb item={{ title: item.title, source: item.source, actionItemId: item.actionItemId, projectId: ctrl.projectId }} />}
+                    : <HandRowVerb item={{ title: item.title, source: item.source, actionItemId: item.actionItemId, projectId: ctrl.projectId, kind: item.kind, watchId: item.watchId, entityId: item.entityId, url: item.url }} />}
                   {item.verb === "decide" ? (
                     <Button dense variant="ghost" onClick={() => {
                       if (item.url) window.open(item.url, "_blank", "noopener");

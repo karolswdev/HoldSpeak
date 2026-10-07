@@ -81,6 +81,11 @@ class AgentHandRefused(ServiceError):
 def item_exists(db: Any, kind: str, item_id: str) -> bool:
     from ..grounding import hydrate_refs_detailed
 
+    if kind == "issue":
+        from .agent_issue import read_issue
+
+        return read_issue(db, item_id) is not None
+
     try:
         hydrated = hydrate_refs_detailed(db, [], [], "summary", [f"{kind}:{item_id}"])
     except Exception:
@@ -88,10 +93,39 @@ def item_exists(db: Any, kind: str, item_id: str) -> bool:
     return bool(hydrated.blocks) and not hydrated.unknown
 
 
-def worktree_spec(kind: str, item_id: str) -> dict[str, str]:
-    """``{mode: new, name: hs-<kind>-<id>, branch: hs/<kind>-<id>}``."""
+def worktree_spec(kind: str, item_id: str, round_: int = 1) -> dict[str, str]:
+    """``{mode: new, name: hs-<kind>-<id>, branch: hs/<kind>-<id>}``; a later
+    hand-off of the same item (``round_`` 2, 3, ...) adds ``-<round>``."""
     slug = _NAME_UNSAFE.sub("-", f"{kind}-{item_id}").strip("-.")[:60]
+    if round_ > 1:
+        slug = f"{slug}-{round_}"
     return {"mode": "new", "name": f"hs-{slug}", "branch": f"hs/{slug}"}
+
+
+#: The most hand-offs of one item that get their own worktree name.
+_MAX_ROUNDS = 50
+
+
+def free_worktree_spec(registry: Any, repo_path: Any, kind: str, item_id: str) -> dict[str, str]:
+    """The spec of this hand-off (Conductor R4, R1's walk).
+
+    K4's cleanup removes a merged worktree but keeps its branch, so a second
+    hand-off of the same item cannot reuse ``hs/<kind>-<id>`` (``git worktree
+    add -b`` refuses an existing branch). The first round whose worktree
+    folder exists (a held or live launch: the caller's own rules apply) or
+    whose branch and folder are both free is the one used."""
+    for round_ in range(1, _MAX_ROUNDS + 1):
+        spec = worktree_spec(kind, item_id, round_)
+        try:
+            folder = derive_worktree_path(repo_path, spec["name"])
+        except LaunchRefused:
+            return spec
+        if folder.exists():
+            return spec
+        branch = registry._git(Path(repo_path), "rev-parse", "--verify", "--quiet", f"refs/heads/{spec['branch']}")
+        if not branch:
+            return spec
+    return worktree_spec(kind, item_id)
 
 
 def _matches_repo(registry: Any, path: str, repositories: list[str]) -> bool:
@@ -191,8 +225,12 @@ class AgentHandService:
         gate_path: Optional[Path] = None,
         project_map: Optional[Mapping[str, Any]] = None,
         max_live: int = MAX_LIVE_LAUNCHES,
+        issue_reads: Optional[Mapping[str, Any]] = None,
     ) -> None:
         self._db = db
+        #: The tracker reads of an issue brief (``gh_runner``, ``jira_adapter``);
+        #: empty in production (the real CLIs).
+        self.issue_reads: Mapping[str, Any] = dict(issue_reads or {})
         self._launch_service = launch_service
         self._control_mode = control_mode or _config_control_mode
         self._gate_path = gate_path
@@ -235,7 +273,7 @@ class AgentHandService:
             raise AgentHandRefused(
                 "no_repository", "the item's Project names no local repository"
             )
-        spec = worktree_spec(kind, item_id)
+        spec = free_worktree_spec(launcher._registry, source.primary_path, kind, item_id)
         try:
             worktree_path = derive_worktree_path(source.primary_path, spec["name"])
         except LaunchRefused as exc:
@@ -283,6 +321,8 @@ class AgentHandService:
                 instruction=instruction,
                 control_mode=mode,
                 repo_path=source.primary_path,
+                principal=principal,
+                issue_reads=self.issue_reads,
             )
         except AgentBriefRefused as exc:
             raise AgentHandRefused.from_launch(exc) from exc

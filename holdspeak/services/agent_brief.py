@@ -48,6 +48,9 @@ BRIEF_KINDS = (
     "note",
     "meeting",
     "artifact",
+    # Conductor R4: a Room issue (a Jira or GitHub issue a Room Watch reads),
+    # ``issue:<watch_id>.<entity_id>`` (services/agent_issue.py).
+    "issue",
 )
 
 #: Source kinds that carry People data. They never reach a cloud agent.
@@ -126,7 +129,13 @@ def project_for_item(db: Any, kind: str, item_id: str) -> Optional[str]:
 
     In order: the item is filed in a Project (``project_resources``); a
     Project item names its Project; the item's meeting is linked to a
-    Project (highest confidence first)."""
+    Project (highest confidence first). An issue belongs to its Watch's
+    Room."""
+    if kind == "issue":
+        from .agent_issue import read_issue
+
+        issue = read_issue(db, item_id)
+        return issue.get("project_id") if issue else None
     with db._connection() as conn:
         row = conn.execute(
             "SELECT project_id FROM project_resources WHERE resource_ref=? AND deleted=0 "
@@ -277,14 +286,45 @@ def _hs_block(repo_path: Optional[str]) -> Optional[GroundingBlock]:
     return GroundingBlock("hs_context", ".hs", "Repository facts (.hs/)", "", text)
 
 
+def _issue_block(
+    db: Any, item_id: str, principal: Any, reads: Mapping[str, Any],
+) -> tuple[GroundingBlock, dict[str, str]]:
+    """The issue as the brief's item part: the snapshot's title, labels,
+    status and URL, and its body read once from the tracker."""
+    from .agent_issue import issue_body, issue_label, issue_text, read_issue, tracker_host
+
+    issue = read_issue(db, item_id)
+    if issue is None:
+        raise AgentBriefRefused("item_unknown", f"issue:{item_id} is not on the desk")
+    if principal is None:
+        from ..kernel.subprocess_exec import LOCAL_OWNER
+
+        principal = LOCAL_OWNER
+    body, state = issue_body(
+        principal, issue, gh_runner=reads.get("gh_runner"), jira_adapter=reads.get("jira_adapter"),
+    )
+    block = GroundingBlock(
+        "issue", item_id, issue_label(issue), issue.get("url") or "", issue_text(issue, body, state),
+    )
+    # The read left the machine: the launch sheet names where (R4, Astra #912).
+    return block, {"host": tracker_host(issue), "state": "read" if state == "read" else "not_read"}
+
+
 def acceptance_checks(kind: str, item_id: str, control_mode: str) -> list[str]:
     """The stanza's checks, one line each (the launch sheet counts them)."""
     mode_line = _MODE_LINES.get(str(control_mode or "").lower(), _MODE_LINES["yolo"])
+    issue_lines = [
+        # A "Closes #N" in a PR body closes the issue on merge: an act on the
+        # tracker the owner did not take. The owner closes the issue.
+        "Name the issue by its URL in the pull request body. Do not write Closes, Fixes "
+        "or Resolves with the issue key: the owner closes the issue.",
+    ] if kind == "issue" else []
     return [
         f"Control mode: {mode_line}",
         "Work only in this worktree, on its own branch. Do not push to main.",
         "Commit your work, push the branch, and open a pull request.",
         f"The pull request body names the item: {kind}:{item_id}.",
+        *issue_lines,
         "If a question blocks you, ask it and wait. Do not guess.",
         "The holdspeak MCP tools are yours for this launch. Use them to read the desk "
         "and memory (People data is cut), file notes, propose decisions (the owner "
@@ -309,6 +349,8 @@ def compose_agent_brief(
     control_mode: str,
     repo_path: Optional[str] = None,
     cap_bytes: int = AGENT_BRIEF_CAP_BYTES,
+    principal: Any = None,
+    issue_reads: Optional[Mapping[str, Any]] = None,
 ) -> dict[str, Any]:
     """Compose the first message a coding agent receives for one item.
 
@@ -317,10 +359,15 @@ def compose_agent_brief(
     name."""
     kind, item_id = parse_item_ref(item_ref)
     own_ref = f"{kind}:{item_id}"
-    hydrated = hydrate_refs_detailed(db, [], [], "summary", [own_ref])
-    if hydrated.unknown or not hydrated.blocks:
-        raise AgentBriefRefused("item_unknown", f"{own_ref} is not on the desk")
-    item_blocks = list(hydrated.blocks)
+    tracker: Optional[dict[str, str]] = None
+    if kind == "issue":
+        issue_block, tracker = _issue_block(db, item_id, principal, issue_reads or {})
+        item_blocks = [issue_block]
+    else:
+        hydrated = hydrate_refs_detailed(db, [], [], "summary", [own_ref])
+        if hydrated.unknown or not hydrated.blocks:
+            raise AgentBriefRefused("item_unknown", f"{own_ref} is not on the desk")
+        item_blocks = list(hydrated.blocks)
     if project_id is None:
         project_id = project_for_item(db, kind, item_id)
 
@@ -403,6 +450,8 @@ def compose_agent_brief(
         "people_cut": people_cut,
         "sources": sources,
         "acceptance": acceptance_checks(kind, item_id, control_mode),
+        # An issue's body was read from its tracker: the host and the outcome.
+        "tracker": tracker,
     }
 
 
