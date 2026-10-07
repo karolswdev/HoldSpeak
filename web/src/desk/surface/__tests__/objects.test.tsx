@@ -631,6 +631,72 @@ describe("NeedsRow + DropTarget + DragGhost", () => {
   });
 });
 
+describe("PHILO-14 C3: the drag props", () => {
+  it("DeskIcon passes the drop-target events; DragGhost draws the dotted path from `from`", () => {
+    const over = vi.fn((e: React.DragEvent) => e.preventDefault());
+    const leave = vi.fn();
+    const drop = vi.fn();
+    const end = vi.fn();
+    const { container } = render(
+      <>
+        <DeskIcon id="conductor" kind="conductor" name="Conductor" onDragOver={over} onDragLeave={leave} onDrop={drop} />
+        <DeskIcon id="act" kind="action" name="Write the cutover comms" draggable onDragEnd={end} />
+        <DragGhost kind="action" id="act" x={62} y={486} from={{ x: 840, y: 250 }} />
+      </>,
+    );
+    const target = screen.getByRole("button", { name: /Conductor/ });
+    fireEvent.dragOver(target);
+    fireEvent.dragLeave(target);
+    fireEvent.drop(target);
+    fireEvent.dragEnd(screen.getByRole("button", { name: /Write the cutover comms/ }));
+    expect([over, leave, drop, end].map((f) => f.mock.calls.length)).toEqual([1, 1, 1, 1]);
+    const path = container.querySelector(".drag-path line")!;
+    expect(container.querySelector(".drag-path")).toHaveAttribute("aria-hidden", "true");
+    expect([path.getAttribute("x1"), path.getAttribute("y1"), path.getAttribute("x2"), path.getAttribute("y2")]).toEqual([
+      "840",
+      "250",
+      "94",
+      "518",
+    ]);
+  });
+
+  it("ConfirmLine: egress on the Hand side, a status line, Hand disabled, verbs after the press", () => {
+    const { rerender } = render(
+      <ConfirmLine
+        from={{ kind: "action", id: "a" }}
+        to={{ kind: "coder", id: "claude" }}
+        title="Write the cutover comms"
+        fact="CLAUDE CODE · YOLO"
+        onCancel={() => undefined}
+        onHand={() => undefined}
+        disabled
+        egress={<span data-testid="egress">API.ANTHROPIC.COM</span>}
+        status={<span>AGENT LIMIT REACHED</span>}
+      />,
+    );
+    const group = screen.getByRole("group", { name: "Hand: Write the cutover comms" });
+    expect(within(group).getByRole("button", { name: "Hand" })).toBeDisabled();
+    expect(within(group).getByText("AGENT LIMIT REACHED")).toBeInTheDocument();
+    // The egress sits on the Hand side, just before the verbs (it wraps above them at 393).
+    expect(group.querySelector(".confirm-line-verbs")!.previousElementSibling!.firstElementChild).toHaveAttribute(
+      "data-testid",
+      "egress",
+    );
+    rerender(
+      <ConfirmLine
+        from={{ kind: "action", id: "a" }}
+        to={{ kind: "coder", id: "claude" }}
+        title="Write the cutover comms"
+        fact="CLAUDE CODE · YOLO"
+        onCancel={() => undefined}
+        onHand={() => undefined}
+        verbs={<Button dense variant="ghost">Close</Button>}
+      />,
+    );
+    expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual(["Close"]);
+  });
+});
+
 describe("the bevel grammar", () => {
   it("raised for a control, sunken for a well, flat for read text, from --bevel-* tokens", () => {
     expect(SURFACE_CSS).toMatch(/\.bevel-raised \{\s*box-shadow: var\(--bevel-raised\);/);

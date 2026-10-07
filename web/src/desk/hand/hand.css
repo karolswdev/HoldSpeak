@@ -1,0 +1,30 @@
+/* PHILO-14 C3 — the hand's line (board A-3). Layout only: the material is
+   the ConfirmLine species'. */
+.hand-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  outline: none;
+}
+.hand-confirm-brief {
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--wb-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow: auto;
+}
+.hand-confirm-brief .desk-hand-text {
+  margin: 0;
+}
+/* At the screen's head (a drop from the screen): over the icons, centred. */
+.desk-screen-hand {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(820px, calc(100% - 32px));
+  z-index: 3;
+}

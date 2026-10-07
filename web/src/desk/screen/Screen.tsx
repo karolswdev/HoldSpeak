@@ -21,6 +21,7 @@ import { composeScreen, screenIsBare } from "./compose";
 import { layoutScreen } from "./layout";
 import { retryPeople, retryProject, useScreenMembers } from "./members";
 import { openTarget } from "./open";
+import { SCREEN_HOST, HandConfirmSlot, handOriginOfRef, handSourceProps, handTargetProps, useDropHand } from "../hand";
 import "./screen.css";
 
 /** The A-1 screen measured at 1440 × 900 (a screen that has not laid out yet). */
@@ -99,6 +100,9 @@ export function Screen() {
     : layoutScreen(objects, size.w || FALLBACK.w, size.h || FALLBACK.h);
 
   const bare = members.loaded && screenIsBare(objects);
+  // PHILO-14 C3: drop to hand. A loose work item drags (not at 393: the
+  // hand there is the verb); the Conductor drawer and the agents take it.
+  const drag = useDropHand((s) => s.drag);
 
   return (
     <div className="desk-screen" ref={ref} data-testid="desk-screen" data-layout={compact ? "grid" : "free"}>
@@ -113,6 +117,10 @@ export function Screen() {
       >
         {objects.map((o) => {
           const at = placed?.[o.key];
+          const hand = !compact && o.role === "loose" ? handOriginOfRef(o.key, o.name) : null;
+          const dragProps = hand
+            ? handSourceProps({ origin: hand, source: { kind: o.kind, id: o.key, sprite: o.sprite }, host: SCREEN_HOST })
+            : {};
           return (
             <div
               key={o.key}
@@ -133,6 +141,10 @@ export function Screen() {
                 selected={selected.has(o.key)}
                 onSelect={() => setSelected(new Set([o.key]))}
                 onOpen={() => openTarget(o.target)}
+                drop={drag?.over === o.key}
+                ghost={drag?.host === SCREEN_HOST && drag.source.id === o.key}
+                {...dragProps}
+                {...handTargetProps(o.key)}
               />
               {o.notRead ? (
                 <span className="desk-screen-notread" data-testid={`desk-screen-notread-${o.key}`}>
@@ -155,6 +167,7 @@ export function Screen() {
           );
         })}
       </IconGrid>
+      <HandConfirmSlot host={SCREEN_HOST} className="desk-screen-hand" />
       {compact ? null : (
         // Astra's P3 on #939 (ruling): TALK is one press on the Chair. The
         // Capture window's own control, at the screen's foot-left.
