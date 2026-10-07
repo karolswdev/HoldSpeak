@@ -302,7 +302,7 @@ def install_agent_hooks(
         for event, our_entries in template_hooks.items():
             existing = hooks.get(event)
             existing_list = existing if isinstance(existing, list) else []
-            foreign = [e for e in existing_list if not _is_our_hook_entry(e)]
+            foreign, _removed = _without_our_handlers(existing_list)
             hooks[event] = foreign + [dict(entry) for entry in our_entries]
             installed_events.append(str(event))
 
@@ -331,8 +331,8 @@ def uninstall_agent_hooks(settings_path: "Path") -> dict[str, Any]:
             entries = hooks.get(event)
             if not isinstance(entries, list):
                 continue
-            kept = [e for e in entries if not _is_our_hook_entry(e)]
-            if len(kept) != len(entries):
+            kept, removed = _without_our_handlers(entries)
+            if removed:
                 removed_events.append(str(event))
             if kept:
                 hooks[event] = kept
@@ -362,6 +362,28 @@ def is_our_hook_command(command: Any) -> bool:
     if parts[1:4] != ["agent-hook", "ingest", "--agent"] or parts[4] not in AGENT_HOOK_SETTINGS_PATHS:
         return False
     return parts[5:] in ([], ["--capture-messages"]) and shlex.join(parts) == str(command)
+
+
+def _without_our_handlers(entries: list[Any]) -> tuple[list[Any], int]:
+    """The groups with HoldSpeak's own handlers taken out, one handler at a
+    time: a foreign sibling in the same group stays, with the group's
+    matcher; a group is dropped only when nothing of it is left. Returns
+    ``(kept, removed_count)`` (Astra round 2 on #914)."""
+    kept: list[Any] = []
+    removed = 0
+    for entry in entries:
+        inner = entry.get("hooks") if isinstance(entry, Mapping) else None
+        if not isinstance(inner, list):
+            kept.append(entry)
+            continue
+        others = [h for h in inner if not (isinstance(h, Mapping) and is_our_hook_command(h.get("command")))]
+        if len(others) == len(inner):
+            kept.append(entry)
+            continue
+        removed += len(inner) - len(others)
+        if others:
+            kept.append({**dict(entry), "hooks": others})
+    return kept, removed
 
 
 def _is_our_hook_entry(entry: Any) -> bool:

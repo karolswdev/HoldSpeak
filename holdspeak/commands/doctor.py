@@ -1136,7 +1136,7 @@ def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:
     detail = "; ".join(parts)
     fixes: list[str] = []
     if any(a["hooks"] == "untrusted" for a in unhooked):
-        fixes.append("Press Use it for Codex on the Agents card: it trusts the hooks in Codex")
+        fixes.append("Press Install hooks on the Agents card: it trusts the hooks in Codex")
         unhooked = [a for a in unhooked if a["hooks"] != "untrusted"]
     if unhooked:
         names = " ".join(a["id"] for a in unhooked)

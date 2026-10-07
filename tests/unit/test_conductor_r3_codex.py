@@ -300,7 +300,9 @@ def test_an_untrusted_codex_launch_refuses_before_anything_runs(tmp_path, db, mo
     with pytest.raises(AgentHandRefused) as exc:
         rig.hand.hand(OWNER, "action", "ai_1", profile="codex-default")
     assert exc.value.reason == "codex_hooks_untrusted"
-    assert "Use it for Codex on the Agents card" in str(exc.value)  # the fix, by name
+    # The card's real verb, and the failing hooks in the refusal payload.
+    assert "Install hooks on the Agents card" in str(exc.value)
+    assert exc.value.context["hooks"] == ["/<session-flags>/config.toml:pre_tool_use:0:0"]
     assert asked and asked[0] == coder_gate.codex_hook_flags(coder_gate.spawn_prefix())
     assert not rig.worktree.exists()
     assert not any(c[1] == "new-session" for c in rig.tmux.calls)
@@ -644,6 +646,7 @@ def test_a_disabled_gate_refuses_the_launch_until_use_it(tmp_path, monkeypatch, 
     with pytest.raises(AgentHandRefused) as exc:
         rig.hand.hand(OWNER, "action", "ai_1", profile="codex-default")
     assert exc.value.reason == "codex_hooks_untrusted"
+    assert exc.value.context["hooks"] == [f"disabled:{gate_key}"]
     assert not any(c[1] == "new-session" for c in rig.tmux.calls)
     again = trust_codex_hooks(executable=shutil.which("codex"), env=env, home=tmp_path, hooks_json=hooks)
     assert again["state"] == "trusted" and again["enabled"] == [gate_key]
@@ -932,3 +935,89 @@ def test_yolo_holds_a_closing_commit_through_the_real_gate(codex_launched, tmp_p
     call = _codex_call(rig, 'git commit -am "Fixes #12"', _launch_principal(rig))
     assert call.proposal.state != APPROVED and call.decision.deny
     assert call.proposal.operation["tool_call"]["rule"] == "pr_close_keyword"
+
+
+
+# ── 12. Astra round 2 on #914 ────────────────────────────────────────
+
+ROUND2_HELD = [
+    # her probes
+    'gh -R o/r pr create --title x --body "Fixes #12"',
+    'gh --repo o/r pr edit 9 --body "Resolves #12"',
+    'git commit --allow-empty --mess="Fixes #12"',
+    # gh: global flags first, the title too, a template body
+    'gh --hostname github.example pr create --title "Closes #3" --body ok',
+    'gh -R o/r pr create -t "fixed #4" -b ok',
+    "gh pr create --title x -T bug_report.md",
+    # git: any unambiguous prefix (git's rule), short forms, trailers
+    'git commit --m="fixes #1"',
+    'git commit --me "fixes #1"',
+    'git commit --messag "Resolves #5"',
+    'git commit -mFixes\\ #6',
+    'git commit --tra "Closes: #4" -m x',
+    "git commit --fil=msg.md",
+    "git commit --f msg.md",  # ambiguous in git (--file, --fixup)
+    "git commit -C HEAD",
+    "git commit --reuse=HEAD~1",
+    "git commit -c HEAD",
+    "git commit --fixup=HEAD",
+    "git commit -t tmpl.md",
+    # gh acting on GitHub for the owner
+    "gh issue close 12",
+    "gh -R o/r issue close 12",
+    "gh pr merge 3",
+    "gh api repos/o/r/issues/12 -X PATCH -f state=closed",
+]
+ROUND2_PASSES = [
+    'gh -R o/r pr create --title "Fix login" --body "Part of #12"',
+    "gh pr view 3", "gh pr checks", "gh run list",
+    'git commit --mess="fix the login timeout"',
+    "git commit --amend --no-edit",
+    "git commit --no-verify -am done",
+]
+
+
+@pytest.mark.parametrize("command", ROUND2_HELD)
+def test_round2_forms_are_held(tmp_path, command) -> None:
+    from holdspeak.tool_gate_rules import classify_bash
+
+    (tmp_path / "msg.md").write_text("Fixes #31\n")
+    verdict = classify_bash(command, cwd=str(tmp_path), root=str(tmp_path))
+    assert verdict.scope in ("unparsed", "outside"), (command, verdict)
+
+
+@pytest.mark.parametrize("command", ROUND2_PASSES)
+def test_round2_clean_forms_still_pass(tmp_path, command) -> None:
+    from holdspeak.tool_gate_rules import classify_bash
+
+    assert classify_bash(command, cwd=str(tmp_path), root=str(tmp_path)).scope == "inside", command
+
+
+@pytest.mark.parametrize("command", ROUND2_HELD[:3])
+def test_round2_probes_through_the_real_gate(codex_launched, tmp_path, monkeypatch, command) -> None:
+    """Astra's probes as she ran them: the real hook, GateService and the
+    launch producer's credential."""
+    _mode(tmp_path, monkeypatch, "yolo")
+    rig = codex_launched
+    call = _codex_call(rig, command, _launch_principal(rig))
+    assert call.proposal.state != APPROVED and call.decision.deny
+    assert call.proposal.operation["tool_call"]["rule"] == "pr_close_keyword"
+
+
+@pytest.mark.parametrize("agent", ["claude", "codex"])
+def test_install_keeps_a_foreign_handler_in_a_shared_group(tmp_path, agent) -> None:
+    from holdspeak.agent_context.hooks import claude_hook_template, uninstall_agent_hooks
+
+    template = claude_hook_template if agent == "claude" else codex_hook_template
+    shared = template()
+    shared["hooks"]["Stop"][0]["hooks"].append({"type": "command", "command": "printf foreign"})
+    path = tmp_path / ("settings.json" if agent == "claude" else "hooks.json")
+    path.write_text(json.dumps(shared))
+    install_agent_hooks(path, template())
+    stop = json.loads(path.read_text())["hooks"]["Stop"]
+    assert stop[0] == {"hooks": [{"type": "command", "command": "printf foreign"}]}
+    assert stop[1] == template()["hooks"]["Stop"][0]  # ours, once
+    install_agent_hooks(path, template())
+    assert json.loads(path.read_text())["hooks"]["Stop"] == stop  # converges
+    uninstall_agent_hooks(path)
+    assert json.loads(path.read_text()) == {"hooks": {"Stop": [{"hooks": [{"type": "command", "command": "printf foreign"}]}]}}

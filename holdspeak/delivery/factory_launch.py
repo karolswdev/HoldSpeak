@@ -133,9 +133,14 @@ class LaunchRefused(ValueError):
     """A typed launch refusal: ``reason`` is machine-readable and the
     message never echoes a filesystem path, an argv, or a secret."""
 
-    def __init__(self, reason: str, message: Optional[str] = None) -> None:
+    def __init__(
+        self, reason: str, message: Optional[str] = None, *,
+        context: Optional[Mapping[str, Any]] = None,
+    ) -> None:
         super().__init__(message or reason)
         self.reason = reason
+        #: Machine-readable detail that rides the refusal (path-free).
+        self.context = dict(context or {})
 
 
 def _iso_now(now: Optional[datetime] = None) -> str:
@@ -740,9 +745,13 @@ class LaunchService:
                 "codex_hooks_unchecked", f"Codex did not say whether it trusts the hooks ({exc.reason})"
             ) from exc
         if untrusted:
+            # Each entry names what keeps one launch hook from running
+            # (missing:/disabled:/untrusted:<key>); a launch hook's key is a
+            # session-flag position, never a path of the owner's.
             raise LaunchRefused(
                 "codex_hooks_untrusted",
-                "Codex does not trust the HoldSpeak hooks. Press Use it for Codex on the Agents card.",
+                "Codex will not run the HoldSpeak hooks. Press Install hooks on the Agents card.",
+                context={"hooks": list(untrusted)},
             )
 
     @staticmethod

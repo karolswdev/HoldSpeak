@@ -407,8 +407,8 @@ class _Reader:
             raise _Unparsed("pipe_to_shell")
         if base in _SHELLS and any(w == "-c" or (w.startswith("-") and not w.startswith("--") and "c" in w[1:]) for w in words[1:]):
             raise _Unparsed("shell_c")
-        if base == "gh" and words[1:2] == ["pr"] and words[2:3] in (["create"], ["edit"]):
-            self._close_check(words[3:], _GH_MESSAGE_FLAGS, _GH_MESSAGE_FILE_FLAGS, cwd=self.cwd)
+        if base == "gh":
+            self._gh(words[1:])
         if base in _NETWORK_CLIENTS:
             raise _Outside("network_client")
         if base.startswith("python") and len(words) > 2 and words[1] == "-m" and (
@@ -503,7 +503,7 @@ class _Reader:
         if verb not in _GIT_KNOWN_VERBS:
             raise _Unparsed("git_unknown_verb")
         if verb == "commit":
-            self._close_check(rest, _GIT_MESSAGE_FLAGS, _GIT_MESSAGE_FILE_FLAGS, cwd=cwd)
+            self._commit_message(rest, cwd=cwd)
         if verb == "push":
             self._push(rest)
             self.all_read = False
@@ -526,6 +526,82 @@ class _Reader:
             self.read_rules.append("git-branch")
         else:
             self.all_read = False
+
+    def _gh(self, args: list[str]) -> None:
+        """``gh``: its global flags may come first (``-R o/r``, ``--repo``,
+        ``--hostname``). Only the forms below run in the agent's own
+        right; any other ``gh`` call (``issue close``, ``pr merge``, ``api``
+        ...) acts on GitHub for the owner, so it is outside. A PR's title,
+        body or body file must not close an issue (``pr_close_keyword``)."""
+        positional: list[str] = []
+        index = 0
+        while index < len(args):
+            arg = args[index]
+            if arg in _GH_VALUE_FLAGS:
+                index += 2
+                continue
+            if arg.startswith("-"):
+                index += 1
+                continue
+            positional.append(arg)
+            index += 1
+            if len(positional) == 2:
+                break
+        form = tuple(positional[:2])
+        if form not in _GH_ALLOWED:
+            raise _Outside("gh_effect")
+        if form in (("pr", "create"), ("pr", "edit")):
+            if any(a in ("-T", "--template") or a.startswith("--template=") for a in args):
+                raise _Unparsed("message_source_unread")  # the body comes from a template
+            self._close_check(args, _GH_MESSAGE_FLAGS, _GH_MESSAGE_FILE_FLAGS, cwd=self.cwd)
+
+    def _commit_message(self, args: list[str], *, cwd: str) -> None:
+        """Every message source of ``git commit``: ``-m``/``--message`` and
+        ``--trailer`` text, ``-F``/``--file`` read from the worktree. Git
+        takes any unambiguous prefix of a long option (``--mess``); an
+        ambiguous one, or a message taken from elsewhere (``-C``, ``-c``,
+        ``-t``, ``--reuse-message``, ``--fixup`` ...), holds."""
+        texts: list[str] = []
+        index = 0
+        while index < len(args):
+            arg = args[index]
+            nxt = args[index + 1] if index + 1 < len(args) else None
+            if arg == "--":
+                break
+            if arg.startswith("--"):
+                name, eq, value = arg[2:].partition("=")
+                option = _git_long_option(name, _GIT_COMMIT_LONG)
+                if option is None:
+                    raise _Unparsed("git_option_ambiguous")
+                if option in _GIT_COMMIT_MESSAGE_ELSEWHERE:
+                    raise _Unparsed("message_source_unread")
+                if option in _GIT_COMMIT_VALUE_LONG and not eq:
+                    if nxt is None:
+                        raise _Unparsed("git_form")
+                    value = nxt
+                    index += 1
+                if option in ("message", "trailer"):
+                    texts.append(value)
+                elif option == "file":
+                    texts.append(self._message_file(value, cwd=cwd))
+            elif arg.startswith("-") and len(arg) > 1:
+                for pos, char in enumerate(arg[1:], start=1):
+                    if char in _GIT_COMMIT_MESSAGE_ELSEWHERE_SHORT:
+                        raise _Unparsed("message_source_unread")
+                    if char in "mF":
+                        value = arg[pos + 1:]
+                        if not value:
+                            if nxt is None:
+                                raise _Unparsed("git_form")
+                            value = nxt
+                            index += 1
+                        texts.append(value if char == "m" else self._message_file(value, cwd=cwd))
+                        break
+                    if char in "Su":
+                        break  # an optional value attached to it: the rest of the word
+            index += 1
+        if any(_closes_issue(self._expand(text)) for text in texts):
+            raise _Unparsed("pr_close_keyword")
 
     def _close_check(
         self, args: list[str], text_flags: frozenset[str], file_flags: frozenset[str], *, cwd: str,
@@ -618,9 +694,54 @@ _CLOSE_KEYWORD = re.compile(
 )
 _HEREDOC_REF = re.compile(r"HEREDOC_TEXT_(\d+)")
 _GH_MESSAGE_FLAGS = frozenset({"--body", "-b", "--title", "-t"})
+#: gh flags that take a value (global and the pr forms'), so a value is
+#: never read as the subcommand.
+_GH_VALUE_FLAGS = frozenset({
+    "-R", "--repo", "--hostname", "-b", "--body", "-t", "--title", "-F", "--body-file",
+    "-B", "--base", "-H", "--head", "-a", "--assignee", "-l", "--label", "-m", "--milestone",
+    "-p", "--project", "-r", "--reviewer", "-T", "--template", "-q", "--jq", "--json",
+    "-L", "--limit", "-s", "--state", "-A", "--author", "-S", "--search",
+})
+#: The gh forms an agent runs in its own right (read, or its own PR).
+_GH_ALLOWED = frozenset({
+    ("pr", "create"), ("pr", "edit"), ("pr", "view"), ("pr", "list"), ("pr", "status"),
+    ("pr", "checks"), ("pr", "diff"), ("issue", "view"), ("issue", "list"),
+    ("run", "view"), ("run", "list"), ("run", "watch"), ("repo", "view"), ("auth", "status"),
+})
+#: git commit's long options (git 2.x ``--git-completion-helper-all``); git
+#: accepts any unambiguous prefix of one.
+_GIT_COMMIT_LONG = (
+    "quiet", "verbose", "file", "author", "date", "message", "reedit-message", "reuse-message",
+    "fixup", "squash", "reset-author", "trailer", "signoff", "template", "edit", "cleanup",
+    "status", "gpg-sign", "all", "include", "interactive", "patch", "only", "no-verify",
+    "dry-run", "short", "branch", "ahead-behind", "porcelain", "long", "null", "amend",
+    "no-post-rewrite", "untracked-files", "pathspec-from-file", "pathspec-file-nul",
+    "allow-empty", "allow-empty-message", "verify", "post-rewrite",
+)
+_GIT_COMMIT_VALUE_LONG = frozenset({
+    "file", "author", "date", "message", "reedit-message", "reuse-message", "fixup", "squash",
+    "trailer", "template", "cleanup", "pathspec-from-file",
+})
+_GIT_COMMIT_MESSAGE_ELSEWHERE = frozenset({
+    "reedit-message", "reuse-message", "fixup", "squash", "template",
+})
+_GIT_COMMIT_MESSAGE_ELSEWHERE_SHORT = frozenset("Cct")
+
+
+def _git_long_option(name: str, options: tuple[str, ...]) -> Optional[str]:
+    """The long option ``name`` names, as git reads it: an exact name (its
+    ``no-`` form too), else the ONE option it is a prefix of; ``None`` when
+    none or more than one matches (git refuses an ambiguous prefix)."""
+    if not name:
+        return None
+    names = list(options) + [f"no-{o}" for o in options if not o.startswith("no-")]
+    if name in names:
+        return name
+    matches = [o for o in names if o.startswith(name)]
+    return matches[0] if len(matches) == 1 else None
+
+
 _GH_MESSAGE_FILE_FLAGS = frozenset({"--body-file", "-F"})
-_GIT_MESSAGE_FLAGS = frozenset({"--message", "-m"})
-_GIT_MESSAGE_FILE_FLAGS = frozenset({"--file", "-F"})
 
 
 def _closes_issue(text: str) -> bool:
