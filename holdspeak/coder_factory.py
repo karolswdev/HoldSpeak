@@ -17,10 +17,14 @@ Nothing autonomous; a human is behind every act.
 """
 from __future__ import annotations
 
+import os
 import re
+import shlex
 import shutil
 import subprocess
 import time
+import uuid
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 from . import coder_steering
@@ -98,29 +102,30 @@ def spawn(
     else:
         identity = f"agent:tmux:{name}"
         credential = agent_credentials.issue(identity)
-    # tmux installs these in the new session's environment before its first
-    # process starts.  The supervised agent receives only its scoped token,
-    # never the owner's browser credential.
+    # The supervised agent receives only its scoped token, never the owner's
+    # browser credential. Conductor R2: the token never rides argv (``ps``
+    # shows argv): a 0600 file in a 0700 directory carries it, and the
+    # session's first shell reads it, deletes it and runs the command.
+    env_file = write_credential_env(credential.token)
     argv = [
         "tmux",
         "new-session",
         "-d",
         "-e",
-        f"HOLDSPEAK_AGENT_CREDENTIAL={credential.token}",
-        "-e",
         f"HOLDSPEAK_HUB_URL={agent_credentials.hub_url}",
         "-s",
         name,
+        session_command(env_file, command),
     ]
-    if command:
-        argv.append(command)
     try:
         completed = _run(runner, argv)
     except (OSError, subprocess.TimeoutExpired) as exc:
         agent_credentials.revoke(identity)
+        _discard(env_file)
         return _audited({"status": "error", "detail": str(exc)})
     if completed.returncode != 0:
         agent_credentials.revoke(identity)
+        _discard(env_file)
         detail = (completed.stderr or "").strip()
         status = "exists" if "duplicate" in detail.lower() else "error"
         return _audited({"status": status, "detail": detail or "tmux refused"})
@@ -131,6 +136,51 @@ def spawn(
         pane_id = None
     agent_credentials.bind_target(identity, name, pane_id)
     return _audited({"status": "spawned", "session": name, "pane_id": pane_id}, pane_id)
+
+
+#: The environment variable the session's processes read the token from.
+CREDENTIAL_ENV = "HOLDSPEAK_AGENT_CREDENTIAL"
+
+
+def credential_env_dir() -> Path:
+    """The private directory of the one-shot credential files (0700)."""
+    return Path.home() / ".holdspeak" / "agent-env"
+
+
+def write_credential_env(token: str, directory: Optional[Path] = None) -> Path:
+    """Write ``token`` to a new 0600 file the session command sources once.
+
+    The token is URL-safe base64 (``secrets.token_urlsafe``); it is quoted
+    anyway."""
+    folder = directory or credential_env_dir()
+    folder.mkdir(parents=True, exist_ok=True)
+    try:
+        os.chmod(folder, 0o700)
+    except OSError:
+        pass
+    target = folder / f"{uuid.uuid4().hex}.env"
+    data = f"{CREDENTIAL_ENV}={shlex.quote(token)}\nexport {CREDENTIAL_ENV}\n".encode("utf-8")
+    fd = os.open(str(target), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        os.write(fd, data)
+    finally:
+        os.close(fd)
+    return target
+
+
+def session_command(env_file: Path, command: Optional[str]) -> str:
+    """The session's first shell line: read the credential file, delete it,
+    then run *command* (or the login shell when there is none)."""
+    path = shlex.quote(str(env_file))
+    rest = command or 'exec "${SHELL:-/bin/sh}" -l'
+    return f". {path}; rm -f {path}; {rest}"
+
+
+def _discard(path: Path) -> None:
+    try:
+        path.unlink()
+    except OSError:
+        pass
 
 
 def launch_identity(launch_id: str) -> str:

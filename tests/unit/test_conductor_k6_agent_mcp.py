@@ -285,8 +285,12 @@ def _spawn(rig) -> tuple[list[str], str]:
 
 
 def _env_token(argv: list[str]) -> str:
-    entry = next(a for a in argv if a.startswith("HOLDSPEAK_AGENT_CREDENTIAL="))
-    return entry.split("=", 1)[1]
+    # Conductor R2: the token rides a one-shot 0600 file, never argv.
+    from tests.unit._spawn_env import token_of
+
+    token = token_of(argv)
+    assert not any(token in arg for arg in argv)
+    return token
 
 
 def test_a_claude_launch_gets_the_mcp_and_its_credential(tmp_path, db, monkeypatch, hub, caplog) -> None:

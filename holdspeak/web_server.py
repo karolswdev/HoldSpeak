@@ -752,6 +752,14 @@ class MeetingWebServer:
         )
 
         app.state.agent_credentials = agent_credentials
+        # Conductor R2: the hub's agent credentials, their targets and launch
+        # ownership survive a restart; a revoke after the restart still ends
+        # the launch's grants.
+        from .db import get_database as _hub_db
+        from .services.conductor_launch import install_revoke_hook
+
+        agent_credentials.attach(_hub_db())
+        install_revoke_hook()
         app.state.owner_token = self.auth_token
 
         async def _launch_cut_response(response: Any) -> Any:

@@ -112,6 +112,9 @@ class FakeTmuxServer:
             if name in self.sessions:
                 return self._err(f"duplicate session: {name}")
             command = argv[5] if len(argv) > 5 else ""
+            from tests.unit._spawn_env import strip_env
+
+            command = strip_env(command)
             path = shlex.split(command)[1] if command.startswith("cd ") else "/"
             pane = f"%{self._next}"
             self._next += 1
@@ -336,7 +339,9 @@ def test_launch_creates_one_attempt_one_target_one_receipt(rig) -> None:
 
     # The composed command is the profile argv + Story ref, nothing else.
     spawn_argv = next(c for c in rig.tmux.calls if c[1] == "new-session")
-    command = spawn_argv[spawn_argv.index("-s") + 2]
+    from tests.unit._spawn_env import strip_env
+
+    command = strip_env(spawn_argv[spawn_argv.index("-s") + 2])
     assert command.startswith(f"cd {shlex.quote(str(rig.repo))} && ")
     assert "HOLDSPEAK_STORY_REF=demo/DM-1-01" in command
     # Conductor K2: every Claude launch carries HoldSpeak's spawn settings
@@ -374,7 +379,11 @@ def test_process_spawn_installs_gate_settings_and_allows_bash(rig, monkeypatch) 
     assert "HOLDSPEAK_PARENT_OPERATION_ID=op_parent123" in command
     assert f"--settings {settings}" in command
     assert command.endswith("--allowedTools Bash mcp__holdspeak")
-    assert any(arg.startswith("HOLDSPEAK_AGENT_CREDENTIAL=") for arg in spawn_argv)
+    # Conductor R2: the credential rides a one-shot file, never argv.
+    assert not any(arg.startswith("HOLDSPEAK_AGENT_CREDENTIAL=") for arg in spawn_argv)
+    from tests.unit._spawn_env import token_of
+
+    assert token_of(spawn_argv) and token_of(spawn_argv) not in " ".join(spawn_argv)
     assert any(arg.startswith("HOLDSPEAK_HUB_URL=") for arg in spawn_argv)
 
 

@@ -1883,6 +1883,34 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_project_delegation_one_live
 ON kernel_project_delegations(agent_identity, project_id) WHERE state='LIVE';
 CREATE INDEX IF NOT EXISTS idx_project_delegations_agent_project_state
 ON kernel_project_delegations(agent_identity, project_id, state);
+-- Conductor R2: the hub's agent credentials outlive a hub restart. The token
+-- is stored only as its SHA-256; expires_at is wall-clock seconds. A revoked
+-- row keeps revoked_at (never deleted). Device-local; never sync.
+CREATE TABLE IF NOT EXISTS agent_credentials (
+    id TEXT PRIMARY KEY,
+    token_sha256 TEXT NOT NULL UNIQUE,
+    identity TEXT NOT NULL,
+    palette_json TEXT,
+    palette_name TEXT,
+    launch_id TEXT,
+    project_id TEXT,
+    targets_json TEXT NOT NULL DEFAULT '[]',
+    expires_at REAL NOT NULL,
+    revoked_at REAL,
+    revocation_reason TEXT NOT NULL DEFAULT '',
+    created_at REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_agent_credentials_live
+ON agent_credentials(revoked_at, expires_at);
+-- Conductor R2: what a launch-bound credential may change (its origin item and
+-- what the agent created), keyed by the credential, so it ends with it.
+CREATE TABLE IF NOT EXISTS agent_launch_ownership (
+    credential_id TEXT NOT NULL,
+    ref TEXT NOT NULL,
+    created INTEGER NOT NULL DEFAULT 0,
+    recorded_at REAL NOT NULL,
+    PRIMARY KEY (credential_id, ref)
+);
 
 -- Skills (HS-116-06): reusable procedural knowledge agents learn and apply.
 CREATE TABLE IF NOT EXISTS skills (
