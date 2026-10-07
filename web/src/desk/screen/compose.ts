@@ -86,8 +86,11 @@ export function normalizeRef(ref: string): string {
   return `${kind}:${id}`;
 }
 
-function sprites(kind: string, id: string) {
-  return { sprite: objectSprite(kind, id, "rest"), spriteSelected: objectSprite(kind, id, "sel") };
+function sprites(kind: string, id: string, agent?: string) {
+  return {
+    sprite: objectSprite(kind, id, "rest", 64, agent),
+    spriteSelected: objectSprite(kind, id, "sel", 64, agent),
+  };
 }
 
 const AGENT_TITLE: Record<string, string> = { claude: "Claude Code", codex: "Codex" };
@@ -238,7 +241,7 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
       kind: "coder",
       kindWord: "AGENT",
       name: agentName(row),
-      ...sprites("coder", row.key),
+      ...sprites("coder", row.key, row.agent),
       lamp: { tone: AGENT_LAMP[state], label: agentWordFor(row) },
       target: { type: "agent", key: row.key },
     });

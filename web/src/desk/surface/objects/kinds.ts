@@ -49,14 +49,17 @@ export function objectKindWord(kind: string): string {
  *  list-row size (32, drawn at 32: PHILO-14 A0c). Every kind of the D1 mold
  *  has its own file in `sprites.ts` (A0b drew action item, PR, person and
  *  the drawers), so the kind reads through `spriteUrl` directly; only
- *  `agent` reads through the coder pool. */
+ *  `agent` reads through the coder pool, by its agent name when given. */
 export function objectSprite(
   kind: string,
   id: string,
   state: SpriteState = "rest",
   size: SpriteSize = 64,
+  /** The agent name of an agent object (`claude`, `codex`): it picks the
+   *  agent's own sprite (PHILO-14 A0c r2: Codex keeps its face everywhere). */
+  agent?: string | null,
 ): string {
-  return spriteUrl(kind === "agent" ? "coder" : kind, id, state, undefined, size);
+  return spriteUrl(kind === "agent" ? "coder" : kind, id, state, agent, size);
 }
 
 /** The lamp tones an object wears. Never colour alone: every lamp sits

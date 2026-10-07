@@ -214,6 +214,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
                     name={m.name}
                     kindWord={m.kindWord}
                     sprite={m.sprite}
+                    spriteSelected={m.spriteSelected}
                     selected={m.id === selectedId}
                     lamp={m.lamp ? { tone: m.lamp.tone, label: m.lamp.label } : undefined}
                     onSelect={() => setSelectedId(m.id)}

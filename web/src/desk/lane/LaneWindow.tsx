@@ -66,6 +66,13 @@ import {
 import { laneSessionKey, launchForSession, useLane, useLaneLaunchId } from "./laneStore";
 import "./lane.css";
 
+
+/** The lane title icon: the launch's OWN agent sprite at 32 (Codex keeps
+ * its face; PHILO-14 A0c r2). */
+export function laneTitleSprite(agent: string | null | undefined, key: string): string {
+  return spriteUrl("agent", key, "rest", agent, 32);
+}
+
 /** The lane refreshes this often while its window is in front. */
 export const LANE_FRONT_POLL_MS = 5_000;
 export const LANE_WINDOW_ID = "lane";
@@ -146,7 +153,7 @@ function LaneFrame({ launchId }: { launchId: string }) {
       defaultH={720}
       icon={
         <img
-          src={spriteUrl("agent", sessionKey ?? launchId, "rest", undefined, 32)}
+          src={laneTitleSprite(lane?.launch.agent ?? flight?.agent, sessionKey ?? launchId)}
           alt=""
           width={16}
           height={16}

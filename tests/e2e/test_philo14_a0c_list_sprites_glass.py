@@ -7,7 +7,8 @@ gallery holds the other list species (Needs you rows, the confirm line, the
 PR card). In Chromium, every list-row sprite is a file under
 `desk/sprites/32/` whose natural size is 32 x 32 (drawn at 32, shown 1:1),
 and every icon-view sprite stays the 64 px file. The lane window opened from
-the Conductor wears the 32 px agent sprite in its title bar.
+the Conductor wears the 32 px sprite of ITS agent in its title bar: the
+Codex launch's lane loads `32/agent-codex.png` (identity, not size alone).
 
 Shots (1440 and 393) to `.tmp/evidence-shots/p14-a0c/`: the drawer's list,
 the Conductor's list, the gallery's Needs you rows and the lane. The shots
@@ -88,6 +89,7 @@ def test_the_list_species_wear_the_32px_set(tmp_path: Path, monkeypatch: pytest.
     server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
     checks: list[tuple[str, list[dict[str, Any]]]] = []
+    identity: list[tuple[str, str, list[dict[str, Any]]]] = []
     icons: list[dict[str, Any]] = []
     try:
         from holdspeak.db import get_database
@@ -134,6 +136,28 @@ def test_the_list_species_wear_the_32px_set(tmp_path: Path, monkeypatch: pytest.
                 page.wait_for_timeout(300)
                 page.screenshot(path=str(SHOTS / f"conductor-list-{width}.png"))
                 checks.append((f"conductor list {width}", _sprites(window, ".object-list-open img")))
+                # Identity, not size alone (Astra r1 on #956): each agent row wears ITS agent.
+                identity.append((f"conductor codex row {width}", "agent-codex", _sprites(
+                    window, ".object-list-row[data-object-id='launch:launch_c4_recon'] .object-list-open img")))
+                identity.append((f"conductor claude row {width}", "agent-claude-code", _sprites(
+                    window, ".object-list-row[data-object-id='launch:launch_c4_runbook'] .object-list-open img")))
+
+                # 3a. The Codex launch's lane: its title wears the Codex sprite.
+                window.locator(".object-list-row[data-object-id='launch:launch_c4_recon'] button").first.click()
+                window.get_by_role("button", name="Open", exact=True).click()
+                codex_lane = page.locator(".is-lane")
+                codex_lane.wait_for(timeout=T)
+                codex_lane.locator("[data-testid='lane-rail']").wait_for(timeout=T)
+                page.wait_for_timeout(300)
+                page.screenshot(path=str(SHOTS / f"lane-codex-{width}.png"))
+                identity.append((f"codex lane title {width}", "agent-codex",
+                                 _sprites(page.locator("body"), ".is-lane .desk-session-glyph")))
+                page.goto(f"{url}/conductor?token={TOKEN}", wait_until="load")
+                _normal_chair(page)
+                window = page.locator(".conductor-window")
+                window.wait_for(timeout=T)
+                window.locator(".object-list-row").first.wait_for(timeout=T)
+                _settle(page)
 
                 # 3. The lane opened from the asking agent's row.
                 window.locator(".object-list-row[data-object-id='launch:launch_c4_runbook'] button").first.click()
@@ -170,6 +194,10 @@ def test_the_list_species_wear_the_32px_set(tmp_path: Path, monkeypatch: pytest.
         if "lane title" in where:
             continue
         assert all(s["shown"] == 32 for s in found), (where, found)
+    for where, name, found in identity:
+        assert found, where
+        for s in found:
+            assert s["src"].endswith(f"/desk/sprites/32/{name}.png"), (where, s)
     # The icon view keeps the 64 px set.
     assert icons, "no drawer icon read"
     for s in icons:
