@@ -67,7 +67,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                   const reason = send?.reason ?? null;
                   return (
                     <SurfaceLedgerRow key={r.id} data-testid="delivery-row" wrap expands={false}
-                      lead={<span data-outcome={r.outcome}><StateChip state="warning" label="" /></span>}
+                      lead={<span data-outcome={r.outcome}><StateChip state="warning" label="" wordless /></span>}
                       primary={<span className="surface-primary" data-to={r.deliveredTo ?? ""}>{`${SEND_WORDS.unknownChip} · CHECK ${r.deliveredTo ?? "—"}`}</span>}
                       cells={<>
                         {reason ? <span className="surface-token" data-chip data-code={reason}>{unknownWord(reason)}</span> : null}
@@ -80,7 +80,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
                 const manual = r.channel === "manual";
                 return (
                   <SurfaceLedgerRow key={r.id} data-testid="delivery-row" wrap expands={false}
-                    lead={<span data-outcome={r.outcome}><StateChip state="success" label="" /></span>}
+                    lead={<span data-outcome={r.outcome}><StateChip state="success" label="" wordless /></span>}
                     primary={<span className="surface-primary" data-to={r.deliveredTo ?? ""}>{r.deliveredTo ?? "—"}</span>}
                     cells={<>
                       <span className="surface-token" data-chip data-tone="ok" data-testid="history-word">

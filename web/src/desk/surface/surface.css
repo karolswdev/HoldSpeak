@@ -1334,7 +1334,9 @@ button.surface-edit-in-place:hover {
 }
 .surface-ledger-line {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) max-content 6ch max-content;
+  /* PHILO-14 B2: the lead slot grows past 52 px for a lamp with its word
+     (`FAILED`); a time or a bare lamp keeps the 52 px column. */
+  grid-template-columns: minmax(52px, max-content) minmax(0, 1fr) max-content 6ch max-content;
   align-items: center;
   gap: 0 10px;
   width: 100%;
@@ -3724,7 +3726,8 @@ button.surface-edit-in-place:hover {
 }
 .surface-ledger[data-cols="room"] .surface-ledger-lead {
   flex: none;
-  width: 16px;
+  /* PHILO-14 B2: a bare lamp holds 16 px; a lamp with its word grows. */
+  min-width: 16px;
   text-align: center;
 }
 .surface-ledger[data-cols="room"] .surface-ledger-primary {

@@ -71,3 +71,19 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
+
+/* PHILO-14 B2 (Astra r1 on #958): a DISABLED strip (the choice is held
+   elsewhere: Settings → People under an environment override) is no
+   control: every token is flat (`.bevel-flat`) on the library's disabled
+   ground, and the held value has no tint. Only its accent border still
+   says which value holds (Conductor R7: the pressed token shows the
+   value). */
+.surface-filter-token.btn:disabled,
+.surface-filter-token.btn[data-filter-active]:disabled {
+  box-shadow: none;
+  background: var(--disabled-bg);
+  color: var(--disabled-fg);
+}
+.surface-filter-token.btn:disabled:not([data-filter-active]) {
+  border-color: var(--disabled-border);
+}
