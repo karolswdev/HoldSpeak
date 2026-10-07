@@ -223,6 +223,10 @@ export type RoomNeedsYouItem = {
   medianDays?: number;
   /** HS-173: count of PRs waiting on this reviewer. */
   prCount?: number;
+  /** The Watch the row was read from (HS-200-11). */
+  watchId?: string;
+  /** Conductor R4: an issue row's entity in that Watch (kind `issue`). */
+  entityId?: string;
 };
 
 /** Needs-you section data shape (when ok). */
@@ -589,6 +593,8 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             relationshipId: r.relationship_id != null ? String(r.relationship_id) : undefined,
             medianDays: r.median_days != null ? Number(r.median_days) : undefined,
             prCount: r.count != null ? Number(r.count) : undefined,
+            watchId: r.watchId != null && r.watchId !== "" ? String(r.watchId) : undefined,
+            entityId: r.entity_id != null && r.entity_id !== "" ? String(r.entity_id) : undefined,
           }))
         : [],
       count: Number(s.count ?? 0),

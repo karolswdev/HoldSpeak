@@ -73,6 +73,11 @@ class AgentHandRefused(ServiceError):
 def item_exists(db: Any, kind: str, item_id: str) -> bool:
     from ..grounding import hydrate_refs_detailed
 
+    if kind == "issue":
+        from .agent_issue import read_issue
+
+        return read_issue(db, item_id) is not None
+
     try:
         hydrated = hydrate_refs_detailed(db, [], [], "summary", [f"{kind}:{item_id}"])
     except Exception:
@@ -183,8 +188,12 @@ class AgentHandService:
         gate_path: Optional[Path] = None,
         project_map: Optional[Mapping[str, Any]] = None,
         max_live: int = MAX_LIVE_LAUNCHES,
+        issue_reads: Optional[Mapping[str, Any]] = None,
     ) -> None:
         self._db = db
+        #: The tracker reads of an issue brief (``gh_runner``, ``jira_adapter``);
+        #: empty in production (the real CLIs).
+        self.issue_reads: Mapping[str, Any] = dict(issue_reads or {})
         self._launch_service = launch_service
         self._control_mode = control_mode or _config_control_mode
         self._gate_path = gate_path
@@ -275,6 +284,8 @@ class AgentHandService:
                 instruction=instruction,
                 control_mode=mode,
                 repo_path=source.primary_path,
+                principal=principal,
+                issue_reads=self.issue_reads,
             )
         except AgentBriefRefused as exc:
             raise AgentHandRefused(exc.reason, str(exc)) from exc

@@ -420,6 +420,12 @@ _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "mandatory authenticated owner read",
     (
+        "holdspeak/services/agent_issue.py",
+        "_gh_body",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # Conductor R4: `gh issue view` for an issue brief
+    (
         "holdspeak/services/jira_provider.py",
         "JiraProviderAdapter._run_acli",
         "run_read_subprocess",

@@ -199,8 +199,24 @@ describe("Hand to agent: where the verb reaches", () => {
     })).toEqual({ kind: "action", id: "c1", title: "Write the rollback runbook", projectId: "p" });
     expect(handOriginOfRow({ title: "T", source: "commitment", actionItemId: "a9" })).toMatchObject({ kind: "action", id: "a9" });
     expect(handOriginOfRow({ title: "Freeze", source: "decision", openRef: "decision:d-freeze" })).toMatchObject({ kind: "decision", id: "d-freeze" });
-    // A GitHub issue is not a kind agent.hand takes: no verb.
+    // A row that names no item (a PR waiting on review) has no verb.
     expect(handOriginOfRow({ title: "#418 Reconciliation job slow", source: "github" })).toBeNull();
+    // Conductor R4: a Room issue row names its Watch and entity: the issue kind.
+    expect(handOriginOfRow({
+      title: "PAY-418 Reconciliation job slow", source: "jira", kind: "issue",
+      watchId: "watch-r4-jira", entityId: "PAY-418", projectId: "p",
+    })).toEqual({ kind: "issue", id: "watch-r4-jira.PAY-418", title: "PAY-418 Reconciliation job slow", projectId: "p" });
+    // An issue row missing its entity cannot be handed.
+    expect(handOriginOfRow({ title: "PAY-418", source: "jira", kind: "issue", watchId: "w" })).toBeNull();
+  });
+
+  it("R4: the Room issue row wears Hand to agent and opens the sheet for issue:<watch>.<entity>", () => {
+    const { container } = render(
+      <HandRowVerb item={{ title: "PAY-418 Reconciliation job slow", source: "jira", kind: "issue", watchId: "watch-r4-jira", entityId: "PAY-418" }} />,
+    );
+    expect(container.querySelectorAll("[data-testid=hand-row-verb]").length).toBe(1);
+    fireEvent.click(screen.getByRole("button", { name: "Hand to agent: PAY-418 Reconciliation job slow" }));
+    expect(useAgentHand.getState().origin).toMatchObject({ kind: "issue", id: "watch-r4-jira.PAY-418" });
   });
 
   it("the row verb opens the sheet for its item, and is withheld when the item cannot be handed", () => {

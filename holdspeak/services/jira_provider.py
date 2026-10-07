@@ -1536,6 +1536,48 @@ class JiraProviderAdapter:
             "project_key": project.get("key") if isinstance(project, dict) else None,
         }
 
+    def view_description(
+        self,
+        principal: Principal,
+        connection_ref_str: str,
+        key: str,
+    ) -> dict[str, Any]:
+        """One work item's description and labels (Conductor R4: the issue
+        brief). ``acli jira workitem view KEY --fields description,labels
+        --json`` under the account switch. Read only.
+
+        Returns ``{state: "ready", description, labels}`` or the typed
+        error dict of ``_with_account``/``{state: failed}``."""
+        clean_key = str(key or "").strip()
+        if not re.match(r"^[A-Z][A-Z0-9_]*-\d+$", clean_key):
+            return {"state": DISCOVERY_FAILED, "error_code": CODE_QUERY_INVALID, "error_detail": "bad key"}
+
+        def _run(_s: str, _e: str) -> dict[str, Any]:
+            command = [
+                "acli", "jira", "workitem", "view", clean_key,
+                "--fields", "description,labels", "--json",
+            ]
+            try:
+                completed = self._run_acli(command, principal, timeout=15.0)
+            except Exception as exc:
+                return {"state": DISCOVERY_FAILED, "error_code": CODE_UNAVAILABLE, "error_detail": str(exc)[:300]}
+            if completed.returncode != 0:
+                return {"state": DISCOVERY_FAILED, "error_code": CODE_UNAVAILABLE,
+                        "error_detail": (completed.stderr or "")[:300]}
+            try:
+                obj = json.loads(completed.stdout or "{}")
+            except json.JSONDecodeError:
+                return {"state": DISCOVERY_FAILED, "error_code": CODE_QUERY_INVALID,
+                        "error_detail": "acli returned invalid JSON"}
+            fields = (obj or {}).get("fields") or {}
+            return {
+                "state": DISCOVERY_READY,
+                "description": fields.get("description"),
+                "labels": fields.get("labels") or [],
+            }
+
+        return self._with_account(principal, connection_ref_str, _run)
+
     def count(
         self,
         principal: Principal,

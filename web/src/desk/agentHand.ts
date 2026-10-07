@@ -12,13 +12,14 @@
 import { create } from "zustand";
 import type { PrimitiveKind } from "../lib/primitives";
 import type { AgentId } from "./firstrun/agentsStep";
+import { issueOriginId } from "./agentFlights";
 
 export const HAND_PATH = "/api/agent/hand";
 export const HAND_PREVIEW_PATH = "/api/agent/hand/preview";
 export const HAND_WINDOW_ID = "agent-hand";
 
 /** The item kinds `agent.hand` takes (holdspeak/services/agent_brief.py BRIEF_KINDS). */
-export type HandKind = "action" | "decision" | "decision_record" | "project_item" | "note" | "meeting" | "artifact";
+export type HandKind = "action" | "decision" | "decision_record" | "project_item" | "note" | "meeting" | "artifact" | "issue";
 
 export interface HandOrigin {
   kind: HandKind;
@@ -78,13 +79,17 @@ export interface HandRowItem {
   actionItemId?: string | null;
   openRef?: string | null;
   projectId?: string | null;
+  /** A Room issue row (Conductor R4): `kind: "issue"`, its Watch and its entity. */
+  kind?: string | null;
+  watchId?: string | null;
+  entityId?: string | null;
   _doorCard?: { lawful_verbs?: Array<{ name: string; arguments: Record<string, unknown> }> } | null;
 }
 
 /** The item a row hands to an agent, or null (the verb is withheld: A.11).
  * In order: the Door card's declared `agent.hand` verb; a commitment's
- * action item; a decision's Desk route token. A GitHub issue is not a
- * kind `agent.hand` takes (agent_brief BRIEF_KINDS), so it has no verb. */
+ * action item; a decision's Desk route token; a Room issue row (its Watch
+ * and entity: `issue:<watch_id>.<entity_id>`, Conductor R4). */
 export function handOriginOfRow(item: HandRowItem): HandOrigin | null {
   const title = String(item.title ?? "") || "Untitled";
   const projectId = item.projectId ? String(item.projectId) : null;
@@ -94,6 +99,8 @@ export function handOriginOfRow(item: HandRowItem): HandOrigin | null {
     if (ref) return { ...ref, title, projectId };
   }
   if (item.actionItemId) return { kind: "action", id: String(item.actionItemId), title, projectId };
+  const issue = issueOriginId(item);
+  if (issue) return { kind: "issue", id: issue, title, projectId };
   if (item.source === "decision") {
     const ref = handRefOf(item.openRef);
     if (ref?.kind === "decision") return { ...ref, title, projectId };

@@ -1042,6 +1042,10 @@ class ProjectService:
                         jira_title = entity.get("summary") or entity.get("title") or ""
                         needs.append({
                             "source": "jira",
+                            # Conductor R4: an issue row names its entity, so
+                            # Hand to agent can take it (issue:<watch>.<id>).
+                            "kind": "issue",
+                            "entity_id": str(entity.get("id") or jira_id),
                             "title": f"{jira_id} {jira_title}".strip(),
                             "why": f"OVERDUE · {_count_unit(overdue_days, 'DAY')}",
                             "since": due_at,

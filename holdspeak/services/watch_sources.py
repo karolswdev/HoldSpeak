@@ -34,7 +34,7 @@ Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 GH_WATCH_FIELDS = (
     "number,title,url,state,isDraft,reviewRequests,reviewDecision,"
-    "statusCheckRollup,headRefOid,headRefName,updatedAt,createdAt"
+    "statusCheckRollup,headRefOid,headRefName,updatedAt,createdAt,mergedAt"
 )
 
 
@@ -110,6 +110,8 @@ class GitHubWatchSource:
                 "checks": rollup_conclusion(row.get("statusCheckRollup")),
                 "headRefOid": row.get("headRefOid"), "headRefName": row.get("headRefName"),
                 "updatedAt": row.get("updatedAt"), "createdAt": row.get("createdAt"),
+                # Conductor R4: the Heartbeat's merged-only read names when.
+                "mergedAt": row.get("mergedAt"),
             })
         return entities
 

@@ -244,6 +244,7 @@ def preview_hand(
         brief = compose_agent_brief(
             db, {"kind": kind, "id": item_id}, project_id=project_id,
             instruction=instruction, control_mode=mode, repo_path=repo,
+            principal=principal, issue_reads=getattr(service, "issue_reads", None),
         )
     except AgentBriefRefused as exc:
         raise AgentHandRefused(exc.reason, str(exc)) from exc

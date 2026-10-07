@@ -246,7 +246,7 @@ def test_merge_closes_the_action_with_evidence_and_cleans_up(tmp_path, db, monke
     assert record["follow_through"]["close"] == "closed"
     assert record["follow_through"]["cleanup"] == {
         "session": "killed", "worktree": "worktree_removed", "gate": "released",
-        "attempts": "reconciled", "mcp": "released",
+        "attempts": "reconciled", "mcp": "released", "registry": "unregistered",
     }
     assert record["follow_through"]["pr"]["number"] == 7 and record["follow_through"]["pr"]["url"] == PR_URL
     assert record["follow_through"]["done"] is True
@@ -488,9 +488,11 @@ def test_secure_asks_through_one_door_item_then_closes_on_confirm(tmp_path, db, 
     assert len(rows) == 1, "one confirm item across sweeps"
     confirm_id, task, owner = rows[0]
     assert task == "Merged: confirm close: Fix the login timeout (PR #7)"
-    assert owner is None
+    # Conductor R4: the owner holds it, due today (it read UNASSIGNED before).
+    assert owner == "me"
     board = FollowThroughService(db).board(OWNER)
-    assert confirm_id in [card.id for card in board.unassigned], "the item is on the Door (Needs you R1)"
+    assert confirm_id in [card.id for card in board.now], "the item is on the Door (Needs you R1), due today"
+    assert confirm_id not in [card.id for card in board.unassigned]
     assert receipt["follow_through"]["confirm"] == [{"launch_id": launch_id}]
     assert rig.worktree.exists(), "cleanup waits for the close"
 

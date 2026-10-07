@@ -34,6 +34,7 @@ REPO = Path(__file__).resolve().parents[4]
 OUT = REPO / ".tmp/evidence-shots/conductor-f1"
 CANVAS = REPO / "docs/internal/conductor-canvas/shots"
 RUNBOOK = "Write the rollback runbook"
+ISSUE418 = "PAY-418 Reconciliation job slow on month-end data"
 ROOM = "surface-project-memory"
 BARE_PATH = "/usr/bin:/bin:/usr/sbin:/sbin"
 TOOLS = ("claude", "codex", "tmux")
@@ -127,6 +128,7 @@ class BuiltStack(rig.Stack):
         # The canvas's issue rows (#418, #421; its stand-in S4) through a REAL producer: the
         # Room's OPEN HERE reads issue rows only from a Jira `issues` Watch snapshot
         # (ProjectService._read_room_needs_you; a GitHub issues Watch yields no row on main).
+        # Since R4 each row names its Watch and entity, so Hand to agent takes it.
         seeded = subprocess.run(
             [rig.PY, "-c", ISSUE_SEED], cwd=REPO, capture_output=True, text=True, timeout=120,
             env={**os.environ, "HOME": self.home, "PYTHONPATH": str(REPO)},
@@ -253,15 +255,22 @@ def boards(r: board.Runner) -> None:
     settle(400)
     rows = ev(f"() => [...document.querySelectorAll(\"[id='{ROOM}'] [data-testid=needs-you-row]\")].map((c) => c.innerText.replace(/\\s+/g, ' ').trim())")
     issue_rows = [x for x in rows if "PAY-418" in x or "PAY-421" in x]
-    r.shoot("K2e-room-row-verb", "Payments ledger cutover", whole=[f"[id='{ROOM}'] [aria-label='Hand to agent: {RUNBOOK}']"],
+    # Conductor R4: an issue row wears Hand to agent, as ratified (K2e).
+    r.shoot("K2e-room-row-verb", "Payments ledger cutover",
+            whole=[f"[id='{ROOM}'] [aria-label='Hand to agent: {RUNBOOK}']", f"[id='{ROOM}'] [aria-label='Hand to agent: {ISSUE418}']"],
             checks={"the two issue rows are in OPEN HERE (real producer)": len(issue_rows) == 2,
-                    "an issue row has no Hand to agent (agent.hand takes no issue)": not any("Hand to agent" in x for x in issue_rows),
+                    "each issue row has Hand to agent (R4: agent.hand takes an issue)": len(issue_rows) == 2 and all("Hand to agent" in x for x in issue_rows),
                     "the runbook row has Hand to agent": any(RUNBOOK in x and "Hand to agent" in x for x in rows)},
             extra={"open_here": rows})
-    r.tap(rrow.locator("[data-testid=hand-row-verb]"), 2500)
+    # K3b as ratified: the sheet for the issue, from its Room row, Codex picked.
+    irow = page.locator(f"[id='{ROOM}'] [data-testid=needs-you-row]:has-text('PAY-418')").first
+    irow.scroll_into_view_if_needed()
+    settle(300)
+    r.tap(irow.locator("[data-testid=hand-row-verb]"), 2500)
     r.tap(page.locator("[data-testid=hand-sheet] label.surface-choice-card:has-text('Codex')").first, 2000)
     r.shoot("K3b-launch-sheet-codex", "Hand to agent", whole=["[data-testid=hand-launch]", ".desk-hand-footer .gadget-chip-egress"],
-            checks={"the egress chip follows the pick": "API.OPENAI.COM" in ev(footer)},
+            checks={"the egress chip follows the pick": "API.OPENAI.COM" in ev(footer),
+                    "the sheet carries the issue (R4)": "PAY-418" in ev("() => (document.querySelector('[data-testid=hand-sheet]') || {}).innerText || ''")},
             extra={"sheet": ev("() => (document.querySelector('[data-testid=hand-sheet]') || {}).innerText || ''")[:1200]})
     close_sheet(r)
 
