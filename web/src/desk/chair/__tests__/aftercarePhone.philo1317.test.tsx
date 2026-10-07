@@ -57,7 +57,7 @@ vi.mock("../../projections", () => {
 });
 
 import { lazy } from "react";
-import { useChairWindows } from "../chairWindows";
+import { closeChairWindow, useChairWindows } from "../chairWindows";
 import { SurfaceWindowHost, type SurfaceRow } from "../../components/SurfaceWindows";
 import { announceWindow, retractWindow } from "../../components/window/windowRegistry";
 import { phoneRing, stepRing } from "../../components/window/phoneRing";
@@ -179,5 +179,56 @@ describe("PHILO-13-17 C7 aftercare at 393", () => {
     await waitFor(() => expect(inCapture()).toBeTruthy());
     expect(useChairWindows.getState().phone).toBe("chair:needs");
     expect(useChairWindows.getState().captureInRing).toBe(false);
+  });
+});
+
+/* PHILO-14 A1c (Muad'Dib's ruling 2026-10-07): since A1 the Chair's windows
+ * start closed at 1440, so the card had no slot and floated over The week's
+ * summary. Red on main: Capture stays closed and the card is fixed. */
+describe("PHILO-14 A1c aftercare at 1440", () => {
+  beforeEach(() => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: false, media: query, addEventListener: () => {}, removeEventListener: () => {},
+      addListener: () => {}, removeListener: () => {}, onchange: null, dispatchEvent: () => false,
+    }));
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 1440 });
+    useChairWindows.setState({
+      closed: { "chair:needs": true, "chair:brief": true, "chair:capture": true },
+      phone: "",
+      captureInRing: false,
+    });
+  });
+
+  it("a closed Capture opens for the card; the card sits in its slot; Dismiss clears it", async () => {
+    render(<><AmbientLayer /><ChairHome /></>);
+    await screen.findByTestId("chair-desk");
+    expect(useChairWindows.getState().closed["chair:capture"]).toBe(true);
+    publish();
+    await waitFor(() => expect(useChairWindows.getState().closed["chair:capture"]).toBe(false));
+    await waitFor(() => expect(inCapture()).toBeTruthy());
+    expect(fixed()).toBeNull();
+    expect(useDesk.getState().panelOrder.at(-1)).toBe("chair:capture");
+
+    act(() => screen.getByRole("button", { name: "Dismiss" }).click());
+    await waitFor(() => expect(document.querySelector(".ambient-aftercare")).toBeNull());
+    expect(useChairWindows.getState().closed["chair:capture"]).toBe(false);
+  });
+
+  it("a card waiting when the Chair mounts opens Capture in its seat", async () => {
+    publish();
+    render(<><AmbientLayer /><ChairHome /></>);
+    await screen.findByTestId("chair-desk");
+    await waitFor(() => expect(inCapture()).toBeTruthy());
+    expect(fixed()).toBeNull();
+  });
+
+  it("Capture closed while the card stands: the card waits; it never floats", async () => {
+    render(<><AmbientLayer /><ChairHome /></>);
+    await screen.findByTestId("chair-desk");
+    publish();
+    await waitFor(() => expect(inCapture()).toBeTruthy());
+    act(() => closeChairWindow("chair:capture"));
+    await waitFor(() => expect(document.querySelector(".ambient-aftercare")).toBeNull());
+    expect(fixed()).toBeNull();
   });
 });

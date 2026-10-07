@@ -78,8 +78,15 @@
   gap: 10px;
 }
 .desk-next .chair-window--capture .chair-window-body {
-  justify-content: center;
+  /* PHILO-14 A1c (Astra r1): `safe` — when the aftercare card overflows a
+     short Capture he arranged, the content starts at the scroll origin, so
+     the whole card is reachable by scrolling (plain `center` stranded the
+     overflow above it). */
+  justify-content: safe center;
   padding: 8px 12px;
+}
+.desk-next .chair-window--capture .chair-window-body > * {
+  flex-shrink: 0;
 }
 /* The capture bar lives in its window: no floating bar over content. */
 .desk-next .chair-window .arrival-capture-bar {
