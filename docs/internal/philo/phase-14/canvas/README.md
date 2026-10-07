@@ -1,6 +1,6 @@
 # PHILO Phase 14 canvas: The Desk Is Objects
 
-**Status: DRAFT, for the owner's letter.** Nothing in product code changes. Every change is in `harness/`.
+**Status: RATIFIED 2026-10-07.** The owner: "it is an improvement ... all three are viable" and "you just need to push it through"; he deferred the letter, so Muad'Dib ruled (his standing rule when he defers): **A, Workbench**, with one borrow from C, the station track across the top of the agent's lane (`C-4`). B's pit is not taken. The owner also ruled the icons: "the existing icons are pretty cringe and deserve a freaking overhaul": a new mold is drawn on PixelLab (lane A0) and comes to him as a sheet to pick from before it lands; until then the boards' sprites are stand-ins. Build what is drawn on the A boards; nothing in product code changed in this folder. Every change is in `harness/`.
 
 The page: `page.html` (one row per moment: the control, then A, B, C at 1440; the 393 shots under them; "Your call" at the top; the new species at the bottom). The charter: `docs/internal/philo/phase-14/PROPOSAL.md` (branch `philo-14/charter`).
 
