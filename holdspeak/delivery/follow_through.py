@@ -526,6 +526,8 @@ class FollowThroughObserver:
             state["pr"] = {
                 "url": row.get("url"), "number": row.get("number"),
                 "state": row.get("state"), "review_decision": row.get("review_decision"),
+                # PHILO-14 C0: the checks rollup and each check, for the lane.
+                "ci": row.get("ci"), "checks": list(row.get("checks") or []),
             }
         if pr_state == "pr_closed_unmerged":
             # The PR was closed without a merge: nothing closes, nothing is

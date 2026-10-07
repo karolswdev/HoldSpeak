@@ -308,7 +308,9 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
         window fall out of the live set entirely; `include_ended=false` also
         drops fresh tombstones. `flights` lists each item an agent was
         handed (Conductor F2, `services.agent_flights`); a session that
-        works on one carries it as `flight`.
+        works on one carries it as `flight`. A launched agent's drafted
+        answer, its events and its worktree facts are on its lane
+        (`GET /api/agent/launches/{id}/lane`, PHILO-14 C0), not here.
         """
         try:
             items = _service().list_sessions(

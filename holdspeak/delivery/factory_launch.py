@@ -1032,6 +1032,8 @@ class LaunchService:
             "operation_id": parent_operation_id or None,
             "rollback": None,
             "launched_at": _iso_now(self._wall_now()),
+            # PHILO-14 C0: the control mode the launch ran under (the lane shows it).
+            "control_mode": mode,
             "mcp": {
                 "server": agent_mcp.SERVER_NAME,
                 "palette": "CONDUCTOR",

@@ -3529,6 +3529,66 @@
         "summary": "Api Agent Deliver"
       }
     },
+    "/api/agent/launches/{launch_id}/lane": {
+      "get": {
+        "description": "One launch's lane (PHILO-14 C0): the launch with its brief, the\nfollow-through with the PR checks, the current wait with its draft,\nthe session's events (paged: ``?after=<event id>&limit=``), the gated\ncalls, the answers typed, the attempt's state changes, the worktree's\ncommits and files, and the usage. Owner only (the edge default).\nReads only (``services.launch_lane``).",
+        "operationId": "api_agent_launch_lane_api_agent_launches__launch_id__lane_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "After",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Launch Lane Api Agent Launches  Launch Id  Lane Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Launch Lane"
+      }
+    },
     "/api/agents/capabilities": {
       "get": {
         "operationId": "api_agent_capabilities_api_agents_capabilities_get",
@@ -7100,7 +7160,7 @@
     },
     "/api/coders/sessions": {
       "get": {
-        "description": "The live coder set (HSM-17-02) in the HSM-17-01 shape.\n\nEvery session the hooks reported, newest first \u2014 not just the ones\nwaiting on a reply \u2014 each carrying its raw `lifecycle`, the pending\n`question` (secret-filtered at ingest), and the decayed effective\n`state` (working | waiting | idle | ended). Sessions past the dead\nwindow fall out of the live set entirely; `include_ended=false` also\ndrops fresh tombstones. `flights` lists each item an agent was\nhanded (Conductor F2, `services.agent_flights`); a session that\nworks on one carries it as `flight`.",
+        "description": "The live coder set (HSM-17-02) in the HSM-17-01 shape.\n\nEvery session the hooks reported, newest first \u2014 not just the ones\nwaiting on a reply \u2014 each carrying its raw `lifecycle`, the pending\n`question` (secret-filtered at ingest), and the decayed effective\n`state` (working | waiting | idle | ended). Sessions past the dead\nwindow fall out of the live set entirely; `include_ended=false` also\ndrops fresh tombstones. `flights` lists each item an agent was\nhanded (Conductor F2, `services.agent_flights`); a session that\nworks on one carries it as `flight`. A launched agent's drafted\nanswer, its events and its worktree facts are on its lane\n(`GET /api/agent/launches/{id}/lane`, PHILO-14 C0), not here.",
         "operationId": "api_coders_sessions_api_coders_sessions_get",
         "parameters": [
           {

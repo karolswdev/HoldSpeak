@@ -162,6 +162,7 @@ def test_sweep_refreshes_the_pr_of_a_live_launch(tmp_path, db, monkeypatch) -> N
     record = rig.launches.get(rig.result["launch_id"])
     assert record["follow_through"]["pr"] == {
         "url": PR_URL, "number": 7, "state": "open", "review_decision": "",
+        "ci": "none", "checks": [],
     }
     # The shared receipts cache shows the sweep's rows to the next read.
     rows = rig.receipts.rows_view()["sources"][0]["prs"]

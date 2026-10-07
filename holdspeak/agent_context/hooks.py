@@ -211,12 +211,15 @@ def claude_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
             # ask (permission prompts, "waiting for your input") -> waiting;
             # PostToolUse is the working heartbeat (bounded matcher so a spawn
             # happens per meaningful tool, not per read); SessionEnd tombstones.
+            # PHILO-14 C0: PostToolUse carries ``tool_input``, so the event log
+            # keeps each change's file path and each command's head for an
+            # ungated launch too; MultiEdit and NotebookEdit change files.
             "Notification": [
                 {"hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}]}
             ],
             "PostToolUse": [
                 {
-                    "matcher": "Bash|Edit|Write|Task",
+                    "matcher": "Bash|Edit|Write|MultiEdit|NotebookEdit|Task",
                     "hooks": [{"type": "command", "command": command, "timeout": RIDER_HOOK_TIMEOUT_SECONDS}],
                 }
             ],
