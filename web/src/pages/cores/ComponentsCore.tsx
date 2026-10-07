@@ -55,6 +55,7 @@ import {
   type GraphNode,
   type GraphFlow,
 } from "../../desk/surface/graph/TopologySurface";
+import { ObjectSpeciesGallery } from "./ObjectSpeciesGallery";
 
 const ALL_CHIP_STATES: ChipState[] = [
   "idle", "active", "working", "success", "warning", "failure", "unreachable",
@@ -438,6 +439,9 @@ export function ComponentsCore({ hero }: CoreProps) {
           inspectorSlot={<div style={{ padding: 8, fontSize: "var(--font-size-sm)", fontFamily: "var(--font-mono)" }}>Inspector slot</div>}
           addNodeSlot={<Button dense variant="ghost">+ Add node</Button>}
         />
+      </SurfaceSection>
+      <SurfaceSection label="Object species (PHILO-14 B1)">
+        <ObjectSpeciesGallery />
       </SurfaceSection>
       <SurfaceFooter
         receipt={<Receipt status="ok" label="Gallery loaded" timestamp="now" />}

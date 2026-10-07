@@ -1427,6 +1427,46 @@
         "name": "--wb-raised-soft",
         "value": "inset 1px 1px 0 rgba(255, 255, 255, 0.36), inset -1px -1px 0 rgba(0, 0, 0, 0.25)",
         "doc": "PHILO-13-11 title bar B (owner pick 2026-10-03): a gadget cell, the raised bevel at half strength"
+      },
+      {
+        "name": "--bevel-raised",
+        "value": "inset 1px 1px 0 var(--bevel-light-strong), inset -1px -1px 0 var(--bevel-dark)",
+        "doc": "PHILO-14 B1 (the object species): the bevel grammar: a control you click (a gadget, a sort header, a plate) LOOKS raised"
+      },
+      {
+        "name": "--bevel-sunken",
+        "value": "inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light-strong)",
+        "doc": "PHILO-14 B1 (the object species): the bevel grammar: a well you type or drop into, and a pressed gadget, sits sunken"
+      },
+      {
+        "name": "--lamp-ok",
+        "value": "var(--ok)",
+        "doc": "PHILO-14 B1 (the object species): IconLamp tone ok: done, checks pass"
+      },
+      {
+        "name": "--lamp-warn",
+        "value": "var(--warn-signal)",
+        "doc": "PHILO-14 B1 (the object species): IconLamp tone warn: a held call, due, to review"
+      },
+      {
+        "name": "--lamp-fail",
+        "value": "var(--danger)",
+        "doc": "PHILO-14 B1 (the object species): IconLamp tone fail: a failed check, a stopped agent"
+      },
+      {
+        "name": "--lamp-info",
+        "value": "var(--accent-cool)",
+        "doc": "PHILO-14 B1 (the object species): IconLamp tone info: in progress (an agent at work, a PR open)"
+      },
+      {
+        "name": "--lamp-ask",
+        "value": "var(--p-color-orange-300)",
+        "doc": "PHILO-14 B1 (the object species): IconLamp tone ask: it asks you (an agent's question); the ember of the A boards"
+      },
+      {
+        "name": "--desk-ghost-shadow",
+        "value": "drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.45))",
+        "doc": "PHILO-14 B1 (the object species): the DragGhost's hard offset shadow (no blur, the Workbench drop)"
       }
     ]
   },

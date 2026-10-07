@@ -178,3 +178,6 @@ export {
 } from "./graph/TopologySurface";
 
 export { countToken, countLabel } from "./count";
+
+// PHILO-14 B1 — the object species (DeskIcon, ObjectList, TimelineRail, ...).
+export * from "./objects";

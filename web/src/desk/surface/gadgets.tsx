@@ -665,8 +665,10 @@ export function LampGadget({
   label: string;
   on: boolean;
   /** HS-111-08 — `fail` joined the roster (the readiness column's
-   * honest red); the lamp is never color-only by construction. */
-  tone?: "ok" | "warn" | "fail";
+   * honest red); the lamp is never color-only by construction.
+   * PHILO-14 B1 — `info` (in progress) and `ask` (it asks you) joined, the
+   * object tones, so a row's lamp matches its icon's. */
+  tone?: "ok" | "warn" | "fail" | "info" | "ask";
   /** HS-135-02 L6 — block system messages wrap instead of truncating. */
   block?: boolean;
 }) {

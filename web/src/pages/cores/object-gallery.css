@@ -1,0 +1,30 @@
+/* PHILO-14 B1 — the gallery's own frame for the object species (the
+   Workbench screen behind the Floor icons; the ghost held in place). */
+.object-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.object-gallery-floor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 8px;
+  background-color: var(--wb-backdrop);
+  background-image: conic-gradient(var(--wb-dither) 25%, transparent 0 50%, var(--wb-dither) 0 75%, transparent 0);
+  background-size: 4px 4px;
+  color: var(--wb-paper);
+  margin-bottom: 12px;
+}
+.object-gallery-drop {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 8px;
+  background-color: var(--wb-backdrop);
+  color: var(--wb-paper);
+  margin-top: 12px;
+}
+.object-gallery-ghost-slot .drag-ghost {
+  position: static;
+}
