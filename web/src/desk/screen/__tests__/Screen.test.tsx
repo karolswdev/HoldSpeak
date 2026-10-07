@@ -129,7 +129,7 @@ const keys = () => [...document.querySelectorAll<HTMLElement>(".desk-screen [dat
 
 beforeEach(() => {
   resetScreenMembers();
-  useDrawers.setState({ drawers: [] });
+  useDrawers.setState({ drawers: [], parked: null });
   setCompact(false);
   localStorage.clear();
   vi.mocked(apiFetch).mockReset();
@@ -249,8 +249,10 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-conductor", "/conductor");
     fireEvent.keyDown(icon(/^People, DRAWER/), { key: "Enter" });
     expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-people", "/");
+    // PHILO-15 04 (gap 14): Parked opens the Parked drawer, not Meetings.
     fireEvent.keyDown(icon(/^Parked/), { key: "Enter" });
-    expect(shell.openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history");
+    expect(useDrawers.getState().parked).not.toBeNull();
+    expect(shell.openSurfaceOr).not.toHaveBeenCalledWith("review-meetings", "/history");
     fireEvent.doubleClick(icon(/^Vendor call/));
     expect(openMeeting).toHaveBeenCalledWith("meeting:m-vendor");
     fireEvent.keyDown(icon(/^Avery Chen/), { key: "Enter" });

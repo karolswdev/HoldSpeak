@@ -39,7 +39,9 @@ describe("the provider words", () => {
 
   it("keeps each provider's key under its own name", () => {
     expect(keyRef("Karol@Example.com", "resend")).toBe("resend-karol@example.com");
-    expect(keyRef("Karol@Example.com")).toBe("sendgrid-karol@example.com");
+    expect(keyRef("Karol@Example.com", "sendgrid")).toBe("sendgrid-karol@example.com");
+    // PHILO-15 04 (gap 13): Resend is the default provider.
+    expect(keyRef("Karol@Example.com")).toBe("resend-karol@example.com");
   });
 });
 
@@ -66,8 +68,12 @@ describe("the Destination form", () => {
     const form = await screen.findByTestId("dest-form");
     fireEvent.change(within(form).getByLabelText("Channel"), { target: { value: "email" } });
     const provider = within(screen.getByTestId("dest-form")).getByLabelText("Provider") as HTMLSelectElement;
-    expect([...provider.options].map((o) => o.textContent)).toEqual(["SendGrid", "Resend"]);
+    // PHILO-15 04 (gap 13): Resend first and picked; SendGrid one change away.
+    expect([...provider.options].map((o) => o.textContent)).toEqual(["Resend", "SendGrid"]);
+    expect(provider.value).toBe("resend");
+    fireEvent.change(provider, { target: { value: "sendgrid" } });
     expect(provider.value).toBe("sendgrid");
+    expect(screen.getByTestId("dest-key-row").textContent).toContain("SendGrid key");
     fireEvent.change(provider, { target: { value: "resend" } });
     fireEvent.change(screen.getByTestId("dest-from"), { target: { value: "karol@example.com" } });
     fireEvent.change(screen.getByTestId("dest-to"), { target: { value: "priya@example.com" } });

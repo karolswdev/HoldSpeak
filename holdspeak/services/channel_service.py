@@ -396,7 +396,7 @@ class ChannelService:
         """
         handle = _handle()
         ref = channel_email.valid_key_ref(key_ref)
-        chosen = str(provider or "sendgrid")
+        chosen = str(provider or channel_email.DEFAULT_EMAIL_PROVIDER)
         channel_email.provider(chosen)
         answer = {"key_ref": ref, "provider": chosen, "saved": True}
         if handle.replay:

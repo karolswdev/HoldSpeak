@@ -2208,6 +2208,16 @@
       ]
     },
     {
+      "path": "/api/desk/parked",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.desk_parked",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/desk/projections",
       "methods": [
         "GET"
@@ -4207,6 +4217,16 @@
       ]
     },
     {
+      "path": "/api/onboarding/calendar/macos/settings",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/onboarding/calendar/use",
       "methods": [
         "POST"
@@ -4978,7 +4998,9 @@
         "POST"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/reviews",
