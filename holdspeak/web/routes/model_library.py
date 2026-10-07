@@ -20,7 +20,9 @@ log = get_logger("web.routes.model_library")
 def _safe_error(exc: ServiceError) -> JSONResponse:
     """Map domain failures without serializing private context or request bodies."""
     status = int(exc.context.get("status") or 400)
-    if status not in {400, 403, 404, 409, 413, 503}:
+    # 422: a well-formed request for a provider with no execution adapter
+    # (PHILO-15 05, `not_supported`); the same code MCP returns.
+    if status not in {400, 403, 404, 409, 413, 422, 503}:
         status = 400
     return JSONResponse({"code": exc.code, "message": exc.detail}, status_code=status)
 

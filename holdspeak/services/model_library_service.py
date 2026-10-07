@@ -32,13 +32,19 @@ MODEL_LIBRARY_SCHEMA = "ModelLibraryProjection@1"
 _SUCCESS_COPY = "Added to the Model Library. Assignments are unchanged."
 _ACTIONS = frozenset({
     "Download", "Add to library", "Connect", "Add model", "Ready", "Checking", "Try again",
+    # PHILO-15 05: a state like Ready, never a verb (no execution adapter).
+    "NOT SUPPORTED YET",
 })
 # The aggregate owns the header truth too: the browser must not infer that an
 # empty library is ready merely because there are no repairs to count.
-_SUMMARY_STATES = frozenset({"empty", "ready", "attention"})
+_SUMMARY_STATES = frozenset({"empty", "ready", "attention", "none_ready"})
 _PROVIDER_FAMILIES = frozenset({
     "openrouter", "anthropic", "openai_compatible", "private_endpoint", "paired_device", "future_backend",
 })
+#: PHILO-15 05: a provider family with no execution adapter (Anthropic).
+#: Its readiness reason and its row status; the face shows the label.
+NOT_SUPPORTED = "not_supported"
+NOT_SUPPORTED_LABEL = "NOT SUPPORTED YET"
 _PROFILE_ID = re.compile(r"^[a-z][a-z0-9_-]{0,95}$")
 
 
@@ -177,6 +183,17 @@ class ModelLibraryApplicationService:
         """Add an existing paired/mesh destination without creating a target."""
         return self._connect_provider(principal, draft, None, hosted=False, paired=True)
 
+    @staticmethod
+    def _refuse_unsupported(draft: dict[str, Any]) -> None:
+        """PHILO-15 05 (Astra r1): a provider with no execution adapter is
+        refused before anything is reserved or stored; no key is written and
+        no receipt says it was added.  HTTP and MCP get this same answer."""
+        if draft.get("provider_family") == "anthropic":
+            raise ServiceError(
+                NOT_SUPPORTED, "Anthropic is not supported yet. Use OpenRouter or an OpenAI-compatible endpoint.",
+                context={"status": 422, "provider_family": "anthropic"},
+            )
+
     def _connect_provider(
         self,
         principal: Principal,
@@ -188,6 +205,7 @@ class ModelLibraryApplicationService:
     ) -> dict[str, Any]:
         self.require_owner(principal)
         draft = self._provider_draft(raw_draft, hosted=hosted, paired=paired)
+        self._refuse_unsupported(draft)
         # Validate the write-only body before reserving a command.  This retains
         # the value only on the stack, never in a ServiceError/context/receipt.
         key_value = self._secret_value(secret, required=draft["requires_key"])
@@ -532,9 +550,10 @@ class ModelLibraryApplicationService:
         if existing is not None:
             return str(existing["observation_id"])
         reason = self._provider_readiness_reason(draft["provider_family"])
-        if reason == "anthropic_runtime_missing":
+        if reason == NOT_SUPPORTED:
             # There is no Anthropic execution adapter in this product yet. A
-            # key may be durably held, but it never turns this row into Ready.
+            # key may be durably held, but it never turns this row into Ready
+            # (PHILO-15 05: the row says NOT SUPPORTED YET, not "broken").
             return self._record_readiness(deployment_id, deployment_revision_id, "unavailable", reason)
         if reason == "runtime_unavailable":
             return self._record_readiness(deployment_id, deployment_revision_id, "unavailable", reason)
@@ -565,7 +584,7 @@ class ModelLibraryApplicationService:
     def _provider_readiness_reason(provider_family: str) -> str | None:
         """Share the existing execution exclusions with manifest minting."""
         if provider_family == "anthropic":
-            return "anthropic_runtime_missing"
+            return NOT_SUPPORTED
         if provider_family == "future_backend":
             return "runtime_unavailable"
         return None
@@ -792,8 +811,13 @@ class ModelLibraryApplicationService:
             state, label = "empty", "Add model"
         elif attention_count:
             state, label = "attention", "Needs attention"
-        else:
+        elif ready_count:
             state, label = "ready", "Ready"
+        else:
+            # PHILO-15 05 (Astra r1 P2): rows, none ready, nothing to repair
+            # is not Ready.  A provider with no adapter names itself.
+            state = "none_ready"
+            label = NOT_SUPPORTED_LABEL if any(row["status"] == NOT_SUPPORTED for row in rows) else "Add model"
         if state not in _SUMMARY_STATES:
             raise AssertionError("model library summary is not closed")
         return {
@@ -875,8 +899,9 @@ class ModelLibraryApplicationService:
             status, action, repair = "configured", "Add model", self._repair("binding_missing", "Model needs a deployment binding")
         elif family == "anthropic":
             # Exact orchestrator ruling: stored custody is not an executable adapter.
-            status, repair = "broken", self._repair("anthropic_runtime_missing", "Anthropic runtime is not installed")
-            action = repair["label"]
+            # PHILO-15 05: there is nothing to repair until the adapter exists,
+            # so the row is a state, not a repair: NOT SUPPORTED YET.
+            status, action, repair = NOT_SUPPORTED, NOT_SUPPORTED_LABEL, None
         elif readiness and readiness.get("state") == "ready":
             status, action, repair = "ready", "Ready", None
         elif (readiness or {}).get("reason_code") == "artifact_unobserved":

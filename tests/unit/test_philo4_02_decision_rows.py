@@ -10,6 +10,7 @@ from holdspeak.db.core import Database
 from holdspeak.meeting_session import MeetingState
 from holdspeak.services.monday_brief_service import MondayBriefService
 import holdspeak.services.monday_brief_service as brief_module
+from tests.unit.brief_rule_stub import quiet_needs_you  # noqa: F401  (a fixture)
 
 
 NOW = datetime.datetime(2026, 8, 4, 9, 30)
@@ -37,7 +38,7 @@ def _fixed_uuid4(*values: str):
     return lambda: uuid.UUID(next(sequence))
 
 
-def test_generate_carries_created_at_on_every_decision_item(tmp_path, monkeypatch):
+def test_generate_carries_created_at_on_every_decision_item(tmp_path, monkeypatch, quiet_needs_you):
     db = Database(tmp_path / "brief.db")
     service = MondayBriefService(db, clock=lambda: NOW)
     _upsert_desk_decision(
@@ -69,7 +70,7 @@ def test_generate_carries_created_at_on_every_decision_item(tmp_path, monkeypatc
     assert all(item.created_at for item in reloaded.sections["decisions"])
 
 
-def test_generate_and_reload_sorts_decisions_by_record_created_at(tmp_path, monkeypatch):
+def test_generate_and_reload_sorts_decisions_by_record_created_at(tmp_path, monkeypatch, quiet_needs_you):
     db = Database(tmp_path / "brief.db")
     service = MondayBriefService(db, clock=lambda: NOW)
     _upsert_desk_decision(
