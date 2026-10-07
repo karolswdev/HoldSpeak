@@ -222,10 +222,20 @@ def test_the_scheduled_brief_asks_for_no_key(tmp_path, monkeypatch):
     assert "Person added" not in texts  # two people: the plural line
     assert "2 people added" in texts
     assert not [t for t in texts if "Sam" in t or "Priya" in t]
-    # The guard is what holds: the owner's own Generate (people_reads) reaches it.
+    # The scheduled Brief says what it skipped: one counted NOT READ row.
+    from holdspeak.services.monday_brief_service import PEOPLE_NOT_READ_TEXT
+
+    assert texts.count(PEOPLE_NOT_READ_TEXT) == 1, texts
+    row = next(i for i in brief.sections["waiting"] if i.text == PEOPLE_NOT_READ_TEXT)
+    assert row.source_ref == "not_read:people"
+    assert brief.headline.startswith("1 source not read"), brief.headline
+    # The guard is what holds: the owner's own Generate (people_reads) reaches
+    # the key, and the full brief has no NOT READ row.
     keys.gets = 0
-    MondayBriefService(db, people_store=people).generate(OWNER)
+    full = MondayBriefService(db, people_store=people).generate(OWNER)
     assert keys.gets > 0
+    assert PEOPLE_NOT_READ_TEXT not in _texts(full)
+    assert full.id == brief.id
 
 
 def test_a_locked_people_store_makes_the_same_brief(tmp_path, monkeypatch):
@@ -249,3 +259,12 @@ def test_the_cadence_job_makes_the_brief_key_free():
 
     source = inspect.getsource(cadence)
     assert "regenerate=False, people_reads=False" in source
+
+
+def test_no_people_store_means_nothing_skipped(tmp_path):
+    db = Database(tmp_path / "hub.db")
+    absent = EncryptedPeopleStore(tmp_path / "none.sqlite3", MemoryKeyStore())
+    from holdspeak.services.monday_brief_service import PEOPLE_NOT_READ_TEXT
+
+    brief = MondayBriefService(db, people_store=absent).generate(None, people_reads=False)
+    assert PEOPLE_NOT_READ_TEXT not in _texts(brief)

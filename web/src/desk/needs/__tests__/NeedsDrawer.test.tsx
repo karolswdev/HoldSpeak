@@ -305,10 +305,18 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
   it("one object, one row: the item an agent works carries its agent's question", async () => {
     const asking: AgentFlight = { ...WORKING, state: "waiting", sessionKey: "claude:s-run" };
     useAgentFlights.setState({ flights: [FLIGHT, asking], sessions: [] } as never);
-    // PHILO-15-09 (B11): the ask rides on its item's row, so the head says
-    // the rows: one object, one row, one count.
+    // PHILO-15-09 (B11): the hub folds the ask into the item it works
+    // (`foldedInto`, needs_you_membership.fold_asks), so its one number and
+    // the rows agree: one object, one row, one count.
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, count: 7, items: ITEMS.map((item) => item.id === "coder:claude:s-run"
+          ? { ...item, foldedInto: "ai-worked" } : item) } as never;
+      return { ...DOOR } as never;
+    });
     render(<NeedsDrawer />);
     await screen.findByText("7 need you");
+    expect(document.querySelectorAll("[data-testid='needs-list'] li.needs-row")).toHaveLength(7);
     const item = row("Write the rollback runbook");
     expect(face(item)).toMatchObject({
       kind: "action",
@@ -326,7 +334,12 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       scheduledArming: { scheduleId: "sch-1", title: "Ledger cutover sync", countdownSeconds: 10, fireAt: Date.now() + 8_000, outcome: null },
       cancelArmedSchedule: cancel,
     } as never);
-    // PHILO-15-09 (B11): the arming row is a row, and it counts.
+    // PHILO-15-09 (B11): the hub counts the recording that arms; it is a row.
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, arming: [{ scheduleId: "sch-1", title: "Ledger cutover sync" }] } as never;
+      return { ...DOOR } as never;
+    });
     render(<NeedsDrawer />);
     await screen.findByText("9 need you");
     const rows = document.querySelectorAll<HTMLElement>("[data-testid='needs-row']");
@@ -415,13 +428,16 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       schedule_id: "sch-9", title: "Ledger cutover sync", countdown_seconds: 30, fire_at: Date.now() / 1000 + 30,
     });
     let refuse = true;
+    let cancelled = false;
     vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       const value = String(path);
       if (value === "/api/scheduled-recordings/sch-9/cancel") {
         if (refuse) throw new ApiError(409, "conflict", { error: "the recording already started", code: "already_started" });
+        cancelled = true;
         return { ok: true } as never;
       }
-      if (value.startsWith("/api/desk/needs-you")) return ANSWER as never;
+      if (value.startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, arming: refuse || !cancelled ? [{ scheduleId: "sch-9", title: "Ledger cutover sync" }] : [] } as never;
       if (value.startsWith("/api/scheduled-recordings")) return { items: [] } as never;
       return { upcoming: [], calendar_configured: true } as never;
     });
@@ -516,7 +532,7 @@ describe("NeedsDrawer one count and kind words (PHILO-15-09)", () => {
 
 
 describe("NeedsDrawer every row counts (PHILO-15-09 B11, Astra r1)", () => {
-  it("a source not read and a recording that arms are rows, and the head counts them", async () => {
+  it("the hub's one number counts a source not read, a recording that arms and a folded ask; the rows agree", async () => {
     vi.mocked(apiFetch).mockImplementation(async (path: string) => {
       if (String(path).startsWith("/api/desk/needs-you"))
         return {
@@ -526,6 +542,9 @@ describe("NeedsDrawer every row counts (PHILO-15-09 B11, Astra r1)", () => {
             { source_id: "gh:ledger", kind: "project", state: "failed", observed_at: null, label: "CI red on main", project_id: "p1", reason: "gh not signed in" },
             { source_id: "jira:ops", kind: "project", state: "available", observed_at: null, label: "Ops", project_id: "p2" },
           ],
+          arming: [{ scheduleId: "sch-2", title: "Standup" }],
+          // the hub folded the agent's question into the item it works
+          items: ITEMS.map((item) => item.id === "coder:claude:s-run" ? { ...item, foldedInto: "ai-worked" } : item),
         } as never;
       return { upcoming: [], calendar_configured: false } as never;
     });
@@ -533,9 +552,13 @@ describe("NeedsDrawer every row counts (PHILO-15-09 B11, Astra r1)", () => {
       scheduledArming: { scheduleId: "sch-2", title: "Standup", countdownSeconds: 60, fireAt: Date.now() + 60_000, outcome: null },
     } as never);
     render(<NeedsDrawer />);
-    await screen.findByText("10 need you");
+    await screen.findByText("9 need you");
     const rows = document.querySelectorAll<HTMLElement>("[data-testid='needs-list'] li.needs-row");
-    expect(rows).toHaveLength(10);
+    expect(rows).toHaveLength(9);
+    // The Dock badge and the bell read the same snapshot (`useNeedsYou`).
+    const { readNeedsYouAnswer } = await import("../../needsYou");
+    const answer = await vi.mocked(apiFetch).getMockImplementation()!("/api/desk/needs-you") as never;
+    expect(readNeedsYouAnswer(answer).count).toBe(9);
     expect(screen.getAllByTestId("needs-source-row")).toHaveLength(1);
     for (const row of rows) expect(row.getAttribute("data-counted")).toBe("true");
   });

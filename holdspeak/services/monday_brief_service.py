@@ -342,6 +342,13 @@ def brief_title(period_end: Any) -> str:
     return f"Brief · {_WEEKDAYS[day.weekday()]} {day.day} {_TITLE_MONTHS[day.month - 1]} {day.year}"
 
 
+#: The source_ref prefix of a NOT READ row; any such row makes a brief PARTIAL.
+#: PHILO-15-09: the same shape as lane 05's NOT READ rows (#975).
+NOT_READ_REF = "not_read:"
+#: PHILO-15-09 (coordinator ruling): the scheduled Brief says what it skipped.
+PEOPLE_NOT_READ_TEXT = "NOT READ · People (locked) · Generate for the full brief"
+
+
 class _NeedsYouRows(list):
     """The Brief's WAITING rows from the one ``needs you`` rule.
 
@@ -495,10 +502,24 @@ class MondayBriefService:
         from holdspeak.people.key_free import no_people_reads
 
         with no_people_reads():
-            return self._generate(principal, now=now, regenerate=regenerate)
+            return self._generate(principal, now=now, regenerate=regenerate,
+                                  people_skipped=self._people_configured())
+
+    def _people_configured(self) -> bool:
+        """True when a People store exists (the key is not asked for)."""
+        try:
+            store = self._people_store
+            if store is None:
+                from holdspeak.people.store import production_people_store
+
+                store = production_people_store()
+            return bool(store.path.exists())
+        except Exception:  # noqa: BLE001 - an unreadable store is still skipped
+            return True
 
     def _generate(
         self, principal: Any, *, now: datetime.datetime | None, regenerate: bool,
+        people_skipped: bool = False,
     ) -> MondayBrief:
         # PHILO-3-03: the producer's day comes from its one clock.
         period_start, period_end = self.compute_window(now or self._clock())
@@ -517,7 +538,13 @@ class MondayBriefService:
         needs_you_count = None if member_items is None else int(
             getattr(member_items, "needs_you_count", len(member_items)))
         counted_decisions = set(getattr(member_items, "counted_decisions", ()))
-        waiting_items = self._collect_coverage_gaps(principal) + (
+        # PHILO-15-09 (coordinator ruling): the key-free (scheduled) Brief
+        # says what it did not read: one counted NOT READ row for People.
+        skipped = [BriefItem(
+            id=f"brief-item-{uuid.uuid4().hex}", section="waiting",
+            text=PEOPLE_NOT_READ_TEXT, source_ref=f"{NOT_READ_REF}people", priority=330,
+        )] if people_skipped else []
+        waiting_items = skipped + self._collect_coverage_gaps(principal) + (
             self._collect_waiting(principal) if member_items is None else member_items
         )
 
@@ -874,8 +901,15 @@ class MondayBriefService:
             for section in _SECTIONS
         }
         counts = {section: len(items) for section, items in finalized_sections.items()}
-        total_items = sum(counts.values())
+        # PHILO-15 05: NOT READ rows are said as such, never as things waiting.
+        unread = sum(
+            1 for item in finalized_sections["waiting"]
+            if str(item.source_ref or "").startswith(NOT_READ_REF)
+        )
+        counts["waiting"] -= unread
+        total_items = sum(counts.values()) + unread
         if waiting_count is not None:
+            total_items -= counts["waiting"]
             counts["waiting"] = waiting_count
             total_items += waiting_count
             said = counted_decisions or set()
@@ -892,6 +926,8 @@ class MondayBriefService:
             return f"{count} {singular if count == 1 else plural}"
 
         headline_parts = []
+        if unread:
+            headline_parts.append(phrase(unread, "source not read", "sources not read"))
         if counts["this_week"]:
             # C11: calendar items are counted as what they are -- meetings,
             # armed recordings, commitments due, new decisions -- never as

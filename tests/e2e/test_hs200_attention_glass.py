@@ -448,7 +448,11 @@ def _run_one_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
             _reload_arrival(page)
 
             wire = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
-            assert wire["count"] == 3, wire["items"]
+            # PHILO-15-09 (B11): the one number is the rows: 3 members and
+            # each source that could not be read.
+            unread = [c for c in wire["coverage"] if c["state"] != "available"]
+            assert len(wire["members"]) == 3, wire["items"]
+            assert wire["count"] == 3 + len(unread), wire["coverage"]
             assert wire["projects"] and len(wire["projects"]) == 1
             assert wire["complete"] is False, wire["coverage"]
             assert [row["rankClass"] for row in wire["items"]] == [
@@ -509,7 +513,9 @@ def _run_three_projects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: 
             _reload_arrival(page)
 
             wire = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
-            assert wire["count"] == 17, [(r["title"], r["source"]) for r in wire["items"]]
+            assert len(wire["members"]) == 17, [(r["title"], r["source"]) for r in wire["items"]]
+            # PHILO-15-09 (B11): the one number is the rows (members + unread sources).
+            assert wire["count"] == 17 + sum(1 for c in wire["coverage"] if c["state"] != "available")
             assert len(wire["projects"]) == 3
             assert wire["complete"] is False
             available = sum(1 for c in wire["coverage"] if c["state"] == "available")
