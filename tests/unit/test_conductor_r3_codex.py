@@ -588,7 +588,8 @@ def _codex_argv(tmp_path, db, monkeypatch, mode: str) -> tuple[Any, list[str]]:
 
 def _after_hooks(argv: list[str]) -> list[str]:
     rest = argv[1 + len(coder_gate.codex_spawn_args()):]
-    return rest[:rest.index("-c")]
+    mcp = next(i for i, a in enumerate(rest) if a.startswith("mcp_servers."))
+    return rest[:mcp - 1]
 
 
 def test_yolo_codex_asks_nothing_and_writes_in_the_worktree_and_its_git_folder(tmp_path, db, monkeypatch) -> None:  # noqa: F811
@@ -599,6 +600,7 @@ def test_yolo_codex_asks_nothing_and_writes_in_the_worktree_and_its_git_folder(t
     assert (rig.worktree / ".git").read_text().strip() == f"gitdir: {git_dir}"
     assert _after_hooks(argv) == [
         "--ask-for-approval", "never", "--sandbox", "workspace-write",
+        "-c", "sandbox_workspace_write.network_access=true",
         "--add-dir", git_dir, "--add-dir", f"{common}/objects",
         "--add-dir", f"{common}/refs", "--add-dir", f"{common}/logs",
     ]
@@ -609,6 +611,7 @@ def test_normal_and_secure_codex_keep_its_own_approvals(tmp_path, db, monkeypatc
     _rig_, argv = _codex_argv(tmp_path, db, monkeypatch, mode)
     assert _after_hooks(argv) == ["--ask-for-approval", "on-request"]
     assert "--sandbox" not in argv and "--add-dir" not in argv
+    assert not any("network_access" in a for a in argv)
 
 
 def test_codex_sessions_have_their_own_receipt_adapter() -> None:

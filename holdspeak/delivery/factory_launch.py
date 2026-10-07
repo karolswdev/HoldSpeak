@@ -780,6 +780,10 @@ class LaunchService:
         args = ["--ask-for-approval", "never"]
         if "--sandbox" not in argv:
             args += ["--sandbox", "workspace-write"]
+        # Ruling 2026-10-06: the sandbox has no network by default; YOLO lets
+        # the agent `git push origin <launch branch>` and `gh pr create` (the
+        # gate still holds URLs and other pushes, K5).
+        args += ["-c", "sandbox_workspace_write.network_access=true"]
         git_dir = self._git_path(worktree_path, "--absolute-git-dir")
         common = self._git_path(worktree_path, "--git-common-dir")
         if git_dir:
