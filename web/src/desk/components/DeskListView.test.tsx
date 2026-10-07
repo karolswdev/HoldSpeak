@@ -89,6 +89,13 @@ function row(name: string) {
   return screen.getByRole("button", { name: new RegExp(`^${escape}, `) });
 }
 
+/** Space on a button: the browser activates it (a click with no pointer). */
+function space(el: HTMLElement) {
+  fireEvent.keyDown(el, { key: " " });
+  fireEvent.keyUp(el, { key: " " });
+  fireEvent.click(el, { detail: 0 });
+}
+
 describe("PHILO-14 A2 the list is a list: same records", () => {
   it("renders one ObjectList row per world object: Name, Kind, When, State", () => {
     useProjections.setState({
@@ -110,6 +117,9 @@ describe("PHILO-14 A2 the list is a list: same records", () => {
 
     // The attention count rides the row's State (one lamp + its word).
     expect(row("Release checklist")).toHaveAccessibleName("Release checklist, NOTE, ATTN 2");
+
+    // A filed object names its zone beside its kind (the Floor spans zones).
+    expect(row("Rollout risks")).toHaveAccessibleName("Rollout risks, NOTE · LAUNCH");
 
     // A zone is a row of its own: a press dives.
     expect(row("Launch")).toHaveAccessibleName("Launch, ZONE, 1 ITEM");
@@ -136,7 +146,7 @@ describe("PHILO-14 A2 the list is a list: same records", () => {
 
   it("Space ropes the SAME ref into the Ask context: the selected row, no mark", () => {
     const { container } = renderList();
-    fireEvent.keyDown(row("Release checklist"), { key: " " });
+    space(row("Release checklist"));
     expect(useDesk.getState().selectedIds).toEqual([qualifiedRef("note", "n1")]);
     expect(screen.getByText("1 selected")).toBeInTheDocument();
     // The mark is the row's selected state plus words for a screen reader.
@@ -145,15 +155,15 @@ describe("PHILO-14 A2 the list is a list: same records", () => {
     expect(selectedRow).toHaveAttribute("aria-selected", "true");
     expect(selectedRow).toHaveAttribute("data-selected", "true");
     expect(container.textContent).not.toMatch(/\[ \]|\[x\]/);
-    fireEvent.keyDown(screen.getByRole("button", { name: "Release checklist, NOTE, in Ask context" }), { key: " " });
+    space(screen.getByRole("button", { name: "Release checklist, NOTE, in Ask context" }));
     expect(useDesk.getState().selectedIds).toEqual([]);
     expect(selectedRow).toHaveAttribute("aria-selected", "false");
   });
 
   it("two refs in the Ask context are two selected rows", () => {
     const { container } = renderList();
-    fireEvent.keyDown(row("Release checklist"), { key: " " });
-    fireEvent.keyDown(row("Q3 kickoff"), { key: " " });
+    space(row("Release checklist"));
+    space(row("Q3 kickoff"));
     const on = [...container.querySelectorAll(`.object-list-row[aria-selected="true"]`)].map((r) => r.getAttribute("data-object-id"));
     expect(on.sort()).toEqual(["meeting:m1", "note:n1"]);
     expect(screen.getByRole("button", { name: "Q3 kickoff, MEETING, in Ask context" })).toBeInTheDocument();

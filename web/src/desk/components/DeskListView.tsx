@@ -153,6 +153,15 @@ export function DeskListView() {
     [items, divedZone],
   );
 
+  const zoneNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const d of items.directory || []) {
+      const name = String(d.name || "Zone");
+      for (const mid of d.memberIds || []) map.set(mid, name);
+    }
+    return map;
+  }, [items.directory]);
+
   const attentionOf = (o: WorldObject) => {
     const ref = qualifiedRef(o.kind, o.id);
     const subject =
@@ -189,11 +198,15 @@ export function DeskListView() {
         const record = object.ref as unknown as Record<string, unknown>;
         const at = record.lastModified ?? record.endedAt ?? record.startedAt ?? record.createdAt;
         const attention = attentionOf(object);
+        const kind = (KIND_LABEL[object.kind] ?? object.kind).toUpperCase();
+        // The Floor spans zones: a filed object names its zone beside its kind
+        // (ObjectList has no Where column; inside a drawer every object shares one).
+        const zone = divedZone ? "" : zoneNames.get(qualifiedRef(object.kind, object.id)) ?? zoneNames.get(object.id) ?? "";
         return {
           id: qualifiedRef(object.kind, object.id),
           kind: object.kind === "coder" ? "agent" : object.kind,
           name: object.title,
-          kindWord: (KIND_LABEL[object.kind] ?? object.kind).toUpperCase(),
+          kindWord: zone ? `${kind} · ${zone.toUpperCase()}` : kind,
           when: whenWord(at),
           whenSort: wireDate(at)?.getTime(),
           state: attention ? { label: `ATTN ${attention}`, tone: "warn" as const } : undefined,
@@ -202,7 +215,7 @@ export function DeskListView() {
         };
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [objects, subjectCounts],
+    [objects, subjectCounts, zoneNames, divedZone],
   );
   const sortedObjects = useMemo(() => [...objectRows].sort(compareRows(sort)), [objectRows, sort]);
   const visible = sortedObjects.slice(0, limit);
