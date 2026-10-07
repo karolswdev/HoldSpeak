@@ -439,15 +439,20 @@ def correlate_gate_waits(
         if row.get("waitKind") != "approve" or start is None:
             kept.append(row)
             continue
-        match = None
+        overlapping = []
         for hold in records:
             if hold["session_key"] != row.get("sessionKey"):
                 continue
             begun = float(hold.get("created_at") or 0.0)
             end = now_s if hold.get("held", True) else float(hold.get("ended_at") or now_s)
             if begun - GATE_WAIT_SLACK_SECONDS <= start <= end + GATE_WAIT_SLACK_SECONDS:
-                match = hold
-                break
+                overlapping.append(hold)
+        # A live hold first (Astra round 2 on #916: a call approved a moment
+        # before a new hold took the new hold's wait); a decided or expired
+        # one only when no held one overlaps. Among them, the newest.
+        held_ones = [h for h in overlapping if h.get("held", True)]
+        pool = held_ones or overlapping
+        match = max(pool, key=lambda h: float(h.get("created_at") or 0.0)) if pool else None
         if match is None:
             kept.append(row)
             continue

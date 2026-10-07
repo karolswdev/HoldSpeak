@@ -128,9 +128,9 @@ def send_keys_to_pane(
     # A literal run is typed text: no terminal control rides in it (a
     # control is a named key, from the allow-list). Read all first: a refused
     # run sends nothing, not the keys before it.
-    for kind, value in keys:
-        if kind == "literal":
-            plain_text(value)
+    # The normalized runs are what is sent (CRLF -> LF), after the whole
+    # sequence passed (Astra round 2 on #916: the original was sent).
+    keys = [(kind, plain_text(value) if kind == "literal" else value) for kind, value in keys]
     for kind, value in keys:
         if kind == "literal":
             _run_tmux(["tmux", "send-keys", "-t", target, "-l", value], timeout_s=timeout_s)

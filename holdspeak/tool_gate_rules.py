@@ -176,24 +176,13 @@ EDIT_INSIDE_RULE = "edit_in_worktree"
 
 
 def _real_target(path: str) -> str:
-    """The path a write lands on: every symlink resolved, also for a target
-    that does not exist yet (its nearest existing folder is resolved and
-    the rest of the path joined to it)."""
-    absolute = os.path.abspath(path)
-    tail: list[str] = []
-    probe = absolute
-    while not os.path.lexists(probe):
-        parent = os.path.dirname(probe)
-        if parent == probe:
-            break
-        tail.append(os.path.basename(probe))
-        probe = parent
-    resolved = os.path.realpath(probe)
-    for part in reversed(tail):
-        if part in ("", ".", ".."):
-            raise _Outside("edit_path_not_plain")
-        resolved = os.path.join(resolved, part)
-    return resolved
+    """The path a write lands on. ``os.path.realpath`` walks the path one
+    component at a time and resolves each symlink BEFORE a later ``..``
+    applies to it (Astra round 2 on #916: ``link/../x`` with ``link`` pointing
+    out of the worktree was collapsed first and read as inside). A tail that
+    does not exist yet is joined to its resolved parent; a dangling symlink
+    is followed to where the write would land."""
+    return os.path.realpath(path)
 
 
 def classify_edit(tool_input: Optional[Mapping[str, Any]], *, cwd: str, root: str) -> BashCall:
@@ -205,10 +194,10 @@ def classify_edit(tool_input: Optional[Mapping[str, Any]], *, cwd: str, root: st
         return BashCall(UNPARSED, "no_file_path")
     try:
         real_root = os.path.realpath(root)
+        # No abspath or normpath first: either would collapse ``..`` before
+        # the symlink in front of it is resolved.
         joined = target if os.path.isabs(target) else os.path.join(cwd or root, target)
         real = _real_target(joined)
-    except _Outside as exc:
-        return BashCall(OUTSIDE, exc.rule)
     except (OSError, ValueError):
         return BashCall(UNPARSED, "edit_path_unreadable")
     if not _inside(real, real_root):

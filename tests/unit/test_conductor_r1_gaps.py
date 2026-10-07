@@ -156,6 +156,7 @@ def test_an_expired_hold_is_not_a_row(launched, tmp_path, monkeypatch) -> None: 
 # ── Astra round 1 on #916 ─────────────────────────────────────────────
 
 import json  # noqa: E402
+import os  # noqa: E402
 import shutil  # noqa: E402
 import subprocess  # noqa: E402
 import tempfile  # noqa: E402
@@ -394,3 +395,87 @@ def test_a_held_call_and_its_permission_wait_are_one_row_one_notification(launch
     current, _ = rows()
     assert [r["why"] for r in current] == ["TO ANSWER"] and current[0]["notifyKey"] != f"gate:{pid}"
     assert edge()["outcome"] == "sent" and len(calls) == 2
+
+
+# ── Astra round 2 on #916: her five probes, as fences ─────────────────
+
+
+@pytest.mark.parametrize("mode", ["neutral", "yolo"])
+@pytest.mark.parametrize("parts", [
+    ("link", "..", "sentinel.txt"),                      # her probe
+    ("link", "..", "new", "deeper", "sentinel.txt"),     # not-yet-existing tail after the escape
+    ("sub", "link2", "..", "..", "sentinel.txt"),        # a link in a nested folder
+    ("link", "inner", "..", "..", "sentinel.txt"),       # through the link, down, then up twice
+])
+def test_a_symlink_then_dotdot_write_is_held(launched, tmp_path, monkeypatch, mode, parts) -> None:  # noqa: F811
+    """`wt/link/../sentinel.txt` with link -> outside/subdir was read as
+    inside (abspath collapsed `..` before the link was resolved); Normal and
+    YOLO approved it and the write reached outside/sentinel.txt."""
+    _mode(tmp_path, monkeypatch, mode)
+    outside = tmp_path / "outside"
+    (outside / "subdir" / "inner").mkdir(parents=True)
+    (outside / "subdir" / "deeper").mkdir(parents=True)
+    (launched.worktree / "link").symlink_to(outside / "subdir")
+    (launched.worktree / "sub").mkdir()
+    (launched.worktree / "sub" / "link2").symlink_to(outside / "subdir" / "inner")
+    target = Path(launched.worktree, *parts)
+    assert not str(Path(os.path.realpath(target))).startswith(str(Path(os.path.realpath(launched.worktree))))
+    call = _write(launched, "Write", str(target))
+    assert call.proposal.state == HELD, call.proposal.operation["tool_call"]
+    assert call.decision.deny is not None
+
+
+def test_a_dotdot_that_stays_inside_still_passes(launched, tmp_path, monkeypatch) -> None:  # noqa: F811
+    _mode(tmp_path, monkeypatch, "yolo")
+    (launched.worktree / "a" / "b").mkdir(parents=True)
+    call = _write(launched, "Write", str(launched.worktree / "a" / "b" / ".." / "x.md"))
+    assert call.proposal.state == APPROVED
+
+
+def test_literal_keys_are_sent_normalized(real_pane) -> None:
+    """A real pane received b'first\\r\\nsecond': the run was checked, then
+    the original was sent."""
+    tmux_transport.send_keys_to_pane(pane=real_pane.pane, keys=[("literal", "first\r\nsecond")])
+    assert _received(real_pane.out, b"first\nsecond") == b"first\nsecond"
+
+
+@pytest.mark.parametrize("previous", ["automatic", "owner_decided"])
+def test_a_recent_approval_cannot_take_a_new_holds_wait(launched, tmp_path, monkeypatch, previous) -> None:  # noqa: F811
+    """An approval, a new hold 0.4 s later and its permission wait 0.3 s
+    after that gave two rows and two notifications."""
+    _mode(tmp_path, monkeypatch, "yolo")
+    now = {"t": time.time()}
+    monkeypatch.setattr(launched.db.gate, "_now", lambda: now["t"])
+    old = _call(launched, "git status" if previous == "automatic" else "ls /etc")
+    if previous == "owner_decided":
+        launched.gate.decide(OWNER, old.proposal.id, {"decision": "approved"})
+    now["t"] += 0.4
+    held = _call(launched, "cat /etc/hosts")
+    assert held.proposal.state == HELD
+    state = tmp_path / "sessions.json"
+    calls: list = []
+    from tests.unit.test_conductor_k3_coder_needs_you import _Clock, _service
+
+    svc = _service(launched.db, calls, _Clock(datetime.now(timezone.utc).replace(hour=12)))
+
+    def rows():
+        holds = _read_gate_holds(launched.db, ledger=launched.launches, now=now["t"])
+        return compute_needs_you(coders=list_agent_sessions(state_path=state), gate_holds=holds,
+                                 now=datetime.fromtimestamp(now["t"], timezone.utc))
+
+    def edge():
+        def build(principal=None):
+            result = rows()
+            return {"count": result["count"], "projects": [], "items": result["unmutedItems"],
+                    "members": result["members"], "coverage": [], "complete": True}
+        with patch.object(svc, "_build_aggregate_via_canonical", side_effect=build):
+            return svc.notify_coder_edge(OWNER, session_key=AGENT.identity)
+
+    assert edge()["outcome"] == "sent"
+    now["t"] += 0.3
+    ingest_agent_hook_event(agent="claude", state_path=state, now=datetime.fromtimestamp(now["t"], timezone.utc), payload={
+        "session_id": AGENT.identity.split(":", 1)[1], "cwd": str(launched.worktree),
+        "hook_event_name": "Notification", "notification_type": "permission_prompt",
+        "message": "Claude needs your permission to use Bash"})
+    current = [(r["kind"], r["notifyKey"]) for r in rows()["unmutedItems"]]
+    assert (current, edge()["outcome"], len(calls)) == ([("gate", f"gate:{held.proposal.id}")], "held_no_edge", 1)
