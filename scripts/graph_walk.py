@@ -2271,7 +2271,29 @@ def found_elsewhere(predicate: dict[str, Any], after: dict[str, Any]) -> str | N
 # ────────────────────────────────────────────────────────────── the hub ──
 
 
+#: Rig ports come from below the OS ephemeral range (macOS: 49152-65535).
+#: A hub restarts on the SAME port, and the port has no owner while the new
+#: process boots (seconds under load). A port from the ephemeral range can be
+#: taken in that window by any outgoing connection or ``bind(0)`` elsewhere
+#: (Conductor R5: the philo5 restart case failed once under FAST). Below the
+#: range only another explicit pick can take it, and each xdist worker has
+#: its own slice.
+_RIG_PORT_BASE, _RIG_PORT_SLICE, _RIG_PORT_SLICES = 20000, 400, 64
+
+
 def _free_port() -> int:
+    worker = os.environ.get("PYTEST_XDIST_WORKER", "")
+    index = int(worker[2:]) if worker.startswith("gw") and worker[2:].isdigit() else 0
+    first = _RIG_PORT_BASE + (index % _RIG_PORT_SLICES) * _RIG_PORT_SLICE
+    start = int.from_bytes(os.urandom(2), "big") % _RIG_PORT_SLICE
+    for step in range(_RIG_PORT_SLICE):
+        port = first + (start + step) % _RIG_PORT_SLICE
+        with socket.socket() as sock:
+            try:
+                sock.bind(("127.0.0.1", port))
+            except OSError:
+                continue
+            return port
     sock = socket.socket()
     sock.bind(("127.0.0.1", 0))
     port = sock.getsockname()[1]
