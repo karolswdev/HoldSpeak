@@ -47,14 +47,16 @@ def agent_settings_path(
 
 
 def holdspeak_executable() -> str | None:
-    """The ``holdspeak`` the hook command runs: on PATH, else beside this interpreter (a venv)."""
-    found = shutil.which("holdspeak")
-    if found:
-        return found
+    """The ``holdspeak`` the hook command runs: beside this interpreter (the
+    hub's own checkout), else on PATH.
+
+    The hub's own command first (Conductor R1): a ``holdspeak`` on PATH can
+    be another checkout (``~/.local/bin/holdspeak`` wrapping an older venv),
+    and its hook ingest would then run other code than the hub reads with."""
     beside = Path(sys.executable).parent / "holdspeak"
     if beside.is_file() and os.access(beside, os.X_OK):
         return str(beside)
-    return None
+    return shutil.which("holdspeak")
 
 
 def hook_command_runs(command: str, *, which: Any = shutil.which) -> bool:

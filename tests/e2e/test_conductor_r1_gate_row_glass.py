@@ -1,0 +1,141 @@
+"""Conductor R1 (Astra on #916, condition a): a held tool call of a launch,
+rendered. A real hub; a launch on its ledger; the agent's own credential
+proposes a call outside the worktree through the real gate route, and the
+YOLO mode holds it. On the Chair the Needs you row "Approve: <command>"
+opens the system shade; Approve there decides the real proposal, and the
+row leaves. A second hold is denied the same way.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import time
+import urllib.request
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from .glass_infra import _api, _assert_clean, _boot, _ensure_build, _normal_chair, _settle
+
+pytest.importorskip("playwright.sync_api", reason="the gate row glass needs Playwright")
+
+TOKEN = "r1-gate-row"
+SESSION = "claude:glass-r1"
+
+
+def _http(url: str, method: str, path: str, token: str, body: Any = None) -> tuple[int, Any]:
+    request = urllib.request.Request(
+        f"{url}{path}", method=method,
+        data=json.dumps(body).encode() if body is not None else None,
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return response.status, json.loads(response.read() or b"null")
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read().decode()[:400]
+
+
+def _hold(url: str, credential: str, proposal_id: str, command: str, worktree: str) -> dict:
+    """What the gate hook sends for one call outside the worktree."""
+    args = json.dumps({"command": command}, separators=(",", ":"), sort_keys=True)
+    digest = hashlib.sha256(args.encode()).hexdigest()
+    status, body = _http(url, "POST", "/api/gate/proposals", credential, {
+        "id": proposal_id, "tool": "Bash", "args_sha256": digest, "args_head": args[:120],
+        "cwd": worktree, "ttl_seconds": 600,
+        "classification": {"scope": "outside", "rule": "path_outside_worktree", "read_rule": "",
+                           "push_branch": "", "root": worktree, "proposal_id": proposal_id,
+                           "args_sha256": digest},
+    })
+    assert status == 200, body
+    return body
+
+
+def _row(page: Any, command: str) -> Any:
+    return page.locator("[data-testid='arrival-needs-you'] .surface-ledger-row", has_text=f"Approve: {command}")
+
+
+@pytest.mark.timeout(240)
+def test_a_held_call_row_opens_the_shade_and_approve_and_deny_decide_it(tmp_path: Path, monkeypatch) -> None:
+    _ensure_build()
+    import holdspeak.delivery.factory_launch as factory_launch
+
+    ledger_path = tmp_path / "home" / ".holdspeak" / "agent_launches.json"
+    monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", ledger_path)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    worktree = tmp_path / "wt"
+    worktree.mkdir()
+    factory_launch.LaunchLedger(ledger_path).record({
+        "launch_schema": 1, "launch_id": "launch_glassr1", "state": "registered",
+        "session_key": SESSION, "profile_id": "claude-default", "source_id": "src_none",
+        "worktree_id": "wt_none", "branch": "hs/action-glass", "session": "hs-glass",
+    })
+    errors: list[str] = []
+    try:
+        status, issued = _http(url, "POST", "/api/principals/agents", TOKEN, {"identity": SESSION})
+        assert status == 201, issued
+        credential = issued["credential"]
+        first = _hold(url, credential, "toolu_glass_approve", "ls /etc", str(worktree))
+        assert first["state"] == "held", first
+        assert first["policy_snapshot"]["reason_code"] == "yolo_outside_own_worktree"
+
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            _settle(page)
+
+            # The row, then its Open: the shade with the held call.
+            row = _row(page, "ls /etc")
+            row.wait_for(timeout=15000)
+            assert "TO APPROVE" in (row.text_content() or "")
+            row.locator("[role=button]").first.click()
+            shade = page.locator(".desk-shade")
+            shade.wait_for(timeout=5000)
+            item = shade.locator(".desk-gate-item").first
+            item.wait_for(timeout=10000)
+            item.get_by_role("button", name="Approve").click()
+            deadline = time.monotonic() + 10
+            state = ""
+            while time.monotonic() < deadline:
+                _status, read = _http(url, "GET", "/api/gate/proposals/toolu_glass_approve", TOKEN)
+                state = read.get("state") if isinstance(read, dict) else ""
+                if state == "approved":
+                    break
+                time.sleep(0.2)
+            assert state == "approved"
+            assert read["decided_by"] != "control-mode"  # the owner's press
+
+            # Deny: a second hold, the same row and shade.
+            second = _hold(url, credential, "toolu_glass_deny", "cat /etc/hosts", str(worktree))
+            assert second["state"] == "held"
+            page.keyboard.press("Escape")
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            _settle(page)
+            assert _row(page, "ls /etc").count() == 0  # the approved call left
+            row = _row(page, "cat /etc/hosts")
+            row.wait_for(timeout=15000)
+            row.locator("[role=button]").first.click()
+            item = page.locator(".desk-shade .desk-gate-item").first
+            item.wait_for(timeout=10000)
+            item.get_by_role("button", name="Deny").click()
+            item.get_by_role("button", name="Send deny").click()
+            deadline = time.monotonic() + 10
+            while time.monotonic() < deadline:
+                _status, read = _http(url, "GET", "/api/gate/proposals/toolu_glass_deny", TOKEN)
+                if isinstance(read, dict) and read.get("state") == "denied":
+                    break
+                time.sleep(0.2)
+            assert read["state"] == "denied"
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()

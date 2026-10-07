@@ -401,7 +401,10 @@ def _resolve_tool_gate(
     elif mode == "safe":
         allowed, reason, basis = False, "secure_holds_every_call", "per_action_required"
     elif mode == "neutral":
-        allowed = scope == "inside" and bool(read_rule)
+        # Conductor R1: a file write inside the launch's own worktree passes
+        # in Normal too (the Edit tool's ``acceptEdits``); outside, it waits.
+        edit_inside = str(tool_call.get("rule") or "") == "edit_in_worktree"
+        allowed = scope == "inside" and (bool(read_rule) or edit_inside)
         reason = "normal_read_or_test_allowed" if allowed else "normal_holds_this_call"
         basis = "control_posture" if allowed else "per_action_required"
     else:

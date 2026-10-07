@@ -5,9 +5,15 @@ from __future__ import annotations
 import shutil
 import subprocess
 import time
+import uuid
 from dataclasses import dataclass
 
 from .errors import HoldSpeakError
+
+
+#: Text longer than this, or with a newline, is pasted as one bracketed paste
+#: instead of typed (Conductor R1, ``send_text_to_pane``).
+PASTE_ABOVE_CHARS = 200
 
 
 class TmuxTransportError(HoldSpeakError):
@@ -29,6 +35,26 @@ class TmuxDelivery:
     submitted: bool
 
 
+#: The control characters a typed text may carry: tab and newline only.
+_ALLOWED_CONTROLS = frozenset({"\t", "\n"})
+
+
+def plain_text(text: str) -> str:
+    """The text as the pane gets it: CRLF (and a lone CR's pair) normalized
+    to LF; refused when it carries any other C0 or C1 control or DEL
+    (Conductor R1, Astra on #916: an embedded ESC[201~ ends a bracketed
+    paste early, a Ctrl-C or a CR acts in the agent's TUI). Ordinary
+    Unicode is kept."""
+    normalized = text.replace("\r\n", "\n")
+    for char in normalized:
+        code = ord(char)
+        if (code < 0x20 and char not in _ALLOWED_CONTROLS) or 0x7F <= code <= 0x9F:
+            raise TmuxTransportError(
+                f"the text carries a terminal control (U+{code:04X}); nothing was typed"
+            )
+    return normalized
+
+
 def send_text_to_pane(
     *,
     pane: str,
@@ -39,7 +65,7 @@ def send_text_to_pane(
     """Send literal text to a tmux pane, optionally followed by Enter."""
 
     target = str(pane or "").strip()
-    message = str(text or "")
+    message = plain_text(str(text or ""))
     if not target:
         raise TmuxTransportError("tmux pane target is required")
     if not message.strip():
@@ -47,7 +73,22 @@ def send_text_to_pane(
     if shutil.which("tmux") is None:
         raise TmuxTransportError("tmux executable not found")
 
-    _run_tmux(["tmux", "send-keys", "-t", target, "-l", message], timeout_s=timeout_s)
+    if "\n" in message or len(message) > PASTE_ABOVE_CHARS:
+        # One bracketed paste (Conductor R1). Typed fast with ``send-keys -l``,
+        # a long or multi-line text reaches Claude Code 2.1.x as several
+        # guessed paste chunks plus typed characters, and on a real launch
+        # the chunks were lost: the agent got only the brief's last lines.
+        # ``paste-buffer -p`` brackets the text when the agent asked for
+        # bracketed paste (Claude Code and Codex do), so it arrives whole;
+        # ``-r`` keeps each newline as it is; ``-d`` deletes the buffer.
+        buffer = f"hs-{uuid.uuid4().hex[:12]}"
+        _run_tmux(["tmux", "load-buffer", "-b", buffer, "-"], timeout_s=timeout_s, stdin=message)
+        _run_tmux(
+            ["tmux", "paste-buffer", "-p", "-r", "-d", "-b", buffer, "-t", target],
+            timeout_s=timeout_s,
+        )
+    else:
+        _run_tmux(["tmux", "send-keys", "-t", target, "-l", message], timeout_s=timeout_s)
     if submit:
         time.sleep(SUBMIT_PAUSE_SECONDS)
         # A LITERAL carriage return, not the named `Enter` key: current Claude
@@ -84,6 +125,12 @@ def send_keys_to_pane(
     if shutil.which("tmux") is None:
         raise TmuxTransportError("tmux executable not found")
 
+    # A literal run is typed text: no terminal control rides in it (a
+    # control is a named key, from the allow-list). Read all first: a refused
+    # run sends nothing, not the keys before it.
+    # The normalized runs are what is sent (CRLF -> LF), after the whole
+    # sequence passed (Astra round 2 on #916: the original was sent).
+    keys = [(kind, plain_text(value) if kind == "literal" else value) for kind, value in keys]
     for kind, value in keys:
         if kind == "literal":
             _run_tmux(["tmux", "send-keys", "-t", target, "-l", value], timeout_s=timeout_s)
@@ -95,10 +142,11 @@ def send_keys_to_pane(
     return TmuxDelivery(pane=target, submitted=False)
 
 
-def _run_tmux(cmd: list[str], *, timeout_s: float) -> None:
+def _run_tmux(cmd: list[str], *, timeout_s: float, stdin: str | None = None) -> None:
     try:
         completed = subprocess.run(
             cmd,
+            input=stdin,
             capture_output=True,
             text=True,
             timeout=timeout_s,
@@ -117,5 +165,6 @@ __all__ = [
     "TmuxDelivery",
     "TmuxTransportError",
     "send_keys_to_pane",
+    "plain_text",
     "send_text_to_pane",
 ]

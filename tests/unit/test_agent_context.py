@@ -735,7 +735,10 @@ def test_templates_use_silent_ingest_command() -> None:
     assert "--print-summary" not in codex
 
 
-def test_templates_prefer_absolute_holdspeak_path(monkeypatch) -> None:
+def test_templates_prefer_absolute_holdspeak_path(monkeypatch, tmp_path: Path) -> None:
+    # No holdspeak beside this interpreter: the one on PATH (Conductor R1:
+    # the hub's own checkout comes first when it has one).
+    monkeypatch.setattr("holdspeak.agent_context.hooks.sys.executable", str(tmp_path / "python"))
     monkeypatch.setattr("holdspeak.agent_context.shutil.which", lambda _name: "/opt/bin/holdspeak")
 
     claude = json.dumps(claude_hook_template())

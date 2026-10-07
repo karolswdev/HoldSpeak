@@ -239,6 +239,14 @@ def ingest_agent_hook_event(
             normalized_agent,
             Path(str(payload.get("transcript_path") or "")).expanduser(),
         )
+    # Conductor R1: Claude Code 2.1.x puts the turn's last assistant message
+    # in the Stop payload itself. A question read from it needs no transcript
+    # read, so a launched agent (whose rider hooks do not opt in to message
+    # capture) still reaches Needs you when it asks. Only the question is kept
+    # (secret-filtered), never the message. Codex's Stop is read below (R3).
+    stop_text: str | None = None
+    if normalized_agent != "codex" and hook_event_name == "Stop" and not assistant_text:
+        stop_text = _optional_str(payload.get("last_assistant_message"))
     codex_last_message: str | None = None
     if normalized_agent == "codex" and hook_event_name == "Stop":
         text = " ".join(str(payload.get("last_assistant_message") or "").split())
@@ -280,6 +288,8 @@ def ingest_agent_hook_event(
             last_assistant_text_at = timestamp
             summary = None
             awaiting_response = looks_like_agent_question(assistant_text)
+        elif stop_text:
+            awaiting_response = looks_like_agent_question(stop_text)
 
         # HSM-17-02: the raw lifecycle + the pending question. A `Notification`
         # carries the blocking ask in `message` (permission prompts, "waiting
@@ -327,8 +337,8 @@ def ingest_agent_hook_event(
             question = _filter_question(codex_last_message)
             notification_type = IDLE_NOTIFICATION
             awaiting_response = bool(question)
-        elif hook_event_name == "Stop" and assistant_text and awaiting_response:
-            question = _filter_question(assistant_text)
+        elif hook_event_name == "Stop" and (assistant_text or stop_text) and awaiting_response:
+            question = _filter_question(assistant_text or stop_text or "")
             notification_type = None
 
         session = AgentSession(

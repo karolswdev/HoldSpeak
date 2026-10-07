@@ -25,6 +25,7 @@ import {
 } from "./DeskWindow";
 import { MicButton } from "./MicButton";
 import { SystemShade } from "./SystemShade";
+import { OPEN_SYSTEM_SHADE_EVENT } from "../openObject";
 import { refreshNeedsYou, useNeedsYou } from "../needsYou";
 import { burstTimer } from "../burstTimer";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
@@ -57,6 +58,12 @@ export function AttentionDrawer() {
   // HS-101 B6 — the bell opens the system shade; the full Desk-memory
   // browser stays one verb away inside it.
   const [shadeOpen, setShadeOpen] = useState(false);
+  // Conductor R1: a Needs you row of a held tool call opens the shade.
+  useEffect(() => {
+    const open = () => setShadeOpen(true);
+    window.addEventListener(OPEN_SYSTEM_SHADE_EVENT, open);
+    return () => window.removeEventListener(OPEN_SYSTEM_SHADE_EVENT, open);
+  }, []);
   const selected = useMemo(
     () => store.projections.find((row) => row.id === store.selectedId) ?? null,
     [store.projections, store.selectedId],

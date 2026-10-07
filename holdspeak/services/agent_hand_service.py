@@ -546,10 +546,15 @@ def live_launches(launcher: Any) -> list[dict[str, Any]]:
 
 
 def codex_hooks_installed(path: Optional[Path] = None) -> bool:
-    """Whether Codex's hook file carries HoldSpeak's rider hooks."""
-    from ..agent_context.hooks import AGENT_HOOK_COMMAND_MARKER
+    """Whether Codex's hook file carries HoldSpeak's rider hooks.
 
-    target = path or Path.home() / ".codex" / "hooks.json"
+    The file Codex reads: ``$CODEX_HOME/hooks.json`` when ``CODEX_HOME`` is
+    set, the same resolver the one-press install writes through (Conductor
+    R1: this read ``~/.codex`` only, so a launch read hooks as missing right
+    after the install had written them)."""
+    from ..agent_context.hooks import AGENT_HOOK_COMMAND_MARKER, agent_settings_path
+
+    target = path or agent_settings_path("codex")
     try:
         return AGENT_HOOK_COMMAND_MARKER in target.read_text(encoding="utf-8")
     except OSError:

@@ -379,11 +379,13 @@ def test_the_submit_waits_for_codex_paste_handling(monkeypatch) -> None:
 
     events: list[Any] = []
     monkeypatch.setattr(transport.shutil, "which", lambda _name: "/usr/bin/tmux")
-    monkeypatch.setattr(transport.subprocess, "run", lambda cmd, **_kw: events.append(cmd[-1])
+    monkeypatch.setattr(transport.subprocess, "run", lambda cmd, **_kw: events.append(cmd[1])
                         or SimpleNamespace(returncode=0, stdout="", stderr=""))
     monkeypatch.setattr(transport.time, "sleep", lambda s: events.append(("sleep", s)))
     transport.send_text_to_pane(pane="%1", text="line one\nline two")
-    assert events == ["line one\nline two", ("sleep", transport.SUBMIT_PAUSE_SECONDS), "\r"]
+    # Conductor R1: a multi-line text is one bracketed paste; the pause sits
+    # between the paste and the \r.
+    assert events == ["load-buffer", "paste-buffer", ("sleep", transport.SUBMIT_PAUSE_SECONDS), "send-keys"]
     assert transport.SUBMIT_PAUSE_SECONDS >= 0.1  # Codex 0.159 swallowed a \r sent at once
 
 
