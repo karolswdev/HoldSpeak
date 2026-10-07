@@ -151,6 +151,7 @@ function LaneSpecimen() {
           draft="Jordan owns it. Avery reviews."
           onUseDraft={setAnswer}
           draftEgress={{ label: "API.ANTHROPIC.COM", scope: "cloud" }}
+          egress={{ label: "THIS DEVICE", scope: "local" }}
         />
       </SurfaceSection>
       <SurfaceSection label="PRCard · FilesChanged">
@@ -162,6 +163,7 @@ function LaneSpecimen() {
           branch="hs/write-the-rollback-runbook"
           base="main"
         />
+        <PRCard number={414} title="Shard the reconciliation job" checks={{ passed: 0, total: 7, running: 7 }} review="none yet" />
         <FilesChanged
           files={[
             { path: "docs/runbooks/ledger-rollback.md", added: 84 },

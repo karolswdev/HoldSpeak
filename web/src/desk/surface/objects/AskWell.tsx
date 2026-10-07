@@ -5,7 +5,8 @@
  *  step, then the answer: a StringGadget (its mic: the voice law) and the
  *  Answer Button (primary; Enter in the field answers too). Under it, when
  *  the hub drafted one, the DRAFT line: the drafted words, **Use draft**,
- *  and the EgressChip that names where the draft was made.
+ *  and the EgressChip that names where the draft was made. `egress` names
+ *  where the answer itself goes, beside Answer (egress where egress happens).
  */
 import { useRef } from "react";
 import { EgressChip, StringGadget } from "../gadgets";
@@ -26,6 +27,9 @@ export interface AskWellProps {
   onUseDraft?(draft: string): void;
   /** Where the draft was made (the egress chip's host and scope). */
   draftEgress?: { label: string; scope?: "local" | "mixed" | "cloud" | "remote" };
+  /** Where the ANSWER goes when it is sent (the Answer action's egress),
+   *  drawn beside Answer whether or not a draft exists. */
+  egress?: { label: string; scope?: "local" | "mixed" | "cloud" | "remote" };
   busy?: boolean;
 }
 
@@ -39,6 +43,7 @@ export function AskWell({
   draft,
   onUseDraft,
   draftEgress,
+  egress,
   busy,
 }: AskWellProps) {
   const caption = [`${agent.toUpperCase()} ASKS`, age?.toUpperCase()].filter(Boolean).join(" · ");
@@ -71,6 +76,7 @@ export function AskWell({
         <Button variant="primary" onClick={send} loading={busy}>
           Answer
         </Button>
+        {egress ? <EgressChip label={egress.label} scope={egress.scope} /> : null}
       </div>
       {draft ? (
         <div className="ask-well-draft">

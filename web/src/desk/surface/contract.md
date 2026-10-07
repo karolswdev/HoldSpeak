@@ -651,7 +651,16 @@ Shared vocabulary (`objects/kinds.ts`):
 - `ObjectTone`: ok · warn · fail · info · ask. Lamp colours are the
   `--lamp-*` tokens (ask = the ember of the boards). A lamp is never colour
   alone: the word sits beside it or is in the accessible name. Row lamps are
-  `LampGadget` (`lampGadgetTone` maps info→ok, ask→warn).
+  `LampGadget`, which carries all five tones (`info` and `ask` joined it in
+  B1 round 2), so ONE object is ONE colour on its icon, its list row and its
+  Needs-you row. `lampGadgetTone` is now the identity (kept for callers).
+  Board A-2L drew ASKS amber and WORKS green in the list while the icons
+  were ember and blue: that was the board's inconsistency, and UX-CANON D
+  (one object, one drawing) wins over it.
+- Activation (DeskIcon, ObjectList rows): a click from ANY source selects
+  (pointer, Space, `element.click()`, an assistive press). Enter opens: it
+  is handled on keydown with its native click prevented, so one key is one
+  callback.
 
 ### DeskIcon / IconLamp
 
@@ -681,7 +690,10 @@ A drawer's or the Floor's objects as icons: 112 px columns, 6 px rows,
   band; `onMarquee?(rect | null, grid)` reports it while the pointer drags
   on empty glass (null at the end); `iconsInRect(grid, rect)` returns the
   ids under it; `onClear?()` on a press on empty glass
-- One Tab stop; arrows walk the icons (`useRovingRows`).
+- One Tab stop, 2-D (`useRovingGrid` in `roving.ts`): Left/Right move within
+  the visual row (no wrap), Up/Down move by the column count READ from the
+  rendered layout on each key (the icons that share the first icon's top
+  edge), Home/End jump to the first/last icon.
 
 ### ObjectList
 
@@ -700,7 +712,11 @@ When, State (one lamp + word).
 - One Tab stop; arrows walk rows; Space selects; Enter opens.
 - Rows are at least 44 px. In a `surface` of 520 px or less Kind and When
   fold under the name (`KIND · WHEN`, the FoldLine of DeskListView without
-  its marks), the State header hides, the sort gadgets grow to 44 px.
+  its marks) and the sort gadgets grow to 44 px. The fold is VISUAL only:
+  all four headers stay, the Kind and When cells stay in their columns for
+  assistive tech (clipped off the glass, never `display: none`) and the
+  fold line is `aria-hidden`, so headers and cells name the same four
+  columns at every width.
 
 ### GetInfo
 
@@ -717,8 +733,8 @@ word; then a facts grid.
 
 TimelineRail (A-4): an `ol` of entries `{ time?, word, tone?, text?, code?,
 quote?, verbs?, pending? }`. `word` is BRIEF · READ · SAYS · WRITE · RUN ·
-COMMIT · PR · HELD · ASKS · MERGE. `quote` is the agent's words (a `q`
-with the steel bar). `verbs` are the entry's own (Brief; Deny / Approve).
+COMMIT · PR · HELD · ASKS · MERGE. `quote` is the agent's words: a `q` in
+its curly quotes, italic body text, flat (no rail, no plate). `verbs` are the entry's own (Brief; Deny / Approve).
 `pending` is the step that waits (MERGE · Your press in GitHub): a hollow
 square, muted words. Props: `label`, `entries`.
 
@@ -737,13 +753,17 @@ never sent, the press focuses the field), then the DRAFT line: the draft,
 **Use draft**, the EgressChip of where it was made.
 
 - `agent, age?, question, value, onChange, onAnswer(answer)`, `draft?`,
-  `onUseDraft?(draft)`, `draftEgress?: { label, scope? }`, `busy?`
+  `onUseDraft?(draft)`, `draftEgress?: { label, scope? }` (where the DRAFT
+  was made, on the draft line), `egress?: { label, scope? }` (where the
+  ANSWER goes, beside Answer, drawn with or without a draft), `busy?`
 
 ### PRCard / FilesChanged
 
-PRCard, a raised plate: sprite, `#N title`, `CHECKS n OF m` (a lamp; fail
-when `failed` > 0), `N FAILED`, `N RUNNING` (each only above zero),
-`REVIEW <WORD>`, `branch → base`. Props: `number, title, checks?: {
+PRCard, a FLAT card (read-only facts): sprite, `#N title`, the checks,
+`REVIEW <WORD>`, `branch → base`. The checks never show a zero (UX-CANON
+A.8): with some passed, `CHECKS p OF t` (fail tone when one failed) plus
+`N FAILED` / `N RUNNING` above zero; with none passed yet, `CHECKS · N
+RUNNING`, `CHECKS · N FAILED` or `CHECKS · N PENDING`, never `0 OF`. Props: `number, title, checks?: {
 passed, total, failed?, running? }, review?, branch?, base?, sprite?`.
 The verb that opens the PR is the face's (Open PR, by its egress chip).
 
@@ -780,11 +800,13 @@ classes in `surface.css`, from the tokens `--bevel-raised` /
 `--bevel-sunken` (built on `--bevel-light-strong` / `--bevel-dark`):
 
 - `.bevel-raised`: a control you press, a plate you act on (the AskWell,
-  the PRCard, the IconLamp, the rail squares). Pressed (`:active` on a
+  which holds the answer gadgets; the IconLamp and rail squares, which are
+  the LED gadget's own material). Pressed (`:active` on a
   button, `aria-pressed="true"`) it sinks.
 - `.bevel-sunken`: a well you type or drop into, a pressed gadget (the
   ConfirmLine).
-- `.bevel-flat`: a fact you read. Facts are never beveled.
+- `.bevel-flat`: a fact you read. Facts are never beveled (the PRCard,
+  the SAYS quote, the facts grid).
 
 On the Steel plate (the window frame, the ObjectList header) the same
 grammar rides `--wb-raised` / `--wb-sunken`.

@@ -11,7 +11,7 @@
  *  Keyboard: one Tab stop; arrows walk the rows (useRovingRows); Space
  *  selects; Enter (or a double press) opens.
  */
-import { useMemo, useRef, type KeyboardEvent, type MouseEvent } from "react";
+import { useMemo, useRef, type KeyboardEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { LampGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
@@ -97,23 +97,15 @@ export function ObjectList({
   useRovingRows(bodyRef, { selector: ".object-list-open" });
   const sorted = useMemo(() => sortRows(rows, sort), [rows, sort]);
 
+  // Enter OPENS on keydown (its native click prevented); every other
+  // activation — pointer, Space, element.click(), assistive press — is ONE
+  // click and SELECTS.
   const keyDown = (id: string) => (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key === "Enter") {
       event.preventDefault();
       onOpen?.(id);
-    } else if (event.key === " ") {
-      event.preventDefault();
-      onSelect?.(id);
     }
   };
-  const keyUp = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === " ") event.preventDefault();
-  };
-  const click = (id: string) => (event: MouseEvent<HTMLButtonElement>) => {
-    if (event.detail === 0) return;
-    onSelect?.(id);
-  };
-
   return (
     <div
       className={`object-list${className ? ` ${className}` : ""}`}
@@ -167,10 +159,9 @@ export function ObjectList({
                   variant="chrome"
                   className="object-list-open"
                   aria-label={[row.name, kindWord, row.when, row.state?.label].filter(Boolean).join(", ")}
-                  onClick={click(row.id)}
+                  onClick={() => onSelect?.(row.id)}
                   onDoubleClick={onOpen ? () => onOpen(row.id) : undefined}
                   onKeyDown={keyDown(row.id)}
-                  onKeyUp={keyUp}
                 >
                   <img
                     src={row.sprite ?? objectSprite(row.kind, row.id)}

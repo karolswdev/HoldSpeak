@@ -187,3 +187,98 @@ export function useRovingRows(
     };
   }, [root, selector, rowSelector]);
 }
+
+/** PHILO-14 B1 — the 2-D sibling of useRovingRows, for a wrapping icon grid.
+ *
+ *  One Tab stop. Left/Right move within the visual row; Up/Down move by the
+ *  column count; Home/End jump to the first/last stop. The column count is
+ *  READ from the rendered layout on each keypress (the stops whose top edge
+ *  equals the first stop's), so it follows the container as it reflows. No
+ *  wrap, like the rows. */
+export function visualColumns(stops: HTMLElement[]): number {
+  if (!stops.length) return 1;
+  const top = stops[0].getBoundingClientRect().top;
+  let columns = 0;
+  for (const stop of stops) {
+    if (Math.abs(stop.getBoundingClientRect().top - top) > 2) break;
+    columns += 1;
+  }
+  return Math.max(1, columns);
+}
+
+export function useRovingGrid(
+  ref: RefObject<HTMLElement | null>,
+  { selector }: { selector: string },
+) {
+  const current = useRef(0);
+  const [root, setRoot] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (ref.current !== root) setRoot(ref.current);
+    const node = ref.current;
+    if (!node) return;
+    const stops = Array.from(node.querySelectorAll<HTMLElement>(selector));
+    if (!stops.length) return;
+    if (current.current >= stops.length) current.current = stops.length - 1;
+    stops.forEach((stop, index) => {
+      stop.tabIndex = index === current.current ? 0 : -1;
+    });
+  });
+
+  useEffect(() => {
+    if (!root) return;
+    const query = () => Array.from(root.querySelectorAll<HTMLElement>(selector));
+    const anchor = (stops: HTMLElement[], index: number) => {
+      current.current = index;
+      stops.forEach((stop, i) => {
+        stop.tabIndex = i === index ? 0 : -1;
+      });
+    };
+    const onFocusIn = (event: FocusEvent) => {
+      const stops = query();
+      const hit = stops.indexOf(event.target as HTMLElement);
+      if (hit >= 0) anchor(stops, hit);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const stops = query();
+      if (!stops.length) return;
+      const from = Math.min(current.current, stops.length - 1);
+      const columns = visualColumns(stops);
+      const column = from % columns;
+      let to: number | null = null;
+      switch (event.key) {
+        case "ArrowRight":
+          if (column < columns - 1 && from + 1 < stops.length) to = from + 1;
+          break;
+        case "ArrowLeft":
+          if (column > 0) to = from - 1;
+          break;
+        case "ArrowDown":
+          if (from + columns < stops.length) to = from + columns;
+          break;
+        case "ArrowUp":
+          if (from - columns >= 0) to = from - columns;
+          break;
+        case "Home":
+          to = 0;
+          break;
+        case "End":
+          to = stops.length - 1;
+          break;
+        default:
+          return;
+      }
+      event.preventDefault();
+      if (to === null || to === from) return;
+      anchor(stops, to);
+      stops[to].focus();
+    };
+    root.addEventListener("focusin", onFocusIn);
+    root.addEventListener("keydown", onKeyDown);
+    return () => {
+      root.removeEventListener("focusin", onFocusIn);
+      root.removeEventListener("keydown", onKeyDown);
+    };
+  }, [root, selector]);
+}
