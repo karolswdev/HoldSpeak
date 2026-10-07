@@ -788,8 +788,21 @@ def test_a_symlink_out_of_the_worktree_is_outside(tmp_path) -> None:
     ("git branch -D x", ""), ("git commit -m x", ""), ("rm x", ""), ("echo x > f", ""),
     ("find . -delete", ""), ("npm install", ""), ("FOO=1 pytest", ""),
 ])
-def test_the_normal_read_and_test_list(tmp_path, command, read_rule) -> None:
-    verdict = classify_bash(command, cwd=str(tmp_path), root=str(tmp_path))
+def test_the_normal_read_and_test_list(tmp_path, monkeypatch, command, read_rule) -> None:
+    # The read rule needs each program to resolve on the PATH OUTSIDE the
+    # worktree (a system program). A runner without rg, uv, npm or npx held
+    # those calls (R5: `rg foo src` failed in CI), so every program word this
+    # list names resolves to a stand-in in a folder beside the worktree.
+    system = tmp_path / "system-bin"
+    system.mkdir()
+    for program in ("git", "ls", "cat", "rg", "grep", "pytest", "uv", "npm", "npx", "rm", "find"):
+        stand_in = system / program
+        stand_in.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        stand_in.chmod(0o755)
+    monkeypatch.setenv("PATH", str(system) + os.pathsep + os.environ.get("PATH", ""))
+    root = tmp_path / "worktree"
+    root.mkdir()
+    verdict = classify_bash(command, cwd=str(root), root=str(root))
     assert verdict.read_rule == read_rule, (command, verdict)
 
 
