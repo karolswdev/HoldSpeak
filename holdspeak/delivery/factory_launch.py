@@ -35,6 +35,7 @@ Every wire projection here is path-free (§13).
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
 import shutil
@@ -132,9 +133,14 @@ class LaunchRefused(ValueError):
     """A typed launch refusal: ``reason`` is machine-readable and the
     message never echoes a filesystem path, an argv, or a secret."""
 
-    def __init__(self, reason: str, message: Optional[str] = None) -> None:
+    def __init__(
+        self, reason: str, message: Optional[str] = None, *,
+        context: Optional[Mapping[str, Any]] = None,
+    ) -> None:
         super().__init__(message or reason)
         self.reason = reason
+        #: Machine-readable detail that rides the refusal (path-free).
+        self.context = dict(context or {})
 
 
 def _iso_now(now: Optional[datetime] = None) -> str:
@@ -597,6 +603,7 @@ class LaunchService:
         which: Optional[Callable[[str], Optional[str]]] = None,
         control_mode: Optional[Callable[[], str]] = None,
         mcp_config_dir: Optional[Path] = None,
+        codex_trust: Optional[Callable[[list[str]], list[str]]] = None,
     ) -> None:
         self._profiles = profiles
         # Conductor K6: the Control mode read at launch decides whether the
@@ -611,6 +618,14 @@ class LaunchService:
         self._which = which if which is not None else (
             shutil.which if runner is None else None
         )
+        # Conductor R3: Codex runs a launch's hooks only when its config trusts
+        # them. Production asks Codex (``codex app-server``); a test with an
+        # injected runner checks only when it passes its own reader.
+        if codex_trust is None and self._which is not None and runner is None:
+            from ..agent_context.codex_trust import untrusted_launch_hooks
+
+            codex_trust = untrusted_launch_hooks
+        self._codex_trust = codex_trust
         self._registry = registry
         self._targets = targets
         self._commands = commands
@@ -684,9 +699,9 @@ class LaunchService:
         """A kernel-spawned agent must be brokered before it can launch.
 
         Manual ``agent.launch`` and ``coder_factory.spawn`` remain unchanged;
-        this extra prerequisite belongs only to ``process.spawn``.  Today the
-        supervised tool contract is Claude Code's Bash hook, so any other
-        profile or an unarmed destination refuses before a worktree, process,
+        this extra prerequisite belongs only to ``process.spawn``.  The
+        supervised tool contract is the Bash hook of Claude Code or Codex, so
+        any other profile or an unarmed destination refuses before a worktree, process,
         or launch record exists.
         """
         self.validate_request(request)
@@ -700,9 +715,11 @@ class LaunchService:
 
     def _preflight(self, profile: Mapping[str, Any]) -> None:
         """Refuse before any envelope when the agent or tmux is not on
-        this machine: ``executable_absent`` / ``tmux_absent``."""
+        this machine: ``executable_absent`` / ``tmux_absent``; a Codex whose
+        config does not trust the launch hooks: ``codex_hooks_untrusted``."""
         which = self._which
         if which is None:
+            self._require_codex_trust(profile)
             return
         if which("tmux") is None:
             raise LaunchRefused("tmux_absent", "tmux is not installed on this machine")
@@ -711,17 +728,92 @@ class LaunchService:
             raise LaunchRefused(
                 "executable_absent", f"{executable} is not installed on this machine"
             )
+        self._require_codex_trust(profile)
+
+    def _require_codex_trust(self, profile: Mapping[str, Any]) -> None:
+        """Refuse a Codex launch whose hooks Codex would not run (untrusted:
+        no story claim, no gate, and a "Hooks need review" screen in the pane)."""
+        if str(profile.get("executable") or "") != "codex" or self._codex_trust is None:
+            return
+        from .. import coder_gate
+        from ..agent_context.codex_trust import CodexTrustError
+
+        try:
+            untrusted = self._codex_trust(coder_gate.codex_hook_flags(coder_gate.spawn_prefix()))
+        except CodexTrustError as exc:
+            raise LaunchRefused(
+                "codex_hooks_unchecked", f"Codex did not say whether it trusts the hooks ({exc.reason})"
+            ) from exc
+        if untrusted:
+            # Each entry names what keeps one launch hook from running
+            # (missing:/disabled:/untrusted:<key>); a launch hook's key is a
+            # session-flag position, never a path of the owner's.
+            raise LaunchRefused(
+                "codex_hooks_untrusted",
+                "Codex will not run the HoldSpeak hooks. Press Install hooks on the Agents card.",
+                context={"hooks": list(untrusted)},
+            )
 
     @staticmethod
     def _require_process_gate(profile: Mapping[str, Any], worktree_path: str) -> None:
         from .. import coder_gate
 
-        if str(profile.get("executable") or "") != "claude":
+        # Claude Code (``--settings``) and Codex (``-c hooks.*``, R3) carry the
+        # gate on their Bash calls.
+        if str(profile.get("executable") or "") not in ("claude", "codex"):
             raise LaunchRefused("process_spawn_not_gated", "not gated")
         if not coder_gate.gate_matches(
             coder_gate.load_gate_config(), cwd=worktree_path, tool="Bash"
         ):
             raise LaunchRefused("process_spawn_not_gated", "not gated")
+
+    def _codex_mode_args(self, argv: list[str], mode: Any, worktree_path: str) -> list[str]:
+        """Codex's approval and sandbox by the Control mode at launch (R3,
+        coordinator ruling 2026-10-06).
+
+        YOLO: no approval prompts (``-a never``); HoldSpeak's gate holds a
+        Bash call outside the worktree, and Codex's ``workspace-write``
+        sandbox keeps writes in the worktree plus the git folders a commit
+        writes. Codex 0.159 keeps a writable root's git folder read-only (for
+        a worktree, the ``.git/worktrees/<name>`` its ``.git`` file names) and
+        a parent ``--add-dir`` does not lift it; the exact folders do
+        (observed): the worktree's own git folder and, when shared, the
+        repository's ``objects``, ``refs`` and ``logs``.
+        Secure and Normal: Codex's own approvals (``on-request``); its
+        prompts reach Needs you as TO APPROVE. A profile ``--sandbox`` choice
+        is kept."""
+        from . import agent_mcp
+
+        if agent_mcp.normalized_mode(mode) != "yolo":
+            return ["--ask-for-approval", "on-request"]
+        args = ["--ask-for-approval", "never"]
+        if "--sandbox" not in argv:
+            args += ["--sandbox", "workspace-write"]
+        # Ruling 2026-10-06: the sandbox has no network by default; YOLO lets
+        # the agent `git push origin <launch branch>` and `gh pr create` (the
+        # gate still holds URLs and other pushes, K5).
+        args += ["-c", "sandbox_workspace_write.network_access=true"]
+        git_dir = self._git_path(worktree_path, "--absolute-git-dir")
+        common = self._git_path(worktree_path, "--git-common-dir")
+        if git_dir:
+            args += ["--add-dir", git_dir]
+        if common and common != git_dir:
+            for part in ("objects", "refs", "logs"):
+                args += ["--add-dir", os.path.join(common, part)]
+        return args
+
+    def _git_path(self, worktree: str, flag: str) -> str:
+        """One git folder of ``worktree`` (absolute, real), or ``""``."""
+        try:
+            completed = self._git(
+                ["git", "-C", str(worktree), "rev-parse", "--path-format=absolute", flag]
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return ""
+        if completed.returncode != 0:
+            return ""
+        path = (completed.stdout or "").strip()
+        return os.path.realpath(path) if path else ""
 
     # request validation ---------------------------------------------------
 
@@ -905,9 +997,17 @@ class LaunchService:
             if parent_operation_id:
                 gate_state = "gated"
         elif executable == "codex":
+            from .. import coder_gate
             from ..principals import agent_credentials
 
-            argv = [*argv, *agent_mcp.codex_args(agent_credentials.hub_url, mode)]
+            # Conductor R3: every Codex launch runs in its own process with the
+            # rider and gate hooks (inert unless the gate holds this worktree).
+            argv = [*argv, *coder_gate.codex_spawn_args()]
+            # The approval and sandbox flags need the worktree's git folder:
+            # added once the worktree exists (before the spawn below).
+            codex_tail = agent_mcp.codex_args(agent_credentials.hub_url, mode)
+            if parent_operation_id:
+                gate_state = "gated"
         record: dict[str, Any] = {
             "launch_schema": LAUNCHES_SCHEMA,
             "launch_id": launch_id,
@@ -961,6 +1061,8 @@ class LaunchService:
             worktree_id = record["worktree_id"] = registered.worktree_id
 
         # 2. spawn through the envelope: the node launch receipt.
+        if executable == "codex":
+            argv = [*argv, *self._codex_mode_args(argv, mode, worktree_path), *codex_tail]
         command = self.compose_command(
             argv, worktree_path, f"{project}/{story_id}",
             parent_operation_id=parent_operation_id,
@@ -1167,6 +1269,7 @@ class LaunchService:
                     launch_id, text, principal, operation_id=operation_id,
                     agent=str(request.get("agent_profile_id") or "agent"),
                     trust=profile.get("executable") == "claude",
+                    codex=profile.get("executable") == "codex",
                 ) or record
                 self._first.start(launch_id)
                 self._first.watch(launch_id)

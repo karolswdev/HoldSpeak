@@ -33,7 +33,11 @@ _EXIT_USAGE = 2
 
 def build_gate_subparsers(parser) -> None:
     sub = parser.add_subparsers(dest="gate_action")
-    sub.add_parser("hook", help="PreToolUse forwarder (stdin JSON in, decision out)")
+    hook = sub.add_parser("hook", help="PreToolUse forwarder (stdin JSON in, decision out)")
+    hook.add_argument(
+        "--agent", choices=["claude", "codex"], default="claude",
+        help="The agent whose hook runs this (its sessions are <agent>:<session_id>)",
+    )
     sub.add_parser("install", help="Print the hook block to add to ~/.claude/settings.json")
     sub.add_parser("arm", help="Flip the master switch on (repos still gate individually)")
     sub.add_parser("disarm", help="Flip the master switch off")
@@ -56,7 +60,7 @@ def run_gate_command(args, *, stdin: TextIO | None = None, stream: TextIO | None
     action = getattr(args, "gate_action", None)
 
     if action == "hook":
-        return _cmd_hook(stdin=stdin or sys.stdin, out=out)
+        return _cmd_hook(stdin=stdin or sys.stdin, out=out, agent=getattr(args, "agent", "claude"))
     if action == "install":
         print(
             "Add this to ~/.claude/settings.json yourself (merging with any\n"
@@ -135,8 +139,10 @@ def run_gate_command(args, *, stdin: TextIO | None = None, stream: TextIO | None
     return _EXIT_USAGE
 
 
-def _cmd_hook(*, stdin: TextIO, out: TextIO) -> int:
-    """Claude Code's PreToolUse entry. Every failure inside an ARMED
+def _cmd_hook(*, stdin: TextIO, out: TextIO, agent: str = "claude") -> int:
+    """Claude Code's and Codex's PreToolUse entry (both read the same deny
+    output; Codex 0.159 refuses ``permissionDecision: allow``, so an allow
+    is no output, as for Claude Code). Every failure inside an ARMED
     match is a deny (fail-closed); a payload we cannot even parse
     cannot be matched, so it is inert — the unarmed posture must
     never break the agent."""
@@ -150,24 +156,24 @@ def _cmd_hook(*, stdin: TextIO, out: TextIO) -> int:
     if event == "SessionStart":
         from ..coder_gate import run_session_start
 
-        run_session_start(payload)
+        run_session_start(payload, agent=agent)
         return _EXIT_OK
     if event == "SessionEnd":
         from ..coder_gate import run_session_end
 
-        run_session_end(payload)
+        run_session_end(payload, agent=agent)
         return _EXIT_OK
     if event == "Stop":
         from ..coder_gate import run_stop_hook
 
-        run_stop_hook(payload)  # telemetry: silent, never blocks the stop
+        run_stop_hook(payload, agent=agent)  # telemetry: silent, never blocks the stop
         return _EXIT_OK
     if event == "PostToolUse":
         from ..coder_gate import run_post_tool_hook
 
-        run_post_tool_hook(payload)
+        run_post_tool_hook(payload, agent=agent)
         return _EXIT_OK
-    decision = run_hook(payload)
+    decision = run_hook(payload, agent=agent)
     output = decision.to_hook_output()
     if output is not None:
         print(json.dumps(output), file=out)

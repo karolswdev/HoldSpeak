@@ -244,7 +244,7 @@ Issues = "https://github.com/karolswdev/HoldSpeak/issues"
 Documentation = "https://github.com/karolswdev/HoldSpeak/tree/main/docs"
 
 [project.scripts]
-holdspeak = "holdspeak.main:main"
+holdspeak = "holdspeak.cli_entry:main"
 holdspeak-mcp = "holdspeak.mcp.server:main"
 
 [build-system]
