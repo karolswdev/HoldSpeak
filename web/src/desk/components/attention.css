@@ -522,6 +522,14 @@
   font-size: var(--desk-surface-detail-size);
   color: var(--text-muted);
 }
+/* PHILO-14 A5: the held command is read whole before a decision: it wraps,
+   it is never cut with an ellipsis (a cut call says `… +N CHARS` itself). */
+.desk-next .desk-gate-item .desk-shade-what code.desk-gate-command {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow: visible;
+  color: var(--text);
+}
 /* HS-111-10 mic sweep: the deny-reason well is StringGadget. */
 .desk-next .desk-shade-do .gadget-string {
   flex: 1;

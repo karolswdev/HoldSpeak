@@ -30,7 +30,8 @@ The fences (each records its findings in ``chair-facts-<width>.json``):
      windows: no clipped text, no strip that scrolls sideways, no two
      controls that overlap, every text >= 4.5:1 (3:1 large) on its ground.
   C6 the existing verbs keep their windows: Done, Name an owner and
-     Connect calendar and Choose an engine in Needs you; Ack, Defer,
+     Connect calendar and Choose an engine in Needs you (PHILO-14 A5: the
+     drawer's row verbs, `needs-row-verb` with `data-verb`); Ack, Defer,
      Generate and the SEND well in Brief; Open in The week; no Run summary
      beside SUMMARY STORED.
 
@@ -312,10 +313,10 @@ class TestTheChairAsWindows:
         def inside(win: str, sel: str) -> int:
             return page.locator(f".desk-window-shell[aria-label='{win}'] {sel}").count()
         return {
-            "needs.done": inside("Needs you", "[data-testid='arrival-commitment-verb'], [data-testid='arrival-door-verb']"),
-            "needs.name_owner": inside("Needs you", "[data-testid='arrival-name-owner']"),
-            "needs.connect_calendar": inside("Needs you", "[data-testid='arrival-connect-calendar']"),
-            "needs.choose_engine": inside("Needs you", "[data-testid^='arrival-blocker-verb-']"),
+            "needs.done": inside("Needs you", "[data-verb='done'], [data-verb='door-verb']"),
+            "needs.name_owner": inside("Needs you", "[data-verb='name-owner']"),
+            "needs.connect_calendar": inside("Needs you", "[data-verb='connect-calendar']"),
+            "needs.choose_engine": inside("Needs you", "[data-verb='setup']"),
             "brief.ack_defer": inside("Brief", "[data-testid='arrival-brief-row'] button"),
             "brief.generate": inside("Brief", "button:has-text('Generate')"),
             "brief.send_well": inside("Brief", ":text('Team updates')"),

@@ -13,6 +13,7 @@ import {
   type MeetingPathBlocker,
 } from "./chair/meetingPathBlocker";
 import { intelBadge } from "./chair/intelBadge";
+import { itemOriginRefs } from "./agentFlights";
 import { readCoverage, type CoverageRecord } from "./coverage";
 import type { AssignmentSummary } from "../pages/cores/assignmentExperience";
 import type { Meeting } from "../lib/primitives";
@@ -114,6 +115,8 @@ export interface NeedsYouInputs {
   decisions?: readonly NeedsYouDecision[];
   /** R5: the coder sessions (the agent hook registry). */
   coders?: readonly NeedsYouCoder[];
+  /** PHILO-14 A5: the items agents were handed (`agent_flights`, snake_case). */
+  flights?: readonly { session_key?: string | null; origin_ref?: string | null; state?: string | null; close?: string | null }[];
   /** The names that mean the owner himself (the hub's `ownerNames`). */
   selfNames?: readonly string[];
   now?: Date;
@@ -435,6 +438,38 @@ export function meetingNeedsYou(meeting: Meeting): boolean {
   return badge === "FAILED" || badge === "RETRYING";
 }
 
+const LIVE_FLIGHT_STATES = new Set(["starting", "working", "waiting", "pr_open"]);
+
+/** Mark each agent ask (`coder` / `gate` row) whose session works an item
+ * in `items` with `foldedInto`: that item's ref. In place. The twin of
+ * `fold_asks` in `holdspeak/services/needs_you_membership.py`. */
+export function foldAsks(
+  items: NeedsYouRoomItem[],
+  flights: NonNullable<NeedsYouInputs["flights"]>,
+): void {
+  const bySession = new Map<string, string>();
+  for (const flight of flights) {
+    const key = String(flight.session_key ?? "");
+    const live = LIVE_FLIGHT_STATES.has(String(flight.state ?? ""))
+      || (flight.state === "merged" && flight.close === "awaiting_confirm");
+    if (key && live && flight.origin_ref && !bySession.has(key)) bySession.set(key, String(flight.origin_ref));
+  }
+  if (!bySession.size) return;
+  const owners = new Map<string, string>();
+  for (const item of items) {
+    if (item.source === "coder" || item.source === "gate") continue;
+    for (const ref of itemOriginRefs(item as Parameters<typeof itemOriginRefs>[0])) {
+      if (!owners.has(ref)) owners.set(ref, itemRef(item));
+    }
+  }
+  for (const item of items) {
+    if (item.source !== "coder" && item.source !== "gate") continue;
+    const target = owners.get(bySession.get(String(item.sessionKey ?? "")) ?? "");
+    // Every ask on the item is the item's (one object, one row, always).
+    if (target) item.foldedInto = target;
+  }
+}
+
 /**
  * The one meaning of `needs you`, as a pure function.
  *
@@ -507,17 +542,29 @@ export function computeNeedsYou(
     { ...row, waiting: waitsOnOther(row, selfNames) }
   ));
   const ranked = rankAttention([...merged, ...singles], now) as NeedsYouRoomItem[];
+  // PHILO-14 A5 (the twin of `fold_asks` and its caller): every agent ask on
+  // an item it was handed is that item's, whatever the item's mute or wait;
+  // an item with an ask is shown and counted once.
+  foldAsks(ranked, input.flights ?? []);
+  const asked = new Set(ranked.filter((item) => item.foldedInto).map((item) => String(item.foldedInto)));
+  for (const item of ranked) {
+    if (item.source !== "coder" && item.source !== "gate" && asked.has(itemRef(item))) {
+      item.askOverrides = true;
+      item.waiting = false;
+    }
+  }
   const mutedProjects = mutedSet(input);
   const mutedItems: NeedsYouRoomItem[] = [];
   const unmutedItems: NeedsYouRoomItem[] = [];
   for (const item of ranked) {
-    if (Boolean(item.muted) || (item.projectId && mutedProjects.has(String(item.projectId))))
+    if (item.askOverrides) unmutedItems.push({ ...item, muted: false } as NeedsYouRoomItem);
+    else if (Boolean(item.muted) || (item.projectId && mutedProjects.has(String(item.projectId))))
       mutedItems.push(item);
     else unmutedItems.push(item);
   }
   // What the owner waits on someone else for is listed and is not counted.
   const waitingItems = unmutedItems.filter((item) => item.waiting);
-  const countedItems = unmutedItems.filter((item) => !item.waiting);
+  const countedItems = unmutedItems.filter((item) => !item.waiting && !item.foldedInto);
 
   const assignmentRead = input.assignmentRead ?? "pending";
   const assignments = input.assignments ?? null;
@@ -598,12 +645,12 @@ export interface NeedsYouAnswer {
  *  `waiting`). The twin of `project_counts` in
  *  `holdspeak/services/needs_you_membership.py`. */
 export function projectCountsOf(
-  items: readonly { projectId?: unknown; muted?: unknown; waiting?: unknown }[],
+  items: readonly { projectId?: unknown; muted?: unknown; waiting?: unknown; foldedInto?: unknown }[],
 ): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const item of items) {
     const projectId = item.projectId ? String(item.projectId) : "";
-    if (!projectId || item.muted || item.waiting) continue;
+    if (!projectId || item.muted || item.waiting || item.foldedInto) continue;
     counts[projectId] = (counts[projectId] ?? 0) + 1;
   }
   return counts;
@@ -663,8 +710,10 @@ export function readNeedsYouAnswer(answer: NeedsYouAnswer | null | undefined): N
     .filter((meeting): meeting is Meeting => meeting !== null);
   // The hub marks each row: a `waiting` row is listed and is not a member.
   const waitingItems = unmutedItems.filter((item) => Boolean(item.waiting));
+  // PHILO-14 A5: an agent's ask the hub folded into its item (`foldedInto`)
+  // is listed and is not a member of its own: one object, one count.
   const members: NeedsYouMember[] = [
-    ...unmutedItems.filter((item) => !item.waiting)
+    ...unmutedItems.filter((item) => !item.waiting && !item.foldedInto)
       .map((item) => ({ ref: itemRef(item), kind: "attention" as const, item })),
     ...blockers.map((blocker) => ({ ref: `blocker:${blocker.key}`, kind: "blocker" as const, blocker })),
     ...failedMeetings.map((meeting) => ({ ref: meeting.id, kind: "meeting" as const, meeting })),

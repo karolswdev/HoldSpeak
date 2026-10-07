@@ -61,7 +61,7 @@ def test_owner_verb_only_where_no_owner_exists(
             page.goto(f"{base}/?token={TOKEN}", wait_until="load")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
             _normal_chair(page)
-            rows = page.locator("[data-testid='arrival-needs-you-row']")
+            rows = page.locator("[data-testid='needs-row']")
             rows.first.wait_for(timeout=20_000)
             _settle(page)
 
@@ -72,14 +72,14 @@ def test_owner_verb_only_where_no_owner_exists(
 
             owned = rows.filter(has_text=OWNED)
             unowned = rows.filter(has_text=UNOWNED)
-            owned_why = owned.locator("[data-testid='arrival-why']").inner_text()
+            owned_why = owned.locator(".needs-row-lamp").inner_text()
             assert "TO REVIEW" in owned_why and "UNASSIGNED" not in owned_why, owned_why
             assert owned.get_by_role("button", name="Name an owner").count() == 0
-            assert "UNASSIGNED" in unowned.locator("[data-testid='arrival-why']").inner_text()
+            assert "UNASSIGNED" in unowned.locator(".needs-row-lamp").inner_text()
 
-            verb = unowned.locator("[data-testid='arrival-name-owner']")
+            verb = unowned.locator("[data-verb='name-owner']")
             verb.click()
-            well = page.locator("[data-testid='arrival-commit-well']")
+            well = page.locator("[data-testid='needs-well']")
             well.wait_for(timeout=5_000)
             well.get_by_role("textbox").fill("Avery")
             well.get_by_role("button", name="Save").click()
@@ -88,17 +88,17 @@ def test_owner_verb_only_where_no_owner_exists(
             # still not reviewed, so it stays in the same lane, now with an
             # owner: the row reads TO REVIEW and the owner verb is gone.
             page.wait_for_function(
-                """(title) => [...document.querySelectorAll("[data-testid='arrival-needs-you-row']")]
+                """(title) => [...document.querySelectorAll("[data-testid='needs-row']")]
                     .some((row) => row.textContent.includes(title) && row.textContent.includes("TO REVIEW"))""",
                 arg=UNOWNED, timeout=10_000,
             )
             after = _api(page, "GET", "/api/door", token=TOKEN)["board"]
             assert {c["text"]: c.get("owner") for c in after["unassigned"]} == {OWNED: "Priya", UNOWNED: "Avery"}
-            moved = page.locator("[data-testid='arrival-needs-you-row']").filter(has_text=UNOWNED)
+            moved = page.locator("[data-testid='needs-row']").filter(has_text=UNOWNED)
             assert moved.count() == 1  # the row stays in Needs you
             assert moved.get_by_role("button", name="Name an owner").count() == 0
-            assert "UNASSIGNED" not in moved.locator("[data-testid='arrival-why']").inner_text()
-            assert page.locator("[data-testid='arrival-name-owner']").count() == 0
+            assert "UNASSIGNED" not in moved.locator(".needs-row-lamp").inner_text()
+            assert page.locator("[data-verb='name-owner']").count() == 0
             browser.close()
     finally:
         server.stop()

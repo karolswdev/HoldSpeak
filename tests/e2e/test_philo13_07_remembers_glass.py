@@ -142,8 +142,9 @@ class TestTheDeskRemembers(_Rig):
             try:
                 # 3. People on Priya, the 1:1s tab, an agenda item typed, not added
                 self._chair_window(page, width, "Needs you")
-                commitment = page.locator(".desk-window-shell[aria-label='Needs you'] .surface-ledger-line",
-                                          has_text=COMMITMENT).first
+                # PHILO-14 A5: the Needs-you drawer row's body opens it (`needs-row`).
+                commitment = page.locator(".desk-window-shell[aria-label='Needs you'] [data-testid='needs-row']",
+                                          has_text=COMMITMENT).first.locator(".needs-row-name")
                 self._press(page, commitment, width)
                 people = page.locator(".desk-window[aria-label='People'], .desk-window-shell[aria-label='People']").first
                 people.get_by_role("tab", name="1:1s").wait_for()

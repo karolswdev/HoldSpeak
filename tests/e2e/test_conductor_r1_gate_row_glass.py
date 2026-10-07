@@ -4,6 +4,13 @@ proposes a call outside the worktree through the real gate route, and the
 YOLO mode holds it. On the Chair the Needs you row "Approve: <command>"
 opens the system shade; Approve there decides the real proposal, and the
 row leaves. A second hold is denied the same way.
+
+PHILO-14 A5: the Needs-you window body is the smart drawer. The held call is
+a `needs-row` whose fact is the whole command and whose lamp is HELD CALL;
+its own verbs Approve and Deny (`needs-row-verb`, `data-verb`) decide the
+real proposal from the row (the shade still lists it). A 198-char call the
+hook cuts reads `… +90 CHARS` on the row and on the shade, and neither
+offers Approve.
 """
 from __future__ import annotations
 
@@ -52,8 +59,19 @@ def _hold(url: str, credential: str, proposal_id: str, command: str, worktree: s
     return body
 
 
+def _open_needs(page: Any) -> None:
+    """PHILO-14 A1: the default desk is the screen; Enter on its Needs you
+    drawer opens the Needs-you window (the drawer)."""
+    if page.locator("[data-testid='needs-drawer']").count():
+        return
+    icon = page.locator(".desk-screen [data-object-id='drawer:needs']")
+    icon.focus()
+    page.keyboard.press("Enter")
+    page.locator("[data-testid='needs-drawer']").wait_for(timeout=10000)
+
+
 def _row(page: Any, command: str) -> Any:
-    return page.locator("[data-testid='arrival-needs-you'] .surface-ledger-row", has_text=f"Approve: {command}")
+    return page.locator("[data-testid='needs-drawer'] [data-testid='needs-row']", has_text=command)
 
 
 @pytest.mark.timeout(240)
@@ -91,17 +109,14 @@ def test_a_held_call_row_opens_the_shade_and_approve_and_deny_decide_it(tmp_path
             page.reload(wait_until="load")
             _normal_chair(page)
             _settle(page)
+            _open_needs(page)
 
-            # The row, then its Open: the shade with the held call.
+            # The row: the whole command, HELD CALL, and its own Approve.
             row = _row(page, "ls /etc")
             row.wait_for(timeout=15000)
-            assert "TO APPROVE" in (row.text_content() or "")
-            row.locator("[role=button]").first.click()
-            shade = page.locator(".desk-shade")
-            shade.wait_for(timeout=5000)
-            item = shade.locator(".desk-gate-item").first
-            item.wait_for(timeout=10000)
-            item.get_by_role("button", name="Approve").click()
+            assert (row.locator(".needs-row-fact").text_content() or "") == "ls /etc"
+            assert "HELD CALL" in (row.locator(".needs-row-lamp").text_content() or "")
+            row.locator("[data-verb='approve']").click()
             deadline = time.monotonic() + 10
             state = ""
             while time.monotonic() < deadline:
@@ -120,14 +135,11 @@ def test_a_held_call_row_opens_the_shade_and_approve_and_deny_decide_it(tmp_path
             page.reload(wait_until="load")
             _normal_chair(page)
             _settle(page)
+            _open_needs(page)
             assert _row(page, "ls /etc").count() == 0  # the approved call left
             row = _row(page, "cat /etc/hosts")
             row.wait_for(timeout=15000)
-            row.locator("[role=button]").first.click()
-            item = page.locator(".desk-shade .desk-gate-item").first
-            item.wait_for(timeout=10000)
-            item.get_by_role("button", name="Deny").click()
-            item.get_by_role("button", name="Send deny").click()
+            row.locator("[data-verb='deny']").click()
             deadline = time.monotonic() + 10
             while time.monotonic() < deadline:
                 _status, read = _http(url, "GET", "/api/gate/proposals/toolu_glass_deny", TOKEN)
@@ -135,6 +147,45 @@ def test_a_held_call_row_opens_the_shade_and_approve_and_deny_decide_it(tmp_path
                     break
                 time.sleep(0.2)
             assert read["state"] == "denied"
+
+            # PHILO-14 A5 (Astra r2): a 198-char call the hook cuts. The body
+            # is the hook's own (`coder_gate.redact_call`: the hash, the
+            # 120-char head, the length of the shown command), through the
+            # real gate route. Every approval surface reads `… +90 CHARS`
+            # and none offers Approve.
+            from holdspeak.coder_gate import redact_call
+
+            base = "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = "
+            long_cmd = base + "7" * (198 - len(base) - 1) + "'"
+            call = redact_call({"command": long_cmd})
+            status, cut = _http(url, "POST", "/api/gate/proposals", credential, {
+                "id": "toolu_glass_cut", "tool": "Bash", "args_sha256": call.sha256, "args_head": call.head,
+                "args_len": call.length, "cwd": str(worktree), "ttl_seconds": 600,
+                "classification": {"scope": "outside", "rule": "path_outside_worktree", "read_rule": "",
+                                   "push_branch": "", "root": str(worktree), "proposal_id": "toolu_glass_cut",
+                                   "args_sha256": call.sha256},
+            })
+            assert status == 200 and cut["state"] == "held", cut
+            _status, listed = _http(url, "GET", "/api/gate/proposals?state=held", TOKEN)
+            [card] = [p for p in listed["proposals"] if p["id"] == "toolu_glass_cut"]
+            assert card["args_cut"] is True and card["args_hidden"] == 90, card
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            _settle(page)
+            _open_needs(page)
+            row = _row(page, "psql -h staging-ledger")
+            row.wait_for(timeout=15000)
+            fact = row.locator(".needs-row-fact").text_content() or ""
+            assert fact.endswith("… +90 CHARS") and long_cmd.startswith(fact.removesuffix("… +90 CHARS")), fact
+            assert row.locator("[data-verb='approve']").count() == 0
+            assert row.locator("[data-verb='deny']").count() == 1 and row.locator("[data-verb='open']").count() == 1
+            # The shade: the command shown whole-or-marked, Deny only.
+            page.evaluate("() => window.dispatchEvent(new CustomEvent('hs-open-system-shade'))")
+            card = page.locator(".desk-shade .desk-gate-item", has_text="psql -h staging-ledger").first
+            card.wait_for(timeout=10000)
+            assert (card.locator("[data-testid='shade-gate-command']").text_content() or "").endswith("… +90 CHARS")
+            assert card.get_by_role("button", name="Approve").count() == 0
+            assert card.get_by_role("button", name="Deny").count() == 1
             _assert_clean(page, errors)
             browser.close()
     finally:

@@ -20,6 +20,8 @@ import {
   saveDeskWorkspaceSection,
 } from "../store/workspaceStorage";
 import { registrySnapshot } from "../components/window/windowRegistry";
+import type { ComponentType } from "react";
+import { NeedsDrawer } from "../needs/NeedsDrawer";
 
 export type ChairWindowKey = "needs" | "brief" | "week" | "capture";
 
@@ -37,6 +39,10 @@ export const CHAIR_WINDOWS: readonly ChairWindowSpec[] = [
   { key: "week", id: "chair:week", title: "The week", phone: true },
   { key: "capture", id: "chair:capture", title: "Capture", phone: false },
 ];
+
+/** PHILO-14 A5: a Chair window whose body is an object face of its own
+ * (the Needs-you smart drawer), in place of the Chair's section. */
+export const CHAIR_WINDOW_BODY: Partial<Record<ChairWindowKey, ComponentType>> = { needs: NeedsDrawer };
 
 export const CHAIR_WINDOW_IDS: readonly string[] = CHAIR_WINDOWS.map((w) => w.id);
 
