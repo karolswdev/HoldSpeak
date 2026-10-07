@@ -16,6 +16,7 @@ from holdspeak.coder_steering import (
     PEEK_MAX_BYTES,
     awaiting_snapshot,
     awaiting_transitions,
+    registration_edges,
     content_hash,
     peek_pane,
     resolve_pane_target,
@@ -186,3 +187,11 @@ def test_awaiting_transitions_pruned_session_is_not_a_transition() -> None:
 def test_awaiting_transitions_steady_state_is_silent() -> None:
     snap = {"claude:a": True, "codex:b": False}
     assert awaiting_transitions(snap, dict(snap)) == []
+
+
+def test_registration_edges_are_the_new_keys_only() -> None:
+    """PHILO-14 C3: a session that registers is an edge (the faces re-read
+    the flights); a known key and a pruned key are not."""
+    assert registration_edges({"claude:a": ""}, {"claude:a": "", "claude:new": ""}) == ["claude:new"]
+    assert registration_edges({"claude:a": ""}, {"claude:a": "w1"}) == []
+    assert registration_edges({"claude:gone": ""}, {}) == []

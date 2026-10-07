@@ -243,7 +243,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     fireEvent.doubleClick(icon(/^Needs you/));
     expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
     fireEvent.keyDown(icon(/^Conductor/), { key: "Enter" });
-    expect(shell.openSurfaceOr).toHaveBeenCalledWith("inspect-personas-and-coders", "/companion");
+    expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-conductor", "/conductor");
     fireEvent.keyDown(icon(/^People, DRAWER/), { key: "Enter" });
     expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-people", "/");
     fireEvent.keyDown(icon(/^Parked/), { key: "Enter" });

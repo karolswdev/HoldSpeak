@@ -20,6 +20,10 @@ export interface GetInfoFacts {
   owner?: string;
   state?: { label: string; tone: ObjectTone };
   branch?: string;
+  /** PHILO-14 C4: the facts an object kind has beyond the seven (an agent's
+   *  VERSION, HOOKS, SIGN-IN; a launch's LAUNCHED, CONTROL). Drawn after the
+   *  seven, in order; an empty value is no row. */
+  more?: readonly { key: string; word: string; value: string }[];
 }
 
 export interface GetInfoProps {
@@ -48,6 +52,7 @@ export function GetInfo({ id, kind, name, kindWord, sprite, facts, verbs }: GetI
     const value = facts[key];
     return typeof value === "string" ? value.trim() !== "" : Boolean(value);
   });
+  const more = (facts.more ?? []).filter((fact) => fact.value.trim() !== "");
   return (
     <div className="object-info" data-object-id={id}>
       <div className="object-info-head">
@@ -57,7 +62,7 @@ export function GetInfo({ id, kind, name, kindWord, sprite, facts, verbs }: GetI
           <p className="object-info-kind">{kindWord ?? objectKindWord(kind)}</p>
         </div>
       </div>
-      {rows.length ? (
+      {rows.length || more.length ? (
         <dl className="object-info-facts">
           {rows.map(({ key, word }) => (
             <div key={key} className="object-info-fact" data-fact={key}>
@@ -71,6 +76,12 @@ export function GetInfo({ id, kind, name, kindWord, sprite, facts, verbs }: GetI
                   (facts[key] as string)
                 )}
               </dd>
+            </div>
+          ))}
+          {more.map((fact) => (
+            <div key={fact.key} className="object-info-fact" data-fact={fact.key}>
+              <dt>{fact.word}</dt>
+              <dd>{fact.value}</dd>
             </div>
           ))}
         </dl>

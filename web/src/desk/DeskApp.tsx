@@ -28,6 +28,7 @@ import { ScheduleCreateWindow } from "./components/ScheduleCreateWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
 import { AskPanel } from "./components/AskPanel";
 import { HandSheet } from "./components/HandSheet";
+import { DragLayer } from "./hand";
 import { GlassDropLayer } from "./components/GlassDropLayer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
 import { Dock, Expose, SnapGhost, Switcher } from "./components/DeskWindow";
@@ -46,6 +47,7 @@ import { qualifiedRef } from "./api";
 import { noteFaceChange } from "./zoneName";
 import { reportWriteFailure } from "./hooks/useWriteReceipt";
 import { DrawerWindows } from "./drawer";
+import { ConductorWindows } from "./conductor";
 import "./desk.css";
 
 // The Chair is HOME. Floor/GL and object-specific heavyweight windows cross
@@ -260,6 +262,8 @@ function DeskFaces() {
       {!arrivalRequired && !showFloor && askOpen && <AskPanel />}
       {/* Hand to agent (Conductor K3): the launch sheet, the Ask AI posture, on every face. */}
       {!arrivalRequired && <HandSheet />}
+      {/* PHILO-14 C3: the drag's ghost and dotted path, over every window. */}
+      {!arrivalRequired && <DragLayer />}
       {/* HS-135-13 fix: the InlineEditor must render on the Chair too,
           not only the Floor (DeskListView/WorldStage own their own copy).
           Without this, "New Agent" from a Workbench on the Chair sets
@@ -306,6 +310,7 @@ function DeskFaces() {
       {!arrivalRequired && <SessionPullout />}
       {/* PHILO-14 A2: a Project opens as a drawer; Get Info is its own window. */}
       {!arrivalRequired && <DrawerWindows />}
+      {!arrivalRequired && <ConductorWindows />}
       {!arrivalRequired && <LaneWindow />}
       {!arrivalRequired && <AttentionDrawer />}
       {/* Recovery remains direct and in-place: FirstWords opens Setup through

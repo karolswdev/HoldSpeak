@@ -332,6 +332,26 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
             annotate_sessions(items, flights)
         except Exception as e:
             log.warning(f"agent flights unread: {e}")
+        # PHILO-14 C4: the Conductor drawer's history (every launch that ended
+        # in the last 24 h, each once) and the hub's own launch count against
+        # its cap (`live_launches`, the count Hand to agent refuses at).
+        extra: dict[str, Any] = {}
+        try:
+            from ....db import get_database
+            from ....services.agent_flights import launch_history
+
+            extra["history"] = launch_history(get_database())
+        except Exception as e:
+            log.warning(f"agent launch history unread: {e}")
+        try:
+            from ....services.agent_hand_preview import LaunchReads
+            from ....services.agent_hand_service import MAX_LIVE_LAUNCHES, live_launches
+
+            reads = getattr(ctx, "agent_hand_reads", None) or LaunchReads()
+            live = await asyncio.to_thread(lambda: len(live_launches(reads.launcher())))
+            extra["launches"] = {"live": live, "cap": MAX_LIVE_LAUNCHES}
+        except Exception as e:
+            log.warning(f"agent launch count unread: {e}")
         # PHILO-14 C0: the coder frame drains the hook's event spool into
         # the event log (the hook never writes the database itself).
         try:
@@ -342,7 +362,7 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             log.warning(f"agent event spool not drained: {e}")
         try:
-            return JSONResponse({"sessions": items, "count": len(items), "flights": flights})
+            return JSONResponse({"sessions": items, "count": len(items), "flights": flights, **extra})
         except Exception as e:
             return error_500("coders sessions", e, log)
 

@@ -30,9 +30,10 @@ export function openNeedsYouDrawer(): void {
   openChairWindow("chair:needs");
 }
 
-/** The Conductor drawer: the Agents window that exists (lane C4 folds it). */
+/** The Conductor drawer (lane C4): where agents live; the Agents
+ *  application folded into it. */
 export function openConductorDrawer(): void {
-  openSurfaceOr("inspect-personas-and-coders", "/companion");
+  openSurfaceOr("open-conductor", "/conductor");
 }
 
 /** The People drawer: the People window. */

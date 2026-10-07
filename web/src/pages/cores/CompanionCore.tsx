@@ -1,3 +1,9 @@
+/* PARKED (PHILO-14 C4, 2026-10-07): the old Agents application. Agents
+ * live in the Conductor drawer now (`desk/conductor/`); the Dock's Agents
+ * entry became Conductor. This file stays whole: its route `/companion`
+ * still opens it, but no Dock, Go list, shortcut, mark or link reaches it.
+ * Its other rows live elsewhere: Delivery and PR receipts on the desk list
+ * view (DeskListView), saved agents (recipes) as desk objects. */
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useEffect, useMemo, useState } from "react";
 import { countLabel } from "../../desk/surface";

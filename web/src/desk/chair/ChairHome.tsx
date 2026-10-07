@@ -640,8 +640,9 @@ function Arrival() {
   // `awaiting_response` in the last 30 minutes, so a working agent and an
   // agent a Notification stopped were never listed. The store re-reads on
   // the `scope:"coder"` frame and on `desk_changed`.
+  // PHILO-14 C4: the AGENTS section is parked; the store stays live here
+  // (the screen and the Conductor drawer read it).
   useAgentFlightsLive();
-  const agentSessions = liveAgentSessions(useAgentFlights((s) => s.sessions));
   // Conductor K3: an agent that begins or stops waiting moves Needs you now
   // (the `scope:"coder"` frame), not at the next minute's poll.
   const onCoderFrame = useCallback(() => {
@@ -1386,12 +1387,10 @@ function Arrival() {
             </div>
           ) : null}
 
-          {/* ── Agents (M-3: only when sessions exist) ── */}
-          {agentSessions.length > 0 ? (
-            <div data-testid="arrival-agents">
-              <AgentsSection sessions={agentSessions} />
-            </div>
-          ) : null}
+          {/* ── Agents: PARKED (PHILO-14 C4). The arrival's AGENTS section
+              folded into the Conductor drawer (`desk/conductor/`): the
+              screen's agent objects and the Conductor carry every live
+              session. `AgentsSection` below is kept, unrendered. ── */}
 
         </>
       }
@@ -2558,7 +2557,9 @@ function MeetingsSection({
   );
 }
 
-// ── Agents (M-3) ──────────────────────────────────────────────────
+// ── Agents (M-3) — PARKED (PHILO-14 C4) ───────────────────────────
+// Unrendered: the Conductor drawer (`desk/conductor/`) lists the agents.
+// Kept whole, nothing deleted (CLAUDE.md: park, never delete).
 
 /** Conductor F2 (K4c): the item a session works on, as its row names it. */
 function originWord(title: string): string {

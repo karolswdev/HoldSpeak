@@ -36,6 +36,8 @@ export const DOCK_SPRITES: Record<string, string> = {
   "surface-dictation": SYSTEM.dockSpeak,
   "surface-meetings": SYSTEM.dockMeetings,
   "surface-companion": SYSTEM.dockAgents,
+  // PHILO-14 C4: the Dock's Conductor wears the same D1 glyph.
+  conductor: SYSTEM.dockAgents,
   "surface-settings": SYSTEM.dockSettings,
   "surface-people": SYSTEM.dockPeople,
 };

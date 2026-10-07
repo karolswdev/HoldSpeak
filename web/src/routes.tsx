@@ -70,7 +70,10 @@ export const DEMOTED_ROUTES: DemotedRoute[] = [
   // HS-100-10 — Studio died; its address lands on Settings (the tools
   // it launched are search-reachable).
   { path: "/studio", surface: "configure-settings" },
+  // PARKED (PHILO-14 C4): the old Agents application keeps its address.
   { path: "/companion", surface: "inspect-personas-and-coders" },
+  // PHILO-14 C4: the Conductor drawer, where agents live.
+  { path: "/conductor", surface: "open-conductor" },
   { path: "/docs/dictation-runtime", surface: "read-runtime-docs" },
   { path: "/design/components", surface: "design-components" },
 ];

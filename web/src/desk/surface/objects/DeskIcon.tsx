@@ -66,6 +66,13 @@ export interface DeskIconProps {
   style?: CSSProperties;
   draggable?: boolean;
   onDragStart?(event: DragEvent<HTMLButtonElement>): void;
+  /** The drag ended (dropped anywhere, or let go): the source's cleanup. */
+  onDragEnd?(event: DragEvent<HTMLButtonElement>): void;
+  /** PHILO-14 C3: the icon as a drop target. `onDragOver` must call
+   *  `preventDefault()` for the drop to land; `onDrop` takes it. */
+  onDragOver?(event: DragEvent<HTMLButtonElement>): void;
+  onDragLeave?(event: DragEvent<HTMLButtonElement>): void;
+  onDrop?(event: DragEvent<HTMLButtonElement>): void;
 }
 
 export function DeskIcon({
@@ -88,6 +95,10 @@ export function DeskIcon({
   style,
   draggable,
   onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
 }: DeskIconProps) {
   const lit = Boolean(selected || drop);
   const src = sprite
@@ -126,6 +137,10 @@ export function DeskIcon({
       onKeyDown={onKeyDown}
       draggable={draggable}
       onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
     >
       <span className="desk-icon-art">
         <img src={src} alt="" draggable={false} />

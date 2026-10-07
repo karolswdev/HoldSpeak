@@ -21,7 +21,7 @@ import { apiFetch, apiRequest } from "../../lib/api";
 import { play as sfx } from "../../lib/sfx";
 import { useAgentFlights } from "../agentFlights";
 import { useSteering } from "../steering";
-import { isNotRead, type LaneEvent, type LaneWire } from "./laneWire";
+import { isNotRead, type LaneControl, type LaneEvent, type LaneWire, type NotRead } from "./laneWire";
 
 /** Events one read asks for. */
 export const LANE_PAGE = 200;
@@ -33,6 +33,12 @@ export interface LaneReceipt {
   at: number;
   text: string;
   tone: "ok" | "fail" | "warn";
+}
+
+/** A press bound to one launch and its session (PHILO-14 C4). */
+export interface LaneBinding {
+  launchId: string;
+  sessionKey: string;
 }
 
 interface LaneState {
@@ -58,8 +64,12 @@ interface LaneState {
   /** Type `text` into the lane's session. `waitId` names the wait an answer
    * answers (the hub refuses it when that wait is not the current one). */
   send(text: string, opts?: { waitId?: string | null }): Promise<boolean>;
-  arm(): Promise<boolean>;
+  /** ARM the lane's session, or `bound`'s (a press bound to its launch). */
+  arm(bound?: LaneBinding): Promise<boolean>;
   stop(): Promise<boolean>;
+  /** PHILO-14 C4: Stop the launch the press named, whatever lane is open:
+   *  the session key and the control are the press's, never re-read. */
+  stopLaunch(bound: LaneBinding & { control?: LaneControl | NotRead | null }): Promise<LaneReceipt>;
 }
 
 let inflight: Promise<void> | null = null;
@@ -246,51 +256,63 @@ export const useLane = create<LaneState>((set, get) => ({
     }
   },
 
-  async arm() {
-    const key = laneSessionKey(get().lane);
+  async arm(bound) {
+    const key = bound ? bound.sessionKey : laneSessionKey(get().lane);
     if (!key) return false;
+    // A bound press (PHILO-14 C4: the Conductor) writes its receipt only on
+    // the lane window of its own launch.
+    const mine = () => !bound || get().launchId === bound.launchId;
     try {
       const res = await post(`/api/coders/${encodeURIComponent(key)}/arm`, {});
       if (res.ok && res.body.status === "armed") {
-        set({ receipt: { word: "ARMED", at: Date.now(), text: String(res.body.pane_id ?? ""), tone: "ok" } });
-        await get().load();
+        if (mine()) set({ receipt: { word: "ARMED", at: Date.now(), text: String(res.body.pane_id ?? ""), tone: "ok" } });
+        if (mine()) await get().load();
         return true;
       }
       const status = String(res.body.status ?? "");
-      set({ receipt: { word: "NOT SENT", at: Date.now(), text: REFUSAL_WORD[status] ?? String(res.body.detail ?? status), tone: "fail" } });
+      if (mine()) set({ receipt: { word: "NOT SENT", at: Date.now(), text: REFUSAL_WORD[status] ?? String(res.body.detail ?? status), tone: "fail" } });
       return false;
     } catch {
-      set({ receipt: { word: "NOT SENT", at: Date.now(), text: "HUB UNREACHABLE", tone: "fail" } });
+      if (mine()) set({ receipt: { word: "NOT SENT", at: Date.now(), text: "HUB UNREACHABLE", tone: "fail" } });
       return false;
     }
   },
 
   async stop() {
+    const launchId = get().launchId;
     const key = laneSessionKey(get().lane);
-    if (!key) return false;
-    const control = get().lane?.control;
-    const known = control && !isNotRead(control) ? control : null;
+    if (!launchId || !key) return false;
+    const receipt = await get().stopLaunch({ launchId, sessionKey: key, control: get().lane?.control ?? null });
+    return receipt.word === "STOPPED";
+  },
+
+  async stopLaunch(bound) {
+    // Every read below is of `bound`, taken at the press: an await never
+    // re-reads the lane that happens to be open now (Astra r1 on #947, P1).
+    const { launchId, sessionKey: key } = bound;
+    const mine = () => get().launchId === launchId;
+    const done = (receipt: LaneReceipt): LaneReceipt => {
+      if (mine()) set({ receipt });
+      return receipt;
+    };
+    const known = bound.control && !isNotRead(bound.control) ? bound.control : null;
     // YOLO arms per press (R6); Secure and Normal need the owner's own ARM.
     if (known && !known.armed) {
-      if (String(known.mode) !== "yolo") {
-        set({ receipt: { word: "ARM FIRST", at: Date.now(), text: "STOP", tone: "fail" } });
-        return false;
-      }
-      if (!(await get().arm())) return false;
+      if (String(known.mode) !== "yolo") return done({ word: "ARM FIRST", at: Date.now(), text: "STOP", tone: "fail" });
+      // ARM wrote its own refusal on the lane; the caller gets the word.
+      if (!(await get().arm({ launchId, sessionKey: key }))) return { word: "NOT STOPPED", at: Date.now(), text: "NOT ARMED", tone: "fail" };
     }
     try {
       const res = await post(`/api/coders/${encodeURIComponent(key)}/kill`, { scope: "session" });
       if (res.ok && res.body.status === "killed") {
-        set({ receipt: { word: "STOPPED", at: Date.now(), text: "BY YOU", tone: "ok" } });
-        await get().load();
-        return true;
+        const receipt = done({ word: "STOPPED", at: Date.now(), text: "BY YOU", tone: "ok" });
+        if (mine()) await get().load();
+        return receipt;
       }
       const status = String(res.body.status ?? "");
-      set({ receipt: { word: "NOT STOPPED", at: Date.now(), text: REFUSAL_WORD[status] ?? String(res.body.detail ?? status), tone: "fail" } });
-      return false;
+      return done({ word: "NOT STOPPED", at: Date.now(), text: REFUSAL_WORD[status] ?? String(res.body.detail ?? status), tone: "fail" });
     } catch {
-      set({ receipt: { word: "NOT STOPPED", at: Date.now(), text: "HUB UNREACHABLE", tone: "fail" } });
-      return false;
+      return done({ word: "NOT STOPPED", at: Date.now(), text: "HUB UNREACHABLE", tone: "fail" });
     }
   },
 }));
