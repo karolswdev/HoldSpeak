@@ -7,7 +7,9 @@ export type ModelLibraryAction =
   | "Add model"
   | "Ready"
   | "Checking"
-  | "Try again";
+  | "Try again"
+  /* PHILO-15 05: a state, never a verb (no Anthropic execution adapter). */
+  | "NOT SUPPORTED YET";
 
 export type ModelLibraryRow = {
   id: string;

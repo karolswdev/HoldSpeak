@@ -1,10 +1,15 @@
 """CadenceMixin (CAD-1-04) — the in-runtime cadence tick.
 
 Mirrors PluginQueueMixin: a daemon thread on `runtime_stop_event`, started by
-WebRuntime.run() ONLY when `config.cadence.enabled` is True. When disabled the
-thread never starts and the runtime is byte-identical to a build without cadence.
-The loop performs no external side effect — it projects + scores loops and computes
-which are due (delivery is Phase 2+).
+WebRuntime.run() when one of its jobs is on. Two jobs, one setting each:
+
+- the loop job (`config.cadence.enabled`, OFF by default): projects + scores
+  loops, computes which are due, and pushes nudges to paired surfaces;
+- the morning Brief job (`config.cadence.brief_enabled`, ON by default,
+  PHILO-15 05): makes the day's Brief once per local day at
+  `config.cadence.brief_hour`. Deterministic: no model, no egress.
+
+With both jobs off the thread never starts.
 """
 from __future__ import annotations
 
@@ -38,6 +43,14 @@ class CadenceMixin:
             source="config",
         ).outcome == "allowed"
 
+    def _brief_job_enabled(self) -> bool:
+        """The morning Brief job: ON by default (PHILO-15 05)."""
+        return bool(getattr(getattr(self.config, "cadence", None), "brief_enabled", False))
+
+    def _cadence_jobs_enabled(self) -> bool:
+        """True when the cadence thread has a job to run."""
+        return self._brief_job_enabled() or self._cadence_enabled()
+
     def _cadence_service(self):
         """Lazily build a CadenceService bound to the shared DB + config."""
         if getattr(self, "_cadence_service_obj", None) is None:
@@ -57,15 +70,17 @@ class CadenceMixin:
 
     def _cadence_tick_body(self) -> None:
         try:
-            result = self._cadence_service().tick()
-            if result.due:
-                log.info(
-                    "cadence tick: %d projected, %d open, %d due",
-                    result.projected, result.open_loops, result.due_count,
-                )
-                self._push_due_to_telegram(result.due)
-            self._maybe_push_daily_brief()
-            self._maybe_regenerate_brief()
+            if self._cadence_enabled():
+                result = self._cadence_service().tick()
+                if result.due:
+                    log.info(
+                        "cadence tick: %d projected, %d open, %d due",
+                        result.projected, result.open_loops, result.due_count,
+                    )
+                    self._push_due_to_telegram(result.due)
+                self._maybe_push_daily_brief()
+            if self._brief_job_enabled():
+                self._maybe_regenerate_brief()
             self._invalidate_needs_you_cache()
         except Exception as exc:  # never let the tick crash the runtime
             log.error("cadence tick failed: %s", exc)
@@ -102,9 +117,11 @@ class CadenceMixin:
     def _maybe_regenerate_brief(self) -> None:
         """HS-171-06: regenerate the Monday brief on its own cadence.
 
-        Once per day, after quiet hours close, call MondayBriefService.generate()
-        so the brief is fresh before any push or shade read.  The regeneration is
-        receipted via pipeline_events.
+        Once per local day, at or after ``brief_hour`` (PHILO-15 05: 06:00 by
+        default, so the Brief is there before the owner arrives), call
+        MondayBriefService.generate().  Quiet hours do not hold it: the Brief
+        is deterministic and sends nothing.  The regeneration is receipted via
+        pipeline_events; the Brief shows its own GENERATED time.
         """
         try:
 
@@ -116,7 +133,7 @@ class CadenceMixin:
             db = get_database()
             policy = db.cadence.get_policy("brief_regeneration")
             last_regen = (policy.config.get("last_regen_date") if policy else None)
-            earliest = int(getattr(self.config.cadence, "quiet_hours_end", 8))
+            earliest = int(getattr(self.config.cadence, "brief_hour", 6)) % 24
             now = local_now()
             if not should_send_daily_brief(now, last_sent_date=last_regen, earliest_hour=earliest):
                 return

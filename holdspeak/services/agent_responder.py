@@ -57,7 +57,14 @@ ANSWER_MAX_CHARS = 2000
 BRIEF_MAX_CHARS = 6000
 SCREEN_MAX_CHARS = 4000
 SCREEN_LINES = 60
-#: The drafting capability (its assigned model drafts the answer).
+#: The drafting capability (its assigned model drafts the answer).  The draft
+#: is OWNER work (``run_owner_draft``), so it reads the whole assignment chain:
+#: an exact Cadence-drafts model, else the Background group, else the Default
+#: for AI work (PHILO-15 05; tests/unit/test_philo15_05_default_feeds_drafts.py).
+#: TODO(#967): when the owner's per-capability OFF record
+#: (``inference_capability_off``) is on main, an OFF for this capability must
+#: hold here too.  #967 checks OFF only on SERVICE routes (assignment_sources
+#: set); this OWNER route needs the same check before the group/global heads.
 CAPABILITY = "background.cadence_draft"
 PARENT_KIND = "cadence.next-action-draft"
 PROJECTION_KIND = "cadence-next-action"

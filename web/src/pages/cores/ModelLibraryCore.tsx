@@ -62,8 +62,12 @@ function statusWord(status: string): string {
   return status.replace(/[_-]+/g, " ");
 }
 
+/** PHILO-15 05: the state of a provider with no execution adapter. */
+const NOT_SUPPORTED_YET = "NOT SUPPORTED YET";
+
 function statusTone(status: string): "ok" | "warn" | "fail" | "quiet" {
   if (status === "ready") return "ok";
+  if (status === "not_supported") return "quiet";
   if (["broken", "unavailable"].includes(status)) return "fail";
   if (["available", "detected", "configured", "acquiring"].includes(status)) return "warn";
   return "quiet";
@@ -95,6 +99,7 @@ export function ModelLibraryCore() {
   const [face, setFace] = useState<AddFace>("inventory");
   const [busy, setBusy] = useState(false);
   const [hosted, setHosted] = useState({ label: "", model: "", family: "openrouter" as "openrouter" | "anthropic" });
+  const anthropicPicked = hosted.family === "anthropic";
   const [endpoint, setEndpoint] = useState({
     label: "",
     model: "",
@@ -334,7 +339,7 @@ export function ModelLibraryCore() {
         <SurfaceFacts value={selected.detail} />
       </FoldGadget>
       <div className="model-library-action-seat" data-action={selected.selected_action}>
-        {selected.selected_action === "Ready" || selected.selected_action === "Checking" ? (
+        {selected.selected_action === "Ready" || selected.selected_action === "Checking" || selected.selected_action === NOT_SUPPORTED_YET ? (
           <span aria-live="polite">{selected.selected_action}</span>
         ) : (
           <Button
@@ -380,8 +385,17 @@ export function ModelLibraryCore() {
         <StringGadget label="Provider name" value={hosted.label} onChange={(label) => setHosted((current) => ({ ...current, label }))} placeholder="Provider model" />
         <StringGadget label="Model" value={hosted.model} onChange={(model) => setHosted((current) => ({ ...current, model }))} placeholder="Model" />
         <CycleGadget label="Hosted provider" value={hosted.family} options={[{ value: "openrouter", label: "OpenRouter" }, { value: "anthropic", label: "Anthropic" }]} onChange={(v) => setHosted((current) => ({ ...current, family: v as typeof hosted.family }))} />
-        <input ref={secretRef} type="password" autoComplete="new-password" aria-label="Provider key" />
-        <Button variant="primary" loading={busy} disabled={busy} onClick={() => void connectHosted()}>Connect</Button>
+        {/* PHILO-15 05: no Anthropic execution adapter yet, so a key there does
+            nothing. The row says so and offers the two routes that run. */}
+        {anthropicPicked ? (
+          <span className="model-library-not-supported" data-testid="model-library-anthropic-not-supported">
+            <span className="surface-token" data-tone="warn">{NOT_SUPPORTED_YET}</span>
+            <Button dense variant="ghost" onClick={() => setHosted((current) => ({ ...current, family: "openrouter" }))}>Use OpenRouter</Button>
+            <Button dense variant="ghost" onClick={() => { setEndpoint((current) => ({ ...current, family: "openai_compatible" })); setFace("endpoint"); }}>Use OpenAI-compatible</Button>
+          </span>
+        ) : null}
+        <input ref={secretRef} type="password" autoComplete="new-password" aria-label="Provider key" disabled={anthropicPicked} />
+        <Button variant="primary" loading={busy} disabled={busy || anthropicPicked} onClick={() => void connectHosted()}>Connect</Button>
       </div>
     </section>
   ) : face === "endpoint" ? (

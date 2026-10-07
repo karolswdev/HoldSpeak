@@ -43,6 +43,11 @@ STATE_WAITING = "WAITING"
 STATE_NOT_SET = "NOT_SET"
 STATE_UNREACHABLE = "UNREACHABLE"
 STATE_CHECKING = "CHECKING"
+#: PHILO-15 05: a cloud provider with no execution adapter (Anthropic). A key
+#: there does nothing, so the row never reads READY.
+STATE_NOT_SUPPORTED = "NOT_SUPPORTED"
+#: Hosts whose provider HoldSpeak cannot run yet.
+_NOT_SUPPORTED_HOSTS = frozenset({"api.anthropic.com"})
 
 # ---- Assignment group ids (the seven user-visible groups) -------------------
 
@@ -476,7 +481,10 @@ def detect(
                 "quantToken": quant or None,
                 "legacyLabel": raw_label,
                 "host": host,
-                "state": STATE_READY if key_set else STATE_NOT_SET,
+                "state": (
+                    STATE_NOT_SUPPORTED if host.lower() in _NOT_SUPPORTED_HOSTS
+                    else STATE_READY if key_set else STATE_NOT_SET
+                ),
                 "keySet": key_set,
                 **_detected_profile_fields(db, str(profile.id)),
                 # HS-200-04: the probe needs the endpoint it is meant to reach.
@@ -866,6 +874,15 @@ def probe(
     """
     kind = engine.get("kind", "")
     host = engine.get("host", "")
+
+    if kind == KIND_CLOUD and str(host).lower() in _NOT_SUPPORTED_HOSTS:
+        # PHILO-15 05: no execution adapter; never a spend, never READY.
+        return {
+            "state": STATE_NOT_SUPPORTED,
+            "host": host,
+            "keySet": engine.get("keySet", False),
+            "latencyMs": None,
+        }
 
     if kind == KIND_CLOUD and not generate:
         # Cloud probe without generate: key-presence check only

@@ -99,11 +99,10 @@ def test_hosted_custom_private_and_anthropic_rows_use_server_truth(monkeypatch: 
     assert _row(service, "custom-main")["selected_action"] == "Ready"
     assert _row(service, "private-main")["selected_action"] == "Ready"
     anthro_row = _row(service, "anthropic-main")
-    assert anthro_row["status"] == "broken"
-    assert anthro_row["repair"] == {
-        "code": "anthropic_runtime_missing", "label": "Anthropic runtime is not installed",
-    }
-    assert anthro_row["selected_action"] == "Anthropic runtime is not installed"
+    # PHILO-15 05: no execution adapter yet; a state, not a repair.
+    assert anthro_row["status"] == "not_supported"
+    assert anthro_row["repair"] is None
+    assert anthro_row["selected_action"] == "NOT SUPPORTED YET"
     # Canonical v2 profile identity has no private endpoint/slot/key material.
     profile = service._profiles.get_profile(OWNER, "private-main")
     encoded = json.dumps(profile, sort_keys=True)
@@ -194,7 +193,11 @@ def test_each_broken_provider_row_has_exactly_one_server_repair(monkeypatch: pyt
     service.connect_hosted_model(
         OWNER, _draft(request_id="anthro-1", profile_id="anthro-main", provider_family="anthropic"), {"value": "key"},
     )
-    for profile_id in ("missing-main", "offline-main", "anthro-main"):
+    # PHILO-15 05: no adapter stays visible as a state, not a repair.
+    anthro = _row(service, "anthro-main")
+    assert anthro["status"] == "not_supported" and anthro["repair"] is None
+    assert anthro["selected_action"] == "NOT SUPPORTED YET"
+    for profile_id in ("missing-main", "offline-main"):
         row = _row(service, profile_id)
         assert row["status"] == "broken"
         assert isinstance(row["repair"], dict)

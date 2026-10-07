@@ -632,8 +632,14 @@ function readDraftEntry(): Promise<AssignmentEntry | null> {
       "/api/inference/assignments",
     )
       .then((body) => {
+        // `effective` is the whole chain (exact, group, global): with only the
+        // Default for AI work, drafts inherit it (PHILO-15 05).
         const row = (body?.task_overrides ?? []).find((r) => r?.id === DRAFT_CAPABILITY);
-        return row?.effective?.assignment?.entries?.[0] ?? null;
+        const entry = row?.effective?.assignment?.entries?.[0] ?? null;
+        // PHILO-15 05: never keep an empty answer. A default set after this
+        // read (Set up local AI) must show at the next open, not NOT SET.
+        if (!entry) draftEntry = null;
+        return entry;
       })
       .catch(() => {
         draftEntry = null;
@@ -644,8 +650,9 @@ function readDraftEntry(): Promise<AssignmentEntry | null> {
 }
 
 /** The EgressChip of the model that drafts answers: its endpoint's host
- * (`API.ANTHROPIC.COM`, `192.168.1.43 · LAN`, `THIS DEVICE`); `NOT SET`
- * when no model is assigned to drafts. */
+ * (`API.ANTHROPIC.COM`, `192.168.1.43 · LAN`, `THIS DEVICE`), else the
+ * model's name; `NOT SET` when no model is assigned to drafts and no Default
+ * for AI work exists (drafts inherit the default, PHILO-15 05). */
 export function useDraftEgress(enabled: boolean): { label: string; scope?: "local" | "mixed" | "cloud" | "remote" } {
   const targets = useDesk((s) => s.inferenceTargets);
   const [entry, setEntry] = useState<AssignmentEntry | null | undefined>(undefined);
@@ -670,9 +677,15 @@ export function useDraftEgress(enabled: boolean): { label: string; scope?: "loca
         host = "";
       }
     }
-    if (!host && (entry.boundary === "same_device" || target?.boundary === "same_device")) host = "same_device";
+    // The assignment projection names a this-device entry `local`; the
+    // deployment revision names it `same_device` (PHILO-15 05: a local
+    // default read its model label as a cloud host).
+    if (!host && [entry.boundary, target?.boundary].some((b) => b === "same_device" || b === "local")) host = "same_device";
     const egress = egressFor(host || entry.label || "");
-    return { label: (egress.label || "NOT SET").toUpperCase(), scope: egress.scope };
+    // No host to read: the chip names the model (its label), and its scope is
+    // the entry's own boundary, so a LAN default never reads as cloud.
+    const lan = !host && ["private_network", "mesh"].includes(String(entry.boundary ?? target?.boundary ?? ""));
+    return { label: (egress.label || "NOT SET").toUpperCase(), scope: lan ? "local" : egress.scope };
   }, [entry, targets]);
 }
 

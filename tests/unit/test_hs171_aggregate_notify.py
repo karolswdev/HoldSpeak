@@ -789,12 +789,14 @@ class TestBriefRegenerationReceipt:
             config={"last_regen_date": yesterday},
         ))
 
-        # Build a mock mixin with quiet_hours_end=0 so the earliest_hour
+        # Build a mock mixin with brief_hour=0 so the earliest_hour
         # check always passes (current hour >= 0 is always True).
         mixin = MagicMock()
         mixin.config = MagicMock()
         mixin.config.cadence = MagicMock()
         mixin.config.cadence.quiet_hours_end = 0
+        # PHILO-15 05: the Brief job reads its own hour, not quiet hours.
+        mixin.config.cadence.brief_hour = 0
 
         generate_calls = []
 

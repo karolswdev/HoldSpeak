@@ -795,7 +795,7 @@ A later refresh never re-arms it.
 When a calendar is connected, the arrival shows a WEEK strip with one dot per meeting for each day.
 The Room's **SOURCES** section shows a meeting watch row with the count and the next meeting.
 The brief gains a `THIS WEEK` section with meetings, armed recordings, commitments due, and new decisions.
-In **Settings > Rhythm**, the brief row regenerates daily.
+In **Settings > Rhythm**, the brief row regenerates daily at 06:00.
 
 ## Connect your tools
 
@@ -906,8 +906,9 @@ The Heartbeat is the unattended sweep that evaluates project Watches and refresh
 - **Sweep** sets the interval: `EVERY 5 MIN`, `EVERY 15 MIN` (default), `EVERY 30 MIN`, or `EVERY 60 MIN`.
   **Run now** runs one sweep at once, also during quiet hours.
   During quiet hours a `HELD · QUIET UNTIL hh:mm` chip shows.
-- **Monday brief** regenerates once a day after quiet hours end.
-  The `DAILY hh:mm` token is not a setting.
+- **Monday brief** makes itself once a day at 06:00, before you arrive.
+  The `DAILY hh:mm` token shows that hour. Set it in **Settings > Rhythm > Morning brief**.
+  The brief uses no model and sends nothing, so quiet hours do not stop it.
   **Generate** regenerates it now.
 - **Notify** has two cycle controls.
   **Mode** is `OFF`, `ON THE EDGE` (default), or `EVERY SWEEP`.
