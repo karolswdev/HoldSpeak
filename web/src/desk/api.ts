@@ -537,6 +537,8 @@ export const fromWireMeeting = (m: unknown): Meeting | null => {
     calendarEventTitle: wireStringOrNull(m, "calendar_event_title"),
     calendarSourceLabel: wireStringOrNull(m, "calendar_source_label"),
     transcriptWords: typeof transcriptWordsRaw === "number" ? transcriptWordsRaw : null,
+    // PHILO-15-07: spans the transcriber marked `[unclear m:ss–m:ss]`.
+    unclearSpans: Number(wireRaw(m, "unclearSpans") ?? wireRaw(m, "unclear_spans") ?? 0) || 0,
     segments,
     // HS-201-04: the disclosed route and the run receipt travel with the
     // row, so the Chair's Run verb never composes a host from config.

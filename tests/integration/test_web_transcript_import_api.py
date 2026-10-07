@@ -108,7 +108,7 @@ def test_vtt_upload_becomes_a_real_meeting_without_a_transcriber(client, db, no_
     # The file's own speakers and real cue timestamps.
     assert [s["speaker"] for s in final["segments"]] == ["Priya", "Sam"]
     assert [s["start_time"] for s in final["segments"]] == [1.0, 4.5]
-    assert final["title"] == "weekly sync"
+    assert final["title"] == "Weekly sync"  # PHILO-15-07: humanised
     assert "transcript" in final.get("tags", [])
 
 

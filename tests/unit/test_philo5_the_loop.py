@@ -431,7 +431,8 @@ def test_gap_e_an_mcp_audio_import_transcribes_with_the_shared_transcriber(hub: 
     assert is_error is False, intake
     done = _wait_imported(hub, intake["meeting_id"], timeout=60.0)
     assert done["segments"] and all(s["text"] == "stub words" for s in done["segments"])
-    assert done["title"] == "architect"
+    # PHILO-15-07 (B30): the file name humanised, never the raw stem.
+    assert done["title"] == "Architect"
     assert caller_file.exists() and caller_file.stat().st_size == FIXTURE_WAV.stat().st_size
 
 

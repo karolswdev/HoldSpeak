@@ -4,7 +4,7 @@
 import type { ReactNode } from "react";
 import { StateTokenSpan } from "./StateTokenSpan";
 import { StateChip } from "../../../desk/surface";
-import { ledgerDate, durationToken, stateToken, intelDurationToken } from "./helpers";
+import { ledgerDate, durationToken, stateToken, intelDurationToken, unclearLampLabel } from "./helpers";
 import { EgressChip } from "../../../desk/surface/gadgets";
 import { egressFor } from "../../../desk/surface/egress";
 import type { MeetingData } from "./useMeetingData";
@@ -57,6 +57,13 @@ export function MeetingHeader({
   }
   if (token.label === "RAN" && intelDur) {
     parts.push(<span key="intel-dur" className="meetings-stream-fact">{intelDur}</span>);
+  }
+  // PHILO-15-07 (B01): the record says when its transcript has gaps.
+  // Astra r1 on #982: one source. The fresh detail is authoritative (its
+  // zero included); the list row speaks only while no detail is loaded.
+  const unclear = unclearLampLabel(source);
+  if (unclear) {
+    parts.push(<StateChip key="unclear" state="warning" label={unclear} data-testid="unclear-lamp" />);
   }
   // Host chip for any intel-active state: RAN, RUNNING, QUEUED.
   const hostStates = ["RAN", "RUNNING", "QUEUED"];
